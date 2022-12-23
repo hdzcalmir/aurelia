@@ -1030,13 +1030,12 @@ const AST = Object.freeze({
 });
 
 class ViewportRequest {
-    constructor(viewportName, componentName, resolution) {
+    constructor(viewportName, componentName) {
         this.viewportName = viewportName;
         this.componentName = componentName;
-        this.resolution = resolution;
     }
     toString() {
-        return `VR(viewport:'${this.viewportName}',component:'${this.componentName}',resolution:'${this.resolution}')`;
+        return `VR(viewport:'${this.viewportName}',component:'${this.componentName}')`;
     }
 }
 const viewportAgentLookup = new WeakMap();
@@ -1049,7 +1048,6 @@ class ViewportAgent {
         this.curCA = null;
         this.nextCA = null;
         this.state = 8256;
-        this.$resolution = 'dynamic';
         this.$plan = 'replace';
         this.currNode = null;
         this.nextNode = null;
@@ -1093,9 +1091,6 @@ class ViewportAgent {
                 if (this.currTransition === null) {
                     throw new Error(`Unexpected viewport activation outside of a transition context at ${this}`);
                 }
-                if (this.$resolution !== 'static') {
-                    throw new Error(`Unexpected viewport activation at ${this}`);
-                }
                 this.logger.trace(`activateFromViewport() - running ordinary activate at %s`, this);
                 const b = Batch.start(b1 => { this.activate(initiator, this.currTransition, b1); });
                 const p = new Promise(resolve => { b.continueWith(() => { resolve(); }); });
@@ -1133,7 +1128,7 @@ class ViewportAgent {
         }
     }
     handles(req) {
-        if (!this.isAvailable(req.resolution)) {
+        if (!this.isAvailable()) {
             return false;
         }
         const $vp = this.viewport;
@@ -1151,13 +1146,13 @@ class ViewportAgent {
         this.logger.trace(`viewport '%s' handles(req:%s) -> true`, vp, req);
         return true;
     }
-    isAvailable(resolution) {
-        if (resolution === 'dynamic' && !this.isActive) {
-            this.logger.trace(`isAvailable(resolution:%s) -> false (viewport is not active and we're in dynamic resolution resolution)`, resolution);
+    isAvailable() {
+        if (!this.isActive) {
+            this.logger.trace(`isAvailable -> false (viewport is not active)`);
             return false;
         }
         if (this.nextState !== 64) {
-            this.logger.trace(`isAvailable(resolution:%s) -> false (update already scheduled for %s)`, resolution, this.nextNode);
+            this.logger.trace(`isAvailable -> false (update already scheduled for %s)`, this.nextNode);
             return false;
         }
         return true;
@@ -1243,26 +1238,25 @@ class ViewportAgent {
             const next = this.nextNode;
             switch (this.$plan) {
                 case 'none':
-                case 'invoke-lifecycles':
+                case 'invoke-lifecycles': {
                     this.logger.trace(`canLoad(next:%s) - plan set to '%s', compiling residue`, next, this.$plan);
                     b1.push();
-                    void kernel.onResolve(processResidue(next), () => {
-                        b1.pop();
-                    });
+                    const ctx = next.context;
+                    void kernel.onResolve(ctx.resolved, () => kernel.onResolve(kernel.resolveAll(...next.residue.splice(0).map(vi => {
+                        return createAndAppendNodes(this.logger, next, vi);
+                    }), ...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
+                        const vp = vpa.viewport;
+                        const component = vp.default;
+                        if (component === null)
+                            return acc;
+                        acc.push(createAndAppendNodes(this.logger, next, ViewportInstruction.create({ component, viewport: vp.name, })));
+                        return acc;
+                    }, [])), () => { b1.pop(); }));
                     return;
+                }
                 case 'replace':
-                    switch (this.$resolution) {
-                        case 'dynamic':
-                            this.logger.trace(`canLoad(next:%s) - (resolution: 'dynamic'), delaying residue compilation until activate`, next, this.$plan);
-                            return;
-                        case 'static':
-                            this.logger.trace(`canLoad(next:%s) - (resolution: '${this.$resolution}'), creating nextCA and compiling residue`, next, this.$plan);
-                            b1.push();
-                            void kernel.onResolve(processResidue(next), () => {
-                                b1.pop();
-                            });
-                            return;
-                    }
+                    this.logger.trace(`canLoad(next:%s), delaying residue compilation until activate`, next, this.$plan);
+                    return;
             }
         }).continueWith(b1 => {
             switch (this.nextState) {
@@ -1410,8 +1404,7 @@ class ViewportAgent {
         ensureTransitionHasNotErrored(tr);
         ensureGuardsResultIsTrue(this, tr);
         b.push();
-        if (this.nextState === 32 &&
-            this.$resolution === 'dynamic') {
+        if (this.nextState === 32) {
             this.logger.trace(`activate() - invoking canLoad(), loading() and activate() on new component due to resolution 'dynamic' at %s`, this);
             Batch.start(b1 => {
                 this.canLoad(tr, b1);
@@ -1523,7 +1516,23 @@ class ViewportAgent {
         const next = this.nextNode;
         tr.run(() => {
             b.push();
-            return getDynamicChildren(next);
+            const ctx = next.context;
+            return kernel.onResolve(ctx.resolved, () => {
+                const existingChildren = next.children.slice();
+                return kernel.onResolve(kernel.resolveAll(...next
+                    .residue
+                    .splice(0)
+                    .map(vi => createAndAppendNodes(this.logger, next, vi))), () => kernel.onResolve(kernel.resolveAll(...ctx
+                    .getAvailableViewportAgents()
+                    .reduce((acc, vpa) => {
+                    const vp = vpa.viewport;
+                    const component = vp.default;
+                    if (component === null)
+                        return acc;
+                    acc.push(createAndAppendNodes(this.logger, next, ViewportInstruction.create({ component, viewport: vp.name, })));
+                    return acc;
+                }, [])), () => next.children.filter(x => !existingChildren.includes(x))));
+            });
         }, newChildren => {
             Batch.start(b1 => {
                 for (const node of newChildren) {
@@ -1562,7 +1571,6 @@ class ViewportAgent {
             case 64:
                 this.nextNode = next;
                 this.nextState = 32;
-                this.$resolution = options.resolutionMode;
                 break;
             default:
                 this.unexpectedState('scheduleUpdate 1');
@@ -1693,7 +1701,7 @@ class ViewportAgent {
         }
     }
     toString() {
-        return `VPA(state:${this.$state},plan:'${this.$plan}',resolution:'${this.$resolution}',n:${this.nextNode},c:${this.currNode},viewport:${this.viewport})`;
+        return `VPA(state:${this.$state},plan:'${this.$plan}',n:${this.nextNode},c:${this.currNode},viewport:${this.viewport})`;
     }
     dispose() {
         if (this.viewport.stateful) {
@@ -1948,62 +1956,6 @@ class RouteTree {
         return this.root.toString();
     }
 }
-function updateNode(log, vit, ctx, node) {
-    log.trace(`updateNode(ctx:%s,node:%s)`, ctx, node);
-    node.queryParams = vit.queryParams;
-    node.fragment = vit.fragment;
-    if (!node.context.isRoot) {
-        node.context.vpa.scheduleUpdate(node.tree.options, node);
-    }
-    if (node.context === ctx) {
-        node.clearChildren();
-        return kernel.onResolve(kernel.resolveAll(...vit.children.map(vi => createAndAppendNodes(log, node, vi))), () => kernel.resolveAll(...ctx.getAvailableViewportAgents('dynamic').map(vpa => {
-            const vp = vpa.viewport;
-            return createAndAppendNodes(log, node, ViewportInstruction.create({ component: vp.default, viewport: vp.name, }));
-        })));
-    }
-    return kernel.resolveAll(...node.children.map(child => {
-        return updateNode(log, vit, ctx, child);
-    }));
-}
-function processResidue(node) {
-    const ctx = node.context;
-    const log = ctx.container.get(kernel.ILogger).scopeTo('RouteTree');
-    const suffix = ctx.resolved instanceof Promise ? ' - awaiting promise' : '';
-    log.trace(`processResidue(node:%s)${suffix}`, node);
-    return kernel.onResolve(ctx.resolved, () => {
-        return kernel.resolveAll(...node.residue.splice(0).map(vi => {
-            return createAndAppendNodes(log, node, vi);
-        }), ...ctx.getAvailableViewportAgents('static').map(vpa => {
-            const defaultInstruction = ViewportInstruction.create({
-                component: vpa.viewport.default,
-                viewport: vpa.viewport.name,
-            });
-            return createAndAppendNodes(log, node, defaultInstruction);
-        }));
-    });
-}
-function getDynamicChildren(node) {
-    const ctx = node.context;
-    const log = ctx.container.get(kernel.ILogger).scopeTo('RouteTree');
-    const suffix = ctx.resolved instanceof Promise ? ' - awaiting promise' : '';
-    log.trace(`getDynamicChildren(node:%s)${suffix}`, node);
-    return kernel.onResolve(ctx.resolved, () => {
-        const existingChildren = node.children.slice();
-        return kernel.onResolve(kernel.resolveAll(...node
-            .residue
-            .splice(0)
-            .map(vi => createAndAppendNodes(log, node, vi))), () => kernel.onResolve(kernel.resolveAll(...ctx
-            .getAvailableViewportAgents('dynamic')
-            .map(vpa => {
-            const defaultInstruction = ViewportInstruction.create({
-                component: vpa.viewport.default,
-                viewport: vpa.viewport.name,
-            });
-            return createAndAppendNodes(log, node, defaultInstruction);
-        })), () => node.children.filter(x => !existingChildren.includes(x))));
-    });
-}
 function createAndAppendNodes(log, node, vi) {
     log.trace(`createAndAppendNodes(node:%s,vi:%s`, node, vi);
     switch (vi.component.type) {
@@ -2057,7 +2009,7 @@ function createAndAppendNodes(log, node, vi) {
                         let vp = vi.viewport;
                         if (vp === null || vp.length === 0)
                             vp = defaultViewportName;
-                        const vpa = ctx.getFallbackViewportAgent('dynamic', vp);
+                        const vpa = ctx.getFallbackViewportAgent(vp);
                         const fallback = vpa !== null ? vpa.viewport.fallback : ctx.definition.fallback;
                         if (fallback === null)
                             throw new UnknownRouteError(`Neither the route '${name}' matched any configured route at '${ctx.friendlyPath}' nor a fallback is configured for the viewport '${vp}' - did you forget to add '${name}' to the routes list of the route decorator of '${ctx.component.name}'?`);
@@ -2106,7 +2058,7 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
         if ($handler.redirectTo === null) {
             const vpName = ((vi.viewport?.length ?? 0) > 0 ? vi.viewport : $handler.viewport);
             const ced = $handler.component;
-            const vpa = ctx.resolveViewportAgent(new ViewportRequest(vpName, ced.name, rt.options.resolutionMode));
+            const vpa = ctx.resolveViewportAgent(new ViewportRequest(vpName, ced.name));
             const router = ctx.container.get(IRouter);
             const childCtx = router.getRouteContext(vpa, ced, null, vpa.hostController.container, ctx.definition);
             log.trace('createConfiguredNode setting the context node');
@@ -2245,23 +2197,21 @@ function valueOrFuncToValue(instructions, valueOrFunc) {
     return valueOrFunc;
 }
 class RouterOptions {
-    constructor(useUrlFragmentHash, useHref, resolutionMode, historyStrategy, buildTitle) {
+    constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle) {
         this.useUrlFragmentHash = useUrlFragmentHash;
         this.useHref = useHref;
-        this.resolutionMode = resolutionMode;
         this.historyStrategy = historyStrategy;
         this.buildTitle = buildTitle;
     }
     static get DEFAULT() { return RouterOptions.create({}); }
     static create(input) {
-        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.resolutionMode ?? 'dynamic', input.historyStrategy ?? 'push', input.buildTitle ?? null);
+        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null);
     }
     getHistoryStrategy(instructions) {
         return valueOrFuncToValue(instructions, this.historyStrategy);
     }
     stringifyProperties() {
         return [
-            ['resolutionMode', 'resolution'],
             ['historyStrategy', 'history'],
         ].map(([key, name]) => {
             const value = this[key];
@@ -2269,7 +2219,7 @@ class RouterOptions {
         }).join(',');
     }
     clone() {
-        return new RouterOptions(this.useUrlFragmentHash, this.useHref, this.resolutionMode, this.historyStrategy, this.buildTitle);
+        return new RouterOptions(this.useUrlFragmentHash, this.useHref, this.historyStrategy, this.buildTitle);
     }
     toString() {
         return `RO(${this.stringifyProperties()})`;
@@ -2277,7 +2227,7 @@ class RouterOptions {
 }
 class NavigationOptions extends RouterOptions {
     constructor(routerOptions, title, titleSeparator, context, queryParams, fragment, state) {
-        super(routerOptions.useUrlFragmentHash, routerOptions.useHref, routerOptions.resolutionMode, routerOptions.historyStrategy, routerOptions.buildTitle);
+        super(routerOptions.useUrlFragmentHash, routerOptions.useHref, routerOptions.historyStrategy, routerOptions.buildTitle);
         this.title = title;
         this.titleSeparator = titleSeparator;
         this.context = context;
@@ -2735,6 +2685,28 @@ exports.Router = __decorate([
     __param(3, IRouterEvents),
     __param(4, ILocationManager)
 ], exports.Router);
+function updateNode(log, vit, ctx, node) {
+    log.trace(`updateNode(ctx:%s,node:%s)`, ctx, node);
+    node.queryParams = vit.queryParams;
+    node.fragment = vit.fragment;
+    if (!node.context.isRoot) {
+        node.context.vpa.scheduleUpdate(node.tree.options, node);
+    }
+    if (node.context === ctx) {
+        node.clearChildren();
+        return kernel.onResolve(kernel.resolveAll(...vit.children.map(vi => createAndAppendNodes(log, node, vi))), () => kernel.resolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
+            const vp = vpa.viewport;
+            const component = vp.default;
+            if (component === null)
+                return acc;
+            acc.push(createAndAppendNodes(log, node, ViewportInstruction.create({ component, viewport: vp.name, })));
+            return acc;
+        }, [])));
+    }
+    return kernel.resolveAll(...node.children.map(child => {
+        return updateNode(log, vit, ctx, child);
+    }));
+}
 
 class ViewportInstruction {
     constructor(open, close, recognizedRoute, component, viewport, params, children) {
@@ -3614,11 +3586,11 @@ class RouteContext {
         }
         return agent;
     }
-    getAvailableViewportAgents(resolution) {
-        return this.childViewportAgents.filter(x => x.isAvailable(resolution));
+    getAvailableViewportAgents() {
+        return this.childViewportAgents.filter(x => x.isAvailable());
     }
-    getFallbackViewportAgent(resolution, name) {
-        return this.childViewportAgents.find(x => x.isAvailable(resolution) && x.viewport.name === name && x.viewport.fallback.length > 0) ?? null;
+    getFallbackViewportAgent(name) {
+        return this.childViewportAgents.find(x => x.isAvailable() && x.viewport.name === name && x.viewport.fallback.length > 0) ?? null;
     }
     createComponentAgent(hostController, routeNode) {
         this.logger.trace(`createComponentAgent(routeNode:%s)`, routeNode);

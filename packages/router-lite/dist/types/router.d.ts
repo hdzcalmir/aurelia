@@ -12,7 +12,6 @@ import { RouteDefinition } from './route-definition';
 import { ViewportAgent } from './viewport-agent';
 export declare function isManagedState(state: {} | null): state is ManagedState;
 export declare function toManagedState(state: {} | null, navId: number): ManagedState;
-export declare type ResolutionMode = 'static' | 'dynamic';
 export declare type HistoryStrategy = 'none' | 'replace' | 'push';
 export declare type ValueOrFunc<T extends string> = T | ((instructions: ViewportInstructionTree) => T);
 export interface IRouterOptions extends Partial<RouterOptions> {
@@ -25,7 +24,6 @@ export interface IRouterOptions extends Partial<RouterOptions> {
 export declare class RouterOptions {
     readonly useUrlFragmentHash: boolean;
     readonly useHref: boolean;
-    readonly resolutionMode: ResolutionMode;
     /**
      * The strategy to use for interacting with the browser's `history` object (if applicable).
      *
@@ -44,7 +42,7 @@ export declare class RouterOptions {
      */
     readonly buildTitle: ((transition: Transition) => string | null) | null;
     static get DEFAULT(): RouterOptions;
-    protected constructor(useUrlFragmentHash: boolean, useHref: boolean, resolutionMode: ResolutionMode, 
+    protected constructor(useUrlFragmentHash: boolean, useHref: boolean, 
     /**
      * The strategy to use for interacting with the browser's `history` object (if applicable).
      *

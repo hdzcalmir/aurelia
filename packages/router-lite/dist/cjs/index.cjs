@@ -294,9 +294,9 @@ class Subscription {
     }
 }
 
-const R = e.DI.createInterface("IRouterEvents", (t => t.singleton(y)));
+const R = e.DI.createInterface("IRouterEvents", (t => t.singleton(b)));
 
-let y = class RouterEvents {
+let b = class RouterEvents {
     constructor(t, e) {
         this.ea = t;
         this.logger = e;
@@ -318,7 +318,7 @@ let y = class RouterEvents {
     }
 };
 
-y = x([ $(0, e.IEventAggregator), $(1, e.ILogger) ], y);
+b = x([ $(0, e.IEventAggregator), $(1, e.ILogger) ], b);
 
 class LocationChangeEvent {
     constructor(t, e, s, i) {
@@ -392,7 +392,7 @@ class NavigationErrorEvent {
     }
 }
 
-const b = e.DI.createInterface("IBaseHref");
+const y = e.DI.createInterface("IBaseHref");
 
 const k = e.DI.createInterface("ILocationManager", (t => t.singleton(S)));
 
@@ -483,7 +483,7 @@ x([ e.bound ], S.prototype, "onPopState", null);
 
 x([ e.bound ], S.prototype, "onHashChange", null);
 
-S = x([ $(0, e.ILogger), $(1, R), $(2, s.IHistory), $(3, s.ILocation), $(4, s.IWindow), $(5, b) ], S);
+S = x([ $(0, e.ILogger), $(1, R), $(2, s.IHistory), $(3, s.ILocation), $(4, s.IWindow), $(5, y) ], S);
 
 function C(t) {
     let e;
@@ -582,9 +582,9 @@ exports.ExpressionKind = void 0;
     t[t["Parameter"] = 9] = "Parameter";
 })(exports.ExpressionKind || (exports.ExpressionKind = {}));
 
-const T = new Map;
-
 const A = new Map;
+
+const T = new Map;
 
 class RouteExpression {
     constructor(t, e, s, i, n, r) {
@@ -599,7 +599,7 @@ class RouteExpression {
         return 0;
     }
     static parse(t, e) {
-        const s = e ? T : A;
+        const s = e ? A : T;
         let i = s.get(t);
         if (void 0 === i) s.set(t, i = RouteExpression.$parse(t, e));
         return i;
@@ -619,14 +619,14 @@ class RouteExpression {
             t = t.slice(0, r);
             n = new URLSearchParams(e);
         }
-        if ("" === t) return new RouteExpression("", false, SegmentExpression.EMPTY, null != n ? Object.freeze(n) : Y, s, e);
+        if ("" === t) return new RouteExpression("", false, SegmentExpression.EMPTY, null != n ? Object.freeze(n) : W, s, e);
         const o = new ParserState(t);
         o.record();
         const h = o.consumeOptional("/");
         const a = CompositeSegmentExpression.parse(o);
         o.ensureDone();
         const c = o.playback();
-        return new RouteExpression(c, h, a, null != n ? Object.freeze(n) : Y, s, e);
+        return new RouteExpression(c, h, a, null != n ? Object.freeze(n) : W, s, e);
     }
     toInstructionTree(t) {
         return new ViewportInstructionTree(t, this.isAbsolute, this.root.toInstructions(0, 0), a(this.queryParams, t.queryParams, true), this.fragment);
@@ -971,13 +971,12 @@ const V = Object.freeze({
 });
 
 class ViewportRequest {
-    constructor(t, e, s) {
+    constructor(t, e) {
         this.viewportName = t;
         this.componentName = e;
-        this.resolution = s;
     }
     toString() {
-        return `VR(viewport:'${this.viewportName}',component:'${this.componentName}',resolution:'${this.resolution}')`;
+        return `VR(viewport:'${this.viewportName}',component:'${this.componentName}')`;
     }
 }
 
@@ -992,7 +991,6 @@ class ViewportAgent {
         this.curCA = null;
         this.nextCA = null;
         this.state = 8256;
-        this.$resolution = "dynamic";
         this.$plan = "replace";
         this.currNode = null;
         this.nextNode = null;
@@ -1046,7 +1044,6 @@ class ViewportAgent {
           case 2:
             {
                 if (null === this.currTransition) throw new Error(`Unexpected viewport activation outside of a transition context at ${this}`);
-                if ("static" !== this.$resolution) throw new Error(`Unexpected viewport activation at ${this}`);
                 this.logger.trace(`activateFromViewport() - running ordinary activate at %s`, this);
                 const e = Batch.start((e => {
                     this.activate(t, this.currTransition, e);
@@ -1097,11 +1094,11 @@ class ViewportAgent {
         }
     }
     handles(t) {
-        if (!this.isAvailable(t.resolution)) return false;
+        if (!this.isAvailable()) return false;
         const e = this.viewport;
         const s = t.viewportName;
         const i = e.name;
-        if (s !== ot && i !== ot && i !== s) {
+        if (s !== nt && i !== nt && i !== s) {
             this.logger.trace(`handles(req:%s) -> false (viewport names don't match '%s')`, t, i);
             return false;
         }
@@ -1113,13 +1110,13 @@ class ViewportAgent {
         this.logger.trace(`viewport '%s' handles(req:%s) -> true`, i, t);
         return true;
     }
-    isAvailable(t) {
-        if ("dynamic" === t && !this.isActive) {
-            this.logger.trace(`isAvailable(resolution:%s) -> false (viewport is not active and we're in dynamic resolution resolution)`, t);
+    isAvailable() {
+        if (!this.isActive) {
+            this.logger.trace(`isAvailable -> false (viewport is not active)`);
             return false;
         }
         if (64 !== this.nextState) {
-            this.logger.trace(`isAvailable(resolution:%s) -> false (update already scheduled for %s)`, t, this.nextNode);
+            this.logger.trace(`isAvailable -> false (update already scheduled for %s)`, this.nextNode);
             return false;
         }
         return true;
@@ -1203,27 +1200,28 @@ class ViewportAgent {
             switch (this.$plan) {
               case "none":
               case "invoke-lifecycles":
-                this.logger.trace(`canLoad(next:%s) - plan set to '%s', compiling residue`, s, this.$plan);
-                t.push();
-                void e.onResolve(z(s), (() => {
-                    t.pop();
-                }));
-                return;
-
-              case "replace":
-                switch (this.$resolution) {
-                  case "dynamic":
-                    this.logger.trace(`canLoad(next:%s) - (resolution: 'dynamic'), delaying residue compilation until activate`, s, this.$plan);
-                    return;
-
-                  case "static":
-                    this.logger.trace(`canLoad(next:%s) - (resolution: '${this.$resolution}'), creating nextCA and compiling residue`, s, this.$plan);
+                {
+                    this.logger.trace(`canLoad(next:%s) - plan set to '%s', compiling residue`, s, this.$plan);
                     t.push();
-                    void e.onResolve(z(s), (() => {
+                    const i = s.context;
+                    void e.onResolve(i.resolved, (() => e.onResolve(e.resolveAll(...s.residue.splice(0).map((t => q(this.logger, s, t))), ...i.getAvailableViewportAgents().reduce(((t, e) => {
+                        const i = e.viewport;
+                        const n = i.default;
+                        if (null === n) return t;
+                        t.push(q(this.logger, s, ViewportInstruction.create({
+                            component: n,
+                            viewport: i.name
+                        })));
+                        return t;
+                    }), [])), (() => {
                         t.pop();
-                    }));
+                    }))));
                     return;
                 }
+
+              case "replace":
+                this.logger.trace(`canLoad(next:%s), delaying residue compilation until activate`, s, this.$plan);
+                return;
             }
         })).continueWith((e => {
             switch (this.nextState) {
@@ -1376,7 +1374,7 @@ class ViewportAgent {
         L(e);
         U(this, e);
         s.push();
-        if (32 === this.nextState && "dynamic" === this.$resolution) {
+        if (32 === this.nextState) {
             this.logger.trace(`activate() - invoking canLoad(), loading() and activate() on new component due to resolution 'dynamic' at %s`, this);
             Batch.start((t => {
                 this.canLoad(e, t);
@@ -1485,36 +1483,49 @@ class ViewportAgent {
             }
         }
     }
-    processDynamicChildren(t, e) {
+    processDynamicChildren(t, s) {
         this.logger.trace(`processDynamicChildren() - %s`, this);
-        const s = this.nextNode;
+        const i = this.nextNode;
         t.run((() => {
-            e.push();
-            return F(s);
-        }), (s => {
-            Batch.start((e => {
-                for (const i of s) t.run((() => {
-                    e.push();
-                    return i.context.vpa.canLoad(t, e);
+            s.push();
+            const t = i.context;
+            return e.onResolve(t.resolved, (() => {
+                const s = i.children.slice();
+                return e.onResolve(e.resolveAll(...i.residue.splice(0).map((t => q(this.logger, i, t)))), (() => e.onResolve(e.resolveAll(...t.getAvailableViewportAgents().reduce(((t, e) => {
+                    const s = e.viewport;
+                    const n = s.default;
+                    if (null === n) return t;
+                    t.push(q(this.logger, i, ViewportInstruction.create({
+                        component: n,
+                        viewport: s.name
+                    })));
+                    return t;
+                }), [])), (() => i.children.filter((t => !s.includes(t)))))));
+            }));
+        }), (e => {
+            Batch.start((s => {
+                for (const i of e) t.run((() => {
+                    s.push();
+                    return i.context.vpa.canLoad(t, s);
                 }), (() => {
-                    e.pop();
+                    s.pop();
                 }));
-            })).continueWith((e => {
-                for (const i of s) t.run((() => {
-                    e.push();
-                    return i.context.vpa.loading(t, e);
+            })).continueWith((s => {
+                for (const i of e) t.run((() => {
+                    s.push();
+                    return i.context.vpa.loading(t, s);
                 }), (() => {
-                    e.pop();
+                    s.pop();
                 }));
-            })).continueWith((e => {
-                for (const i of s) t.run((() => {
-                    e.push();
-                    return i.context.vpa.activate(null, t, e);
+            })).continueWith((s => {
+                for (const i of e) t.run((() => {
+                    s.push();
+                    return i.context.vpa.activate(null, t, s);
                 }), (() => {
-                    e.pop();
+                    s.pop();
                 }));
             })).continueWith((() => {
-                e.pop();
+                s.pop();
             })).start();
         }));
     }
@@ -1523,7 +1534,6 @@ class ViewportAgent {
           case 64:
             this.nextNode = e;
             this.nextState = 32;
-            this.$resolution = t.resolutionMode;
             break;
 
           default:
@@ -1650,7 +1660,7 @@ class ViewportAgent {
         }
     }
     toString() {
-        return `VPA(state:${this.$state},plan:'${this.$plan}',resolution:'${this.$resolution}',n:${this.nextNode},c:${this.currNode},viewport:${this.viewport})`;
+        return `VPA(state:${this.$state},plan:'${this.$plan}',n:${this.nextNode},c:${this.currNode},viewport:${this.viewport})`;
     }
     dispose() {
         if (this.viewport.stateful) this.logger.trace(`dispose() - not disposing stateful viewport at %s`, this); else {
@@ -1747,7 +1757,7 @@ class RouteNode {
     }
     static create(t) {
         const {[i.RESIDUE]: e, ...s} = t.params ?? {};
-        return new RouteNode(++B, t.path, t.finalPath, t.context, t.originalInstruction ?? t.instruction, t.instruction, s, t.queryParams ?? Y, t.fragment ?? null, t.data ?? {}, t.viewport ?? null, t.title ?? null, t.component, t.children ?? [], t.residue ?? []);
+        return new RouteNode(++B, t.path, t.finalPath, t.context, t.originalInstruction ?? t.instruction, t.instruction, s, t.queryParams ?? W, t.fragment ?? null, t.data ?? {}, t.viewport ?? null, t.title ?? null, t.component, t.children ?? [], t.residue ?? []);
     }
     contains(t) {
         if (this.context === t.options.context) {
@@ -1849,56 +1859,7 @@ class RouteTree {
     }
 }
 
-function q(t, s, i, n) {
-    t.trace(`updateNode(ctx:%s,node:%s)`, i, n);
-    n.queryParams = s.queryParams;
-    n.fragment = s.fragment;
-    if (!n.context.isRoot) n.context.vpa.scheduleUpdate(n.tree.options, n);
-    if (n.context === i) {
-        n.clearChildren();
-        return e.onResolve(e.resolveAll(...s.children.map((e => H(t, n, e)))), (() => e.resolveAll(...i.getAvailableViewportAgents("dynamic").map((e => {
-            const s = e.viewport;
-            return H(t, n, ViewportInstruction.create({
-                component: s.default,
-                viewport: s.name
-            }));
-        })))));
-    }
-    return e.resolveAll(...n.children.map((e => q(t, s, i, e))));
-}
-
-function z(t) {
-    const s = t.context;
-    const i = s.container.get(e.ILogger).scopeTo("RouteTree");
-    const n = s.resolved instanceof Promise ? " - awaiting promise" : "";
-    i.trace(`processResidue(node:%s)${n}`, t);
-    return e.onResolve(s.resolved, (() => e.resolveAll(...t.residue.splice(0).map((e => H(i, t, e))), ...s.getAvailableViewportAgents("static").map((e => {
-        const s = ViewportInstruction.create({
-            component: e.viewport.default,
-            viewport: e.viewport.name
-        });
-        return H(i, t, s);
-    })))));
-}
-
-function F(t) {
-    const s = t.context;
-    const i = s.container.get(e.ILogger).scopeTo("RouteTree");
-    const n = s.resolved instanceof Promise ? " - awaiting promise" : "";
-    i.trace(`getDynamicChildren(node:%s)${n}`, t);
-    return e.onResolve(s.resolved, (() => {
-        const n = t.children.slice();
-        return e.onResolve(e.resolveAll(...t.residue.splice(0).map((e => H(i, t, e)))), (() => e.onResolve(e.resolveAll(...s.getAvailableViewportAgents("dynamic").map((e => {
-            const s = ViewportInstruction.create({
-                component: e.viewport.default,
-                viewport: e.viewport.name
-            });
-            return H(i, t, s);
-        }))), (() => t.children.filter((t => !n.includes(t)))))));
-    }));
-}
-
-function H(t, s, i) {
+function q(t, s, i) {
     t.trace(`createAndAppendNodes(node:%s,vi:%s`, s, i);
     switch (i.component.type) {
       case 0:
@@ -1908,7 +1869,7 @@ function H(t, s, i) {
             s.clearChildren();
 
           case ".":
-            return e.resolveAll(...i.children.map((e => H(t, s, e))));
+            return e.resolveAll(...i.children.map((e => q(t, s, e))));
 
           default:
             {
@@ -1916,14 +1877,14 @@ function H(t, s, i) {
                 const e = s.context;
                 const n = i.clone();
                 let r = i.recognizedRoute;
-                if (null !== r) return _(t, s, W(t, s, i, r, n));
+                if (null !== r) return F(t, s, z(t, s, i, r, n));
                 if (0 === i.children.length) {
                     const n = e.generateViewportInstruction(i);
                     if (null !== n) {
                         s.tree.queryParams = a(s.tree.queryParams, n.query, true);
                         const e = n.vi;
                         e.children.push(...i.children);
-                        return _(t, s, W(t, s, e, e.recognizedRoute, i));
+                        return F(t, s, z(t, s, e, e.recognizedRoute, i));
                     }
                 }
                 let o = 0;
@@ -1945,18 +1906,18 @@ function H(t, s, i) {
                     const n = i.component.value;
                     if ("" === n) return;
                     let r = i.viewport;
-                    if (null === r || 0 === r.length) r = ot;
-                    const o = e.getFallbackViewportAgent("dynamic", r);
+                    if (null === r || 0 === r.length) r = nt;
+                    const o = e.getFallbackViewportAgent(r);
                     const h = null !== o ? o.viewport.fallback : e.definition.fallback;
                     if (null === h) throw new UnknownRouteError(`Neither the route '${n}' matched any configured route at '${e.friendlyPath}' nor a fallback is configured for the viewport '${r}' - did you forget to add '${n}' to the routes list of the route decorator of '${e.component.name}'?`);
                     t.trace(`Fallback is set to '${h}'. Looking for a recognized route.`);
                     const a = e.childRoutes.find((t => t.id === h));
-                    if (void 0 !== a) return _(t, s, G(t, a, s, i));
+                    if (void 0 !== a) return F(t, s, H(t, a, s, i));
                     t.trace(`No route definition for the fallback '${h}' is found; trying to recognize the route.`);
                     const c = e.recognize(h, true);
-                    if (null !== c && c.residue !== h) return _(t, s, W(t, s, i, c, null));
+                    if (null !== c && c.residue !== h) return F(t, s, z(t, s, i, c, null));
                     t.trace(`The fallback '${h}' is not recognized as a route; treating as custom element name.`);
-                    return _(t, s, G(t, RouteDefinition.resolve(h, e.definition, null, e), s, i));
+                    return F(t, s, H(t, RouteDefinition.resolve(h, e.definition, null, e), s, i));
                 }
                 r.residue = null;
                 i.component.value = l ? h : h.slice(0, -(u.length + 1));
@@ -1966,7 +1927,7 @@ function H(t, s, i) {
                     i.children = t.children;
                 }
                 t.trace("createNode after adjustment vi:%s", i);
-                return _(t, s, W(t, s, i, r, n));
+                return F(t, s, z(t, s, i, r, n));
             }
         }
 
@@ -1981,12 +1942,12 @@ function H(t, s, i) {
             });
             s.tree.queryParams = a(s.tree.queryParams, h, true);
             o.children.push(...i.children);
-            return _(t, s, W(t, s, o, o.recognizedRoute, i));
+            return F(t, s, z(t, s, o, o.recognizedRoute, i));
         }
     }
 }
 
-function W(t, s, i, n, r, o = n.route.endpoint.route) {
+function z(t, s, i, n, r, o = n.route.endpoint.route) {
     const h = s.context;
     const a = s.tree;
     return e.onResolve(o.handler, (e => {
@@ -1995,8 +1956,8 @@ function W(t, s, i, n, r, o = n.route.endpoint.route) {
         if (null === e.redirectTo) {
             const c = (i.viewport?.length ?? 0) > 0 ? i.viewport : e.viewport;
             const u = e.component;
-            const l = h.resolveViewportAgent(new ViewportRequest(c, u.name, a.options.resolutionMode));
-            const f = h.container.get(Q);
+            const l = h.resolveViewportAgent(new ViewportRequest(c, u.name));
+            const f = h.container.get(J);
             const p = f.getRouteContext(l, u, null, l.hostController.container, h.definition);
             t.trace("createConfiguredNode setting the context node");
             const d = p.node = RouteNode.create({
@@ -2083,11 +2044,11 @@ function W(t, s, i, n, r, o = n.route.endpoint.route) {
         const m = p.filter(Boolean).join("/");
         const x = h.recognize(m);
         if (null === x) throw new UnknownRouteError(`'${m}' did not match any configured route or registered component name at '${h.friendlyPath}' - did you forget to add '${m}' to the routes list of the route decorator of '${h.component.name}'?`);
-        return W(t, s, i, n, r, x.route.endpoint.route);
+        return z(t, s, i, n, r, x.route.endpoint.route);
     }));
 }
 
-function _(t, s, i) {
+function F(t, s, i) {
     return e.onResolve(i, (e => {
         t.trace(`appendNode($childNode:%s)`, e);
         s.appendChild(e);
@@ -2095,55 +2056,54 @@ function _(t, s, i) {
     }));
 }
 
-function G(t, s, n, r) {
+function H(t, s, n, r) {
     const o = new $RecognizedRoute(new i.RecognizedRoute(new i.Endpoint(new i.ConfigurableRoute(s.path[0], s.caseSensitive, s), []), e.emptyObject), null);
     r.children.length = 0;
-    return W(t, n, r, o, null);
+    return z(t, n, r, o, null);
 }
 
-const Y = Object.freeze(new URLSearchParams);
+const W = Object.freeze(new URLSearchParams);
 
-function J(e) {
+function _(e) {
     return t.isObject(e) && true === Object.prototype.hasOwnProperty.call(e, E);
 }
 
-function Z(t, e) {
+function G(t, e) {
     return {
         ...t,
         [E]: e
     };
 }
 
-function K(t, e) {
+function Y(t, e) {
     if ("function" === typeof e) return e(t);
     return e;
 }
 
 class RouterOptions {
-    constructor(t, e, s, i, n) {
+    constructor(t, e, s, i) {
         this.useUrlFragmentHash = t;
         this.useHref = e;
-        this.resolutionMode = s;
-        this.historyStrategy = i;
-        this.buildTitle = n;
+        this.historyStrategy = s;
+        this.buildTitle = i;
     }
     static get DEFAULT() {
         return RouterOptions.create({});
     }
     static create(t) {
-        return new RouterOptions(t.useUrlFragmentHash ?? false, t.useHref ?? true, t.resolutionMode ?? "dynamic", t.historyStrategy ?? "push", t.buildTitle ?? null);
+        return new RouterOptions(t.useUrlFragmentHash ?? false, t.useHref ?? true, t.historyStrategy ?? "push", t.buildTitle ?? null);
     }
     getHistoryStrategy(t) {
-        return K(t, this.historyStrategy);
+        return Y(t, this.historyStrategy);
     }
     stringifyProperties() {
-        return [ [ "resolutionMode", "resolution" ], [ "historyStrategy", "history" ] ].map((([t, e]) => {
+        return [ [ "historyStrategy", "history" ] ].map((([t, e]) => {
             const s = this[t];
             return `${e}:${"function" === typeof s ? s : `'${s}'`}`;
         })).join(",");
     }
     clone() {
-        return new RouterOptions(this.useUrlFragmentHash, this.useHref, this.resolutionMode, this.historyStrategy, this.buildTitle);
+        return new RouterOptions(this.useUrlFragmentHash, this.useHref, this.historyStrategy, this.buildTitle);
     }
     toString() {
         return `RO(${this.stringifyProperties()})`;
@@ -2152,7 +2112,7 @@ class RouterOptions {
 
 class NavigationOptions extends RouterOptions {
     constructor(t, e, s, i, n, r, o) {
-        super(t.useUrlFragmentHash, t.useHref, t.resolutionMode, t.historyStrategy, t.buildTitle);
+        super(t.useUrlFragmentHash, t.useHref, t.historyStrategy, t.buildTitle);
         this.title = e;
         this.titleSeparator = s;
         this.context = i;
@@ -2225,7 +2185,7 @@ class Transition {
     }
 }
 
-const Q = e.DI.createInterface("IRouter", (t => t.singleton(exports.Router)));
+const J = e.DI.createInterface("IRouter", (t => t.singleton(exports.Router)));
 
 exports.Router = class Router {
     constructor(t, e, s, i, n) {
@@ -2251,8 +2211,8 @@ exports.Router = class Router {
     get ctx() {
         let t = this.h;
         if (null === t) {
-            if (!this.container.has(ct, true)) throw new Error(`Root RouteContext is not set. Did you forget to register RouteConfiguration, or try to navigate before calling Aurelia.start()?`);
-            t = this.h = this.container.get(ct);
+            if (!this.container.has(ht, true)) throw new Error(`Root RouteContext is not set. Did you forget to register RouteConfiguration, or try to navigate before calling Aurelia.start()?`);
+            t = this.h = this.container.get(ht);
         }
         return t;
     }
@@ -2262,7 +2222,7 @@ exports.Router = class Router {
             const e = this.ctx;
             t = this.u = new RouteTree(NavigationOptions.create({
                 ...this.options
-            }), Y, null, RouteNode.create({
+            }), W, null, RouteNode.create({
                 path: "",
                 finalPath: "",
                 context: e,
@@ -2311,7 +2271,7 @@ exports.Router = class Router {
         this.locationMgr.startListening();
         this.locationChangeSubscription = this.events.subscribe("au:router:location-change", (t => {
             this.p.taskQueue.queueTask((() => {
-                const e = J(t.state) ? t.state : null;
+                const e = _(t.state) ? t.state : null;
                 const s = NavigationOptions.create({
                     ...this.options,
                     historyStrategy: "replace"
@@ -2352,7 +2312,7 @@ exports.Router = class Router {
             return c;
         }
         o.trace(`creating new RouteContext for %s`, h);
-        const u = n.has(ct, true) ? n.get(ct) : null;
+        const u = n.has(ht, true) ? n.get(ht) : null;
         a.set(h, c = new RouteContext(t, u, s, h, n, this));
         return c;
     }
@@ -2455,7 +2415,7 @@ exports.Router = class Router {
             }
             const h = s.resolved instanceof Promise ? " - awaiting promise" : "";
             o.trace(`updateRouteTree(rootCtx:%s,rt:%s,vit:%s)${h}`, n, r, i);
-            return e.onResolve(s.resolved, (() => q(o, i, s, n.node)));
+            return e.onResolve(s.resolved, (() => Z(o, i, s, n.node)));
         }), (() => {
             const e = t.previousRouteTree.root.children;
             const s = t.routeTree.root.children;
@@ -2507,11 +2467,11 @@ exports.Router = class Router {
             break;
 
           case "push":
-            this.locationMgr.pushState(Z(t.options.state, t.id), this.updateTitle(t), e);
+            this.locationMgr.pushState(G(t.options.state, t.id), this.updateTitle(t), e);
             break;
 
           case "replace":
-            this.locationMgr.replaceState(Z(t.options.state, t.id), this.updateTitle(t), e);
+            this.locationMgr.replaceState(G(t.options.state, t.id), this.updateTitle(t), e);
             break;
         }
     }
@@ -2578,6 +2538,27 @@ exports.Router = class Router {
 
 exports.Router = x([ $(0, e.IContainer), $(1, s.IPlatform), $(2, e.ILogger), $(3, R), $(4, k) ], exports.Router);
 
+function Z(t, s, i, n) {
+    t.trace(`updateNode(ctx:%s,node:%s)`, i, n);
+    n.queryParams = s.queryParams;
+    n.fragment = s.fragment;
+    if (!n.context.isRoot) n.context.vpa.scheduleUpdate(n.tree.options, n);
+    if (n.context === i) {
+        n.clearChildren();
+        return e.onResolve(e.resolveAll(...s.children.map((e => q(t, n, e)))), (() => e.resolveAll(...i.getAvailableViewportAgents().reduce(((e, s) => {
+            const i = s.viewport;
+            const r = i.default;
+            if (null === r) return e;
+            e.push(q(t, n, ViewportInstruction.create({
+                component: r,
+                viewport: i.name
+            })));
+            return e;
+        }), []))));
+    }
+    return e.resolveAll(...n.children.map((e => Z(t, s, i, e))));
+}
+
 class ViewportInstruction {
     constructor(t, e, s, i, n, r, o) {
         this.open = t;
@@ -2621,7 +2602,7 @@ class ViewportInstruction {
     }
     toUrlComponent(t = true) {
         const e = this.component.toUrlComponent();
-        const s = null === this.params || 0 === Object.keys(this.params).length ? "" : `(${X(this.params)})`;
+        const s = null === this.params || 0 === Object.keys(this.params).length ? "" : `(${K(this.params)})`;
         const i = 0 === e.length || null === this.viewport || 0 === this.viewport.length ? "" : `@${this.viewport}`;
         const n = `${"(".repeat(this.open)}${e}${s}${i}${")".repeat(this.close)}`;
         const r = t ? this.children.map((t => t.toUrlComponent())).join("+") : "";
@@ -2640,7 +2621,7 @@ class ViewportInstruction {
     }
 }
 
-function X(t) {
+function K(t) {
     const s = Object.keys(t);
     const i = Array(s.length);
     const n = [];
@@ -2659,7 +2640,7 @@ function X(t) {
     return i.join(",");
 }
 
-const tt = function() {
+const Q = function() {
     let t = 0;
     const e = new Map;
     return function(s) {
@@ -2703,7 +2684,7 @@ class ViewportInstructionTree {
             return e.toInstructionTree(n);
         }
         const h = o ? r.generateViewportInstruction(t) : null;
-        return null !== h ? new ViewportInstructionTree(n, false, [ h.vi ], new URLSearchParams(h.query ?? e.emptyObject), null) : new ViewportInstructionTree(n, false, [ ViewportInstruction.create(t) ], Y, null);
+        return null !== h ? new ViewportInstructionTree(n, false, [ h.vi ], new URLSearchParams(h.query ?? e.emptyObject), null) : new ViewportInstructionTree(n, false, [ ViewportInstruction.create(t) ], W, null);
     }
     equals(t) {
         const e = this.children;
@@ -2734,7 +2715,7 @@ class ViewportInstructionTree {
     }
 }
 
-var et;
+var X;
 
 (function(t) {
     t[t["string"] = 0] = "string";
@@ -2742,7 +2723,7 @@ var et;
     t[t["CustomElementDefinition"] = 2] = "CustomElementDefinition";
     t[t["Promise"] = 3] = "Promise";
     t[t["IRouteViewModel"] = 4] = "IRouteViewModel";
-})(et || (et = {}));
+})(X || (X = {}));
 
 class TypedNavigationInstruction {
     constructor(t, e) {
@@ -2793,7 +2774,7 @@ class TypedNavigationInstruction {
 
           case 4:
           case 3:
-            return `au$obj${tt(this.value)}`;
+            return `au$obj${Q(this.value)}`;
 
           case 1:
             return this.value.toUrlComponent();
@@ -2822,9 +2803,9 @@ class TypedNavigationInstruction {
     }
 }
 
-const st = e.emptyArray;
+const tt = e.emptyArray;
 
-function it(t, e) {
+function et(t, e) {
     if (!m(t.params, e.params)) return "replace";
     return "none";
 }
@@ -2854,7 +2835,7 @@ class RouteConfig {
             const a = e?.transitionPlan ?? s?.transitionPlan ?? null;
             const c = e?.viewport ?? null;
             const u = e?.data ?? {};
-            const l = e?.routes ?? st;
+            const l = e?.routes ?? tt;
             return new RouteConfig(o, i, h, n, r, a, c, u, l, e?.fallback ?? null, null, e?.nav ?? true);
         } else if ("object" === typeof t) {
             const i = t;
@@ -2870,7 +2851,7 @@ class RouteConfig {
                 ...e?.data,
                 ...i.data
             };
-            const f = [ ...i.routes ?? st, ...e?.routes ?? st ];
+            const f = [ ...i.routes ?? tt, ...e?.routes ?? tt ];
             return new RouteConfig(a, n, r, o, h, c, u, l, f, i.fallback ?? e?.fallback ?? null, i.component ?? null, i.nav ?? true);
         } else d("string, function/class or object", "", t);
     }
@@ -2881,34 +2862,34 @@ class RouteConfig {
         return new RouteConfig(t.id ?? this.id, t.path ?? this.path, t.title ?? this.title, t.redirectTo ?? this.redirectTo, t.caseSensitive ?? this.caseSensitive, t.transitionPlan ?? this.transitionPlan ?? e?.transitionPlan ?? null, t.viewport ?? this.viewport, t.data ?? this.data, t.routes ?? this.routes, t.fallback ?? this.fallback, t.component ?? this.component, t.nav ?? this.nav);
     }
     getTransitionPlan(t, e) {
-        const s = this.transitionPlan ?? it;
+        const s = this.transitionPlan ?? et;
         return "function" === typeof s ? s(t, e) : s;
     }
 }
 
-const nt = {
+const st = {
     name: e.Protocol.resource.keyFor("route-configuration"),
     isConfigured(e) {
-        return t.Metadata.hasOwn(nt.name, e);
+        return t.Metadata.hasOwn(st.name, e);
     },
     configure(e, s) {
         const i = RouteConfig.N(e, s, null);
-        t.Metadata.define(nt.name, i, s);
+        t.Metadata.define(st.name, i, s);
         return s;
     },
     getConfig(e) {
-        if (!nt.isConfigured(e)) nt.configure({}, e);
-        return t.Metadata.getOwn(nt.name, e);
+        if (!st.isConfigured(e)) st.configure({}, e);
+        return t.Metadata.getOwn(st.name, e);
     }
 };
 
-function rt(t) {
+function it(t) {
     return function(e) {
-        return nt.configure(t, e);
+        return st.configure(t, e);
     };
 }
 
-const ot = "default";
+const nt = "default";
 
 class RouteDefinition {
     constructor(t, e, s) {
@@ -2918,7 +2899,7 @@ class RouteDefinition {
         this.caseSensitive = t.caseSensitive;
         this.path = o(t.path ?? e.name);
         this.redirectTo = t.redirectTo ?? null;
-        this.viewport = t.viewport ?? ot;
+        this.viewport = t.viewport ?? nt;
         this.id = h(t.id ?? this.path);
         this.data = t.data ?? {};
         this.fallback = t.fallback ?? s?.fallback ?? null;
@@ -2952,14 +2933,14 @@ class RouteDefinition {
             break;
         }
         return e.onResolve(a, (s => {
-            let r = ht.get(s);
+            let r = rt.get(s);
             const a = 4 === h.type && "function" === typeof t.getRouteConfig;
             if (null === r) {
                 const h = s.Type;
                 let c = null;
-                if (a) c = RouteConfig.N(t.getRouteConfig(i, n) ?? e.emptyObject, h, o); else c = l(t) ? nt.isConfigured(h) ? nt.getConfig(h).applyChildRouteConfig(t, o) : RouteConfig.N(t, h, o) : nt.getConfig(s.Type);
+                if (a) c = RouteConfig.N(t.getRouteConfig(i, n) ?? e.emptyObject, h, o); else c = l(t) ? st.isConfigured(h) ? st.getConfig(h).applyChildRouteConfig(t, o) : RouteConfig.N(t, h, o) : st.getConfig(s.Type);
                 r = new RouteDefinition(c, s, i);
-                ht.define(r, s);
+                rt.define(r, s);
             } else if (0 === r.config.routes.length && a) r.applyChildRouteConfig(t.getRouteConfig?.(i, n) ?? e.emptyObject);
             return r;
         }));
@@ -2973,7 +2954,7 @@ class RouteDefinition {
         this.caseSensitive = t.caseSensitive ?? this.caseSensitive;
         this.path = o(t.path ?? this.path);
         this.redirectTo = t.redirectTo ?? null;
-        this.viewport = t.viewport ?? ot;
+        this.viewport = t.viewport ?? nt;
         this.id = h(t.id ?? this.path);
         this.data = t.data ?? {};
         this.fallback = t.fallback ?? this.fallback;
@@ -2987,20 +2968,20 @@ class RouteDefinition {
     }
 }
 
-const ht = {
+const rt = {
     name: e.Protocol.resource.keyFor("route-definition"),
     isDefined(e) {
-        return t.Metadata.hasOwn(ht.name, e);
+        return t.Metadata.hasOwn(rt.name, e);
     },
     define(e, s) {
-        t.Metadata.define(ht.name, e, s);
+        t.Metadata.define(rt.name, e, s);
     },
     get(e) {
-        return ht.isDefined(e) ? t.Metadata.getOwn(ht.name, e) : null;
+        return rt.isDefined(e) ? t.Metadata.getOwn(rt.name, e) : null;
     }
 };
 
-const at = new WeakMap;
+const ot = new WeakMap;
 
 class ComponentAgent {
     constructor(t, s, i, n, r) {
@@ -3009,50 +2990,50 @@ class ComponentAgent {
         this.definition = i;
         this.routeNode = n;
         this.ctx = r;
-        this.T = r.container.get(e.ILogger).scopeTo(`ComponentAgent<${r.friendlyPath}>`);
-        this.T.trace(`constructor()`);
+        this.A = r.container.get(e.ILogger).scopeTo(`ComponentAgent<${r.friendlyPath}>`);
+        this.A.trace(`constructor()`);
         const o = s.lifecycleHooks;
         this.canLoadHooks = (o.canLoad ?? []).map((t => t.instance));
         this.loadHooks = (o.loading ?? []).map((t => t.instance));
         this.canUnloadHooks = (o.canUnload ?? []).map((t => t.instance));
         this.unloadHooks = (o.unloading ?? []).map((t => t.instance));
-        this.A = "canLoad" in t;
+        this.T = "canLoad" in t;
         this.V = "loading" in t;
         this.P = "canUnload" in t;
         this.U = "unloading" in t;
     }
     static for(t, e, i, n) {
-        let r = at.get(t);
+        let r = ot.get(t);
         if (void 0 === r) {
             const o = n.container;
             const h = RouteDefinition.resolve(t.constructor, n.definition, null);
             const a = s.Controller.$el(o, t, e.host, null);
-            at.set(t, r = new ComponentAgent(t, a, h, i, n));
+            ot.set(t, r = new ComponentAgent(t, a, h, i, n));
         }
         return r;
     }
     activate(t, e, s) {
         if (null === t) {
-            this.T.trace(`activate() - initial`);
+            this.A.trace(`activate() - initial`);
             return this.controller.activate(this.controller, e, s);
         }
-        this.T.trace(`activate()`);
+        this.A.trace(`activate()`);
         void this.controller.activate(t, e, s);
     }
     deactivate(t, e, s) {
         if (null === t) {
-            this.T.trace(`deactivate() - initial`);
+            this.A.trace(`deactivate() - initial`);
             return this.controller.deactivate(this.controller, e, s);
         }
-        this.T.trace(`deactivate()`);
+        this.A.trace(`deactivate()`);
         void this.controller.deactivate(t, e, s);
     }
     dispose() {
-        this.T.trace(`dispose()`);
+        this.A.trace(`dispose()`);
         this.controller.dispose();
     }
     canUnload(t, e, s) {
-        this.T.trace(`canUnload(next:%s) - invoking ${this.canUnloadHooks.length} hooks`, e);
+        this.A.trace(`canUnload(next:%s) - invoking ${this.canUnloadHooks.length} hooks`, e);
         s.push();
         let i = Promise.resolve();
         for (const n of this.canUnloadHooks) {
@@ -3086,7 +3067,7 @@ class ComponentAgent {
         s.pop();
     }
     canLoad(t, e, s) {
-        this.T.trace(`canLoad(next:%s) - invoking ${this.canLoadHooks.length} hooks`, e);
+        this.A.trace(`canLoad(next:%s) - invoking ${this.canLoadHooks.length} hooks`, e);
         const i = this.ctx.root;
         s.push();
         let n = Promise.resolve();
@@ -3105,7 +3086,7 @@ class ComponentAgent {
                 }));
             }))));
         }
-        if (this.A) {
+        if (this.T) {
             s.push();
             n = n.then((() => {
                 if (true !== t.guardsResult) {
@@ -3121,7 +3102,7 @@ class ComponentAgent {
         s.pop();
     }
     unloading(t, e, s) {
-        this.T.trace(`unloading(next:%s) - invoking ${this.unloadHooks.length} hooks`, e);
+        this.A.trace(`unloading(next:%s) - invoking ${this.unloadHooks.length} hooks`, e);
         s.push();
         for (const i of this.unloadHooks) t.run((() => {
             s.push();
@@ -3138,7 +3119,7 @@ class ComponentAgent {
         s.pop();
     }
     loading(t, e, s) {
-        this.T.trace(`loading(next:%s) - invoking ${this.loadHooks.length} hooks`, e);
+        this.A.trace(`loading(next:%s) - invoking ${this.loadHooks.length} hooks`, e);
         s.push();
         for (const i of this.loadHooks) t.run((() => {
             s.push();
@@ -3159,15 +3140,15 @@ class ComponentAgent {
     }
 }
 
-const ct = e.DI.createInterface("IRouteContext");
+const ht = e.DI.createInterface("IRouteContext");
 
-const ut = Object.freeze([ "string", "object", "function" ]);
+const at = Object.freeze([ "string", "object", "function" ]);
 
-function lt(t) {
+function ct(t) {
     if (null == t) return false;
     const e = t.params;
     const s = t.component;
-    return "object" === typeof e && null !== e && null != s && ut.includes(typeof s) && !(s instanceof Promise);
+    return "object" === typeof e && null !== e && null != s && at.includes(typeof s) && !(s instanceof Promise);
 }
 
 class RouteContext {
@@ -3199,7 +3180,7 @@ class RouteContext {
         this.moduleLoader = h.get(e.IModuleLoader);
         const c = this.container = h.createChild();
         c.registerResolver(s.IController, this.hostControllerProvider = new e.InstanceProvider, true);
-        c.registerResolver(ct, new e.InstanceProvider("IRouteContext", this));
+        c.registerResolver(ht, new e.InstanceProvider("IRouteContext", this));
         c.register(o);
         c.register(...r.dependencies);
         this.recognizer = new i.RouteRecognizer;
@@ -3284,13 +3265,13 @@ class RouteContext {
     }
     static setRoot(t) {
         const i = t.get(e.ILogger).scopeTo("RouteContext");
-        if (!t.has(s.IAppRoot, true)) pt(new Error(`The provided container has no registered IAppRoot. RouteContext.setRoot can only be used after Aurelia.app was called, on a container that is within that app's component tree.`), i);
-        if (t.has(ct, true)) pt(new Error(`A root RouteContext is already registered. A possible cause is the RouterConfiguration being registered more than once in the same container tree. If you have a multi-rooted app, make sure you register RouterConfiguration only in the "forked" containers and not in the common root.`), i);
+        if (!t.has(s.IAppRoot, true)) lt(new Error(`The provided container has no registered IAppRoot. RouteContext.setRoot can only be used after Aurelia.app was called, on a container that is within that app's component tree.`), i);
+        if (t.has(ht, true)) lt(new Error(`A root RouteContext is already registered. A possible cause is the RouterConfiguration being registered more than once in the same container tree. If you have a multi-rooted app, make sure you register RouterConfiguration only in the "forked" containers and not in the common root.`), i);
         const {controller: n} = t.get(s.IAppRoot);
-        if (void 0 === n) pt(new Error(`The provided IAppRoot does not (yet) have a controller. A possible cause is calling this API manually before Aurelia.start() is called`), i);
-        const r = t.get(Q);
+        if (void 0 === n) lt(new Error(`The provided IAppRoot does not (yet) have a controller. A possible cause is calling this API manually before Aurelia.start() is called`), i);
+        const r = t.get(J);
         const o = r.getRouteContext(null, n.definition, n.viewModel, n.container, null);
-        t.register(e.Registration.instance(ct, o));
+        t.register(e.Registration.instance(ht, o));
         o.node = r.routeTree.root;
     }
     static resolve(t, i) {
@@ -3300,7 +3281,7 @@ class RouteContext {
             r.trace(`resolve(context:%s) - returning root RouteContext`, i);
             return t;
         }
-        if (ft(i)) {
+        if (ut(i)) {
             r.trace(`resolve(context:%s) - returning provided RouteContext`, i);
             return i;
         }
@@ -3309,7 +3290,7 @@ class RouteContext {
                 searchParents: true
             });
             r.trace(`resolve(context:Node(nodeName:'${i.nodeName}'),controller:'${t.definition.name}') - resolving RouteContext from controller's RenderContext`);
-            return t.container.get(ct);
+            return t.container.get(ht);
         } catch (t) {
             r.error(`Failed to resolve RouteContext from Node(nodeName:'${i.nodeName}')`, t);
             throw t;
@@ -3317,14 +3298,14 @@ class RouteContext {
         if (s.isCustomElementViewModel(i)) {
             const t = i.$controller;
             r.trace(`resolve(context:CustomElementViewModel(name:'${t.definition.name}')) - resolving RouteContext from controller's RenderContext`);
-            return t.container.get(ct);
+            return t.container.get(ht);
         }
         if (s.isCustomElementController(i)) {
             const t = i;
             r.trace(`resolve(context:CustomElementController(name:'${t.definition.name}')) - resolving RouteContext from controller's RenderContext`);
-            return t.container.get(ct);
+            return t.container.get(ht);
         }
-        pt(new Error(`Invalid context type: ${Object.prototype.toString.call(i)}`), r);
+        lt(new Error(`Invalid context type: ${Object.prototype.toString.call(i)}`), r);
     }
     dispose() {
         this.container.dispose();
@@ -3335,11 +3316,11 @@ class RouteContext {
         if (void 0 === e) throw new Error(`Failed to resolve ${t} at:\n${this.printTree()}`);
         return e;
     }
-    getAvailableViewportAgents(t) {
-        return this.childViewportAgents.filter((e => e.isAvailable(t)));
+    getAvailableViewportAgents() {
+        return this.childViewportAgents.filter((t => t.isAvailable()));
     }
-    getFallbackViewportAgent(t, e) {
-        return this.childViewportAgents.find((s => s.isAvailable(t) && s.viewport.name === e && s.viewport.fallback.length > 0)) ?? null;
+    getFallbackViewportAgent(t) {
+        return this.childViewportAgents.find((e => e.isAvailable() && e.viewport.name === t && e.viewport.fallback.length > 0)) ?? null;
     }
     createComponentAgent(t, e) {
         this.logger.trace(`createComponentAgent(routeNode:%s)`, e);
@@ -3403,13 +3384,13 @@ class RouteContext {
         return this.moduleLoader.load(t, (s => {
             const i = s.raw;
             if ("function" === typeof i) {
-                const t = e.Protocol.resource.getAll(i).find(dt);
+                const t = e.Protocol.resource.getAll(i).find(ft);
                 if (void 0 !== t) return t;
             }
             let n;
             let r;
             for (const t of s.items) if (t.isConstructable) {
-                const e = t.definitions.find(dt);
+                const e = t.definitions.find(ft);
                 if (void 0 !== e) if ("default" === t.key) n = e; else if (void 0 === r) r = e;
             }
             if (void 0 === n) {
@@ -3420,7 +3401,7 @@ class RouteContext {
         }));
     }
     generateViewportInstruction(t) {
-        if (!lt(t)) return null;
+        if (!ct(t)) return null;
         const e = t.component;
         let s;
         let n = false;
@@ -3523,16 +3504,16 @@ class RouteContext {
     }
 }
 
-function ft(t) {
+function ut(t) {
     return t instanceof RouteContext;
 }
 
-function pt(t, e) {
+function lt(t, e) {
     e.error(t);
     throw t;
 }
 
-function dt(t) {
+function ft(t) {
     return s.CustomElement.isType(t.Type);
 }
 
@@ -3601,7 +3582,7 @@ exports.ViewportCustomElement = class ViewportCustomElement {
     constructor(t, e) {
         this.logger = t;
         this.ctx = e;
-        this.name = ot;
+        this.name = nt;
         this.usedBy = "";
         this.default = "";
         this.fallback = "";
@@ -3632,7 +3613,7 @@ exports.ViewportCustomElement = class ViewportCustomElement {
     }
     toString() {
         const t = [];
-        for (const e of gt) {
+        for (const e of pt) {
             const s = this[e];
             switch (typeof s) {
               case "string":
@@ -3663,9 +3644,9 @@ x([ s.bindable ], exports.ViewportCustomElement.prototype, "stateful", void 0);
 
 exports.ViewportCustomElement = x([ s.customElement({
     name: "au-viewport"
-}), $(0, e.ILogger), $(1, ct) ], exports.ViewportCustomElement);
+}), $(0, e.ILogger), $(1, ht) ], exports.ViewportCustomElement);
 
-const gt = [ "name", "usedBy", "default", "fallback", "stateful" ];
+const pt = [ "name", "usedBy", "default", "fallback", "stateful" ];
 
 exports.LoadCustomAttribute = class LoadCustomAttribute {
     constructor(t, e, s, i, n, r) {
@@ -3762,7 +3743,7 @@ x([ s.bindable({
     callback: "valueChanged"
 }) ], exports.LoadCustomAttribute.prototype, "context", void 0);
 
-exports.LoadCustomAttribute = x([ s.customAttribute("load"), $(0, s.IEventTarget), $(1, s.INode), $(2, Q), $(3, R), $(4, ct), $(5, k) ], exports.LoadCustomAttribute);
+exports.LoadCustomAttribute = x([ s.customAttribute("load"), $(0, s.IEventTarget), $(1, s.INode), $(2, J), $(3, R), $(4, ht), $(5, k) ], exports.LoadCustomAttribute);
 
 exports.HrefCustomAttribute = class HrefCustomAttribute {
     constructor(t, e, s, i, n) {
@@ -3825,41 +3806,41 @@ x([ s.bindable({
 exports.HrefCustomAttribute = x([ s.customAttribute({
     name: "href",
     noMultiBindings: true
-}), $(0, s.IEventTarget), $(1, s.INode), $(2, Q), $(3, ct), $(4, s.IWindow) ], exports.HrefCustomAttribute);
+}), $(0, s.IEventTarget), $(1, s.INode), $(2, J), $(3, ht), $(4, s.IWindow) ], exports.HrefCustomAttribute);
 
-const wt = Q;
+const dt = J;
 
-const vt = [ wt ];
+const gt = [ dt ];
 
-const mt = exports.ViewportCustomElement;
+const wt = exports.ViewportCustomElement;
 
-const xt = exports.LoadCustomAttribute;
+const vt = exports.LoadCustomAttribute;
 
-const $t = exports.HrefCustomAttribute;
+const mt = exports.HrefCustomAttribute;
 
-const Et = [ exports.ViewportCustomElement, exports.LoadCustomAttribute, exports.HrefCustomAttribute ];
+const xt = [ exports.ViewportCustomElement, exports.LoadCustomAttribute, exports.HrefCustomAttribute ];
 
-function Rt(i, n) {
+function $t(i, n) {
     let r = null;
     if (t.isObject(n)) r = n.basePath ?? null; else n = {};
-    return i.register(e.Registration.cachedCallback(b, ((t, e, i) => {
+    return i.register(e.Registration.cachedCallback(y, ((t, e, i) => {
         const n = t.get(s.IWindow);
         const o = new URL(n.document.baseURI);
         o.pathname = C(r ?? o.pathname);
         return o;
-    })), s.AppTask.hydrated(Q, (t => t.I(n))), s.AppTask.hydrated(e.IContainer, RouteContext.setRoot), s.AppTask.activated(Q, (t => t.start(true))), s.AppTask.deactivated(Q, (t => {
+    })), s.AppTask.hydrated(J, (t => t.I(n))), s.AppTask.hydrated(e.IContainer, RouteContext.setRoot), s.AppTask.activated(J, (t => t.start(true))), s.AppTask.deactivated(J, (t => {
         t.stop();
-    })), ...vt, ...Et);
+    })), ...gt, ...xt);
 }
 
-const yt = {
+const Et = {
     register(t) {
-        return Rt(t);
+        return $t(t);
     },
     customize(t) {
         return {
             register(e) {
-                return Rt(e, t);
+                return $t(e, t);
             }
         };
     }
@@ -3880,7 +3861,7 @@ class ScrollState {
     }
 }
 
-function bt(t) {
+function Rt(t) {
     t.restore();
 }
 
@@ -3898,12 +3879,12 @@ class HostElementState {
         }
     }
     restore() {
-        this.scrollStates.forEach(bt);
+        this.scrollStates.forEach(Rt);
         this.scrollStates = null;
     }
 }
 
-const kt = e.DI.createInterface("IStateManager", (t => t.singleton(ScrollStateManager)));
+const bt = e.DI.createInterface("IStateManager", (t => t.singleton(ScrollStateManager)));
 
 class ScrollStateManager {
     constructor() {
@@ -3933,23 +3914,23 @@ exports.ComponentExpression = ComponentExpression;
 
 exports.CompositeSegmentExpression = CompositeSegmentExpression;
 
-exports.DefaultComponents = vt;
+exports.DefaultComponents = gt;
 
-exports.DefaultResources = Et;
+exports.DefaultResources = xt;
 
-exports.HrefCustomAttributeRegistration = $t;
+exports.HrefCustomAttributeRegistration = mt;
 
 exports.ILocationManager = k;
 
-exports.IRouteContext = ct;
+exports.IRouteContext = ht;
 
-exports.IRouter = Q;
+exports.IRouter = J;
 
 exports.IRouterEvents = R;
 
-exports.IStateManager = kt;
+exports.IStateManager = bt;
 
-exports.LoadCustomAttributeRegistration = xt;
+exports.LoadCustomAttributeRegistration = vt;
 
 exports.LocationChangeEvent = LocationChangeEvent;
 
@@ -3967,7 +3948,7 @@ exports.ParameterExpression = ParameterExpression;
 
 exports.ParameterListExpression = ParameterListExpression;
 
-exports.Route = nt;
+exports.Route = st;
 
 exports.RouteConfig = RouteConfig;
 
@@ -3981,11 +3962,11 @@ exports.RouteNode = RouteNode;
 
 exports.RouteTree = RouteTree;
 
-exports.RouterConfiguration = yt;
+exports.RouterConfiguration = Et;
 
 exports.RouterOptions = RouterOptions;
 
-exports.RouterRegistration = wt;
+exports.RouterRegistration = dt;
 
 exports.ScopedSegmentExpression = ScopedSegmentExpression;
 
@@ -3997,13 +3978,13 @@ exports.Transition = Transition;
 
 exports.ViewportAgent = ViewportAgent;
 
-exports.ViewportCustomElementRegistration = mt;
+exports.ViewportCustomElementRegistration = wt;
 
 exports.ViewportExpression = ViewportExpression;
 
-exports.isManagedState = J;
+exports.isManagedState = _;
 
-exports.route = rt;
+exports.route = it;
 
-exports.toManagedState = Z;
+exports.toManagedState = G;
 //# sourceMappingURL=index.cjs.map
