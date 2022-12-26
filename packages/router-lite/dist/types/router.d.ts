@@ -278,8 +278,6 @@ export declare class Router {
      */
     private enqueue;
     private run;
-    private applyHistoryState;
-    private getTitle;
     updateTitle(tr?: Transition): string;
     private cancelNavigation;
     private runNextTransition;

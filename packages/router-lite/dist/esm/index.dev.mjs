@@ -2026,6 +2026,7 @@ function createAndAppendNodes(log, node, vi) {
                         : path.slice(0, -(residue.length + 1));
                     for (let i = 0; i < collapse; ++i) {
                         const child = vi.children[0];
+                        vi.viewport = child.viewport;
                         if (residue?.startsWith(child.component.value) ?? false)
                             break;
                         vi.children = child.children;
@@ -2593,38 +2594,41 @@ let Router = class Router {
                 this.navigated = true;
                 this.instructions = tr.finalInstructions = tr.routeTree.finalizeInstructions();
                 this._isNavigating = false;
-                this.applyHistoryState(tr);
+                const newUrl = tr.finalInstructions.toUrl(this.options.useUrlFragmentHash);
+                switch (tr.options.getHistoryStrategy(this.instructions)) {
+                    case 'none':
+                        break;
+                    case 'push':
+                        this.locationMgr.pushState(toManagedState(tr.options.state, tr.id), this.updateTitle(tr), newUrl);
+                        break;
+                    case 'replace':
+                        this.locationMgr.replaceState(toManagedState(tr.options.state, tr.id), this.updateTitle(tr), newUrl);
+                        break;
+                }
                 this.events.publish(new NavigationEndEvent(tr.id, tr.instructions, this.instructions));
                 tr.resolve(true);
                 this.runNextTransition();
             }).start();
         });
     }
-    applyHistoryState(tr) {
-        const newUrl = tr.finalInstructions.toUrl(this.options.useUrlFragmentHash);
-        switch (tr.options.getHistoryStrategy(this.instructions)) {
-            case 'none':
-                break;
-            case 'push':
-                this.locationMgr.pushState(toManagedState(tr.options.state, tr.id), this.updateTitle(tr), newUrl);
-                break;
-            case 'replace':
-                this.locationMgr.replaceState(toManagedState(tr.options.state, tr.id), this.updateTitle(tr), newUrl);
-                break;
-        }
-    }
-    getTitle(tr) {
-        switch (typeof tr.options.title) {
-            case 'function':
-                return tr.options.title.call(void 0, tr.routeTree.root) ?? '';
-            case 'string':
-                return tr.options.title;
-            default:
-                return tr.routeTree.root.getTitle(tr.options.titleSeparator) ?? '';
-        }
-    }
     updateTitle(tr = this.currentTr) {
-        const title = this._hasTitleBuilder ? (this.options.buildTitle(tr) ?? '') : this.getTitle(tr);
+        let title;
+        if (this._hasTitleBuilder) {
+            title = this.options.buildTitle(tr) ?? '';
+        }
+        else {
+            switch (typeof tr.options.title) {
+                case 'function':
+                    title = tr.options.title.call(void 0, tr.routeTree.root) ?? '';
+                    break;
+                case 'string':
+                    title = tr.options.title;
+                    break;
+                default:
+                    title = tr.routeTree.root.getTitle(tr.options.titleSeparator) ?? '';
+                    break;
+            }
+        }
         if (title.length > 0) {
             this.p.document.title = title;
         }

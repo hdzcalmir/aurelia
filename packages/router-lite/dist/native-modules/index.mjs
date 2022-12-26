@@ -1917,6 +1917,7 @@ function kt(t, e, i) {
                 i.component.value = u ? h : h.slice(0, -(c.length + 1));
                 for (let t = 0; t < o; ++t) {
                     const t = i.children[0];
+                    i.viewport = t.viewport;
                     if (c?.startsWith(t.component.value) ?? false) break;
                     i.children = t.children;
                 }
@@ -2447,42 +2448,40 @@ let Ut = class Router {
                 this.navigated = true;
                 this.instructions = t.finalInstructions = t.routeTree.finalizeInstructions();
                 this.C = false;
-                this.applyHistoryState(t);
+                const e = t.finalInstructions.toUrl(this.options.useUrlFragmentHash);
+                switch (t.options.getHistoryStrategy(this.instructions)) {
+                  case "none":
+                    break;
+
+                  case "push":
+                    this.locationMgr.pushState(Tt(t.options.state, t.id), this.updateTitle(t), e);
+                    break;
+
+                  case "replace":
+                    this.locationMgr.replaceState(Tt(t.options.state, t.id), this.updateTitle(t), e);
+                    break;
+                }
                 this.events.publish(new NavigationEndEvent(t.id, t.instructions, this.instructions));
                 t.resolve(true);
                 this.runNextTransition();
             })).start();
         }));
     }
-    applyHistoryState(t) {
-        const e = t.finalInstructions.toUrl(this.options.useUrlFragmentHash);
-        switch (t.options.getHistoryStrategy(this.instructions)) {
-          case "none":
-            break;
-
-          case "push":
-            this.locationMgr.pushState(Tt(t.options.state, t.id), this.updateTitle(t), e);
-            break;
-
-          case "replace":
-            this.locationMgr.replaceState(Tt(t.options.state, t.id), this.updateTitle(t), e);
-            break;
-        }
-    }
-    getTitle(t) {
-        switch (typeof t.options.title) {
+    updateTitle(t = this.currentTr) {
+        let e;
+        if (this.R) e = this.options.buildTitle(t) ?? ""; else switch (typeof t.options.title) {
           case "function":
-            return t.options.title.call(void 0, t.routeTree.root) ?? "";
+            e = t.options.title.call(void 0, t.routeTree.root) ?? "";
+            break;
 
           case "string":
-            return t.options.title;
+            e = t.options.title;
+            break;
 
           default:
-            return t.routeTree.root.getTitle(t.options.titleSeparator) ?? "";
+            e = t.routeTree.root.getTitle(t.options.titleSeparator) ?? "";
+            break;
         }
-    }
-    updateTitle(t = this.currentTr) {
-        const e = this.R ? this.options.buildTitle(t) ?? "" : this.getTitle(t);
         if (e.length > 0) this.p.document.title = e;
         return this.p.document.title;
     }
