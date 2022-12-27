@@ -1098,7 +1098,7 @@ class ViewportAgent {
         const e = this.viewport;
         const s = t.viewportName;
         const i = e.name;
-        if (s !== nt && i !== nt && i !== s) {
+        if (s !== nt && i !== s) {
             this.logger.trace(`handles(req:%s) -> false (viewport names don't match '%s')`, t, i);
             return false;
         }
@@ -1923,8 +1923,8 @@ function q(t, s, i) {
                 i.component.value = l ? h : h.slice(0, -(u.length + 1));
                 for (let t = 0; t < o; ++t) {
                     const t = i.children[0];
-                    i.viewport = t.viewport;
                     if (u?.startsWith(t.component.value) ?? false) break;
+                    i.viewport = t.viewport;
                     i.children = t.children;
                 }
                 t.trace("createNode after adjustment vi:%s", i);

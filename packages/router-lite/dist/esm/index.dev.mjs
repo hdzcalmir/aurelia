@@ -1130,7 +1130,7 @@ class ViewportAgent {
         const $vp = this.viewport;
         const reqVp = req.viewportName;
         const vp = $vp.name;
-        if (reqVp !== defaultViewportName && vp !== defaultViewportName && vp !== reqVp) {
+        if (reqVp !== defaultViewportName && vp !== reqVp) {
             this.logger.trace(`handles(req:%s) -> false (viewport names don't match '%s')`, req, vp);
             return false;
         }
@@ -2026,9 +2026,9 @@ function createAndAppendNodes(log, node, vi) {
                         : path.slice(0, -(residue.length + 1));
                     for (let i = 0; i < collapse; ++i) {
                         const child = vi.children[0];
-                        vi.viewport = child.viewport;
                         if (residue?.startsWith(child.component.value) ?? false)
                             break;
+                        vi.viewport = child.viewport;
                         vi.children = child.children;
                     }
                     log.trace('createNode after adjustment vi:%s', vi);
