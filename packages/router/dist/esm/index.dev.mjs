@@ -1876,19 +1876,19 @@ class ViewportContent extends EndpointContent {
                 return hook(instance, merged, this.instruction, this.navigation);
             }));
             if (hooks.length !== 0) {
-                if (instance.loading != null) {
+                if (typeof instance.loading === 'function') {
                     hooks.push(() => instance.loading(merged, this.instruction, this.navigation));
                 }
-                if (instance.load != null) {
+                if (typeof instance.load === 'function') {
                     console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                     hooks.push(() => instance.load(merged, this.instruction, this.navigation));
                 }
                 return Runner.run(null, ...hooks);
             }
-            if (instance.loading != null) {
+            if (typeof instance.loading === 'function') {
                 return instance.loading(merged, this.instruction, this.navigation);
             }
-            if (instance.load != null) {
+            if (typeof instance.load === 'function') {
                 console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                 return instance.load(merged, this.instruction, this.navigation);
             }
@@ -1913,19 +1913,19 @@ class ViewportContent extends EndpointContent {
             return hook(instance, this.instruction, navigation);
         }));
         if (hooks.length !== 0) {
-            if (instance.unloading != null) {
+            if (typeof instance.unloading === 'function') {
                 hooks.push(() => instance.unloading(this.instruction, navigation));
             }
-            if (instance.unload != null) {
+            if (typeof instance.unload === 'function') {
                 console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
                 hooks.push(() => instance.unload(this.instruction, navigation));
             }
             return Runner.run(null, ...hooks);
         }
-        if (instance.unloading != null) {
+        if (typeof instance.unloading === 'function') {
             return instance.unloading(this.instruction, navigation);
         }
-        if (instance.unload != null) {
+        if (typeof instance.unload === 'function') {
             console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
             return instance.unload(this.instruction, navigation);
         }

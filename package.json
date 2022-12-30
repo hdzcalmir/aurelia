@@ -1,7 +1,7 @@
 {
   "name": "@aurelia/monorepo",
   "private": true,
-  "version": "2.1.0-dev.202212271044",
+  "version": "2.1.0-dev.202212300244",
   "workspaces": [
     "packages/__tests__",
     "packages/__e2e__/hmr-webpack",

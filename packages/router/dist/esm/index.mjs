@@ -1542,15 +1542,15 @@ class ViewportContent extends EndpointContent {
                 return i(t, n, this.instruction, this.navigation);
             })));
             if (0 !== e.length) {
-                if (null != t.loading) e.push((() => t.loading(n, this.instruction, this.navigation)));
-                if (null != t.load) {
+                if ("function" === typeof t.loading) e.push((() => t.loading(n, this.instruction, this.navigation)));
+                if ("function" === typeof t.load) {
                     console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                     e.push((() => t.load(n, this.instruction, this.navigation)));
                 }
                 return Runner.run(null, ...e);
             }
-            if (null != t.loading) return t.loading(n, this.instruction, this.navigation);
-            if (null != t.load) {
+            if ("function" === typeof t.loading) return t.loading(n, this.instruction, this.navigation);
+            if ("function" === typeof t.load) {
                 console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                 return t.load(n, this.instruction, this.navigation);
             }
@@ -1571,15 +1571,15 @@ class ViewportContent extends EndpointContent {
             return s(i, this.instruction, t);
         })));
         if (0 !== s.length) {
-            if (null != i.unloading) s.push((() => i.unloading(this.instruction, t)));
-            if (null != i.unload) {
+            if ("function" === typeof i.unloading) s.push((() => i.unloading(this.instruction, t)));
+            if ("function" === typeof i.unload) {
                 console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
                 s.push((() => i.unload(this.instruction, t)));
             }
             return Runner.run(null, ...s);
         }
-        if (null != i.unloading) return i.unloading(this.instruction, t);
-        if (null != i.unload) {
+        if ("function" === typeof i.unloading) return i.unloading(this.instruction, t);
+        if ("function" === typeof i.unload) {
             console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
             return i.unload(this.instruction, t);
         }
