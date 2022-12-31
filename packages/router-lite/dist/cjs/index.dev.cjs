@@ -1379,9 +1379,8 @@ class ViewportAgent {
                         return;
                     case 'replace': {
                         const controller = this.hostController;
-                        const deactivateFlags = this.viewport.stateful ? 0 : 4;
                         tr.run(() => {
-                            return this.curCA.deactivate(initiator, controller, deactivateFlags);
+                            return this.curCA.deactivate(initiator, controller, 4);
                         }, () => {
                             b.pop();
                         });
@@ -1485,20 +1484,18 @@ class ViewportAgent {
                 const controller = this.hostController;
                 const curCA = this.curCA;
                 const nextCA = this.nextCA;
-                const deactivateFlags = this.viewport.stateful ? 0 : 4;
-                const activateFlags = 0;
                 b.push();
                 Batch.start(b1 => {
                     tr.run(() => {
                         b1.push();
-                        return curCA.deactivate(null, controller, deactivateFlags);
+                        return curCA.deactivate(null, controller, 4);
                     }, () => {
                         b1.pop();
                     });
                 }).continueWith(b1 => {
                     tr.run(() => {
                         b1.push();
-                        return nextCA.activate(null, controller, activateFlags);
+                        return nextCA.activate(null, controller, 0);
                     }, () => {
                         b1.pop();
                     });
@@ -1704,13 +1701,8 @@ class ViewportAgent {
         return `VPA(state:${this.$state},plan:'${this.$plan}',n:${this.nextNode},c:${this.currNode},viewport:${this.viewport})`;
     }
     dispose() {
-        if (this.viewport.stateful) {
-            this.logger.trace(`dispose() - not disposing stateful viewport at %s`, this);
-        }
-        else {
-            this.logger.trace(`dispose() - disposing %s`, this);
-            this.curCA?.dispose();
-        }
+        this.logger.trace(`dispose() - disposing %s`, this);
+        this.curCA?.dispose();
     }
     unexpectedState(label) {
         throw new Error(`Unexpected state at ${label} of ${this}`);
@@ -3914,7 +3906,6 @@ exports.ViewportCustomElement = class ViewportCustomElement {
         this.usedBy = '';
         this.default = '';
         this.fallback = '';
-        this.stateful = false;
         this.agent = (void 0);
         this.controller = (void 0);
         this.logger = logger.scopeTo(`au-viewport<${ctx.friendlyPath}>`);
@@ -3974,9 +3965,6 @@ __decorate([
 __decorate([
     runtimeHtml.bindable
 ], exports.ViewportCustomElement.prototype, "fallback", void 0);
-__decorate([
-    runtimeHtml.bindable
-], exports.ViewportCustomElement.prototype, "stateful", void 0);
 exports.ViewportCustomElement = __decorate([
     runtimeHtml.customElement({ name: 'au-viewport' }),
     __param(0, kernel.ILogger),
@@ -3987,7 +3975,6 @@ const props = [
     'usedBy',
     'default',
     'fallback',
-    'stateful',
 ];
 
 exports.LoadCustomAttribute = class LoadCustomAttribute {

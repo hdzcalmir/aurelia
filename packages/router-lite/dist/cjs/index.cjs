@@ -1348,8 +1348,7 @@ class ViewportAgent {
               case "replace":
                 {
                     const i = this.hostController;
-                    const n = this.viewport.stateful ? 0 : 4;
-                    e.run((() => this.curCA.deactivate(t, i, n)), (() => {
+                    e.run((() => this.curCA.deactivate(t, i, 4)), (() => {
                         s.pop();
                     }));
                 }
@@ -1457,20 +1456,18 @@ class ViewportAgent {
                 const s = this.hostController;
                 const i = this.curCA;
                 const n = this.nextCA;
-                const r = this.viewport.stateful ? 0 : 4;
-                const o = 0;
                 e.push();
                 Batch.start((e => {
                     t.run((() => {
                         e.push();
-                        return i.deactivate(null, s, r);
+                        return i.deactivate(null, s, 4);
                     }), (() => {
                         e.pop();
                     }));
                 })).continueWith((e => {
                     t.run((() => {
                         e.push();
-                        return n.activate(null, s, o);
+                        return n.activate(null, s, 0);
                     }), (() => {
                         e.pop();
                     }));
@@ -1663,10 +1660,8 @@ class ViewportAgent {
         return `VPA(state:${this.$state},plan:'${this.$plan}',n:${this.nextNode},c:${this.currNode},viewport:${this.viewport})`;
     }
     dispose() {
-        if (this.viewport.stateful) this.logger.trace(`dispose() - not disposing stateful viewport at %s`, this); else {
-            this.logger.trace(`dispose() - disposing %s`, this);
-            this.curCA?.dispose();
-        }
+        this.logger.trace(`dispose() - disposing %s`, this);
+        this.curCA?.dispose();
     }
     unexpectedState(t) {
         throw new Error(`Unexpected state at ${t} of ${this}`);
@@ -3585,7 +3580,6 @@ exports.ViewportCustomElement = class ViewportCustomElement {
         this.usedBy = "";
         this.default = "";
         this.fallback = "";
-        this.stateful = false;
         this.agent = void 0;
         this.controller = void 0;
         this.logger = t.scopeTo(`au-viewport<${e.friendlyPath}>`);
@@ -3639,13 +3633,11 @@ x([ s.bindable ], exports.ViewportCustomElement.prototype, "default", void 0);
 
 x([ s.bindable ], exports.ViewportCustomElement.prototype, "fallback", void 0);
 
-x([ s.bindable ], exports.ViewportCustomElement.prototype, "stateful", void 0);
-
 exports.ViewportCustomElement = x([ s.customElement({
     name: "au-viewport"
 }), $(0, e.ILogger), $(1, ht) ], exports.ViewportCustomElement);
 
-const pt = [ "name", "usedBy", "default", "fallback", "stateful" ];
+const pt = [ "name", "usedBy", "default", "fallback" ];
 
 exports.LoadCustomAttribute = class LoadCustomAttribute {
     constructor(t, e, s, i, n, r) {

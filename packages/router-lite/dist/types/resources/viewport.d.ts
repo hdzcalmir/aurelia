@@ -6,7 +6,6 @@ export interface IViewport {
     readonly usedBy: string;
     readonly default: string;
     readonly fallback: string;
-    readonly stateful: boolean;
 }
 export declare class ViewportCustomElement implements ICustomElementViewModel, IViewport {
     private readonly logger;
@@ -15,7 +14,6 @@ export declare class ViewportCustomElement implements ICustomElementViewModel, I
     usedBy: string;
     default: string;
     fallback: string;
-    stateful: boolean;
     private agent;
     private controller;
     constructor(logger: ILogger, ctx: IRouteContext);
