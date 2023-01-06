@@ -1242,16 +1242,14 @@ class ViewportAgent {
                     this.logger.trace(`canLoad(next:%s) - plan set to '%s', compiling residue`, next, this.$plan);
                     b1.push();
                     const ctx = next.context;
-                    void kernel.onResolve(ctx.resolved, () => kernel.onResolve(kernel.resolveAll(...next.residue.splice(0).map(vi => {
-                        return createAndAppendNodes(this.logger, next, vi);
-                    }), ...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
+                    void kernel.onResolve(ctx.resolved, () => kernel.onResolve(kernel.onResolve(kernel.resolveAll(...next.residue.splice(0).map(vi => createAndAppendNodes(this.logger, next, vi))), () => kernel.resolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
                         const vp = vpa.viewport;
                         const component = vp.default;
                         if (component === null)
                             return acc;
                         acc.push(createAndAppendNodes(this.logger, next, ViewportInstruction.create({ component, viewport: vp.name, })));
                         return acc;
-                    }, [])), () => { b1.pop(); }));
+                    }, []))), () => { b1.pop(); }));
                     return;
                 }
                 case 'replace':
@@ -4149,10 +4147,15 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
             || !this.isEnabled) {
             return;
         }
-        const href = this.el.getAttribute('href');
+        let href = this.el.getAttribute('href');
         if (href !== null) {
             e.preventDefault();
-            void this.router.load(href, { context: this.ctx });
+            let context = this.ctx;
+            while (href.startsWith('../') && context.parent !== null) {
+                href = href.slice(3);
+                context = context.parent;
+            }
+            void this.router.load(href, { context });
         }
     }
 };

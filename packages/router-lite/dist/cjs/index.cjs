@@ -1204,7 +1204,7 @@ class ViewportAgent {
                     this.logger.trace(`canLoad(next:%s) - plan set to '%s', compiling residue`, s, this.$plan);
                     t.push();
                     const i = s.context;
-                    void e.onResolve(i.resolved, (() => e.onResolve(e.resolveAll(...s.residue.splice(0).map((t => q(this.logger, s, t))), ...i.getAvailableViewportAgents().reduce(((t, e) => {
+                    void e.onResolve(i.resolved, (() => e.onResolve(e.onResolve(e.resolveAll(...s.residue.splice(0).map((t => q(this.logger, s, t)))), (() => e.resolveAll(...i.getAvailableViewportAgents().reduce(((t, e) => {
                         const i = e.viewport;
                         const n = i.default;
                         if (null === n) return t;
@@ -1213,7 +1213,7 @@ class ViewportAgent {
                             viewport: i.name
                         })));
                         return t;
-                    }), [])), (() => {
+                    }), [])))), (() => {
                         t.pop();
                     }))));
                     return;
@@ -3780,11 +3780,16 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
     }
     _(t) {
         if (t.altKey || t.ctrlKey || t.shiftKey || t.metaKey || 0 !== t.button || this.isExternal || !this.isEnabled) return;
-        const e = this.el.getAttribute("href");
+        let e = this.el.getAttribute("href");
         if (null !== e) {
             t.preventDefault();
+            let s = this.ctx;
+            while (e.startsWith("../") && null !== s.parent) {
+                e = e.slice(3);
+                s = s.parent;
+            }
             void this.router.load(e, {
-                context: this.ctx
+                context: s
             });
         }
     }

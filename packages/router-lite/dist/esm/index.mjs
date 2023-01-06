@@ -1198,7 +1198,7 @@ class ViewportAgent {
                     this.logger.trace(`canLoad(next:%s) - plan set to '%s', compiling residue`, e, this.$plan);
                     t.push();
                     const i = e.context;
-                    void o(i.resolved, (() => o(h(...e.residue.splice(0).map((t => kt(this.logger, e, t))), ...i.getAvailableViewportAgents().reduce(((t, i) => {
+                    void o(i.resolved, (() => o(o(h(...e.residue.splice(0).map((t => kt(this.logger, e, t)))), (() => h(...i.getAvailableViewportAgents().reduce(((t, i) => {
                         const s = i.viewport;
                         const n = s.default;
                         if (null === n) return t;
@@ -1207,7 +1207,7 @@ class ViewportAgent {
                             viewport: s.name
                         })));
                         return t;
-                    }), [])), (() => {
+                    }), [])))), (() => {
                         t.pop();
                     }))));
                     return;
@@ -3774,11 +3774,16 @@ let ee = class HrefCustomAttribute {
     }
     G(t) {
         if (t.altKey || t.ctrlKey || t.shiftKey || t.metaKey || 0 !== t.button || this.isExternal || !this.isEnabled) return;
-        const e = this.el.getAttribute("href");
+        let e = this.el.getAttribute("href");
         if (null !== e) {
             t.preventDefault();
+            let i = this.ctx;
+            while (e.startsWith("../") && null !== i.parent) {
+                e = e.slice(3);
+                i = i.parent;
+            }
             void this.router.load(e, {
-                context: this.ctx
+                context: i
             });
         }
     }
