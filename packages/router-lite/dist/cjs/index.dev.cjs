@@ -2426,10 +2426,18 @@ exports.Router = class Router {
     createViewportInstructions(instructionOrInstructions, options) {
         if (instructionOrInstructions instanceof ViewportInstructionTree)
             return instructionOrInstructions;
+        let context = (options?.context ?? null);
         if (typeof instructionOrInstructions === 'string') {
             instructionOrInstructions = this.locationMgr.removeBaseHref(instructionOrInstructions);
+            if (instructionOrInstructions.startsWith('../') && context !== null) {
+                context = this.resolveContext(context);
+                while (instructionOrInstructions.startsWith('../') && (context?.parent ?? null) !== null) {
+                    instructionOrInstructions = instructionOrInstructions.slice(3);
+                    context = context.parent;
+                }
+            }
         }
-        return ViewportInstructionTree.create(instructionOrInstructions, this.getNavigationOptions(options), this.ctx);
+        return ViewportInstructionTree.create(instructionOrInstructions, NavigationOptions.create({ ...this.options, ...options, context }), this.ctx);
     }
     enqueue(instructions, trigger, state, failedTr) {
         const lastTr = this.currentTr;
@@ -2667,9 +2675,6 @@ exports.Router = class Router {
                 nextTr.handleError(err);
             }
         });
-    }
-    getNavigationOptions(options) {
-        return NavigationOptions.create({ ...this.options, ...options });
     }
 };
 exports.Router = __decorate([
@@ -4147,15 +4152,10 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
             || !this.isEnabled) {
             return;
         }
-        let href = this.el.getAttribute('href');
+        const href = this.el.getAttribute('href');
         if (href !== null) {
             e.preventDefault();
-            let context = this.ctx;
-            while (href.startsWith('../') && context.parent !== null) {
-                href = href.slice(3);
-                context = context.parent;
-            }
-            void this.router.load(href, { context });
+            void this.router.load(href, { context: this.ctx });
         }
     }
 };

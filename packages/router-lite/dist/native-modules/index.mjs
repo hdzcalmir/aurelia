@@ -2308,8 +2308,22 @@ let Ut = class Router {
     }
     createViewportInstructions(t, e) {
         if (t instanceof ViewportInstructionTree) return t;
-        if ("string" === typeof t) t = this.locationMgr.removeBaseHref(t);
-        return ViewportInstructionTree.create(t, this.getNavigationOptions(e), this.ctx);
+        let i = e?.context ?? null;
+        if ("string" === typeof t) {
+            t = this.locationMgr.removeBaseHref(t);
+            if (t.startsWith("../") && null !== i) {
+                i = this.resolveContext(i);
+                while (t.startsWith("../") && null !== (i?.parent ?? null)) {
+                    t = t.slice(3);
+                    i = i.parent;
+                }
+            }
+        }
+        return ViewportInstructionTree.create(t, NavigationOptions.create({
+            ...this.options,
+            ...e,
+            context: i
+        }), this.ctx);
     }
     enqueue(t, e, i, s) {
         const n = this.currentTr;
@@ -2515,12 +2529,6 @@ let Ut = class Router {
                 t.handleError(e);
             }
         }));
-    }
-    getNavigationOptions(t) {
-        return NavigationOptions.create({
-            ...this.options,
-            ...t
-        });
     }
 };
 
@@ -3774,16 +3782,11 @@ let ee = class HrefCustomAttribute {
     }
     G(t) {
         if (t.altKey || t.ctrlKey || t.shiftKey || t.metaKey || 0 !== t.button || this.isExternal || !this.isEnabled) return;
-        let e = this.el.getAttribute("href");
+        const e = this.el.getAttribute("href");
         if (null !== e) {
             t.preventDefault();
-            let i = this.ctx;
-            while (e.startsWith("../") && null !== i.parent) {
-                e = e.slice(3);
-                i = i.parent;
-            }
             void this.router.load(e, {
-                context: i
+                context: this.ctx
             });
         }
     }

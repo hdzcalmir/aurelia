@@ -281,6 +281,5 @@ export declare class Router {
     updateTitle(tr?: Transition): string;
     private cancelNavigation;
     private runNextTransition;
-    private getNavigationOptions;
 }
 //# sourceMappingURL=router.d.ts.map
