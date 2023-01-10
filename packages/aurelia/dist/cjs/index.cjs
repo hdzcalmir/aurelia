@@ -4,9 +4,9 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var r = require("@aurelia/kernel");
+var e = require("@aurelia/kernel");
 
-var e = require("@aurelia/runtime-html");
+var r = require("@aurelia/runtime-html");
 
 var t = require("@aurelia/platform-browser");
 
@@ -16,201 +16,199 @@ var o = require("@aurelia/metadata");
 
 var p = require("@aurelia/platform");
 
-var x = require("@aurelia/router-lite");
+var x = require("@aurelia/runtime");
 
-var a = require("@aurelia/runtime");
+const a = t.BrowserPlatform.getOrCreate(globalThis);
 
-const u = t.BrowserPlatform.getOrCreate(globalThis);
-
-function i() {
-    return r.DI.createContainer().register(r.Registration.instance(e.IPlatform, u), e.StandardConfiguration);
+function u() {
+    return e.DI.createContainer().register(e.Registration.instance(r.IPlatform, a), r.StandardConfiguration);
 }
 
-class Aurelia extends e.Aurelia {
-    constructor(r = i()) {
-        super(r);
+class Aurelia extends r.Aurelia {
+    constructor(e = u()) {
+        super(e);
     }
-    static start(r) {
-        return (new Aurelia).start(r);
+    static start(e) {
+        return (new Aurelia).start(e);
     }
-    static app(r) {
-        return (new Aurelia).app(r);
+    static app(e) {
+        return (new Aurelia).app(e);
     }
-    static enhance(r, e) {
-        return (new Aurelia).enhance(r, e);
+    static enhance(e, r) {
+        return (new Aurelia).enhance(e, r);
     }
-    static register(...r) {
-        return (new Aurelia).register(...r);
+    static register(...e) {
+        return (new Aurelia).register(...e);
     }
-    app(r) {
-        if (e.CustomElement.isType(r)) {
-            const t = e.CustomElement.getDefinition(r);
+    app(e) {
+        if (r.CustomElement.isType(e)) {
+            const t = r.CustomElement.getDefinition(e);
             let s = document.querySelector(t.name);
             if (null === s) s = document.body;
             return super.app({
                 host: s,
-                component: r
+                component: e
             });
         }
-        return super.app(r);
+        return super.app(e);
     }
 }
 
-exports.ColorOptions = r.ColorOptions;
+exports.ColorOptions = e.ColorOptions;
 
-exports.ConsoleSink = r.ConsoleSink;
+exports.ConsoleSink = e.ConsoleSink;
 
-exports.DI = r.DI;
+exports.DI = e.DI;
 
-exports.EventAggregator = r.EventAggregator;
+exports.EventAggregator = e.EventAggregator;
 
-exports.IContainer = r.IContainer;
+exports.IContainer = e.IContainer;
 
-exports.IEventAggregator = r.IEventAggregator;
+exports.IEventAggregator = e.IEventAggregator;
 
-exports.ILogger = r.ILogger;
+exports.ILogger = e.ILogger;
 
-exports.IServiceLocator = r.IServiceLocator;
+exports.IServiceLocator = e.IServiceLocator;
 
-exports.InstanceProvider = r.InstanceProvider;
+exports.InstanceProvider = e.InstanceProvider;
 
-exports.LogLevel = r.LogLevel;
+exports.LogLevel = e.LogLevel;
 
-exports.LoggerConfiguration = r.LoggerConfiguration;
+exports.LoggerConfiguration = e.LoggerConfiguration;
 
-exports.Registration = r.Registration;
+exports.Registration = e.Registration;
 
-exports.all = r.all;
+exports.all = e.all;
 
-exports.bound = r.bound;
+exports.bound = e.bound;
 
-exports.camelCase = r.camelCase;
+exports.camelCase = e.camelCase;
 
-exports.emptyArray = r.emptyArray;
+exports.emptyArray = e.emptyArray;
 
-exports.emptyObject = r.emptyObject;
+exports.emptyObject = e.emptyObject;
 
-exports.inject = r.inject;
+exports.inject = e.inject;
 
-exports.isArrayIndex = r.isArrayIndex;
+exports.isArrayIndex = e.isArrayIndex;
 
-exports.kebabCase = r.kebabCase;
+exports.kebabCase = e.kebabCase;
 
-exports.lazy = r.lazy;
+exports.lazy = e.lazy;
 
-exports.noop = r.noop;
+exports.noop = e.noop;
 
-exports.optional = r.optional;
+exports.optional = e.optional;
 
-exports.pascalCase = r.pascalCase;
+exports.pascalCase = e.pascalCase;
 
-exports.singleton = r.singleton;
+exports.singleton = e.singleton;
 
-exports.toArray = r.toArray;
+exports.toArray = e.toArray;
 
-exports.transient = r.transient;
+exports.transient = e.transient;
 
-exports.AppTask = e.AppTask;
+exports.AppTask = r.AppTask;
 
-exports.AuSlotsInfo = e.AuSlotsInfo;
+exports.AuSlotsInfo = r.AuSlotsInfo;
 
-exports.Bindable = e.Bindable;
+exports.Bindable = r.Bindable;
 
-exports.BindingBehavior = e.BindingBehavior;
+exports.BindingBehavior = r.BindingBehavior;
 
-exports.BindingMode = e.BindingMode;
+exports.BindingMode = r.BindingMode;
 
-exports.Controller = e.Controller;
+exports.Controller = r.Controller;
 
-exports.CustomAttribute = e.CustomAttribute;
+exports.CustomAttribute = r.CustomAttribute;
 
-exports.CustomElement = e.CustomElement;
+exports.CustomElement = r.CustomElement;
 
-exports.FlushQueue = e.FlushQueue;
+exports.FlushQueue = r.FlushQueue;
 
-exports.IAppRoot = e.IAppRoot;
+exports.IAppRoot = r.IAppRoot;
 
-exports.IAttrMapper = e.IAttrMapper;
+exports.IAttrMapper = r.IAttrMapper;
 
-exports.IAttributePattern = e.IAttributePattern;
+exports.IAttributePattern = r.IAttributePattern;
 
-exports.IAuSlotsInfo = e.IAuSlotsInfo;
+exports.IAuSlotsInfo = r.IAuSlotsInfo;
 
-exports.IAurelia = e.IAurelia;
+exports.IAurelia = r.IAurelia;
 
-exports.IEventTarget = e.IEventTarget;
+exports.IEventTarget = r.IEventTarget;
 
-exports.IFlushQueue = e.IFlushQueue;
+exports.IFlushQueue = r.IFlushQueue;
 
-exports.ILifecycleHooks = e.ILifecycleHooks;
+exports.ILifecycleHooks = r.ILifecycleHooks;
 
-exports.INode = e.INode;
+exports.INode = r.INode;
 
-exports.IPlatform = e.IPlatform;
+exports.IPlatform = r.IPlatform;
 
-exports.IRenderLocation = e.IRenderLocation;
+exports.IRenderLocation = r.IRenderLocation;
 
-exports.ITemplateCompiler = e.ITemplateCompiler;
+exports.ITemplateCompiler = r.ITemplateCompiler;
 
-exports.ITemplateCompilerHooks = e.ITemplateCompilerHooks;
+exports.ITemplateCompilerHooks = r.ITemplateCompilerHooks;
 
-exports.LifecycleFlags = e.LifecycleFlags;
+exports.LifecycleFlags = r.LifecycleFlags;
 
-exports.LifecycleHooks = e.LifecycleHooks;
+exports.LifecycleHooks = r.LifecycleHooks;
 
-exports.NodeObserverLocator = e.NodeObserverLocator;
+exports.NodeObserverLocator = r.NodeObserverLocator;
 
-exports.ShortHandBindingSyntax = e.ShortHandBindingSyntax;
+exports.ShortHandBindingSyntax = r.ShortHandBindingSyntax;
 
-exports.StyleConfiguration = e.StyleConfiguration;
+exports.StyleConfiguration = r.StyleConfiguration;
 
-exports.TemplateCompilerHooks = e.TemplateCompilerHooks;
+exports.TemplateCompilerHooks = r.TemplateCompilerHooks;
 
-exports.ValueConverter = e.ValueConverter;
+exports.ValueConverter = r.ValueConverter;
 
-exports.ViewFactory = e.ViewFactory;
+exports.ViewFactory = r.ViewFactory;
 
-exports.alias = e.alias;
+exports.alias = r.alias;
 
-exports.attributePattern = e.attributePattern;
+exports.attributePattern = r.attributePattern;
 
-exports.bindable = e.bindable;
+exports.bindable = r.bindable;
 
-exports.bindingBehavior = e.bindingBehavior;
+exports.bindingBehavior = r.bindingBehavior;
 
-exports.bindingCommand = e.bindingCommand;
+exports.bindingCommand = r.bindingCommand;
 
-exports.capture = e.capture;
+exports.capture = r.capture;
 
-exports.children = e.children;
+exports.children = r.children;
 
-exports.coercer = e.coercer;
+exports.coercer = r.coercer;
 
-exports.containerless = e.containerless;
+exports.containerless = r.containerless;
 
-exports.cssModules = e.cssModules;
+exports.cssModules = r.cssModules;
 
-exports.customAttribute = e.customAttribute;
+exports.customAttribute = r.customAttribute;
 
-exports.customElement = e.customElement;
+exports.customElement = r.customElement;
 
-exports.lifecycleHooks = e.lifecycleHooks;
+exports.lifecycleHooks = r.lifecycleHooks;
 
-exports.registerAliases = e.registerAliases;
+exports.registerAliases = r.registerAliases;
 
-exports.renderer = e.renderer;
+exports.renderer = r.renderer;
 
-exports.shadowCSS = e.shadowCSS;
+exports.shadowCSS = r.shadowCSS;
 
-exports.strict = e.strict;
+exports.strict = r.strict;
 
-exports.templateCompilerHooks = e.templateCompilerHooks;
+exports.templateCompilerHooks = r.templateCompilerHooks;
 
-exports.templateController = e.templateController;
+exports.templateController = r.templateController;
 
-exports.useShadowDOM = e.useShadowDOM;
+exports.useShadowDOM = r.useShadowDOM;
 
-exports.valueConverter = e.valueConverter;
+exports.valueConverter = r.valueConverter;
 
 exports.HttpClient = s.HttpClient;
 
@@ -234,45 +232,23 @@ exports.TaskQueuePriority = p.TaskQueuePriority;
 
 exports.TaskStatus = p.TaskStatus;
 
-exports.IRouteContext = x.IRouteContext;
+exports.CollectionKind = x.CollectionKind;
 
-exports.IRouter = x.IRouter;
+exports.ComputedObserver = x.ComputedObserver;
 
-exports.IRouterEvents = x.IRouterEvents;
+exports.IObserverLocator = x.IObserverLocator;
 
-exports.Route = x.Route;
+exports.ISignaler = x.ISignaler;
 
-exports.RouteConfig = x.RouteConfig;
+exports.batch = x.batch;
 
-exports.RouteNode = x.RouteNode;
+exports.observable = x.observable;
 
-exports.Router = x.Router;
-
-exports.RouterConfiguration = x.RouterConfiguration;
-
-exports.RouterOptions = x.RouterOptions;
-
-exports.RouterRegistration = x.RouterRegistration;
-
-exports.route = x.route;
-
-exports.CollectionKind = a.CollectionKind;
-
-exports.ComputedObserver = a.ComputedObserver;
-
-exports.IObserverLocator = a.IObserverLocator;
-
-exports.ISignaler = a.ISignaler;
-
-exports.batch = a.batch;
-
-exports.observable = a.observable;
-
-exports.subscriberCollection = a.subscriberCollection;
+exports.subscriberCollection = x.subscriberCollection;
 
 exports.Aurelia = Aurelia;
 
-exports.PLATFORM = u;
+exports.PLATFORM = a;
 
 exports["default"] = Aurelia;
 //# sourceMappingURL=index.cjs.map
