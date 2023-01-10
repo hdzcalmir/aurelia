@@ -47,16 +47,13 @@
     "access": "public"
   },
   "dependencies": {
-    "@aurelia/fetch-client": "2.1.0-dev.202301072025",
-    "@aurelia/kernel": "2.1.0-dev.202301072025",
-    "@aurelia/metadata": "2.1.0-dev.202301072025",
-    "@aurelia/platform": "2.1.0-dev.202301072025",
-    "@aurelia/platform-browser": "2.1.0-dev.202301072025",
-    "@aurelia/route-recognizer": "2.1.0-dev.202301072025",
-    "@aurelia/router": "2.1.0-dev.202301072025",
-    "@aurelia/router-lite": "2.1.0-dev.202301072025",
-    "@aurelia/runtime": "2.1.0-dev.202301072025",
-    "@aurelia/runtime-html": "2.1.0-dev.202301072025"
+    "@aurelia/fetch-client": "2.0.0-alpha.41",
+    "@aurelia/kernel": "2.0.0-alpha.41",
+    "@aurelia/metadata": "2.0.0-alpha.41",
+    "@aurelia/platform": "2.0.0-alpha.41",
+    "@aurelia/platform-browser": "2.0.0-alpha.41",
+    "@aurelia/runtime": "2.0.0-alpha.41",
+    "@aurelia/runtime-html": "2.0.0-alpha.41"
   },
   "devDependencies": {
     "typescript": "4.7.3"
