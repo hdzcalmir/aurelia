@@ -1,11 +1,8 @@
-import { BindingInterceptor, IInterceptableBinding } from '../binding-behavior';
-import type { BindingBehaviorExpression, Scope } from '@aurelia/runtime';
-export declare class ThrottleBindingBehavior extends BindingInterceptor {
-    constructor(binding: IInterceptableBinding, expr: BindingBehaviorExpression);
-    callSource(args: object): unknown;
-    handleChange(newValue: unknown, oldValue: unknown): void;
-    updateSource(newValue: unknown): void;
-    $bind(scope: Scope): void;
-    $unbind(): void;
+import { IPlatform } from '@aurelia/kernel';
+import { BindingBehaviorInstance, type IBinding, type Scope } from '@aurelia/runtime';
+export declare class ThrottleBindingBehavior implements BindingBehaviorInstance {
+    constructor(platform: IPlatform);
+    bind(scope: Scope, binding: IBinding, delay?: number): void;
+    unbind(scope: Scope, binding: IBinding): void;
 }
 //# sourceMappingURL=throttle.d.ts.map

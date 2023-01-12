@@ -1,4 +1,3 @@
-import { AnyBindingExpression, IAstEvaluator, IConnectableBinding } from '@aurelia/runtime';
 import { State } from '../templating/controller';
 /**
  * Mode of a binding to operate
@@ -13,9 +12,6 @@ export declare const enum BindingMode {
      */
     default = 8
 }
-export declare type IAstBasedBinding = IAstEvaluator & IConnectableBinding & {
-    ast: AnyBindingExpression;
-};
 export interface IBindingController {
     readonly state: State;
 }

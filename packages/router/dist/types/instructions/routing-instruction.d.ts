@@ -254,8 +254,9 @@ export declare class RoutingInstruction {
      * @param context - The context (used for syntax) within to stringify the instructions
      * @param excludeEndpoint - Whether to exclude endpoint names in the string
      * @param endpointContext - Whether to include endpoint context in the string
+     * @param shallow - Whether to stringify next scope instructions
      */
-    stringify(context: IRouterConfiguration | IRouter | IContainer, excludeEndpoint?: boolean, endpointContext?: boolean): string;
+    stringify(context: IRouterConfiguration | IRouter | IContainer, excludeEndpoint?: boolean, endpointContext?: boolean, shallow?: boolean): string;
     /**
      * Clone the routing instruction.
      *

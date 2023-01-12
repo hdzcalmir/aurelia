@@ -1,96 +1,96 @@
 class Parameter {
-    constructor(t, s, e) {
+    constructor(t, e, s) {
         this.name = t;
-        this.isOptional = s;
-        this.isStar = e;
+        this.isOptional = e;
+        this.isStar = s;
     }
 }
 
 class ConfigurableRoute {
-    constructor(t, s, e) {
+    constructor(t, e, s) {
         this.path = t;
-        this.caseSensitive = s;
-        this.handler = e;
+        this.caseSensitive = e;
+        this.handler = s;
     }
 }
 
 class Endpoint {
-    constructor(t, s) {
+    constructor(t, e) {
         this.route = t;
-        this.params = s;
+        this.params = e;
     }
 }
 
 class RecognizedRoute {
-    constructor(t, s) {
+    constructor(t, e) {
         this.endpoint = t;
-        this.params = s;
+        this.params = e;
     }
 }
 
 class Candidate {
-    constructor(t, s, e, n) {
+    constructor(t, e, s, n) {
         this.chars = t;
-        this.states = s;
-        this.skippedStates = e;
+        this.states = e;
+        this.skippedStates = s;
         this.result = n;
-        this.head = s[s.length - 1];
+        this.head = e[e.length - 1];
         this.endpoint = this.head?.endpoint;
     }
     advance(t) {
-        const {chars: s, states: e, skippedStates: n, result: i} = this;
-        let r = null;
-        let o = 0;
-        const l = e[e.length - 1];
-        function c(u, h) {
-            if (u.isMatch(t)) if (1 === ++o) r = u; else i.add(new Candidate(s.concat(t), e.concat(u), null === h ? n : n.concat(h), i));
-            if (null === l.segment && u.isOptional && null !== u.nextStates) {
-                if (u.nextStates.length > 1) throw new Error(`${u.nextStates.length} nextStates`);
-                const t = u.nextStates[0];
-                if (!t.isSeparator) throw new Error(`Not a separator`);
-                if (null !== t.nextStates) for (const s of t.nextStates) c(s, u);
+        const {chars: e, states: s, skippedStates: n, result: r} = this;
+        let o = null;
+        let l = 0;
+        const a = s[s.length - 1];
+        function u(c, h) {
+            if (c.isMatch(t)) if (1 === ++l) o = c; else r.add(new Candidate(e.concat(t), s.concat(c), null === h ? n : n.concat(h), r));
+            if (null === a.segment && c.isOptional && null !== c.nextStates) {
+                if (c.nextStates.length > 1) throw i(`${c.nextStates.length} nextStates`);
+                const t = c.nextStates[0];
+                if (!t.isSeparator) throw i(`Not a separator`);
+                if (null !== t.nextStates) for (const e of t.nextStates) u(e, c);
             }
         }
-        if (l.isDynamic) c(l, null);
-        if (null !== l.nextStates) for (const t of l.nextStates) c(t, null);
-        if (null !== r) {
-            e.push(this.head = r);
-            s.push(t);
-            if (null !== r.endpoint) this.endpoint = r.endpoint;
+        if (a.isDynamic) u(a, null);
+        if (null !== a.nextStates) for (const t of a.nextStates) u(t, null);
+        if (null !== o) {
+            s.push(this.head = o);
+            e.push(t);
+            if (null !== o.endpoint) this.endpoint = o.endpoint;
         }
-        if (0 === o) i.remove(this);
+        if (0 === l) r.remove(this);
     }
     finalize() {
-        function t(s, e) {
-            const n = e.nextStates;
-            if (null !== n) if (1 === n.length && null === n[0].segment) t(s, n[0]); else for (const e of n) if (e.isOptional && null !== e.endpoint) {
-                s.push(e);
-                if (null !== e.nextStates) for (const n of e.nextStates) t(s, n);
+        function t(e, s) {
+            const n = s.nextStates;
+            if (null !== n) if (1 === n.length && null === n[0].segment) t(e, n[0]); else for (const s of n) if (s.isOptional && null !== s.endpoint) {
+                e.push(s);
+                if (null !== s.nextStates) for (const n of s.nextStates) t(e, n);
                 break;
             }
         }
         t(this.skippedStates, this.head);
     }
     getParams() {
-        const {states: t, chars: s, endpoint: e} = this;
+        const {states: t, chars: e, endpoint: s} = this;
         const n = {};
-        for (const t of e.params) n[t.name] = void 0;
-        for (let e = 0, i = t.length; e < i; ++e) {
-            const i = t[e];
+        for (const t of s.params) n[t.name] = void 0;
+        for (let s = 0, i = t.length; s < i; ++s) {
+            const i = t[s];
             if (i.isDynamic) {
                 const t = i.segment.name;
-                if (void 0 === n[t]) n[t] = s[e]; else n[t] += s[e];
+                if (void 0 === n[t]) n[t] = e[s]; else n[t] += e[s];
             }
         }
         return n;
     }
     compareTo(t) {
-        const s = this.states;
-        const e = t.states;
-        for (let t = 0, n = 0, i = Math.max(s.length, e.length); t < i; ++t) {
-            let i = s[t];
+        const e = this.states;
+        const s = t.states;
+        for (let t = 0, n = 0, i = Math.max(e.length, s.length); t < i; ++t) {
+            let i = e[t];
             if (void 0 === i) return 1;
-            let r = e[n];
+            let r = s[n];
             if (void 0 === r) return -1;
             let o = i.segment;
             let l = r.segment;
@@ -99,10 +99,10 @@ class Candidate {
                     ++n;
                     continue;
                 }
-                if (void 0 === (i = s[++t])) return 1;
+                if (void 0 === (i = e[++t])) return 1;
                 o = i.segment;
             } else if (null === l) {
-                if (void 0 === (r = e[++n])) return -1;
+                if (void 0 === (r = s[++n])) return -1;
                 l = r.segment;
             }
             if (o.kind < l.kind) return 1;
@@ -116,10 +116,10 @@ class Candidate {
         if (r < o) return 1;
         if (r > o) return -1;
         for (let t = 0; t < r; ++t) {
-            const s = n[t];
-            const e = i[t];
-            if (s.length < e.length) return 1;
-            if (s.length > e.length) return -1;
+            const e = n[t];
+            const s = i[t];
+            if (e.length < s.length) return 1;
+            if (e.length > s.length) return -1;
         }
         return 0;
     }
@@ -129,8 +129,8 @@ function t(t) {
     return null !== t.head.endpoint;
 }
 
-function s(t, s) {
-    return t.compareTo(s);
+function e(t, e) {
+    return t.compareTo(e);
 }
 
 class RecognizeResult {
@@ -142,11 +142,11 @@ class RecognizeResult {
         return 0 === this.candidates.length;
     }
     getSolution() {
-        const e = this.candidates.filter(t);
-        if (0 === e.length) return null;
-        for (const t of e) t.finalize();
-        e.sort(s);
-        return e[0];
+        const s = this.candidates.filter(t);
+        if (0 === s.length) return null;
+        for (const t of s) t.finalize();
+        s.sort(e);
+        return s[0];
     }
     add(t) {
         this.candidates.push(t);
@@ -155,10 +155,12 @@ class RecognizeResult {
         this.candidates.splice(this.candidates.indexOf(t), 1);
     }
     advance(t) {
-        const s = this.candidates.slice();
-        for (const e of s) e.advance(t);
+        const e = this.candidates.slice();
+        for (const s of e) s.advance(t);
     }
 }
+
+const s = "$$residue";
 
 class RouteRecognizer {
     constructor() {
@@ -166,66 +168,87 @@ class RouteRecognizer {
         this.cache = new Map;
         this.endpointLookup = new Map;
     }
-    add(t) {
-        if (t instanceof Array) for (const s of t) this.$add(s); else this.$add(t);
+    add(t, e = false) {
+        let n;
+        if (t instanceof Array) for (const i of t) {
+            n = this.$add(i, false).params;
+            if (!e || (n[n.length - 1]?.isStar ?? false)) continue;
+            this.$add({
+                ...i,
+                path: `${i.path}/*${s}`
+            }, true);
+        } else {
+            n = this.$add(t, false).params;
+            if (e && !(n[n.length - 1]?.isStar ?? false)) this.$add({
+                ...t,
+                path: `${t.path}/*${s}`
+            }, true);
+        }
         this.cache.clear();
     }
-    $add(t) {
-        const s = t.path;
-        const n = this.endpointLookup;
-        if (n.has(s)) throw new Error(`Cannot add duplicate path '${s}'.`);
-        const i = new ConfigurableRoute(s, true === t.caseSensitive, t.handler);
-        const r = "" === s ? [ "" ] : s.split("/").filter(e);
-        const o = [];
-        let l = this.rootState;
-        for (const t of r) {
-            l = l.append(null, "/");
+    $add(t, e) {
+        const r = t.path;
+        const o = this.endpointLookup;
+        if (o.has(r)) throw i(`Cannot add duplicate path '${r}'.`);
+        const l = new ConfigurableRoute(r, true === t.caseSensitive, t.handler);
+        const a = "" === r ? [ "" ] : r.split("/").filter(n);
+        const u = [];
+        let c = this.rootState;
+        for (const t of a) {
+            c = c.append(null, "/");
             switch (t.charAt(0)) {
               case ":":
                 {
-                    const s = t.endsWith("?");
-                    const e = s ? t.slice(1, -1) : t.slice(1);
-                    o.push(new Parameter(e, s, false));
-                    l = new DynamicSegment(e, s).appendTo(l);
+                    const e = t.endsWith("?");
+                    const n = e ? t.slice(1, -1) : t.slice(1);
+                    if (n === s) throw new Error(`Invalid parameter name; usage of the reserved parameter name '${s}' is used.`);
+                    u.push(new Parameter(n, e, false));
+                    c = new DynamicSegment(n, e).appendTo(c);
                     break;
                 }
 
               case "*":
                 {
-                    const s = t.slice(1);
-                    o.push(new Parameter(s, true, true));
-                    l = new StarSegment(s).appendTo(l);
+                    const n = t.slice(1);
+                    let i;
+                    if (n === s) {
+                        if (!e) throw new Error(`Invalid parameter name; usage of the reserved parameter name '${s}' is used.`);
+                        i = 1;
+                    } else i = 2;
+                    u.push(new Parameter(n, true, true));
+                    c = new StarSegment(n, i).appendTo(c);
                     break;
                 }
 
               default:
-                l = new StaticSegment(t, i.caseSensitive).appendTo(l);
+                c = new StaticSegment(t, l.caseSensitive).appendTo(c);
                 break;
             }
         }
-        const c = new Endpoint(i, o);
-        l.setEndpoint(c);
-        n.set(s, c);
+        const h = new Endpoint(l, u);
+        c.setEndpoint(h);
+        o.set(r, h);
+        return h;
     }
     recognize(t) {
-        let s = this.cache.get(t);
-        if (void 0 === s) this.cache.set(t, s = this.$recognize(t));
-        return s;
+        let e = this.cache.get(t);
+        if (void 0 === e) this.cache.set(t, e = this.$recognize(t));
+        return e;
     }
     $recognize(t) {
         t = decodeURI(t);
         if (!t.startsWith("/")) t = `/${t}`;
         if (t.length > 1 && t.endsWith("/")) t = t.slice(0, -1);
-        const s = new RecognizeResult(this.rootState);
-        for (let e = 0, n = t.length; e < n; ++e) {
-            const n = t.charAt(e);
-            s.advance(n);
-            if (s.isEmpty) return null;
+        const e = new RecognizeResult(this.rootState);
+        for (let s = 0, n = t.length; s < n; ++s) {
+            const n = t.charAt(s);
+            e.advance(n);
+            if (e.isEmpty) return null;
         }
-        const e = s.getSolution();
-        if (null === e) return null;
-        const {endpoint: n} = e;
-        const i = e.getParams();
+        const s = e.getSolution();
+        if (null === s) return null;
+        const {endpoint: n} = s;
+        const i = s.getParams();
         return new RecognizedRoute(n, i);
     }
     getEndpoint(t) {
@@ -234,20 +257,21 @@ class RouteRecognizer {
 }
 
 class State {
-    constructor(t, s, e) {
+    constructor(t, e, s) {
         this.prevState = t;
-        this.segment = s;
-        this.value = e;
+        this.segment = e;
+        this.value = s;
         this.nextStates = null;
         this.endpoint = null;
-        switch (s?.kind) {
-          case 2:
+        switch (e?.kind) {
+          case 3:
             this.length = t.length + 1;
             this.isSeparator = false;
             this.isDynamic = true;
-            this.isOptional = s.optional;
+            this.isOptional = e.optional;
             break;
 
+          case 2:
           case 1:
             this.length = t.length + 1;
             this.isSeparator = false;
@@ -255,7 +279,7 @@ class State {
             this.isOptional = false;
             break;
 
-          case 3:
+          case 4:
             this.length = t.length + 1;
             this.isSeparator = false;
             this.isDynamic = false;
@@ -270,18 +294,18 @@ class State {
             break;
         }
     }
-    append(t, s) {
-        let e;
+    append(t, e) {
+        let s;
         let n = this.nextStates;
         if (null === n) {
-            e = void 0;
+            s = void 0;
             n = this.nextStates = [];
-        } else if (null === t) e = n.find((t => t.value === s)); else e = n.find((s => s.segment?.equals(t)));
-        if (void 0 === e) n.push(e = new State(this, t, s));
-        return e;
+        } else if (null === t) s = n.find((t => t.value === e)); else s = n.find((e => e.segment?.equals(t)));
+        if (void 0 === s) n.push(s = new State(this, t, e));
+        return s;
     }
     setEndpoint(t) {
-        if (null !== this.endpoint) throw new Error(`Cannot add ambiguous route. The pattern '${t.route.path}' clashes with '${this.endpoint.route.path}'`);
+        if (null !== this.endpoint) throw i(`Cannot add ambiguous route. The pattern '${t.route.path}' clashes with '${this.endpoint.route.path}'`);
         this.endpoint = t;
         if (this.isOptional) {
             this.prevState.setEndpoint(t);
@@ -289,86 +313,79 @@ class State {
         }
     }
     isMatch(t) {
-        const s = this.segment;
-        switch (s?.kind) {
-          case 2:
+        const e = this.segment;
+        switch (e?.kind) {
+          case 3:
             return !this.value.includes(t);
 
+          case 2:
           case 1:
             return true;
 
-          case 3:
+          case 4:
           case void 0:
             return this.value.includes(t);
         }
     }
 }
 
-function e(t) {
+function n(t) {
     return t.length > 0;
 }
 
-var n;
-
-(function(t) {
-    t[t["star"] = 1] = "star";
-    t[t["dynamic"] = 2] = "dynamic";
-    t[t["static"] = 3] = "static";
-})(n || (n = {}));
-
 class StaticSegment {
-    constructor(t, s) {
+    constructor(t, e) {
         this.value = t;
-        this.caseSensitive = s;
+        this.caseSensitive = e;
     }
     get kind() {
-        return 3;
+        return 4;
     }
     appendTo(t) {
-        const {value: s, value: {length: e}} = this;
-        if (this.caseSensitive) for (let n = 0; n < e; ++n) t = t.append(this, s.charAt(n)); else for (let n = 0; n < e; ++n) {
-            const e = s.charAt(n);
-            t = t.append(this, e.toUpperCase() + e.toLowerCase());
+        const {value: e, value: {length: s}} = this;
+        if (this.caseSensitive) for (let n = 0; n < s; ++n) t = t.append(this, e.charAt(n)); else for (let n = 0; n < s; ++n) {
+            const s = e.charAt(n);
+            t = t.append(this, s.toUpperCase() + s.toLowerCase());
         }
         return t;
     }
     equals(t) {
-        return 3 === t.kind && t.caseSensitive === this.caseSensitive && t.value === this.value;
+        return 4 === t.kind && t.caseSensitive === this.caseSensitive && t.value === this.value;
     }
 }
 
 class DynamicSegment {
-    constructor(t, s) {
+    constructor(t, e) {
         this.name = t;
-        this.optional = s;
+        this.optional = e;
     }
     get kind() {
-        return 2;
+        return 3;
     }
     appendTo(t) {
         t = t.append(this, "/");
         return t;
     }
     equals(t) {
-        return 2 === t.kind && t.optional === this.optional && t.name === this.name;
+        return 3 === t.kind && t.optional === this.optional && t.name === this.name;
     }
 }
 
 class StarSegment {
-    constructor(t) {
+    constructor(t, e) {
         this.name = t;
-    }
-    get kind() {
-        return 1;
+        this.kind = e;
     }
     appendTo(t) {
         t = t.append(this, "");
         return t;
     }
     equals(t) {
-        return 1 === t.kind && t.name === this.name;
+        return (2 === t.kind || 1 === t.kind) && t.name === this.name;
     }
 }
 
-export { ConfigurableRoute, Endpoint, Parameter, RecognizedRoute, RouteRecognizer };
+const i = t => new Error(t);
+
+export { ConfigurableRoute, Endpoint, Parameter, s as RESIDUE, RecognizedRoute, RouteRecognizer };
 //# sourceMappingURL=index.mjs.map

@@ -1,4 +1,8 @@
 import type { IConnectable } from '../observation';
+/**
+ * Current subscription collector
+ */
+export declare let _connectable: IConnectable | null;
 export declare let connecting: boolean;
 export declare function pauseConnecting(): void;
 export declare function resumeConnecting(): void;

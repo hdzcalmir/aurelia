@@ -25,11 +25,15 @@ export declare class RecognizedRoute<T> {
     readonly params: Readonly<Record<string, string | undefined>>;
     constructor(endpoint: Endpoint<T>, params: Readonly<Record<string, string | undefined>>);
 }
+/**
+ * Reserved parameter name that's used when registering a route with residual star segment (catch-all).
+ */
+export declare const RESIDUE: "$$residue";
 export declare class RouteRecognizer<T> {
     private readonly rootState;
     private readonly cache;
     private readonly endpointLookup;
-    add(routeOrRoutes: IConfigurableRoute<T> | readonly IConfigurableRoute<T>[]): void;
+    add(routeOrRoutes: IConfigurableRoute<T> | readonly IConfigurableRoute<T>[], addResidue?: boolean): void;
     private $add;
     recognize(path: string): RecognizedRoute<T> | null;
     private $recognize;

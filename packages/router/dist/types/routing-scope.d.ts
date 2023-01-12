@@ -72,7 +72,6 @@ export declare class RoutingScope {
      * The children of the routing scope (parent/child hierarchy)
      */
     children: RoutingScope[];
-    path: string | null;
     constructor(router: IRouter, 
     /**
      * Whether the routing scope has a scope and can own other scopes
@@ -86,7 +85,10 @@ export declare class RoutingScope {
      * The endpoint content the routing scope is connected to
      */
     endpointContent: EndpointContent);
-    static for(origin: Element | ICustomElementViewModel | Viewport | ViewportScope | RoutingScope | ICustomElementController | IContainer | null): RoutingScope | null;
+    static for(origin: Element | ICustomElementViewModel | Viewport | ViewportScope | RoutingScope | ICustomElementController | IContainer | null, instruction?: string): {
+        scope: RoutingScope | null;
+        instruction: string | undefined;
+    };
     /**
      * The routing scope children to this scope are added to. If this routing
      * scope has scope, this scope property equals this scope itself. If it
@@ -102,6 +104,7 @@ export declare class RoutingScope {
     get enabled(): boolean;
     get passThroughScope(): boolean;
     get pathname(): string;
+    get path(): string;
     toString(recurse?: boolean): string;
     toStringOwning(recurse?: boolean): string;
     get enabledChildren(): RoutingScope[];

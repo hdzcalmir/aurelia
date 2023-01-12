@@ -1,12 +1,8 @@
-import { BindingInterceptor, IInterceptableBinding } from '../binding-behavior';
-import type { BindingBehaviorExpression, Scope } from '@aurelia/runtime';
-export declare class DebounceBindingBehavior extends BindingInterceptor {
-    constructor(binding: IInterceptableBinding, expr: BindingBehaviorExpression);
-    callSource(args: object): unknown;
-    handleChange(newValue: unknown, oldValue: unknown): void;
-    updateSource(newValue: unknown): void;
-    private queueTask;
-    $bind(scope: Scope): void;
-    $unbind(): void;
+import { IPlatform } from '@aurelia/kernel';
+import { type BindingBehaviorInstance, type IBinding, type Scope } from '@aurelia/runtime';
+export declare class DebounceBindingBehavior implements BindingBehaviorInstance {
+    constructor(platform: IPlatform);
+    bind(scope: Scope, binding: IBinding, delay?: number): void;
+    unbind(scope: Scope, binding: IBinding): void;
 }
 //# sourceMappingURL=debounce.d.ts.map

@@ -1,12 +1,4 @@
 /**
- * This is the minimum required runtime modules for HMR
- */
-export declare const hmrRuntimeModules: string[];
-/**
- * This is the minimum required metadata modules for HMR
- */
-export declare const hmrMetadataModules: string[];
-/**
  * This gets the generated HMR code for the specified class
  *
  * @param className - The name of the class to generate HMR code for

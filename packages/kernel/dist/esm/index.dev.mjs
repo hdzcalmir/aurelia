@@ -1,4 +1,4 @@
-import { Metadata, applyMetadataPolyfill, isObject } from '@aurelia/metadata';
+import { Metadata, isObject, applyMetadataPolyfill } from '@aurelia/metadata';
 
 const toStringSafe = String;
 const getOwnMetadata = Metadata.getOwn;
@@ -7,9 +7,10 @@ const defineMetadata = Metadata.define;
 const isFunction = (v) => typeof v === 'function';
 const isString = (v) => typeof v === 'string';
 const createObject = () => Object.create(null);
+const createError = (message) => new Error(message);
 
 const isNumericLookup = {};
-function isArrayIndex(value) {
+const isArrayIndex = (value) => {
     switch (typeof value) {
         case 'number':
             return value >= 0 && (value | 0) === value;
@@ -25,7 +26,7 @@ function isArrayIndex(value) {
             let ch = 0;
             let i = 0;
             for (; i < length; ++i) {
-                ch = value.charCodeAt(i);
+                ch = charCodeAt(value, i);
                 if (i === 0 && ch === 0x30 && length > 1 || ch < 0x30 || ch > 0x39) {
                     return isNumericLookup[value] = false;
                 }
@@ -35,15 +36,9 @@ function isArrayIndex(value) {
         default:
             return false;
     }
-}
+};
 const baseCase = (function () {
-    let CharKind;
-    (function (CharKind) {
-        CharKind[CharKind["none"] = 0] = "none";
-        CharKind[CharKind["digit"] = 1] = "digit";
-        CharKind[CharKind["upper"] = 2] = "upper";
-        CharKind[CharKind["lower"] = 3] = "lower";
-    })(CharKind || (CharKind = {}));
+    
     const isDigit = Object.assign(createObject(), {
         '0': true,
         '1': true,
@@ -56,7 +51,7 @@ const baseCase = (function () {
         '8': true,
         '9': true,
     });
-    function charToKind(char) {
+    const charToKind = (char) => {
         if (char === '') {
             return 0;
         }
@@ -70,8 +65,8 @@ const baseCase = (function () {
             return 1;
         }
         return 0;
-    }
-    return function (input, cb) {
+    };
+    return (input, cb) => {
         const len = input.length;
         if (len === 0) {
             return input;
@@ -108,10 +103,10 @@ const baseCase = (function () {
 })();
 const camelCase = (function () {
     const cache = createObject();
-    function callback(char, sep) {
+    const callback = (char, sep) => {
         return sep ? char.toUpperCase() : char.toLowerCase();
-    }
-    return function (input) {
+    };
+    return (input) => {
         let output = cache[input];
         if (output === void 0) {
             output = cache[input] = baseCase(input, callback);
@@ -121,7 +116,7 @@ const camelCase = (function () {
 })();
 const pascalCase = (function () {
     const cache = createObject();
-    return function (input) {
+    return (input) => {
         let output = cache[input];
         if (output === void 0) {
             output = camelCase(input);
@@ -135,10 +130,10 @@ const pascalCase = (function () {
 })();
 const kebabCase = (function () {
     const cache = createObject();
-    function callback(char, sep) {
+    const callback = (char, sep) => {
         return sep ? `-${char.toLowerCase()}` : char.toLowerCase();
-    }
-    return function (input) {
+    };
+    return (input) => {
         let output = cache[input];
         if (output === void 0) {
             output = cache[input] = baseCase(input, callback);
@@ -146,7 +141,7 @@ const kebabCase = (function () {
         return output;
     };
 })();
-function toArray(input) {
+const toArray = (input) => {
     const length = input.length;
     const arr = Array(length);
     let i = 0;
@@ -154,8 +149,8 @@ function toArray(input) {
         arr[i] = input[i];
     }
     return arr;
-}
-function bound(target, key, descriptor) {
+};
+const bound = (target, key, descriptor) => {
     return {
         configurable: true,
         enumerable: descriptor.enumerable,
@@ -170,8 +165,8 @@ function bound(target, key, descriptor) {
             return boundFn;
         },
     };
-}
-function mergeArrays(...arrays) {
+};
+const mergeArrays = (...arrays) => {
     const result = [];
     let k = 0;
     const arraysLen = arrays.length;
@@ -189,8 +184,8 @@ function mergeArrays(...arrays) {
         }
     }
     return result;
-}
-function firstDefined(...values) {
+};
+const firstDefined = (...values) => {
     const len = values.length;
     let value;
     let i = 0;
@@ -200,8 +195,8 @@ function firstDefined(...values) {
             return value;
         }
     }
-    throw new Error(`No default value found`);
-}
+    throw createError(`No default value found`);
+};
 const getPrototypeChain = (function () {
     const functionPrototype = Function.prototype;
     const getPrototypeOf = Object.getPrototypeOf;
@@ -229,40 +224,40 @@ const isNativeFunction = (function () {
     let isNative = false;
     let sourceText = '';
     let i = 0;
-    return function (fn) {
+    return (fn) => {
         isNative = lookup.get(fn);
         if (isNative === void 0) {
             sourceText = fn.toString();
             i = sourceText.length;
             isNative = (i >= 29 &&
                 i <= 100 &&
-                sourceText.charCodeAt(i - 1) === 0x7D &&
-                sourceText.charCodeAt(i - 2) <= 0x20 &&
-                sourceText.charCodeAt(i - 3) === 0x5D &&
-                sourceText.charCodeAt(i - 4) === 0x65 &&
-                sourceText.charCodeAt(i - 5) === 0x64 &&
-                sourceText.charCodeAt(i - 6) === 0x6F &&
-                sourceText.charCodeAt(i - 7) === 0x63 &&
-                sourceText.charCodeAt(i - 8) === 0x20 &&
-                sourceText.charCodeAt(i - 9) === 0x65 &&
-                sourceText.charCodeAt(i - 10) === 0x76 &&
-                sourceText.charCodeAt(i - 11) === 0x69 &&
-                sourceText.charCodeAt(i - 12) === 0x74 &&
-                sourceText.charCodeAt(i - 13) === 0x61 &&
-                sourceText.charCodeAt(i - 14) === 0x6E &&
-                sourceText.charCodeAt(i - 15) === 0x58);
+                charCodeAt(sourceText, i - 1) === 0x7D &&
+                charCodeAt(sourceText, i - 2) <= 0x20 &&
+                charCodeAt(sourceText, i - 3) === 0x5D &&
+                charCodeAt(sourceText, i - 4) === 0x65 &&
+                charCodeAt(sourceText, i - 5) === 0x64 &&
+                charCodeAt(sourceText, i - 6) === 0x6F &&
+                charCodeAt(sourceText, i - 7) === 0x63 &&
+                charCodeAt(sourceText, i - 8) === 0x20 &&
+                charCodeAt(sourceText, i - 9) === 0x65 &&
+                charCodeAt(sourceText, i - 10) === 0x76 &&
+                charCodeAt(sourceText, i - 11) === 0x69 &&
+                charCodeAt(sourceText, i - 12) === 0x74 &&
+                charCodeAt(sourceText, i - 13) === 0x61 &&
+                charCodeAt(sourceText, i - 14) === 0x6E &&
+                charCodeAt(sourceText, i - 15) === 0x58);
             lookup.set(fn, isNative);
         }
         return isNative;
     };
 })();
-function onResolve(maybePromise, resolveCallback) {
+const onResolve = (maybePromise, resolveCallback) => {
     if (maybePromise instanceof Promise) {
         return maybePromise.then(resolveCallback);
     }
     return resolveCallback(maybePromise);
-}
-function resolveAll(...maybePromises) {
+};
+const resolveAll = (...maybePromises) => {
     let maybePromise = void 0;
     let firstPromise = void 0;
     let promises = void 0;
@@ -286,7 +281,8 @@ function resolveAll(...maybePromises) {
         return firstPromise;
     }
     return Promise.all(promises);
-}
+};
+const charCodeAt = (str, index) => str.charCodeAt(index);
 
 const annoBaseName = 'au:annotation';
 const getAnnotationKeyFor = (name, context) => {
@@ -397,454 +393,7 @@ function fromDefinitionOrDefault(name, def, getDefault) {
     return value;
 }
 
-applyMetadataPolyfill(Reflect, false, false);
-class ResolverBuilder {
-    constructor(_container, _key) {
-        this._container = _container;
-        this._key = _key;
-    }
-    instance(value) {
-        return this._registerResolver(0, value);
-    }
-    singleton(value) {
-        return this._registerResolver(1, value);
-    }
-    transient(value) {
-        return this._registerResolver(2, value);
-    }
-    callback(value) {
-        return this._registerResolver(3, value);
-    }
-    cachedCallback(value) {
-        return this._registerResolver(3, cacheCallbackResult(value));
-    }
-    aliasTo(destinationKey) {
-        return this._registerResolver(5, destinationKey);
-    }
-    _registerResolver(strategy, state) {
-        const { _container: container, _key: key } = this;
-        this._container = this._key = (void 0);
-        return container.registerResolver(key, new Resolver(key, strategy, state));
-    }
-}
-function cloneArrayWithPossibleProps(source) {
-    const clone = source.slice();
-    const keys = Object.keys(source);
-    const len = keys.length;
-    let key;
-    for (let i = 0; i < len; ++i) {
-        key = keys[i];
-        if (!isArrayIndex(key)) {
-            clone[key] = source[key];
-        }
-    }
-    return clone;
-}
-const DefaultResolver = {
-    none(key) {
-        throw noResolverForKeyError(key);
-    },
-    singleton(key) { return new Resolver(key, 1, key); },
-    transient(key) { return new Resolver(key, 2, key); },
-};
-const noResolverForKeyError = (key) => new Error(`AUR0002: ${toStringSafe(key)} not registered, did you forget to add @singleton()?`)
-    ;
-class ContainerConfiguration {
-    constructor(inheritParentResources, defaultResolver) {
-        this.inheritParentResources = inheritParentResources;
-        this.defaultResolver = defaultResolver;
-    }
-    static from(config) {
-        if (config === void 0 ||
-            config === ContainerConfiguration.DEFAULT) {
-            return ContainerConfiguration.DEFAULT;
-        }
-        return new ContainerConfiguration(config.inheritParentResources ?? false, config.defaultResolver ?? DefaultResolver.singleton);
-    }
-}
-ContainerConfiguration.DEFAULT = ContainerConfiguration.from({});
-const DI = {
-    createContainer(config) {
-        return new Container(null, ContainerConfiguration.from(config));
-    },
-    getDesignParamtypes(Type) {
-        return getOwnMetadata('design:paramtypes', Type);
-    },
-    getAnnotationParamtypes(Type) {
-        const key = getAnnotationKeyFor('di:paramtypes');
-        return getOwnMetadata(key, Type);
-    },
-    getOrCreateAnnotationParamTypes: getOrCreateAnnotationParamTypes,
-    getDependencies: getDependencies,
-    createInterface(configureOrName, configuror) {
-        const configure = isFunction(configureOrName) ? configureOrName : configuror;
-        const friendlyName = isString(configureOrName) ? configureOrName : undefined;
-        const Interface = function (target, property, index) {
-            if (target == null || new.target !== undefined) {
-                {
-                    throw new Error(`AUR0001: No registration for interface: '${Interface.friendlyName}'`);
-                }
-            }
-            const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
-            annotationParamtypes[index] = Interface;
-        };
-        Interface.$isInterface = true;
-        Interface.friendlyName = friendlyName == null ? '(anonymous)' : friendlyName;
-        if (configure != null) {
-            Interface.register = (container, key) => configure(new ResolverBuilder(container, key ?? Interface));
-        }
-        Interface.toString = () => `InterfaceSymbol<${Interface.friendlyName}>`;
-        return Interface;
-    },
-    inject(...dependencies) {
-        return function (target, key, descriptor) {
-            if (typeof descriptor === 'number') {
-                const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
-                const dep = dependencies[0];
-                if (dep !== void 0) {
-                    annotationParamtypes[descriptor] = dep;
-                }
-            }
-            else if (key) {
-                const annotationParamtypes = getOrCreateAnnotationParamTypes(target.constructor);
-                const dep = dependencies[0];
-                if (dep !== void 0) {
-                    annotationParamtypes[key] = dep;
-                }
-            }
-            else if (descriptor) {
-                const fn = descriptor.value;
-                const annotationParamtypes = getOrCreateAnnotationParamTypes(fn);
-                let dep;
-                let i = 0;
-                for (; i < dependencies.length; ++i) {
-                    dep = dependencies[i];
-                    if (dep !== void 0) {
-                        annotationParamtypes[i] = dep;
-                    }
-                }
-            }
-            else {
-                const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
-                let dep;
-                let i = 0;
-                for (; i < dependencies.length; ++i) {
-                    dep = dependencies[i];
-                    if (dep !== void 0) {
-                        annotationParamtypes[i] = dep;
-                    }
-                }
-            }
-        };
-    },
-    transient(target) {
-        target.register = function (container) {
-            const registration = Registration.transient(target, target);
-            return registration.register(container, target);
-        };
-        target.registerInRequestor = false;
-        return target;
-    },
-    singleton(target, options = defaultSingletonOptions) {
-        target.register = function (container) {
-            const registration = Registration.singleton(target, target);
-            return registration.register(container, target);
-        };
-        target.registerInRequestor = options.scoped;
-        return target;
-    },
-};
-function getDependencies(Type) {
-    const key = getAnnotationKeyFor('di:dependencies');
-    let dependencies = getOwnMetadata(key, Type);
-    if (dependencies === void 0) {
-        const inject = Type.inject;
-        if (inject === void 0) {
-            const designParamtypes = DI.getDesignParamtypes(Type);
-            const annotationParamtypes = DI.getAnnotationParamtypes(Type);
-            if (designParamtypes === void 0) {
-                if (annotationParamtypes === void 0) {
-                    const Proto = Object.getPrototypeOf(Type);
-                    if (isFunction(Proto) && Proto !== Function.prototype) {
-                        dependencies = cloneArrayWithPossibleProps(getDependencies(Proto));
-                    }
-                    else {
-                        dependencies = [];
-                    }
-                }
-                else {
-                    dependencies = cloneArrayWithPossibleProps(annotationParamtypes);
-                }
-            }
-            else if (annotationParamtypes === void 0) {
-                dependencies = cloneArrayWithPossibleProps(designParamtypes);
-            }
-            else {
-                dependencies = cloneArrayWithPossibleProps(designParamtypes);
-                let len = annotationParamtypes.length;
-                let auAnnotationParamtype;
-                let i = 0;
-                for (; i < len; ++i) {
-                    auAnnotationParamtype = annotationParamtypes[i];
-                    if (auAnnotationParamtype !== void 0) {
-                        dependencies[i] = auAnnotationParamtype;
-                    }
-                }
-                const keys = Object.keys(annotationParamtypes);
-                let key;
-                i = 0;
-                len = keys.length;
-                for (i = 0; i < len; ++i) {
-                    key = keys[i];
-                    if (!isArrayIndex(key)) {
-                        dependencies[key] = annotationParamtypes[key];
-                    }
-                }
-            }
-        }
-        else {
-            dependencies = cloneArrayWithPossibleProps(inject);
-        }
-        defineMetadata(key, dependencies, Type);
-        appendAnnotation(Type, key);
-    }
-    return dependencies;
-}
-function getOrCreateAnnotationParamTypes(Type) {
-    const key = getAnnotationKeyFor('di:paramtypes');
-    let annotationParamtypes = getOwnMetadata(key, Type);
-    if (annotationParamtypes === void 0) {
-        defineMetadata(key, annotationParamtypes = [], Type);
-        appendAnnotation(Type, key);
-    }
-    return annotationParamtypes;
-}
-const IContainer = DI.createInterface('IContainer');
-const IServiceLocator = IContainer;
-function createResolver(getter) {
-    return function (key) {
-        const resolver = function (target, property, descriptor) {
-            DI.inject(resolver)(target, property, descriptor);
-        };
-        resolver.$isResolver = true;
-        resolver.resolve = function (handler, requestor) {
-            return getter(key, handler, requestor);
-        };
-        return resolver;
-    };
-}
-const inject = DI.inject;
-function transientDecorator(target) {
-    return DI.transient(target);
-}
-function transient(target) {
-    return target == null ? transientDecorator : transientDecorator(target);
-}
-const defaultSingletonOptions = { scoped: false };
-function singleton(targetOrOptions) {
-    if (isFunction(targetOrOptions)) {
-        return DI.singleton(targetOrOptions);
-    }
-    return function ($target) {
-        return DI.singleton($target, targetOrOptions);
-    };
-}
-function createAllResolver(getter) {
-    return function (key, searchAncestors) {
-        searchAncestors = !!searchAncestors;
-        const resolver = function (target, property, descriptor) {
-            DI.inject(resolver)(target, property, descriptor);
-        };
-        resolver.$isResolver = true;
-        resolver.resolve = function (handler, requestor) {
-            return getter(key, handler, requestor, searchAncestors);
-        };
-        return resolver;
-    };
-}
-const all = createAllResolver((key, handler, requestor, searchAncestors) => requestor.getAll(key, searchAncestors));
-const lazy = createResolver((key, handler, requestor) => {
-    return () => requestor.get(key);
-});
-const optional = createResolver((key, handler, requestor) => {
-    if (requestor.has(key, true)) {
-        return requestor.get(key);
-    }
-    else {
-        return undefined;
-    }
-});
-function ignore(target, property, descriptor) {
-    DI.inject(ignore)(target, property, descriptor);
-}
-ignore.$isResolver = true;
-ignore.resolve = () => undefined;
-const factory = createResolver((key, handler, requestor) => {
-    return (...args) => handler.getFactory(key).construct(requestor, args);
-});
-const newInstanceForScope = createResolver((key, handler, requestor) => {
-    const instance = createNewInstance(key, handler, requestor);
-    const instanceProvider = new InstanceProvider(toStringSafe(key), instance);
-    requestor.registerResolver(key, instanceProvider, true);
-    return instance;
-});
-const newInstanceOf = createResolver((key, handler, requestor) => createNewInstance(key, handler, requestor));
-function createNewInstance(key, handler, requestor) {
-    return handler.getFactory(key).construct(requestor);
-}
-var ResolverStrategy;
-(function (ResolverStrategy) {
-    ResolverStrategy[ResolverStrategy["instance"] = 0] = "instance";
-    ResolverStrategy[ResolverStrategy["singleton"] = 1] = "singleton";
-    ResolverStrategy[ResolverStrategy["transient"] = 2] = "transient";
-    ResolverStrategy[ResolverStrategy["callback"] = 3] = "callback";
-    ResolverStrategy[ResolverStrategy["array"] = 4] = "array";
-    ResolverStrategy[ResolverStrategy["alias"] = 5] = "alias";
-})(ResolverStrategy || (ResolverStrategy = {}));
-class Resolver {
-    constructor(_key, _strategy, _state) {
-        this._key = _key;
-        this._strategy = _strategy;
-        this._state = _state;
-        this.resolving = false;
-    }
-    get $isResolver() { return true; }
-    register(container, key) {
-        return container.registerResolver(key || this._key, this);
-    }
-    resolve(handler, requestor) {
-        switch (this._strategy) {
-            case 0:
-                return this._state;
-            case 1: {
-                if (this.resolving) {
-                    throw cyclicDependencyError(this._state.name);
-                }
-                this.resolving = true;
-                this._state = handler.getFactory(this._state).construct(requestor);
-                this._strategy = 0;
-                this.resolving = false;
-                return this._state;
-            }
-            case 2: {
-                const factory = handler.getFactory(this._state);
-                if (factory === null) {
-                    throw nullFactoryError(this._key);
-                }
-                return factory.construct(requestor);
-            }
-            case 3:
-                return this._state(handler, requestor, this);
-            case 4:
-                return this._state[0].resolve(handler, requestor);
-            case 5:
-                return requestor.get(this._state);
-            default:
-                throw invalidResolverStrategyError(this._strategy);
-        }
-    }
-    getFactory(container) {
-        switch (this._strategy) {
-            case 1:
-            case 2:
-                return container.getFactory(this._state);
-            case 5:
-                return container.getResolver(this._state)?.getFactory?.(container) ?? null;
-            default:
-                return null;
-        }
-    }
-}
-const cyclicDependencyError = (name) => new Error(`AUR0003: Cyclic dependency found: ${name}`)
-    ;
-const nullFactoryError = (key) => new Error(`AUR0004: Resolver for ${toStringSafe(key)} returned a null factory`)
-    ;
-const invalidResolverStrategyError = (strategy) => new Error(`AUR0005: Invalid resolver strategy specified: ${strategy}.`)
-    ;
-function containerGetKey(d) {
-    return this.get(d);
-}
-function transformInstance(inst, transform) {
-    return transform(inst);
-}
-class Factory {
-    constructor(Type, dependencies) {
-        this.Type = Type;
-        this.dependencies = dependencies;
-        this.transformers = null;
-    }
-    construct(container, dynamicDependencies) {
-        let instance;
-        if (dynamicDependencies === void 0) {
-            instance = new this.Type(...this.dependencies.map(containerGetKey, container));
-        }
-        else {
-            instance = new this.Type(...this.dependencies.map(containerGetKey, container), ...dynamicDependencies);
-        }
-        if (this.transformers == null) {
-            return instance;
-        }
-        return this.transformers.reduce(transformInstance, instance);
-    }
-    registerTransformer(transformer) {
-        (this.transformers ?? (this.transformers = [])).push(transformer);
-    }
-}
-const containerResolver = {
-    $isResolver: true,
-    resolve(handler, requestor) {
-        return requestor;
-    }
-};
-function isRegistry(obj) {
-    return isFunction(obj.register);
-}
-function isSelfRegistry(obj) {
-    return isRegistry(obj) && typeof obj.registerInRequestor === 'boolean';
-}
-function isRegisterInRequester(obj) {
-    return isSelfRegistry(obj) && obj.registerInRequestor;
-}
-function isClass(obj) {
-    return obj.prototype !== void 0;
-}
-function isResourceKey(key) {
-    return isString(key) && key.indexOf(':') > 0;
-}
-const InstrinsicTypeNames = new Set([
-    'Array',
-    'ArrayBuffer',
-    'Boolean',
-    'DataView',
-    'Date',
-    'Error',
-    'EvalError',
-    'Float32Array',
-    'Float64Array',
-    'Function',
-    'Int8Array',
-    'Int16Array',
-    'Int32Array',
-    'Map',
-    'Number',
-    'Object',
-    'Promise',
-    'RangeError',
-    'ReferenceError',
-    'RegExp',
-    'Set',
-    'SharedArrayBuffer',
-    'String',
-    'SyntaxError',
-    'TypeError',
-    'Uint8Array',
-    'Uint8ClampedArray',
-    'Uint16Array',
-    'Uint32Array',
-    'URIError',
-    'WeakMap',
-    'WeakSet',
-]);
+const InstrinsicTypeNames = new Set('Array ArrayBuffer Boolean DataView Date Error EvalError Float32Array Float64Array Function Int8Array Int16Array Int32Array Map Number Object Promise RangeError ReferenceError RegExp Set SharedArrayBuffer String SyntaxError TypeError Uint8Array Uint8ClampedArray Uint16Array Uint32Array URIError WeakMap WeakSet'.split(' '));
 let containerId = 0;
 class Container {
     constructor(parent, config) {
@@ -1192,20 +741,462 @@ class Container {
         }
     }
 }
-const registrationError = (deps) => new Error(`AUR0006: Unable to autoregister dependency: [${deps.map(toStringSafe)}]`)
+function validateKey(key) {
+    if (key === null || key === void 0) {
+        {
+            throw createError(`AUR0014: key/value cannot be null or undefined. Are you trying to inject/register something that doesn't exist with DI?`);
+        }
+    }
+}
+const buildAllResponse = (resolver, handler, requestor) => {
+    if (resolver instanceof Resolver && resolver._strategy === 4) {
+        const state = resolver._state;
+        let i = state.length;
+        const results = new Array(i);
+        while (i--) {
+            results[i] = state[i].resolve(handler, requestor);
+        }
+        return results;
+    }
+    return [resolver.resolve(handler, requestor)];
+};
+const containerResolver = {
+    $isResolver: true,
+    resolve(handler, requestor) {
+        return requestor;
+    }
+};
+const isRegistry = (obj) => isFunction(obj.register);
+const isSelfRegistry = (obj) => isRegistry(obj) && typeof obj.registerInRequestor === 'boolean';
+const isRegisterInRequester = (obj) => isSelfRegistry(obj) && obj.registerInRequestor;
+const isClass = (obj) => obj.prototype !== void 0;
+const isResourceKey = (key) => isString(key) && key.indexOf(':') > 0;
+const registrationError = (deps) => createError(`AUR0006: Unable to autoregister dependency: [${deps.map(toStringSafe)}]`)
     ;
-const resourceExistError = (key) => new Error(`AUR0007: Resource key "${toStringSafe(key)}" already registered`)
+const resourceExistError = (key) => createError(`AUR0007: Resource key "${toStringSafe(key)}" already registered`)
     ;
-const cantResolveKeyError = (key) => new Error(`AUR0008: Unable to resolve key: ${toStringSafe(key)}`)
+const cantResolveKeyError = (key) => createError(`AUR0008: Unable to resolve key: ${toStringSafe(key)}`)
     ;
-const jitRegisterNonFunctionError = (keyAsValue) => new Error(`AUR0009: Attempted to jitRegister something that is not a constructor: '${toStringSafe(keyAsValue)}'. Did you forget to register this resource?`)
+const jitRegisterNonFunctionError = (keyAsValue) => createError(`AUR0009: Attempted to jitRegister something that is not a constructor: '${toStringSafe(keyAsValue)}'. Did you forget to register this resource?`)
     ;
-const jitInstrinsicTypeError = (keyAsValue) => new Error(`AUR0010: Attempted to jitRegister an intrinsic type: ${keyAsValue.name}. Did you forget to add @inject(Key)`)
+const jitInstrinsicTypeError = (keyAsValue) => createError(`AUR0010: Attempted to jitRegister an intrinsic type: ${keyAsValue.name}. Did you forget to add @inject(Key)`)
     ;
-const invalidResolverFromRegisterError = () => new Error(`AUR0011: Invalid resolver returned from the static register method`)
+const invalidResolverFromRegisterError = () => createError(`AUR0011: Invalid resolver returned from the static register method`)
     ;
-const jitInterfaceError = (name) => new Error(`AUR0012: Attempted to jitRegister an interface: ${name}`)
+const jitInterfaceError = (name) => createError(`AUR0012: Attempted to jitRegister an interface: ${name}`)
     ;
+const createNativeInvocationError = (Type) => createError(`AUR0015: ${Type.name} is a native function and therefore cannot be safely constructed by DI. If this is intentional, please use a callback or cachedCallback resolver.`)
+    ;
+
+const instanceRegistration = (key, value) => new Resolver(key, 0, value);
+const singletonRegistration = (key, value) => new Resolver(key, 1, value);
+const transientRegistation = (key, value) => new Resolver(key, 2, value);
+const callbackRegistration = (key, callback) => new Resolver(key, 3, callback);
+const cachedCallbackRegistration = (key, callback) => new Resolver(key, 3, cacheCallbackResult(callback));
+const aliasToRegistration = (originalKey, aliasKey) => new Resolver(aliasKey, 5, originalKey);
+const deferRegistration = (key, ...params) => new ParameterizedRegistry(key, params);
+const containerLookup = new WeakMap();
+const cacheCallbackResult = (fun) => {
+    return (handler, requestor, resolver) => {
+        let resolverLookup = containerLookup.get(handler);
+        if (resolverLookup === void 0) {
+            containerLookup.set(handler, resolverLookup = new WeakMap());
+        }
+        if (resolverLookup.has(resolver)) {
+            return resolverLookup.get(resolver);
+        }
+        const t = fun(handler, requestor, resolver);
+        resolverLookup.set(resolver, t);
+        return t;
+    };
+};
+
+applyMetadataPolyfill(Reflect, false, false);
+class ResolverBuilder {
+    constructor(_container, _key) {
+        this._container = _container;
+        this._key = _key;
+    }
+    instance(value) {
+        return this._registerResolver(0, value);
+    }
+    singleton(value) {
+        return this._registerResolver(1, value);
+    }
+    transient(value) {
+        return this._registerResolver(2, value);
+    }
+    callback(value) {
+        return this._registerResolver(3, value);
+    }
+    cachedCallback(value) {
+        return this._registerResolver(3, cacheCallbackResult(value));
+    }
+    aliasTo(destinationKey) {
+        return this._registerResolver(5, destinationKey);
+    }
+    _registerResolver(strategy, state) {
+        const { _container: container, _key: key } = this;
+        this._container = this._key = (void 0);
+        return container.registerResolver(key, new Resolver(key, strategy, state));
+    }
+}
+const cloneArrayWithPossibleProps = (source) => {
+    const clone = source.slice();
+    const keys = Object.keys(source);
+    const len = keys.length;
+    let key;
+    for (let i = 0; i < len; ++i) {
+        key = keys[i];
+        if (!isArrayIndex(key)) {
+            clone[key] = source[key];
+        }
+    }
+    return clone;
+};
+const DefaultResolver = {
+    none(key) {
+        throw noResolverForKeyError(key);
+    },
+    singleton: (key) => new Resolver(key, 1, key),
+    transient: (key) => new Resolver(key, 2, key),
+};
+const noResolverForKeyError = (key) => createError(`AUR0002: ${toStringSafe(key)} not registered, did you forget to add @singleton()?`)
+    ;
+class ContainerConfiguration {
+    constructor(inheritParentResources, defaultResolver) {
+        this.inheritParentResources = inheritParentResources;
+        this.defaultResolver = defaultResolver;
+    }
+    static from(config) {
+        if (config === void 0 ||
+            config === ContainerConfiguration.DEFAULT) {
+            return ContainerConfiguration.DEFAULT;
+        }
+        return new ContainerConfiguration(config.inheritParentResources ?? false, config.defaultResolver ?? DefaultResolver.singleton);
+    }
+}
+ContainerConfiguration.DEFAULT = ContainerConfiguration.from({});
+const createContainer = (config) => new Container(null, ContainerConfiguration.from(config));
+const getAnnotationParamtypes = (Type) => {
+    const key = getAnnotationKeyFor('di:paramtypes');
+    return getOwnMetadata(key, Type);
+};
+const getDesignParamtypes = (Type) => getOwnMetadata('design:paramtypes', Type);
+const getOrCreateAnnotationParamTypes = (Type) => {
+    const key = getAnnotationKeyFor('di:paramtypes');
+    let annotationParamtypes = getOwnMetadata(key, Type);
+    if (annotationParamtypes === void 0) {
+        defineMetadata(key, annotationParamtypes = [], Type);
+        appendAnnotation(Type, key);
+    }
+    return annotationParamtypes;
+};
+const getDependencies = (Type) => {
+    const key = getAnnotationKeyFor('di:dependencies');
+    let dependencies = getOwnMetadata(key, Type);
+    if (dependencies === void 0) {
+        const inject = Type.inject;
+        if (inject === void 0) {
+            const designParamtypes = DI.getDesignParamtypes(Type);
+            const annotationParamtypes = getAnnotationParamtypes(Type);
+            if (designParamtypes === void 0) {
+                if (annotationParamtypes === void 0) {
+                    const Proto = Object.getPrototypeOf(Type);
+                    if (isFunction(Proto) && Proto !== Function.prototype) {
+                        dependencies = cloneArrayWithPossibleProps(getDependencies(Proto));
+                    }
+                    else {
+                        dependencies = [];
+                    }
+                }
+                else {
+                    dependencies = cloneArrayWithPossibleProps(annotationParamtypes);
+                }
+            }
+            else if (annotationParamtypes === void 0) {
+                dependencies = cloneArrayWithPossibleProps(designParamtypes);
+            }
+            else {
+                dependencies = cloneArrayWithPossibleProps(designParamtypes);
+                let len = annotationParamtypes.length;
+                let auAnnotationParamtype;
+                let i = 0;
+                for (; i < len; ++i) {
+                    auAnnotationParamtype = annotationParamtypes[i];
+                    if (auAnnotationParamtype !== void 0) {
+                        dependencies[i] = auAnnotationParamtype;
+                    }
+                }
+                const keys = Object.keys(annotationParamtypes);
+                let key;
+                i = 0;
+                len = keys.length;
+                for (i = 0; i < len; ++i) {
+                    key = keys[i];
+                    if (!isArrayIndex(key)) {
+                        dependencies[key] = annotationParamtypes[key];
+                    }
+                }
+            }
+        }
+        else {
+            dependencies = cloneArrayWithPossibleProps(inject);
+        }
+        defineMetadata(key, dependencies, Type);
+        appendAnnotation(Type, key);
+    }
+    return dependencies;
+};
+const createInterface = (configureOrName, configuror) => {
+    const configure = isFunction(configureOrName) ? configureOrName : configuror;
+    const friendlyName = isString(configureOrName) ? configureOrName : undefined;
+    const Interface = function (target, property, index) {
+        if (target == null || new.target !== undefined) {
+            throw createNoRegistrationError(Interface.friendlyName);
+        }
+        const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
+        annotationParamtypes[index] = Interface;
+    };
+    Interface.$isInterface = true;
+    Interface.friendlyName = friendlyName == null ? '(anonymous)' : friendlyName;
+    if (configure != null) {
+        Interface.register = (container, key) => configure(new ResolverBuilder(container, key ?? Interface));
+    }
+    Interface.toString = () => `InterfaceSymbol<${Interface.friendlyName}>`;
+    return Interface;
+};
+const createNoRegistrationError = (name) => createError(`AUR0001: No registration for interface: '${name}'`)
+    ;
+const DI = {
+    createContainer,
+    getDesignParamtypes,
+    getAnnotationParamtypes,
+    getOrCreateAnnotationParamTypes,
+    getDependencies: getDependencies,
+    createInterface,
+    inject(...dependencies) {
+        return (target, key, descriptor) => {
+            if (typeof descriptor === 'number') {
+                const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
+                const dep = dependencies[0];
+                if (dep !== void 0) {
+                    annotationParamtypes[descriptor] = dep;
+                }
+            }
+            else if (key) {
+                const annotationParamtypes = getOrCreateAnnotationParamTypes(target.constructor);
+                const dep = dependencies[0];
+                if (dep !== void 0) {
+                    annotationParamtypes[key] = dep;
+                }
+            }
+            else if (descriptor) {
+                const fn = descriptor.value;
+                const annotationParamtypes = getOrCreateAnnotationParamTypes(fn);
+                let dep;
+                let i = 0;
+                for (; i < dependencies.length; ++i) {
+                    dep = dependencies[i];
+                    if (dep !== void 0) {
+                        annotationParamtypes[i] = dep;
+                    }
+                }
+            }
+            else {
+                const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
+                let dep;
+                let i = 0;
+                for (; i < dependencies.length; ++i) {
+                    dep = dependencies[i];
+                    if (dep !== void 0) {
+                        annotationParamtypes[i] = dep;
+                    }
+                }
+            }
+        };
+    },
+    transient(target) {
+        target.register = function (container) {
+            const registration = Registration.transient(target, target);
+            return registration.register(container, target);
+        };
+        target.registerInRequestor = false;
+        return target;
+    },
+    singleton(target, options = defaultSingletonOptions) {
+        target.register = function (container) {
+            const registration = Registration.singleton(target, target);
+            return registration.register(container, target);
+        };
+        target.registerInRequestor = options.scoped;
+        return target;
+    },
+};
+const IContainer = createInterface('IContainer');
+const IServiceLocator = IContainer;
+function createResolver(getter) {
+    return function (key) {
+        const resolver = function (target, property, descriptor) {
+            inject(resolver)(target, property, descriptor);
+        };
+        resolver.$isResolver = true;
+        resolver.resolve = function (handler, requestor) {
+            return getter(key, handler, requestor);
+        };
+        return resolver;
+    };
+}
+const inject = DI.inject;
+function transientDecorator(target) {
+    return DI.transient(target);
+}
+function transient(target) {
+    return target == null ? transientDecorator : transientDecorator(target);
+}
+const defaultSingletonOptions = { scoped: false };
+const decorateSingleton = DI.singleton;
+function singleton(targetOrOptions) {
+    if (isFunction(targetOrOptions)) {
+        return decorateSingleton(targetOrOptions);
+    }
+    return function ($target) {
+        return decorateSingleton($target, targetOrOptions);
+    };
+}
+const createAllResolver = (getter) => {
+    return (key, searchAncestors) => {
+        searchAncestors = !!searchAncestors;
+        const resolver = function (target, property, descriptor) {
+            inject(resolver)(target, property, descriptor);
+        };
+        resolver.$isResolver = true;
+        resolver.resolve = function (handler, requestor) {
+            return getter(key, handler, requestor, searchAncestors);
+        };
+        return resolver;
+    };
+};
+const all = createAllResolver((key, handler, requestor, searchAncestors) => requestor.getAll(key, searchAncestors));
+const lazy = createResolver((key, handler, requestor) => {
+    return () => requestor.get(key);
+});
+const optional = createResolver((key, handler, requestor) => {
+    if (requestor.has(key, true)) {
+        return requestor.get(key);
+    }
+    else {
+        return undefined;
+    }
+});
+const ignore = (target, property, descriptor) => {
+    inject(ignore)(target, property, descriptor);
+};
+ignore.$isResolver = true;
+ignore.resolve = () => undefined;
+const factory = createResolver((key, handler, requestor) => {
+    return (...args) => handler.getFactory(key).construct(requestor, args);
+});
+const newInstanceForScope = createResolver((key, handler, requestor) => {
+    const instance = createNewInstance(key, handler, requestor);
+    const instanceProvider = new InstanceProvider(toStringSafe(key), instance);
+    requestor.registerResolver(key, instanceProvider, true);
+    return instance;
+});
+const newInstanceOf = createResolver((key, handler, requestor) => createNewInstance(key, handler, requestor));
+const createNewInstance = (key, handler, requestor) => {
+    return handler.getFactory(key).construct(requestor);
+};
+
+class Resolver {
+    constructor(_key, _strategy, _state) {
+        this._key = _key;
+        this._strategy = _strategy;
+        this._state = _state;
+        this.resolving = false;
+    }
+    get $isResolver() { return true; }
+    register(container, key) {
+        return container.registerResolver(key || this._key, this);
+    }
+    resolve(handler, requestor) {
+        switch (this._strategy) {
+            case 0:
+                return this._state;
+            case 1: {
+                if (this.resolving) {
+                    throw cyclicDependencyError(this._state.name);
+                }
+                this.resolving = true;
+                this._state = handler.getFactory(this._state).construct(requestor);
+                this._strategy = 0;
+                this.resolving = false;
+                return this._state;
+            }
+            case 2: {
+                const factory = handler.getFactory(this._state);
+                if (factory === null) {
+                    throw nullFactoryError(this._key);
+                }
+                return factory.construct(requestor);
+            }
+            case 3:
+                return this._state(handler, requestor, this);
+            case 4:
+                return this._state[0].resolve(handler, requestor);
+            case 5:
+                return requestor.get(this._state);
+            default:
+                throw invalidResolverStrategyError(this._strategy);
+        }
+    }
+    getFactory(container) {
+        switch (this._strategy) {
+            case 1:
+            case 2:
+                return container.getFactory(this._state);
+            case 5:
+                return container.getResolver(this._state)?.getFactory?.(container) ?? null;
+            default:
+                return null;
+        }
+    }
+}
+const cyclicDependencyError = (name) => createError(`AUR0003: Cyclic dependency found: ${name}`)
+    ;
+const nullFactoryError = (key) => createError(`AUR0004: Resolver for ${toStringSafe(key)} returned a null factory`)
+    ;
+const invalidResolverStrategyError = (strategy) => createError(`AUR0005: Invalid resolver strategy specified: ${strategy}.`)
+    ;
+function containerGetKey(d) {
+    return this.get(d);
+}
+function transformInstance(inst, transform) {
+    return transform(inst);
+}
+class Factory {
+    constructor(Type, dependencies) {
+        this.Type = Type;
+        this.dependencies = dependencies;
+        this.transformers = null;
+    }
+    construct(container, dynamicDependencies) {
+        let instance;
+        if (dynamicDependencies === void 0) {
+            instance = new this.Type(...this.dependencies.map(containerGetKey, container));
+        }
+        else {
+            instance = new this.Type(...this.dependencies.map(containerGetKey, container), ...dynamicDependencies);
+        }
+        if (this.transformers == null) {
+            return instance;
+        }
+        return this.transformers.reduce(transformInstance, instance);
+    }
+    registerTransformer(transformer) {
+        (this.transformers ?? (this.transformers = [])).push(transformer);
+    }
+}
 class ParameterizedRegistry {
     constructor(key, params) {
         this.key = key;
@@ -1221,43 +1212,14 @@ class ParameterizedRegistry {
         }
     }
 }
-const containerLookup = new WeakMap();
-function cacheCallbackResult(fun) {
-    return function (handler, requestor, resolver) {
-        let resolverLookup = containerLookup.get(handler);
-        if (resolverLookup === void 0) {
-            containerLookup.set(handler, resolverLookup = new WeakMap());
-        }
-        if (resolverLookup.has(resolver)) {
-            return resolverLookup.get(resolver);
-        }
-        const t = fun(handler, requestor, resolver);
-        resolverLookup.set(resolver, t);
-        return t;
-    };
-}
 const Registration = {
-    instance(key, value) {
-        return new Resolver(key, 0, value);
-    },
-    singleton(key, value) {
-        return new Resolver(key, 1, value);
-    },
-    transient(key, value) {
-        return new Resolver(key, 2, value);
-    },
-    callback(key, callback) {
-        return new Resolver(key, 3, callback);
-    },
-    cachedCallback(key, callback) {
-        return new Resolver(key, 3, cacheCallbackResult(callback));
-    },
-    aliasTo(originalKey, aliasKey) {
-        return new Resolver(aliasKey, 5, originalKey);
-    },
-    defer(key, ...params) {
-        return new ParameterizedRegistry(key, params);
-    }
+    instance: instanceRegistration,
+    singleton: singletonRegistration,
+    transient: transientRegistation,
+    callback: callbackRegistration,
+    cachedCallback: cachedCallbackRegistration,
+    aliasTo: aliasToRegistration,
+    defer: deferRegistration,
 };
 class InstanceProvider {
     constructor(name, instance) {
@@ -1284,40 +1246,16 @@ class InstanceProvider {
         this._instance = null;
     }
 }
-function validateKey(key) {
-    if (key === null || key === void 0) {
-        {
-            throw new Error(`AUR0014: key/value cannot be null or undefined. Are you trying to inject/register something that doesn't exist with DI?`);
-        }
-    }
-}
-function buildAllResponse(resolver, handler, requestor) {
-    if (resolver instanceof Resolver && resolver._strategy === 4) {
-        const state = resolver._state;
-        let i = state.length;
-        const results = new Array(i);
-        while (i--) {
-            results[i] = state[i].resolve(handler, requestor);
-        }
-        return results;
-    }
-    return [resolver.resolve(handler, requestor)];
-}
-function noInstanceError(name) {
+const noInstanceError = (name) => {
     {
-        return new Error(`AUR0013: Cannot call resolve ${name} before calling prepare or after calling dispose.`);
+        return createError(`AUR0013: Cannot call resolve ${name} before calling prepare or after calling dispose.`);
     }
-}
-function createNativeInvocationError(Type) {
-    {
-        return new Error(`AUR0015: ${Type.name} is a native function and therefore cannot be safely constructed by DI. If this is intentional, please use a callback or cachedCallback resolver.`);
-    }
-}
+};
 
 const emptyArray = Object.freeze([]);
 const emptyObject = Object.freeze({});
 function noop() { }
-const IPlatform = DI.createInterface('IPlatform');
+const IPlatform = createInterface('IPlatform');
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -1360,11 +1298,11 @@ var ColorOptions;
     ColorOptions[ColorOptions["noColors"] = 0] = "noColors";
     ColorOptions[ColorOptions["colors"] = 1] = "colors";
 })(ColorOptions || (ColorOptions = {}));
-const ILogConfig = DI.createInterface('ILogConfig', x => x.instance(new LogConfig(0, 3)));
-const ISink = DI.createInterface('ISink');
-const ILogEventFactory = DI.createInterface('ILogEventFactory', x => x.singleton(DefaultLogEventFactory));
-const ILogger = DI.createInterface('ILogger', x => x.singleton(DefaultLogger));
-const ILogScopes = DI.createInterface('ILogScope');
+const ILogConfig = createInterface('ILogConfig', x => x.instance(new LogConfig(0, 3)));
+const ISink = createInterface('ISink');
+const ILogEventFactory = createInterface('ILogEventFactory', x => x.singleton(DefaultLogEventFactory));
+const ILogger = createInterface('ILogger', x => x.singleton(DefaultLogger));
+const ILogScopes = createInterface('ILogScope');
 const LoggerSink = Object.freeze({
     key: getAnnotationKeyFor('logger-sink-handles'),
     define(target, definition) {
@@ -1375,11 +1313,9 @@ const LoggerSink = Object.freeze({
         return Metadata.get(this.key, target);
     },
 });
-function sink(definition) {
-    return function (target) {
-        return LoggerSink.define(target, definition);
-    };
-}
+const sink = (definition) => {
+    return (target) => LoggerSink.define(target, definition);
+};
 const format = toLookup({
     red(str) {
         return `\u001b[31m${str}\u001b[39m`;
@@ -1433,7 +1369,7 @@ const getLogLevelString = (function () {
             QQQ: format.grey('???'),
         }),
     ];
-    return function (level, colorOptions) {
+    return (level, colorOptions) => {
         if (level <= 0) {
             return logLevelString[colorOptions].TRC;
         }
@@ -1455,18 +1391,18 @@ const getLogLevelString = (function () {
         return logLevelString[colorOptions].QQQ;
     };
 })();
-function getScopeString(scope, colorOptions) {
+const getScopeString = (scope, colorOptions) => {
     if (colorOptions === 0) {
         return scope.join('.');
     }
     return scope.map(format.cyan).join('.');
-}
-function getIsoString(timestamp, colorOptions) {
+};
+const getIsoString = (timestamp, colorOptions) => {
     if (colorOptions === 0) {
         return new Date(timestamp).toISOString();
     }
     return format.grey(new Date(timestamp).toISOString());
-}
+};
 class DefaultLogEvent {
     constructor(severity, message, optionalParams, scope, colorOptions, timestamp) {
         this.severity = severity;
@@ -1537,7 +1473,7 @@ let ConsoleSink = class ConsoleSink {
         };
     }
     static register(container) {
-        Registration.singleton(ISink, ConsoleSink).register(container);
+        singletonRegistration(ISink, ConsoleSink).register(container);
     }
 };
 ConsoleSink = __decorate([
@@ -1545,25 +1481,26 @@ ConsoleSink = __decorate([
 ], ConsoleSink);
 let DefaultLogger = class DefaultLogger {
     constructor(config, factory, sinks, scope = [], parent = null) {
-        this.config = config;
-        this.factory = factory;
         this.scope = scope;
-        this.scopedLoggers = createObject();
+        this._scopedLoggers = createObject();
         let traceSinks;
         let debugSinks;
         let infoSinks;
         let warnSinks;
         let errorSinks;
         let fatalSinks;
+        this.config = config;
+        this._factory = factory;
+        this.sinks = sinks;
         if (parent === null) {
             this.root = this;
             this.parent = this;
-            traceSinks = this.traceSinks = [];
-            debugSinks = this.debugSinks = [];
-            infoSinks = this.infoSinks = [];
-            warnSinks = this.warnSinks = [];
-            errorSinks = this.errorSinks = [];
-            fatalSinks = this.fatalSinks = [];
+            traceSinks = this._traceSinks = [];
+            debugSinks = this._debugSinks = [];
+            infoSinks = this._infoSinks = [];
+            warnSinks = this._warnSinks = [];
+            errorSinks = this._errorSinks = [];
+            fatalSinks = this._fatalSinks = [];
             for (const $sink of sinks) {
                 const handles = LoggerSink.getHandles($sink);
                 if (handles?.includes(0) ?? true) {
@@ -1589,55 +1526,55 @@ let DefaultLogger = class DefaultLogger {
         else {
             this.root = parent.root;
             this.parent = parent;
-            traceSinks = this.traceSinks = parent.traceSinks;
-            debugSinks = this.debugSinks = parent.debugSinks;
-            infoSinks = this.infoSinks = parent.infoSinks;
-            warnSinks = this.warnSinks = parent.warnSinks;
-            errorSinks = this.errorSinks = parent.errorSinks;
-            fatalSinks = this.fatalSinks = parent.fatalSinks;
+            traceSinks = this._traceSinks = parent._traceSinks;
+            debugSinks = this._debugSinks = parent._debugSinks;
+            infoSinks = this._infoSinks = parent._infoSinks;
+            warnSinks = this._warnSinks = parent._warnSinks;
+            errorSinks = this._errorSinks = parent._errorSinks;
+            fatalSinks = this._fatalSinks = parent._fatalSinks;
         }
     }
     trace(messageOrGetMessage, ...optionalParams) {
         if (this.config.level <= 0) {
-            this.emit(this.traceSinks, 0, messageOrGetMessage, optionalParams);
+            this._emit(this._traceSinks, 0, messageOrGetMessage, optionalParams);
         }
     }
     debug(messageOrGetMessage, ...optionalParams) {
         if (this.config.level <= 1) {
-            this.emit(this.debugSinks, 1, messageOrGetMessage, optionalParams);
+            this._emit(this._debugSinks, 1, messageOrGetMessage, optionalParams);
         }
     }
     info(messageOrGetMessage, ...optionalParams) {
         if (this.config.level <= 2) {
-            this.emit(this.infoSinks, 2, messageOrGetMessage, optionalParams);
+            this._emit(this._infoSinks, 2, messageOrGetMessage, optionalParams);
         }
     }
     warn(messageOrGetMessage, ...optionalParams) {
         if (this.config.level <= 3) {
-            this.emit(this.warnSinks, 3, messageOrGetMessage, optionalParams);
+            this._emit(this._warnSinks, 3, messageOrGetMessage, optionalParams);
         }
     }
     error(messageOrGetMessage, ...optionalParams) {
         if (this.config.level <= 4) {
-            this.emit(this.errorSinks, 4, messageOrGetMessage, optionalParams);
+            this._emit(this._errorSinks, 4, messageOrGetMessage, optionalParams);
         }
     }
     fatal(messageOrGetMessage, ...optionalParams) {
         if (this.config.level <= 5) {
-            this.emit(this.fatalSinks, 5, messageOrGetMessage, optionalParams);
+            this._emit(this._fatalSinks, 5, messageOrGetMessage, optionalParams);
         }
     }
     scopeTo(name) {
-        const scopedLoggers = this.scopedLoggers;
+        const scopedLoggers = this._scopedLoggers;
         let scopedLogger = scopedLoggers[name];
         if (scopedLogger === void 0) {
-            scopedLogger = scopedLoggers[name] = new DefaultLogger(this.config, this.factory, (void 0), this.scope.concat(name), this);
+            scopedLogger = scopedLoggers[name] = new DefaultLogger(this.config, this._factory, (void 0), this.scope.concat(name), this);
         }
         return scopedLogger;
     }
-    emit(sinks, level, msgOrGetMsg, optionalParams) {
+    _emit(sinks, level, msgOrGetMsg, optionalParams) {
         const message = (isFunction(msgOrGetMsg) ? msgOrGetMsg() : msgOrGetMsg);
-        const event = this.factory.createLogEvent(this, level, message, optionalParams);
+        const event = this._factory.createLogEvent(this, level, message, optionalParams);
         for (let i = 0, ii = sinks.length; i < ii; ++i) {
             sinks[i].handleEvent(event);
         }
@@ -1672,10 +1609,10 @@ const LoggerConfiguration = toLookup({
     create({ level = 3, colorOptions = 0, sinks = [], } = {}) {
         return toLookup({
             register(container) {
-                container.register(Registration.instance(ILogConfig, new LogConfig(colorOptions, level)));
+                container.register(instanceRegistration(ILogConfig, new LogConfig(colorOptions, level)));
                 for (const $sink of sinks) {
                     if (isFunction($sink)) {
-                        container.register(Registration.singleton(ISink, $sink));
+                        container.register(singletonRegistration(ISink, $sink));
                     }
                     else {
                         container.register($sink);
@@ -1687,15 +1624,13 @@ const LoggerConfiguration = toLookup({
     },
 });
 
-const IModuleLoader = DI.createInterface(x => x.singleton(ModuleLoader));
-function noTransform(m) {
-    return m;
-}
+const IModuleLoader = createInterface(x => x.singleton(ModuleLoader));
+const noTransform = (m) => m;
 class ModuleTransformer {
-    constructor($transform) {
-        this.$transform = $transform;
+    constructor(transform) {
         this._promiseCache = new Map();
         this._objectCache = new Map();
+        this._transform = transform;
     }
     transform(objOrPromise) {
         if (objOrPromise instanceof Promise) {
@@ -1705,7 +1640,7 @@ class ModuleTransformer {
             return this._transformObject(objOrPromise);
         }
         else {
-            throw new Error(`Invalid input: ${String(objOrPromise)}. Expected Promise or Object.`);
+            throw createError(`Invalid input: ${String(objOrPromise)}. Expected Promise or Object.`);
         }
     }
     _transformPromise(promise) {
@@ -1725,7 +1660,7 @@ class ModuleTransformer {
         if (this._objectCache.has(obj)) {
             return this._objectCache.get(obj);
         }
-        const ret = this.$transform(this._analyze(obj));
+        const ret = this._transform(this._analyze(obj));
         this._objectCache.set(obj, ret);
         if (ret instanceof Promise) {
             void ret.then(value => {
@@ -1800,17 +1735,17 @@ class ModuleItem {
 }
 
 class Handler {
-    constructor(messageType, callback) {
-        this.messageType = messageType;
-        this.callback = callback;
+    constructor(type, cb) {
+        this.type = type;
+        this.cb = cb;
     }
     handle(message) {
-        if (message instanceof this.messageType) {
-            this.callback.call(null, message);
+        if (message instanceof this.type) {
+            this.cb.call(null, message);
         }
     }
 }
-const IEventAggregator = DI.createInterface('IEventAggregator', x => x.singleton(EventAggregator));
+const IEventAggregator = createInterface('IEventAggregator', x => x.singleton(EventAggregator));
 class EventAggregator {
     constructor() {
         this.eventLookup = {};
@@ -1818,7 +1753,7 @@ class EventAggregator {
     }
     publish(channelOrInstance, message) {
         if (!channelOrInstance) {
-            throw new Error(`Invalid channel name or instance: ${channelOrInstance}.`);
+            throw createError(`Invalid channel name or instance: ${channelOrInstance}.`);
         }
         if (isString(channelOrInstance)) {
             let subscribers = this.eventLookup[channelOrInstance];
@@ -1840,7 +1775,7 @@ class EventAggregator {
     }
     subscribe(channelOrType, callback) {
         if (!channelOrType) {
-            throw new Error(`Invalid channel name or type: ${channelOrType}.`);
+            throw createError(`Invalid channel name or type: ${channelOrType}.`);
         }
         let handler;
         let subscribers;
@@ -1866,7 +1801,7 @@ class EventAggregator {
         };
     }
     subscribeOnce(channelOrType, callback) {
-        const sub = this.subscribe(channelOrType, function (message, event) {
+        const sub = this.subscribe(channelOrType, (message, event) => {
             sub.dispose();
             callback(message, event);
         });

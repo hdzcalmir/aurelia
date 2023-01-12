@@ -1,6 +1,6 @@
-import { IPlatform as t, ILogger as e, Registration as r } from "../../../kernel/dist/native-modules/index.mjs";
+import { IPlatform as t, ILogger as e, Registration as r } from "../kernel/dist/native-modules/index.mjs";
 
-import { IWindow as i, Controller as s } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { IWindow as i, Controller as s } from "../runtime-html/dist/native-modules/index.mjs";
 
 import { BehaviorSubject as n, Subscription as o, Observable as c } from "rxjs";
 

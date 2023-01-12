@@ -48,7 +48,7 @@ export interface IRouteConfig {
      *
      * By default, calls the router lifecycle hooks only if the parameters have changed, otherwise does nothing.
      */
-    readonly transitionPlan?: TransitionPlanOrFunc;
+    readonly transitionPlan?: TransitionPlanOrFunc | null;
     /**
      * The name of the viewport this component should be loaded into.
      */
@@ -83,27 +83,26 @@ export interface IRedirectRouteConfig extends Pick<IRouteConfig, 'caseSensitive'
 }
 export declare type TransitionPlan = 'none' | 'replace' | 'invoke-lifecycles';
 export declare type TransitionPlanOrFunc = TransitionPlan | ((current: RouteNode, next: RouteNode) => TransitionPlan);
-export declare function defaultReentryBehavior(current: RouteNode, next: RouteNode): TransitionPlan;
 export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     readonly id: string | null;
     readonly path: string | string[] | null;
     readonly title: string | ((node: RouteNode) => string | null) | null;
     readonly redirectTo: string | null;
     readonly caseSensitive: boolean;
-    readonly transitionPlan: TransitionPlanOrFunc;
+    readonly transitionPlan: TransitionPlanOrFunc | null;
     readonly viewport: string | null;
     readonly data: Record<string, unknown>;
     readonly routes: readonly Routeable[];
     readonly fallback: string | null;
     readonly component: Routeable;
     readonly nav: boolean;
-    protected constructor(id: string | null, path: string | string[] | null, title: string | ((node: RouteNode) => string | null) | null, redirectTo: string | null, caseSensitive: boolean, transitionPlan: TransitionPlanOrFunc, viewport: string | null, data: Record<string, unknown>, routes: readonly Routeable[], fallback: string | null, component: Routeable, nav: boolean);
-    static create(configOrPath: IRouteConfig | IChildRouteConfig | string | string[], Type: RouteType | null): RouteConfig;
+    protected constructor(id: string | null, path: string | string[] | null, title: string | ((node: RouteNode) => string | null) | null, redirectTo: string | null, caseSensitive: boolean, transitionPlan: TransitionPlanOrFunc | null, viewport: string | null, data: Record<string, unknown>, routes: readonly Routeable[], fallback: string | null, component: Routeable, nav: boolean);
     /**
      * Creates a new route config applying the child route config.
      * Note that the current rote config is not mutated.
      */
-    applyChildRouteConfig(config: IChildRouteConfig): RouteConfig;
+    applyChildRouteConfig(config: IChildRouteConfig, parentConfig: RouteConfig | null): RouteConfig;
+    getTransitionPlan(cur: RouteNode, next: RouteNode): TransitionPlan;
 }
 export declare const Route: {
     name: string;

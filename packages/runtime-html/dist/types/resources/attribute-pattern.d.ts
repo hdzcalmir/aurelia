@@ -27,18 +27,6 @@ export declare class Interpretation {
     append(pattern: string, ch: string): void;
     next(pattern: string): void;
 }
-export declare class AttrParsingState {
-    charSpec: ICharSpec;
-    nextStates: AttrParsingState[];
-    types: SegmentTypes | null;
-    patterns: string[];
-    isEndpoint: boolean;
-    get pattern(): string | null;
-    constructor(charSpec: ICharSpec, ...patterns: string[]);
-    findChild(charSpec: ICharSpec): AttrParsingState;
-    append(charSpec: ICharSpec, pattern: string): AttrParsingState;
-    findMatches(ch: string, interpretation: Interpretation): AttrParsingState[];
-}
 export interface ISegment {
     text: string;
     eachChar(callback: (spec: CharSpec) => void): void;
@@ -48,16 +36,14 @@ export declare class SegmentTypes {
     dynamics: number;
     symbols: number;
 }
-export interface ISyntaxInterpreter extends SyntaxInterpreter {
-}
-export declare const ISyntaxInterpreter: import("@aurelia/kernel").InterfaceSymbol<ISyntaxInterpreter>;
-export declare class SyntaxInterpreter {
-    rootState: AttrParsingState;
-    private readonly initialStates;
+export interface ISyntaxInterpreter {
     add(defs: AttributePatternDefinition[]): void;
     interpret(name: string): Interpretation;
-    getNextStates(states: AttrParsingState[], ch: string, interpretation: Interpretation): AttrParsingState[];
-    private parse;
+}
+export declare const ISyntaxInterpreter: import("@aurelia/kernel").InterfaceSymbol<ISyntaxInterpreter>;
+export declare class SyntaxInterpreter implements ISyntaxInterpreter {
+    add(defs: AttributePatternDefinition[]): void;
+    interpret(name: string): Interpretation;
 }
 export declare class AttrSyntax {
     rawName: string;

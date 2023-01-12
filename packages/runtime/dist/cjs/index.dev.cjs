@@ -5,78 +5,17 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var metadata = require('@aurelia/metadata');
 
-class BindingContext {
-    constructor(key, value) {
-        if (key !== void 0) {
-            this[key] = value;
-        }
-    }
-}
-class Scope {
-    constructor(parentScope, bindingContext, overrideContext, isBoundary) {
-        this.parentScope = parentScope;
-        this.bindingContext = bindingContext;
-        this.overrideContext = overrideContext;
-        this.isBoundary = isBoundary;
-    }
-    static getContext(scope, name, ancestor) {
-        if (scope == null) {
-            throw nullScopeError();
-        }
-        let overrideContext = scope.overrideContext;
-        let currentScope = scope;
-        if (ancestor > 0) {
-            while (ancestor > 0) {
-                ancestor--;
-                currentScope = currentScope.parentScope;
-                if (currentScope == null) {
-                    return void 0;
-                }
-            }
-            overrideContext = currentScope.overrideContext;
-            return name in overrideContext ? overrideContext : currentScope.bindingContext;
-        }
-        while (currentScope != null
-            && !currentScope.isBoundary
-            && !(name in currentScope.overrideContext)
-            && !(name in currentScope.bindingContext)) {
-            currentScope = currentScope.parentScope;
-        }
-        if (currentScope == null) {
-            return scope.bindingContext;
-        }
-        overrideContext = currentScope.overrideContext;
-        return name in overrideContext ? overrideContext : currentScope.bindingContext;
-    }
-    static create(bc, oc, isBoundary) {
-        if (bc == null) {
-            throw nullContextError();
-        }
-        return new Scope(null, bc, oc == null ? new OverrideContext() : oc, isBoundary ?? false);
-    }
-    static fromParent(ps, bc) {
-        if (ps == null) {
-            throw nullScopeError();
-        }
-        return new Scope(ps, bc, new OverrideContext(), false);
-    }
-}
-const nullScopeError = () => {
-    return new Error(`AUR0203: scope is null/undefined.`)
-        ;
-};
-const nullContextError = () => {
-    return new Error('AUR0204: binding context is null/undefined')
-        ;
-};
-class OverrideContext {
-}
-
-const hasOwnProp = Object.prototype.hasOwnProperty;
+const O = Object;
+const hasOwnProp = O.prototype.hasOwnProperty;
 const def = Reflect.defineProperty;
+const createError = (message) => new Error(message);
 const isFunction = (v) => typeof v === 'function';
 const isString = (v) => typeof v === 'string';
+const isObject = (v) => v instanceof O;
 const isArray = (v) => v instanceof Array;
+const isSet = (v) => v instanceof Set;
+const isMap = (v) => v instanceof Map;
+const areEqual = O.is;
 function defineHiddenProp(obj, key, value) {
     def(obj, key, {
         enumerable: false,
@@ -92,7 +31,8 @@ function ensureProto(proto, key, defaultValue) {
     }
 }
 const safeString = String;
-const createLookup = () => Object.create(null);
+const createInterface = kernel.DI.createInterface;
+const createLookup = () => O.create(null);
 const getOwnMetadata = metadata.Metadata.getOwn;
 metadata.Metadata.hasOwn;
 const defineMetadata = metadata.Metadata.define;
@@ -100,33 +40,332 @@ kernel.Protocol.annotation.keyFor;
 kernel.Protocol.resource.keyFor;
 kernel.Protocol.resource.appendTo;
 
-const ISignaler = kernel.DI.createInterface('ISignaler', x => x.singleton(Signaler));
-class Signaler {
-    constructor() {
-        this.signals = createLookup();
+const astVisit = (ast, visitor) => {
+    switch (ast.$kind) {
+        case 11: return visitor.visitAccessKeyed(ast);
+        case 10: return visitor.visitAccessMember(ast);
+        case 1: return visitor.visitAccessScope(ast);
+        case 0: return visitor.visitAccessThis(ast);
+        case 19: return visitor.visitArrayBindingPattern(ast);
+        case 24: return visitor.visitDestructuringAssignmentExpression(ast);
+        case 2: return visitor.visitArrayLiteral(ast);
+        case 16: return visitor.visitArrowFunction(ast);
+        case 15: return visitor.visitAssign(ast);
+        case 13: return visitor.visitBinary(ast);
+        case 18: return visitor.visitBindingBehavior(ast);
+        case 21: return visitor.visitBindingIdentifier(ast);
+        case 9: return visitor.visitCallFunction(ast);
+        case 8: return visitor.visitCallMember(ast);
+        case 7: return visitor.visitCallScope(ast);
+        case 14: return visitor.visitConditional(ast);
+        case 26: return visitor.visitDestructuringAssignmentSingleExpression(ast);
+        case 22: return visitor.visitForOfStatement(ast);
+        case 23: return visitor.visitInterpolation(ast);
+        case 20: return visitor.visitObjectBindingPattern(ast);
+        case 25: return visitor.visitDestructuringAssignmentExpression(ast);
+        case 3: return visitor.visitObjectLiteral(ast);
+        case 4: return visitor.visitPrimitiveLiteral(ast);
+        case 12: return visitor.visitTaggedTemplate(ast);
+        case 5: return visitor.visitTemplate(ast);
+        case 6: return visitor.visitUnary(ast);
+        case 17: return visitor.visitValueConverter(ast);
+        case 28: return visitor.visitCustom(ast);
+        default: {
+            throw createError(`Unknown ast node ${JSON.stringify(ast)}`);
+        }
     }
-    dispatchSignal(name) {
-        const listeners = this.signals[name];
-        if (listeners === undefined) {
+};
+class Unparser {
+    constructor() {
+        this.text = '';
+    }
+    static unparse(expr) {
+        const visitor = new Unparser();
+        astVisit(expr, visitor);
+        return visitor.text;
+    }
+    visitAccessMember(expr) {
+        astVisit(expr.object, this);
+        this.text += `${expr.optional ? '?' : ''}.${expr.name}`;
+    }
+    visitAccessKeyed(expr) {
+        astVisit(expr.object, this);
+        this.text += `${expr.optional ? '?.' : ''}[`;
+        astVisit(expr.key, this);
+        this.text += ']';
+    }
+    visitAccessThis(expr) {
+        if (expr.ancestor === 0) {
+            this.text += '$this';
             return;
         }
-        let listener;
-        for (listener of listeners.keys()) {
-            listener.handleChange(undefined, undefined);
+        this.text += '$parent';
+        let i = expr.ancestor - 1;
+        while (i--) {
+            this.text += '.$parent';
         }
     }
-    addSignalListener(name, listener) {
-        const signals = this.signals;
-        const listeners = signals[name];
-        if (listeners === undefined) {
-            signals[name] = new Set([listener]);
+    visitAccessScope(expr) {
+        let i = expr.ancestor;
+        while (i--) {
+            this.text += '$parent.';
+        }
+        this.text += expr.name;
+    }
+    visitArrayLiteral(expr) {
+        const elements = expr.elements;
+        this.text += '[';
+        for (let i = 0, length = elements.length; i < length; ++i) {
+            if (i !== 0) {
+                this.text += ',';
+            }
+            astVisit(elements[i], this);
+        }
+        this.text += ']';
+    }
+    visitArrowFunction(expr) {
+        const args = expr.args;
+        const ii = args.length;
+        let i = 0;
+        let text = '(';
+        let name;
+        for (; i < ii; ++i) {
+            name = args[i].name;
+            if (i > 0) {
+                text += ', ';
+            }
+            if (i < ii - 1) {
+                text += name;
+            }
+            else {
+                text += expr.rest ? `...${name}` : name;
+            }
+        }
+        this.text += `${text}) => `;
+        astVisit(expr.body, this);
+    }
+    visitObjectLiteral(expr) {
+        const keys = expr.keys;
+        const values = expr.values;
+        this.text += '{';
+        for (let i = 0, length = keys.length; i < length; ++i) {
+            if (i !== 0) {
+                this.text += ',';
+            }
+            this.text += `'${keys[i]}':`;
+            astVisit(values[i], this);
+        }
+        this.text += '}';
+    }
+    visitPrimitiveLiteral(expr) {
+        this.text += '(';
+        if (isString(expr.value)) {
+            const escaped = expr.value.replace(/'/g, '\\\'');
+            this.text += `'${escaped}'`;
         }
         else {
-            listeners.add(listener);
+            this.text += `${expr.value}`;
+        }
+        this.text += ')';
+    }
+    visitCallFunction(expr) {
+        this.text += '(';
+        astVisit(expr.func, this);
+        this.text += expr.optional ? '?.' : '';
+        this.writeArgs(expr.args);
+        this.text += ')';
+    }
+    visitCallMember(expr) {
+        this.text += '(';
+        astVisit(expr.object, this);
+        this.text += `${expr.optionalMember ? '?.' : ''}.${expr.name}${expr.optionalCall ? '?.' : ''}`;
+        this.writeArgs(expr.args);
+        this.text += ')';
+    }
+    visitCallScope(expr) {
+        this.text += '(';
+        let i = expr.ancestor;
+        while (i--) {
+            this.text += '$parent.';
+        }
+        this.text += `${expr.name}${expr.optional ? '?.' : ''}`;
+        this.writeArgs(expr.args);
+        this.text += ')';
+    }
+    visitTemplate(expr) {
+        const { cooked, expressions } = expr;
+        const length = expressions.length;
+        this.text += '`';
+        this.text += cooked[0];
+        for (let i = 0; i < length; i++) {
+            astVisit(expressions[i], this);
+            this.text += cooked[i + 1];
+        }
+        this.text += '`';
+    }
+    visitTaggedTemplate(expr) {
+        const { cooked, expressions } = expr;
+        const length = expressions.length;
+        astVisit(expr.func, this);
+        this.text += '`';
+        this.text += cooked[0];
+        for (let i = 0; i < length; i++) {
+            astVisit(expressions[i], this);
+            this.text += cooked[i + 1];
+        }
+        this.text += '`';
+    }
+    visitUnary(expr) {
+        this.text += `(${expr.operation}`;
+        if (expr.operation.charCodeAt(0) >= 97) {
+            this.text += ' ';
+        }
+        astVisit(expr.expression, this);
+        this.text += ')';
+    }
+    visitBinary(expr) {
+        this.text += '(';
+        astVisit(expr.left, this);
+        if (expr.operation.charCodeAt(0) === 105) {
+            this.text += ` ${expr.operation} `;
+        }
+        else {
+            this.text += expr.operation;
+        }
+        astVisit(expr.right, this);
+        this.text += ')';
+    }
+    visitConditional(expr) {
+        this.text += '(';
+        astVisit(expr.condition, this);
+        this.text += '?';
+        astVisit(expr.yes, this);
+        this.text += ':';
+        astVisit(expr.no, this);
+        this.text += ')';
+    }
+    visitAssign(expr) {
+        this.text += '(';
+        astVisit(expr.target, this);
+        this.text += '=';
+        astVisit(expr.value, this);
+        this.text += ')';
+    }
+    visitValueConverter(expr) {
+        const args = expr.args;
+        astVisit(expr.expression, this);
+        this.text += `|${expr.name}`;
+        for (let i = 0, length = args.length; i < length; ++i) {
+            this.text += ':';
+            astVisit(args[i], this);
         }
     }
-    removeSignalListener(name, listener) {
-        this.signals[name]?.delete(listener);
+    visitBindingBehavior(expr) {
+        const args = expr.args;
+        astVisit(expr.expression, this);
+        this.text += `&${expr.name}`;
+        for (let i = 0, length = args.length; i < length; ++i) {
+            this.text += ':';
+            astVisit(args[i], this);
+        }
+    }
+    visitArrayBindingPattern(expr) {
+        const elements = expr.elements;
+        this.text += '[';
+        for (let i = 0, length = elements.length; i < length; ++i) {
+            if (i !== 0) {
+                this.text += ',';
+            }
+            astVisit(elements[i], this);
+        }
+        this.text += ']';
+    }
+    visitObjectBindingPattern(expr) {
+        const keys = expr.keys;
+        const values = expr.values;
+        this.text += '{';
+        for (let i = 0, length = keys.length; i < length; ++i) {
+            if (i !== 0) {
+                this.text += ',';
+            }
+            this.text += `'${keys[i]}':`;
+            astVisit(values[i], this);
+        }
+        this.text += '}';
+    }
+    visitBindingIdentifier(expr) {
+        this.text += expr.name;
+    }
+    visitForOfStatement(expr) {
+        astVisit(expr.declaration, this);
+        this.text += ' of ';
+        astVisit(expr.iterable, this);
+    }
+    visitInterpolation(expr) {
+        const { parts, expressions } = expr;
+        const length = expressions.length;
+        this.text += '${';
+        this.text += parts[0];
+        for (let i = 0; i < length; i++) {
+            astVisit(expressions[i], this);
+            this.text += parts[i + 1];
+        }
+        this.text += '}';
+    }
+    visitDestructuringAssignmentExpression(expr) {
+        const $kind = expr.$kind;
+        const isObjDes = $kind === 25;
+        this.text += isObjDes ? '{' : '[';
+        const list = expr.list;
+        const len = list.length;
+        let i;
+        let item;
+        for (i = 0; i < len; i++) {
+            item = list[i];
+            switch (item.$kind) {
+                case 26:
+                    astVisit(item, this);
+                    break;
+                case 24:
+                case 25: {
+                    const source = item.source;
+                    if (source) {
+                        astVisit(source, this);
+                        this.text += ':';
+                    }
+                    astVisit(item, this);
+                    break;
+                }
+            }
+        }
+        this.text += isObjDes ? '}' : ']';
+    }
+    visitDestructuringAssignmentSingleExpression(expr) {
+        astVisit(expr.source, this);
+        this.text += ':';
+        astVisit(expr.target, this);
+        const initializer = expr.initializer;
+        if (initializer !== void 0) {
+            this.text += '=';
+            astVisit(initializer, this);
+        }
+    }
+    visitDestructuringAssignmentRestExpression(expr) {
+        this.text += '...';
+        astVisit(expr.target, this);
+    }
+    visitCustom(expr) {
+        this.text += safeString(expr.value);
+    }
+    writeArgs(args) {
+        this.text += '(';
+        for (let i = 0, length = args.length; i < length; ++i) {
+            if (i !== 0) {
+                this.text += ',';
+            }
+            astVisit(args[i], this);
+        }
+        this.text += ')';
     }
 }
 
@@ -159,303 +398,26 @@ exports.ExpressionKind = void 0;
     ExpressionKind[ExpressionKind["ArrayDestructuring"] = 24] = "ArrayDestructuring";
     ExpressionKind[ExpressionKind["ObjectDestructuring"] = 25] = "ObjectDestructuring";
     ExpressionKind[ExpressionKind["DestructuringAssignmentLeaf"] = 26] = "DestructuringAssignmentLeaf";
+    ExpressionKind[ExpressionKind["DestructuringAssignmentRestLeaf"] = 27] = "DestructuringAssignmentRestLeaf";
+    ExpressionKind[ExpressionKind["Custom"] = 28] = "Custom";
 })(exports.ExpressionKind || (exports.ExpressionKind = {}));
-class Unparser {
-    constructor() {
-        this.text = '';
-    }
-    static unparse(expr) {
-        const visitor = new Unparser();
-        expr.accept(visitor);
-        return visitor.text;
-    }
-    visitAccessMember(expr) {
-        expr.object.accept(this);
-        this.text += `${expr.optional ? '?' : ''}.${expr.name}`;
-    }
-    visitAccessKeyed(expr) {
-        expr.object.accept(this);
-        this.text += `${expr.optional ? '?.' : ''}[`;
-        expr.key.accept(this);
-        this.text += ']';
-    }
-    visitAccessThis(expr) {
-        if (expr.ancestor === 0) {
-            this.text += '$this';
-            return;
-        }
-        this.text += '$parent';
-        let i = expr.ancestor - 1;
-        while (i--) {
-            this.text += '.$parent';
-        }
-    }
-    visitAccessScope(expr) {
-        let i = expr.ancestor;
-        while (i--) {
-            this.text += '$parent.';
-        }
-        this.text += expr.name;
-    }
-    visitArrayLiteral(expr) {
-        const elements = expr.elements;
-        this.text += '[';
-        for (let i = 0, length = elements.length; i < length; ++i) {
-            if (i !== 0) {
-                this.text += ',';
-            }
-            elements[i].accept(this);
-        }
-        this.text += ']';
-    }
-    visitArrowFunction(expr) {
-        const args = expr.args;
-        const ii = args.length;
-        let i = 0;
-        let text = '(';
-        let name;
-        for (; i < ii; ++i) {
-            name = args[i].name;
-            if (i > 0) {
-                text += ', ';
-            }
-            if (i < ii - 1) {
-                text += name;
-            }
-            else {
-                text += expr.rest ? `...${name}` : name;
-            }
-        }
-        this.text += `${text}) => `;
-        expr.body.accept(this);
-    }
-    visitObjectLiteral(expr) {
-        const keys = expr.keys;
-        const values = expr.values;
-        this.text += '{';
-        for (let i = 0, length = keys.length; i < length; ++i) {
-            if (i !== 0) {
-                this.text += ',';
-            }
-            this.text += `'${keys[i]}':`;
-            values[i].accept(this);
-        }
-        this.text += '}';
-    }
-    visitPrimitiveLiteral(expr) {
-        this.text += '(';
-        if (isString(expr.value)) {
-            const escaped = expr.value.replace(/'/g, '\\\'');
-            this.text += `'${escaped}'`;
-        }
-        else {
-            this.text += `${expr.value}`;
-        }
-        this.text += ')';
-    }
-    visitCallFunction(expr) {
-        this.text += '(';
-        expr.func.accept(this);
-        this.text += expr.optional ? '?.' : '';
-        this.writeArgs(expr.args);
-        this.text += ')';
-    }
-    visitCallMember(expr) {
-        this.text += '(';
-        expr.object.accept(this);
-        this.text += `${expr.optionalMember ? '?.' : ''}.${expr.name}${expr.optionalCall ? '?.' : ''}`;
-        this.writeArgs(expr.args);
-        this.text += ')';
-    }
-    visitCallScope(expr) {
-        this.text += '(';
-        let i = expr.ancestor;
-        while (i--) {
-            this.text += '$parent.';
-        }
-        this.text += `${expr.name}${expr.optional ? '?.' : ''}`;
-        this.writeArgs(expr.args);
-        this.text += ')';
-    }
-    visitTemplate(expr) {
-        const { cooked, expressions } = expr;
-        const length = expressions.length;
-        this.text += '`';
-        this.text += cooked[0];
-        for (let i = 0; i < length; i++) {
-            expressions[i].accept(this);
-            this.text += cooked[i + 1];
-        }
-        this.text += '`';
-    }
-    visitTaggedTemplate(expr) {
-        const { cooked, expressions } = expr;
-        const length = expressions.length;
-        expr.func.accept(this);
-        this.text += '`';
-        this.text += cooked[0];
-        for (let i = 0; i < length; i++) {
-            expressions[i].accept(this);
-            this.text += cooked[i + 1];
-        }
-        this.text += '`';
-    }
-    visitUnary(expr) {
-        this.text += `(${expr.operation}`;
-        if (expr.operation.charCodeAt(0) >= 97) {
-            this.text += ' ';
-        }
-        expr.expression.accept(this);
-        this.text += ')';
-    }
-    visitBinary(expr) {
-        this.text += '(';
-        expr.left.accept(this);
-        if (expr.operation.charCodeAt(0) === 105) {
-            this.text += ` ${expr.operation} `;
-        }
-        else {
-            this.text += expr.operation;
-        }
-        expr.right.accept(this);
-        this.text += ')';
-    }
-    visitConditional(expr) {
-        this.text += '(';
-        expr.condition.accept(this);
-        this.text += '?';
-        expr.yes.accept(this);
-        this.text += ':';
-        expr.no.accept(this);
-        this.text += ')';
-    }
-    visitAssign(expr) {
-        this.text += '(';
-        expr.target.accept(this);
-        this.text += '=';
-        expr.value.accept(this);
-        this.text += ')';
-    }
-    visitValueConverter(expr) {
-        const args = expr.args;
-        expr.expression.accept(this);
-        this.text += `|${expr.name}`;
-        for (let i = 0, length = args.length; i < length; ++i) {
-            this.text += ':';
-            args[i].accept(this);
-        }
-    }
-    visitBindingBehavior(expr) {
-        const args = expr.args;
-        expr.expression.accept(this);
-        this.text += `&${expr.name}`;
-        for (let i = 0, length = args.length; i < length; ++i) {
-            this.text += ':';
-            args[i].accept(this);
-        }
-    }
-    visitArrayBindingPattern(expr) {
-        const elements = expr.elements;
-        this.text += '[';
-        for (let i = 0, length = elements.length; i < length; ++i) {
-            if (i !== 0) {
-                this.text += ',';
-            }
-            elements[i].accept(this);
-        }
-        this.text += ']';
-    }
-    visitObjectBindingPattern(expr) {
-        const keys = expr.keys;
-        const values = expr.values;
-        this.text += '{';
-        for (let i = 0, length = keys.length; i < length; ++i) {
-            if (i !== 0) {
-                this.text += ',';
-            }
-            this.text += `'${keys[i]}':`;
-            values[i].accept(this);
-        }
-        this.text += '}';
-    }
-    visitBindingIdentifier(expr) {
-        this.text += expr.name;
-    }
-    visitForOfStatement(expr) {
-        expr.declaration.accept(this);
-        this.text += ' of ';
-        expr.iterable.accept(this);
-    }
-    visitInterpolation(expr) {
-        const { parts, expressions } = expr;
-        const length = expressions.length;
-        this.text += '${';
-        this.text += parts[0];
-        for (let i = 0; i < length; i++) {
-            expressions[i].accept(this);
-            this.text += parts[i + 1];
-        }
-        this.text += '}';
-    }
-    visitDestructuringAssignmentExpression(expr) {
-        const $kind = expr.$kind;
-        const isObjDes = $kind === 25;
-        this.text += isObjDes ? '{' : '[';
-        const list = expr.list;
-        const len = list.length;
-        let i;
-        let item;
-        for (i = 0; i < len; i++) {
-            item = list[i];
-            switch (item.$kind) {
-                case 26:
-                    item.accept(this);
-                    break;
-                case 24:
-                case 25: {
-                    const source = item.source;
-                    if (source) {
-                        source.accept(this);
-                        this.text += ':';
-                    }
-                    item.accept(this);
-                    break;
-                }
-            }
-        }
-        this.text += isObjDes ? '}' : ']';
-    }
-    visitDestructuringAssignmentSingleExpression(expr) {
-        expr.source.accept(this);
-        this.text += ':';
-        expr.target.accept(this);
-        const initializer = expr.initializer;
-        if (initializer !== void 0) {
-            this.text += '=';
-            initializer.accept(this);
-        }
-    }
-    visitDestructuringAssignmentRestExpression(expr) {
-        this.text += '...';
-        expr.accept(this);
-    }
-    writeArgs(args) {
-        this.text += '(';
-        for (let i = 0, length = args.length; i < length; ++i) {
-            if (i !== 0) {
-                this.text += ',';
-            }
-            args[i].accept(this);
-        }
-        this.text += ')';
-    }
-}
 class CustomExpression {
     constructor(value) {
         this.value = value;
+        this.$kind = 28;
     }
     evaluate(_s, _e, _c) {
         return this.value;
+    }
+    assign(s, e, val) {
+        return val;
+    }
+    bind(s, b) {
+    }
+    unbind(s, b) {
+    }
+    accept(_visitor) {
+        return (void 0);
     }
 }
 class BindingBehaviorExpression {
@@ -463,148 +425,23 @@ class BindingBehaviorExpression {
         this.expression = expression;
         this.name = name;
         this.args = args;
-        this._key = `_bb_${name}`;
-    }
-    get $kind() { return 18; }
-    get hasBind() { return true; }
-    get hasUnbind() { return true; }
-    evaluate(s, e, c) {
-        return this.expression.evaluate(s, e, c);
-    }
-    assign(s, e, val) {
-        return this.expression.assign(s, e, val);
-    }
-    bind(s, b) {
-        const name = this.name;
-        const key = this._key;
-        const behavior = b.getBehavior?.(name);
-        if (behavior == null) {
-            throw behaviorNotFoundError(name);
-        }
-        if (b[key] === void 0) {
-            b[key] = behavior;
-            behavior.bind?.(s, b, ...this.args.map(a => a.evaluate(s, b, null)));
-        }
-        else {
-            throw duplicateBehaviorAppliedError(name);
-        }
-        if (this.expression.hasBind) {
-            this.expression.bind(s, b);
-        }
-    }
-    unbind(s, b) {
-        const internalKey = this._key;
-        const $b = b;
-        if ($b[internalKey] !== void 0) {
-            $b[internalKey].unbind?.(s, b);
-            $b[internalKey] = void 0;
-        }
-        if (this.expression.hasUnbind) {
-            this.expression.unbind(s, b);
-        }
-    }
-    accept(visitor) {
-        return visitor.visitBindingBehavior(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 18;
+        this.key = `_bb_${name}`;
     }
 }
-const behaviorNotFoundError = (name) => new Error(`AUR0101: BindingBehavior '${name}' could not be found. Did you forget to register it as a dependency?`)
-    ;
-const duplicateBehaviorAppliedError = (name) => new Error(`AUR0102: BindingBehavior '${name}' already applied.`)
-    ;
 class ValueConverterExpression {
     constructor(expression, name, args) {
         this.expression = expression;
         this.name = name;
         this.args = args;
-    }
-    get $kind() { return 17; }
-    get hasBind() { return true; }
-    get hasUnbind() { return true; }
-    evaluate(s, e, c) {
-        const name = this.name;
-        const vc = e?.getConverter?.(name);
-        if (vc == null) {
-            throw converterNotFoundError(name);
-        }
-        if ('toView' in vc) {
-            return vc.toView(this.expression.evaluate(s, e, c), ...this.args.map(a => a.evaluate(s, e, c)));
-        }
-        return this.expression.evaluate(s, e, c);
-    }
-    assign(s, e, val) {
-        const name = this.name;
-        const vc = e?.getConverter?.(name);
-        if (vc == null) {
-            throw converterNotFoundError(name);
-        }
-        if ('fromView' in vc) {
-            val = vc.fromView(val, ...this.args.map(a => a.evaluate(s, e, null)));
-        }
-        return this.expression.assign(s, e, val);
-    }
-    bind(s, b) {
-        const name = this.name;
-        const vc = b.getConverter?.(name);
-        if (vc == null) {
-            throw converterNotFoundError(name);
-        }
-        const signals = vc.signals;
-        if (signals != null) {
-            const signaler = b.get?.(ISignaler);
-            const ii = signals.length;
-            let i = 0;
-            for (; i < ii; ++i) {
-                signaler?.addSignalListener(signals[i], b);
-            }
-        }
-        if (this.expression.hasBind) {
-            this.expression.bind(s, b);
-        }
-    }
-    unbind(_s, b) {
-        const vc = b.getConverter?.(this.name);
-        if (vc?.signals === void 0) {
-            return;
-        }
-        const signaler = b.get(ISignaler);
-        let i = 0;
-        for (; i < vc.signals.length; ++i) {
-            signaler.removeSignalListener(vc.signals[i], b);
-        }
-    }
-    accept(visitor) {
-        return visitor.visitValueConverter(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 17;
     }
 }
-const converterNotFoundError = (name) => {
-    return new Error(`AUR0103: ValueConverter '${name}' could not be found. Did you forget to register it as a dependency?`);
-};
 class AssignExpression {
     constructor(target, value) {
         this.target = target;
         this.value = value;
-    }
-    get $kind() { return 15; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        return this.target.assign(s, e, this.value.evaluate(s, e, c));
-    }
-    assign(s, e, val) {
-        this.value.assign(s, e, val);
-        return this.target.assign(s, e, val);
-    }
-    accept(visitor) {
-        return visitor.visitAssign(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 15;
     }
 }
 class ConditionalExpression {
@@ -612,46 +449,13 @@ class ConditionalExpression {
         this.condition = condition;
         this.yes = yes;
         this.no = no;
-    }
-    get $kind() { return 14; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        return this.condition.evaluate(s, e, c) ? this.yes.evaluate(s, e, c) : this.no.evaluate(s, e, c);
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitConditional(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 14;
     }
 }
 class AccessThisExpression {
     constructor(ancestor = 0) {
         this.ancestor = ancestor;
-    }
-    get $kind() { return 0; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, _e, _c) {
-        let currentScope = s;
-        let i = this.ancestor;
-        while (i-- && currentScope) {
-            currentScope = currentScope.parentScope;
-        }
-        return i < 1 && currentScope ? currentScope.bindingContext : void 0;
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitAccessThis(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 0;
     }
 }
 AccessThisExpression.$this = new AccessThisExpression(0);
@@ -660,50 +464,7 @@ class AccessScopeExpression {
     constructor(name, ancestor = 0) {
         this.name = name;
         this.ancestor = ancestor;
-    }
-    get $kind() { return 1; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        const obj = Scope.getContext(s, this.name, this.ancestor);
-        if (c !== null) {
-            c.observe(obj, this.name);
-        }
-        const evaluatedValue = obj[this.name];
-        if (evaluatedValue == null && this.name === '$host') {
-            throw new Error(`AUR0105: Unable to find $host context. Did you forget [au-slot] attribute?`);
-        }
-        if (e?.strict) {
-            return e?.boundFn && isFunction(evaluatedValue)
-                ? evaluatedValue.bind(obj)
-                : evaluatedValue;
-        }
-        return evaluatedValue == null
-            ? ''
-            : e?.boundFn && isFunction(evaluatedValue)
-                ? evaluatedValue.bind(obj)
-                : evaluatedValue;
-    }
-    assign(s, _e, val) {
-        if (this.name === '$host') {
-            throw new Error(`AUR0106: Invalid assignment. $host is a reserved keyword.`);
-        }
-        const obj = Scope.getContext(s, this.name, this.ancestor);
-        if (obj instanceof Object) {
-            if (obj.$observers?.[this.name] !== void 0) {
-                obj.$observers[this.name].setValue(val);
-                return val;
-            }
-            else {
-                return obj[this.name] = val;
-            }
-        }
-    }
-    accept(visitor) {
-        return visitor.visitAccessScope(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 1;
     }
 }
 class AccessMemberExpression {
@@ -711,58 +472,7 @@ class AccessMemberExpression {
         this.object = object;
         this.name = name;
         this.optional = optional;
-    }
-    get $kind() { return 10; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        const instance = this.object.evaluate(s, e, c);
-        let ret;
-        if (e?.strict) {
-            if (instance == null) {
-                return instance;
-            }
-            if (c !== null) {
-                c.observe(instance, this.name);
-            }
-            ret = instance[this.name];
-            if (e?.boundFn && isFunction(ret)) {
-                return ret.bind(instance);
-            }
-            return ret;
-        }
-        if (c !== null && instance instanceof Object) {
-            c.observe(instance, this.name);
-        }
-        if (instance) {
-            ret = instance[this.name];
-            if (e?.boundFn && isFunction(ret)) {
-                return ret.bind(instance);
-            }
-            return ret;
-        }
-        return '';
-    }
-    assign(s, e, val) {
-        const obj = this.object.evaluate(s, e, null);
-        if (obj instanceof Object) {
-            if (obj.$observers !== void 0 && obj.$observers[this.name] !== void 0) {
-                obj.$observers[this.name].setValue(val);
-            }
-            else {
-                obj[this.name] = val;
-            }
-        }
-        else {
-            this.object.assign(s, e, { [this.name]: val });
-        }
-        return val;
-    }
-    accept(visitor) {
-        return visitor.visitAccessMember(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 10;
     }
 }
 class AccessKeyedExpression {
@@ -770,31 +480,7 @@ class AccessKeyedExpression {
         this.object = object;
         this.key = key;
         this.optional = optional;
-    }
-    get $kind() { return 11; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        const instance = this.object.evaluate(s, e, c);
-        if (instance instanceof Object) {
-            const key = this.key.evaluate(s, e, c);
-            if (c !== null) {
-                c.observe(instance, key);
-            }
-            return instance[key];
-        }
-        return void 0;
-    }
-    assign(s, e, val) {
-        const instance = this.object.evaluate(s, e, null);
-        const key = this.key.evaluate(s, e, null);
-        return instance[key] = val;
-    }
-    accept(visitor) {
-        return visitor.visitAccessKeyed(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 11;
     }
 }
 class CallScopeExpression {
@@ -803,30 +489,9 @@ class CallScopeExpression {
         this.args = args;
         this.ancestor = ancestor;
         this.optional = optional;
-    }
-    get $kind() { return 7; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        const args = this.args.map(a => a.evaluate(s, e, c));
-        const context = Scope.getContext(s, this.name, this.ancestor);
-        const func = getFunction(e?.strictFnCall, context, this.name);
-        if (func) {
-            return func.apply(context, args);
-        }
-        return void 0;
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitCallScope(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 7;
     }
 }
-const autoObserveArrayMethods = 'at map filter includes indexOf lastIndexOf findIndex find flat flatMap join reduce reduceRight slice every some sort'.split(' ');
 class CallMemberExpression {
     constructor(object, name, args, optionalMember = false, optionalCall = false) {
         this.object = object;
@@ -834,31 +499,7 @@ class CallMemberExpression {
         this.args = args;
         this.optionalMember = optionalMember;
         this.optionalCall = optionalCall;
-    }
-    get $kind() { return 8; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        const instance = this.object.evaluate(s, e, c);
-        const args = this.args.map(a => a.evaluate(s, e, c));
-        const func = getFunction(e?.strictFnCall, instance, this.name);
-        if (func) {
-            const ret = func.apply(instance, args);
-            if (isArray(instance) && autoObserveArrayMethods.includes(this.name)) {
-                c?.observeCollection(instance);
-            }
-            return ret;
-        }
-        return void 0;
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitCallMember(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 8;
     }
 }
 class CallFunctionExpression {
@@ -866,28 +507,7 @@ class CallFunctionExpression {
         this.func = func;
         this.args = args;
         this.optional = optional;
-    }
-    get $kind() { return 9; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        const func = this.func.evaluate(s, e, c);
-        if (isFunction(func)) {
-            return func(...this.args.map(a => a.evaluate(s, e, c)));
-        }
-        if (!e?.strictFnCall && func == null) {
-            return void 0;
-        }
-        throw new Error(`AUR0107: Expression is not a function.`);
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitCallFunction(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 9;
     }
 }
 class BinaryExpression {
@@ -895,138 +515,20 @@ class BinaryExpression {
         this.operation = operation;
         this.left = left;
         this.right = right;
-    }
-    get $kind() { return 13; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        switch (this.operation) {
-            case '&&':
-                return this.left.evaluate(s, e, c) && this.right.evaluate(s, e, c);
-            case '||':
-                return this.left.evaluate(s, e, c) || this.right.evaluate(s, e, c);
-            case '??':
-                return this.left.evaluate(s, e, c) ?? this.right.evaluate(s, e, c);
-            case '==':
-                return this.left.evaluate(s, e, c) == this.right.evaluate(s, e, c);
-            case '===':
-                return this.left.evaluate(s, e, c) === this.right.evaluate(s, e, c);
-            case '!=':
-                return this.left.evaluate(s, e, c) != this.right.evaluate(s, e, c);
-            case '!==':
-                return this.left.evaluate(s, e, c) !== this.right.evaluate(s, e, c);
-            case 'instanceof': {
-                const right = this.right.evaluate(s, e, c);
-                if (isFunction(right)) {
-                    return this.left.evaluate(s, e, c) instanceof right;
-                }
-                return false;
-            }
-            case 'in': {
-                const right = this.right.evaluate(s, e, c);
-                if (right instanceof Object) {
-                    return this.left.evaluate(s, e, c) in right;
-                }
-                return false;
-            }
-            case '+': {
-                const left = this.left.evaluate(s, e, c);
-                const right = this.right.evaluate(s, e, c);
-                if (e?.strict) {
-                    return left + right;
-                }
-                if (!left || !right) {
-                    if (isNumberOrBigInt(left) || isNumberOrBigInt(right)) {
-                        return (left || 0) + (right || 0);
-                    }
-                    if (isStringOrDate(left) || isStringOrDate(right)) {
-                        return (left || '') + (right || '');
-                    }
-                }
-                return left + right;
-            }
-            case '-':
-                return this.left.evaluate(s, e, c) - this.right.evaluate(s, e, c);
-            case '*':
-                return this.left.evaluate(s, e, c) * this.right.evaluate(s, e, c);
-            case '/':
-                return this.left.evaluate(s, e, c) / this.right.evaluate(s, e, c);
-            case '%':
-                return this.left.evaluate(s, e, c) % this.right.evaluate(s, e, c);
-            case '<':
-                return this.left.evaluate(s, e, c) < this.right.evaluate(s, e, c);
-            case '>':
-                return this.left.evaluate(s, e, c) > this.right.evaluate(s, e, c);
-            case '<=':
-                return this.left.evaluate(s, e, c) <= this.right.evaluate(s, e, c);
-            case '>=':
-                return this.left.evaluate(s, e, c) >= this.right.evaluate(s, e, c);
-            default:
-                throw new Error(`AUR0108: Unknown binary operator: '${this.operation}'`);
-        }
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitBinary(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 13;
     }
 }
 class UnaryExpression {
     constructor(operation, expression) {
         this.operation = operation;
         this.expression = expression;
-    }
-    get $kind() { return 6; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        switch (this.operation) {
-            case 'void':
-                return void this.expression.evaluate(s, e, c);
-            case 'typeof':
-                return typeof this.expression.evaluate(s, e, c);
-            case '!':
-                return !this.expression.evaluate(s, e, c);
-            case '-':
-                return -this.expression.evaluate(s, e, c);
-            case '+':
-                return +this.expression.evaluate(s, e, c);
-            default:
-                throw new Error(`AUR0109: Unknown unary operator: '${this.operation}'`);
-        }
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitUnary(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 6;
     }
 }
 class PrimitiveLiteralExpression {
     constructor(value) {
         this.value = value;
-    }
-    get $kind() { return 4; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(_s, _e, _c) {
-        return this.value;
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitPrimitiveLiteral(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 4;
     }
 }
 PrimitiveLiteralExpression.$undefined = new PrimitiveLiteralExpression(void 0);
@@ -1037,21 +539,7 @@ PrimitiveLiteralExpression.$empty = new PrimitiveLiteralExpression('');
 class ArrayLiteralExpression {
     constructor(elements) {
         this.elements = elements;
-    }
-    get $kind() { return 2; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        return this.elements.map(el => el.evaluate(s, e, c));
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitArrayLiteral(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 2;
     }
 }
 ArrayLiteralExpression.$empty = new ArrayLiteralExpression(kernel.emptyArray);
@@ -1059,25 +547,7 @@ class ObjectLiteralExpression {
     constructor(keys, values) {
         this.keys = keys;
         this.values = values;
-    }
-    get $kind() { return 3; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        const instance = {};
-        for (let i = 0; i < this.keys.length; ++i) {
-            instance[this.keys[i]] = this.values[i].evaluate(s, e, c);
-        }
-        return instance;
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitObjectLiteral(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 3;
     }
 }
 ObjectLiteralExpression.$empty = new ObjectLiteralExpression(kernel.emptyArray, kernel.emptyArray);
@@ -1085,26 +555,7 @@ class TemplateExpression {
     constructor(cooked, expressions = kernel.emptyArray) {
         this.cooked = cooked;
         this.expressions = expressions;
-    }
-    get $kind() { return 5; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        let result = this.cooked[0];
-        for (let i = 0; i < this.expressions.length; ++i) {
-            result += safeString(this.expressions[i].evaluate(s, e, c));
-            result += this.cooked[i + 1];
-        }
-        return result;
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitTemplate(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 5;
     }
 }
 TemplateExpression.$empty = new TemplateExpression(['']);
@@ -1113,150 +564,44 @@ class TaggedTemplateExpression {
         this.cooked = cooked;
         this.func = func;
         this.expressions = expressions;
+        this.$kind = 12;
         cooked.raw = raw;
-    }
-    get $kind() { return 12; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        const results = this.expressions.map(el => el.evaluate(s, e, c));
-        const func = this.func.evaluate(s, e, c);
-        if (!isFunction(func)) {
-            throw new Error(`AUR0110: Left-hand side of tagged template expression is not a function.`);
-        }
-        return func(this.cooked, ...results);
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitTaggedTemplate(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
     }
 }
 class ArrayBindingPattern {
     constructor(elements) {
         this.elements = elements;
-    }
-    get $kind() { return 19; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(_s, _e, _c) {
-        return void 0;
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitArrayBindingPattern(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 19;
     }
 }
 class ObjectBindingPattern {
     constructor(keys, values) {
         this.keys = keys;
         this.values = values;
-    }
-    get $kind() { return 20; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(_s, _e, _c) {
-        return void 0;
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitObjectBindingPattern(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 20;
     }
 }
 class BindingIdentifier {
     constructor(name) {
         this.name = name;
-    }
-    get $kind() { return 21; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(_s, _e, _c) {
-        return this.name;
-    }
-    accept(visitor) {
-        return visitor.visitBindingIdentifier(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 21;
     }
 }
 class ForOfStatement {
-    constructor(declaration, iterable) {
+    constructor(declaration, iterable, semiIdx) {
         this.declaration = declaration;
         this.iterable = iterable;
-    }
-    get $kind() { return 22; }
-    get hasBind() { return true; }
-    get hasUnbind() { return true; }
-    evaluate(s, e, c) {
-        return this.iterable.evaluate(s, e, c);
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    bind(s, b) {
-        if (this.iterable.hasBind) {
-            this.iterable.bind(s, b);
-        }
-    }
-    unbind(s, b) {
-        if (this.iterable.hasUnbind) {
-            this.iterable.unbind(s, b);
-        }
-    }
-    accept(visitor) {
-        return visitor.visitForOfStatement(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.semiIdx = semiIdx;
+        this.$kind = 22;
     }
 }
 class Interpolation {
     constructor(parts, expressions = kernel.emptyArray) {
         this.parts = parts;
         this.expressions = expressions;
+        this.$kind = 23;
         this.isMulti = expressions.length > 1;
         this.firstExpression = expressions[0];
-    }
-    get $kind() { return 23; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        if (this.isMulti) {
-            let result = this.parts[0];
-            let i = 0;
-            for (; i < this.expressions.length; ++i) {
-                result += safeString(this.expressions[i].evaluate(s, e, c));
-                result += this.parts[i + 1];
-            }
-            return result;
-        }
-        else {
-            return `${this.parts[0]}${this.firstExpression.evaluate(s, e, c)}${this.parts[1]}`;
-        }
-    }
-    assign(_s, _e, _obj) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitInterpolation(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
     }
 }
 class DestructuringAssignmentExpression {
@@ -1266,123 +611,20 @@ class DestructuringAssignmentExpression {
         this.source = source;
         this.initializer = initializer;
     }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(_s, _e, _c) {
-        return void 0;
-    }
-    assign(s, l, value) {
-        const list = this.list;
-        const len = list.length;
-        let i;
-        let item;
-        for (i = 0; i < len; i++) {
-            item = list[i];
-            switch (item.$kind) {
-                case 26:
-                    item.assign(s, l, value);
-                    break;
-                case 24:
-                case 25: {
-                    if (typeof value !== 'object' || value === null) {
-                        {
-                            throw new Error(`AUR0112: Cannot use non-object value for destructuring assignment.`);
-                        }
-                    }
-                    let source = item.source.evaluate(Scope.create(value), l, null);
-                    if (source === void 0) {
-                        source = item.initializer?.evaluate(s, l, null);
-                    }
-                    item.assign(s, l, source);
-                    break;
-                }
-            }
-        }
-    }
-    accept(visitor) {
-        return visitor.visitDestructuringAssignmentExpression(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
-    }
 }
 class DestructuringAssignmentSingleExpression {
     constructor(target, source, initializer) {
         this.target = target;
         this.source = source;
         this.initializer = initializer;
-    }
-    get $kind() { return 26; }
-    evaluate(_s, _e, _c) {
-        return void 0;
-    }
-    assign(s, l, value) {
-        if (value == null) {
-            return;
-        }
-        if (typeof value !== 'object') {
-            {
-                throw new Error(`AUR0112: Cannot use non-object value for destructuring assignment.`);
-            }
-        }
-        let source = this.source.evaluate(Scope.create(value), l, null);
-        if (source === void 0) {
-            source = this.initializer?.evaluate(s, l, null);
-        }
-        this.target.assign(s, l, source);
-    }
-    accept(visitor) {
-        return visitor.visitDestructuringAssignmentSingleExpression(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 26;
     }
 }
 class DestructuringAssignmentRestExpression {
     constructor(target, indexOrProperties) {
         this.target = target;
         this.indexOrProperties = indexOrProperties;
-    }
-    get $kind() { return 26; }
-    evaluate(_s, _e, _c) {
-        return void 0;
-    }
-    assign(s, l, value) {
-        if (value == null) {
-            return;
-        }
-        if (typeof value !== 'object') {
-            {
-                throw new Error(`AUR0112: Cannot use non-object value for destructuring assignment.`);
-            }
-        }
-        const indexOrProperties = this.indexOrProperties;
-        let restValue;
-        if (kernel.isArrayIndex(indexOrProperties)) {
-            if (!Array.isArray(value)) {
-                {
-                    throw new Error(`AUR0112: Cannot use non-array value for array-destructuring assignment.`);
-                }
-            }
-            restValue = value.slice(indexOrProperties);
-        }
-        else {
-            restValue = Object
-                .entries(value)
-                .reduce((acc, [k, v]) => {
-                if (!indexOrProperties.includes(k)) {
-                    acc[k] = v;
-                }
-                return acc;
-            }, {});
-        }
-        this.target.assign(s, l, restValue);
-    }
-    accept(_visitor) {
-        return _visitor.visitDestructuringAssignmentRestExpression(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 26;
     }
 }
 class ArrowFunction {
@@ -1390,40 +632,584 @@ class ArrowFunction {
         this.args = args;
         this.body = body;
         this.rest = rest;
-    }
-    get $kind() { return 16; }
-    get hasBind() { return false; }
-    get hasUnbind() { return false; }
-    evaluate(s, e, c) {
-        const func = (...args) => {
-            const params = this.args;
-            const rest = this.rest;
-            const lastIdx = params.length - 1;
-            const context = params.reduce((map, param, i) => {
-                if (rest && i === lastIdx) {
-                    map[param.name] = args.slice(i);
-                }
-                else {
-                    map[param.name] = args[i];
-                }
-                return map;
-            }, {});
-            const functionScope = Scope.fromParent(s, context);
-            return this.body.evaluate(functionScope, e, c);
-        };
-        return func;
-    }
-    assign(_s, _e, _value) {
-        return void 0;
-    }
-    accept(visitor) {
-        return visitor.visitArrowFunction(this);
-    }
-    toString() {
-        return Unparser.unparse(this);
+        this.$kind = 16;
     }
 }
-function getFunction(mustEvaluate, obj, name) {
+
+class BindingContext {
+    constructor(key, value) {
+        if (key !== void 0) {
+            this[key] = value;
+        }
+    }
+}
+class Scope {
+    constructor(parent, bindingContext, overrideContext, isBoundary) {
+        this.parent = parent;
+        this.bindingContext = bindingContext;
+        this.overrideContext = overrideContext;
+        this.isBoundary = isBoundary;
+    }
+    static getContext(scope, name, ancestor) {
+        if (scope == null) {
+            throw nullScopeError();
+        }
+        let overrideContext = scope.overrideContext;
+        let currentScope = scope;
+        if (ancestor > 0) {
+            while (ancestor > 0) {
+                ancestor--;
+                currentScope = currentScope.parent;
+                if (currentScope == null) {
+                    return void 0;
+                }
+            }
+            overrideContext = currentScope.overrideContext;
+            return name in overrideContext ? overrideContext : currentScope.bindingContext;
+        }
+        while (currentScope != null
+            && !currentScope.isBoundary
+            && !(name in currentScope.overrideContext)
+            && !(name in currentScope.bindingContext)) {
+            currentScope = currentScope.parent;
+        }
+        if (currentScope == null) {
+            return scope.bindingContext;
+        }
+        overrideContext = currentScope.overrideContext;
+        return name in overrideContext ? overrideContext : currentScope.bindingContext;
+    }
+    static create(bc, oc, isBoundary) {
+        if (bc == null) {
+            throw nullContextError();
+        }
+        return new Scope(null, bc, oc == null ? new OverrideContext() : oc, isBoundary ?? false);
+    }
+    static fromParent(ps, bc) {
+        if (ps == null) {
+            throw nullScopeError();
+        }
+        return new Scope(ps, bc, new OverrideContext(), false);
+    }
+}
+const nullScopeError = () => {
+    return createError(`AUR0203: scope is null/undefined.`)
+        ;
+};
+const nullContextError = () => {
+    return createError('AUR0204: binding context is null/undefined')
+        ;
+};
+class OverrideContext {
+}
+
+const getContext = Scope.getContext;
+function astEvaluate(ast, s, e, c) {
+    switch (ast.$kind) {
+        case 0: {
+            let oc = s.overrideContext;
+            let currentScope = s;
+            let i = ast.ancestor;
+            while (i-- && oc) {
+                currentScope = currentScope.parent;
+                oc = currentScope?.overrideContext ?? null;
+            }
+            return i < 1 && currentScope ? currentScope.bindingContext : void 0;
+        }
+        case 1: {
+            const obj = getContext(s, ast.name, ast.ancestor);
+            if (c !== null) {
+                c.observe(obj, ast.name);
+            }
+            const evaluatedValue = obj[ast.name];
+            if (evaluatedValue == null && ast.name === '$host') {
+                throw createError(`AUR0105: Unable to find $host context. Did you forget [au-slot] attribute?`);
+            }
+            if (e?.strict) {
+                return e?.boundFn && isFunction(evaluatedValue)
+                    ? evaluatedValue.bind(obj)
+                    : evaluatedValue;
+            }
+            return evaluatedValue == null
+                ? ''
+                : e?.boundFn && isFunction(evaluatedValue)
+                    ? evaluatedValue.bind(obj)
+                    : evaluatedValue;
+        }
+        case 2:
+            return ast.elements.map(expr => astEvaluate(expr, s, e, c));
+        case 3: {
+            const instance = {};
+            for (let i = 0; i < ast.keys.length; ++i) {
+                instance[ast.keys[i]] = astEvaluate(ast.values[i], s, e, c);
+            }
+            return instance;
+        }
+        case 4:
+            return ast.value;
+        case 5: {
+            let result = ast.cooked[0];
+            for (let i = 0; i < ast.expressions.length; ++i) {
+                result += String(astEvaluate(ast.expressions[i], s, e, c));
+                result += ast.cooked[i + 1];
+            }
+            return result;
+        }
+        case 6:
+            switch (ast.operation) {
+                case 'void':
+                    return void astEvaluate(ast.expression, s, e, c);
+                case 'typeof':
+                    return typeof astEvaluate(ast.expression, s, e, c);
+                case '!':
+                    return !astEvaluate(ast.expression, s, e, c);
+                case '-':
+                    return -astEvaluate(ast.expression, s, e, c);
+                case '+':
+                    return +astEvaluate(ast.expression, s, e, c);
+                default:
+                    throw createError(`AUR0109: Unknown unary operator: '${ast.operation}'`);
+            }
+        case 7: {
+            const args = ast.args.map(a => astEvaluate(a, s, e, c));
+            const context = getContext(s, ast.name, ast.ancestor);
+            const func = getFunction(e?.strictFnCall, context, ast.name);
+            if (func) {
+                return func.apply(context, args);
+            }
+            return void 0;
+        }
+        case 8: {
+            const instance = astEvaluate(ast.object, s, e, c);
+            const args = ast.args.map(a => astEvaluate(a, s, e, c));
+            const func = getFunction(e?.strictFnCall, instance, ast.name);
+            let ret;
+            if (func) {
+                ret = func.apply(instance, args);
+                if (isArray(instance) && autoObserveArrayMethods.includes(ast.name)) {
+                    c?.observeCollection(instance);
+                }
+            }
+            return ret;
+        }
+        case 9: {
+            const func = astEvaluate(ast.func, s, e, c);
+            if (isFunction(func)) {
+                return func(...ast.args.map(a => astEvaluate(a, s, e, c)));
+            }
+            if (!e?.strictFnCall && func == null) {
+                return void 0;
+            }
+            throw createError(`AUR0107: Expression is not a function.`);
+        }
+        case 16: {
+            const func = (...args) => {
+                const params = ast.args;
+                const rest = ast.rest;
+                const lastIdx = params.length - 1;
+                const context = params.reduce((map, param, i) => {
+                    if (rest && i === lastIdx) {
+                        map[param.name] = args.slice(i);
+                    }
+                    else {
+                        map[param.name] = args[i];
+                    }
+                    return map;
+                }, {});
+                const functionScope = Scope.fromParent(s, context);
+                return astEvaluate(ast.body, functionScope, e, c);
+            };
+            return func;
+        }
+        case 10: {
+            const instance = astEvaluate(ast.object, s, e, c);
+            let ret;
+            if (e?.strict) {
+                if (instance == null) {
+                    return instance;
+                }
+                if (c !== null) {
+                    c.observe(instance, ast.name);
+                }
+                ret = instance[ast.name];
+                if (e?.boundFn && isFunction(ret)) {
+                    return ret.bind(instance);
+                }
+                return ret;
+            }
+            if (c !== null && isObject(instance)) {
+                c.observe(instance, ast.name);
+            }
+            if (instance) {
+                ret = instance[ast.name];
+                if (e?.boundFn && isFunction(ret)) {
+                    return ret.bind(instance);
+                }
+                return ret;
+            }
+            return '';
+        }
+        case 11: {
+            const instance = astEvaluate(ast.object, s, e, c);
+            if (isObject(instance)) {
+                const key = astEvaluate(ast.key, s, e, c);
+                if (c !== null) {
+                    c.observe(instance, key);
+                }
+                return instance[key];
+            }
+            return void 0;
+        }
+        case 12: {
+            const results = ast.expressions.map(expr => astEvaluate(expr, s, e, c));
+            const func = astEvaluate(ast.func, s, e, c);
+            if (!isFunction(func)) {
+                throw createError(`AUR0110: Left-hand side of tagged template expression is not a function.`);
+            }
+            return func(ast.cooked, ...results);
+        }
+        case 13: {
+            const left = ast.left;
+            const right = ast.right;
+            switch (ast.operation) {
+                case '&&':
+                    return astEvaluate(left, s, e, c) && astEvaluate(right, s, e, c);
+                case '||':
+                    return astEvaluate(left, s, e, c) || astEvaluate(right, s, e, c);
+                case '??':
+                    return astEvaluate(left, s, e, c) ?? astEvaluate(right, s, e, c);
+                case '==':
+                    return astEvaluate(left, s, e, c) == astEvaluate(right, s, e, c);
+                case '===':
+                    return astEvaluate(left, s, e, c) === astEvaluate(right, s, e, c);
+                case '!=':
+                    return astEvaluate(left, s, e, c) != astEvaluate(right, s, e, c);
+                case '!==':
+                    return astEvaluate(left, s, e, c) !== astEvaluate(right, s, e, c);
+                case 'instanceof': {
+                    const $right = astEvaluate(right, s, e, c);
+                    if (isFunction($right)) {
+                        return astEvaluate(left, s, e, c) instanceof $right;
+                    }
+                    return false;
+                }
+                case 'in': {
+                    const $right = astEvaluate(right, s, e, c);
+                    if (isObject($right)) {
+                        return astEvaluate(left, s, e, c) in $right;
+                    }
+                    return false;
+                }
+                case '+': {
+                    const $left = astEvaluate(left, s, e, c);
+                    const $right = astEvaluate(right, s, e, c);
+                    if (e?.strict) {
+                        return $left + $right;
+                    }
+                    if (!$left || !$right) {
+                        if (isNumberOrBigInt($left) || isNumberOrBigInt($right)) {
+                            return ($left || 0) + ($right || 0);
+                        }
+                        if (isStringOrDate($left) || isStringOrDate($right)) {
+                            return ($left || '') + ($right || '');
+                        }
+                    }
+                    return $left + $right;
+                }
+                case '-':
+                    return astEvaluate(left, s, e, c) - astEvaluate(right, s, e, c);
+                case '*':
+                    return astEvaluate(left, s, e, c) * astEvaluate(right, s, e, c);
+                case '/':
+                    return astEvaluate(left, s, e, c) / astEvaluate(right, s, e, c);
+                case '%':
+                    return astEvaluate(left, s, e, c) % astEvaluate(right, s, e, c);
+                case '<':
+                    return astEvaluate(left, s, e, c) < astEvaluate(right, s, e, c);
+                case '>':
+                    return astEvaluate(left, s, e, c) > astEvaluate(right, s, e, c);
+                case '<=':
+                    return astEvaluate(left, s, e, c) <= astEvaluate(right, s, e, c);
+                case '>=':
+                    return astEvaluate(left, s, e, c) >= astEvaluate(right, s, e, c);
+                default:
+                    throw createError(`AUR0108: Unknown binary operator: '${ast.operation}'`);
+            }
+        }
+        case 14:
+            return astEvaluate(ast.condition, s, e, c) ? astEvaluate(ast.yes, s, e, c) : astEvaluate(ast.no, s, e, c);
+        case 15:
+            return astAssign(ast.target, s, e, astEvaluate(ast.value, s, e, c));
+        case 17: {
+            const vc = e?.getConverter?.(ast.name);
+            if (vc == null) {
+                throw createError(`AUR0103: ValueConverter named '${ast.name}' could not be found. Did you forget to register it as a dependency?`);
+            }
+            if ('toView' in vc) {
+                return vc.toView(astEvaluate(ast.expression, s, e, c), ...ast.args.map(a => astEvaluate(a, s, e, c)));
+            }
+            return astEvaluate(ast.expression, s, e, c);
+        }
+        case 18:
+            return astEvaluate(ast.expression, s, e, c);
+        case 21:
+            return ast.name;
+        case 22:
+            return astEvaluate(ast.iterable, s, e, c);
+        case 23:
+            if (ast.isMulti) {
+                let result = ast.parts[0];
+                let i = 0;
+                for (; i < ast.expressions.length; ++i) {
+                    result += safeString(astEvaluate(ast.expressions[i], s, e, c));
+                    result += ast.parts[i + 1];
+                }
+                return result;
+            }
+            else {
+                return `${ast.parts[0]}${astEvaluate(ast.firstExpression, s, e, c)}${ast.parts[1]}`;
+            }
+        case 26:
+            return astEvaluate(ast.target, s, e, c);
+        case 24: {
+            return ast.list.map(x => astEvaluate(x, s, e, c));
+        }
+        case 19:
+        case 20:
+        case 25:
+        default:
+            return void 0;
+        case 28:
+            return ast.evaluate(s, e, c);
+    }
+}
+function astAssign(ast, s, e, val) {
+    switch (ast.$kind) {
+        case 1: {
+            if (ast.name === '$host') {
+                throw createError(`AUR0106: Invalid assignment. $host is a reserved keyword.`);
+            }
+            const obj = getContext(s, ast.name, ast.ancestor);
+            return obj[ast.name] = val;
+        }
+        case 10: {
+            const obj = astEvaluate(ast.object, s, e, null);
+            if (isObject(obj)) {
+                if (ast.name === 'length' && isArray(obj) && !isNaN(val)) {
+                    obj.splice(val);
+                }
+                else {
+                    obj[ast.name] = val;
+                }
+            }
+            else {
+                astAssign(ast.object, s, e, { [ast.name]: val });
+            }
+            return val;
+        }
+        case 11: {
+            const instance = astEvaluate(ast.object, s, e, null);
+            const key = astEvaluate(ast.key, s, e, null);
+            if (isArray(instance)) {
+                if (key === 'length' && !isNaN(val)) {
+                    instance.splice(val);
+                    return val;
+                }
+                if (kernel.isArrayIndex(key)) {
+                    instance.splice(key, 1, val);
+                    return val;
+                }
+            }
+            return instance[key] = val;
+        }
+        case 15:
+            astAssign(ast.value, s, e, val);
+            return astAssign(ast.target, s, e, val);
+        case 17: {
+            const vc = e?.getConverter?.(ast.name);
+            if (vc == null) {
+                throw converterNotFoundError(ast.name);
+            }
+            if ('fromView' in vc) {
+                val = vc.fromView(val, ...ast.args.map(a => astEvaluate(a, s, e, null)));
+            }
+            return astAssign(ast.expression, s, e, val);
+        }
+        case 18:
+            return astAssign(ast.expression, s, e, val);
+        case 24:
+        case 25: {
+            const list = ast.list;
+            const len = list.length;
+            let i;
+            let item;
+            for (i = 0; i < len; i++) {
+                item = list[i];
+                switch (item.$kind) {
+                    case 26:
+                        astAssign(item, s, e, val);
+                        break;
+                    case 24:
+                    case 25: {
+                        if (typeof val !== 'object' || val === null) {
+                            {
+                                throw createError(`AUR0112: Cannot use non-object value for destructuring assignment.`);
+                            }
+                        }
+                        let source = astEvaluate(item.source, Scope.create(val), e, null);
+                        if (source === void 0 && item.initializer) {
+                            source = astEvaluate(item.initializer, s, e, null);
+                        }
+                        astAssign(item, s, e, source);
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+        case 26: {
+            if (ast instanceof DestructuringAssignmentSingleExpression) {
+                if (val == null) {
+                    return;
+                }
+                if (typeof val !== 'object') {
+                    {
+                        throw createError(`AUR0112: Cannot use non-object value for destructuring assignment.`);
+                    }
+                }
+                let source = astEvaluate(ast.source, Scope.create(val), e, null);
+                if (source === void 0 && ast.initializer) {
+                    source = astEvaluate(ast.initializer, s, e, null);
+                }
+                astAssign(ast.target, s, e, source);
+            }
+            else {
+                if (val == null) {
+                    return;
+                }
+                if (typeof val !== 'object') {
+                    {
+                        throw createError(`AUR0112: Cannot use non-object value for destructuring assignment.`);
+                    }
+                }
+                const indexOrProperties = ast.indexOrProperties;
+                let restValue;
+                if (kernel.isArrayIndex(indexOrProperties)) {
+                    if (!Array.isArray(val)) {
+                        {
+                            throw createError(`AUR0112: Cannot use non-array value for array-destructuring assignment.`);
+                        }
+                    }
+                    restValue = val.slice(indexOrProperties);
+                }
+                else {
+                    restValue = Object
+                        .entries(val)
+                        .reduce((acc, [k, v]) => {
+                        if (!indexOrProperties.includes(k)) {
+                            acc[k] = v;
+                        }
+                        return acc;
+                    }, {});
+                }
+                astAssign(ast.target, s, e, restValue);
+            }
+            break;
+        }
+        case 28:
+            return ast.assign(s, e, val);
+        default:
+            return void 0;
+    }
+}
+function astBind(ast, s, b) {
+    switch (ast.$kind) {
+        case 18: {
+            const name = ast.name;
+            const key = ast.key;
+            const behavior = b.getBehavior?.(name);
+            if (behavior == null) {
+                throw behaviorNotFoundError(name);
+            }
+            if (b[key] === void 0) {
+                b[key] = behavior;
+                behavior.bind?.(s, b, ...ast.args.map(a => astEvaluate(a, s, b, null)));
+            }
+            else {
+                throw duplicateBehaviorAppliedError(name);
+            }
+            astBind(ast.expression, s, b);
+            return;
+        }
+        case 17: {
+            const name = ast.name;
+            const vc = b.getConverter?.(name);
+            if (vc == null) {
+                throw converterNotFoundError(name);
+            }
+            const signals = vc.signals;
+            if (signals != null) {
+                const signaler = b.getSignaler?.();
+                const ii = signals.length;
+                let i = 0;
+                for (; i < ii; ++i) {
+                    signaler?.addSignalListener(signals[i], b);
+                }
+            }
+            astBind(ast.expression, s, b);
+            return;
+        }
+        case 22: {
+            astBind(ast.iterable, s, b);
+            break;
+        }
+        case 28: {
+            ast.bind?.(s, b);
+        }
+    }
+}
+function astUnbind(ast, s, b) {
+    switch (ast.$kind) {
+        case 18: {
+            const key = ast.key;
+            const $b = b;
+            if ($b[key] !== void 0) {
+                $b[key].unbind?.(s, b);
+                $b[key] = void 0;
+            }
+            astUnbind(ast.expression, s, b);
+            break;
+        }
+        case 17: {
+            const vc = b.getConverter?.(ast.name);
+            if (vc?.signals === void 0) {
+                return;
+            }
+            const signaler = b.getSignaler?.();
+            let i = 0;
+            for (; i < vc.signals.length; ++i) {
+                signaler?.removeSignalListener(vc.signals[i], b);
+            }
+            astUnbind(ast.expression, s, b);
+            break;
+        }
+        case 22: {
+            astUnbind(ast.iterable, s, b);
+            break;
+        }
+        case 28: {
+            ast.unbind?.(s, b);
+        }
+    }
+}
+const behaviorNotFoundError = (name) => createError(`AUR0101: BindingBehavior '${name}' could not be found. Did you forget to register it as a dependency?`)
+    ;
+const duplicateBehaviorAppliedError = (name) => createError(`AUR0102: BindingBehavior '${name}' already applied.`)
+    ;
+const converterNotFoundError = (name) => {
+    return createError(`AUR0103: ValueConverter '${name}' could not be found. Did you forget to register it as a dependency?`);
+};
+const getFunction = (mustEvaluate, obj, name) => {
     const func = obj == null ? null : obj[name];
     if (isFunction(func)) {
         return func;
@@ -1431,9 +1217,9 @@ function getFunction(mustEvaluate, obj, name) {
     if (!mustEvaluate && func == null) {
         return null;
     }
-    throw new Error(`AUR0111: Expected '${name}' to be a function`);
-}
-function isNumberOrBigInt(value) {
+    throw createError(`AUR0111: Expected '${name}' to be a function`);
+};
+const isNumberOrBigInt = (value) => {
     switch (typeof value) {
         case 'number':
         case 'bigint':
@@ -1441,8 +1227,8 @@ function isNumberOrBigInt(value) {
         default:
             return false;
     }
-}
-function isStringOrDate(value) {
+};
+const isStringOrDate = (value) => {
     switch (typeof value) {
         case 'string':
             return true;
@@ -1451,7 +1237,8 @@ function isStringOrDate(value) {
         default:
             return false;
     }
-}
+};
+const autoObserveArrayMethods = 'at map filter includes indexOf lastIndexOf findIndex find flat flatMap join reduce reduceRight slice every some sort'.split(' ');
 
 const ICoercionConfiguration = kernel.DI.createInterface('ICoercionConfiguration');
 exports.CollectionKind = void 0;
@@ -1607,96 +1394,23 @@ function subscriberCollectionDeco(target) {
 }
 class SubscriberRecord {
     constructor() {
-        this.sf = 0;
         this.count = 0;
+        this._subs = [];
     }
     add(subscriber) {
-        if (this.has(subscriber)) {
+        if (this._subs.includes(subscriber)) {
             return false;
         }
-        const subscriberFlags = this.sf;
-        if ((subscriberFlags & 1) === 0) {
-            this.s0 = subscriber;
-            this.sf |= 1;
-        }
-        else if ((subscriberFlags & 2) === 0) {
-            this.s1 = subscriber;
-            this.sf |= 2;
-        }
-        else if ((subscriberFlags & 4) === 0) {
-            this.s2 = subscriber;
-            this.sf |= 4;
-        }
-        else if ((subscriberFlags & 8) === 0) {
-            this.sr = [subscriber];
-            this.sf |= 8;
-        }
-        else {
-            this.sr.push(subscriber);
-        }
+        this._subs[this._subs.length] = subscriber;
         ++this.count;
         return true;
     }
-    has(subscriber) {
-        const subscriberFlags = this.sf;
-        if ((subscriberFlags & 1) > 0 && this.s0 === subscriber) {
-            return true;
-        }
-        if ((subscriberFlags & 2) > 0 && this.s1 === subscriber) {
-            return true;
-        }
-        if ((subscriberFlags & 4) > 0 && this.s2 === subscriber) {
-            return true;
-        }
-        if ((subscriberFlags & 8) > 0) {
-            const subscribers = this.sr;
-            const ii = subscribers.length;
-            let i = 0;
-            for (; i < ii; ++i) {
-                if (subscribers[i] === subscriber) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    any() {
-        return this.sf !== 0;
-    }
     remove(subscriber) {
-        const subscriberFlags = this.sf;
-        if ((subscriberFlags & 1) > 0 && this.s0 === subscriber) {
-            this.s0 = void 0;
-            this.sf = (this.sf | 1) ^ 1;
+        const idx = this._subs.indexOf(subscriber);
+        if (idx !== -1) {
+            this._subs.splice(idx, 1);
             --this.count;
             return true;
-        }
-        else if ((subscriberFlags & 2) > 0 && this.s1 === subscriber) {
-            this.s1 = void 0;
-            this.sf = (this.sf | 2) ^ 2;
-            --this.count;
-            return true;
-        }
-        else if ((subscriberFlags & 4) > 0 && this.s2 === subscriber) {
-            this.s2 = void 0;
-            this.sf = (this.sf | 4) ^ 4;
-            --this.count;
-            return true;
-        }
-        else if ((subscriberFlags & 8) > 0) {
-            const subscribers = this.sr;
-            const ii = subscribers.length;
-            let i = 0;
-            for (; i < ii; ++i) {
-                if (subscribers[i] === subscriber) {
-                    subscribers.splice(i, 1);
-                    if (ii === 1) {
-                        this.sf = (this.sf | 8) ^ 8;
-                    }
-                    --this.count;
-                    return true;
-                }
-            }
         }
         return false;
     }
@@ -1705,62 +1419,22 @@ class SubscriberRecord {
             addValueBatch(this, val, oldVal);
             return;
         }
-        const sub0 = this.s0;
-        const sub1 = this.s1;
-        const sub2 = this.s2;
-        let subs = this.sr;
-        if (subs !== void 0) {
-            subs = subs.slice();
+        const _subs = this._subs.slice(0);
+        const len = _subs.length;
+        let i = 0;
+        for (; i < len; ++i) {
+            _subs[i].handleChange(val, oldVal);
         }
-        if (sub0 !== void 0) {
-            sub0.handleChange(val, oldVal);
-        }
-        if (sub1 !== void 0) {
-            sub1.handleChange(val, oldVal);
-        }
-        if (sub2 !== void 0) {
-            sub2.handleChange(val, oldVal);
-        }
-        if (subs !== void 0) {
-            const ii = subs.length;
-            let sub;
-            let i = 0;
-            for (; i < ii; ++i) {
-                sub = subs[i];
-                if (sub !== void 0) {
-                    sub.handleChange(val, oldVal);
-                }
-            }
-        }
+        return;
     }
     notifyCollection(collection, indexMap) {
-        const sub0 = this.s0;
-        const sub1 = this.s1;
-        const sub2 = this.s2;
-        let subs = this.sr;
-        if (subs !== void 0) {
-            subs = subs.slice();
+        const _subs = this._subs.slice(0);
+        const len = _subs.length;
+        let i = 0;
+        for (; i < len; ++i) {
+            _subs[i].handleCollectionChange(collection, indexMap);
         }
-        if (sub0 !== void 0) {
-            sub0.handleCollectionChange(collection, indexMap);
-        }
-        if (sub1 !== void 0) {
-            sub1.handleCollectionChange(collection, indexMap);
-        }
-        if (sub2 !== void 0) {
-            sub2.handleCollectionChange(collection, indexMap);
-        }
-        if (subs !== void 0) {
-            const ii = subs.length;
-            let sub;
-            let i = 0;
-            for (; i < ii; ++i) {
-                sub = subs[i];
-                if (sub !== void 0) {
-                    sub.handleCollectionChange(collection, indexMap);
-                }
-            }
-        }
+        return;
     }
 }
 function getSubscriberRecord() {
@@ -1772,15 +1446,6 @@ function addSubscriber(subscriber) {
 function removeSubscriber(subscriber) {
     return this.subs.remove(subscriber);
 }
-var SubFlags;
-(function (SubFlags) {
-    SubFlags[SubFlags["None"] = 0] = "None";
-    SubFlags[SubFlags["Sub0"] = 1] = "Sub0";
-    SubFlags[SubFlags["Sub1"] = 2] = "Sub1";
-    SubFlags[SubFlags["Sub2"] = 4] = "Sub2";
-    SubFlags[SubFlags["SubRest"] = 8] = "SubRest";
-    SubFlags[SubFlags["Any"] = 15] = "Any";
-})(SubFlags || (SubFlags = {}));
 
 class CollectionLengthObserver {
     constructor(owner) {
@@ -1792,11 +1457,14 @@ class CollectionLengthObserver {
         return this._obj.length;
     }
     setValue(newValue) {
-        const currentValue = this._value;
-        if (newValue !== currentValue && kernel.isArrayIndex(newValue)) {
-            this._obj.length = newValue;
-            this._value = newValue;
-            this.subs.notify(newValue, currentValue);
+        if (newValue !== this._value) {
+            if (!Number.isNaN(newValue)) {
+                this._obj.splice(newValue);
+                this._value = this._obj.length;
+            }
+            else {
+                console.warn(`Invalid value "${newValue}" for array length`);
+            }
         }
     }
     handleCollectionChange(_arr, _) {
@@ -1811,13 +1479,13 @@ class CollectionSizeObserver {
     constructor(owner) {
         this.owner = owner;
         this._value = (this._obj = owner.collection).size;
-        this.type = this._obj instanceof Map ? 66 : 34;
+        this.type = isMap(this._obj) ? 66 : 34;
     }
     getValue() {
         return this._obj.size;
     }
     setValue() {
-        throw new Error(`AUR02: Map/Set "size" is a readonly property`);
+        throw createError(`AUR02: Map/Set "size" is a readonly property`);
     }
     handleCollectionChange(_collection, _) {
         const oldValue = this._value;
@@ -2097,8 +1765,8 @@ const observe$3 = {
         const indexMap = o.indexMap;
         const argCount = args.length;
         const actualDeleteCount = argCount === 0 ? 0 : argCount === 1 ? len - actualStart : deleteCount;
+        let i = actualStart;
         if (actualDeleteCount > 0) {
-            let i = actualStart;
             const to = i + actualDeleteCount;
             while (i < to) {
                 if (indexMap[i] > -1) {
@@ -2108,10 +1776,10 @@ const observe$3 = {
                 i++;
             }
         }
+        i = 0;
         if (argCount > 2) {
             const itemCount = argCount - 2;
             const inserts = new Array(itemCount);
-            let i = 0;
             while (i < itemCount) {
                 inserts[i++] = -2;
             }
@@ -2121,7 +1789,9 @@ const observe$3 = {
             $splice.apply(indexMap, args);
         }
         const deleted = $splice.apply(this, args);
-        o.notify();
+        if (actualDeleteCount > 0 || i > 0) {
+            o.notify();
+        }
         return deleted;
     },
     reverse: function () {
@@ -2638,26 +2308,25 @@ function getMapObserver(map) {
     return observer;
 }
 
-function observe(obj, key) {
-    const observer = this.oL.getObserver(obj, key);
-    this.obs.add(observer);
-}
 function getObserverRecord() {
     return defineHiddenProp(this, 'obs', new BindingObserverRecord(this));
 }
-function observeCollection(collection) {
+function observe(obj, key) {
+    this.obs.add(this.oL.getObserver(obj, key));
+}
+function observeCollection$1(collection) {
     let obs;
     if (isArray(collection)) {
         obs = getArrayObserver(collection);
     }
-    else if (collection instanceof Set) {
+    else if (isSet(collection)) {
         obs = getSetObserver(collection);
     }
-    else if (collection instanceof Map) {
+    else if (isMap(collection)) {
         obs = getMapObserver(collection);
     }
     else {
-        throw new Error(`AUR0210: Unrecognised collection type.`);
+        throw createError(`AUR0210: Unrecognised collection type.`);
     }
     this.obs.add(obs);
 }
@@ -2665,10 +2334,10 @@ function subscribeTo(subscribable) {
     this.obs.add(subscribable);
 }
 function noopHandleChange() {
-    throw new Error(`AUR2011: method "handleChange" not implemented`);
+    throw createError(`AUR2011: method "handleChange" not implemented`);
 }
 function noopHandleCollectionChange() {
-    throw new Error(`AUR2011: method "handleCollectionChange" not implemented`);
+    throw createError(`AUR2011: method "handleCollectionChange" not implemented`);
 }
 class BindingObserverRecord {
     constructor(b) {
@@ -2677,15 +2346,9 @@ class BindingObserverRecord {
         this.o = new Map();
         this.b = b;
     }
-    handleChange(value, oldValue) {
-        return this.b.interceptor.handleChange(value, oldValue);
-    }
-    handleCollectionChange(collection, indexMap) {
-        this.b.interceptor.handleCollectionChange(collection, indexMap);
-    }
     add(observer) {
         if (!this.o.has(observer)) {
-            observer.subscribe(this);
+            observer.subscribe(this.b);
             ++this.count;
         }
         this.o.set(observer, this.version);
@@ -2701,18 +2364,18 @@ class BindingObserverRecord {
     }
 }
 function unsubscribeAll(version, subscribable) {
-    subscribable.unsubscribe(this);
+    subscribable.unsubscribe(this.b);
 }
 function unsubscribeStale(version, subscribable) {
     if (this.version !== version) {
-        subscribable.unsubscribe(this);
+        subscribable.unsubscribe(this.b);
         this.o.delete(subscribable);
     }
 }
 function connectableDecorator(target) {
     const proto = target.prototype;
     ensureProto(proto, 'observe', observe);
-    ensureProto(proto, 'observeCollection', observeCollection);
+    ensureProto(proto, 'observeCollection', observeCollection$1);
     ensureProto(proto, 'subscribeTo', subscribeTo);
     def(proto, 'obs', { get: getObserverRecord });
     ensureProto(proto, 'handleChange', noopHandleChange);
@@ -2723,7 +2386,7 @@ function connectable(target) {
     return target == null ? connectableDecorator : connectableDecorator(target);
 }
 
-const IExpressionParser = kernel.DI.createInterface('IExpressionParser', x => x.singleton(ExpressionParser));
+const IExpressionParser = createInterface('IExpressionParser', x => x.singleton(ExpressionParser));
 class ExpressionParser {
     constructor() {
         this._expressionLookup = createLookup();
@@ -2733,7 +2396,7 @@ class ExpressionParser {
     parse(expression, expressionType) {
         let found;
         switch (expressionType) {
-            case 16:
+            case 32:
                 return new CustomExpression(expression);
             case 1:
                 found = this._interpolationLookup[expression];
@@ -2749,7 +2412,7 @@ class ExpressionParser {
                 return found;
             default: {
                 if (expression.length === 0) {
-                    if ((expressionType & (4 | 8)) > 0) {
+                    if ((expressionType & (8 | 16)) > 0) {
                         return PrimitiveLiteralExpression.$empty;
                     }
                     throw invalidEmptyExpression();
@@ -2770,114 +2433,14 @@ class ExpressionParser {
         $startIndex = 0;
         $currentToken = 6291456;
         $tokenValue = '';
-        $currentChar = expression.charCodeAt(0);
+        $currentChar = $charCodeAt(0);
         $assignable = true;
         $optional = false;
-        return parse(61, expressionType === void 0 ? 8 : expressionType);
+        $semicolonIndex = -1;
+        return parse(61, expressionType === void 0 ? 16 : expressionType);
     }
 }
-var Char;
-(function (Char) {
-    Char[Char["Null"] = 0] = "Null";
-    Char[Char["Backspace"] = 8] = "Backspace";
-    Char[Char["Tab"] = 9] = "Tab";
-    Char[Char["LineFeed"] = 10] = "LineFeed";
-    Char[Char["VerticalTab"] = 11] = "VerticalTab";
-    Char[Char["FormFeed"] = 12] = "FormFeed";
-    Char[Char["CarriageReturn"] = 13] = "CarriageReturn";
-    Char[Char["Space"] = 32] = "Space";
-    Char[Char["Exclamation"] = 33] = "Exclamation";
-    Char[Char["DoubleQuote"] = 34] = "DoubleQuote";
-    Char[Char["Dollar"] = 36] = "Dollar";
-    Char[Char["Percent"] = 37] = "Percent";
-    Char[Char["Ampersand"] = 38] = "Ampersand";
-    Char[Char["SingleQuote"] = 39] = "SingleQuote";
-    Char[Char["OpenParen"] = 40] = "OpenParen";
-    Char[Char["CloseParen"] = 41] = "CloseParen";
-    Char[Char["Asterisk"] = 42] = "Asterisk";
-    Char[Char["Plus"] = 43] = "Plus";
-    Char[Char["Comma"] = 44] = "Comma";
-    Char[Char["Minus"] = 45] = "Minus";
-    Char[Char["Dot"] = 46] = "Dot";
-    Char[Char["Slash"] = 47] = "Slash";
-    Char[Char["Semicolon"] = 59] = "Semicolon";
-    Char[Char["Backtick"] = 96] = "Backtick";
-    Char[Char["OpenBracket"] = 91] = "OpenBracket";
-    Char[Char["Backslash"] = 92] = "Backslash";
-    Char[Char["CloseBracket"] = 93] = "CloseBracket";
-    Char[Char["Caret"] = 94] = "Caret";
-    Char[Char["Underscore"] = 95] = "Underscore";
-    Char[Char["OpenBrace"] = 123] = "OpenBrace";
-    Char[Char["Bar"] = 124] = "Bar";
-    Char[Char["CloseBrace"] = 125] = "CloseBrace";
-    Char[Char["Colon"] = 58] = "Colon";
-    Char[Char["LessThan"] = 60] = "LessThan";
-    Char[Char["Equals"] = 61] = "Equals";
-    Char[Char["GreaterThan"] = 62] = "GreaterThan";
-    Char[Char["Question"] = 63] = "Question";
-    Char[Char["Zero"] = 48] = "Zero";
-    Char[Char["One"] = 49] = "One";
-    Char[Char["Two"] = 50] = "Two";
-    Char[Char["Three"] = 51] = "Three";
-    Char[Char["Four"] = 52] = "Four";
-    Char[Char["Five"] = 53] = "Five";
-    Char[Char["Six"] = 54] = "Six";
-    Char[Char["Seven"] = 55] = "Seven";
-    Char[Char["Eight"] = 56] = "Eight";
-    Char[Char["Nine"] = 57] = "Nine";
-    Char[Char["UpperA"] = 65] = "UpperA";
-    Char[Char["UpperB"] = 66] = "UpperB";
-    Char[Char["UpperC"] = 67] = "UpperC";
-    Char[Char["UpperD"] = 68] = "UpperD";
-    Char[Char["UpperE"] = 69] = "UpperE";
-    Char[Char["UpperF"] = 70] = "UpperF";
-    Char[Char["UpperG"] = 71] = "UpperG";
-    Char[Char["UpperH"] = 72] = "UpperH";
-    Char[Char["UpperI"] = 73] = "UpperI";
-    Char[Char["UpperJ"] = 74] = "UpperJ";
-    Char[Char["UpperK"] = 75] = "UpperK";
-    Char[Char["UpperL"] = 76] = "UpperL";
-    Char[Char["UpperM"] = 77] = "UpperM";
-    Char[Char["UpperN"] = 78] = "UpperN";
-    Char[Char["UpperO"] = 79] = "UpperO";
-    Char[Char["UpperP"] = 80] = "UpperP";
-    Char[Char["UpperQ"] = 81] = "UpperQ";
-    Char[Char["UpperR"] = 82] = "UpperR";
-    Char[Char["UpperS"] = 83] = "UpperS";
-    Char[Char["UpperT"] = 84] = "UpperT";
-    Char[Char["UpperU"] = 85] = "UpperU";
-    Char[Char["UpperV"] = 86] = "UpperV";
-    Char[Char["UpperW"] = 87] = "UpperW";
-    Char[Char["UpperX"] = 88] = "UpperX";
-    Char[Char["UpperY"] = 89] = "UpperY";
-    Char[Char["UpperZ"] = 90] = "UpperZ";
-    Char[Char["LowerA"] = 97] = "LowerA";
-    Char[Char["LowerB"] = 98] = "LowerB";
-    Char[Char["LowerC"] = 99] = "LowerC";
-    Char[Char["LowerD"] = 100] = "LowerD";
-    Char[Char["LowerE"] = 101] = "LowerE";
-    Char[Char["LowerF"] = 102] = "LowerF";
-    Char[Char["LowerG"] = 103] = "LowerG";
-    Char[Char["LowerH"] = 104] = "LowerH";
-    Char[Char["LowerI"] = 105] = "LowerI";
-    Char[Char["LowerJ"] = 106] = "LowerJ";
-    Char[Char["LowerK"] = 107] = "LowerK";
-    Char[Char["LowerL"] = 108] = "LowerL";
-    Char[Char["LowerM"] = 109] = "LowerM";
-    Char[Char["LowerN"] = 110] = "LowerN";
-    Char[Char["LowerO"] = 111] = "LowerO";
-    Char[Char["LowerP"] = 112] = "LowerP";
-    Char[Char["LowerQ"] = 113] = "LowerQ";
-    Char[Char["LowerR"] = 114] = "LowerR";
-    Char[Char["LowerS"] = 115] = "LowerS";
-    Char[Char["LowerT"] = 116] = "LowerT";
-    Char[Char["LowerU"] = 117] = "LowerU";
-    Char[Char["LowerV"] = 118] = "LowerV";
-    Char[Char["LowerW"] = 119] = "LowerW";
-    Char[Char["LowerX"] = 120] = "LowerX";
-    Char[Char["LowerY"] = 121] = "LowerY";
-    Char[Char["LowerZ"] = 122] = "LowerZ";
-})(Char || (Char = {}));
+
 function unescapeCode(code) {
     switch (code) {
         case 98: return 8;
@@ -2892,91 +2455,8 @@ function unescapeCode(code) {
         default: return code;
     }
 }
-var Precedence;
-(function (Precedence) {
-    Precedence[Precedence["Variadic"] = 61] = "Variadic";
-    Precedence[Precedence["Assign"] = 62] = "Assign";
-    Precedence[Precedence["Conditional"] = 63] = "Conditional";
-    Precedence[Precedence["NullishCoalescing"] = 128] = "NullishCoalescing";
-    Precedence[Precedence["LogicalOR"] = 192] = "LogicalOR";
-    Precedence[Precedence["LogicalAND"] = 256] = "LogicalAND";
-    Precedence[Precedence["Equality"] = 320] = "Equality";
-    Precedence[Precedence["Relational"] = 384] = "Relational";
-    Precedence[Precedence["Additive"] = 448] = "Additive";
-    Precedence[Precedence["Multiplicative"] = 512] = "Multiplicative";
-    Precedence[Precedence["Binary"] = 513] = "Binary";
-    Precedence[Precedence["LeftHandSide"] = 514] = "LeftHandSide";
-    Precedence[Precedence["Primary"] = 515] = "Primary";
-    Precedence[Precedence["Unary"] = 516] = "Unary";
-})(Precedence || (Precedence = {}));
-var Token;
-(function (Token) {
-    Token[Token["EOF"] = 6291456] = "EOF";
-    Token[Token["ExpressionTerminal"] = 4194304] = "ExpressionTerminal";
-    Token[Token["AccessScopeTerminal"] = 2097152] = "AccessScopeTerminal";
-    Token[Token["ClosingToken"] = 1048576] = "ClosingToken";
-    Token[Token["OpeningToken"] = 524288] = "OpeningToken";
-    Token[Token["BinaryOp"] = 262144] = "BinaryOp";
-    Token[Token["UnaryOp"] = 131072] = "UnaryOp";
-    Token[Token["LeftHandSide"] = 65536] = "LeftHandSide";
-    Token[Token["StringOrNumericLiteral"] = 49152] = "StringOrNumericLiteral";
-    Token[Token["NumericLiteral"] = 32768] = "NumericLiteral";
-    Token[Token["StringLiteral"] = 16384] = "StringLiteral";
-    Token[Token["IdentifierName"] = 12288] = "IdentifierName";
-    Token[Token["Keyword"] = 8192] = "Keyword";
-    Token[Token["Identifier"] = 4096] = "Identifier";
-    Token[Token["Contextual"] = 2048] = "Contextual";
-    Token[Token["OptionalSuffix"] = 13312] = "OptionalSuffix";
-    Token[Token["Precedence"] = 960] = "Precedence";
-    Token[Token["Type"] = 63] = "Type";
-    Token[Token["FalseKeyword"] = 8192] = "FalseKeyword";
-    Token[Token["TrueKeyword"] = 8193] = "TrueKeyword";
-    Token[Token["NullKeyword"] = 8194] = "NullKeyword";
-    Token[Token["UndefinedKeyword"] = 8195] = "UndefinedKeyword";
-    Token[Token["ThisScope"] = 12292] = "ThisScope";
-    Token[Token["ParentScope"] = 12294] = "ParentScope";
-    Token[Token["OpenParen"] = 2688007] = "OpenParen";
-    Token[Token["OpenBrace"] = 524296] = "OpenBrace";
-    Token[Token["Dot"] = 65545] = "Dot";
-    Token[Token["DotDot"] = 10] = "DotDot";
-    Token[Token["DotDotDot"] = 11] = "DotDotDot";
-    Token[Token["QuestionDot"] = 2162700] = "QuestionDot";
-    Token[Token["CloseBrace"] = 7340045] = "CloseBrace";
-    Token[Token["CloseParen"] = 7340046] = "CloseParen";
-    Token[Token["Comma"] = 6291471] = "Comma";
-    Token[Token["OpenBracket"] = 2688016] = "OpenBracket";
-    Token[Token["CloseBracket"] = 7340051] = "CloseBracket";
-    Token[Token["Colon"] = 6291476] = "Colon";
-    Token[Token["Question"] = 6291477] = "Question";
-    Token[Token["Ampersand"] = 6291478] = "Ampersand";
-    Token[Token["Bar"] = 6291479] = "Bar";
-    Token[Token["QuestionQuestion"] = 6553752] = "QuestionQuestion";
-    Token[Token["BarBar"] = 6553817] = "BarBar";
-    Token[Token["AmpersandAmpersand"] = 6553882] = "AmpersandAmpersand";
-    Token[Token["EqualsEquals"] = 6553947] = "EqualsEquals";
-    Token[Token["ExclamationEquals"] = 6553948] = "ExclamationEquals";
-    Token[Token["EqualsEqualsEquals"] = 6553949] = "EqualsEqualsEquals";
-    Token[Token["ExclamationEqualsEquals"] = 6553950] = "ExclamationEqualsEquals";
-    Token[Token["LessThan"] = 6554015] = "LessThan";
-    Token[Token["GreaterThan"] = 6554016] = "GreaterThan";
-    Token[Token["LessThanEquals"] = 6554017] = "LessThanEquals";
-    Token[Token["GreaterThanEquals"] = 6554018] = "GreaterThanEquals";
-    Token[Token["InKeyword"] = 6562211] = "InKeyword";
-    Token[Token["InstanceOfKeyword"] = 6562212] = "InstanceOfKeyword";
-    Token[Token["Plus"] = 2490853] = "Plus";
-    Token[Token["Minus"] = 2490854] = "Minus";
-    Token[Token["TypeofKeyword"] = 139303] = "TypeofKeyword";
-    Token[Token["VoidKeyword"] = 139304] = "VoidKeyword";
-    Token[Token["Asterisk"] = 6554153] = "Asterisk";
-    Token[Token["Percent"] = 6554154] = "Percent";
-    Token[Token["Slash"] = 6554155] = "Slash";
-    Token[Token["Equals"] = 4194348] = "Equals";
-    Token[Token["Exclamation"] = 131117] = "Exclamation";
-    Token[Token["TemplateTail"] = 2163758] = "TemplateTail";
-    Token[Token["TemplateContinuation"] = 2163759] = "TemplateContinuation";
-    Token[Token["OfKeyword"] = 4204592] = "OfKeyword";
-    Token[Token["Arrow"] = 49] = "Arrow";
-})(Token || (Token = {}));
+
+
 const $false = PrimitiveLiteralExpression.$false;
 const $true = PrimitiveLiteralExpression.$true;
 const $null = PrimitiveLiteralExpression.$null;
@@ -2988,9 +2468,10 @@ exports.ExpressionType = void 0;
     ExpressionType[ExpressionType["None"] = 0] = "None";
     ExpressionType[ExpressionType["Interpolation"] = 1] = "Interpolation";
     ExpressionType[ExpressionType["IsIterator"] = 2] = "IsIterator";
-    ExpressionType[ExpressionType["IsFunction"] = 4] = "IsFunction";
-    ExpressionType[ExpressionType["IsProperty"] = 8] = "IsProperty";
-    ExpressionType[ExpressionType["IsCustom"] = 16] = "IsCustom";
+    ExpressionType[ExpressionType["IsChainable"] = 4] = "IsChainable";
+    ExpressionType[ExpressionType["IsFunction"] = 8] = "IsFunction";
+    ExpressionType[ExpressionType["IsProperty"] = 16] = "IsProperty";
+    ExpressionType[ExpressionType["IsCustom"] = 32] = "IsCustom";
 })(exports.ExpressionType || (exports.ExpressionType = {}));
 let $input = '';
 let $index = 0;
@@ -3002,9 +2483,10 @@ let $tokenValue = '';
 let $currentChar;
 let $assignable = true;
 let $optional = false;
-function $tokenRaw() {
-    return $input.slice($startIndex, $index);
-}
+let $semicolonIndex = -1;
+const stringFromCharCode = String.fromCharCode;
+const $charCodeAt = (index) => $input.charCodeAt(index);
+const $tokenRaw = () => $input.slice($startIndex, $index);
 function parseExpression(input, expressionType) {
     $input = input;
     $index = 0;
@@ -3013,13 +2495,14 @@ function parseExpression(input, expressionType) {
     $startIndex = 0;
     $currentToken = 6291456;
     $tokenValue = '';
-    $currentChar = input.charCodeAt(0);
+    $currentChar = $charCodeAt(0);
     $assignable = true;
     $optional = false;
-    return parse(61, expressionType === void 0 ? 8 : expressionType);
+    $semicolonIndex = -1;
+    return parse(61, expressionType === void 0 ? 16 : expressionType);
 }
 function parse(minPrecedence, expressionType) {
-    if (expressionType === 16) {
+    if (expressionType === 32) {
         return new CustomExpression($input);
     }
     if ($index === 0) {
@@ -3087,7 +2570,7 @@ function parse(minPrecedence, expressionType) {
                 }
                 $assignable = !$optional;
                 nextToken();
-                if (consumeOpt(49)) {
+                if (consumeOpt(50)) {
                     if ($currentToken === 524296) {
                         throw functionBodyInArrowFN();
                     }
@@ -3130,12 +2613,12 @@ function parse(minPrecedence, expressionType) {
             case 524296:
                 result = parseObjectLiteralExpression(expressionType);
                 break;
-            case 2163758:
+            case 2163759:
                 result = new TemplateExpression([$tokenValue]);
                 $assignable = false;
                 nextToken();
                 break;
-            case 2163759:
+            case 2163760:
                 result = parseTemplate(expressionType, result, false);
                 break;
             case 16384:
@@ -3210,10 +2693,10 @@ function parse(minPrecedence, expressionType) {
                 case 2688016:
                     result = parseKeyedExpression(result, optionalThisTail);
                     break;
-                case 2163758:
+                case 2163759:
                     result = createTemplateTail(result);
                     break;
-                case 2163759:
+                case 2163760:
                     result = parseTemplate(expressionType, result, true);
                     break;
             }
@@ -3247,13 +2730,13 @@ function parse(minPrecedence, expressionType) {
                 case 2688016:
                     result = parseKeyedExpression(result, false);
                     break;
-                case 2163758:
+                case 2163759:
                     if ($optional) {
                         throw invalidTaggedTemplateOnOptionalChain();
                     }
                     result = createTemplateTail(result);
                     break;
-                case 2163759:
+                case 2163760:
                     if ($optional) {
                         throw invalidTaggedTemplateOnOptionalChain();
                     }
@@ -3280,7 +2763,7 @@ function parse(minPrecedence, expressionType) {
     if (63 < minPrecedence) {
         return result;
     }
-    if (consumeOpt(6291477)) {
+    if (consumeOpt(6291478)) {
         const yes = parse(62, expressionType);
         consume(6291476);
         result = new ConditionalExpression(result, yes, parse(62, expressionType));
@@ -3289,7 +2772,7 @@ function parse(minPrecedence, expressionType) {
     if (62 < minPrecedence) {
         return result;
     }
-    if (consumeOpt(4194348)) {
+    if (consumeOpt(4194349)) {
         if (!$assignable) {
             throw lhsNotAssignable();
         }
@@ -3298,7 +2781,7 @@ function parse(minPrecedence, expressionType) {
     if (61 < minPrecedence) {
         return result;
     }
-    while (consumeOpt(6291479)) {
+    while (consumeOpt(6291480)) {
         if ($currentToken === 6291456) {
             throw expectedValueConverterIdentifier();
         }
@@ -3310,7 +2793,7 @@ function parse(minPrecedence, expressionType) {
         }
         result = new ValueConverterExpression(result, name, args);
     }
-    while (consumeOpt(6291478)) {
+    while (consumeOpt(6291479)) {
         if ($currentToken === 6291456) {
             throw expectedBindingBehaviorIdentifier();
         }
@@ -3324,6 +2807,13 @@ function parse(minPrecedence, expressionType) {
     }
     if ($currentToken !== 6291456) {
         if ((expressionType & 1) > 0 && $currentToken === 7340045) {
+            return result;
+        }
+        if ((expressionType & 4) > 0 && $currentToken === 6291477) {
+            if ($index === $length) {
+                throw unconsumedToken();
+            }
+            $semicolonIndex = $index - 1;
             return result;
         }
         if ($tokenRaw() === 'of') {
@@ -3458,13 +2948,7 @@ function parseMemberExpressionLHS(lhs, optional) {
         }
     }
 }
-var ArrowFnParams;
-(function (ArrowFnParams) {
-    ArrowFnParams[ArrowFnParams["Valid"] = 1] = "Valid";
-    ArrowFnParams[ArrowFnParams["Invalid"] = 2] = "Invalid";
-    ArrowFnParams[ArrowFnParams["Default"] = 3] = "Default";
-    ArrowFnParams[ArrowFnParams["Destructuring"] = 4] = "Destructuring";
-})(ArrowFnParams || (ArrowFnParams = {}));
+
 function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) {
     nextToken();
     const indexSave = $index;
@@ -3492,7 +2976,7 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
                 throw invalidSpreadOp();
             }
             nextToken();
-            if ($currentToken !== 49) {
+            if ($currentToken !== 50) {
                 throw invalidSpreadOp();
             }
             nextToken();
@@ -3541,12 +3025,12 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
             case 7340046:
                 nextToken();
                 break loop;
-            case 4194348:
+            case 4194349:
                 if (paramsState === 1) {
                     paramsState = 3;
                 }
                 break loop;
-            case 49:
+            case 50:
                 if (isParamList) {
                     throw invalidArrowParameterList();
                 }
@@ -3560,7 +3044,7 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
                 break loop;
         }
     }
-    if ($currentToken === 49) {
+    if ($currentToken === 50) {
         if (paramsState === 1) {
             nextToken();
             if ($currentToken === 524296) {
@@ -3578,7 +3062,7 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
         throw invalidArrowParameterList();
     }
     else if (paramsState === 1 && arrowParams.length === 0) {
-        throw missingExpectedToken(49);
+        throw missingExpectedToken(50);
     }
     if (isParamList) {
         switch (paramsState) {
@@ -3601,7 +3085,7 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
     const expr = parse(62, expressionType);
     $optional = _optional;
     consume(7340046);
-    if ($currentToken === 49) {
+    if ($currentToken === 50) {
         switch (paramsState) {
             case 2:
                 throw invalidArrowParameterList();
@@ -3652,13 +3136,13 @@ function parseForOfStatement(result) {
         | 21)) === 0) {
         throw invalidLHSBindingIdentifierInForOf();
     }
-    if ($currentToken !== 4204592) {
+    if ($currentToken !== 4204593) {
         throw invalidLHSBindingIdentifierInForOf();
     }
     nextToken();
     const declaration = result;
-    const statement = parse(61, 0);
-    return new ForOfStatement(declaration, statement);
+    const statement = parse(61, 4);
+    return new ForOfStatement(declaration, statement, $semicolonIndex);
 }
 function parseObjectLiteralExpression(expressionType) {
     const _optional = $optional;
@@ -3712,11 +3196,11 @@ function parseInterpolation() {
     while ($index < length) {
         switch ($currentChar) {
             case 36:
-                if ($input.charCodeAt($index + 1) === 123) {
+                if ($charCodeAt($index + 1) === 123) {
                     parts.push(result);
                     result = '';
                     $index += 2;
-                    $currentChar = $input.charCodeAt($index);
+                    $currentChar = $charCodeAt($index);
                     nextToken();
                     const expression = parse(61, 1);
                     expressions.push(expression);
@@ -3727,10 +3211,10 @@ function parseInterpolation() {
                 }
                 break;
             case 92:
-                result += String.fromCharCode(unescapeCode(nextChar()));
+                result += stringFromCharCode(unescapeCode(nextChar()));
                 break;
             default:
-                result += String.fromCharCode($currentChar);
+                result += stringFromCharCode($currentChar);
         }
         nextChar();
     }
@@ -3743,11 +3227,11 @@ function parseInterpolation() {
 function parseTemplate(expressionType, result, tagged) {
     const _optional = $optional;
     const cooked = [$tokenValue];
-    consume(2163759);
+    consume(2163760);
     const expressions = [parse(62, expressionType)];
-    while (($currentToken = scanTemplateTail()) !== 2163758) {
+    while (($currentToken = scanTemplateTail()) !== 2163759) {
         cooked.push($tokenValue);
-        consume(2163759);
+        consume(2163760);
         expressions.push(parse(62, expressionType));
     }
     cooked.push($tokenValue);
@@ -3778,7 +3262,7 @@ function nextToken() {
     $currentToken = 6291456;
 }
 function nextChar() {
-    return $currentChar = $input.charCodeAt(++$index);
+    return $currentChar = $charCodeAt(++$index);
 }
 function scanIdentifier() {
     while (IdParts[nextChar()])
@@ -3808,7 +3292,7 @@ function scanNumber(isFloat) {
         } while (char <= 57 && char >= 48);
     }
     else {
-        $currentChar = $input.charCodeAt(--$index);
+        $currentChar = $charCodeAt(--$index);
     }
     $tokenValue = parseFloat($tokenRaw());
     return 32768;
@@ -3825,7 +3309,7 @@ function scanString() {
             nextChar();
             unescaped = unescapeCode($currentChar);
             nextChar();
-            buffer.push(String.fromCharCode(unescaped));
+            buffer.push(stringFromCharCode(unescaped));
             marker = $index;
         }
         else if ($index >= $length) {
@@ -3847,7 +3331,7 @@ function scanTemplate() {
     let result = '';
     while (nextChar() !== 96) {
         if ($currentChar === 36) {
-            if (($index + 1) < $length && $input.charCodeAt($index + 1) === 123) {
+            if (($index + 1) < $length && $charCodeAt($index + 1) === 123) {
                 $index++;
                 tail = false;
                 break;
@@ -3857,181 +3341,181 @@ function scanTemplate() {
             }
         }
         else if ($currentChar === 92) {
-            result += String.fromCharCode(unescapeCode(nextChar()));
+            result += stringFromCharCode(unescapeCode(nextChar()));
         }
         else {
             if ($index >= $length) {
                 throw unterminatedTemplateLiteral();
             }
-            result += String.fromCharCode($currentChar);
+            result += stringFromCharCode($currentChar);
         }
     }
     nextChar();
     $tokenValue = result;
     if (tail) {
-        return 2163758;
+        return 2163759;
     }
-    return 2163759;
+    return 2163760;
 }
-function scanTemplateTail() {
+const scanTemplateTail = () => {
     if ($index >= $length) {
         throw unterminatedTemplateLiteral();
     }
     $index--;
     return scanTemplate();
-}
-function consumeOpt(token) {
+};
+const consumeOpt = (token) => {
     if ($currentToken === token) {
         nextToken();
         return true;
     }
     return false;
-}
-function consume(token) {
+};
+const consume = (token) => {
     if ($currentToken === token) {
         nextToken();
     }
     else {
         throw missingExpectedToken(token);
     }
-}
-function invalidStartOfExpression() {
+};
+const invalidStartOfExpression = () => {
     {
-        return new Error(`AUR0151: Invalid start of expression: '${$input}'`);
+        return createError(`AUR0151: Invalid start of expression: '${$input}'`);
     }
-}
-function invalidSpreadOp() {
+};
+const invalidSpreadOp = () => {
     {
-        return new Error(`AUR0152: Spread operator is not supported: '${$input}'`);
+        return createError(`AUR0152: Spread operator is not supported: '${$input}'`);
     }
-}
-function expectedIdentifier() {
+};
+const expectedIdentifier = () => {
     {
-        return new Error(`AUR0153: Expected identifier: '${$input}'`);
+        return createError(`AUR0153: Expected identifier: '${$input}'`);
     }
-}
-function invalidMemberExpression() {
+};
+const invalidMemberExpression = () => {
     {
-        return new Error(`AUR0154: Invalid member expression: '${$input}'`);
+        return createError(`AUR0154: Invalid member expression: '${$input}'`);
     }
-}
-function unexpectedEndOfExpression() {
+};
+const unexpectedEndOfExpression = () => {
     {
-        return new Error(`AUR0155: Unexpected end of expression: '${$input}'`);
+        return createError(`AUR0155: Unexpected end of expression: '${$input}'`);
     }
-}
-function unconsumedToken() {
+};
+const unconsumedToken = () => {
     {
-        return new Error(`AUR0156: Unconsumed token: '${$tokenRaw()}' at position ${$index} of '${$input}'`);
+        return createError(`AUR0156: Unconsumed token: '${$tokenRaw()}' at position ${$index} of '${$input}'`);
     }
-}
-function invalidEmptyExpression() {
+};
+const invalidEmptyExpression = () => {
     {
-        return new Error(`AUR0157: Invalid expression. Empty expression is only valid in event bindings (trigger, delegate, capture etc...)`);
+        return createError(`AUR0157: Invalid expression. Empty expression is only valid in event bindings (trigger, delegate, capture etc...)`);
     }
-}
-function lhsNotAssignable() {
+};
+const lhsNotAssignable = () => {
     {
-        return new Error(`AUR0158: Left hand side of expression is not assignable: '${$input}'`);
+        return createError(`AUR0158: Left hand side of expression is not assignable: '${$input}'`);
     }
-}
-function expectedValueConverterIdentifier() {
+};
+const expectedValueConverterIdentifier = () => {
     {
-        return new Error(`AUR0159: Expected identifier to come after ValueConverter operator: '${$input}'`);
+        return createError(`AUR0159: Expected identifier to come after ValueConverter operator: '${$input}'`);
     }
-}
-function expectedBindingBehaviorIdentifier() {
+};
+const expectedBindingBehaviorIdentifier = () => {
     {
-        return new Error(`AUR0160: Expected identifier to come after BindingBehavior operator: '${$input}'`);
+        return createError(`AUR0160: Expected identifier to come after BindingBehavior operator: '${$input}'`);
     }
-}
-function unexpectedOfKeyword() {
+};
+const unexpectedOfKeyword = () => {
     {
-        return new Error(`AUR0161: Unexpected keyword "of": '${$input}'`);
+        return createError(`AUR0161: Unexpected keyword "of": '${$input}'`);
     }
-}
-function invalidLHSBindingIdentifierInForOf() {
+};
+const invalidLHSBindingIdentifierInForOf = () => {
     {
-        return new Error(`AUR0163: Invalid BindingIdentifier at left hand side of "of": '${$input}'`);
+        return createError(`AUR0163: Invalid BindingIdentifier at left hand side of "of": '${$input}'`);
     }
-}
-function invalidPropDefInObjLiteral() {
+};
+const invalidPropDefInObjLiteral = () => {
     {
-        return new Error(`AUR0164: Invalid or unsupported property definition in object literal: '${$input}'`);
+        return createError(`AUR0164: Invalid or unsupported property definition in object literal: '${$input}'`);
     }
-}
-function unterminatedStringLiteral() {
+};
+const unterminatedStringLiteral = () => {
     {
-        return new Error(`AUR0165: Unterminated quote in string literal: '${$input}'`);
+        return createError(`AUR0165: Unterminated quote in string literal: '${$input}'`);
     }
-}
-function unterminatedTemplateLiteral() {
+};
+const unterminatedTemplateLiteral = () => {
     {
-        return new Error(`AUR0166: Unterminated template string: '${$input}'`);
+        return createError(`AUR0166: Unterminated template string: '${$input}'`);
     }
-}
-function missingExpectedToken(token) {
+};
+const missingExpectedToken = (token) => {
     {
-        return new Error(`AUR0167: Missing expected token '${TokenValues[token & 63]}' in '${$input}' `);
+        return createError(`AUR0167: Missing expected token '${TokenValues[token & 63]}' in '${$input}' `);
     }
-}
+};
 const unexpectedCharacter = () => {
     {
-        throw new Error(`AUR0168: Unexpected character: '${$input}'`);
+        throw createError(`AUR0168: Unexpected character: '${$input}'`);
     }
 };
 unexpectedCharacter.notMapped = true;
-function unexpectedTokenInDestructuring() {
+const unexpectedTokenInDestructuring = () => {
     {
-        return new Error(`AUR0170: Unexpected '${$tokenRaw()}' at position ${$index - 1} for destructuring assignment in ${$input}`);
+        return createError(`AUR0170: Unexpected '${$tokenRaw()}' at position ${$index - 1} for destructuring assignment in ${$input}`);
     }
-}
-function unexpectedTokenInOptionalChain() {
+};
+const unexpectedTokenInOptionalChain = () => {
     {
-        return new Error(`AUR0171: Unexpected '${$tokenRaw()}' at position ${$index - 1} for optional chain in ${$input}`);
+        return createError(`AUR0171: Unexpected '${$tokenRaw()}' at position ${$index - 1} for optional chain in ${$input}`);
     }
-}
-function invalidTaggedTemplateOnOptionalChain() {
+};
+const invalidTaggedTemplateOnOptionalChain = () => {
     {
-        return new Error(`AUR0172: Invalid tagged template on optional chain in ${$input}`);
+        return createError(`AUR0172: Invalid tagged template on optional chain in ${$input}`);
     }
-}
-function invalidArrowParameterList() {
+};
+const invalidArrowParameterList = () => {
     {
-        return new Error(`AUR0173: Invalid arrow parameter list in ${$input}`);
+        return createError(`AUR0173: Invalid arrow parameter list in ${$input}`);
     }
-}
-function defaultParamsInArrowFn() {
+};
+const defaultParamsInArrowFn = () => {
     {
-        return new Error(`AUR0174: Arrow function with default parameters is not supported: ${$input}`);
+        return createError(`AUR0174: Arrow function with default parameters is not supported: ${$input}`);
     }
-}
-function destructuringParamsInArrowFn() {
+};
+const destructuringParamsInArrowFn = () => {
     {
-        return new Error(`AUR0175: Arrow function with destructuring parameters is not supported: ${$input}`);
+        return createError(`AUR0175: Arrow function with destructuring parameters is not supported: ${$input}`);
     }
-}
-function restParamsMustBeLastParam() {
+};
+const restParamsMustBeLastParam = () => {
     {
-        return new Error(`AUR0176: Rest parameter must be last formal parameter in arrow function: ${$input}`);
+        return createError(`AUR0176: Rest parameter must be last formal parameter in arrow function: ${$input}`);
     }
-}
-function functionBodyInArrowFN() {
+};
+const functionBodyInArrowFN = () => {
     {
-        return new Error(`AUR0178: Arrow function with function body is not supported: ${$input}`);
+        return createError(`AUR0178: Arrow function with function body is not supported: ${$input}`);
     }
-}
-function unexpectedDoubleDot() {
+};
+const unexpectedDoubleDot = () => {
     {
-        return new Error(`AUR0179: Unexpected token '.' at position ${$index - 1} in ${$input}`);
+        return createError(`AUR0179: Unexpected token '.' at position ${$index - 1} in ${$input}`);
     }
-}
+};
 const TokenValues = [
     $false, $true, $null, $undefined, '$this', null, '$parent',
-    '(', '{', '.', '..', '...', '?.', '}', ')', ',', '[', ']', ':', '?', '\'', '"',
+    '(', '{', '.', '..', '...', '?.', '}', ')', ',', '[', ']', ':', ';', '?', '\'', '"',
     '&', '|', '??', '||', '&&', '==', '!=', '===', '!==', '<', '>',
     '<=', '>=', 'in', 'instanceof', '+', '-', 'typeof', 'void', '*', '%', '/', '=', '!',
-    2163758, 2163759,
+    2163759, 2163760,
     'of', '=>'
 ];
 const KeywordLookup = Object.assign(Object.create(null), {
@@ -4041,11 +3525,11 @@ const KeywordLookup = Object.assign(Object.create(null), {
     undefined: 8195,
     $this: 12292,
     $parent: 12294,
-    in: 6562211,
-    instanceof: 6562212,
-    typeof: 139303,
-    void: 139304,
-    of: 4204592,
+    in: 6562212,
+    instanceof: 6562213,
+    typeof: 139304,
+    void: 139305,
+    of: 4204593,
 });
 const codes = {
     AsciiIdPart: [0x24, 0, 0x30, 0x3A, 0x41, 0x5B, 0x5F, 0, 0x61, 0x7B],
@@ -4053,7 +3537,7 @@ const codes = {
     Digit: [0x30, 0x3A],
     Skip: [0, 0x21, 0x7F, 0xA1]
 };
-function decompress(lookup, $set, compressed, value) {
+const decompress = (lookup, $set, compressed, value) => {
     const rangeCount = compressed.length;
     for (let i = 0; i < rangeCount; i += 2) {
         const start = compressed[i];
@@ -4068,13 +3552,11 @@ function decompress(lookup, $set, compressed, value) {
             }
         }
     }
-}
-function returnToken(token) {
-    return () => {
-        nextChar();
-        return token;
-    };
-}
+};
+const returnToken = (token) => () => {
+    nextChar();
+    return token;
+};
 const AsciiIdParts = new Set();
 decompress(null, AsciiIdParts, codes.AsciiIdPart, true);
 const IdParts = new Uint8Array(0xFFFF);
@@ -4097,7 +3579,21 @@ CharScanners[96] = () => {
 };
 CharScanners[33] = () => {
     if (nextChar() !== 61) {
-        return 131117;
+        return 131118;
+    }
+    if (nextChar() !== 61) {
+        return 6553949;
+    }
+    nextChar();
+    return 6553951;
+};
+CharScanners[61] = () => {
+    if (nextChar() === 62) {
+        nextChar();
+        return 50;
+    }
+    if ($currentChar !== 61) {
+        return 4194349;
     }
     if (nextChar() !== 61) {
         return 6553948;
@@ -4105,48 +3601,34 @@ CharScanners[33] = () => {
     nextChar();
     return 6553950;
 };
-CharScanners[61] = () => {
-    if (nextChar() === 62) {
-        nextChar();
-        return 49;
-    }
-    if ($currentChar !== 61) {
-        return 4194348;
-    }
-    if (nextChar() !== 61) {
-        return 6553947;
-    }
-    nextChar();
-    return 6553949;
-};
 CharScanners[38] = () => {
     if (nextChar() !== 38) {
-        return 6291478;
-    }
-    nextChar();
-    return 6553882;
-};
-CharScanners[124] = () => {
-    if (nextChar() !== 124) {
         return 6291479;
     }
     nextChar();
-    return 6553817;
+    return 6553883;
+};
+CharScanners[124] = () => {
+    if (nextChar() !== 124) {
+        return 6291480;
+    }
+    nextChar();
+    return 6553818;
 };
 CharScanners[63] = () => {
     if (nextChar() === 46) {
-        const peek = $input.charCodeAt($index + 1);
+        const peek = $charCodeAt($index + 1);
         if (peek <= 48 || peek >= 57) {
             nextChar();
             return 2162700;
         }
-        return 6291477;
+        return 6291478;
     }
     if ($currentChar !== 63) {
-        return 6291477;
+        return 6291478;
     }
     nextChar();
-    return 6553752;
+    return 6553753;
 };
 CharScanners[46] = () => {
     if (nextChar() <= 57 && $currentChar >= 48) {
@@ -4163,27 +3645,28 @@ CharScanners[46] = () => {
 };
 CharScanners[60] = () => {
     if (nextChar() !== 61) {
-        return 6554015;
-    }
-    nextChar();
-    return 6554017;
-};
-CharScanners[62] = () => {
-    if (nextChar() !== 61) {
         return 6554016;
     }
     nextChar();
     return 6554018;
 };
-CharScanners[37] = returnToken(6554154);
+CharScanners[62] = () => {
+    if (nextChar() !== 61) {
+        return 6554017;
+    }
+    nextChar();
+    return 6554019;
+};
+CharScanners[37] = returnToken(6554155);
 CharScanners[40] = returnToken(2688007);
 CharScanners[41] = returnToken(7340046);
-CharScanners[42] = returnToken(6554153);
-CharScanners[43] = returnToken(2490853);
+CharScanners[42] = returnToken(6554154);
+CharScanners[43] = returnToken(2490854);
 CharScanners[44] = returnToken(6291471);
-CharScanners[45] = returnToken(2490854);
-CharScanners[47] = returnToken(6554155);
+CharScanners[45] = returnToken(2490855);
+CharScanners[47] = returnToken(6554156);
 CharScanners[58] = returnToken(6291476);
+CharScanners[59] = returnToken(6291477);
 CharScanners[91] = returnToken(2688016);
 CharScanners[93] = returnToken(7340051);
 CharScanners[123] = returnToken(524296);
@@ -4203,7 +3686,7 @@ function currentConnectable() {
 }
 function enterConnectable(connectable) {
     if (connectable == null) {
-        throw new Error(`AUR0206: Connectable cannot be null/undefined`);
+        throw createError(`AUR0206: Connectable cannot be null/undefined`);
     }
     if (_connectable == null) {
         _connectable = connectable;
@@ -4212,7 +3695,7 @@ function enterConnectable(connectable) {
         return;
     }
     if (_connectable === connectable) {
-        throw new Error(`AUR0207: Trying to enter an active connectable`);
+        throw createError(`AUR0207: Trying to enter an active connectable`);
     }
     connectables.push(connectable);
     _connectable = connectable;
@@ -4220,10 +3703,10 @@ function enterConnectable(connectable) {
 }
 function exitConnectable(connectable) {
     if (connectable == null) {
-        throw new Error(`AUR0208: Connectable cannot be null/undefined`);
+        throw createError(`AUR0208: Connectable cannot be null/undefined`);
     }
     if (_connectable !== connectable) {
-        throw new Error(`AUR0209: Trying to exit an unactive connectable`);
+        throw createError(`AUR0209: Trying to exit an unactive connectable`);
     }
     connectables.pop();
     _connectable = connectables.length > 0 ? connectables[connectables.length - 1] : null;
@@ -4279,7 +3762,7 @@ function doNotCollect(key) {
 function createProxy(obj) {
     const handler = isArray(obj)
         ? arrayHandler
-        : obj instanceof Map || obj instanceof Set
+        : isMap(obj) || isSet(obj)
             ? collectionHandler
             : objectHandler;
     const proxiedObj = new Proxy(obj, handler);
@@ -4304,13 +3787,12 @@ const arrayHandler = {
         if (key === rawKey) {
             return target;
         }
-        const connectable = currentConnectable();
-        if (!connecting || doNotCollect(key) || connectable == null) {
+        if (!connecting || doNotCollect(key) || _connectable == null) {
             return R$get(target, key, receiver);
         }
         switch (key) {
             case 'length':
-                connectable.observe(target, 'length');
+                _connectable.observe(target, 'length');
                 return target.length;
             case 'map':
                 return wrappedArrayMap;
@@ -4364,7 +3846,7 @@ const arrayHandler = {
             case 'entries':
                 return wrappedEntries;
         }
-        connectable.observe(target, key);
+        _connectable.observe(target, key);
         return wrap(R$get(target, key, receiver));
     },
     ownKeys(target) {
@@ -4375,64 +3857,64 @@ const arrayHandler = {
 function wrappedArrayMap(cb, thisArg) {
     const raw = getRaw(this);
     const res = raw.map((v, i) => unwrap(cb.call(thisArg, wrap(v), i, this)));
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return wrap(res);
 }
 function wrappedArrayEvery(cb, thisArg) {
     const raw = getRaw(this);
     const res = raw.every((v, i) => cb.call(thisArg, wrap(v), i, this));
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return res;
 }
 function wrappedArrayFilter(cb, thisArg) {
     const raw = getRaw(this);
     const res = raw.filter((v, i) => unwrap(cb.call(thisArg, wrap(v), i, this)));
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return wrap(res);
 }
 function wrappedArrayIncludes(v) {
     const raw = getRaw(this);
     const res = raw.includes(unwrap(v));
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return res;
 }
 function wrappedArrayIndexOf(v) {
     const raw = getRaw(this);
     const res = raw.indexOf(unwrap(v));
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return res;
 }
 function wrappedArrayLastIndexOf(v) {
     const raw = getRaw(this);
     const res = raw.lastIndexOf(unwrap(v));
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return res;
 }
 function wrappedArrayFindIndex(cb, thisArg) {
     const raw = getRaw(this);
     const res = raw.findIndex((v, i) => unwrap(cb.call(thisArg, wrap(v), i, this)));
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return res;
 }
 function wrappedArrayFind(cb, thisArg) {
     const raw = getRaw(this);
     const res = raw.find((v, i) => cb(wrap(v), i, this), thisArg);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return wrap(res);
 }
 function wrappedArrayFlat() {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return wrap(raw.flat());
 }
 function wrappedArrayFlatMap(cb, thisArg) {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return getProxy(raw.flatMap((v, i) => wrap(cb.call(thisArg, wrap(v), i, this))));
 }
 function wrappedArrayJoin(separator) {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return raw.join(separator);
 }
 function wrappedArrayPop() {
@@ -4453,36 +3935,36 @@ function wrappedArraySplice(...args) {
 function wrappedArrayReverse(..._args) {
     const raw = getRaw(this);
     const res = raw.reverse();
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return wrap(res);
 }
 function wrappedArraySome(cb, thisArg) {
     const raw = getRaw(this);
     const res = raw.some((v, i) => unwrap(cb.call(thisArg, wrap(v), i, this)));
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return res;
 }
 function wrappedArraySort(cb) {
     const raw = getRaw(this);
     const res = raw.sort(cb);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return wrap(res);
 }
 function wrappedArraySlice(start, end) {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return getProxy(raw.slice(start, end));
 }
 function wrappedReduce(cb, initValue) {
     const raw = getRaw(this);
     const res = raw.reduce((curr, v, i) => cb(curr, wrap(v), i, this), initValue);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return wrap(res);
 }
 function wrappedReduceRight(cb, initValue) {
     const raw = getRaw(this);
     const res = raw.reduceRight((curr, v, i) => cb(curr, wrap(v), i, this), initValue);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return wrap(res);
 }
 const collectionHandler = {
@@ -4505,17 +3987,17 @@ const collectionHandler = {
             case 'forEach':
                 return wrappedForEach;
             case 'add':
-                if (target instanceof Set) {
+                if (isSet(target)) {
                     return wrappedAdd;
                 }
                 break;
             case 'get':
-                if (target instanceof Map) {
+                if (isMap(target)) {
                     return wrappedGet;
                 }
                 break;
             case 'set':
-                if (target instanceof Map) {
+                if (isMap(target)) {
                     return wrappedSet;
                 }
                 break;
@@ -4528,26 +4010,26 @@ const collectionHandler = {
             case 'entries':
                 return wrappedEntries;
             case Symbol.iterator:
-                return target instanceof Map ? wrappedEntries : wrappedValues;
+                return isMap(target) ? wrappedEntries : wrappedValues;
         }
         return wrap(R$get(target, key, receiver));
     },
 };
 function wrappedForEach(cb, thisArg) {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return raw.forEach((v, key) => {
         cb.call(thisArg, wrap(v), wrap(key), this);
     });
 }
 function wrappedHas(v) {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return raw.has(unwrap(v));
 }
 function wrappedGet(k) {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     return wrap(raw.get(unwrap(k)));
 }
 function wrappedSet(k, v) {
@@ -4564,7 +4046,7 @@ function wrappedDelete(k) {
 }
 function wrappedKeys() {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     const iterator = raw.keys();
     return {
         next() {
@@ -4582,7 +4064,7 @@ function wrappedKeys() {
 }
 function wrappedValues() {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     const iterator = raw.values();
     return {
         next() {
@@ -4600,7 +4082,7 @@ function wrappedValues() {
 }
 function wrappedEntries() {
     const raw = getRaw(this);
-    currentConnectable()?.observeCollection(raw);
+    observeCollection(_connectable, raw);
     const iterator = raw.entries();
     return {
         next() {
@@ -4616,6 +4098,7 @@ function wrappedEntries() {
         },
     };
 }
+const observeCollection = (connectable, collection) => connectable?.observeCollection(collection);
 const ProxyObservable = Object.freeze({
     getProxy,
     getRaw,
@@ -4626,7 +4109,6 @@ const ProxyObservable = Object.freeze({
 
 class ComputedObserver {
     constructor(obj, get, set, useProxy, observerLocator) {
-        this.interceptor = this;
         this.type = 1;
         this._value = void 0;
         this._oldValue = void 0;
@@ -4674,7 +4156,7 @@ class ComputedObserver {
             }
         }
         else {
-            throw new Error(`AUR0221: Property is readonly`);
+            throw createError(`AUR0221: Property is readonly`);
         }
     }
     handleChange() {
@@ -4708,7 +4190,7 @@ class ComputedObserver {
         const oldValue = this._value;
         const newValue = this.compute();
         this._isDirty = false;
-        if (!Object.is(newValue, oldValue)) {
+        if (!areEqual(newValue, oldValue)) {
             this._oldValue = oldValue;
             oV$1 = this._oldValue;
             this._oldValue = this._value;
@@ -4733,7 +4215,7 @@ connectable(ComputedObserver);
 subscriberCollection(ComputedObserver);
 let oV$1 = void 0;
 
-const IDirtyChecker = kernel.DI.createInterface('IDirtyChecker', x => x.singleton(DirtyChecker));
+const IDirtyChecker = createInterface('IDirtyChecker', x => x.singleton(DirtyChecker));
 const DirtyCheckSettings = {
     timeoutsPerCheck: 25,
     disabled: false,
@@ -4775,7 +4257,7 @@ class DirtyChecker {
     }
     createProperty(obj, key) {
         if (DirtyCheckSettings.throw) {
-            throw new Error(`AUR0222: Property '${safeString(key)}' is being dirty-checked.`);
+            throw createError(`AUR0222: Property '${safeString(key)}' is being dirty-checked.`);
         }
         return new DirtyCheckProperty(this, obj, key);
     }
@@ -4806,7 +4288,7 @@ class DirtyCheckProperty {
         return this.obj[this.key];
     }
     setValue(_v) {
-        throw new Error(`Trying to set value for property ${safeString(this.key)} in dirty checker`);
+        throw createError(`Trying to set value for property ${safeString(this.key)} in dirty checker`);
     }
     isDirty() {
         return this._oldValue !== this.obj[this.key];
@@ -4871,7 +4353,7 @@ class SetterObserver {
     }
     setValue(newValue) {
         if (this._observing) {
-            if (Object.is(newValue, this._value)) {
+            if (areEqual(newValue, this._value)) {
                 return;
             }
             oV = this._value;
@@ -4935,7 +4417,7 @@ class SetterNotifier {
         if (this._hasSetter) {
             value = this._setter(value, null);
         }
-        if (!Object.is(value, this._value)) {
+        if (!areEqual(value, this._value)) {
             this._oldValue = this._value;
             this._value = value;
             this.cb?.call(this._obj, this._value, this._oldValue);
@@ -4950,9 +4432,8 @@ subscriberCollection(SetterNotifier);
 let oV = void 0;
 
 const propertyAccessor = new PropertyAccessor();
-const IObserverLocator = kernel.DI.createInterface('IObserverLocator', x => x.singleton(ObserverLocator));
-const INodeObserverLocator = kernel.DI
-    .createInterface('INodeObserverLocator', x => x.cachedCallback(handler => {
+const IObserverLocator = createInterface('IObserverLocator', x => x.singleton(ObserverLocator));
+const INodeObserverLocator = createInterface('INodeObserverLocator', x => x.cachedCallback(handler => {
     {
         handler.getAll(kernel.ILogger).forEach(logger => {
             logger.error('Using default INodeObserverLocator implementation. Will not be able to observe nodes (HTML etc...).');
@@ -4984,7 +4465,7 @@ class ObserverLocator {
         if (obj == null) {
             throw nullObjectError(key);
         }
-        if (!(obj instanceof Object)) {
+        if (!isObject(obj)) {
             return new PrimitiveObserver(obj, key);
         }
         const lookup = getObserverLookup(obj);
@@ -5027,10 +4508,10 @@ class ObserverLocator {
                 }
                 break;
             case 'size':
-                if (obj instanceof Map) {
+                if (isMap(obj)) {
                     return getMapObserver(obj).getLengthObserver();
                 }
-                else if (obj instanceof Set) {
+                else if (isSet(obj)) {
                     return getSetObserver(obj).getLengthObserver();
                 }
                 break;
@@ -5084,10 +4565,10 @@ const getCollectionObserver = (collection) => {
     if (isArray(collection)) {
         obs = getArrayObserver(collection);
     }
-    else if (collection instanceof Map) {
+    else if (isMap(collection)) {
         obs = getMapObserver(collection);
     }
-    else if (collection instanceof Set) {
+    else if (isSet(collection)) {
         obs = getSetObserver(collection);
     }
     return obs;
@@ -5104,10 +4585,10 @@ const getObserverLookup = (instance) => {
     }
     return lookup;
 };
-const nullObjectError = (key) => new Error(`AUR0199: trying to observe property ${safeString(key)} on null/undefined`)
+const nullObjectError = (key) => createError(`AUR0199: trying to observe property ${safeString(key)} on null/undefined`)
     ;
 
-const IObservation = kernel.DI.createInterface('IObservation', x => x.singleton(Observation));
+const IObservation = createInterface('IObservation', x => x.singleton(Observation));
 class Observation {
     constructor(oL) {
         this.oL = oL;
@@ -5123,7 +4604,6 @@ class Effect {
     constructor(oL, fn) {
         this.oL = oL;
         this.fn = fn;
-        this.interceptor = this;
         this.maxRunCount = 10;
         this.queued = false;
         this.running = false;
@@ -5140,7 +4620,7 @@ class Effect {
     }
     run() {
         if (this.stopped) {
-            throw new Error(`AUR0225: Effect has already been stopped`);
+            throw createError(`AUR0225: Effect has already been stopped`);
         }
         if (this.running) {
             return;
@@ -5161,7 +4641,7 @@ class Effect {
         if (this.queued) {
             if (this.runCount > this.maxRunCount) {
                 this.runCount = 0;
-                throw new Error(`AUR0226: Maximum number of recursive effect run reached. Consider handle effect dependencies differently.`);
+                throw createError(`AUR0226: Maximum number of recursive effect run reached. Consider handle effect dependencies differently.`);
             }
             this.run();
         }
@@ -5197,7 +4677,7 @@ function observable(targetOrConfig, key, descriptor) {
             key = config.name;
         }
         if (key == null || key === '') {
-            throw new Error(`AUR0224: Invalid usage, cannot determine property name for @observable`);
+            throw createError(`AUR0224: Invalid usage, cannot determine property name for @observable`);
         }
         const callback = config.callback || `${safeString(key)}Changed`;
         let initialValue = noValue;
@@ -5241,6 +4721,36 @@ function getNotifier(obj, key, callbackKey, initialValue, set) {
         lookup[key] = notifier;
     }
     return notifier;
+}
+
+const ISignaler = createInterface('ISignaler', x => x.singleton(Signaler));
+class Signaler {
+    constructor() {
+        this.signals = createLookup();
+    }
+    dispatchSignal(name) {
+        const listeners = this.signals[name];
+        if (listeners === undefined) {
+            return;
+        }
+        let listener;
+        for (listener of listeners.keys()) {
+            listener.handleChange(undefined, undefined);
+        }
+    }
+    addSignalListener(name, listener) {
+        const signals = this.signals;
+        const listeners = signals[name];
+        if (listeners === undefined) {
+            signals[name] = new Set([listener]);
+        }
+        else {
+            listeners.add(listener);
+        }
+    }
+    removeSignalListener(name, listener) {
+        this.signals[name]?.delete(listener);
+    }
 }
 
 exports.AccessKeyedExpression = AccessKeyedExpression;
@@ -5297,8 +4807,14 @@ exports.SubscriberRecord = SubscriberRecord;
 exports.TaggedTemplateExpression = TaggedTemplateExpression;
 exports.TemplateExpression = TemplateExpression;
 exports.UnaryExpression = UnaryExpression;
+exports.Unparser = Unparser;
 exports.ValueConverterExpression = ValueConverterExpression;
 exports.applyMutationsToIndices = applyMutationsToIndices;
+exports.astAssign = astAssign;
+exports.astBind = astBind;
+exports.astEvaluate = astEvaluate;
+exports.astUnbind = astUnbind;
+exports.astVisit = astVisit;
 exports.batch = batch;
 exports.cloneIndexMap = cloneIndexMap;
 exports.connectable = connectable;

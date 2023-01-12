@@ -1,15 +1,7 @@
-import { Resolved, ResourceType } from '@aurelia/kernel';
-import { BindingBehaviorInstance, Collection, IndexMap, ValueConverterInstance } from '@aurelia/runtime';
-import { BindingMode } from '../binding/interfaces-bindings';
-import type { Constructable, IContainer, IResourceKind, IServiceLocator, Key, PartialResourceDefinition, ResourceDefinition } from '@aurelia/kernel';
-import type { BindingBehaviorExpression, BindingObserverRecord, ForOfStatement, IConnectableBinding, IObserverLocator, IsBindingBehavior, Scope } from '@aurelia/runtime';
-export declare type PartialBindingBehaviorDefinition = PartialResourceDefinition<{
-    strategy?: BindingBehaviorStrategy;
-}>;
-export declare const enum BindingBehaviorStrategy {
-    singleton = 1,
-    interceptor = 2
-}
+import { ResourceType } from '@aurelia/kernel';
+import { BindingBehaviorInstance } from '@aurelia/runtime';
+import type { Constructable, IContainer, IResourceKind, PartialResourceDefinition, ResourceDefinition } from '@aurelia/kernel';
+export declare type PartialBindingBehaviorDefinition = PartialResourceDefinition;
 export declare type BindingBehaviorType<T extends Constructable = Constructable> = ResourceType<T, BindingBehaviorInstance>;
 export declare type BindingBehaviorKind = IResourceKind<BindingBehaviorType, BindingBehaviorDefinition> & {
     isType<T>(value: T): value is (T extends Constructable ? BindingBehaviorType<T> : never);
@@ -29,51 +21,9 @@ export declare class BindingBehaviorDefinition<T extends Constructable = Constru
     readonly name: string;
     readonly aliases: readonly string[];
     readonly key: string;
-    readonly strategy: BindingBehaviorStrategy;
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialBindingBehaviorDefinition, Type: BindingBehaviorType<T>): BindingBehaviorDefinition<T>;
     register(container: IContainer): void;
-}
-export declare class BindingBehaviorFactory<T extends Constructable = Constructable> {
-    private readonly ctn;
-    private readonly Type;
-    private readonly deps;
-    constructor(ctn: IContainer, Type: BindingBehaviorType<T>);
-    construct(binding: IInterceptableBinding, expr: BindingBehaviorExpression): IInterceptableBinding;
-}
-export declare type IInterceptableBinding = Exclude<IConnectableBinding, 'updateTarget' | 'updateSource' | 'callSource' | 'handleChange'> & {
-    updateTarget?(value: unknown): void;
-    updateSource?(value: unknown): void;
-    callSource?(args: object): unknown;
-    handleChange?(newValue: unknown, previousValue: unknown): void;
-};
-export interface BindingInterceptor extends IConnectableBinding {
-}
-export declare class BindingInterceptor implements IInterceptableBinding {
-    readonly binding: IInterceptableBinding;
-    readonly expr: BindingBehaviorExpression;
-    readonly type = "instance";
-    interceptor: this;
-    readonly oL: IObserverLocator;
-    readonly locator: IServiceLocator;
-    readonly $scope: Scope | undefined;
-    readonly isBound: boolean;
-    readonly obs: BindingObserverRecord;
-    readonly ast: IsBindingBehavior | ForOfStatement;
-    readonly mode: BindingMode;
-    constructor(binding: IInterceptableBinding, expr: BindingBehaviorExpression);
-    get(key: Key): Resolved<Key>;
-    getConverter<T>(name: string): ValueConverterInstance<T> | undefined;
-    getBehavior<T>(name: string): BindingBehaviorInstance<T> | undefined;
-    updateTarget(value: unknown): void;
-    updateSource(value: unknown): void;
-    callSource(args: object): unknown;
-    handleChange(newValue: unknown, previousValue: unknown): void;
-    handleCollectionChange(collection: Collection, indexMap: IndexMap): void;
-    observe(obj: object, key: string): void;
-    observeCollection(observer: Collection): void;
-    $bind(scope: Scope): void;
-    $unbind(): void;
 }
 export declare const BindingBehavior: Readonly<BindingBehaviorKind>;
 //# sourceMappingURL=binding-behavior.d.ts.map

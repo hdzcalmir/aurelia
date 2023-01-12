@@ -28,15 +28,6 @@ export declare class TaskQueue {
     readonly platform: Platform;
     private readonly $request;
     private readonly $cancel;
-    private processing;
-    private pending;
-    private delayed;
-    private flushRequested;
-    private _yieldPromise;
-    private readonly taskPool;
-    private _taskPoolSize;
-    private _lastRequest;
-    private _lastFlush;
     get isEmpty(): boolean;
     constructor(platform: Platform, $request: () => void, $cancel: () => void);
     flush(time?: number): void;
@@ -61,20 +52,6 @@ export declare class TaskQueue {
      * Remove the task from this queue.
      */
     remove<T = any>(task: Task<T>): void;
-    /**
-     * Return a reusable task to the shared task pool.
-     * The next queued callback will reuse this task object instead of creating a new one, to save overhead of creating additional objects.
-     */
-    private returnToPool;
-    /**
-     * Reset the persistent task back to its pending state, preparing it for being invoked again on the next flush.
-     */
-    private resetPersistentTask;
-    /**
-     * Notify the queue that this async task has had its promise resolved, so that the queue can proceed with consecutive tasks on the next flush.
-     */
-    private completeAsyncTask;
-    private readonly _requestFlush;
 }
 export declare class TaskAbortError<T = any> extends Error {
     task: Task<T>;
@@ -111,16 +88,6 @@ export declare class Task<T = any> implements ITask {
     reset(time: number): void;
     reuse(time: number, delay: number, preempt: boolean, persistent: boolean, suspend: boolean, callback: TaskCallback<T>): void;
     dispose(): void;
-}
-declare class Tracer {
-    private readonly console;
-    enabled: boolean;
-    private depth;
-    constructor(console: Platform['console']);
-    enter(obj: TaskQueue | Task, method: string): void;
-    leave(obj: TaskQueue | Task, method: string): void;
-    trace(obj: TaskQueue | Task, method: string): void;
-    private log;
 }
 export declare const enum TaskQueuePriority {
     render = 0,
@@ -163,5 +130,29 @@ export declare type QueueTaskOptions = {
      */
     suspend?: boolean;
 };
+declare class Tracer {
+    private readonly console;
+    enabled: boolean;
+    private depth;
+    constructor(console: Platform['console']);
+    enter(obj: TaskQueue | Task, method: string): void;
+    leave(obj: TaskQueue | Task, method: string): void;
+    trace(obj: TaskQueue | Task, method: string): void;
+    private log;
+}
+/**
+ * Retrieve internal tasks information of a TaskQueue
+ */
+export declare const reportTaskQueue: (taskQueue: TaskQueue) => {
+    processing: Task<any>[];
+    pending: Task<any>[];
+    delayed: Task<any>[];
+    flushRequested: boolean;
+};
+/**
+ * Flush a taskqueue and cancel all the tasks that are queued by the flush
+ * Mainly for debugging purposes
+ */
+export declare const ensureEmpty: (taskQueue: TaskQueue) => void;
 export {};
 //# sourceMappingURL=index.d.ts.map

@@ -1,22 +1,18 @@
-import type { ITask } from '@aurelia/platform';
+import { type IAstEvaluator, type IBinding, type IConnectableBinding } from '@aurelia/runtime';
 import type { IIndexable, IServiceLocator } from '@aurelia/kernel';
 import type { IObservable, IObserverLocator, IsExpression, Scope } from '@aurelia/runtime';
-import type { IAstBasedBinding } from './interfaces-bindings';
-export interface LetBinding extends IAstBasedBinding {
+export interface LetBinding extends IAstEvaluator, IConnectableBinding {
 }
-export declare class LetBinding implements IAstBasedBinding {
-    locator: IServiceLocator;
+export declare class LetBinding implements IBinding {
     ast: IsExpression;
     targetProperty: string;
-    interceptor: this;
     isBound: boolean;
-    $scope?: Scope;
-    task: ITask | null;
     target: (IObservable & IIndexable) | null;
     constructor(locator: IServiceLocator, observerLocator: IObserverLocator, ast: IsExpression, targetProperty: string, toBindingContext?: boolean);
+    updateTarget(): void;
     handleChange(): void;
     handleCollectionChange(): void;
-    $bind(scope: Scope): void;
-    $unbind(): void;
+    bind(_scope: Scope): void;
+    unbind(): void;
 }
 //# sourceMappingURL=let-binding.d.ts.map

@@ -22,6 +22,7 @@ export interface IFactory<T extends Constructable = any> {
     construct(container: IContainer, dynamicDependencies?: unknown[]): Resolved<T>;
 }
 export interface IServiceLocator {
+    readonly root: IServiceLocator;
     has<K extends Key>(key: K | Key, searchAncestors: boolean): boolean;
     get<K extends Key>(key: INewInstanceResolver<K>): Resolved<K>;
     get<K extends Key>(key: ILazyResolver<K>): IResolvedLazy<K>;
@@ -85,8 +86,8 @@ export interface IContainerConfiguration {
 }
 export declare const DefaultResolver: {
     none(key: Key): IResolver;
-    singleton(key: Key): IResolver;
-    transient(key: Key): IResolver;
+    singleton: (key: Key) => IResolver;
+    transient: (key: Key) => IResolver;
 };
 export declare class ContainerConfiguration implements IContainerConfiguration {
     readonly inheritParentResources: boolean;
@@ -95,12 +96,13 @@ export declare class ContainerConfiguration implements IContainerConfiguration {
     private constructor();
     static from(config?: IContainerConfiguration): ContainerConfiguration;
 }
+export declare const getDependencies: (Type: Constructable | Injectable) => Key[];
 export declare const DI: {
-    createContainer(config?: Partial<IContainerConfiguration>): IContainer;
-    getDesignParamtypes(Type: Constructable | Injectable): readonly Key[] | undefined;
-    getAnnotationParamtypes(Type: Constructable | Injectable): readonly Key[] | undefined;
-    getOrCreateAnnotationParamTypes: typeof getOrCreateAnnotationParamTypes;
-    getDependencies: typeof getDependencies;
+    createContainer: (config?: Partial<IContainerConfiguration>) => IContainer;
+    getDesignParamtypes: (Type: Constructable | Injectable) => readonly Key[] | undefined;
+    getAnnotationParamtypes: (Type: Constructable | Injectable) => readonly Key[] | undefined;
+    getOrCreateAnnotationParamTypes: (Type: Constructable | Injectable) => Key[];
+    getDependencies: (Type: Constructable | Injectable) => Key[];
     /**
      * creates a decorator that also matches an interface and can be used as a {@linkcode Key}.
      * ```ts
@@ -140,9 +142,9 @@ export declare const DI: {
      * container.get(Foo).str; // returns 'somestring'
      * ```
      *
-     * - @param friendlyName used to improve error messaging
+     * - @param configureOrName - supply a string to improve error messaging
      */
-    createInterface<K extends Key>(configureOrName?: string | ((builder: ResolverBuilder<K>) => IResolver<K>) | undefined, configuror?: ((builder: ResolverBuilder<K>) => IResolver<K>) | undefined): InterfaceSymbol<K>;
+    createInterface: <K extends Key>(configureOrName?: string | ((builder: ResolverBuilder<K>) => IResolver<K>) | undefined, configuror?: ((builder: ResolverBuilder<K>) => IResolver<K>) | undefined) => InterfaceSymbol<K>;
     inject(...dependencies: Key[]): (target: Injectable, key?: string | number, descriptor?: PropertyDescriptor | number) => void;
     /**
      * Registers the `target` class as a transient dependency; each time the dependency is resolved
@@ -182,8 +184,6 @@ export declare const DI: {
      */
     singleton<T_1 extends Constructable<{}>>(target: T_1 & Partial<RegisterSelf<T_1>>, options?: SingletonOptions): T_1 & RegisterSelf<T_1>;
 };
-declare function getDependencies(Type: Constructable | Injectable): Key[];
-declare function getOrCreateAnnotationParamTypes(Type: Constructable | Injectable): Key[];
 export declare const IContainer: InterfaceSymbol<IContainer>;
 export declare const IServiceLocator: InterfaceSymbol<IServiceLocator>;
 export declare const inject: (...dependencies: Key[]) => (target: Injectable, key?: string | number, descriptor?: PropertyDescriptor | number) => void;
@@ -213,7 +213,7 @@ export declare function transient<T extends Constructable>(target: T & Partial<R
 declare type SingletonOptions = {
     scoped: boolean;
 };
-declare function singletonDecorator<T extends Constructable>(target: T & Partial<RegisterSelf<T>>): T & RegisterSelf<T>;
+declare const singletonDecorator: <T extends Constructable<{}>>(target: T & Partial<RegisterSelf<T>>) => T & RegisterSelf<T>;
 /**
  * Registers the decorated class as a singleton dependency; the class will only be created once. Each
  * consecutive time the dependency is resolved, the same instance will be returned.
@@ -296,11 +296,11 @@ export declare const optional: (key: any) => any;
 /**
  * ignore tells the container not to try to inject a dependency
  */
-export declare function ignore(target: Injectable, property?: string | number, descriptor?: PropertyDescriptor | number): void;
-export declare namespace ignore {
-    var $isResolver: boolean;
-    var resolve: () => undefined;
-}
+export declare const ignore: {
+    (target: Injectable, property?: string | number, descriptor?: PropertyDescriptor | number): void;
+    $isResolver: boolean;
+    resolve(): undefined;
+};
 /**
  * Inject a function that will return a resolved instance of the [[key]] given.
  * Also supports passing extra parameters to the invocation of the resolved constructor of [[key]]
@@ -341,6 +341,26 @@ export declare type INewInstanceResolver<T> = {
     __newInstance: undefined;
     (...args: unknown[]): any;
 };
+export declare const enum ResolverStrategy {
+    instance = 0,
+    singleton = 1,
+    transient = 2,
+    callback = 3,
+    array = 4,
+    alias = 5
+}
+export declare class Resolver implements IResolver, IRegistration {
+    _key: Key;
+    _strategy: ResolverStrategy;
+    _state: any;
+    constructor(_key: Key, _strategy: ResolverStrategy, _state: any);
+    get $isResolver(): true;
+    private resolving;
+    register(container: IContainer, key?: Key): IResolver;
+    resolve(handler: IContainer, requestor: IContainer): any;
+    getFactory(container: IContainer): IFactory | null;
+}
+export declare function containerGetKey(this: IContainer, d: Key): any;
 /**
  * An implementation of IRegistry that delegates registration to a
  * separately registered class. The ParameterizedRegistry facilitates the
@@ -373,7 +393,7 @@ export declare const Registration: {
      * @param key - key to register the instance with
      * @param value - the instance associated with the key
      */
-    instance<T>(key: Key, value: T): IRegistration<T>;
+    instance: <T>(key: Key, value: T) => IRegistration<T>;
     /**
      * Creates an instance from the class.
      * Every time you request this {@linkcode Key} you will get the same one back.
@@ -384,7 +404,7 @@ export declare const Registration: {
      * @param key - key to register the singleton class with
      * @param value - the singleton class to instantiate when a container resolves the associated key
      */
-    singleton<T_1 extends Constructable<{}>>(key: Key, value: T_1): IRegistration<InstanceType<T_1>>;
+    singleton: <T_1 extends Constructable<{}>>(key: Key, value: T_1) => IRegistration<InstanceType<T_1>>;
     /**
      * Creates an instance from a class.
      * Every time you request this {@linkcode Key} you will get a new instance.
@@ -395,7 +415,7 @@ export declare const Registration: {
      * @param key - key to register the transient class with
      * @param value - the class to instantiate when a container resolves the associated key
      */
-    transient<T_2 extends Constructable<{}>>(key: Key, value: T_2): IRegistration<InstanceType<T_2>>;
+    transient: <T_2 extends Constructable<{}>>(key: Key, value: T_2) => IRegistration<InstanceType<T_2>>;
     /**
      * Creates an instance from the method passed.
      * Every time you request this {@linkcode Key} you will get a new instance.
@@ -407,7 +427,7 @@ export declare const Registration: {
      * @param key - key to register the callback with
      * @param callback - the callback to invoke when a container resolves the associated key
      */
-    callback<T_3>(key: Key, callback: ResolveCallback<T_3>): IRegistration<Resolved<T_3>>;
+    callback: <T_3>(key: Key, callback: ResolveCallback<T_3>) => IRegistration<Resolved<T_3>>;
     /**
      * Creates an instance from the method passed.
      * On the first request for the {@linkcode Key} your callback is called and returns an instance.
@@ -422,7 +442,7 @@ export declare const Registration: {
      * @param key - key to register the cached callback with
      * @param callback - the cache callback to invoke when a container resolves the associated key
      */
-    cachedCallback<T_4>(key: Key, callback: ResolveCallback<T_4>): IRegistration<Resolved<T_4>>;
+    cachedCallback: <T_4>(key: Key, callback: ResolveCallback<T_4>) => IRegistration<Resolved<T_4>>;
     /**
      * creates an alternate {@linkcode Key} to retrieve an instance by.
      * Returns the same scope as the original {@linkcode Key}.
@@ -436,13 +456,13 @@ export declare const Registration: {
      * @param originalKey - the real key to resolve the get call from a container
      * @param aliasKey - the key that a container allows to resolve the real key associated
      */
-    aliasTo<T_5>(originalKey: T_5, aliasKey: Key): IRegistration<Resolved<T_5>>;
+    aliasTo: <T_5>(originalKey: T_5, aliasKey: Key) => IRegistration<Resolved<T_5>>;
     /**
      * @internal
      * @param key - the key to register a defer registration
      * @param params - the parameters that should be passed to the resolution of the key
      */
-    defer(key: Key, ...params: unknown[]): IRegistry;
+    defer: (key: Key, ...params: unknown[]) => IRegistry;
 };
 export declare class InstanceProvider<K extends Key> implements IDisposableResolver<K | null> {
     get friendlyName(): string | undefined;

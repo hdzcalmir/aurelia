@@ -1,7 +1,5 @@
 import { IExpressionParser, IObserverLocator } from '@aurelia/runtime';
 import { BindingMode } from './binding/interfaces-bindings';
-import { IEventDelegator } from './observation/event-delegator';
-import { IInterceptableBinding } from './resources/binding-behavior';
 import { CustomElementDefinition } from './resources/custom-element';
 import { IProjections } from './resources/slot-injectables';
 import { CustomAttributeDefinition } from './resources/custom-attribute';
@@ -9,8 +7,8 @@ import { INode } from './dom';
 import { IController } from './templating/controller';
 import { IPlatform } from './platform';
 import { IRendering } from './templating/rendering';
-import { AttrSyntax } from './resources/attribute-pattern';
-import type { IServiceLocator, IContainer, Class, IRegistry } from '@aurelia/kernel';
+import type { AttrSyntax } from './resources/attribute-pattern';
+import type { IContainer, Class, IRegistry } from '@aurelia/kernel';
 import type { Interpolation, IsBindingBehavior, ForOfStatement } from '@aurelia/runtime';
 import type { IHydratableController } from './templating/controller';
 import type { PartialCustomElementDefinition } from './resources/custom-element';
@@ -22,10 +20,10 @@ export declare const enum InstructionType {
     setProperty = "re",
     interpolation = "rf",
     propertyBinding = "rg",
-    callBinding = "rh",
     letBinding = "ri",
     refBinding = "rj",
     iteratorBinding = "rk",
+    multiAttr = "rl",
     textBinding = "ha",
     listenerBinding = "hb",
     attributeBinding = "hc",
@@ -45,39 +43,41 @@ export declare function isInstruction(value: unknown): value is IInstruction;
 export declare class InterpolationInstruction {
     from: string | Interpolation;
     to: string;
-    get type(): InstructionType.interpolation;
+    readonly type = InstructionType.interpolation;
     constructor(from: string | Interpolation, to: string);
 }
 export declare class PropertyBindingInstruction {
     from: string | IsBindingBehavior;
     to: string;
     mode: BindingMode;
-    get type(): InstructionType.propertyBinding;
+    readonly type = InstructionType.propertyBinding;
     constructor(from: string | IsBindingBehavior, to: string, mode: BindingMode);
 }
 export declare class IteratorBindingInstruction {
-    from: string | ForOfStatement;
+    forOf: string | ForOfStatement;
     to: string;
-    get type(): InstructionType.iteratorBinding;
-    constructor(from: string | ForOfStatement, to: string);
-}
-export declare class CallBindingInstruction {
-    from: string | IsBindingBehavior;
-    to: string;
-    get type(): InstructionType.callBinding;
-    constructor(from: string | IsBindingBehavior, to: string);
+    props: MultiAttrInstruction[];
+    readonly type = InstructionType.iteratorBinding;
+    constructor(forOf: string | ForOfStatement, to: string, props: MultiAttrInstruction[]);
 }
 export declare class RefBindingInstruction {
     readonly from: string | IsBindingBehavior;
     readonly to: string;
-    get type(): InstructionType.refBinding;
+    readonly type = InstructionType.refBinding;
     constructor(from: string | IsBindingBehavior, to: string);
 }
 export declare class SetPropertyInstruction {
     value: unknown;
     to: string;
-    get type(): InstructionType.setProperty;
+    readonly type = InstructionType.setProperty;
     constructor(value: unknown, to: string);
+}
+export declare class MultiAttrInstruction {
+    value: string;
+    to: string;
+    command: string | null;
+    readonly type = InstructionType.multiAttr;
+    constructor(value: string, to: string, command: string | null);
 }
 export declare class HydrateElementInstruction {
     /**
@@ -101,7 +101,7 @@ export declare class HydrateElementInstruction {
      * A list of captured attr syntaxes
      */
     captures: AttrSyntax[] | undefined;
-    get type(): InstructionType.hydrateElement;
+    readonly type = InstructionType.hydrateElement;
     /**
      * A special property that can be used to store <au-slot/> usage information
      */
@@ -138,7 +138,7 @@ export declare class HydrateAttributeInstruction {
      * Bindable instructions for the custom attribute instance
      */
     props: IInstruction[];
-    get type(): InstructionType.hydrateAttribute;
+    readonly type = InstructionType.hydrateAttribute;
     constructor(res: string | /* Constructable |  */ CustomAttributeDefinition, alias: string | undefined, 
     /**
      * Bindable instructions for the custom attribute instance
@@ -153,7 +153,7 @@ export declare class HydrateTemplateController {
      * Bindable instructions for the template controller instance
      */
     props: IInstruction[];
-    get type(): InstructionType.hydrateTemplateController;
+    readonly type = InstructionType.hydrateTemplateController;
     constructor(def: PartialCustomElementDefinition, res: string | /* Constructable |  */ CustomAttributeDefinition, alias: string | undefined, 
     /**
      * Bindable instructions for the template controller instance
@@ -163,17 +163,17 @@ export declare class HydrateTemplateController {
 export declare class HydrateLetElementInstruction {
     instructions: LetBindingInstruction[];
     toBindingContext: boolean;
-    get type(): InstructionType.hydrateLetElement;
+    readonly type = InstructionType.hydrateLetElement;
     constructor(instructions: LetBindingInstruction[], toBindingContext: boolean);
 }
 export declare class LetBindingInstruction {
     from: string | IsBindingBehavior | Interpolation;
     to: string;
-    get type(): InstructionType.letBinding;
+    readonly type = InstructionType.letBinding;
     constructor(from: string | IsBindingBehavior | Interpolation, to: string);
 }
 export declare class TextBindingInstruction {
-    from: string | Interpolation;
+    from: string | IsBindingBehavior;
     /**
      * Indicates whether the value of the expression "from"
      * should be evaluated in strict mode.
@@ -181,8 +181,8 @@ export declare class TextBindingInstruction {
      * In none strict mode, "undefined" and "null" are coerced into empty string
      */
     strict: boolean;
-    get type(): InstructionType.textBinding;
-    constructor(from: string | Interpolation, 
+    readonly type = InstructionType.textBinding;
+    constructor(from: string | IsBindingBehavior, 
     /**
      * Indicates whether the value of the expression "from"
      * should be evaluated in strict mode.
@@ -191,29 +191,24 @@ export declare class TextBindingInstruction {
      */
     strict: boolean);
 }
-export declare const enum DelegationStrategy {
-    none = 0,
-    capturing = 1,
-    bubbling = 2
-}
 export declare class ListenerBindingInstruction {
     from: string | IsBindingBehavior;
     to: string;
     preventDefault: boolean;
-    strategy: DelegationStrategy;
-    get type(): InstructionType.listenerBinding;
-    constructor(from: string | IsBindingBehavior, to: string, preventDefault: boolean, strategy: DelegationStrategy);
+    capture: boolean;
+    readonly type = InstructionType.listenerBinding;
+    constructor(from: string | IsBindingBehavior, to: string, preventDefault: boolean, capture: boolean);
 }
 export declare class StylePropertyBindingInstruction {
     from: string | IsBindingBehavior;
     to: string;
-    get type(): InstructionType.stylePropertyBinding;
+    readonly type = InstructionType.stylePropertyBinding;
     constructor(from: string | IsBindingBehavior, to: string);
 }
 export declare class SetAttributeInstruction {
     value: string;
     to: string;
-    get type(): InstructionType.setAttribute;
+    readonly type = InstructionType.setAttribute;
     constructor(value: string, to: string);
 }
 export declare class SetClassAttributeInstruction {
@@ -236,7 +231,7 @@ export declare class AttributeBindingInstruction {
     attr: string;
     from: string | IsBindingBehavior;
     to: string;
-    get type(): InstructionType.attributeBinding;
+    readonly type = InstructionType.attributeBinding;
     constructor(
     /**
      * `attr` and `to` have the same value on a normal attribute
@@ -247,11 +242,11 @@ export declare class AttributeBindingInstruction {
     attr: string, from: string | IsBindingBehavior, to: string);
 }
 export declare class SpreadBindingInstruction {
-    get type(): InstructionType.spreadBinding;
+    readonly type = InstructionType.spreadBinding;
 }
 export declare class SpreadElementPropBindingInstruction {
     readonly instructions: IInstruction;
-    get type(): InstructionType.spreadElementProp;
+    readonly type = InstructionType.spreadElementProp;
     constructor(instructions: IInstruction);
 }
 export declare const ITemplateCompiler: import("@aurelia/kernel").InterfaceSymbol<ITemplateCompiler>;
@@ -296,7 +291,7 @@ export interface IRenderer<TType extends InstructionTypeName = InstructionTypeNa
     /**
      * The controller that is current invoking this renderer
      */
-    renderingCtrl: IHydratableController, target: unknown, instruction: IInstruction): void;
+    renderingCtrl: IHydratableController, target: unknown, instruction: IInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare const IRenderer: import("@aurelia/kernel").InterfaceSymbol<IRenderer<string>>;
 declare type DecoratableInstructionRenderer<TType extends string, TProto, TClass> = Class<TProto & Partial<IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>>, TClass> & Partial<IRegistry>;
@@ -309,63 +304,50 @@ export declare class SetPropertyRenderer implements IRenderer {
 }
 export declare class CustomElementRenderer implements IRenderer {
     target: InstructionType.hydrateElement;
-    constructor(rendering: IRendering, platform: IPlatform);
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: HydrateElementInstruction): void;
+    constructor(rendering: IRendering);
+    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: HydrateElementInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class CustomAttributeRenderer implements IRenderer {
     target: InstructionType.hydrateAttribute;
-    constructor(rendering: IRendering, platform: IPlatform);
+    constructor(rendering: IRendering);
     render(
     /**
      * The cotroller that is currently invoking this renderer
      */
-    renderingCtrl: IHydratableController, target: HTMLElement, instruction: HydrateAttributeInstruction): void;
+    renderingCtrl: IHydratableController, target: HTMLElement, instruction: HydrateAttributeInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class TemplateControllerRenderer implements IRenderer {
     target: InstructionType.hydrateTemplateController;
     constructor(rendering: IRendering, platform: IPlatform);
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: HydrateTemplateController): void;
+    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: HydrateTemplateController, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class LetElementRenderer implements IRenderer {
     target: InstructionType.hydrateLetElement;
-    constructor(exprParser: IExpressionParser, observerLocator: IObserverLocator);
-    render(renderingCtrl: IHydratableController, target: Node & ChildNode, instruction: HydrateLetElementInstruction): void;
-}
-export declare class CallBindingRenderer implements IRenderer {
-    target: InstructionType.callBinding;
-    constructor(exprParser: IExpressionParser, observerLocator: IObserverLocator);
-    render(renderingCtrl: IHydratableController, target: IController, instruction: CallBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: Node & ChildNode, instruction: HydrateLetElementInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class RefBindingRenderer implements IRenderer {
     target: InstructionType.refBinding;
-    constructor(exprParser: IExpressionParser);
-    render(renderingCtrl: IHydratableController, target: INode, instruction: RefBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: INode, instruction: RefBindingInstruction, platform: IPlatform, exprParser: IExpressionParser): void;
 }
 export declare class InterpolationBindingRenderer implements IRenderer {
     target: InstructionType.interpolation;
-    constructor(exprParser: IExpressionParser, observerLocator: IObserverLocator, p: IPlatform);
-    render(renderingCtrl: IHydratableController, target: IController, instruction: InterpolationInstruction): void;
+    render(renderingCtrl: IHydratableController, target: IController, instruction: InterpolationInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class PropertyBindingRenderer implements IRenderer {
     target: InstructionType.propertyBinding;
-    constructor(exprParser: IExpressionParser, observerLocator: IObserverLocator, p: IPlatform);
-    render(renderingCtrl: IHydratableController, target: IController, instruction: PropertyBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: IController, instruction: PropertyBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class IteratorBindingRenderer implements IRenderer {
     target: InstructionType.iteratorBinding;
-    constructor(exprParser: IExpressionParser, observerLocator: IObserverLocator, p: IPlatform);
-    render(renderingCtrl: IHydratableController, target: IController, instruction: IteratorBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: IController, instruction: IteratorBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
-export declare function applyBindingBehavior<T extends IInterceptableBinding>(binding: T, expression: IsBindingBehavior, locator: IServiceLocator): T;
 export declare class TextBindingRenderer implements IRenderer {
     target: InstructionType.textBinding;
-    constructor(exprParser: IExpressionParser, observerLocator: IObserverLocator, p: IPlatform);
-    render(renderingCtrl: IHydratableController, target: ChildNode, instruction: TextBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: ChildNode, instruction: TextBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class ListenerBindingRenderer implements IRenderer {
     target: InstructionType.listenerBinding;
-    constructor(parser: IExpressionParser, eventDelegator: IEventDelegator);
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: ListenerBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: ListenerBindingInstruction, platform: IPlatform, exprParser: IExpressionParser): void;
 }
 export declare class SetAttributeRenderer implements IRenderer {
     target: InstructionType.setAttribute;
@@ -381,23 +363,18 @@ export declare class SetStyleAttributeRenderer implements IRenderer {
 }
 export declare class StylePropertyBindingRenderer implements IRenderer {
     target: InstructionType.stylePropertyBinding;
-    constructor(exprParser: IExpressionParser, observerLocator: IObserverLocator, platform: IPlatform);
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: StylePropertyBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: StylePropertyBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class AttributeBindingRenderer implements IRenderer {
     target: InstructionType.attributeBinding;
-    constructor(
-    /** @internal */ _platform: IPlatform, 
-    /** @internal */ _exprParser: IExpressionParser, 
-    /** @internal */ _observerLocator: IObserverLocator);
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: AttributeBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: AttributeBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class SpreadRenderer implements IRenderer {
     target: InstructionType.spreadBinding;
     constructor(
     /** @internal */ _compiler: ITemplateCompiler, 
     /** @internal */ _rendering: IRendering);
-    render(renderingCtrl: IHydratableController, target: HTMLElement, _instruction: SpreadBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: HTMLElement, _instruction: SpreadBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export {};
 //# sourceMappingURL=renderer.d.ts.map

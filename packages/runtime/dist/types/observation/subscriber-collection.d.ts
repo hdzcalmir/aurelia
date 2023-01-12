@@ -3,21 +3,8 @@ export declare type IAnySubscriber = ISubscriber | ICollectionSubscriber;
 export declare function subscriberCollection(): ClassDecorator;
 export declare function subscriberCollection(target: Function): void;
 export declare class SubscriberRecord<T extends IAnySubscriber> implements ISubscriberRecord<T> {
-    /**
-     * subscriber flags: bits indicating the existence status of the subscribers of this record
-     */
-    private sf;
-    private s0?;
-    private s1?;
-    private s2?;
-    /**
-     * subscriber rest: When there's more than 3 subscribers, use an array to store the subscriber references
-     */
-    private sr?;
     count: number;
     add(subscriber: T): boolean;
-    has(subscriber: T): boolean;
-    any(): boolean;
     remove(subscriber: T): boolean;
     notify(val: unknown, oldVal: unknown): void;
     notifyCollection(collection: Collection, indexMap: IndexMap): void;

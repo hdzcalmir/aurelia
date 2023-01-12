@@ -9,7 +9,7 @@ import { Constructable, Overwrite } from './interfaces';
  *
  * Results are cached.
  */
-export declare function isArrayIndex(value: unknown): value is number | string;
+export declare const isArrayIndex: (value: unknown) => value is string | number;
 /**
  * Efficiently convert a string to camelCase.
  *
@@ -45,13 +45,13 @@ export declare const kebabCase: (input: string) => string;
  *
  * Primarily used by Aurelia to convert DOM node lists to arrays.
  */
-export declare function toArray<T = unknown>(input: ArrayLike<T>): T[];
+export declare const toArray: <T = unknown>(input: ArrayLike<T>) => T[];
 /**
  * Decorator. (lazily) bind the method to the class instance on first call.
  */
-export declare function bound<T extends Function>(target: Object, key: string | symbol, descriptor: TypedPropertyDescriptor<T>): TypedPropertyDescriptor<T>;
-export declare function mergeArrays<T>(...arrays: (readonly T[] | undefined)[]): T[];
-export declare function firstDefined<T>(...values: readonly (T | undefined)[]): T;
+export declare const bound: <T extends Function>(target: Object, key: string | symbol, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T>;
+export declare const mergeArrays: <T>(...arrays: (readonly T[] | undefined)[]) => T[];
+export declare const firstDefined: <T>(...values: readonly (T | undefined)[]) => T;
 export declare const getPrototypeChain: <T extends Constructable<{}>>(Type: T) => readonly [T, ...Constructable<{}>[]];
 export declare function toLookup<T1 extends {}>(obj1: T1): T1;
 export declare function toLookup<T1 extends {}, T2 extends {}>(obj1: T1, obj2: T2): Overwrite<T1, T2>;
@@ -72,7 +72,7 @@ declare type MaybePromise<T> = T extends Promise<infer R> ? (T | R) : (T | Promi
  *
  * If the value is a promise, it is `then`ed before the callback is invoked. Otherwise the callback is invoked synchronously.
  */
-export declare function onResolve<TValue, TRet>(maybePromise: TValue, resolveCallback: (value: UnwrapPromise<TValue>) => TRet): MaybePromise<TRet>;
+export declare const onResolve: <TValue, TRet>(maybePromise: TValue, resolveCallback: (value: UnwrapPromise<TValue>) => TRet) => MaybePromise<TRet>;
 /**
  * Normalize an array of potential promises, to ensure things stay synchronous when they can.
  *
@@ -82,6 +82,6 @@ export declare function onResolve<TValue, TRet>(maybePromise: TValue, resolveCal
  *
  * If none of the values is a promise, nothing is returned, to indicate that things can stay synchronous.
  */
-export declare function resolveAll(...maybePromises: (void | Promise<void>)[]): void | Promise<void>;
+export declare const resolveAll: (...maybePromises: (void | Promise<void>)[]) => void | Promise<void>;
 export {};
 //# sourceMappingURL=functions.d.ts.map

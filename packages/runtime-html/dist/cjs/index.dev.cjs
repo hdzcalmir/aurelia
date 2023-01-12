@@ -44,8 +44,15 @@ const appendResourceKey = resource$1.appendTo;
 const appendAnnotationKey = annotation.appendTo;
 const getAllAnnotations = annotation.getKeys;
 
-const createLookup = () => Object.create(null);
-const hasOwnProperty = Object.prototype.hasOwnProperty;
+const O = Object;
+const baseObjectPrototype = O.prototype;
+const createLookup = () => O.create(null);
+const createError = (message) => new Error(message);
+const hasOwnProperty = baseObjectPrototype.hasOwnProperty;
+const objectFreeze = O.freeze;
+const objectAssign = O.assign;
+const getOwnPropertyNames = O.getOwnPropertyNames;
+const objectKeys = O.keys;
 const IsDataAttribute = createLookup();
 const isDataAttribute = (obj, key, svgAnalyzer) => {
     if (IsDataAttribute[key] === true) {
@@ -64,8 +71,9 @@ const isPromise = (v) => v instanceof Promise;
 const isArray = (v) => v instanceof Array;
 const isFunction = (v) => typeof v === 'function';
 const isString = (v) => typeof v === 'string';
-const defineProp = Object.defineProperty;
+const defineProp = O.defineProperty;
 const rethrow = (err) => { throw err; };
+const areEqual = O.is;
 const def = Reflect.defineProperty;
 const defineHiddenProp = (obj, key, value) => {
     def(obj, key, {
@@ -102,7 +110,7 @@ function isBindableAnnotation(key) {
     return key.startsWith(baseName$1);
 }
 const baseName$1 = getAnnotationKeyFor('bindable');
-const Bindable = Object.freeze({
+const Bindable = objectFreeze({
     name: baseName$1,
     keyFrom: (name) => `${baseName$1}:${name}`,
     from(type, ...bindableLists) {
@@ -122,7 +130,7 @@ const Bindable = Object.freeze({
                 bindables[maybeList.property] = maybeList;
             }
             else if (maybeList !== void 0) {
-                Object.keys(maybeList).forEach(name => addDescription(name, maybeList[name]));
+                objectKeys(maybeList).forEach(name => addDescription(name, maybeList[name]));
             }
         }
         bindableLists.forEach(addList);
@@ -219,7 +227,7 @@ const Coercer = {
     }
 };
 function getInterceptor(prop, target, def = {}) {
-    const type = def.type ?? Reflect.getMetadata('design:type', target, prop) ?? null;
+    const type = def.type ?? metadata.Metadata.get('design:type', target, prop) ?? null;
     if (type == null) {
         return kernel.noop;
     }
@@ -268,8 +276,8 @@ class BindableObserver {
         let val;
         this._obj = obj;
         this._key = key;
-        this.cb = hasCb ? cb : kernel.noop;
         this._cbAll = hasCbAll ? cbAll : kernel.noop;
+        this.cb = hasCb ? cb : kernel.noop;
         if (this.cb === void 0 && !hasCbAll && !hasSetter) {
             this._observing = false;
         }
@@ -290,7 +298,7 @@ class BindableObserver {
         }
         const currentValue = this._value;
         if (this._observing) {
-            if (Object.is(newValue, currentValue)) {
+            if (areEqual(newValue, currentValue)) {
                 return;
             }
             this._value = newValue;
@@ -363,11 +371,13 @@ const allResources = function (key) {
     };
     return Resolver;
 };
+const createInterface = kernel.DI.createInterface;
 const singletonRegistration = kernel.Registration.singleton;
 const aliasRegistration = kernel.Registration.aliasTo;
 const instanceRegistration = kernel.Registration.instance;
-const callbackRegistration = kernel.Registration.callback;
+kernel.Registration.callback;
 const transientRegistration = kernel.Registration.transient;
+const registerResolver = (ctn, key, resolver) => ctn.registerResolver(key, resolver);
 function alias(...aliases) {
     return function (target) {
         const key = getAnnotationKeyFor('aliases');
@@ -495,16 +505,16 @@ class Interpretation {
 class AttrParsingState {
     constructor(charSpec, ...patterns) {
         this.charSpec = charSpec;
-        this.nextStates = [];
-        this.types = null;
-        this.isEndpoint = false;
-        this.patterns = patterns;
+        this._nextStates = [];
+        this._types = null;
+        this._isEndpoint = false;
+        this._patterns = patterns;
     }
-    get pattern() {
-        return this.isEndpoint ? this.patterns[0] : null;
+    get _pattern() {
+        return this._isEndpoint ? this._patterns[0] : null;
     }
     findChild(charSpec) {
-        const nextStates = this.nextStates;
+        const nextStates = this._nextStates;
         const len = nextStates.length;
         let child = null;
         let i = 0;
@@ -517,23 +527,23 @@ class AttrParsingState {
         return null;
     }
     append(charSpec, pattern) {
-        const patterns = this.patterns;
+        const patterns = this._patterns;
         if (!patterns.includes(pattern)) {
             patterns.push(pattern);
         }
         let state = this.findChild(charSpec);
         if (state == null) {
             state = new AttrParsingState(charSpec, pattern);
-            this.nextStates.push(state);
+            this._nextStates.push(state);
             if (charSpec.repeat) {
-                state.nextStates.push(state);
+                state._nextStates.push(state);
             }
         }
         return state;
     }
     findMatches(ch, interpretation) {
         const results = [];
-        const nextStates = this.nextStates;
+        const nextStates = this._nextStates;
         const len = nextStates.length;
         let childLen = 0;
         let child = null;
@@ -543,16 +553,16 @@ class AttrParsingState {
             child = nextStates[i];
             if (child.charSpec.has(ch)) {
                 results.push(child);
-                childLen = child.patterns.length;
+                childLen = child._patterns.length;
                 j = 0;
                 if (child.charSpec.isSymbol) {
                     for (; j < childLen; ++j) {
-                        interpretation.next(child.patterns[j]);
+                        interpretation.next(child._patterns[j]);
                     }
                 }
                 else {
                     for (; j < childLen; ++j) {
-                        interpretation.append(child.patterns[j], ch);
+                        interpretation.append(child._patterns[j], ch);
                     }
                 }
             }
@@ -563,16 +573,16 @@ class AttrParsingState {
 class StaticSegment {
     constructor(text) {
         this.text = text;
-        const len = this.len = text.length;
-        const specs = this.specs = [];
+        const len = this._len = text.length;
+        const specs = this._specs = [];
         let i = 0;
         for (; len > i; ++i) {
             specs.push(new CharSpec(text[i], false, false, false));
         }
     }
     eachChar(callback) {
-        const len = this.len;
-        const specs = this.specs;
+        const len = this._len;
+        const specs = this._specs;
         let i = 0;
         for (; len > i; ++i) {
             callback(specs[i]);
@@ -582,19 +592,19 @@ class StaticSegment {
 class DynamicSegment {
     constructor(symbols) {
         this.text = 'PART';
-        this.spec = new CharSpec(symbols, true, false, true);
+        this._spec = new CharSpec(symbols, true, false, true);
     }
     eachChar(callback) {
-        callback(this.spec);
+        callback(this._spec);
     }
 }
 class SymbolSegment {
     constructor(text) {
         this.text = text;
-        this.spec = new CharSpec(text, false, true, false);
+        this._spec = new CharSpec(text, false, true, false);
     }
     eachChar(callback) {
-        callback(this.spec);
+        callback(this._spec);
     }
 }
 class SegmentTypes {
@@ -604,11 +614,11 @@ class SegmentTypes {
         this.symbols = 0;
     }
 }
-const ISyntaxInterpreter = kernel.DI.createInterface('ISyntaxInterpreter', x => x.singleton(SyntaxInterpreter));
+const ISyntaxInterpreter = createInterface('ISyntaxInterpreter', x => x.singleton(SyntaxInterpreter));
 class SyntaxInterpreter {
     constructor() {
-        this.rootState = new AttrParsingState(null);
-        this.initialStates = [this.rootState];
+        this._rootState = new AttrParsingState(null);
+        this._initialStates = [this._rootState];
     }
     add(defs) {
         defs = defs.slice(0).sort((d1, d2) => d1.pattern > d2.pattern ? 1 : -1);
@@ -623,31 +633,29 @@ class SyntaxInterpreter {
         let i = 0;
         let j;
         while (ii > i) {
-            currentState = this.rootState;
+            currentState = this._rootState;
             def = defs[i];
             pattern = def.pattern;
             types = new SegmentTypes();
-            segments = this.parse(def, types);
+            segments = this._parse(def, types);
             len = segments.length;
-            charSpecCb = (ch) => {
-                currentState = currentState.append(ch, pattern);
-            };
+            charSpecCb = (ch) => currentState = currentState.append(ch, pattern);
             for (j = 0; len > j; ++j) {
                 segments[j].eachChar(charSpecCb);
             }
-            currentState.types = types;
-            currentState.isEndpoint = true;
+            currentState._types = types;
+            currentState._isEndpoint = true;
             ++i;
         }
     }
     interpret(name) {
         const interpretation = new Interpretation();
         const len = name.length;
-        let states = this.initialStates;
+        let states = this._initialStates;
         let i = 0;
         let state;
         for (; i < len; ++i) {
-            states = this.getNextStates(states, name.charAt(i), interpretation);
+            states = this._getNextStates(states, name.charAt(i), interpretation);
             if (states.length === 0) {
                 break;
             }
@@ -657,13 +665,13 @@ class SyntaxInterpreter {
             states.sort(sortEndpoint);
             state = states[0];
             if (!state.charSpec.isSymbol) {
-                interpretation.next(state.pattern);
+                interpretation.next(state._pattern);
             }
-            interpretation.pattern = state.pattern;
+            interpretation.pattern = state._pattern;
         }
         return interpretation;
     }
-    getNextStates(states, ch, interpretation) {
+    _getNextStates(states, ch, interpretation) {
         const nextStates = [];
         let state = null;
         const len = states.length;
@@ -674,7 +682,7 @@ class SyntaxInterpreter {
         }
         return nextStates;
     }
-    parse(def, types) {
+    _parse(def, types) {
         const result = [];
         const pattern = def.pattern;
         const len = pattern.length;
@@ -718,11 +726,11 @@ class SyntaxInterpreter {
     }
 }
 function isEndpoint(a) {
-    return a.isEndpoint;
+    return a._isEndpoint;
 }
 function sortEndpoint(a, b) {
-    const aTypes = a.types;
-    const bTypes = b.types;
+    const aTypes = a._types;
+    const bTypes = b._types;
     if (aTypes.statics !== bTypes.statics) {
         return bTypes.statics - aTypes.statics;
     }
@@ -742,8 +750,8 @@ class AttrSyntax {
         this.command = command;
     }
 }
-const IAttributePattern = kernel.DI.createInterface('IAttributePattern');
-const IAttributeParser = kernel.DI.createInterface('IAttributeParser', x => x.singleton(AttributeParser));
+const IAttributePattern = createInterface('IAttributePattern');
+const IAttributeParser = createInterface('IAttributeParser', x => x.singleton(AttributeParser));
 class AttributeParser {
     constructor(interpreter, attrPatterns) {
         this._cache = {};
@@ -788,7 +796,7 @@ class AttributePatternResourceDefinition {
 const apBaseName = getResourceKeyFor('attribute-pattern');
 const annotationKey = 'attribute-pattern-definitions';
 const getAllPatternDefinitions = (Type) => kernel.Protocol.annotation.get(Type, annotationKey);
-const AttributePattern = Object.freeze({
+const AttributePattern = objectFreeze({
     name: apBaseName,
     definitionAnnotationKey: annotationKey,
     define(patternDefs, Type) {
@@ -806,7 +814,7 @@ exports.DotSeparatedAttributePattern = class DotSeparatedAttributePattern {
         return new AttrSyntax(rawName, rawValue, parts[0], parts[1]);
     }
     'PART.PART.PART'(rawName, rawValue, parts) {
-        return new AttrSyntax(rawName, rawValue, parts[0], parts[2]);
+        return new AttrSyntax(rawName, rawValue, `${parts[0]}.${parts[1]}`, parts[2]);
     }
 };
 exports.DotSeparatedAttributePattern = __decorate([
@@ -847,355 +855,6 @@ let SpreadAttributePattern = class SpreadAttributePattern {
 SpreadAttributePattern = __decorate([
     attributePattern({ pattern: '...$attrs', symbols: '' })
 ], SpreadAttributePattern);
-
-exports.BindingBehaviorStrategy = void 0;
-(function (BindingBehaviorStrategy) {
-    BindingBehaviorStrategy[BindingBehaviorStrategy["singleton"] = 1] = "singleton";
-    BindingBehaviorStrategy[BindingBehaviorStrategy["interceptor"] = 2] = "interceptor";
-})(exports.BindingBehaviorStrategy || (exports.BindingBehaviorStrategy = {}));
-function bindingBehavior(nameOrDef) {
-    return function (target) {
-        return BindingBehavior.define(nameOrDef, target);
-    };
-}
-class BindingBehaviorDefinition {
-    constructor(Type, name, aliases, key, strategy) {
-        this.Type = Type;
-        this.name = name;
-        this.aliases = aliases;
-        this.key = key;
-        this.strategy = strategy;
-    }
-    static create(nameOrDef, Type) {
-        let name;
-        let def;
-        if (isString(nameOrDef)) {
-            name = nameOrDef;
-            def = { name };
-        }
-        else {
-            name = nameOrDef.name;
-            def = nameOrDef;
-        }
-        const inheritsFromInterceptor = Object.getPrototypeOf(Type) === BindingInterceptor;
-        return new BindingBehaviorDefinition(Type, kernel.firstDefined(getBehaviorAnnotation(Type, 'name'), name), kernel.mergeArrays(getBehaviorAnnotation(Type, 'aliases'), def.aliases, Type.aliases), BindingBehavior.keyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('strategy', def, Type, () => inheritsFromInterceptor ? 2 : 1));
-    }
-    register(container) {
-        const { Type, key, aliases, strategy } = this;
-        switch (strategy) {
-            case 1:
-                kernel.Registration.singleton(key, Type).register(container);
-                break;
-            case 2:
-                kernel.Registration.instance(key, new BindingBehaviorFactory(container, Type)).register(container);
-                break;
-        }
-        kernel.Registration.aliasTo(key, Type).register(container);
-        registerAliases(aliases, BindingBehavior, key, container);
-    }
-}
-class BindingBehaviorFactory {
-    constructor(ctn, Type) {
-        this.ctn = ctn;
-        this.Type = Type;
-        this.deps = kernel.DI.getDependencies(Type);
-    }
-    construct(binding, expr) {
-        const container = this.ctn;
-        const deps = this.deps;
-        switch (deps.length) {
-            case 0:
-                return new this.Type(binding, expr);
-            case 1:
-                return new this.Type(container.get(deps[0]), binding, expr);
-            case 2:
-                return new this.Type(container.get(deps[0]), container.get(deps[1]), binding, expr);
-            default:
-                return new this.Type(...deps.map(d => container.get(d)), binding, expr);
-        }
-    }
-}
-class BindingInterceptor {
-    constructor(binding, expr) {
-        this.binding = binding;
-        this.expr = expr;
-        this.type = 'instance';
-        this.interceptor = this;
-        let interceptor;
-        while (binding.interceptor !== this) {
-            interceptor = binding.interceptor;
-            binding.interceptor = this;
-            binding = interceptor;
-        }
-    }
-    get(key) {
-        return this.binding.get(key);
-    }
-    getConverter(name) {
-        return this.binding.getConverter?.(name);
-    }
-    getBehavior(name) {
-        return this.binding.getBehavior?.(name);
-    }
-    updateTarget(value) {
-        this.binding.updateTarget(value);
-    }
-    updateSource(value) {
-        this.binding.updateSource(value);
-    }
-    callSource(args) {
-        return this.binding.callSource(args);
-    }
-    handleChange(newValue, previousValue) {
-        this.binding.handleChange(newValue, previousValue);
-    }
-    handleCollectionChange(collection, indexMap) {
-        this.binding.handleCollectionChange(collection, indexMap);
-    }
-    observe(obj, key) {
-        this.binding.observe(obj, key);
-    }
-    observeCollection(observer) {
-        this.binding.observeCollection(observer);
-    }
-    $bind(scope) {
-        this.binding.$bind(scope);
-    }
-    $unbind() {
-        this.binding.$unbind();
-    }
-}
-const interceptableProperties = ['isBound', '$scope', 'obs', 'ast', 'locator', 'oL', 'boundFn'];
-interceptableProperties.forEach(prop => {
-    def(BindingInterceptor.prototype, prop, {
-        enumerable: false,
-        configurable: true,
-        get: function () {
-            return this.binding[prop];
-        },
-    });
-});
-const bbBaseName = getResourceKeyFor('binding-behavior');
-const getBehaviorAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
-const BindingBehavior = Object.freeze({
-    name: bbBaseName,
-    keyFrom(name) {
-        return `${bbBaseName}:${name}`;
-    },
-    isType(value) {
-        return isFunction(value) && hasOwnMetadata(bbBaseName, value);
-    },
-    define(nameOrDef, Type) {
-        const definition = BindingBehaviorDefinition.create(nameOrDef, Type);
-        defineMetadata(bbBaseName, definition, definition.Type);
-        defineMetadata(bbBaseName, definition, definition);
-        appendResourceKey(Type, bbBaseName);
-        return definition.Type;
-    },
-    getDefinition(Type) {
-        const def = getOwnMetadata(bbBaseName, Type);
-        if (def === void 0) {
-            throw new Error(`AUR0151: No definition found for type ${Type.name}`);
-        }
-        return def;
-    },
-    annotate(Type, prop, value) {
-        defineMetadata(getAnnotationKeyFor(prop), value, Type);
-    },
-    getAnnotation: getBehaviorAnnotation,
-});
-
-function valueConverter(nameOrDef) {
-    return function (target) {
-        return ValueConverter.define(nameOrDef, target);
-    };
-}
-class ValueConverterDefinition {
-    constructor(Type, name, aliases, key) {
-        this.Type = Type;
-        this.name = name;
-        this.aliases = aliases;
-        this.key = key;
-    }
-    static create(nameOrDef, Type) {
-        let name;
-        let def;
-        if (isString(nameOrDef)) {
-            name = nameOrDef;
-            def = { name };
-        }
-        else {
-            name = nameOrDef.name;
-            def = nameOrDef;
-        }
-        return new ValueConverterDefinition(Type, kernel.firstDefined(getConverterAnnotation(Type, 'name'), name), kernel.mergeArrays(getConverterAnnotation(Type, 'aliases'), def.aliases, Type.aliases), ValueConverter.keyFrom(name));
-    }
-    register(container) {
-        const { Type, key, aliases } = this;
-        kernel.Registration.singleton(key, Type).register(container);
-        kernel.Registration.aliasTo(key, Type).register(container);
-        registerAliases(aliases, ValueConverter, key, container);
-    }
-}
-const vcBaseName = getResourceKeyFor('value-converter');
-const getConverterAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
-const ValueConverter = Object.freeze({
-    name: vcBaseName,
-    keyFrom: (name) => `${vcBaseName}:${name}`,
-    isType(value) {
-        return isFunction(value) && hasOwnMetadata(vcBaseName, value);
-    },
-    define(nameOrDef, Type) {
-        const definition = ValueConverterDefinition.create(nameOrDef, Type);
-        defineMetadata(vcBaseName, definition, definition.Type);
-        defineMetadata(vcBaseName, definition, definition);
-        appendResourceKey(Type, vcBaseName);
-        return definition.Type;
-    },
-    getDefinition(Type) {
-        const def = getOwnMetadata(vcBaseName, Type);
-        if (def === void 0) {
-            throw new Error(`AUR0152: No definition found for type ${Type.name}`);
-        }
-        return def;
-    },
-    annotate(Type, prop, value) {
-        defineMetadata(getAnnotationKeyFor(prop), value, Type);
-    },
-    getAnnotation: getConverterAnnotation,
-});
-
-class BindingTargetSubscriber {
-    constructor(b, flushQueue) {
-        this._value = void 0;
-        this.b = b;
-        this._flushQueue = flushQueue;
-    }
-    flush() {
-        this.b.updateSource(this._value);
-    }
-    handleChange(value, _) {
-        const b = this.b;
-        if (value !== b.ast.evaluate(b.$scope, b, null)) {
-            this._value = value;
-            this._flushQueue.add(this);
-        }
-    }
-}
-function astEvaluator(strict, strictFnCall = true) {
-    return (target) => {
-        const proto = target.prototype;
-        if (strict != null) {
-            def(proto, 'strict', { enumerable: true, get: function () { return strict; } });
-        }
-        def(proto, 'strictFnCall', { enumerable: true, get: function () { return strictFnCall; } });
-        defineHiddenProp(proto, 'get', function (key) {
-            return this.locator.get(key);
-        });
-        defineHiddenProp(proto, 'getConverter', function (name) {
-            const key = ValueConverter.keyFrom(name);
-            let resourceLookup = resourceLookupCache.get(this);
-            if (resourceLookup == null) {
-                resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
-            }
-            return resourceLookup[key] ?? (resourceLookup[key] = this.locator.get(resource(key)));
-        });
-        defineHiddenProp(proto, 'getBehavior', function (name) {
-            const key = BindingBehavior.keyFrom(name);
-            let resourceLookup = resourceLookupCache.get(this);
-            if (resourceLookup == null) {
-                resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
-            }
-            return resourceLookup[key] ?? (resourceLookup[key] = this.locator.get(resource(key)));
-        });
-    };
-}
-const resourceLookupCache = new WeakMap();
-class ResourceLookup {
-}
-const IFlushQueue = kernel.DI.createInterface('IFlushQueue', x => x.singleton(FlushQueue));
-class FlushQueue {
-    constructor() {
-        this._flushing = false;
-        this._items = new Set();
-    }
-    get count() {
-        return this._items.size;
-    }
-    add(flushable) {
-        this._items.add(flushable);
-        if (this._flushing) {
-            return;
-        }
-        this._flushing = true;
-        try {
-            this._items.forEach(flushItem);
-        }
-        finally {
-            this._flushing = false;
-        }
-    }
-    clear() {
-        this._items.clear();
-        this._flushing = false;
-    }
-}
-function flushItem(item, _, items) {
-    items.delete(item);
-    item.flush();
-}
-
-class CallBinding {
-    constructor(locator, observerLocator, ast, target, targetProperty) {
-        this.locator = locator;
-        this.ast = ast;
-        this.target = target;
-        this.targetProperty = targetProperty;
-        this.interceptor = this;
-        this.isBound = false;
-        this.boundFn = false;
-        this.targetObserver = observerLocator.getAccessor(target, targetProperty);
-    }
-    callSource(args) {
-        const overrideContext = this.$scope.overrideContext;
-        overrideContext.$event = args;
-        const result = this.ast.evaluate(this.$scope, this, null);
-        Reflect.deleteProperty(overrideContext, '$event');
-        return result;
-    }
-    $bind(scope) {
-        if (this.isBound) {
-            if (this.$scope === scope) {
-                return;
-            }
-            this.interceptor.$unbind();
-        }
-        this.$scope = scope;
-        if (this.ast.hasBind) {
-            this.ast.bind(scope, this.interceptor);
-        }
-        this.targetObserver.setValue(($args) => this.interceptor.callSource($args), this.target, this.targetProperty);
-        this.isBound = true;
-    }
-    $unbind() {
-        if (!this.isBound) {
-            return;
-        }
-        if (this.ast.hasUnbind) {
-            this.ast.unbind(this.$scope, this.interceptor);
-        }
-        this.$scope = void 0;
-        this.targetObserver.setValue(null, this.target, this.targetProperty);
-        this.isBound = false;
-    }
-    observe(_obj, _propertyName) {
-        return;
-    }
-    handleChange(_newValue, _previousValue) {
-        return;
-    }
-}
-astEvaluator(true)(CallBinding);
 
 class AttributeObserver {
     constructor(obj, prop, attr) {
@@ -1264,7 +923,7 @@ class AttributeObserver {
                     newValue = this._obj.style.getPropertyValue(this._prop);
                     break;
                 default:
-                    throw new Error(`AUR0651: Unsupported observation of attribute: ${this._attr}`);
+                    throw createError(`AUR0651: Unsupported observation of attribute: ${this._attr}`);
             }
             if (newValue !== this._value) {
                 this._oldValue = this._value;
@@ -1320,122 +979,379 @@ function invokeHandleMutation(s) {
 }
 let oV$3 = void 0;
 
+function bindingBehavior(nameOrDef) {
+    return function (target) {
+        return BindingBehavior.define(nameOrDef, target);
+    };
+}
+class BindingBehaviorDefinition {
+    constructor(Type, name, aliases, key) {
+        this.Type = Type;
+        this.name = name;
+        this.aliases = aliases;
+        this.key = key;
+    }
+    static create(nameOrDef, Type) {
+        let name;
+        let def;
+        if (isString(nameOrDef)) {
+            name = nameOrDef;
+            def = { name };
+        }
+        else {
+            name = nameOrDef.name;
+            def = nameOrDef;
+        }
+        return new BindingBehaviorDefinition(Type, kernel.firstDefined(getBehaviorAnnotation(Type, 'name'), name), kernel.mergeArrays(getBehaviorAnnotation(Type, 'aliases'), def.aliases, Type.aliases), BindingBehavior.keyFrom(name));
+    }
+    register(container) {
+        const { Type, key, aliases } = this;
+        singletonRegistration(key, Type).register(container);
+        aliasRegistration(key, Type).register(container);
+        registerAliases(aliases, BindingBehavior, key, container);
+    }
+}
+const bbBaseName = getResourceKeyFor('binding-behavior');
+const getBehaviorAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const BindingBehavior = objectFreeze({
+    name: bbBaseName,
+    keyFrom(name) {
+        return `${bbBaseName}:${name}`;
+    },
+    isType(value) {
+        return isFunction(value) && hasOwnMetadata(bbBaseName, value);
+    },
+    define(nameOrDef, Type) {
+        const definition = BindingBehaviorDefinition.create(nameOrDef, Type);
+        defineMetadata(bbBaseName, definition, definition.Type);
+        defineMetadata(bbBaseName, definition, definition);
+        appendResourceKey(Type, bbBaseName);
+        return definition.Type;
+    },
+    getDefinition(Type) {
+        const def = getOwnMetadata(bbBaseName, Type);
+        if (def === void 0) {
+            throw createError(`AUR0151: No definition found for type ${Type.name}`);
+        }
+        return def;
+    },
+    annotate(Type, prop, value) {
+        defineMetadata(getAnnotationKeyFor(prop), value, Type);
+    },
+    getAnnotation: getBehaviorAnnotation,
+});
+
+function valueConverter(nameOrDef) {
+    return function (target) {
+        return ValueConverter.define(nameOrDef, target);
+    };
+}
+class ValueConverterDefinition {
+    constructor(Type, name, aliases, key) {
+        this.Type = Type;
+        this.name = name;
+        this.aliases = aliases;
+        this.key = key;
+    }
+    static create(nameOrDef, Type) {
+        let name;
+        let def;
+        if (isString(nameOrDef)) {
+            name = nameOrDef;
+            def = { name };
+        }
+        else {
+            name = nameOrDef.name;
+            def = nameOrDef;
+        }
+        return new ValueConverterDefinition(Type, kernel.firstDefined(getConverterAnnotation(Type, 'name'), name), kernel.mergeArrays(getConverterAnnotation(Type, 'aliases'), def.aliases, Type.aliases), ValueConverter.keyFrom(name));
+    }
+    register(container) {
+        const { Type, key, aliases } = this;
+        kernel.Registration.singleton(key, Type).register(container);
+        kernel.Registration.aliasTo(key, Type).register(container);
+        registerAliases(aliases, ValueConverter, key, container);
+    }
+}
+const vcBaseName = getResourceKeyFor('value-converter');
+const getConverterAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const ValueConverter = objectFreeze({
+    name: vcBaseName,
+    keyFrom: (name) => `${vcBaseName}:${name}`,
+    isType(value) {
+        return isFunction(value) && hasOwnMetadata(vcBaseName, value);
+    },
+    define(nameOrDef, Type) {
+        const definition = ValueConverterDefinition.create(nameOrDef, Type);
+        defineMetadata(vcBaseName, definition, definition.Type);
+        defineMetadata(vcBaseName, definition, definition);
+        appendResourceKey(Type, vcBaseName);
+        return definition.Type;
+    },
+    getDefinition(Type) {
+        const def = getOwnMetadata(vcBaseName, Type);
+        if (def === void 0) {
+            throw createError(`AUR0152: No definition found for type ${Type.name}`);
+        }
+        return def;
+    },
+    annotate(Type, prop, value) {
+        defineMetadata(getAnnotationKeyFor(prop), value, Type);
+    },
+    getAnnotation: getConverterAnnotation,
+});
+
+class BindingTargetSubscriber {
+    constructor(b, flushQueue) {
+        this._value = void 0;
+        this.b = b;
+        this._flushQueue = flushQueue;
+    }
+    flush() {
+        this.b.updateSource(this._value);
+    }
+    handleChange(value, _) {
+        const b = this.b;
+        if (value !== runtime.astEvaluate(b.ast, b._scope, b, null)) {
+            this._value = value;
+            this._flushQueue.add(this);
+        }
+    }
+}
+const mixinUseScope = (target) => {
+    defineHiddenProp(target.prototype, 'useScope', function (scope) {
+        this._scope = scope;
+    });
+};
+const mixinAstEvaluator = (strict, strictFnCall = true) => {
+    return (target) => {
+        const proto = target.prototype;
+        if (strict != null) {
+            def(proto, 'strict', { enumerable: true, get: function () { return strict; } });
+        }
+        def(proto, 'strictFnCall', { enumerable: true, get: function () { return strictFnCall; } });
+        defineHiddenProp(proto, 'get', function (key) {
+            return this.l.get(key);
+        });
+        defineHiddenProp(proto, 'getSignaler', function () {
+            return this.l.root.get(runtime.ISignaler);
+        });
+        defineHiddenProp(proto, 'getConverter', function (name) {
+            const key = ValueConverter.keyFrom(name);
+            let resourceLookup = resourceLookupCache.get(this);
+            if (resourceLookup == null) {
+                resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
+            }
+            return resourceLookup[key] ?? (resourceLookup[key] = this.l.get(resource(key)));
+        });
+        defineHiddenProp(proto, 'getBehavior', function (name) {
+            const key = BindingBehavior.keyFrom(name);
+            let resourceLookup = resourceLookupCache.get(this);
+            if (resourceLookup == null) {
+                resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
+            }
+            return resourceLookup[key] ?? (resourceLookup[key] = this.l.get(resource(key)));
+        });
+    };
+};
+const resourceLookupCache = new WeakMap();
+class ResourceLookup {
+}
+const IFlushQueue = createInterface('IFlushQueue', x => x.singleton(FlushQueue));
+class FlushQueue {
+    constructor() {
+        this._flushing = false;
+        this._items = new Set();
+    }
+    get count() {
+        return this._items.size;
+    }
+    add(flushable) {
+        this._items.add(flushable);
+        if (this._flushing) {
+            return;
+        }
+        this._flushing = true;
+        try {
+            this._items.forEach(flushItem);
+        }
+        finally {
+            this._flushing = false;
+        }
+    }
+    clear() {
+        this._items.clear();
+        this._flushing = false;
+    }
+}
+function flushItem(item, _, items) {
+    items.delete(item);
+    item.flush();
+}
+const withLimitationBindings = new WeakSet();
+const mixingBindingLimited = (target, getMethodName) => {
+    defineHiddenProp(target.prototype, 'limit', function (opts) {
+        if (withLimitationBindings.has(this)) {
+            throw createError(`AURXXXX: a rate limit has already been applied.`);
+        }
+        withLimitationBindings.add(this);
+        const prop = getMethodName(this, opts);
+        const originalFn = this[prop];
+        const callOriginal = (...args) => originalFn.call(this, ...args);
+        const limitedFn = opts.type === 'debounce'
+            ? debounced(opts, callOriginal, this)
+            : throttled(opts, callOriginal, this);
+        this[prop] = limitedFn;
+        return {
+            dispose: () => {
+                withLimitationBindings.delete(this);
+                limitedFn.dispose();
+                delete this[prop];
+            }
+        };
+    });
+};
+const debounced = (opts, callOriginal, binding) => {
+    let limiterTask;
+    let task;
+    let latestValue;
+    const taskQueue = opts.queue;
+    const fn = (v) => {
+        latestValue = v;
+        if (binding.isBound) {
+            task = limiterTask;
+            limiterTask = taskQueue.queueTask(() => callOriginal(latestValue), { delay: opts.delay, reusable: false });
+            task?.cancel();
+        }
+        else {
+            callOriginal(latestValue);
+        }
+    };
+    fn.dispose = () => {
+        task?.cancel();
+        limiterTask?.cancel();
+    };
+    return fn;
+};
+const throttled = (opts, callOriginal, binding) => {
+    let limiterTask;
+    let task;
+    let last = 0;
+    let elapsed = 0;
+    let latestValue;
+    const taskQueue = opts.queue;
+    const now = () => opts.now();
+    const fn = (v) => {
+        latestValue = v;
+        if (binding.isBound) {
+            elapsed = now() - last;
+            task = limiterTask;
+            if (elapsed > opts.delay) {
+                last = now();
+                callOriginal(latestValue);
+            }
+            else {
+                limiterTask = taskQueue.queueTask(() => {
+                    last = now();
+                    callOriginal(latestValue);
+                }, { delay: opts.delay - elapsed, reusable: false });
+            }
+            task?.cancel();
+        }
+        else {
+            callOriginal(latestValue);
+        }
+    };
+    fn.dispose = () => {
+        task?.cancel();
+        limiterTask?.cancel();
+    };
+    return fn;
+};
+
 const taskOptions = {
     reusable: false,
     preempt: true,
 };
 class AttributeBinding {
     constructor(controller, locator, observerLocator, taskQueue, ast, target, targetAttribute, targetProperty, mode) {
-        this.locator = locator;
-        this.taskQueue = taskQueue;
-        this.ast = ast;
         this.targetAttribute = targetAttribute;
         this.targetProperty = targetProperty;
         this.mode = mode;
-        this.interceptor = this;
         this.isBound = false;
-        this.$scope = null;
-        this.task = null;
-        this.targetSubscriber = null;
-        this.value = void 0;
+        this._scope = void 0;
+        this._task = null;
+        this._value = void 0;
         this.boundFn = false;
+        this.l = locator;
+        this.ast = ast;
         this._controller = controller;
         this.target = target;
         this.oL = observerLocator;
+        this._taskQueue = taskQueue;
     }
     updateTarget(value) {
-        this.targetObserver.setValue(value, this.target, this.targetProperty);
-    }
-    updateSource(value) {
-        this.ast.assign(this.$scope, this, value);
+        this._targetObserver.setValue(value, this.target, this.targetProperty);
     }
     handleChange() {
         if (!this.isBound) {
             return;
         }
-        const mode = this.mode;
-        const interceptor = this.interceptor;
-        const ast = this.ast;
-        const $scope = this.$scope;
-        const targetObserver = this.targetObserver;
-        const shouldQueueFlush = this._controller.state !== 1 && (targetObserver.type & 4) > 0;
-        let shouldConnect = false;
         let task;
-        shouldConnect = (mode & 1) === 0;
-        if (shouldConnect) {
-            this.obs.version++;
-        }
-        const newValue = ast.evaluate($scope, this, interceptor);
-        if (shouldConnect) {
-            this.obs.clear();
-        }
-        if (newValue !== this.value) {
-            this.value = newValue;
+        this.obs.version++;
+        const newValue = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & 2) > 0 ? this : null);
+        this.obs.clear();
+        if (newValue !== this._value) {
+            this._value = newValue;
+            const shouldQueueFlush = this._controller.state !== 1 && (this._targetObserver.type & 4) > 0;
             if (shouldQueueFlush) {
-                task = this.task;
-                this.task = this.taskQueue.queueTask(() => {
-                    this.task = null;
-                    interceptor.updateTarget(newValue);
+                task = this._task;
+                this._task = this._taskQueue.queueTask(() => {
+                    this._task = null;
+                    this.updateTarget(newValue);
                 }, taskOptions);
                 task?.cancel();
             }
             else {
-                interceptor.updateTarget(newValue);
+                this.updateTarget(newValue);
             }
         }
     }
     handleCollectionChange() {
         this.handleChange();
     }
-    $bind(scope) {
+    bind(_scope) {
         if (this.isBound) {
-            if (this.$scope === scope) {
+            if (this._scope === _scope) {
                 return;
             }
-            this.interceptor.$unbind();
+            this.unbind();
         }
-        this.$scope = scope;
-        let ast = this.ast;
-        if (ast.hasBind) {
-            ast.bind(scope, this.interceptor);
-        }
-        let targetObserver = this.targetObserver;
-        if (!targetObserver) {
-            targetObserver = this.targetObserver = new AttributeObserver(this.target, this.targetProperty, this.targetAttribute);
-        }
-        ast = this.ast;
-        const $mode = this.mode;
-        const interceptor = this.interceptor;
-        let shouldConnect = false;
-        if ($mode & (2 | 1)) {
-            shouldConnect = ($mode & 2) > 0;
-            interceptor.updateTarget(this.value = ast.evaluate(scope, this, shouldConnect ? interceptor : null));
-        }
-        if ($mode & 4) {
-            targetObserver.subscribe(this.targetSubscriber ?? (this.targetSubscriber = new BindingTargetSubscriber(interceptor, this.locator.get(IFlushQueue))));
+        this._scope = _scope;
+        runtime.astBind(this.ast, _scope, this);
+        this._targetObserver ?? (this._targetObserver = new AttributeObserver(this.target, this.targetProperty, this.targetAttribute));
+        if (this.mode & (2 | 1)) {
+            this.updateTarget(this._value = runtime.astEvaluate(this.ast, _scope, this, (this.mode & 2) > 0 ? this : null));
         }
         this.isBound = true;
     }
-    $unbind() {
+    unbind() {
         if (!this.isBound) {
             return;
         }
-        if (this.ast.hasUnbind) {
-            this.ast.unbind(this.$scope, this.interceptor);
-        }
-        this.$scope = null;
-        this.value = void 0;
-        if (this.targetSubscriber) {
-            this.targetObserver.unsubscribe(this.targetSubscriber);
-        }
-        this.task?.cancel();
-        this.task = null;
-        this.obs.clearAll();
         this.isBound = false;
+        runtime.astUnbind(this.ast, this._scope, this);
+        this._scope = void 0;
+        this._value = void 0;
+        this._task?.cancel();
+        this._task = null;
+        this.obs.clearAll();
     }
 }
+mixinUseScope(AttributeBinding);
+mixingBindingLimited(AttributeBinding, () => 'updateTarget');
 runtime.connectable(AttributeBinding);
-astEvaluator(true)(AttributeBinding);
+mixinAstEvaluator(true)(AttributeBinding);
 
 const queueTaskOptions = {
     reusable: false,
@@ -1443,19 +1359,17 @@ const queueTaskOptions = {
 };
 class InterpolationBinding {
     constructor(controller, locator, observerLocator, taskQueue, ast, target, targetProperty, mode) {
-        this.locator = locator;
-        this.taskQueue = taskQueue;
         this.ast = ast;
         this.target = target;
         this.targetProperty = targetProperty;
         this.mode = mode;
-        this.interceptor = this;
         this.isBound = false;
-        this.$scope = void 0;
-        this.task = null;
+        this._scope = void 0;
+        this._task = null;
         this._controller = controller;
         this.oL = observerLocator;
-        this.targetObserver = observerLocator.getAccessor(target, targetProperty);
+        this._taskQueue = taskQueue;
+        this._targetObserver = observerLocator.getAccessor(target, targetProperty);
         const expressions = ast.expressions;
         const partBindings = this.partBindings = Array(expressions.length);
         const ii = expressions.length;
@@ -1474,21 +1388,21 @@ class InterpolationBinding {
         let result = '';
         let i = 0;
         if (ii === 1) {
-            result = staticParts[0] + partBindings[0].value + staticParts[1];
+            result = staticParts[0] + partBindings[0]._value + staticParts[1];
         }
         else {
             result = staticParts[0];
             for (; ii > i; ++i) {
-                result += partBindings[i].value + staticParts[i + 1];
+                result += partBindings[i]._value + staticParts[i + 1];
             }
         }
-        const targetObserver = this.targetObserver;
+        const targetObserver = this._targetObserver;
         const shouldQueueFlush = this._controller.state !== 1 && (targetObserver.type & 4) > 0;
         let task;
         if (shouldQueueFlush) {
-            task = this.task;
-            this.task = this.taskQueue.queueTask(() => {
-                this.task = null;
+            task = this._task;
+            this._task = this._taskQueue.queueTask(() => {
+                this._task = null;
                 targetObserver.setValue(result, this.target, this.targetProperty);
             }, queueTaskOptions);
             task?.cancel();
@@ -1498,134 +1412,124 @@ class InterpolationBinding {
             targetObserver.setValue(result, this.target, this.targetProperty);
         }
     }
-    $bind(scope) {
+    bind(_scope) {
         if (this.isBound) {
-            if (this.$scope === scope) {
+            if (this._scope === _scope) {
                 return;
             }
-            this.interceptor.$unbind();
+            this.unbind();
         }
-        this.isBound = true;
-        this.$scope = scope;
+        this._scope = _scope;
         const partBindings = this.partBindings;
         const ii = partBindings.length;
         let i = 0;
         for (; ii > i; ++i) {
-            partBindings[i].$bind(scope);
+            partBindings[i].bind(_scope);
         }
         this.updateTarget();
+        this.isBound = true;
     }
-    $unbind() {
+    unbind() {
         if (!this.isBound) {
             return;
         }
         this.isBound = false;
-        this.$scope = void 0;
+        this._scope = void 0;
         const partBindings = this.partBindings;
         const ii = partBindings.length;
         let i = 0;
         for (; ii > i; ++i) {
-            partBindings[i].interceptor.$unbind();
+            partBindings[i].unbind();
         }
-        this.task?.cancel();
-        this.task = null;
+        this._task?.cancel();
+        this._task = null;
     }
 }
-astEvaluator(true)(InterpolationBinding);
 class InterpolationPartBinding {
     constructor(ast, target, targetProperty, locator, observerLocator, owner) {
         this.ast = ast;
         this.target = target;
         this.targetProperty = targetProperty;
-        this.locator = locator;
         this.owner = owner;
-        this.interceptor = this;
         this.mode = 2;
-        this.value = '';
         this.task = null;
         this.isBound = false;
+        this._value = '';
         this.boundFn = false;
+        this.l = locator;
         this.oL = observerLocator;
+    }
+    updateTarget() {
+        this.owner._handlePartChange();
     }
     handleChange() {
         if (!this.isBound) {
             return;
         }
-        const ast = this.ast;
-        const obsRecord = this.obs;
-        let shouldConnect = false;
-        shouldConnect = (this.mode & 2) > 0;
-        if (shouldConnect) {
-            obsRecord.version++;
-        }
-        const newValue = ast.evaluate(this.$scope, this, shouldConnect ? this.interceptor : null);
-        if (shouldConnect) {
-            obsRecord.clear();
-        }
-        if (newValue != this.value) {
-            this.value = newValue;
-            if (newValue instanceof Array) {
+        this.obs.version++;
+        const newValue = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & 2) > 0 ? this : null);
+        this.obs.clear();
+        if (newValue != this._value) {
+            this._value = newValue;
+            if (isArray(newValue)) {
                 this.observeCollection(newValue);
             }
-            this.owner._handlePartChange();
+            this.updateTarget();
         }
     }
     handleCollectionChange() {
         this.handleChange();
     }
-    $bind(scope) {
+    bind(_scope) {
         if (this.isBound) {
-            if (this.$scope === scope) {
+            if (this._scope === _scope) {
                 return;
             }
-            this.interceptor.$unbind();
+            this.unbind();
+        }
+        this._scope = _scope;
+        runtime.astBind(this.ast, _scope, this);
+        this._value = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & 2) > 0 ? this : null);
+        if (isArray(this._value)) {
+            this.observeCollection(this._value);
         }
         this.isBound = true;
-        this.$scope = scope;
-        if (this.ast.hasBind) {
-            this.ast.bind(scope, this.interceptor);
-        }
-        this.value = this.ast.evaluate(scope, this, (this.mode & 2) > 0 ? this.interceptor : null);
-        if (this.value instanceof Array) {
-            this.observeCollection(this.value);
-        }
     }
-    $unbind() {
+    unbind() {
         if (!this.isBound) {
             return;
         }
         this.isBound = false;
-        if (this.ast.hasUnbind) {
-            this.ast.unbind(this.$scope, this.interceptor);
-        }
-        this.$scope = void 0;
+        runtime.astUnbind(this.ast, this._scope, this);
+        this._scope = void 0;
         this.obs.clearAll();
     }
 }
+mixinUseScope(InterpolationPartBinding);
+mixingBindingLimited(InterpolationPartBinding, () => 'updateTarget');
 runtime.connectable(InterpolationPartBinding);
-astEvaluator(true)(InterpolationPartBinding);
+mixinAstEvaluator(true)(InterpolationPartBinding);
 class ContentBinding {
     constructor(controller, locator, observerLocator, taskQueue, p, ast, target, strict) {
-        this.locator = locator;
-        this.taskQueue = taskQueue;
         this.p = p;
         this.ast = ast;
         this.target = target;
         this.strict = strict;
-        this.interceptor = this;
-        this.mode = 2;
-        this.value = '';
-        this.task = null;
         this.isBound = false;
+        this.mode = 2;
+        this._task = null;
+        this._value = '';
         this.boundFn = false;
+        this.l = locator;
         this._controller = controller;
         this.oL = observerLocator;
+        this._taskQueue = taskQueue;
     }
     updateTarget(value) {
         const target = this.target;
         const NodeCtor = this.p.Node;
-        const oldValue = this.value;
-        this.value = value;
+        const oldValue = this._value;
+        this._value = value;
         if (oldValue instanceof NodeCtor) {
             oldValue.parentNode?.removeChild(oldValue);
         }
@@ -1641,22 +1545,17 @@ class ContentBinding {
         if (!this.isBound) {
             return;
         }
-        const shouldConnect = (this.mode & 2) > 0;
-        if (shouldConnect) {
-            this.obs.version++;
-        }
-        const newValue = this.ast.evaluate(this.$scope, this, shouldConnect ? this.interceptor : null);
-        if (shouldConnect) {
-            this.obs.clear();
-        }
-        if (newValue === this.value) {
-            this.task?.cancel();
-            this.task = null;
+        this.obs.version++;
+        const newValue = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & 2) > 0 ? this : null);
+        this.obs.clear();
+        if (newValue === this._value) {
+            this._task?.cancel();
+            this._task = null;
             return;
         }
         const shouldQueueFlush = this._controller.state !== 1;
         if (shouldQueueFlush) {
-            this.queueUpdate(newValue);
+            this._queueUpdate(newValue);
         }
         else {
             this.updateTarget(newValue);
@@ -1667,198 +1566,175 @@ class ContentBinding {
             return;
         }
         this.obs.version++;
-        const v = this.value = this.ast.evaluate(this.$scope, this, (this.mode & 2) > 0 ? this.interceptor : null);
+        const v = this._value = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & 2) > 0 ? this : null);
         this.obs.clear();
         if (isArray(v)) {
             this.observeCollection(v);
         }
         const shouldQueueFlush = this._controller.state !== 1;
         if (shouldQueueFlush) {
-            this.queueUpdate(v);
+            this._queueUpdate(v);
         }
         else {
             this.updateTarget(v);
         }
     }
-    $bind(scope) {
+    bind(_scope) {
         if (this.isBound) {
-            if (this.$scope === scope) {
+            if (this._scope === _scope) {
                 return;
             }
-            this.interceptor.$unbind();
+            this.unbind();
         }
-        this.isBound = true;
-        this.$scope = scope;
-        if (this.ast.hasBind) {
-            this.ast.bind(scope, this.interceptor);
-        }
-        const v = this.value = this.ast.evaluate(scope, this, (this.mode & 2) > 0 ? this.interceptor : null);
+        this._scope = _scope;
+        runtime.astBind(this.ast, _scope, this);
+        const v = this._value = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & 2) > 0 ? this : null);
         if (isArray(v)) {
             this.observeCollection(v);
         }
         this.updateTarget(v);
+        this.isBound = true;
     }
-    $unbind() {
+    unbind() {
         if (!this.isBound) {
             return;
         }
         this.isBound = false;
-        if (this.ast.hasUnbind) {
-            this.ast.unbind(this.$scope, this.interceptor);
-        }
-        this.$scope = void 0;
+        runtime.astUnbind(this.ast, this._scope, this);
+        this._scope = void 0;
         this.obs.clearAll();
-        this.task?.cancel();
-        this.task = null;
+        this._task?.cancel();
+        this._task = null;
     }
-    queueUpdate(newValue) {
-        const task = this.task;
-        this.task = this.taskQueue.queueTask(() => {
-            this.task = null;
+    _queueUpdate(newValue) {
+        const task = this._task;
+        this._task = this._taskQueue.queueTask(() => {
+            this._task = null;
             this.updateTarget(newValue);
         }, queueTaskOptions);
         task?.cancel();
     }
 }
+mixinUseScope(ContentBinding);
+mixingBindingLimited(ContentBinding, () => 'updateTarget');
 runtime.connectable()(ContentBinding);
-astEvaluator(void 0, false)(ContentBinding);
+mixinAstEvaluator(void 0, false)(ContentBinding);
 
 class LetBinding {
     constructor(locator, observerLocator, ast, targetProperty, toBindingContext = false) {
-        this.locator = locator;
         this.ast = ast;
         this.targetProperty = targetProperty;
-        this.interceptor = this;
         this.isBound = false;
-        this.$scope = void 0;
-        this.task = null;
+        this._scope = void 0;
         this.target = null;
         this.boundFn = false;
+        this.l = locator;
         this.oL = observerLocator;
         this._toBindingContext = toBindingContext;
+    }
+    updateTarget() {
+        this.target[this.targetProperty] = this._value;
     }
     handleChange() {
         if (!this.isBound) {
             return;
         }
-        const target = this.target;
-        const targetProperty = this.targetProperty;
-        const previousValue = target[targetProperty];
         this.obs.version++;
-        const newValue = this.ast.evaluate(this.$scope, this, this.interceptor);
+        this._value = runtime.astEvaluate(this.ast, this._scope, this, this);
         this.obs.clear();
-        if (newValue !== previousValue) {
-            target[targetProperty] = newValue;
-        }
+        this.updateTarget();
     }
     handleCollectionChange() {
         this.handleChange();
     }
-    $bind(scope) {
+    bind(_scope) {
         if (this.isBound) {
-            if (this.$scope === scope) {
+            if (this._scope === _scope) {
                 return;
             }
-            this.interceptor.$unbind();
+            this.unbind();
         }
-        this.$scope = scope;
-        this.target = (this._toBindingContext ? scope.bindingContext : scope.overrideContext);
-        if (this.ast.hasBind) {
-            this.ast.bind(scope, this.interceptor);
-        }
-        this.target[this.targetProperty]
-            = this.ast.evaluate(scope, this, this.interceptor);
+        this._scope = _scope;
+        this.target = (this._toBindingContext ? _scope.bindingContext : _scope.overrideContext);
+        runtime.astBind(this.ast, _scope, this);
+        this._value = runtime.astEvaluate(this.ast, this._scope, this, this);
+        this.updateTarget();
         this.isBound = true;
     }
-    $unbind() {
+    unbind() {
         if (!this.isBound) {
             return;
         }
-        if (this.ast.hasUnbind) {
-            this.ast.unbind(this.$scope, this.interceptor);
-        }
-        this.$scope = void 0;
-        this.obs.clearAll();
         this.isBound = false;
+        runtime.astUnbind(this.ast, this._scope, this);
+        this._scope = void 0;
+        this.obs.clearAll();
     }
 }
+mixinUseScope(LetBinding);
+mixingBindingLimited(LetBinding, () => 'updateTarget');
 runtime.connectable(LetBinding);
-astEvaluator(true)(LetBinding);
+mixinAstEvaluator(true)(LetBinding);
 
-const updateTaskOpts = {
-    reusable: false,
-    preempt: true,
-};
 class PropertyBinding {
     constructor(controller, locator, observerLocator, taskQueue, ast, target, targetProperty, mode) {
-        this.locator = locator;
         this.ast = ast;
         this.target = target;
         this.targetProperty = targetProperty;
         this.mode = mode;
-        this.interceptor = this;
         this.isBound = false;
-        this.$scope = void 0;
-        this.targetObserver = void 0;
-        this.task = null;
-        this.targetSubscriber = null;
+        this._scope = void 0;
+        this._targetObserver = void 0;
+        this._task = null;
+        this._targetSubscriber = null;
         this.boundFn = false;
+        this.l = locator;
         this._controller = controller;
         this._taskQueue = taskQueue;
         this.oL = observerLocator;
     }
     updateTarget(value) {
-        this.targetObserver.setValue(value, this.target, this.targetProperty);
+        this._targetObserver.setValue(value, this.target, this.targetProperty);
     }
     updateSource(value) {
-        this.ast.assign(this.$scope, this, value);
+        runtime.astAssign(this.ast, this._scope, this, value);
     }
     handleChange() {
         if (!this.isBound) {
             return;
         }
-        const shouldQueueFlush = this._controller.state !== 1 && (this.targetObserver.type & 4) > 0;
-        const obsRecord = this.obs;
-        let shouldConnect = false;
-        shouldConnect = this.mode > 1;
-        if (shouldConnect) {
-            obsRecord.version++;
-        }
-        const newValue = this.ast.evaluate(this.$scope, this, this.interceptor);
-        if (shouldConnect) {
-            obsRecord.clear();
-        }
+        this.obs.version++;
+        const newValue = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & 2) > 0 ? this : null);
+        this.obs.clear();
+        const shouldQueueFlush = this._controller.state !== 1 && (this._targetObserver.type & 4) > 0;
         if (shouldQueueFlush) {
-            task = this.task;
-            this.task = this._taskQueue.queueTask(() => {
-                this.interceptor.updateTarget(newValue);
-                this.task = null;
+            task = this._task;
+            this._task = this._taskQueue.queueTask(() => {
+                this.updateTarget(newValue);
+                this._task = null;
             }, updateTaskOpts);
             task?.cancel();
             task = null;
         }
         else {
-            this.interceptor.updateTarget(newValue);
+            this.updateTarget(newValue);
         }
     }
     handleCollectionChange() {
         this.handleChange();
     }
-    $bind(scope) {
+    bind(scope) {
         if (this.isBound) {
-            if (this.$scope === scope) {
+            if (this._scope === scope) {
                 return;
             }
-            this.interceptor.$unbind();
+            this.unbind();
         }
-        this.$scope = scope;
-        let ast = this.ast;
-        if (ast.hasBind) {
-            ast.bind(scope, this.interceptor);
-        }
+        this._scope = scope;
+        runtime.astBind(this.ast, scope, this);
         const observerLocator = this.oL;
         const $mode = this.mode;
-        let targetObserver = this.targetObserver;
+        let targetObserver = this._targetObserver;
         if (!targetObserver) {
             if ($mode & 4) {
                 targetObserver = observerLocator.getObserver(this.target, this.targetProperty);
@@ -1866,93 +1742,155 @@ class PropertyBinding {
             else {
                 targetObserver = observerLocator.getAccessor(this.target, this.targetProperty);
             }
-            this.targetObserver = targetObserver;
+            this._targetObserver = targetObserver;
         }
-        ast = this.ast;
-        const interceptor = this.interceptor;
         const shouldConnect = ($mode & 2) > 0;
         if ($mode & (2 | 1)) {
-            interceptor.updateTarget(ast.evaluate(scope, this, shouldConnect ? interceptor : null));
+            this.updateTarget(runtime.astEvaluate(this.ast, this._scope, this, shouldConnect ? this : null));
         }
         if ($mode & 4) {
-            targetObserver.subscribe(this.targetSubscriber ?? (this.targetSubscriber = new BindingTargetSubscriber(interceptor, this.locator.get(IFlushQueue))));
+            targetObserver.subscribe(this._targetSubscriber ?? (this._targetSubscriber = new BindingTargetSubscriber(this, this.l.get(IFlushQueue))));
             if (!shouldConnect) {
-                interceptor.updateSource(targetObserver.getValue(this.target, this.targetProperty));
+                this.updateSource(targetObserver.getValue(this.target, this.targetProperty));
             }
         }
         this.isBound = true;
     }
-    $unbind() {
+    unbind() {
         if (!this.isBound) {
             return;
         }
-        if (this.ast.hasUnbind) {
-            this.ast.unbind(this.$scope, this.interceptor);
-        }
-        this.$scope = void 0;
-        task = this.task;
-        if (this.targetSubscriber) {
-            this.targetObserver.unsubscribe(this.targetSubscriber);
-        }
-        if (task != null) {
-            task.cancel();
-            task = this.task = null;
-        }
-        this.obs.clearAll();
         this.isBound = false;
+        runtime.astUnbind(this.ast, this._scope, this);
+        this._scope = void 0;
+        if (this._targetSubscriber) {
+            this._targetObserver.unsubscribe(this._targetSubscriber);
+            this._targetSubscriber = null;
+        }
+        this._task?.cancel();
+        this._task = null;
+        this.obs.clearAll();
+    }
+    useTargetObserver(observer) {
+        this._targetObserver?.unsubscribe(this);
+        (this._targetObserver = observer).subscribe(this);
+    }
+    useTargetSubscriber(subscriber) {
+        if (this._targetSubscriber != null) {
+            throw createError(`AURxxxx: binding already has a target subscriber`);
+        }
+        this._targetSubscriber = subscriber;
     }
 }
+mixinUseScope(PropertyBinding);
+mixingBindingLimited(PropertyBinding, (propBinding) => (propBinding.mode & 4) ? 'updateSource' : 'updateTarget');
 runtime.connectable(PropertyBinding);
-astEvaluator(true, false)(PropertyBinding);
+mixinAstEvaluator(true, false)(PropertyBinding);
 let task = null;
+const updateTaskOpts = {
+    reusable: false,
+    preempt: true,
+};
 
 class RefBinding {
     constructor(locator, ast, target) {
-        this.locator = locator;
         this.ast = ast;
         this.target = target;
-        this.interceptor = this;
         this.isBound = false;
-        this.$scope = void 0;
+        this._scope = void 0;
+        this.l = locator;
     }
-    $bind(scope) {
+    bind(_scope) {
         if (this.isBound) {
-            if (this.$scope === scope) {
+            if (this._scope === _scope) {
                 return;
             }
-            this.interceptor.$unbind();
+            this.unbind();
         }
-        this.$scope = scope;
-        if (this.ast.hasBind) {
-            this.ast.bind(scope, this);
-        }
-        this.ast.assign(this.$scope, this, this.target);
+        this._scope = _scope;
+        runtime.astBind(this.ast, _scope, this);
+        runtime.astAssign(this.ast, this._scope, this, this.target);
         this.isBound = true;
     }
-    $unbind() {
+    unbind() {
         if (!this.isBound) {
             return;
         }
-        let ast = this.ast;
-        if (ast.evaluate(this.$scope, this, null) === this.target) {
-            ast.assign(this.$scope, this, null);
-        }
-        ast = this.ast;
-        if (ast.hasUnbind) {
-            ast.unbind(this.$scope, this.interceptor);
-        }
-        this.$scope = void 0;
         this.isBound = false;
-    }
-    observe(_obj, _propertyName) {
-        return;
-    }
-    handleChange(_newValue, _previousValue) {
-        return;
+        if (runtime.astEvaluate(this.ast, this._scope, this, null) === this.target) {
+            runtime.astAssign(this.ast, this._scope, this, null);
+        }
+        runtime.astUnbind(this.ast, this._scope, this);
+        this._scope = void 0;
     }
 }
+mixinAstEvaluator(false)(RefBinding);
 
-const IAppTask = kernel.DI.createInterface('IAppTask');
+class ListenerBindingOptions {
+    constructor(prevent, capture = false) {
+        this.prevent = prevent;
+        this.capture = capture;
+    }
+}
+class ListenerBinding {
+    constructor(locator, ast, target, targetEvent, options) {
+        this.ast = ast;
+        this.target = target;
+        this.targetEvent = targetEvent;
+        this.isBound = false;
+        this.self = false;
+        this.boundFn = true;
+        this.l = locator;
+        this._options = options;
+    }
+    callSource(event) {
+        const overrideContext = this._scope.overrideContext;
+        overrideContext.$event = event;
+        let result = runtime.astEvaluate(this.ast, this._scope, this, null);
+        delete overrideContext.$event;
+        if (isFunction(result)) {
+            result = result(event);
+        }
+        if (result !== true && this._options.prevent) {
+            event.preventDefault();
+        }
+        return result;
+    }
+    handleEvent(event) {
+        if (this.self) {
+            if (this.target !== event.composedPath()[0]) {
+                return;
+            }
+        }
+        this.callSource(event);
+    }
+    bind(scope) {
+        if (this.isBound) {
+            if (this._scope === scope) {
+                return;
+            }
+            this.unbind();
+        }
+        this._scope = scope;
+        runtime.astBind(this.ast, scope, this);
+        this.target.addEventListener(this.targetEvent, this, this._options);
+        this.isBound = true;
+    }
+    unbind() {
+        if (!this.isBound) {
+            return;
+        }
+        this.isBound = false;
+        runtime.astUnbind(this.ast, this._scope, this);
+        this._scope = void 0;
+        this.target.removeEventListener(this.targetEvent, this, this._options);
+    }
+}
+mixinUseScope(ListenerBinding);
+mixingBindingLimited(ListenerBinding, () => 'callSource');
+mixinAstEvaluator(true, true)(ListenerBinding);
+
+const IAppTask = createInterface('IAppTask');
 class $AppTask {
     constructor(slot, key, cb) {
         this.c = (void 0);
@@ -1971,7 +1909,7 @@ class $AppTask {
             : cb(this.c.get(key)));
     }
 }
-const AppTask = Object.freeze({
+const AppTask = objectFreeze({
     creating: createAppTaskSlotHook('creating'),
     hydrating: createAppTaskSlotHook('hydrating'),
     hydrated: createAppTaskSlotHook('hydrated'),
@@ -1989,6 +1927,136 @@ function createAppTaskSlotHook(slotName) {
     }
     return appTaskFactory;
 }
+
+function watch(expressionOrPropertyAccessFn, changeHandlerOrCallback) {
+    if (expressionOrPropertyAccessFn == null) {
+        throw createError(`AUR0772: Invalid watch config. Expected an expression or a fn`);
+    }
+    return function decorator(target, key, descriptor) {
+        const isClassDecorator = key == null;
+        const Type = isClassDecorator ? target : target.constructor;
+        const watchDef = new WatchDefinition(expressionOrPropertyAccessFn, isClassDecorator ? changeHandlerOrCallback : descriptor.value);
+        if (isClassDecorator) {
+            if (!isFunction(changeHandlerOrCallback)
+                && (changeHandlerOrCallback == null || !(changeHandlerOrCallback in Type.prototype))) {
+                throw createError(`AUR0773: Invalid change handler config. Method "${String(changeHandlerOrCallback)}" not found in class ${Type.name}`);
+            }
+        }
+        else if (!isFunction(descriptor?.value)) {
+            throw createError(`AUR0774: decorated target ${String(key)} is not a class method.`);
+        }
+        Watch.add(Type, watchDef);
+        if (isAttributeType(Type)) {
+            getAttributeDefinition(Type).watches.push(watchDef);
+        }
+        if (isElementType(Type)) {
+            getElementDefinition(Type).watches.push(watchDef);
+        }
+    };
+}
+class WatchDefinition {
+    constructor(expression, callback) {
+        this.expression = expression;
+        this.callback = callback;
+    }
+}
+const noDefinitions = kernel.emptyArray;
+const watchBaseName = getAnnotationKeyFor('watch');
+const Watch = objectFreeze({
+    name: watchBaseName,
+    add(Type, definition) {
+        let watchDefinitions = getOwnMetadata(watchBaseName, Type);
+        if (watchDefinitions == null) {
+            defineMetadata(watchBaseName, watchDefinitions = [], Type);
+        }
+        watchDefinitions.push(definition);
+    },
+    getAnnotation(Type) {
+        return getOwnMetadata(watchBaseName, Type) ?? noDefinitions;
+    },
+});
+
+function customAttribute(nameOrDef) {
+    return function (target) {
+        return defineAttribute(nameOrDef, target);
+    };
+}
+function templateController(nameOrDef) {
+    return function (target) {
+        return defineAttribute(isString(nameOrDef)
+            ? { isTemplateController: true, name: nameOrDef }
+            : { isTemplateController: true, ...nameOrDef }, target);
+    };
+}
+class CustomAttributeDefinition {
+    constructor(Type, name, aliases, key, defaultBindingMode, isTemplateController, bindables, noMultiBindings, watches, dependencies) {
+        this.Type = Type;
+        this.name = name;
+        this.aliases = aliases;
+        this.key = key;
+        this.defaultBindingMode = defaultBindingMode;
+        this.isTemplateController = isTemplateController;
+        this.bindables = bindables;
+        this.noMultiBindings = noMultiBindings;
+        this.watches = watches;
+        this.dependencies = dependencies;
+    }
+    get type() { return 2; }
+    static create(nameOrDef, Type) {
+        let name;
+        let def;
+        if (isString(nameOrDef)) {
+            name = nameOrDef;
+            def = { name };
+        }
+        else {
+            name = nameOrDef.name;
+            def = nameOrDef;
+        }
+        return new CustomAttributeDefinition(Type, kernel.firstDefined(getAttributeAnnotation(Type, 'name'), name), kernel.mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), kernel.firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, 2), kernel.firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(Type, ...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), kernel.firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies));
+    }
+    register(container) {
+        const { Type, key, aliases } = this;
+        transientRegistration(key, Type).register(container);
+        aliasRegistration(key, Type).register(container);
+        registerAliases(aliases, CustomAttribute, key, container);
+    }
+}
+const caBaseName = getResourceKeyFor('custom-attribute');
+const getAttributeKeyFrom = (name) => `${caBaseName}:${name}`;
+const getAttributeAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const isAttributeType = (value) => {
+    return isFunction(value) && hasOwnMetadata(caBaseName, value);
+};
+const findAttributeControllerFor = (node, name) => {
+    return (getRef(node, getAttributeKeyFrom(name)) ?? void 0);
+};
+const defineAttribute = (nameOrDef, Type) => {
+    const definition = CustomAttributeDefinition.create(nameOrDef, Type);
+    defineMetadata(caBaseName, definition, definition.Type);
+    defineMetadata(caBaseName, definition, definition);
+    appendResourceKey(Type, caBaseName);
+    return definition.Type;
+};
+const getAttributeDefinition = (Type) => {
+    const def = getOwnMetadata(caBaseName, Type);
+    if (def === void 0) {
+        throw createError(`No definition found for type ${Type.name}`);
+    }
+    return def;
+};
+const CustomAttribute = objectFreeze({
+    name: caBaseName,
+    keyFrom: getAttributeKeyFrom,
+    isType: isAttributeType,
+    for: findAttributeControllerFor,
+    define: defineAttribute,
+    getDefinition: getAttributeDefinition,
+    annotate(Type, prop, value) {
+        defineMetadata(getAnnotationKeyFor(prop), value, Type);
+    },
+    getAnnotation: getAttributeAnnotation,
+});
 
 function children(configOrTarget, prop) {
     let config;
@@ -2015,7 +2083,7 @@ function isChildrenObserverAnnotation(key) {
     return key.startsWith(baseName);
 }
 const baseName = getAnnotationKeyFor('children-observer');
-const Children = Object.freeze({
+const Children = objectFreeze({
     name: baseName,
     keyFrom: (name) => `${baseName}:${name}`,
     from(...childrenObserverLists) {
@@ -2034,7 +2102,7 @@ const Children = Object.freeze({
                 childrenObservers[maybeList.property] = maybeList;
             }
             else if (maybeList !== void 0) {
-                Object.keys(maybeList).forEach(name => addDescription(name, maybeList));
+                objectKeys(maybeList).forEach(name => addDescription(name, maybeList));
             }
         }
         childrenObserverLists.forEach(addList);
@@ -2154,422 +2222,51 @@ function filterChildren(controller, query, filter, map) {
     return children;
 }
 
-function customAttribute(nameOrDef) {
-    return function (target) {
-        return defineAttribute(nameOrDef, target);
-    };
-}
-function templateController(nameOrDef) {
-    return function (target) {
-        return defineAttribute(isString(nameOrDef)
-            ? { isTemplateController: true, name: nameOrDef }
-            : { isTemplateController: true, ...nameOrDef }, target);
-    };
-}
-class CustomAttributeDefinition {
-    constructor(Type, name, aliases, key, defaultBindingMode, isTemplateController, bindables, noMultiBindings, watches, dependencies) {
-        this.Type = Type;
-        this.name = name;
-        this.aliases = aliases;
-        this.key = key;
-        this.defaultBindingMode = defaultBindingMode;
-        this.isTemplateController = isTemplateController;
-        this.bindables = bindables;
-        this.noMultiBindings = noMultiBindings;
-        this.watches = watches;
-        this.dependencies = dependencies;
-    }
-    get type() { return 2; }
-    static create(nameOrDef, Type) {
-        let name;
-        let def;
-        if (isString(nameOrDef)) {
-            name = nameOrDef;
-            def = { name };
-        }
-        else {
-            name = nameOrDef.name;
-            def = nameOrDef;
-        }
-        return new CustomAttributeDefinition(Type, kernel.firstDefined(getAttributeAnnotation(Type, 'name'), name), kernel.mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), kernel.firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, 2), kernel.firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(Type, ...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), kernel.firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies));
-    }
-    register(container) {
-        const { Type, key, aliases } = this;
-        transientRegistration(key, Type).register(container);
-        aliasRegistration(key, Type).register(container);
-        registerAliases(aliases, CustomAttribute, key, container);
-    }
-}
-const caBaseName = getResourceKeyFor('custom-attribute');
-const getAttributeKeyFrom = (name) => `${caBaseName}:${name}`;
-const getAttributeAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
-const isAttributeType = (value) => {
-    return isFunction(value) && hasOwnMetadata(caBaseName, value);
-};
-const findAttributeControllerFor = (node, name) => {
-    return (getRef(node, getAttributeKeyFrom(name)) ?? void 0);
-};
-const defineAttribute = (nameOrDef, Type) => {
-    const definition = CustomAttributeDefinition.create(nameOrDef, Type);
-    defineMetadata(caBaseName, definition, definition.Type);
-    defineMetadata(caBaseName, definition, definition);
-    appendResourceKey(Type, caBaseName);
-    return definition.Type;
-};
-const getAttributeDefinition = (Type) => {
-    const def = getOwnMetadata(caBaseName, Type);
-    if (def === void 0) {
-        throw new Error(`No definition found for type ${Type.name}`);
-    }
-    return def;
-};
-const CustomAttribute = Object.freeze({
-    name: caBaseName,
-    keyFrom: getAttributeKeyFrom,
-    isType: isAttributeType,
-    for: findAttributeControllerFor,
-    define: defineAttribute,
-    getDefinition: getAttributeDefinition,
-    annotate(Type, prop, value) {
-        defineMetadata(getAnnotationKeyFor(prop), value, Type);
-    },
-    getAnnotation: getAttributeAnnotation,
-});
-
-function watch(expressionOrPropertyAccessFn, changeHandlerOrCallback) {
-    if (expressionOrPropertyAccessFn == null) {
-        throw new Error(`AUR0772: Invalid watch config. Expected an expression or a fn`);
-    }
-    return function decorator(target, key, descriptor) {
-        const isClassDecorator = key == null;
-        const Type = isClassDecorator ? target : target.constructor;
-        const watchDef = new WatchDefinition(expressionOrPropertyAccessFn, isClassDecorator ? changeHandlerOrCallback : descriptor.value);
-        if (isClassDecorator) {
-            if (!isFunction(changeHandlerOrCallback)
-                && (changeHandlerOrCallback == null || !(changeHandlerOrCallback in Type.prototype))) {
-                throw new Error(`AUR0773: Invalid change handler config. Method "${String(changeHandlerOrCallback)}" not found in class ${Type.name}`);
-            }
-        }
-        else if (!isFunction(descriptor?.value)) {
-            throw new Error(`AUR0774: decorated target ${String(key)} is not a class method.`);
-        }
-        Watch.add(Type, watchDef);
-        if (isAttributeType(Type)) {
-            getAttributeDefinition(Type).watches.push(watchDef);
-        }
-        if (isElementType(Type)) {
-            getElementDefinition(Type).watches.push(watchDef);
-        }
-    };
-}
-class WatchDefinition {
-    constructor(expression, callback) {
-        this.expression = expression;
-        this.callback = callback;
-    }
-}
-const noDefinitions = kernel.emptyArray;
-const watchBaseName = getAnnotationKeyFor('watch');
-const Watch = Object.freeze({
-    name: watchBaseName,
-    add(Type, definition) {
-        let watchDefinitions = getOwnMetadata(watchBaseName, Type);
-        if (watchDefinitions == null) {
-            defineMetadata(watchBaseName, watchDefinitions = [], Type);
-        }
-        watchDefinitions.push(definition);
-    },
-    getAnnotation(Type) {
-        return getOwnMetadata(watchBaseName, Type) ?? noDefinitions;
-    },
-});
-
-function customElement(nameOrDef) {
-    return function (target) {
-        return defineElement(nameOrDef, target);
-    };
-}
-function useShadowDOM(targetOrOptions) {
-    if (targetOrOptions === void 0) {
-        return function ($target) {
-            annotateElementMetadata($target, 'shadowOptions', { mode: 'open' });
-        };
-    }
-    if (!isFunction(targetOrOptions)) {
-        return function ($target) {
-            annotateElementMetadata($target, 'shadowOptions', targetOrOptions);
-        };
-    }
-    annotateElementMetadata(targetOrOptions, 'shadowOptions', { mode: 'open' });
-}
-function containerless(target) {
-    if (target === void 0) {
-        return function ($target) {
-            markContainerless($target);
-        };
-    }
-    markContainerless(target);
-}
-function markContainerless(target) {
-    const def = getOwnMetadata(elementBaseName, target);
-    if (def === void 0) {
-        annotateElementMetadata(target, 'containerless', true);
-        return;
-    }
-    def.containerless = true;
-}
-function strict(target) {
-    if (target === void 0) {
-        return function ($target) {
-            annotateElementMetadata($target, 'isStrictBinding', true);
-        };
-    }
-    annotateElementMetadata(target, 'isStrictBinding', true);
-}
-const definitionLookup = new WeakMap();
-class CustomElementDefinition {
-    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, childrenObservers, containerless, isStrictBinding, shadowOptions, hasSlots, enhance, watches, processContent) {
-        this.Type = Type;
-        this.name = name;
-        this.aliases = aliases;
-        this.key = key;
-        this.cache = cache;
-        this.capture = capture;
-        this.template = template;
-        this.instructions = instructions;
-        this.dependencies = dependencies;
-        this.injectable = injectable;
-        this.needsCompile = needsCompile;
-        this.surrogates = surrogates;
-        this.bindables = bindables;
-        this.childrenObservers = childrenObservers;
-        this.containerless = containerless;
-        this.isStrictBinding = isStrictBinding;
-        this.shadowOptions = shadowOptions;
-        this.hasSlots = hasSlots;
-        this.enhance = enhance;
-        this.watches = watches;
-        this.processContent = processContent;
-    }
-    get type() { return 1; }
-    static create(nameOrDef, Type = null) {
-        if (Type === null) {
-            const def = nameOrDef;
-            if (isString(def)) {
-                throw new Error(`AUR0761: Cannot create a custom element definition with only a name and no type: ${nameOrDef}`);
-            }
-            const name = kernel.fromDefinitionOrDefault('name', def, generateElementName);
-            if (isFunction(def.Type)) {
-                Type = def.Type;
-            }
-            else {
-                Type = generateElementType(kernel.pascalCase(name));
-            }
-            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromDefinitionOrDefault('capture', def, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), Children.from(def.childrenObservers), kernel.fromDefinitionOrDefault('containerless', def, returnFalse), kernel.fromDefinitionOrDefault('isStrictBinding', def, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
-        }
-        if (isString(nameOrDef)) {
-            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), Children.from(...Children.getAll(Type), getElementAnnotation(Type, 'childrenObservers'), Type.childrenObservers), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('isStrictBinding', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
-        }
-        const name = kernel.fromDefinitionOrDefault('name', nameOrDef, generateElementName);
-        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), Children.from(...Children.getAll(Type), getElementAnnotation(Type, 'childrenObservers'), Type.childrenObservers, nameOrDef.childrenObservers), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('isStrictBinding', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
-    }
-    static getOrCreate(partialDefinition) {
-        if (partialDefinition instanceof CustomElementDefinition) {
-            return partialDefinition;
-        }
-        if (definitionLookup.has(partialDefinition)) {
-            return definitionLookup.get(partialDefinition);
-        }
-        const definition = CustomElementDefinition.create(partialDefinition);
-        definitionLookup.set(partialDefinition, definition);
-        defineMetadata(elementBaseName, definition, definition.Type);
-        return definition;
-    }
-    register(container) {
-        const { Type, key, aliases } = this;
-        if (!container.has(key, false)) {
-            transientRegistration(key, Type).register(container);
-            aliasRegistration(key, Type).register(container);
-            registerAliases(aliases, CustomElement, key, container);
-        }
-    }
-}
-const defaultForOpts = {
-    name: undefined,
-    searchParents: false,
-    optional: false,
-};
-const returnZero = () => 0;
-const returnNull = () => null;
-const returnFalse = () => false;
-const returnTrue = () => true;
-const returnEmptyArray = () => kernel.emptyArray;
-const elementBaseName = getResourceKeyFor('custom-element');
-const getElementKeyFrom = (name) => `${elementBaseName}:${name}`;
-const generateElementName = (() => {
-    let id = 0;
-    return () => `unnamed-${++id}`;
-})();
-const annotateElementMetadata = (Type, prop, value) => {
-    defineMetadata(getAnnotationKeyFor(prop), value, Type);
-};
-const defineElement = (nameOrDef, Type) => {
-    const definition = CustomElementDefinition.create(nameOrDef, Type);
-    defineMetadata(elementBaseName, definition, definition.Type);
-    defineMetadata(elementBaseName, definition, definition);
-    appendResourceKey(definition.Type, elementBaseName);
-    return definition.Type;
-};
-const isElementType = (value) => {
-    return isFunction(value) && hasOwnMetadata(elementBaseName, value);
-};
-const findElementControllerFor = (node, opts = defaultForOpts) => {
-    if (opts.name === void 0 && opts.searchParents !== true) {
-        const controller = getRef(node, elementBaseName);
-        if (controller === null) {
-            if (opts.optional === true) {
-                return null;
-            }
-            throw new Error(`AUR0762: The provided node is not a custom element or containerless host.`);
-        }
-        return controller;
-    }
-    if (opts.name !== void 0) {
-        if (opts.searchParents !== true) {
-            const controller = getRef(node, elementBaseName);
-            if (controller === null) {
-                throw new Error(`AUR0763: The provided node is not a custom element or containerless host.`);
-            }
-            if (controller.is(opts.name)) {
-                return controller;
-            }
-            return (void 0);
-        }
-        let cur = node;
-        let foundAController = false;
-        while (cur !== null) {
-            const controller = getRef(cur, elementBaseName);
-            if (controller !== null) {
-                foundAController = true;
-                if (controller.is(opts.name)) {
-                    return controller;
-                }
-            }
-            cur = getEffectiveParentNode(cur);
-        }
-        if (foundAController) {
-            return (void 0);
-        }
-        throw new Error(`AUR0764: The provided node does does not appear to be part of an Aurelia app DOM tree, or it was added to the DOM in a way that Aurelia cannot properly resolve its position in the component tree.`);
-    }
-    let cur = node;
-    while (cur !== null) {
-        const controller = getRef(cur, elementBaseName);
-        if (controller !== null) {
-            return controller;
-        }
-        cur = getEffectiveParentNode(cur);
-    }
-    throw new Error(`AUR0765: The provided node does does not appear to be part of an Aurelia app DOM tree, or it was added to the DOM in a way that Aurelia cannot properly resolve its position in the component tree.`);
-};
-const getElementAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
-const getElementDefinition = (Type) => {
-    const def = getOwnMetadata(elementBaseName, Type);
-    if (def === void 0) {
-        throw new Error(`AUR0760: No definition found for type ${Type.name}`);
-    }
-    return def;
-};
-const createElementInjectable = () => {
-    const $injectable = function (target, property, index) {
-        const annotationParamtypes = kernel.DI.getOrCreateAnnotationParamTypes(target);
-        annotationParamtypes[index] = $injectable;
-        return target;
-    };
-    $injectable.register = function (_container) {
-        return {
-            resolve(container, requestor) {
-                if (requestor.has($injectable, true)) {
-                    return requestor.get($injectable);
-                }
-                else {
-                    return null;
-                }
-            },
-        };
-    };
-    return $injectable;
-};
-const generateElementType = (function () {
-    const nameDescriptor = {
-        value: '',
-        writable: false,
-        enumerable: false,
-        configurable: true,
-    };
-    const defaultProto = {};
-    return function (name, proto = defaultProto) {
-        const Type = class {
-        };
-        nameDescriptor.value = name;
-        Reflect.defineProperty(Type, 'name', nameDescriptor);
-        if (proto !== defaultProto) {
-            Object.assign(Type.prototype, proto);
-        }
-        return Type;
-    };
-})();
-const CustomElement = Object.freeze({
-    name: elementBaseName,
-    keyFrom: getElementKeyFrom,
-    isType: isElementType,
-    for: findElementControllerFor,
-    define: defineElement,
-    getDefinition: getElementDefinition,
-    annotate: annotateElementMetadata,
-    getAnnotation: getElementAnnotation,
-    generateName: generateElementName,
-    createInjectable: createElementInjectable,
-    generateType: generateElementType,
-});
-const pcHookMetadataProperty = getAnnotationKeyFor('processContent');
-function processContent(hook) {
-    return hook === void 0
-        ? function (target, propertyKey, _descriptor) {
-            defineMetadata(pcHookMetadataProperty, ensureHook(target, propertyKey), target);
-        }
-        : function (target) {
-            hook = ensureHook(target, hook);
-            const def = getOwnMetadata(elementBaseName, target);
-            if (def !== void 0) {
-                def.processContent = hook;
-            }
-            else {
-                defineMetadata(pcHookMetadataProperty, hook, target);
-            }
-            return target;
-        };
-}
-function ensureHook(target, hook) {
-    if (isString(hook)) {
-        hook = target[hook];
-    }
-    if (!isFunction(hook)) {
-        throw new Error(`AUR0766: Invalid @processContent hook. Expected the hook to be a function (when defined in a class, it needs to be a static function) but got a ${typeof hook}.`);
-    }
-    return hook;
-}
-function capture(targetOrFilter) {
-    return function ($target) {
-        const value = isFunction(targetOrFilter) ? targetOrFilter : true;
-        annotateElementMetadata($target, 'capture', value);
-        if (isElementType($target)) {
-            getElementDefinition($target).capture = value;
-        }
-    };
-}
-
 const IPlatform = kernel.IPlatform;
+
+const addListener = (target, name, handler, options) => {
+    target.addEventListener(name, handler, options);
+};
+const removeListener = (target, name, handler, options) => {
+    target.removeEventListener(name, handler, options);
+};
+const mixinNodeObserverUseConfig = (target) => {
+    const prototype = target.prototype;
+    defineHiddenProp(prototype, 'subscribe', function (subscriber) {
+        if (this.subs.add(subscriber) && this.subs.count === 1) {
+            for (event of this._config.events) {
+                addListener(this._el, event, this);
+            }
+            this._listened = true;
+            this._start?.();
+        }
+    });
+    defineHiddenProp(prototype, 'unsubscribe', function (subscriber) {
+        if (this.subs.remove(subscriber) && this.subs.count === 0) {
+            for (event of this._config.events) {
+                removeListener(this._el, event, this);
+            }
+            this._listened = false;
+            this._stop?.();
+        }
+    });
+    defineHiddenProp(prototype, 'useConfig', function (config) {
+        this._config = config;
+        if (this._listened) {
+            for (event of this._config.events) {
+                removeListener(this._el, event, this);
+            }
+            for (event of this._config.events) {
+                addListener(this._el, event, this);
+            }
+        }
+    });
+};
+let event;
+const mixinNoopSubscribable = (target) => {
+    defineHiddenProp(target.prototype, 'subscribe', kernel.noop);
+    defineHiddenProp(target.prototype, 'unsubscribe', kernel.noop);
+};
 
 class ClassAttributeAccessor {
     constructor(obj) {
@@ -2671,6 +2368,7 @@ function splitClassString(classString) {
     }
     return matches;
 }
+mixinNoopSubscribable(ClassAttributeAccessor);
 
 function cssModules(...modules) {
     return new CSSModulesProcessorRegistry(modules);
@@ -2681,7 +2379,7 @@ class CSSModulesProcessorRegistry {
     }
     register(container) {
         var _a;
-        const classLookup = Object.assign({}, ...this.modules);
+        const classLookup = objectAssign({}, ...this.modules);
         const ClassCustomAttribute = defineAttribute({
             name: 'class',
             bindables: ['value'],
@@ -2709,7 +2407,7 @@ class CSSModulesProcessorRegistry {
 function shadowCSS(...css) {
     return new ShadowDOMRegistry(css);
 }
-const IShadowDOMStyleFactory = kernel.DI.createInterface('IShadowDOMStyleFactory', x => x.cachedCallback(handler => {
+const IShadowDOMStyleFactory = createInterface('IShadowDOMStyleFactory', x => x.cachedCallback(handler => {
     if (AdoptedStyleSheetsStyles.supported(handler.get(IPlatform))) {
         return handler.get(AdoptedStyleSheetsStylesFactory);
     }
@@ -2744,8 +2442,8 @@ class StyleElementStylesFactory {
     }
 }
 StyleElementStylesFactory.inject = [IPlatform];
-const IShadowDOMStyles = kernel.DI.createInterface('IShadowDOMStyles');
-const IShadowDOMGlobalStyles = kernel.DI.createInterface('IShadowDOMGlobalStyles', x => x.instance({ applyTo: kernel.noop }));
+const IShadowDOMStyles = createInterface('IShadowDOMStyles');
+const IShadowDOMGlobalStyles = createInterface('IShadowDOMGlobalStyles', x => x.instance({ applyTo: kernel.noop }));
 class AdoptedStyleSheetsStyles {
     constructor(p, localStyles, styleSheetCache, sharedStyles = null) {
         this.sharedStyles = sharedStyles;
@@ -2814,13 +2512,15 @@ class ComputedWatcher {
     constructor(obj, observerLocator, $get, cb, useProxy) {
         this.obj = obj;
         this.$get = $get;
-        this.cb = cb;
         this.useProxy = useProxy;
-        this.interceptor = this;
-        this.value = void 0;
         this.isBound = false;
         this.running = false;
+        this._value = void 0;
+        this._callback = cb;
         this.oL = observerLocator;
+    }
+    get value() {
+        return this._value;
     }
     handleChange() {
         this.run();
@@ -2828,14 +2528,14 @@ class ComputedWatcher {
     handleCollectionChange() {
         this.run();
     }
-    $bind() {
+    bind() {
         if (this.isBound) {
             return;
         }
-        this.isBound = true;
         this.compute();
+        this.isBound = true;
     }
-    $unbind() {
+    unbind() {
         if (!this.isBound) {
             return;
         }
@@ -2847,10 +2547,10 @@ class ComputedWatcher {
             return;
         }
         const obj = this.obj;
-        const oldValue = this.value;
+        const oldValue = this._value;
         const newValue = this.compute();
-        if (!Object.is(newValue, oldValue)) {
-            this.cb.call(obj, newValue, oldValue, obj);
+        if (!areEqual(newValue, oldValue)) {
+            this._callback.call(obj, newValue, oldValue, obj);
         }
     }
     compute() {
@@ -2858,7 +2558,7 @@ class ComputedWatcher {
         this.obs.version++;
         try {
             enter(this);
-            return this.value = unwrap(this.$get.call(void 0, this.useProxy ? wrap(this.obj) : this.obj, this));
+            return this._value = unwrap(this.$get.call(void 0, this.useProxy ? wrap(this.obj) : this.obj, this));
         }
         finally {
             this.obs.clear();
@@ -2868,56 +2568,57 @@ class ComputedWatcher {
     }
 }
 class ExpressionWatcher {
-    constructor(scope, locator, oL, expression, callback) {
+    constructor(scope, l, oL, expression, callback) {
         this.scope = scope;
-        this.locator = locator;
+        this.l = l;
         this.oL = oL;
-        this.expression = expression;
-        this.callback = callback;
-        this.interceptor = this;
         this.isBound = false;
         this.boundFn = false;
         this.obj = scope.bindingContext;
+        this._expression = expression;
+        this._callback = callback;
+    }
+    get value() {
+        return this._value;
     }
     handleChange(value) {
-        const expr = this.expression;
+        const expr = this._expression;
         const obj = this.obj;
-        const oldValue = this.value;
+        const oldValue = this._value;
         const canOptimize = expr.$kind === 1 && this.obs.count === 1;
         if (!canOptimize) {
             this.obs.version++;
-            value = expr.evaluate(this.scope, this, this);
+            value = runtime.astEvaluate(expr, this.scope, this, this);
             this.obs.clear();
         }
-        if (!Object.is(value, oldValue)) {
-            this.value = value;
-            this.callback.call(obj, value, oldValue, obj);
+        if (!areEqual(value, oldValue)) {
+            this._value = value;
+            this._callback.call(obj, value, oldValue, obj);
         }
     }
-    $bind() {
+    bind() {
         if (this.isBound) {
             return;
         }
-        this.isBound = true;
         this.obs.version++;
-        this.value = this.expression.evaluate(this.scope, this, this);
+        this._value = runtime.astEvaluate(this._expression, this.scope, this, this);
         this.obs.clear();
+        this.isBound = true;
     }
-    $unbind() {
+    unbind() {
         if (!this.isBound) {
             return;
         }
         this.isBound = false;
         this.obs.clearAll();
-        this.value = void 0;
+        this._value = void 0;
     }
 }
 runtime.connectable(ComputedWatcher);
-astEvaluator(true)(ComputedWatcher);
 runtime.connectable(ExpressionWatcher);
-astEvaluator(true)(ExpressionWatcher);
+mixinAstEvaluator(true)(ExpressionWatcher);
 
-const ILifecycleHooks = kernel.DI.createInterface('ILifecycleHooks');
+const ILifecycleHooks = createInterface('ILifecycleHooks');
 class LifecycleHooksEntry {
     constructor(definition, instance) {
         this.definition = definition;
@@ -2932,8 +2633,8 @@ class LifecycleHooksDefinition {
     static create(def, Type) {
         const propertyNames = new Set();
         let proto = Type.prototype;
-        while (proto !== Object.prototype) {
-            for (const name of Object.getOwnPropertyNames(proto)) {
+        while (proto !== baseObjectPrototype) {
+            for (const name of getOwnPropertyNames(proto)) {
                 if (name !== 'constructor') {
                     propertyNames.add(name);
                 }
@@ -2948,7 +2649,7 @@ class LifecycleHooksDefinition {
 }
 const containerLookup = new WeakMap();
 const lhBaseName = getAnnotationKeyFor('lifecycle-hooks');
-const LifecycleHooks = Object.freeze({
+const LifecycleHooks = objectFreeze({
     name: lhBaseName,
     define(def, Type) {
         const definition = LifecycleHooksDefinition.create(def, Type);
@@ -2996,12 +2697,12 @@ function lifecycleHooks() {
     };
 }
 
-const IViewFactory = kernel.DI.createInterface('IViewFactory');
+const IViewFactory = createInterface('IViewFactory');
 class ViewFactory {
     constructor(container, def) {
         this.isCaching = false;
-        this.cache = null;
-        this.cacheSize = -1;
+        this._cache = null;
+        this._cacheSize = -1;
         this.name = def.name;
         this.container = container;
         this.def = def;
@@ -3014,30 +2715,30 @@ class ViewFactory {
             else if (isString(size)) {
                 size = parseInt(size, 10);
             }
-            if (this.cacheSize === -1 || !doNotOverrideIfAlreadySet) {
-                this.cacheSize = size;
+            if (this._cacheSize === -1 || !doNotOverrideIfAlreadySet) {
+                this._cacheSize = size;
             }
         }
-        if (this.cacheSize > 0) {
-            this.cache = [];
+        if (this._cacheSize > 0) {
+            this._cache = [];
         }
         else {
-            this.cache = null;
+            this._cache = null;
         }
-        this.isCaching = this.cacheSize > 0;
+        this.isCaching = this._cacheSize > 0;
     }
     canReturnToCache(_controller) {
-        return this.cache != null && this.cache.length < this.cacheSize;
+        return this._cache != null && this._cache.length < this._cacheSize;
     }
     tryReturnToCache(controller) {
         if (this.canReturnToCache(controller)) {
-            this.cache.push(controller);
+            this._cache.push(controller);
             return true;
         }
         return false;
     }
     create(parentController) {
-        const cache = this.cache;
+        const cache = this._cache;
         let controller;
         if (cache != null && cache.length > 0) {
             controller = cache.pop();
@@ -3048,199 +2749,23 @@ class ViewFactory {
     }
 }
 ViewFactory.maxCacheSize = 0xFFFF;
-const seenViews = new WeakSet();
-function notYetSeen($view) {
-    return !seenViews.has($view);
-}
-function toCustomElementDefinition($view) {
-    seenViews.add($view);
-    return CustomElementDefinition.create($view);
-}
-const viewsBaseName = getResourceKeyFor('views');
-const Views = Object.freeze({
-    name: viewsBaseName,
-    has(value) {
-        return isFunction(value) && (hasOwnMetadata(viewsBaseName, value) || '$views' in value);
-    },
-    get(value) {
-        if (isFunction(value) && '$views' in value) {
-            const $views = value.$views;
-            const definitions = $views.filter(notYetSeen).map(toCustomElementDefinition);
-            for (const def of definitions) {
-                Views.add(value, def);
-            }
-        }
-        let views = getOwnMetadata(viewsBaseName, value);
-        if (views === void 0) {
-            defineMetadata(viewsBaseName, views = [], value);
-        }
-        return views;
-    },
-    add(Type, partialDefinition) {
-        const definition = CustomElementDefinition.create(partialDefinition);
-        let views = getOwnMetadata(viewsBaseName, Type);
-        if (views === void 0) {
-            defineMetadata(viewsBaseName, views = [definition], Type);
-        }
-        else {
-            views.push(definition);
-        }
-        return views;
-    },
-});
-function view(v) {
-    return function (target) {
-        Views.add(target, v);
-    };
-}
-const IViewLocator = kernel.DI.createInterface('IViewLocator', x => x.singleton(ViewLocator));
-class ViewLocator {
-    constructor() {
-        this._modelInstanceToBoundComponent = new WeakMap();
-        this._modelTypeToUnboundComponent = new Map();
-    }
-    getViewComponentForObject(object, viewNameOrSelector) {
-        if (object) {
-            const availableViews = Views.has(object.constructor) ? Views.get(object.constructor) : [];
-            const resolvedViewName = isFunction(viewNameOrSelector)
-                ? viewNameOrSelector(object, availableViews)
-                : this._getViewName(availableViews, viewNameOrSelector);
-            return this._getOrCreateBoundComponent(object, availableViews, resolvedViewName);
-        }
-        return null;
-    }
-    _getOrCreateBoundComponent(object, availableViews, resolvedViewName) {
-        let lookup = this._modelInstanceToBoundComponent.get(object);
-        let BoundComponent;
-        if (lookup === void 0) {
-            lookup = {};
-            this._modelInstanceToBoundComponent.set(object, lookup);
-        }
-        else {
-            BoundComponent = lookup[resolvedViewName];
-        }
-        if (BoundComponent === void 0) {
-            const UnboundComponent = this._getOrCreateUnboundComponent(object, availableViews, resolvedViewName);
-            BoundComponent = defineElement(getElementDefinition(UnboundComponent), class extends UnboundComponent {
-                constructor() {
-                    super(object);
-                }
-            });
-            lookup[resolvedViewName] = BoundComponent;
-        }
-        return BoundComponent;
-    }
-    _getOrCreateUnboundComponent(object, availableViews, resolvedViewName) {
-        let lookup = this._modelTypeToUnboundComponent.get(object.constructor);
-        let UnboundComponent;
-        if (lookup === void 0) {
-            lookup = {};
-            this._modelTypeToUnboundComponent.set(object.constructor, lookup);
-        }
-        else {
-            UnboundComponent = lookup[resolvedViewName];
-        }
-        if (UnboundComponent === void 0) {
-            UnboundComponent = defineElement(this._getView(availableViews, resolvedViewName), class {
-                constructor(viewModel) {
-                    this.viewModel = viewModel;
-                }
-                define(controller, hydrationContext, definition) {
-                    const vm = this.viewModel;
-                    controller.scope = runtime.Scope.fromParent(controller.scope, vm);
-                    if (vm.define !== void 0) {
-                        return vm.define(controller, hydrationContext, definition);
-                    }
-                }
-            });
-            const proto = UnboundComponent.prototype;
-            if ('hydrating' in object) {
-                proto.hydrating = function hydrating(controller) {
-                    this.viewModel.hydrating(controller);
-                };
-            }
-            if ('hydrated' in object) {
-                proto.hydrated = function hydrated(controller) {
-                    this.viewModel.hydrated(controller);
-                };
-            }
-            if ('created' in object) {
-                proto.created = function created(controller) {
-                    this.viewModel.created(controller);
-                };
-            }
-            if ('binding' in object) {
-                proto.binding = function binding(initiator, parent, flags) {
-                    return this.viewModel.binding(initiator, parent, flags);
-                };
-            }
-            if ('bound' in object) {
-                proto.bound = function bound(initiator, parent, flags) {
-                    return this.viewModel.bound(initiator, parent, flags);
-                };
-            }
-            if ('attaching' in object) {
-                proto.attaching = function attaching(initiator, parent, flags) {
-                    return this.viewModel.attaching(initiator, parent, flags);
-                };
-            }
-            if ('attached' in object) {
-                proto.attached = function attached(initiator, flags) {
-                    return this.viewModel.attached(initiator, flags);
-                };
-            }
-            if ('detaching' in object) {
-                proto.detaching = function detaching(initiator, parent, flags) {
-                    return this.viewModel.detaching(initiator, parent, flags);
-                };
-            }
-            if ('unbinding' in object) {
-                proto.unbinding = function unbinding(initiator, parent, flags) {
-                    return this.viewModel.unbinding(initiator, parent, flags);
-                };
-            }
-            if ('dispose' in object) {
-                proto.dispose = function dispose() {
-                    this.viewModel.dispose();
-                };
-            }
-            lookup[resolvedViewName] = UnboundComponent;
-        }
-        return UnboundComponent;
-    }
-    _getViewName(views, requestedName) {
-        if (requestedName) {
-            return requestedName;
-        }
-        if (views.length === 1) {
-            return views[0].name;
-        }
-        return 'default-view';
-    }
-    _getView(views, name) {
-        const v = views.find(x => x.name === name);
-        if (v === void 0) {
-            throw new Error(`Could not find view: ${name}`);
-        }
-        return v;
-    }
-}
 
-const IRendering = kernel.DI.createInterface('IRendering', x => x.singleton(Rendering));
+const IRendering = createInterface('IRendering', x => x.singleton(Rendering));
 class Rendering {
     constructor(container) {
         this._compilationCache = new WeakMap();
         this._fragmentCache = new WeakMap();
-        this._platform = (this._ctn = container.root).get(IPlatform);
+        const ctn = container.root;
+        this._platform = (this._ctn = ctn).get(IPlatform);
+        this._exprParser = ctn.get(runtime.IExpressionParser);
+        this._observerLocator = ctn.get(runtime.IObserverLocator);
         this._empty = new FragmentNodeSequence(this._platform, this._platform.document.createDocumentFragment());
     }
     get renderers() {
-        return this._renderers == null
-            ? (this._renderers = this._ctn.getAll(IRenderer, false).reduce((all, r) => {
-                all[r.target] = r;
-                return all;
-            }, createLookup()))
-            : this._renderers;
+        return this._renderers ?? (this._renderers = this._ctn.getAll(IRenderer, false).reduce((all, r) => {
+            all[r.target] = r;
+            return all;
+        }, createLookup()));
     }
     compile(definition, container, compilationInstruction) {
         if (definition.needsCompile !== false) {
@@ -3303,7 +2828,7 @@ class Rendering {
         const renderers = this.renderers;
         const ii = targets.length;
         if (targets.length !== rows.length) {
-            throw new Error(`AUR0757: The compiled template is not aligned with the render instructions. There are ${ii} targets and ${rows.length} instructions.`);
+            throw createError(`AUR0757: The compiled template is not aligned with the render instructions. There are ${ii} targets and ${rows.length} instructions.`);
         }
         let i = 0;
         let j = 0;
@@ -3319,7 +2844,7 @@ class Rendering {
                 jj = row.length;
                 while (jj > j) {
                     instruction = row[j];
-                    renderers[instruction.type].render(controller, target, instruction);
+                    renderers[instruction.type].render(controller, target, instruction, this._platform, this._exprParser, this._observerLocator);
                     ++j;
                 }
                 ++i;
@@ -3331,7 +2856,7 @@ class Rendering {
                 j = 0;
                 while (jj > j) {
                     instruction = row[j];
-                    renderers[instruction.type].render(controller, host, instruction);
+                    renderers[instruction.type].render(controller, host, instruction, this._platform, this._exprParser, this._observerLocator);
                     ++j;
                 }
             }
@@ -3362,7 +2887,6 @@ class Controller {
         this.vmKind = vmKind;
         this.definition = definition;
         this.viewFactory = viewFactory;
-        this.viewModel = viewModel;
         this.host = host;
         this.head = null;
         this.tail = null;
@@ -3379,7 +2903,7 @@ class Controller {
         this.shadowRoot = null;
         this.nodes = null;
         this.location = null;
-        this.lifecycleHooks = null;
+        this._lifecycleHooks = null;
         this.state = 0;
         this._fullyNamed = false;
         this._childrenObs = kernel.emptyArray;
@@ -3392,21 +2916,17 @@ class Controller {
         this._activatingStack = 0;
         this._detachingStack = 0;
         this._unbindingStack = 0;
+        this._vm = viewModel;
+        this._hooks = vmKind === 2 ? HooksDefinition.none : new HooksDefinition(viewModel);
         {
             this.logger = null;
             this.debug = false;
         }
         this.location = location;
         this._rendering = container.root.get(IRendering);
-        switch (vmKind) {
-            case 1:
-            case 0:
-                this.hooks = new HooksDefinition(viewModel);
-                break;
-            case 2:
-                this.hooks = HooksDefinition.none;
-                break;
-        }
+    }
+    get lifecycleHooks() {
+        return this._lifecycleHooks;
     }
     get isActive() {
         return (this.state & (1 | 2)) > 0 && (this.state & 4) === 0;
@@ -3433,13 +2953,23 @@ class Controller {
                     : `${this.parent.name}[view:${this.viewFactory.name}]`;
         }
     }
+    get hooks() {
+        return this._hooks;
+    }
+    get viewModel() {
+        return this._vm;
+    }
+    set viewModel(v) {
+        this._vm = v;
+        this._hooks = v == null || this.vmKind === 2 ? HooksDefinition.none : new HooksDefinition(v);
+    }
     static getCached(viewModel) {
         return controllerLookup.get(viewModel);
     }
     static getCachedOrThrow(viewModel) {
         const $el = Controller.getCached(viewModel);
         if ($el === void 0) {
-            throw new Error(`AUR0500: There is no cached controller for the provided ViewModel: ${viewModel}`);
+            throw createError(`AUR0500: There is no cached controller for the provided ViewModel: ${viewModel}`);
         }
         return $el;
     }
@@ -3453,7 +2983,7 @@ class Controller {
         if (definition.dependencies.length > 0) {
             ctn.register(...definition.dependencies);
         }
-        ctn.registerResolver(IHydrationContext, new kernel.InstanceProvider('IHydrationContext', new HydrationContext(controller, hydrationInst, hydrationContext)));
+        registerResolver(ctn, IHydrationContext, new kernel.InstanceProvider('IHydrationContext', new HydrationContext(controller, hydrationInst, hydrationContext)));
         controllerLookup.set(viewModel, controller);
         if (hydrationInst == null || hydrationInst.hydrate !== false) {
             controller._hydrateCustomElement(hydrationInst, hydrationContext);
@@ -3489,7 +3019,7 @@ class Controller {
         }
         const container = this.container;
         const flags = this.flags;
-        const instance = this.viewModel;
+        const instance = this._vm;
         let definition = this.definition;
         this.scope = runtime.Scope.create(instance, null, true);
         if (definition.watches.length > 0) {
@@ -3497,7 +3027,7 @@ class Controller {
         }
         createObservers(this, definition, flags, instance);
         this._childrenObs = createChildrenObservers(this, definition, instance);
-        if (this.hooks.hasDefine) {
+        if (this._hooks.hasDefine) {
             if (this.debug) {
                 this.logger.trace(`invoking define() hook`);
             }
@@ -3506,10 +3036,10 @@ class Controller {
                 definition = CustomElementDefinition.getOrCreate(result);
             }
         }
-        this.lifecycleHooks = LifecycleHooks.resolve(container);
+        this._lifecycleHooks = LifecycleHooks.resolve(container);
         definition.register(container);
         if (definition.injectable !== null) {
-            container.registerResolver(definition.injectable, new kernel.InstanceProvider('definition.injectable', instance));
+            registerResolver(container, definition.injectable, new kernel.InstanceProvider('definition.injectable', instance));
         }
         if (hydrationInst == null || hydrationInst.hydrate !== false) {
             this._hydrate(hydrationInst);
@@ -3517,14 +3047,14 @@ class Controller {
         }
     }
     _hydrate(hydrationInst) {
-        if (this.lifecycleHooks.hydrating !== void 0) {
-            this.lifecycleHooks.hydrating.forEach(callHydratingHook, this);
+        if (this._lifecycleHooks.hydrating !== void 0) {
+            this._lifecycleHooks.hydrating.forEach(callHydratingHook, this);
         }
-        if (this.hooks.hasHydrating) {
+        if (this._hooks.hasHydrating) {
             if (this.debug) {
                 this.logger.trace(`invoking hydrating() hook`);
             }
-            this.viewModel.hydrating(this);
+            this._vm.hydrating(this);
         }
         const compiledDef = this._compiledDef = this._rendering.compile(this.definition, this.container, hydrationInst);
         const { shadowOptions, isStrictBinding, hasSlots, containerless } = compiledDef;
@@ -3540,7 +3070,7 @@ class Controller {
         setRef(this.host, this.definition.key, this);
         if (shadowOptions !== null || hasSlots) {
             if (location != null) {
-                throw new Error(`AUR0501: Cannot combine the containerless custom element option with Shadow DOM.`);
+                throw createError(`AUR0501: Cannot combine the containerless custom element option with Shadow DOM.`);
             }
             setRef(this.shadowRoot = this.host.attachShadow(shadowOptions ?? defaultShadowOptions), elementBaseName, this);
             setRef(this.shadowRoot, this.definition.key, this);
@@ -3554,47 +3084,47 @@ class Controller {
         else {
             this.mountTarget = 1;
         }
-        this.viewModel.$controller = this;
+        this._vm.$controller = this;
         this.nodes = this._rendering.createNodes(compiledDef);
-        if (this.lifecycleHooks.hydrated !== void 0) {
-            this.lifecycleHooks.hydrated.forEach(callHydratedHook, this);
+        if (this._lifecycleHooks.hydrated !== void 0) {
+            this._lifecycleHooks.hydrated.forEach(callHydratedHook, this);
         }
-        if (this.hooks.hasHydrated) {
+        if (this._hooks.hasHydrated) {
             if (this.debug) {
                 this.logger.trace(`invoking hydrated() hook`);
             }
-            this.viewModel.hydrated(this);
+            this._vm.hydrated(this);
         }
     }
     _hydrateChildren() {
         this._rendering.render(this, this.nodes.findTargets(), this._compiledDef, this.host);
-        if (this.lifecycleHooks.created !== void 0) {
-            this.lifecycleHooks.created.forEach(callCreatedHook, this);
+        if (this._lifecycleHooks.created !== void 0) {
+            this._lifecycleHooks.created.forEach(callCreatedHook, this);
         }
-        if (this.hooks.hasCreated) {
+        if (this._hooks.hasCreated) {
             if (this.debug) {
                 this.logger.trace(`invoking created() hook`);
             }
-            this.viewModel.created(this);
+            this._vm.created(this);
         }
     }
     _hydrateCustomAttribute() {
         const definition = this.definition;
-        const instance = this.viewModel;
+        const instance = this._vm;
         if (definition.watches.length > 0) {
             createWatchers(this, this.container, definition, instance);
         }
         createObservers(this, definition, this.flags, instance);
         instance.$controller = this;
-        this.lifecycleHooks = LifecycleHooks.resolve(this.container);
-        if (this.lifecycleHooks.created !== void 0) {
-            this.lifecycleHooks.created.forEach(callCreatedHook, this);
+        this._lifecycleHooks = LifecycleHooks.resolve(this.container);
+        if (this._lifecycleHooks.created !== void 0) {
+            this._lifecycleHooks.created.forEach(callCreatedHook, this);
         }
-        if (this.hooks.hasCreated) {
+        if (this._hooks.hasCreated) {
             if (this.debug) {
                 this.logger.trace(`invoking created() hook`);
             }
-            this.viewModel.created(this);
+            this._vm.created(this);
         }
     }
     _hydrateSynthetic() {
@@ -3614,9 +3144,9 @@ class Controller {
             case 2:
                 return;
             case 32:
-                throw new Error(`AUR0502: ${this.name} trying to activate a controller that is disposed.`);
+                throw createError(`AUR0502: ${this.name} trying to activate a controller that is disposed.`);
             default:
-                throw new Error(`AUR0503: ${this.name} unexpected state: ${stringifyState(this.state)}.`);
+                throw createError(`AUR0503: ${this.name} unexpected state: ${stringifyState(this.state)}.`);
         }
         this.parent = parent;
         if (this.debug && !this._fullyNamed) {
@@ -3626,14 +3156,14 @@ class Controller {
         flags |= 1;
         switch (this.vmKind) {
             case 0:
-                this.scope.parentScope = scope ?? null;
+                this.scope.parent = scope ?? null;
                 break;
             case 1:
                 this.scope = scope ?? null;
                 break;
             case 2:
                 if (scope === void 0 || scope === null) {
-                    throw new Error(`AUR0504: Scope is null or undefined`);
+                    throw createError(`AUR0504: Scope is null or undefined`);
                 }
                 if (!this.hasLockedScope) {
                     this.scope = scope;
@@ -3645,17 +3175,17 @@ class Controller {
         this.$flags = flags;
         this._enterActivating();
         let ret;
-        if (this.vmKind !== 2 && this.lifecycleHooks.binding != null) {
+        if (this.vmKind !== 2 && this._lifecycleHooks.binding != null) {
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.binding()`);
             }
-            ret = kernel.resolveAll(...this.lifecycleHooks.binding.map(callBindingHook, this));
+            ret = kernel.resolveAll(...this._lifecycleHooks.binding.map(callBindingHook, this));
         }
-        if (this.hooks.hasBinding) {
+        if (this._hooks.hasBinding) {
             if (this.debug) {
                 this.logger.trace(`binding()`);
             }
-            ret = kernel.resolveAll(ret, this.viewModel.binding(this.$initiator, this.parent, this.$flags));
+            ret = kernel.resolveAll(ret, this._vm.binding(this.$initiator, this.parent, this.$flags));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
@@ -3686,21 +3216,21 @@ class Controller {
             i = 0;
             ii = this.bindings.length;
             while (ii > i) {
-                this.bindings[i].$bind(this.scope);
+                this.bindings[i].bind(this.scope);
                 ++i;
             }
         }
-        if (this.vmKind !== 2 && this.lifecycleHooks.bound != null) {
+        if (this.vmKind !== 2 && this._lifecycleHooks.bound != null) {
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.bound()`);
             }
-            ret = kernel.resolveAll(...this.lifecycleHooks.bound.map(callBoundHook, this));
+            ret = kernel.resolveAll(...this._lifecycleHooks.bound.map(callBoundHook, this));
         }
-        if (this.hooks.hasBound) {
+        if (this._hooks.hasBound) {
             if (this.debug) {
                 this.logger.trace(`bound()`);
             }
-            ret = kernel.resolveAll(ret, this.viewModel.bound(this.$initiator, this.parent, this.$flags));
+            ret = kernel.resolveAll(ret, this._vm.bound(this.$initiator, this.parent, this.$flags));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
@@ -3766,17 +3296,17 @@ class Controller {
         }
         let i = 0;
         let ret = void 0;
-        if (this.vmKind !== 2 && this.lifecycleHooks.attaching != null) {
+        if (this.vmKind !== 2 && this._lifecycleHooks.attaching != null) {
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.attaching()`);
             }
-            ret = kernel.resolveAll(...this.lifecycleHooks.attaching.map(callAttachingHook, this));
+            ret = kernel.resolveAll(...this._lifecycleHooks.attaching.map(callAttachingHook, this));
         }
-        if (this.hooks.hasAttaching) {
+        if (this._hooks.hasAttaching) {
             if (this.debug) {
                 this.logger.trace(`attaching()`);
             }
-            ret = kernel.resolveAll(ret, this.viewModel.attaching(this.$initiator, this.parent, this.$flags));
+            ret = kernel.resolveAll(ret, this._vm.attaching(this.$initiator, this.parent, this.$flags));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
@@ -3805,7 +3335,7 @@ class Controller {
             case 8 | 32:
                 return;
             default:
-                throw new Error(`AUR0505: ${this.name} unexpected state: ${stringifyState(this.state)}.`);
+                throw createError(`AUR0505: ${this.name} unexpected state: ${stringifyState(this.state)}.`);
         }
         if (this.debug) {
             this.logger.trace(`deactivate()`);
@@ -3827,17 +3357,17 @@ class Controller {
                 void this.children[i].deactivate(initiator, this, flags);
             }
         }
-        if (this.vmKind !== 2 && this.lifecycleHooks.detaching != null) {
+        if (this.vmKind !== 2 && this._lifecycleHooks.detaching != null) {
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.detaching()`);
             }
-            ret = kernel.resolveAll(...this.lifecycleHooks.detaching.map(callDetachingHook, this));
+            ret = kernel.resolveAll(...this._lifecycleHooks.detaching.map(callDetachingHook, this));
         }
-        if (this.hooks.hasDetaching) {
+        if (this._hooks.hasDetaching) {
             if (this.debug) {
                 this.logger.trace(`detaching()`);
             }
-            ret = kernel.resolveAll(ret, this.viewModel.detaching(this.$initiator, this.parent, this.$flags));
+            ret = kernel.resolveAll(ret, this._vm.detaching(this.$initiator, this.parent, this.$flags));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
@@ -3889,7 +3419,7 @@ class Controller {
         let i = 0;
         if (this.bindings !== null) {
             for (; i < this.bindings.length; ++i) {
-                this.bindings[i].$unbind();
+                this.bindings[i].unbind();
             }
         }
         this.parent = null;
@@ -3908,7 +3438,7 @@ class Controller {
                 }
                 break;
             case 0:
-                this.scope.parentScope = null;
+                this.scope.parent = null;
                 break;
         }
         if ((flags & 4) === 4 && this.$initiator === this) {
@@ -3956,14 +3486,14 @@ class Controller {
     }
     _leaveActivating() {
         if (--this._activatingStack === 0) {
-            if (this.vmKind !== 2 && this.lifecycleHooks.attached != null) {
-                _retPromise = kernel.resolveAll(...this.lifecycleHooks.attached.map(callAttachedHook, this));
+            if (this.vmKind !== 2 && this._lifecycleHooks.attached != null) {
+                _retPromise = kernel.resolveAll(...this._lifecycleHooks.attached.map(callAttachedHook, this));
             }
-            if (this.hooks.hasAttached) {
+            if (this._hooks.hasAttached) {
                 if (this.debug) {
                     this.logger.trace(`attached()`);
                 }
-                _retPromise = kernel.resolveAll(_retPromise, this.viewModel.attached(this.$initiator, this.$flags));
+                _retPromise = kernel.resolveAll(_retPromise, this._vm.attached(this.$initiator, this.$flags));
             }
             if (isPromise(_retPromise)) {
                 this._ensurePromise();
@@ -4006,10 +3536,10 @@ class Controller {
                     }
                     cur.removeNodes();
                 }
-                if (cur.vmKind !== 2 && cur.lifecycleHooks.unbinding != null) {
-                    ret = kernel.resolveAll(...cur.lifecycleHooks.unbinding.map(callUnbindingHook, this));
+                if (cur.vmKind !== 2 && cur._lifecycleHooks.unbinding != null) {
+                    ret = kernel.resolveAll(...cur._lifecycleHooks.unbinding.map(callUnbindingHook, this));
                 }
-                if (cur.hooks.hasUnbinding) {
+                if (cur._hooks.hasUnbinding) {
                     if (cur.debug) {
                         cur.logger.trace('unbinding()');
                     }
@@ -4073,10 +3603,10 @@ class Controller {
     is(name) {
         switch (this.vmKind) {
             case 1: {
-                return getAttributeDefinition(this.viewModel.constructor).name === name;
+                return getAttributeDefinition(this._vm.constructor).name === name;
             }
             case 0: {
-                return getElementDefinition(this.viewModel.constructor).name === name;
+                return getElementDefinition(this._vm.constructor).name === name;
             }
             case 2:
                 return this.viewFactory.name === name;
@@ -4124,8 +3654,8 @@ class Controller {
             return;
         }
         this.state |= 32;
-        if (this.hooks.hasDispose) {
-            this.viewModel.dispose();
+        if (this._hooks.hasDispose) {
+            this._vm.dispose();
         }
         if (this.children !== null) {
             this.children.forEach(callDispose);
@@ -4136,11 +3666,11 @@ class Controller {
         this.nodes = null;
         this.location = null;
         this.viewFactory = null;
-        if (this.viewModel !== null) {
-            controllerLookup.delete(this.viewModel);
-            this.viewModel = null;
+        if (this._vm !== null) {
+            controllerLookup.delete(this._vm);
+            this._vm = null;
         }
-        this.viewModel = null;
+        this._vm = null;
         this.host = null;
         this.shadowRoot = null;
         this.container.disposeResolvers();
@@ -4149,7 +3679,7 @@ class Controller {
         if (visitor(this) === true) {
             return true;
         }
-        if (this.hooks.hasAccept && this.viewModel.accept(visitor) === true) {
+        if (this._hooks.hasAccept && this._vm.accept(visitor) === true) {
             return true;
         }
         if (this.children !== null) {
@@ -4174,7 +3704,7 @@ function getLookup(instance) {
 }
 function createObservers(controller, definition, _flags, instance) {
     const bindables = definition.bindables;
-    const observableNames = Object.getOwnPropertyNames(bindables);
+    const observableNames = getOwnPropertyNames(bindables);
     const length = observableNames.length;
     if (length > 0) {
         let name;
@@ -4194,7 +3724,7 @@ function createObservers(controller, definition, _flags, instance) {
 }
 function createChildrenObservers(controller, definition, instance) {
     const childrenObservers = definition.childrenObservers;
-    const childObserverNames = Object.getOwnPropertyNames(childrenObservers);
+    const childObserverNames = getOwnPropertyNames(childrenObservers);
     const length = childObserverNames.length;
     if (length > 0) {
         const observers = getLookup(instance);
@@ -4240,14 +3770,14 @@ function createWatchers(controller, context, definition, instance) {
             ? callback
             : Reflect.get(instance, callback);
         if (!isFunction(callback)) {
-            throw new Error(`AUR0506: Invalid callback for @watch decorator: ${String(callback)}`);
+            throw createError(`AUR0506: Invalid callback for @watch decorator: ${String(callback)}`);
         }
         if (isFunction(expression)) {
             controller.addBinding(new ComputedWatcher(instance, observerLocator, expression, callback, true));
         }
         else {
             ast = isString(expression)
-                ? expressionParser.parse(expression, 8)
+                ? expressionParser.parse(expression, 16)
                 : getAccessScopeAst(expression);
             controller.addBinding(new ExpressionWatcher(scope, context, observerLocator, ast, callback));
         }
@@ -4317,8 +3847,8 @@ function stringifyState(state) {
     }
     return names.length === 0 ? 'none' : names.join('|');
 }
-const IController = kernel.DI.createInterface('IController');
-const IHydrationContext = kernel.DI.createInterface('IHydrationContext');
+const IController = createInterface('IController');
+const IHydrationContext = createInterface('IHydrationContext');
 class HydrationContext {
     constructor(controller, instruction, parent) {
         this.instruction = instruction;
@@ -4330,37 +3860,37 @@ function callDispose(disposable) {
     disposable.dispose();
 }
 function callCreatedHook(l) {
-    l.instance.created(this.viewModel, this);
+    l.instance.created(this._vm, this);
 }
 function callHydratingHook(l) {
-    l.instance.hydrating(this.viewModel, this);
+    l.instance.hydrating(this._vm, this);
 }
 function callHydratedHook(l) {
-    l.instance.hydrated(this.viewModel, this);
+    l.instance.hydrated(this._vm, this);
 }
 function callBindingHook(l) {
-    return l.instance.binding(this.viewModel, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.binding(this._vm, this['$initiator'], this.parent, this['$flags']);
 }
 function callBoundHook(l) {
-    return l.instance.bound(this.viewModel, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.bound(this._vm, this['$initiator'], this.parent, this['$flags']);
 }
 function callAttachingHook(l) {
-    return l.instance.attaching(this.viewModel, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.attaching(this._vm, this['$initiator'], this.parent, this['$flags']);
 }
 function callAttachedHook(l) {
-    return l.instance.attached(this.viewModel, this['$initiator'], this['$flags']);
+    return l.instance.attached(this._vm, this['$initiator'], this['$flags']);
 }
 function callDetachingHook(l) {
-    return l.instance.detaching(this.viewModel, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.detaching(this._vm, this['$initiator'], this.parent, this['$flags']);
 }
 function callUnbindingHook(l) {
-    return l.instance.unbinding(this.viewModel, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.unbinding(this._vm, this['$initiator'], this.parent, this['$flags']);
 }
 let _resolve;
 let _reject;
 let _retPromise;
 
-const IAppRoot = kernel.DI.createInterface('IAppRoot');
+const IAppRoot = createInterface('IAppRoot');
 class AppRoot {
     constructor(config, platform, container, rootProvider) {
         this.config = config;
@@ -4370,7 +3900,7 @@ class AppRoot {
         this._hydratePromise = void 0;
         this.host = config.host;
         rootProvider.prepare(this);
-        container.registerResolver(platform.HTMLElement, container.registerResolver(platform.Element, container.registerResolver(INode, new kernel.InstanceProvider('ElementResolver', config.host))));
+        registerResolver(container, platform.HTMLElement, registerResolver(container, platform.Element, registerResolver(container, INode, new kernel.InstanceProvider('ElementResolver', config.host))));
         this._hydratePromise = kernel.onResolve(this._runAppTasks('creating'), () => {
             const component = config.component;
             const childCtn = container.createChild();
@@ -4422,6 +3952,60 @@ class AppRoot {
     }
 }
 
+const auLocationStart = 'au-start';
+const auLocationEnd = 'au-end';
+const createElement = (p, name) => p.document.createElement(name);
+const createComment = (p, text) => p.document.createComment(text);
+const createLocation = (p) => {
+    const locationEnd = createComment(p, auLocationEnd);
+    locationEnd.$start = createComment(p, auLocationStart);
+    return locationEnd;
+};
+const createText = (p, text) => p.document.createTextNode(text);
+const insertBefore = (parent, newChildNode, target) => {
+    return parent.insertBefore(newChildNode, target);
+};
+const insertManyBefore = (parent, target, newChildNodes) => {
+    if (parent === null) {
+        return;
+    }
+    const ii = newChildNodes.length;
+    let i = 0;
+    while (ii > i) {
+        parent.insertBefore(newChildNodes[i], target);
+        ++i;
+    }
+};
+const getPreviousSibling = (node) => node.previousSibling;
+const appendToTemplate = (parent, child) => {
+    return parent.content.appendChild(child);
+};
+const appendManyToTemplate = (parent, children) => {
+    const ii = children.length;
+    let i = 0;
+    while (ii > i) {
+        parent.content.appendChild(children[i]);
+        ++i;
+    }
+};
+const markerToLocation = (el) => {
+    const previousSibling = el.previousSibling;
+    let locationEnd;
+    if (previousSibling?.nodeType === 8 && previousSibling.textContent === 'au-end') {
+        locationEnd = previousSibling;
+        if ((locationEnd.$start = locationEnd.previousSibling) == null) {
+            throw markerMalformedError();
+        }
+        el.parentNode?.removeChild(el);
+        return locationEnd;
+    }
+    else {
+        throw markerMalformedError();
+    }
+};
+const markerMalformedError = () => createError(`AURxxxx: marker is malformed.`)
+    ;
+
 class Refs {
 }
 function getRef(node, name) {
@@ -4431,29 +4015,15 @@ function setRef(node, name, controller) {
     var _a;
     ((_a = node).$au ?? (_a.$au = new Refs()))[name] = controller;
 }
-const INode = kernel.DI.createInterface('INode');
-const IEventTarget = kernel.DI.createInterface('IEventTarget', x => x.cachedCallback(handler => {
+const INode = createInterface('INode');
+const IEventTarget = createInterface('IEventTarget', x => x.cachedCallback(handler => {
     if (handler.has(IAppRoot, true)) {
         return handler.get(IAppRoot).host;
     }
     return handler.get(IPlatform).document;
 }));
-const IRenderLocation = kernel.DI.createInterface('IRenderLocation');
-exports.NodeType = void 0;
-(function (NodeType) {
-    NodeType[NodeType["Element"] = 1] = "Element";
-    NodeType[NodeType["Attr"] = 2] = "Attr";
-    NodeType[NodeType["Text"] = 3] = "Text";
-    NodeType[NodeType["CDATASection"] = 4] = "CDATASection";
-    NodeType[NodeType["EntityReference"] = 5] = "EntityReference";
-    NodeType[NodeType["Entity"] = 6] = "Entity";
-    NodeType[NodeType["ProcessingInstruction"] = 7] = "ProcessingInstruction";
-    NodeType[NodeType["Comment"] = 8] = "Comment";
-    NodeType[NodeType["Document"] = 9] = "Document";
-    NodeType[NodeType["DocumentType"] = 10] = "DocumentType";
-    NodeType[NodeType["DocumentFragment"] = 11] = "DocumentFragment";
-    NodeType[NodeType["Notation"] = 12] = "Notation";
-})(exports.NodeType || (exports.NodeType = {}));
+const IRenderLocation = createInterface('IRenderLocation');
+
 const effectiveParentNodeOverrides = new WeakMap();
 function getEffectiveParentNode(node) {
     if (effectiveParentNodeOverrides.has(node)) {
@@ -4502,12 +4072,12 @@ function convertToRenderLocation(node) {
         return node;
     }
     const locationEnd = node.ownerDocument.createComment('au-end');
-    const locationStart = node.ownerDocument.createComment('au-start');
-    if (node.parentNode !== null) {
-        node.parentNode.replaceChild(locationEnd, node);
-        locationEnd.parentNode.insertBefore(locationStart, locationEnd);
+    const locationStart = locationEnd.$start = node.ownerDocument.createComment('au-start');
+    const parentNode = node.parentNode;
+    if (parentNode !== null) {
+        parentNode.replaceChild(locationEnd, node);
+        parentNode.insertBefore(locationStart, locationEnd);
     }
-    locationEnd.$start = locationStart;
     return locationEnd;
 }
 function isRenderLocation(node) {
@@ -4516,20 +4086,20 @@ function isRenderLocation(node) {
 class FragmentNodeSequence {
     constructor(platform, fragment) {
         this.platform = platform;
-        this.fragment = fragment;
-        this.isMounted = false;
-        this.isLinked = false;
         this.next = void 0;
-        this.refNode = void 0;
+        this._isMounted = false;
+        this._isLinked = false;
+        this.ref = null;
+        this.f = fragment;
         const targetNodeList = fragment.querySelectorAll('.au');
         let i = 0;
         let ii = targetNodeList.length;
         let target;
-        let targets = this.targets = Array(ii);
+        let targets = this.t = Array(ii);
         while (ii > i) {
             target = targetNodeList[i];
             if (target.nodeName === 'AU-M') {
-                targets[i] = convertToRenderLocation(target);
+                targets[i] = markerToLocation(target);
             }
             else {
                 targets[i] = target;
@@ -4543,22 +4113,28 @@ class FragmentNodeSequence {
             childNodes[i] = childNodeList[i];
             ++i;
         }
-        this.firstChild = fragment.firstChild;
-        this.lastChild = fragment.lastChild;
+        this._firstChild = fragment.firstChild;
+        this._lastChild = fragment.lastChild;
+    }
+    get firstChild() {
+        return this._firstChild;
+    }
+    get lastChild() {
+        return this._lastChild;
     }
     findTargets() {
-        return this.targets;
+        return this.t;
     }
     insertBefore(refNode) {
-        if (this.isLinked && !!this.refNode) {
+        if (this._isLinked && !!this.ref) {
             this.addToLinked();
         }
         else {
             const parent = refNode.parentNode;
-            if (this.isMounted) {
-                let current = this.firstChild;
+            if (this._isMounted) {
+                let current = this._firstChild;
                 let next;
-                const end = this.lastChild;
+                const end = this._lastChild;
                 while (current != null) {
                     next = current.nextSibling;
                     parent.insertBefore(current, refNode);
@@ -4569,16 +4145,16 @@ class FragmentNodeSequence {
                 }
             }
             else {
-                this.isMounted = true;
-                refNode.parentNode.insertBefore(this.fragment, refNode);
+                this._isMounted = true;
+                refNode.parentNode.insertBefore(this.f, refNode);
             }
         }
     }
     appendTo(parent, enhance = false) {
-        if (this.isMounted) {
-            let current = this.firstChild;
+        if (this._isMounted) {
+            let current = this._firstChild;
             let next;
-            const end = this.lastChild;
+            const end = this._lastChild;
             while (current != null) {
                 next = current.nextSibling;
                 parent.appendChild(current);
@@ -4589,19 +4165,19 @@ class FragmentNodeSequence {
             }
         }
         else {
-            this.isMounted = true;
+            this._isMounted = true;
             if (!enhance) {
-                parent.appendChild(this.fragment);
+                parent.appendChild(this.f);
             }
         }
     }
     remove() {
-        if (this.isMounted) {
-            this.isMounted = false;
-            const fragment = this.fragment;
-            const end = this.lastChild;
+        if (this._isMounted) {
+            this._isMounted = false;
+            const fragment = this.f;
+            const end = this._lastChild;
             let next;
-            let current = this.firstChild;
+            let current = this._firstChild;
             while (current !== null) {
                 next = current.nextSibling;
                 fragment.appendChild(current);
@@ -4613,12 +4189,12 @@ class FragmentNodeSequence {
         }
     }
     addToLinked() {
-        const refNode = this.refNode;
+        const refNode = this.ref;
         const parent = refNode.parentNode;
-        if (this.isMounted) {
-            let current = this.firstChild;
+        if (this._isMounted) {
+            let current = this._firstChild;
             let next;
-            const end = this.lastChild;
+            const end = this._lastChild;
             while (current != null) {
                 next = current.nextSibling;
                 parent.insertBefore(current, refNode);
@@ -4629,253 +4205,325 @@ class FragmentNodeSequence {
             }
         }
         else {
-            this.isMounted = true;
-            parent.insertBefore(this.fragment, refNode);
+            this._isMounted = true;
+            parent.insertBefore(this.f, refNode);
         }
     }
     unlink() {
-        this.isLinked = false;
+        this._isLinked = false;
         this.next = void 0;
-        this.refNode = void 0;
+        this.ref = void 0;
     }
     link(next) {
-        this.isLinked = true;
+        this._isLinked = true;
         if (isRenderLocation(next)) {
-            this.refNode = next;
+            this.ref = next;
         }
         else {
             this.next = next;
-            this.obtainRefNode();
+            this._obtainRefNode();
         }
     }
-    obtainRefNode() {
+    _obtainRefNode() {
         if (this.next !== void 0) {
-            this.refNode = this.next.firstChild;
+            this.ref = this.next.firstChild;
         }
         else {
-            this.refNode = void 0;
+            this.ref = void 0;
         }
     }
 }
-const IWindow = kernel.DI.createInterface('IWindow', x => x.callback(handler => handler.get(IPlatform).window));
-const ILocation = kernel.DI.createInterface('ILocation', x => x.callback(handler => handler.get(IWindow).location));
-const IHistory = kernel.DI.createInterface('IHistory', x => x.callback(handler => handler.get(IWindow).history));
+const IWindow = createInterface('IWindow', x => x.callback(handler => handler.get(IPlatform).window));
+const ILocation = createInterface('ILocation', x => x.callback(handler => handler.get(IWindow).location));
+const IHistory = createInterface('IHistory', x => x.callback(handler => handler.get(IWindow).history));
 
-const addListenerOptions = {
-    [1]: { capture: true },
-    [2]: { capture: false },
-};
-class ListenerOptions {
-    constructor(prevent, strategy) {
-        this.prevent = prevent;
-        this.strategy = strategy;
-    }
+function customElement(nameOrDef) {
+    return function (target) {
+        return defineElement(nameOrDef, target);
+    };
 }
-class Listener {
-    constructor(locator, ast, target, targetEvent, eventDelegator, options) {
-        this.locator = locator;
-        this.ast = ast;
-        this.target = target;
-        this.targetEvent = targetEvent;
-        this.eventDelegator = eventDelegator;
-        this.interceptor = this;
-        this.isBound = false;
-        this.handler = null;
-        this.boundFn = true;
-        this._options = options;
+function useShadowDOM(targetOrOptions) {
+    if (targetOrOptions === void 0) {
+        return function ($target) {
+            annotateElementMetadata($target, 'shadowOptions', { mode: 'open' });
+        };
     }
-    callSource(event) {
-        const overrideContext = this.$scope.overrideContext;
-        overrideContext.$event = event;
-        let result = this.ast.evaluate(this.$scope, this, null);
-        delete overrideContext.$event;
-        if (isFunction(result)) {
-            result = result(event);
-        }
-        if (result !== true && this._options.prevent) {
-            event.preventDefault();
-        }
-        return result;
+    if (!isFunction(targetOrOptions)) {
+        return function ($target) {
+            annotateElementMetadata($target, 'shadowOptions', targetOrOptions);
+        };
     }
-    handleEvent(event) {
-        this.interceptor.callSource(event);
+    annotateElementMetadata(targetOrOptions, 'shadowOptions', { mode: 'open' });
+}
+function containerless(target) {
+    if (target === void 0) {
+        return function ($target) {
+            markContainerless($target);
+        };
     }
-    $bind(scope) {
-        if (this.isBound) {
-            if (this.$scope === scope) {
-                return;
-            }
-            this.interceptor.$unbind();
-        }
-        this.$scope = scope;
-        const ast = this.ast;
-        if (ast.hasBind) {
-            ast.bind(scope, this.interceptor);
-        }
-        if (this._options.strategy === 0) {
-            this.target.addEventListener(this.targetEvent, this);
-        }
-        else {
-            this.handler = this.eventDelegator.addEventListener(this.locator.get(IEventTarget), this.target, this.targetEvent, this, addListenerOptions[this._options.strategy]);
-        }
-        this.isBound = true;
-    }
-    $unbind() {
-        if (!this.isBound) {
-            return;
-        }
-        if (this.ast.hasUnbind) {
-            this.ast.unbind(this.$scope, this.interceptor);
-        }
-        this.$scope = null;
-        if (this._options.strategy === 0) {
-            this.target.removeEventListener(this.targetEvent, this);
-        }
-        else {
-            this.handler.dispose();
-            this.handler = null;
-        }
-        this.isBound = false;
-    }
-    observe(obj, propertyName) {
+    markContainerless(target);
+}
+function markContainerless(target) {
+    const def = getOwnMetadata(elementBaseName, target);
+    if (def === void 0) {
+        annotateElementMetadata(target, 'containerless', true);
         return;
     }
-    handleChange(newValue, previousValue) {
-        return;
-    }
+    def.containerless = true;
 }
-astEvaluator(true, true)(Listener);
-
-const defaultOptions = {
-    capture: false,
-};
-class ListenerTracker {
-    constructor(_publisher, _eventName, _options = defaultOptions) {
-        this._publisher = _publisher;
-        this._eventName = _eventName;
-        this._options = _options;
-        this._count = 0;
-        this._captureLookups = new Map();
-        this._bubbleLookups = new Map();
+function strict(target) {
+    if (target === void 0) {
+        return function ($target) {
+            annotateElementMetadata($target, 'isStrictBinding', true);
+        };
     }
-    _increment() {
-        if (++this._count === 1) {
-            this._publisher.addEventListener(this._eventName, this, this._options);
-        }
+    annotateElementMetadata(target, 'isStrictBinding', true);
+}
+const definitionLookup = new WeakMap();
+class CustomElementDefinition {
+    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, childrenObservers, containerless, isStrictBinding, shadowOptions, hasSlots, enhance, watches, processContent) {
+        this.Type = Type;
+        this.name = name;
+        this.aliases = aliases;
+        this.key = key;
+        this.cache = cache;
+        this.capture = capture;
+        this.template = template;
+        this.instructions = instructions;
+        this.dependencies = dependencies;
+        this.injectable = injectable;
+        this.needsCompile = needsCompile;
+        this.surrogates = surrogates;
+        this.bindables = bindables;
+        this.childrenObservers = childrenObservers;
+        this.containerless = containerless;
+        this.isStrictBinding = isStrictBinding;
+        this.shadowOptions = shadowOptions;
+        this.hasSlots = hasSlots;
+        this.enhance = enhance;
+        this.watches = watches;
+        this.processContent = processContent;
     }
-    _decrement() {
-        if (--this._count === 0) {
-            this._publisher.removeEventListener(this._eventName, this, this._options);
-        }
-    }
-    dispose() {
-        if (this._count > 0) {
-            this._count = 0;
-            this._publisher.removeEventListener(this._eventName, this, this._options);
-        }
-        this._captureLookups.clear();
-        this._bubbleLookups.clear();
-    }
-    _getLookup(target) {
-        const lookups = this._options.capture === true ? this._captureLookups : this._bubbleLookups;
-        let lookup = lookups.get(target);
-        if (lookup === void 0) {
-            lookups.set(target, lookup = createLookup());
-        }
-        return lookup;
-    }
-    handleEvent(event) {
-        const lookups = this._options.capture === true ? this._captureLookups : this._bubbleLookups;
-        const path = event.composedPath();
-        if (this._options.capture === true) {
-            path.reverse();
-        }
-        for (const target of path) {
-            const lookup = lookups.get(target);
-            if (lookup === void 0) {
-                continue;
+    get type() { return 1; }
+    static create(nameOrDef, Type = null) {
+        if (Type === null) {
+            const def = nameOrDef;
+            if (isString(def)) {
+                throw createError(`AUR0761: Cannot create a custom element definition with only a name and no type: ${nameOrDef}`);
             }
-            const listener = lookup[this._eventName];
-            if (listener === void 0) {
-                continue;
-            }
-            if (isFunction(listener)) {
-                listener(event);
+            const name = kernel.fromDefinitionOrDefault('name', def, generateElementName);
+            if (isFunction(def.Type)) {
+                Type = def.Type;
             }
             else {
-                listener.handleEvent(event);
+                Type = generateElementType(kernel.pascalCase(name));
             }
-            if (event.cancelBubble === true) {
-                return;
-            }
+            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromDefinitionOrDefault('capture', def, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), Children.from(def.childrenObservers), kernel.fromDefinitionOrDefault('containerless', def, returnFalse), kernel.fromDefinitionOrDefault('isStrictBinding', def, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+        }
+        if (isString(nameOrDef)) {
+            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), Children.from(...Children.getAll(Type), getElementAnnotation(Type, 'childrenObservers'), Type.childrenObservers), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('isStrictBinding', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+        }
+        const name = kernel.fromDefinitionOrDefault('name', nameOrDef, generateElementName);
+        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), Children.from(...Children.getAll(Type), getElementAnnotation(Type, 'childrenObservers'), Type.childrenObservers, nameOrDef.childrenObservers), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('isStrictBinding', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
+    }
+    static getOrCreate(partialDefinition) {
+        if (partialDefinition instanceof CustomElementDefinition) {
+            return partialDefinition;
+        }
+        if (definitionLookup.has(partialDefinition)) {
+            return definitionLookup.get(partialDefinition);
+        }
+        const definition = CustomElementDefinition.create(partialDefinition);
+        definitionLookup.set(partialDefinition, definition);
+        defineMetadata(elementBaseName, definition, definition.Type);
+        return definition;
+    }
+    register(container) {
+        const { Type, key, aliases } = this;
+        if (!container.has(key, false)) {
+            transientRegistration(key, Type).register(container);
+            aliasRegistration(key, Type).register(container);
+            registerAliases(aliases, CustomElement, key, container);
         }
     }
 }
-class DelegateSubscription {
-    constructor(_tracker, _lookup, _eventName, callback) {
-        this._tracker = _tracker;
-        this._lookup = _lookup;
-        this._eventName = _eventName;
-        _tracker._increment();
-        _lookup[_eventName] = callback;
-    }
-    dispose() {
-        this._tracker._decrement();
-        this._lookup[this._eventName] = void 0;
-    }
-}
-class EventSubscriber {
-    constructor(config) {
-        this.config = config;
-        this.target = null;
-        this.handler = null;
-    }
-    subscribe(node, callbackOrListener) {
-        this.target = node;
-        this.handler = callbackOrListener;
-        let event;
-        for (event of this.config.events) {
-            node.addEventListener(event, callbackOrListener);
-        }
-    }
-    dispose() {
-        const { target, handler } = this;
-        let event;
-        if (target !== null && handler !== null) {
-            for (event of this.config.events) {
-                target.removeEventListener(event, handler);
+const defaultForOpts = {
+    name: undefined,
+    searchParents: false,
+    optional: false,
+};
+const returnZero = () => 0;
+const returnNull = () => null;
+const returnFalse = () => false;
+const returnTrue = () => true;
+const returnEmptyArray = () => kernel.emptyArray;
+const elementBaseName = getResourceKeyFor('custom-element');
+const getElementKeyFrom = (name) => `${elementBaseName}:${name}`;
+const generateElementName = (() => {
+    let id = 0;
+    return () => `unnamed-${++id}`;
+})();
+const annotateElementMetadata = (Type, prop, value) => {
+    defineMetadata(getAnnotationKeyFor(prop), value, Type);
+};
+const defineElement = (nameOrDef, Type) => {
+    const definition = CustomElementDefinition.create(nameOrDef, Type);
+    defineMetadata(elementBaseName, definition, definition.Type);
+    defineMetadata(elementBaseName, definition, definition);
+    appendResourceKey(definition.Type, elementBaseName);
+    return definition.Type;
+};
+const isElementType = (value) => {
+    return isFunction(value) && hasOwnMetadata(elementBaseName, value);
+};
+const findElementControllerFor = (node, opts = defaultForOpts) => {
+    if (opts.name === void 0 && opts.searchParents !== true) {
+        const controller = getRef(node, elementBaseName);
+        if (controller === null) {
+            if (opts.optional === true) {
+                return null;
             }
+            throw createError(`AUR0762: The provided node is not a custom element or containerless host.`);
         }
-        this.target = this.handler = null;
+        return controller;
     }
-}
-const IEventDelegator = kernel.DI.createInterface('IEventDelegator', x => x.singleton(EventDelegator));
-class EventDelegator {
-    constructor() {
-        this._trackerMaps = createLookup();
-    }
-    addEventListener(publisher, target, eventName, listener, options) {
-        var _a;
-        const trackerMap = (_a = this._trackerMaps)[eventName] ?? (_a[eventName] = new Map());
-        let tracker = trackerMap.get(publisher);
-        if (tracker === void 0) {
-            trackerMap.set(publisher, tracker = new ListenerTracker(publisher, eventName, options));
-        }
-        return new DelegateSubscription(tracker, tracker._getLookup(target), eventName, listener);
-    }
-    dispose() {
-        for (const eventName in this._trackerMaps) {
-            const trackerMap = this._trackerMaps[eventName];
-            for (const tracker of trackerMap.values()) {
-                tracker.dispose();
+    if (opts.name !== void 0) {
+        if (opts.searchParents !== true) {
+            const controller = getRef(node, elementBaseName);
+            if (controller === null) {
+                throw createError(`AUR0763: The provided node is not a custom element or containerless host.`);
             }
-            trackerMap.clear();
+            if (controller.is(opts.name)) {
+                return controller;
+            }
+            return (void 0);
         }
+        let cur = node;
+        let foundAController = false;
+        while (cur !== null) {
+            const controller = getRef(cur, elementBaseName);
+            if (controller !== null) {
+                foundAController = true;
+                if (controller.is(opts.name)) {
+                    return controller;
+                }
+            }
+            cur = getEffectiveParentNode(cur);
+        }
+        if (foundAController) {
+            return (void 0);
+        }
+        throw createError(`AUR0764: The provided node does does not appear to be part of an Aurelia app DOM tree, or it was added to the DOM in a way that Aurelia cannot properly resolve its position in the component tree.`);
     }
+    let cur = node;
+    while (cur !== null) {
+        const controller = getRef(cur, elementBaseName);
+        if (controller !== null) {
+            return controller;
+        }
+        cur = getEffectiveParentNode(cur);
+    }
+    throw createError(`AUR0765: The provided node does does not appear to be part of an Aurelia app DOM tree, or it was added to the DOM in a way that Aurelia cannot properly resolve its position in the component tree.`);
+};
+const getElementAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const getElementDefinition = (Type) => {
+    const def = getOwnMetadata(elementBaseName, Type);
+    if (def === void 0) {
+        throw createError(`AUR0760: No definition found for type ${Type.name}`);
+    }
+    return def;
+};
+const createElementInjectable = () => {
+    const $injectable = function (target, property, index) {
+        const annotationParamtypes = kernel.DI.getOrCreateAnnotationParamTypes(target);
+        annotationParamtypes[index] = $injectable;
+        return target;
+    };
+    $injectable.register = function (_container) {
+        return {
+            resolve(container, requestor) {
+                if (requestor.has($injectable, true)) {
+                    return requestor.get($injectable);
+                }
+                else {
+                    return null;
+                }
+            },
+        };
+    };
+    return $injectable;
+};
+const generateElementType = (function () {
+    const nameDescriptor = {
+        value: '',
+        writable: false,
+        enumerable: false,
+        configurable: true,
+    };
+    const defaultProto = {};
+    return function (name, proto = defaultProto) {
+        const Type = class {
+        };
+        nameDescriptor.value = name;
+        Reflect.defineProperty(Type, 'name', nameDescriptor);
+        if (proto !== defaultProto) {
+            objectAssign(Type.prototype, proto);
+        }
+        return Type;
+    };
+})();
+const CustomElement = objectFreeze({
+    name: elementBaseName,
+    keyFrom: getElementKeyFrom,
+    isType: isElementType,
+    for: findElementControllerFor,
+    define: defineElement,
+    getDefinition: getElementDefinition,
+    annotate: annotateElementMetadata,
+    getAnnotation: getElementAnnotation,
+    generateName: generateElementName,
+    createInjectable: createElementInjectable,
+    generateType: generateElementType,
+});
+const pcHookMetadataProperty = getAnnotationKeyFor('processContent');
+function processContent(hook) {
+    return hook === void 0
+        ? function (target, propertyKey, _descriptor) {
+            defineMetadata(pcHookMetadataProperty, ensureHook(target, propertyKey), target);
+        }
+        : function (target) {
+            hook = ensureHook(target, hook);
+            const def = getOwnMetadata(elementBaseName, target);
+            if (def !== void 0) {
+                def.processContent = hook;
+            }
+            else {
+                defineMetadata(pcHookMetadataProperty, hook, target);
+            }
+            return target;
+        };
+}
+function ensureHook(target, hook) {
+    if (isString(hook)) {
+        hook = target[hook];
+    }
+    if (!isFunction(hook)) {
+        throw createError(`AUR0766: Invalid @processContent hook. Expected the hook to be a function (when defined in a class, it needs to be a static function) but got a ${typeof hook}.`);
+    }
+    return hook;
+}
+function capture(targetOrFilter) {
+    return function ($target) {
+        const value = isFunction(targetOrFilter) ? targetOrFilter : true;
+        annotateElementMetadata($target, 'capture', value);
+        if (isElementType($target)) {
+            getElementDefinition($target).capture = value;
+        }
+    };
 }
 
-const IProjections = kernel.DI.createInterface("IProjections");
-const IAuSlotsInfo = kernel.DI.createInterface('IAuSlotsInfo');
+const IProjections = createInterface("IProjections");
+const IAuSlotsInfo = createInterface('IAuSlotsInfo');
 class AuSlotsInfo {
     constructor(projectedSlots) {
         this.projectedSlots = projectedSlots;
@@ -4891,10 +4539,10 @@ exports.InstructionType = void 0;
     InstructionType["setProperty"] = "re";
     InstructionType["interpolation"] = "rf";
     InstructionType["propertyBinding"] = "rg";
-    InstructionType["callBinding"] = "rh";
     InstructionType["letBinding"] = "ri";
     InstructionType["refBinding"] = "rj";
     InstructionType["iteratorBinding"] = "rk";
+    InstructionType["multiAttr"] = "rl";
     InstructionType["textBinding"] = "ha";
     InstructionType["listenerBinding"] = "hb";
     InstructionType["attributeBinding"] = "hc";
@@ -4905,7 +4553,7 @@ exports.InstructionType = void 0;
     InstructionType["spreadBinding"] = "hs";
     InstructionType["spreadElementProp"] = "hp";
 })(exports.InstructionType || (exports.InstructionType = {}));
-const IInstruction = kernel.DI.createInterface('Instruction');
+const IInstruction = createInterface('Instruction');
 function isInstruction(value) {
     const type = value.type;
     return isString(type) && type.length === 2;
@@ -4914,44 +4562,46 @@ class InterpolationInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
+        this.type = "rf";
     }
-    get type() { return "rf"; }
 }
 class PropertyBindingInstruction {
     constructor(from, to, mode) {
         this.from = from;
         this.to = to;
         this.mode = mode;
+        this.type = "rg";
     }
-    get type() { return "rg"; }
 }
 class IteratorBindingInstruction {
-    constructor(from, to) {
-        this.from = from;
+    constructor(forOf, to, props) {
+        this.forOf = forOf;
         this.to = to;
+        this.props = props;
+        this.type = "rk";
     }
-    get type() { return "rk"; }
-}
-class CallBindingInstruction {
-    constructor(from, to) {
-        this.from = from;
-        this.to = to;
-    }
-    get type() { return "rh"; }
 }
 class RefBindingInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
+        this.type = "rj";
     }
-    get type() { return "rj"; }
 }
 class SetPropertyInstruction {
     constructor(value, to) {
         this.value = value;
         this.to = to;
+        this.type = "re";
     }
-    get type() { return "re"; }
+}
+class MultiAttrInstruction {
+    constructor(value, to, command) {
+        this.value = value;
+        this.to = to;
+        this.command = command;
+        this.type = "rl";
+    }
 }
 class HydrateElementInstruction {
     constructor(res, alias, props, projections, containerless, captures) {
@@ -4961,17 +4611,17 @@ class HydrateElementInstruction {
         this.projections = projections;
         this.containerless = containerless;
         this.captures = captures;
+        this.type = "ra";
         this.auSlot = null;
     }
-    get type() { return "ra"; }
 }
 class HydrateAttributeInstruction {
     constructor(res, alias, props) {
         this.res = res;
         this.alias = alias;
         this.props = props;
+        this.type = "rb";
     }
-    get type() { return "rb"; }
 }
 class HydrateTemplateController {
     constructor(def, res, alias, props) {
@@ -4979,58 +4629,52 @@ class HydrateTemplateController {
         this.res = res;
         this.alias = alias;
         this.props = props;
+        this.type = "rc";
     }
-    get type() { return "rc"; }
 }
 class HydrateLetElementInstruction {
     constructor(instructions, toBindingContext) {
         this.instructions = instructions;
         this.toBindingContext = toBindingContext;
+        this.type = "rd";
     }
-    get type() { return "rd"; }
 }
 class LetBindingInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
+        this.type = "ri";
     }
-    get type() { return "ri"; }
 }
 class TextBindingInstruction {
     constructor(from, strict) {
         this.from = from;
         this.strict = strict;
+        this.type = "ha";
     }
-    get type() { return "ha"; }
 }
-exports.DelegationStrategy = void 0;
-(function (DelegationStrategy) {
-    DelegationStrategy[DelegationStrategy["none"] = 0] = "none";
-    DelegationStrategy[DelegationStrategy["capturing"] = 1] = "capturing";
-    DelegationStrategy[DelegationStrategy["bubbling"] = 2] = "bubbling";
-})(exports.DelegationStrategy || (exports.DelegationStrategy = {}));
 class ListenerBindingInstruction {
-    constructor(from, to, preventDefault, strategy) {
+    constructor(from, to, preventDefault, capture) {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
-        this.strategy = strategy;
+        this.capture = capture;
+        this.type = "hb";
     }
-    get type() { return "hb"; }
 }
 class StylePropertyBindingInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
+        this.type = "hd";
     }
-    get type() { return "hd"; }
 }
 class SetAttributeInstruction {
     constructor(value, to) {
         this.value = value;
         this.to = to;
+        this.type = "he";
     }
-    get type() { return "he"; }
 }
 class SetClassAttributeInstruction {
     constructor(value) {
@@ -5049,20 +4693,22 @@ class AttributeBindingInstruction {
         this.attr = attr;
         this.from = from;
         this.to = to;
+        this.type = "hc";
     }
-    get type() { return "hc"; }
 }
 class SpreadBindingInstruction {
-    get type() { return "hs"; }
+    constructor() {
+        this.type = "hs";
+    }
 }
 class SpreadElementPropBindingInstruction {
     constructor(instructions) {
         this.instructions = instructions;
+        this.type = "hp";
     }
-    get type() { return "hp"; }
 }
-const ITemplateCompiler = kernel.DI.createInterface('ITemplateCompiler');
-const IRenderer = kernel.DI.createInterface('IRenderer');
+const ITemplateCompiler = createInterface('ITemplateCompiler');
+const IRenderer = createInterface('IRenderer');
 function renderer(targetType) {
     return function decorator(target) {
         target.register = function (container) {
@@ -5095,7 +4741,7 @@ function getRefTarget(refHost, refTargetName) {
         case 'controller':
             return findElementControllerFor(refHost);
         case 'view':
-            throw new Error(`AUR0750: Not supported API`);
+            throw createError(`AUR0750: Not supported API`);
         case 'view-model':
             return findElementControllerFor(refHost).viewModel;
         default: {
@@ -5105,16 +4751,16 @@ function getRefTarget(refHost, refTargetName) {
             }
             const ceController = findElementControllerFor(refHost, { name: refTargetName });
             if (ceController === void 0) {
-                throw new Error(`AUR0751: Attempted to reference "${refTargetName}", but it was not found amongst the target's API.`);
+                throw createError(`AUR0751: Attempted to reference "${refTargetName}", but it was not found amongst the target's API.`);
             }
             return ceController.viewModel;
         }
     }
 }
-let SetPropertyRenderer = class SetPropertyRenderer {
+exports.SetPropertyRenderer = class SetPropertyRenderer {
     render(renderingCtrl, target, instruction) {
         const obj = getTarget(target);
-        if (obj.$observers !== void 0 && obj.$observers[instruction.to] !== void 0) {
+        if (obj.$observers?.[instruction.to] !== void 0) {
             obj.$observers[instruction.to].setValue(instruction.value);
         }
         else {
@@ -5122,16 +4768,15 @@ let SetPropertyRenderer = class SetPropertyRenderer {
         }
     }
 };
-SetPropertyRenderer = __decorate([
+exports.SetPropertyRenderer = __decorate([
     renderer("re")
-], SetPropertyRenderer);
-let CustomElementRenderer = class CustomElementRenderer {
-    constructor(rendering, platform) {
+], exports.SetPropertyRenderer);
+exports.CustomElementRenderer = class CustomElementRenderer {
+    constructor(rendering) {
         this._rendering = rendering;
-        this._platform = platform;
     }
-    static get inject() { return [IRendering, IPlatform]; }
-    render(renderingCtrl, target, instruction) {
+    static get inject() { return [IRendering]; }
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         let def;
         let Ctor;
         let component;
@@ -5143,7 +4788,7 @@ let CustomElementRenderer = class CustomElementRenderer {
             case 'string':
                 def = ctxContainer.find(CustomElement, res);
                 if (def == null) {
-                    throw new Error(`AUR0752: Element ${res} is not registered in ${renderingCtrl['name']}.`);
+                    throw createError(`AUR0752: Element ${res} is not registered in ${renderingCtrl['name']}.`);
                 }
                 break;
             default:
@@ -5151,10 +4796,10 @@ let CustomElementRenderer = class CustomElementRenderer {
         }
         const containerless = instruction.containerless || def.containerless;
         const location = containerless ? convertToRenderLocation(target) : null;
-        const container = createElementContainer(this._platform, renderingCtrl, target, instruction, location, projections == null ? void 0 : new AuSlotsInfo(Object.keys(projections)));
+        const container = createElementContainer(platform, renderingCtrl, target, instruction, location, projections == null ? void 0 : new AuSlotsInfo(objectKeys(projections)));
         Ctor = def.Type;
         component = container.invoke(Ctor);
-        container.registerResolver(Ctor, new kernel.InstanceProvider(def.key, component));
+        registerResolver(container, Ctor, new kernel.InstanceProvider(def.key, component));
         childCtrl = Controller.$el(container, component, target, instruction, def, location);
         setRef(target, def.key, childCtrl);
         const renderers = this._rendering.renderers;
@@ -5164,35 +4809,34 @@ let CustomElementRenderer = class CustomElementRenderer {
         let propInst;
         while (ii > i) {
             propInst = props[i];
-            renderers[propInst.type].render(renderingCtrl, childCtrl, propInst);
+            renderers[propInst.type].render(renderingCtrl, childCtrl, propInst, platform, exprParser, observerLocator);
             ++i;
         }
         renderingCtrl.addChild(childCtrl);
     }
 };
-CustomElementRenderer = __decorate([
+exports.CustomElementRenderer = __decorate([
     renderer("ra")
-], CustomElementRenderer);
-let CustomAttributeRenderer = class CustomAttributeRenderer {
-    constructor(rendering, platform) {
+], exports.CustomElementRenderer);
+exports.CustomAttributeRenderer = class CustomAttributeRenderer {
+    constructor(rendering) {
         this._rendering = rendering;
-        this._platform = platform;
     }
-    static get inject() { return [IRendering, IPlatform]; }
-    render(renderingCtrl, target, instruction) {
+    static get inject() { return [IRendering]; }
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         let ctxContainer = renderingCtrl.container;
         let def;
         switch (typeof instruction.res) {
             case 'string':
                 def = ctxContainer.find(CustomAttribute, instruction.res);
                 if (def == null) {
-                    throw new Error(`AUR0753: Attribute ${instruction.res} is not registered in ${renderingCtrl['name']}.`);
+                    throw createError(`AUR0753: Attribute ${instruction.res} is not registered in ${renderingCtrl['name']}.`);
                 }
                 break;
             default:
                 def = instruction.res;
         }
-        const results = invokeAttribute(this._platform, def, renderingCtrl, target, instruction, void 0, void 0);
+        const results = invokeAttribute(platform, def, renderingCtrl, target, instruction, void 0, void 0);
         const childController = Controller.$attr(results.ctn, results.vm, target, def);
         setRef(target, def.key, childController);
         const renderers = this._rendering.renderers;
@@ -5202,29 +4846,29 @@ let CustomAttributeRenderer = class CustomAttributeRenderer {
         let propInst;
         while (ii > i) {
             propInst = props[i];
-            renderers[propInst.type].render(renderingCtrl, childController, propInst);
+            renderers[propInst.type].render(renderingCtrl, childController, propInst, platform, exprParser, observerLocator);
             ++i;
         }
         renderingCtrl.addChild(childController);
     }
 };
-CustomAttributeRenderer = __decorate([
+exports.CustomAttributeRenderer = __decorate([
     renderer("rb")
-], CustomAttributeRenderer);
-let TemplateControllerRenderer = class TemplateControllerRenderer {
+], exports.CustomAttributeRenderer);
+exports.TemplateControllerRenderer = class TemplateControllerRenderer {
     constructor(rendering, platform) {
         this._rendering = rendering;
         this._platform = platform;
     }
     static get inject() { return [IRendering, IPlatform]; }
-    render(renderingCtrl, target, instruction) {
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         let ctxContainer = renderingCtrl.container;
         let def;
         switch (typeof instruction.res) {
             case 'string':
                 def = ctxContainer.find(CustomAttribute, instruction.res);
                 if (def == null) {
-                    throw new Error(`AUR0754: Attribute ${instruction.res} is not registered in ${renderingCtrl['name']}.`);
+                    throw createError(`AUR0754: Attribute ${instruction.res} is not registered in ${renderingCtrl['name']}.`);
                 }
                 break;
             default:
@@ -5243,21 +4887,17 @@ let TemplateControllerRenderer = class TemplateControllerRenderer {
         let propInst;
         while (ii > i) {
             propInst = props[i];
-            renderers[propInst.type].render(renderingCtrl, childController, propInst);
+            renderers[propInst.type].render(renderingCtrl, childController, propInst, platform, exprParser, observerLocator);
             ++i;
         }
         renderingCtrl.addChild(childController);
     }
 };
-TemplateControllerRenderer = __decorate([
+exports.TemplateControllerRenderer = __decorate([
     renderer("rc")
-], TemplateControllerRenderer);
-let LetElementRenderer = class LetElementRenderer {
-    constructor(exprParser, observerLocator) {
-        this._exprParser = exprParser;
-        this._observerLocator = observerLocator;
-    }
-    render(renderingCtrl, target, instruction) {
+], exports.TemplateControllerRenderer);
+exports.LetElementRenderer = class LetElementRenderer {
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         target.remove();
         const childInstructions = instruction.instructions;
         const toBindingContext = instruction.toBindingContext;
@@ -5265,262 +4905,113 @@ let LetElementRenderer = class LetElementRenderer {
         const ii = childInstructions.length;
         let childInstruction;
         let expr;
-        let binding;
         let i = 0;
         while (ii > i) {
             childInstruction = childInstructions[i];
-            expr = ensureExpression(this._exprParser, childInstruction.from, 8);
-            binding = new LetBinding(container, this._observerLocator, expr, childInstruction.to, toBindingContext);
-            renderingCtrl.addBinding(expr.$kind === 18
-                ? applyBindingBehavior(binding, expr, container)
-                : binding);
+            expr = ensureExpression(exprParser, childInstruction.from, 16);
+            renderingCtrl.addBinding(new LetBinding(container, observerLocator, expr, childInstruction.to, toBindingContext));
             ++i;
         }
     }
 };
-LetElementRenderer.inject = [runtime.IExpressionParser, runtime.IObserverLocator];
-LetElementRenderer = __decorate([
+exports.LetElementRenderer = __decorate([
     renderer("rd")
-], LetElementRenderer);
-let CallBindingRenderer = class CallBindingRenderer {
-    constructor(exprParser, observerLocator) {
-        this._exprParser = exprParser;
-        this._observerLocator = observerLocator;
-    }
-    render(renderingCtrl, target, instruction) {
-        const expr = ensureExpression(this._exprParser, instruction.from, 8 | 4);
-        const binding = new CallBinding(renderingCtrl.container, this._observerLocator, expr, getTarget(target), instruction.to);
-        renderingCtrl.addBinding(expr.$kind === 18
-            ? applyBindingBehavior(binding, expr, renderingCtrl.container)
-            : binding);
+], exports.LetElementRenderer);
+exports.RefBindingRenderer = class RefBindingRenderer {
+    render(renderingCtrl, target, instruction, platform, exprParser) {
+        renderingCtrl.addBinding(new RefBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, 16), getRefTarget(target, instruction.to)));
     }
 };
-CallBindingRenderer.inject = [runtime.IExpressionParser, runtime.IObserverLocator];
-CallBindingRenderer = __decorate([
-    renderer("rh")
-], CallBindingRenderer);
-let RefBindingRenderer = class RefBindingRenderer {
-    constructor(exprParser) {
-        this._exprParser = exprParser;
-    }
-    render(renderingCtrl, target, instruction) {
-        const expr = ensureExpression(this._exprParser, instruction.from, 8);
-        const binding = new RefBinding(renderingCtrl.container, expr, getRefTarget(target, instruction.to));
-        renderingCtrl.addBinding(expr.$kind === 18
-            ? applyBindingBehavior(binding, expr, renderingCtrl.container)
-            : binding);
-    }
-};
-RefBindingRenderer.inject = [runtime.IExpressionParser];
-RefBindingRenderer = __decorate([
+exports.RefBindingRenderer = __decorate([
     renderer("rj")
-], RefBindingRenderer);
-let InterpolationBindingRenderer = class InterpolationBindingRenderer {
-    constructor(exprParser, observerLocator, p) {
-        this._exprParser = exprParser;
-        this._observerLocator = observerLocator;
-        this._platform = p;
-    }
-    render(renderingCtrl, target, instruction) {
-        const container = renderingCtrl.container;
-        const expr = ensureExpression(this._exprParser, instruction.from, 1);
-        const binding = new InterpolationBinding(renderingCtrl, container, this._observerLocator, this._platform.domWriteQueue, expr, getTarget(target), instruction.to, 2);
-        const partBindings = binding.partBindings;
-        const ii = partBindings.length;
-        let i = 0;
-        let partBinding;
-        for (; ii > i; ++i) {
-            partBinding = partBindings[i];
-            if (partBinding.ast.$kind === 18) {
-                partBindings[i] = applyBindingBehavior(partBinding, partBinding.ast, container);
-            }
-        }
-        renderingCtrl.addBinding(binding);
+], exports.RefBindingRenderer);
+exports.InterpolationBindingRenderer = class InterpolationBindingRenderer {
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 1), getTarget(target), instruction.to, 2));
     }
 };
-InterpolationBindingRenderer.inject = [runtime.IExpressionParser, runtime.IObserverLocator, IPlatform];
-InterpolationBindingRenderer = __decorate([
+exports.InterpolationBindingRenderer = __decorate([
     renderer("rf")
-], InterpolationBindingRenderer);
-let PropertyBindingRenderer = class PropertyBindingRenderer {
-    constructor(exprParser, observerLocator, p) {
-        this._exprParser = exprParser;
-        this._observerLocator = observerLocator;
-        this._platform = p;
-    }
-    render(renderingCtrl, target, instruction) {
-        const expr = ensureExpression(this._exprParser, instruction.from, 8);
-        const binding = new PropertyBinding(renderingCtrl, renderingCtrl.container, this._observerLocator, this._platform.domWriteQueue, expr, getTarget(target), instruction.to, instruction.mode);
-        renderingCtrl.addBinding(expr.$kind === 18
-            ? applyBindingBehavior(binding, expr, renderingCtrl.container)
-            : binding);
+], exports.InterpolationBindingRenderer);
+exports.PropertyBindingRenderer = class PropertyBindingRenderer {
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), getTarget(target), instruction.to, instruction.mode));
     }
 };
-PropertyBindingRenderer.inject = [runtime.IExpressionParser, runtime.IObserverLocator, IPlatform];
-PropertyBindingRenderer = __decorate([
+exports.PropertyBindingRenderer = __decorate([
     renderer("rg")
-], PropertyBindingRenderer);
-let IteratorBindingRenderer = class IteratorBindingRenderer {
-    constructor(exprParser, observerLocator, p) {
-        this._exprParser = exprParser;
-        this._observerLocator = observerLocator;
-        this._platform = p;
-    }
-    render(renderingCtrl, target, instruction) {
-        const expr = ensureExpression(this._exprParser, instruction.from, 2);
-        const binding = new PropertyBinding(renderingCtrl, renderingCtrl.container, this._observerLocator, this._platform.domWriteQueue, expr, getTarget(target), instruction.to, 2);
-        renderingCtrl.addBinding(expr.iterable.$kind === 18
-            ? applyBindingBehavior(binding, expr.iterable, renderingCtrl.container)
-            : binding);
+], exports.PropertyBindingRenderer);
+exports.IteratorBindingRenderer = class IteratorBindingRenderer {
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.forOf, 2), getTarget(target), instruction.to, 2));
     }
 };
-IteratorBindingRenderer.inject = [runtime.IExpressionParser, runtime.IObserverLocator, IPlatform];
-IteratorBindingRenderer = __decorate([
+exports.IteratorBindingRenderer = __decorate([
     renderer("rk")
-], IteratorBindingRenderer);
-let behaviorExpressionIndex = 0;
-const behaviorExpressions = [];
-function applyBindingBehavior(binding, expression, locator) {
-    while (expression instanceof runtime.BindingBehaviorExpression) {
-        behaviorExpressions[behaviorExpressionIndex++] = expression;
-        expression = expression.expression;
-    }
-    while (behaviorExpressionIndex > 0) {
-        const behaviorExpression = behaviorExpressions[--behaviorExpressionIndex];
-        const behaviorOrFactory = locator.get(BindingBehavior.keyFrom(behaviorExpression.name));
-        if (behaviorOrFactory instanceof BindingBehaviorFactory) {
-            binding = behaviorOrFactory.construct(binding, behaviorExpression);
-        }
-    }
-    behaviorExpressions.length = 0;
-    return binding;
-}
-let TextBindingRenderer = class TextBindingRenderer {
-    constructor(exprParser, observerLocator, p) {
-        this._exprParser = exprParser;
-        this._observerLocator = observerLocator;
-        this._platform = p;
-    }
-    render(renderingCtrl, target, instruction) {
-        const container = renderingCtrl.container;
-        const next = target.nextSibling;
-        const parent = target.parentNode;
-        const doc = this._platform.document;
-        const expr = ensureExpression(this._exprParser, instruction.from, 1);
-        const staticParts = expr.parts;
-        const dynamicParts = expr.expressions;
-        const ii = dynamicParts.length;
-        let i = 0;
-        let text = staticParts[0];
-        let binding;
-        let part;
-        if (text !== '') {
-            parent.insertBefore(doc.createTextNode(text), next);
-        }
-        for (; ii > i; ++i) {
-            part = dynamicParts[i];
-            binding = new ContentBinding(renderingCtrl, container, this._observerLocator, this._platform.domWriteQueue, this._platform, part, parent.insertBefore(doc.createTextNode(''), next), instruction.strict);
-            renderingCtrl.addBinding(part.$kind === 18
-                ? applyBindingBehavior(binding, part, container)
-                : binding);
-            text = staticParts[i + 1];
-            if (text !== '') {
-                parent.insertBefore(doc.createTextNode(text), next);
-            }
-        }
-        if (target.nodeName === 'AU-M') {
-            target.remove();
-        }
+], exports.IteratorBindingRenderer);
+exports.TextBindingRenderer = class TextBindingRenderer {
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, platform, ensureExpression(exprParser, instruction.from, 16), insertBefore(target.parentNode, createText(platform, ''), target), instruction.strict));
     }
 };
-TextBindingRenderer.inject = [runtime.IExpressionParser, runtime.IObserverLocator, IPlatform];
-TextBindingRenderer = __decorate([
+exports.TextBindingRenderer = __decorate([
     renderer("ha")
-], TextBindingRenderer);
-let ListenerBindingRenderer = class ListenerBindingRenderer {
-    constructor(parser, eventDelegator) {
-        this._exprParser = parser;
-        this._eventDelegator = eventDelegator;
-    }
-    render(renderingCtrl, target, instruction) {
-        const expr = ensureExpression(this._exprParser, instruction.from, 4);
-        const binding = new Listener(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new ListenerOptions(instruction.preventDefault, instruction.strategy));
-        renderingCtrl.addBinding(expr.$kind === 18
-            ? applyBindingBehavior(binding, expr, renderingCtrl.container)
-            : binding);
+], exports.TextBindingRenderer);
+exports.ListenerBindingRenderer = class ListenerBindingRenderer {
+    render(renderingCtrl, target, instruction, platform, exprParser) {
+        renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, 8), target, instruction.to, new ListenerBindingOptions(instruction.preventDefault, instruction.capture)));
     }
 };
-ListenerBindingRenderer.inject = [runtime.IExpressionParser, IEventDelegator];
-ListenerBindingRenderer = __decorate([
+exports.ListenerBindingRenderer = __decorate([
     renderer("hb")
-], ListenerBindingRenderer);
-let SetAttributeRenderer = class SetAttributeRenderer {
+], exports.ListenerBindingRenderer);
+exports.SetAttributeRenderer = class SetAttributeRenderer {
     render(_, target, instruction) {
         target.setAttribute(instruction.to, instruction.value);
     }
 };
-SetAttributeRenderer = __decorate([
+exports.SetAttributeRenderer = __decorate([
     renderer("he")
-], SetAttributeRenderer);
-let SetClassAttributeRenderer = class SetClassAttributeRenderer {
+], exports.SetAttributeRenderer);
+exports.SetClassAttributeRenderer = class SetClassAttributeRenderer {
     render(_, target, instruction) {
         addClasses(target.classList, instruction.value);
     }
 };
-SetClassAttributeRenderer = __decorate([
+exports.SetClassAttributeRenderer = __decorate([
     renderer("hf")
-], SetClassAttributeRenderer);
-let SetStyleAttributeRenderer = class SetStyleAttributeRenderer {
+], exports.SetClassAttributeRenderer);
+exports.SetStyleAttributeRenderer = class SetStyleAttributeRenderer {
     render(_, target, instruction) {
         target.style.cssText += instruction.value;
     }
 };
-SetStyleAttributeRenderer = __decorate([
+exports.SetStyleAttributeRenderer = __decorate([
     renderer("hg")
-], SetStyleAttributeRenderer);
-let StylePropertyBindingRenderer = class StylePropertyBindingRenderer {
-    constructor(exprParser, observerLocator, platform) {
-        this._exprParser = exprParser;
-        this._observerLocator = observerLocator;
-        this._platform = platform;
-    }
-    render(renderingCtrl, target, instruction) {
-        const expr = ensureExpression(this._exprParser, instruction.from, 8);
-        const binding = new PropertyBinding(renderingCtrl, renderingCtrl.container, this._observerLocator, this._platform.domWriteQueue, expr, target.style, instruction.to, 2);
-        renderingCtrl.addBinding(expr.$kind === 18
-            ? applyBindingBehavior(binding, expr, renderingCtrl.container)
-            : binding);
+], exports.SetStyleAttributeRenderer);
+exports.StylePropertyBindingRenderer = class StylePropertyBindingRenderer {
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target.style, instruction.to, 2));
     }
 };
-StylePropertyBindingRenderer.inject = [runtime.IExpressionParser, runtime.IObserverLocator, IPlatform];
-StylePropertyBindingRenderer = __decorate([
+exports.StylePropertyBindingRenderer = __decorate([
     renderer("hd")
-], StylePropertyBindingRenderer);
-let AttributeBindingRenderer = class AttributeBindingRenderer {
-    constructor(_platform, _exprParser, _observerLocator) {
-        this._platform = _platform;
-        this._exprParser = _exprParser;
-        this._observerLocator = _observerLocator;
-    }
-    render(renderingCtrl, target, instruction) {
-        const expr = ensureExpression(this._exprParser, instruction.from, 8);
-        const binding = new AttributeBinding(renderingCtrl, renderingCtrl.container, this._observerLocator, this._platform.domWriteQueue, expr, target, instruction.attr, instruction.to, 2);
-        renderingCtrl.addBinding(expr.$kind === 18
-            ? applyBindingBehavior(binding, expr, renderingCtrl.container)
-            : binding);
+], exports.StylePropertyBindingRenderer);
+exports.AttributeBindingRenderer = class AttributeBindingRenderer {
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target, instruction.attr, instruction.to, 2));
     }
 };
-AttributeBindingRenderer.inject = [IPlatform, runtime.IExpressionParser, runtime.IObserverLocator];
-AttributeBindingRenderer = __decorate([
+exports.AttributeBindingRenderer = __decorate([
     renderer("hc")
-], AttributeBindingRenderer);
-let SpreadRenderer = class SpreadRenderer {
+], exports.AttributeBindingRenderer);
+exports.SpreadRenderer = class SpreadRenderer {
     constructor(_compiler, _rendering) {
         this._compiler = _compiler;
         this._rendering = _rendering;
     }
     static get inject() { return [ITemplateCompiler, IRendering]; }
-    render(renderingCtrl, target, _instruction) {
+    render(renderingCtrl, target, _instruction, platform, exprParser, observerLocator) {
         const container = renderingCtrl.container;
         const hydrationContext = container.get(IHydrationContext);
         const renderers = this._rendering.renderers;
@@ -5532,7 +5023,7 @@ let SpreadRenderer = class SpreadRenderer {
                 --currentLevel;
             }
             if (currentContext == null) {
-                throw new Error('No scope context for spread binding.');
+                throw createError('No scope context for spread binding.');
             }
             return currentContext;
         };
@@ -5547,10 +5038,10 @@ let SpreadRenderer = class SpreadRenderer {
                         renderSpreadInstruction(ancestor + 1);
                         break;
                     case "hp":
-                        renderers[inst.instructions.type].render(spreadBinding, findElementControllerFor(target), inst.instructions);
+                        renderers[inst.instructions.type].render(spreadBinding, findElementControllerFor(target), inst.instructions, platform, exprParser, observerLocator);
                         break;
                     default:
-                        renderers[inst.type].render(spreadBinding, target, inst);
+                        renderers[inst.type].render(spreadBinding, target, inst, platform, exprParser, observerLocator);
                 }
             }
             renderingCtrl.addBinding(spreadBinding);
@@ -5558,14 +5049,13 @@ let SpreadRenderer = class SpreadRenderer {
         renderSpreadInstruction(0);
     }
 };
-SpreadRenderer = __decorate([
+exports.SpreadRenderer = __decorate([
     renderer("hs")
-], SpreadRenderer);
+], exports.SpreadRenderer);
 class SpreadBinding {
     constructor(_innerBindings, _hydrationContext) {
         this._innerBindings = _innerBindings;
         this._hydrationContext = _hydrationContext;
-        this.interceptor = this;
         this.isBound = false;
         this.ctrl = _hydrationContext.controller;
         this.locator = this.ctrl.container;
@@ -5585,19 +5075,19 @@ class SpreadBinding {
     get(key) {
         return this.locator.get(key);
     }
-    $bind(_scope) {
+    bind(_scope) {
         if (this.isBound) {
             return;
         }
         this.isBound = true;
-        const innerScope = this.$scope = this._hydrationContext.controller.scope.parentScope ?? void 0;
+        const innerScope = this.scope = this._hydrationContext.controller.scope.parent ?? void 0;
         if (innerScope == null) {
-            throw new Error('Invalid spreading. Context scope is null/undefined');
+            throw createError('Invalid spreading. Context scope is null/undefined');
         }
-        this._innerBindings.forEach(b => b.$bind(innerScope));
+        this._innerBindings.forEach(b => b.bind(innerScope));
     }
-    $unbind() {
-        this._innerBindings.forEach(b => b.$unbind());
+    unbind() {
+        this._innerBindings.forEach(b => b.unbind());
         this.isBound = false;
     }
     addBinding(binding) {
@@ -5605,9 +5095,15 @@ class SpreadBinding {
     }
     addChild(controller) {
         if (controller.vmKind !== 1) {
-            throw new Error('Spread binding does not support spreading custom attributes/template controllers');
+            throw createError('Spread binding does not support spreading custom attributes/template controllers');
         }
         this.ctrl.addChild(controller);
+    }
+    limit() {
+        throw createError('not implemented');
+    }
+    useScope() {
+        throw createError('not implemented');
     }
 }
 function addClasses(classList, className) {
@@ -5632,14 +5128,14 @@ const locationProviderName = 'IRenderLocation';
 const slotInfoProviderName = 'IAuSlotsInfo';
 function createElementContainer(p, renderingCtrl, host, instruction, location, auSlotsInfo) {
     const ctn = renderingCtrl.container.createChild();
-    ctn.registerResolver(p.HTMLElement, ctn.registerResolver(p.Element, ctn.registerResolver(INode, new kernel.InstanceProvider('ElementResolver', host))));
-    ctn.registerResolver(IController, new kernel.InstanceProvider(controllerProviderName, renderingCtrl));
-    ctn.registerResolver(IInstruction, new kernel.InstanceProvider(instructionProviderName, instruction));
-    ctn.registerResolver(IRenderLocation, location == null
+    registerResolver(ctn, p.HTMLElement, registerResolver(ctn, p.Element, registerResolver(ctn, INode, new kernel.InstanceProvider('ElementResolver', host))));
+    registerResolver(ctn, IController, new kernel.InstanceProvider(controllerProviderName, renderingCtrl));
+    registerResolver(ctn, IInstruction, new kernel.InstanceProvider(instructionProviderName, instruction));
+    registerResolver(ctn, IRenderLocation, location == null
         ? noLocationProvider
         : new RenderLocationProvider(location));
-    ctn.registerResolver(IViewFactory, noViewFactoryProvider);
-    ctn.registerResolver(IAuSlotsInfo, auSlotsInfo == null
+    registerResolver(ctn, IViewFactory, noViewFactoryProvider);
+    registerResolver(ctn, IAuSlotsInfo, auSlotsInfo == null
         ? noAuSlotProvider
         : new kernel.InstanceProvider(slotInfoProviderName, auSlotsInfo));
     return ctn;
@@ -5652,29 +5148,29 @@ class ViewFactoryProvider {
     resolve() {
         const f = this.f;
         if (f === null) {
-            throw new Error(`AUR7055: Cannot resolve ViewFactory before the provider was prepared.`);
+            throw createError(`AUR7055: Cannot resolve ViewFactory before the provider was prepared.`);
         }
         if (!isString(f.name) || f.name.length === 0) {
-            throw new Error(`AUR0756: Cannot resolve ViewFactory without a (valid) name.`);
+            throw createError(`AUR0756: Cannot resolve ViewFactory without a (valid) name.`);
         }
         return f;
     }
 }
 function invokeAttribute(p, definition, renderingCtrl, host, instruction, viewFactory, location, auSlotsInfo) {
     const ctn = renderingCtrl.container.createChild();
-    ctn.registerResolver(p.HTMLElement, ctn.registerResolver(p.Element, ctn.registerResolver(INode, new kernel.InstanceProvider('ElementResolver', host))));
+    registerResolver(ctn, p.HTMLElement, registerResolver(ctn, p.Element, registerResolver(ctn, INode, new kernel.InstanceProvider('ElementResolver', host))));
     renderingCtrl = renderingCtrl instanceof Controller
         ? renderingCtrl
         : renderingCtrl.ctrl;
-    ctn.registerResolver(IController, new kernel.InstanceProvider(controllerProviderName, renderingCtrl));
-    ctn.registerResolver(IInstruction, new kernel.InstanceProvider(instructionProviderName, instruction));
-    ctn.registerResolver(IRenderLocation, location == null
+    registerResolver(ctn, IController, new kernel.InstanceProvider(controllerProviderName, renderingCtrl));
+    registerResolver(ctn, IInstruction, new kernel.InstanceProvider(instructionProviderName, instruction));
+    registerResolver(ctn, IRenderLocation, location == null
         ? noLocationProvider
         : new kernel.InstanceProvider(locationProviderName, location));
-    ctn.registerResolver(IViewFactory, viewFactory == null
+    registerResolver(ctn, IViewFactory, viewFactory == null
         ? noViewFactoryProvider
         : new ViewFactoryProvider(viewFactory));
-    ctn.registerResolver(IAuSlotsInfo, auSlotsInfo == null
+    registerResolver(ctn, IAuSlotsInfo, auSlotsInfo == null
         ? noAuSlotProvider
         : new kernel.InstanceProvider(slotInfoProviderName, auSlotsInfo));
     return { vm: ctn.invoke(definition.Type), ctn };
@@ -5734,7 +5230,7 @@ class BindingCommandDefinition {
 const cmdBaseName = getResourceKeyFor('binding-command');
 const getCommandKeyFrom = (name) => `${cmdBaseName}:${name}`;
 const getCommandAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
-const BindingCommand = Object.freeze({
+const BindingCommand = objectFreeze({
     name: cmdBaseName,
     keyFrom: getCommandKeyFrom,
     define(nameOrDef, Type) {
@@ -5748,7 +5244,6 @@ const BindingCommand = Object.freeze({
 });
 exports.OneTimeBindingCommand = class OneTimeBindingCommand {
     get type() { return 0; }
-    get name() { return 'one-time'; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -5763,7 +5258,7 @@ exports.OneTimeBindingCommand = class OneTimeBindingCommand {
             }
             target = info.bindable.property;
         }
-        return new PropertyBindingInstruction(exprParser.parse(value, 8), target, 1);
+        return new PropertyBindingInstruction(exprParser.parse(value, 16), target, 1);
     }
 };
 exports.OneTimeBindingCommand = __decorate([
@@ -5771,7 +5266,6 @@ exports.OneTimeBindingCommand = __decorate([
 ], exports.OneTimeBindingCommand);
 exports.ToViewBindingCommand = class ToViewBindingCommand {
     get type() { return 0; }
-    get name() { return 'to-view'; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -5786,7 +5280,7 @@ exports.ToViewBindingCommand = class ToViewBindingCommand {
             }
             target = info.bindable.property;
         }
-        return new PropertyBindingInstruction(exprParser.parse(value, 8), target, 2);
+        return new PropertyBindingInstruction(exprParser.parse(value, 16), target, 2);
     }
 };
 exports.ToViewBindingCommand = __decorate([
@@ -5794,7 +5288,6 @@ exports.ToViewBindingCommand = __decorate([
 ], exports.ToViewBindingCommand);
 exports.FromViewBindingCommand = class FromViewBindingCommand {
     get type() { return 0; }
-    get name() { return 'from-view'; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -5809,7 +5302,7 @@ exports.FromViewBindingCommand = class FromViewBindingCommand {
             }
             target = info.bindable.property;
         }
-        return new PropertyBindingInstruction(exprParser.parse(value, 8), target, 4);
+        return new PropertyBindingInstruction(exprParser.parse(value, 16), target, 4);
     }
 };
 exports.FromViewBindingCommand = __decorate([
@@ -5817,7 +5310,6 @@ exports.FromViewBindingCommand = __decorate([
 ], exports.FromViewBindingCommand);
 exports.TwoWayBindingCommand = class TwoWayBindingCommand {
     get type() { return 0; }
-    get name() { return 'two-way'; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -5832,7 +5324,7 @@ exports.TwoWayBindingCommand = class TwoWayBindingCommand {
             }
             target = info.bindable.property;
         }
-        return new PropertyBindingInstruction(exprParser.parse(value, 8), target, 6);
+        return new PropertyBindingInstruction(exprParser.parse(value, 16), target, 6);
     }
 };
 exports.TwoWayBindingCommand = __decorate([
@@ -5840,7 +5332,6 @@ exports.TwoWayBindingCommand = __decorate([
 ], exports.TwoWayBindingCommand);
 exports.DefaultBindingCommand = class DefaultBindingCommand {
     get type() { return 0; }
-    get name() { return 'bind'; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         const bindable = info.bindable;
@@ -5865,33 +5356,35 @@ exports.DefaultBindingCommand = class DefaultBindingCommand {
                 : bindable.mode;
             target = bindable.property;
         }
-        return new PropertyBindingInstruction(exprParser.parse(value, 8), target, mode);
+        return new PropertyBindingInstruction(exprParser.parse(value, 16), target, mode);
     }
 };
 exports.DefaultBindingCommand = __decorate([
     bindingCommand('bind')
 ], exports.DefaultBindingCommand);
-exports.CallBindingCommand = class CallBindingCommand {
-    get type() { return 0; }
-    get name() { return 'call'; }
-    build(info, exprParser) {
-        const target = info.bindable === null
-            ? kernel.camelCase(info.attr.target)
-            : info.bindable.property;
-        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, (8 | 4)), target);
-    }
-};
-exports.CallBindingCommand = __decorate([
-    bindingCommand('call')
-], exports.CallBindingCommand);
 exports.ForBindingCommand = class ForBindingCommand {
+    constructor(attrParser) {
+        this._attrParser = attrParser;
+    }
     get type() { return 0; }
-    get name() { return 'for'; }
+    static get inject() { return [IAttributeParser]; }
     build(info, exprParser) {
         const target = info.bindable === null
             ? kernel.camelCase(info.attr.target)
             : info.bindable.property;
-        return new IteratorBindingInstruction(exprParser.parse(info.attr.rawValue, 2), target);
+        const forOf = exprParser.parse(info.attr.rawValue, 2);
+        let props = kernel.emptyArray;
+        if (forOf.semiIdx > -1) {
+            const attr = info.attr.rawValue.slice(forOf.semiIdx + 1);
+            const i = attr.indexOf(':');
+            if (i > -1) {
+                const attrName = attr.slice(0, i).trim();
+                const attrValue = attr.slice(i + 1).trim();
+                const attrSyntax = this._attrParser.parse(attrName, attrValue);
+                props = [new MultiAttrInstruction(attrValue, attrSyntax.target, attrSyntax.command)];
+            }
+        }
+        return new IteratorBindingInstruction(forOf, target, props);
     }
 };
 exports.ForBindingCommand = __decorate([
@@ -5899,29 +5392,17 @@ exports.ForBindingCommand = __decorate([
 ], exports.ForBindingCommand);
 exports.TriggerBindingCommand = class TriggerBindingCommand {
     get type() { return 1; }
-    get name() { return 'trigger'; }
     build(info, exprParser) {
-        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, 4), info.attr.target, true, 0);
+        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, 8), info.attr.target, true, false);
     }
 };
 exports.TriggerBindingCommand = __decorate([
     bindingCommand('trigger')
 ], exports.TriggerBindingCommand);
-exports.DelegateBindingCommand = class DelegateBindingCommand {
-    get type() { return 1; }
-    get name() { return 'delegate'; }
-    build(info, exprParser) {
-        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, 4), info.attr.target, false, 2);
-    }
-};
-exports.DelegateBindingCommand = __decorate([
-    bindingCommand('delegate')
-], exports.DelegateBindingCommand);
 exports.CaptureBindingCommand = class CaptureBindingCommand {
     get type() { return 1; }
-    get name() { return 'capture'; }
     build(info, exprParser) {
-        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, 4), info.attr.target, false, 1);
+        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, 8), info.attr.target, false, true);
     }
 };
 exports.CaptureBindingCommand = __decorate([
@@ -5929,9 +5410,8 @@ exports.CaptureBindingCommand = __decorate([
 ], exports.CaptureBindingCommand);
 exports.AttrBindingCommand = class AttrBindingCommand {
     get type() { return 1; }
-    get name() { return 'attr'; }
     build(info, exprParser) {
-        return new AttributeBindingInstruction(info.attr.target, exprParser.parse(info.attr.rawValue, 8), info.attr.target);
+        return new AttributeBindingInstruction(info.attr.target, exprParser.parse(info.attr.rawValue, 16), info.attr.target);
     }
 };
 exports.AttrBindingCommand = __decorate([
@@ -5939,9 +5419,8 @@ exports.AttrBindingCommand = __decorate([
 ], exports.AttrBindingCommand);
 exports.StyleBindingCommand = class StyleBindingCommand {
     get type() { return 1; }
-    get name() { return 'style'; }
     build(info, exprParser) {
-        return new AttributeBindingInstruction('style', exprParser.parse(info.attr.rawValue, 8), info.attr.target);
+        return new AttributeBindingInstruction('style', exprParser.parse(info.attr.rawValue, 16), info.attr.target);
     }
 };
 exports.StyleBindingCommand = __decorate([
@@ -5949,9 +5428,8 @@ exports.StyleBindingCommand = __decorate([
 ], exports.StyleBindingCommand);
 exports.ClassBindingCommand = class ClassBindingCommand {
     get type() { return 1; }
-    get name() { return 'class'; }
     build(info, exprParser) {
-        return new AttributeBindingInstruction('class', exprParser.parse(info.attr.rawValue, 8), info.attr.target);
+        return new AttributeBindingInstruction('class', exprParser.parse(info.attr.rawValue, 16), info.attr.target);
     }
 };
 exports.ClassBindingCommand = __decorate([
@@ -5959,9 +5437,8 @@ exports.ClassBindingCommand = __decorate([
 ], exports.ClassBindingCommand);
 let RefBindingCommand = class RefBindingCommand {
     get type() { return 1; }
-    get name() { return 'ref'; }
     build(info, exprParser) {
-        return new RefBindingInstruction(exprParser.parse(info.attr.rawValue, 8), info.attr.target);
+        return new RefBindingInstruction(exprParser.parse(info.attr.rawValue, 16), info.attr.target);
     }
 };
 RefBindingCommand = __decorate([
@@ -5969,7 +5446,6 @@ RefBindingCommand = __decorate([
 ], RefBindingCommand);
 let SpreadBindingCommand = class SpreadBindingCommand {
     get type() { return 1; }
-    get name() { return '...$attrs'; }
     build(_info) {
         return new SpreadBindingInstruction();
     }
@@ -5978,7 +5454,7 @@ SpreadBindingCommand = __decorate([
     bindingCommand('...$attrs')
 ], SpreadBindingCommand);
 
-const ISVGAnalyzer = kernel.DI.createInterface('ISVGAnalyzer', x => x.singleton(NoopSVGAnalyzer));
+const ISVGAnalyzer = createInterface('ISVGAnalyzer', x => x.singleton(NoopSVGAnalyzer));
 const o = (keys) => {
     const lookup = createLookup();
     keys = isString(keys) ? keys.split(' ') : keys;
@@ -5995,7 +5471,7 @@ class NoopSVGAnalyzer {
 }
 class SVGAnalyzer {
     constructor(platform) {
-        this._svgElements = Object.assign(createLookup(), {
+        this._svgElements = objectAssign(createLookup(), {
             'a': o('class externalResourcesRequired id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup requiredExtensions requiredFeatures style systemLanguage target transform xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space'),
             'altGlyph': o('class dx dy externalResourcesRequired format glyphRef id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup requiredExtensions requiredFeatures rotate style systemLanguage x xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space y'),
             'altglyph': createLookup(),
@@ -6115,8 +5591,7 @@ class SVGAnalyzer {
 }
 SVGAnalyzer.inject = [IPlatform];
 
-const IAttrMapper = kernel.DI
-    .createInterface('IAttrMapper', x => x.singleton(AttrMapper));
+const IAttrMapper = createInterface('IAttrMapper', x => x.singleton(AttrMapper));
 class AttrMapper {
     constructor(svg) {
         this.svg = svg;
@@ -6220,15 +5695,15 @@ function shouldDefaultToTwoWay(element, attr) {
     }
 }
 function createMappedError(attr, tagName) {
-    return new Error(`Attribute ${attr} has been already registered for ${tagName === '*' ? 'all elements' : `<${tagName}/>`}`);
+    return createError(`Attribute ${attr} has been already registered for ${tagName === '*' ? 'all elements' : `<${tagName}/>`}`);
 }
 
-const ITemplateElementFactory = kernel.DI.createInterface('ITemplateElementFactory', x => x.singleton(TemplateElementFactory));
+const ITemplateElementFactory = createInterface('ITemplateElementFactory', x => x.singleton(TemplateElementFactory));
 const markupCache = {};
 class TemplateElementFactory {
     constructor(p) {
         this.p = p;
-        this._template = p.document.createElement('template');
+        this._template = createTemplate(this.p);
     }
     createTemplate(input) {
         if (isString(input)) {
@@ -6238,7 +5713,7 @@ class TemplateElementFactory {
                 template.innerHTML = input;
                 const node = template.content.firstElementChild;
                 if (node == null || node.nodeName !== 'TEMPLATE' || node.nextElementSibling != null) {
-                    this._template = this.p.document.createElement('template');
+                    this._template = createTemplate(this.p);
                     result = template;
                 }
                 else {
@@ -6250,7 +5725,7 @@ class TemplateElementFactory {
             return result.cloneNode(true);
         }
         if (input.nodeName !== 'TEMPLATE') {
-            const template = this.p.document.createElement('template');
+            const template = createTemplate(this.p);
             template.content.appendChild(input);
             return template;
         }
@@ -6259,6 +5734,7 @@ class TemplateElementFactory {
     }
 }
 TemplateElementFactory.inject = [IPlatform];
+const createTemplate = (p) => p.document.createElement('template');
 
 class TemplateCompiler {
     constructor() {
@@ -6281,7 +5757,7 @@ class TemplateCompiler {
         const template = isString(definition.template) || !partialDefinition.enhance
             ? context._templateFactory.createTemplate(definition.template)
             : definition.template;
-        const isTemplateElement = template.nodeName === 'TEMPLATE' && template.content != null;
+        const isTemplateElement = template.nodeName === TEMPLATE_NODE_NAME && template.content != null;
         const content = isTemplateElement ? template.content : template;
         const hooks = container.get(allResources(ITemplateCompilerHooks));
         const ii = hooks.length;
@@ -6293,7 +5769,7 @@ class TemplateCompiler {
             }
         }
         if (template.hasAttribute(localTemplateIdentifier)) {
-            throw new Error(`AUR0701: The root cannot be a local template itself.`);
+            throw createError(`AUR0701: The root cannot be a local template itself.`);
         }
         this._compileLocalElement(content, context);
         this._compileNode(content, context);
@@ -6346,7 +5822,7 @@ class TemplateCompiler {
             attrDef = context._findAttr(attrTarget);
             if (attrDef !== null) {
                 if (attrDef.isTemplateController) {
-                    throw new Error(`AUR0703: Spreading template controller ${attrTarget} is not supported.`);
+                    throw createError(`AUR0703: Spreading template controller ${attrTarget} is not supported.`);
                 }
                 bindablesInfo = BindablesInfo.from(attrDef, true);
                 isMultiBindings = attrDef.noMultiBindings === false
@@ -6459,7 +5935,7 @@ class TemplateCompiler {
             realAttrTarget = attrSyntax.target;
             realAttrValue = attrSyntax.rawValue;
             if (invalidSurrogateAttribute[realAttrTarget]) {
-                throw new Error(`AUR0702: Attribute ${attrName} is invalid on surrogate.`);
+                throw createError(`AUR0702: Attribute ${attrName} is invalid on surrogate.`);
             }
             bindingCommand = context._createCommand(attrSyntax);
             if (bindingCommand !== null && (bindingCommand.type & 1) > 0) {
@@ -6473,7 +5949,7 @@ class TemplateCompiler {
             attrDef = context._findAttr(realAttrTarget);
             if (attrDef !== null) {
                 if (attrDef.isTemplateController) {
-                    throw new Error(`AUR0703: Template controller ${realAttrTarget} is invalid on surrogate.`);
+                    throw createError(`AUR0703: Template controller ${realAttrTarget} is invalid on surrogate.`);
                 }
                 bindableInfo = BindablesInfo.from(attrDef, true);
                 isMultiBindings = attrDef.noMultiBindings === false
@@ -6590,14 +6066,13 @@ class TemplateCompiler {
             realAttrValue = attrSyntax.rawValue;
             bindingCommand = context._createCommand(attrSyntax);
             if (bindingCommand !== null) {
-                switch (bindingCommand.name) {
-                    case 'to-view':
-                    case 'bind':
-                        letInstructions.push(new LetBindingInstruction(exprParser.parse(realAttrValue, 8), kernel.camelCase(realAttrTarget)));
-                        continue;
-                    default:
-                        throw new Error(`AUR0704: Invalid command ${attrSyntax.command} for <let>. Only to-view/bind supported.`);
+                if (attrSyntax.command === 'bind') {
+                    letInstructions.push(new LetBindingInstruction(exprParser.parse(realAttrValue, 16), kernel.camelCase(realAttrTarget)));
                 }
+                else {
+                    throw createError(`AUR0704: Invalid command ${attrSyntax.command} for <let>. Only to-view/bind supported.`);
+                }
+                continue;
             }
             expr = exprParser.parse(realAttrValue, 1);
             if (expr === null) {
@@ -6658,7 +6133,7 @@ class TemplateCompiler {
         let canCapture = false;
         if (elName === 'slot') {
             if (context.root.def.shadowOptions == null) {
-                throw new Error(`AUR0717: detect a usage of "<slot>" element without specifying shadow DOM options in element: ${context.root.def.name}`);
+                throw createError(`AUR0717: detect a usage of "<slot>" element without specifying shadow DOM options in element: ${context.root.def.name}`);
             }
             context.root.hasSlot = true;
         }
@@ -6668,7 +6143,7 @@ class TemplateCompiler {
             ii = attrs.length;
         }
         if (context.root.def.enhance && el.classList.contains('au')) {
-            throw new Error(`AUR0705: `
+            throw createError(`AUR0705: `
                     + 'Trying to enhance with a template that was probably compiled before. '
                     + 'This is likely going to cause issues. '
                     + 'Consider enhancing only untouched elements or first remove all "au" classes.');
@@ -6696,7 +6171,7 @@ class TemplateCompiler {
                     captures.push(attrSyntax);
                     continue;
                 }
-                canCapture = realAttrTarget !== 'au-slot' && realAttrTarget !== 'slot';
+                canCapture = realAttrTarget !== AU_SLOT && realAttrTarget !== 'slot';
                 if (canCapture) {
                     bindablesInfo = BindablesInfo.from(elDef, false);
                     if (bindablesInfo.attrs[realAttrTarget] == null && !context._findAttr(realAttrTarget)?.isTemplateController) {
@@ -6798,15 +6273,15 @@ class TemplateCompiler {
             elementInstruction = new HydrateElementInstruction(this.resolveResources ? elDef : elDef.name, void 0, (elBindableInstructions ?? kernel.emptyArray), null, hasContainerless, captures);
             if (elName === AU_SLOT) {
                 const slotName = el.getAttribute('name') || DEFAULT_SLOT_NAME;
-                const template = context.h('template');
+                const template = context.t();
                 const fallbackContentContext = context._createChild();
                 let node = el.firstChild;
                 while (node !== null) {
-                    if (node.nodeType === 1 && node.hasAttribute('au-slot')) {
+                    if (node.nodeType === 1 && node.hasAttribute(AU_SLOT)) {
                         el.removeChild(node);
                     }
                     else {
-                        template.content.appendChild(node);
+                        appendToTemplate(template, node);
                     }
                     node = el.firstChild;
                 }
@@ -6835,13 +6310,19 @@ class TemplateCompiler {
             i = ii;
             tcInstruction = tcInstructions[i];
             let template;
-            this._replaceByMarker(el, context);
-            if (el.nodeName === 'TEMPLATE') {
-                template = el;
+            if (isMarker(el)) {
+                template = context.t();
+                appendManyToTemplate(template, [context._comment(auStartComment), context._comment(auEndComment), this._markAsTarget(context.h(MARKER_NODE_NAME))]);
             }
             else {
-                template = context.h('template');
-                template.content.appendChild(el);
+                this._replaceByMarker(el, context);
+                if (el.nodeName === 'TEMPLATE') {
+                    template = el;
+                }
+                else {
+                    template = context.t();
+                    appendToTemplate(template, el);
+                }
             }
             const mostInnerTemplate = template;
             const childContext = context._createChild(instructions == null ? [] : [instructions]);
@@ -6876,7 +6357,7 @@ class TemplateCompiler {
                     else {
                         if (targetSlot !== null) {
                             targetSlot = targetSlot || DEFAULT_SLOT_NAME;
-                            throw new Error(`AUR0706: Projection with [au-slot="${targetSlot}"] is attempted on a non custom element ${el.nodeName}.`);
+                            throw createError(`AUR0706: Projection with [au-slot="${targetSlot}"] is attempted on a non custom element ${el.nodeName}.`);
                         }
                         child = child.nextSibling;
                     }
@@ -6885,20 +6366,20 @@ class TemplateCompiler {
             if (slotTemplateRecord != null) {
                 projections = {};
                 for (targetSlot in slotTemplateRecord) {
-                    template = context.h('template');
+                    template = context.t();
                     slotTemplates = slotTemplateRecord[targetSlot];
                     for (j = 0, jj = slotTemplates.length; jj > j; ++j) {
                         slotTemplate = slotTemplates[j];
                         if (slotTemplate.nodeName === 'TEMPLATE') {
                             if (slotTemplate.attributes.length > 0) {
-                                template.content.appendChild(slotTemplate);
+                                appendToTemplate(template, slotTemplate);
                             }
                             else {
-                                template.content.appendChild(slotTemplate.content);
+                                appendToTemplate(template, slotTemplate.content);
                             }
                         }
                         else {
-                            template.content.appendChild(slotTemplate);
+                            appendToTemplate(template, slotTemplate);
                         }
                     }
                     projectionCompilationContext = context._createChild();
@@ -6918,7 +6399,7 @@ class TemplateCompiler {
             }
             shouldCompileContent = !isCustomElement || !elDef.containerless && !hasContainerless && processContentResult !== false;
             if (shouldCompileContent) {
-                if (el.nodeName === 'TEMPLATE') {
+                if (el.nodeName === TEMPLATE_NODE_NAME) {
                     this._compileNode(el.content, childContext);
                 }
                 else {
@@ -6937,10 +6418,9 @@ class TemplateCompiler {
             });
             while (i-- > 0) {
                 tcInstruction = tcInstructions[i];
-                template = context.h('template');
-                marker = context.h('au-m');
-                marker.classList.add('au');
-                template.content.appendChild(marker);
+                template = context.t();
+                marker = this._markAsTarget(context.h(MARKER_NODE_NAME));
+                appendManyToTemplate(template, [context._comment(auStartComment), context._comment(auEndComment), marker]);
                 tcInstruction.def = CustomElementDefinition.create({
                     name: generateElementName(),
                     template,
@@ -6986,7 +6466,7 @@ class TemplateCompiler {
                     else {
                         if (targetSlot !== null) {
                             targetSlot = targetSlot || DEFAULT_SLOT_NAME;
-                            throw new Error(`AUR0706: Projection with [au-slot="${targetSlot}"] is attempted on a non custom element ${el.nodeName}.`);
+                            throw createError(`AUR0706: Projection with [au-slot="${targetSlot}"] is attempted on a non custom element ${el.nodeName}.`);
                         }
                         child = child.nextSibling;
                     }
@@ -6995,20 +6475,20 @@ class TemplateCompiler {
             if (slotTemplateRecord != null) {
                 projections = {};
                 for (targetSlot in slotTemplateRecord) {
-                    template = context.h('template');
+                    template = context.t();
                     slotTemplates = slotTemplateRecord[targetSlot];
                     for (j = 0, jj = slotTemplates.length; jj > j; ++j) {
                         slotTemplate = slotTemplates[j];
-                        if (slotTemplate.nodeName === 'TEMPLATE') {
+                        if (slotTemplate.nodeName === TEMPLATE_NODE_NAME) {
                             if (slotTemplate.attributes.length > 0) {
-                                template.content.appendChild(slotTemplate);
+                                appendToTemplate(template, slotTemplate);
                             }
                             else {
-                                template.content.appendChild(slotTemplate.content);
+                                appendToTemplate(template, slotTemplate.content);
                             }
                         }
                         else {
-                            template.content.appendChild(slotTemplate);
+                            appendToTemplate(template, slotTemplate);
                         }
                     }
                     projectionCompilationContext = context._createChild();
@@ -7037,26 +6517,33 @@ class TemplateCompiler {
         return nextSibling;
     }
     _compileText(node, context) {
-        let text = '';
-        let current = node;
-        while (current !== null && current.nodeType === 3) {
-            text += current.textContent;
-            current = current.nextSibling;
-        }
-        const expr = context._exprParser.parse(text, 1);
-        if (expr === null) {
-            return current;
-        }
         const parent = node.parentNode;
-        parent.insertBefore(this._markAsTarget(context.h('au-m')), node);
-        context.rows.push([new TextBindingInstruction(expr, !!context.def.isStrictBinding)]);
-        node.textContent = '';
-        current = node.nextSibling;
-        while (current !== null && current.nodeType === 3) {
-            parent.removeChild(current);
-            current = node.nextSibling;
+        const expr = context._exprParser.parse(node.textContent, 1);
+        const next = node.nextSibling;
+        let parts;
+        let expressions;
+        let i;
+        let ii;
+        let part;
+        if (expr !== null) {
+            ({ parts, expressions } = expr);
+            if ((part = parts[0])) {
+                insertBefore(parent, context._text(part), node);
+            }
+            for (i = 0, ii = expressions.length; ii > i; ++i) {
+                insertManyBefore(parent, node, [
+                    context._comment(auStartComment),
+                    context._comment(auEndComment),
+                    this._markAsTarget(context.h(MARKER_NODE_NAME)),
+                ]);
+                if ((part = parts[i + 1])) {
+                    insertBefore(parent, context._text(part), node);
+                }
+                context.rows.push([new TextBindingInstruction(expressions[i], context.root.def.isStrictBinding)]);
+            }
+            parent.removeChild(node);
         }
-        return node.nextSibling;
+        return next;
     }
     _compileMultiBindings(node, attrRawValue, attrDef, context) {
         const bindableAttrsInfo = BindablesInfo.from(attrDef, true);
@@ -7097,7 +6584,7 @@ class TemplateCompiler {
                 command = context._createCommand(attrSyntax);
                 bindable = bindableAttrsInfo.attrs[attrSyntax.target];
                 if (bindable == null) {
-                    throw new Error(`AUR0707: Bindable ${attrSyntax.target} not found on ${attrDef.name}.`);
+                    throw createError(`AUR0707: Bindable ${attrSyntax.target} not found on ${attrDef.name}.`);
                 }
                 if (command === null) {
                     expr = context._exprParser.parse(attrValue, 1);
@@ -7130,13 +6617,13 @@ class TemplateCompiler {
             return;
         }
         if (numLocalTemplates === root.childElementCount) {
-            throw new Error(`AUR0708: The custom element does not have any content other than local template(s).`);
+            throw createError(`AUR0708: The custom element does not have any content other than local template(s).`);
         }
         const localTemplateNames = new Set();
         const localElTypes = [];
         for (const localTemplate of localTemplates) {
             if (localTemplate.parentNode !== root) {
-                throw new Error(`AUR0709: Local templates needs to be defined directly under root.`);
+                throw createError(`AUR0709: Local templates needs to be defined directly under root.`);
             }
             const name = processTemplateName(localTemplate, localTemplateNames);
             const LocalTemplateType = class LocalTemplate {
@@ -7148,17 +6635,17 @@ class TemplateCompiler {
             const attributes = new Set();
             for (const bindableEl of bindableEls) {
                 if (bindableEl.parentNode !== content) {
-                    throw new Error(`AUR0710: Bindable properties of local templates needs to be defined directly under root.`);
+                    throw createError(`AUR0710: Bindable properties of local templates needs to be defined directly under root.`);
                 }
                 const property = bindableEl.getAttribute("property");
                 if (property === null) {
-                    throw new Error(`AUR0711: The attribute 'property' is missing in ${bindableEl.outerHTML}`);
+                    throw createError(`AUR0711: The attribute 'property' is missing in ${bindableEl.outerHTML}`);
                 }
                 const attribute = bindableEl.getAttribute("attribute");
                 if (attribute !== null
                     && attributes.has(attribute)
                     || properties.has(property)) {
-                    throw new Error(`Bindable property and attribute needs to be unique; found property: ${property}, attribute: ${attribute}`);
+                    throw createError(`Bindable property and attribute needs to be unique; found property: ${property}, attribute: ${attribute}`);
                 }
                 else {
                     if (attribute !== null) {
@@ -7219,18 +6706,35 @@ class TemplateCompiler {
             }
         }
     }
+    _isMarker(el) {
+        return el.nodeName === MARKER_NODE_NAME
+            && isComment($prevSibling = getPreviousSibling(el)) && $prevSibling.textContent === auEndComment
+            && isComment($prevSibling = getPreviousSibling($prevSibling)) && $prevSibling.textContent === auStartComment;
+    }
     _markAsTarget(el) {
         el.classList.add('au');
         return el;
     }
     _replaceByMarker(node, context) {
+        if (isMarker(node)) {
+            return node;
+        }
         const parent = node.parentNode;
-        const marker = context.h('au-m');
-        this._markAsTarget(parent.insertBefore(marker, node));
+        const marker = this._markAsTarget(context.h(MARKER_NODE_NAME));
+        insertManyBefore(parent, node, [context._comment(auStartComment), context._comment(auEndComment), marker]);
         parent.removeChild(node);
         return marker;
     }
 }
+let $prevSibling;
+const MARKER_NODE_NAME = 'AU-M';
+const TEMPLATE_NODE_NAME = 'TEMPLATE';
+const auStartComment = 'au-start';
+const auEndComment = 'au-end';
+const isMarker = (el) => el.nodeName === MARKER_NODE_NAME
+    && isComment($prevSibling = getPreviousSibling(el)) && $prevSibling.textContent === auEndComment
+    && isComment($prevSibling = getPreviousSibling($prevSibling)) && $prevSibling.textContent === auStartComment;
+const isComment = (el) => el?.nodeType === 8;
 class CompilationContext {
     constructor(def, container, compilationInstruction, parent, root, instructions) {
         this.hasSlot = false;
@@ -7255,12 +6759,21 @@ class CompilationContext {
         ((_a = this.root).deps ?? (_a.deps = [])).push(dep);
         this.root.c.register(dep);
     }
+    _text(text) {
+        return createText(this.p, text);
+    }
+    _comment(text) {
+        return createComment(this.p, text);
+    }
     h(name) {
-        const el = this.p.document.createElement(name);
+        const el = createElement(this.p, name);
         if (name === 'template') {
             this.p.document.adoptNode(el.content);
         }
         return el;
+    }
+    t() {
+        return this.h('template');
     }
     _findElement(name) {
         return this.c.find(CustomElement, name);
@@ -7283,14 +6796,14 @@ class CompilationContext {
         if (result === void 0) {
             result = this.c.create(BindingCommand, name);
             if (result === null) {
-                throw new Error(`AUR0713: Unknown binding command: ${name}`);
+                throw createError(`AUR0713: Unknown binding command: ${name}`);
             }
             this._commands[name] = result;
         }
         return result;
     }
 }
-function hasInlineBindings(rawValue) {
+const hasInlineBindings = (rawValue) => {
     const len = rawValue.length;
     let ch = 0;
     let i = 0;
@@ -7308,13 +6821,13 @@ function hasInlineBindings(rawValue) {
         ++i;
     }
     return false;
-}
-function resetCommandBuildInfo() {
+};
+const resetCommandBuildInfo = () => {
     commandBuildInfo.node
         = commandBuildInfo.attr
             = commandBuildInfo.bindable
                 = commandBuildInfo.def = null;
-}
+};
 const emptyCompilationInstructions = { projections: null };
 const voidDefinition = { name: 'unnamed' };
 const commandBuildInfo = {
@@ -7323,7 +6836,7 @@ const commandBuildInfo = {
     bindable: null,
     def: null,
 };
-const invalidSurrogateAttribute = Object.assign(createLookup(), {
+const invalidSurrogateAttribute = objectAssign(createLookup(), {
     'id': true,
     'name': true,
     'au-slot': true,
@@ -7360,7 +6873,7 @@ class BindablesInfo {
                 attr = bindable.attribute;
                 if (bindable.primary === true) {
                     if (hasPrimary) {
-                        throw new Error(`AUR0714: Primary already exists on ${def.name}`);
+                        throw createError(`AUR0714: Primary already exists on ${def.name}`);
                     }
                     hasPrimary = true;
                     primary = bindable;
@@ -7378,33 +6891,28 @@ class BindablesInfo {
         return info;
     }
 }
-var LocalTemplateBindableAttributes;
-(function (LocalTemplateBindableAttributes) {
-    LocalTemplateBindableAttributes["property"] = "property";
-    LocalTemplateBindableAttributes["attribute"] = "attribute";
-    LocalTemplateBindableAttributes["mode"] = "mode";
-})(LocalTemplateBindableAttributes || (LocalTemplateBindableAttributes = {}));
-const allowedLocalTemplateBindableAttributes = Object.freeze([
+
+const allowedLocalTemplateBindableAttributes = objectFreeze([
     "property",
     "attribute",
     "mode"
 ]);
 const localTemplateIdentifier = 'as-custom-element';
-function processTemplateName(localTemplate, localTemplateNames) {
+const processTemplateName = (localTemplate, localTemplateNames) => {
     const name = localTemplate.getAttribute(localTemplateIdentifier);
     if (name === null || name === '') {
-        throw new Error(`AUR0715: The value of "as-custom-element" attribute cannot be empty for local template`);
+        throw createError(`AUR0715: The value of "as-custom-element" attribute cannot be empty for local template`);
     }
     if (localTemplateNames.has(name)) {
-        throw new Error(`AUR0716: Duplicate definition of the local template named ${name}`);
+        throw createError(`AUR0716: Duplicate definition of the local template named ${name}`);
     }
     else {
         localTemplateNames.add(name);
         localTemplate.removeAttribute(localTemplateIdentifier);
     }
     return name;
-}
-function getBindingMode(bindable) {
+};
+const getBindingMode = (bindable) => {
     switch (bindable.getAttribute("mode")) {
         case 'oneTime':
             return 1;
@@ -7418,11 +6926,11 @@ function getBindingMode(bindable) {
         default:
             return 8;
     }
-}
-const ITemplateCompilerHooks = kernel.DI.createInterface('ITemplateCompilerHooks');
+};
+const ITemplateCompilerHooks = createInterface('ITemplateCompilerHooks');
 const typeToHooksDefCache = new WeakMap();
 const hooksBaseName = getResourceKeyFor('compiler-hooks');
-const TemplateCompilerHooks = Object.freeze({
+const TemplateCompilerHooks = objectFreeze({
     name: hooksBaseName,
     define(Type) {
         let def = typeToHooksDefCache.get(Type);
@@ -7451,21 +6959,9 @@ const templateCompilerHooks = (target) => {
 };
 const DEFAULT_SLOT_NAME = 'default';
 const AU_SLOT = 'au-slot';
-var Char;
-(function (Char) {
-    Char[Char["Space"] = 32] = "Space";
-    Char[Char["Dollar"] = 36] = "Dollar";
-    Char[Char["Semicolon"] = 59] = "Semicolon";
-    Char[Char["Backslash"] = 92] = "Backslash";
-    Char[Char["OpenBrace"] = 123] = "OpenBrace";
-    Char[Char["Colon"] = 58] = "Colon";
-})(Char || (Char = {}));
 
 const originalModesMap = new Map();
 class BindingModeBehavior {
-    constructor(mode) {
-        this.mode = mode;
-    }
     bind(scope, binding) {
         originalModesMap.set(binding, binding.mode);
         binding.mode = this.mode;
@@ -7476,77 +6972,52 @@ class BindingModeBehavior {
     }
 }
 class OneTimeBindingBehavior extends BindingModeBehavior {
-    constructor() {
-        super(1);
-    }
+    get mode() { return 1; }
 }
 class ToViewBindingBehavior extends BindingModeBehavior {
-    constructor() {
-        super(2);
-    }
+    get mode() { return 2; }
 }
 class FromViewBindingBehavior extends BindingModeBehavior {
-    constructor() {
-        super(4);
-    }
+    get mode() { return 4; }
 }
 class TwoWayBindingBehavior extends BindingModeBehavior {
-    constructor() {
-        super(6);
-    }
+    get mode() { return 6; }
 }
 bindingBehavior('oneTime')(OneTimeBindingBehavior);
 bindingBehavior('toView')(ToViewBindingBehavior);
 bindingBehavior('fromView')(FromViewBindingBehavior);
 bindingBehavior('twoWay')(TwoWayBindingBehavior);
 
+const bindingHandlerMap$1 = new WeakMap();
 const defaultDelay$1 = 200;
-class DebounceBindingBehavior extends BindingInterceptor {
-    constructor(binding, expr) {
-        super(binding, expr);
-        this._opts = { delay: defaultDelay$1 };
-        this._firstArg = null;
-        this._task = null;
-        this._taskQueue = binding.get(kernel.IPlatform).taskQueue;
-        if (expr.args.length > 0) {
-            this._firstArg = expr.args[0];
+class DebounceBindingBehavior {
+    constructor(platform) {
+        this._platform = platform;
+    }
+    bind(scope, binding, delay) {
+        delay = Number(delay);
+        const opts = {
+            type: 'debounce',
+            delay: delay > 0 ? delay : defaultDelay$1,
+            now: this._platform.performanceNow,
+            queue: this._platform.taskQueue,
+        };
+        const handler = binding.limit?.(opts);
+        if (handler == null) {
+            {
+                console.warn(`Binding ${binding.constructor.name} does not support debounce rate limiting`);
+            }
+        }
+        else {
+            bindingHandlerMap$1.set(binding, handler);
         }
     }
-    callSource(args) {
-        this.queueTask(() => this.binding.callSource(args));
-        return void 0;
-    }
-    handleChange(newValue, oldValue) {
-        if (this._task !== null) {
-            this._task.cancel();
-            this._task = null;
-        }
-        this.binding.handleChange(newValue, oldValue);
-    }
-    updateSource(newValue) {
-        this.queueTask(() => this.binding.updateSource(newValue));
-    }
-    queueTask(callback) {
-        const task = this._task;
-        this._task = this._taskQueue.queueTask(() => {
-            this._task = null;
-            return callback();
-        }, this._opts);
-        task?.cancel();
-    }
-    $bind(scope) {
-        if (this._firstArg !== null) {
-            const delay = Number(this._firstArg.evaluate(scope, this, null));
-            this._opts.delay = isNaN(delay) ? defaultDelay$1 : delay;
-        }
-        this.binding.$bind(scope);
-    }
-    $unbind() {
-        this._task?.cancel();
-        this._task = null;
-        this.binding.$unbind();
+    unbind(scope, binding) {
+        bindingHandlerMap$1.get(binding)?.dispose();
+        bindingHandlerMap$1.delete(binding);
     }
 }
+DebounceBindingBehavior.inject = [kernel.IPlatform];
 bindingBehavior('debounce')(DebounceBindingBehavior);
 
 class SignalBindingBehavior {
@@ -7556,10 +7027,10 @@ class SignalBindingBehavior {
     }
     bind(scope, binding, ...names) {
         if (!('handleChange' in binding)) {
-            throw new Error(`AUR0817: The signal behavior can only be used with bindings that have a "handleChange" method`);
+            throw createError(`AUR0817: The signal behavior can only be used with bindings that have a "handleChange" method`);
         }
         if (names.length === 0) {
-            throw new Error(`AUR0818: At least one signal name must be passed to the signal behavior, e.g. "expr & signal:'my-signal'"`);
+            throw createError(`AUR0818: At least one signal name must be passed to the signal behavior, e.g. "expr & signal:'my-signal'"`);
         }
         this._lookup.set(binding, names);
         let name;
@@ -7579,69 +7050,37 @@ class SignalBindingBehavior {
 SignalBindingBehavior.inject = [runtime.ISignaler];
 bindingBehavior('signal')(SignalBindingBehavior);
 
+const bindingHandlerMap = new WeakMap();
 const defaultDelay = 200;
-class ThrottleBindingBehavior extends BindingInterceptor {
-    constructor(binding, expr) {
-        super(binding, expr);
-        this._opts = { delay: defaultDelay };
-        this._firstArg = null;
-        this._task = null;
-        this._lastCall = 0;
-        this._delay = 0;
-        this._platform = binding.get(kernel.IPlatform);
-        this._taskQueue = this._platform.taskQueue;
-        if (expr.args.length > 0) {
-            this._firstArg = expr.args[0];
-        }
+class ThrottleBindingBehavior {
+    constructor(platform) {
+        this._now = platform.performanceNow;
+        this._taskQueue = platform.taskQueue;
     }
-    callSource(args) {
-        this._queueTask(() => this.binding.callSource(args));
-        return void 0;
-    }
-    handleChange(newValue, oldValue) {
-        if (this._task !== null) {
-            this._task.cancel();
-            this._task = null;
-            this._lastCall = this._platform.performanceNow();
-        }
-        this.binding.handleChange(newValue, oldValue);
-    }
-    updateSource(newValue) {
-        this._queueTask(() => this.binding.updateSource(newValue));
-    }
-    _queueTask(callback) {
-        const opts = this._opts;
-        const platform = this._platform;
-        const nextDelay = this._lastCall + opts.delay - platform.performanceNow();
-        if (nextDelay > 0) {
-            const task = this._task;
-            opts.delay = nextDelay;
-            this._task = this._taskQueue.queueTask(() => {
-                this._lastCall = platform.performanceNow();
-                this._task = null;
-                opts.delay = this._delay;
-                callback();
-            }, opts);
-            task?.cancel();
+    bind(scope, binding, delay) {
+        delay = Number(delay);
+        const opts = {
+            type: 'throttle',
+            delay: delay > 0 ? delay : defaultDelay,
+            now: this._now,
+            queue: this._taskQueue,
+        };
+        const handler = binding.limit?.(opts);
+        if (handler == null) {
+            {
+                console.warn(`Binding ${binding.constructor.name} does not support debounce rate limiting`);
+            }
         }
         else {
-            this._lastCall = platform.performanceNow();
-            callback();
+            bindingHandlerMap.set(binding, handler);
         }
     }
-    $bind(scope) {
-        if (this._firstArg !== null) {
-            const delay = Number(this._firstArg.evaluate(scope, this, null));
-            this._opts.delay = this._delay = isNaN(delay) ? defaultDelay : delay;
-        }
-        super.$bind(scope);
-    }
-    $unbind() {
-        this._task?.cancel();
-        this._task = null;
-        super.$unbind();
+    unbind(scope, binding) {
+        bindingHandlerMap.get(binding)?.dispose();
+        bindingHandlerMap.delete(binding);
     }
 }
+ThrottleBindingBehavior.inject = [kernel.IPlatform];
 bindingBehavior('throttle')(ThrottleBindingBehavior);
 
 class DataAttributeAccessor {
@@ -7660,36 +7099,28 @@ class DataAttributeAccessor {
         }
     }
 }
+mixinNoopSubscribable(DataAttributeAccessor);
 const attrAccessor = new DataAttributeAccessor();
 
 class AttrBindingBehavior {
     bind(_scope, binding) {
-        binding.targetObserver = attrAccessor;
-    }
-    unbind(_scope, _binding) {
-        return;
+        if (!(binding instanceof PropertyBinding)) {
+            throw createError(`AURxxxx: & attr can be only used on property binding. It's used on ${binding.constructor.name}`);
+        }
+        binding.useTargetObserver(attrAccessor);
     }
 }
 bindingBehavior('attr')(AttrBindingBehavior);
 
-function handleSelfEvent(event) {
-    const target = event.composedPath()[0];
-    if (this.target !== target) {
-        return;
-    }
-    return this.selfEventCallSource(event);
-}
 class SelfBindingBehavior {
     bind(_scope, binding) {
-        if (!binding.callSource || !binding.targetEvent) {
-            throw new Error(`AUR0801: Self binding behavior only supports events.`);
+        if (!(binding instanceof ListenerBinding)) {
+            throw createError(`AUR0801: Self binding behavior only supports listener binding via trigger/capture command.`);
         }
-        binding.selfEventCallSource = binding.callSource;
-        binding.callSource = handleSelfEvent;
+        binding.self = true;
     }
     unbind(_scope, binding) {
-        binding.callSource = binding.selfEventCallSource;
-        binding.selfEventCallSource = null;
+        binding.self = false;
     }
 }
 bindingBehavior('self')(SelfBindingBehavior);
@@ -7715,20 +7146,22 @@ class AttributeNSAccessor {
         }
     }
 }
+mixinNoopSubscribable(AttributeNSAccessor);
 
 function defaultMatcher$1(a, b) {
     return a === b;
 }
 class CheckedObserver {
-    constructor(obj, _key, handler, observerLocator) {
-        this.handler = handler;
+    constructor(obj, _key, config, observerLocator) {
         this.type = 2 | 1 | 4;
         this._value = void 0;
         this._oldValue = void 0;
         this._collectionObserver = void 0;
         this._valueObserver = void 0;
-        this._obj = obj;
+        this._listened = false;
+        this._el = obj;
         this.oL = observerLocator;
+        this._config = config;
     }
     getValue() {
         return this._value;
@@ -7752,7 +7185,7 @@ class CheckedObserver {
     }
     _synchronizeElement() {
         const currentValue = this._value;
-        const obj = this._obj;
+        const obj = this._el;
         const elementValue = hasOwnProperty.call(obj, 'model') ? obj.model : obj.value;
         const isRadio = obj.type === 'radio';
         const matcher = obj.matcher !== void 0 ? obj.matcher : defaultMatcher$1;
@@ -7790,7 +7223,7 @@ class CheckedObserver {
     }
     handleEvent() {
         let currentValue = this._oldValue = this._value;
-        const obj = this._obj;
+        const obj = this._el;
         const elementValue = hasOwnProperty.call(obj, 'model') ? obj.model : obj.value;
         const isChecked = obj.checked;
         const matcher = obj.matcher !== void 0 ? obj.matcher : defaultMatcher$1;
@@ -7845,25 +7278,13 @@ class CheckedObserver {
         this._value = currentValue;
         this._flush();
     }
-    start() {
-        this.handler.subscribe(this._obj, this);
+    _start() {
         this._observe();
     }
-    stop() {
-        this.handler.dispose();
+    _stop() {
         this._collectionObserver?.unsubscribe(this);
-        this._collectionObserver = void 0;
         this._valueObserver?.unsubscribe(this);
-    }
-    subscribe(subscriber) {
-        if (this.subs.add(subscriber) && this.subs.count === 1) {
-            this.start();
-        }
-    }
-    unsubscribe(subscriber) {
-        if (this.subs.remove(subscriber) && this.subs.count === 0) {
-            this.stop();
-        }
+        this._collectionObserver = this._valueObserver = void 0;
     }
     _flush() {
         oV$2 = this._oldValue;
@@ -7871,7 +7292,7 @@ class CheckedObserver {
         this.subs.notify(this._value, oV$2);
     }
     _observe() {
-        const obj = this._obj;
+        const obj = this._el;
         (this._valueObserver ?? (this._valueObserver = obj.$observers?.model ?? obj.$observers?.value))?.subscribe(this);
         this._collectionObserver?.unsubscribe(this);
         this._collectionObserver = void 0;
@@ -7880,6 +7301,7 @@ class CheckedObserver {
         }
     }
 }
+mixinNodeObserverUseConfig(CheckedObserver);
 runtime.subscriberCollection(CheckedObserver);
 let oV$2 = void 0;
 
@@ -7892,7 +7314,7 @@ function defaultMatcher(a, b) {
     return a === b;
 }
 class SelectValueObserver {
-    constructor(obj, _key, handler, observerLocator) {
+    constructor(obj, _key, config, observerLocator) {
         this.type = 2 | 1 | 4;
         this._value = void 0;
         this._oldValue = void 0;
@@ -7900,16 +7322,17 @@ class SelectValueObserver {
         this._arrayObserver = void 0;
         this._nodeObserver = void 0;
         this._observing = false;
-        this._obj = obj;
+        this._listened = false;
+        this._el = obj;
         this._observerLocator = observerLocator;
-        this.handler = handler;
+        this._config = config;
     }
     getValue() {
         return this._observing
             ? this._value
-            : this._obj.multiple
-                ? getSelectedOptions(this._obj.options)
-                : this._obj.value;
+            : this._el.multiple
+                ? getSelectedOptions(this._el.options)
+                : this._el.value;
     }
     setValue(newValue) {
         this._oldValue = this._value;
@@ -7929,7 +7352,7 @@ class SelectValueObserver {
     }
     syncOptions() {
         const value = this._value;
-        const obj = this._obj;
+        const obj = this._el;
         const $isArray = isArray(value);
         const matcher = obj.matcher ?? defaultMatcher;
         const options = obj.options;
@@ -7945,7 +7368,7 @@ class SelectValueObserver {
         }
     }
     syncValue() {
-        const obj = this._obj;
+        const obj = this._el;
         const options = obj.options;
         const len = options.length;
         const currentValue = this._value;
@@ -8004,8 +7427,8 @@ class SelectValueObserver {
         return true;
     }
     _start() {
-        (this._nodeObserver = new this._obj.ownerDocument.defaultView.MutationObserver(this._handleNodeChange.bind(this)))
-            .observe(this._obj, childObserverOptions);
+        (this._nodeObserver = new this._el.ownerDocument.defaultView.MutationObserver(this._handleNodeChange.bind(this)))
+            .observe(this._el, childObserverOptions);
         this._observeArray(this._value instanceof Array ? this._value : null);
         this._observing = true;
     }
@@ -8021,8 +7444,8 @@ class SelectValueObserver {
         this._arrayObserver?.unsubscribe(this);
         this._arrayObserver = void 0;
         if (array != null) {
-            if (!this._obj.multiple) {
-                throw new Error(`AUR0654: Only null or Array instances can be bound to a multi-select.`);
+            if (!this._el.multiple) {
+                throw createError(`AUR0654: Only null or Array instances can be bound to a multi-select.`);
             }
             (this._arrayObserver = this._observerLocator.getArrayObserver(array)).subscribe(this);
         }
@@ -8040,24 +7463,13 @@ class SelectValueObserver {
             this._flush();
         }
     }
-    subscribe(subscriber) {
-        if (this.subs.add(subscriber) && this.subs.count === 1) {
-            this.handler.subscribe(this._obj, this);
-            this._start();
-        }
-    }
-    unsubscribe(subscriber) {
-        if (this.subs.remove(subscriber) && this.subs.count === 0) {
-            this.handler.dispose();
-            this._stop();
-        }
-    }
     _flush() {
         oV$1 = this._oldValue;
         this._oldValue = this._value;
         this.subs.notify(this._value, oV$1);
     }
 }
+mixinNodeObserverUseConfig(SelectValueObserver);
 runtime.subscriberCollection(SelectValueObserver);
 function getSelectedOptions(options) {
     const selection = [];
@@ -8083,7 +7495,7 @@ class StyleAttributeAccessor {
     constructor(obj) {
         this.obj = obj;
         this.type = 2 | 4;
-        this.value = '';
+        this._value = '';
         this._oldValue = '';
         this.styles = {};
         this.version = 0;
@@ -8093,7 +7505,7 @@ class StyleAttributeAccessor {
         return this.obj.style.cssText;
     }
     setValue(newValue) {
-        this.value = newValue;
+        this._value = newValue;
         this._hasChanges = newValue !== this._oldValue;
         this._flushChanges();
     }
@@ -8173,7 +7585,7 @@ class StyleAttributeAccessor {
     _flushChanges() {
         if (this._hasChanges) {
             this._hasChanges = false;
-            const currentValue = this.value;
+            const currentValue = this._value;
             const styles = this.styles;
             const styleTuples = this._getStyleTuples(currentValue);
             let style;
@@ -8214,59 +7626,53 @@ class StyleAttributeAccessor {
         this.obj.style.setProperty(style, value, priority);
     }
     bind() {
-        this.value = this._oldValue = this.obj.style.cssText;
+        this._value = this._oldValue = this.obj.style.cssText;
     }
 }
+mixinNoopSubscribable(StyleAttributeAccessor);
 
 class ValueAttributeObserver {
-    constructor(obj, key, handler) {
-        this.handler = handler;
+    constructor(obj, key, config) {
         this.type = 2 | 1 | 4;
         this._value = '';
         this._oldValue = '';
         this._hasChanges = false;
-        this._obj = obj;
+        this._listened = false;
+        this._el = obj;
         this._key = key;
+        this._config = config;
     }
     getValue() {
         return this._value;
     }
     setValue(newValue) {
-        if (Object.is(newValue, this._value)) {
+        if (areEqual(newValue, this._value)) {
             return;
         }
         this._oldValue = this._value;
         this._value = newValue;
         this._hasChanges = true;
-        if (!this.handler.config.readonly) {
+        if (!this._config.readonly) {
             this._flushChanges();
         }
     }
     _flushChanges() {
         if (this._hasChanges) {
             this._hasChanges = false;
-            this._obj[this._key] = this._value ?? this.handler.config.default;
+            this._el[this._key] = this._value ?? this._config.default;
             this._flush();
         }
     }
     handleEvent() {
         this._oldValue = this._value;
-        this._value = this._obj[this._key];
+        this._value = this._el[this._key];
         if (this._oldValue !== this._value) {
             this._hasChanges = false;
             this._flush();
         }
     }
-    subscribe(subscriber) {
-        if (this.subs.add(subscriber) && this.subs.count === 1) {
-            this.handler.subscribe(this._obj, this);
-            this._value = this._oldValue = this._obj[this._key];
-        }
-    }
-    unsubscribe(subscriber) {
-        if (this.subs.remove(subscriber) && this.subs.count === 0) {
-            this.handler.dispose();
-        }
+    _start() {
+        this._value = this._oldValue = this._el[this._key];
     }
     _flush() {
         oV = this._oldValue;
@@ -8274,13 +7680,14 @@ class ValueAttributeObserver {
         this.subs.notify(this._value, oV);
     }
 }
+mixinNodeObserverUseConfig(ValueAttributeObserver);
 runtime.subscriberCollection(ValueAttributeObserver);
 let oV = void 0;
 
 const xlinkNS = 'http://www.w3.org/1999/xlink';
 const xmlNS = 'http://www.w3.org/XML/1998/namespace';
 const xmlnsNS = 'http://www.w3.org/2000/xmlns/';
-const nsAttributes = Object.assign(createLookup(), {
+const nsAttributes = objectAssign(createLookup(), {
     'xlink:actuate': ['actuate', xlinkNS],
     'xlink:arcrole': ['arcrole', xlinkNS],
     'xlink:href': ['href', xlinkNS],
@@ -8295,14 +7702,6 @@ const nsAttributes = Object.assign(createLookup(), {
 });
 const elementPropertyAccessor = new runtime.PropertyAccessor();
 elementPropertyAccessor.type = 2 | 4;
-class NodeObserverConfig {
-    constructor(config) {
-        this.type = config.type ?? ValueAttributeObserver;
-        this.events = config.events;
-        this.readonly = config.readonly;
-        this.default = config.default;
-    }
-}
 class NodeObserverLocator {
     constructor(locator, platform, dirtyChecker, svgAnalyzer) {
         this.locator = locator;
@@ -8358,7 +7757,7 @@ class NodeObserverLocator {
         if (isString(nodeNameOrConfig)) {
             existingMapping = lookup[nodeNameOrConfig] ?? (lookup[nodeNameOrConfig] = createLookup());
             if (existingMapping[key] == null) {
-                existingMapping[key] = new NodeObserverConfig(eventsConfig);
+                existingMapping[key] = eventsConfig;
             }
             else {
                 throwMappingExisted(nodeNameOrConfig, key);
@@ -8370,7 +7769,7 @@ class NodeObserverLocator {
                 const newMapping = nodeNameOrConfig[nodeName];
                 for (key in newMapping) {
                     if (existingMapping[key] == null) {
-                        existingMapping[key] = new NodeObserverConfig(newMapping[key]);
+                        existingMapping[key] = newMapping[key];
                     }
                     else {
                         throwMappingExisted(nodeName, key);
@@ -8384,7 +7783,7 @@ class NodeObserverLocator {
         if (typeof configOrKey === 'object') {
             for (const key in configOrKey) {
                 if (lookup[key] == null) {
-                    lookup[key] = new NodeObserverConfig(configOrKey[key]);
+                    lookup[key] = configOrKey[key];
                 }
                 else {
                     throwMappingExisted('*', key);
@@ -8393,7 +7792,7 @@ class NodeObserverLocator {
         }
         else {
             if (lookup[configOrKey] == null) {
-                lookup[configOrKey] = new NodeObserverConfig(eventsConfig);
+                lookup[configOrKey] = eventsConfig;
             }
             else {
                 throwMappingExisted('*', configOrKey);
@@ -8448,6 +7847,21 @@ class NodeObserverLocator {
             this._globalOverrides[key] = true;
         }
     }
+    getNodeObserverConfig(el, key) {
+        return this._events[el.tagName]?.[key] ?? this._globalEvents[key];
+    }
+    getNodeObserver(el, key, requestor) {
+        const eventsConfig = this._events[el.tagName]?.[key] ?? this._globalEvents[key];
+        let observer;
+        if (eventsConfig != null) {
+            observer = new (eventsConfig.type ?? ValueAttributeObserver)(el, key, eventsConfig, requestor, this.locator);
+            if (!observer.doNotCache) {
+                runtime.getObserverLookup(el)[key] = observer;
+            }
+            return observer;
+        }
+        return null;
+    }
     getObserver(el, key, requestor) {
         switch (key) {
             case 'class':
@@ -8456,9 +7870,9 @@ class NodeObserverLocator {
             case 'style':
                 return new StyleAttributeAccessor(el);
         }
-        const eventsConfig = this._events[el.tagName]?.[key] ?? this._globalEvents[key];
-        if (eventsConfig != null) {
-            return new eventsConfig.type(el, key, new EventSubscriber(eventsConfig), requestor, this.locator);
+        const nodeObserver = this.getNodeObserver(el, key, requestor);
+        if (nodeObserver != null) {
+            return nodeObserver;
         }
         const nsProps = nsAttributes[key];
         if (nsProps !== undefined) {
@@ -8471,7 +7885,7 @@ class NodeObserverLocator {
             if (this.allowDirtyCheck) {
                 return this.dirtyChecker.createProperty(el, key);
             }
-            throw new Error(`AUR0652: Unable to observe property ${String(key)}. Register observation mapping with .useConfig().`);
+            throw createError(`AUR0652: Unable to observe property ${String(key)}. Register observation mapping with .useConfig().`);
         }
         else {
             return new runtime.SetterObserver(el, key);
@@ -8491,40 +7905,36 @@ function getCollectionObserver(collection, observerLocator) {
     }
 }
 function throwMappingExisted(nodeName, key) {
-    throw new Error(`AUR0653: Mapping for property ${String(key)} of <${nodeName} /> already exists`);
+    throw createError(`AUR0653: Mapping for property ${String(key)} of <${nodeName} /> already exists`);
 }
 
 class UpdateTriggerBindingBehavior {
-    constructor(observerLocator) {
-        this.oL = observerLocator;
+    constructor(observerLocator, nodeObserverLocator) {
+        if (!(nodeObserverLocator instanceof NodeObserverLocator)) {
+            throw createError('AURxxxx: updateTrigger binding behavior only works with the default implementation of Aurelia HTML observation. Implement your own node observation + updateTrigger');
+        }
+        this._observerLocator = observerLocator;
+        this._nodeObserverLocator = nodeObserverLocator;
     }
     bind(_scope, binding, ...events) {
         if (events.length === 0) {
-            throw new Error(`AUR0802: The updateTrigger binding behavior requires at least one event name argument: eg <input value.bind="firstName & updateTrigger:'blur'">`);
+            throw createError(`AUR0802: The updateTrigger binding behavior requires at least one event name argument: eg <input value.bind="firstName & updateTrigger:'blur'">`);
         }
-        if (binding.mode !== 6 && binding.mode !== 4) {
-            throw new Error(`AUR0803: The updateTrigger binding behavior can only be applied to two-way/ from-view bindings.`);
+        if (!(binding instanceof PropertyBinding) || !(binding.mode & 4)) {
+            throw createError(`AUR0803: The updateTrigger binding behavior can only be applied to two-way/ from-view bindings.`);
         }
-        const targetObserver = this.oL.getObserver(binding.target, binding.targetProperty);
-        if (!targetObserver.handler) {
-            throw new Error(`AUR0804: The updateTrigger binding behavior can only be applied to two-way/ from-view bindings on input/select elements.`);
+        const targetConfig = this._nodeObserverLocator.getNodeObserverConfig(binding.target, binding.targetProperty);
+        if (targetConfig == null) {
+            {
+                throw createError(`AURxxxx: node observer does not know how to use events to observe ${binding.target}@${binding.targetProperty}`);
+            }
         }
-        binding.targetObserver = targetObserver;
-        const originalHandler = targetObserver.handler;
-        targetObserver.originalHandler = originalHandler;
-        targetObserver.handler = new EventSubscriber(new NodeObserverConfig({
-            default: originalHandler.config.default,
-            events,
-            readonly: originalHandler.config.readonly
-        }));
-    }
-    unbind(_scope, binding) {
-        binding.targetObserver.handler.dispose();
-        binding.targetObserver.handler = binding.targetObserver.originalHandler;
-        binding.targetObserver.originalHandler = null;
+        const targetObserver = this._nodeObserverLocator.getNodeObserver(binding.target, binding.targetProperty, this._observerLocator);
+        targetObserver.useConfig({ readonly: targetConfig.readonly, default: targetConfig.default, events });
+        binding.useTargetObserver(targetObserver);
     }
 }
-UpdateTriggerBindingBehavior.inject = [runtime.IObserverLocator];
+UpdateTriggerBindingBehavior.inject = [runtime.IObserverLocator, runtime.INodeObserverLocator];
 bindingBehavior('updateTrigger')(UpdateTriggerBindingBehavior);
 
 class Focus {
@@ -8642,44 +8052,57 @@ customAttribute('show')(Show);
 
 class Portal {
     constructor(factory, originalLoc, p) {
+        this.position = 'beforeend';
         this.strict = false;
         this._platform = p;
-        this._currentTarget = p.document.createElement('div');
-        this.view = factory.create();
+        this._resolvedTarget = p.document.createElement('div');
+        (this.view = factory.create()).setLocation(this._targetLocation = createLocation(p));
         setEffectiveParentNode(this.view.nodes, originalLoc);
     }
     attaching(initiator, parent, flags) {
         if (this.callbackContext == null) {
             this.callbackContext = this.$controller.scope.bindingContext;
         }
-        const newTarget = this._currentTarget = this._resolveTarget();
-        this.view.setHost(newTarget);
+        const newTarget = this._resolvedTarget = this._getTarget();
+        this._moveLocation(newTarget, this.position);
         return this._activating(initiator, newTarget, flags);
     }
     detaching(initiator, parent, flags) {
-        return this._deactivating(initiator, this._currentTarget, flags);
+        return this._deactivating(initiator, this._resolvedTarget, flags);
     }
     targetChanged() {
         const { $controller } = this;
         if (!$controller.isActive) {
             return;
         }
-        const oldTarget = this._currentTarget;
-        const newTarget = this._currentTarget = this._resolveTarget();
-        if (oldTarget === newTarget) {
+        const newTarget = this._getTarget();
+        if (this._resolvedTarget === newTarget) {
             return;
         }
-        this.view.setHost(newTarget);
+        this._resolvedTarget = newTarget;
         const ret = kernel.onResolve(this._deactivating(null, newTarget, $controller.flags), () => {
+            this._moveLocation(newTarget, this.position);
             return this._activating(null, newTarget, $controller.flags);
         });
         if (isPromise(ret)) {
-            ret.catch(err => { throw err; });
+            ret.catch(rethrow);
+        }
+    }
+    positionChanged() {
+        const { $controller, _resolvedTarget } = this;
+        if (!$controller.isActive) {
+            return;
+        }
+        const ret = kernel.onResolve(this._deactivating(null, _resolvedTarget, $controller.flags), () => {
+            this._moveLocation(_resolvedTarget, this.position);
+            return this._activating(null, _resolvedTarget, $controller.flags);
+        });
+        if (isPromise(ret)) {
+            ret.catch(rethrow);
         }
     }
     _activating(initiator, target, flags) {
         const { activating, callbackContext, view } = this;
-        view.setHost(target);
         return kernel.onResolve(activating?.call(callbackContext, target, view), () => {
             return this._activate(initiator, target, flags);
         });
@@ -8687,7 +8110,7 @@ class Portal {
     _activate(initiator, target, flags) {
         const { $controller, view } = this;
         if (initiator === null) {
-            view.nodes.appendTo(target);
+            view.nodes.insertBefore(this._targetLocation);
         }
         else {
             return kernel.onResolve(view.activate(initiator ?? view, $controller, flags, $controller.scope), () => {
@@ -8722,14 +8145,14 @@ class Portal {
         const { deactivated, callbackContext, view } = this;
         return deactivated?.call(callbackContext, target, view);
     }
-    _resolveTarget() {
+    _getTarget() {
         const p = this._platform;
         const $document = p.document;
         let target = this.target;
         let context = this.renderContext;
         if (target === '') {
             if (this.strict) {
-                throw new Error(`AUR0811: Empty querySelector`);
+                throw createError(`AUR0811: Empty querySelector`);
             }
             return $document.body;
         }
@@ -8748,11 +8171,33 @@ class Portal {
         }
         if (target == null) {
             if (this.strict) {
-                throw new Error(`AUR0812: Portal target not found`);
+                throw createError(`AUR0812: Portal target not found`);
             }
             return $document.body;
         }
         return target;
+    }
+    _moveLocation(target, position) {
+        const end = this._targetLocation;
+        const start = end.$start;
+        const parent = target.parentNode;
+        const nodes = [start, end];
+        switch (position) {
+            case 'beforeend':
+                insertManyBefore(target, null, nodes);
+                break;
+            case 'afterbegin':
+                insertManyBefore(target, target.firstChild, nodes);
+                break;
+            case 'beforebegin':
+                insertManyBefore(parent, target, nodes);
+                break;
+            case 'afterend':
+                insertManyBefore(parent, target.nextSibling, nodes);
+                break;
+            default:
+                throw new Error('Invalid portal insertion position');
+        }
     }
     dispose() {
         this.view.dispose();
@@ -8769,6 +8214,9 @@ Portal.inject = [IViewFactory, IRenderLocation, IPlatform];
 __decorate([
     bindable({ primary: true })
 ], Portal.prototype, "target", void 0);
+__decorate([
+    bindable()
+], Portal.prototype, "position", void 0);
 __decorate([
     bindable({ callback: 'targetChanged' })
 ], Portal.prototype, "renderContext", void 0);
@@ -8922,7 +8370,7 @@ class Else {
             ifBehavior.viewModel.elseFactory = this._factory;
         }
         else {
-            throw new Error(`AUR0810: Unsupported If behavior`);
+            throw createError(`AUR0810: Unsupported If behavior`);
         }
     }
 }
@@ -8937,15 +8385,39 @@ const wrappedExprs = [
     17,
 ];
 class Repeat {
-    constructor(location, parent, factory) {
+    constructor(instruction, parser, location, parent, factory) {
         this.views = [];
-        this.key = void 0;
+        this.key = null;
+        this._keyMap = new Map();
+        this._scopeMap = new Map();
         this._observer = void 0;
         this._observingInnerItems = false;
         this._reevaluating = false;
         this._innerItemsExpression = null;
         this._normalizedItems = void 0;
         this._hasDestructuredLocal = false;
+        const keyProp = instruction.props[0].props[0];
+        if (keyProp !== void 0) {
+            const { to, value, command } = keyProp;
+            if (to === 'key') {
+                if (command === null) {
+                    this.key = value;
+                }
+                else if (command === 'bind') {
+                    this.key = parser.parse(value, 16);
+                }
+                else {
+                    {
+                        throw createError(`AUR775:invalid command ${command}`);
+                    }
+                }
+            }
+            else {
+                {
+                    throw createError(`AUR776:invalid target ${to}`);
+                }
+            }
+        }
         this._location = location;
         this._parent = parent;
         this._factory = factory;
@@ -8973,7 +8445,7 @@ class Repeat {
         this._refreshCollectionObserver();
         const dec = forOf.declaration;
         if (!(this._hasDestructuredLocal = dec.$kind === 24 || dec.$kind === 25)) {
-            this.local = dec.evaluate(this.$controller.scope, binding, null);
+            this.local = runtime.astEvaluate(dec, this.$controller.scope, binding, null);
         }
     }
     attaching(initiator, _parent, _flags) {
@@ -8984,19 +8456,17 @@ class Repeat {
         this._refreshCollectionObserver();
         return this._deactivateAllViews(initiator);
     }
+    unbinding(_initiator, _parent, _flags) {
+        this._scopeMap.clear();
+        this._keyMap.clear();
+    }
     itemsChanged() {
-        const { $controller } = this;
-        if (!$controller.isActive) {
+        if (!this.$controller.isActive) {
             return;
         }
         this._refreshCollectionObserver();
         this._normalizeToArray();
-        const ret = kernel.onResolve(this._deactivateAllViews(null), () => {
-            return this._activateAllViews(null);
-        });
-        if (isPromise(ret)) {
-            ret.catch(rethrow);
-        }
+        this._applyIndexMap(this.items, void 0);
     }
     handleCollectionChange(collection, indexMap) {
         const $controller = this.$controller;
@@ -9008,11 +8478,157 @@ class Repeat {
                 return;
             }
             this._reevaluating = true;
-            this.items = this.forOf.iterable.evaluate($controller.scope, this._forOfBinding, null);
+            this.items = runtime.astEvaluate(this.forOf.iterable, $controller.scope, this._forOfBinding, null);
             this._reevaluating = false;
             return;
         }
         this._normalizeToArray();
+        this._applyIndexMap(collection, indexMap);
+    }
+    _applyIndexMap(collection, indexMap) {
+        const oldViews = this.views;
+        const oldLen = oldViews.length;
+        const key = this.key;
+        const hasKey = key !== null;
+        if (hasKey || indexMap === void 0) {
+            const local = this.local;
+            const newItems = this._normalizedItems;
+            const newLen = newItems.length;
+            const forOf = this.forOf;
+            const dec = forOf.declaration;
+            const binding = this._forOfBinding;
+            const hasDestructuredLocal = this._hasDestructuredLocal;
+            indexMap = runtime.createIndexMap(newLen);
+            let i = 0;
+            if (oldLen === 0) {
+                for (; i < newLen; ++i) {
+                    indexMap[i] = -2;
+                }
+            }
+            else if (newLen === 0) {
+                if (hasDestructuredLocal) {
+                    for (i = 0; i < oldLen; ++i) {
+                        indexMap.deletedIndices.push(i);
+                        indexMap.deletedItems.push(runtime.astEvaluate(dec, oldViews[i].scope, binding, null));
+                    }
+                }
+                else {
+                    for (i = 0; i < oldLen; ++i) {
+                        indexMap.deletedIndices.push(i);
+                        indexMap.deletedItems.push(oldViews[i].scope.bindingContext[local]);
+                    }
+                }
+            }
+            else {
+                const oldItems = Array(oldLen);
+                if (hasDestructuredLocal) {
+                    for (i = 0; i < oldLen; ++i) {
+                        oldItems[i] = runtime.astEvaluate(dec, oldViews[i].scope, binding, null);
+                    }
+                }
+                else {
+                    for (i = 0; i < oldLen; ++i) {
+                        oldItems[i] = oldViews[i].scope.bindingContext[local];
+                    }
+                }
+                let oldItem;
+                let newItem;
+                let oldKey;
+                let newKey;
+                let j = 0;
+                const oldEnd = oldLen - 1;
+                const newEnd = newLen - 1;
+                const oldIndices = new Map();
+                const newIndices = new Map();
+                const keyMap = this._keyMap;
+                const scopeMap = this._scopeMap;
+                const parentScope = this.$controller.scope;
+                i = 0;
+                outer: {
+                    while (true) {
+                        oldItem = oldItems[i];
+                        newItem = newItems[i];
+                        oldKey = hasKey
+                            ? getKeyValue(keyMap, key, oldItem, getScope(scopeMap, oldItems[i], forOf, parentScope, binding, local, hasDestructuredLocal), binding)
+                            : oldItem;
+                        newKey = hasKey
+                            ? getKeyValue(keyMap, key, newItem, getScope(scopeMap, newItems[i], forOf, parentScope, binding, local, hasDestructuredLocal), binding)
+                            : newItem;
+                        if (oldKey !== newKey) {
+                            keyMap.set(oldItem, oldKey);
+                            keyMap.set(newItem, newKey);
+                            break;
+                        }
+                        ++i;
+                        if (i > oldEnd || i > newEnd) {
+                            break outer;
+                        }
+                    }
+                    if (oldEnd !== newEnd) {
+                        break outer;
+                    }
+                    j = newEnd;
+                    while (true) {
+                        oldItem = oldItems[j];
+                        newItem = newItems[j];
+                        oldKey = hasKey
+                            ? getKeyValue(keyMap, key, oldItem, getScope(scopeMap, oldItem, forOf, parentScope, binding, local, hasDestructuredLocal), binding)
+                            : oldItem;
+                        newKey = hasKey
+                            ? getKeyValue(keyMap, key, newItem, getScope(scopeMap, newItem, forOf, parentScope, binding, local, hasDestructuredLocal), binding)
+                            : newItem;
+                        if (oldKey !== newKey) {
+                            keyMap.set(oldItem, oldKey);
+                            keyMap.set(newItem, newKey);
+                            break;
+                        }
+                        --j;
+                        if (i > j) {
+                            break outer;
+                        }
+                    }
+                }
+                const oldStart = i;
+                const newStart = i;
+                for (i = newStart; i <= newEnd; ++i) {
+                    if (keyMap.has(newItem = newItems[i])) {
+                        newKey = keyMap.get(newItem);
+                    }
+                    else {
+                        newKey = hasKey
+                            ? getKeyValue(keyMap, key, newItem, getScope(scopeMap, newItem, forOf, parentScope, binding, local, hasDestructuredLocal), binding)
+                            : newItem;
+                        keyMap.set(newItem, newKey);
+                    }
+                    newIndices.set(newKey, i);
+                }
+                for (i = oldStart; i <= oldEnd; ++i) {
+                    if (keyMap.has(oldItem = oldItems[i])) {
+                        oldKey = keyMap.get(oldItem);
+                    }
+                    else {
+                        oldKey = hasKey
+                            ? getKeyValue(keyMap, key, oldItem, oldViews[i].scope, binding)
+                            : oldItem;
+                    }
+                    oldIndices.set(oldKey, i);
+                    if (newIndices.has(oldKey)) {
+                        indexMap[newIndices.get(oldKey)] = i;
+                    }
+                    else {
+                        indexMap.deletedIndices.push(i);
+                        indexMap.deletedItems.push(oldItem);
+                    }
+                }
+                for (i = newStart; i <= newEnd; ++i) {
+                    if (!oldIndices.has(keyMap.get(newItems[i]))) {
+                        indexMap[i] = -2;
+                    }
+                }
+                oldIndices.clear();
+                newIndices.clear();
+            }
+        }
         if (indexMap === void 0) {
             const ret = kernel.onResolve(this._deactivateAllViews(null), () => {
                 return this._activateAllViews(null);
@@ -9022,18 +8638,17 @@ class Repeat {
             }
         }
         else {
-            const oldLength = this.views.length;
             const $indexMap = runtime.applyMutationsToIndices(indexMap);
             if ($indexMap.deletedIndices.length > 0) {
                 const ret = kernel.onResolve(this._deactivateAndRemoveViewsByKey($indexMap), () => {
-                    return this._createAndActivateAndSortViewsByKey(oldLength, $indexMap);
+                    return this._createAndActivateAndSortViewsByKey(oldLen, $indexMap);
                 });
                 if (isPromise(ret)) {
                     ret.catch(rethrow);
                 }
             }
             else {
-                this._createAndActivateAndSortViewsByKey(oldLength, $indexMap);
+                this._createAndActivateAndSortViewsByKey(oldLen, $indexMap);
             }
         }
     }
@@ -9043,8 +8658,8 @@ class Repeat {
         let observingInnerItems = this._observingInnerItems;
         let newObserver;
         if (observingInnerItems) {
-            innerItems = this._innerItems = this._innerItemsExpression.evaluate(scope, this._forOfBinding, null) ?? null;
-            observingInnerItems = this._observingInnerItems = !Object.is(this.items, innerItems);
+            innerItems = this._innerItems = runtime.astEvaluate(this._innerItemsExpression, scope, this._forOfBinding, null) ?? null;
+            observingInnerItems = this._observingInnerItems = !areEqual(this.items, innerItems);
         }
         const oldObserver = this._observer;
         if (this.$controller.isActive) {
@@ -9060,7 +8675,7 @@ class Repeat {
         }
     }
     _normalizeToArray() {
-        const items = this.items;
+        const { items } = this;
         if (isArray(items)) {
             this._normalizedItems = items;
             return;
@@ -9076,20 +8691,14 @@ class Repeat {
         let ret;
         let view;
         let viewScope;
-        const { $controller, _factory: factory, local, _location: location, items } = this;
+        const { $controller, _factory, local, _location, items, _scopeMap, _forOfBinding, forOf, _hasDestructuredLocal } = this;
         const parentScope = $controller.scope;
-        const forOf = this.forOf;
         const newLen = getCount(items);
         const views = this.views = Array(newLen);
         iterate(items, (item, i) => {
-            view = views[i] = factory.create().setLocation(location);
+            view = views[i] = _factory.create().setLocation(_location);
             view.nodes.unlink();
-            if (this._hasDestructuredLocal) {
-                forOf.declaration.assign(viewScope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext()), this._forOfBinding, item);
-            }
-            else {
-                viewScope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext(local, item));
-            }
+            viewScope = getScope(_scopeMap, item, forOf, parentScope, _forOfBinding, local, _hasDestructuredLocal);
             setContextualProperties(viewScope.overrideContext, i, newLen);
             ret = view.activate(initiator ?? view, $controller, 0, viewScope);
             if (isPromise(ret)) {
@@ -9157,11 +8766,11 @@ class Repeat {
         let view;
         let viewScope;
         let i = 0;
-        const { $controller, _factory: factory, local, _normalizedItems: normalizedItems, _location: location, views } = this;
+        const { $controller, _factory, local, _normalizedItems, _location, views, _hasDestructuredLocal, _forOfBinding, _scopeMap, forOf } = this;
         const mapLen = indexMap.length;
         for (; mapLen > i; ++i) {
             if (indexMap[i] === -2) {
-                view = factory.create();
+                view = _factory.create();
                 views.splice(i, 0, view);
             }
         }
@@ -9173,32 +8782,40 @@ class Repeat {
         runtime.synchronizeIndices(views, indexMap);
         const seq = longestIncreasingSubsequence(indexMap);
         const seqLen = seq.length;
+        const dec = forOf.declaration;
         let next;
         let j = seqLen - 1;
         i = newLen - 1;
         for (; i >= 0; --i) {
             view = views[i];
             next = views[i + 1];
-            view.nodes.link(next?.nodes ?? location);
+            view.nodes.link(next?.nodes ?? _location);
             if (indexMap[i] === -2) {
-                if (this._hasDestructuredLocal) {
-                    this.forOf.declaration.assign(viewScope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext()), this._forOfBinding, normalizedItems[i]);
-                }
-                else {
-                    viewScope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext(local, normalizedItems[i]));
-                }
+                viewScope = getScope(_scopeMap, _normalizedItems[i], forOf, parentScope, _forOfBinding, local, _hasDestructuredLocal);
                 setContextualProperties(viewScope.overrideContext, i, newLen);
-                view.setLocation(location);
+                view.setLocation(_location);
                 ret = view.activate(view, $controller, 0, viewScope);
                 if (isPromise(ret)) {
                     (promises ?? (promises = [])).push(ret);
                 }
             }
             else if (j < 0 || seqLen === 1 || i !== seq[j]) {
+                if (_hasDestructuredLocal) {
+                    runtime.astAssign(dec, view.scope, _forOfBinding, _normalizedItems[i]);
+                }
+                else {
+                    view.scope.bindingContext[local] = _normalizedItems[i];
+                }
                 setContextualProperties(view.scope.overrideContext, i, newLen);
                 view.nodes.insertBefore(view.location);
             }
             else {
+                if (_hasDestructuredLocal) {
+                    runtime.astAssign(dec, view.scope, _forOfBinding, _normalizedItems[i]);
+                }
+                else {
+                    view.scope.bindingContext[local] = _normalizedItems[i];
+                }
                 if (oldLength !== newLen) {
                     setContextualProperties(view.scope.overrideContext, i, newLen);
                 }
@@ -9226,7 +8843,7 @@ class Repeat {
         }
     }
 }
-Repeat.inject = [IRenderLocation, IController, IViewFactory];
+Repeat.inject = [IInstruction, runtime.IExpressionParser, IRenderLocation, IController, IViewFactory];
 __decorate([
     bindable
 ], Repeat.prototype, "items", void 0);
@@ -9291,7 +8908,7 @@ function longestIncreasingSubsequence(indexMap) {
         prevIndices[i] = 0;
     return result;
 }
-const mismatchedLengthError = (viewCount, itemCount) => new Error(`AUR0814: viewsLen=${viewCount}, mapLen=${itemCount}`)
+const mismatchedLengthError = (viewCount, itemCount) => createError(`AUR0814: viewsLen=${viewCount}, mapLen=${itemCount}`)
     ;
 const setContextualProperties = (oc, index, length) => {
     const isFirst = index === 0;
@@ -9305,7 +8922,7 @@ const setContextualProperties = (oc, index, length) => {
     oc.$odd = !isEven;
     oc.$length = length;
 };
-const toStringTag = Object.prototype.toString;
+const toStringTag = baseObjectPrototype.toString;
 const getCount = (result) => {
     switch (toStringTag.call(result)) {
         case '[object Array]': return result.length;
@@ -9314,7 +8931,7 @@ const getCount = (result) => {
         case '[object Number]': return result;
         case '[object Null]': return 0;
         case '[object Undefined]': return 0;
-        default: throw new Error(`Cannot count ${toStringTag.call(result)}`);
+        default: throw createError(`Cannot count ${toStringTag.call(result)}`);
     }
 };
 const iterate = (result, func) => {
@@ -9325,7 +8942,7 @@ const iterate = (result, func) => {
         case '[object Number]': return $number(result, func);
         case '[object Null]': return;
         case '[object Undefined]': return;
-        default: throw new Error(`Cannot iterate over ${toStringTag.call(result)}`);
+        default: throw createError(`Cannot iterate over ${toStringTag.call(result)}`);
     }
 };
 const $array = (result, func) => {
@@ -9355,6 +8972,32 @@ const $number = (result, func) => {
         func(i, i, result);
     }
 };
+const getKeyValue = (keyMap, key, item, scope, binding) => {
+    let value = keyMap.get(item);
+    if (value === void 0) {
+        if (typeof key === 'string') {
+            value = item[key];
+        }
+        else {
+            value = runtime.astEvaluate(key, scope, binding, null);
+        }
+        keyMap.set(item, value);
+    }
+    return value;
+};
+const getScope = (scopeMap, item, forOf, parentScope, binding, local, hasDestructuredLocal) => {
+    let scope = scopeMap.get(item);
+    if (scope === void 0) {
+        if (hasDestructuredLocal) {
+            runtime.astAssign(forOf.declaration, scope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext()), binding, item);
+        }
+        else {
+            scope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext(local, item));
+        }
+        scopeMap.set(item, scope);
+    }
+    return scope;
+};
 
 class With {
     constructor(factory, location) {
@@ -9368,7 +9011,7 @@ class With {
         if ($controller.isActive && bindings != null) {
             scope = runtime.Scope.fromParent($controller.scope, newValue === void 0 ? {} : newValue);
             for (ii = bindings.length; ii > i; ++i) {
-                bindings[i].$bind(scope);
+                bindings[i].bind(scope);
             }
         }
     }
@@ -9577,7 +9220,7 @@ exports.Case = class Case {
             this.linkToSwitch($switch);
         }
         else {
-            throw new Error(`AUR0815: The parent switch not found; only "*[switch] > *[case|default-case]" relation is supported.`);
+            throw createError(`AUR0815: The parent switch not found; only "*[switch] > *[case|default-case]" relation is supported.`);
         }
     }
     detaching(initiator, parent, flags) {
@@ -9666,7 +9309,7 @@ exports.Case = __decorate([
 exports.DefaultCase = class DefaultCase extends exports.Case {
     linkToSwitch($switch) {
         if ($switch.defaultCase !== void 0) {
-            throw new Error(`AUR0816: Multiple 'default-case's are not allowed.`);
+            throw createError(`AUR0816: Multiple 'default-case's are not allowed.`);
         }
         $switch.defaultCase = this;
     }
@@ -9909,7 +9552,7 @@ function getPromiseController(controller) {
     if ($promise instanceof exports.PromiseTemplateController) {
         return $promise;
     }
-    throw new Error(`AUR0813: The parent promise.resolve not found; only "*[promise.resolve] > *[pending|then|catch]" relation is supported.`);
+    throw createError(`AUR0813: The parent promise.resolve not found; only "*[promise.resolve] > *[pending|then|catch]" relation is supported.`);
 }
 let PromiseAttributePattern = class PromiseAttributePattern {
     'promise.resolve'(name, value, _parts) {
@@ -9935,249 +9578,6 @@ let RejectedAttributePattern = class RejectedAttributePattern {
 RejectedAttributePattern = __decorate([
     attributePattern({ pattern: 'catch', symbols: '' })
 ], RejectedAttributePattern);
-
-function createElement(p, tagOrType, props, children) {
-    if (isString(tagOrType)) {
-        return createElementForTag(p, tagOrType, props, children);
-    }
-    if (isElementType(tagOrType)) {
-        return createElementForType(p, tagOrType, props, children);
-    }
-    throw new Error(`Invalid Tag or Type.`);
-}
-class RenderPlan {
-    constructor(node, instructions, _dependencies) {
-        this.node = node;
-        this.instructions = instructions;
-        this._dependencies = _dependencies;
-        this._lazyDef = void 0;
-    }
-    get definition() {
-        if (this._lazyDef === void 0) {
-            this._lazyDef = CustomElementDefinition.create({
-                name: generateElementName(),
-                template: this.node,
-                needsCompile: isString(this.node),
-                instructions: this.instructions,
-                dependencies: this._dependencies,
-            });
-        }
-        return this._lazyDef;
-    }
-    createView(parentContainer) {
-        return this.getViewFactory(parentContainer).create();
-    }
-    getViewFactory(parentContainer) {
-        return parentContainer.root.get(IRendering).getViewFactory(this.definition, parentContainer.createChild().register(...this._dependencies));
-    }
-    mergeInto(parent, instructions, dependencies) {
-        parent.appendChild(this.node);
-        instructions.push(...this.instructions);
-        dependencies.push(...this._dependencies);
-    }
-}
-function createElementForTag(p, tagName, props, children) {
-    const instructions = [];
-    const allInstructions = [];
-    const dependencies = [];
-    const element = p.document.createElement(tagName);
-    let hasInstructions = false;
-    if (props) {
-        Object.keys(props)
-            .forEach(to => {
-            const value = props[to];
-            if (isInstruction(value)) {
-                hasInstructions = true;
-                instructions.push(value);
-            }
-            else {
-                element.setAttribute(to, value);
-            }
-        });
-    }
-    if (hasInstructions) {
-        element.className = 'au';
-        allInstructions.push(instructions);
-    }
-    if (children) {
-        addChildren(p, element, children, allInstructions, dependencies);
-    }
-    return new RenderPlan(element, allInstructions, dependencies);
-}
-function createElementForType(p, Type, props, children) {
-    const definition = getElementDefinition(Type);
-    const instructions = [];
-    const allInstructions = [instructions];
-    const dependencies = [];
-    const childInstructions = [];
-    const bindables = definition.bindables;
-    const element = p.document.createElement(definition.name);
-    element.className = 'au';
-    if (!dependencies.includes(Type)) {
-        dependencies.push(Type);
-    }
-    instructions.push(new HydrateElementInstruction(definition, void 0, childInstructions, null, false, void 0));
-    if (props) {
-        Object.keys(props)
-            .forEach(to => {
-            const value = props[to];
-            if (isInstruction(value)) {
-                childInstructions.push(value);
-            }
-            else {
-                if (bindables[to] === void 0) {
-                    childInstructions.push(new SetAttributeInstruction(value, to));
-                }
-                else {
-                    childInstructions.push(new SetPropertyInstruction(value, to));
-                }
-            }
-        });
-    }
-    if (children) {
-        addChildren(p, element, children, allInstructions, dependencies);
-    }
-    return new RenderPlan(element, allInstructions, dependencies);
-}
-function addChildren(p, parent, children, allInstructions, dependencies) {
-    for (let i = 0, ii = children.length; i < ii; ++i) {
-        const current = children[i];
-        switch (typeof current) {
-            case 'string':
-                parent.appendChild(p.document.createTextNode(current));
-                break;
-            case 'object':
-                if (current instanceof p.Node) {
-                    parent.appendChild(current);
-                }
-                else if ('mergeInto' in current) {
-                    current.mergeInto(parent, allInstructions, dependencies);
-                }
-        }
-    }
-}
-
-function toLookup(acc, item) {
-    const to = item.to;
-    if (to !== void 0 && to !== 'subject' && to !== 'composing') {
-        acc[to] = item;
-    }
-    return acc;
-}
-class AuRender {
-    constructor(_platform, _instruction, _hdrContext, _rendering) {
-        this._platform = _platform;
-        this._instruction = _instruction;
-        this._hdrContext = _hdrContext;
-        this._rendering = _rendering;
-        this.component = void 0;
-        this.composing = false;
-        this.view = void 0;
-        this._lastSubject = void 0;
-        this._properties = _instruction.props.reduce(toLookup, {});
-    }
-    attaching(initiator, parent, flags) {
-        const { component, view } = this;
-        if (view === void 0 || this._lastSubject !== component) {
-            this._lastSubject = component;
-            this.composing = true;
-            return this.compose(void 0, component, initiator, flags);
-        }
-        return this.compose(view, component, initiator, flags);
-    }
-    detaching(initiator, parent, flags) {
-        return this._deactivate(this.view, initiator, flags);
-    }
-    componentChanged(newValue, previousValue, flags) {
-        const { $controller } = this;
-        if (!$controller.isActive) {
-            return;
-        }
-        if (this._lastSubject === newValue) {
-            return;
-        }
-        this._lastSubject = newValue;
-        this.composing = true;
-        flags |= $controller.flags;
-        const ret = kernel.onResolve(this._deactivate(this.view, null, flags), () => {
-            return this.compose(void 0, newValue, null, flags);
-        });
-        if (isPromise(ret)) {
-            ret.catch(err => { throw err; });
-        }
-    }
-    compose(view, subject, initiator, flags) {
-        return kernel.onResolve(view === void 0
-            ? kernel.onResolve(subject, resolvedSubject => this._resolveView(resolvedSubject, flags))
-            : view, resolvedView => this._activate(this.view = resolvedView, initiator, flags));
-    }
-    _deactivate(view, initiator, flags) {
-        return view?.deactivate(initiator ?? view, this.$controller, flags);
-    }
-    _activate(view, initiator, flags) {
-        const { $controller } = this;
-        return kernel.onResolve(view?.activate(initiator ?? view, $controller, flags, $controller.scope), () => {
-            this.composing = false;
-        });
-    }
-    _resolveView(subject, flags) {
-        const view = this._provideViewFor(subject, flags);
-        if (view) {
-            view.setLocation(this.$controller.location);
-            view.lockScope(this.$controller.scope);
-            return view;
-        }
-        return void 0;
-    }
-    _provideViewFor(comp, _flags) {
-        if (comp == null) {
-            return void 0;
-        }
-        const ctxContainer = this._hdrContext.controller.container;
-        if (typeof comp === 'object') {
-            if (isController(comp)) {
-                return comp;
-            }
-            if ('createView' in comp) {
-                return comp.createView(ctxContainer);
-            }
-            if ('create' in comp) {
-                return comp.create();
-            }
-            if ('template' in comp) {
-                return this._rendering.getViewFactory(CustomElementDefinition.getOrCreate(comp), ctxContainer).create();
-            }
-        }
-        if (isString(comp)) {
-            const def = ctxContainer.find(CustomElement, comp);
-            if (def == null) {
-                throw new Error(`AUR0809: Unable to find custom element ${comp} for <au-render>.`);
-            }
-            comp = def.Type;
-        }
-        return createElement(this._platform, comp, this._properties, this.$controller.host.childNodes).createView(ctxContainer);
-    }
-    dispose() {
-        this.view?.dispose();
-        this.view = (void 0);
-    }
-    accept(visitor) {
-        if (this.view?.accept(visitor) === true) {
-            return true;
-        }
-    }
-}
-AuRender.inject = [IPlatform, IInstruction, IHydrationContext, IRendering];
-__decorate([
-    bindable
-], AuRender.prototype, "component", void 0);
-__decorate([
-    bindable({ mode: 4 })
-], AuRender.prototype, "composing", void 0);
-customElement({ name: 'au-render', template: null, containerless: true, capture: true })(AuRender);
-function isController(subject) {
-    return 'lockScope' in subject;
-}
 
 class AuCompose {
     constructor(_container, parent, host, _location, _platform, instruction, contextFactory) {
@@ -10264,7 +9664,7 @@ class AuCompose {
         const parentNode = loc == null ? host.parentNode : loc.parentNode;
         if (vmDef !== null) {
             if (vmDef.containerless) {
-                throw new Error(`AUR0806: Containerless custom element is not supported by <au-compose/>`);
+                throw createError(`AUR0806: Containerless custom element is not supported by <au-compose/>`);
             }
             if (loc == null) {
                 compositionHost = host;
@@ -10288,7 +9688,7 @@ class AuCompose {
         const compose = () => {
             if (vmDef !== null) {
                 const controller = Controller.$el(childCtn, comp, compositionHost, { projections: this._instruction.projections }, vmDef);
-                return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, 1, $controller.scope.parentScope), (deactachInitiator) => kernel.onResolve(controller.deactivate(deactachInitiator ?? controller, $controller, 2), removeCompositionHost), (model) => comp.activate?.(model), context);
+                return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, 1, $controller.scope.parent), (deactachInitiator) => kernel.onResolve(controller.deactivate(deactachInitiator ?? controller, $controller, 2), removeCompositionHost), (model) => comp.activate?.(model), context);
             }
             else {
                 const targetDef = CustomElementDefinition.create({
@@ -10318,17 +9718,17 @@ class AuCompose {
     }
     getVm(container, comp, host) {
         if (comp == null) {
-            return new EmptyComponent$1();
+            return new EmptyComponent();
         }
         if (typeof comp === 'object') {
             return comp;
         }
         const p = this._platform;
         const isLocation = isRenderLocation(host);
-        container.registerResolver(p.Element, container.registerResolver(INode, new kernel.InstanceProvider('ElementResolver', isLocation ? null : host)));
-        container.registerResolver(IRenderLocation, new kernel.InstanceProvider('IRenderLocation', isLocation ? host : null));
+        registerResolver(container, p.Element, registerResolver(container, INode, new kernel.InstanceProvider('ElementResolver', isLocation ? null : host)));
+        registerResolver(container, IRenderLocation, new kernel.InstanceProvider('IRenderLocation', isLocation ? host : null));
         const instance = container.invoke(comp);
-        container.registerResolver(comp, new kernel.InstanceProvider('au-compose.viewModel', instance));
+        registerResolver(container, comp, new kernel.InstanceProvider('au-compose.viewModel', instance));
         return instance;
     }
     getDef(component) {
@@ -10355,12 +9755,12 @@ __decorate([
             if (v === 'scoped' || v === 'auto') {
                 return v;
             }
-            throw new Error(`AUR0805: Invalid scope behavior config. Only "scoped" or "auto" allowed.`);
+            throw createError(`AUR0805: Invalid scope behavior config. Only "scoped" or "auto" allowed.`);
         }
     })
 ], AuCompose.prototype, "scopeBehavior", void 0);
 customElement('au-compose')(AuCompose);
-class EmptyComponent$1 {
+class EmptyComponent {
 }
 class CompositionContextFactory {
     constructor() {
@@ -10421,7 +9821,7 @@ class CompositionController {
     }
     activate(initiator) {
         if (this.state !== 0) {
-            throw new Error(`AUR0807: Composition has already been activated/deactivated. Id: ${this.controller.name}`);
+            throw createError(`AUR0807: Composition has already been activated/deactivated. Id: ${this.controller.name}`);
         }
         this.state = 1;
         return this.start(initiator);
@@ -10432,14 +9832,14 @@ class CompositionController {
                 this.state = -1;
                 return this.stop(detachInitator);
             case -1:
-                throw new Error(`AUR0808: Composition has already been deactivated.`);
+                throw createError(`AUR0808: Composition has already been deactivated.`);
             default:
                 this.state = -1;
         }
     }
 }
 
-class AuSlot {
+exports.AuSlot = class AuSlot {
     constructor(location, instruction, hdrContext, rendering) {
         this._parentScope = null;
         this._outerScope = null;
@@ -10459,10 +9859,10 @@ class AuSlot {
     }
     static get inject() { return [IRenderLocation, IInstruction, IHydrationContext, IRendering]; }
     binding(_initiator, _parent, _flags) {
-        this._parentScope = this.$controller.scope.parentScope;
+        this._parentScope = this.$controller.scope.parent;
         let outerScope;
         if (this._hasProjection) {
-            outerScope = this._hdrContext.controller.scope.parentScope;
+            outerScope = this._hdrContext.controller.scope.parent;
             (this._outerScope = runtime.Scope.fromParent(outerScope, outerScope.bindingContext))
                 .overrideContext.$host = this.expose ?? this._parentScope.bindingContext;
         }
@@ -10487,15 +9887,21 @@ class AuSlot {
             return true;
         }
     }
-}
+};
 __decorate([
     bindable
-], AuSlot.prototype, "expose", void 0);
-customElement({ name: 'au-slot', template: null, containerless: true })(AuSlot);
+], exports.AuSlot.prototype, "expose", void 0);
+exports.AuSlot = __decorate([
+    customElement({
+        name: 'au-slot',
+        template: null,
+        containerless: true
+    })
+], exports.AuSlot);
 
-const ISanitizer = kernel.DI.createInterface('ISanitizer', x => x.singleton(class {
+const ISanitizer = createInterface('ISanitizer', x => x.singleton(class {
     sanitize() {
-        throw new Error('"sanitize" method not implemented');
+        throw createError('"sanitize" method not implemented');
     }
 }));
 exports.SanitizeValueConverter = class SanitizeValueConverter {
@@ -10513,19 +9919,6 @@ exports.SanitizeValueConverter = __decorate([
     __param(0, ISanitizer)
 ], exports.SanitizeValueConverter);
 valueConverter('sanitize')(exports.SanitizeValueConverter);
-
-exports.ViewValueConverter = class ViewValueConverter {
-    constructor(_viewLocator) {
-        this._viewLocator = _viewLocator;
-    }
-    toView(object, viewNameOrSelector) {
-        return this._viewLocator.getViewComponentForObject(object, viewNameOrSelector);
-    }
-};
-exports.ViewValueConverter = __decorate([
-    __param(0, IViewLocator)
-], exports.ViewValueConverter);
-valueConverter('view')(exports.ViewValueConverter);
 
 const DebounceBindingBehaviorRegistration = DebounceBindingBehavior;
 const OneTimeBindingBehaviorRegistration = OneTimeBindingBehavior;
@@ -10555,7 +9948,6 @@ const ShortHandBindingSyntax = [
     AtPrefixedTriggerAttributePatternRegistration,
     ColonPrefixedBindAttributePatternRegistration
 ];
-const CallBindingCommandRegistration = exports.CallBindingCommand;
 const DefaultBindingCommandRegistration = exports.DefaultBindingCommand;
 const ForBindingCommandRegistration = exports.ForBindingCommand;
 const FromViewBindingCommandRegistration = exports.FromViewBindingCommand;
@@ -10564,7 +9956,6 @@ const ToViewBindingCommandRegistration = exports.ToViewBindingCommand;
 const TwoWayBindingCommandRegistration = exports.TwoWayBindingCommand;
 const RefBindingCommandRegistration = RefBindingCommand;
 const TriggerBindingCommandRegistration = exports.TriggerBindingCommand;
-const DelegateBindingCommandRegistration = exports.DelegateBindingCommand;
 const CaptureBindingCommandRegistration = exports.CaptureBindingCommand;
 const AttrBindingCommandRegistration = exports.AttrBindingCommand;
 const ClassBindingCommandRegistration = exports.ClassBindingCommand;
@@ -10576,11 +9967,9 @@ const DefaultBindingLanguage = [
     FromViewBindingCommandRegistration,
     ToViewBindingCommandRegistration,
     TwoWayBindingCommandRegistration,
-    CallBindingCommandRegistration,
     ForBindingCommandRegistration,
     RefBindingCommandRegistration,
     TriggerBindingCommandRegistration,
-    DelegateBindingCommandRegistration,
     CaptureBindingCommandRegistration,
     ClassBindingCommandRegistration,
     StyleBindingCommandRegistration,
@@ -10588,7 +9977,6 @@ const DefaultBindingLanguage = [
     SpreadBindingCommandRegistration,
 ];
 const SanitizeValueConverterRegistration = exports.SanitizeValueConverter;
-const ViewValueConverterRegistration = exports.ViewValueConverter;
 const IfRegistration = If;
 const ElseRegistration = Else;
 const RepeatRegistration = Repeat;
@@ -10603,10 +9991,8 @@ const RejectedTemplateControllerRegistration = exports.RejectedTemplateControlle
 const PromiseAttributePatternRegistration = PromiseAttributePattern;
 const FulfilledAttributePatternRegistration = FulfilledAttributePattern;
 const RejectedAttributePatternRegistration = RejectedAttributePattern;
-const AttrBindingBehaviorRegistration = AttrBindingBehavior;
 const SelfBindingBehaviorRegistration = SelfBindingBehavior;
 const UpdateTriggerBindingBehaviorRegistration = UpdateTriggerBindingBehavior;
-const AuRenderRegistration = AuRender;
 const AuComposeRegistration = AuCompose;
 const PortalRegistration = Portal;
 const FocusRegistration = Focus;
@@ -10620,7 +10006,6 @@ const DefaultResources = [
     ThrottleBindingBehaviorRegistration,
     TwoWayBindingBehaviorRegistration,
     SanitizeValueConverterRegistration,
-    ViewValueConverterRegistration,
     IfRegistration,
     ElseRegistration,
     RepeatRegistration,
@@ -10635,53 +10020,33 @@ const DefaultResources = [
     PromiseAttributePatternRegistration,
     FulfilledAttributePatternRegistration,
     RejectedAttributePatternRegistration,
-    AttrBindingBehaviorRegistration,
+    AttrBindingBehavior,
     SelfBindingBehaviorRegistration,
     UpdateTriggerBindingBehaviorRegistration,
-    AuRenderRegistration,
     AuComposeRegistration,
     PortalRegistration,
     FocusRegistration,
     ShowRegistration,
-    AuSlot,
+    exports.AuSlot,
 ];
-const CallBindingRendererRegistration = CallBindingRenderer;
-const CustomAttributeRendererRegistration = CustomAttributeRenderer;
-const CustomElementRendererRegistration = CustomElementRenderer;
-const InterpolationBindingRendererRegistration = InterpolationBindingRenderer;
-const IteratorBindingRendererRegistration = IteratorBindingRenderer;
-const LetElementRendererRegistration = LetElementRenderer;
-const PropertyBindingRendererRegistration = PropertyBindingRenderer;
-const RefBindingRendererRegistration = RefBindingRenderer;
-const SetPropertyRendererRegistration = SetPropertyRenderer;
-const TemplateControllerRendererRegistration = TemplateControllerRenderer;
-const ListenerBindingRendererRegistration = ListenerBindingRenderer;
-const AttributeBindingRendererRegistration = AttributeBindingRenderer;
-const SetAttributeRendererRegistration = SetAttributeRenderer;
-const SetClassAttributeRendererRegistration = SetClassAttributeRenderer;
-const SetStyleAttributeRendererRegistration = SetStyleAttributeRenderer;
-const StylePropertyBindingRendererRegistration = StylePropertyBindingRenderer;
-const TextBindingRendererRegistration = TextBindingRenderer;
-const SpreadRendererRegistration = SpreadRenderer;
 const DefaultRenderers = [
-    PropertyBindingRendererRegistration,
-    IteratorBindingRendererRegistration,
-    CallBindingRendererRegistration,
-    RefBindingRendererRegistration,
-    InterpolationBindingRendererRegistration,
-    SetPropertyRendererRegistration,
-    CustomElementRendererRegistration,
-    CustomAttributeRendererRegistration,
-    TemplateControllerRendererRegistration,
-    LetElementRendererRegistration,
-    ListenerBindingRendererRegistration,
-    AttributeBindingRendererRegistration,
-    SetAttributeRendererRegistration,
-    SetClassAttributeRendererRegistration,
-    SetStyleAttributeRendererRegistration,
-    StylePropertyBindingRendererRegistration,
-    TextBindingRendererRegistration,
-    SpreadRendererRegistration,
+    exports.PropertyBindingRenderer,
+    exports.IteratorBindingRenderer,
+    exports.RefBindingRenderer,
+    exports.InterpolationBindingRenderer,
+    exports.SetPropertyRenderer,
+    exports.CustomElementRenderer,
+    exports.CustomAttributeRenderer,
+    exports.TemplateControllerRenderer,
+    exports.LetElementRenderer,
+    exports.ListenerBindingRenderer,
+    exports.AttributeBindingRenderer,
+    exports.SetAttributeRenderer,
+    exports.SetClassAttributeRenderer,
+    exports.SetStyleAttributeRenderer,
+    exports.StylePropertyBindingRenderer,
+    exports.TextBindingRenderer,
+    exports.SpreadRenderer,
 ];
 const StandardConfiguration = createConfiguration(kernel.noop);
 function createConfiguration(optionsProvider) {
@@ -10703,7 +10068,7 @@ function createConfiguration(optionsProvider) {
     };
 }
 
-const IAurelia = kernel.DI.createInterface('IAurelia');
+const IAurelia = createInterface('IAurelia');
 class Aurelia {
     constructor(container = kernel.DI.createContainer()) {
         this.container = container;
@@ -10715,10 +10080,10 @@ class Aurelia {
         this._startPromise = void 0;
         this._stopPromise = void 0;
         if (container.has(IAurelia, true)) {
-            throw new Error(`AUR0768: An instance of Aurelia is already registered with the container or an ancestor of it.`);
+            throw createError(`AUR0768: An instance of Aurelia is already registered with the container or an ancestor of it.`);
         }
-        container.registerResolver(IAurelia, new kernel.InstanceProvider('IAurelia', this));
-        container.registerResolver(IAppRoot, this._rootProvider = new kernel.InstanceProvider('IAppRoot'));
+        registerResolver(container, IAurelia, new kernel.InstanceProvider('IAurelia', this));
+        registerResolver(container, IAppRoot, this._rootProvider = new kernel.InstanceProvider('IAppRoot'));
     }
     get isRunning() { return this._isRunning; }
     get isStarting() { return this._isStarting; }
@@ -10726,7 +10091,7 @@ class Aurelia {
     get root() {
         if (this._root == null) {
             if (this.next == null) {
-                throw new Error(`AUR0767: root is not defined`);
+                throw createError(`AUR0767: root is not defined`);
             }
             return this.next;
         }
@@ -10747,13 +10112,13 @@ class Aurelia {
         const comp = config.component;
         let bc;
         if (isFunction(comp)) {
-            ctn.registerResolver(p.HTMLElement, ctn.registerResolver(p.Element, ctn.registerResolver(INode, new kernel.InstanceProvider('ElementResolver', host))));
+            registerResolver(ctn, p.HTMLElement, registerResolver(ctn, p.Element, registerResolver(ctn, INode, new kernel.InstanceProvider('ElementResolver', host))));
             bc = ctn.invoke(comp);
         }
         else {
             bc = comp;
         }
-        ctn.registerResolver(IEventTarget, new kernel.InstanceProvider('IEventTarget', host));
+        registerResolver(ctn, IEventTarget, new kernel.InstanceProvider('IEventTarget', host));
         parentController = parentController ?? null;
         const view = Controller.$el(ctn, bc, host, null, CustomElementDefinition.create({ name: generateElementName(), template: host, enhance: true }));
         return kernel.onResolve(view.activate(view, parentController, 1), () => view);
@@ -10768,7 +10133,7 @@ class Aurelia {
         let p;
         if (!this.container.has(IPlatform, false)) {
             if (host.ownerDocument.defaultView === null) {
-                throw new Error(`AUR0769: Failed to initialize the platform object. The host element's ownerDocument does not have a defaultView`);
+                throw createError(`AUR0769: Failed to initialize the platform object. The host element's ownerDocument does not have a defaultView`);
             }
             p = new platformBrowser.BrowserPlatform(host.ownerDocument.defaultView);
             this.container.register(instanceRegistration(IPlatform, p));
@@ -10780,7 +10145,7 @@ class Aurelia {
     }
     start(root = this.next) {
         if (root == null) {
-            throw new Error(`AUR0770: There is no composition root`);
+            throw createError(`AUR0770: There is no composition root`);
         }
         if (isPromise(this._startPromise)) {
             return this._startPromise;
@@ -10819,7 +10184,7 @@ class Aurelia {
     }
     dispose() {
         if (this._isRunning || this._isStopping) {
-            throw new Error(`AUR0771: The aurelia instance must be fully stopped before it can be disposed`);
+            throw createError(`AUR0771: The aurelia instance must be fully stopped before it can be disposed`);
         }
         this.container.dispose();
     }
@@ -10844,491 +10209,18 @@ exports.DefinitionType = void 0;
     DefinitionType[DefinitionType["Attribute"] = 2] = "Attribute";
 })(exports.DefinitionType || (exports.DefinitionType = {}));
 
-const IDialogService = kernel.DI.createInterface('IDialogService');
-const IDialogController = kernel.DI.createInterface('IDialogController');
-const IDialogDomRenderer = kernel.DI.createInterface('IDialogDomRenderer');
-const IDialogDom = kernel.DI.createInterface('IDialogDom');
-const IDialogGlobalSettings = kernel.DI.createInterface('IDialogGlobalSettings');
-class DialogOpenResult {
-    constructor(wasCancelled, dialog) {
-        this.wasCancelled = wasCancelled;
-        this.dialog = dialog;
-    }
-    static create(wasCancelled, dialog) {
-        return new DialogOpenResult(wasCancelled, dialog);
-    }
-}
-class DialogCloseResult {
-    constructor(status, value) {
-        this.status = status;
-        this.value = value;
-    }
-    static create(status, value) {
-        return new DialogCloseResult(status, value);
-    }
-}
-exports.DialogDeactivationStatuses = void 0;
-(function (DialogDeactivationStatuses) {
-    DialogDeactivationStatuses["Ok"] = "ok";
-    DialogDeactivationStatuses["Error"] = "error";
-    DialogDeactivationStatuses["Cancel"] = "cancel";
-    DialogDeactivationStatuses["Abort"] = "abort";
-})(exports.DialogDeactivationStatuses || (exports.DialogDeactivationStatuses = {}));
-
-class DialogController {
-    constructor(p, container) {
-        this.p = p;
-        this.ctn = container;
-        this.closed = new Promise((resolve, reject) => {
-            this._resolve = resolve;
-            this._reject = reject;
-        });
-    }
-    static get inject() { return [IPlatform, kernel.IContainer]; }
-    activate(settings) {
-        const container = this.ctn.createChild();
-        const { model, template, rejectOnCancel } = settings;
-        const hostRenderer = container.get(IDialogDomRenderer);
-        const dialogTargetHost = settings.host ?? this.p.document.body;
-        const dom = this.dom = hostRenderer.render(dialogTargetHost, settings);
-        const rootEventTarget = container.has(IEventTarget, true)
-            ? container.get(IEventTarget)
-            : null;
-        const contentHost = dom.contentHost;
-        this.settings = settings;
-        if (rootEventTarget == null || !rootEventTarget.contains(dialogTargetHost)) {
-            container.register(instanceRegistration(IEventTarget, dialogTargetHost));
-        }
-        container.register(instanceRegistration(INode, contentHost), instanceRegistration(IDialogDom, dom));
-        return new Promise(r => {
-            const cmp = Object.assign(this.cmp = this.getOrCreateVm(container, settings, contentHost), { $dialog: this });
-            r(cmp.canActivate?.(model) ?? true);
-        })
-            .then(canActivate => {
-            if (canActivate !== true) {
-                dom.dispose();
-                if (rejectOnCancel) {
-                    throw createDialogCancelError(null, 'Dialog activation rejected');
-                }
-                return DialogOpenResult.create(true, this);
-            }
-            const cmp = this.cmp;
-            return kernel.onResolve(cmp.activate?.(model), () => {
-                const ctrlr = this.controller = Controller.$el(container, cmp, contentHost, null, CustomElementDefinition.create(this.getDefinition(cmp) ?? { name: CustomElement.generateName(), template }));
-                return kernel.onResolve(ctrlr.activate(ctrlr, null, 1), () => {
-                    dom.overlay.addEventListener(settings.mouseEvent ?? 'click', this);
-                    return DialogOpenResult.create(false, this);
-                });
-            });
-        }, e => {
-            dom.dispose();
-            throw e;
-        });
-    }
-    deactivate(status, value) {
-        if (this._closingPromise) {
-            return this._closingPromise;
-        }
-        let deactivating = true;
-        const { controller, dom, cmp, settings: { mouseEvent, rejectOnCancel } } = this;
-        const dialogResult = DialogCloseResult.create(status, value);
-        const promise = new Promise(r => {
-            r(kernel.onResolve(cmp.canDeactivate?.(dialogResult) ?? true, canDeactivate => {
-                if (canDeactivate !== true) {
-                    deactivating = false;
-                    this._closingPromise = void 0;
-                    if (rejectOnCancel) {
-                        throw createDialogCancelError(null, 'Dialog cancellation rejected');
-                    }
-                    return DialogCloseResult.create("abort");
-                }
-                return kernel.onResolve(cmp.deactivate?.(dialogResult), () => kernel.onResolve(controller.deactivate(controller, null, 2), () => {
-                    dom.dispose();
-                    dom.overlay.removeEventListener(mouseEvent ?? 'click', this);
-                    if (!rejectOnCancel && status !== "error") {
-                        this._resolve(dialogResult);
-                    }
-                    else {
-                        this._reject(createDialogCancelError(value, 'Dialog cancelled with a rejection on cancel'));
-                    }
-                    return dialogResult;
-                }));
-            }));
-        }).catch(reason => {
-            this._closingPromise = void 0;
-            throw reason;
-        });
-        this._closingPromise = deactivating ? promise : void 0;
-        return promise;
-    }
-    ok(value) {
-        return this.deactivate("ok", value);
-    }
-    cancel(value) {
-        return this.deactivate("cancel", value);
-    }
-    error(value) {
-        const closeError = createDialogCloseError(value);
-        return new Promise(r => r(kernel.onResolve(this.cmp.deactivate?.(DialogCloseResult.create("error", closeError)), () => kernel.onResolve(this.controller.deactivate(this.controller, null, 2), () => {
-            this.dom.dispose();
-            this._reject(closeError);
-        }))));
-    }
-    handleEvent(event) {
-        if (this.settings.overlayDismiss
-            && !this.dom.contentHost.contains(event.target)) {
-            this.cancel();
-        }
-    }
-    getOrCreateVm(container, settings, host) {
-        const Component = settings.component;
-        if (Component == null) {
-            return new EmptyComponent();
-        }
-        if (typeof Component === 'object') {
-            return Component;
-        }
-        const p = this.p;
-        container.registerResolver(p.HTMLElement, container.registerResolver(p.Element, container.registerResolver(INode, new kernel.InstanceProvider('ElementResolver', host))));
-        return container.invoke(Component);
-    }
-    getDefinition(component) {
-        const Ctor = (isFunction(component)
-            ? component
-            : component?.constructor);
-        return CustomElement.isType(Ctor)
-            ? CustomElement.getDefinition(Ctor)
-            : null;
-    }
-}
-class EmptyComponent {
-}
-function createDialogCancelError(output, msg) {
-    const error = new Error(msg);
-    error.wasCancelled = true;
-    error.value = output;
-    return error;
-}
-function createDialogCloseError(output) {
-    const error = new Error();
-    error.wasCancelled = false;
-    error.value = output;
-    return error;
-}
-
-class DialogService {
-    constructor(_ctn, p, _defaultSettings) {
-        this._ctn = _ctn;
-        this.p = p;
-        this._defaultSettings = _defaultSettings;
-        this.dlgs = [];
-    }
-    get controllers() {
-        return this.dlgs.slice(0);
-    }
-    get top() {
-        const dlgs = this.dlgs;
-        return dlgs.length > 0 ? dlgs[dlgs.length - 1] : null;
-    }
-    static get inject() { return [kernel.IContainer, IPlatform, IDialogGlobalSettings]; }
-    static register(container) {
-        container.register(singletonRegistration(IDialogService, this), AppTask.deactivating(IDialogService, dialogService => kernel.onResolve(dialogService.closeAll(), (openDialogController) => {
-            if (openDialogController.length > 0) {
-                throw new Error(`AUR0901: There are still ${openDialogController.length} open dialog(s).`);
-            }
-        })));
-    }
-    open(settings) {
-        return asDialogOpenPromise(new Promise(resolve => {
-            const $settings = DialogSettings.from(this._defaultSettings, settings);
-            const container = $settings.container ?? this._ctn.createChild();
-            resolve(kernel.onResolve($settings.load(), loadedSettings => {
-                const dialogController = container.invoke(DialogController);
-                container.register(instanceRegistration(IDialogController, dialogController));
-                container.register(callbackRegistration(DialogController, () => {
-                    throw new Error(`AUR0902: Invalid injection of DialogController. Use IDialogController instead.`);
-                }));
-                return kernel.onResolve(dialogController.activate(loadedSettings), openResult => {
-                    if (!openResult.wasCancelled) {
-                        if (this.dlgs.push(dialogController) === 1) {
-                            this.p.window.addEventListener('keydown', this);
-                        }
-                        const $removeController = () => this.remove(dialogController);
-                        dialogController.closed.then($removeController, $removeController);
-                    }
-                    return openResult;
-                });
-            }));
-        }));
-    }
-    closeAll() {
-        return Promise
-            .all(Array.from(this.dlgs)
-            .map(controller => {
-            if (controller.settings.rejectOnCancel) {
-                return controller.cancel().then(() => null);
-            }
-            return controller.cancel().then(result => result.status === "cancel"
-                ? null
-                : controller);
-        }))
-            .then(unclosedControllers => unclosedControllers.filter(unclosed => !!unclosed));
-    }
-    remove(controller) {
-        const dlgs = this.dlgs;
-        const idx = dlgs.indexOf(controller);
-        if (idx > -1) {
-            this.dlgs.splice(idx, 1);
-        }
-        if (dlgs.length === 0) {
-            this.p.window.removeEventListener('keydown', this);
-        }
-    }
-    handleEvent(e) {
-        const keyEvent = e;
-        const key = getActionKey(keyEvent);
-        if (key == null) {
-            return;
-        }
-        const top = this.top;
-        if (top === null || top.settings.keyboard.length === 0) {
-            return;
-        }
-        const keyboard = top.settings.keyboard;
-        if (key === 'Escape' && keyboard.includes(key)) {
-            void top.cancel();
-        }
-        else if (key === 'Enter' && keyboard.includes(key)) {
-            void top.ok();
-        }
-    }
-}
-class DialogSettings {
-    static from(...srcs) {
-        return Object.assign(new DialogSettings(), ...srcs)
-            ._validate()
-            ._normalize();
-    }
-    load() {
-        const loaded = this;
-        const cmp = this.component;
-        const template = this.template;
-        const maybePromise = kernel.resolveAll(...[
-            cmp == null
-                ? void 0
-                : kernel.onResolve(cmp(), loadedCmp => { loaded.component = loadedCmp; }),
-            isFunction(template)
-                ? kernel.onResolve(template(), loadedTpl => { loaded.template = loadedTpl; })
-                : void 0
-        ]);
-        return isPromise(maybePromise)
-            ? maybePromise.then(() => loaded)
-            : loaded;
-    }
-    _validate() {
-        if (this.component == null && this.template == null) {
-            throw new Error(`AUR0903: Invalid Dialog Settings. You must provide "component", "template" or both.`);
-        }
-        return this;
-    }
-    _normalize() {
-        if (this.keyboard == null) {
-            this.keyboard = this.lock ? [] : ['Enter', 'Escape'];
-        }
-        if (typeof this.overlayDismiss !== 'boolean') {
-            this.overlayDismiss = !this.lock;
-        }
-        return this;
-    }
-}
-function whenClosed(onfulfilled, onrejected) {
-    return this.then(openResult => openResult.dialog.closed.then(onfulfilled, onrejected), onrejected);
-}
-function asDialogOpenPromise(promise) {
-    promise.whenClosed = whenClosed;
-    return promise;
-}
-function getActionKey(e) {
-    if ((e.code || e.key) === 'Escape' || e.keyCode === 27) {
-        return 'Escape';
-    }
-    if ((e.code || e.key) === 'Enter' || e.keyCode === 13) {
-        return 'Enter';
-    }
-    return undefined;
-}
-
-class DefaultDialogGlobalSettings {
-    constructor() {
-        this.lock = true;
-        this.startingZIndex = 1000;
-        this.rejectOnCancel = false;
-    }
-    static register(container) {
-        singletonRegistration(IDialogGlobalSettings, this).register(container);
-    }
-}
-const baseWrapperCss = 'position:absolute;width:100%;height:100%;top:0;left:0;';
-class DefaultDialogDomRenderer {
-    constructor(p) {
-        this.p = p;
-        this.wrapperCss = `${baseWrapperCss} display:flex;`;
-        this.overlayCss = baseWrapperCss;
-        this.hostCss = 'position:relative;margin:auto;';
-    }
-    static register(container) {
-        singletonRegistration(IDialogDomRenderer, this).register(container);
-    }
-    render(dialogHost) {
-        const doc = this.p.document;
-        const h = (name, css) => {
-            const el = doc.createElement(name);
-            el.style.cssText = css;
-            return el;
-        };
-        const wrapper = dialogHost.appendChild(h('au-dialog-container', this.wrapperCss));
-        const overlay = wrapper.appendChild(h('au-dialog-overlay', this.overlayCss));
-        const host = wrapper.appendChild(h('div', this.hostCss));
-        return new DefaultDialogDom(wrapper, overlay, host);
-    }
-}
-DefaultDialogDomRenderer.inject = [IPlatform];
-class DefaultDialogDom {
-    constructor(wrapper, overlay, contentHost) {
-        this.wrapper = wrapper;
-        this.overlay = overlay;
-        this.contentHost = contentHost;
-    }
-    dispose() {
-        this.wrapper.remove();
-    }
-}
-
-function createDialogConfiguration(settingsProvider, registrations) {
-    return {
-        settingsProvider: settingsProvider,
-        register: (ctn) => ctn.register(...registrations, AppTask.creating(() => settingsProvider(ctn.get(IDialogGlobalSettings)))),
-        customize(cb, regs) {
-            return createDialogConfiguration(cb, regs ?? registrations);
-        },
-    };
-}
-const DialogConfiguration = createDialogConfiguration(() => {
-    throw new Error(`AUR0904: Invalid dialog configuration. ` +
-            'Specify the implementations for ' +
-            '<IDialogService>, <IDialogGlobalSettings> and <IDialogDomRenderer>, ' +
-            'or use the DialogDefaultConfiguration export.');
-}, [class NoopDialogGlobalSettings {
-        static register(container) {
-            container.register(singletonRegistration(IDialogGlobalSettings, this));
-        }
-    }]);
-const DialogDefaultConfiguration = createDialogConfiguration(kernel.noop, [
-    DialogService,
-    DefaultDialogGlobalSettings,
-    DefaultDialogDomRenderer,
-]);
-
-const IWcElementRegistry = kernel.DI.createInterface(x => x.singleton(WcCustomElementRegistry));
-class WcCustomElementRegistry {
-    constructor(ctn, p, r) {
-        this.ctn = ctn;
-        this.p = p;
-        this.r = r;
-    }
-    define(name, def, options) {
-        if (!name.includes('-')) {
-            throw new Error('Invalid web-components custom element name. It must include a "-"');
-        }
-        let elDef;
-        if (def == null) {
-            throw new Error('Invalid custom element definition');
-        }
-        switch (typeof def) {
-            case 'function':
-                elDef = CustomElement.isType(def)
-                    ? CustomElement.getDefinition(def)
-                    : CustomElementDefinition.create(CustomElement.generateName(), def);
-                break;
-            default:
-                elDef = CustomElementDefinition.getOrCreate(def);
-                break;
-        }
-        if (elDef.containerless) {
-            throw new Error('Containerless custom element is not supported. Consider using buitl-in extends instead');
-        }
-        const BaseClass = !options?.extends ? HTMLElement : this.p.document.createElement(options.extends).constructor;
-        const container = this.ctn;
-        const rendering = this.r;
-        const bindables = elDef.bindables;
-        const p = this.p;
-        class CustomElementClass extends BaseClass {
-            auInit() {
-                if (this.auInited) {
-                    return;
-                }
-                this.auInited = true;
-                const childCtn = container.createChild();
-                childCtn.registerResolver(p.HTMLElement, childCtn.registerResolver(p.Element, childCtn.registerResolver(INode, new kernel.InstanceProvider('ElementProvider', this))));
-                const compiledDef = rendering.compile(elDef, childCtn, { projections: null });
-                const viewModel = childCtn.invoke(compiledDef.Type);
-                const controller = this.auCtrl = Controller.$el(childCtn, viewModel, this, null, compiledDef);
-                setRef(this, compiledDef.key, controller);
-            }
-            connectedCallback() {
-                this.auInit();
-                this.auCtrl.activate(this.auCtrl, null, 0);
-            }
-            disconnectedCallback() {
-                this.auCtrl.deactivate(this.auCtrl, null, 0);
-            }
-            adoptedCallback() {
-                this.auInit();
-            }
-            attributeChangedCallback(name, oldValue, newValue) {
-                this.auInit();
-                this.auCtrl.viewModel[name] = newValue;
-            }
-        }
-        CustomElementClass.observedAttributes = Object.keys(bindables);
-        for (const bindableProp in bindables) {
-            Object.defineProperty(CustomElementClass.prototype, bindableProp, {
-                configurable: true,
-                enumerable: false,
-                get() {
-                    return this['auCtrl'].viewModel[bindableProp];
-                },
-                set(v) {
-                    if (!this['auInited']) {
-                        this['auInit']();
-                    }
-                    this['auCtrl'].viewModel[bindableProp] = v;
-                }
-            });
-        }
-        this.p.customElements.define(name, CustomElementClass, options);
-        return CustomElementClass;
-    }
-}
-WcCustomElementRegistry.inject = [kernel.IContainer, IPlatform, IRendering];
-
 exports.AdoptedStyleSheetsStyles = AdoptedStyleSheetsStyles;
 exports.AppRoot = AppRoot;
 exports.AppTask = AppTask;
 exports.AtPrefixedTriggerAttributePatternRegistration = AtPrefixedTriggerAttributePatternRegistration;
 exports.AttrBindingBehavior = AttrBindingBehavior;
-exports.AttrBindingBehaviorRegistration = AttrBindingBehaviorRegistration;
 exports.AttrBindingCommandRegistration = AttrBindingCommandRegistration;
 exports.AttrSyntax = AttrSyntax;
 exports.AttributeBinding = AttributeBinding;
 exports.AttributeBindingInstruction = AttributeBindingInstruction;
-exports.AttributeBindingRendererRegistration = AttributeBindingRendererRegistration;
 exports.AttributeNSAccessor = AttributeNSAccessor;
 exports.AttributePattern = AttributePattern;
 exports.AuCompose = AuCompose;
-exports.AuRender = AuRender;
-exports.AuRenderRegistration = AuRenderRegistration;
-exports.AuSlot = AuSlot;
 exports.AuSlotsInfo = AuSlotsInfo;
 exports.Aurelia = Aurelia;
 exports.Bindable = Bindable;
@@ -11337,16 +10229,11 @@ exports.BindableObserver = BindableObserver;
 exports.BindablesInfo = BindablesInfo;
 exports.BindingBehavior = BindingBehavior;
 exports.BindingBehaviorDefinition = BindingBehaviorDefinition;
-exports.BindingBehaviorFactory = BindingBehaviorFactory;
 exports.BindingCommand = BindingCommand;
 exports.BindingCommandDefinition = BindingCommandDefinition;
-exports.BindingInterceptor = BindingInterceptor;
 exports.BindingModeBehavior = BindingModeBehavior;
+exports.BindingTargetSubscriber = BindingTargetSubscriber;
 exports.CSSModulesProcessorRegistry = CSSModulesProcessorRegistry;
-exports.CallBinding = CallBinding;
-exports.CallBindingCommandRegistration = CallBindingCommandRegistration;
-exports.CallBindingInstruction = CallBindingInstruction;
-exports.CallBindingRendererRegistration = CallBindingRendererRegistration;
 exports.CaptureBindingCommandRegistration = CaptureBindingCommandRegistration;
 exports.CheckedObserver = CheckedObserver;
 exports.Children = Children;
@@ -11356,13 +10243,12 @@ exports.ClassAttributeAccessor = ClassAttributeAccessor;
 exports.ClassBindingCommandRegistration = ClassBindingCommandRegistration;
 exports.ColonPrefixedBindAttributePatternRegistration = ColonPrefixedBindAttributePatternRegistration;
 exports.ComputedWatcher = ComputedWatcher;
+exports.ContentBinding = ContentBinding;
 exports.Controller = Controller;
 exports.CustomAttribute = CustomAttribute;
 exports.CustomAttributeDefinition = CustomAttributeDefinition;
-exports.CustomAttributeRendererRegistration = CustomAttributeRendererRegistration;
 exports.CustomElement = CustomElement;
 exports.CustomElementDefinition = CustomElementDefinition;
-exports.CustomElementRendererRegistration = CustomElementRendererRegistration;
 exports.DataAttributeAccessor = DataAttributeAccessor;
 exports.DebounceBindingBehavior = DebounceBindingBehavior;
 exports.DebounceBindingBehaviorRegistration = DebounceBindingBehaviorRegistration;
@@ -11370,23 +10256,11 @@ exports.DefaultBindingCommandRegistration = DefaultBindingCommandRegistration;
 exports.DefaultBindingLanguage = DefaultBindingLanguage;
 exports.DefaultBindingSyntax = DefaultBindingSyntax;
 exports.DefaultComponents = DefaultComponents;
-exports.DefaultDialogDom = DefaultDialogDom;
-exports.DefaultDialogDomRenderer = DefaultDialogDomRenderer;
-exports.DefaultDialogGlobalSettings = DefaultDialogGlobalSettings;
 exports.DefaultRenderers = DefaultRenderers;
 exports.DefaultResources = DefaultResources;
-exports.DelegateBindingCommandRegistration = DelegateBindingCommandRegistration;
-exports.DialogCloseResult = DialogCloseResult;
-exports.DialogConfiguration = DialogConfiguration;
-exports.DialogController = DialogController;
-exports.DialogDefaultConfiguration = DialogDefaultConfiguration;
-exports.DialogOpenResult = DialogOpenResult;
-exports.DialogService = DialogService;
 exports.DotSeparatedAttributePatternRegistration = DotSeparatedAttributePatternRegistration;
 exports.Else = Else;
 exports.ElseRegistration = ElseRegistration;
-exports.EventDelegator = EventDelegator;
-exports.EventSubscriber = EventSubscriber;
 exports.ExpressionWatcher = ExpressionWatcher;
 exports.FlushQueue = FlushQueue;
 exports.Focus = Focus;
@@ -11408,12 +10282,6 @@ exports.IAttributePattern = IAttributePattern;
 exports.IAuSlotsInfo = IAuSlotsInfo;
 exports.IAurelia = IAurelia;
 exports.IController = IController;
-exports.IDialogController = IDialogController;
-exports.IDialogDom = IDialogDom;
-exports.IDialogDomRenderer = IDialogDomRenderer;
-exports.IDialogGlobalSettings = IDialogGlobalSettings;
-exports.IDialogService = IDialogService;
-exports.IEventDelegator = IEventDelegator;
 exports.IEventTarget = IEventTarget;
 exports.IFlushQueue = IFlushQueue;
 exports.IHistory = IHistory;
@@ -11438,28 +10306,23 @@ exports.ITemplateCompilerHooks = ITemplateCompilerHooks;
 exports.ITemplateCompilerRegistration = ITemplateCompilerRegistration;
 exports.ITemplateElementFactory = ITemplateElementFactory;
 exports.IViewFactory = IViewFactory;
-exports.IViewLocator = IViewLocator;
-exports.IWcElementRegistry = IWcElementRegistry;
 exports.IWindow = IWindow;
 exports.If = If;
 exports.IfRegistration = IfRegistration;
 exports.InterpolationBinding = InterpolationBinding;
-exports.InterpolationBindingRendererRegistration = InterpolationBindingRendererRegistration;
 exports.InterpolationInstruction = InterpolationInstruction;
 exports.InterpolationPartBinding = InterpolationPartBinding;
 exports.Interpretation = Interpretation;
 exports.IteratorBindingInstruction = IteratorBindingInstruction;
-exports.IteratorBindingRendererRegistration = IteratorBindingRendererRegistration;
 exports.LetBinding = LetBinding;
 exports.LetBindingInstruction = LetBindingInstruction;
-exports.LetElementRendererRegistration = LetElementRendererRegistration;
 exports.LifecycleHooks = LifecycleHooks;
 exports.LifecycleHooksDefinition = LifecycleHooksDefinition;
 exports.LifecycleHooksEntry = LifecycleHooksEntry;
-exports.Listener = Listener;
+exports.ListenerBinding = ListenerBinding;
 exports.ListenerBindingInstruction = ListenerBindingInstruction;
-exports.ListenerBindingRendererRegistration = ListenerBindingRendererRegistration;
-exports.NodeObserverConfig = NodeObserverConfig;
+exports.ListenerBindingOptions = ListenerBindingOptions;
+exports.MultiAttrInstruction = MultiAttrInstruction;
 exports.NodeObserverLocator = NodeObserverLocator;
 exports.NoopSVGAnalyzer = NoopSVGAnalyzer;
 exports.OneTimeBindingBehavior = OneTimeBindingBehavior;
@@ -11468,13 +10331,10 @@ exports.OneTimeBindingCommandRegistration = OneTimeBindingCommandRegistration;
 exports.Portal = Portal;
 exports.PropertyBinding = PropertyBinding;
 exports.PropertyBindingInstruction = PropertyBindingInstruction;
-exports.PropertyBindingRendererRegistration = PropertyBindingRendererRegistration;
 exports.RefAttributePatternRegistration = RefAttributePatternRegistration;
 exports.RefBinding = RefBinding;
 exports.RefBindingCommandRegistration = RefBindingCommandRegistration;
 exports.RefBindingInstruction = RefBindingInstruction;
-exports.RefBindingRendererRegistration = RefBindingRendererRegistration;
-exports.RenderPlan = RenderPlan;
 exports.Rendering = Rendering;
 exports.Repeat = Repeat;
 exports.RepeatRegistration = RepeatRegistration;
@@ -11485,29 +10345,24 @@ exports.SelectValueObserver = SelectValueObserver;
 exports.SelfBindingBehavior = SelfBindingBehavior;
 exports.SelfBindingBehaviorRegistration = SelfBindingBehaviorRegistration;
 exports.SetAttributeInstruction = SetAttributeInstruction;
-exports.SetAttributeRendererRegistration = SetAttributeRendererRegistration;
 exports.SetClassAttributeInstruction = SetClassAttributeInstruction;
-exports.SetClassAttributeRendererRegistration = SetClassAttributeRendererRegistration;
 exports.SetPropertyInstruction = SetPropertyInstruction;
-exports.SetPropertyRendererRegistration = SetPropertyRendererRegistration;
 exports.SetStyleAttributeInstruction = SetStyleAttributeInstruction;
-exports.SetStyleAttributeRendererRegistration = SetStyleAttributeRendererRegistration;
 exports.ShadowDOMRegistry = ShadowDOMRegistry;
 exports.ShortHandBindingSyntax = ShortHandBindingSyntax;
 exports.SignalBindingBehavior = SignalBindingBehavior;
 exports.SignalBindingBehaviorRegistration = SignalBindingBehaviorRegistration;
+exports.SpreadBindingInstruction = SpreadBindingInstruction;
+exports.SpreadElementPropBindingInstruction = SpreadElementPropBindingInstruction;
 exports.StandardConfiguration = StandardConfiguration;
 exports.StyleAttributeAccessor = StyleAttributeAccessor;
 exports.StyleBindingCommandRegistration = StyleBindingCommandRegistration;
 exports.StyleConfiguration = StyleConfiguration;
 exports.StyleElementStyles = StyleElementStyles;
 exports.StylePropertyBindingInstruction = StylePropertyBindingInstruction;
-exports.StylePropertyBindingRendererRegistration = StylePropertyBindingRendererRegistration;
 exports.TemplateCompiler = TemplateCompiler;
 exports.TemplateCompilerHooks = TemplateCompilerHooks;
-exports.TemplateControllerRendererRegistration = TemplateControllerRendererRegistration;
 exports.TextBindingInstruction = TextBindingInstruction;
-exports.TextBindingRendererRegistration = TextBindingRendererRegistration;
 exports.ThrottleBindingBehavior = ThrottleBindingBehavior;
 exports.ThrottleBindingBehaviorRegistration = ThrottleBindingBehaviorRegistration;
 exports.ToViewBindingBehavior = ToViewBindingBehavior;
@@ -11523,17 +10378,11 @@ exports.ValueAttributeObserver = ValueAttributeObserver;
 exports.ValueConverter = ValueConverter;
 exports.ValueConverterDefinition = ValueConverterDefinition;
 exports.ViewFactory = ViewFactory;
-exports.ViewLocator = ViewLocator;
-exports.ViewValueConverterRegistration = ViewValueConverterRegistration;
-exports.Views = Views;
 exports.Watch = Watch;
-exports.WcCustomElementRegistry = WcCustomElementRegistry;
 exports.With = With;
 exports.WithRegistration = WithRegistration;
 exports.alias = alias;
 exports.allResources = allResources;
-exports.applyBindingBehavior = applyBindingBehavior;
-exports.astEvaluator = astEvaluator;
 exports.attributePattern = attributePattern;
 exports.bindable = bindable;
 exports.bindingBehavior = bindingBehavior;
@@ -11543,7 +10392,6 @@ exports.children = children;
 exports.coercer = coercer;
 exports.containerless = containerless;
 exports.convertToRenderLocation = convertToRenderLocation;
-exports.createElement = createElement;
 exports.cssModules = cssModules;
 exports.customAttribute = customAttribute;
 exports.customElement = customElement;
@@ -11554,6 +10402,9 @@ exports.isCustomElementViewModel = isCustomElementViewModel;
 exports.isInstruction = isInstruction;
 exports.isRenderLocation = isRenderLocation;
 exports.lifecycleHooks = lifecycleHooks;
+exports.mixinAstEvaluator = mixinAstEvaluator;
+exports.mixinUseScope = mixinUseScope;
+exports.mixingBindingLimited = mixingBindingLimited;
 exports.processContent = processContent;
 exports.registerAliases = registerAliases;
 exports.renderer = renderer;
@@ -11565,6 +10416,5 @@ exports.templateCompilerHooks = templateCompilerHooks;
 exports.templateController = templateController;
 exports.useShadowDOM = useShadowDOM;
 exports.valueConverter = valueConverter;
-exports.view = view;
 exports.watch = watch;
 //# sourceMappingURL=index.dev.cjs.map

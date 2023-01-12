@@ -1,11 +1,6 @@
 import { Platform, TaskQueue } from '@aurelia/platform';
 
 const lookup = new Map();
-function notImplemented(name) {
-    return function notImplemented() {
-        throw new Error(`The PLATFORM did not receive a valid reference to the global function '${name}'.`);
-    };
-}
 class BrowserPlatform extends Platform {
     constructor(g, overrides = {}) {
         super(g, overrides);
@@ -13,15 +8,11 @@ class BrowserPlatform extends Platform {
         this._domReadHandle = -1;
         this._domWriteRequested = false;
         this._domWriteHandle = -1;
-        ('Node,Element,HTMLElement,CustomEvent,CSSStyleSheet,ShadowRoot,MutationObserver,'
-            + 'window,document,location,history,navigator,customElements')
-            .split(',')
-            .forEach(prop => {
-            this[prop] = prop in overrides ? overrides[prop] : g[prop];
-        });
-        'fetch,requestAnimationFrame,cancelAnimationFrame'.split(',').forEach(prop => {
-            this[prop] = prop in overrides ? overrides[prop] : (g[prop]?.bind(g) ?? notImplemented(prop));
-        });
+        ('Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver '
+            + 'window document location history navigator customElements')
+            .split(' ')
+            .forEach(prop => this[prop] = prop in overrides ? overrides[prop] : g[prop]);
+        'fetch requestAnimationFrame cancelAnimationFrame'.split(' ').forEach(prop => this[prop] = prop in overrides ? overrides[prop] : (g[prop]?.bind(g) ?? notImplemented(prop)));
         this.flushDomRead = this.flushDomRead.bind(this);
         this.flushDomWrite = this.flushDomWrite.bind(this);
         this.domReadQueue = new TaskQueue(this, this.requestDomRead.bind(this), this.cancelDomRead.bind(this));
@@ -86,6 +77,11 @@ class BrowserPlatform extends Platform {
         }
     }
 }
+const notImplemented = (name) => {
+    return () => {
+        throw new Error(`The PLATFORM did not receive a valid reference to the global function '${name}'.`);
+    };
+};
 
 export { BrowserPlatform };
 //# sourceMappingURL=index.dev.mjs.map

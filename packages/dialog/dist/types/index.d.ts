@@ -1,0 +1,6 @@
+export { DialogActionKey, DialogMouseEventType, DialogDeactivationStatuses, IDialogService, IDialogController, IDialogDomRenderer, IDialogDom, DialogCloseResult, type DialogError, type DialogCancelError, type DialogCloseError, type DialogOpenPromise, DialogOpenResult, type IDialogSettings, type IDialogLoadedSettings, IDialogGlobalSettings, type IDialogCustomElementViewModel, type IDialogComponent, type IDialogComponentActivate, type IDialogComponentCanActivate, type IDialogComponentDeactivate, type IDialogComponentCanDeactivate, } from './plugins/dialog/dialog-interfaces';
+export { DialogController, } from './plugins/dialog/dialog-controller';
+export { DialogService, } from './plugins/dialog/dialog-service';
+export { DialogConfiguration, DialogDefaultConfiguration, DialogConfigurationProvider, } from './plugins/dialog/dialog-configuration';
+export { DefaultDialogDom, DefaultDialogDomRenderer, DefaultDialogGlobalSettings, } from './plugins/dialog/dialog-default-impl';
+//# sourceMappingURL=index.d.ts.map

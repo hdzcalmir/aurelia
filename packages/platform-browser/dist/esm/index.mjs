@@ -2,12 +2,6 @@ import { Platform as t, TaskQueue as i } from "@aurelia/platform";
 
 const s = new Map;
 
-function e(t) {
-    return function i() {
-        throw new Error(`The PLATFORM did not receive a valid reference to the global function '${t}'.`);
-    };
-}
-
 class BrowserPlatform extends t {
     constructor(t, s = {}) {
         super(t, s);
@@ -15,12 +9,8 @@ class BrowserPlatform extends t {
         this.i = -1;
         this.h = false;
         this.u = -1;
-        ("Node,Element,HTMLElement,CustomEvent,CSSStyleSheet,ShadowRoot,MutationObserver," + "window,document,location,history,navigator,customElements").split(",").forEach((i => {
-            this[i] = i in s ? s[i] : t[i];
-        }));
-        "fetch,requestAnimationFrame,cancelAnimationFrame".split(",").forEach((i => {
-            this[i] = i in s ? s[i] : t[i]?.bind(t) ?? e(i);
-        }));
+        ("Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver " + "window document location history navigator customElements").split(" ").forEach((i => this[i] = i in s ? s[i] : t[i]));
+        "fetch requestAnimationFrame cancelAnimationFrame".split(" ").forEach((i => this[i] = i in s ? s[i] : t[i]?.bind(t) ?? e(i)));
         this.flushDomRead = this.flushDomRead.bind(this);
         this.flushDomWrite = this.flushDomWrite.bind(this);
         this.domReadQueue = new i(this, this.requestDomRead.bind(this), this.cancelDomRead.bind(this));
@@ -76,6 +66,10 @@ class BrowserPlatform extends t {
         if (true === this.t && -1 === this.i) this.i = this.setTimeout(this.flushDomRead, 0);
     }
 }
+
+const e = t => () => {
+    throw new Error(`The PLATFORM did not receive a valid reference to the global function '${t}'.`);
+};
 
 export { BrowserPlatform };
 //# sourceMappingURL=index.mjs.map

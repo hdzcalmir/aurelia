@@ -7,12 +7,11 @@ import { IViewport } from './resources/viewport';
 import { IChildRouteConfig, RouteType } from './route';
 import { RouteDefinition } from './route-definition';
 import { RouteNode } from './route-tree';
-import { IRouter, ResolutionMode } from './router';
+import { IRouter } from './router';
 import { ViewportAgent, ViewportRequest } from './viewport-agent';
 export interface IRouteContext extends RouteContext {
 }
 export declare const IRouteContext: import("@aurelia/kernel").InterfaceSymbol<IRouteContext>;
-export declare const RESIDUE: "au$residue";
 declare type PathGenerationResult = {
     vi: ViewportInstruction;
     query: Params | null;
@@ -86,8 +85,8 @@ export declare class RouteContext {
     static resolve(root: IRouteContext, context: unknown): IRouteContext;
     dispose(): void;
     resolveViewportAgent(req: ViewportRequest): ViewportAgent;
-    getAvailableViewportAgents(resolution: ResolutionMode): readonly ViewportAgent[];
-    getFallbackViewportAgent(resolution: ResolutionMode, name: string): ViewportAgent | null;
+    getAvailableViewportAgents(): readonly ViewportAgent[];
+    getFallbackViewportAgent(name: string): ViewportAgent | null;
     /**
      * Create a component based on the provided viewportInstruction.
      *

@@ -1,5 +1,5 @@
 import { IContainer, IRegistry } from '@aurelia/kernel';
-import { IRouterOptions, IRouter } from './router';
+import { IRouterOptions } from './router';
 import { ViewportCustomElement } from './resources/viewport';
 import { LoadCustomAttribute } from './resources/load';
 import { HrefCustomAttribute } from './resources/href';
@@ -19,7 +19,6 @@ export declare const HrefCustomAttributeRegistration: IRegistry;
  * - Custom Attributes: `load`, `href`
  */
 export declare const DefaultResources: IRegistry[];
-export declare type RouterConfig = IRouterOptions | ((router: IRouter) => ReturnType<IRouter['start']>);
 export declare const RouterConfiguration: {
     register(container: IContainer): IContainer;
     /**
@@ -27,6 +26,6 @@ export declare const RouterConfiguration: {
      * Parameter is either a config object that's passed to Router's activate
      * or a config function that's called instead of Router's activate.
      */
-    customize(config?: RouterConfig): IRegistry;
+    customize(options?: IRouterOptions): IRegistry;
 };
 //# sourceMappingURL=configuration.d.ts.map

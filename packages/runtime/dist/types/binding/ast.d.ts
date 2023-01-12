@@ -1,8 +1,9 @@
-import { type IBinding } from '../observation';
-import { Scope } from '../observation/binding-context';
-import { type IConnectableBinding } from './connectable';
-import type { IServiceLocator } from '@aurelia/kernel';
-import type { IBindingContext, IConnectable } from '../observation';
+import type { IBinding, IConnectable } from '../observation';
+import type { Scope } from '../observation/scope';
+import type { IConnectableBinding } from './connectable';
+import type { ISignaler } from '../observation/signaler';
+import type { IVisitor } from './ast.visitor';
+export { astVisit, IVisitor, Unparser } from './ast.visitor';
 export declare const enum ExpressionKind {
     AccessThis = 0,
     AccessScope = 1,
@@ -30,7 +31,9 @@ export declare const enum ExpressionKind {
     Interpolation = 23,
     ArrayDestructuring = 24,
     ObjectDestructuring = 25,
-    DestructuringAssignmentLeaf = 26
+    DestructuringAssignmentLeaf = 26,
+    DestructuringAssignmentRestLeaf = 27,
+    Custom = 28
 }
 export declare type UnaryOperator = 'void' | 'typeof' | '!' | '-' | '+';
 export declare type BinaryOperator = '??' | '&&' | '||' | '==' | '===' | '!=' | '!==' | 'instanceof' | 'in' | '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=';
@@ -41,76 +44,229 @@ export declare type IsUnary = IsLeftHandSide | UnaryExpression;
 export declare type IsBinary = IsUnary | BinaryExpression;
 export declare type IsConditional = IsBinary | ConditionalExpression;
 export declare type IsAssign = IsConditional | AssignExpression | ArrowFunction;
-export declare type IsValueConverter = IsAssign | ValueConverterExpression;
+export declare type IsValueConverter = CustomExpression | IsAssign | ValueConverterExpression;
 export declare type IsBindingBehavior = IsValueConverter | BindingBehaviorExpression;
 export declare type IsAssignable = AccessScopeExpression | AccessKeyedExpression | AccessMemberExpression | AssignExpression;
 export declare type IsExpression = IsBindingBehavior | Interpolation;
 export declare type BindingIdentifierOrPattern = BindingIdentifier | ArrayBindingPattern | ObjectBindingPattern;
 export declare type IsExpressionOrStatement = IsExpression | ForOfStatement | BindingIdentifierOrPattern | DestructuringAssignmentExpression | DestructuringAssignmentSingleExpression | DestructuringAssignmentRestExpression;
 export declare type AnyBindingExpression = Interpolation | ForOfStatement | IsBindingBehavior;
-export interface IExpressionHydrator {
-    hydrate(jsonExpr: any): any;
+export declare class CustomExpression {
+    readonly value: unknown;
+    readonly $kind = ExpressionKind.Custom;
+    constructor(value: unknown);
+    evaluate(_s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): unknown;
+    assign(s: Scope, e: IAstEvaluator | null, val: unknown): unknown;
+    bind(s: Scope, b: IAstEvaluator & IConnectableBinding): void;
+    unbind(s: Scope, b: IAstEvaluator & IConnectableBinding): void;
+    accept<T>(_visitor: IVisitor<T>): T;
 }
-export interface IVisitor<T = unknown> {
-    visitAccessKeyed(expr: AccessKeyedExpression): T;
-    visitAccessMember(expr: AccessMemberExpression): T;
-    visitAccessScope(expr: AccessScopeExpression): T;
-    visitAccessThis(expr: AccessThisExpression): T;
-    visitArrayBindingPattern(expr: ArrayBindingPattern): T;
-    visitArrayLiteral(expr: ArrayLiteralExpression): T;
-    visitArrowFunction(expr: ArrowFunction): T;
-    visitAssign(expr: AssignExpression): T;
-    visitBinary(expr: BinaryExpression): T;
-    visitBindingBehavior(expr: BindingBehaviorExpression): T;
-    visitBindingIdentifier(expr: BindingIdentifier): T;
-    visitCallFunction(expr: CallFunctionExpression): T;
-    visitCallMember(expr: CallMemberExpression): T;
-    visitCallScope(expr: CallScopeExpression): T;
-    visitConditional(expr: ConditionalExpression): T;
-    visitForOfStatement(expr: ForOfStatement): T;
-    visitInterpolation(expr: Interpolation): T;
-    visitObjectBindingPattern(expr: ObjectBindingPattern): T;
-    visitObjectLiteral(expr: ObjectLiteralExpression): T;
-    visitPrimitiveLiteral(expr: PrimitiveLiteralExpression): T;
-    visitTaggedTemplate(expr: TaggedTemplateExpression): T;
-    visitTemplate(expr: TemplateExpression): T;
-    visitUnary(expr: UnaryExpression): T;
-    visitValueConverter(expr: ValueConverterExpression): T;
-    visitDestructuringAssignmentExpression(expr: DestructuringAssignmentExpression): T;
-    visitDestructuringAssignmentSingleExpression(expr: DestructuringAssignmentSingleExpression): T;
-    visitDestructuringAssignmentRestExpression(expr: DestructuringAssignmentRestExpression): T;
+export declare type BindingBehaviorInstance<T extends {} = {}> = {
+    type?: 'instance' | 'factory';
+    bind?(scope: Scope, binding: IBinding, ...args: unknown[]): void;
+    unbind?(scope: Scope, binding: IBinding, ...args: unknown[]): void;
+} & T;
+export declare class BindingBehaviorExpression {
+    readonly expression: IsBindingBehavior;
+    readonly name: string;
+    readonly args: readonly IsAssign[];
+    readonly $kind = ExpressionKind.BindingBehavior;
+    /**
+     * The name of the property to store a binding behavior on the binding when binding
+     */
+    readonly key: string;
+    constructor(expression: IsBindingBehavior, name: string, args: readonly IsAssign[]);
 }
-export declare class Unparser implements IVisitor<void> {
-    text: string;
-    static unparse(expr: IsExpressionOrStatement): string;
-    visitAccessMember(expr: AccessMemberExpression): void;
-    visitAccessKeyed(expr: AccessKeyedExpression): void;
-    visitAccessThis(expr: AccessThisExpression): void;
-    visitAccessScope(expr: AccessScopeExpression): void;
-    visitArrayLiteral(expr: ArrayLiteralExpression): void;
-    visitArrowFunction(expr: ArrowFunction): void;
-    visitObjectLiteral(expr: ObjectLiteralExpression): void;
-    visitPrimitiveLiteral(expr: PrimitiveLiteralExpression): void;
-    visitCallFunction(expr: CallFunctionExpression): void;
-    visitCallMember(expr: CallMemberExpression): void;
-    visitCallScope(expr: CallScopeExpression): void;
-    visitTemplate(expr: TemplateExpression): void;
-    visitTaggedTemplate(expr: TaggedTemplateExpression): void;
-    visitUnary(expr: UnaryExpression): void;
-    visitBinary(expr: BinaryExpression): void;
-    visitConditional(expr: ConditionalExpression): void;
-    visitAssign(expr: AssignExpression): void;
-    visitValueConverter(expr: ValueConverterExpression): void;
-    visitBindingBehavior(expr: BindingBehaviorExpression): void;
-    visitArrayBindingPattern(expr: ArrayBindingPattern): void;
-    visitObjectBindingPattern(expr: ObjectBindingPattern): void;
-    visitBindingIdentifier(expr: BindingIdentifier): void;
-    visitForOfStatement(expr: ForOfStatement): void;
-    visitInterpolation(expr: Interpolation): void;
-    visitDestructuringAssignmentExpression(expr: DestructuringAssignmentExpression): void;
-    visitDestructuringAssignmentSingleExpression(expr: DestructuringAssignmentSingleExpression): void;
-    visitDestructuringAssignmentRestExpression(expr: DestructuringAssignmentRestExpression): void;
-    private writeArgs;
+export declare type ValueConverterInstance<T extends {} = {}> = {
+    signals?: string[];
+    toView(input: unknown, ...args: unknown[]): unknown;
+    fromView?(input: unknown, ...args: unknown[]): unknown;
+} & T;
+export declare class ValueConverterExpression {
+    readonly expression: IsValueConverter;
+    readonly name: string;
+    readonly args: readonly IsAssign[];
+    readonly $kind = ExpressionKind.ValueConverter;
+    constructor(expression: IsValueConverter, name: string, args: readonly IsAssign[]);
+}
+export declare class AssignExpression {
+    readonly target: IsAssignable;
+    readonly value: IsAssign;
+    readonly $kind = ExpressionKind.Assign;
+    constructor(target: IsAssignable, value: IsAssign);
+}
+export declare class ConditionalExpression {
+    readonly condition: IsBinary;
+    readonly yes: IsAssign;
+    readonly no: IsAssign;
+    readonly $kind = ExpressionKind.Conditional;
+    constructor(condition: IsBinary, yes: IsAssign, no: IsAssign);
+}
+export declare class AccessThisExpression {
+    readonly ancestor: number;
+    static readonly $this: AccessThisExpression;
+    static readonly $parent: AccessThisExpression;
+    readonly $kind: ExpressionKind.AccessThis;
+    constructor(ancestor?: number);
+}
+export declare class AccessScopeExpression {
+    readonly name: string;
+    readonly ancestor: number;
+    readonly $kind = ExpressionKind.AccessScope;
+    constructor(name: string, ancestor?: number);
+}
+export declare class AccessMemberExpression {
+    readonly object: IsLeftHandSide;
+    readonly name: string;
+    readonly optional: boolean;
+    readonly $kind: ExpressionKind.AccessMember;
+    constructor(object: IsLeftHandSide, name: string, optional?: boolean);
+}
+export declare class AccessKeyedExpression {
+    readonly object: IsLeftHandSide;
+    readonly key: IsAssign;
+    readonly optional: boolean;
+    readonly $kind = ExpressionKind.AccessKeyed;
+    constructor(object: IsLeftHandSide, key: IsAssign, optional?: boolean);
+}
+export declare class CallScopeExpression {
+    readonly name: string;
+    readonly args: readonly IsAssign[];
+    readonly ancestor: number;
+    readonly optional: boolean;
+    readonly $kind = ExpressionKind.CallScope;
+    constructor(name: string, args: readonly IsAssign[], ancestor?: number, optional?: boolean);
+}
+export declare class CallMemberExpression {
+    readonly object: IsLeftHandSide;
+    readonly name: string;
+    readonly args: readonly IsAssign[];
+    readonly optionalMember: boolean;
+    readonly optionalCall: boolean;
+    readonly $kind = ExpressionKind.CallMember;
+    constructor(object: IsLeftHandSide, name: string, args: readonly IsAssign[], optionalMember?: boolean, optionalCall?: boolean);
+}
+export declare class CallFunctionExpression {
+    readonly func: IsLeftHandSide;
+    readonly args: readonly IsAssign[];
+    readonly optional: boolean;
+    readonly $kind = ExpressionKind.CallFunction;
+    constructor(func: IsLeftHandSide, args: readonly IsAssign[], optional?: boolean);
+}
+export declare class BinaryExpression {
+    readonly operation: BinaryOperator;
+    readonly left: IsBinary;
+    readonly right: IsBinary;
+    readonly $kind: ExpressionKind.Binary;
+    constructor(operation: BinaryOperator, left: IsBinary, right: IsBinary);
+}
+export declare class UnaryExpression {
+    readonly operation: UnaryOperator;
+    readonly expression: IsLeftHandSide;
+    readonly $kind = ExpressionKind.Unary;
+    constructor(operation: UnaryOperator, expression: IsLeftHandSide);
+}
+export declare class PrimitiveLiteralExpression<TValue extends null | undefined | number | boolean | string = null | undefined | number | boolean | string> {
+    readonly value: TValue;
+    static readonly $undefined: PrimitiveLiteralExpression<undefined>;
+    static readonly $null: PrimitiveLiteralExpression<null>;
+    static readonly $true: PrimitiveLiteralExpression<true>;
+    static readonly $false: PrimitiveLiteralExpression<false>;
+    static readonly $empty: PrimitiveLiteralExpression<string>;
+    readonly $kind = ExpressionKind.PrimitiveLiteral;
+    constructor(value: TValue);
+}
+export declare class ArrayLiteralExpression {
+    readonly elements: readonly IsAssign[];
+    static readonly $empty: ArrayLiteralExpression;
+    readonly $kind = ExpressionKind.ArrayLiteral;
+    constructor(elements: readonly IsAssign[]);
+}
+export declare class ObjectLiteralExpression {
+    readonly keys: readonly (number | string)[];
+    readonly values: readonly IsAssign[];
+    static readonly $empty: ObjectLiteralExpression;
+    readonly $kind = ExpressionKind.ObjectLiteral;
+    constructor(keys: readonly (number | string)[], values: readonly IsAssign[]);
+}
+export declare class TemplateExpression {
+    readonly cooked: readonly string[];
+    readonly expressions: readonly IsAssign[];
+    static readonly $empty: TemplateExpression;
+    readonly $kind = ExpressionKind.Template;
+    constructor(cooked: readonly string[], expressions?: readonly IsAssign[]);
+}
+export declare class TaggedTemplateExpression {
+    readonly cooked: readonly string[] & {
+        raw?: readonly string[];
+    };
+    readonly func: IsLeftHandSide;
+    readonly expressions: readonly IsAssign[];
+    readonly $kind = ExpressionKind.TaggedTemplate;
+    constructor(cooked: readonly string[] & {
+        raw?: readonly string[];
+    }, raw: readonly string[], func: IsLeftHandSide, expressions?: readonly IsAssign[]);
+}
+export declare class ArrayBindingPattern {
+    readonly elements: readonly IsAssign[];
+    readonly $kind = ExpressionKind.ArrayBindingPattern;
+    constructor(elements: readonly IsAssign[]);
+}
+export declare class ObjectBindingPattern {
+    readonly keys: readonly (string | number)[];
+    readonly values: readonly IsAssign[];
+    readonly $kind = ExpressionKind.ObjectBindingPattern;
+    constructor(keys: readonly (string | number)[], values: readonly IsAssign[]);
+}
+export declare class BindingIdentifier {
+    readonly name: string;
+    readonly $kind = ExpressionKind.BindingIdentifier;
+    constructor(name: string);
+}
+export declare class ForOfStatement {
+    readonly declaration: BindingIdentifierOrPattern | DestructuringAssignmentExpression;
+    readonly iterable: IsBindingBehavior;
+    readonly semiIdx: number;
+    readonly $kind = ExpressionKind.ForOfStatement;
+    constructor(declaration: BindingIdentifierOrPattern | DestructuringAssignmentExpression, iterable: IsBindingBehavior, semiIdx: number);
+}
+export declare class Interpolation {
+    readonly parts: readonly string[];
+    readonly expressions: readonly IsBindingBehavior[];
+    readonly $kind = ExpressionKind.Interpolation;
+    readonly isMulti: boolean;
+    readonly firstExpression: IsBindingBehavior;
+    constructor(parts: readonly string[], expressions?: readonly IsBindingBehavior[]);
+}
+/** This is an internal API */
+export declare class DestructuringAssignmentExpression {
+    readonly $kind: ExpressionKind.ArrayDestructuring | ExpressionKind.ObjectDestructuring;
+    readonly list: readonly (DestructuringAssignmentExpression | DestructuringAssignmentSingleExpression | DestructuringAssignmentRestExpression)[];
+    readonly source: AccessMemberExpression | AccessKeyedExpression | undefined;
+    readonly initializer: IsBindingBehavior | undefined;
+    constructor($kind: ExpressionKind.ArrayDestructuring | ExpressionKind.ObjectDestructuring, list: readonly (DestructuringAssignmentExpression | DestructuringAssignmentSingleExpression | DestructuringAssignmentRestExpression)[], source: AccessMemberExpression | AccessKeyedExpression | undefined, initializer: IsBindingBehavior | undefined);
+}
+/** This is an internal API */
+export declare class DestructuringAssignmentSingleExpression {
+    readonly target: AccessMemberExpression;
+    readonly source: AccessMemberExpression | AccessKeyedExpression;
+    readonly initializer: IsBindingBehavior | undefined;
+    readonly $kind = ExpressionKind.DestructuringAssignmentLeaf;
+    constructor(target: AccessMemberExpression, source: AccessMemberExpression | AccessKeyedExpression, initializer: IsBindingBehavior | undefined);
+}
+/** This is an internal API */
+export declare class DestructuringAssignmentRestExpression {
+    readonly target: AccessMemberExpression;
+    readonly indexOrProperties: string[] | number;
+    readonly $kind = ExpressionKind.DestructuringAssignmentLeaf;
+    constructor(target: AccessMemberExpression, indexOrProperties: string[] | number);
+}
+export declare class ArrowFunction {
+    args: BindingIdentifier[];
+    body: IsAssign;
+    rest: boolean;
+    readonly $kind = ExpressionKind.ArrowFunction;
+    constructor(args: BindingIdentifier[], body: IsAssign, rest?: boolean);
 }
 /**
  * An interface describing the object that can evaluate Aurelia AST
@@ -122,381 +278,11 @@ export interface IAstEvaluator {
     boundFn?: boolean;
     /** describe whether the evaluator wants to evaluate the function call in strict mode */
     strictFnCall?: boolean;
-    /** Allow an AST to retrieve a service that it needs */
-    get?: IServiceLocator['get'];
+    /** Allow an AST to retrieve a signaler instance for connecting/disconnecting */
+    getSignaler?(): ISignaler;
     /** Allow an AST to retrieve a value converter that it needs */
     getConverter?<T>(name: string): ValueConverterInstance<T> | undefined;
     /** Allow an AST to retrieve a binding behavior that it needs */
     getBehavior?<T>(name: string): BindingBehaviorInstance<T> | undefined;
-}
-export declare class CustomExpression {
-    readonly value: string;
-    constructor(value: string);
-    evaluate(_s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): string;
-}
-export declare type BindingBehaviorInstance<T extends {} = {}> = {
-    type?: 'instance' | 'factory';
-    bind?(scope: Scope, binding: IBinding, ...args: T[]): void;
-    unbind?(scope: Scope, binding: IBinding, ...args: T[]): void;
-} & T;
-export declare class BindingBehaviorExpression {
-    readonly expression: IsBindingBehavior;
-    readonly name: string;
-    readonly args: readonly IsAssign[];
-    get $kind(): ExpressionKind.BindingBehavior;
-    get hasBind(): true;
-    get hasUnbind(): true;
-    constructor(expression: IsBindingBehavior, name: string, args: readonly IsAssign[]);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(s: Scope, e: IAstEvaluator | null, val: unknown): unknown;
-    bind(s: Scope, b: IAstEvaluator & IConnectableBinding): void;
-    unbind(s: Scope, b: IAstEvaluator & IConnectableBinding): void;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare type ValueConverterInstance<T extends {} = {}> = {
-    signals?: string[];
-    toView(input: unknown, ...args: unknown[]): unknown;
-    fromView?(input: unknown, ...args: unknown[]): unknown;
-} & T;
-export declare class ValueConverterExpression {
-    readonly expression: IsValueConverter;
-    readonly name: string;
-    readonly args: readonly IsAssign[];
-    get $kind(): ExpressionKind.ValueConverter;
-    get hasBind(): true;
-    get hasUnbind(): true;
-    constructor(expression: IsValueConverter, name: string, args: readonly IsAssign[]);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(s: Scope, e: IAstEvaluator | null, val: unknown): unknown;
-    bind(s: Scope, b: IAstEvaluator & IConnectableBinding): void;
-    unbind(_s: Scope, b: IAstEvaluator & IConnectableBinding): void;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class AssignExpression {
-    readonly target: IsAssignable;
-    readonly value: IsAssign;
-    get $kind(): ExpressionKind.Assign;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(target: IsAssignable, value: IsAssign);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(s: Scope, e: IAstEvaluator | null, val: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class ConditionalExpression {
-    readonly condition: IsBinary;
-    readonly yes: IsAssign;
-    readonly no: IsAssign;
-    get $kind(): ExpressionKind.Conditional;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(condition: IsBinary, yes: IsAssign, no: IsAssign);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class AccessThisExpression {
-    readonly ancestor: number;
-    static readonly $this: AccessThisExpression;
-    static readonly $parent: AccessThisExpression;
-    get $kind(): ExpressionKind.AccessThis;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(ancestor?: number);
-    evaluate(s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): IBindingContext | undefined;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class AccessScopeExpression {
-    readonly name: string;
-    readonly ancestor: number;
-    get $kind(): ExpressionKind.AccessScope;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(name: string, ancestor?: number);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(s: Scope, _e: IAstEvaluator | null, val: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class AccessMemberExpression {
-    readonly object: IsLeftHandSide;
-    readonly name: string;
-    readonly optional: boolean;
-    get $kind(): ExpressionKind.AccessMember;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(object: IsLeftHandSide, name: string, optional?: boolean);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(s: Scope, e: IAstEvaluator | null, val: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class AccessKeyedExpression {
-    readonly object: IsLeftHandSide;
-    readonly key: IsAssign;
-    readonly optional: boolean;
-    get $kind(): ExpressionKind.AccessKeyed;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(object: IsLeftHandSide, key: IsAssign, optional?: boolean);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(s: Scope, e: IAstEvaluator | null, val: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class CallScopeExpression {
-    readonly name: string;
-    readonly args: readonly IsAssign[];
-    readonly ancestor: number;
-    readonly optional: boolean;
-    get $kind(): ExpressionKind.CallScope;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(name: string, args: readonly IsAssign[], ancestor?: number, optional?: boolean);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class CallMemberExpression {
-    readonly object: IsLeftHandSide;
-    readonly name: string;
-    readonly args: readonly IsAssign[];
-    readonly optionalMember: boolean;
-    readonly optionalCall: boolean;
-    get $kind(): ExpressionKind.CallMember;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(object: IsLeftHandSide, name: string, args: readonly IsAssign[], optionalMember?: boolean, optionalCall?: boolean);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class CallFunctionExpression {
-    readonly func: IsLeftHandSide;
-    readonly args: readonly IsAssign[];
-    readonly optional: boolean;
-    get $kind(): ExpressionKind.CallFunction;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(func: IsLeftHandSide, args: readonly IsAssign[], optional?: boolean);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class BinaryExpression {
-    readonly operation: BinaryOperator;
-    readonly left: IsBinary;
-    readonly right: IsBinary;
-    get $kind(): ExpressionKind.Binary;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(operation: BinaryOperator, left: IsBinary, right: IsBinary);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class UnaryExpression {
-    readonly operation: UnaryOperator;
-    readonly expression: IsLeftHandSide;
-    get $kind(): ExpressionKind.Unary;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(operation: UnaryOperator, expression: IsLeftHandSide);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class PrimitiveLiteralExpression<TValue extends null | undefined | number | boolean | string = null | undefined | number | boolean | string> {
-    readonly value: TValue;
-    static readonly $undefined: PrimitiveLiteralExpression<undefined>;
-    static readonly $null: PrimitiveLiteralExpression<null>;
-    static readonly $true: PrimitiveLiteralExpression<true>;
-    static readonly $false: PrimitiveLiteralExpression<false>;
-    static readonly $empty: PrimitiveLiteralExpression<string>;
-    get $kind(): ExpressionKind.PrimitiveLiteral;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(value: TValue);
-    evaluate(_s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): TValue;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class ArrayLiteralExpression {
-    readonly elements: readonly IsAssign[];
-    static readonly $empty: ArrayLiteralExpression;
-    get $kind(): ExpressionKind.ArrayLiteral;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(elements: readonly IsAssign[]);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): readonly unknown[];
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class ObjectLiteralExpression {
-    readonly keys: readonly (number | string)[];
-    readonly values: readonly IsAssign[];
-    static readonly $empty: ObjectLiteralExpression;
-    get $kind(): ExpressionKind.ObjectLiteral;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(keys: readonly (number | string)[], values: readonly IsAssign[]);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): Record<string, unknown>;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class TemplateExpression {
-    readonly cooked: readonly string[];
-    readonly expressions: readonly IsAssign[];
-    static readonly $empty: TemplateExpression;
-    get $kind(): ExpressionKind.Template;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(cooked: readonly string[], expressions?: readonly IsAssign[]);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): string;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class TaggedTemplateExpression {
-    readonly cooked: readonly string[] & {
-        raw?: readonly string[];
-    };
-    readonly func: IsLeftHandSide;
-    readonly expressions: readonly IsAssign[];
-    get $kind(): ExpressionKind.TaggedTemplate;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(cooked: readonly string[] & {
-        raw?: readonly string[];
-    }, raw: readonly string[], func: IsLeftHandSide, expressions?: readonly IsAssign[]);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): string;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class ArrayBindingPattern {
-    readonly elements: readonly IsAssign[];
-    get $kind(): ExpressionKind.ArrayBindingPattern;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(elements: readonly IsAssign[]);
-    evaluate(_s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class ObjectBindingPattern {
-    readonly keys: readonly (string | number)[];
-    readonly values: readonly IsAssign[];
-    get $kind(): ExpressionKind.ObjectBindingPattern;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(keys: readonly (string | number)[], values: readonly IsAssign[]);
-    evaluate(_s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class BindingIdentifier {
-    readonly name: string;
-    get $kind(): ExpressionKind.BindingIdentifier;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(name: string);
-    evaluate(_s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): string;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class ForOfStatement {
-    readonly declaration: BindingIdentifierOrPattern | DestructuringAssignmentExpression;
-    readonly iterable: IsBindingBehavior;
-    get $kind(): ExpressionKind.ForOfStatement;
-    get hasBind(): true;
-    get hasUnbind(): true;
-    constructor(declaration: BindingIdentifierOrPattern | DestructuringAssignmentExpression, iterable: IsBindingBehavior);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    bind(s: Scope, b: IConnectableBinding): void;
-    unbind(s: Scope, b: IConnectableBinding): void;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class Interpolation {
-    readonly parts: readonly string[];
-    readonly expressions: readonly IsBindingBehavior[];
-    get $kind(): ExpressionKind.Interpolation;
-    readonly isMulti: boolean;
-    readonly firstExpression: IsBindingBehavior;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(parts: readonly string[], expressions?: readonly IsBindingBehavior[]);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): string;
-    assign(_s: Scope, _e: IAstEvaluator | null, _obj: unknown): unknown;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-/** This is an internal API */
-export declare class DestructuringAssignmentExpression {
-    readonly $kind: ExpressionKind.ArrayDestructuring | ExpressionKind.ObjectDestructuring;
-    readonly list: readonly (DestructuringAssignmentExpression | DestructuringAssignmentSingleExpression | DestructuringAssignmentRestExpression)[];
-    readonly source: AccessMemberExpression | AccessKeyedExpression | undefined;
-    readonly initializer: IsBindingBehavior | undefined;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor($kind: ExpressionKind.ArrayDestructuring | ExpressionKind.ObjectDestructuring, list: readonly (DestructuringAssignmentExpression | DestructuringAssignmentSingleExpression | DestructuringAssignmentRestExpression)[], source: AccessMemberExpression | AccessKeyedExpression | undefined, initializer: IsBindingBehavior | undefined);
-    evaluate(_s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): undefined;
-    assign(s: Scope, l: IAstEvaluator, value: unknown): void;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-/** This is an internal API */
-export declare class DestructuringAssignmentSingleExpression {
-    readonly target: AccessMemberExpression;
-    readonly source: AccessMemberExpression | AccessKeyedExpression;
-    readonly initializer: IsBindingBehavior | undefined;
-    get $kind(): ExpressionKind.DestructuringAssignmentLeaf;
-    constructor(target: AccessMemberExpression, source: AccessMemberExpression | AccessKeyedExpression, initializer: IsBindingBehavior | undefined);
-    evaluate(_s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): undefined;
-    assign(s: Scope, l: IAstEvaluator, value: unknown): void;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
-}
-/** This is an internal API */
-export declare class DestructuringAssignmentRestExpression {
-    readonly target: AccessMemberExpression;
-    readonly indexOrProperties: string[] | number;
-    get $kind(): ExpressionKind.DestructuringAssignmentLeaf;
-    constructor(target: AccessMemberExpression, indexOrProperties: string[] | number);
-    evaluate(_s: Scope, _e: IAstEvaluator | null, _c: IConnectable | null): undefined;
-    assign(s: Scope, l: IAstEvaluator, value: unknown): void;
-    accept<T>(_visitor: IVisitor<T>): T;
-    toString(): string;
-}
-export declare class ArrowFunction {
-    args: BindingIdentifier[];
-    body: IsAssign;
-    rest: boolean;
-    get $kind(): ExpressionKind.ArrowFunction;
-    get hasBind(): false;
-    get hasUnbind(): false;
-    constructor(args: BindingIdentifier[], body: IsAssign, rest?: boolean);
-    evaluate(s: Scope, e: IAstEvaluator | null, c: IConnectable | null): unknown;
-    assign(_s: Scope, _e: IAstEvaluator | null, _value: unknown): void;
-    accept<T>(visitor: IVisitor<T>): T;
-    toString(): string;
 }
 //# sourceMappingURL=ast.d.ts.map

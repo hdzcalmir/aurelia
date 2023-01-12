@@ -1,19 +1,13 @@
-import type { IIndexable, IServiceLocator } from '@aurelia/kernel';
-import type { IsBindingBehavior, Scope } from '@aurelia/runtime';
-import type { IAstBasedBinding } from './interfaces-bindings';
-export interface RefBinding extends IAstBasedBinding {
+import type { IServiceLocator } from '@aurelia/kernel';
+import { IAstEvaluator, IBinding, IConnectableBinding, type IsBindingBehavior, type Scope } from '@aurelia/runtime';
+export interface RefBinding extends IAstEvaluator, IConnectableBinding {
 }
-export declare class RefBinding implements IAstBasedBinding {
-    locator: IServiceLocator;
+export declare class RefBinding implements IBinding {
     ast: IsBindingBehavior;
     target: object;
-    interceptor: this;
     isBound: boolean;
-    $scope?: Scope;
     constructor(locator: IServiceLocator, ast: IsBindingBehavior, target: object);
-    $bind(scope: Scope): void;
-    $unbind(): void;
-    observe(_obj: IIndexable, _propertyName: string): void;
-    handleChange(_newValue: unknown, _previousValue: unknown): void;
+    bind(_scope: Scope): void;
+    unbind(): void;
 }
 //# sourceMappingURL=ref-binding.d.ts.map

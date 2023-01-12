@@ -35,11 +35,12 @@ export declare class ValidationDeserializer implements IValidationExpressionHydr
 export interface ModelValidationExpressionHydrator extends IAstEvaluator {
 }
 export declare class ModelValidationExpressionHydrator implements IValidationExpressionHydrator {
-    private readonly locator;
     readonly messageProvider: IValidationMessageProvider;
     readonly parser: IExpressionParser;
     readonly astDeserializer: Deserializer;
-    constructor(locator: IServiceLocator, messageProvider: IValidationMessageProvider, parser: IExpressionParser);
+    constructor(
+    /** @internal */
+    l: IServiceLocator, messageProvider: IValidationMessageProvider, parser: IExpressionParser);
     hydrate(_raw: any, _validationRules: IValidationRules): void;
     hydrateRuleset(ruleset: Record<string, any>, validationRules: IValidationRules): any[];
     protected hydrateRule(ruleName: string, ruleConfig: any): IValidationRule;

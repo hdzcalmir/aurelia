@@ -1,7 +1,7 @@
 import { AccessorType } from '@aurelia/runtime';
 import type { INode } from '../dom';
-import type { EventSubscriber } from './event-delegator';
-import type { IObserver, IObserverLocator, ISubscriber, ISubscriberCollection } from '@aurelia/runtime';
+import type { IObserverLocator, ISubscriberCollection } from '@aurelia/runtime';
+import { INodeObserver, INodeObserverConfigBase } from './observer-locator';
 declare function defaultMatcher(a: unknown, b: unknown): boolean;
 export interface ISelectElement extends HTMLSelectElement {
     options: HTMLCollectionOf<IOptionElement> & Pick<HTMLOptionsCollection, 'length' | 'selectedIndex' | 'add' | 'remove'>;
@@ -12,18 +12,19 @@ export interface IOptionElement extends HTMLOptionElement {
 }
 export interface SelectValueObserver extends ISubscriberCollection {
 }
-export declare class SelectValueObserver implements IObserver {
+export declare class SelectValueObserver implements INodeObserver {
     type: AccessorType;
-    readonly handler: EventSubscriber;
-    constructor(obj: INode, _key: PropertyKey, handler: EventSubscriber, observerLocator: IObserverLocator);
+    /**
+     * Comes from mixin
+     */
+    useConfig: (config: INodeObserverConfigBase) => void;
+    constructor(obj: INode, _key: PropertyKey, config: INodeObserverConfigBase, observerLocator: IObserverLocator);
     getValue(): unknown;
     setValue(newValue: unknown): void;
     handleCollectionChange(): void;
     syncOptions(): void;
     syncValue(): boolean;
     handleEvent(): void;
-    subscribe(subscriber: ISubscriber): void;
-    unsubscribe(subscriber: ISubscriber): void;
 }
 export {};
 //# sourceMappingURL=select-value-observer.d.ts.map

@@ -32,10 +32,6 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
      */
     viewFactory: IViewFactory | null;
     /**
-     * The backing viewModel. Only present for custom attributes and elements.
-     */
-    viewModel: BindingContext<C> | null;
-    /**
      * The physical host dom node.
      *
      * For containerless elements, this node will be removed from the DOM and replaced by a comment, which is assigned to the `location` property.
@@ -58,14 +54,16 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
     shadowRoot: ShadowRoot | null;
     nodes: INodeSequence | null;
     location: IRenderLocation | null;
-    lifecycleHooks: LifecycleHooksLookup<ICompileHooks & IActivationHooks<IHydratedController>> | null;
+    get lifecycleHooks(): LifecycleHooksLookup<ICompileHooks & IActivationHooks<IHydratedController>> | null;
     state: State;
     get isActive(): boolean;
     get name(): string;
     private logger;
     private debug;
-    readonly hooks: HooksDefinition;
+    get hooks(): HooksDefinition;
     flags: LifecycleFlags;
+    get viewModel(): BindingContext<C> | null;
+    set viewModel(v: BindingContext<C> | null);
     constructor(container: IContainer, vmKind: ViewModelKind, definition: CustomElementDefinition | CustomAttributeDefinition | null, 
     /**
      * The viewFactory. Only present for synthetic views.

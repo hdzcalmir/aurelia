@@ -32,11 +32,8 @@ export declare class DispatchBindingInstruction {
 export declare class StateBindingInstructionRenderer implements IRenderer {
     readonly target: 'sb';
     constructor(
-    /** @internal */ _exprParser: IExpressionParser, 
-    /** @internal */ _observerLocator: IObserverLocator, 
-    /** @internal */ _stateContainer: IStore<object>, 
-    /** @internal */ p: IPlatform);
-    render(renderingCtrl: IHydratableController, target: object, instruction: StateBindingInstruction): void;
+    /** @internal */ _stateContainer: IStore<object>);
+    render(renderingCtrl: IHydratableController, target: object, instruction: StateBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class DispatchBindingInstructionRenderer implements IRenderer {
     readonly target: 'sd';

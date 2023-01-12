@@ -5,11 +5,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var platform = require('@aurelia/platform');
 
 const lookup = new Map();
-function notImplemented(name) {
-    return function notImplemented() {
-        throw new Error(`The PLATFORM did not receive a valid reference to the global function '${name}'.`);
-    };
-}
 class BrowserPlatform extends platform.Platform {
     constructor(g, overrides = {}) {
         super(g, overrides);
@@ -17,15 +12,11 @@ class BrowserPlatform extends platform.Platform {
         this._domReadHandle = -1;
         this._domWriteRequested = false;
         this._domWriteHandle = -1;
-        ('Node,Element,HTMLElement,CustomEvent,CSSStyleSheet,ShadowRoot,MutationObserver,'
-            + 'window,document,location,history,navigator,customElements')
-            .split(',')
-            .forEach(prop => {
-            this[prop] = prop in overrides ? overrides[prop] : g[prop];
-        });
-        'fetch,requestAnimationFrame,cancelAnimationFrame'.split(',').forEach(prop => {
-            this[prop] = prop in overrides ? overrides[prop] : (g[prop]?.bind(g) ?? notImplemented(prop));
-        });
+        ('Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver '
+            + 'window document location history navigator customElements')
+            .split(' ')
+            .forEach(prop => this[prop] = prop in overrides ? overrides[prop] : g[prop]);
+        'fetch requestAnimationFrame cancelAnimationFrame'.split(' ').forEach(prop => this[prop] = prop in overrides ? overrides[prop] : (g[prop]?.bind(g) ?? notImplemented(prop)));
         this.flushDomRead = this.flushDomRead.bind(this);
         this.flushDomWrite = this.flushDomWrite.bind(this);
         this.domReadQueue = new platform.TaskQueue(this, this.requestDomRead.bind(this), this.cancelDomRead.bind(this));
@@ -90,6 +81,11 @@ class BrowserPlatform extends platform.Platform {
         }
     }
 }
+const notImplemented = (name) => {
+    return () => {
+        throw new Error(`The PLATFORM did not receive a valid reference to the global function '${name}'.`);
+    };
+};
 
 exports.BrowserPlatform = BrowserPlatform;
 //# sourceMappingURL=index.dev.cjs.map

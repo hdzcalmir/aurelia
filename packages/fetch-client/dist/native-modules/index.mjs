@@ -1,4 +1,4 @@
-import { DI as t } from "../../../kernel/dist/native-modules/index.mjs";
+import { DI as t } from "../kernel/dist/native-modules/index.mjs";
 
 function e(t, e) {
     return JSON.stringify(void 0 !== t ? t : {}, e);

@@ -20,15 +20,13 @@ export declare type IRenderLocation<T extends ChildNode = ChildNode> = T & {
  */
 export interface INodeSequence<T extends INode = INode> {
     readonly platform: IPlatform;
-    readonly isMounted: boolean;
-    readonly isLinked: boolean;
     readonly next?: INodeSequence<T>;
     /**
      * The nodes of this sequence.
      */
     readonly childNodes: ArrayLike<T>;
-    readonly firstChild: T;
-    readonly lastChild: T;
+    readonly firstChild: T | null;
+    readonly lastChild: T | null;
     /**
      * Find all instruction targets in this sequence.
      */
@@ -48,20 +46,6 @@ export interface INodeSequence<T extends INode = INode> {
     addToLinked(): void;
     unlink(): void;
     link(next: INodeSequence<T> | IRenderLocation | undefined): void;
-}
-export declare const enum NodeType {
-    Element = 1,
-    Attr = 2,
-    Text = 3,
-    CDATASection = 4,
-    EntityReference = 5,
-    Entity = 6,
-    ProcessingInstruction = 7,
-    Comment = 8,
-    Document = 9,
-    DocumentType = 10,
-    DocumentFragment = 11,
-    Notation = 12
 }
 /**
  * Returns the effective parentNode according to Aurelia's component hierarchy.
@@ -99,15 +83,10 @@ export declare function convertToRenderLocation(node: Node): IRenderLocation;
 export declare function isRenderLocation(node: INode | INodeSequence): node is IRenderLocation;
 export declare class FragmentNodeSequence implements INodeSequence {
     readonly platform: IPlatform;
-    private readonly fragment;
-    isMounted: boolean;
-    isLinked: boolean;
-    firstChild: Node;
-    lastChild: Node;
+    get firstChild(): Node | null;
+    get lastChild(): Node | null;
     childNodes: Node[];
     next?: INodeSequence;
-    private refNode?;
-    private readonly targets;
     constructor(platform: IPlatform, fragment: DocumentFragment);
     findTargets(): ArrayLike<Node>;
     insertBefore(refNode: IRenderLocation & Comment): void;
@@ -116,7 +95,6 @@ export declare class FragmentNodeSequence implements INodeSequence {
     addToLinked(): void;
     unlink(): void;
     link(next: INodeSequence | IRenderLocation & Comment | undefined): void;
-    private obtainRefNode;
 }
 export declare const IWindow: import("@aurelia/kernel").InterfaceSymbol<IWindow>;
 export interface IWindow extends Window {

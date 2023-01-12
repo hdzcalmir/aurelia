@@ -2,13 +2,12 @@ import { LifecycleFlags, IHydratedController, ICustomElementController } from '@
 import { IViewport } from './resources/viewport';
 import { RouteNode } from './route-tree';
 import { IRouteContext } from './route-context';
-import { Transition, ResolutionMode, NavigationOptions } from './router';
+import { Transition, NavigationOptions } from './router';
 import { Batch } from './util';
 export declare class ViewportRequest {
     readonly viewportName: string;
     readonly componentName: string;
-    readonly resolution: ResolutionMode;
-    constructor(viewportName: string, componentName: string, resolution: ResolutionMode);
+    constructor(viewportName: string, componentName: string);
     toString(): string;
 }
 export declare class ViewportAgent {
@@ -25,19 +24,16 @@ export declare class ViewportAgent {
     private set currState(value);
     private get nextState();
     private set nextState(value);
-    private $resolution;
     private $plan;
     private currNode;
     private nextNode;
     private currTransition;
-    private prevTransition;
-    private _cancellationPromise;
     constructor(viewport: IViewport, hostController: ICustomElementController, ctx: IRouteContext);
     static for(viewport: IViewport, ctx: IRouteContext): ViewportAgent;
     activateFromViewport(initiator: IHydratedController, parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
     deactivateFromViewport(initiator: IHydratedController, parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
     handles(req: ViewportRequest): boolean;
-    isAvailable(resolution: ResolutionMode): boolean;
+    isAvailable(): boolean;
     canUnload(tr: Transition, b: Batch): void;
     canLoad(tr: Transition, b: Batch): void;
     unloading(tr: Transition, b: Batch): void;

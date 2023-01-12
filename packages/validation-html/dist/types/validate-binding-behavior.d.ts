@@ -1,7 +1,6 @@
 import { IServiceLocator } from '@aurelia/kernel';
-import { BindingBehaviorExpression, IConnectableBinding, IObserverLocator, Scope } from '@aurelia/runtime';
-import { BindingInterceptor } from '@aurelia/runtime-html';
-import { BindingWithBehavior, ValidationEvent, ValidationResultsSubscriber } from './validation-controller';
+import { BindingBehaviorInstance, IAstEvaluator, IBinding, IConnectable, IObserverLocator, Scope } from '@aurelia/runtime';
+import { IPlatform } from '@aurelia/runtime-html';
 /**
  * Validation triggers.
  */
@@ -31,55 +30,24 @@ export declare enum ValidationTrigger {
      */
     changeOrFocusout = "changeOrFocusout"
 }
-/**
- * Binding behavior. Indicates the bound property should be validated.
- */
-export declare class ValidateBindingBehavior extends BindingInterceptor implements ValidationResultsSubscriber {
-    readonly binding: BindingWithBehavior;
-    private propertyBinding;
-    private target;
-    private trigger;
-    private readonly scopedController?;
-    private controller;
-    private isChangeTrigger;
-    private readonly defaultTrigger;
-    private scope;
-    private readonly triggerMediator;
-    private readonly controllerMediator;
-    private readonly rulesMediator;
-    private isDirty;
-    private validatedOnce;
-    private triggerEvent;
-    private bindingInfo;
-    private readonly platform;
-    constructor(binding: BindingWithBehavior, expr: BindingBehaviorExpression);
-    updateSource(value: unknown): void;
-    handleEvent(_event: Event): void;
-    $bind(scope: Scope): void;
-    $unbind(): void;
-    handleTriggerChange(newValue: unknown, _previousValue: unknown): void;
-    handleControllerChange(newValue: unknown, _previousValue: unknown): void;
-    handleRulesChange(newValue: unknown, _previousValue: unknown): void;
-    handleValidationEvent(event: ValidationEvent): void;
-    private task;
-    private validateBinding;
-    private setTriggerEvent;
-    private setBindingInfo;
+export declare const IDefaultTrigger: import("@aurelia/kernel").InterfaceSymbol<ValidationTrigger>;
+export declare class ValidateBindingBehavior implements BindingBehaviorInstance {
+    protected static inject: (import("@aurelia/kernel").InterfaceSymbol<IPlatform> | import("@aurelia/kernel").InterfaceSymbol<IObserverLocator>)[];
+    constructor(platform: IPlatform, observerLocator: IObserverLocator);
+    bind(scope: Scope, binding: IBinding): void;
+    unbind(scope: Scope, binding: IBinding): void;
 }
 declare type MediatedBinding<K extends string> = {
     [key in K]: (newValue: unknown, previousValue: unknown) => void;
 };
-export interface BindingMediator<K extends string> extends IConnectableBinding {
+export interface BindingMediator<K extends string> extends IConnectable, IAstEvaluator {
 }
-export declare class BindingMediator<K extends string> implements IConnectableBinding {
+export declare class BindingMediator<K extends string> {
     readonly key: K;
     readonly binding: MediatedBinding<K>;
     oL: IObserverLocator;
-    locator: IServiceLocator;
-    interceptor: this;
-    constructor(key: K, binding: MediatedBinding<K>, oL: IObserverLocator, locator: IServiceLocator);
-    $bind(): void;
-    $unbind(): void;
+    readonly l: IServiceLocator;
+    constructor(key: K, binding: MediatedBinding<K>, oL: IObserverLocator, l: IServiceLocator);
     handleChange(newValue: unknown, previousValue: unknown): void;
 }
 export {};

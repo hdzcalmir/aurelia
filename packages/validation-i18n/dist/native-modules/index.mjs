@@ -1,14 +1,14 @@
-import { I18N as t } from "../../../i18n/dist/native-modules/index.mjs";
+import { I18N as t } from "@aurelia/i18n";
 
-import { DI as e, IServiceLocator as i, IEventAggregator as o, ILogger as r, Registration as n, noop as a } from "../../../kernel/dist/native-modules/index.mjs";
+import { DI as e, IServiceLocator as i, IEventAggregator as o, ILogger as r, Registration as n, noop as a } from "../kernel/dist/native-modules/index.mjs";
 
-import { IExpressionParser as l } from "../../../runtime/dist/native-modules/index.mjs";
+import { IExpressionParser as l } from "../runtime/dist/native-modules/index.mjs";
 
-import { IPlatform as s } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { IPlatform as s } from "../runtime-html/dist/native-modules/index.mjs";
 
-import { ValidationMessageProvider as c, IValidator as u } from "../../../validation/dist/native-modules/index.mjs";
+import { ValidationMessageProvider as c, IValidator as u } from "../validation/dist/native-modules/index.mjs";
 
-import { ValidationController as f, ValidationControllerFactory as d, getDefaultValidationHtmlConfiguration as m, ValidationHtmlConfiguration as h } from "../../../validation-html/dist/native-modules/index.mjs";
+import { ValidationController as f, ValidationControllerFactory as d, getDefaultValidationHtmlConfiguration as m, ValidationHtmlConfiguration as h } from "../validation-html/dist/native-modules/index.mjs";
 
 function p(t, e, i, o) {
     var r = arguments.length, n = r < 3 ? e : null === o ? o = Object.getOwnPropertyDescriptor(e, i) : o, a;

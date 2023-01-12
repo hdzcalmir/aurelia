@@ -3,28 +3,23 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 const lookup = new Map();
-function notImplemented(name) {
-    return function notImplemented() {
-        throw new Error(`The PLATFORM did not receive a valid reference to the global function '${name}'.`);
+const notImplemented = (name) => {
+    return () => {
+        throw createError(`AUR1005: The PLATFORM did not receive a valid reference to the global function '${name}'.`)
+            ;
     };
-}
+};
 class Platform {
     constructor(g, overrides = {}) {
         this.macroTaskRequested = false;
         this.macroTaskHandle = -1;
         this.globalThis = g;
-        this.decodeURI = 'decodeURI' in overrides ? overrides.decodeURI : g.decodeURI;
-        this.decodeURIComponent = 'decodeURIComponent' in overrides ? overrides.decodeURIComponent : g.decodeURIComponent;
-        this.encodeURI = 'encodeURI' in overrides ? overrides.encodeURI : g.encodeURI;
-        this.encodeURIComponent = 'encodeURIComponent' in overrides ? overrides.encodeURIComponent : g.encodeURIComponent;
-        this.Date = 'Date' in overrides ? overrides.Date : g.Date;
-        this.Reflect = 'Reflect' in overrides ? overrides.Reflect : g.Reflect;
-        this.clearInterval = 'clearInterval' in overrides ? overrides.clearInterval : g.clearInterval?.bind(g) ?? notImplemented('clearInterval');
-        this.clearTimeout = 'clearTimeout' in overrides ? overrides.clearTimeout : g.clearTimeout?.bind(g) ?? notImplemented('clearTimeout');
-        this.queueMicrotask = 'queueMicrotask' in overrides ? overrides.queueMicrotask : g.queueMicrotask?.bind(g) ?? notImplemented('queueMicrotask');
-        this.setInterval = 'setInterval' in overrides ? overrides.setInterval : g.setInterval?.bind(g) ?? notImplemented('setInterval');
-        this.setTimeout = 'setTimeout' in overrides ? overrides.setTimeout : g.setTimeout?.bind(g) ?? notImplemented('setTimeout');
-        this.console = 'console' in overrides ? overrides.console : g.console;
+        'decodeURI decodeURIComponent encodeURI encodeURIComponent Date Reflect console'.split(' ').forEach(prop => {
+            this[prop] = prop in overrides ? overrides[prop] : g[prop];
+        });
+        'clearInterval clearTimeout queueMicrotask setInterval setTimeout'.split(' ').forEach(method => {
+            this[method] = method in overrides ? overrides[method] : g[method]?.bind(g) ?? notImplemented(method);
+        });
         this.performanceNow = 'performanceNow' in overrides ? overrides.performanceNow : g.performance?.now?.bind(g.performance) ?? notImplemented('performance.now');
         this.flushMacroTask = this.flushMacroTask.bind(this);
         this.taskQueue = new TaskQueue(this, this.requestMacroTask.bind(this), this.cancelMacroTask.bind(this));
@@ -60,9 +55,6 @@ class Platform {
         }
     }
 }
-function isPersistent(task) {
-    return task.persistent;
-}
 class TaskQueue {
     constructor(platform, $request, $cancel) {
         this.platform = platform;
@@ -70,12 +62,12 @@ class TaskQueue {
         this.$cancel = $cancel;
         this._suspenderTask = void 0;
         this._pendingAsyncCount = 0;
-        this.processing = [];
-        this.pending = [];
-        this.delayed = [];
-        this.flushRequested = false;
+        this._processing = [];
+        this._pending = [];
+        this._delayed = [];
+        this._flushRequested = false;
         this._yieldPromise = void 0;
-        this.taskPool = [];
+        this._taskPool = [];
         this._taskPoolSize = 0;
         this._lastRequest = 0;
         this._lastFlush = 0;
@@ -83,48 +75,49 @@ class TaskQueue {
             if (this._tracer.enabled) {
                 this._tracer.enter(this, 'requestFlush');
             }
-            if (!this.flushRequested) {
-                this.flushRequested = true;
-                this._lastRequest = this.platform.performanceNow();
+            if (!this._flushRequested) {
+                this._flushRequested = true;
+                this._lastRequest = this._now();
                 this.$request();
             }
             if (this._tracer.enabled) {
                 this._tracer.leave(this, 'requestFlush');
             }
         };
+        this._now = platform.performanceNow;
         this._tracer = new Tracer(platform.console);
     }
     get isEmpty() {
         return (this._pendingAsyncCount === 0 &&
-            this.processing.length === 0 &&
-            this.pending.length === 0 &&
-            this.delayed.length === 0);
+            this._processing.length === 0 &&
+            this._pending.length === 0 &&
+            this._delayed.length === 0);
     }
     get _hasNoMoreFiniteWork() {
         return (this._pendingAsyncCount === 0 &&
-            this.processing.every(isPersistent) &&
-            this.pending.every(isPersistent) &&
-            this.delayed.every(isPersistent));
+            this._processing.every(isPersistent) &&
+            this._pending.every(isPersistent) &&
+            this._delayed.every(isPersistent));
     }
-    flush(time = this.platform.performanceNow()) {
+    flush(time = this._now()) {
         if (this._tracer.enabled) {
             this._tracer.enter(this, 'flush');
         }
-        this.flushRequested = false;
+        this._flushRequested = false;
         this._lastFlush = time;
         if (this._suspenderTask === void 0) {
-            if (this.pending.length > 0) {
-                this.processing.push(...this.pending);
-                this.pending.length = 0;
+            if (this._pending.length > 0) {
+                this._processing.push(...this._pending);
+                this._pending.length = 0;
             }
-            if (this.delayed.length > 0) {
+            if (this._delayed.length > 0) {
                 let i = -1;
-                while (++i < this.delayed.length && this.delayed[i].queueTime <= time) { }
-                this.processing.push(...this.delayed.splice(0, i));
+                while (++i < this._delayed.length && this._delayed[i].queueTime <= time) { }
+                this._processing.push(...this._delayed.splice(0, i));
             }
             let cur;
-            while (this.processing.length > 0) {
-                (cur = this.processing.shift()).run();
+            while (this._processing.length > 0) {
+                (cur = this._processing.shift()).run();
                 if (cur.status === 1) {
                     if (cur.suspend === true) {
                         this._suspenderTask = cur;
@@ -139,16 +132,16 @@ class TaskQueue {
                     }
                 }
             }
-            if (this.pending.length > 0) {
-                this.processing.push(...this.pending);
-                this.pending.length = 0;
+            if (this._pending.length > 0) {
+                this._processing.push(...this._pending);
+                this._pending.length = 0;
             }
-            if (this.delayed.length > 0) {
+            if (this._delayed.length > 0) {
                 let i = -1;
-                while (++i < this.delayed.length && this.delayed[i].queueTime <= time) { }
-                this.processing.push(...this.delayed.splice(0, i));
+                while (++i < this._delayed.length && this._delayed[i].queueTime <= time) { }
+                this._processing.push(...this._delayed.splice(0, i));
             }
-            if (this.processing.length > 0 || this.delayed.length > 0 || this._pendingAsyncCount > 0) {
+            if (this._processing.length > 0 || this._delayed.length > 0 || this._pendingAsyncCount > 0) {
                 this._requestFlush();
             }
             if (this._yieldPromise !== void 0 &&
@@ -169,9 +162,9 @@ class TaskQueue {
         if (this._tracer.enabled) {
             this._tracer.enter(this, 'cancel');
         }
-        if (this.flushRequested) {
+        if (this._flushRequested) {
             this.$cancel();
-            this.flushRequested = false;
+            this._flushRequested = false;
         }
         if (this._tracer.enabled) {
             this._tracer.leave(this, 'cancel');
@@ -206,19 +199,19 @@ class TaskQueue {
         const { delay, preempt, persistent, reusable, suspend } = { ...defaultQueueTaskOptions, ...opts };
         if (preempt) {
             if (delay > 0) {
-                throw new Error(`Invalid arguments: preempt cannot be combined with a greater-than-zero delay`);
+                throw preemptDelayComboError();
             }
             if (persistent) {
-                throw new Error(`Invalid arguments: preempt cannot be combined with persistent`);
+                throw preemptyPersistentComboError();
             }
         }
-        if (this.processing.length === 0) {
+        if (this._processing.length === 0) {
             this._requestFlush();
         }
-        const time = this.platform.performanceNow();
+        const time = this._now();
         let task;
         if (reusable) {
-            const taskPool = this.taskPool;
+            const taskPool = this._taskPool;
             const index = this._taskPoolSize - 1;
             if (index >= 0) {
                 task = taskPool[index];
@@ -234,13 +227,13 @@ class TaskQueue {
             task = new Task(this._tracer, this, time, time + delay, preempt, persistent, suspend, reusable, callback);
         }
         if (preempt) {
-            this.processing[this.processing.length] = task;
+            this._processing[this._processing.length] = task;
         }
         else if (delay === 0) {
-            this.pending[this.pending.length] = task;
+            this._pending[this._pending.length] = task;
         }
         else {
-            this.delayed[this.delayed.length] = task;
+            this._delayed[this._delayed.length] = task;
         }
         if (this._tracer.enabled) {
             this._tracer.leave(this, 'queueTask');
@@ -251,25 +244,25 @@ class TaskQueue {
         if (this._tracer.enabled) {
             this._tracer.enter(this, 'remove');
         }
-        let idx = this.processing.indexOf(task);
+        let idx = this._processing.indexOf(task);
         if (idx > -1) {
-            this.processing.splice(idx, 1);
+            this._processing.splice(idx, 1);
             if (this._tracer.enabled) {
                 this._tracer.leave(this, 'remove processing');
             }
             return;
         }
-        idx = this.pending.indexOf(task);
+        idx = this._pending.indexOf(task);
         if (idx > -1) {
-            this.pending.splice(idx, 1);
+            this._pending.splice(idx, 1);
             if (this._tracer.enabled) {
                 this._tracer.leave(this, 'remove pending');
             }
             return;
         }
-        idx = this.delayed.indexOf(task);
+        idx = this._delayed.indexOf(task);
         if (idx > -1) {
-            this.delayed.splice(idx, 1);
+            this._delayed.splice(idx, 1);
             if (this._tracer.enabled) {
                 this._tracer.leave(this, 'remove delayed');
             }
@@ -278,30 +271,30 @@ class TaskQueue {
         if (this._tracer.enabled) {
             this._tracer.leave(this, 'remove error');
         }
-        throw new Error(`Task #${task.id} could not be found`);
+        throw createError(`Task #${task.id} could not be found`);
     }
-    returnToPool(task) {
+    _returnToPool(task) {
         if (this._tracer.enabled) {
             this._tracer.trace(this, 'returnToPool');
         }
-        this.taskPool[this._taskPoolSize++] = task;
+        this._taskPool[this._taskPoolSize++] = task;
     }
-    resetPersistentTask(task) {
+    _resetPersistentTask(task) {
         if (this._tracer.enabled) {
             this._tracer.enter(this, 'resetPersistentTask');
         }
-        task.reset(this.platform.performanceNow());
+        task.reset(this._now());
         if (task.createdTime === task.queueTime) {
-            this.pending[this.pending.length] = task;
+            this._pending[this._pending.length] = task;
         }
         else {
-            this.delayed[this.delayed.length] = task;
+            this._delayed[this._delayed.length] = task;
         }
         if (this._tracer.enabled) {
             this._tracer.leave(this, 'resetPersistentTask');
         }
     }
-    completeAsyncTask(task) {
+    _completeAsyncTask(task) {
         if (this._tracer.enabled) {
             this._tracer.enter(this, 'completeAsyncTask');
         }
@@ -310,7 +303,7 @@ class TaskQueue {
                 if (this._tracer.enabled) {
                     this._tracer.leave(this, 'completeAsyncTask error');
                 }
-                throw new Error(`Async task completion mismatch: suspenderTask=${this._suspenderTask?.id}, task=${task.id}`);
+                throw createError(`Async task completion mismatch: suspenderTask=${this._suspenderTask?.id}, task=${task.id}`);
             }
             this._suspenderTask = void 0;
         }
@@ -373,7 +366,7 @@ class Task {
                     return promise;
                 }
                 case 1:
-                    throw new Error('Trying to await task from within task will cause a deadlock.');
+                    throw createError('Trying to await task from within task will cause a deadlock.');
                 case 2:
                     return this._result = Promise.resolve();
                 case 3:
@@ -393,7 +386,7 @@ class Task {
             if (this._tracer.enabled) {
                 this._tracer.leave(this, 'run error');
             }
-            throw new Error(`Cannot run task in ${this._status} state`);
+            throw createError(`Cannot run task in ${this._status} state`);
         }
         const { persistent, reusable, taskQueue, callback, _resolve: resolve, _reject: reject, createdTime, } = this;
         let ret;
@@ -403,7 +396,7 @@ class Task {
             if (ret instanceof Promise) {
                 ret.then($ret => {
                     if (this.persistent) {
-                        taskQueue['resetPersistentTask'](this);
+                        taskQueue._resetPersistentTask(this);
                     }
                     else {
                         if (persistent) {
@@ -414,7 +407,7 @@ class Task {
                         }
                         this.dispose();
                     }
-                    taskQueue['completeAsyncTask'](this);
+                    taskQueue._completeAsyncTask(this);
                     if (true && this._tracer.enabled) {
                         this._tracer.leave(this, 'run async then');
                     }
@@ -422,14 +415,14 @@ class Task {
                         resolve($ret);
                     }
                     if (!this.persistent && reusable) {
-                        taskQueue['returnToPool'](this);
+                        taskQueue._returnToPool(this);
                     }
                 })
                     .catch((err) => {
                     if (!this.persistent) {
                         this.dispose();
                     }
-                    taskQueue['completeAsyncTask'](this);
+                    taskQueue._completeAsyncTask(this);
                     if (true && this._tracer.enabled) {
                         this._tracer.leave(this, 'run async catch');
                     }
@@ -443,7 +436,7 @@ class Task {
             }
             else {
                 if (this.persistent) {
-                    taskQueue['resetPersistentTask'](this);
+                    taskQueue._resetPersistentTask(this);
                 }
                 else {
                     if (persistent) {
@@ -461,7 +454,7 @@ class Task {
                     resolve(ret);
                 }
                 if (!this.persistent && reusable) {
-                    taskQueue['returnToPool'](this);
+                    taskQueue._returnToPool(this);
                 }
             }
         }
@@ -495,7 +488,7 @@ class Task {
             this._status = 3;
             this.dispose();
             if (reusable) {
-                taskQueue['returnToPool'](this);
+                taskQueue._returnToPool(this);
             }
             if (reject !== void 0) {
                 reject(new TaskAbortError(this));
@@ -557,14 +550,12 @@ class Task {
         this._result = void 0;
     }
 }
-function taskStatus(status) {
-    switch (status) {
-        case 0: return 'pending';
-        case 1: return 'running';
-        case 3: return 'canceled';
-        case 2: return 'completed';
-    }
-}
+exports.TaskQueuePriority = void 0;
+(function (TaskQueuePriority) {
+    TaskQueuePriority[TaskQueuePriority["render"] = 0] = "render";
+    TaskQueuePriority[TaskQueuePriority["macroTask"] = 1] = "macroTask";
+    TaskQueuePriority[TaskQueuePriority["postRender"] = 2] = "postRender";
+})(exports.TaskQueuePriority || (exports.TaskQueuePriority = {}));
 class Tracer {
     constructor(console) {
         this.console = console;
@@ -582,10 +573,10 @@ class Tracer {
     }
     log(prefix, obj, method) {
         if (obj instanceof TaskQueue) {
-            const processing = obj['processing'].length;
-            const pending = obj['pending'].length;
-            const delayed = obj['delayed'].length;
-            const flushReq = obj['flushRequested'];
+            const processing = obj._processing.length;
+            const pending = obj._pending.length;
+            const delayed = obj._delayed.length;
+            const flushReq = obj._flushRequested;
             const susTask = !!obj._suspenderTask;
             const info = `processing=${processing} pending=${pending} delayed=${delayed} flushReq=${flushReq} susTask=${susTask}`;
             this.console.log(`${prefix}[Q.${method}] ${info}`);
@@ -604,12 +595,14 @@ class Tracer {
         }
     }
 }
-exports.TaskQueuePriority = void 0;
-(function (TaskQueuePriority) {
-    TaskQueuePriority[TaskQueuePriority["render"] = 0] = "render";
-    TaskQueuePriority[TaskQueuePriority["macroTask"] = 1] = "macroTask";
-    TaskQueuePriority[TaskQueuePriority["postRender"] = 2] = "postRender";
-})(exports.TaskQueuePriority || (exports.TaskQueuePriority = {}));
+const taskStatus = (status) => {
+    switch (status) {
+        case 0: return 'pending';
+        case 1: return 'running';
+        case 3: return 'canceled';
+        case 2: return 'completed';
+    }
+};
 const defaultQueueTaskOptions = {
     delay: 0,
     preempt: false,
@@ -619,19 +612,38 @@ const defaultQueueTaskOptions = {
 };
 let $resolve;
 let $reject;
-function executor(resolve, reject) {
+const executor = (resolve, reject) => {
     $resolve = resolve;
     $reject = reject;
-}
-function createExposedPromise() {
+};
+const createExposedPromise = () => {
     const p = new Promise(executor);
     p.resolve = $resolve;
     p.reject = $reject;
     return p;
-}
+};
+const isPersistent = (task) => task.persistent;
+const preemptDelayComboError = () => createError(`AUR1006: Invalid arguments: preempt cannot be combined with a greater-than-zero delay`)
+    ;
+const preemptyPersistentComboError = () => createError(`AUR1007: Invalid arguments: preempt cannot be combined with persistent`)
+    ;
+const createError = (msg) => new Error(msg);
+const reportTaskQueue = (taskQueue) => {
+    const processing = taskQueue._processing;
+    const pending = taskQueue._pending;
+    const delayed = taskQueue._delayed;
+    const flushReq = taskQueue._flushRequested;
+    return { processing, pending, delayed, flushRequested: flushReq };
+};
+const ensureEmpty = (taskQueue) => {
+    taskQueue.flush();
+    taskQueue._pending.forEach((x) => x.cancel());
+};
 
 exports.Platform = Platform;
 exports.Task = Task;
 exports.TaskAbortError = TaskAbortError;
 exports.TaskQueue = TaskQueue;
+exports.ensureEmpty = ensureEmpty;
+exports.reportTaskQueue = reportTaskQueue;
 //# sourceMappingURL=index.dev.cjs.map

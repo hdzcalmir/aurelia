@@ -1,8 +1,8 @@
 import { SetterObserver, AccessorType } from '@aurelia/runtime';
+import { INodeObserver, INodeObserverConfigBase } from './observer-locator';
 import type { INode } from '../dom';
-import type { EventSubscriber } from './event-delegator';
 import type { ValueAttributeObserver } from './value-attribute-observer';
-import type { ISubscriber, ISubscriberCollection, IObserver, IObserverLocator } from '@aurelia/runtime';
+import type { ISubscriberCollection, IObserverLocator } from '@aurelia/runtime';
 export interface IInputElement extends HTMLInputElement {
     model?: unknown;
     $observers?: {
@@ -14,19 +14,18 @@ export interface IInputElement extends HTMLInputElement {
 declare function defaultMatcher(a: unknown, b: unknown): boolean;
 export interface CheckedObserver extends ISubscriberCollection {
 }
-export declare class CheckedObserver implements IObserver {
-    readonly handler: EventSubscriber;
+export declare class CheckedObserver implements INodeObserver {
     type: AccessorType;
-    constructor(obj: INode, _key: PropertyKey, handler: EventSubscriber, observerLocator: IObserverLocator);
+    /**
+     * Comes from mixin
+     */
+    useConfig: (config: INodeObserverConfigBase) => void;
+    constructor(obj: INode, _key: PropertyKey, config: INodeObserverConfigBase, observerLocator: IObserverLocator);
     getValue(): unknown;
     setValue(newValue: unknown): void;
     handleCollectionChange(): void;
     handleChange(_newValue: unknown, _previousValue: unknown): void;
     handleEvent(): void;
-    start(): void;
-    stop(): void;
-    subscribe(subscriber: ISubscriber): void;
-    unsubscribe(subscriber: ISubscriber): void;
 }
 export {};
 //# sourceMappingURL=checked-observer.d.ts.map

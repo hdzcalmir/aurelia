@@ -30,7 +30,6 @@ export declare const validationRulesRegistrar: Readonly<{
 export interface PropertyRule extends IAstEvaluator {
 }
 export declare class PropertyRule<TObject extends IValidateable = IValidateable, TValue = unknown> implements IPropertyRule {
-    private readonly locator;
     readonly validationRules: IValidationRules;
     readonly messageProvider: IValidationMessageProvider;
     property: RuleProperty;

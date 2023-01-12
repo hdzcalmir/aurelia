@@ -1,5 +1,7 @@
-import { IExpressionHydrator } from '@aurelia/runtime';
 import * as AST from '@aurelia/runtime';
+export interface IExpressionHydrator {
+    hydrate(jsonExpr: any): any;
+}
 export declare class Deserializer implements IExpressionHydrator {
     static deserialize(serializedExpr: string): AST.IsExpressionOrStatement;
     hydrate(raw: any): any;
@@ -34,6 +36,7 @@ export declare class Serializer implements AST.IVisitor<string> {
     visitDestructuringAssignmentSingleExpression(expr: AST.DestructuringAssignmentSingleExpression): string;
     visitDestructuringAssignmentRestExpression(expr: AST.DestructuringAssignmentRestExpression): string;
     visitArrowFunction(expr: AST.ArrowFunction): string;
+    visitCustom(expr: AST.CustomExpression): string;
     private serializeExpressions;
 }
 export declare function serializePrimitives(values: readonly unknown[]): string;

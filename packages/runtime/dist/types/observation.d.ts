@@ -1,14 +1,20 @@
-import { IIndexable, IServiceLocator } from '@aurelia/kernel';
-import type { Scope } from './observation/binding-context';
+import { IDisposable, IIndexable, IServiceLocator } from '@aurelia/kernel';
+import type { Scope } from './observation/scope';
 import type { CollectionLengthObserver, CollectionSizeObserver } from './observation/collection-length-observer';
+import { TaskQueue } from '@aurelia/platform';
 export interface IBinding {
-    interceptor: this;
-    readonly locator: IServiceLocator;
-    readonly $scope?: Scope;
     readonly isBound: boolean;
-    $bind(scope: Scope): void;
-    $unbind(): void;
+    bind(scope: Scope): void;
+    unbind(): void;
     get: IServiceLocator['get'];
+    useScope(scope: Scope): void;
+    limit(opts: IRateLimitOptions): IDisposable;
+}
+export interface IRateLimitOptions {
+    type: 'throttle' | 'debounce';
+    delay: number;
+    queue: TaskQueue;
+    now: () => number;
 }
 export declare const ICoercionConfiguration: import("@aurelia/kernel").InterfaceSymbol<ICoercionConfiguration>;
 export interface ICoercionConfiguration {
@@ -23,9 +29,15 @@ export interface IConnectable {
     observeCollection(obj: Collection): void;
     subscribeTo(subscribable: ISubscribable | ICollectionSubscribable): void;
 }
+/**
+ * Interface of a subscriber or property change handler
+ */
 export interface ISubscriber<TValue = unknown> {
     handleChange(newValue: TValue, previousValue: TValue): void;
 }
+/**
+ * Interface of a collection subscriber or mutation handler
+ */
 export interface ICollectionSubscriber {
     handleCollectionChange(collection: Collection, indexMap: IndexMap): void;
 }
@@ -44,9 +56,7 @@ export interface ICollectionSubscribable {
 export interface ISubscriberRecord<T extends ISubscriber | ICollectionSubscriber> {
     readonly count: number;
     add(subscriber: T): boolean;
-    has(subscriber: T): boolean;
     remove(subscriber: T): boolean;
-    any(): boolean;
     notify(value: unknown, oldValue: unknown): void;
     notifyCollection(collection: Collection, indexMap: IndexMap): void;
 }

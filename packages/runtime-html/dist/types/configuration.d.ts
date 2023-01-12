@@ -1,4 +1,6 @@
 import { IContainer, IRegistry } from '@aurelia/kernel';
+import { CustomAttributeRenderer, CustomElementRenderer, InterpolationBindingRenderer, IteratorBindingRenderer, LetElementRenderer, PropertyBindingRenderer, RefBindingRenderer, SetPropertyRenderer, TemplateControllerRenderer, AttributeBindingRenderer, ListenerBindingRenderer, SetAttributeRenderer, StylePropertyBindingRenderer, TextBindingRenderer, SetClassAttributeRenderer, SetStyleAttributeRenderer, SpreadRenderer } from './renderer';
+import { AttrBindingBehavior } from './resources/binding-behaviors/attr';
 import { AuSlot } from './resources/custom-elements/au-slot';
 import { ICoercionConfiguration } from '@aurelia/runtime';
 export declare const DebounceBindingBehaviorRegistration: IRegistry;
@@ -35,7 +37,6 @@ export declare const DefaultBindingSyntax: IRegistry[];
  * - `:target` (short-hand for `target.bind`)
  */
 export declare const ShortHandBindingSyntax: IRegistry[];
-export declare const CallBindingCommandRegistration: IRegistry;
 export declare const DefaultBindingCommandRegistration: IRegistry;
 export declare const ForBindingCommandRegistration: IRegistry;
 export declare const FromViewBindingCommandRegistration: IRegistry;
@@ -44,7 +45,6 @@ export declare const ToViewBindingCommandRegistration: IRegistry;
 export declare const TwoWayBindingCommandRegistration: IRegistry;
 export declare const RefBindingCommandRegistration: IRegistry;
 export declare const TriggerBindingCommandRegistration: IRegistry;
-export declare const DelegateBindingCommandRegistration: IRegistry;
 export declare const CaptureBindingCommandRegistration: IRegistry;
 export declare const AttrBindingCommandRegistration: IRegistry;
 export declare const ClassBindingCommandRegistration: IRegistry;
@@ -59,7 +59,6 @@ export declare const SpreadBindingCommandRegistration: IRegistry;
  */
 export declare const DefaultBindingLanguage: IRegistry[];
 export declare const SanitizeValueConverterRegistration: IRegistry;
-export declare const ViewValueConverterRegistration: IRegistry;
 export declare const IfRegistration: IRegistry;
 export declare const ElseRegistration: IRegistry;
 export declare const RepeatRegistration: IRegistry;
@@ -74,10 +73,8 @@ export declare const RejectedTemplateControllerRegistration: IRegistry;
 export declare const PromiseAttributePatternRegistration: IRegistry;
 export declare const FulfilledAttributePatternRegistration: IRegistry;
 export declare const RejectedAttributePatternRegistration: IRegistry;
-export declare const AttrBindingBehaviorRegistration: IRegistry;
 export declare const SelfBindingBehaviorRegistration: IRegistry;
 export declare const UpdateTriggerBindingBehaviorRegistration: IRegistry;
-export declare const AuRenderRegistration: IRegistry;
 export declare const AuComposeRegistration: IRegistry;
 export declare const PortalRegistration: IRegistry;
 export declare const FocusRegistration: IRegistry;
@@ -90,25 +87,7 @@ export declare const ShowRegistration: IRegistry;
  * - Template controllers: `if`/`else`, `repeat`, `with`
  * - Value Converters: `sanitize`
  */
-export declare const DefaultResources: (IRegistry | typeof AuSlot)[];
-export declare const CallBindingRendererRegistration: IRegistry;
-export declare const CustomAttributeRendererRegistration: IRegistry;
-export declare const CustomElementRendererRegistration: IRegistry;
-export declare const InterpolationBindingRendererRegistration: IRegistry;
-export declare const IteratorBindingRendererRegistration: IRegistry;
-export declare const LetElementRendererRegistration: IRegistry;
-export declare const PropertyBindingRendererRegistration: IRegistry;
-export declare const RefBindingRendererRegistration: IRegistry;
-export declare const SetPropertyRendererRegistration: IRegistry;
-export declare const TemplateControllerRendererRegistration: IRegistry;
-export declare const ListenerBindingRendererRegistration: IRegistry;
-export declare const AttributeBindingRendererRegistration: IRegistry;
-export declare const SetAttributeRendererRegistration: IRegistry;
-export declare const SetClassAttributeRendererRegistration: IRegistry;
-export declare const SetStyleAttributeRendererRegistration: IRegistry;
-export declare const StylePropertyBindingRendererRegistration: IRegistry;
-export declare const TextBindingRendererRegistration: IRegistry;
-export declare const SpreadRendererRegistration: IRegistry;
+export declare const DefaultResources: (IRegistry | typeof AttrBindingBehavior | typeof AuSlot)[];
 /**
  * Default renderers for:
  * - PropertyBinding: `bind`, `one-time`, `to-view`, `from-view`, `two-way`
@@ -126,7 +105,7 @@ export declare const SpreadRendererRegistration: IRegistry;
  * - StyleProperty: `style`, `css`
  * - TextBinding: `${}`
  */
-export declare const DefaultRenderers: IRegistry[];
+export declare const DefaultRenderers: (typeof SetPropertyRenderer | typeof CustomElementRenderer | typeof CustomAttributeRenderer | typeof TemplateControllerRenderer | typeof LetElementRenderer | typeof RefBindingRenderer | typeof InterpolationBindingRenderer | typeof PropertyBindingRenderer | typeof IteratorBindingRenderer | typeof TextBindingRenderer | typeof ListenerBindingRenderer | typeof SetAttributeRenderer | typeof SetClassAttributeRenderer | typeof SetStyleAttributeRenderer | typeof StylePropertyBindingRenderer | typeof AttributeBindingRenderer | typeof SpreadRenderer)[];
 export declare const StandardConfiguration: {
     optionsProvider: ConfigurationOptionsProvider;
     /**

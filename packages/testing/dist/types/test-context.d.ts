@@ -68,15 +68,11 @@ export declare class TestContext {
         new (): DOMParser;
         prototype: DOMParser;
     };
-    private _container;
     get container(): IContainer;
-    private _platform;
     get platform(): IPlatform;
-    private _templateCompiler;
     get templateCompiler(): ITemplateCompiler;
     private oL;
     get observerLocator(): IObserverLocator;
-    private _domParser;
     get domParser(): HTMLDivElement;
     private constructor();
     static create(): TestContext;

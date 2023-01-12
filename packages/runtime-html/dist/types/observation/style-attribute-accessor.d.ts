@@ -3,7 +3,6 @@ import type { IAccessor } from '@aurelia/runtime';
 export declare class StyleAttributeAccessor implements IAccessor {
     readonly obj: HTMLElement;
     type: AccessorType;
-    value: unknown;
     styles: Record<string, number>;
     version: number;
     constructor(obj: HTMLElement);

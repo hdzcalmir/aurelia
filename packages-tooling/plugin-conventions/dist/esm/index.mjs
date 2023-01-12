@@ -30,11 +30,11 @@ function resourceName(filePath) {
     return kebabCase(name);
 }
 
-const hmrRuntimeModules = ['CustomElement', 'LifecycleFlags', 'IHydrationContext', 'Controller'];
-const hmrMetadataModules = ['Metadata'];
 const getHmrCode = (className, moduleText = 'module') => {
     const code = `
+    import { Metadata as $$M } from '@aurelia/metadata';
     import { ExpressionKind as $$EK } from '@aurelia/runtime';
+    import { Controller as $$C, CustomElement as $$CE, IHydrationContext as $$IHC } from '@aurelia/runtime-html';
 
     // @ts-ignore
     const controllers = [];
@@ -77,10 +77,10 @@ const getHmrCode = (className, moduleText = 'module') => {
     });
 
     if (hot.data?.aurelia) {
-      const newDefinition = CustomElement.getDefinition(currentClassType);
-      Metadata.define(newDefinition.name, newDefinition, currentClassType);
-      Metadata.define(newDefinition.name, newDefinition, newDefinition);
-      hot.data.aurelia.container.res[CustomElement.keyFrom(newDefinition.name)] = newDefinition;
+      const newDefinition = $$CE.getDefinition(currentClassType);
+      $$M.define(newDefinition.name, newDefinition, currentClassType);
+      $$M.define(newDefinition.name, newDefinition, newDefinition);
+      hot.data.aurelia.container.res[$$CE.keyFrom(newDefinition.name)] = newDefinition;
 
       const previousControllers = hot.data.controllers;
       if(previousControllers == null || previousControllers.length === 0) {
@@ -91,7 +91,7 @@ const getHmrCode = (className, moduleText = 'module') => {
       // @ts-ignore
       previousControllers.forEach(controller => {
         const values = { ...controller.viewModel };
-        const hydrationContext = controller.container.get(IHydrationContext)
+        const hydrationContext = controller.container.get($$IHC)
         const hydrationInst = hydrationContext.instruction;
 
         const bindableNames = Object.keys(controller.definition.bindables);
@@ -115,7 +115,6 @@ const getHmrCode = (className, moduleText = 'module') => {
         controller.viewModel = controller.container.invoke(currentClassType);
         controller.definition = newDefinition;
         Object.assign(controller.viewModel, values);
-        controller.hooks = new controller.hooks.constructor(controller.viewModel);
         if (controller._hydrateCustomElement) {
           controller._hydrateCustomElement(hydrationInst, hydrationContext);
         } else {
@@ -123,8 +122,8 @@ const getHmrCode = (className, moduleText = 'module') => {
         }
         h.parentNode.replaceChild(controller.host, h);
         controller.hostController = null;
-        controller.deactivate(controller, controller.parent ?? null, LifecycleFlags.none);
-        controller.activate(controller, controller.parent ?? null, LifecycleFlags.none);
+        controller.deactivate(controller, controller.parent ?? null, 0);
+        controller.activate(controller, controller.parent ?? null, 0);
       });
     }
   }`;
@@ -173,16 +172,6 @@ function preprocessResource(unit, options) {
         }
         if (className && options.hmr && process.env.NODE_ENV !== 'production') {
             exportedClassName = className;
-            hmrRuntimeModules.forEach(m => {
-                if (!auImport.names.includes(m)) {
-                    ensureTypeIsExported(runtimeImport.names, m);
-                }
-            });
-            hmrMetadataModules.forEach(m => {
-                if (!auImport.names.includes(m)) {
-                    ensureTypeIsExported(metadataImport.names, m);
-                }
-            });
         }
         if (customName)
             customElementName = customName;
@@ -589,13 +578,7 @@ function preprocessHtmlTemplate(unit, options, hasViewModel) {
     });
     const m = modifyCode('', unit.path);
     const hmrEnabled = !hasViewModel && options.hmr && process.env.NODE_ENV !== 'production';
-    if (hmrEnabled) {
-        m.append(`import { ${hmrRuntimeModules.join(', ')} } from '@aurelia/runtime-html';\n`);
-        m.append(`import { ${hmrMetadataModules.join(', ')} } from '@aurelia/metadata';\n`);
-    }
-    else {
-        m.append(`import { CustomElement } from '@aurelia/runtime-html';\n`);
-    }
+    m.append(`import { CustomElement } from '@aurelia/runtime-html';\n`);
     if (cssDeps.length > 0) {
         if (shadowMode !== null) {
             m.append(`import { shadowCSS } from '@aurelia/runtime-html';\n`);

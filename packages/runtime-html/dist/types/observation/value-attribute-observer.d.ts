@@ -1,20 +1,21 @@
 import { AccessorType } from '@aurelia/runtime';
-import type { IObserver, ISubscriber, ISubscriberCollection } from '@aurelia/runtime';
+import type { ISubscriberCollection } from '@aurelia/runtime';
 import type { INode } from '../dom';
-import type { EventSubscriber } from './event-delegator';
+import type { INodeObserver, INodeObserverConfigBase } from './observer-locator';
 export interface ValueAttributeObserver extends ISubscriberCollection {
 }
 /**
  * Observer for non-radio, non-checkbox input.
  */
-export declare class ValueAttributeObserver implements IObserver {
-    readonly handler: EventSubscriber;
+export declare class ValueAttributeObserver implements INodeObserver {
     type: AccessorType;
-    constructor(obj: INode, key: PropertyKey, handler: EventSubscriber);
+    /**
+     * Comes from mixin
+     */
+    useConfig: (config: INodeObserverConfigBase) => void;
+    constructor(obj: INode, key: PropertyKey, config: INodeObserverConfigBase);
     getValue(): unknown;
     setValue(newValue: string | null): void;
     handleEvent(): void;
-    subscribe(subscriber: ISubscriber): void;
-    unsubscribe(subscriber: ISubscriber): void;
 }
 //# sourceMappingURL=value-attribute-observer.d.ts.map

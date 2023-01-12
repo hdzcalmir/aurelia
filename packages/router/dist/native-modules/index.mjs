@@ -1,10 +1,10 @@
-import { Protocol as t, IEventAggregator as i, IContainer as s, DI as n, Registration as e } from "../../../kernel/dist/native-modules/index.mjs";
+import { Protocol as t, IEventAggregator as i, IContainer as s, DI as n, Registration as e } from "../kernel/dist/native-modules/index.mjs";
 
-import { CustomElement as r, isCustomElementViewModel as o, Controller as h, IPlatform as u, IWindow as l, IHistory as a, ILocation as c, IAppRoot as f, CustomAttribute as d, customElement as p, bindable as g, INode as v, IInstruction as w, IController as m, customAttribute as R, AppTask as I } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { CustomElement as r, isCustomElementViewModel as o, Controller as h, IPlatform as u, IWindow as l, IHistory as a, ILocation as c, IAppRoot as f, CustomAttribute as d, customElement as p, bindable as g, INode as v, IInstruction as w, IController as m, customAttribute as R, AppTask as I } from "../runtime-html/dist/native-modules/index.mjs";
 
-import { Metadata as E } from "../../../metadata/dist/native-modules/index.mjs";
+import { Metadata as E } from "../metadata/dist/native-modules/index.mjs";
 
-import { RouteRecognizer as y, ConfigurableRoute as C, RecognizedRoute as S, Endpoint as N } from "../../../route-recognizer/dist/native-modules/index.mjs";
+import { RouteRecognizer as y, ConfigurableRoute as C, RecognizedRoute as S, Endpoint as N } from "../route-recognizer/dist/native-modules/index.mjs";
 
 class Endpoint$1 {
     constructor(t, i, s, n = {}) {
@@ -1439,6 +1439,7 @@ class ViewportContent extends EndpointContent {
         if (!this.fromCache && !this.fromHistory) try {
             this.instruction.component.set(this.toComponentInstance(t.container, t.controller, t.element));
         } catch (n) {
+            if (!n.message.startsWith("AUR0009:")) throw n;
             if ("" !== (i ?? "")) {
                 if ("process-children" === s) this.instruction.parameters.set([ this.instruction.component.name ]); else {
                     this.instruction.parameters.set([ this.instruction.unparsed ?? this.instruction.component.name ]);
@@ -1448,6 +1449,7 @@ class ViewportContent extends EndpointContent {
                 try {
                     this.instruction.component.set(this.toComponentInstance(t.container, t.controller, t.element));
                 } catch (t) {
+                    if (!t.message.startsWith("AUR0009:")) throw t;
                     throw new Error(`'${this.instruction.component.name}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                 }
             } else throw new Error(`'${this.instruction.component.name}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
@@ -1540,15 +1542,15 @@ class ViewportContent extends EndpointContent {
                 return i(t, n, this.instruction, this.navigation);
             })));
             if (0 !== e.length) {
-                if (null != t.loading) e.push((() => t.loading(n, this.instruction, this.navigation)));
-                if (null != t.load) {
+                if ("function" === typeof t.loading) e.push((() => t.loading(n, this.instruction, this.navigation)));
+                if ("function" === typeof t.load) {
                     console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                     e.push((() => t.load(n, this.instruction, this.navigation)));
                 }
                 return Runner.run(null, ...e);
             }
-            if (null != t.loading) return t.loading(n, this.instruction, this.navigation);
-            if (null != t.load) {
+            if ("function" === typeof t.loading) return t.loading(n, this.instruction, this.navigation);
+            if ("function" === typeof t.load) {
                 console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                 return t.load(n, this.instruction, this.navigation);
             }
@@ -1569,15 +1571,15 @@ class ViewportContent extends EndpointContent {
             return s(i, this.instruction, t);
         })));
         if (0 !== s.length) {
-            if (null != i.unloading) s.push((() => i.unloading(this.instruction, t)));
-            if (null != i.unload) {
+            if ("function" === typeof i.unloading) s.push((() => i.unloading(this.instruction, t)));
+            if ("function" === typeof i.unload) {
                 console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
                 s.push((() => i.unload(this.instruction, t)));
             }
             return Runner.run(null, ...s);
         }
-        if (null != i.unloading) return i.unloading(this.instruction, t);
-        if (null != i.unload) {
+        if ("function" === typeof i.unloading) return i.unloading(this.instruction, t);
+        if ("function" === typeof i.unload) {
             console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
             return i.unload(this.instruction, t);
         }
@@ -2283,30 +2285,30 @@ class RoutingInstruction {
         if (!this.component.same(i.component, s)) return false;
         return this.parameters.same(t, i.parameters, this.component.type);
     }
-    stringify(t, i = false, s = false) {
-        const n = Separators.for(t);
-        let e = i;
-        let r = false;
+    stringify(t, i = false, s = false, n = false) {
+        const e = Separators.for(t);
+        let r = i;
+        let o = false;
         if (s) {
             const t = this.viewport?.instance ?? null;
             if (t?.options.noLink ?? false) return "";
-            if (!this.needsEndpointDescribed && (!(t?.options.forceDescription ?? false) || null != this.viewportScope?.instance)) e = true;
-            if (t?.options.fallback === this.component.name) r = true;
-            if (t?.options.default === this.component.name) r = true;
+            if (!this.needsEndpointDescribed && (!(t?.options.forceDescription ?? false) || null != this.viewportScope?.instance)) r = true;
+            if (t?.options.fallback === this.component.name) o = true;
+            if (t?.options.default === this.component.name) o = true;
         }
-        const o = this.nextScopeInstructions;
-        let h = this.scopeModifier;
-        if (this.route instanceof FoundRoute && !this.routeStart) return Array.isArray(o) ? RoutingInstruction.stringify(t, o, i, s) : "";
-        const u = this.stringifyShallow(t, e, r);
-        h += u.endsWith(n.scope) ? u.slice(0, -n.scope.length) : u;
-        if (Array.isArray(o) && o.length > 0) {
-            const e = RoutingInstruction.stringify(t, o, i, s);
-            if (e.length > 0) {
-                h += n.scope;
-                h += 1 === o.length ? e : `${n.groupStart}${e}${n.groupEnd}`;
+        const h = this.nextScopeInstructions;
+        let u = this.scopeModifier;
+        if (this.route instanceof FoundRoute && !this.routeStart) return !n && Array.isArray(h) ? RoutingInstruction.stringify(t, h, i, s) : "";
+        const l = this.stringifyShallow(t, r, o);
+        u += l.endsWith(e.scope) ? l.slice(0, -e.scope.length) : l;
+        if (!n && Array.isArray(h) && h.length > 0) {
+            const n = RoutingInstruction.stringify(t, h, i, s);
+            if (n.length > 0) {
+                u += e.scope;
+                u += 1 === h.length ? n : `${e.groupStart}${n}${e.groupEnd}`;
             }
         }
-        return h;
+        return u;
     }
     clone(t = false, i = false, s = false) {
         const n = RoutingInstruction.create(this.component.func ?? this.component.promise ?? this.component.type ?? this.component.name, this.endpoint.name, null !== this.parameters.typedParameters ? this.parameters.typedParameters : void 0);
@@ -2567,9 +2569,9 @@ O = b([ k(0, i), k(1, s) ], O);
 
 const x = y;
 
-const F = C;
+const U = C;
 
-const U = S;
+const F = S;
 
 const M = N;
 
@@ -2714,23 +2716,50 @@ class RoutingScope {
         this.id = -1;
         this.parent = null;
         this.children = [];
-        this.path = null;
         this.id = ++RoutingScope.lastId;
         this.owningScope = s ?? this;
     }
-    static for(t) {
-        if (null == t) return null;
-        if (t instanceof RoutingScope || t instanceof Viewport || t instanceof ViewportScope) return t.scope;
-        let i;
-        if ("res" in t) i = t; else if ("container" in t) i = t.container; else if ("$controller" in t) i = t.$controller.container; else {
-            const s = r.for(t, {
+    static for(t, i) {
+        if (null == t) return {
+            scope: null,
+            instruction: i
+        };
+        if (t instanceof RoutingScope || t instanceof Viewport || t instanceof ViewportScope) return {
+            scope: t.scope,
+            instruction: i
+        };
+        let s;
+        if ("res" in t) s = t; else if ("container" in t) s = t.container; else if ("$controller" in t) s = t.$controller.container; else {
+            const i = r.for(t, {
                 searchParents: true
             });
-            i = s?.container;
+            s = i?.container;
         }
-        if (null == i) return null;
-        const s = i.has(Router.closestEndpointKey, true) ? i.get(Router.closestEndpointKey) : null;
-        return s?.scope ?? null;
+        if (null == s) return {
+            scope: null,
+            instruction: i
+        };
+        const n = s.has(Router.closestEndpointKey, true) ? s.get(Router.closestEndpointKey) : null;
+        let e = n?.scope ?? null;
+        if (null === e || void 0 === i) {
+            const t = i ?? "";
+            return {
+                scope: e,
+                instruction: t.startsWith("/") ? t.slice(1) : i
+            };
+        }
+        if (i.startsWith("/")) return {
+            scope: null,
+            instruction: i.slice(1)
+        };
+        while (i.startsWith(".")) if (i.startsWith("./")) i = i.slice(2); else if (i.startsWith("../")) {
+            e = e.parent ?? e;
+            i = i.slice(3);
+        } else break;
+        return {
+            scope: e,
+            instruction: i
+        };
     }
     get scope() {
         return this.hasScope ? this : this.owningScope.scope;
@@ -2755,6 +2784,12 @@ class RoutingScope {
     }
     get pathname() {
         return `${this.owningScope !== this ? this.owningScope.pathname : ""}/${this.endpoint.name}`;
+    }
+    get path() {
+        const t = this.parent?.path ?? "";
+        const i = this.routingInstruction?.stringify(this.router, false, true, true) ?? "";
+        const s = this.routingInstruction ? Separators.for(this.router).scope : "";
+        return `${t}${i}${s}`;
     }
     toString(t = false) {
         return `${this.owningScope !== this ? this.owningScope.toString() : ""}/${!this.enabled ? "(" : ""}${this.endpoint.toString()}#${this.id}${!this.enabled ? ")" : ""}` + `${t ? `\n` + this.children.map((t => t.toString(true))).join("") : ""}`;
@@ -3880,7 +3915,7 @@ class Router {
         return t;
     }
     disconnectEndpoint(t, i, s) {
-        if (!i.connectedScope.parent.removeEndpoint(t, i, s)) throw new Error("Failed to remove endpoint: " + i.name);
+        if (!i.connectedScope.parent.removeEndpoint(t, i, s)) throw new Error("Router failed to remove endpoint: " + i.name);
     }
     async load(t, i) {
         i = i ?? {};
@@ -3913,26 +3948,11 @@ class Router {
     applyLoadOptions(t, i, s = true) {
         i = i ?? {};
         if ("origin" in i && !("context" in i)) i.context = i.origin;
-        let n = RoutingScope.for(i.context ?? null) ?? null;
-        if ("string" === typeof t) {
-            if (!t.startsWith("/")) {
-                if (t.startsWith(".")) {
-                    if (t.startsWith("./")) t = t.slice(2);
-                    while (t.startsWith("../")) {
-                        n = n?.parent ?? n;
-                        t = t.slice(3);
-                    }
-                }
-                if (null != n?.path) {
-                    t = `${n.path}/${t}`;
-                    n = null;
-                }
-            } else n = null;
-            if (!s) {
-                t = RoutingInstruction.from(this, t);
-                for (const i of t) if (null === i.scope) i.scope = n;
-            }
-        } else {
+        const {scope: n, instruction: e} = RoutingScope.for(i.context ?? null, "string" === typeof t ? t : void 0);
+        if ("string" === typeof t) if (!s) {
+            t = RoutingInstruction.from(this, e);
+            for (const i of t) if (null === i.scope) i.scope = n;
+        } else t = e; else {
             t = RoutingInstruction.from(this, t);
             for (const i of t) if (null === i.scope) i.scope = n;
         }
@@ -3984,7 +4004,7 @@ class Router {
             s = this.coordinators[t];
             break;
         }
-        if (null === s) if (!this.loadedFirst) this.appendedInstructions.push(...t); else throw Error("Failed to append routing instructions to coordinator");
+        if (null === s) if (!this.loadedFirst) this.appendedInstructions.push(...t); else throw Error("Router failed to append routing instructions to coordinator");
         s?.enqueueAppendedInstructions(t);
     }
     async updateNavigation(t) {
@@ -3993,7 +4013,7 @@ class Router {
         let {matchedInstructions: s} = this.rootScope.scope.matchEndpoints(i, [], true);
         let n = 100;
         while (s.length > 0) {
-            if (0 === n--) throw new Error("Failed to find viewport when updating viewer paths.");
+            if (0 === n--) throw new Error("Router failed to find viewport when updating viewer paths.");
             s = s.map((t => {
                 const {matchedInstructions: i} = t.endpoint.instance.scope.matchEndpoints(t.nextScopeInstructions ?? [], [], true);
                 return i;
@@ -4469,7 +4489,10 @@ let Y = class LoadCustomAttribute {
                 if (s.foundConfiguration) i.route = s.matching;
                 t = RoutingInstruction.stringify(this.router, [ i ]);
             }
-            if (this.router.configuration.options.useUrlFragmentHash && !t.startsWith("#")) t = `#${t}`;
+            const {scope: i, instruction: s} = RoutingScope.for(this.element, t);
+            const n = i?.path ?? "";
+            t = `${n}${s ?? ""}`;
+            if (this.router.configuration.options.useUrlFragmentHash && !t.startsWith("#")) t = `#/${t}`;
             this.element.setAttribute("href", t);
         }
     }
@@ -4488,7 +4511,7 @@ let Y = class LoadCustomAttribute {
     }
     u(t) {
         if ("string" === typeof t) return new FoundRoute;
-        const i = RoutingScope.for(this.element) ?? this.router.rootScope.scope;
+        const i = RoutingScope.for(this.element).scope ?? this.router.rootScope.scope;
         if (null != t.id) return i.findMatchingRoute(t.id, t.parameters ?? {});
         const s = t.path;
         if (null != s) return i.findMatchingRoute(s, t.parameters ?? {});
@@ -4638,5 +4661,5 @@ RouterConfiguration.configurationCall = t => {
     t.start();
 };
 
-export { F as ConfigurableRoute, it as ConsideredActiveCustomAttribute, et as DefaultComponents, lt as DefaultResources, Endpoint$1 as Endpoint, EndpointContent, FoundRoute, tt as HrefCustomAttribute, ut as HrefCustomAttributeRegistration, z as ILinkHandler, H as IRouter, st as IRouterConfiguration, InstructionParameters, B as LinkHandler, Y as LoadCustomAttribute, ht as LoadCustomAttributeRegistration, Navigation, NavigationCoordinator, NavigationFlags, O as Navigator, U as RecognizedRoute, M as RecognizerEndpoint, D as ReloadBehavior, Route, x as RouteRecognizer, Router, RouterConfiguration, RouterNavigationCancelEvent, RouterNavigationCompleteEvent, RouterNavigationEndEvent, RouterNavigationErrorEvent, RouterNavigationStartEvent, RouterOptions, nt as RouterRegistration, RouterStartEvent, RouterStopEvent, V as Routes, RoutingHook, RoutingInstruction, RoutingScope, Runner, Step, Viewport, ViewportContent, K as ViewportCustomElement, rt as ViewportCustomElementRegistration, ViewportOptions, ViewportScope, ViewportScopeContent, X as ViewportScopeCustomElement, ot as ViewportScopeCustomElementRegistration, q as route, A as routes };
+export { U as ConfigurableRoute, it as ConsideredActiveCustomAttribute, et as DefaultComponents, lt as DefaultResources, Endpoint$1 as Endpoint, EndpointContent, FoundRoute, tt as HrefCustomAttribute, ut as HrefCustomAttributeRegistration, z as ILinkHandler, H as IRouter, st as IRouterConfiguration, InstructionParameters, B as LinkHandler, Y as LoadCustomAttribute, ht as LoadCustomAttributeRegistration, Navigation, NavigationCoordinator, NavigationFlags, O as Navigator, F as RecognizedRoute, M as RecognizerEndpoint, D as ReloadBehavior, Route, x as RouteRecognizer, Router, RouterConfiguration, RouterNavigationCancelEvent, RouterNavigationCompleteEvent, RouterNavigationEndEvent, RouterNavigationErrorEvent, RouterNavigationStartEvent, RouterOptions, nt as RouterRegistration, RouterStartEvent, RouterStopEvent, V as Routes, RoutingHook, RoutingInstruction, RoutingScope, Runner, Step, Viewport, ViewportContent, K as ViewportCustomElement, rt as ViewportCustomElementRegistration, ViewportOptions, ViewportScope, ViewportScopeContent, X as ViewportScopeCustomElement, ot as ViewportScopeCustomElementRegistration, q as route, A as routes };
 

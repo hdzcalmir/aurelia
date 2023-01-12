@@ -300,11 +300,11 @@ class ValidationMessageEvaluationContext {
 }
 class PropertyRule {
     constructor(locator, validationRules, messageProvider, property, $rules = [[]]) {
-        this.locator = locator;
         this.validationRules = validationRules;
         this.messageProvider = messageProvider;
         this.property = property;
         this.$rules = $rules;
+        this.l = locator;
     }
     accept(visitor) {
         return visitor.visitPropertyRule(this);
@@ -328,7 +328,7 @@ class PropertyRule {
             value = object;
         }
         else {
-            value = expression.evaluate(scope, this, null);
+            value = AST.astEvaluate(expression, scope, this, null);
         }
         let isValid = true;
         const validateRuleset = async (rules) => {
@@ -342,7 +342,7 @@ class PropertyRule {
                 let message;
                 if (!isValidOrPromise) {
                     const messageEvaluationScope = AST.Scope.create(new ValidationMessageEvaluationContext(this.messageProvider, this.messageProvider.getDisplayName(name, displayName), name, value, rule, object));
-                    message = this.messageProvider.getMessage(rule).evaluate(messageEvaluationScope, this, null);
+                    message = AST.astEvaluate(this.messageProvider.getMessage(rule), messageEvaluationScope, this, null);
                 }
                 return new ValidationResult(isValidOrPromise, message, name, object, rule, this);
             };
@@ -460,7 +460,7 @@ class PropertyRule {
     }
 }
 PropertyRule.$TYPE = 'PropertyRule';
-runtimeHtml.astEvaluator()(PropertyRule);
+runtimeHtml.mixinAstEvaluator()(PropertyRule);
 class ModelBasedRule {
     constructor(ruleset, tag = validationRulesRegistrar.defaultRuleSetName) {
         this.ruleset = ruleset;
@@ -548,7 +548,7 @@ function parsePropertyName(property, parser) {
         default:
             throw new Error(`Unable to parse accessor function:\n${property}`);
     }
-    return [property, parser.parse(`${rootObjectSymbol}.${property}`, 8)];
+    return [property, parser.parse(`${rootObjectSymbol}.${property}`, 16)];
 }
 class ValidationResult {
     constructor(valid, message, propertyName, object, rule, propertyRule, isManual = false) {
@@ -641,6 +641,7 @@ exports.ValidationMessageProvider = __decorate([
     __param(2, ICustomMessages)
 ], exports.ValidationMessageProvider);
 
+const astVisit = AST__namespace.astVisit;
 var ASTExpressionTypes;
 (function (ASTExpressionTypes) {
     ASTExpressionTypes["BindingBehaviorExpression"] = "BindingBehaviorExpression";
@@ -670,6 +671,7 @@ var ASTExpressionTypes;
     ASTExpressionTypes["DestructuringSingleAssignment"] = "DestructuringSingleAssignment";
     ASTExpressionTypes["DestructuringRestAssignment"] = "DestructuringRestAssignment";
     ASTExpressionTypes["ArrowFunction"] = "ArrowFunction";
+    ASTExpressionTypes["Custom"] = "Custom";
 })(ASTExpressionTypes || (ASTExpressionTypes = {}));
 class Deserializer {
     static deserialize(serializedExpr) {
@@ -765,7 +767,7 @@ class Deserializer {
             }
             case ASTExpressionTypes.ForOfStatement: {
                 const expr = raw;
-                return new AST__namespace.ForOfStatement(this.hydrate(expr.declaration), this.hydrate(expr.iterable));
+                return new AST__namespace.ForOfStatement(this.hydrate(expr.declaration), this.hydrate(expr.iterable), this.hydrate(expr.semiIdx));
             }
             case ASTExpressionTypes.Interpolation: {
                 const expr = raw;
@@ -809,16 +811,16 @@ class Deserializer {
 class Serializer {
     static serialize(expr) {
         const visitor = new Serializer();
-        if (expr == null || typeof expr.accept !== 'function') {
+        if (expr == null) {
             return `${expr}`;
         }
-        return expr.accept(visitor);
+        return astVisit(expr, visitor);
     }
     visitAccessMember(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.AccessMemberExpression}","name":"${expr.name}","object":${expr.object.accept(this)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.AccessMemberExpression}","name":"${expr.name}","object":${astVisit(expr.object, this)}}`;
     }
     visitAccessKeyed(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.AccessKeyedExpression}","object":${expr.object.accept(this)},"key":${expr.key.accept(this)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.AccessKeyedExpression}","object":${astVisit(expr.object, this)},"key":${astVisit(expr.key, this)}}`;
     }
     visitAccessThis(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.AccessThisExpression}","ancestor":${expr.ancestor}}`;
@@ -836,10 +838,10 @@ class Serializer {
         return `{"$TYPE":"${ASTExpressionTypes.PrimitiveLiteralExpression}","value":${serializePrimitive(expr.value)}}`;
     }
     visitCallFunction(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.CallFunctionExpression}","func":${expr.func.accept(this)},"args":${this.serializeExpressions(expr.args)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.CallFunctionExpression}","func":${astVisit(expr.func, this)},"args":${this.serializeExpressions(expr.args)}}`;
     }
     visitCallMember(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.CallMemberExpression}","name":"${expr.name}","object":${expr.object.accept(this)},"args":${this.serializeExpressions(expr.args)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.CallMemberExpression}","name":"${expr.name}","object":${astVisit(expr.object, this)},"args":${this.serializeExpressions(expr.args)}}`;
     }
     visitCallScope(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.CallScopeExpression}","name":"${expr.name}","ancestor":${expr.ancestor},"args":${this.serializeExpressions(expr.args)}}`;
@@ -848,25 +850,25 @@ class Serializer {
         return `{"$TYPE":"${ASTExpressionTypes.TemplateExpression}","cooked":${serializePrimitives(expr.cooked)},"expressions":${this.serializeExpressions(expr.expressions)}}`;
     }
     visitTaggedTemplate(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.TaggedTemplateExpression}","cooked":${serializePrimitives(expr.cooked)},"raw":${serializePrimitives(expr.cooked.raw)},"func":${expr.func.accept(this)},"expressions":${this.serializeExpressions(expr.expressions)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.TaggedTemplateExpression}","cooked":${serializePrimitives(expr.cooked)},"raw":${serializePrimitives(expr.cooked.raw)},"func":${astVisit(expr.func, this)},"expressions":${this.serializeExpressions(expr.expressions)}}`;
     }
     visitUnary(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.UnaryExpression}","operation":"${expr.operation}","expression":${expr.expression.accept(this)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.UnaryExpression}","operation":"${expr.operation}","expression":${astVisit(expr.expression, this)}}`;
     }
     visitBinary(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.BinaryExpression}","operation":"${expr.operation}","left":${expr.left.accept(this)},"right":${expr.right.accept(this)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.BinaryExpression}","operation":"${expr.operation}","left":${astVisit(expr.left, this)},"right":${astVisit(expr.right, this)}}`;
     }
     visitConditional(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.ConditionalExpression}","condition":${expr.condition.accept(this)},"yes":${expr.yes.accept(this)},"no":${expr.no.accept(this)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.ConditionalExpression}","condition":${astVisit(expr.condition, this)},"yes":${astVisit(expr.yes, this)},"no":${astVisit(expr.no, this)}}`;
     }
     visitAssign(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.AssignExpression}","target":${expr.target.accept(this)},"value":${expr.value.accept(this)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.AssignExpression}","target":${astVisit(expr.target, this)},"value":${astVisit(expr.value, this)}}`;
     }
     visitValueConverter(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.ValueConverterExpression}","name":"${expr.name}","expression":${expr.expression.accept(this)},"args":${this.serializeExpressions(expr.args)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.ValueConverterExpression}","name":"${expr.name}","expression":${astVisit(expr.expression, this)},"args":${this.serializeExpressions(expr.args)}}`;
     }
     visitBindingBehavior(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.BindingBehaviorExpression}","name":"${expr.name}","expression":${expr.expression.accept(this)},"args":${this.serializeExpressions(expr.args)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.BindingBehaviorExpression}","name":"${expr.name}","expression":${astVisit(expr.expression, this)},"args":${this.serializeExpressions(expr.args)}}`;
     }
     visitArrayBindingPattern(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.ArrayBindingPattern}","elements":${this.serializeExpressions(expr.elements)}}`;
@@ -878,22 +880,25 @@ class Serializer {
         return `{"$TYPE":"${ASTExpressionTypes.BindingIdentifier}","name":"${expr.name}"}`;
     }
     visitForOfStatement(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.ForOfStatement}","declaration":${expr.declaration.accept(this)},"iterable":${expr.iterable.accept(this)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.ForOfStatement}","declaration":${astVisit(expr.declaration, this)},"iterable":${astVisit(expr.iterable, this)},"semiIdx":${serializePrimitive(expr.semiIdx)}}`;
     }
     visitInterpolation(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.Interpolation}","cooked":${serializePrimitives(expr.parts)},"expressions":${this.serializeExpressions(expr.expressions)}}`;
     }
     visitDestructuringAssignmentExpression(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.DestructuringAssignment}","$kind":${serializePrimitive(expr.$kind)},"list":${this.serializeExpressions(expr.list)},"source":${expr.source === void 0 ? serializePrimitive(expr.source) : expr.source.accept(this)},"initializer":${expr.initializer === void 0 ? serializePrimitive(expr.initializer) : expr.initializer.accept(this)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.DestructuringAssignment}","$kind":${serializePrimitive(expr.$kind)},"list":${this.serializeExpressions(expr.list)},"source":${expr.source === void 0 ? serializePrimitive(expr.source) : astVisit(expr.source, this)},"initializer":${expr.initializer === void 0 ? serializePrimitive(expr.initializer) : astVisit(expr.initializer, this)}}`;
     }
     visitDestructuringAssignmentSingleExpression(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.DestructuringSingleAssignment}","source":${expr.source.accept(this)},"target":${expr.target.accept(this)},"initializer":${expr.initializer === void 0 ? serializePrimitive(expr.initializer) : expr.initializer.accept(this)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.DestructuringSingleAssignment}","source":${astVisit(expr.source, this)},"target":${astVisit(expr.target, this)},"initializer":${expr.initializer === void 0 ? serializePrimitive(expr.initializer) : astVisit(expr.initializer, this)}}`;
     }
     visitDestructuringAssignmentRestExpression(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.DestructuringRestAssignment}","target":${expr.target.accept(this)},"indexOrProperties":${Array.isArray(expr.indexOrProperties) ? serializePrimitives(expr.indexOrProperties) : serializePrimitive(expr.indexOrProperties)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.DestructuringRestAssignment}","target":${astVisit(expr.target, this)},"indexOrProperties":${Array.isArray(expr.indexOrProperties) ? serializePrimitives(expr.indexOrProperties) : serializePrimitive(expr.indexOrProperties)}}`;
     }
     visitArrowFunction(expr) {
-        return `{"$TYPE":"${ASTExpressionTypes.ArrowFunction}","parameters":${this.serializeExpressions(expr.args)},"body":${expr.body.accept(this)},"rest":${serializePrimitive(expr.rest)}}`;
+        return `{"$TYPE":"${ASTExpressionTypes.ArrowFunction}","parameters":${this.serializeExpressions(expr.args)},"body":${astVisit(expr.body, this)},"rest":${serializePrimitive(expr.rest)}}`;
+    }
+    visitCustom(expr) {
+        return `{"$TYPE":"${ASTExpressionTypes.Custom}","body":${expr.value}}`;
     }
     serializeExpressions(args) {
         let text = '[';
@@ -901,7 +906,7 @@ class Serializer {
             if (i !== 0) {
                 text += ',';
             }
-            text += args[i].accept(this);
+            text += astVisit(args[i], this);
         }
         text += ']';
         return text;
@@ -1118,8 +1123,8 @@ exports.ValidationDeserializer = __decorate([
     __param(2, AST.IExpressionParser)
 ], exports.ValidationDeserializer);
 exports.ModelValidationExpressionHydrator = class ModelValidationExpressionHydrator {
-    constructor(locator, messageProvider, parser) {
-        this.locator = locator;
+    constructor(l, messageProvider, parser) {
+        this.l = l;
         this.messageProvider = messageProvider;
         this.parser = parser;
         this.astDeserializer = new Deserializer();
@@ -1135,7 +1140,7 @@ exports.ModelValidationExpressionHydrator = class ModelValidationExpressionHydra
                     const rules = value.rules.map((rule) => Object.entries(rule).map(([ruleName, ruleConfig]) => this.hydrateRule(ruleName, ruleConfig)));
                     const propertyPrefix = propertyPath.join('.');
                     const property = this.hydrateRuleProperty({ name: propertyPrefix !== '' ? `${propertyPrefix}.${key}` : key, displayName: value.displayName });
-                    accRules.push(new PropertyRule(this.locator, validationRules, this.messageProvider, property, rules));
+                    accRules.push(new PropertyRule(this.l, validationRules, this.messageProvider, property, rules));
                 }
                 else {
                     iterate(Object.entries(value), [...propertyPath, key]);
@@ -1180,7 +1185,7 @@ exports.ModelValidationExpressionHydrator = class ModelValidationExpressionHydra
             if (typeof when === 'string') {
                 const parsed = this.parser.parse(when, 0);
                 rule.canExecute = (object) => {
-                    return parsed.evaluate(AST.Scope.create({ $object: object }), this, null);
+                    return AST.astEvaluate(parsed, AST.Scope.create({ $object: object }), this, null);
                 };
             }
             else if (typeof when === 'function') {
@@ -1236,7 +1241,7 @@ exports.ModelValidationExpressionHydrator = __decorate([
     __param(1, IValidationMessageProvider),
     __param(2, AST.IExpressionParser)
 ], exports.ModelValidationExpressionHydrator);
-runtimeHtml.astEvaluator()(exports.ModelValidationExpressionHydrator);
+runtimeHtml.mixinAstEvaluator()(exports.ModelValidationExpressionHydrator);
 
 class ValidateInstruction {
     constructor(object = (void 0), propertyName = (void 0), rules = (void 0), objectTag = (void 0), propertyTag = (void 0), flags = 0) {

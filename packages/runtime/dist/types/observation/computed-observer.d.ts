@@ -6,7 +6,6 @@ export interface ComputedObserver extends IConnectableBinding, ISubscriberCollec
 }
 export declare class ComputedObserver implements IObserver, IConnectableBinding, ISubscriber, ICollectionSubscriber, ISubscriberCollection {
     static create(obj: object, key: PropertyKey, descriptor: PropertyDescriptor, observerLocator: IObserverLocator, useProxy: boolean): ComputedObserver;
-    interceptor: this;
     type: AccessorType;
     /**
      * The getter this observer is wrapping

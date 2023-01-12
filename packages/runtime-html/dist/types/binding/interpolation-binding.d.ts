@@ -1,85 +1,59 @@
+import { IAstEvaluator, IConnectableBinding } from '@aurelia/runtime';
 import { BindingMode } from './interfaces-bindings';
-import type { ITask, TaskQueue } from '@aurelia/platform';
 import type { IServiceLocator } from '@aurelia/kernel';
-import type { ICollectionSubscriber, Interpolation, IObserverLocator, IsExpression, IBinding, Scope } from '@aurelia/runtime';
+import type { ITask, TaskQueue } from '@aurelia/platform';
+import type { IBinding, ICollectionSubscriber, Interpolation, IObserverLocator, IsExpression, Scope } from '@aurelia/runtime';
 import type { IPlatform } from '../platform';
-import type { IAstBasedBinding, IBindingController } from './interfaces-bindings';
+import type { IBindingController } from './interfaces-bindings';
 export interface InterpolationBinding extends IBinding {
 }
 export declare class InterpolationBinding implements IBinding {
-    locator: IServiceLocator;
-    private readonly taskQueue;
     ast: Interpolation;
     target: object;
     targetProperty: string;
     mode: BindingMode;
-    interceptor: this;
     isBound: boolean;
-    $scope?: Scope;
     partBindings: InterpolationPartBinding[];
-    private readonly targetObserver;
-    private task;
-    /**
-     * A semi-private property used by connectable mixin
-     */
-    readonly oL: IObserverLocator;
     constructor(controller: IBindingController, locator: IServiceLocator, observerLocator: IObserverLocator, taskQueue: TaskQueue, ast: Interpolation, target: object, targetProperty: string, mode: BindingMode);
     updateTarget(): void;
-    $bind(scope: Scope): void;
-    $unbind(): void;
+    bind(_scope: Scope): void;
+    unbind(): void;
 }
-export interface InterpolationPartBinding extends IAstBasedBinding {
+export interface InterpolationPartBinding extends IAstEvaluator, IConnectableBinding {
 }
-export declare class InterpolationPartBinding implements IAstBasedBinding, ICollectionSubscriber {
+export declare class InterpolationPartBinding implements IBinding, ICollectionSubscriber {
     readonly ast: IsExpression;
     readonly target: object;
     readonly targetProperty: string;
-    readonly locator: IServiceLocator;
     readonly owner: InterpolationBinding;
-    interceptor: this;
     readonly mode: BindingMode;
-    value: unknown;
-    $scope?: Scope;
+    _scope?: Scope;
     task: ITask | null;
     isBound: boolean;
-    /**
-     * A semi-private property used by connectable mixin
-     */
-    readonly oL: IObserverLocator;
     constructor(ast: IsExpression, target: object, targetProperty: string, locator: IServiceLocator, observerLocator: IObserverLocator, owner: InterpolationBinding);
+    updateTarget(): void;
     handleChange(): void;
     handleCollectionChange(): void;
-    $bind(scope: Scope): void;
-    $unbind(): void;
+    bind(_scope: Scope): void;
+    unbind(): void;
 }
-export interface ContentBinding extends IAstBasedBinding {
+export interface ContentBinding extends IAstEvaluator, IConnectableBinding {
 }
 /**
  * A binding for handling the element content interpolation
  */
-export declare class ContentBinding implements IAstBasedBinding, ICollectionSubscriber {
-    readonly locator: IServiceLocator;
-    private readonly taskQueue;
+export declare class ContentBinding implements IBinding, ICollectionSubscriber {
     private readonly p;
     readonly ast: IsExpression;
     readonly target: Text;
     readonly strict: boolean;
-    interceptor: this;
-    readonly mode: BindingMode;
-    value: unknown;
-    $scope?: Scope;
-    task: ITask | null;
     isBound: boolean;
-    /**
-     * A semi-private property used by connectable mixin
-     */
-    readonly oL: IObserverLocator;
+    readonly mode: BindingMode;
     constructor(controller: IBindingController, locator: IServiceLocator, observerLocator: IObserverLocator, taskQueue: TaskQueue, p: IPlatform, ast: IsExpression, target: Text, strict: boolean);
     updateTarget(value: unknown): void;
     handleChange(): void;
     handleCollectionChange(): void;
-    $bind(scope: Scope): void;
-    $unbind(): void;
-    private queueUpdate;
+    bind(_scope: Scope): void;
+    unbind(): void;
 }
 //# sourceMappingURL=interpolation-binding.d.ts.map

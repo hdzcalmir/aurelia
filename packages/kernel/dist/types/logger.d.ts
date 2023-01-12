@@ -161,7 +161,7 @@ export declare const LoggerSink: Readonly<{
     define<TSink extends ISink>(target: Constructable<TSink>, definition: SinkDefinition): Constructable<TSink>;
     getHandles<TSink_1 extends ISink>(target: TSink_1 | Constructable<TSink_1>): LogLevel[] | undefined;
 }>;
-export declare function sink(definition: SinkDefinition): <TSink extends ISink>(target: Constructable<TSink>) => Constructable<TSink>;
+export declare const sink: (definition: SinkDefinition) => <TSink extends ISink>(target: Constructable<TSink>) => Constructable<TSink>;
 export interface IConsoleLike {
     debug(message: string, ...optionalParams: unknown[]): void;
     info(message: string, ...optionalParams: unknown[]): void;
@@ -210,11 +210,6 @@ export declare class ConsoleSink implements ISink {
 }
 export declare class DefaultLogger {
     /**
-     * The global logger configuration.
-     */
-    readonly config: ILogConfig;
-    private readonly factory;
-    /**
      * The scopes that this logger was created for, if any.
      */
     readonly scope: string[];
@@ -224,18 +219,19 @@ export declare class DefaultLogger {
      * When using `.scopeTo`, a new `ILogger` is created. That new logger will have the `root` property set to the global (non-scoped) logger.
      */
     readonly root: ILogger;
+    readonly config: ILogConfig;
+    readonly sinks: readonly ISink[];
     /**
      * The parent `ILogger` instance. On the root logger itself, this property circularly references the root. It is never null.
      *
      * When using `.scopeTo`, a new `ILogger` is created. That new logger will have the `parent` property set to the logger that it was created from.
      */
-    readonly parent: ILogger;
-    private readonly scopedLoggers;
+    private readonly parent;
     constructor(
     /**
      * The global logger configuration.
      */
-    config: ILogConfig, factory: ILogEventFactory, sinks: readonly ISink[], 
+    config: ILogConfig, factory: ILogEventFactory, sinks: ISink[], 
     /**
      * The scopes that this logger was created for, if any.
      */
@@ -387,7 +383,6 @@ export declare class DefaultLogger {
      * ```
      */
     scopeTo(name: string): ILogger;
-    private emit;
 }
 /**
  * A basic `ILogger` configuration that configures a single `console` sink based on provided options.

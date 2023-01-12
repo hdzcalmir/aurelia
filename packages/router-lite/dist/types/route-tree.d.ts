@@ -86,7 +86,5 @@ export declare class RouteTree {
     finalizeInstructions(): ViewportInstructionTree;
     toString(): string;
 }
-export declare function updateNode(log: ILogger, vit: ViewportInstructionTree, ctx: IRouteContext, node: RouteNode): Promise<void> | void;
-export declare function processResidue(node: RouteNode): Promise<void> | void;
-export declare function getDynamicChildren(node: RouteNode): Promise<readonly RouteNode[]> | readonly RouteNode[];
+export declare function createAndAppendNodes(log: ILogger, node: RouteNode, vi: ViewportInstruction): void | Promise<void>;
 //# sourceMappingURL=route-tree.d.ts.map

@@ -4,7 +4,7 @@
  *
  * ```ts
  * class MyComponent {
- *  \@state(s => s.items)
+ *  \@fromState(s => s.items)
  *   data: Item[]
  * }
  * ```

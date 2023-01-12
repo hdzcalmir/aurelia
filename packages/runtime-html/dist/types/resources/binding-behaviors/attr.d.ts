@@ -1,8 +1,6 @@
-import { BindingBehaviorInstance } from '@aurelia/runtime';
+import { BindingBehaviorInstance, IBinding } from '@aurelia/runtime';
 import type { Scope } from '@aurelia/runtime';
-import type { PropertyBinding } from '../../binding/property-binding';
 export declare class AttrBindingBehavior implements BindingBehaviorInstance {
-    bind(_scope: Scope, binding: PropertyBinding): void;
-    unbind(_scope: Scope, _binding: PropertyBinding): void;
+    bind(_scope: Scope, binding: IBinding): void;
 }
 //# sourceMappingURL=attr.d.ts.map

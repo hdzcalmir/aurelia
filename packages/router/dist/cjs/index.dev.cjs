@@ -1738,6 +1738,9 @@ class ViewportContent extends EndpointContent {
                 this.instruction.component.set(this.toComponentInstance(connectedCE.container, connectedCE.controller, connectedCE.element));
             }
             catch (e) {
+                if (!e.message.startsWith('AUR0009:')) {
+                    throw e;
+                }
                 {
                     console.warn(`'${this.instruction.component.name}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                 }
@@ -1754,6 +1757,9 @@ class ViewportContent extends EndpointContent {
                         this.instruction.component.set(this.toComponentInstance(connectedCE.container, connectedCE.controller, connectedCE.element));
                     }
                     catch (ee) {
+                        if (!ee.message.startsWith('AUR0009:')) {
+                            throw ee;
+                        }
                         throw new Error(`'${this.instruction.component.name}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                     }
                 }
@@ -1874,19 +1880,19 @@ class ViewportContent extends EndpointContent {
                 return hook(instance, merged, this.instruction, this.navigation);
             }));
             if (hooks.length !== 0) {
-                if (instance.loading != null) {
+                if (typeof instance.loading === 'function') {
                     hooks.push(() => instance.loading(merged, this.instruction, this.navigation));
                 }
-                if (instance.load != null) {
+                if (typeof instance.load === 'function') {
                     console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                     hooks.push(() => instance.load(merged, this.instruction, this.navigation));
                 }
                 return Runner.run(null, ...hooks);
             }
-            if (instance.loading != null) {
+            if (typeof instance.loading === 'function') {
                 return instance.loading(merged, this.instruction, this.navigation);
             }
-            if (instance.load != null) {
+            if (typeof instance.load === 'function') {
                 console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                 return instance.load(merged, this.instruction, this.navigation);
             }
@@ -1911,19 +1917,19 @@ class ViewportContent extends EndpointContent {
             return hook(instance, this.instruction, navigation);
         }));
         if (hooks.length !== 0) {
-            if (instance.unloading != null) {
+            if (typeof instance.unloading === 'function') {
                 hooks.push(() => instance.unloading(this.instruction, navigation));
             }
-            if (instance.unload != null) {
+            if (typeof instance.unload === 'function') {
                 console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
                 hooks.push(() => instance.unload(this.instruction, navigation));
             }
             return Runner.run(null, ...hooks);
         }
-        if (instance.unloading != null) {
+        if (typeof instance.unloading === 'function') {
             return instance.unloading(this.instruction, navigation);
         }
-        if (instance.unload != null) {
+        if (typeof instance.unload === 'function') {
             console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
             return instance.unload(this.instruction, navigation);
         }
@@ -2881,7 +2887,7 @@ class RoutingInstruction {
         }
         return this.parameters.same(context, other.parameters, this.component.type);
     }
-    stringify(context, excludeEndpoint = false, endpointContext = false) {
+    stringify(context, excludeEndpoint = false, endpointContext = false, shallow = false) {
         const seps = Separators.for(context);
         let excludeCurrentEndpoint = excludeEndpoint;
         let excludeCurrentComponent = false;
@@ -2905,13 +2911,13 @@ class RoutingInstruction {
         const nextInstructions = this.nextScopeInstructions;
         let stringified = this.scopeModifier;
         if (this.route instanceof FoundRoute && !this.routeStart) {
-            return Array.isArray(nextInstructions)
+            return !shallow && Array.isArray(nextInstructions)
                 ? RoutingInstruction.stringify(context, nextInstructions, excludeEndpoint, endpointContext)
                 : '';
         }
         const path = this.stringifyShallow(context, excludeCurrentEndpoint, excludeCurrentComponent);
         stringified += path.endsWith(seps.scope) ? path.slice(0, -seps.scope.length) : path;
-        if (Array.isArray(nextInstructions) && nextInstructions.length > 0) {
+        if (!shallow && Array.isArray(nextInstructions) && nextInstructions.length > 0) {
             const nextStringified = RoutingInstruction.stringify(context, nextInstructions, excludeEndpoint, endpointContext);
             if (nextStringified.length > 0) {
                 stringified += seps.scope;
@@ -3470,16 +3476,15 @@ class RoutingScope {
         this.id = -1;
         this.parent = null;
         this.children = [];
-        this.path = null;
         this.id = ++RoutingScope.lastId;
         this.owningScope = owningScope ?? this;
     }
-    static for(origin) {
+    static for(origin, instruction) {
         if (origin == null) {
-            return null;
+            return { scope: null, instruction };
         }
         if (origin instanceof RoutingScope || origin instanceof Viewport || origin instanceof ViewportScope) {
-            return origin.scope;
+            return { scope: origin.scope, instruction };
         }
         let container;
         if ('res' in origin) {
@@ -3498,12 +3503,35 @@ class RoutingScope {
             }
         }
         if (container == null) {
-            return null;
+            {
+                console.warn("RoutingScope failed to find a container for provided origin", origin);
+            }
+            return { scope: null, instruction };
         }
         const closestEndpoint = (container.has(Router.closestEndpointKey, true)
             ? container.get(Router.closestEndpointKey)
             : null);
-        return closestEndpoint?.scope ?? null;
+        let scope = closestEndpoint?.scope ?? null;
+        if (scope === null || instruction === undefined) {
+            const safeInstruction = instruction ?? '';
+            return { scope, instruction: safeInstruction.startsWith('/') ? safeInstruction.slice(1) : instruction };
+        }
+        if (instruction.startsWith('/')) {
+            return { scope: null, instruction: instruction.slice(1) };
+        }
+        while (instruction.startsWith('.')) {
+            if (instruction.startsWith('./')) {
+                instruction = instruction.slice(2);
+            }
+            else if (instruction.startsWith('../')) {
+                scope = scope.parent ?? scope;
+                instruction = instruction.slice(3);
+            }
+            else {
+                break;
+            }
+        }
+        return { scope, instruction };
     }
     get scope() {
         return this.hasScope ? this : this.owningScope.scope;
@@ -3528,6 +3556,12 @@ class RoutingScope {
     }
     get pathname() {
         return `${this.owningScope !== this ? this.owningScope.pathname : ''}/${this.endpoint.name}`;
+    }
+    get path() {
+        const parentPath = this.parent?.path ?? '';
+        const path = this.routingInstruction?.stringify(this.router, false, true, true) ?? '';
+        const sep = this.routingInstruction ? Separators.for(this.router).scope : '';
+        return `${parentPath}${path}${sep}`;
     }
     toString(recurse = false) {
         return `${this.owningScope !== this ? this.owningScope.toString() : ''}/${!this.enabled ? '(' : ''}${this.endpoint.toString()}#${this.id}${!this.enabled ? ')' : ''}` +
@@ -4954,7 +4988,7 @@ class Router {
     }
     disconnectEndpoint(step, endpoint, connectedCE) {
         if (!endpoint.connectedScope.parent.removeEndpoint(step, endpoint, connectedCE)) {
-            throw new Error("Failed to remove endpoint: " + endpoint.name);
+            throw new Error("Router failed to remove endpoint: " + endpoint.name);
         }
     }
     async load(instructions, options) {
@@ -4990,40 +5024,25 @@ class Router {
         if ('origin' in options && !('context' in options)) {
             options.context = options.origin;
         }
-        let scope = RoutingScope.for(options.context ?? null) ?? null;
+        const { scope, instruction } = RoutingScope.for(options.context ?? null, typeof loadInstructions === 'string' ? loadInstructions : undefined);
         if (typeof loadInstructions === 'string') {
-            if (!(loadInstructions).startsWith('/')) {
-                if ((loadInstructions).startsWith('.')) {
-                    if ((loadInstructions).startsWith('./')) {
-                        loadInstructions = (loadInstructions).slice(2);
+            if (!keepString) {
+                loadInstructions = RoutingInstruction.from(this, instruction);
+                for (const loadInstruction of loadInstructions) {
+                    if (loadInstruction.scope === null) {
+                        loadInstruction.scope = scope;
                     }
-                    while (loadInstructions.startsWith('../')) {
-                        scope = scope?.parent ?? scope;
-                        loadInstructions = loadInstructions.slice(3);
-                    }
-                }
-                if (scope?.path != null) {
-                    loadInstructions = `${scope.path}/${loadInstructions}`;
-                    scope = null;
                 }
             }
             else {
-                scope = null;
-            }
-            if (!keepString) {
-                loadInstructions = RoutingInstruction.from(this, loadInstructions);
-                for (const instruction of loadInstructions) {
-                    if (instruction.scope === null) {
-                        instruction.scope = scope;
-                    }
-                }
+                loadInstructions = instruction;
             }
         }
         else {
             loadInstructions = RoutingInstruction.from(this, loadInstructions);
-            for (const instruction of loadInstructions) {
-                if (instruction.scope === null) {
-                    instruction.scope = scope;
+            for (const loadInstruction of loadInstructions) {
+                if (loadInstruction.scope === null) {
+                    loadInstruction.scope = scope;
                 }
             }
         }
@@ -5092,7 +5111,7 @@ class Router {
                 this.appendedInstructions.push(...instructions);
             }
             else {
-                throw Error('Failed to append routing instructions to coordinator');
+                throw Error('Router failed to append routing instructions to coordinator');
             }
         }
         coordinator?.enqueueAppendedInstructions(instructions);
@@ -5104,7 +5123,7 @@ class Router {
         let guard = 100;
         while (matchedInstructions.length > 0) {
             if (guard-- === 0) {
-                throw new Error('Failed to find viewport when updating viewer paths.');
+                throw new Error('Router failed to find viewport when updating viewer paths.');
             }
             matchedInstructions = matchedInstructions.map(instruction => {
                 const { matchedInstructions } = instruction.endpoint.instance.scope.matchEndpoints(instruction.nextScopeInstructions ?? [], [], true);
@@ -5675,8 +5694,11 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
                 }
                 value = RoutingInstruction.stringify(this.router, [instruction]);
             }
+            const { scope, instruction } = RoutingScope.for(this.element, value);
+            const scopePath = scope?.path ?? '';
+            value = `${scopePath}${instruction ?? ''}`;
             if (this.router.configuration.options.useUrlFragmentHash && !value.startsWith('#')) {
-                value = `#${value}`;
+                value = `#/${value}`;
             }
             this.element.setAttribute('href', value);
         }
@@ -5695,7 +5717,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
         if (typeof value === 'string') {
             return new FoundRoute();
         }
-        const scope = RoutingScope.for(this.element) ?? this.router.rootScope.scope;
+        const scope = RoutingScope.for(this.element).scope ?? this.router.rootScope.scope;
         if (value.id != null) {
             return scope.findMatchingRoute(value.id, value.parameters ?? {});
         }

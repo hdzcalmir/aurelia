@@ -5,9 +5,9 @@ function isNullOrUndefined(value) {
     return value === null || value === void 0;
 }
 let metadataInternalSlot = new WeakMap();
-function $typeError(operation, args, paramName, actualValue, expectedType) {
+const $typeError = (operation, args, paramName, actualValue, expectedType) => {
     return new TypeError(`${operation}(${args.map(String).join(',')}) - Expected '${paramName}' to be of type ${expectedType}, but got: ${Object.prototype.toString.call(actualValue)} (${String(actualValue)})`);
-}
+};
 function toPropertyKeyOrUndefined(propertyKey) {
     switch (typeof propertyKey) {
         case 'undefined':
@@ -67,7 +67,7 @@ function OrdinaryHasMetadata(MetadataKey, O, P) {
     if (OrdinaryHasOwnMetadata(MetadataKey, O, P)) {
         return true;
     }
-    const parent = Object.getPrototypeOf(O);
+    const parent = getPrototype(O);
     if (parent !== null) {
         return OrdinaryHasMetadata(MetadataKey, parent, P);
     }
@@ -84,7 +84,7 @@ function OrdinaryGetMetadata(MetadataKey, O, P) {
     if (OrdinaryHasOwnMetadata(MetadataKey, O, P)) {
         return OrdinaryGetOwnMetadata(MetadataKey, O, P);
     }
-    const parent = Object.getPrototypeOf(O);
+    const parent = getPrototype(O);
     if (parent !== null) {
         return OrdinaryGetMetadata(MetadataKey, parent, P);
     }
@@ -110,7 +110,7 @@ function OrdinaryOwnMetadataKeys(O, P) {
 }
 function OrdinaryMetadataKeys(O, P) {
     const ownKeys = OrdinaryOwnMetadataKeys(O, P);
-    const parent = Object.getPrototypeOf(O);
+    const parent = getPrototype(O);
     if (parent === null) {
         return ownKeys;
     }
@@ -272,34 +272,35 @@ const Metadata = {
     getOwnKeys: $getOwnKeys,
     delete: $delete,
 };
-function def(obj, key, value, writable, configurable) {
+const def = (obj, key, value, writable, configurable) => {
     if (!Reflect.defineProperty(obj, key, {
         writable,
         enumerable: false,
         configurable,
         value,
     })) {
-        throw new Error(`Unable to apply metadata polyfill: could not add property '${key}' to the global Reflect object`);
+        throw createError(`AUR1000: Unable to apply metadata polyfill: could not add property '${key}' to the global Reflect object`)
+            ;
     }
-}
+};
 const internalSlotName = '[[$au]]';
-function hasInternalSlot(reflect) {
+const hasInternalSlot = (reflect) => {
     return internalSlotName in reflect;
-}
-function $applyMetadataPolyfill(reflect, writable, configurable) {
-    def(reflect, internalSlotName, metadataInternalSlot, writable, configurable);
-    def(reflect, 'metadata', metadata, writable, configurable);
-    def(reflect, 'decorate', decorate, writable, configurable);
-    def(reflect, 'defineMetadata', $define, writable, configurable);
-    def(reflect, 'hasMetadata', $has, writable, configurable);
-    def(reflect, 'hasOwnMetadata', $hasOwn, writable, configurable);
-    def(reflect, 'getMetadata', $get, writable, configurable);
-    def(reflect, 'getOwnMetadata', $getOwn, writable, configurable);
-    def(reflect, 'getMetadataKeys', $getKeys, writable, configurable);
-    def(reflect, 'getOwnMetadataKeys', $getOwnKeys, writable, configurable);
-    def(reflect, 'deleteMetadata', $delete, writable, configurable);
-}
-function applyMetadataPolyfill(reflect, throwIfConflict = true, forceOverwrite = false, writable = true, configurable = true) {
+};
+const $applyMetadataPolyfill = (reflect, writable, configurable) => [
+    [internalSlotName, metadataInternalSlot],
+    ['metadata', metadata],
+    ['decorate', decorate],
+    ['defineMetadata', $define],
+    ['hasMetadata', $has],
+    ['hasOwnMetadata', $hasOwn],
+    ['getMetadata', $get],
+    ['getOwnMetadata', $getOwn],
+    ['getMetadataKeys', $getKeys],
+    ['getOwnMetadataKeys', $getOwnKeys],
+    ['deleteMetadata', $delete],
+].forEach(([key, value]) => def(reflect, key, value, writable, configurable));
+const applyMetadataPolyfill = (reflect, throwIfConflict = true, forceOverwrite = false, writable = true, configurable = true) => {
     if (hasInternalSlot(reflect)) {
         if (reflect[internalSlotName] === metadataInternalSlot) {
             return;
@@ -308,29 +309,20 @@ function applyMetadataPolyfill(reflect, throwIfConflict = true, forceOverwrite =
             metadataInternalSlot = reflect[internalSlotName];
             return;
         }
-        throw new Error(`Conflicting @aurelia/metadata module import detected. Please make sure you have the same version of all Aurelia packages in your dependency tree.`);
+        throw createError(`AUR1001: Conflicting @aurelia/metadata module import detected. Please make sure you have the same version of all Aurelia packages in your dependency tree.`)
+            ;
     }
-    const presentProps = [
-        'metadata',
-        'decorate',
-        'defineMetadata',
-        'hasMetadata',
-        'hasOwnMetadata',
-        'getMetadata',
-        'getOwnMetadata',
-        'getMetadataKeys',
-        'getOwnMetadataKeys',
-        'deleteMetadata',
-    ].filter(function (p) {
-        return p in Reflect;
-    });
+    const presentProps = 'metadata decorate defineMetadata hasMetadata hasOwnMetadata getMetadata getOwnMetadata getMetadataKeys getOwnMetadataKeys deleteMetadata'
+        .split(' ')
+        .filter(p => p in Reflect);
     if (presentProps.length > 0) {
         if (throwIfConflict) {
             const implementationSummary = presentProps.map(function (p) {
                 const impl = `${Reflect[p].toString().slice(0, 100)}...`;
                 return `${p}:\n${impl}`;
             }).join('\n\n');
-            throw new Error(`Conflicting reflect.metadata polyfill found. If you have 'reflect-metadata' or any other reflect polyfill imported, please remove it, if not (or if you must use a specific polyfill) please file an issue at https://github.com/aurelia/aurelia/issues so that we can look into compatibility options for this scenario. Implementation summary:\n\n${implementationSummary}`);
+            throw createError(`AUR1002: Conflicting reflect.metadata polyfill found. If you have 'reflect-metadata' or any other reflect polyfill imported, please remove it, if not (or if you must use a specific polyfill) please file an issue at https://github.com/aurelia/aurelia/issues so that we can look into compatibility options for this scenario. Implementation summary:\n\n${implementationSummary}`)
+                ;
         }
         else if (forceOverwrite) {
             $applyMetadataPolyfill(reflect, writable, configurable);
@@ -339,7 +331,9 @@ function applyMetadataPolyfill(reflect, throwIfConflict = true, forceOverwrite =
     else {
         $applyMetadataPolyfill(reflect, writable, configurable);
     }
-}
+};
+const createError = (message) => new Error(message);
+const getPrototype = Object.getPrototypeOf;
 
 export { Metadata, applyMetadataPolyfill, isNullOrUndefined, isObject, metadata };
 //# sourceMappingURL=index.dev.mjs.map
