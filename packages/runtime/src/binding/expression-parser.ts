@@ -1,8 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import {
-  DI,
-} from '@aurelia/kernel';
-import {
   AccessKeyedExpression,
   AccessMemberExpression,
   AccessScopeExpression,
@@ -43,10 +40,10 @@ import {
   DestructuringAssignmentExpression as DAE,
   ArrowFunction,
 } from './ast';
-import { createLookup } from '../utilities-objects';
+import { createError, createInterface, createLookup } from '../utilities-objects';
 
 export interface IExpressionParser extends ExpressionParser {}
-export const IExpressionParser = DI.createInterface<IExpressionParser>('IExpressionParser', x => x.singleton(ExpressionParser));
+export const IExpressionParser = createInterface<IExpressionParser>('IExpressionParser', x => x.singleton(ExpressionParser));
 
 export class ExpressionParser {
   /** @internal */ private readonly _expressionLookup: Record<string, IsBindingBehavior> = createLookup();
@@ -106,13 +103,15 @@ export class ExpressionParser {
     $startIndex = 0;
     $currentToken = Token.EOF;
     $tokenValue = '';
-    $currentChar = expression.charCodeAt(0);
+    $currentChar = $charCodeAt(0);
     $assignable = true;
     $optional = false;
+    $semicolonIndex = -1;
     return parse(Precedence.Variadic, expressionType === void 0 ? ExpressionType.IsProperty : expressionType);
   }
 }
 
+_START_CONST_ENUM();
 const enum Char {
   Null           = 0x00,
   Backspace      = 0x08,
@@ -217,6 +216,7 @@ const enum Char {
   LowerY  = 0x79,
   LowerZ  = 0x7A
 }
+_END_CONST_ENUM();
 
 function unescapeCode(code: number): number {
   switch (code) {
@@ -233,7 +233,8 @@ function unescapeCode(code: number): number {
   }
 }
 
-export const enum Precedence {
+_START_CONST_ENUM();
+const enum Precedence {
   Variadic                = 0b0000_111101,
   Assign                  = 0b0000_111110,
   Conditional             = 0b0000_111111,
@@ -249,6 +250,9 @@ export const enum Precedence {
   Primary                 = 0b1000_000011,
   Unary                   = 0b1000_000100,
 }
+_END_CONST_ENUM();
+
+_START_CONST_ENUM();
 const enum Token {
   EOF                     = 0b1100000000000_0000_000000,
   ExpressionTerminal      = 0b1000000000000_0000_000000,
@@ -287,36 +291,38 @@ const enum Token {
   OpenBracket             = 0b0101001000001_0000_010000,
   CloseBracket            = 0b1110000000000_0000_010011,
   Colon                   = 0b1100000000000_0000_010100,
-  Question                = 0b1100000000000_0000_010101,
-  Ampersand               = 0b1100000000000_0000_010110,
-  Bar                     = 0b1100000000000_0000_010111,
-  QuestionQuestion        = 0b1100100000000_0010_011000,
-  BarBar                  = 0b1100100000000_0011_011001,
-  AmpersandAmpersand      = 0b1100100000000_0100_011010,
-  EqualsEquals            = 0b1100100000000_0101_011011,
-  ExclamationEquals       = 0b1100100000000_0101_011100,
-  EqualsEqualsEquals      = 0b1100100000000_0101_011101,
-  ExclamationEqualsEquals = 0b1100100000000_0101_011110,
-  LessThan                = 0b1100100000000_0110_011111,
-  GreaterThan             = 0b1100100000000_0110_100000,
-  LessThanEquals          = 0b1100100000000_0110_100001,
-  GreaterThanEquals       = 0b1100100000000_0110_100010,
-  InKeyword               = 0b1100100001000_0110_100011,
-  InstanceOfKeyword       = 0b1100100001000_0110_100100,
-  Plus                    = 0b0100110000000_0111_100101,
-  Minus                   = 0b0100110000000_0111_100110,
-  TypeofKeyword           = 0b0000010001000_0000_100111,
-  VoidKeyword             = 0b0000010001000_0000_101000,
-  Asterisk                = 0b1100100000000_1000_101001,
-  Percent                 = 0b1100100000000_1000_101010,
-  Slash                   = 0b1100100000000_1000_101011,
-  Equals                  = 0b1000000000000_0000_101100,
-  Exclamation             = 0b0000010000000_0000_101101,
-  TemplateTail            = 0b0100001000001_0000_101110,
-  TemplateContinuation    = 0b0100001000001_0000_101111,
-  OfKeyword               = 0b1000000001010_0000_110000,
-  Arrow                   = 0b0000000000000_0000_110001,
+  Semicolon               = 0b1100000000000_0000_010101,
+  Question                = 0b1100000000000_0000_010110,
+  Ampersand               = 0b1100000000000_0000_010111,
+  Bar                     = 0b1100000000000_0000_011000,
+  QuestionQuestion        = 0b1100100000000_0010_011001,
+  BarBar                  = 0b1100100000000_0011_011010,
+  AmpersandAmpersand      = 0b1100100000000_0100_011011,
+  EqualsEquals            = 0b1100100000000_0101_011100,
+  ExclamationEquals       = 0b1100100000000_0101_011101,
+  EqualsEqualsEquals      = 0b1100100000000_0101_011110,
+  ExclamationEqualsEquals = 0b1100100000000_0101_011111,
+  LessThan                = 0b1100100000000_0110_100000,
+  GreaterThan             = 0b1100100000000_0110_100001,
+  LessThanEquals          = 0b1100100000000_0110_100010,
+  GreaterThanEquals       = 0b1100100000000_0110_100011,
+  InKeyword               = 0b1100100001000_0110_100100,
+  InstanceOfKeyword       = 0b1100100001000_0110_100101,
+  Plus                    = 0b0100110000000_0111_100110,
+  Minus                   = 0b0100110000000_0111_100111,
+  TypeofKeyword           = 0b0000010001000_0000_101000,
+  VoidKeyword             = 0b0000010001000_0000_101001,
+  Asterisk                = 0b1100100000000_1000_101010,
+  Percent                 = 0b1100100000000_1000_101011,
+  Slash                   = 0b1100100000000_1000_101100,
+  Equals                  = 0b1000000000000_0000_101101,
+  Exclamation             = 0b0000010000000_0000_101110,
+  TemplateTail            = 0b0100001000001_0000_101111,
+  TemplateContinuation    = 0b0100001000001_0000_110000,
+  OfKeyword               = 0b1000000001010_0000_110001,
+  Arrow                   = 0b0000000000000_0000_110010,
 }
+_END_CONST_ENUM();
 
 const $false = PrimitiveLiteralExpression.$false;
 const $true = PrimitiveLiteralExpression.$true;
@@ -327,11 +333,12 @@ const $parent = AccessThisExpression.$parent;
 
 export const enum ExpressionType {
           None = 0,
- Interpolation = 0b0_00001,
-    IsIterator = 0b0_00010,
-    IsFunction = 0b0_00100,
-    IsProperty = 0b0_01000,
-    IsCustom   = 0b0_10000,
+ Interpolation = 0b0_000001,
+    IsIterator = 0b0_000010,
+   IsChainable = 0b0_000100,
+    IsFunction = 0b0_001000,
+    IsProperty = 0b0_010000,
+    IsCustom   = 0b0_100000,
 }
 /* eslint-enable @typescript-eslint/indent */
 
@@ -345,9 +352,12 @@ let $tokenValue: string | number = '';
 let $currentChar: number;
 let $assignable: boolean = true;
 let $optional: boolean = false;
-function $tokenRaw(): string {
-  return $input.slice($startIndex, $index);
-}
+let $semicolonIndex: number = -1;
+
+const stringFromCharCode = String.fromCharCode;
+const $charCodeAt = (index: number) => $input.charCodeAt(index);
+
+const $tokenRaw = (): string => $input.slice($startIndex, $index);
 
 export function parseExpression(input: string, expressionType?: ExpressionType): AnyBindingExpression {
   $input = input;
@@ -357,9 +367,10 @@ export function parseExpression(input: string, expressionType?: ExpressionType):
   $startIndex = 0;
   $currentToken = Token.EOF;
   $tokenValue = '';
-  $currentChar = input.charCodeAt(0);
+  $currentChar = $charCodeAt(0);
   $assignable = true;
   $optional = false;
+  $semicolonIndex = -1;
   return parse(Precedence.Variadic, expressionType === void 0 ? ExpressionType.IsProperty : expressionType);
 }
 
@@ -834,8 +845,17 @@ export function parse(minPrecedence: Precedence, expressionType: ExpressionType)
     }
     result = new BindingBehaviorExpression(result as IsBindingBehavior, name, args);
   }
+
   if ($currentToken !== Token.EOF) {
     if ((expressionType & ExpressionType.Interpolation) > 0 && $currentToken === Token.CloseBrace) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return result as any;
+    }
+    if ((expressionType & ExpressionType.IsChainable) > 0 && $currentToken === Token.Semicolon) {
+      if ($index === $length) {
+        throw unconsumedToken();
+      }
+      $semicolonIndex = $index - 1;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return result as any;
     }
@@ -997,12 +1017,14 @@ function parseMemberExpressionLHS(lhs: IsLeftHandSide, optional: boolean) {
   }
 }
 
+_START_CONST_ENUM();
 const enum ArrowFnParams {
   Valid         = 1,
   Invalid       = 2,
   Default       = 3,
   Destructuring = 4,
 }
+_END_CONST_ENUM();
 
 /**
  * https://tc39.es/ecma262/#prod-CoverParenthesizedExpressionAndArrowParameterList
@@ -1257,8 +1279,8 @@ function parseForOfStatement(result: BindingIdentifierOrPattern): ForOfStatement
   }
   nextToken();
   const declaration = result;
-  const statement = parse(Precedence.Variadic, ExpressionType.None);
-  return new ForOfStatement(declaration, statement as IsBindingBehavior);
+  const statement = parse(Precedence.Variadic, ExpressionType.IsChainable);
+  return new ForOfStatement(declaration, statement as IsBindingBehavior, $semicolonIndex);
 }
 
 /**
@@ -1337,12 +1359,12 @@ function parseInterpolation(): Interpolation {
   while ($index < length) {
     switch ($currentChar) {
       case Char.Dollar:
-        if ($input.charCodeAt($index + 1) === Char.OpenBrace) {
+        if ($charCodeAt($index + 1) === Char.OpenBrace) {
           parts.push(result);
           result = '';
 
           $index += 2;
-          $currentChar = $input.charCodeAt($index);
+          $currentChar = $charCodeAt($index);
           nextToken();
           const expression = parse(Precedence.Variadic, ExpressionType.Interpolation) as IsBindingBehavior | Interpolation;
           expressions.push(expression);
@@ -1352,10 +1374,10 @@ function parseInterpolation(): Interpolation {
         }
         break;
       case Char.Backslash:
-        result += String.fromCharCode(unescapeCode(nextChar()));
+        result += stringFromCharCode(unescapeCode(nextChar()));
         break;
       default:
-        result += String.fromCharCode($currentChar);
+        result += stringFromCharCode($currentChar);
     }
     nextChar();
   }
@@ -1441,7 +1463,7 @@ function nextToken(): void {
 }
 
 function nextChar(): number {
-  return $currentChar = $input.charCodeAt(++$index);
+  return $currentChar = $charCodeAt(++$index);
 }
 
 function scanIdentifier(): Token {
@@ -1478,7 +1500,7 @@ function scanNumber(isFloat: boolean): Token {
       char = nextChar();
     } while (char <= Char.Nine && char >= Char.Zero);
   } else {
-    $currentChar = $input.charCodeAt(--$index);
+    $currentChar = $charCodeAt(--$index);
   }
 
   $tokenValue = parseFloat($tokenRaw());
@@ -1499,7 +1521,7 @@ function scanString(): Token {
       nextChar();
       unescaped = unescapeCode($currentChar);
       nextChar();
-      buffer.push(String.fromCharCode(unescaped));
+      buffer.push(stringFromCharCode(unescaped));
       marker = $index;
     } else if ($index >= $length) {
       throw unterminatedStringLiteral();
@@ -1525,7 +1547,7 @@ function scanTemplate(): Token {
 
   while (nextChar() !== Char.Backtick) {
     if ($currentChar === Char.Dollar) {
-      if (($index + 1) < $length && $input.charCodeAt($index + 1) === Char.OpenBrace) {
+      if (($index + 1) < $length && $charCodeAt($index + 1) === Char.OpenBrace) {
         $index++;
         tail = false;
         break;
@@ -1533,12 +1555,12 @@ function scanTemplate(): Token {
         result += '$';
       }
     } else if ($currentChar === Char.Backslash) {
-      result += String.fromCharCode(unescapeCode(nextChar()));
+      result += stringFromCharCode(unescapeCode(nextChar()));
     } else {
       if ($index >= $length) {
         throw unterminatedTemplateLiteral();
       }
-      result += String.fromCharCode($currentChar);
+      result += stringFromCharCode($currentChar);
     }
   }
 
@@ -1550,241 +1572,241 @@ function scanTemplate(): Token {
   return Token.TemplateContinuation;
 }
 
-function scanTemplateTail(): Token {
+const scanTemplateTail = (): Token => {
   if ($index >= $length) {
     throw unterminatedTemplateLiteral();
   }
   $index--;
   return scanTemplate();
-}
+};
 
-function consumeOpt(token: Token): boolean {
+const consumeOpt = (token: Token): boolean => {
   if ($currentToken === token) {
     nextToken();
     return true;
   }
 
   return false;
-}
+};
 
-function consume(token: Token): void {
+const consume = (token: Token): void => {
   if ($currentToken === token) {
     nextToken();
   } else {
     throw missingExpectedToken(token);
   }
-}
+};
 
 // #region errors
 
-function invalidStartOfExpression() {
+const invalidStartOfExpression = () => {
   if (__DEV__) {
-    return new Error(`AUR0151: Invalid start of expression: '${$input}'`);
+    return createError(`AUR0151: Invalid start of expression: '${$input}'`);
   } else {
-    return new Error(`AUR0151:${$input}`);
+    return createError(`AUR0151:${$input}`);
   }
-}
+};
 
-function invalidSpreadOp() {
+const invalidSpreadOp = () => {
   if (__DEV__) {
-    return new Error(`AUR0152: Spread operator is not supported: '${$input}'`);
+    return createError(`AUR0152: Spread operator is not supported: '${$input}'`);
   } else {
-    return new Error(`AUR0152:${$input}`);
+    return createError(`AUR0152:${$input}`);
   }
-}
+};
 
-function expectedIdentifier() {
+const expectedIdentifier = () => {
   if (__DEV__) {
-    return new Error(`AUR0153: Expected identifier: '${$input}'`);
+    return createError(`AUR0153: Expected identifier: '${$input}'`);
   } else {
-    return new Error(`AUR0153:${$input}`);
+    return createError(`AUR0153:${$input}`);
   }
-}
+};
 
-function invalidMemberExpression() {
+const invalidMemberExpression = () => {
   if (__DEV__) {
-    return new Error(`AUR0154: Invalid member expression: '${$input}'`);
+    return createError(`AUR0154: Invalid member expression: '${$input}'`);
   } else {
-    return new Error(`AUR0154:${$input}`);
+    return createError(`AUR0154:${$input}`);
   }
-}
+};
 
-function unexpectedEndOfExpression() {
+const unexpectedEndOfExpression = () => {
   if (__DEV__) {
-    return new Error(`AUR0155: Unexpected end of expression: '${$input}'`);
+    return createError(`AUR0155: Unexpected end of expression: '${$input}'`);
   } else {
-    return new Error(`AUR0155:${$input}`);
+    return createError(`AUR0155:${$input}`);
   }
-}
+};
 
-function unconsumedToken() {
+const unconsumedToken = () => {
   if (__DEV__) {
-    return new Error(`AUR0156: Unconsumed token: '${$tokenRaw()}' at position ${$index} of '${$input}'`);
+    return createError(`AUR0156: Unconsumed token: '${$tokenRaw()}' at position ${$index} of '${$input}'`);
   } else {
-    return new Error(`AUR0156:${$input}`);
+    return createError(`AUR0156:${$input}`);
   }
-}
+};
 
-function invalidEmptyExpression() {
+const invalidEmptyExpression = () => {
   if (__DEV__) {
-    return new Error(`AUR0157: Invalid expression. Empty expression is only valid in event bindings (trigger, delegate, capture etc...)`);
+    return createError(`AUR0157: Invalid expression. Empty expression is only valid in event bindings (trigger, delegate, capture etc...)`);
   } else {
-    return new Error(`AUR0157`);
+    return createError(`AUR0157`);
   }
-}
+};
 
-function lhsNotAssignable() {
+const lhsNotAssignable = () => {
   if (__DEV__) {
-    return new Error(`AUR0158: Left hand side of expression is not assignable: '${$input}'`);
+    return createError(`AUR0158: Left hand side of expression is not assignable: '${$input}'`);
   } else {
-    return new Error(`AUR0158:${$input}`);
+    return createError(`AUR0158:${$input}`);
   }
-}
+};
 
-function expectedValueConverterIdentifier() {
+const expectedValueConverterIdentifier = () => {
   if (__DEV__) {
-    return new Error(`AUR0159: Expected identifier to come after ValueConverter operator: '${$input}'`);
+    return createError(`AUR0159: Expected identifier to come after ValueConverter operator: '${$input}'`);
   } else {
-    return new Error(`AUR0159:${$input}`);
+    return createError(`AUR0159:${$input}`);
   }
-}
+};
 
-function expectedBindingBehaviorIdentifier() {
+const expectedBindingBehaviorIdentifier = () => {
   if (__DEV__) {
-    return new Error(`AUR0160: Expected identifier to come after BindingBehavior operator: '${$input}'`);
+    return createError(`AUR0160: Expected identifier to come after BindingBehavior operator: '${$input}'`);
   } else {
-    return new Error(`AUR0160:${$input}`);
+    return createError(`AUR0160:${$input}`);
   }
-}
+};
 
-function unexpectedOfKeyword() {
+const unexpectedOfKeyword = () => {
   if (__DEV__) {
-    return new Error(`AUR0161: Unexpected keyword "of": '${$input}'`);
+    return createError(`AUR0161: Unexpected keyword "of": '${$input}'`);
   } else {
-    return new Error(`AUR0161:${$input}`);
+    return createError(`AUR0161:${$input}`);
   }
-}
+};
 
-function invalidLHSBindingIdentifierInForOf() {
+const invalidLHSBindingIdentifierInForOf = () => {
   if (__DEV__) {
-    return new Error(`AUR0163: Invalid BindingIdentifier at left hand side of "of": '${$input}'`);
+    return createError(`AUR0163: Invalid BindingIdentifier at left hand side of "of": '${$input}'`);
   } else {
-    return new Error(`AUR0163:${$input}`);
+    return createError(`AUR0163:${$input}`);
   }
-}
+};
 
-function invalidPropDefInObjLiteral() {
+const invalidPropDefInObjLiteral = () => {
   if (__DEV__) {
-    return new Error(`AUR0164: Invalid or unsupported property definition in object literal: '${$input}'`);
+    return createError(`AUR0164: Invalid or unsupported property definition in object literal: '${$input}'`);
   } else {
-    return new Error(`AUR0164:${$input}`);
+    return createError(`AUR0164:${$input}`);
   }
-}
+};
 
-function unterminatedStringLiteral() {
+const unterminatedStringLiteral = () => {
   if (__DEV__) {
-    return new Error(`AUR0165: Unterminated quote in string literal: '${$input}'`);
+    return createError(`AUR0165: Unterminated quote in string literal: '${$input}'`);
   } else {
-    return new Error(`AUR0165:${$input}`);
+    return createError(`AUR0165:${$input}`);
   }
-}
+};
 
-function unterminatedTemplateLiteral() {
+const unterminatedTemplateLiteral = () => {
   if (__DEV__) {
-    return new Error(`AUR0166: Unterminated template string: '${$input}'`);
+    return createError(`AUR0166: Unterminated template string: '${$input}'`);
   } else {
-    return new Error(`AUR0166:${$input}`);
+    return createError(`AUR0166:${$input}`);
   }
-}
+};
 
-function missingExpectedToken(token: Token) {
+const missingExpectedToken = (token: Token) => {
   if (__DEV__) {
-    return new Error(`AUR0167: Missing expected token '${TokenValues[token & Token.Type]}' in '${$input}' `);
+    return createError(`AUR0167: Missing expected token '${TokenValues[token & Token.Type]}' in '${$input}' `);
   } else {
-    return new Error(`AUR0167:${$input}<${TokenValues[token & Token.Type]}`);
+    return createError(`AUR0167:${$input}<${TokenValues[token & Token.Type]}`);
   }
-}
+};
 
 const unexpectedCharacter: CharScanner = () => {
   if (__DEV__) {
-    throw new Error(`AUR0168: Unexpected character: '${$input}'`);
+    throw createError(`AUR0168: Unexpected character: '${$input}'`);
   } else {
-    throw new Error(`AUR0168:${$input}`);
+    throw createError(`AUR0168:${$input}`);
   }
 };
 unexpectedCharacter.notMapped = true;
 
-function unexpectedTokenInDestructuring() {
+const unexpectedTokenInDestructuring = () => {
   if (__DEV__) {
-    return new Error(`AUR0170: Unexpected '${$tokenRaw()}' at position ${$index - 1} for destructuring assignment in ${$input}`);
+    return createError(`AUR0170: Unexpected '${$tokenRaw()}' at position ${$index - 1} for destructuring assignment in ${$input}`);
   } else {
-    return new Error(`AUR0170:${$input}`);
+    return createError(`AUR0170:${$input}`);
   }
-}
+};
 
-function unexpectedTokenInOptionalChain() {
+const unexpectedTokenInOptionalChain = () => {
   if (__DEV__) {
-    return new Error(`AUR0171: Unexpected '${$tokenRaw()}' at position ${$index - 1} for optional chain in ${$input}`);
+    return createError(`AUR0171: Unexpected '${$tokenRaw()}' at position ${$index - 1} for optional chain in ${$input}`);
   } else {
-    return new Error(`AUR0171:${$input}`);
+    return createError(`AUR0171:${$input}`);
   }
-}
+};
 
-function invalidTaggedTemplateOnOptionalChain() {
+const invalidTaggedTemplateOnOptionalChain = () => {
   if (__DEV__) {
-    return new Error(`AUR0172: Invalid tagged template on optional chain in ${$input}`);
+    return createError(`AUR0172: Invalid tagged template on optional chain in ${$input}`);
   } else {
-    return new Error(`AUR0172:${$input}`);
+    return createError(`AUR0172:${$input}`);
   }
-}
+};
 
-function invalidArrowParameterList() {
+const invalidArrowParameterList = () => {
   if (__DEV__) {
-    return new Error(`AUR0173: Invalid arrow parameter list in ${$input}`);
+    return createError(`AUR0173: Invalid arrow parameter list in ${$input}`);
   } else {
-    return new Error(`AUR0173:${$input}`);
+    return createError(`AUR0173:${$input}`);
   }
-}
+};
 
-function defaultParamsInArrowFn() {
+const defaultParamsInArrowFn = () => {
   if (__DEV__) {
-    return new Error(`AUR0174: Arrow function with default parameters is not supported: ${$input}`);
+    return createError(`AUR0174: Arrow function with default parameters is not supported: ${$input}`);
   } else {
-    return new Error(`AUR0174:${$input}`);
+    return createError(`AUR0174:${$input}`);
   }
-}
+};
 
-function destructuringParamsInArrowFn() {
+const destructuringParamsInArrowFn = () => {
   if (__DEV__) {
-    return new Error(`AUR0175: Arrow function with destructuring parameters is not supported: ${$input}`);
+    return createError(`AUR0175: Arrow function with destructuring parameters is not supported: ${$input}`);
   } else {
-    return new Error(`AUR0175:${$input}`);
+    return createError(`AUR0175:${$input}`);
   }
-}
+};
 
-function restParamsMustBeLastParam() {
+const restParamsMustBeLastParam = () => {
   if (__DEV__) {
-    return new Error(`AUR0176: Rest parameter must be last formal parameter in arrow function: ${$input}`);
+    return createError(`AUR0176: Rest parameter must be last formal parameter in arrow function: ${$input}`);
   } else {
-    return new Error(`AUR0176:${$input}`);
+    return createError(`AUR0176:${$input}`);
   }
-}
+};
 
-function functionBodyInArrowFN() {
+const functionBodyInArrowFN = () => {
   if (__DEV__) {
-    return new Error(`AUR0178: Arrow function with function body is not supported: ${$input}`);
+    return createError(`AUR0178: Arrow function with function body is not supported: ${$input}`);
   } else {
-    return new Error(`AUR0178:${$input}`);
+    return createError(`AUR0178:${$input}`);
   }
-}
+};
 
-function unexpectedDoubleDot() {
+const unexpectedDoubleDot = () => {
   if (__DEV__) {
-    return new Error(`AUR0179: Unexpected token '.' at position ${$index - 1} in ${$input}`);
+    return createError(`AUR0179: Unexpected token '.' at position ${$index - 1} in ${$input}`);
   } else {
-    return new Error(`AUR0179:${$input}`);
+    return createError(`AUR0179:${$input}`);
   }
-}
+};
 
 // #endregion
 
@@ -1798,7 +1820,7 @@ function unexpectedDoubleDot() {
 const TokenValues = [
   $false, $true, $null, $undefined, '$this', null/* '$host' */, '$parent',
 
-  '(', '{', '.', '..', '...', '?.', '}', ')', ',', '[', ']', ':', '?', '\'', '"',
+  '(', '{', '.', '..', '...', '?.', '}', ')', ',', '[', ']', ':', ';', '?', '\'', '"',
 
   '&', '|', '??', '||', '&&', '==', '!=', '===', '!==', '<', '>',
   '<=', '>=', 'in', 'instanceof', '+', '-', 'typeof', 'void', '*', '%', '/', '=', '!',
@@ -1840,7 +1862,7 @@ const codes = {
  * Decompress the ranges into an array of numbers so that the char code
  * can be used as an index to the lookup
  */
-function decompress(lookup: (CharScanner | number)[] | null, $set: Set<number> | null, compressed: number[], value: CharScanner | number | boolean): void {
+const decompress = (lookup: (CharScanner | number)[] | null, $set: Set<number> | null, compressed: number[], value: CharScanner | number | boolean): void => {
   const rangeCount = compressed.length;
   for (let i = 0; i < rangeCount; i += 2) {
     const start = compressed[i];
@@ -1855,15 +1877,14 @@ function decompress(lookup: (CharScanner | number)[] | null, $set: Set<number> |
       }
     }
   }
-}
+};
 
 // CharFuncLookup functions
-function returnToken(token: Token): () => Token {
-  return () => {
+const returnToken = (token: Token): () => Token =>
+  () => {
     nextChar();
     return token;
   };
-}
 
 // ASCII IdentifierPart lookup
 const AsciiIdParts = new Set<number>();
@@ -1946,7 +1967,7 @@ CharScanners[Char.Bar] = () => {
 // ?, ??, ?.
 CharScanners[Char.Question] = () => {
   if (nextChar() === Char.Dot) {
-    const peek = $input.charCodeAt($index + 1);
+    const peek = $charCodeAt($index + 1);
     if (peek <= Char.Zero || peek >= Char.Nine) {
       nextChar();
       return Token.QuestionDot;
@@ -2002,6 +2023,7 @@ CharScanners[Char.Comma]        = returnToken(Token.Comma);
 CharScanners[Char.Minus]        = returnToken(Token.Minus);
 CharScanners[Char.Slash]        = returnToken(Token.Slash);
 CharScanners[Char.Colon]        = returnToken(Token.Colon);
+CharScanners[Char.Semicolon]    = returnToken(Token.Semicolon);
 CharScanners[Char.OpenBracket]  = returnToken(Token.OpenBracket);
 CharScanners[Char.CloseBracket] = returnToken(Token.CloseBracket);
 CharScanners[Char.OpenBrace]    = returnToken(Token.OpenBrace);

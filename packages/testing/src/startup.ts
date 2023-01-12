@@ -129,15 +129,26 @@ export function createFixture<T extends object>(
       assert.strictEqual(host.textContent, selector);
     }
   }
-  function assertHtml(selector: string, html?: string) {
-    if (arguments.length === 2) {
-      const el = queryBy(selector);
+  function getInnerHtml(el: Element, compact?: boolean) {
+    let actual = el.innerHTML;
+    if (compact) {
+      actual = actual
+        .replace(/<!--au-start-->/g, '')
+        .replace(/<!--au-end-->/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    return actual;
+  }
+  function assertHtml(selectorOrHtml: string, html: string = selectorOrHtml, { compact }: { compact?: boolean } = { compact: false }) {
+    if (arguments.length > 1) {
+      const el = queryBy(selectorOrHtml);
       if (el === null) {
-        throw new Error(`No element found for selector "${selector}" to compare innerHTML against "${html}"`);
+        throw new Error(`No element found for selector "${selectorOrHtml}" to compare innerHTML against "${html}"`);
       }
-      assert.strictEqual(el.innerHTML, html);
+      assert.strictEqual(getInnerHtml(el, compact) , html);
     } else {
-      assert.strictEqual(host.innerHTML, selector);
+      assert.strictEqual(getInnerHtml(host, compact), selectorOrHtml);
     }
   }
   function assertAttr(selector: string, name: string, value: string | null) {
@@ -177,6 +188,14 @@ export function createFixture<T extends object>(
       el.dispatchEvent(new ctx.CustomEvent(event, init));
     } });
   });
+  function type(selector: string | Element, value: string): void {
+    const el = typeof selector === 'string' ? queryBy(selector) : selector;
+    if (el === null || !/input|textarea/i.test(el.nodeName)) {
+      throw new Error(`No <input>/<textarea> element found for selector "${selector}" to emulate input for "${value}"`);
+    }
+    (el as HTMLInputElement).value = value;
+    el.dispatchEvent(new platform.window.Event('input'));
+  }
 
   const scrollBy = (selector: string, init: number | ScrollToOptions) => {
     const el = queryBy(selector);
@@ -184,7 +203,7 @@ export function createFixture<T extends object>(
       throw new Error(`No element found for selector "${selector}" to scroll by "${JSON.stringify(init)}"`);
     }
     el.scrollBy(typeof init === 'number' ? { top: init } : init);
-    el.dispatchEvent(new Event('scroll'));
+    el.dispatchEvent(new platform.window.Event('scroll'));
   };
 
   const flush = (time?: number) => {
@@ -194,7 +213,6 @@ export function createFixture<T extends object>(
   const fixture = new class Results implements IFixture<K> {
     public startPromise = startPromise;
     public ctx = ctx;
-    public host = ctx.doc.firstElementChild as HTMLElement;
     public container = container;
     public platform = platform;
     public testHost = root;
@@ -205,8 +223,8 @@ export function createFixture<T extends object>(
     public logger = container.get(ILogger);
     public hJsx = hJsx.bind(ctx.doc);
 
-    public async start() {
-      await au.app({ host: host, component }).start();
+    public start() {
+      return au.app({ host: host, component }).start();
     }
 
     public tearDown() {
@@ -247,7 +265,9 @@ export function createFixture<T extends object>(
     public assertAttr = assertAttr;
     public assertAttrNS = assertAttrNS;
     public assertValue = assertValue;
+    public createEvent = (name: string, init?: CustomEventInit) => new platform.CustomEvent(name, init);
     public trigger = trigger as ITrigger;
+    public type = type;
     public scrollBy = scrollBy;
     public flush = flush;
   }();
@@ -260,7 +280,6 @@ export function createFixture<T extends object>(
 export interface IFixture<T> {
   readonly startPromise: void | Promise<void>;
   readonly ctx: TestContext;
-  readonly host: HTMLElement;
   readonly container: IContainer;
   readonly platform: IPlatform;
   readonly testHost: HTMLElement;
@@ -270,7 +289,7 @@ export interface IFixture<T> {
   readonly observerLocator: IObserverLocator;
   readonly logger: ILogger;
   readonly torn: boolean;
-  start(): Promise<void>;
+  start(): void | Promise<void>;
   tearDown(): void | Promise<void>;
   readonly started: Promise<IFixture<T>>;
 
@@ -332,6 +351,15 @@ export interface IFixture<T> {
    * Will throw if there' more than one elements with matching selector
    */
   assertValue(selector: string, value: unknown): void;
+  /**
+   * Create a custom event by the given name and init for the current platform
+   */
+  createEvent<T>(name: string, init?: CustomEventInit<T>): CustomEvent;
+
+  /**
+   * Find an input or text area by the selector and emulate a keyboard event with the given value
+   */
+  type(selector: string | Element, value: string): void;
 
   hJsx(name: string, attrs: Record<string, string> | null, ...children: (Node | string | (Node | string)[])[]): HTMLElement;
 

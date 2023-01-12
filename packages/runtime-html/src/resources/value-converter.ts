@@ -4,7 +4,7 @@ import {
   firstDefined,
 } from '@aurelia/kernel';
 import { registerAliases } from '../utilities-di';
-import { isFunction, isString } from '../utilities';
+import { createError, isFunction, isString, objectFreeze } from '../utilities';
 import { appendResourceKey, defineMetadata, getAnnotationKeyFor, getOwnMetadata, getResourceKeyFor, hasOwnMetadata } from '../utilities-metadata';
 
 import type {
@@ -86,7 +86,7 @@ const getConverterAnnotation = <K extends keyof PartialValueConverterDefinition>
   prop: K,
 ): PartialValueConverterDefinition[K] => getOwnMetadata(getAnnotationKeyFor(prop), Type);
 
-export const ValueConverter = Object.freeze<ValueConverterKind>({
+export const ValueConverter = objectFreeze<ValueConverterKind>({
   name: vcBaseName,
   keyFrom: (name: string): string => `${vcBaseName}:${name}`,
   isType<T>(value: T): value is (T extends Constructable ? ValueConverterType<T> : never) {
@@ -104,9 +104,9 @@ export const ValueConverter = Object.freeze<ValueConverterKind>({
     const def = getOwnMetadata(vcBaseName, Type);
     if (def === void 0) {
       if (__DEV__)
-        throw new Error(`AUR0152: No definition found for type ${Type.name}`);
+        throw createError(`AUR0152: No definition found for type ${Type.name}`);
       else
-        throw new Error(`AUR0152:${Type.name}`);
+        throw createError(`AUR0152:${Type.name}`);
     }
 
     return def;

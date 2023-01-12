@@ -1,3 +1,4 @@
+import { callSyntax, delegateSyntax } from '@aurelia/compat-v1';
 import { DI, IServiceLocator, newInstanceForScope, newInstanceOf, Registration } from '@aurelia/kernel';
 import {
   ArrayObserver,
@@ -5,12 +6,12 @@ import {
   IBinding,
   IObserverLocator,
   Scope,
+  Unparser,
 } from '@aurelia/runtime';
 import {
   bindable,
   bindingBehavior,
   customAttribute,
-  BindingInterceptor,
   valueConverter,
   CustomElement,
   customElement,
@@ -222,20 +223,6 @@ describe('validation-html/validate-binding-behavior.spec.ts/validate-binding-beh
   class B64ToPlainTextValueConverter {
     public fromView(b64: string): string { return $atob(b64); }
   }
-  @bindingBehavior('interceptor')
-  class InterceptorBindingBehavior extends BindingInterceptor {
-    public updateSource(value: unknown) {
-      if (this.interceptor !== this) {
-        this.interceptor.updateSource(value);
-      } else {
-        let binding = this as BindingInterceptor;
-        while (binding.binding !== void 0) {
-          binding = binding.binding as BindingInterceptor;
-        }
-        binding.updateSource(value);
-      }
-    }
-  }
   @bindingBehavior('vanilla')
   class VanillaBindingBehavior implements BindingBehaviorInstance {
     public bind(_scope: Scope, _binding: IBinding): void {
@@ -284,6 +271,7 @@ describe('validation-html/validate-binding-behavior.spec.ts/validate-binding-beh
     const au = new Aurelia(container);
     await au
       .register(
+        delegateSyntax,
         customDefaultTrigger
           ? ValidationHtmlConfiguration.customize((options) => {
             options.DefaultTrigger = customDefaultTrigger;
@@ -294,7 +282,6 @@ describe('validation-html/validate-binding-behavior.spec.ts/validate-binding-beh
         FooBar,
         ToNumberValueConverter,
         B64ToPlainTextValueConverter,
-        InterceptorBindingBehavior,
         VanillaBindingBehavior,
         Editor,
         Editor1,
@@ -324,7 +311,7 @@ describe('validation-html/validate-binding-behavior.spec.ts/validate-binding-beh
 
     const binding = bindings[0];
     assert.equal(binding.target, target);
-    assert.equal(binding.ast.expression.toString(), rawExpression);
+    assert.equal(Unparser.unparse(binding.ast.expression), rawExpression);
   }
 
   async function assertEventHandler(target: HTMLElement, event: 'change' | 'blur' | 'focusout', callCount: number, platform: IPlatform, validateBindingSpy: ISpy, validateSpy: ISpy, ctx: TestContext) {
@@ -1063,14 +1050,6 @@ describe('validation-html/validate-binding-behavior.spec.ts/validate-binding-beh
   const bindingBehaviorTestData = [
     { expr: `person.name & validate:'change' & vanilla`, rawExpr: 'person.name&validate:(\'change\')' },
     { expr: `person.name & vanilla & validate:'change'`, rawExpr: 'person.name&vanilla' },
-    { expr: `person.name & validate:'change' & interceptor`, rawExpr: 'person.name&validate:(\'change\')' },
-    { expr: `person.name & interceptor & validate:'change'`, rawExpr: 'person.name&interceptor' },
-    { expr: `person.name & validate:'change' & vanilla & interceptor`, rawExpr: 'person.name&validate:(\'change\')&vanilla' },
-    { expr: `person.name & validate:'change' & interceptor & vanilla`, rawExpr: 'person.name&validate:(\'change\')&interceptor' },
-    { expr: `person.name & vanilla & validate:'change' & interceptor`, rawExpr: 'person.name&vanilla&validate:(\'change\')' },
-    { expr: `person.name & interceptor & validate:'change' & vanilla`, rawExpr: 'person.name&interceptor&validate:(\'change\')' },
-    { expr: `person.name & vanilla & interceptor & validate:'change'`, rawExpr: 'person.name&vanilla&interceptor' },
-    { expr: `person.name & interceptor & vanilla & validate:'change'`, rawExpr: 'person.name&interceptor&vanilla' },
   ];
   for (const { expr, rawExpr } of bindingBehaviorTestData) {
     $it(`can be used with other binding behavior - ${expr}`,
@@ -1121,7 +1100,7 @@ describe('validation-html/validate-binding-behavior.spec.ts/validate-binding-beh
       assert.equal(bindings.length, 1);
 
       const binding = bindings[0];
-      assert.equal(binding.ast.expression.toString(), 'org.employees');
+      assert.equal(Unparser.unparse(binding.ast.expression), 'org.employees');
 
       assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'employees').length, 0, 'error1');
       await controller.validate();
@@ -1155,7 +1134,7 @@ describe('validation-html/validate-binding-behavior.spec.ts/validate-binding-beh
       assert.equal(bindings.length, 1);
 
       const binding = bindings[0];
-      assert.equal(binding.ast.expression.toString(), 'org.employees');
+      assert.equal(Unparser.unparse(binding.ast.expression), 'org.employees');
 
       assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'employees').length, 0, 'error1');
       await controller.validate();
@@ -1188,9 +1167,9 @@ describe('validation-html/validate-binding-behavior.spec.ts/validate-binding-beh
       const bindings = Array.from((controller['bindings'] as Map<IBinding, any>).keys()) as BindingWithBehavior[];
       assert.equal(bindings.length, 2);
       assert.equal(bindings[0].target, target1);
-      assert.equal(bindings[0].ast.expression.toString(), 'obj.coll[(0)].a|toNumber');
+      assert.equal(Unparser.unparse(bindings[0].ast.expression), 'obj.coll[(0)].a|toNumber');
       assert.equal(bindings[1].target, target2);
-      assert.equal(bindings[1].ast.expression.toString(), 'obj.coll[(1)].a|toNumber');
+      assert.equal(Unparser.unparse(bindings[1].ast.expression), 'obj.coll[(1)].a|toNumber');
 
       assert.equal(controller.results.filter((r) => !r.valid && (r.propertyName === 'coll[0].a' || r.propertyName === 'coll[1].a')).length, 0, 'error1');
       await controller.validate();
@@ -1377,18 +1356,22 @@ describe('validation-html/validate-binding-behavior.spec.ts/validate-binding-beh
       const container = ctx.container;
       const host = ctx.doc.createElement('app');
       ctx.doc.body.appendChild(host);
+      container.register(delegateSyntax);
       const au = new Aurelia(container).register(ValidationHtmlConfiguration);
 
       try {
         await au
-          .register(Registration.instance(IObserveCollection, false))
+          .register(
+            Registration.instance(IObserveCollection, false),
+            callSyntax,
+          )
           .app({
             host,
             component: CustomElement.define({ name: 'app', isStrictBinding: true, template }, App)
           })
           .start();
       } catch (e) {
-        assert.equal(e.message, 'Unable to set property binding');
+        assert.equal(e.message, 'Validate behavior used on non property binding');
       }
       await au.stop();
       ctx.doc.body.removeChild(host);

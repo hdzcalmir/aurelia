@@ -10,9 +10,10 @@ import {
   Scope,
   ExpressionKind,
   IAstEvaluator,
+  astEvaluate,
 } from '@aurelia/runtime';
 import {
-  astEvaluator,
+  mixinAstEvaluator,
   LifecycleFlags,
 } from '@aurelia/runtime-html';
 import {
@@ -115,14 +116,19 @@ export interface PropertyRule extends IAstEvaluator {}
 export class PropertyRule<TObject extends IValidateable = IValidateable, TValue = unknown> implements IPropertyRule {
   public static readonly $TYPE: string = 'PropertyRule';
   private latestRule?: IValidationRule;
+  /** @internal */
+  public readonly l: IServiceLocator;
 
   public constructor(
-    private readonly locator: IServiceLocator,
+    locator: IServiceLocator,
     public readonly validationRules: IValidationRules,
     public readonly messageProvider: IValidationMessageProvider,
     public property: RuleProperty,
     public $rules: IValidationRule[][] = [[]],
-  ) { }
+  ) {
+    this.l = locator;
+  }
+
   public accept(visitor: IValidationVisitor): string {
     return visitor.visitPropertyRule(this);
   }
@@ -153,7 +159,7 @@ export class PropertyRule<TObject extends IValidateable = IValidateable, TValue 
     if (expression === void 0) {
       value = object;
     } else {
-      value = expression.evaluate(scope, this, null);
+      value = astEvaluate(expression, scope, this, null);
     }
 
     let isValid = true;
@@ -176,7 +182,7 @@ export class PropertyRule<TObject extends IValidateable = IValidateable, TValue 
               rule,
               object,
             ));
-          message = this.messageProvider.getMessage(rule).evaluate(messageEvaluationScope, this, null) as string;
+          message = astEvaluate(this.messageProvider.getMessage(rule), messageEvaluationScope, this, null) as string;
         }
         return new ValidationResult(isValidOrPromise, message, name, object, rule, this);
       };
@@ -422,7 +428,7 @@ export class PropertyRule<TObject extends IValidateable = IValidateable, TValue 
   }
   // #endregion
 }
-astEvaluator()(PropertyRule);
+mixinAstEvaluator()(PropertyRule);
 
 export class ModelBasedRule {
   public constructor(

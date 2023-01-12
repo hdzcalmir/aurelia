@@ -29,7 +29,7 @@ const args = yargs
     type: 'string',
     array: true,
   })
-  .argv;
+  .parseSync();
 
 const envVars = { DEV_MODE: true };
 const testPatterns = (args.t ?? []).join(' ');
@@ -61,6 +61,8 @@ const validPackages = [
   'kernel',
   'runtime',
   'runtime-html',
+  'dialog',
+  'web-components',
   'i18n',
   'fetch-client',
   'route-recognizer',
@@ -72,6 +74,7 @@ const validPackages = [
   'state',
   'store-v1',
   'ui-virtualization',
+  'compat-v1',
   'aurelia',
   'addons',
   'testing',

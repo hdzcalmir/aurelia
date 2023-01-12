@@ -2,7 +2,7 @@
 import replace from "@rollup/plugin-replace";
 import typescript from '@rollup/plugin-typescript';
 import { terser }  from 'rollup-plugin-terser';
-import { esbuildNameCache, terserNameCache } from "./mangle-namecache";
+import { terserNameCache } from "./mangle-namecache";
 import { execSync } from 'child_process';
 import esbuild from 'rollup-plugin-esbuild';
 
@@ -127,11 +127,14 @@ export function runPostbuildScript(...scripts) {
  * @param {{ name: string; script: string }[]} [postBuildScript]
  */
 export function getRollupConfig(pkg, configure = identity, configureTerser, postBuildScript = [{ name: 'build dts', script: 'postrollup'}]) {
+  const isReleaseBuild = /true/.test(process.env.RELEASE_BUILD + '');
+  const cwd = process.cwd();
   /** @type {NormalizedEnvVars} */
   const envVars = {
     __DEV__: process.env.__DEV__,
     NO_MINIFIED: process.env.NO_MINIFIED
   };
+  // @ts-ignore
   const isDevMode = /^true$/.test(process.env.DEV_MODE);
   const inputFile = 'src/index.ts';
   const esmDevDist = 'dist/esm/index.dev.mjs';
@@ -141,13 +144,14 @@ export function getRollupConfig(pkg, configure = identity, configureTerser, post
   const typingsDist = 'dist/types/index.d.ts';
   /** @type {import('rollup').WarningHandlerWithDefault} */
   const onWarn = (warning, warn) => {
-    if (warning.code === 'CIRCULAR_DEPENDENCY') return;
+    if (warning.code === 'CIRCULAR_DEPENDENCY' || warning.code === 'MIXED_EXPORTS') return;
     if (warning.message.includes('Mixing named and default exports')) return;
     warn(warning);
   };
 
   const devConfig = configure({
     input: inputFile,
+    // @ts-ignore
     external: Object.keys(pkg.dependencies),
     output: [
       {
@@ -165,12 +169,13 @@ export function getRollupConfig(pkg, configure = identity, configureTerser, post
     ],
     plugins: [
       ...(
-        // isDevMode // there's something wrong with sourcemap
-        false
+        isDevMode
         ? [
+          // @ts-ignore
+          rollupReplace({ '_START_CONST_ENUM': '(() => {})', '_END_CONST_ENUM': '(() => {})' }),
           esbuild({
             minify: false,
-            target: 'es2018',
+            target: 'es2020',
             define: { ...envVars, __DEV__: 'true' },
             sourceMap: true,
           }),
@@ -178,6 +183,7 @@ export function getRollupConfig(pkg, configure = identity, configureTerser, post
         : [
           rollupReplace({ ...envVars, __DEV__: true }),
           rollupTypeScript({}, isDevMode),
+          stripInternalConstEnum(),
         ]
       ),
     ],
@@ -186,6 +192,7 @@ export function getRollupConfig(pkg, configure = identity, configureTerser, post
 
   const prodConfig = configure({
     input: inputFile,
+    // @ts-ignore
     external: Object.keys(pkg.dependencies),
     output: [
       {
@@ -212,25 +219,25 @@ export function getRollupConfig(pkg, configure = identity, configureTerser, post
     ],
     plugins: [
       ...(
-        // isDevMode // there's something wrong with sourcemap
-        false
+        isDevMode
         ? [
+          // @ts-ignore
+          rollupReplace({ '_START_CONST_ENUM': '(() => {})', '_END_CONST_ENUM': '(() => {})' }),
           esbuild({
             minify: false,
-            target: 'es2018',
+            target: 'es2020',
             define: { ...envVars, __DEV__: 'false' },
-            mangleProps: /^_/,
-            reserveProps: /^__.*__$|__esModule|_stateSubscriptions|_state|__REDUX_DEVTOOLS_EXTENSION__/,
-            mangleCache: esbuildNameCache,
             sourceMap: true,
-          })
+          }),
         ]
         : [
           rollupReplace({ ...envVars, __DEV__: false }),
           rollupTypeScript({}, isDevMode),
+          stripInternalConstEnum(),
         ]
       ),
       runPostbuildScript(...postBuildScript),
+      generateNativeModulePlugin(cwd, 'index.mjs', isReleaseBuild),
     ],
     onwarn: onWarn,
   }, false, envVars);
@@ -245,4 +252,85 @@ export function getRollupConfig(pkg, configure = identity, configureTerser, post
  */
 function identity(a) {
   return a;
+}
+
+import { createFilter } from '@rollup/pluginutils';
+import MagicString from 'magic-string';
+
+/** @return {import('rollup').Plugin} */
+function stripInternalConstEnum (options = {}) {
+  const { include, exclude } = options
+
+  const filter = createFilter(include, exclude)
+
+  return {
+    name: 'stripCode',
+
+    transform (source, id) {
+      if (!filter(id)) return
+
+      const s = new MagicString(source);
+      const indexPairs = [];
+
+      let startIndex = 0;
+      let endIndex = 0;
+      while (true) {
+        startIndex = source.indexOf('_START_CONST_ENUM();', endIndex);
+        if (startIndex === -1) {
+          break;
+        }
+
+        endIndex = source.indexOf('_END_CONST_ENUM();', startIndex);
+        if (endIndex === -1) {
+          break;
+        }
+        indexPairs.push([startIndex, endIndex]);
+      }
+
+      if (indexPairs.length === 0) {
+        return;
+      }
+
+      indexPairs.forEach(([startIndex, endIndex]) => {
+        s.overwrite(startIndex, endIndex + '_END_CONST_ENUM();'.length, '');
+      })
+      
+      const map = s.generateMap({ hires: true })
+
+      return { code: s.toString(), map };
+    }
+  }
+}
+
+import path from 'path';
+import fs from 'fs-extra';
+
+/**
+ * @param {string} cwd
+ * @param {string} fileName
+ * @param {boolean} enabled
+ * @returns {import('rollup').Plugin}
+ */
+function generateNativeModulePlugin(cwd, fileName, enabled) {
+  /**
+   * @param {string} cwd
+   * @param {string} fileName
+   */
+  async function generateNativeImport(cwd, fileName) {
+    const code = await fs.readFile(path.resolve(cwd, `dist/esm/${fileName}`), { encoding: 'utf-8' });
+    const regex = /from\s+(['"])@aurelia\/([-a-z]+)['"];/g;
+    const transformed = code.replace(regex, `from $1../$2/dist/native-modules/${fileName}$1;`).replace(`//# sourceMappingURL=${fileName}.map`, '');
+    await fs.ensureDir(path.resolve(cwd, 'dist/native-modules'));
+    await fs.writeFile(path.resolve(cwd, `dist/native-modules/${fileName}`), transformed, { encoding: 'utf-8' });
+  }
+
+  return {
+    name: 'aurelia-generate-native-modules',
+    closeBundle() {
+      if (!enabled) {
+        return;
+      }
+      generateNativeImport(cwd, fileName);
+    }
+  }
 }

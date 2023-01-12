@@ -7,7 +7,6 @@ import {
   RefAttributePattern,
 } from './resources/attribute-pattern';
 import {
-  CallBindingCommand,
   DefaultBindingCommand,
   ForBindingCommand,
   FromViewBindingCommand,
@@ -17,15 +16,13 @@ import {
   AttrBindingCommand,
   CaptureBindingCommand,
   ClassBindingCommand,
-  DelegateBindingCommand,
   RefBindingCommand,
   StyleBindingCommand,
   TriggerBindingCommand,
   SpreadBindingCommand,
 } from './resources/binding-command';
-import { TemplateCompiler } from './template-compiler';
+import { TemplateCompiler } from './compiler/template-compiler';
 import {
-  CallBindingRenderer,
   CustomAttributeRenderer,
   CustomElementRenderer,
   InterpolationBindingRenderer,
@@ -74,11 +71,9 @@ import {
   FulfilledAttributePattern,
   RejectedAttributePattern,
 } from './resources/template-controllers/promise';
-import { AuRender } from './resources/custom-elements/au-render';
 import { AuCompose } from './resources/custom-elements/au-compose';
 import { AuSlot } from './resources/custom-elements/au-slot';
 import { SanitizeValueConverter } from './resources/value-converters/sanitize';
-import { ViewValueConverter } from './resources/value-converters/view';
 import { NodeObserverLocator } from './observation/observer-locator';
 import { ICoercionConfiguration } from '@aurelia/runtime';
 import { instanceRegistration } from './utilities-di';
@@ -134,7 +129,6 @@ export const ShortHandBindingSyntax = [
   ColonPrefixedBindAttributePatternRegistration
 ];
 
-export const CallBindingCommandRegistration = CallBindingCommand as unknown as IRegistry;
 export const DefaultBindingCommandRegistration = DefaultBindingCommand as unknown as IRegistry;
 export const ForBindingCommandRegistration = ForBindingCommand as unknown as IRegistry;
 export const FromViewBindingCommandRegistration = FromViewBindingCommand as unknown as IRegistry;
@@ -143,7 +137,6 @@ export const ToViewBindingCommandRegistration = ToViewBindingCommand as unknown 
 export const TwoWayBindingCommandRegistration = TwoWayBindingCommand as unknown as IRegistry;
 export const RefBindingCommandRegistration = RefBindingCommand as unknown as IRegistry;
 export const TriggerBindingCommandRegistration = TriggerBindingCommand as unknown as IRegistry;
-export const DelegateBindingCommandRegistration = DelegateBindingCommand as unknown as IRegistry;
 export const CaptureBindingCommandRegistration = CaptureBindingCommand as unknown as IRegistry;
 export const AttrBindingCommandRegistration = AttrBindingCommand as unknown as IRegistry;
 export const ClassBindingCommandRegistration = ClassBindingCommand as unknown as IRegistry;
@@ -163,11 +156,9 @@ export const DefaultBindingLanguage = [
   FromViewBindingCommandRegistration,
   ToViewBindingCommandRegistration,
   TwoWayBindingCommandRegistration,
-  CallBindingCommandRegistration,
   ForBindingCommandRegistration,
   RefBindingCommandRegistration,
   TriggerBindingCommandRegistration,
-  DelegateBindingCommandRegistration,
   CaptureBindingCommandRegistration,
   ClassBindingCommandRegistration,
   StyleBindingCommandRegistration,
@@ -176,7 +167,6 @@ export const DefaultBindingLanguage = [
 ];
 
 export const SanitizeValueConverterRegistration = SanitizeValueConverter as unknown as IRegistry;
-export const ViewValueConverterRegistration = ViewValueConverter as unknown as IRegistry;
 export const IfRegistration = If as unknown as IRegistry;
 export const ElseRegistration = Else as unknown as IRegistry;
 export const RepeatRegistration = Repeat as unknown as IRegistry;
@@ -192,10 +182,8 @@ export const RejectedTemplateControllerRegistration = RejectedTemplateController
 export const PromiseAttributePatternRegistration = PromiseAttributePattern as unknown as IRegistry;
 export const FulfilledAttributePatternRegistration = FulfilledAttributePattern as unknown as IRegistry;
 export const RejectedAttributePatternRegistration = RejectedAttributePattern as unknown as IRegistry;
-export const AttrBindingBehaviorRegistration = AttrBindingBehavior as unknown as IRegistry;
 export const SelfBindingBehaviorRegistration = SelfBindingBehavior as unknown as IRegistry;
 export const UpdateTriggerBindingBehaviorRegistration = UpdateTriggerBindingBehavior as unknown as IRegistry;
-export const AuRenderRegistration = AuRender as unknown as IRegistry;
 export const AuComposeRegistration = AuCompose as unknown as IRegistry;
 export const PortalRegistration = Portal as unknown as IRegistry;
 export const FocusRegistration = Focus as unknown as IRegistry;
@@ -218,7 +206,6 @@ export const DefaultResources = [
   ThrottleBindingBehaviorRegistration,
   TwoWayBindingBehaviorRegistration,
   SanitizeValueConverterRegistration,
-  ViewValueConverterRegistration,
   IfRegistration,
   ElseRegistration,
   RepeatRegistration,
@@ -234,35 +221,15 @@ export const DefaultResources = [
   PromiseAttributePatternRegistration,
   FulfilledAttributePatternRegistration,
   RejectedAttributePatternRegistration,
-  AttrBindingBehaviorRegistration,
+  AttrBindingBehavior,
   SelfBindingBehaviorRegistration,
   UpdateTriggerBindingBehaviorRegistration,
-  AuRenderRegistration,
   AuComposeRegistration,
   PortalRegistration,
   FocusRegistration,
   ShowRegistration,
   AuSlot,
 ];
-
-export const CallBindingRendererRegistration = CallBindingRenderer as unknown as IRegistry;
-export const CustomAttributeRendererRegistration = CustomAttributeRenderer as unknown as IRegistry;
-export const CustomElementRendererRegistration = CustomElementRenderer as unknown as IRegistry;
-export const InterpolationBindingRendererRegistration = InterpolationBindingRenderer as unknown as IRegistry;
-export const IteratorBindingRendererRegistration = IteratorBindingRenderer as unknown as IRegistry;
-export const LetElementRendererRegistration = LetElementRenderer as unknown as IRegistry;
-export const PropertyBindingRendererRegistration = PropertyBindingRenderer as unknown as IRegistry;
-export const RefBindingRendererRegistration = RefBindingRenderer as unknown as IRegistry;
-export const SetPropertyRendererRegistration = SetPropertyRenderer as unknown as IRegistry;
-export const TemplateControllerRendererRegistration = TemplateControllerRenderer as unknown as IRegistry;
-export const ListenerBindingRendererRegistration = ListenerBindingRenderer as unknown as IRegistry;
-export const AttributeBindingRendererRegistration = AttributeBindingRenderer as unknown as IRegistry;
-export const SetAttributeRendererRegistration = SetAttributeRenderer as unknown as IRegistry;
-export const SetClassAttributeRendererRegistration = SetClassAttributeRenderer as unknown as IRegistry;
-export const SetStyleAttributeRendererRegistration = SetStyleAttributeRenderer as unknown as IRegistry;
-export const StylePropertyBindingRendererRegistration = StylePropertyBindingRenderer as unknown as IRegistry;
-export const TextBindingRendererRegistration = TextBindingRenderer as unknown as IRegistry;
-export const SpreadRendererRegistration = SpreadRenderer as unknown as IRegistry;
 
 /**
  * Default renderers for:
@@ -282,24 +249,23 @@ export const SpreadRendererRegistration = SpreadRenderer as unknown as IRegistry
  * - TextBinding: `${}`
  */
 export const DefaultRenderers = [
-  PropertyBindingRendererRegistration,
-  IteratorBindingRendererRegistration,
-  CallBindingRendererRegistration,
-  RefBindingRendererRegistration,
-  InterpolationBindingRendererRegistration,
-  SetPropertyRendererRegistration,
-  CustomElementRendererRegistration,
-  CustomAttributeRendererRegistration,
-  TemplateControllerRendererRegistration,
-  LetElementRendererRegistration,
-  ListenerBindingRendererRegistration,
-  AttributeBindingRendererRegistration,
-  SetAttributeRendererRegistration,
-  SetClassAttributeRendererRegistration,
-  SetStyleAttributeRendererRegistration,
-  StylePropertyBindingRendererRegistration,
-  TextBindingRendererRegistration,
-  SpreadRendererRegistration,
+  PropertyBindingRenderer,
+  IteratorBindingRenderer,
+  RefBindingRenderer,
+  InterpolationBindingRenderer,
+  SetPropertyRenderer,
+  CustomElementRenderer,
+  CustomAttributeRenderer,
+  TemplateControllerRenderer,
+  LetElementRenderer,
+  ListenerBindingRenderer,
+  AttributeBindingRenderer,
+  SetAttributeRenderer,
+  SetClassAttributeRenderer,
+  SetStyleAttributeRenderer,
+  StylePropertyBindingRenderer,
+  TextBindingRenderer,
+  SpreadRenderer,
 ];
 
 export const StandardConfiguration = createConfiguration(noop);

@@ -1,9 +1,11 @@
+import { delegateSyntax } from '@aurelia/compat-v1';
 import { IContainer } from '@aurelia/kernel';
 import { BindingMode, Aurelia, AuSlotsInfo, bindable, customElement, CustomElement, IAuSlotsInfo, IPlatform } from '@aurelia/runtime-html';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, createFixture, hJsx, TestContext } from '@aurelia/testing';
 import { createSpecFunction, TestExecutionContext, TestFunction } from '../util.js';
 
-describe('3-runtime-html/au-slot.spec.ts', function () {
+describe('3-runtime-html/au-slot.spec.tsx', function () {
   interface TestSetupContext {
     template: string;
     registrations: any[];
@@ -36,7 +38,7 @@ describe('3-runtime-html/au-slot.spec.ts', function () {
     let app: App | null = null;
     try {
       await au
-        .register(...registrations)
+        .register(...registrations, delegateSyntax)
         .app({
           host,
           component: CustomElement.define({ name: 'app', isStrictBinding: true, template }, App)
@@ -1036,7 +1038,8 @@ describe('3-runtime-html/au-slot.spec.ts', function () {
         [
           createMyElement(`<au-slot with.bind="{item: people[0]}">\${item.firstName}</au-slot><au-slot with.bind="{item: people[1]}">\${item.firstName}</au-slot>`),
         ],
-        { 'my-element': [`<div>Doe</div><div>Mustermann</div>`, new AuSlotsInfo(['default'])] }
+        { 'my-element': [`<div>Doe</div><div>Mustermann</div>`, new AuSlotsInfo(['default'])] },
+        void 0,
       );
     }
     // #endregion
@@ -2029,7 +2032,7 @@ describe('3-runtime-html/au-slot.spec.ts', function () {
       { template, registrations });
   }
 
-  for (const listener of ['delegate', 'trigger']) {
+  for (const listener of ['capture', 'trigger', 'delegate']) {
     describe(listener, function () {
       @customElement({ name: 'my-element', isStrictBinding: true, template: `<au-slot><button click.${listener}="fn()">Click</button></au-slot>` })
       class MyElement {

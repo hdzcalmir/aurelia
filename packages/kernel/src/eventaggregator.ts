@@ -1,24 +1,24 @@
-import { DI } from './di';
+import { createInterface } from './di';
 import { Constructable, IDisposable } from './interfaces';
-import { isString } from './utilities';
+import { createError, isString } from './utilities';
 
 /**
  * Represents a handler for an EventAggregator event.
  */
 class Handler<T extends Constructable> {
   public constructor(
-    public readonly messageType: T,
-    public readonly callback: (message: InstanceType<T>) => void,
+    private readonly type: T,
+    private readonly cb: (message: InstanceType<T>) => void,
   ) {}
 
   public handle(message: InstanceType<T>): void {
-    if (message instanceof this.messageType) {
-      this.callback.call(null, message);
+    if (message instanceof this.type) {
+      this.cb.call(null, message);
     }
   }
 }
 
-export const IEventAggregator = DI.createInterface<IEventAggregator>('IEventAggregator', x => x.singleton(EventAggregator));
+export const IEventAggregator = createInterface<IEventAggregator>('IEventAggregator', x => x.singleton(EventAggregator));
 export interface IEventAggregator extends EventAggregator {}
 
 /**
@@ -54,7 +54,7 @@ export class EventAggregator {
   ): void {
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!channelOrInstance) {
-      throw new Error(`Invalid channel name or instance: ${channelOrInstance}.`);
+      throw createError(`Invalid channel name or instance: ${channelOrInstance}.`);
     }
 
     if (isString(channelOrInstance)) {
@@ -103,7 +103,7 @@ export class EventAggregator {
   ): IDisposable {
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!channelOrType) {
-      throw new Error(`Invalid channel name or type: ${channelOrType}.`);
+      throw createError(`Invalid channel name or type: ${channelOrType}.`);
     }
 
     let handler: unknown;
@@ -157,7 +157,7 @@ export class EventAggregator {
     channelOrType: string | Constructable,
     callback: (...args: unknown[]) => void,
   ): IDisposable {
-    const sub = this.subscribe(channelOrType as string, function (message, event) {
+    const sub = this.subscribe(channelOrType as string, (message, event) => {
       sub.dispose();
       callback(message, event);
     });

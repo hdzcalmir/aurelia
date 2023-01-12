@@ -114,7 +114,8 @@ Instantiates the root component and adds it to the DOM.
 ```typescript
 // src/main(.js|.ts)
 ​
-import Aurelia, { RouterConfiguration } from 'aurelia';
+import { RouterConfiguration } from '@aurelia/router';
+import Aurelia from 'aurelia';
 import { MyApp } from './my-app';
 ​
 Aurelia
@@ -266,17 +267,17 @@ Every component instance has a life-cycle that you can tap into. This makes it e
 | Name        | Aurelia 1   | Asyncable | Description |
 | ----------- | ----------- | --------- | ----------- |
 | constructor | constructor | **✗**     |             |
-| define      | **✗**       | **✓**     |             |
-| hydrating   | **✗**       | **✓**     |             |
-| hydrated    | **✗**       | **✓**     |             |
-| created     | created     | **✓**     |             |
+| define      | **✗**       | **✗**     |             |
+| hydrating   | **✗**       | **✗**     |             |
+| hydrated    | **✗**       | **✗**     |             |
+| created     | created     | **✗**     |             |
 | binding     | bind        | **✓**     |             |
 | bound       | **✗**       | **✓**     |             |
 | attaching   | **✗**       | **✓**     |             |
 | attached    | attached    | **✓**     |             |
 | detaching   | **✗**       | **✓**     |             |
 | unbinding   | unbind      | **✓**     |             |
-| dispose     | detached    | **✓**     |             |
+| dispose     | **✗**       | **✗**     |             |
 
 {% hint style="info" %}
 Aurelia 1 has a restriction and the community made an [afterAttached](https://github.com/aurelia-ui-toolkits/aurelia-after-attached-plugin) plugin that is called after all child components are attached, and after all two-way bindings have completed. The`attached`life-cycle in version 2 covers this scenario.
@@ -291,8 +292,8 @@ Such cases can be summarized.
 | binding   | Fetch data (working with API services & Ajax calls), initialize data/subscriptions.               |
 | bound     | Any work that relies on fromView/twoWay binding data coming from children, Defining router hooks. |
 | attached  | Use anything (like third-party libraries) that touches the DOM.                                   |
-| unbinding | Persisting data.                                                                                  |
-| dispose   | Cleanup data/subscriptions.                                                                       |
+| unbinding | Cleanup data/subscriptions, maybe persist some data for the next activation.                      |
+| dispose   | One way cleanup all the references/resources. This is invoked only once and is irreversible       |
 
 ## Dependency injection
 
@@ -376,10 +377,10 @@ import * as LogManager from 'aurelia-logging';
 import { ConsoleAppender } from 'aurelia-logging-console';
 export function configure(aurelia) {
     aurelia.use.standardConfiguration();
-    
+
     LogManager.addAppender(new ConsoleAppender());
     LogManager.setLevel(LogManager.logLevel.debug);
-    
+
     aurelia.start().then(() => aurelia.setRoot());
 }
 ```
@@ -507,9 +508,9 @@ export class MyApp {
 | Name      | Aurelia 1     | Asyncable | Description |
 | --------- | ------------- | --------- | ----------- |
 | canLoad   | canActivate   | **✓**     |             |
-| load      | activate      | **✓**     |             |
+| loading   | activate      | **✓**     |             |
 | canUnload | canDeactivate | **✓**     |             |
-| unload    | deactivate    | **✓**     |             |
+| unloading | deactivate    | **✓**     |             |
 {% endtab %}
 {% endtabs %}
 
@@ -537,6 +538,7 @@ export class MyApp {
 | Name | Aurelia 1 & 2 | Description |
 | ---- | ------------- | ----------- |
 | ref  | **✓**         |             |
+| view-model.ref  | **✓**         |             |
 
 ### Passing Function References
 

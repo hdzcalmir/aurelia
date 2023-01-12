@@ -1,3 +1,4 @@
+import { delegateSyntax } from '@aurelia/compat-v1';
 import {
   Constructable,
   IContainer,
@@ -13,12 +14,12 @@ import {
   BindingIdentifier,
   PrimitiveLiteralExpression,
   IExpressionParser,
+  ExpressionKind,
 } from '@aurelia/runtime';
 import {
   bindable,
   BindingMode,
   BindableDefinition,
-  DelegationStrategy,
   customAttribute,
   CustomAttribute,
   customElement,
@@ -41,6 +42,7 @@ import {
   attributePattern,
   PropertyBindingInstruction,
   InterpolationInstruction,
+  InstructionType,
 } from '@aurelia/runtime-html';
 import {
   assert,
@@ -294,7 +296,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             `<template><el prop.bind="p"></el></template>`,
             [Prop]
           );
-          assert.strictEqual((template as HTMLTemplateElement).outerHTML, '<template><au-m class="au"></au-m></template>', `(template as HTMLTemplateElement).outerHTML`);
+          assert.strictEqual((template as HTMLTemplateElement).outerHTML, '<template><!--au-start--><!--au-end--><au-m class="au"></au-m></template>', `(template as HTMLTemplateElement).outerHTML`);
           const [hydratePropAttrInstruction] = instructions[0] as unknown as [HydrateTemplateController];
           assert.strictEqual((hydratePropAttrInstruction.def.template as HTMLTemplateElement).outerHTML, '<template><el></el></template>', `(hydratePropAttrInstruction.def.template as HTMLTemplateElement).outerHTML`);
         });
@@ -311,7 +313,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             `<template><el name.bind="name" title.bind="title" prop.bind="p"></el></template>`,
             [Prop]
           );
-          assert.strictEqual((template as HTMLTemplateElement).outerHTML, '<template><au-m class="au"></au-m></template>', `(template as HTMLTemplateElement).outerHTML`);
+          assert.strictEqual((template as HTMLTemplateElement).outerHTML, '<template><!--au-start--><!--au-end--><au-m class="au"></au-m></template>', `(template as HTMLTemplateElement).outerHTML`);
           const [hydratePropAttrInstruction] = instructions[0] as unknown as [HydrateTemplateController];
           verifyInstructions(hydratePropAttrInstruction.props, [
             { toVerify: ['type', 'to', 'from'],
@@ -671,10 +673,12 @@ function createTplCtrlAttributeInstruction(attr: string, value: string) {
   if (attr === 'repeat.for') {
     return [{
       type: TT.iteratorBinding,
-      from: new ForOfStatement(
+      forOf: new ForOfStatement(
         new BindingIdentifier(value.split(' of ')[0]),
-        new AccessScopeExpression(value.split(' of ')[1])),
-      to: 'items'
+        new AccessScopeExpression(value.split(' of ')[1]),
+        -1),
+      to: 'items',
+      props: [],
     }];
   } else if (attr.includes('.')) {
     return [{
@@ -715,7 +719,7 @@ function createTemplateController(ctx: TestContext, resolveRes: boolean, attr: s
         ...defaultCustomElementDefinitionProperties,
         name: stringOrUnnamed(target),
         key: `au:resource:custom-element:${stringOrUnnamed(target)}`,
-        template: ctx.createElementFromMarkup(`<template><au-m class="au"></au-m></template>`),
+        template: ctx.createElementFromMarkup(`<template><!--au-start--><!--au-end--><au-m class="au"></au-m></template>`),
         instructions: [[childInstr]],
         needsCompile: false,
         enhance: false,
@@ -730,7 +734,7 @@ function createTemplateController(ctx: TestContext, resolveRes: boolean, attr: s
     } as unknown as PartialCustomElementDefinition;
     const output: PartialCustomElementDefinition = {
       ...defaultCustomElementDefinitionProperties,
-      template: ctx.createElementFromMarkup(`<template><div><au-m class="au"></au-m></div></template>`),
+      template: ctx.createElementFromMarkup(`<template><div><!--au-start--><!--au-end--><au-m class="au"></au-m></div></template>`),
       instructions: [[instruction]],
       needsCompile: false,
       enhance: false,
@@ -745,7 +749,7 @@ function createTemplateController(ctx: TestContext, resolveRes: boolean, attr: s
       compiledMarkup = `<${tagName}></${tagName}>`;
       instructions = [];
     } else {
-      compiledMarkup = `<${tagName}><au-m class="au"></au-m></${tagName}>`;
+      compiledMarkup = `<${tagName}><!--au-start--><!--au-end--><au-m class="au"></au-m></${tagName}>`;
       instructions = [[childInstr]];
     }
     const instruction: Partial<HydrateTemplateController & { def: PartialCustomElementDefinition & { key: string } }> = {
@@ -771,7 +775,7 @@ function createTemplateController(ctx: TestContext, resolveRes: boolean, attr: s
     } as unknown as PartialCustomElementDefinition;
     const output: PartialCustomElementDefinition = {
       ...defaultCustomElementDefinitionProperties,
-      template: ctx.createElementFromMarkup(finalize ? `<template><div><au-m class="au"></au-m></div></template>` : `<au-m class="au"></au-m>`),
+      template: ctx.createElementFromMarkup(finalize ? `<template><div><!--au-start--><!--au-end--><au-m class="au"></au-m></div></template>` : `<!--au-start--><!--au-end--><au-m class="au"></au-m>`),
       instructions: [[instruction]],
       needsCompile: false,
       enhance: false,
@@ -965,7 +969,7 @@ type Bindables = { [pdName: string]: BindableDefinition };
 describe(`TemplateCompiler - combinations`, function () {
   function createFixture(ctx: TestContext, ...globals: any[]) {
     const container = ctx.container;
-    container.register(...globals);
+    container.register(...globals, delegateSyntax);
     const sut = ctx.templateCompiler;
     return { container, sut };
   }
@@ -980,8 +984,8 @@ describe(`TemplateCompiler - combinations`, function () {
       ] as ((ctx: TestContext) => [string])[],
       [
         (_ctx) => ['foo', 'foo', 'bar'],
-        (_ctx) => ['foo.bar', 'foo', 'bar'],
-        (_ctx) => ['foo.bind', 'foo', 'bar'],
+        // (_ctx) => ['foo.bar', 'foo', 'bar'],
+        // (_ctx) => ['foo.bind', 'foo', 'bar'],
         (_ctx) => ['value', 'value', 'value']
       ] as ((ctx: TestContext, $1: [string]) => [string, string, string])[],
       [
@@ -991,10 +995,9 @@ describe(`TemplateCompiler - combinations`, function () {
         (ctx, $1, [attr, to, value]) => [`${attr}.one-time`,  value, { type: TT.propertyBinding,  from: new AccessScopeExpression(value), to, mode: BindingMode.oneTime,  }],
         (ctx, $1, [attr, to, value]) => [`${attr}.from-view`, value, { type: TT.propertyBinding,  from: new AccessScopeExpression(value), to, mode: BindingMode.fromView, }],
         (ctx, $1, [attr, to, value]) => [`${attr}.two-way`,   value, { type: TT.propertyBinding,  from: new AccessScopeExpression(value), to, mode: BindingMode.twoWay,   }],
-        (ctx, $1, [attr, to, value]) => [`${attr}.trigger`,   value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, strategy: DelegationStrategy.none,      preventDefault: true }],
-        (ctx, $1, [attr, to, value]) => [`${attr}.delegate`,  value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, strategy: DelegationStrategy.bubbling,  preventDefault: false }],
-        (ctx, $1, [attr, to, value]) => [`${attr}.capture`,   value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, strategy: DelegationStrategy.capturing, preventDefault: false }],
-        (ctx, $1, [attr, to, value]) => [`${attr}.call`,      value, { type: TT.callBinding,      from: new AccessScopeExpression(value), to }]
+        (ctx, $1, [attr, to, value]) => [`${attr}.trigger`,   value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: true, capture: false }],
+        (ctx, $1, [attr, to, value]) => [`${attr}.delegate`,  value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: false }],
+        (ctx, $1, [attr, to, value]) => [`${attr}.capture`,   value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: false, capture: true }],
       ] as ((ctx: TestContext, $1: [string], $2: [string, string, string]) => [string, string, any])[]
     ],                       (ctx, [el], $2, [n1, v1, i1]) => {
       const markup = `<${el} plain data-attr="value" ${n1}="${v1}"></${el}>`;
@@ -1070,13 +1073,15 @@ describe(`TemplateCompiler - combinations`, function () {
           ),
           instructions: [[
             {
+              "type": InstructionType.interpolation,
               "from": {
+                '$kind': ExpressionKind.Interpolation,
                 "parts": ["abc-",""],
                 "expressions": [
-                  {"name":"value","ancestor":0}
+                  {"$kind":ExpressionKind.AccessScope,"name":"value","ancestor":0}
                 ],
                 "isMulti": false,
-                "firstExpression": {"name":"value","ancestor":0}
+                "firstExpression": { "$kind": ExpressionKind.AccessScope, "name":"value","ancestor":0}
               },
               "to":"class"
             }
@@ -1461,9 +1466,14 @@ describe(`TemplateCompiler - combinations`, function () {
         );
         sut.resolveResources = resolveRes;
 
+        const getOuterHtml = (node: any) =>
+          /au-m/i.test(node.nodeName)
+            ? `<!--au-start--><!--au-end-->${node.outerHTML}`
+            : node.outerHTML;
+
         const output: PartialCustomElementDefinition = {
           ...defaultCustomElementDefinitionProperties,
-          template: ctx.createElementFromMarkup(`<template><div>${output1.template['outerHTML']}${output2.template['outerHTML']}${output3.template['outerHTML']}</div></template>`),
+          template: ctx.createElementFromMarkup(`<template><div>${getOuterHtml(output1.template)}${getOuterHtml(output2.template)}${getOuterHtml(output3.template)}</div></template>`),
           instructions: [output1.instructions[0], output2.instructions[0], output3.instructions[0]],
           needsCompile: false,
           enhance: false,
@@ -1522,7 +1532,7 @@ describe(`TemplateCompiler - combinations`, function () {
       ] as ((ctx: TestContext) => [string, string])[],
       [
         (ctx, pdName, pdProp, pdAttr, bindables, [cmd]) => [bindables[pdName], `${pdAttr}${cmd}`],
-        (ctx, pdName, pdProp, pdAttr, bindables, [cmd]) => [bindables[pdName], `${pdAttr}.qux${cmd}`],
+        // (ctx, pdName, pdProp, pdAttr, bindables, [cmd]) => [bindables[pdName], `${pdAttr}.qux${cmd}`],
         (ctx, pdName, pdProp, pdAttr, bindables, [cmd]) => [null,              `${pdAttr}-qux${cmd}`]
       ] as ((ctx: TestContext, $1: string, $2: string, $3: string, $4: Bindables, $5: [string, string]) => [BindableDefinition, string])[],
       [

@@ -1,13 +1,12 @@
-import { DI } from '@aurelia/kernel';
 import { IPlatform } from '../platform';
-import { createLookup, isString } from '../utilities';
+import { createLookup, isString, objectAssign } from '../utilities';
+import { createInterface, singletonRegistration } from '../utilities-di';
 
 import type { IContainer, IResolver } from '@aurelia/kernel';
 import type { INode } from '../dom';
-import { singletonRegistration } from '../utilities-di';
 
 export interface ISVGAnalyzer extends NoopSVGAnalyzer {}
-export const ISVGAnalyzer = DI.createInterface<ISVGAnalyzer>('ISVGAnalyzer', x => x.singleton(NoopSVGAnalyzer));
+export const ISVGAnalyzer = createInterface<ISVGAnalyzer>('ISVGAnalyzer', x => x.singleton(NoopSVGAnalyzer));
 
 const o = (keys: string | string[]): Record<string, true | undefined> => {
   const lookup = createLookup<true | undefined>();
@@ -34,7 +33,7 @@ export class SVGAnalyzer {
   }
 
   /** @internal */
-  private readonly _svgElements: Record<string, Record<string, true | undefined> | undefined> = Object.assign(createLookup<Record<string, true | undefined> | undefined>(), {
+  private readonly _svgElements: Record<string, Record<string, true | undefined> | undefined> = objectAssign(createLookup<Record<string, true | undefined> | undefined>(), {
     'a':                    o('class externalResourcesRequired id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup requiredExtensions requiredFeatures style systemLanguage target transform xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space'),
     'altGlyph':             o('class dx dy externalResourcesRequired format glyphRef id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup requiredExtensions requiredFeatures rotate style systemLanguage x xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space y'),
     'altglyph':             createLookup<true | undefined>(),

@@ -30,6 +30,9 @@ export {
   DestructuringAssignmentRestExpression,
   ArrowFunction,
 
+  astVisit,
+  Unparser,
+
   // ast typing helpers
   type AnyBindingExpression,
   type BindingBehaviorInstance,
@@ -49,12 +52,16 @@ export {
   type BinaryOperator,
   type BindingIdentifierOrPattern,
   type UnaryOperator,
-  type IExpressionHydrator,
   type IAstEvaluator,
   type ValueConverterInstance,
 } from './binding/ast';
 export {
-  type IObserverLocatorBasedConnectable,
+  astAssign,
+  astBind,
+  astEvaluate,
+  astUnbind,
+} from './binding/ast.eval';
+export {
   type IConnectableBinding,
   connectable,
   BindingObserverRecord,
@@ -87,7 +94,7 @@ export {
 export {
   BindingContext,
   Scope,
-} from './observation/binding-context';
+} from './observation/scope';
 export {
   CollectionLengthObserver,
   CollectionSizeObserver,
@@ -148,6 +155,7 @@ export {
 
 export {
   type AccessorOrObserver,
+  type IRateLimitOptions,
   type IBinding,
   AccessorType,
   type Collection,

@@ -1,5 +1,5 @@
 import { DI } from '@aurelia/kernel';
-import { AccessMemberExpression, AccessScopeExpression } from '@aurelia/runtime';
+import { AccessMemberExpression, AccessScopeExpression, astEvaluate, ExpressionKind } from '@aurelia/runtime';
 import { ComputedWatcher, ExpressionWatcher } from '@aurelia/runtime-html';
 import { assert, createObserverLocator, createScopeForTest } from '@aurelia/testing';
 
@@ -24,7 +24,7 @@ describe('3-runtime-html/decorator-watch.unit.spec.ts', function () {
         true,
       );
 
-      watcher.$bind();
+      watcher.bind();
       assert.strictEqual(watcher['value'], undefined);
       assert.strictEqual(getCallCount, 1);
       assert.deepStrictEqual(callbackValues, []);
@@ -105,7 +105,7 @@ describe('3-runtime-html/decorator-watch.unit.spec.ts', function () {
         false,
       );
 
-      watcher.$bind();
+      watcher.bind();
       assert.strictEqual(watcher['value'], undefined);
       assert.strictEqual(getCallCount, 1);
       assert.deepStrictEqual(callbackValues, []);
@@ -129,33 +129,43 @@ describe('3-runtime-html/decorator-watch.unit.spec.ts', function () {
       const container = DI.createContainer();
       const observerLocator = createObserverLocator(container);
       const obj: any = { a: {} };
-      const expr = new AccessMemberExpression(
-        new AccessScopeExpression('a'),
-        'prop'
-      );
+      const expr = new class AccessWrapExpression {
+        $kind = ExpressionKind.Custom;
+        constructor(
+          private readonly ast = new AccessMemberExpression(
+            new AccessScopeExpression('a'),
+            'prop'
+          )
+        ) {}
+
+        evaluate(...args: unknown[]) {
+          evaluateCallCount++;
+          assert.strictEqual(args[2], watcher);
+          return astEvaluate.call(undefined, this.ast, ...args);
+        }
+      }();
       const watcher = new ExpressionWatcher(
         createScopeForTest(obj),
         container,
         observerLocator,
-        expr,
+        expr as any,
         newValue => {
           callbackValues.push(newValue);
         }
       );
-      expr.evaluate = (evaluate => {
-        return function (...args: unknown[]) {
-          evaluateCallCount++;
-          assert.strictEqual(args[2], watcher);
-          return evaluate.apply(this, args);
-        };
-      })(expr.evaluate);
+      // Object.defineProperty(expr, '$kind', { value: ExpressionKind.Custom });
+      // (expr as any).evaluate = function (...args: unknown[]) {
+      //   evaluateCallCount++;
+      //   assert.strictEqual(args[2], watcher);
+      //   return (astEvaluate as any).call(undefined, this, ...args);
+      // };
 
       obj.a.prop = 1;
       assert.strictEqual(evaluateCallCount, 0);
       assert.strictEqual(watcher['value'], void 0);
       assert.deepStrictEqual(callbackValues, []);
 
-      watcher.$bind();
+      watcher.bind();
       assert.strictEqual(evaluateCallCount, 1);
       assert.strictEqual(watcher['value'], 1);
       assert.deepStrictEqual(callbackValues, []);
@@ -165,7 +175,7 @@ describe('3-runtime-html/decorator-watch.unit.spec.ts', function () {
       assert.strictEqual(watcher['value'], 2);
       assert.deepStrictEqual(callbackValues, [2]);
 
-      watcher.$unbind();
+      watcher.unbind();
       assert.strictEqual(evaluateCallCount, 2);
       assert.strictEqual(watcher['value'], void 0);
       assert.deepStrictEqual(callbackValues, [2]);

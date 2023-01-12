@@ -4,7 +4,7 @@ import { Watch } from '../watch';
 import { getRef } from '../dom';
 import { DefinitionType } from './resources-shared';
 import { appendResourceKey, defineMetadata, getAnnotationKeyFor, getOwnMetadata, getResourceKeyFor, hasOwnMetadata } from '../utilities-metadata';
-import { isFunction, isString } from '../utilities';
+import { createError, isFunction, isString, objectFreeze } from '../utilities';
 import { aliasRegistration, registerAliases, transientRegistration } from '../utilities-di';
 import { BindingMode } from '../binding/interfaces-bindings';
 
@@ -185,15 +185,15 @@ export const getAttributeDefinition = <T extends Constructable>(Type: T | Functi
   const def = getOwnMetadata(caBaseName, Type) as CustomAttributeDefinition<T>;
   if (def === void 0) {
     if (__DEV__)
-      throw new Error(`No definition found for type ${Type.name}`);
+      throw createError(`No definition found for type ${Type.name}`);
     else
-      throw new Error(`AUR0759:${Type.name}`);
+      throw createError(`AUR0759:${Type.name}`);
   }
 
   return def;
 };
 
-export const CustomAttribute = Object.freeze<CustomAttributeKind>({
+export const CustomAttribute = objectFreeze<CustomAttributeKind>({
   name: caBaseName,
   keyFrom: getAttributeKeyFrom,
   isType: isAttributeType,

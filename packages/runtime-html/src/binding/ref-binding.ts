@@ -1,68 +1,57 @@
-import type { IIndexable, IServiceLocator } from '@aurelia/kernel';
-import type { IsBindingBehavior, Scope } from '@aurelia/runtime';
-import type { IAstBasedBinding } from './interfaces-bindings';
+import type { IServiceLocator } from '@aurelia/kernel';
+import { astAssign, astBind, astEvaluate, astUnbind, IAstEvaluator, IBinding, IConnectableBinding, type IsBindingBehavior, type Scope } from '@aurelia/runtime';
+import { mixinAstEvaluator } from './binding-utils';
 
-export interface RefBinding extends IAstBasedBinding {}
-export class RefBinding implements IAstBasedBinding {
-  public interceptor: this = this;
-
+export interface RefBinding extends IAstEvaluator, IConnectableBinding { }
+export class RefBinding implements IBinding {
   public isBound: boolean = false;
-  public $scope?: Scope = void 0;
+
+  /** @internal */
+  public _scope?: Scope = void 0;
+
+  /** @internal */
+  public l: IServiceLocator;
 
   public constructor(
-    public locator: IServiceLocator,
+    locator: IServiceLocator,
     public ast: IsBindingBehavior,
     public target: object,
-  ) {}
+  ) {
+    this.l = locator;
+  }
 
-  public $bind(scope: Scope): void {
+  public bind(_scope: Scope): void {
     if (this.isBound) {
-      if (this.$scope === scope) {
+      if (this._scope === _scope) {
         return;
       }
 
-      this.interceptor.$unbind();
+      this.unbind();
     }
+    this._scope = _scope;
 
-    this.$scope = scope;
+    astBind(this.ast, _scope, this);
 
-    if (this.ast.hasBind) {
-      this.ast.bind(scope, this);
-    }
-
-    this.ast.assign(this.$scope, this, this.target);
+    astAssign(this.ast, this._scope, this, this.target);
 
     // add isBound flag and remove isBinding flag
     this.isBound = true;
   }
 
-  public $unbind(): void {
+  public unbind(): void {
     if (!this.isBound) {
       return;
     }
-
-    let ast = this.ast;
-    if (ast.evaluate(this.$scope!, this, null) === this.target) {
-      ast.assign(this.$scope!, this, null);
-    }
-
-    // source expression might have been modified durring assign, via a BB
-    // deepscan-disable-next-line
-    ast = this.ast;
-    if (ast.hasUnbind) {
-      ast.unbind(this.$scope!, this.interceptor);
-    }
-
-    this.$scope = void 0;
-
     this.isBound = false;
-  }
 
-  public observe(_obj: IIndexable, _propertyName: string): void {
-    return;
-  }
+    if (astEvaluate(this.ast, this._scope!, this, null) === this.target) {
+      astAssign(this.ast, this._scope!, this, null);
+    }
 
-  public handleChange(_newValue: unknown, _previousValue: unknown): void {
-    return;
+    astUnbind(this.ast, this._scope!, this);
+
+    this._scope = void 0;
   }
 }
+
+mixinAstEvaluator(false)(RefBinding);

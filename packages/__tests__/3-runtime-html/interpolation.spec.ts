@@ -318,7 +318,7 @@ describe('3-runtime/interpolation.spec.ts -- [UNIT]interpolation', function () {
           return handleChange.apply(this, args);
         };
       })(binding.partBindings[0].handleChange);
-      binding.$bind(createScopeForTest(source));
+      binding.bind(createScopeForTest(source));
 
       assert.strictEqual(target.value, 'no');
       assert.deepStrictEqual(
@@ -416,7 +416,7 @@ describe('3-runtime/interpolation.spec.ts -- [UNIT]interpolation', function () {
           return handleChange.apply(this, args);
         };
       })(binding.partBindings[1].handleChange);
-      binding.$bind(createScopeForTest(source));
+      binding.bind(createScopeForTest(source));
 
       assert.strictEqual(target.value, 'no1--no2');
       assert.deepStrictEqual(
@@ -466,6 +466,22 @@ describe('3-runtime/interpolation.spec.ts -- [UNIT]interpolation', function () {
 });
 
 describe('3-runtime/interpolation.spec.ts', function () {
+  it('works with strict mode', function () {
+    const { assertText, component, flush } = createFixture(
+      'hey ${id}',
+      CustomElement.define({ name: 'app', isStrictBinding: true }, class { id = undefined; })
+    );
+    assertText('hey undefined');
+
+    component.id = '1';
+    flush();
+    assertText('hey 1');
+
+    component.id = null;
+    flush();
+    assertText('hey null');
+  });
+
   it('observes and updates when bound with array', async function () {
     const { tearDown, appHost, ctx, startPromise } = createFixture(
       `<label repeat.for="product of products">

@@ -6,7 +6,7 @@ import { subscriberCollection } from './subscriber-collection';
 import { enterConnectable, exitConnectable } from './connectable-switcher';
 import { connectable } from '../binding/connectable';
 import { wrap, unwrap } from './proxy-observation';
-import { def, isFunction } from '../utilities-objects';
+import { areEqual, createError, def, isFunction } from '../utilities-objects';
 
 import type {
   ISubscriber,
@@ -49,8 +49,6 @@ export class ComputedObserver implements
 
     return observer;
   }
-
-  public interceptor = this;
 
   public type: AccessorType = AccessorType.Observer;
 
@@ -125,9 +123,9 @@ export class ComputedObserver implements
       }
     } else {
       if (__DEV__)
-        throw new Error(`AUR0221: Property is readonly`);
+        throw createError(`AUR0221: Property is readonly`);
       else
-        throw new Error(`AUR0221`);
+        throw createError(`AUR0221`);
     }
   }
 
@@ -171,7 +169,7 @@ export class ComputedObserver implements
 
     this._isDirty = false;
 
-    if (!Object.is(newValue, oldValue)) {
+    if (!areEqual(newValue, oldValue)) {
       this._oldValue = oldValue;
       oV = this._oldValue;
       this._oldValue = this._value;

@@ -1,5 +1,5 @@
 import { subscriberCollection, AccessorType } from '@aurelia/runtime';
-import { isString } from '../utilities';
+import { createError, isString } from '../utilities';
 
 import type {
   IObserver,
@@ -12,6 +12,7 @@ export interface AttributeObserver extends
   ISubscriber,
   ISubscriberCollection { }
 
+// todo(bigopon): add the observation back in again
 /**
  * Observer for handling two-way binding with attributes
  * Has different strategy for class/style and normal attributes
@@ -127,9 +128,9 @@ export class AttributeObserver implements AttributeObserver, ElementMutationSubs
           break;
         default:
           if (__DEV__)
-            throw new Error(`AUR0651: Unsupported observation of attribute: ${this._attr}`);
+            throw createError(`AUR0651: Unsupported observation of attribute: ${this._attr}`);
           else
-            throw new Error(`AUR0651:${this._attr}`);
+            throw createError(`AUR0651:${this._attr}`);
       }
 
       if (newValue !== this._value) {

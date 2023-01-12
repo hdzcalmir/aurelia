@@ -1,4 +1,5 @@
 import {
+  reportTaskQueue,
   Task,
   TaskStatus,
 } from '@aurelia/platform';
@@ -179,7 +180,7 @@ describe('promise template-controller', function () {
       public controller: Controller,
       public error: Error | null,
     ) {
-      this._log = (container.get(ILogger)['debugSinks'] as ISink[]).find((s) => s instanceof DebugLog) as DebugLog;
+      this._log = container.get(ILogger).sinks.find((s) => s instanceof DebugLog) as DebugLog;
     }
     public get platform(): IPlatform { return this._scheduler ?? (this._scheduler = this.container.get(IPlatform)); }
     public get log() {
@@ -2549,7 +2550,8 @@ describe('promise template-controller', function () {
 
               const tc = (ctx.app as ICustomElementViewModel).$controller.children.find((c) => c.viewModel instanceof PromiseTemplateController).viewModel as PromiseTemplateController;
               const postSettleTask = tc['postSettledTask'];
-              const taskNums = [q['pending'].length, q['processing'].length, q['delayed'].length];
+              let { pending, processing, delayed } = reportTaskQueue(q);
+              const taskNums = [pending.length, processing.length, delayed.length];
 
               try {
                 if ($resolve) {
@@ -2563,7 +2565,8 @@ describe('promise template-controller', function () {
               }
               await q.yield();
               assert.strictEqual(tc['postSettledTask'], postSettleTask);
-              assert.deepStrictEqual([q['pending'].length, q['processing'].length, q['delayed'].length], taskNums);
+              ({ pending, processing, delayed } = reportTaskQueue(q));
+              assert.deepStrictEqual([pending.length, processing.length, delayed.length], taskNums);
             },
           );
         }

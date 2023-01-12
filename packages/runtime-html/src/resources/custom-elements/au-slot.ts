@@ -11,6 +11,11 @@ import type { LifecycleFlags, ControllerVisitor, ICustomElementController, ICust
 import type { IViewFactory } from '../../templating/view';
 import type { HydrateElementInstruction } from '../../renderer';
 
+@customElement({
+  name: 'au-slot',
+  template: null,
+  containerless: true
+})
 export class AuSlot implements ICustomElementViewModel {
   /** @internal */ public static get inject() { return [IRenderLocation, IInstruction, IHydrationContext, IRendering]; }
 
@@ -50,7 +55,7 @@ export class AuSlot implements ICustomElementViewModel {
     _parent: IHydratedParentController,
     _flags: LifecycleFlags,
   ): void | Promise<void> {
-    this._parentScope = this.$controller.scope.parentScope!;
+    this._parentScope = this.$controller.scope.parent!;
     let outerScope: Scope;
     if (this._hasProjection) {
       // if there is a projection,
@@ -58,7 +63,7 @@ export class AuSlot implements ICustomElementViewModel {
       // via overlaying the outerscope with another scope that has
       // - binding context & override context pointing to the outer scope binding & override context respectively
       // - override context has the $host pointing to inner scope binding context
-      outerScope = this._hdrContext.controller.scope.parentScope!;
+      outerScope = this._hdrContext.controller.scope.parent!;
       (this._outerScope = Scope.fromParent(outerScope, outerScope.bindingContext))
         .overrideContext.$host = this.expose ?? this._parentScope.bindingContext;
     }
@@ -103,4 +108,3 @@ export class AuSlot implements ICustomElementViewModel {
   }
 }
 
-customElement({ name: 'au-slot', template: null, containerless: true })(AuSlot);

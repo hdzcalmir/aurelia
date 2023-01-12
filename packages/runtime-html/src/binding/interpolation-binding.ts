@@ -1,25 +1,28 @@
 import {
   AccessorOrObserver,
   AccessorType,
+  astBind,
+  astEvaluate,
+  astUnbind,
   connectable,
+  IAstEvaluator,
+  IConnectableBinding
 } from '@aurelia/runtime';
-import { BindingMode } from './interfaces-bindings';
-import { astEvaluator } from './binding-utils';
 import { State } from '../templating/controller';
+import { mixinAstEvaluator, mixinUseScope, mixingBindingLimited } from './binding-utils';
+import { BindingMode } from './interfaces-bindings';
 
+import type { IServiceLocator } from '@aurelia/kernel';
 import type { ITask, QueueTaskOptions, TaskQueue } from '@aurelia/platform';
-import type { IIndexable, IServiceLocator } from '@aurelia/kernel';
 import type {
-  ICollectionSubscriber,
+  IBinding, ICollectionSubscriber,
   Interpolation,
   IObserverLocator,
-  IsExpression,
-  IBinding,
-  Scope,
+  IsExpression, Scope
 } from '@aurelia/runtime';
 import type { IPlatform } from '../platform';
-import type { IAstBasedBinding, IBindingController } from './interfaces-bindings';
 import { isArray } from '../utilities';
+import type { IBindingController } from './interfaces-bindings';
 
 const queueTaskOptions: QueueTaskOptions = {
   reusable: false,
@@ -34,28 +37,38 @@ const queueTaskOptions: QueueTaskOptions = {
 // in which case the renderer will create the TextBinding directly
 export interface InterpolationBinding extends IBinding {}
 export class InterpolationBinding implements IBinding {
-  public interceptor: this = this;
 
   public isBound: boolean = false;
-  public $scope?: Scope = void 0;
+
+  /** @internal */
+  public _scope?: Scope = void 0;
 
   public partBindings: InterpolationPartBinding[];
 
-  private readonly targetObserver: AccessorOrObserver;
-  private task: ITask | null = null;
+  /** @internal */
+  private readonly _targetObserver: AccessorOrObserver;
+
+  /** @internal */
+  private _task: ITask | null = null;
 
   /**
    * A semi-private property used by connectable mixin
+   *
+   * @internal
    */
   public readonly oL: IObserverLocator;
+
+  /** @internal */
+  private readonly _taskQueue: TaskQueue;
+
   /** @internal */
   private readonly _controller: IBindingController;
 
   public constructor(
     controller: IBindingController,
-    public locator: IServiceLocator,
+    locator: IServiceLocator,
     observerLocator: IObserverLocator,
-    private readonly taskQueue: TaskQueue,
+    taskQueue: TaskQueue,
     public ast: Interpolation,
     public target: object,
     public targetProperty: string,
@@ -63,7 +76,8 @@ export class InterpolationBinding implements IBinding {
   ) {
     this._controller = controller;
     this.oL = observerLocator;
-    this.targetObserver = observerLocator.getAccessor(target, targetProperty);
+    this._taskQueue = taskQueue;
+    this._targetObserver = observerLocator.getAccessor(target, targetProperty);
     const expressions = ast.expressions;
     const partBindings = this.partBindings = Array(expressions.length);
     const ii = expressions.length;
@@ -86,16 +100,16 @@ export class InterpolationBinding implements IBinding {
     let i = 0;
     if (ii === 1) {
       // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-      result = staticParts[0] + partBindings[0].value + staticParts[1];
+      result = staticParts[0] + partBindings[0]._value + staticParts[1];
     } else {
       result = staticParts[0];
       for (; ii > i; ++i) {
         // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        result += partBindings[i].value + staticParts[i + 1];
+        result += partBindings[i]._value + staticParts[i + 1];
       }
     }
 
-    const targetObserver = this.targetObserver;
+    const targetObserver = this._targetObserver;
     // Alpha: during bind a simple strategy for bind is always flush immediately
     // todo:
     //  (1). determine whether this should be the behavior
@@ -104,9 +118,9 @@ export class InterpolationBinding implements IBinding {
     let task: ITask | null;
     if (shouldQueueFlush) {
       // Queue the new one before canceling the old one, to prevent early yield
-      task = this.task;
-      this.task = this.taskQueue.queueTask(() => {
-        this.task = null;
+      task = this._task;
+      this._task = this._taskQueue.queueTask(() => {
+        this._task = null;
         targetObserver.setValue(result, this.target, this.targetProperty);
       }, queueTaskOptions);
       task?.cancel();
@@ -116,62 +130,66 @@ export class InterpolationBinding implements IBinding {
     }
   }
 
-  public $bind(scope: Scope): void {
+  public bind(_scope: Scope): void {
     if (this.isBound) {
-      if (this.$scope === scope) {
+      if (this._scope === _scope) {
         return;
       }
-      this.interceptor.$unbind();
+      this.unbind();
     }
-    this.isBound = true;
-    this.$scope = scope;
+    this._scope = _scope;
 
     const partBindings = this.partBindings;
     const ii = partBindings.length;
     let i = 0;
     for (; ii > i; ++i) {
-      partBindings[i].$bind(scope);
+      partBindings[i].bind(_scope);
     }
     this.updateTarget();
+    this.isBound = true;
   }
 
-  public $unbind(): void {
+  public unbind(): void {
     if (!this.isBound) {
       return;
     }
     this.isBound = false;
-    this.$scope = void 0;
+    this._scope = void 0;
     const partBindings = this.partBindings;
     const ii = partBindings.length;
     let i = 0;
     for (; ii > i; ++i) {
-      partBindings[i].interceptor.$unbind();
+      partBindings[i].unbind();
     }
-    this.task?.cancel();
-    this.task = null;
+    this._task?.cancel();
+    this._task = null;
   }
 }
-astEvaluator(true)(InterpolationBinding);
 
 // a pseudo binding, part of a larger interpolation binding
 // employed to support full expression per expression part of an interpolation
-export interface InterpolationPartBinding extends IAstBasedBinding {}
+export interface InterpolationPartBinding extends IAstEvaluator, IConnectableBinding {}
 
-export class InterpolationPartBinding implements IAstBasedBinding, ICollectionSubscriber {
-  public interceptor: this = this;
+export class InterpolationPartBinding implements IBinding, ICollectionSubscriber {
 
   // at runtime, mode may be overriden by binding behavior
   // but it wouldn't matter here, just start with something for later check
   public readonly mode: BindingMode = BindingMode.toView;
-  public value: unknown = '';
-  public $scope?: Scope;
+  public _scope?: Scope;
   public task: ITask | null = null;
   public isBound: boolean = false;
 
+  /** @internal */
+  public _value: unknown = '';
   /**
    * A semi-private property used by connectable mixin
+   *
+   * @internal
    */
   public readonly oL: IObserverLocator;
+
+  /** @internal */
+  public readonly l: IServiceLocator;
   // see Listener binding for explanation
   /** @internal */
   public readonly boundFn = false;
@@ -180,36 +198,39 @@ export class InterpolationPartBinding implements IAstBasedBinding, ICollectionSu
     public readonly ast: IsExpression,
     public readonly target: object,
     public readonly targetProperty: string,
-    public readonly locator: IServiceLocator,
+    locator: IServiceLocator,
     observerLocator: IObserverLocator,
     public readonly owner: InterpolationBinding,
   ) {
+    this.l = locator;
     this.oL = observerLocator;
+  }
+
+  public updateTarget() {
+    this.owner._handlePartChange();
   }
 
   public handleChange(): void {
     if (!this.isBound) {
       return;
     }
-    const ast = this.ast;
-    const obsRecord = this.obs;
-    let shouldConnect: boolean = false;
-    shouldConnect = (this.mode & BindingMode.toView) > 0;
-    if (shouldConnect) {
-      obsRecord.version++;
-    }
-    const newValue = ast.evaluate(this.$scope!, this, shouldConnect ? this.interceptor : null);
-    if (shouldConnect) {
-      obsRecord.clear();
-    }
+    this.obs.version++;
+    const newValue = astEvaluate(
+      this.ast,
+      this._scope!,
+      this,
+      // should observe?
+      (this.mode & BindingMode.toView) > 0 ? this : null
+    );
+    this.obs.clear();
     // todo(!=): maybe should do strict comparison?
     // eslint-disable-next-line eqeqeq
-    if (newValue != this.value) {
-      this.value = newValue;
-      if (newValue instanceof Array) {
+    if (newValue != this._value) {
+      this._value = newValue;
+      if (isArray(newValue)) {
         this.observeCollection(newValue);
       }
-      this.owner._handlePartChange();
+      this.updateTarget();
     }
   }
 
@@ -217,70 +238,80 @@ export class InterpolationPartBinding implements IAstBasedBinding, ICollectionSu
     this.handleChange();
   }
 
-  public $bind(scope: Scope): void {
+  public bind(_scope: Scope): void {
     if (this.isBound) {
-      if (this.$scope === scope) {
+      if (this._scope === _scope) {
         return;
       }
-      this.interceptor.$unbind();
+      this.unbind();
+    }
+    this._scope = _scope;
+
+    astBind(this.ast, _scope, this);
+
+    this._value = astEvaluate(
+      this.ast,
+      this._scope,
+      this,
+      (this.mode & BindingMode.toView) > 0 ?  this : null,
+    );
+    if (isArray(this._value)) {
+      this.observeCollection(this._value);
     }
 
     this.isBound = true;
-    this.$scope = scope;
-
-    if (this.ast.hasBind) {
-      this.ast.bind(scope, this.interceptor as IIndexable & this);
-    }
-
-    this.value = this.ast.evaluate(
-      scope,
-      this,
-      (this.mode & BindingMode.toView) > 0 ?  this.interceptor : null,
-    );
-    if (this.value instanceof Array) {
-      this.observeCollection(this.value);
-    }
   }
 
-  public $unbind(): void {
+  public unbind(): void {
     if (!this.isBound) {
       return;
     }
     this.isBound = false;
 
-    if (this.ast.hasUnbind) {
-      this.ast.unbind(this.$scope!, this.interceptor);
-    }
+    astUnbind(this.ast, this._scope!, this);
 
-    this.$scope = void 0;
+    this._scope = void 0;
     this.obs.clearAll();
   }
 }
 
+mixinUseScope(InterpolationPartBinding);
+mixingBindingLimited(InterpolationPartBinding, () => 'updateTarget');
 connectable(InterpolationPartBinding);
-astEvaluator(true)(InterpolationPartBinding);
+mixinAstEvaluator(true)(InterpolationPartBinding);
 
-export interface ContentBinding extends IAstBasedBinding {}
+export interface ContentBinding extends IAstEvaluator, IConnectableBinding {}
 
 /**
  * A binding for handling the element content interpolation
  */
-export class ContentBinding implements IAstBasedBinding, ICollectionSubscriber {
-  public interceptor: this = this;
+export class ContentBinding implements IBinding, ICollectionSubscriber {
+  public isBound: boolean = false;
 
   // at runtime, mode may be overriden by binding behavior
   // but it wouldn't matter here, just start with something for later check
   public readonly mode: BindingMode = BindingMode.toView;
-  public value: unknown = '';
-  public $scope?: Scope;
-  public task: ITask | null = null;
-  public isBound: boolean = false;
+
+  /** @internal */
+  public _scope?: Scope;
+
+  /** @internal */
+  public _task: ITask | null = null;
 
   /**
    * A semi-private property used by connectable mixin
+   *
+   * @internal
    */
   public readonly oL: IObserverLocator;
+  /** @internal */
+  private readonly _taskQueue: TaskQueue;
 
+  /** @internal */
+  public readonly l: IServiceLocator;
+
+  /** @internal */
+  private _value: unknown = '';
   /** @internal */
   private readonly _controller: IBindingController;
   // see Listener binding for explanation
@@ -289,23 +320,25 @@ export class ContentBinding implements IAstBasedBinding, ICollectionSubscriber {
 
   public constructor(
     controller: IBindingController,
-    public readonly locator: IServiceLocator,
+    locator: IServiceLocator,
     observerLocator: IObserverLocator,
-    private readonly taskQueue: TaskQueue,
+    taskQueue: TaskQueue,
     private readonly p: IPlatform,
     public readonly ast: IsExpression,
     public readonly target: Text,
     public readonly strict: boolean,
   ) {
+    this.l = locator;
     this._controller = controller;
     this.oL = observerLocator;
+    this._taskQueue = taskQueue;
   }
 
   public updateTarget(value: unknown): void {
     const target = this.target;
     const NodeCtor = this.p.Node;
-    const oldValue = this.value;
-    this.value = value;
+    const oldValue = this._value;
+    this._value = value;
     if (oldValue instanceof NodeCtor) {
       oldValue.parentNode?.removeChild(oldValue);
     }
@@ -321,25 +354,26 @@ export class ContentBinding implements IAstBasedBinding, ICollectionSubscriber {
     if (!this.isBound) {
       return;
     }
-    const shouldConnect = (this.mode & BindingMode.toView) > 0;
-    if (shouldConnect) {
-      this.obs.version++;
-    }
-    const newValue = this.ast.evaluate(this.$scope!, this, shouldConnect ? this.interceptor : null);
-    if (shouldConnect) {
-      this.obs.clear();
-    }
-    if (newValue === this.value) {
+    this.obs.version++;
+    const newValue = astEvaluate(
+      this.ast,
+      this._scope!,
+      this,
+      // should observe?
+      (this.mode & BindingMode.toView) > 0 ? this : null
+    );
+    this.obs.clear();
+    if (newValue === this._value) {
       // in a frequent update, e.g collection mutation in a loop
       // value could be changing frequently and previous update task may be stale at this point
       // cancel if any task going on because the latest value is already the same
-      this.task?.cancel();
-      this.task = null;
+      this._task?.cancel();
+      this._task = null;
       return;
     }
     const shouldQueueFlush = this._controller.state !== State.activating;
     if (shouldQueueFlush) {
-      this.queueUpdate(newValue);
+      this._queueUpdate(newValue);
     } else {
       this.updateTarget(newValue);
     }
@@ -350,10 +384,11 @@ export class ContentBinding implements IAstBasedBinding, ICollectionSubscriber {
       return;
     }
     this.obs.version++;
-    const v = this.value = this.ast.evaluate(
-      this.$scope!,
+    const v = this._value = astEvaluate(
+      this.ast,
+      this._scope!,
       this,
-      (this.mode & BindingMode.toView) > 0 ?  this.interceptor : null,
+      (this.mode & BindingMode.toView) > 0 ?  this : null,
     );
     this.obs.clear();
     if (isArray(v)) {
@@ -361,67 +396,67 @@ export class ContentBinding implements IAstBasedBinding, ICollectionSubscriber {
     }
     const shouldQueueFlush = this._controller.state !== State.activating;
     if (shouldQueueFlush) {
-      this.queueUpdate(v);
+      this._queueUpdate(v);
     } else {
       this.updateTarget(v);
     }
   }
 
-  public $bind(scope: Scope): void {
+  public bind(_scope: Scope): void {
     if (this.isBound) {
-      if (this.$scope === scope) {
+      if (this._scope === _scope) {
         return;
       }
-      this.interceptor.$unbind();
+      this.unbind();
     }
+    this._scope = _scope;
 
-    this.isBound = true;
-    this.$scope = scope;
+    astBind(this.ast, _scope, this);
 
-    if (this.ast.hasBind) {
-      this.ast.bind(scope, this.interceptor);
-    }
-
-    const v = this.value = this.ast.evaluate(
-      scope,
+    const v = this._value = astEvaluate(
+      this.ast,
+      this._scope,
       this,
-      (this.mode & BindingMode.toView) > 0 ?  this.interceptor : null,
+      (this.mode & BindingMode.toView) > 0 ?  this : null,
     );
     if (isArray(v)) {
       this.observeCollection(v);
     }
     this.updateTarget(v);
+
+    this.isBound = true;
   }
 
-  public $unbind(): void {
+  public unbind(): void {
     if (!this.isBound) {
       return;
     }
     this.isBound = false;
 
-    if (this.ast.hasUnbind) {
-      this.ast.unbind(this.$scope!, this.interceptor);
-    }
+    astUnbind(this.ast, this._scope!, this);
 
     // TODO: should existing value (either connected node, or a string)
     // be removed when this binding is unbound?
     // this.updateTarget('', flags);
-    this.$scope = void 0;
+    this._scope = void 0;
     this.obs.clearAll();
-    this.task?.cancel();
-    this.task = null;
+    this._task?.cancel();
+    this._task = null;
   }
 
   // queue a force update
-  private queueUpdate(newValue: unknown): void {
-    const task = this.task;
-    this.task = this.taskQueue.queueTask(() => {
-      this.task = null;
+  /** @internal */
+  private _queueUpdate(newValue: unknown): void {
+    const task = this._task;
+    this._task = this._taskQueue.queueTask(() => {
+      this._task = null;
       this.updateTarget(newValue);
     }, queueTaskOptions);
     task?.cancel();
   }
 }
 
+mixinUseScope(ContentBinding);
+mixingBindingLimited(ContentBinding, () => 'updateTarget');
 connectable()(ContentBinding);
-astEvaluator(void 0, false)(ContentBinding);
+mixinAstEvaluator(void 0, false)(ContentBinding);

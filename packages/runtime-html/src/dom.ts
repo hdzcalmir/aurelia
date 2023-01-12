@@ -1,9 +1,11 @@
-import { DI, Writable } from '@aurelia/kernel';
+import { type Writable } from '@aurelia/kernel';
 import { IAppRoot } from './app-root';
 import { IPlatform } from './platform';
 import { findElementControllerFor } from './resources/custom-element';
 import { MountTarget } from './templating/controller';
 import type { IHydratedController } from './templating/controller';
+import { createInterface } from './utilities-di';
+import { markerToLocation } from './utilities-dom';
 
 export class Refs {
   [key: string]: IHydratedController | undefined;
@@ -20,17 +22,17 @@ export function setRef(node: INode, name: string, controller: IHydratedControlle
 export type INode<T extends Node = Node> = T & {
   readonly $au?: Refs;
 };
-export const INode = DI.createInterface<INode>('INode');
+export const INode = createInterface<INode>('INode');
 
 export type IEventTarget<T extends EventTarget = EventTarget> = T;
-export const IEventTarget = DI.createInterface<IEventTarget>('IEventTarget', x => x.cachedCallback(handler => {
+export const IEventTarget = createInterface<IEventTarget>('IEventTarget', x => x.cachedCallback(handler => {
   if (handler.has(IAppRoot, true)) {
     return handler.get(IAppRoot).host;
   }
   return handler.get(IPlatform).document;
 }));
 
-export const IRenderLocation = DI.createInterface<IRenderLocation>('IRenderLocation');
+export const IRenderLocation = createInterface<IRenderLocation>('IRenderLocation');
 export type IRenderLocation<T extends ChildNode = ChildNode> = T & {
   $start?: IRenderLocation<T>;
 };
@@ -40,8 +42,6 @@ export type IRenderLocation<T extends ChildNode = ChildNode> = T & {
  */
 export interface INodeSequence<T extends INode = INode> {
   readonly platform: IPlatform;
-  readonly isMounted: boolean;
-  readonly isLinked: boolean;
 
   readonly next?: INodeSequence<T>;
 
@@ -50,9 +50,9 @@ export interface INodeSequence<T extends INode = INode> {
    */
   readonly childNodes: ArrayLike<T>;
 
-  readonly firstChild: T;
+  readonly firstChild: T | null;
 
-  readonly lastChild: T;
+  readonly lastChild: T | null;
 
   /**
    * Find all instruction targets in this sequence.
@@ -81,7 +81,8 @@ export interface INodeSequence<T extends INode = INode> {
   link(next: INodeSequence<T> | IRenderLocation | undefined): void;
 }
 
-export const enum NodeType {
+_START_CONST_ENUM();
+const enum NodeType {
   Element = 1,
   Attr = 2,
   Text = 3,
@@ -95,6 +96,7 @@ export const enum NodeType {
   DocumentFragment = 11,
   Notation = 12
 }
+_END_CONST_ENUM();
 
 const effectiveParentNodeOverrides = new WeakMap<Node, Node>();
 
@@ -190,17 +192,16 @@ export function convertToRenderLocation(node: Node): IRenderLocation {
     return node; // it's already a IRenderLocation (converted by FragmentNodeSequence)
   }
 
-  const locationEnd = node.ownerDocument!.createComment('au-end');
-  const locationStart = node.ownerDocument!.createComment('au-start');
+  const locationEnd = node.ownerDocument!.createComment('au-end') as IRenderLocation;
+  const locationStart = locationEnd.$start = node.ownerDocument!.createComment('au-start') as IRenderLocation;
+  const parentNode = node.parentNode;
 
-  if (node.parentNode !== null) {
-    node.parentNode.replaceChild(locationEnd, node);
-    locationEnd.parentNode!.insertBefore(locationStart, locationEnd);
+  if (parentNode !== null) {
+    parentNode.replaceChild(locationEnd, node);
+    parentNode.insertBefore(locationStart, locationEnd);
   }
 
-  (locationEnd as IRenderLocation).$start = locationStart as IRenderLocation;
-
-  return locationEnd as IRenderLocation;
+  return locationEnd;
 }
 
 export function isRenderLocation(node: INode | INodeSequence): node is IRenderLocation {
@@ -208,29 +209,48 @@ export function isRenderLocation(node: INode | INodeSequence): node is IRenderLo
 }
 
 export class FragmentNodeSequence implements INodeSequence {
-  public isMounted: boolean = false;
-  public isLinked: boolean = false;
+  /** @internal */
+  private readonly _firstChild: Node | null;
+  public get firstChild(): Node | null {
+    return this._firstChild;
+  }
 
-  public firstChild: Node;
-  public lastChild: Node;
+  /** @internal */
+  private readonly _lastChild: Node | null;
+  public get lastChild(): Node | null {
+    return this._lastChild;
+  }
+
   public childNodes: Node[];
 
   public next?: INodeSequence = void 0;
 
-  private refNode?: Node = void 0;
+  /** @internal */
+  private _isMounted: boolean = false;
 
-  private readonly targets: ArrayLike<Node>;
+  /** @internal */
+  private _isLinked: boolean = false;
+
+  /** @internal */
+  private ref?: Node | null = null;
+
+  /** @internal */
+  private readonly t: ArrayLike<Node>;
+
+  /** @internal */
+  private readonly f: DocumentFragment;
 
   public constructor(
     public readonly platform: IPlatform,
-    private readonly fragment: DocumentFragment,
+    fragment: DocumentFragment,
   ) {
+    this.f = fragment;
     const targetNodeList = fragment.querySelectorAll('.au');
     let i = 0;
     let ii = targetNodeList.length;
     let target: Element;
     // eslint-disable-next-line
-    let targets = this.targets = Array(ii);
+    let targets = this.t = Array(ii);
 
     while (ii > i) {
       // eagerly convert all markers to RenderLocations (otherwise the renderer
@@ -241,7 +261,7 @@ export class FragmentNodeSequence implements INodeSequence {
       if (target.nodeName === 'AU-M') {
         // note the renderer will still call this method, but it will just return the
         // location if it sees it's already a location
-        targets[i] = convertToRenderLocation(target);
+        targets[i] = markerToLocation(target);
       } else {
         // also store non-markers for consistent ordering
         targets[i] = target;
@@ -257,23 +277,23 @@ export class FragmentNodeSequence implements INodeSequence {
       ++i;
     }
 
-    this.firstChild = fragment.firstChild!;
-    this.lastChild = fragment.lastChild!;
+    this._firstChild = fragment.firstChild;
+    this._lastChild = fragment.lastChild;
   }
 
   public findTargets(): ArrayLike<Node> {
-    return this.targets;
+    return this.t;
   }
 
   public insertBefore(refNode: IRenderLocation & Comment): void {
-    if (this.isLinked && !!this.refNode) {
+    if (this._isLinked && !!this.ref) {
       this.addToLinked();
     } else {
       const parent = refNode.parentNode!;
-      if (this.isMounted) {
-        let current = this.firstChild;
+      if (this._isMounted) {
+        let current = this._firstChild;
         let next: Node;
-        const end = this.lastChild;
+        const end = this._lastChild;
 
         while (current != null) {
           next = current.nextSibling!;
@@ -286,17 +306,17 @@ export class FragmentNodeSequence implements INodeSequence {
           current = next;
         }
       } else {
-        this.isMounted = true;
-        refNode.parentNode!.insertBefore(this.fragment, refNode);
+        this._isMounted = true;
+        refNode.parentNode!.insertBefore(this.f, refNode);
       }
     }
   }
 
   public appendTo(parent: Node, enhance: boolean = false): void {
-    if (this.isMounted) {
-      let current = this.firstChild;
+    if (this._isMounted) {
+      let current = this._firstChild;
       let next: Node;
-      const end = this.lastChild;
+      const end = this._lastChild;
 
       while (current != null) {
         next = current.nextSibling!;
@@ -309,22 +329,22 @@ export class FragmentNodeSequence implements INodeSequence {
         current = next;
       }
     } else {
-      this.isMounted = true;
+      this._isMounted = true;
       if (!enhance) {
-        parent.appendChild(this.fragment);
+        parent.appendChild(this.f);
       }
     }
   }
 
   public remove(): void {
-    if (this.isMounted) {
-      this.isMounted = false;
+    if (this._isMounted) {
+      this._isMounted = false;
 
-      const fragment = this.fragment;
-      const end = this.lastChild;
+      const fragment = this.f;
+      const end = this._lastChild;
       let next: Node;
 
-      let current = this.firstChild;
+      let current = this._firstChild;
       while (current !== null) {
         next = current.nextSibling!;
         fragment.appendChild(current);
@@ -339,12 +359,12 @@ export class FragmentNodeSequence implements INodeSequence {
   }
 
   public addToLinked(): void {
-    const refNode = this.refNode!;
+    const refNode = this.ref!;
     const parent = refNode.parentNode!;
-    if (this.isMounted) {
-      let current = this.firstChild;
+    if (this._isMounted) {
+      let current = this._firstChild;
       let next: Node;
-      const end = this.lastChild;
+      const end = this._lastChild;
 
       while (current != null) {
         next = current.nextSibling!;
@@ -357,43 +377,44 @@ export class FragmentNodeSequence implements INodeSequence {
         current = next;
       }
     } else {
-      this.isMounted = true;
-      parent.insertBefore(this.fragment, refNode);
+      this._isMounted = true;
+      parent.insertBefore(this.f, refNode);
     }
   }
 
   public unlink(): void {
-    this.isLinked = false;
+    this._isLinked = false;
     this.next = void 0;
-    this.refNode = void 0;
+    this.ref = void 0;
   }
 
   public link(next: INodeSequence | IRenderLocation & Comment | undefined): void {
-    this.isLinked = true;
+    this._isLinked = true;
     if (isRenderLocation(next!)) {
-      this.refNode = next;
+      this.ref = next;
     } else {
       this.next = next;
-      this.obtainRefNode();
+      this._obtainRefNode();
     }
   }
 
-  private obtainRefNode(): void {
+  /** @internal */
+  private _obtainRefNode(): void {
     if (this.next !== void 0) {
-      this.refNode = this.next.firstChild;
+      this.ref = this.next.firstChild;
     } else {
-      this.refNode = void 0;
+      this.ref = void 0;
     }
   }
 }
 
-export const IWindow = DI.createInterface<IWindow>('IWindow', x => x.callback(handler => handler.get(IPlatform).window));
+export const IWindow = createInterface<IWindow>('IWindow', x => x.callback(handler => handler.get(IPlatform).window));
 export interface IWindow extends Window { }
 
-export const ILocation = DI.createInterface<ILocation>('ILocation', x => x.callback(handler => handler.get(IWindow).location));
+export const ILocation = createInterface<ILocation>('ILocation', x => x.callback(handler => handler.get(IWindow).location));
 export interface ILocation extends Location { }
 
-export const IHistory = DI.createInterface<IHistory>('IHistory', x => x.callback(handler => handler.get(IWindow).history));
+export const IHistory = createInterface<IHistory>('IHistory', x => x.callback(handler => handler.get(IWindow).history));
 // NOTE: `IHistory` is documented
 /**
  * https://developer.mozilla.org/en-US/docs/Web/API/History

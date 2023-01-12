@@ -10,6 +10,7 @@ import {
   IndexMap,
   BindingContext,
   type IOverrideContext,
+  astEvaluate,
 } from '@aurelia/runtime';
 import {
   customAttribute,
@@ -91,7 +92,7 @@ export class VirtualRepeat implements IScrollerSubscriber, IVirtualRepeater {
     platform: IPlatform,
   ) {
     const iteratorInstruction = instruction.props[0] as IteratorBindingInstruction;
-    const forOf = iteratorInstruction.from as ForOfStatement;
+    const forOf = iteratorInstruction.forOf as ForOfStatement;
     const iterable = this.iterable = unwrapExpression(forOf.iterable) ?? forOf.iterable;
     const hasWrapExpression = this._hasWrapExpression = forOf.iterable !== iterable;
     this._obsMediator = new CollectionObservationMediator(this, hasWrapExpression ? 'handleInnerCollectionChange' : 'handleCollectionChange');
@@ -255,7 +256,7 @@ export class VirtualRepeat implements IScrollerSubscriber, IVirtualRepeater {
         scope.overrideContext.$index = idx;
         scope.overrideContext.$length = itemCount;
       } else {
-        view.nodes.insertBefore(prevView.nodes.firstChild.nextSibling!);
+        view.nodes.insertBefore(prevView.nodes.firstChild!.nextSibling!);
         scope = Scope.fromParent(
           controller.scope,
           new BindingContext(local, collectionStrategy.item(idx))
@@ -406,7 +407,7 @@ export class VirtualRepeat implements IScrollerSubscriber, IVirtualRepeater {
         scope.bindingContext[local] = collectionStrategy.item(idx);
         scope.overrideContext.$index = idx;
         scope.overrideContext.$length = collectionSize;
-        view.nodes.insertBefore(views[0].nodes.firstChild);
+        view.nodes.insertBefore(views[0].nodes.firstChild!);
         views.unshift(view);
         ++idxIncrement;
         --viewsToMoveCount;
@@ -479,7 +480,7 @@ export class VirtualRepeat implements IScrollerSubscriber, IVirtualRepeater {
    * @internal
    */
   public handleInnerCollectionChange(): void {
-    const newItems = this.iterable.evaluate(this.parent.scope, this._container, null) as Collection;
+    const newItems = astEvaluate(this.iterable, this.parent.scope, { strict: true }, null) as Collection;
     const oldItems = this.items;
     this.items = newItems;
     if (newItems === oldItems) {

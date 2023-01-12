@@ -1,8 +1,14 @@
+---
+description: >-
+  A developer guide that details numerous strategies for implementing animation
+  into Aurelia applications.
+---
+
 # Animation
 
 Learn numerous techniques for implementing animations into your Aurelia applications.
 
-## Class-based animations
+## Component-based animations
 
 In instances where you don't need to implement router-based transition animations (entering and leaving), we can lean on traditional CSS-based animations to add animation to our Aurelia applications.
 
@@ -100,7 +106,7 @@ export class MyApp {
 
 ## Reactive Animations
 
-Not to be confused with state animations, a reactive animation is where we respond to changes in our view-models instead of views and animate accordingly. You might use an animation library or custom animation code in these instances.
+Not to be confused with state animations, a reactive animation is where we respond to changes in our view models instead of views and animate accordingly. You might use an animation library or custom animation code in these instances.
 
 In the following example, we will use the animation engine Anime.js to animate numeric values when a slider input is changed. Using the `change` event on our range slider, we'll animate the number up and down depending on the dragged value.
 
@@ -133,7 +139,6 @@ export class MyApp {
 />
 
 <p ref="sliderWrapper" class="slider-wrapper">${sliderVal & oneTime}</p>
-
 ```
 
 ```css

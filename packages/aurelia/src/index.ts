@@ -206,25 +206,6 @@ export {
 } from '@aurelia/kernel';
 
 export {
-  RouterOptions,
-  IRouter,
-  IRouterEvents,
-  Router,
-  RouteNode,
-  route,
-  Route,
-  RouteConfig,
-  IRouteContext,
-  type IRouteViewModel,
-  type NavigationInstruction,
-  type Routeable,
-  type Params,
-
-  RouterConfiguration,
-  RouterRegistration,
-} from '@aurelia/router-lite';
-
-export {
   CollectionKind,
   batch,
   // CallFunctionExpression,
@@ -435,7 +416,6 @@ export {
   // IAccessor,
   // IBindingContext,
   // ICollectionChangeTracker,
-  // ICollectionObserver,
   // ICollectionSubscriber,
 
   // ValueConverterDefinition,
@@ -555,16 +535,7 @@ export {
   // ThrottleBindingBehaviorRegistration,
   // TwoWayBindingBehaviorRegistration,
 
-  // RefBindingRendererRegistration,
   // CallBindingRendererRegistration,
-  // CustomAttributeRendererRegistration,
-  // CustomElementRendererRegistration,
-  // InterpolationBindingRendererRegistration,
-  // IteratorBindingRendererRegistration,
-  // LetElementRendererRegistration,
-  // PropertyBindingRendererRegistration,
-  // SetPropertyRendererRegistration,
-  // TemplateControllerRendererRegistration,
 
   // DefaultResources as RuntimeDefaultResources,
   // IObserverLocatorRegistration,
@@ -615,7 +586,6 @@ export {
   // IAccessor,
   // IBindingContext,
   // ICollectionChangeTracker,
-  // ICollectionObserver,
   // ICollectionSubscriber,
 
   IFlushQueue,
@@ -671,18 +641,7 @@ export {
 
   // DataAttributeAccessor,
 
-  // ElementPropertyAccessor,
-
-  // IManagedEvent,
-  // ListenerTracker,
-  // DelegateOrCaptureSubscription,
-  // TriggerSubscription,
-  // IElementConfiguration,
-  // IEventDelegator,
-  // IEventSubscriber,
-  // IEventTargetWithLookups,
   // EventSubscriber,
-  // EventSubscription,
   // EventDelegator,
 
   NodeObserverLocator,
@@ -702,12 +661,9 @@ export {
 
   // AttrBindingBehavior,
 
-  // SelfableBinding,
   // SelfBindingBehavior,
 
   // UpdateTriggerBindingBehavior,
-  // UpdateTriggerableBinding,
-  // UpdateTriggerableObserver,
 
   // Focus,
 
@@ -807,27 +763,15 @@ export {
   // ToViewBindingCommandRegistration,
   // TwoWayBindingCommandRegistration,
 
-  // AttrBindingBehaviorRegistration,
   // SelfBindingBehaviorRegistration,
   // UpdateTriggerBindingBehaviorRegistration,
   // ComposeRegistration,
 
   // DefaultResources as RuntimeHtmlDefaultResources,
 
-  // AttributeBindingRendererRegistration,
-  // ListenerBindingRendererRegistration,
-  // SetAttributeRendererRegistration,
-  // SetClassAttributeRendererRegistration,
-  // SetStyleAttributeRendererRegistration,
-  // StylePropertyBindingRendererRegistration,
-  // TextBindingRendererRegistration,
-
   // DefaultRenderers,
 
   // StandardConfiguration,
-
-  createElement,
-  // RenderPlan,
 
   // AttributeInstruction,
   // IInstructionRow,
@@ -838,7 +782,6 @@ export {
   // ISetAttributeInstruction,
   // isInstruction,
   // IStylePropertyBindingInstruction,
-  // ITextBindingInstruction,
 
   // NodeSequenceFactory,
   // FragmentNodeSequence,
@@ -848,7 +791,6 @@ export {
   // SetClassAttributeInstruction,
   // SetStyleAttributeInstruction,
   // StylePropertyBindingInstruction,
-  // TextBindingInstruction,
 
   // ContainerlessProjector,
   // HostProjector,
@@ -908,56 +850,4 @@ export {
   type LifecycleHook,
   LifecycleHooks,
   lifecycleHooks,
-
-  // -------- dialog plugin -------------
-  // configurations
-  DialogConfiguration,
-  type DialogConfigurationProvider,
-  DialogDefaultConfiguration,
-
-  // enums
-  type DialogActionKey,
-  type DialogMouseEventType,
-  DialogDeactivationStatuses,
-
-  // settings
-  type IDialogSettings,
-  IDialogGlobalSettings,
-  type IDialogLoadedSettings,
-
-  // main interfaces
-  IDialogService,
-  IDialogController,
-  IDialogDomRenderer,
-  IDialogDom,
-
-  // dialog results
-  type DialogError,
-  type DialogOpenPromise,
-  DialogOpenResult,
-  type DialogCancelError,
-  type DialogCloseError,
-  DialogCloseResult,
-
-  // default impls
-  DialogService,
-  DialogController,
-  DefaultDialogDom,
-  DefaultDialogDomRenderer,
-  DefaultDialogGlobalSettings,
-
-  // implementable for applications
-  type IDialogCustomElementViewModel,
-  type IDialogComponent,
-  type IDialogComponentActivate,
-  type IDialogComponentCanActivate,
-  type IDialogComponentDeactivate,
-  type IDialogComponentCanDeactivate,
-  // -------- dialog plugin end -------------
-
-  // -------- wc plugin -------------
-  IWcElementRegistry,
-  type WebComponentViewModelClass,
-  WcCustomElementRegistry,
-  // -------- wc plugin end -------------
 } from '@aurelia/runtime-html';
