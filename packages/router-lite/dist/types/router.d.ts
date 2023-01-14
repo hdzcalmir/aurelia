@@ -1,5 +1,5 @@
 import { IContainer, ILogger } from '@aurelia/kernel';
-import { CustomElementDefinition, IPlatform, PartialCustomElementDefinition } from '@aurelia/runtime-html';
+import { CustomElementDefinition, IPlatform } from '@aurelia/runtime-html';
 import { IRouteContext } from './route-context';
 import { IRouterEvents, ManagedState, RoutingTrigger } from './router-events';
 import { ILocationManager } from './location-manager';
@@ -204,16 +204,6 @@ export declare class Router {
      */
     load(componentTypes: readonly RouteType[], options?: INavigationOptions): Promise<boolean>;
     /**
-     * Loads the provided component definition. May or may not be pre-compiled.
-     *
-     * Examples:
-     *
-     * ```ts
-     * router.load({ name: 'greeter', template: 'Hello!' });
-     * ```
-     */
-    load(componentDefinition: PartialCustomElementDefinition, options?: INavigationOptions): Promise<boolean>;
-    /**
      * Loads the provided component instance.
      *
      * Examples:
@@ -237,17 +227,6 @@ export declare class Router {
      * router.load({ component: ProductDetail, parameters: { id: 37 } })
      * router.load({ component: 'category', children: ['product(id=20)'] })
      * router.load({ component: 'category', children: [{ component: 'product', parameters: { id: 20 } }] })
-     * router.load({
-     *   component: CustomElement.define({
-     *     name: 'greeter',
-     *     template: 'Hello, ${name}!'
-     *   }, class {
-     *     load(instruction) {
-     *       this.name = instruction.parameters.name;
-     *     }
-     *   }),
-     *   parameters: { name: 'John' }
-     * })
      * ```
      */
     load(viewportInstruction: IViewportInstruction, options?: INavigationOptions): boolean | Promise<boolean>;

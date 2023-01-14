@@ -1993,6 +1993,18 @@ function createAndAppendNodes(log, node, vi) {
                     log.trace('createNode residue:', residue);
                     const noResidue = residue === null;
                     if (rr === null || residue === path) {
+                        const eagerResult = ctx.generateViewportInstruction({
+                            component: vi.component.value,
+                            params: vi.params ?? kernel.emptyObject,
+                            open: vi.open,
+                            close: vi.close,
+                            viewport: vi.viewport,
+                            children: vi.children.slice(),
+                        });
+                        if (eagerResult !== null) {
+                            node.tree.queryParams = mergeURLSearchParams(node.tree.queryParams, eagerResult.query, true);
+                            return appendNode(log, node, createConfiguredNode(log, node, eagerResult.vi, eagerResult.vi.recognizedRoute, vi));
+                        }
                         const name = vi.component.value;
                         if (name === '')
                             return;
@@ -2029,14 +2041,22 @@ function createAndAppendNodes(log, node, vi) {
                     return appendNode(log, node, createConfiguredNode(log, node, vi, rr, originalInstruction));
                 }
             }
+        case 3:
         case 4:
         case 2: {
             const rc = node.context;
-            const rd = RouteDefinition.resolve(vi.component.value, rc.definition, null);
-            const { vi: newVi, query } = rc.generateViewportInstruction({ component: rd, params: vi.params ?? kernel.emptyObject });
-            node.tree.queryParams = mergeURLSearchParams(node.tree.queryParams, query, true);
-            newVi.children.push(...vi.children);
-            return appendNode(log, node, createConfiguredNode(log, node, newVi, newVi.recognizedRoute, vi));
+            return kernel.onResolve(RouteDefinition.resolve(vi.component.value, rc.definition, null, rc), rd => {
+                const { vi: newVi, query } = rc.generateViewportInstruction({
+                    component: rd,
+                    params: vi.params ?? kernel.emptyObject,
+                    open: vi.open,
+                    close: vi.close,
+                    viewport: vi.viewport,
+                    children: vi.children.slice(),
+                });
+                node.tree.queryParams = mergeURLSearchParams(node.tree.queryParams, query, true);
+                return appendNode(log, node, createConfiguredNode(log, node, newVi, newVi.recognizedRoute, vi));
+            });
         }
     }
 }
@@ -2940,11 +2960,6 @@ class TypedNavigationInstruction {
             return new TypedNavigationInstruction(4, instruction);
         if (instruction instanceof runtimeHtml.CustomElementDefinition)
             return new TypedNavigationInstruction(2, instruction);
-        if (isPartialCustomElementDefinition(instruction)) {
-            const Type = runtimeHtml.CustomElement.define(instruction);
-            const definition = runtimeHtml.CustomElement.getDefinition(Type);
-            return new TypedNavigationInstruction(2, definition);
-        }
         throw new Error(`Invalid component ${tryStringify(instruction)}: must be either a class, a custom element ViewModel, or a (partial) custom element definition`);
     }
     equals(other) {

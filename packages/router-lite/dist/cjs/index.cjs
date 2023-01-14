@@ -1869,76 +1869,93 @@ function q(t, s, i) {
           default:
             {
                 t.trace(`createAndAppendNodes invoking createNode`);
-                const e = s.context;
-                const n = i.clone();
-                let r = i.recognizedRoute;
-                if (null !== r) return F(t, s, z(t, s, i, r, n));
+                const n = s.context;
+                const r = i.clone();
+                let o = i.recognizedRoute;
+                if (null !== o) return F(t, s, z(t, s, i, o, r));
                 if (0 === i.children.length) {
-                    const n = e.generateViewportInstruction(i);
-                    if (null !== n) {
-                        s.tree.queryParams = a(s.tree.queryParams, n.query, true);
-                        const e = n.vi;
-                        e.children.push(...i.children);
-                        return F(t, s, z(t, s, e, e.recognizedRoute, i));
+                    const e = n.generateViewportInstruction(i);
+                    if (null !== e) {
+                        s.tree.queryParams = a(s.tree.queryParams, e.query, true);
+                        const n = e.vi;
+                        n.children.push(...i.children);
+                        return F(t, s, z(t, s, n, n.recognizedRoute, i));
                     }
                 }
-                let o = 0;
-                let h = i.component.value;
-                let c = i;
-                while (1 === c.children.length) {
-                    c = c.children[0];
-                    if (0 === c.component.type) {
-                        ++o;
-                        h = `${h}/${c.component.value}`;
+                let h = 0;
+                let c = i.component.value;
+                let u = i;
+                while (1 === u.children.length) {
+                    u = u.children[0];
+                    if (0 === u.component.type) {
+                        ++h;
+                        c = `${c}/${u.component.value}`;
                     } else break;
                 }
-                r = e.recognize(h);
-                t.trace("createNode recognized route: %s", r);
-                const u = r?.residue ?? null;
-                t.trace("createNode residue:", u);
-                const l = null === u;
-                if (null === r || u === h) {
-                    const n = i.component.value;
-                    if ("" === n) return;
-                    let r = i.viewport;
-                    if (null === r || 0 === r.length) r = nt;
-                    const o = e.getFallbackViewportAgent(r);
-                    const h = null !== o ? o.viewport.fallback : e.definition.fallback;
-                    if (null === h) throw new UnknownRouteError(`Neither the route '${n}' matched any configured route at '${e.friendlyPath}' nor a fallback is configured for the viewport '${r}' - did you forget to add '${n}' to the routes list of the route decorator of '${e.component.name}'?`);
-                    t.trace(`Fallback is set to '${h}'. Looking for a recognized route.`);
-                    const a = e.childRoutes.find((t => t.id === h));
-                    if (void 0 !== a) return F(t, s, H(t, a, s, i));
-                    t.trace(`No route definition for the fallback '${h}' is found; trying to recognize the route.`);
-                    const c = e.recognize(h, true);
-                    if (null !== c && c.residue !== h) return F(t, s, z(t, s, i, c, null));
-                    t.trace(`The fallback '${h}' is not recognized as a route; treating as custom element name.`);
-                    return F(t, s, H(t, RouteDefinition.resolve(h, e.definition, null, e), s, i));
+                o = n.recognize(c);
+                t.trace("createNode recognized route: %s", o);
+                const l = o?.residue ?? null;
+                t.trace("createNode residue:", l);
+                const f = null === l;
+                if (null === o || l === c) {
+                    const r = n.generateViewportInstruction({
+                        component: i.component.value,
+                        params: i.params ?? e.emptyObject,
+                        open: i.open,
+                        close: i.close,
+                        viewport: i.viewport,
+                        children: i.children.slice()
+                    });
+                    if (null !== r) {
+                        s.tree.queryParams = a(s.tree.queryParams, r.query, true);
+                        return F(t, s, z(t, s, r.vi, r.vi.recognizedRoute, i));
+                    }
+                    const o = i.component.value;
+                    if ("" === o) return;
+                    let h = i.viewport;
+                    if (null === h || 0 === h.length) h = nt;
+                    const c = n.getFallbackViewportAgent(h);
+                    const u = null !== c ? c.viewport.fallback : n.definition.fallback;
+                    if (null === u) throw new UnknownRouteError(`Neither the route '${o}' matched any configured route at '${n.friendlyPath}' nor a fallback is configured for the viewport '${h}' - did you forget to add '${o}' to the routes list of the route decorator of '${n.component.name}'?`);
+                    t.trace(`Fallback is set to '${u}'. Looking for a recognized route.`);
+                    const l = n.childRoutes.find((t => t.id === u));
+                    if (void 0 !== l) return F(t, s, H(t, l, s, i));
+                    t.trace(`No route definition for the fallback '${u}' is found; trying to recognize the route.`);
+                    const f = n.recognize(u, true);
+                    if (null !== f && f.residue !== u) return F(t, s, z(t, s, i, f, null));
+                    t.trace(`The fallback '${u}' is not recognized as a route; treating as custom element name.`);
+                    return F(t, s, H(t, RouteDefinition.resolve(u, n.definition, null, n), s, i));
                 }
-                r.residue = null;
-                i.component.value = l ? h : h.slice(0, -(u.length + 1));
-                for (let t = 0; t < o; ++t) {
+                o.residue = null;
+                i.component.value = f ? c : c.slice(0, -(l.length + 1));
+                for (let t = 0; t < h; ++t) {
                     const t = i.children[0];
-                    if (u?.startsWith(t.component.value) ?? false) break;
+                    if (l?.startsWith(t.component.value) ?? false) break;
                     i.viewport = t.viewport;
                     i.children = t.children;
                 }
                 t.trace("createNode after adjustment vi:%s", i);
-                return F(t, s, z(t, s, i, r, n));
+                return F(t, s, z(t, s, i, o, r));
             }
         }
 
+      case 3:
       case 4:
       case 2:
         {
             const n = s.context;
-            const r = RouteDefinition.resolve(i.component.value, n.definition, null);
-            const {vi: o, query: h} = n.generateViewportInstruction({
-                component: r,
-                params: i.params ?? e.emptyObject
-            });
-            s.tree.queryParams = a(s.tree.queryParams, h, true);
-            o.children.push(...i.children);
-            return F(t, s, z(t, s, o, o.recognizedRoute, i));
+            return e.onResolve(RouteDefinition.resolve(i.component.value, n.definition, null, n), (r => {
+                const {vi: o, query: h} = n.generateViewportInstruction({
+                    component: r,
+                    params: i.params ?? e.emptyObject,
+                    open: i.open,
+                    close: i.close,
+                    viewport: i.viewport,
+                    children: i.children.slice()
+                });
+                s.tree.queryParams = a(s.tree.queryParams, h, true);
+                return F(t, s, z(t, s, o, o.recognizedRoute, i));
+            }));
         }
     }
 }
@@ -2747,11 +2764,6 @@ class TypedNavigationInstruction {
         }
         if (s.isCustomElementViewModel(e)) return new TypedNavigationInstruction(4, e);
         if (e instanceof s.CustomElementDefinition) return new TypedNavigationInstruction(2, e);
-        if (u(e)) {
-            const t = s.CustomElement.define(e);
-            const i = s.CustomElement.getDefinition(t);
-            return new TypedNavigationInstruction(2, i);
-        }
         throw new Error(`Invalid component ${r(e)}: must be either a class, a custom element ViewModel, or a (partial) custom element definition`);
     }
     equals(t) {

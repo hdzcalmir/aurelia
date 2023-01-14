@@ -1878,41 +1878,53 @@ function kt(t, e, i) {
                 }
                 let o = 0;
                 let h = i.component.value;
-                let a = i;
-                while (1 === a.children.length) {
-                    a = a.children[0];
-                    if (0 === a.component.type) {
+                let c = i;
+                while (1 === c.children.length) {
+                    c = c.children[0];
+                    if (0 === c.component.type) {
                         ++o;
-                        h = `${h}/${a.component.value}`;
+                        h = `${h}/${c.component.value}`;
                     } else break;
                 }
                 r = s.recognize(h);
                 t.trace("createNode recognized route: %s", r);
-                const c = r?.residue ?? null;
-                t.trace("createNode residue:", c);
-                const u = null === c;
-                if (null === r || c === h) {
-                    const n = i.component.value;
-                    if ("" === n) return;
-                    let r = i.viewport;
-                    if (null === r || 0 === r.length) r = Ft;
-                    const o = s.getFallbackViewportAgent(r);
-                    const h = null !== o ? o.viewport.fallback : s.definition.fallback;
-                    if (null === h) throw new UnknownRouteError(`Neither the route '${n}' matched any configured route at '${s.friendlyPath}' nor a fallback is configured for the viewport '${r}' - did you forget to add '${n}' to the routes list of the route decorator of '${s.component.name}'?`);
-                    t.trace(`Fallback is set to '${h}'. Looking for a recognized route.`);
-                    const a = s.childRoutes.find((t => t.id === h));
-                    if (void 0 !== a) return Ct(t, e, It(t, a, e, i));
-                    t.trace(`No route definition for the fallback '${h}' is found; trying to recognize the route.`);
-                    const c = s.recognize(h, true);
-                    if (null !== c && c.residue !== h) return Ct(t, e, St(t, e, i, c, null));
-                    t.trace(`The fallback '${h}' is not recognized as a route; treating as custom element name.`);
-                    return Ct(t, e, It(t, RouteDefinition.resolve(h, s.definition, null, s), e, i));
+                const u = r?.residue ?? null;
+                t.trace("createNode residue:", u);
+                const l = null === u;
+                if (null === r || u === h) {
+                    const n = s.generateViewportInstruction({
+                        component: i.component.value,
+                        params: i.params ?? a,
+                        open: i.open,
+                        close: i.close,
+                        viewport: i.viewport,
+                        children: i.children.slice()
+                    });
+                    if (null !== n) {
+                        e.tree.queryParams = W(e.tree.queryParams, n.query, true);
+                        return Ct(t, e, St(t, e, n.vi, n.vi.recognizedRoute, i));
+                    }
+                    const r = i.component.value;
+                    if ("" === r) return;
+                    let o = i.viewport;
+                    if (null === o || 0 === o.length) o = Ft;
+                    const h = s.getFallbackViewportAgent(o);
+                    const c = null !== h ? h.viewport.fallback : s.definition.fallback;
+                    if (null === c) throw new UnknownRouteError(`Neither the route '${r}' matched any configured route at '${s.friendlyPath}' nor a fallback is configured for the viewport '${o}' - did you forget to add '${r}' to the routes list of the route decorator of '${s.component.name}'?`);
+                    t.trace(`Fallback is set to '${c}'. Looking for a recognized route.`);
+                    const u = s.childRoutes.find((t => t.id === c));
+                    if (void 0 !== u) return Ct(t, e, It(t, u, e, i));
+                    t.trace(`No route definition for the fallback '${c}' is found; trying to recognize the route.`);
+                    const l = s.recognize(c, true);
+                    if (null !== l && l.residue !== c) return Ct(t, e, St(t, e, i, l, null));
+                    t.trace(`The fallback '${c}' is not recognized as a route; treating as custom element name.`);
+                    return Ct(t, e, It(t, RouteDefinition.resolve(c, s.definition, null, s), e, i));
                 }
                 r.residue = null;
-                i.component.value = u ? h : h.slice(0, -(c.length + 1));
+                i.component.value = l ? h : h.slice(0, -(u.length + 1));
                 for (let t = 0; t < o; ++t) {
                     const t = i.children[0];
-                    if (c?.startsWith(t.component.value) ?? false) break;
+                    if (u?.startsWith(t.component.value) ?? false) break;
                     i.viewport = t.viewport;
                     i.children = t.children;
                 }
@@ -1921,18 +1933,23 @@ function kt(t, e, i) {
             }
         }
 
+      case 3:
       case 4:
       case 2:
         {
             const s = e.context;
-            const n = RouteDefinition.resolve(i.component.value, s.definition, null);
-            const {vi: r, query: o} = s.generateViewportInstruction({
-                component: n,
-                params: i.params ?? a
-            });
-            e.tree.queryParams = W(e.tree.queryParams, o, true);
-            r.children.push(...i.children);
-            return Ct(t, e, St(t, e, r, r.recognizedRoute, i));
+            return o(RouteDefinition.resolve(i.component.value, s.definition, null, s), (n => {
+                const {vi: r, query: o} = s.generateViewportInstruction({
+                    component: n,
+                    params: i.params ?? a,
+                    open: i.open,
+                    close: i.close,
+                    viewport: i.viewport,
+                    children: i.children.slice()
+                });
+                e.tree.queryParams = W(e.tree.queryParams, o, true);
+                return Ct(t, e, St(t, e, r, r.recognizedRoute, i));
+            }));
         }
     }
 }
@@ -2741,11 +2758,6 @@ class TypedNavigationInstruction {
         }
         if (v(e)) return new TypedNavigationInstruction(4, e);
         if (e instanceof y) return new TypedNavigationInstruction(2, e);
-        if (Y(e)) {
-            const t = b.define(e);
-            const i = b.getDefinition(t);
-            return new TypedNavigationInstruction(2, i);
-        }
         throw new Error(`Invalid component ${q(e)}: must be either a class, a custom element ViewModel, or a (partial) custom element definition`);
     }
     equals(t) {
