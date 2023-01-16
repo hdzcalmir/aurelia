@@ -2904,7 +2904,8 @@ class ViewportInstructionTree {
         }
         else {
             pathname = this.toPath();
-            hash = this.fragment ?? '';
+            const fragment = this.fragment;
+            hash = fragment !== null && fragment.length > 0 ? `#${fragment}` : '';
         }
         let search = this.queryParams.toString();
         search = search === '' ? '' : `?${search}`;

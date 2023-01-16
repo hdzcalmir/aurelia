@@ -2715,7 +2715,8 @@ class ViewportInstructionTree {
             i = `#${this.toPath()}`;
         } else {
             e = this.toPath();
-            i = this.fragment ?? "";
+            const t = this.fragment;
+            i = null !== t && t.length > 0 ? `#${t}` : "";
         }
         let s = this.queryParams.toString();
         s = "" === s ? "" : `?${s}`;
