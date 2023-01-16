@@ -14,7 +14,7 @@ export interface IRouteContext extends RouteContext {
 export declare const IRouteContext: import("@aurelia/kernel").InterfaceSymbol<IRouteContext>;
 declare type PathGenerationResult = {
     vi: ViewportInstruction;
-    query: Params | null;
+    query: Params;
 };
 export declare type EagerInstruction = {
     component: string | RouteDefinition | PartialCustomElementDefinition | IRouteViewModel | IChildRouteConfig | RouteType;

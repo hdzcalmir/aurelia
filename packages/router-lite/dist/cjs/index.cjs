@@ -629,7 +629,7 @@ class RouteExpression {
         return new RouteExpression(c, h, a, null != n ? Object.freeze(n) : W, s, e);
     }
     toInstructionTree(t) {
-        return new ViewportInstructionTree(t, this.isAbsolute, this.root.toInstructions(0, 0), a(this.queryParams, t.queryParams, true), this.fragment);
+        return new ViewportInstructionTree(t, this.isAbsolute, this.root.toInstructions(0, 0), a(this.queryParams, t.queryParams, true), this.fragment ?? t.fragment);
     }
     toString() {
         return this.raw;
@@ -2696,14 +2696,15 @@ class ViewportInstructionTree {
                     a(h, n.query, false);
                 } else i[e] = ViewportInstruction.create(s);
             }
-            return new ViewportInstructionTree(n, false, i, h, null);
+            return new ViewportInstructionTree(n, false, i, h, n.fragment);
         }
         if ("string" === typeof t) {
             const e = RouteExpression.parse(t, n.useUrlFragmentHash);
             return e.toInstructionTree(n);
         }
         const h = o ? r.generateViewportInstruction(t) : null;
-        return null !== h ? new ViewportInstructionTree(n, false, [ h.vi ], new URLSearchParams(h.query ?? e.emptyObject), null) : new ViewportInstructionTree(n, false, [ ViewportInstruction.create(t) ], W, null);
+        const c = new URLSearchParams(n.queryParams ?? e.emptyObject);
+        return null !== h ? new ViewportInstructionTree(n, false, [ h.vi ], a(c, h.query, false), n.fragment) : new ViewportInstructionTree(n, false, [ ViewportInstruction.create(t) ], c, n.fragment);
     }
     equals(t) {
         const e = this.children;

@@ -685,7 +685,7 @@ class RouteExpression {
         return new RouteExpression(raw, isAbsolute, root, queryParams != null ? Object.freeze(queryParams) : emptyQuery, fragment, fragmentIsRoute);
     }
     toInstructionTree(options) {
-        return new ViewportInstructionTree(options, this.isAbsolute, this.root.toInstructions(0, 0), mergeURLSearchParams(this.queryParams, options.queryParams, true), this.fragment);
+        return new ViewportInstructionTree(options, this.isAbsolute, this.root.toInstructions(0, 0), mergeURLSearchParams(this.queryParams, options.queryParams, true), this.fragment ?? options.fragment);
     }
     toString() {
         return this.raw;
@@ -2870,16 +2870,17 @@ class ViewportInstructionTree {
                     children[i] = ViewportInstruction.create(instruction);
                 }
             }
-            return new ViewportInstructionTree($options, false, children, query, null);
+            return new ViewportInstructionTree($options, false, children, query, $options.fragment);
         }
         if (typeof instructionOrInstructions === 'string') {
             const expr = RouteExpression.parse(instructionOrInstructions, $options.useUrlFragmentHash);
             return expr.toInstructionTree($options);
         }
         const eagerVi = hasContext ? context.generateViewportInstruction(instructionOrInstructions) : null;
+        const query = new URLSearchParams($options.queryParams ?? emptyObject);
         return eagerVi !== null
-            ? new ViewportInstructionTree($options, false, [eagerVi.vi], new URLSearchParams(eagerVi.query ?? emptyObject), null)
-            : new ViewportInstructionTree($options, false, [ViewportInstruction.create(instructionOrInstructions)], emptyQuery, null);
+            ? new ViewportInstructionTree($options, false, [eagerVi.vi], mergeURLSearchParams(query, eagerVi.query, false), $options.fragment)
+            : new ViewportInstructionTree($options, false, [ViewportInstruction.create(instructionOrInstructions)], query, $options.fragment);
     }
     equals(other) {
         const thisChildren = this.children;
