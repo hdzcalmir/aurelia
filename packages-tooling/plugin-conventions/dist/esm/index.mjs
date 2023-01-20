@@ -82,10 +82,10 @@ const getHmrCode = (className, moduleText = 'module') => {
       $$M.define(newDefinition.name, newDefinition, newDefinition);
       hot.data.aurelia.container.res[$$CE.keyFrom(newDefinition.name)] = newDefinition;
 
-      const previousControllers = hot.data.controllers;
-      if(previousControllers == null || previousControllers.length === 0) {
+      const previousControllers = hot.data.controllers ?? [];
+      if(previousControllers.length === 0) {
         // @ts-ignore
-        hot.invalidate();
+        hot.invalidate?.();
       }
 
       // @ts-ignore
