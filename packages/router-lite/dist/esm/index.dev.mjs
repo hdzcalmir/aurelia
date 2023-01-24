@@ -2163,7 +2163,7 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
             }
             if (redirSeg !== null) {
                 if (redirSeg.component.isDynamic && (origSeg?.component.isDynamic ?? false)) {
-                    newSegs.push(rr.route.params[origSeg.component.name]);
+                    newSegs.push(rr.route.params[origSeg.component.parameterName]);
                 }
                 else {
                     newSegs.push(redirSeg.raw);
@@ -2174,7 +2174,14 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
         const redirRR = ctx.recognize(newPath);
         if (redirRR === null)
             throw new UnknownRouteError(`'${newPath}' did not match any configured route or registered component name at '${ctx.friendlyPath}' - did you forget to add '${newPath}' to the routes list of the route decorator of '${ctx.component.name}'?`);
-        return createConfiguredNode(log, node, vi, rr, originalVi, redirRR.route.endpoint.route);
+        return createConfiguredNode(log, node, ViewportInstruction.create({
+            recognizedRoute: redirRR,
+            component: newPath,
+            children: vi.children,
+            viewport: vi.viewport,
+            open: vi.open,
+            close: vi.close,
+        }), redirRR, originalVi);
     });
 }
 function appendNode(log, node, childNode) {
@@ -2909,7 +2916,7 @@ class ViewportInstructionTree {
         }
         let search = this.queryParams.toString();
         search = search === '' ? '' : `?${search}`;
-        return `${pathname}${hash}${search}`;
+        return `${pathname}${search}${hash}`;
     }
     toPath() {
         return this.children.map(x => x.toUrlComponent()).join('+');

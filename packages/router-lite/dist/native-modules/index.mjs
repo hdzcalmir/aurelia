@@ -2046,12 +2046,19 @@ function St(t, e, i, s, n, r = s.route.endpoint.route) {
                     throw new Error(`Unexpected expression kind ${f.right.kind}`);
                 }
             } else throw new Error(`Unexpected expression kind ${f.left.kind}`);
-            if (null !== g) if (g.component.isDynamic && (d?.component.isDynamic ?? false)) p.push(s.route.params[d.component.name]); else p.push(g.raw);
+            if (null !== g) if (g.component.isDynamic && (d?.component.isDynamic ?? false)) p.push(s.route.params[d.component.parameterName]); else p.push(g.raw);
         }
         const m = p.filter(Boolean).join("/");
         const $ = h.recognize(m);
         if (null === $) throw new UnknownRouteError(`'${m}' did not match any configured route or registered component name at '${h.friendlyPath}' - did you forget to add '${m}' to the routes list of the route decorator of '${h.component.name}'?`);
-        return St(t, e, i, s, n, $.route.endpoint.route);
+        return St(t, e, ViewportInstruction.create({
+            recognizedRoute: $,
+            component: m,
+            children: i.children,
+            viewport: i.viewport,
+            open: i.open,
+            close: i.close
+        }), $, n);
     }));
 }
 
@@ -2720,7 +2727,7 @@ class ViewportInstructionTree {
         }
         let s = this.queryParams.toString();
         s = "" === s ? "" : `?${s}`;
-        return `${e}${i}${s}`;
+        return `${e}${s}${i}`;
     }
     toPath() {
         return this.children.map((t => t.toUrlComponent())).join("+");
