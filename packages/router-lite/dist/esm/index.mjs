@@ -2219,6 +2219,7 @@ let Ut = class Router {
         this.locationChangeSubscription = null;
         this.R = false;
         this.C = false;
+        this.I = false;
         this.vpaLookup = new Map;
         this.logger = i.root.scopeTo("Router");
     }
@@ -2277,7 +2278,7 @@ let Ut = class Router {
     resolveContext(t) {
         return RouteContext.resolve(this.ctx, t);
     }
-    I(t) {
+    N(t) {
         this.options = RouterOptions.create(t);
     }
     start(t) {
@@ -2411,9 +2412,8 @@ let Ut = class Router {
         let e = this.resolveContext(t.options.context);
         const i = t.instructions.children;
         const s = e.node.children;
-        const r = !this.navigated || i.length !== s.length || i.some(((t, e) => !(s[e]?.originalInstruction.equals(t) ?? false)));
-        const h = r || "replace" === this.ctx.definition.config.getTransitionPlan(t.previousRouteTree.root, t.routeTree.root);
-        if (!h) {
+        const r = !this.navigated || this.I || i.length !== s.length || i.some(((t, e) => !(s[e]?.originalInstruction.equals(t) ?? false))) || "replace" === this.ctx.definition.config.getTransitionPlan(t.previousRouteTree.root, t.routeTree.root);
+        if (!r) {
             this.logger.trace(`run(tr:%s) - NOT processing route`, t);
             this.navigated = true;
             this.C = false;
@@ -2421,6 +2421,7 @@ let Ut = class Router {
             this.runNextTransition();
             return;
         }
+        this.I = false;
         this.logger.trace(`run(tr:%s) - processing route`, t);
         this.events.publish(new NavigationStartEvent(t.id, t.instructions, t.trigger, t.managedState));
         if (null !== this.nextTr) {
@@ -2454,6 +2455,7 @@ let Ut = class Router {
             })).continueWith((e => {
                 if (true !== t.guardsResult) {
                     e.push();
+                    this.I = false === t.guardsResult;
                     this.cancelNavigation(t);
                 }
             })).continueWith((e => {
@@ -2842,7 +2844,7 @@ class RouteConfig {
         this.component = u;
         this.nav = l;
     }
-    static N(t, e, i) {
+    static A(t, e, i) {
         if ("string" === typeof t || t instanceof Array) {
             const s = t;
             const n = e?.redirectTo ?? null;
@@ -2890,7 +2892,7 @@ const zt = {
         return e.hasOwn(zt.name, t);
     },
     configure(t, i) {
-        const s = RouteConfig.N(t, i, null);
+        const s = RouteConfig.A(t, i, null);
         e.define(zt.name, s, i);
         return i;
     },
@@ -2923,7 +2925,7 @@ class RouteDefinition {
     }
     static resolve(t, e, i, s) {
         const n = e?.config ?? null;
-        if (J(t)) return new RouteDefinition(RouteConfig.N(t, null, n), null, e);
+        if (J(t)) return new RouteDefinition(RouteConfig.A(t, null, n), null, e);
         const r = this.createNavigationInstruction(t);
         let h;
         switch (r.type) {
@@ -2955,7 +2957,7 @@ class RouteDefinition {
             if (null === o) {
                 const r = s.Type;
                 let c = null;
-                if (h) c = RouteConfig.N(t.getRouteConfig(e, i) ?? a, r, n); else c = _(t) ? zt.isConfigured(r) ? zt.getConfig(r).applyChildRouteConfig(t, n) : RouteConfig.N(t, r, n) : zt.getConfig(s.Type);
+                if (h) c = RouteConfig.A(t.getRouteConfig(e, i) ?? a, r, n); else c = _(t) ? zt.isConfigured(r) ? zt.getConfig(r).applyChildRouteConfig(t, n) : RouteConfig.A(t, r, n) : zt.getConfig(s.Type);
                 o = new RouteDefinition(c, s, e);
                 Ht.define(o, s);
             } else if (0 === o.config.routes.length && h) o.applyChildRouteConfig(t.getRouteConfig?.(e, i) ?? a);
@@ -3007,17 +3009,17 @@ class ComponentAgent {
         this.definition = i;
         this.routeNode = s;
         this.ctx = r;
-        this.A = r.container.get(n).scopeTo(`ComponentAgent<${r.friendlyPath}>`);
-        this.A.trace(`constructor()`);
+        this.T = r.container.get(n).scopeTo(`ComponentAgent<${r.friendlyPath}>`);
+        this.T.trace(`constructor()`);
         const o = e.lifecycleHooks;
         this.canLoadHooks = (o.canLoad ?? []).map((t => t.instance));
         this.loadHooks = (o.loading ?? []).map((t => t.instance));
         this.canUnloadHooks = (o.canUnload ?? []).map((t => t.instance));
         this.unloadHooks = (o.unloading ?? []).map((t => t.instance));
-        this.T = "canLoad" in t;
-        this.V = "loading" in t;
-        this.P = "canUnload" in t;
-        this.U = "unloading" in t;
+        this.V = "canLoad" in t;
+        this.P = "loading" in t;
+        this.U = "canUnload" in t;
+        this.L = "unloading" in t;
     }
     static for(t, e, i, s) {
         let n = Wt.get(t);
@@ -3031,26 +3033,26 @@ class ComponentAgent {
     }
     activate(t, e, i) {
         if (null === t) {
-            this.A.trace(`activate() - initial`);
+            this.T.trace(`activate() - initial`);
             return this.controller.activate(this.controller, e, i);
         }
-        this.A.trace(`activate()`);
+        this.T.trace(`activate()`);
         void this.controller.activate(t, e, i);
     }
     deactivate(t, e, i) {
         if (null === t) {
-            this.A.trace(`deactivate() - initial`);
+            this.T.trace(`deactivate() - initial`);
             return this.controller.deactivate(this.controller, e, i);
         }
-        this.A.trace(`deactivate()`);
+        this.T.trace(`deactivate()`);
         void this.controller.deactivate(t, e, i);
     }
     dispose() {
-        this.A.trace(`dispose()`);
+        this.T.trace(`dispose()`);
         this.controller.dispose();
     }
     canUnload(t, e, i) {
-        this.A.trace(`canUnload(next:%s) - invoking ${this.canUnloadHooks.length} hooks`, e);
+        this.T.trace(`canUnload(next:%s) - invoking ${this.canUnloadHooks.length} hooks`, e);
         i.push();
         let s = Promise.resolve();
         for (const n of this.canUnloadHooks) {
@@ -3068,7 +3070,7 @@ class ComponentAgent {
                 }));
             }))));
         }
-        if (this.P) {
+        if (this.U) {
             i.push();
             s = s.then((() => {
                 if (true !== t.guardsResult) {
@@ -3084,7 +3086,7 @@ class ComponentAgent {
         i.pop();
     }
     canLoad(t, e, i) {
-        this.A.trace(`canLoad(next:%s) - invoking ${this.canLoadHooks.length} hooks`, e);
+        this.T.trace(`canLoad(next:%s) - invoking ${this.canLoadHooks.length} hooks`, e);
         const s = this.ctx.root;
         i.push();
         let n = Promise.resolve();
@@ -3103,7 +3105,7 @@ class ComponentAgent {
                 }));
             }))));
         }
-        if (this.T) {
+        if (this.V) {
             i.push();
             n = n.then((() => {
                 if (true !== t.guardsResult) {
@@ -3119,7 +3121,7 @@ class ComponentAgent {
         i.pop();
     }
     unloading(t, e, i) {
-        this.A.trace(`unloading(next:%s) - invoking ${this.unloadHooks.length} hooks`, e);
+        this.T.trace(`unloading(next:%s) - invoking ${this.unloadHooks.length} hooks`, e);
         i.push();
         for (const s of this.unloadHooks) t.run((() => {
             i.push();
@@ -3127,7 +3129,7 @@ class ComponentAgent {
         }), (() => {
             i.pop();
         }));
-        if (this.U) t.run((() => {
+        if (this.L) t.run((() => {
             i.push();
             return this.instance.unloading(e, this.routeNode);
         }), (() => {
@@ -3136,7 +3138,7 @@ class ComponentAgent {
         i.pop();
     }
     loading(t, e, i) {
-        this.A.trace(`loading(next:%s) - invoking ${this.loadHooks.length} hooks`, e);
+        this.T.trace(`loading(next:%s) - invoking ${this.loadHooks.length} hooks`, e);
         i.push();
         for (const s of this.loadHooks) t.run((() => {
             i.push();
@@ -3144,7 +3146,7 @@ class ComponentAgent {
         }), (() => {
             i.pop();
         }));
-        if (this.V) t.run((() => {
+        if (this.P) t.run((() => {
             i.push();
             return this.instance.loading(e.params, e, this.routeNode);
         }), (() => {
@@ -3174,15 +3176,15 @@ class RouteContext {
         this.component = i;
         this.definition = s;
         this.parentContainer = r;
-        this.L = o;
+        this.O = o;
         this.childViewportAgents = [];
         this.childRoutes = [];
-        this.O = null;
         this.j = null;
-        this.prevNode = null;
         this.B = null;
-        this.M = false;
-        this.q = t;
+        this.prevNode = null;
+        this.M = null;
+        this.q = false;
+        this.F = t;
         if (null === e) {
             this.root = this;
             this.path = [ this ];
@@ -3201,7 +3203,7 @@ class RouteContext {
         h.register(s);
         h.register(...i.dependencies);
         this.recognizer = new M;
-        const a = this.F = new NavigationModel([]);
+        const a = this.H = new NavigationModel([]);
         h.get(rt).subscribe("au:router:navigation-end", (() => a.setIsActive(o, this)));
         this.processDefinition(s);
     }
@@ -3212,30 +3214,30 @@ class RouteContext {
         return this.path.length - 1;
     }
     get resolved() {
-        return this.O;
-    }
-    get allResolved() {
         return this.j;
     }
+    get allResolved() {
+        return this.B;
+    }
     get node() {
-        const t = this.B;
+        const t = this.M;
         if (null === t) throw new Error(`Invariant violation: RouteNode should be set immediately after the RouteContext is created. Context: ${this}`);
         return t;
     }
     set node(t) {
-        const e = this.prevNode = this.B;
+        const e = this.prevNode = this.M;
         if (e !== t) {
-            this.B = t;
+            this.M = t;
             this.logger.trace(`Node changed from %s to %s`, this.prevNode, t);
         }
     }
     get vpa() {
-        const t = this.q;
+        const t = this.F;
         if (null === t) throw new Error(`RouteContext has no ViewportAgent: ${this}`);
         return t;
     }
     get navigationModel() {
-        return this.F;
+        return this.H;
     }
     processDefinition(t) {
         const e = [];
@@ -3244,10 +3246,10 @@ class RouteContext {
         const n = s.length;
         if (0 === n) {
             const e = t.component?.Type.prototype?.getRouteConfig;
-            this.M = null == e ? true : "function" !== typeof e;
+            this.q = null == e ? true : "function" !== typeof e;
             return;
         }
-        const r = this.F;
+        const r = this.H;
         let o = 0;
         for (;o < n; o++) {
             const n = s[o];
@@ -3272,12 +3274,12 @@ class RouteContext {
                 }
             }
         }
-        this.M = true;
-        if (e.length > 0) this.O = Promise.all(e).then((() => {
-            this.O = null;
-        }));
-        if (i.length > 0) this.j = Promise.all(i).then((() => {
+        this.q = true;
+        if (e.length > 0) this.j = Promise.all(e).then((() => {
             this.j = null;
+        }));
+        if (i.length > 0) this.B = Promise.all(i).then((() => {
+            this.B = null;
         }));
     }
     static setRoot(t) {
@@ -3343,7 +3345,7 @@ class RouteContext {
         this.logger.trace(`createComponentAgent(routeNode:%s)`, e);
         this.hostControllerProvider.prepare(t);
         const i = this.container.get(e.component.key);
-        if (!this.M) {
+        if (!this.q) {
             const t = RouteDefinition.resolve(i, this.definition, e);
             this.processDefinition(t);
         }
@@ -3386,7 +3388,7 @@ class RouteContext {
         this.logger.trace(`addRoute(routeable:'${t}')`);
         return o(RouteDefinition.resolve(t, this.definition, null, this), (t => {
             for (const e of t.path) this.$addRoute(e, t.caseSensitive, t);
-            this.F.addRoute(t);
+            this.H.addRoute(t);
             this.childRoutes.push(t);
         }));
     }
@@ -3551,13 +3553,13 @@ i.createInterface("INavigationModel");
 class NavigationModel {
     constructor(t) {
         this.routes = t;
-        this.H = void 0;
+        this.W = void 0;
     }
     resolve() {
-        return o(this.H, g);
+        return o(this.W, g);
     }
     setIsActive(t, e) {
-        void o(this.H, (() => {
+        void o(this.W, (() => {
             for (const i of this.routes) i.setIsActive(t, e);
         }));
     }
@@ -3570,9 +3572,9 @@ class NavigationModel {
         const i = e.length;
         e.push(void 0);
         let s;
-        s = this.H = o(this.H, (() => o(t, (t => {
+        s = this.W = o(this.W, (() => o(t, (t => {
             if (t.config.nav) e[i] = NavigationRoute.create(t); else e.splice(i, 1);
-            if (this.H === s) this.H = void 0;
+            if (this.W === s) this.W = void 0;
         }))));
     }
 }
@@ -3588,10 +3590,10 @@ class NavigationRoute {
         return new NavigationRoute(t.id, t.path, t.config.title, t.data);
     }
     get isActive() {
-        return this.W;
+        return this.G;
     }
     setIsActive(t, e) {
-        this.W = this.path.some((i => t.isActive(i, e)));
+        this.G = this.path.some((i => t.isActive(i, e)));
     }
 }
 
@@ -3799,9 +3801,9 @@ let ee = class HrefCustomAttribute {
         }
     }
     handleEvent(t) {
-        this.G(t);
+        this.Y(t);
     }
-    G(t) {
+    Y(t) {
         if (t.altKey || t.ctrlKey || t.shiftKey || t.metaKey || 0 !== t.button || this.isExternal || !this.isEnabled) return;
         const e = this.el.getAttribute("href");
         if (null !== e) {
@@ -3842,7 +3844,7 @@ function ae(e, i) {
         const r = new URL(n.document.baseURI);
         r.pathname = ut(s ?? r.pathname);
         return r;
-    })), L.hydrated(Pt, (t => t.I(i))), L.hydrated(c, RouteContext.setRoot), L.activated(Pt, (t => t.start(true))), L.deactivated(Pt, (t => {
+    })), L.hydrated(Pt, (t => t.N(i))), L.hydrated(c, RouteContext.setRoot), L.activated(Pt, (t => t.start(true))), L.deactivated(Pt, (t => {
         t.stop();
     })), ...se, ...he);
 }

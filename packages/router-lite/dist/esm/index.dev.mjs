@@ -2331,6 +2331,7 @@ let Router = class Router {
         this.locationChangeSubscription = null;
         this._hasTitleBuilder = false;
         this._isNavigating = false;
+        this._cannotBeUnloaded = false;
         this.vpaLookup = new Map();
         this.logger = logger.root.scopeTo('Router');
     }
@@ -2535,10 +2536,11 @@ let Router = class Router {
         let navigationContext = this.resolveContext(tr.options.context);
         const trChildren = tr.instructions.children;
         const nodeChildren = navigationContext.node.children;
-        const routeChanged = !this.navigated
+        const shouldProcess = !this.navigated
+            || this._cannotBeUnloaded
             || trChildren.length !== nodeChildren.length
-            || trChildren.some((x, i) => !(nodeChildren[i]?.originalInstruction.equals(x) ?? false));
-        const shouldProcess = routeChanged || this.ctx.definition.config.getTransitionPlan(tr.previousRouteTree.root, tr.routeTree.root) === 'replace';
+            || trChildren.some((x, i) => !(nodeChildren[i]?.originalInstruction.equals(x) ?? false))
+            || this.ctx.definition.config.getTransitionPlan(tr.previousRouteTree.root, tr.routeTree.root) === 'replace';
         if (!shouldProcess) {
             this.logger.trace(`run(tr:%s) - NOT processing route`, tr);
             this.navigated = true;
@@ -2547,6 +2549,7 @@ let Router = class Router {
             this.runNextTransition();
             return;
         }
+        this._cannotBeUnloaded = false;
         this.logger.trace(`run(tr:%s) - processing route`, tr);
         this.events.publish(new NavigationStartEvent(tr.id, tr.instructions, tr.trigger, tr.managedState));
         if (this.nextTr !== null) {
@@ -2584,6 +2587,7 @@ let Router = class Router {
             }).continueWith(b => {
                 if (tr.guardsResult !== true) {
                     b.push();
+                    this._cannotBeUnloaded = tr.guardsResult === false;
                     this.cancelNavigation(tr);
                 }
             }).continueWith(b => {

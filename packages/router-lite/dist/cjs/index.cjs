@@ -2225,6 +2225,7 @@ exports.Router = class Router {
         this.locationChangeSubscription = null;
         this.R = false;
         this.C = false;
+        this.I = false;
         this.vpaLookup = new Map;
         this.logger = s.root.scopeTo("Router");
     }
@@ -2283,7 +2284,7 @@ exports.Router = class Router {
     resolveContext(t) {
         return RouteContext.resolve(this.ctx, t);
     }
-    I(t) {
+    N(t) {
         this.options = RouterOptions.create(t);
     }
     start(t) {
@@ -2417,9 +2418,8 @@ exports.Router = class Router {
         let s = this.resolveContext(t.options.context);
         const i = t.instructions.children;
         const r = s.node.children;
-        const o = !this.navigated || i.length !== r.length || i.some(((t, e) => !(r[e]?.originalInstruction.equals(t) ?? false)));
-        const h = o || "replace" === this.ctx.definition.config.getTransitionPlan(t.previousRouteTree.root, t.routeTree.root);
-        if (!h) {
+        const o = !this.navigated || this.I || i.length !== r.length || i.some(((t, e) => !(r[e]?.originalInstruction.equals(t) ?? false))) || "replace" === this.ctx.definition.config.getTransitionPlan(t.previousRouteTree.root, t.routeTree.root);
+        if (!o) {
             this.logger.trace(`run(tr:%s) - NOT processing route`, t);
             this.navigated = true;
             this.C = false;
@@ -2427,6 +2427,7 @@ exports.Router = class Router {
             this.runNextTransition();
             return;
         }
+        this.I = false;
         this.logger.trace(`run(tr:%s) - processing route`, t);
         this.events.publish(new NavigationStartEvent(t.id, t.instructions, t.trigger, t.managedState));
         if (null !== this.nextTr) {
@@ -2460,6 +2461,7 @@ exports.Router = class Router {
             })).continueWith((e => {
                 if (true !== t.guardsResult) {
                     e.push();
+                    this.I = false === t.guardsResult;
                     this.cancelNavigation(t);
                 }
             })).continueWith((e => {
@@ -2848,7 +2850,7 @@ class RouteConfig {
         this.component = u;
         this.nav = l;
     }
-    static N(t, e, s) {
+    static A(t, e, s) {
         if ("string" === typeof t || t instanceof Array) {
             const i = t;
             const n = e?.redirectTo ?? null;
@@ -2896,7 +2898,7 @@ const st = {
         return t.Metadata.hasOwn(st.name, e);
     },
     configure(e, s) {
-        const i = RouteConfig.N(e, s, null);
+        const i = RouteConfig.A(e, s, null);
         t.Metadata.define(st.name, i, s);
         return s;
     },
@@ -2929,7 +2931,7 @@ class RouteDefinition {
     }
     static resolve(t, i, n, r) {
         const o = i?.config ?? null;
-        if (f(t)) return new RouteDefinition(RouteConfig.N(t, null, o), null, i);
+        if (f(t)) return new RouteDefinition(RouteConfig.A(t, null, o), null, i);
         const h = this.createNavigationInstruction(t);
         let a;
         switch (h.type) {
@@ -2961,7 +2963,7 @@ class RouteDefinition {
             if (null === r) {
                 const h = s.Type;
                 let c = null;
-                if (a) c = RouteConfig.N(t.getRouteConfig(i, n) ?? e.emptyObject, h, o); else c = l(t) ? st.isConfigured(h) ? st.getConfig(h).applyChildRouteConfig(t, o) : RouteConfig.N(t, h, o) : st.getConfig(s.Type);
+                if (a) c = RouteConfig.A(t.getRouteConfig(i, n) ?? e.emptyObject, h, o); else c = l(t) ? st.isConfigured(h) ? st.getConfig(h).applyChildRouteConfig(t, o) : RouteConfig.A(t, h, o) : st.getConfig(s.Type);
                 r = new RouteDefinition(c, s, i);
                 rt.define(r, s);
             } else if (0 === r.config.routes.length && a) r.applyChildRouteConfig(t.getRouteConfig?.(i, n) ?? e.emptyObject);
@@ -3013,17 +3015,17 @@ class ComponentAgent {
         this.definition = i;
         this.routeNode = n;
         this.ctx = r;
-        this.A = r.container.get(e.ILogger).scopeTo(`ComponentAgent<${r.friendlyPath}>`);
-        this.A.trace(`constructor()`);
+        this.T = r.container.get(e.ILogger).scopeTo(`ComponentAgent<${r.friendlyPath}>`);
+        this.T.trace(`constructor()`);
         const o = s.lifecycleHooks;
         this.canLoadHooks = (o.canLoad ?? []).map((t => t.instance));
         this.loadHooks = (o.loading ?? []).map((t => t.instance));
         this.canUnloadHooks = (o.canUnload ?? []).map((t => t.instance));
         this.unloadHooks = (o.unloading ?? []).map((t => t.instance));
-        this.T = "canLoad" in t;
-        this.V = "loading" in t;
-        this.P = "canUnload" in t;
-        this.U = "unloading" in t;
+        this.V = "canLoad" in t;
+        this.P = "loading" in t;
+        this.U = "canUnload" in t;
+        this.L = "unloading" in t;
     }
     static for(t, e, i, n) {
         let r = ot.get(t);
@@ -3037,26 +3039,26 @@ class ComponentAgent {
     }
     activate(t, e, s) {
         if (null === t) {
-            this.A.trace(`activate() - initial`);
+            this.T.trace(`activate() - initial`);
             return this.controller.activate(this.controller, e, s);
         }
-        this.A.trace(`activate()`);
+        this.T.trace(`activate()`);
         void this.controller.activate(t, e, s);
     }
     deactivate(t, e, s) {
         if (null === t) {
-            this.A.trace(`deactivate() - initial`);
+            this.T.trace(`deactivate() - initial`);
             return this.controller.deactivate(this.controller, e, s);
         }
-        this.A.trace(`deactivate()`);
+        this.T.trace(`deactivate()`);
         void this.controller.deactivate(t, e, s);
     }
     dispose() {
-        this.A.trace(`dispose()`);
+        this.T.trace(`dispose()`);
         this.controller.dispose();
     }
     canUnload(t, e, s) {
-        this.A.trace(`canUnload(next:%s) - invoking ${this.canUnloadHooks.length} hooks`, e);
+        this.T.trace(`canUnload(next:%s) - invoking ${this.canUnloadHooks.length} hooks`, e);
         s.push();
         let i = Promise.resolve();
         for (const n of this.canUnloadHooks) {
@@ -3074,7 +3076,7 @@ class ComponentAgent {
                 }));
             }))));
         }
-        if (this.P) {
+        if (this.U) {
             s.push();
             i = i.then((() => {
                 if (true !== t.guardsResult) {
@@ -3090,7 +3092,7 @@ class ComponentAgent {
         s.pop();
     }
     canLoad(t, e, s) {
-        this.A.trace(`canLoad(next:%s) - invoking ${this.canLoadHooks.length} hooks`, e);
+        this.T.trace(`canLoad(next:%s) - invoking ${this.canLoadHooks.length} hooks`, e);
         const i = this.ctx.root;
         s.push();
         let n = Promise.resolve();
@@ -3109,7 +3111,7 @@ class ComponentAgent {
                 }));
             }))));
         }
-        if (this.T) {
+        if (this.V) {
             s.push();
             n = n.then((() => {
                 if (true !== t.guardsResult) {
@@ -3125,7 +3127,7 @@ class ComponentAgent {
         s.pop();
     }
     unloading(t, e, s) {
-        this.A.trace(`unloading(next:%s) - invoking ${this.unloadHooks.length} hooks`, e);
+        this.T.trace(`unloading(next:%s) - invoking ${this.unloadHooks.length} hooks`, e);
         s.push();
         for (const i of this.unloadHooks) t.run((() => {
             s.push();
@@ -3133,7 +3135,7 @@ class ComponentAgent {
         }), (() => {
             s.pop();
         }));
-        if (this.U) t.run((() => {
+        if (this.L) t.run((() => {
             s.push();
             return this.instance.unloading(e, this.routeNode);
         }), (() => {
@@ -3142,7 +3144,7 @@ class ComponentAgent {
         s.pop();
     }
     loading(t, e, s) {
-        this.A.trace(`loading(next:%s) - invoking ${this.loadHooks.length} hooks`, e);
+        this.T.trace(`loading(next:%s) - invoking ${this.loadHooks.length} hooks`, e);
         s.push();
         for (const i of this.loadHooks) t.run((() => {
             s.push();
@@ -3150,7 +3152,7 @@ class ComponentAgent {
         }), (() => {
             s.pop();
         }));
-        if (this.V) t.run((() => {
+        if (this.P) t.run((() => {
             s.push();
             return this.instance.loading(e.params, e, this.routeNode);
         }), (() => {
@@ -3180,15 +3182,15 @@ class RouteContext {
         this.component = r;
         this.definition = o;
         this.parentContainer = h;
-        this.L = a;
+        this.O = a;
         this.childViewportAgents = [];
         this.childRoutes = [];
-        this.O = null;
         this.j = null;
-        this.prevNode = null;
         this.M = null;
-        this.B = false;
-        this.q = t;
+        this.prevNode = null;
+        this.B = null;
+        this.q = false;
+        this.F = t;
         if (null === n) {
             this.root = this;
             this.path = [ this ];
@@ -3207,7 +3209,7 @@ class RouteContext {
         c.register(o);
         c.register(...r.dependencies);
         this.recognizer = new i.RouteRecognizer;
-        const u = this.F = new NavigationModel([]);
+        const u = this.H = new NavigationModel([]);
         c.get(R).subscribe("au:router:navigation-end", (() => u.setIsActive(a, this)));
         this.processDefinition(o);
     }
@@ -3218,30 +3220,30 @@ class RouteContext {
         return this.path.length - 1;
     }
     get resolved() {
-        return this.O;
-    }
-    get allResolved() {
         return this.j;
     }
+    get allResolved() {
+        return this.M;
+    }
     get node() {
-        const t = this.M;
+        const t = this.B;
         if (null === t) throw new Error(`Invariant violation: RouteNode should be set immediately after the RouteContext is created. Context: ${this}`);
         return t;
     }
     set node(t) {
-        const e = this.prevNode = this.M;
+        const e = this.prevNode = this.B;
         if (e !== t) {
-            this.M = t;
+            this.B = t;
             this.logger.trace(`Node changed from %s to %s`, this.prevNode, t);
         }
     }
     get vpa() {
-        const t = this.q;
+        const t = this.F;
         if (null === t) throw new Error(`RouteContext has no ViewportAgent: ${this}`);
         return t;
     }
     get navigationModel() {
-        return this.F;
+        return this.H;
     }
     processDefinition(t) {
         const s = [];
@@ -3250,10 +3252,10 @@ class RouteContext {
         const r = n.length;
         if (0 === r) {
             const e = t.component?.Type.prototype?.getRouteConfig;
-            this.B = null == e ? true : "function" !== typeof e;
+            this.q = null == e ? true : "function" !== typeof e;
             return;
         }
-        const h = this.F;
+        const h = this.H;
         let a = 0;
         for (;a < r; a++) {
             const r = n[a];
@@ -3278,12 +3280,12 @@ class RouteContext {
                 }
             }
         }
-        this.B = true;
-        if (s.length > 0) this.O = Promise.all(s).then((() => {
-            this.O = null;
-        }));
-        if (i.length > 0) this.j = Promise.all(i).then((() => {
+        this.q = true;
+        if (s.length > 0) this.j = Promise.all(s).then((() => {
             this.j = null;
+        }));
+        if (i.length > 0) this.M = Promise.all(i).then((() => {
+            this.M = null;
         }));
     }
     static setRoot(t) {
@@ -3349,7 +3351,7 @@ class RouteContext {
         this.logger.trace(`createComponentAgent(routeNode:%s)`, e);
         this.hostControllerProvider.prepare(t);
         const s = this.container.get(e.component.key);
-        if (!this.B) {
+        if (!this.q) {
             const t = RouteDefinition.resolve(s, this.definition, e);
             this.processDefinition(t);
         }
@@ -3392,7 +3394,7 @@ class RouteContext {
         this.logger.trace(`addRoute(routeable:'${t}')`);
         return e.onResolve(RouteDefinition.resolve(t, this.definition, null, this), (t => {
             for (const e of t.path) this.$addRoute(e, t.caseSensitive, t);
-            this.F.addRoute(t);
+            this.H.addRoute(t);
             this.childRoutes.push(t);
         }));
     }
@@ -3557,13 +3559,13 @@ e.DI.createInterface("INavigationModel");
 class NavigationModel {
     constructor(t) {
         this.routes = t;
-        this.H = void 0;
+        this.W = void 0;
     }
     resolve() {
-        return e.onResolve(this.H, e.noop);
+        return e.onResolve(this.W, e.noop);
     }
     setIsActive(t, s) {
-        void e.onResolve(this.H, (() => {
+        void e.onResolve(this.W, (() => {
             for (const e of this.routes) e.setIsActive(t, s);
         }));
     }
@@ -3576,9 +3578,9 @@ class NavigationModel {
         const i = s.length;
         s.push(void 0);
         let n;
-        n = this.H = e.onResolve(this.H, (() => e.onResolve(t, (t => {
+        n = this.W = e.onResolve(this.W, (() => e.onResolve(t, (t => {
             if (t.config.nav) s[i] = NavigationRoute.create(t); else s.splice(i, 1);
-            if (this.H === n) this.H = void 0;
+            if (this.W === n) this.W = void 0;
         }))));
     }
 }
@@ -3594,10 +3596,10 @@ class NavigationRoute {
         return new NavigationRoute(t.id, t.path, t.config.title, t.data);
     }
     get isActive() {
-        return this.W;
+        return this._;
     }
     setIsActive(t, e) {
-        this.W = this.path.some((s => t.isActive(s, e)));
+        this._ = this.path.some((s => t.isActive(s, e)));
     }
 }
 
@@ -3805,9 +3807,9 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
         }
     }
     handleEvent(t) {
-        this._(t);
+        this.G(t);
     }
-    _(t) {
+    G(t) {
         if (t.altKey || t.ctrlKey || t.shiftKey || t.metaKey || 0 !== t.button || this.isExternal || !this.isEnabled) return;
         const e = this.el.getAttribute("href");
         if (null !== e) {
@@ -3848,7 +3850,7 @@ function $t(i, n) {
         const o = new URL(n.document.baseURI);
         o.pathname = C(r ?? o.pathname);
         return o;
-    })), s.AppTask.hydrated(J, (t => t.I(n))), s.AppTask.hydrated(e.IContainer, RouteContext.setRoot), s.AppTask.activated(J, (t => t.start(true))), s.AppTask.deactivated(J, (t => {
+    })), s.AppTask.hydrated(J, (t => t.N(n))), s.AppTask.hydrated(e.IContainer, RouteContext.setRoot), s.AppTask.activated(J, (t => t.start(true))), s.AppTask.deactivated(J, (t => {
         t.stop();
     })), ...gt, ...xt);
 }
