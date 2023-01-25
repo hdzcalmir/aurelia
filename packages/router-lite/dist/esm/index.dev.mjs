@@ -2163,7 +2163,7 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
             }
             if (redirSeg !== null) {
                 if (redirSeg.component.isDynamic && (origSeg?.component.isDynamic ?? false)) {
-                    newSegs.push(rr.route.params[origSeg.component.parameterName]);
+                    newSegs.push(rr.route.params[redirSeg.component.parameterName]);
                 }
                 else {
                     newSegs.push(redirSeg.raw);

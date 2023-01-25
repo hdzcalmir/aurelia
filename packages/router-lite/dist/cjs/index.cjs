@@ -2052,7 +2052,7 @@ function z(t, s, i, n, r, o = n.route.endpoint.route) {
                     throw new Error(`Unexpected expression kind ${f.right.kind}`);
                 }
             } else throw new Error(`Unexpected expression kind ${f.left.kind}`);
-            if (null !== g) if (g.component.isDynamic && (d?.component.isDynamic ?? false)) p.push(n.route.params[d.component.parameterName]); else p.push(g.raw);
+            if (null !== g) if (g.component.isDynamic && (d?.component.isDynamic ?? false)) p.push(n.route.params[g.component.parameterName]); else p.push(g.raw);
         }
         const m = p.filter(Boolean).join("/");
         const x = h.recognize(m);

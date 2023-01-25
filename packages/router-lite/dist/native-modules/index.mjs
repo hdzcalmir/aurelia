@@ -2046,7 +2046,7 @@ function St(t, e, i, s, n, r = s.route.endpoint.route) {
                     throw new Error(`Unexpected expression kind ${f.right.kind}`);
                 }
             } else throw new Error(`Unexpected expression kind ${f.left.kind}`);
-            if (null !== g) if (g.component.isDynamic && (d?.component.isDynamic ?? false)) p.push(s.route.params[d.component.parameterName]); else p.push(g.raw);
+            if (null !== g) if (g.component.isDynamic && (d?.component.isDynamic ?? false)) p.push(s.route.params[g.component.parameterName]); else p.push(g.raw);
         }
         const m = p.filter(Boolean).join("/");
         const $ = h.recognize(m);
