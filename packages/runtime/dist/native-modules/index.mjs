@@ -900,12 +900,12 @@ function R(t, e, s, r) {
       case 11:
         {
             const i = R(t.object, e, s, r);
+            const n = R(t.key, e, s, r);
             if (f(i)) {
-                const n = R(t.key, e, s, r);
                 if (null !== r) r.observe(i, n);
                 return i[n];
             }
-            return;
+            return null == i ? void 0 : i[n];
         }
 
       case 12:

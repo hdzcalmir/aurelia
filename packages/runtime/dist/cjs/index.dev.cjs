@@ -851,14 +851,16 @@ function astEvaluate(ast, s, e, c) {
         }
         case 11: {
             const instance = astEvaluate(ast.object, s, e, c);
+            const key = astEvaluate(ast.key, s, e, c);
             if (isObject(instance)) {
-                const key = astEvaluate(ast.key, s, e, c);
                 if (c !== null) {
                     c.observe(instance, key);
                 }
                 return instance[key];
             }
-            return void 0;
+            return instance == null
+                ? void 0
+                : instance[key];
         }
         case 12: {
             const results = ast.expressions.map(expr => astEvaluate(expr, s, e, c));

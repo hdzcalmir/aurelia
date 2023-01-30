@@ -2231,6 +2231,7 @@ const removeListener = (target, name, handler, options) => {
     target.removeEventListener(name, handler, options);
 };
 const mixinNodeObserverUseConfig = (target) => {
+    let event;
     const prototype = target.prototype;
     defineHiddenProp(prototype, 'subscribe', function (subscriber) {
         if (this.subs.add(subscriber) && this.subs.count === 1) {
@@ -2262,7 +2263,6 @@ const mixinNodeObserverUseConfig = (target) => {
         }
     });
 };
-let event;
 const mixinNoopSubscribable = (target) => {
     defineHiddenProp(target.prototype, 'subscribe', kernel.noop);
     defineHiddenProp(target.prototype, 'unsubscribe', kernel.noop);
