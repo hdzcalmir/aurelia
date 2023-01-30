@@ -53,106 +53,6 @@ function resourceName(filePath) {
     return kernel.kebabCase(name);
 }
 
-const getHmrCode = (className, moduleText = 'module') => {
-    const code = `
-    import { Metadata as $$M } from '@aurelia/metadata';
-    import { ExpressionKind as $$EK } from '@aurelia/runtime';
-    import { Controller as $$C, CustomElement as $$CE, IHydrationContext as $$IHC } from '@aurelia/runtime-html';
-
-    // @ts-ignore
-    const controllers = [];
-
-    // @ts-ignore
-    if (${moduleText}.hot) {
-
-    // @ts-ignore
-    ${moduleText}.hot.accept();
-
-    // @ts-ignore
-    const hot = ${moduleText}.hot;
-
-    let aurelia = hot.data?.aurelia;
-
-    // @ts-ignore
-    document.addEventListener('au-started', (event) => {aurelia= event.detail; });
-    const currentClassType = ${className};
-
-    // @ts-ignore
-    const proto = ${className}.prototype
-
-    // @ts-ignore
-    const ogCreated = proto ? proto.created : undefined;
-
-    if (proto) {
-      // @ts-ignore
-      proto.created = function(controller) {
-        // @ts-ignore
-        ogCreated && ogCreated.call(this, controller);
-        controllers.push(controller);
-      }
-    }
-
-    // @ts-ignore
-    hot.dispose(function (data) {
-      // @ts-ignore
-      data.controllers = controllers;
-      data.aurelia = aurelia;
-    });
-
-    if (hot.data?.aurelia) {
-      const newDefinition = $$CE.getDefinition(currentClassType);
-      $$M.define(newDefinition.name, newDefinition, currentClassType);
-      $$M.define(newDefinition.name, newDefinition, newDefinition);
-      hot.data.aurelia.container.res[$$CE.keyFrom(newDefinition.name)] = newDefinition;
-
-      const previousControllers = hot.data.controllers ?? [];
-      if(previousControllers.length === 0) {
-        // @ts-ignore
-        hot.invalidate?.();
-      }
-
-      // @ts-ignore
-      previousControllers.forEach(controller => {
-        const values = { ...controller.viewModel };
-        const hydrationContext = controller.container.get($$IHC)
-        const hydrationInst = hydrationContext.instruction;
-
-        const bindableNames = Object.keys(controller.definition.bindables);
-        // @ts-ignore
-        Object.keys(values).forEach(key => {
-          if (bindableNames.includes(key)) {
-            return;
-          }
-          // if there' some bindings that target the existing property
-          // @ts-ignore
-          const isTargettedByBinding = controller.bindings?.some(y =>
-            y.ast?.$kind === $$EK.AccessScope
-              && y.ast.name === key && y.targetProperty
-          );
-          if (!isTargettedByBinding) {
-            delete values[key];
-          }
-        });
-        const h = controller.host;
-        delete controller._compiledDef;
-        controller.viewModel = controller.container.invoke(currentClassType);
-        controller.definition = newDefinition;
-        Object.assign(controller.viewModel, values);
-        if (controller._hydrateCustomElement) {
-          controller._hydrateCustomElement(hydrationInst, hydrationContext);
-        } else {
-          controller.hE(hydrationInst, hydrationContext);
-        }
-        h.parentNode.replaceChild(controller.host, h);
-        controller.hostController = null;
-        controller.deactivate(controller, controller.parent ?? null, 0);
-        controller.activate(controller, controller.parent ?? null, 0);
-      });
-    }
-  }`;
-    return code;
-};
-
 function preprocessResource(unit, options) {
     const expectedResourceName = resourceName(unit.path);
     const sf = ts__namespace.createSourceFile(unit.path, unit.contents, ts__namespace.ScriptTarget.Latest);
@@ -223,21 +123,23 @@ function preprocessResource(unit, options) {
             implicitElement,
             localDeps,
             conventionalDecorators,
-            customElementName
+            customElementName,
+            transformHtmlImportSpecifier: options.transformHtmlImportSpecifier,
         });
     }
     if (options.hmr && exportedClassName && process.env.NODE_ENV !== 'production') {
-        const hmr = getHmrCode(exportedClassName, options.hmrModule);
-        m.append(hmr);
+        if (options.getHmrCode) {
+            m.append(options.getHmrCode(exportedClassName, unit.path));
+        }
     }
     return m.transform();
 }
 function modifyResource(unit, m, options) {
-    const { implicitElement, localDeps, conventionalDecorators, customElementName } = options;
+    const { implicitElement, localDeps, conventionalDecorators, customElementName, transformHtmlImportSpecifier = s => s, } = options;
     if (implicitElement && unit.filePair) {
         const dec = unit.isViewPair ? 'view' : 'customElement';
         const viewDef = '__au2ViewDef';
-        m.prepend(`import * as ${viewDef} from './${unit.filePair}';\n`);
+        m.prepend(`import * as ${viewDef} from './${transformHtmlImportSpecifier(unit.filePair)}';\n`);
         if (localDeps.length) {
             const elementStatement = unit.contents.slice(implicitElement.pos, implicitElement.end);
             m.replace(implicitElement.pos, implicitElement.end, '');
@@ -571,9 +473,15 @@ function preprocessHtmlTemplate(unit, options, hasViewModel) {
         throw new Error(`<slot> cannot be used in ${unit.path}. <slot> is only available when using ShadowDOM. Please turn on ShadowDOM, or use <au-slot> in non-ShadowDOM mode. https://docs.aurelia.io/app-basics/components-revisited#au-slot`);
     }
     deps.forEach((d, i) => {
+        var _a;
         const ext = path__namespace.extname(d);
-        if (!ext || ext === '.js' || ext === '.ts' || options.templateExtensions.includes(ext)) {
+        if (!ext || ext === '.js' || ext === '.ts') {
             statements.push(`import * as d${i} from ${s(d)};\n`);
+            viewDeps.push(`d${i}`);
+            return;
+        }
+        if (options.templateExtensions.includes(ext)) {
+            statements.push(`import * as d${i} from ${s(((_a = options.transformHtmlImportSpecifier) !== null && _a !== void 0 ? _a : (s => s))(d))};\n`);
             viewDeps.push(`d${i}`);
             return;
         }
@@ -660,8 +568,8 @@ export function register(container) {
 }
 `);
     }
-    if (hmrEnabled) {
-        m.append(getHmrCode('_e', options.hmrModule));
+    if (hmrEnabled && options.getHmrCode) {
+        m.append(options.getHmrCode('_e', options.hmrModule));
     }
     const { code, map } = m.transform();
     map.sourcesContent = [unit.contents];
