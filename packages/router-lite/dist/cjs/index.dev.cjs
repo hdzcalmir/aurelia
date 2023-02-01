@@ -3451,7 +3451,6 @@ class RouteContext {
         container.registerResolver(runtimeHtml.IController, this.hostControllerProvider = new kernel.InstanceProvider(), true);
         container.registerResolver(IRouteContext, new kernel.InstanceProvider('IRouteContext', this));
         container.register(definition);
-        container.register(...component.dependencies);
         this.recognizer = new routeRecognizer.RouteRecognizer();
         const navModel = this._navigationModel = new NavigationModel([]);
         container

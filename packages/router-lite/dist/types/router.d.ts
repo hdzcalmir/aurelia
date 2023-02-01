@@ -145,7 +145,6 @@ export declare class Router {
     private locationChangeSubscription;
     private _isNavigating;
     get isNavigating(): boolean;
-    private _cannotBeUnloaded;
     constructor(container: IContainer, p: IPlatform, logger: ILogger, events: IRouterEvents, locationMgr: ILocationManager);
     /**
      * Get the closest RouteContext relative to the provided component, controller or node.

@@ -3207,7 +3207,6 @@ class RouteContext {
         c.registerResolver(s.IController, this.hostControllerProvider = new e.InstanceProvider, true);
         c.registerResolver(ht, new e.InstanceProvider("IRouteContext", this));
         c.register(o);
-        c.register(...r.dependencies);
         this.recognizer = new i.RouteRecognizer;
         const u = this.H = new NavigationModel([]);
         c.get(R).subscribe("au:router:navigation-end", (() => u.setIsActive(a, this)));
