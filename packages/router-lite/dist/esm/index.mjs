@@ -2399,8 +2399,9 @@ let Ut = class Router {
             r.error(`Transition %s failed: %s`, c, t);
             if (c.erredWithUnknownRoute) this.cancelNavigation(c); else {
                 this.C = false;
-                const t = this.nextTr;
-                if (null !== t) t.previousRouteTree = c.previousRouteTree; else this.u = c.previousRouteTree;
+                this.events.publish(new NavigationErrorEvent(c.id, c.instructions, t));
+                const e = this.nextTr;
+                if (null !== e) e.previousRouteTree = c.previousRouteTree; else this.u = c.previousRouteTree;
             }
             throw t;
         }));

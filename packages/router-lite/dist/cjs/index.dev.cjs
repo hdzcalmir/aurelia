@@ -2522,6 +2522,7 @@ exports.Router = class Router {
             }
             else {
                 this._isNavigating = false;
+                this.events.publish(new NavigationErrorEvent(nextTr.id, nextTr.instructions, err));
                 const $nextTr = this.nextTr;
                 if ($nextTr !== null) {
                     $nextTr.previousRouteTree = nextTr.previousRouteTree;
