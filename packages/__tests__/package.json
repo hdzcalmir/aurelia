@@ -64,7 +64,7 @@
     "i18next": "^17.0.0",
     "jsdom": "^19.0.0",
     "rxjs": "^6.6.7",
-    "typescript": "4.7.3"
+    "typescript": "4.9.5"
   },
   "devDependencies": {
     "@types/jsdom": "^16.2.14",
@@ -90,5 +90,5 @@
     "source-map-support": "^0.5.21",
     "ts-node": "10.9.1"
   },
-  "version": "2.1.0-dev.202302082041"
+  "version": "2.0.0-beta.1"
 }
