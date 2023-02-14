@@ -21,9 +21,9 @@ import { DirectivePrologue, $VariableStatement } from './statements';
 import { $FunctionDeclaration } from './functions';
 import { $InterfaceDeclaration, $TypeAliasDeclaration, $EnumDeclaration } from './types';
 import { $StringLiteral } from './literals';
-export declare type $$ESModuleItem = ($$ESStatementListItem | $ImportDeclaration | $ExportDeclaration);
-export declare type $$TSModuleItem = ($$ESModuleItem | $$TSDeclaration | $ExportAssignment | $ImportEqualsDeclaration | $ModuleDeclaration | $NamespaceExportDeclaration);
-export declare type $$ESModuleOrScript = ($ESModule | $ESScript);
+export type $$ESModuleItem = ($$ESStatementListItem | $ImportDeclaration | $ExportDeclaration);
+export type $$TSModuleItem = ($$ESModuleItem | $$TSDeclaration | $ExportAssignment | $ImportEqualsDeclaration | $ModuleDeclaration | $NamespaceExportDeclaration);
+export type $$ESModuleOrScript = ($ESModule | $ESScript);
 export declare class $ESScript implements I$Node {
     readonly logger: ILogger;
     readonly $file: IFile;
@@ -52,7 +52,7 @@ export declare class $ESScript implements I$Node {
     InstantiateGlobalDeclaration(ctx: ExecutionContext, env: $GlobalEnvRec): $Empty | $Error;
     EvaluateScript(ctx: ExecutionContext): $Any;
 }
-export declare type ModuleStatus = 'uninstantiated' | 'instantiating' | 'instantiated' | 'evaluating' | 'evaluated';
+export type ModuleStatus = 'uninstantiated' | 'instantiating' | 'instantiated' | 'evaluating' | 'evaluated';
 export declare class $ESModule implements I$Node, IModule {
     readonly logger: ILogger;
     readonly $file: IFile;
@@ -130,8 +130,8 @@ export declare class $DocumentFragment implements I$Node, IModule {
     Instantiate(ctx: ExecutionContext): $Undefined | $Error;
     dispose(): void;
 }
-export declare type $$ModuleBody = ($ModuleBlock | $ModuleDeclaration);
-export declare type $$ModuleName = ($Identifier | $StringLiteral);
+export type $$ModuleBody = ($ModuleBlock | $ModuleDeclaration);
+export type $$ModuleName = ($Identifier | $StringLiteral);
 export declare class $ModuleDeclaration implements I$Node {
     readonly node: ModuleDeclaration;
     readonly parent: $ESModule | $$ModuleBody;
@@ -164,7 +164,7 @@ export declare class ImportEntryRecord {
     readonly LocalName: $String;
     constructor(source: $ImportClause | $NamespaceImport | $ImportSpecifier, ModuleRequest: $String, ImportName: $String, LocalName: $String);
 }
-export declare type $$ModuleReference = ($$EntityName | $ExternalModuleReference);
+export type $$ModuleReference = ($$EntityName | $ExternalModuleReference);
 /**
  * One of:
  * - import x = require("mod");
@@ -408,8 +408,8 @@ export declare class $ExternalModuleReference implements I$Node {
     readonly $expression: $StringLiteral;
     constructor(node: ExternalModuleReference, parent: $ImportEqualsDeclaration, ctx: Context, mos?: $ESModule, realm?: Realm, depth?: number, logger?: ILogger, path?: string);
 }
-export declare type $$NodeWithQualifiedName = ($ImportEqualsDeclaration | $QualifiedName);
-export declare type $$EntityName = ($Identifier | $QualifiedName);
+export type $$NodeWithQualifiedName = ($ImportEqualsDeclaration | $QualifiedName);
+export type $$EntityName = ($Identifier | $QualifiedName);
 export declare class $QualifiedName implements I$Node {
     readonly node: QualifiedName;
     readonly parent: $$NodeWithQualifiedName;

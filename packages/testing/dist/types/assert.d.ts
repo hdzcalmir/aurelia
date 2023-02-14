@@ -1,4 +1,4 @@
-declare type ErrorMatcher = string | Error | RegExp | Function;
+type ErrorMatcher = string | Error | RegExp | Function;
 export declare function throws(fn: () => any, errorMatcher?: ErrorMatcher, message?: string): void;
 export declare function rejects(promiseFn: () => Promise<any>, errorMatcher?: ErrorMatcher, message?: string): Promise<void>;
 export declare function doesNotThrow(fn: () => any, errorMatcher?: ErrorMatcher, message?: string): void;

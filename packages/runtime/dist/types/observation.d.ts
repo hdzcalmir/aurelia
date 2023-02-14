@@ -23,7 +23,7 @@ export interface ICoercionConfiguration {
     /** When set to `true`, coerces the `null` and `undefined` values to the target types. This is ineffective when `disableCoercion` is set to `true.` */
     coerceNullish: boolean;
 }
-export declare type InterceptorFunc<TInput = unknown, TOutput = unknown> = (value: TInput, coercionConfig: ICoercionConfiguration | null) => TOutput;
+export type InterceptorFunc<TInput = unknown, TOutput = unknown> = (value: TInput, coercionConfig: ICoercionConfiguration | null) => TOutput;
 export interface IConnectable {
     observe(obj: object, key: PropertyKey): void;
     observeCollection(obj: Collection): void;
@@ -87,7 +87,7 @@ export interface ICollectionSubscriberCollection extends ICollectionSubscribable
 /**
  * A collection (array, set or map)
  */
-export declare type Collection = unknown[] | Set<unknown> | Map<unknown, unknown>;
+export type Collection = unknown[] | Set<unknown> | Map<unknown, unknown>;
 export declare const enum CollectionKind {
     indexed = 8,
     keyed = 4,
@@ -95,10 +95,10 @@ export declare const enum CollectionKind {
     map = 6,
     set = 7
 }
-export declare type LengthPropertyName<T> = T extends unknown[] ? 'length' : T extends Set<unknown> ? 'size' : T extends Map<unknown, unknown> ? 'size' : never;
-export declare type CollectionTypeToKind<T> = T extends unknown[] ? CollectionKind.array | CollectionKind.indexed : T extends Set<unknown> ? CollectionKind.set | CollectionKind.keyed : T extends Map<unknown, unknown> ? CollectionKind.map | CollectionKind.keyed : never;
-export declare type CollectionKindToType<T> = T extends CollectionKind.array ? unknown[] : T extends CollectionKind.indexed ? unknown[] : T extends CollectionKind.map ? Map<unknown, unknown> : T extends CollectionKind.set ? Set<unknown> : T extends CollectionKind.keyed ? Set<unknown> | Map<unknown, unknown> : never;
-export declare type ObservedCollectionKindToType<T> = T extends CollectionKind.array ? unknown[] : T extends CollectionKind.indexed ? unknown[] : T extends CollectionKind.map ? Map<unknown, unknown> : T extends CollectionKind.set ? Set<unknown> : T extends CollectionKind.keyed ? Map<unknown, unknown> | Set<unknown> : never;
+export type LengthPropertyName<T> = T extends unknown[] ? 'length' : T extends Set<unknown> ? 'size' : T extends Map<unknown, unknown> ? 'size' : never;
+export type CollectionTypeToKind<T> = T extends unknown[] ? CollectionKind.array | CollectionKind.indexed : T extends Set<unknown> ? CollectionKind.set | CollectionKind.keyed : T extends Map<unknown, unknown> ? CollectionKind.map | CollectionKind.keyed : never;
+export type CollectionKindToType<T> = T extends CollectionKind.array ? unknown[] : T extends CollectionKind.indexed ? unknown[] : T extends CollectionKind.map ? Map<unknown, unknown> : T extends CollectionKind.set ? Set<unknown> : T extends CollectionKind.keyed ? Set<unknown> | Map<unknown, unknown> : never;
+export type ObservedCollectionKindToType<T> = T extends CollectionKind.array ? unknown[] : T extends CollectionKind.indexed ? unknown[] : T extends CollectionKind.map ? Map<unknown, unknown> : T extends CollectionKind.set ? Set<unknown> : T extends CollectionKind.keyed ? Map<unknown, unknown> | Set<unknown> : never;
 export declare const enum AccessorType {
     None = 0,
     Observer = 1,
@@ -123,7 +123,7 @@ export interface IAccessor<TValue = unknown> {
 export interface IObserver extends IAccessor, ISubscribable {
     doNotCache?: boolean;
 }
-export declare type AccessorOrObserver = (IAccessor | IObserver) & {
+export type AccessorOrObserver = (IAccessor | IObserver) & {
     doNotCache?: boolean;
 };
 /**
@@ -131,7 +131,7 @@ export declare type AccessorOrObserver = (IAccessor | IObserver) & {
  *
  * The deletedIndices property contains the items (in case of an array) or keys (in case of map or set) that have been deleted.
  */
-export declare type IndexMap<T = unknown> = number[] & {
+export type IndexMap<T = unknown> = number[] & {
     deletedIndices: number[];
     deletedItems: T[];
     isIndexMap: true;
@@ -159,14 +159,14 @@ export interface ICollectionObserver<T extends CollectionKind> extends ICollecti
     getLengthObserver(): T extends CollectionKind.array ? CollectionLengthObserver : CollectionSizeObserver;
     notify(): void;
 }
-export declare type CollectionObserver = ICollectionObserver<CollectionKind>;
+export type CollectionObserver = ICollectionObserver<CollectionKind>;
 export interface IBindingContext {
     [key: PropertyKey]: any;
 }
 export interface IOverrideContext {
     [key: PropertyKey]: any;
 }
-export declare type IObservable<T = IIndexable> = T & {
+export type IObservable<T = IIndexable> = T & {
     $observers?: IIndexable<{}, AccessorOrObserver>;
 };
 //# sourceMappingURL=observation.d.ts.map

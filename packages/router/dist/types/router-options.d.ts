@@ -8,7 +8,7 @@ import { Navigation } from './navigation';
 /**
  * How contents are swapped in a viewport when transitioning. Default: `attach-next-detach-current`
  */
-export declare type SwapOrder = 'attach-next-detach-current' | 'attach-detach-simultaneously' | 'detach-current-attach-next' | 'detach-attach-simultaneously';
+export type SwapOrder = 'attach-next-detach-current' | 'attach-detach-simultaneously' | 'detach-current-attach-next' | 'detach-attach-simultaneously';
 export interface ITitleOptions extends Partial<TitleOptions> {
 }
 /**
@@ -248,7 +248,7 @@ export declare class Indicators {
     static for(context: IRouterConfiguration | IRouter | IContainer): Indicators;
     apply(input?: IIndicators): void;
 }
-export declare type FallbackAction = 'abort' | 'process-children';
+export type FallbackAction = 'abort' | 'process-children';
 export interface IRouterOptions extends Omit<Partial<RouterOptions>, 'separators' | 'indicators' | 'title'> {
     /**
      * The router's title configuration

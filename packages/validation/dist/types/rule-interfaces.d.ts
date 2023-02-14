@@ -3,10 +3,10 @@ import { IsBindingBehavior, IExpressionParser } from '@aurelia/runtime';
 import { Deserializer } from './ast-serialization';
 import { IValidationRules } from './rule-provider';
 import { IValidationMessageProvider } from './rules';
-export declare type IValidateable<T = any> = (Class<T> | object) & {
+export type IValidateable<T = any> = (Class<T> | object) & {
     [key in PropertyKey]: any;
 };
-export declare type ValidationRuleExecutionPredicate<TObject extends IValidateable = IValidateable> = (object?: TObject) => boolean;
+export type ValidationRuleExecutionPredicate<TObject extends IValidateable = IValidateable> = (object?: TObject) => boolean;
 export interface IValidationRule<TValue = any, TObject extends IValidateable = IValidateable> {
     tag?: string;
     messageKey: string;
@@ -42,7 +42,7 @@ export interface IRangeRule extends IValidationRule<number> {
 export interface IEqualsRule extends IValidationRule {
     readonly expectedValue: unknown;
 }
-export declare type ValidationDisplayNameAccessor = () => string;
+export type ValidationDisplayNameAccessor = () => string;
 /**
  * Describes a property to be validated.
  */

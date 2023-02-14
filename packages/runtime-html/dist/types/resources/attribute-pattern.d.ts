@@ -64,9 +64,9 @@ export declare class AttributeParser implements IAttributeParser {
     constructor(interpreter: ISyntaxInterpreter, attrPatterns: IAttributePattern[]);
     parse(name: string, value: string): AttrSyntax;
 }
-declare type DecoratableAttributePattern<TProto, TClass> = Class<TProto & Partial<{} | IAttributePattern>, TClass>;
-declare type DecoratedAttributePattern<TProto, TClass> = Class<TProto & IAttributePattern, TClass>;
-declare type AttributePatternDecorator = <TProto, TClass>(target: DecoratableAttributePattern<TProto, TClass>) => DecoratedAttributePattern<TProto, TClass>;
+type DecoratableAttributePattern<TProto, TClass> = Class<TProto & Partial<{} | IAttributePattern>, TClass>;
+type DecoratedAttributePattern<TProto, TClass> = Class<TProto & IAttributePattern, TClass>;
+type AttributePatternDecorator = <TProto, TClass>(target: DecoratableAttributePattern<TProto, TClass>) => DecoratedAttributePattern<TProto, TClass>;
 export interface AttributePattern {
     readonly name: string;
     readonly definitionAnnotationKey: string;

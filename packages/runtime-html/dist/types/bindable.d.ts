@@ -2,10 +2,10 @@ import { Class } from '@aurelia/kernel';
 import { BindingMode } from './binding/interfaces-bindings';
 import type { Constructable } from '@aurelia/kernel';
 import type { InterceptorFunc } from '@aurelia/runtime';
-declare type PropertyType = typeof Number | typeof String | typeof Boolean | typeof BigInt | {
+type PropertyType = typeof Number | typeof String | typeof Boolean | typeof BigInt | {
     coercer: InterceptorFunc;
 } | Class<unknown>;
-export declare type PartialBindableDefinition = {
+export type PartialBindableDefinition = {
     mode?: BindingMode;
     callback?: string;
     attribute?: string;
@@ -20,10 +20,10 @@ export declare type PartialBindableDefinition = {
      */
     nullable?: boolean;
 };
-declare type PartialBindableDefinitionPropertyRequired = PartialBindableDefinition & {
+type PartialBindableDefinitionPropertyRequired = PartialBindableDefinition & {
     property: string;
 };
-declare type PartialBindableDefinitionPropertyOmitted = Omit<PartialBindableDefinition, 'property'>;
+type PartialBindableDefinitionPropertyOmitted = Omit<PartialBindableDefinition, 'property'>;
 /**
  * Decorator: Specifies custom behavior for a bindable property.
  *
@@ -43,29 +43,29 @@ export declare function bindable(prop: string): (target: Constructable) => void;
  * @param prop - The property name
  */
 export declare function bindable(target: {}, prop: string): void;
-declare type BFluent = {
+type BFluent = {
     add(config: PartialBindableDefinitionPropertyRequired): BFluent;
     add(property: string): BFluent & B12345;
 };
-declare type B1<T = {}> = {
+type B1<T = {}> = {
     mode(mode: BindingMode): BFluent & T;
 };
-declare type B2<T = {}> = {
+type B2<T = {}> = {
     callback(callback: string): BFluent & T;
 };
-declare type B3<T = {}> = {
+type B3<T = {}> = {
     attribute(attribute: string): BFluent & T;
 };
-declare type B4<T = {}> = {
+type B4<T = {}> = {
     primary(): BFluent & T;
 };
-declare type B5<T = {}> = {
+type B5<T = {}> = {
     set(setterFn: InterceptorFunc): BFluent & T;
 };
-declare type B45 = B5 & B4<B5>;
-declare type B345 = B45 & B3<B45>;
-declare type B2345 = B345 & B2<B345>;
-declare type B12345 = B2345 & B1<B2345>;
+type B45 = B5 & B4<B5>;
+type B345 = B45 & B3<B45>;
+type B2345 = B345 & B2<B345>;
+type B12345 = B2345 & B1<B2345>;
 export declare const Bindable: Readonly<{
     name: string;
     keyFrom: (name: string) => string;

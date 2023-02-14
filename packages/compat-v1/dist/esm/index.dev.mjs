@@ -197,10 +197,10 @@ DelegateBindingCommand = __decorate([
     bindingCommand('delegate')
 ], DelegateBindingCommand);
 let ListenerBindingRenderer = class ListenerBindingRenderer {
+    static get inject() { return [IEventDelegator]; }
     constructor(eventDelegator) {
         this._eventDelegator = eventDelegator;
     }
-    static get inject() { return [IEventDelegator]; }
     render(renderingCtrl, target, instruction, platform, exprParser) {
         const expr = ensureExpression(exprParser, instruction.from, 8);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));

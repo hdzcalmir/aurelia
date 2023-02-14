@@ -338,6 +338,9 @@ const P = new Set("Array ArrayBuffer Boolean DataView Date Error EvalError Float
 let D = 0;
 
 class Container {
+    get depth() {
+        return null === this.parent ? 0 : this.parent.depth + 1;
+    }
     constructor(t, e) {
         this.parent = t;
         this.config = e;
@@ -356,9 +359,6 @@ class Container {
             if (e.inheritParentResources) this.res = Object.assign(c(), t.res, this.root.res); else this.res = c();
         }
         this.u.set(mt, W);
-    }
-    get depth() {
-        return null === this.parent ? 0 : this.parent.depth + 1;
     }
     register(...e) {
         if (100 === ++this.t) throw K(e);
@@ -1042,26 +1042,26 @@ const zt = {
 };
 
 class InstanceProvider {
-    constructor(t, e) {
-        this.A = null;
-        this.j = t;
-        if (void 0 !== e) this.A = e;
-    }
     get friendlyName() {
-        return this.j;
+        return this.A;
+    }
+    constructor(t, e) {
+        this.j = null;
+        this.A = t;
+        if (void 0 !== e) this.j = e;
     }
     prepare(t) {
-        this.A = t;
+        this.j = t;
     }
     get $isResolver() {
         return true;
     }
     resolve() {
-        if (null == this.A) throw Qt(this.j);
-        return this.A;
+        if (null == this.j) throw Qt(this.A);
+        return this.j;
     }
     dispose() {
-        this.A = null;
+        this.j = null;
     }
 }
 
@@ -1230,6 +1230,9 @@ exports.DefaultLogEventFactory = class DefaultLogEventFactory {
 exports.DefaultLogEventFactory = Vt([ Jt(0, Xt) ], exports.DefaultLogEventFactory);
 
 exports.ConsoleSink = class ConsoleSink {
+    static register(t) {
+        et(Yt, ConsoleSink).register(t);
+    }
     constructor(t) {
         const e = t.console;
         this.handleEvent = function t(r) {
@@ -1272,9 +1275,6 @@ exports.ConsoleSink = class ConsoleSink {
                 }
             }
         };
-    }
-    static register(t) {
-        et(Yt, ConsoleSink).register(t);
     }
 };
 

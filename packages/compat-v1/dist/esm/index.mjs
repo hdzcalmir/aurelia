@@ -166,11 +166,11 @@ let ut = class DelegateBindingCommand {
 ut = X([ T("delegate") ], ut);
 
 let dt = class ListenerBindingRenderer {
-    constructor(t) {
-        this.t = t;
-    }
     static get inject() {
         return [ gt ];
+    }
+    constructor(t) {
+        this.t = t;
     }
     render(t, i, e, n, s) {
         const r = it(s, e.from, 8);

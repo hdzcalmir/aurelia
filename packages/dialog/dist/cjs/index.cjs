@@ -62,6 +62,9 @@ const g = t => t instanceof Promise;
 const D = t => "function" === typeof t;
 
 class DialogController {
+    static get inject() {
+        return [ e.IPlatform, t.IContainer ];
+    }
     constructor(t, e) {
         this.p = t;
         this.ctn = e;
@@ -69,9 +72,6 @@ class DialogController {
             this.t = t;
             this.i = e;
         }));
-    }
-    static get inject() {
-        return [ e.IPlatform, t.IContainer ];
     }
     activate(s) {
         const i = this.ctn.createChild();
@@ -185,12 +185,6 @@ function p(t) {
 }
 
 class DialogService {
-    constructor(t, e, s) {
-        this.h = t;
-        this.p = e;
-        this.R = s;
-        this.dlgs = [];
-    }
     get controllers() {
         return this.dlgs.slice(0);
     }
@@ -200,6 +194,12 @@ class DialogService {
     }
     static get inject() {
         return [ t.IContainer, e.IPlatform, u ];
+    }
+    constructor(t, e, s) {
+        this.h = t;
+        this.p = e;
+        this.R = s;
+        this.dlgs = [];
     }
     static register(s) {
         s.register(i(n, this), e.AppTask.deactivating(n, (e => t.onResolve(e.closeAll(), (t => {

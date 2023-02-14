@@ -14,7 +14,7 @@ import { $Identifier, $Decorator } from './expressions';
 import { $InterfaceDeclaration } from './types';
 import { $ConstructorDeclaration } from './functions';
 import { $List } from '../types/list';
-export declare type $$NodeWithHeritageClauses = ($ClassDeclaration | $ClassExpression | $InterfaceDeclaration);
+export type $$NodeWithHeritageClauses = ($ClassDeclaration | $ClassExpression | $InterfaceDeclaration);
 export declare function $expressionWithTypeArgumentsList(nodes: readonly ExpressionWithTypeArguments[], parent: $HeritageClause, ctx: Context): readonly $ExpressionWithTypeArguments[];
 export declare class $HeritageClause implements I$Node {
     readonly node: HeritageClause;

@@ -70,6 +70,9 @@ const noScrollInfo = {
     width: 0
 };
 class VirtualRepeat {
+    static get inject() {
+        return [runtimeHtml.IRenderLocation, runtimeHtml.IInstruction, runtimeHtml.IController, runtimeHtml.IViewFactory, kernel.IContainer, runtimeHtml.IPlatform];
+    }
     constructor(location, instruction, parent, _factory, _container, platform) {
         this.location = location;
         this.instruction = instruction;
@@ -91,9 +94,6 @@ class VirtualRepeat {
         this._obsMediator = new CollectionObservationMediator(this, hasWrapExpression ? 'handleInnerCollectionChange' : 'handleCollectionChange');
         this.local = forOf.declaration.name;
         this.taskQueue = platform.domWriteQueue;
-    }
-    static get inject() {
-        return [runtimeHtml.IRenderLocation, runtimeHtml.IInstruction, runtimeHtml.IController, runtimeHtml.IViewFactory, kernel.IContainer, runtimeHtml.IPlatform];
     }
     attaching() {
         const container = this._container;
@@ -402,12 +402,12 @@ var SizingSignals;
     SizingSignals[SizingSignals["has_sizing"] = 2] = "has_sizing";
 })(SizingSignals || (SizingSignals = {}));
 class Calculation {
+    static from(signals, minViews) {
+        return new Calculation(signals, minViews);
+    }
     constructor(signals, minViews) {
         this.signals = signals;
         this.minViews = minViews;
-    }
-    static from(signals, minViews) {
-        return new Calculation(signals, minViews);
     }
 }
 Calculation.reset = new Calculation(1, 0);
@@ -518,15 +518,15 @@ class NullCollectionStrategy {
 }
 
 class ScrollerObserverLocator {
-    constructor(p) {
-        this.cache = new WeakMap();
-        this.p = p;
-    }
     static get inject() {
         return [runtimeHtml.IPlatform];
     }
     static register(container) {
         return kernel.Registration.singleton(IScrollerObsererLocator, this).register(container);
+    }
+    constructor(p) {
+        this.cache = new WeakMap();
+        this.p = p;
     }
     getObserver(scroller) {
         const cache = this.cache;
@@ -623,12 +623,12 @@ class ScrollerInfo {
 const getResizeObserverClass = (p) => p.window.ResizeObserver;
 
 class DefaultDomRenderer {
-    constructor(p) {
-        this.p = p;
-    }
     static get inject() { return [runtimeHtml.IPlatform]; }
     static register(container) {
         return kernel.Registration.singleton(IDomRenderer, this).register(container);
+    }
+    constructor(p) {
+        this.p = p;
     }
     render(target) {
         const doc = this.p.document;

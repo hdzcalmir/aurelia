@@ -26,7 +26,7 @@ export interface INodeObserver extends IObserver {
      */
     useConfig(config: INodeObserverConfigBase): void;
 }
-export declare type INodeObserverConstructor = new (el: INode, key: PropertyKey, config: INodeObserverConfig, observerLocator: IObserverLocator, locator: IServiceLocator) => INodeObserver;
+export type INodeObserverConstructor = new (el: INode, key: PropertyKey, config: INodeObserverConfig, observerLocator: IObserverLocator, locator: IServiceLocator) => INodeObserver;
 export interface INodeObserverConfig {
     /**
      * The observer constructor to use

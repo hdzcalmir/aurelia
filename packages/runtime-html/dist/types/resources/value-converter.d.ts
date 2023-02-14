@@ -1,8 +1,8 @@
 import type { Constructable, IContainer, ResourceDefinition, IResourceKind, ResourceType, PartialResourceDefinition } from '@aurelia/kernel';
 import { ValueConverterInstance } from '@aurelia/runtime';
-export declare type PartialValueConverterDefinition = PartialResourceDefinition;
-export declare type ValueConverterType<T extends Constructable = Constructable> = ResourceType<T, ValueConverterInstance>;
-export declare type ValueConverterKind = IResourceKind<ValueConverterType, ValueConverterDefinition> & {
+export type PartialValueConverterDefinition = PartialResourceDefinition;
+export type ValueConverterType<T extends Constructable = Constructable> = ResourceType<T, ValueConverterInstance>;
+export type ValueConverterKind = IResourceKind<ValueConverterType, ValueConverterDefinition> & {
     isType<T>(value: T): value is (T extends Constructable ? ValueConverterType<T> : never);
     define<T extends Constructable>(name: string, Type: T): ValueConverterType<T>;
     define<T extends Constructable>(def: PartialValueConverterDefinition, Type: T): ValueConverterType<T>;
@@ -11,7 +11,7 @@ export declare type ValueConverterKind = IResourceKind<ValueConverterType, Value
     annotate<K extends keyof PartialValueConverterDefinition>(Type: Constructable, prop: K, value: PartialValueConverterDefinition[K]): void;
     getAnnotation<K extends keyof PartialValueConverterDefinition>(Type: Constructable, prop: K): PartialValueConverterDefinition[K];
 };
-export declare type ValueConverterDecorator = <T extends Constructable>(Type: T) => ValueConverterType<T>;
+export type ValueConverterDecorator = <T extends Constructable>(Type: T) => ValueConverterType<T>;
 export declare function valueConverter(definition: PartialValueConverterDefinition): ValueConverterDecorator;
 export declare function valueConverter(name: string): ValueConverterDecorator;
 export declare function valueConverter(nameOrDef: string | PartialValueConverterDefinition): ValueConverterDecorator;

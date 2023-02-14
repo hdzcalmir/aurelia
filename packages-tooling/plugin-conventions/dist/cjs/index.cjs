@@ -5,7 +5,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var path = require('path');
 var modifyCode = require('modify-code');
-var ts = require('typescript');
+var typescript = require('typescript');
 var parse5 = require('parse5');
 var fs = require('fs');
 
@@ -25,7 +25,6 @@ function _interopNamespace(e) {
 
 var path__namespace = /*#__PURE__*/_interopNamespace(path);
 var modifyCode__default = /*#__PURE__*/_interopDefaultLegacy(modifyCode);
-var ts__namespace = /*#__PURE__*/_interopNamespace(ts);
 var fs__namespace = /*#__PURE__*/_interopNamespace(fs);
 
 function nameConvention(className) {
@@ -55,7 +54,7 @@ function resourceName(filePath) {
 
 function preprocessResource(unit, options) {
     const expectedResourceName = resourceName(unit.path);
-    const sf = ts__namespace.createSourceFile(unit.path, unit.contents, ts__namespace.ScriptTarget.Latest);
+    const sf = typescript.createSourceFile(unit.path, unit.contents, typescript.ScriptTarget.Latest);
     let exportedClassName;
     let auImport = { names: [], start: 0, end: 0 };
     let runtimeImport = { names: [], start: 0, end: 0 };
@@ -167,12 +166,12 @@ function modifyResource(unit, m, options) {
     return m;
 }
 function captureImport(s, lib, code) {
-    if (ts__namespace.isImportDeclaration(s) &&
-        ts__namespace.isStringLiteral(s.moduleSpecifier) &&
+    if (typescript.isImportDeclaration(s) &&
+        typescript.isStringLiteral(s.moduleSpecifier) &&
         s.moduleSpecifier.text === lib &&
         s.importClause &&
         s.importClause.namedBindings &&
-        ts__namespace.isNamedImports(s.importClause.namedBindings)) {
+        typescript.isNamedImports(s.importClause.namedBindings)) {
         return {
             names: s.importClause.namedBindings.elements.map(e => e.name.text),
             start: ensureTokenStart(s.pos, code),
@@ -191,23 +190,29 @@ function ensureTokenStart(start, code) {
     return start;
 }
 function isExported(node) {
-    if (!node.modifiers)
+    if (!typescript.canHaveModifiers(node))
         return false;
-    for (const mod of node.modifiers) {
-        if (mod.kind === ts__namespace.SyntaxKind.ExportKeyword)
+    const modifiers = typescript.getModifiers(node);
+    if (modifiers === void 0)
+        return false;
+    for (const mod of modifiers) {
+        if (mod.kind === typescript.SyntaxKind.ExportKeyword)
             return true;
     }
     return false;
 }
 const KNOWN_DECORATORS = ['view', 'customElement', 'customAttribute', 'valueConverter', 'bindingBehavior', 'bindingCommand', 'templateController'];
 function findDecoratedResourceType(node) {
-    if (!node.decorators)
+    if (!typescript.canHaveDecorators(node))
         return;
-    for (const d of node.decorators) {
-        if (!ts__namespace.isCallExpression(d.expression))
+    const decorators = typescript.getDecorators(node);
+    if (decorators === void 0)
+        return;
+    for (const d of decorators) {
+        if (!typescript.isCallExpression(d.expression))
             return;
         const exp = d.expression.expression;
-        if (ts__namespace.isIdentifier(exp)) {
+        if (typescript.isIdentifier(exp)) {
             const name = exp.text;
             if (KNOWN_DECORATORS.includes(name)) {
                 return {
@@ -222,7 +227,7 @@ function isKindOfSame(name1, name2) {
     return name1.replace(/-/g, '') === name2.replace(/-/g, '');
 }
 function findResource(node, expectedResourceName, filePair, isViewPair, code) {
-    if (!ts__namespace.isClassDeclaration(node))
+    if (!typescript.isClassDeclaration(node))
         return;
     if (!node.name)
         return;
@@ -245,7 +250,7 @@ function findResource(node, expectedResourceName, filePair, isViewPair, code) {
         if (isImplicitResource &&
             foundType.type === 'customElement' &&
             foundType.expression.arguments.length === 1 &&
-            ts__namespace.isStringLiteral(foundType.expression.arguments[0])) {
+            typescript.isStringLiteral(foundType.expression.arguments[0])) {
             const customName = foundType.expression.arguments[0];
             return {
                 className,

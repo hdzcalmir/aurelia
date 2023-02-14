@@ -1,6 +1,6 @@
 import { ExecutionContext } from '../realm';
 import { I$Node } from '../ast/_shared';
-export declare type $ListItem = {
+export type $ListItem = {
     is(other: unknown): boolean;
 };
 export declare class $List<T extends $ListItem> extends Array<T> {

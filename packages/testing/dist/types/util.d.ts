@@ -1,11 +1,11 @@
 import { Primitive } from '@aurelia/kernel';
-export declare type BoxedPrimitive = Number | Boolean | String | Symbol;
-export declare type IntArray = Int8Array | Int16Array | Int32Array | Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array;
-export declare type FloatArray = Float32Array | Float64Array;
-export declare type TypedArray = IntArray | FloatArray;
-export declare type IntArrayConstructor = Int8ArrayConstructor | Int16ArrayConstructor | Int32ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor;
-export declare type FloatArrayConstructor = Float32ArrayConstructor | Float64ArrayConstructor;
-export declare type TypedArrayConstructor = IntArrayConstructor | FloatArrayConstructor;
+export type BoxedPrimitive = Number | Boolean | String | Symbol;
+export type IntArray = Int8Array | Int16Array | Int32Array | Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array;
+export type FloatArray = Float32Array | Float64Array;
+export type TypedArray = IntArray | FloatArray;
+export type IntArrayConstructor = Int8ArrayConstructor | Int16ArrayConstructor | Int32ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor;
+export type FloatArrayConstructor = Float32ArrayConstructor | Float64ArrayConstructor;
+export type TypedArrayConstructor = IntArrayConstructor | FloatArrayConstructor;
 export declare const getPrototypeOf: (o: any) => any, getOwnPropertyDescriptor: (o: any, p: PropertyKey) => PropertyDescriptor | undefined, getOwnPropertyDescriptors: <T>(o: T) => { [P in keyof T]: TypedPropertyDescriptor<T[P]>; } & {
     [x: string]: PropertyDescriptor;
 }, getOwnPropertyNames: (o: any) => string[], getOwnPropertySymbols: (o: any) => symbol[], defineProperty: <T>(o: T, p: PropertyKey, attributes: PropertyDescriptor & ThisType<any>) => T, defineProperties: <T>(o: T, properties: PropertyDescriptorMap & ThisType<any>) => T;
@@ -15,12 +15,11 @@ export declare const Object_keys: {
 };
 export declare const Object_is: (value1: any, value2: any) => boolean;
 export declare const Object_freeze: {
-    <T>(a: T[]): readonly T[];
-    <T_1 extends Function>(f: T_1): T_1;
-    <T_2 extends {
+    <T extends Function>(f: T): T;
+    <T_1 extends {
         [idx: string]: object | U | null | undefined;
-    }, U extends string | number | bigint | boolean | symbol>(o: T_2): Readonly<T_2>;
-    <T_3>(o: T_3): Readonly<T_3>;
+    }, U extends string | number | bigint | boolean | symbol>(o: T_1): Readonly<T_1>;
+    <T_2>(o: T_2): Readonly<T_2>;
 };
 export declare const Object_assign: {
     <T extends {}, U>(target: T, source: U): T & U;
@@ -117,9 +116,9 @@ export declare function escapeAndQuoteString(str: string): string;
 export declare function escapeString(str: string): string;
 export declare function truncate<T>(s: T, n: number): T;
 export declare const trimFull: (input: string) => string;
-declare type AnyFunction = (...args: unknown[]) => unknown;
-declare type VoidFunction = (...args: unknown[]) => void;
-export declare type ISpy<T extends AnyFunction = AnyFunction> = T & {
+type AnyFunction = (...args: unknown[]) => unknown;
+type VoidFunction = (...args: unknown[]) => void;
+export type ISpy<T extends AnyFunction = AnyFunction> = T & {
     readonly calls: (readonly unknown[])[];
     restore(): void;
     reset(): void;

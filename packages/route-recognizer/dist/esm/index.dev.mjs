@@ -193,12 +193,12 @@ function compareChains(a, b) {
     return a.compareTo(b);
 }
 class RecognizeResult {
+    get isEmpty() {
+        return this.candidates.length === 0;
+    }
     constructor(rootState) {
         this.candidates = [];
         this.candidates = [new Candidate([''], [rootState], [], this)];
-    }
-    get isEmpty() {
-        return this.candidates.length === 0;
     }
     getSolution() {
         const candidates = this.candidates.filter(hasEndpoint);
@@ -415,11 +415,11 @@ function isNotEmpty(segment) {
 }
 
 class StaticSegment {
+    get kind() { return 4; }
     constructor(value, caseSensitive) {
         this.value = value;
         this.caseSensitive = caseSensitive;
     }
-    get kind() { return 4; }
     appendTo(state) {
         const { value, value: { length } } = this;
         if (this.caseSensitive) {
@@ -442,11 +442,11 @@ class StaticSegment {
     }
 }
 class DynamicSegment {
+    get kind() { return 3; }
     constructor(name, optional) {
         this.name = name;
         this.optional = optional;
     }
-    get kind() { return 3; }
     appendTo(state) {
         state = state.append(this, '/');
         return state;

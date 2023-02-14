@@ -14,5 +14,5 @@
 /**
  * The content states for the viewport content content.
  */
-export declare type ContentState = 'created' | 'checkedUnload' | 'checkedLoad' | 'loaded' | 'activating' | 'activated';
+export type ContentState = 'created' | 'checkedUnload' | 'checkedLoad' | 'loaded' | 'activating' | 'activated';
 //# sourceMappingURL=viewport-content.d.ts.map

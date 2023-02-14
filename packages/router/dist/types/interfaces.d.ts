@@ -22,12 +22,12 @@ export interface IElement extends Element {
 }
 export interface IHTMLElement extends HTMLElement {
 }
-export declare type RouteableComponentType<C extends Constructable = Constructable> = CustomElementType<C> & {
+export type RouteableComponentType<C extends Constructable = Constructable> = CustomElementType<C> & {
     parameters?: string[];
     title?: string | TitleFunction;
     routes?: IRoute[];
 };
-export declare type TitleFunction = (viewModel: IRouteableComponent, instruction: Navigation) => string;
+export type TitleFunction = (viewModel: IRouteableComponent, instruction: Navigation) => string;
 export interface IRouteableComponent extends ICustomElementViewModel {
     reloadBehavior?: ReloadBehavior;
     canLoad?(parameters: Parameters, instruction: RoutingInstruction, navigation: Navigation): boolean | LoadInstruction | LoadInstruction[] | Promise<boolean | LoadInstruction | LoadInstruction[]>;
@@ -54,8 +54,8 @@ export interface IComponentAndOrViewportOrNothing {
     component?: ComponentAppellation;
     viewport?: ViewportHandle;
 }
-export declare type LoadInstruction = ComponentAppellation | IRoutingInstruction | RoutingInstruction;
-export declare type ComponentAppellation = string | RouteableComponentType | IRouteableComponent | Constructable;
-export declare type ViewportHandle = string | Viewport;
-export declare type ComponentParameters = string | Record<string, unknown> | unknown[];
+export type LoadInstruction = ComponentAppellation | IRoutingInstruction | RoutingInstruction;
+export type ComponentAppellation = string | RouteableComponentType | IRouteableComponent | Constructable;
+export type ViewportHandle = string | Viewport;
+export type ComponentParameters = string | Record<string, unknown> | unknown[];
 //# sourceMappingURL=interfaces.d.ts.map

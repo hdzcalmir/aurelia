@@ -380,23 +380,23 @@ function M(t) {
 }
 
 async function N(t, e, ...r) {
-    const i = (t, r) => i => {
+    const i = (t, r) => async i => {
         if (e) {
             console.group(`Step ${r}`);
             console.log(i);
             console.groupEnd();
         }
-        t(i);
+        await t(i);
     };
-    const s = (t, e) => r => {
+    const s = (t, e) => async r => {
         try {
-            t(r);
+            await t(r);
         } catch (t) {
             e(t);
         }
     };
-    const n = (t, e) => r => {
-        t(r);
+    const n = (t, e) => async r => {
+        await t(r);
         e();
     };
     return new Promise(((e, o) => {

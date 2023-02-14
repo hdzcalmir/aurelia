@@ -4110,18 +4110,6 @@ const ProxyObservable = Object.freeze({
 });
 
 class ComputedObserver {
-    constructor(obj, get, set, useProxy, observerLocator) {
-        this.type = 1;
-        this._value = void 0;
-        this._oldValue = void 0;
-        this._isRunning = false;
-        this._isDirty = false;
-        this._obj = obj;
-        this.$get = get;
-        this.$set = set;
-        this._useProxy = useProxy;
-        this.oL = observerLocator;
-    }
     static create(obj, key, descriptor, observerLocator, useProxy) {
         const getter = descriptor.get;
         const setter = descriptor.set;
@@ -4137,6 +4125,18 @@ class ComputedObserver {
             },
         });
         return observer;
+    }
+    constructor(obj, get, set, useProxy, observerLocator) {
+        this.type = 1;
+        this._value = void 0;
+        this._oldValue = void 0;
+        this._isRunning = false;
+        this._isDirty = false;
+        this._obj = obj;
+        this.$get = get;
+        this.$set = set;
+        this._useProxy = useProxy;
+        this.oL = observerLocator;
     }
     getValue() {
         if (this.subs.count === 0) {
@@ -4316,12 +4316,12 @@ class DirtyCheckProperty {
 subscriberCollection(DirtyCheckProperty);
 
 class PrimitiveObserver {
+    get doNotCache() { return true; }
     constructor(obj, key) {
         this.type = 0;
         this._obj = obj;
         this._key = key;
     }
-    get doNotCache() { return true; }
     getValue() {
         return this._obj[this._key];
     }
@@ -4592,10 +4592,10 @@ const nullObjectError = (key) => createError(`AUR0199: trying to observe propert
 
 const IObservation = createInterface('IObservation', x => x.singleton(Observation));
 class Observation {
+    static get inject() { return [IObserverLocator]; }
     constructor(oL) {
         this.oL = oL;
     }
-    static get inject() { return [IObserverLocator]; }
     run(fn) {
         const effect = new Effect(this.oL, fn);
         effect.run();

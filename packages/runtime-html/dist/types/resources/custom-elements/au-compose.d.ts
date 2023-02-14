@@ -13,8 +13,8 @@ export interface IDynamicComponentActivate<T> {
      */
     activate?(model?: T): unknown | Promise<unknown>;
 }
-declare type MaybePromise<T> = T | Promise<T>;
-declare type ChangeSource = 'view' | 'viewModel' | 'model' | 'scopeBehavior';
+type MaybePromise<T> = T | Promise<T>;
+type ChangeSource = 'view' | 'viewModel' | 'model' | 'scopeBehavior';
 export declare class AuCompose {
     view?: string | Promise<string>;
     viewModel?: Constructable | object | Promise<Constructable | object>;

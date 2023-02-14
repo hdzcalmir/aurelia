@@ -18,7 +18,7 @@ import { $Block, DirectivePrologue } from './statements';
 import { $MethodDeclaration, $SetAccessorDeclaration, $GetAccessorDeclaration } from './methods';
 import { $Boolean } from '../types/boolean';
 import { $List } from '../types/list';
-export declare type $$Function = ($FunctionDeclaration | $FunctionExpression | $MethodDeclaration | $ConstructorDeclaration | $SetAccessorDeclaration | $GetAccessorDeclaration | $ArrowFunction);
+export type $$Function = ($FunctionDeclaration | $FunctionExpression | $MethodDeclaration | $ConstructorDeclaration | $SetAccessorDeclaration | $GetAccessorDeclaration | $ArrowFunction);
 export declare class $FormalParameterList extends Array<$ParameterDeclaration> {
     readonly BoundNames: readonly $String[];
     readonly ContainsExpression: boolean;

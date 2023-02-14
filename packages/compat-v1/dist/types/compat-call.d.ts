@@ -1,7 +1,6 @@
-import { type IContainer } from '@aurelia/kernel';
+import { type IContainer, type IServiceLocator } from '@aurelia/kernel';
 import { IAccessor, IAstEvaluator, IBinding, IConnectableBinding, IExpressionParser, IObserverLocator, IsBindingBehavior, Scope } from '@aurelia/runtime';
 import { BindingCommandInstance, CommandType, ICommandBuildInfo, IController, IHydratableController, IInstruction, IRenderer, IPlatform } from '@aurelia/runtime-html';
-import type { IServiceLocator } from '@aurelia/kernel';
 export declare const callSyntax: {
     register(container: IContainer): void;
 };

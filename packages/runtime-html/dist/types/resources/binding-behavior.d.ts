@@ -1,9 +1,9 @@
 import { ResourceType } from '@aurelia/kernel';
 import { BindingBehaviorInstance } from '@aurelia/runtime';
 import type { Constructable, IContainer, IResourceKind, PartialResourceDefinition, ResourceDefinition } from '@aurelia/kernel';
-export declare type PartialBindingBehaviorDefinition = PartialResourceDefinition;
-export declare type BindingBehaviorType<T extends Constructable = Constructable> = ResourceType<T, BindingBehaviorInstance>;
-export declare type BindingBehaviorKind = IResourceKind<BindingBehaviorType, BindingBehaviorDefinition> & {
+export type PartialBindingBehaviorDefinition = PartialResourceDefinition;
+export type BindingBehaviorType<T extends Constructable = Constructable> = ResourceType<T, BindingBehaviorInstance>;
+export type BindingBehaviorKind = IResourceKind<BindingBehaviorType, BindingBehaviorDefinition> & {
     isType<T>(value: T): value is (T extends Constructable ? BindingBehaviorType<T> : never);
     define<T extends Constructable>(name: string, Type: T): BindingBehaviorType<T>;
     define<T extends Constructable>(def: PartialBindingBehaviorDefinition, Type: T): BindingBehaviorType<T>;
@@ -12,7 +12,7 @@ export declare type BindingBehaviorKind = IResourceKind<BindingBehaviorType, Bin
     annotate<K extends keyof PartialBindingBehaviorDefinition>(Type: Constructable, prop: K, value: PartialBindingBehaviorDefinition[K]): void;
     getAnnotation<K extends keyof PartialBindingBehaviorDefinition>(Type: Constructable, prop: K): PartialBindingBehaviorDefinition[K];
 };
-export declare type BindingBehaviorDecorator = <T extends Constructable>(Type: T) => BindingBehaviorType<T>;
+export type BindingBehaviorDecorator = <T extends Constructable>(Type: T) => BindingBehaviorType<T>;
 export declare function bindingBehavior(definition: PartialBindingBehaviorDefinition): BindingBehaviorDecorator;
 export declare function bindingBehavior(name: string): BindingBehaviorDecorator;
 export declare function bindingBehavior(nameOrDef: string | PartialBindingBehaviorDefinition): BindingBehaviorDecorator;

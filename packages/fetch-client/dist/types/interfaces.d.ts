@@ -41,8 +41,8 @@ export interface Interceptor {
      */
     responseError?(error: unknown, request?: Request, httpClient?: HttpClient): Response | Promise<Response>;
 }
-export declare type ValidInterceptorMethodName = keyof Interceptor;
-export declare type RetryableRequest = Request & {
+export type ValidInterceptorMethodName = keyof Interceptor;
+export type RetryableRequest = Request & {
     retryConfig?: RetryConfiguration;
 };
 export interface RetryConfiguration {

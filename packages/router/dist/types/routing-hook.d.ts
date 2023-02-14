@@ -10,28 +10,28 @@ import { Navigation } from './navigation';
 /**
  * Public API
  */
-export declare type RoutingHookType = 'beforeNavigation' | 'transformFromUrl' | 'transformToUrl' | 'transformTitle';
+export type RoutingHookType = 'beforeNavigation' | 'transformFromUrl' | 'transformToUrl' | 'transformTitle';
 /**
  * Public API
  */
-export declare type BeforeNavigationHookFunction = (routingInstructions: RoutingInstruction[], navigationInstruction: Navigation) => Promise<boolean | RoutingInstruction[]>;
+export type BeforeNavigationHookFunction = (routingInstructions: RoutingInstruction[], navigationInstruction: Navigation) => Promise<boolean | RoutingInstruction[]>;
 /**
  * Public API
  */
-export declare type TransformFromUrlHookFunction = (url: string, navigationInstruction: Navigation) => Promise<string | RoutingInstruction[]>;
+export type TransformFromUrlHookFunction = (url: string, navigationInstruction: Navigation) => Promise<string | RoutingInstruction[]>;
 /**
  * Public API
  */
-export declare type TransformToUrlHookFunction = (state: string | RoutingInstruction[], navigationInstruction: Navigation) => Promise<string | RoutingInstruction[]>;
+export type TransformToUrlHookFunction = (state: string | RoutingInstruction[], navigationInstruction: Navigation) => Promise<string | RoutingInstruction[]>;
 /**
  * Public API
  */
-export declare type TransformTitleHookFunction = (title: string | RoutingInstruction[], navigationInstruction: Navigation) => Promise<string | RoutingInstruction[]>;
-export declare type RoutingHookTarget = ComponentAppellation | IComponentAndOrViewportOrNothing;
+export type TransformTitleHookFunction = (title: string | RoutingInstruction[], navigationInstruction: Navigation) => Promise<string | RoutingInstruction[]>;
+export type RoutingHookTarget = ComponentAppellation | IComponentAndOrViewportOrNothing;
 /**
  * Public API
  */
-export declare type RoutingHookIdentity = number;
+export type RoutingHookIdentity = number;
 /**
  * Public API
  */

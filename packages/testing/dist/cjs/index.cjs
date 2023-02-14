@@ -691,13 +691,6 @@ function et(e, t) {
 }
 
 class TestContext {
-    constructor() {
-        this.c = void 0;
-        this.p = void 0;
-        this.t = void 0;
-        this.oL = void 0;
-        this.i = void 0;
-    }
     get wnd() {
         return this.platform.globalThis;
     }
@@ -761,6 +754,13 @@ class TestContext {
     get domParser() {
         if (void 0 === this.i) this.i = this.doc.createElement("div");
         return this.i;
+    }
+    constructor() {
+        this.c = void 0;
+        this.p = void 0;
+        this.t = void 0;
+        this.oL = void 0;
+        this.i = void 0;
     }
     static create() {
         return new TestContext;
@@ -4124,16 +4124,16 @@ class MockBrowserHistoryLocation {
 }
 
 class ChangeSet {
-    constructor(e, t, n) {
-        this.index = e;
-        this.O = t;
-        this.ov = n;
-    }
     get newValue() {
         return this.O;
     }
     get oldValue() {
         return this.ov;
+    }
+    constructor(e, t, n) {
+        this.index = e;
+        this.O = t;
+        this.ov = n;
     }
     dispose() {
         this.O = void 0;
@@ -4142,18 +4142,18 @@ class ChangeSet {
 }
 
 class ProxyChangeSet {
+    get newValue() {
+        return this.O;
+    }
+    get oldValue() {
+        return this.ov;
+    }
     constructor(e, t, n, i, r) {
         this.index = e;
         this.flags = t;
         this.key = n;
         this.O = i;
         this.ov = r;
-    }
-    get newValue() {
-        return this.O;
-    }
-    get oldValue() {
-        return this.ov;
     }
     dispose() {
         this.O = void 0;
@@ -4162,12 +4162,12 @@ class ProxyChangeSet {
 }
 
 class CollectionChangeSet {
+    get indexMap() {
+        return this.j;
+    }
     constructor(e, t) {
         this.index = e;
         this.j = t;
-    }
-    get indexMap() {
-        return this.j;
     }
     dispose() {
         this.j = void 0;
@@ -4175,12 +4175,6 @@ class CollectionChangeSet {
 }
 
 class SpySubscriber {
-    constructor() {
-        this.A = void 0;
-        this.R = void 0;
-        this.q = void 0;
-        this.M = 0;
-    }
     get changes() {
         if (void 0 === this.A) return [];
         return this.A;
@@ -4204,6 +4198,12 @@ class SpySubscriber {
     }
     get callCount() {
         return this.M;
+    }
+    constructor() {
+        this.A = void 0;
+        this.R = void 0;
+        this.q = void 0;
+        this.M = 0;
     }
     handleChange(e, t) {
         if (void 0 === this.A) this.A = [ new ChangeSet(this.M++, e, t) ]; else this.A.push(new ChangeSet(this.M++, e, t));

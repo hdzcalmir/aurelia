@@ -1033,12 +1033,6 @@ class ValidationSerializer {
 }
 
 exports.ValidationDeserializer = class ValidationDeserializer {
-    constructor(e, t, s) {
-        this.locator = e;
-        this.messageProvider = t;
-        this.parser = s;
-        this.astDeserializer = new Deserializer;
-    }
     static register(e) {
         this.container = e;
     }
@@ -1048,6 +1042,12 @@ exports.ValidationDeserializer = class ValidationDeserializer {
         const n = new ValidationDeserializer(this.container, r, i);
         const o = JSON.parse(e);
         return n.hydrate(o, t);
+    }
+    constructor(e, t, s) {
+        this.locator = e;
+        this.messageProvider = t;
+        this.parser = s;
+        this.astDeserializer = new Deserializer;
     }
     hydrate(e, t) {
         switch (e.$TYPE) {

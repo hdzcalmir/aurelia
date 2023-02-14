@@ -426,24 +426,24 @@ function dispatchify(action) {
 }
 
 async function executeSteps(store, shouldLogResults, ...steps) {
-    const logStep = (step, stepIdx) => (res) => {
+    const logStep = (step, stepIdx) => async (res) => {
         if (shouldLogResults) {
             console.group(`Step ${stepIdx}`);
             console.log(res);
             console.groupEnd();
         }
-        step(res);
+        await step(res);
     };
-    const tryStep = (step, reject) => (res) => {
+    const tryStep = (step, reject) => async (res) => {
         try {
-            step(res);
+            await step(res);
         }
         catch (err) {
             reject(err);
         }
     };
-    const lastStep = (step, resolve) => (res) => {
-        step(res);
+    const lastStep = (step, resolve) => async (res) => {
+        await step(res);
         resolve();
     };
     return new Promise((resolve, reject) => {

@@ -1,9 +1,8 @@
 import { IConnectableBinding, IAstEvaluator } from '@aurelia/runtime';
-import { IPlatform, type IBindingController } from '@aurelia/runtime-html';
+import { IPlatform, type IBindingController, type IHydratableController, type INode } from '@aurelia/runtime-html';
 import i18next from 'i18next';
 import type { IContainer, IServiceLocator } from '@aurelia/kernel';
 import type { Scope, IsExpression, IExpressionParser, IObserverLocator } from '@aurelia/runtime';
-import type { IHydratableController, INode } from '@aurelia/runtime-html';
 import type { TranslationBindBindingInstruction, TranslationBindingInstruction } from './translation-renderer';
 import type { TranslationParametersBindingInstruction } from './translation-parameters-renderer';
 interface TranslationBindingCreationContext {

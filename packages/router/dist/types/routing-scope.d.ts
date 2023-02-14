@@ -11,7 +11,7 @@ import { Endpoint, IConnectedCustomElement } from './endpoints/endpoint';
 import { EndpointContent, Navigation } from './index';
 import { IContainer } from '@aurelia/kernel';
 import { Parameters } from './instructions/instruction-parameters';
-export declare type TransitionAction = 'skip' | 'reload' | 'swap' | '';
+export type TransitionAction = 'skip' | 'reload' | 'swap' | '';
 /**
  * The router uses routing scopes to organize all endpoints (viewports and viewport
  * scopes) into two hierarchical structures. Each routing scope belongs to a parent/child

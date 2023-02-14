@@ -42,6 +42,7 @@ const isPromise = (v) => v instanceof Promise;
 const isFunction = (v) => typeof v === 'function';
 
 class DialogController {
+    static get inject() { return [IPlatform, IContainer]; }
     constructor(p, container) {
         this.p = p;
         this.ctn = container;
@@ -50,7 +51,6 @@ class DialogController {
             this._reject = reject;
         });
     }
-    static get inject() { return [IPlatform, IContainer]; }
     activate(settings) {
         const container = this.ctn.createChild();
         const { model, template, rejectOnCancel } = settings;
@@ -183,12 +183,6 @@ function createDialogCloseError(output) {
 }
 
 class DialogService {
-    constructor(_ctn, p, _defaultSettings) {
-        this._ctn = _ctn;
-        this.p = p;
-        this._defaultSettings = _defaultSettings;
-        this.dlgs = [];
-    }
     get controllers() {
         return this.dlgs.slice(0);
     }
@@ -197,6 +191,12 @@ class DialogService {
         return dlgs.length > 0 ? dlgs[dlgs.length - 1] : null;
     }
     static get inject() { return [IContainer, IPlatform, IDialogGlobalSettings]; }
+    constructor(_ctn, p, _defaultSettings) {
+        this._ctn = _ctn;
+        this.p = p;
+        this._defaultSettings = _defaultSettings;
+        this.dlgs = [];
+    }
     static register(container) {
         container.register(singletonRegistration(IDialogService, this), AppTask.deactivating(IDialogService, dialogService => onResolve(dialogService.closeAll(), (openDialogController) => {
             if (openDialogController.length > 0) {

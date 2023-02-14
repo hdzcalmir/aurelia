@@ -142,5 +142,5 @@ export declare class Route {
      */
     private static validateRouteConfiguration;
 }
-export declare type RouteType<T extends Constructable = Constructable> = ResourceType<T, InstanceType<T>, IRoute>;
+export type RouteType<T extends Constructable = Constructable> = ResourceType<T, InstanceType<T>, IRoute>;
 //# sourceMappingURL=route.d.ts.map

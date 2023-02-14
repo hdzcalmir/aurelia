@@ -367,58 +367,58 @@ RouterEvents = __decorate([
     __param(1, kernel.ILogger)
 ], RouterEvents);
 class LocationChangeEvent {
+    get name() { return 'au:router:location-change'; }
     constructor(id, url, trigger, state) {
         this.id = id;
         this.url = url;
         this.trigger = trigger;
         this.state = state;
     }
-    get name() { return 'au:router:location-change'; }
     toString() {
         return `LocationChangeEvent(id:${this.id},url:'${this.url}',trigger:'${this.trigger}')`;
     }
 }
 class NavigationStartEvent {
+    get name() { return 'au:router:navigation-start'; }
     constructor(id, instructions, trigger, managedState) {
         this.id = id;
         this.instructions = instructions;
         this.trigger = trigger;
         this.managedState = managedState;
     }
-    get name() { return 'au:router:navigation-start'; }
     toString() {
         return `NavigationStartEvent(id:${this.id},instructions:'${this.instructions}',trigger:'${this.trigger}')`;
     }
 }
 class NavigationEndEvent {
+    get name() { return 'au:router:navigation-end'; }
     constructor(id, instructions, finalInstructions) {
         this.id = id;
         this.instructions = instructions;
         this.finalInstructions = finalInstructions;
     }
-    get name() { return 'au:router:navigation-end'; }
     toString() {
         return `NavigationEndEvent(id:${this.id},instructions:'${this.instructions}',finalInstructions:'${this.finalInstructions}')`;
     }
 }
 class NavigationCancelEvent {
+    get name() { return 'au:router:navigation-cancel'; }
     constructor(id, instructions, reason) {
         this.id = id;
         this.instructions = instructions;
         this.reason = reason;
     }
-    get name() { return 'au:router:navigation-cancel'; }
     toString() {
         return `NavigationCancelEvent(id:${this.id},instructions:'${this.instructions}',reason:${String(this.reason)})`;
     }
 }
 class NavigationErrorEvent {
+    get name() { return 'au:router:navigation-error'; }
     constructor(id, instructions, error) {
         this.id = id;
         this.instructions = instructions;
         this.error = error;
     }
-    get name() { return 'au:router:navigation-error'; }
     toString() {
         return `NavigationErrorEvent(id:${this.id},instructions:'${this.instructions}',error:${String(this.error)})`;
     }
@@ -559,15 +559,15 @@ function normalizeQuery(query) {
 
 const terminal = ['?', '#', '/', '+', '(', ')', '.', '@', '!', '=', ',', '&', '\'', '~', ';'];
 class ParserState {
+    get done() {
+        return this.rest.length === 0;
+    }
     constructor(input) {
         this.input = input;
         this.buffers = [];
         this.bufferIndex = 0;
         this.index = 0;
         this.rest = input;
-    }
-    get done() {
-        return this.rest.length === 0;
     }
     startsWith(...values) {
         const rest = this.rest;
@@ -640,6 +640,7 @@ exports.ExpressionKind = void 0;
 const fragmentRouteExpressionCache = new Map();
 const routeExpressionCache = new Map();
 class RouteExpression {
+    get kind() { return 0; }
     constructor(raw, isAbsolute, root, queryParams, fragment, fragmentIsRoute) {
         this.raw = raw;
         this.isAbsolute = isAbsolute;
@@ -648,7 +649,6 @@ class RouteExpression {
         this.fragment = fragment;
         this.fragmentIsRoute = fragmentIsRoute;
     }
-    get kind() { return 0; }
     static parse(path, fragmentIsRoute) {
         const cache = fragmentIsRoute ? fragmentRouteExpressionCache : routeExpressionCache;
         let result = cache.get(path);
@@ -696,11 +696,11 @@ class RouteExpression {
     }
 }
 class CompositeSegmentExpression {
+    get kind() { return 1; }
     constructor(raw, siblings) {
         this.raw = raw;
         this.siblings = siblings;
     }
-    get kind() { return 1; }
     static parse(state) {
         state.record();
         const append = state.consumeOptional('+');
@@ -741,12 +741,12 @@ class CompositeSegmentExpression {
     }
 }
 class ScopedSegmentExpression {
+    get kind() { return 2; }
     constructor(raw, left, right) {
         this.raw = raw;
         this.left = left;
         this.right = right;
     }
-    get kind() { return 2; }
     static parse(state) {
         state.record();
         const left = SegmentGroupExpression.parse(state);
@@ -773,11 +773,11 @@ class ScopedSegmentExpression {
     }
 }
 class SegmentGroupExpression {
+    get kind() { return 3; }
     constructor(raw, expression) {
         this.raw = raw;
         this.expression = expression;
     }
-    get kind() { return 3; }
     static parse(state) {
         state.record();
         if (state.consumeOptional('(')) {
@@ -797,6 +797,8 @@ class SegmentGroupExpression {
     }
 }
 class SegmentExpression {
+    get kind() { return 4; }
+    static get EMPTY() { return new SegmentExpression('', ComponentExpression.EMPTY, ActionExpression.EMPTY, ViewportExpression.EMPTY, true); }
     constructor(raw, component, action, viewport, scoped) {
         this.raw = raw;
         this.component = component;
@@ -804,8 +806,6 @@ class SegmentExpression {
         this.viewport = viewport;
         this.scoped = scoped;
     }
-    get kind() { return 4; }
-    static get EMPTY() { return new SegmentExpression('', ComponentExpression.EMPTY, ActionExpression.EMPTY, ViewportExpression.EMPTY, true); }
     static parse(state) {
         state.record();
         const component = ComponentExpression.parse(state);
@@ -831,6 +831,8 @@ class SegmentExpression {
     }
 }
 class ComponentExpression {
+    get kind() { return 5; }
+    static get EMPTY() { return new ComponentExpression('', '', ParameterListExpression.EMPTY); }
     constructor(raw, name, parameterList) {
         this.raw = raw;
         this.name = name;
@@ -856,8 +858,6 @@ class ComponentExpression {
                 break;
         }
     }
-    get kind() { return 5; }
-    static get EMPTY() { return new ComponentExpression('', '', ParameterListExpression.EMPTY); }
     static parse(state) {
         state.record();
         state.record();
@@ -888,13 +888,13 @@ class ComponentExpression {
     }
 }
 class ActionExpression {
+    get kind() { return 6; }
+    static get EMPTY() { return new ActionExpression('', '', ParameterListExpression.EMPTY); }
     constructor(raw, name, parameterList) {
         this.raw = raw;
         this.name = name;
         this.parameterList = parameterList;
     }
-    get kind() { return 6; }
-    static get EMPTY() { return new ActionExpression('', '', ParameterListExpression.EMPTY); }
     static parse(state) {
         state.record();
         let name = '';
@@ -917,12 +917,12 @@ class ActionExpression {
     }
 }
 class ViewportExpression {
+    get kind() { return 7; }
+    static get EMPTY() { return new ViewportExpression('', ''); }
     constructor(raw, name) {
         this.raw = raw;
         this.name = name;
     }
-    get kind() { return 7; }
-    static get EMPTY() { return new ViewportExpression('', ''); }
     static parse(state) {
         state.record();
         let name = '';
@@ -944,12 +944,12 @@ class ViewportExpression {
     }
 }
 class ParameterListExpression {
+    get kind() { return 8; }
+    static get EMPTY() { return new ParameterListExpression('', []); }
     constructor(raw, expressions) {
         this.raw = raw;
         this.expressions = expressions;
     }
-    get kind() { return 8; }
-    static get EMPTY() { return new ParameterListExpression('', []); }
     static parse(state) {
         state.record();
         const expressions = [];
@@ -977,13 +977,13 @@ class ParameterListExpression {
     }
 }
 class ParameterExpression {
+    get kind() { return 9; }
+    static get EMPTY() { return new ParameterExpression('', '', ''); }
     constructor(raw, key, value) {
         this.raw = raw;
         this.key = key;
         this.value = value;
     }
-    get kind() { return 9; }
-    static get EMPTY() { return new ParameterExpression('', '', ''); }
     static parse(state, index) {
         state.record();
         state.record();
@@ -1040,6 +1040,11 @@ class ViewportRequest {
 }
 const viewportAgentLookup = new WeakMap();
 class ViewportAgent {
+    get $state() { return $state(this.state); }
+    get currState() { return this.state & 16256; }
+    set currState(state) { this.state = (this.state & 127) | state; }
+    get nextState() { return this.state & 127; }
+    set nextState(state) { this.state = (this.state & 16256) | state; }
     constructor(viewport, hostController, ctx) {
         this.viewport = viewport;
         this.hostController = hostController;
@@ -1056,11 +1061,6 @@ class ViewportAgent {
         this.logger = ctx.container.get(kernel.ILogger).scopeTo(`ViewportAgent<${ctx.friendlyPath}>`);
         this.logger.trace(`constructor()`);
     }
-    get $state() { return $state(this.state); }
-    get currState() { return this.state & 16256; }
-    set currState(state) { this.state = (this.state & 127) | state; }
-    get nextState() { return this.state & 127; }
-    set nextState(state) { this.state = (this.state & 16256) | state; }
     static for(viewport, ctx) {
         let viewportAgent = viewportAgentLookup.get(viewport);
         if (viewportAgent === void 0) {
@@ -1792,6 +1792,9 @@ function stringifyState(state) {
 
 let nodeId = 0;
 class RouteNode {
+    get root() {
+        return this.tree.root;
+    }
     constructor(id, path, finalPath, context, originalInstruction, instruction, params, queryParams, fragment, data, viewport, title, component, children, residue) {
         this.id = id;
         this.path = path;
@@ -1810,9 +1813,6 @@ class RouteNode {
         this.residue = residue;
         this.version = 1;
         this.originalInstruction ?? (this.originalInstruction = instruction);
-    }
-    get root() {
-        return this.tree.root;
     }
     static create(input) {
         const { [routeRecognizer.RESIDUE]: _, ...params } = input.params ?? {};
@@ -2215,13 +2215,13 @@ function valueOrFuncToValue(instructions, valueOrFunc) {
     return valueOrFunc;
 }
 class RouterOptions {
+    static get DEFAULT() { return RouterOptions.create({}); }
     constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle) {
         this.useUrlFragmentHash = useUrlFragmentHash;
         this.useHref = useHref;
         this.historyStrategy = historyStrategy;
         this.buildTitle = buildTitle;
     }
-    static get DEFAULT() { return RouterOptions.create({}); }
     static create(input) {
         return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null);
     }
@@ -2244,6 +2244,7 @@ class RouterOptions {
     }
 }
 class NavigationOptions extends RouterOptions {
+    static get DEFAULT() { return NavigationOptions.create({}); }
     constructor(routerOptions, title, titleSeparator, context, queryParams, fragment, state) {
         super(routerOptions.useUrlFragmentHash, routerOptions.useHref, routerOptions.historyStrategy, routerOptions.buildTitle);
         this.title = title;
@@ -2253,7 +2254,6 @@ class NavigationOptions extends RouterOptions {
         this.fragment = fragment;
         this.state = state;
     }
-    static get DEFAULT() { return NavigationOptions.create({}); }
     static create(input) {
         return new NavigationOptions(RouterOptions.create(input), input.title ?? null, input.titleSeparator ?? ' | ', input.context ?? null, input.queryParams ?? null, input.fragment ?? '', input.state ?? null);
     }
@@ -2267,6 +2267,7 @@ class NavigationOptions extends RouterOptions {
 class UnknownRouteError extends Error {
 }
 class Transition {
+    get erredWithUnknownRoute() { return this._erredWithUnknownRoute; }
     constructor(id, prevInstructions, instructions, finalInstructions, instructionsChanged, trigger, options, managedState, previousRouteTree, routeTree, promise, resolve, reject, guardsResult, error) {
         this.id = id;
         this.prevInstructions = prevInstructions;
@@ -2285,7 +2286,6 @@ class Transition {
         this.error = error;
         this._erredWithUnknownRoute = false;
     }
-    get erredWithUnknownRoute() { return this._erredWithUnknownRoute; }
     static create(input) {
         return new Transition(input.id, input.prevInstructions, input.instructions, input.finalInstructions, input.instructionsChanged, input.trigger, input.options, input.managedState, input.previousRouteTree, input.routeTree, input.promise, input.resolve, input.reject, input.guardsResult, void 0);
     }
@@ -2318,27 +2318,6 @@ class Transition {
 }
 const IRouter = kernel.DI.createInterface('IRouter', x => x.singleton(exports.Router));
 exports.Router = class Router {
-    constructor(container, p, logger, events, locationMgr) {
-        this.container = container;
-        this.p = p;
-        this.logger = logger;
-        this.events = events;
-        this.locationMgr = locationMgr;
-        this._ctx = null;
-        this._routeTree = null;
-        this._currentTr = null;
-        this.options = RouterOptions.DEFAULT;
-        this.navigated = false;
-        this.navigationId = 0;
-        this.instructions = ViewportInstructionTree.create('');
-        this.nextTr = null;
-        this.locationChangeSubscription = null;
-        this._hasTitleBuilder = false;
-        this._isNavigating = false;
-        this._cannotBeUnloaded = false;
-        this.vpaLookup = new Map();
-        this.logger = logger.root.scopeTo('Router');
-    }
     get ctx() {
         let ctx = this._ctx;
         if (ctx === null) {
@@ -2392,6 +2371,27 @@ exports.Router = class Router {
     }
     get isNavigating() {
         return this._isNavigating;
+    }
+    constructor(container, p, logger, events, locationMgr) {
+        this.container = container;
+        this.p = p;
+        this.logger = logger;
+        this.events = events;
+        this.locationMgr = locationMgr;
+        this._ctx = null;
+        this._routeTree = null;
+        this._currentTr = null;
+        this.options = RouterOptions.DEFAULT;
+        this.navigated = false;
+        this.navigationId = 0;
+        this.instructions = ViewportInstructionTree.create('');
+        this.nextTr = null;
+        this.locationChangeSubscription = null;
+        this._hasTitleBuilder = false;
+        this._isNavigating = false;
+        this._cannotBeUnloaded = false;
+        this.vpaLookup = new Map();
+        this.logger = logger.root.scopeTo('Router');
     }
     resolveContext(context) {
         return RouteContext.resolve(this.ctx, context);
@@ -3421,6 +3421,42 @@ function isEagerInstruction(val) {
         && !(component instanceof Promise);
 }
 class RouteContext {
+    get isRoot() {
+        return this.parent === null;
+    }
+    get depth() {
+        return this.path.length - 1;
+    }
+    get resolved() {
+        return this._resolved;
+    }
+    get allResolved() {
+        return this._allResolved;
+    }
+    get node() {
+        const node = this._node;
+        if (node === null) {
+            throw new Error(`Invariant violation: RouteNode should be set immediately after the RouteContext is created. Context: ${this}`);
+        }
+        return node;
+    }
+    set node(value) {
+        const prev = this.prevNode = this._node;
+        if (prev !== value) {
+            this._node = value;
+            this.logger.trace(`Node changed from %s to %s`, this.prevNode, value);
+        }
+    }
+    get vpa() {
+        const vpa = this._vpa;
+        if (vpa === null) {
+            throw new Error(`RouteContext has no ViewportAgent: ${this}`);
+        }
+        return vpa;
+    }
+    get navigationModel() {
+        return this._navigationModel;
+    }
     constructor(viewportAgent, parent, component, definition, parentContainer, _router) {
         this.parent = parent;
         this.component = component;
@@ -3458,42 +3494,6 @@ class RouteContext {
             .get(IRouterEvents)
             .subscribe('au:router:navigation-end', () => navModel.setIsActive(_router, this));
         this.processDefinition(definition);
-    }
-    get isRoot() {
-        return this.parent === null;
-    }
-    get depth() {
-        return this.path.length - 1;
-    }
-    get resolved() {
-        return this._resolved;
-    }
-    get allResolved() {
-        return this._allResolved;
-    }
-    get node() {
-        const node = this._node;
-        if (node === null) {
-            throw new Error(`Invariant violation: RouteNode should be set immediately after the RouteContext is created. Context: ${this}`);
-        }
-        return node;
-    }
-    set node(value) {
-        const prev = this.prevNode = this._node;
-        if (prev !== value) {
-            this._node = value;
-            this.logger.trace(`Node changed from %s to %s`, this.prevNode, value);
-        }
-    }
-    get vpa() {
-        const vpa = this._vpa;
-        if (vpa === null) {
-            throw new Error(`RouteContext has no ViewportAgent: ${this}`);
-        }
-        return vpa;
-    }
-    get navigationModel() {
-        return this._navigationModel;
     }
     processDefinition(definition) {
         const promises = [];
@@ -4121,6 +4121,9 @@ exports.LoadCustomAttribute = __decorate([
 ], exports.LoadCustomAttribute);
 
 exports.HrefCustomAttribute = class HrefCustomAttribute {
+    get isExternal() {
+        return this.el.hasAttribute('external') || this.el.hasAttribute('data-external');
+    }
     constructor(target, el, router, ctx, w) {
         this.target = target;
         this.el = el;
@@ -4143,9 +4146,6 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
         else {
             this.isEnabled = false;
         }
-    }
-    get isExternal() {
-        return this.el.hasAttribute('external') || this.el.hasAttribute('data-external');
     }
     binding() {
         if (!this.isInitialized) {

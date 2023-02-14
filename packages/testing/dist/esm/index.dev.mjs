@@ -832,13 +832,6 @@ function isDeepStrictEqual(val1, val2) {
 }
 
 class TestContext {
-    constructor() {
-        this._container = void 0;
-        this._platform = void 0;
-        this._templateCompiler = void 0;
-        this.oL = void 0;
-        this._domParser = void 0;
-    }
     get wnd() { return this.platform.globalThis; }
     get doc() { return this.platform.document; }
     get userAgent() { return this.platform.navigator.userAgent; }
@@ -886,6 +879,13 @@ class TestContext {
             this._domParser = this.doc.createElement('div');
         }
         return this._domParser;
+    }
+    constructor() {
+        this._container = void 0;
+        this._platform = void 0;
+        this._templateCompiler = void 0;
+        this.oL = void 0;
+        this._domParser = void 0;
     }
     static create() {
         return new TestContext();
@@ -7990,16 +7990,16 @@ class MockBrowserHistoryLocation {
     }
 }
 class ChangeSet {
-    constructor(index, newValue, oldValue) {
-        this.index = index;
-        this._newValue = newValue;
-        this._oldValue = oldValue;
-    }
     get newValue() {
         return this._newValue;
     }
     get oldValue() {
         return this._oldValue;
+    }
+    constructor(index, newValue, oldValue) {
+        this.index = index;
+        this._newValue = newValue;
+        this._oldValue = oldValue;
     }
     dispose() {
         this._newValue = (void 0);
@@ -8007,6 +8007,12 @@ class ChangeSet {
     }
 }
 class ProxyChangeSet {
+    get newValue() {
+        return this._newValue;
+    }
+    get oldValue() {
+        return this._oldValue;
+    }
     constructor(index, flags, key, newValue, oldValue) {
         this.index = index;
         this.flags = flags;
@@ -8014,36 +8020,24 @@ class ProxyChangeSet {
         this._newValue = newValue;
         this._oldValue = oldValue;
     }
-    get newValue() {
-        return this._newValue;
-    }
-    get oldValue() {
-        return this._oldValue;
-    }
     dispose() {
         this._newValue = (void 0);
         this._oldValue = (void 0);
     }
 }
 class CollectionChangeSet {
+    get indexMap() {
+        return this._indexMap;
+    }
     constructor(index, indexMap) {
         this.index = index;
         this._indexMap = indexMap;
-    }
-    get indexMap() {
-        return this._indexMap;
     }
     dispose() {
         this._indexMap = (void 0);
     }
 }
 class SpySubscriber {
-    constructor() {
-        this._changes = void 0;
-        this._proxyChanges = void 0;
-        this._collectionChanges = void 0;
-        this._callCount = 0;
-    }
     get changes() {
         if (this._changes === void 0) {
             return [];
@@ -8073,6 +8067,12 @@ class SpySubscriber {
     }
     get callCount() {
         return this._callCount;
+    }
+    constructor() {
+        this._changes = void 0;
+        this._proxyChanges = void 0;
+        this._collectionChanges = void 0;
+        this._callCount = 0;
     }
     handleChange(newValue, oldValue) {
         if (this._changes === void 0) {

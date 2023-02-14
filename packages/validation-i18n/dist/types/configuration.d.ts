@@ -1,6 +1,6 @@
 import { IContainer } from '@aurelia/kernel';
 import { ValidationI18nCustomizationOptions } from './localization';
-export declare type ValidationConfigurationProvider = (options: ValidationI18nCustomizationOptions) => void;
+export type ValidationConfigurationProvider = (options: ValidationI18nCustomizationOptions) => void;
 export declare const ValidationI18nConfiguration: {
     optionsProvider: ValidationConfigurationProvider;
     register(container: IContainer): IContainer;

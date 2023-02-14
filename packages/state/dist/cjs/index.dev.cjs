@@ -26,6 +26,9 @@ const ActionHandler = Object.freeze({
 });
 
 class Store {
+    static register(c) {
+        kernel.Registration.singleton(IStore, this).register(c);
+    }
     constructor(initialState, reducers, logger) {
         this._subs = new Set();
         this._dispatching = 0;
@@ -33,9 +36,6 @@ class Store {
         this._state = initialState ?? new State();
         this._handlers = reducers;
         this._logger = logger;
-    }
-    static register(c) {
-        kernel.Registration.singleton(IStore, this).register(c);
     }
     subscribe(subscriber) {
         {

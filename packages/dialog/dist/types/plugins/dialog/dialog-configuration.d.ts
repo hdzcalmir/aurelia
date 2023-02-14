@@ -1,6 +1,6 @@
 import { IContainer, IRegistry } from '@aurelia/kernel';
 import { IDialogGlobalSettings } from './dialog-interfaces';
-export declare type DialogConfigurationProvider = (settings: IDialogGlobalSettings) => void | Promise<unknown>;
+export type DialogConfigurationProvider = (settings: IDialogGlobalSettings) => void | Promise<unknown>;
 export interface DialogConfiguration extends IRegistry {
     settingsProvider: DialogConfigurationProvider;
     register(container: IContainer): IContainer;

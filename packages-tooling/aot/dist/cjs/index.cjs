@@ -513,19 +513,6 @@ function compareIndices(a, b) {
 
 let descriptorId = 0;
 class $PropertyDescriptor {
-    constructor(realm, name, config) {
-        this.realm = realm;
-        this.name = name;
-        this.id = ++descriptorId;
-        const $empty = realm['[[Intrinsics]]'].empty;
-        this['[[Enumerable]]'] = $empty;
-        this['[[Configurable]]'] = $empty;
-        this['[[Get]]'] = $empty;
-        this['[[Set]]'] = $empty;
-        this['[[Value]]'] = $empty;
-        this['[[Writable]]'] = $empty;
-        Object.assign(this, config);
-    }
     get isAbrupt() { return false; }
     get isEmpty() { return false; }
     get isUndefined() { return false; }
@@ -549,6 +536,19 @@ class $PropertyDescriptor {
             this['[[Set]]'].isEmpty &&
             this['[[Value]]'].isEmpty &&
             this['[[Writable]]'].isEmpty);
+    }
+    constructor(realm, name, config) {
+        this.realm = realm;
+        this.name = name;
+        this.id = ++descriptorId;
+        const $empty = realm['[[Intrinsics]]'].empty;
+        this['[[Enumerable]]'] = $empty;
+        this['[[Configurable]]'] = $empty;
+        this['[[Get]]'] = $empty;
+        this['[[Set]]'] = $empty;
+        this['[[Value]]'] = $empty;
+        this['[[Writable]]'] = $empty;
+        Object.assign(this, config);
     }
     Complete(ctx) {
         const realm = ctx.Realm;
@@ -594,19 +594,6 @@ function $IsDataDescriptor(Desc) {
 }
 
 class $Number {
-    constructor(realm, value, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null, conversionSource = null) {
-        this.realm = realm;
-        this.sourceNode = sourceNode;
-        this.conversionSource = conversionSource;
-        this.id = nextValueId();
-        this.IntrinsicName = 'number';
-        this.nodeStack = [];
-        this.ctx = null;
-        this.stack = '';
-        this['[[Value]]'] = value;
-        this['[[Type]]'] = type;
-        this['[[Target]]'] = target;
-    }
     get isAbrupt() { return (this['[[Type]]'] !== 1); }
     get Type() { return 'Number'; }
     get isNaN() { return isNaN(this['[[Value]]']); }
@@ -633,6 +620,19 @@ class $Number {
     get isSpeculative() { return false; }
     get hasValue() { return true; }
     get isList() { return false; }
+    constructor(realm, value, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null, conversionSource = null) {
+        this.realm = realm;
+        this.sourceNode = sourceNode;
+        this.conversionSource = conversionSource;
+        this.id = nextValueId();
+        this.IntrinsicName = 'number';
+        this.nodeStack = [];
+        this.ctx = null;
+        this.stack = '';
+        this['[[Value]]'] = value;
+        this['[[Type]]'] = type;
+        this['[[Target]]'] = target;
+    }
     is(other) {
         return other instanceof $Number && Object.is(this['[[Value]]'], other['[[Value]]']);
     }
@@ -742,19 +742,6 @@ class $Number {
 }
 
 class $String {
-    constructor(realm, value, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null, conversionSource = null) {
-        this.realm = realm;
-        this.sourceNode = sourceNode;
-        this.conversionSource = conversionSource;
-        this.id = nextValueId();
-        this.IntrinsicName = 'string';
-        this.nodeStack = [];
-        this.ctx = null;
-        this.stack = '';
-        this['[[Value]]'] = value;
-        this['[[Type]]'] = type;
-        this['[[Target]]'] = target;
-    }
     get isAbrupt() { return (this['[[Type]]'] !== 1); }
     get Type() { return 'String'; }
     get isEmpty() { return false; }
@@ -801,6 +788,19 @@ class $String {
             return num >= 0 && num <= (2 ** 32 - 1);
         }
         return false;
+    }
+    constructor(realm, value, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null, conversionSource = null) {
+        this.realm = realm;
+        this.sourceNode = sourceNode;
+        this.conversionSource = conversionSource;
+        this.id = nextValueId();
+        this.IntrinsicName = 'string';
+        this.nodeStack = [];
+        this.ctx = null;
+        this.stack = '';
+        this['[[Value]]'] = value;
+        this['[[Type]]'] = type;
+        this['[[Target]]'] = target;
     }
     is(other) {
         return other instanceof $String && this['[[Value]]'] === other['[[Value]]'];
@@ -881,17 +881,6 @@ class $String {
 }
 
 class $Error {
-    constructor(realm, err, intrinsicName) {
-        this.realm = realm;
-        this.id = nextValueId();
-        this['[[Type]]'] = 5;
-        this.nodeStack = [];
-        this.ctx = null;
-        this.stack = '';
-        this.IntrinsicName = intrinsicName;
-        this['[[Value]]'] = err;
-        this['[[Target]]'] = realm['[[Intrinsics]]'].empty;
-    }
     get isAbrupt() { return true; }
     get isEmpty() { return false; }
     get isUndefined() { return false; }
@@ -912,6 +901,17 @@ class $Error {
     get isSpeculative() { return false; }
     get hasValue() { return true; }
     get isList() { return false; }
+    constructor(realm, err, intrinsicName) {
+        this.realm = realm;
+        this.id = nextValueId();
+        this['[[Type]]'] = 5;
+        this.nodeStack = [];
+        this.ctx = null;
+        this.stack = '';
+        this.IntrinsicName = intrinsicName;
+        this['[[Value]]'] = err;
+        this['[[Target]]'] = realm['[[Intrinsics]]'].empty;
+    }
     is(other) {
         return other instanceof $Error && other.id === this.id;
     }
@@ -1032,15 +1032,6 @@ class $List extends Array {
 
 const empty = Symbol('empty');
 class $Empty {
-    constructor(realm, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null) {
-        this.realm = realm;
-        this.sourceNode = sourceNode;
-        this.id = nextValueId();
-        this.IntrinsicName = 'empty';
-        this['[[Value]]'] = empty;
-        this['[[Type]]'] = type;
-        this['[[Target]]'] = target;
-    }
     get isAbrupt() { return (this['[[Type]]'] !== 1); }
     get Type() { return new $TypeError(this.realm, `[[empty]] has no Type`); }
     get isEmpty() { return true; }
@@ -1062,6 +1053,15 @@ class $Empty {
     get isSpeculative() { return false; }
     get hasValue() { return false; }
     get isList() { return false; }
+    constructor(realm, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null) {
+        this.realm = realm;
+        this.sourceNode = sourceNode;
+        this.id = nextValueId();
+        this.IntrinsicName = 'empty';
+        this['[[Value]]'] = empty;
+        this['[[Type]]'] = type;
+        this['[[Target]]'] = target;
+    }
     is(other) {
         return other instanceof $Empty;
     }
@@ -1842,22 +1842,6 @@ function $SpeciesConstructor(ctx, O, defaultConstructor) {
 }
 
 class $Object {
-    constructor(realm, IntrinsicName, proto, type, target) {
-        this.realm = realm;
-        this.IntrinsicName = IntrinsicName;
-        this.disposed = false;
-        this.id = nextValueId();
-        this.propertyMap = new Map();
-        this.propertyDescriptors = [];
-        this.propertyKeys = [];
-        this.nodeStack = [];
-        this.ctx = null;
-        this.stack = '';
-        this['[[Prototype]]'] = proto;
-        this['[[Extensible]]'] = realm['[[Intrinsics]]'].true;
-        this['[[Type]]'] = type;
-        this['[[Target]]'] = target;
-    }
     get '[[Value]]'() {
         const obj = {};
         for (const pd of this.propertyDescriptors) {
@@ -1885,6 +1869,22 @@ class $Object {
     get isSpeculative() { return false; }
     get hasValue() { return false; }
     get isList() { return false; }
+    constructor(realm, IntrinsicName, proto, type, target) {
+        this.realm = realm;
+        this.IntrinsicName = IntrinsicName;
+        this.disposed = false;
+        this.id = nextValueId();
+        this.propertyMap = new Map();
+        this.propertyDescriptors = [];
+        this.propertyKeys = [];
+        this.nodeStack = [];
+        this.ctx = null;
+        this.stack = '';
+        this['[[Prototype]]'] = proto;
+        this['[[Extensible]]'] = realm['[[Intrinsics]]'].true;
+        this['[[Type]]'] = type;
+        this['[[Target]]'] = target;
+    }
     static ObjectCreate(ctx, IntrinsicName, proto, internalSlotsList) {
         const realm = ctx.Realm;
         const obj = new $Object(realm, IntrinsicName, proto, 1, realm['[[Intrinsics]]'].empty);
@@ -2326,19 +2326,6 @@ class $Object {
 }
 
 class $Boolean {
-    constructor(realm, value, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null, conversionSource = null) {
-        this.realm = realm;
-        this.sourceNode = sourceNode;
-        this.conversionSource = conversionSource;
-        this.id = nextValueId();
-        this.IntrinsicName = 'boolean';
-        this.nodeStack = [];
-        this.ctx = null;
-        this.stack = '';
-        this['[[Value]]'] = value;
-        this['[[Type]]'] = type;
-        this['[[Target]]'] = target;
-    }
     get isAbrupt() { return (this['[[Type]]'] !== 1); }
     get Type() { return 'Boolean'; }
     get isEmpty() { return false; }
@@ -2360,6 +2347,19 @@ class $Boolean {
     get isSpeculative() { return false; }
     get hasValue() { return true; }
     get isList() { return false; }
+    constructor(realm, value, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null, conversionSource = null) {
+        this.realm = realm;
+        this.sourceNode = sourceNode;
+        this.conversionSource = conversionSource;
+        this.id = nextValueId();
+        this.IntrinsicName = 'boolean';
+        this.nodeStack = [];
+        this.ctx = null;
+        this.stack = '';
+        this['[[Value]]'] = value;
+        this['[[Type]]'] = type;
+        this['[[Target]]'] = target;
+    }
     is(other) {
         return other instanceof $Boolean && this['[[Value]]'] === other['[[Value]]'];
     }
@@ -2439,18 +2439,6 @@ class $Boolean {
 }
 
 class $Null {
-    constructor(realm, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null) {
-        this.realm = realm;
-        this.sourceNode = sourceNode;
-        this.id = nextValueId();
-        this.IntrinsicName = 'null';
-        this['[[Value]]'] = null;
-        this.nodeStack = [];
-        this.ctx = null;
-        this.stack = '';
-        this['[[Type]]'] = type;
-        this['[[Target]]'] = target;
-    }
     get isAbrupt() { return (this['[[Type]]'] !== 1); }
     get Type() { return 'Null'; }
     get isEmpty() { return false; }
@@ -2473,6 +2461,18 @@ class $Null {
     get hasValue() { return true; }
     get isAmbiguous() { return false; }
     get isList() { return false; }
+    constructor(realm, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null) {
+        this.realm = realm;
+        this.sourceNode = sourceNode;
+        this.id = nextValueId();
+        this.IntrinsicName = 'null';
+        this['[[Value]]'] = null;
+        this.nodeStack = [];
+        this.ctx = null;
+        this.stack = '';
+        this['[[Type]]'] = type;
+        this['[[Target]]'] = target;
+    }
     is(other) {
         return other instanceof $Null;
     }
@@ -2548,18 +2548,6 @@ class $Null {
 }
 
 class $Symbol {
-    constructor(realm, Description, value = Symbol(Description['[[Value]]']), type = 1, target = realm['[[Intrinsics]]'].empty) {
-        this.realm = realm;
-        this.Description = Description;
-        this.id = nextValueId();
-        this.IntrinsicName = 'symbol';
-        this.nodeStack = [];
-        this.ctx = null;
-        this.stack = '';
-        this['[[Value]]'] = value;
-        this['[[Type]]'] = type;
-        this['[[Target]]'] = target;
-    }
     get isAbrupt() { return (this['[[Type]]'] !== 1); }
     get Type() { return 'Symbol'; }
     get isEmpty() { return false; }
@@ -2582,6 +2570,18 @@ class $Symbol {
     get hasValue() { return true; }
     get isList() { return false; }
     get IsArrayIndex() { return false; }
+    constructor(realm, Description, value = Symbol(Description['[[Value]]']), type = 1, target = realm['[[Intrinsics]]'].empty) {
+        this.realm = realm;
+        this.Description = Description;
+        this.id = nextValueId();
+        this.IntrinsicName = 'symbol';
+        this.nodeStack = [];
+        this.ctx = null;
+        this.stack = '';
+        this['[[Value]]'] = value;
+        this['[[Type]]'] = type;
+        this['[[Target]]'] = target;
+    }
     is(other) {
         return other instanceof $Symbol && this['[[Value]]'] === other['[[Value]]'];
     }
@@ -2661,18 +2661,6 @@ class $Symbol {
 }
 
 class $Undefined {
-    constructor(realm, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null) {
-        this.realm = realm;
-        this.sourceNode = sourceNode;
-        this.id = nextValueId();
-        this.IntrinsicName = 'undefined';
-        this['[[Value]]'] = void 0;
-        this.nodeStack = [];
-        this.ctx = null;
-        this.stack = '';
-        this['[[Type]]'] = type;
-        this['[[Target]]'] = target;
-    }
     get isAbrupt() { return (this['[[Type]]'] !== 1); }
     get Type() { return 'Undefined'; }
     get isEmpty() { return false; }
@@ -2695,6 +2683,18 @@ class $Undefined {
     get hasValue() { return true; }
     get isList() { return false; }
     get IsArrayIndex() { return false; }
+    constructor(realm, type = 1, target = realm['[[Intrinsics]]'].empty, sourceNode = null) {
+        this.realm = realm;
+        this.sourceNode = sourceNode;
+        this.id = nextValueId();
+        this.IntrinsicName = 'undefined';
+        this['[[Value]]'] = void 0;
+        this.nodeStack = [];
+        this.ctx = null;
+        this.stack = '';
+        this['[[Type]]'] = type;
+        this['[[Target]]'] = target;
+    }
     is(other) {
         return other instanceof $Undefined;
     }
@@ -2783,14 +2783,14 @@ class Job {
     }
 }
 class JobQueue {
+    get isEmpty() {
+        return this.queue.length === 0;
+    }
     constructor(logger, name) {
         this.logger = logger;
         this.name = name;
         this.queue = [];
         this.logger = logger.root.scopeTo(`JobQueue['${name}']`);
-    }
-    get isEmpty() {
-        return this.queue.length === 0;
     }
     EnqueueJob(ctx, job) {
         const realm = ctx.Realm;
@@ -2807,6 +2807,9 @@ class JobQueue {
 
 let bindingId = 0;
 class $Binding {
+    get isIndirect() {
+        return this.M !== null;
+    }
     constructor(isMutable, isStrict, isInitialized, canBeDeleted, value, name, origin, M = null, N2 = null) {
         this.isMutable = isMutable;
         this.isStrict = isStrict;
@@ -2819,9 +2822,6 @@ class $Binding {
         this.N2 = N2;
         this.id = ++bindingId;
     }
-    get isIndirect() {
-        return this.M !== null;
-    }
     dispose() {
         this.value = void 0;
         this.origin = void 0;
@@ -2830,13 +2830,6 @@ class $Binding {
     }
 }
 class $DeclarativeEnvRec {
-    constructor(logger, realm, outer) {
-        this.logger = logger;
-        this.realm = realm;
-        this.outer = outer;
-        this.bindings = new Map();
-        this.logger = logger.scopeTo('DeclarativeEnvRec');
-    }
     get isEmpty() { return false; }
     get isUndefined() { return false; }
     get isNull() { return false; }
@@ -2848,6 +2841,13 @@ class $DeclarativeEnvRec {
     get isPrimitive() { return false; }
     get isObject() { return false; }
     get isFunction() { return false; }
+    constructor(logger, realm, outer) {
+        this.logger = logger;
+        this.realm = realm;
+        this.outer = outer;
+        this.bindings = new Map();
+        this.logger = logger.scopeTo('DeclarativeEnvRec');
+    }
     HasBinding(ctx, N) {
         const intrinsics = this.realm['[[Intrinsics]]'];
         const envRec = this;
@@ -2956,14 +2956,6 @@ class $DeclarativeEnvRec {
     }
 }
 class $ObjectEnvRec {
-    constructor(logger, realm, outer, bindingObject) {
-        this.logger = logger;
-        this.realm = realm;
-        this.outer = outer;
-        this.bindingObject = bindingObject;
-        this.withEnvironment = false;
-        this.logger = logger.scopeTo('ObjectEnvRec');
-    }
     get isEmpty() { return false; }
     get isUndefined() { return false; }
     get isNull() { return false; }
@@ -2975,6 +2967,14 @@ class $ObjectEnvRec {
     get isPrimitive() { return false; }
     get isObject() { return false; }
     get isFunction() { return false; }
+    constructor(logger, realm, outer, bindingObject) {
+        this.logger = logger;
+        this.realm = realm;
+        this.outer = outer;
+        this.bindingObject = bindingObject;
+        this.withEnvironment = false;
+        this.logger = logger.scopeTo('ObjectEnvRec');
+    }
     HasBinding(ctx, N) {
         const intrinsics = this.realm['[[Intrinsics]]'];
         const envRec = this;
@@ -3083,6 +3083,17 @@ class $ObjectEnvRec {
     }
 }
 class $FunctionEnvRec extends $DeclarativeEnvRec {
+    get isEmpty() { return false; }
+    get isUndefined() { return false; }
+    get isNull() { return false; }
+    get isNil() { return false; }
+    get isBoolean() { return false; }
+    get isNumber() { return false; }
+    get isString() { return false; }
+    get isSymbol() { return false; }
+    get isPrimitive() { return false; }
+    get isObject() { return false; }
+    get isFunction() { return false; }
     constructor(logger, realm, F, newTarget) {
         super(logger, realm, F['[[Environment]]']);
         this.logger = logger;
@@ -3099,17 +3110,6 @@ class $FunctionEnvRec extends $DeclarativeEnvRec {
         envRec['[[HomeObject]]'] = home;
         envRec['[[NewTarget]]'] = newTarget;
     }
-    get isEmpty() { return false; }
-    get isUndefined() { return false; }
-    get isNull() { return false; }
-    get isNil() { return false; }
-    get isBoolean() { return false; }
-    get isNumber() { return false; }
-    get isString() { return false; }
-    get isSymbol() { return false; }
-    get isPrimitive() { return false; }
-    get isObject() { return false; }
-    get isFunction() { return false; }
     HasThisBinding(ctx) {
         const intrinsics = this.realm['[[Intrinsics]]'];
         const envRec = this;
@@ -3163,6 +3163,17 @@ class $FunctionEnvRec extends $DeclarativeEnvRec {
     }
 }
 class $GlobalEnvRec {
+    get isEmpty() { return false; }
+    get isUndefined() { return false; }
+    get isNull() { return false; }
+    get isNil() { return false; }
+    get isBoolean() { return false; }
+    get isNumber() { return false; }
+    get isString() { return false; }
+    get isSymbol() { return false; }
+    get isPrimitive() { return false; }
+    get isObject() { return false; }
+    get isFunction() { return false; }
     constructor(logger, realm, G, thisValue) {
         this.logger = logger;
         this.realm = realm;
@@ -3176,17 +3187,6 @@ class $GlobalEnvRec {
         globalRec['[[DeclarativeRecord]]'] = dclRec;
         globalRec['[[VarNames]]'] = [];
     }
-    get isEmpty() { return false; }
-    get isUndefined() { return false; }
-    get isNull() { return false; }
-    get isNil() { return false; }
-    get isBoolean() { return false; }
-    get isNumber() { return false; }
-    get isString() { return false; }
-    get isSymbol() { return false; }
-    get isPrimitive() { return false; }
-    get isObject() { return false; }
-    get isFunction() { return false; }
     HasBinding(ctx, N) {
         const intrinsics = this.realm['[[Intrinsics]]'];
         const envRec = this;
@@ -3433,11 +3433,6 @@ class $GlobalEnvRec {
     }
 }
 class $ModuleEnvRec extends $DeclarativeEnvRec {
-    constructor(logger, realm, outer) {
-        super(logger, realm, outer);
-        this.logger = logger;
-        this.logger = logger.scopeTo('ModuleEnvRec');
-    }
     get isEmpty() { return false; }
     get isUndefined() { return false; }
     get isNull() { return false; }
@@ -3449,6 +3444,11 @@ class $ModuleEnvRec extends $DeclarativeEnvRec {
     get isPrimitive() { return false; }
     get isObject() { return false; }
     get isFunction() { return false; }
+    constructor(logger, realm, outer) {
+        super(logger, realm, outer);
+        this.logger = logger;
+        this.logger = logger.scopeTo('ModuleEnvRec');
+    }
     GetBindingValue(ctx, N, S) {
         const intrinsics = this.realm['[[Intrinsics]]'];
         const envRec = this;
@@ -3489,10 +3489,10 @@ class $ModuleEnvRec extends $DeclarativeEnvRec {
 }
 
 class $Function extends $Object {
+    get isFunction() { return true; }
     constructor(realm, IntrinsicName, proto) {
         super(realm, IntrinsicName, proto, 1, realm['[[Intrinsics]]'].empty);
     }
-    get isFunction() { return true; }
     toString() {
         const code = this['[[ECMAScriptCode]]'];
         const sourceFile = code.mos.node;
@@ -3939,13 +3939,13 @@ function $CreateArrayFromList(ctx, elements) {
 }
 
 class $PromiseCapability {
+    get isUndefined() { return false; }
+    get isAbrupt() { return false; }
     constructor(promise, resolve, reject) {
         this['[[Promise]]'] = promise;
         this['[[Resolve]]'] = resolve;
         this['[[Reject]]'] = reject;
     }
-    get isUndefined() { return false; }
-    get isAbrupt() { return false; }
 }
 function $IfAbruptRejectPromise(ctx, value, capability) {
     const realm = ctx.Realm;
@@ -4881,21 +4881,21 @@ class $ListIterator_next extends $BuiltinFunction {
     }
 }
 class $ListIterator extends $Object {
+    get isAbrupt() { return false; }
     constructor(realm, list) {
         const intrinsics = realm['[[Intrinsics]]'];
         super(realm, 'ListIterator', intrinsics['%IteratorPrototype%'], 1, intrinsics.empty);
         this['[[IteratedList]]'] = list;
         this['[[ListIteratorNextIndex]]'] = new $Number(realm, 0);
     }
-    get isAbrupt() { return false; }
 }
 class $IteratorRecord {
+    get isAbrupt() { return false; }
     constructor(iterator, next, done) {
         this['[[Iterator]]'] = iterator;
         this['[[NextMethod]]'] = next;
         this['[[Done]]'] = done;
     }
-    get isAbrupt() { return false; }
 }
 class $AsyncFromSyncIterator extends $Object {
     constructor(realm, syncIteratorRecord) {
@@ -5229,16 +5229,16 @@ class $StringConstructor extends $BuiltinFunction {
     }
 }
 class $StringPrototype extends $Object {
-    constructor(realm, objectPrototype) {
-        const intrinsics = realm['[[Intrinsics]]'];
-        super(realm, '%StringPrototype%', objectPrototype, 1, intrinsics.empty);
-        this['[[StringData]]'] = new $String(realm, '');
-    }
     get $constructor() {
         return this.getProperty(this.realm['[[Intrinsics]]'].$constructor)['[[Value]]'];
     }
     set $constructor(value) {
         this.setDataProperty(this.realm['[[Intrinsics]]'].$constructor, value);
+    }
+    constructor(realm, objectPrototype) {
+        const intrinsics = realm['[[Intrinsics]]'];
+        super(realm, '%StringPrototype%', objectPrototype, 1, intrinsics.empty);
+        this['[[StringData]]'] = new $String(realm, '');
     }
 }
 class $StringSet {
@@ -5839,6 +5839,7 @@ class $ObjProto_valueOf extends $BuiltinFunction {
 }
 
 class $ComputedPropertyName {
+    get $kind() { return typescript.SyntaxKind.ComputedPropertyName; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ComputedPropertyName`) {
         this.node = node;
         this.parent = parent;
@@ -5852,7 +5853,6 @@ class $ComputedPropertyName {
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
         this.PropName = new $Empty(realm, void 0, void 0, this);
     }
-    get $kind() { return typescript.SyntaxKind.ComputedPropertyName; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const exprValue = this.$expression.Evaluate(ctx);
@@ -5868,6 +5868,7 @@ class $ComputedPropertyName {
     }
 }
 class $ObjectBindingPattern {
+    get $kind() { return typescript.SyntaxKind.ObjectBindingPattern; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ObjectBindingPattern`) {
         this.node = node;
         this.parent = parent;
@@ -5886,7 +5887,6 @@ class $ObjectBindingPattern {
         this.HasInitializer = $elements.some(getHasInitializer);
         this.IsSimpleParameterList = $elements.every(getIsSimpleParameterList);
     }
-    get $kind() { return typescript.SyntaxKind.ObjectBindingPattern; }
     InitializeBinding(ctx, value, environment) {
         ctx.checkTimeout();
         this.logger.debug(`${this.path}.InitializeBinding(#${ctx.id})`);
@@ -5930,6 +5930,7 @@ function $bindingElementList(nodes, parent, ctx) {
     return $nodes;
 }
 class $ArrayBindingPattern {
+    get $kind() { return typescript.SyntaxKind.ArrayBindingPattern; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ArrayBindingPattern`) {
         this.node = node;
         this.parent = parent;
@@ -5948,7 +5949,6 @@ class $ArrayBindingPattern {
         this.HasInitializer = $elements.some(getHasInitializer);
         this.IsSimpleParameterList = $elements.every(getIsSimpleParameterList);
     }
-    get $kind() { return typescript.SyntaxKind.ArrayBindingPattern; }
     InitializeBinding(ctx, value, environment) {
         ctx.checkTimeout();
         this.logger.debug(`${this.path}.InitializeBinding(#${ctx.id})`);
@@ -5998,6 +5998,7 @@ class $ArrayBindingPattern {
     }
 }
 class $BindingElement {
+    get $kind() { return typescript.SyntaxKind.BindingElement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.BindingElement`) {
         this.node = node;
         this.parent = parent;
@@ -6008,7 +6009,7 @@ class $BindingElement {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : void 0);
         this.combinedModifierFlags = this.modifierFlags | parent.combinedModifierFlags;
         ctx = clearBit(ctx, 8);
         if (node.propertyName === void 0) {
@@ -6046,7 +6047,6 @@ class $BindingElement {
             }
         }
     }
-    get $kind() { return typescript.SyntaxKind.BindingElement; }
     InitializePropertyBinding(ctx, value, environment) {
         ctx.checkTimeout();
         this.logger.debug(`${this.path}.InitializePropertyBinding(#${ctx.id})`);
@@ -6135,6 +6135,7 @@ class $BindingElement {
     }
 }
 class $SpreadElement {
+    get $kind() { return typescript.SyntaxKind.SpreadElement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.SpreadElement`) {
         this.node = node;
         this.parent = parent;
@@ -6147,7 +6148,6 @@ class $SpreadElement {
         this.path = path;
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.SpreadElement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const list = new $List();
@@ -6205,6 +6205,7 @@ class $SpreadElement {
     }
 }
 class $OmittedExpression {
+    get $kind() { return typescript.SyntaxKind.OmittedExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.OmittedExpression`) {
         this.node = node;
         this.parent = parent;
@@ -6220,7 +6221,6 @@ class $OmittedExpression {
         this.HasInitializer = false;
         this.IsSimpleParameterList = false;
     }
-    get $kind() { return typescript.SyntaxKind.OmittedExpression; }
     EvaluateDestructuringAssignmentIterator(ctx, iteratorRecord) {
         ctx.checkTimeout();
         this.logger.debug(`${this.path}.EvaluateDestructuringAssignmentIterator(#${ctx.id})`);
@@ -6245,6 +6245,7 @@ class $OmittedExpression {
 }
 
 class $Reference {
+    get isAbrupt() { return false; }
     constructor(realm, baseValue, referencedName, strict, thisValue) {
         this.realm = realm;
         this.baseValue = baseValue;
@@ -6252,7 +6253,6 @@ class $Reference {
         this.strict = strict;
         this.thisValue = thisValue;
     }
-    get isAbrupt() { return false; }
     enrichWith(ctx, node) {
         return this;
     }
@@ -6485,6 +6485,7 @@ function $expressionWithTypeArgumentsList(nodes, parent, ctx) {
     return $nodes;
 }
 class $HeritageClause {
+    get $kind() { return typescript.SyntaxKind.HeritageClause; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.HeritageClause`) {
         this.node = node;
         this.parent = parent;
@@ -6497,9 +6498,9 @@ class $HeritageClause {
         this.path = path;
         this.$types = $expressionWithTypeArgumentsList(node.types, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.HeritageClause; }
 }
 class $ExpressionWithTypeArguments {
+    get $kind() { return typescript.SyntaxKind.ExpressionWithTypeArguments; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ExpressionWithTypeArguments`) {
         this.node = node;
         this.parent = parent;
@@ -6512,9 +6513,9 @@ class $ExpressionWithTypeArguments {
         this.path = path;
         this.$expression = $LHSExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.ExpressionWithTypeArguments; }
 }
 class $ClassExpression {
+    get $kind() { return typescript.SyntaxKind.ClassExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ClassExpression`) {
         this.node = node;
         this.parent = parent;
@@ -6529,7 +6530,7 @@ class $ClassExpression {
         this.IsConstantDeclaration = false;
         this.IsFunctionDefinition = true;
         const intrinsics = realm['[[Intrinsics]]'];
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         const $name = this.$name = $identifier(node.name, this, ctx, -1);
         const $heritageClauses = this.$heritageClauses = $heritageClauseList(node.heritageClauses, this, ctx);
         const $members = this.$members = $$classElementList(node.members, this, ctx);
@@ -6569,7 +6570,6 @@ class $ClassExpression {
         }
         this.HasName = $name !== void 0;
     }
-    get $kind() { return typescript.SyntaxKind.ClassExpression; }
     EvaluateNamed(ctx, name) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -6591,6 +6591,7 @@ class $ClassExpression {
     }
 }
 class $ClassDeclaration {
+    get $kind() { return typescript.SyntaxKind.ClassDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ClassDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -6609,7 +6610,7 @@ class $ClassDeclaration {
         this.TypeDeclarations = kernel.emptyArray;
         this.IsType = false;
         const intrinsics = realm['[[Intrinsics]]'];
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         if (hasBit(modifierFlags, typescript.ModifierFlags.Export)) {
             ctx |= 4096;
         }
@@ -6688,7 +6689,6 @@ class $ClassDeclaration {
         }
         this.ModuleRequests = kernel.emptyArray;
     }
-    get $kind() { return typescript.SyntaxKind.ClassDeclaration; }
     EvaluateClassDefinition(ctx, classBinding, className) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -6741,16 +6741,16 @@ class $ClassDeclaration {
         }
         if (constructor instanceof $Empty) {
             if (this.ClassHeritage !== void 0) {
-                constructor = this.ConstructorMethod = new $ConstructorDeclaration(typescript.createConstructor(void 0, void 0, [
-                    typescript.createParameter(void 0, void 0, typescript.createToken(typescript.SyntaxKind.DotDotDotToken), typescript.createIdentifier('args')),
-                ], typescript.createBlock([
-                    typescript.createExpressionStatement(typescript.createCall(typescript.createSuper(), void 0, [
-                        typescript.createSpread(typescript.createIdentifier('args')),
+                constructor = this.ConstructorMethod = new $ConstructorDeclaration(typescript.factory.createConstructorDeclaration([], [
+                    typescript.factory.createParameterDeclaration(void 0, typescript.factory.createToken(typescript.SyntaxKind.DotDotDotToken), typescript.factory.createIdentifier('args')),
+                ], typescript.factory.createBlock([
+                    typescript.factory.createExpressionStatement(typescript.factory.createCallExpression(typescript.factory.createSuper(), void 0, [
+                        typescript.factory.createSpreadElement(typescript.factory.createIdentifier('args')),
                     ])),
                 ])), this, this.ctx, -1);
             }
             else {
-                constructor = this.ConstructorMethod = new $ConstructorDeclaration(typescript.createConstructor(void 0, void 0, [], typescript.createBlock([])), this, this.ctx, -1);
+                constructor = this.ConstructorMethod = new $ConstructorDeclaration(typescript.factory.createConstructorDeclaration([], [], typescript.factory.createBlock([])), this, this.ctx, -1);
             }
         }
         ctx.LexicalEnvironment = classScope;
@@ -6831,6 +6831,7 @@ class $ClassDeclaration {
     }
 }
 class $PropertyDeclaration {
+    get $kind() { return typescript.SyntaxKind.PropertyDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.PropertyDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -6841,15 +6842,15 @@ class $PropertyDeclaration {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         this.$decorators = $decoratorList(node.decorators, this, ctx);
         this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$initializer = $assignmentExpression(node.initializer, this, ctx, -1);
         this.IsStatic = hasBit(modifierFlags, typescript.ModifierFlags.Static);
     }
-    get $kind() { return typescript.SyntaxKind.PropertyDeclaration; }
 }
 class $SemicolonClassElement {
+    get $kind() { return typescript.SyntaxKind.SemicolonClassElement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.SemicolonClassElement`) {
         this.node = node;
         this.parent = parent;
@@ -6863,10 +6864,10 @@ class $SemicolonClassElement {
         this.IsStatic = false;
         this.PropName = empty;
     }
-    get $kind() { return typescript.SyntaxKind.SemicolonClassElement; }
 }
 
 class $InterfaceDeclaration {
+    get $kind() { return typescript.SyntaxKind.InterfaceDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.InterfaceDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -6906,9 +6907,9 @@ class $InterfaceDeclaration {
             this.ExportEntries = kernel.emptyArray;
         }
     }
-    get $kind() { return typescript.SyntaxKind.InterfaceDeclaration; }
 }
 class $TypeAliasDeclaration {
+    get $kind() { return typescript.SyntaxKind.TypeAliasDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.TypeAliasDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -6947,7 +6948,6 @@ class $TypeAliasDeclaration {
             this.ExportEntries = kernel.emptyArray;
         }
     }
-    get $kind() { return typescript.SyntaxKind.TypeAliasDeclaration; }
 }
 function $enumMemberList(nodes, parent, ctx) {
     if (nodes === void 0 || nodes.length === 0) {
@@ -6961,6 +6961,7 @@ function $enumMemberList(nodes, parent, ctx) {
     return $nodes;
 }
 class $EnumDeclaration {
+    get $kind() { return typescript.SyntaxKind.EnumDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.EnumDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -6999,9 +7000,9 @@ class $EnumDeclaration {
             this.ExportEntries = kernel.emptyArray;
         }
     }
-    get $kind() { return typescript.SyntaxKind.EnumDeclaration; }
 }
 class $EnumMember {
+    get $kind() { return typescript.SyntaxKind.EnumMember; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.EnumMember`) {
         this.node = node;
         this.parent = parent;
@@ -7015,10 +7016,10 @@ class $EnumMember {
         this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$initializer = $assignmentExpression(node.initializer, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.EnumMember; }
 }
 
 class $TemplateHead {
+    get $kind() { return typescript.SyntaxKind.TemplateHead; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.TemplateHead`) {
         this.node = node;
         this.parent = parent;
@@ -7029,7 +7030,6 @@ class $TemplateHead {
         this.logger = logger;
         this.path = path;
     }
-    get $kind() { return typescript.SyntaxKind.TemplateHead; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -7039,6 +7039,7 @@ class $TemplateHead {
     }
 }
 class $TemplateMiddle {
+    get $kind() { return typescript.SyntaxKind.TemplateMiddle; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.TemplateMiddle`) {
         this.node = node;
         this.parent = parent;
@@ -7049,7 +7050,6 @@ class $TemplateMiddle {
         this.logger = logger;
         this.path = path;
     }
-    get $kind() { return typescript.SyntaxKind.TemplateMiddle; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -7059,6 +7059,7 @@ class $TemplateMiddle {
     }
 }
 class $TemplateTail {
+    get $kind() { return typescript.SyntaxKind.TemplateTail; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.TemplateTail`) {
         this.node = node;
         this.parent = parent;
@@ -7069,7 +7070,6 @@ class $TemplateTail {
         this.logger = logger;
         this.path = path;
     }
-    get $kind() { return typescript.SyntaxKind.TemplateTail; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -7079,6 +7079,7 @@ class $TemplateTail {
     }
 }
 class $TemplateSpan {
+    get $kind() { return typescript.SyntaxKind.TemplateSpan; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.TemplateSpan`) {
         this.node = node;
         this.parent = parent;
@@ -7097,7 +7098,6 @@ class $TemplateSpan {
             this.$literal = new $TemplateTail(node.literal, this, ctx);
         }
     }
-    get $kind() { return typescript.SyntaxKind.TemplateSpan; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -7107,6 +7107,7 @@ class $TemplateSpan {
     }
 }
 class $NumericLiteral {
+    get $kind() { return typescript.SyntaxKind.NumericLiteral; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.NumericLiteral`) {
         this.node = node;
         this.parent = parent;
@@ -7126,7 +7127,6 @@ class $NumericLiteral {
         this.PropName = new $String(realm, num.toString(), void 0, void 0, this);
         this.Value = new $Number(realm, num, void 0, void 0, this);
     }
-    get $kind() { return typescript.SyntaxKind.NumericLiteral; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         return this.Value;
@@ -7137,6 +7137,7 @@ class $NumericLiteral {
     }
 }
 class $BigIntLiteral {
+    get $kind() { return typescript.SyntaxKind.BigIntLiteral; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.BigIntLiteral`) {
         this.node = node;
         this.parent = parent;
@@ -7153,7 +7154,6 @@ class $BigIntLiteral {
         this.IsIdentifierRef = false;
         this.AssignmentTargetType = 'invalid';
     }
-    get $kind() { return typescript.SyntaxKind.BigIntLiteral; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -7163,6 +7163,7 @@ class $BigIntLiteral {
     }
 }
 class $StringLiteral {
+    get $kind() { return typescript.SyntaxKind.StringLiteral; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.StringLiteral`) {
         this.node = node;
         this.parent = parent;
@@ -7182,7 +7183,6 @@ class $StringLiteral {
         this.PropName = StringValue;
         this.Value = StringValue;
     }
-    get $kind() { return typescript.SyntaxKind.StringLiteral; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         return this.Value;
@@ -7193,6 +7193,7 @@ class $StringLiteral {
     }
 }
 class $RegularExpressionLiteral {
+    get $kind() { return typescript.SyntaxKind.RegularExpressionLiteral; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.RegularExpressionLiteral`) {
         this.node = node;
         this.parent = parent;
@@ -7210,7 +7211,6 @@ class $RegularExpressionLiteral {
         this.AssignmentTargetType = 'invalid';
         this.StringValue = node.text;
     }
-    get $kind() { return typescript.SyntaxKind.RegularExpressionLiteral; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -7219,6 +7219,7 @@ class $RegularExpressionLiteral {
     }
 }
 class $NoSubstitutionTemplateLiteral {
+    get $kind() { return typescript.SyntaxKind.NoSubstitutionTemplateLiteral; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.NoSubstitutionTemplateLiteral`) {
         this.node = node;
         this.parent = parent;
@@ -7235,7 +7236,6 @@ class $NoSubstitutionTemplateLiteral {
         this.IsIdentifierRef = false;
         this.AssignmentTargetType = 'invalid';
     }
-    get $kind() { return typescript.SyntaxKind.NoSubstitutionTemplateLiteral; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -7244,6 +7244,7 @@ class $NoSubstitutionTemplateLiteral {
     }
 }
 class $NullLiteral {
+    get $kind() { return typescript.SyntaxKind.NullKeyword; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.NullLiteral`) {
         this.node = node;
         this.parent = parent;
@@ -7261,7 +7262,6 @@ class $NullLiteral {
         this.AssignmentTargetType = 'invalid';
         this.Value = new $Null(realm, void 0, void 0, this);
     }
-    get $kind() { return typescript.SyntaxKind.NullKeyword; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         return this.Value;
@@ -7293,6 +7293,9 @@ class $BooleanLiteral {
 }
 
 class $ESScript {
+    get isNull() { return false; }
+    get isScript() { return true; }
+    get isModule() { return false; }
     constructor(logger, $file, node, realm) {
         this.logger = logger;
         this.$file = $file;
@@ -7448,9 +7451,6 @@ class $ESScript {
             }
         }
     }
-    get isNull() { return false; }
-    get isScript() { return true; }
-    get isModule() { return false; }
     InstantiateGlobalDeclaration(ctx, env) {
         const realm = ctx.Realm;
         const intrinsics = realm['[[Intrinsics]]'];
@@ -7657,6 +7657,11 @@ class $ESScript {
     }
 }
 class $ESModule {
+    get isAbrupt() { return false; }
+    get $kind() { return typescript.SyntaxKind.SourceFile; }
+    get isNull() { return false; }
+    get isScript() { return false; }
+    get isModule() { return true; }
     constructor(logger, $file, node, realm, pkg, moduleResolver, compilerOptions) {
         this.logger = logger;
         this.$file = $file;
@@ -7927,11 +7932,6 @@ class $ESModule {
         this.logger.trace(`LocalExportEntries: `, localExportEntries);
         this.logger.trace(`StarExportEntries: `, starExportEntries);
     }
-    get isAbrupt() { return false; }
-    get $kind() { return typescript.SyntaxKind.SourceFile; }
-    get isNull() { return false; }
-    get isScript() { return false; }
-    get isModule() { return true; }
     Instantiate(ctx) {
         const realm = ctx.Realm;
         const intrinsics = realm['[[Intrinsics]]'];
@@ -8394,6 +8394,8 @@ class $ESModule {
     }
 }
 class $DocumentFragment {
+    get isNull() { return false; }
+    get isAbrupt() { return false; }
     constructor(logger, $file, node, realm, pkg) {
         this.logger = logger;
         this.$file = $file;
@@ -8410,8 +8412,6 @@ class $DocumentFragment {
         this.logger = logger.root;
         this.path = `DocumentFragment<(...)${$file.rootlessPath}>`;
     }
-    get isNull() { return false; }
-    get isAbrupt() { return false; }
     ResolveExport(ctx, exportName, resolveSet) {
         ctx.checkTimeout();
         this.logger.debug(`${this.path}.[ResolveExport] returning content as '${exportName['[[Value]]']}'`);
@@ -8434,6 +8434,7 @@ class $DocumentFragment {
     }
 }
 class $ModuleDeclaration {
+    get $kind() { return typescript.SyntaxKind.ModuleDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ModuleDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -8470,7 +8471,6 @@ class $ModuleDeclaration {
             }
         }
     }
-    get $kind() { return typescript.SyntaxKind.ModuleDeclaration; }
 }
 class ImportEntryRecord {
     constructor(source, ModuleRequest, ImportName, LocalName) {
@@ -8481,6 +8481,7 @@ class ImportEntryRecord {
     }
 }
 class $ImportEqualsDeclaration {
+    get $kind() { return typescript.SyntaxKind.ImportEqualsDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ImportEqualsDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -8507,9 +8508,9 @@ class $ImportEqualsDeclaration {
                 throw new Error(`Unexpected syntax node: ${typescript.SyntaxKind[node.kind]}.`);
         }
     }
-    get $kind() { return typescript.SyntaxKind.ImportEqualsDeclaration; }
 }
 class $ImportDeclaration {
+    get $kind() { return typescript.SyntaxKind.ImportDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ImportDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -8535,9 +8536,9 @@ class $ImportDeclaration {
         }
         this.ModuleRequests = [moduleSpecifier];
     }
-    get $kind() { return typescript.SyntaxKind.ImportDeclaration; }
 }
 class $ImportClause {
+    get $kind() { return typescript.SyntaxKind.ImportClause; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.ImportClause`) {
         this.node = node;
         this.parent = parent;
@@ -8576,9 +8577,9 @@ class $ImportClause {
             }
         }
     }
-    get $kind() { return typescript.SyntaxKind.ImportClause; }
 }
 class $NamedImports {
+    get $kind() { return typescript.SyntaxKind.NamedImports; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.NamedImports`) {
         this.node = node;
         this.parent = parent;
@@ -8593,9 +8594,9 @@ class $NamedImports {
         this.BoundNames = $elements.flatMap(getBoundNames);
         this.ImportEntriesForModule = $elements.flatMap(getImportEntriesForModule);
     }
-    get $kind() { return typescript.SyntaxKind.NamedImports; }
 }
 class $ImportSpecifier {
+    get $kind() { return typescript.SyntaxKind.ImportSpecifier; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.ImportSpecifier`) {
         this.node = node;
         this.parent = parent;
@@ -8629,9 +8630,9 @@ class $ImportSpecifier {
             ];
         }
     }
-    get $kind() { return typescript.SyntaxKind.ImportSpecifier; }
 }
 class $NamespaceImport {
+    get $kind() { return typescript.SyntaxKind.NamespaceImport; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.NamespaceImport`) {
         this.node = node;
         this.parent = parent;
@@ -8650,7 +8651,6 @@ class $NamespaceImport {
             new ImportEntryRecord(this, moduleSpecifier, intrinsics['*'], localName),
         ];
     }
-    get $kind() { return typescript.SyntaxKind.NamespaceImport; }
 }
 class ExportEntryRecord {
     constructor(source, ExportName, ModuleRequest, ImportName, LocalName) {
@@ -8662,6 +8662,7 @@ class ExportEntryRecord {
     }
 }
 class $ExportAssignment {
+    get $kind() { return typescript.SyntaxKind.ExportAssignment; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ExportAssignment`) {
         this.node = node;
         this.parent = parent;
@@ -8677,9 +8678,9 @@ class $ExportAssignment {
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
         this.BoundNames = [intrinsics['*default*']];
     }
-    get $kind() { return typescript.SyntaxKind.ExportAssignment; }
 }
 class $ExportDeclaration {
+    get $kind() { return typescript.SyntaxKind.ExportDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ExportDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -8722,9 +8723,9 @@ class $ExportDeclaration {
             this.ExportEntries = $exportClause.ExportEntriesForModule;
         }
     }
-    get $kind() { return typescript.SyntaxKind.ExportDeclaration; }
 }
 class $NamedExports {
+    get $kind() { return typescript.SyntaxKind.NamedExports; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.NamedExports`) {
         this.node = node;
         this.parent = parent;
@@ -8740,9 +8741,9 @@ class $NamedExports {
         this.ExportEntriesForModule = $elements.flatMap(getExportEntriesForModule);
         this.ReferencedBindings = $elements.flatMap(getReferencedBindings);
     }
-    get $kind() { return typescript.SyntaxKind.NamedExports; }
 }
 class $ExportSpecifier {
+    get $kind() { return typescript.SyntaxKind.ExportSpecifier; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.ExportSpecifier`) {
         this.node = node;
         this.parent = parent;
@@ -8794,9 +8795,9 @@ class $ExportSpecifier {
             }
         }
     }
-    get $kind() { return typescript.SyntaxKind.ExportSpecifier; }
 }
 class $NamespaceExportDeclaration {
+    get $kind() { return typescript.SyntaxKind.NamespaceExportDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.NamespaceExportDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -8807,12 +8808,12 @@ class $NamespaceExportDeclaration {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         this.$name = $identifier(node.name, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.NamespaceExportDeclaration; }
 }
 class $ModuleBlock {
+    get $kind() { return typescript.SyntaxKind.ModuleBlock; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.ModuleBlock`) {
         this.node = node;
         this.parent = parent;
@@ -8824,9 +8825,9 @@ class $ModuleBlock {
         this.path = path;
         this.$statements = kernel.emptyArray;
     }
-    get $kind() { return typescript.SyntaxKind.ModuleBlock; }
 }
 class $ExternalModuleReference {
+    get $kind() { return typescript.SyntaxKind.ExternalModuleReference; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.ExternalModuleReference`) {
         this.node = node;
         this.parent = parent;
@@ -8838,9 +8839,9 @@ class $ExternalModuleReference {
         this.path = path;
         this.$expression = new $StringLiteral(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.ExternalModuleReference; }
 }
 class $QualifiedName {
+    get $kind() { return typescript.SyntaxKind.QualifiedName; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.QualifiedName`) {
         this.node = node;
         this.parent = parent;
@@ -8858,10 +8859,10 @@ class $QualifiedName {
         }
         this.$right = new $Identifier(node.right, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.QualifiedName; }
 }
 
 class $VariableStatement {
+    get $kind() { return typescript.SyntaxKind.VariableStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.VariableStatement`) {
         this.node = node;
         this.parent = parent;
@@ -8906,7 +8907,6 @@ class $VariableStatement {
         }
         this.ModuleRequests = kernel.emptyArray;
     }
-    get $kind() { return typescript.SyntaxKind.VariableStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -8916,6 +8916,7 @@ class $VariableStatement {
     }
 }
 class $VariableDeclaration {
+    get $kind() { return typescript.SyntaxKind.VariableDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.VariableDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -8928,7 +8929,7 @@ class $VariableDeclaration {
         this.path = path;
         this.LexicallyDeclaredNames = kernel.emptyArray;
         this.LexicallyScopedDeclarations = kernel.emptyArray;
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         if (hasBit(ctx, 4)) {
             this.combinedModifierFlags = modifierFlags | parent.combinedModifierFlags;
         }
@@ -8950,7 +8951,6 @@ class $VariableDeclaration {
             this.IsConstantDeclaration = hasBit(ctx, 8192);
         }
     }
-    get $kind() { return typescript.SyntaxKind.VariableDeclaration; }
     InitializeBinding(ctx, value) {
         var _a, _b;
         ctx.checkTimeout();
@@ -8997,6 +8997,7 @@ function $variableDeclarationList(nodes, parent, ctx) {
     return $nodes;
 }
 class $VariableDeclarationList {
+    get $kind() { return typescript.SyntaxKind.VariableDeclarationList; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.VariableDeclarationList`) {
         this.node = node;
         this.parent = parent;
@@ -9030,9 +9031,9 @@ class $VariableDeclarationList {
         this.VarDeclaredNames = $declarations.flatMap(getVarDeclaredNames);
         this.VarScopedDeclarations = $declarations.flatMap(getVarScopedDeclarations);
     }
-    get $kind() { return typescript.SyntaxKind.VariableDeclarationList; }
 }
 class $Block {
+    get $kind() { return typescript.SyntaxKind.Block; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.Block`) {
         this.node = node;
         this.parent = parent;
@@ -9110,7 +9111,6 @@ class $Block {
             }
         }
     }
-    get $kind() { return typescript.SyntaxKind.Block; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9134,6 +9134,7 @@ class $Block {
     }
 }
 class $EmptyStatement {
+    get $kind() { return typescript.SyntaxKind.EmptyStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.EmptyStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9149,7 +9150,6 @@ class $EmptyStatement {
         this.VarDeclaredNames = kernel.emptyArray;
         this.VarScopedDeclarations = kernel.emptyArray;
     }
-    get $kind() { return typescript.SyntaxKind.EmptyStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9159,6 +9159,7 @@ class $EmptyStatement {
     }
 }
 class $ExpressionStatement {
+    get $kind() { return typescript.SyntaxKind.ExpressionStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ExpressionStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9175,7 +9176,6 @@ class $ExpressionStatement {
         this.VarScopedDeclarations = kernel.emptyArray;
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.ExpressionStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         this.logger.debug(`${this.path}.Evaluate(#${ctx.id})`);
@@ -9183,6 +9183,7 @@ class $ExpressionStatement {
     }
 }
 class $IfStatement {
+    get $kind() { return typescript.SyntaxKind.IfStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.IfStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9214,7 +9215,6 @@ class $IfStatement {
             ];
         }
     }
-    get $kind() { return typescript.SyntaxKind.IfStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9248,6 +9248,7 @@ class $IfStatement {
     }
 }
 class $DoStatement {
+    get $kind() { return typescript.SyntaxKind.DoStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.DoStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9265,7 +9266,6 @@ class $DoStatement {
         this.VarDeclaredNames = $statement.VarDeclaredNames;
         this.VarScopedDeclarations = $statement.VarScopedDeclarations;
     }
-    get $kind() { return typescript.SyntaxKind.DoStatement; }
     EvaluateLabelled(ctx, labelSet) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9298,6 +9298,7 @@ class $DoStatement {
     }
 }
 class $WhileStatement {
+    get $kind() { return typescript.SyntaxKind.WhileStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.WhileStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9315,7 +9316,6 @@ class $WhileStatement {
         this.VarDeclaredNames = $statement.VarDeclaredNames;
         this.VarScopedDeclarations = $statement.VarScopedDeclarations;
     }
-    get $kind() { return typescript.SyntaxKind.WhileStatement; }
     EvaluateLabelled(ctx, labelSet) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9348,6 +9348,7 @@ class $WhileStatement {
     }
 }
 class $ForStatement {
+    get $kind() { return typescript.SyntaxKind.ForStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ForStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9393,7 +9394,6 @@ class $ForStatement {
             }
         }
     }
-    get $kind() { return typescript.SyntaxKind.ForStatement; }
     EvaluateLabelled(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9403,6 +9403,7 @@ class $ForStatement {
     }
 }
 class $ForInStatement {
+    get $kind() { return typescript.SyntaxKind.ForInStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ForInStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9443,7 +9444,6 @@ class $ForInStatement {
             this.VarScopedDeclarations = $statement.VarScopedDeclarations;
         }
     }
-    get $kind() { return typescript.SyntaxKind.ForInStatement; }
     EvaluateLabelled(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9460,6 +9460,7 @@ class $ForInStatement {
     }
 }
 class $ForOfStatement {
+    get $kind() { return typescript.SyntaxKind.ForOfStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ForOfStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9500,7 +9501,6 @@ class $ForOfStatement {
             this.VarScopedDeclarations = $statement.VarScopedDeclarations;
         }
     }
-    get $kind() { return typescript.SyntaxKind.ForOfStatement; }
     EvaluateLabelled(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9517,6 +9517,7 @@ class $ForOfStatement {
     }
 }
 class $ContinueStatement {
+    get $kind() { return typescript.SyntaxKind.ContinueStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ContinueStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9533,7 +9534,6 @@ class $ContinueStatement {
         this.VarScopedDeclarations = kernel.emptyArray;
         this.$label = $identifier(node.label, this, ctx | 2048, -1);
     }
-    get $kind() { return typescript.SyntaxKind.ContinueStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9546,6 +9546,7 @@ class $ContinueStatement {
     }
 }
 class $BreakStatement {
+    get $kind() { return typescript.SyntaxKind.BreakStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.BreakStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9562,7 +9563,6 @@ class $BreakStatement {
         this.VarScopedDeclarations = kernel.emptyArray;
         this.$label = $identifier(node.label, this, ctx | 2048, -1);
     }
-    get $kind() { return typescript.SyntaxKind.BreakStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9575,6 +9575,7 @@ class $BreakStatement {
     }
 }
 class $ReturnStatement {
+    get $kind() { return typescript.SyntaxKind.ReturnStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ReturnStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9596,7 +9597,6 @@ class $ReturnStatement {
             this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
         }
     }
-    get $kind() { return typescript.SyntaxKind.ReturnStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9614,6 +9614,7 @@ class $ReturnStatement {
     }
 }
 class $WithStatement {
+    get $kind() { return typescript.SyntaxKind.WithStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.WithStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9631,7 +9632,6 @@ class $WithStatement {
         this.VarDeclaredNames = $statement.VarDeclaredNames;
         this.VarScopedDeclarations = $statement.VarScopedDeclarations;
     }
-    get $kind() { return typescript.SyntaxKind.WithStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9641,6 +9641,7 @@ class $WithStatement {
     }
 }
 class $SwitchStatement {
+    get $kind() { return typescript.SyntaxKind.SwitchStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.SwitchStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9658,7 +9659,6 @@ class $SwitchStatement {
         this.VarDeclaredNames = $caseBlock.VarDeclaredNames;
         this.VarScopedDeclarations = $caseBlock.VarScopedDeclarations;
     }
-    get $kind() { return typescript.SyntaxKind.SwitchStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         this.logger.debug(`${this.path}.Evaluate(#${ctx.id})`);
@@ -9740,6 +9740,7 @@ class $SwitchStatement {
     }
 }
 class $LabeledStatement {
+    get $kind() { return typescript.SyntaxKind.LabeledStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.LabeledStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9779,7 +9780,6 @@ class $LabeledStatement {
             this.VarScopedDeclarations = $statement.VarScopedDeclarations;
         }
     }
-    get $kind() { return typescript.SyntaxKind.LabeledStatement; }
     EvaluateLabelled(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9796,6 +9796,7 @@ class $LabeledStatement {
     }
 }
 class $ThrowStatement {
+    get $kind() { return typescript.SyntaxKind.ThrowStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ThrowStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9812,7 +9813,6 @@ class $ThrowStatement {
         this.VarScopedDeclarations = kernel.emptyArray;
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.ThrowStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9827,6 +9827,7 @@ class $ThrowStatement {
     }
 }
 class $TryStatement {
+    get $kind() { return typescript.SyntaxKind.TryStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.TryStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9879,7 +9880,6 @@ class $TryStatement {
             ];
         }
     }
-    get $kind() { return typescript.SyntaxKind.TryStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         this.logger.debug(`${this.path}.Evaluate(#${ctx.id})`);
@@ -9923,6 +9923,7 @@ class $TryStatement {
     }
 }
 class $DebuggerStatement {
+    get $kind() { return typescript.SyntaxKind.DebuggerStatement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.DebuggerStatement`) {
         this.node = node;
         this.parent = parent;
@@ -9938,7 +9939,6 @@ class $DebuggerStatement {
         this.VarDeclaredNames = kernel.emptyArray;
         this.VarScopedDeclarations = kernel.emptyArray;
     }
-    get $kind() { return typescript.SyntaxKind.DebuggerStatement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -9965,6 +9965,7 @@ function $$clauseList(nodes, parent, ctx) {
     return $nodes;
 }
 class $CaseBlock {
+    get $kind() { return typescript.SyntaxKind.CaseBlock; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.CaseBlock`) {
         this.node = node;
         this.parent = parent;
@@ -9980,9 +9981,9 @@ class $CaseBlock {
         this.VarDeclaredNames = $clauses.flatMap(getVarDeclaredNames);
         this.VarScopedDeclarations = $clauses.flatMap(getVarScopedDeclarations);
     }
-    get $kind() { return typescript.SyntaxKind.CaseBlock; }
 }
 class $CaseClause {
+    get $kind() { return typescript.SyntaxKind.CaseClause; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.CaseClause`) {
         this.node = node;
         this.parent = parent;
@@ -10000,9 +10001,9 @@ class $CaseClause {
         this.VarDeclaredNames = $statements.flatMap(getVarDeclaredNames);
         this.VarScopedDeclarations = $statements.flatMap(getVarScopedDeclarations);
     }
-    get $kind() { return typescript.SyntaxKind.CaseClause; }
 }
 class $DefaultClause {
+    get $kind() { return typescript.SyntaxKind.DefaultClause; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.DefaultClause`) {
         this.node = node;
         this.parent = parent;
@@ -10019,9 +10020,9 @@ class $DefaultClause {
         this.VarDeclaredNames = $statements.flatMap(getVarDeclaredNames);
         this.VarScopedDeclarations = $statements.flatMap(getVarScopedDeclarations);
     }
-    get $kind() { return typescript.SyntaxKind.DefaultClause; }
 }
 class $CatchClause {
+    get $kind() { return typescript.SyntaxKind.CatchClause; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.CatchClause`) {
         this.node = node;
         this.parent = parent;
@@ -10042,7 +10043,6 @@ class $CatchClause {
         this.VarDeclaredNames = $block.VarDeclaredNames;
         this.VarScopedDeclarations = $block.VarScopedDeclarations;
     }
-    get $kind() { return typescript.SyntaxKind.CatchClause; }
     CreateBinding(ctx, realm) {
         var _a, _b;
         ctx.checkTimeout();
@@ -10053,6 +10053,7 @@ class $CatchClause {
 }
 
 class $MethodDeclaration {
+    get $kind() { return typescript.SyntaxKind.MethodDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.MethodDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -10063,7 +10064,7 @@ class $MethodDeclaration {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         this.$decorators = $decoratorList(node.decorators, this, ctx);
         const $name = this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$parameters = new $FormalParameterList(node.parameters, this, ctx);
@@ -10089,7 +10090,6 @@ class $MethodDeclaration {
             this.functionKind = 12;
         }
     }
-    get $kind() { return typescript.SyntaxKind.MethodDeclaration; }
     DefineMethod(ctx, object) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10129,6 +10129,7 @@ class $MethodDeclaration {
     }
 }
 class $GetAccessorDeclaration {
+    get $kind() { return typescript.SyntaxKind.GetAccessor; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.GetAccessorDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -10140,7 +10141,7 @@ class $GetAccessorDeclaration {
         this.logger = logger;
         this.path = path;
         this.functionKind = 0;
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         this.$decorators = $decoratorList(node.decorators, this, ctx);
         const $name = this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$parameters = new $FormalParameterList(node.parameters, this, ctx);
@@ -10152,7 +10153,6 @@ class $GetAccessorDeclaration {
         this.VarDeclaredNames = $body.TopLevelVarDeclaredNames;
         this.VarScopedDeclarations = $body.TopLevelVarScopedDeclarations;
     }
-    get $kind() { return typescript.SyntaxKind.GetAccessor; }
     EvaluatePropertyDefinition(ctx, object, enumerable) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10180,6 +10180,7 @@ class $GetAccessorDeclaration {
     }
 }
 class $SetAccessorDeclaration {
+    get $kind() { return typescript.SyntaxKind.SetAccessor; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.SetAccessorDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -10191,7 +10192,7 @@ class $SetAccessorDeclaration {
         this.logger = logger;
         this.path = path;
         this.functionKind = 0;
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         this.$decorators = $decoratorList(node.decorators, this, ctx);
         const $name = this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$parameters = new $FormalParameterList(node.parameters, this, ctx);
@@ -10203,7 +10204,6 @@ class $SetAccessorDeclaration {
         this.VarDeclaredNames = $body.TopLevelVarDeclaredNames;
         this.VarScopedDeclarations = $body.TopLevelVarScopedDeclarations;
     }
-    get $kind() { return typescript.SyntaxKind.SetAccessor; }
     EvaluatePropertyDefinition(ctx, object, enumerable) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10232,6 +10232,7 @@ class $SetAccessorDeclaration {
 }
 
 class $Decorator {
+    get $kind() { return typescript.SyntaxKind.Decorator; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.Decorator`) {
         this.node = node;
         this.parent = parent;
@@ -10244,9 +10245,9 @@ class $Decorator {
         this.path = path;
         this.$expression = $LHSExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.Decorator; }
 }
 class $ThisExpression {
+    get $kind() { return typescript.SyntaxKind.ThisKeyword; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ThisExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10263,7 +10264,6 @@ class $ThisExpression {
         this.IsIdentifierRef = false;
         this.AssignmentTargetType = 'invalid';
     }
-    get $kind() { return typescript.SyntaxKind.ThisKeyword; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10272,6 +10272,7 @@ class $ThisExpression {
     }
 }
 class $SuperExpression {
+    get $kind() { return typescript.SyntaxKind.SuperKeyword; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.SuperExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10283,7 +10284,6 @@ class $SuperExpression {
         this.logger = logger;
         this.path = path;
     }
-    get $kind() { return typescript.SyntaxKind.SuperKeyword; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10314,6 +10314,7 @@ function $argumentOrArrayLiteralElementList(nodes, parent, ctx) {
     return $nodes;
 }
 class $ArrayLiteralExpression {
+    get $kind() { return typescript.SyntaxKind.ArrayLiteralExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ArrayLiteralExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10331,7 +10332,6 @@ class $ArrayLiteralExpression {
         this.AssignmentTargetType = 'invalid';
         this.$elements = $argumentOrArrayLiteralElementList(node.elements, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.ArrayLiteralExpression; }
     AccumulateArray(ctx, array, nextIndex) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10417,6 +10417,7 @@ function $$objectLiteralElementLikeList(nodes, parent, ctx) {
     return $nodes;
 }
 class $ObjectLiteralExpression {
+    get $kind() { return typescript.SyntaxKind.ObjectLiteralExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ObjectLiteralExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10434,7 +10435,6 @@ class $ObjectLiteralExpression {
         this.AssignmentTargetType = 'invalid';
         this.$properties = $$objectLiteralElementLikeList(node.properties, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.ObjectLiteralExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10450,6 +10450,7 @@ class $ObjectLiteralExpression {
     }
 }
 class $PropertyAssignment {
+    get $kind() { return typescript.SyntaxKind.PropertyAssignment; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.PropertyAssignment`) {
         this.node = node;
         this.parent = parent;
@@ -10460,12 +10461,11 @@ class $PropertyAssignment {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         const $name = this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$initializer = $assignmentExpression(node.initializer, this, ctx, -1);
         this.PropName = $name.PropName;
     }
-    get $kind() { return typescript.SyntaxKind.PropertyAssignment; }
     EvaluatePropertyDefinition(ctx, object, enumerable) {
         ctx.checkTimeout();
         const propKey = this.$name.EvaluatePropName(ctx);
@@ -10492,6 +10492,7 @@ class $PropertyAssignment {
     }
 }
 class $ShorthandPropertyAssignment {
+    get $kind() { return typescript.SyntaxKind.ShorthandPropertyAssignment; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ShorthandPropertyAssignment`) {
         this.node = node;
         this.parent = parent;
@@ -10507,7 +10508,6 @@ class $ShorthandPropertyAssignment {
         this.$objectAssignmentInitializer = $assignmentExpression(node.objectAssignmentInitializer, this, ctx, -1);
         this.PropName = $name.PropName;
     }
-    get $kind() { return typescript.SyntaxKind.ShorthandPropertyAssignment; }
     EvaluatePropertyDefinition(ctx, object, enumerable) {
         ctx.checkTimeout();
         const propName = this.$name.StringValue;
@@ -10520,6 +10520,7 @@ class $ShorthandPropertyAssignment {
     }
 }
 class $SpreadAssignment {
+    get $kind() { return typescript.SyntaxKind.SpreadAssignment; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.SpreadAssignment`) {
         this.node = node;
         this.parent = parent;
@@ -10533,7 +10534,6 @@ class $SpreadAssignment {
         this.PropName = empty;
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.SpreadAssignment; }
     EvaluatePropertyDefinition(ctx, object, enumerable) {
         ctx.checkTimeout();
         const exprValue = this.$expression.Evaluate(ctx);
@@ -10546,6 +10546,7 @@ class $SpreadAssignment {
     }
 }
 class $PropertyAccessExpression {
+    get $kind() { return typescript.SyntaxKind.PropertyAccessExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.PropertyAccessExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10559,7 +10560,6 @@ class $PropertyAccessExpression {
         this.$expression = $LHSExpression(node.expression, this, ctx, -1);
         this.$name = $identifier(node.name, this, ctx | 256, -1);
     }
-    get $kind() { return typescript.SyntaxKind.PropertyAccessExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10579,6 +10579,7 @@ class $PropertyAccessExpression {
     }
 }
 class $ElementAccessExpression {
+    get $kind() { return typescript.SyntaxKind.ElementAccessExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ElementAccessExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10592,7 +10593,6 @@ class $ElementAccessExpression {
         this.$expression = $LHSExpression(node.expression, this, ctx, -1);
         this.$argumentExpression = $assignmentExpression(node.argumentExpression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.ElementAccessExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10620,6 +10620,7 @@ class $ElementAccessExpression {
     }
 }
 class $CallExpression {
+    get $kind() { return typescript.SyntaxKind.CallExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.CallExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10633,7 +10634,6 @@ class $CallExpression {
         this.$expression = $LHSExpression(node.expression, this, ctx, -1);
         this.$arguments = $argumentOrArrayLiteralElementList(node.arguments, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.CallExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10701,6 +10701,7 @@ function $ArgumentListEvaluation(ctx, args) {
     return list;
 }
 class $NewExpression {
+    get $kind() { return typescript.SyntaxKind.NewExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.NewExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10714,7 +10715,6 @@ class $NewExpression {
         this.$expression = $LHSExpression(node.expression, this, ctx, -1);
         this.$arguments = $argumentOrArrayLiteralElementList(node.arguments, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.NewExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10744,6 +10744,7 @@ class $NewExpression {
     }
 }
 class $TaggedTemplateExpression {
+    get $kind() { return typescript.SyntaxKind.TaggedTemplateExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.TaggedTemplateExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10762,7 +10763,6 @@ class $TaggedTemplateExpression {
             this.$template = new $TemplateExpression(node.template, this, ctx, -1);
         }
     }
-    get $kind() { return typescript.SyntaxKind.TaggedTemplateExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10783,6 +10783,7 @@ function $$templateSpanList(nodes, parent, ctx) {
     return $nodes;
 }
 class $TemplateExpression {
+    get $kind() { return typescript.SyntaxKind.TemplateExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.TemplateExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10801,7 +10802,6 @@ class $TemplateExpression {
         this.$head = new $TemplateHead(node.head, this, ctx);
         this.$templateSpans = $$templateSpanList(node.templateSpans, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.TemplateExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10810,6 +10810,7 @@ class $TemplateExpression {
     }
 }
 class $ParenthesizedExpression {
+    get $kind() { return typescript.SyntaxKind.ParenthesizedExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ParenthesizedExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10823,7 +10824,6 @@ class $ParenthesizedExpression {
         const $expression = this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
         this.CoveredParenthesizedExpression = $expression;
     }
-    get $kind() { return typescript.SyntaxKind.ParenthesizedExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10832,6 +10832,7 @@ class $ParenthesizedExpression {
     }
 }
 class $NonNullExpression {
+    get $kind() { return typescript.SyntaxKind.NonNullExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.NonNullExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10844,13 +10845,13 @@ class $NonNullExpression {
         this.path = path;
         this.$expression = $LHSExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.NonNullExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         return this.$expression.Evaluate(ctx).enrichWith(ctx, this);
     }
 }
 class $MetaProperty {
+    get $kind() { return typescript.SyntaxKind.MetaProperty; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.MetaProperty`) {
         this.node = node;
         this.parent = parent;
@@ -10863,7 +10864,6 @@ class $MetaProperty {
         this.path = path;
         this.$name = $identifier(node.name, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.MetaProperty; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10873,6 +10873,7 @@ class $MetaProperty {
     }
 }
 class $DeleteExpression {
+    get $kind() { return typescript.SyntaxKind.DeleteExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.DeleteExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10885,7 +10886,6 @@ class $DeleteExpression {
         this.path = path;
         this.$expression = $unaryExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.DeleteExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10895,6 +10895,7 @@ class $DeleteExpression {
     }
 }
 class $TypeOfExpression {
+    get $kind() { return typescript.SyntaxKind.TypeOfExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.TypeOfExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10907,7 +10908,6 @@ class $TypeOfExpression {
         this.path = path;
         this.$expression = $unaryExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.TypeOfExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10940,6 +10940,7 @@ class $TypeOfExpression {
     }
 }
 class $VoidExpression {
+    get $kind() { return typescript.SyntaxKind.VoidExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.VoidExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10952,7 +10953,6 @@ class $VoidExpression {
         this.path = path;
         this.$expression = $unaryExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.VoidExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10967,6 +10967,7 @@ class $VoidExpression {
     }
 }
 class $AwaitExpression {
+    get $kind() { return typescript.SyntaxKind.AwaitExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.AwaitExpression`) {
         this.node = node;
         this.parent = parent;
@@ -10979,7 +10980,6 @@ class $AwaitExpression {
         this.path = path;
         this.$expression = $unaryExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.AwaitExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -10989,6 +10989,7 @@ class $AwaitExpression {
     }
 }
 class $PrefixUnaryExpression {
+    get $kind() { return typescript.SyntaxKind.PrefixUnaryExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.PrefixUnaryExpression`) {
         this.node = node;
         this.parent = parent;
@@ -11001,7 +11002,6 @@ class $PrefixUnaryExpression {
         this.path = path;
         this.$operand = $unaryExpression(node.operand, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.PrefixUnaryExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -11124,6 +11124,7 @@ class $PrefixUnaryExpression {
     }
 }
 class $PostfixUnaryExpression {
+    get $kind() { return typescript.SyntaxKind.PostfixUnaryExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.PostfixUnaryExpression`) {
         this.node = node;
         this.parent = parent;
@@ -11136,7 +11137,6 @@ class $PostfixUnaryExpression {
         this.path = path;
         this.$operand = $LHSExpression(node.operand, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.PostfixUnaryExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -11187,6 +11187,7 @@ class $PostfixUnaryExpression {
     }
 }
 class $TypeAssertion {
+    get $kind() { return typescript.SyntaxKind.TypeAssertionExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.TypeAssertion`) {
         this.node = node;
         this.parent = parent;
@@ -11199,13 +11200,13 @@ class $TypeAssertion {
         this.path = path;
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.TypeAssertionExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         return this.$expression.Evaluate(ctx);
     }
 }
 class $BinaryExpression {
+    get $kind() { return typescript.SyntaxKind.BinaryExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.BinaryExpression`) {
         this.node = node;
         this.parent = parent;
@@ -11219,7 +11220,6 @@ class $BinaryExpression {
         this.$left = $assignmentExpression(node.left, this, ctx, -1);
         this.$right = $assignmentExpression(node.right, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.BinaryExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -11954,6 +11954,7 @@ class $BinaryExpression {
     }
 }
 class $ConditionalExpression {
+    get $kind() { return typescript.SyntaxKind.ConditionalExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ConditionalExpression`) {
         this.node = node;
         this.parent = parent;
@@ -11973,7 +11974,6 @@ class $ConditionalExpression {
         this.$whenTrue = $assignmentExpression(node.whenTrue, this, ctx, -1);
         this.$whenFalse = $assignmentExpression(node.whenFalse, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.ConditionalExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -11983,6 +11983,7 @@ class $ConditionalExpression {
     }
 }
 class $YieldExpression {
+    get $kind() { return typescript.SyntaxKind.YieldExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.YieldExpression`) {
         this.node = node;
         this.parent = parent;
@@ -11995,7 +11996,6 @@ class $YieldExpression {
         this.path = path;
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.YieldExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12005,6 +12005,7 @@ class $YieldExpression {
     }
 }
 class $AsExpression {
+    get $kind() { return typescript.SyntaxKind.AsExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.AsExpression`) {
         this.node = node;
         this.parent = parent;
@@ -12017,13 +12018,15 @@ class $AsExpression {
         this.path = path;
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.AsExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         return this.$expression.Evaluate(ctx);
     }
 }
 class $Identifier {
+    get $kind() { return typescript.SyntaxKind.Identifier; }
+    get isUndefined() { return false; }
+    get isNull() { return false; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.Identifier(${node.text})`) {
         this.node = node;
         this.parent = parent;
@@ -12051,9 +12054,6 @@ class $Identifier {
             this.AssignmentTargetType = 'simple';
         }
     }
-    get $kind() { return typescript.SyntaxKind.Identifier; }
-    get isUndefined() { return false; }
-    get isNull() { return false; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12187,6 +12187,7 @@ function $$jsxChildList(nodes, parent, ctx) {
     return $nodes;
 }
 class $JsxElement {
+    get $kind() { return typescript.SyntaxKind.JsxElement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.JsxElement`) {
         this.node = node;
         this.parent = parent;
@@ -12201,7 +12202,6 @@ class $JsxElement {
         this.$children = $$jsxChildList(node.children, this, ctx);
         this.$closingElement = new $JsxClosingElement(node.closingElement, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.JsxElement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12223,6 +12223,7 @@ function $$jsxTagNameExpression(node, parent, ctx, idx) {
     }
 }
 class $JsxSelfClosingElement {
+    get $kind() { return typescript.SyntaxKind.JsxSelfClosingElement; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.JsxSelfClosingElement`) {
         this.node = node;
         this.parent = parent;
@@ -12236,7 +12237,6 @@ class $JsxSelfClosingElement {
         this.$tagName = $$jsxTagNameExpression(node.tagName, this, ctx, -1);
         this.$attributes = new $JsxAttributes(node.attributes, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.JsxSelfClosingElement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12246,6 +12246,7 @@ class $JsxSelfClosingElement {
     }
 }
 class $JsxFragment {
+    get $kind() { return typescript.SyntaxKind.JsxFragment; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.JsxFragment`) {
         this.node = node;
         this.parent = parent;
@@ -12260,7 +12261,6 @@ class $JsxFragment {
         this.$children = $$jsxChildList(node.children, this, ctx);
         this.$closingFragment = new $JsxClosingFragment(node.closingFragment, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.JsxFragment; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12270,6 +12270,7 @@ class $JsxFragment {
     }
 }
 class $JsxText {
+    get $kind() { return typescript.SyntaxKind.JsxText; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.JsxText`) {
         this.node = node;
         this.parent = parent;
@@ -12281,7 +12282,6 @@ class $JsxText {
         this.logger = logger;
         this.path = path;
     }
-    get $kind() { return typescript.SyntaxKind.JsxText; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12291,6 +12291,7 @@ class $JsxText {
     }
 }
 class $JsxOpeningElement {
+    get $kind() { return typescript.SyntaxKind.JsxOpeningElement; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.JsxOpeningElement`) {
         this.node = node;
         this.parent = parent;
@@ -12303,7 +12304,6 @@ class $JsxOpeningElement {
         this.$tagName = $$jsxTagNameExpression(node.tagName, this, ctx, -1);
         this.$attributes = new $JsxAttributes(node.attributes, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.JsxOpeningElement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12313,6 +12313,7 @@ class $JsxOpeningElement {
     }
 }
 class $JsxClosingElement {
+    get $kind() { return typescript.SyntaxKind.JsxClosingElement; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.JsxClosingElement`) {
         this.node = node;
         this.parent = parent;
@@ -12324,7 +12325,6 @@ class $JsxClosingElement {
         this.path = path;
         this.$tagName = $$jsxTagNameExpression(node.tagName, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.JsxClosingElement; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12334,6 +12334,7 @@ class $JsxClosingElement {
     }
 }
 class $JsxOpeningFragment {
+    get $kind() { return typescript.SyntaxKind.JsxOpeningFragment; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.JsxOpeningFragment`) {
         this.node = node;
         this.parent = parent;
@@ -12344,7 +12345,6 @@ class $JsxOpeningFragment {
         this.logger = logger;
         this.path = path;
     }
-    get $kind() { return typescript.SyntaxKind.JsxOpeningFragment; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12354,6 +12354,7 @@ class $JsxOpeningFragment {
     }
 }
 class $JsxClosingFragment {
+    get $kind() { return typescript.SyntaxKind.JsxClosingFragment; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.JsxClosingFragment`) {
         this.node = node;
         this.parent = parent;
@@ -12364,7 +12365,6 @@ class $JsxClosingFragment {
         this.logger = logger;
         this.path = path;
     }
-    get $kind() { return typescript.SyntaxKind.JsxClosingFragment; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12374,6 +12374,7 @@ class $JsxClosingFragment {
     }
 }
 class $JsxAttribute {
+    get $kind() { return typescript.SyntaxKind.JsxAttribute; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.JsxAttribute`) {
         this.node = node;
         this.parent = parent;
@@ -12397,7 +12398,6 @@ class $JsxAttribute {
             }
         }
     }
-    get $kind() { return typescript.SyntaxKind.JsxAttribute; }
 }
 function $$jsxAttributeLikeList(nodes, parent, ctx) {
     if (nodes === void 0 || nodes.length === 0) {
@@ -12418,6 +12418,7 @@ function $$jsxAttributeLikeList(nodes, parent, ctx) {
     return $nodes;
 }
 class $JsxAttributes {
+    get $kind() { return typescript.SyntaxKind.JsxAttributes; }
     constructor(node, parent, ctx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}.JsxAttributes`) {
         this.node = node;
         this.parent = parent;
@@ -12429,7 +12430,6 @@ class $JsxAttributes {
         this.path = path;
         this.$properties = $$jsxAttributeLikeList(node.properties, this, ctx);
     }
-    get $kind() { return typescript.SyntaxKind.JsxAttributes; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12439,6 +12439,7 @@ class $JsxAttributes {
     }
 }
 class $JsxSpreadAttribute {
+    get $kind() { return typescript.SyntaxKind.JsxSpreadAttribute; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.JsxSpreadAttribute`) {
         this.node = node;
         this.parent = parent;
@@ -12451,7 +12452,6 @@ class $JsxSpreadAttribute {
         this.path = path;
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.JsxSpreadAttribute; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -12461,6 +12461,7 @@ class $JsxSpreadAttribute {
     }
 }
 class $JsxExpression {
+    get $kind() { return typescript.SyntaxKind.JsxExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.JsxExpression`) {
         this.node = node;
         this.parent = parent;
@@ -12473,7 +12474,6 @@ class $JsxExpression {
         this.path = path;
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
     }
-    get $kind() { return typescript.SyntaxKind.JsxExpression; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -13203,6 +13203,7 @@ class $FormalParameterList extends Array {
     }
 }
 class $FunctionExpression {
+    get $kind() { return typescript.SyntaxKind.FunctionExpression; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.FunctionExpression`) {
         this.node = node;
         this.parent = parent;
@@ -13247,7 +13248,6 @@ class $FunctionExpression {
             this.functionKind = 12;
         }
     }
-    get $kind() { return typescript.SyntaxKind.FunctionExpression; }
     EvaluateBody(ctx, functionObject, argumentsList) {
         return EvaluateBody(this, ctx, functionObject, argumentsList);
     }
@@ -13381,6 +13381,7 @@ class $FunctionExpression {
     }
 }
 class $FunctionDeclaration {
+    get $kind() { return typescript.SyntaxKind.FunctionDeclaration; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.FunctionDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -13472,7 +13473,6 @@ class $FunctionDeclaration {
             this.functionKind = 12;
         }
     }
-    get $kind() { return typescript.SyntaxKind.FunctionDeclaration; }
     InstantiateFunctionObject(ctx, Scope) {
         switch (this.functionKind) {
             case 0:
@@ -13727,6 +13727,7 @@ function $FunctionDeclarationInstantiation(ctx, func, argumentsList) {
     return new $Empty(realm, 1, intrinsics.empty);
 }
 class $ArrowFunction {
+    get $kind() { return typescript.SyntaxKind.ArrowFunction; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ArrowFunction`) {
         this.node = node;
         this.parent = parent;
@@ -13766,7 +13767,6 @@ class $ArrowFunction {
         }
         this.functionKind = hasBit(modifierFlags, typescript.ModifierFlags.Async) ? 8 : 0;
     }
-    get $kind() { return typescript.SyntaxKind.ArrowFunction; }
     Evaluate(ctx) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -13786,13 +13786,14 @@ class $ArrowFunction {
     }
 }
 class MethodDefinitionRecord {
+    get isAbrupt() { return false; }
     constructor(key, closure) {
         this['[[Key]]'] = key;
         this['[[Closure]]'] = closure;
     }
-    get isAbrupt() { return false; }
 }
 class $ConstructorDeclaration {
+    get $kind() { return typescript.SyntaxKind.Constructor; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ConstructorDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -13813,7 +13814,6 @@ class $ConstructorDeclaration {
         this.VarDeclaredNames = $body.TopLevelVarDeclaredNames;
         this.VarScopedDeclarations = $body.TopLevelVarScopedDeclarations;
     }
-    get $kind() { return typescript.SyntaxKind.Constructor; }
     DefineMethod(ctx, object, functionPrototype) {
         ctx.checkTimeout();
         const realm = ctx.Realm;
@@ -13831,6 +13831,7 @@ class $ConstructorDeclaration {
     }
 }
 class $ParameterDeclaration {
+    get $kind() { return typescript.SyntaxKind.Parameter; }
     constructor(node, parent, ctx, idx, mos = parent.mos, realm = parent.realm, depth = parent.depth + 1, logger = parent.logger, path = `${parent.path}${$i(idx)}.ParameterDeclaration`) {
         this.node = node;
         this.parent = parent;
@@ -13841,7 +13842,7 @@ class $ParameterDeclaration {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        this.modifierFlags = this.combinedModifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = this.combinedModifierFlags = modifiersToModifierFlags(typescript.canHaveModifiers(node) ? typescript.getModifiers(node) : undefined);
         ctx |= 16;
         this.$decorators = $decoratorList(node.decorators, this, ctx);
         const $name = this.$name = $$bindingName(node.name, this, ctx, -1);
@@ -13859,7 +13860,6 @@ class $ParameterDeclaration {
             this.IsSimpleParameterList = false;
         }
     }
-    get $kind() { return typescript.SyntaxKind.Parameter; }
     InitializeIteratorBinding(ctx, iteratorRecord, environment) {
         ctx.checkTimeout();
         this.logger.debug(`${this.path}.InitializeIteratorBinding(#${ctx.id})`);
@@ -14180,16 +14180,16 @@ class $NumberConstructor extends $BuiltinFunction {
     }
 }
 class $NumberPrototype extends $Object {
-    constructor(realm, objectPrototype) {
-        const intrinsics = realm['[[Intrinsics]]'];
-        super(realm, '%NumberPrototype%', objectPrototype, 1, intrinsics.empty);
-        this['[[NumberData]]'] = new $Number(realm, 0);
-    }
     get $constructor() {
         return this.getProperty(this.realm['[[Intrinsics]]'].$constructor)['[[Value]]'];
     }
     set $constructor(value) {
         this.setDataProperty(this.realm['[[Intrinsics]]'].$constructor, value);
+    }
+    constructor(realm, objectPrototype) {
+        const intrinsics = realm['[[Intrinsics]]'];
+        super(realm, '%NumberPrototype%', objectPrototype, 1, intrinsics.empty);
+        this['[[NumberData]]'] = new $Number(realm, 0);
     }
 }
 
@@ -14218,16 +14218,16 @@ class $BooleanConstructor extends $BuiltinFunction {
     }
 }
 class $BooleanPrototype extends $Object {
-    constructor(realm, objectPrototype) {
-        const intrinsics = realm['[[Intrinsics]]'];
-        super(realm, '%BooleanPrototype%', objectPrototype, 1, intrinsics.empty);
-        this['[[BooleanData]]'] = new $Boolean(realm, false);
-    }
     get $constructor() {
         return this.getProperty(this.realm['[[Intrinsics]]'].$constructor)['[[Value]]'];
     }
     set $constructor(value) {
         this.setDataProperty(this.realm['[[Intrinsics]]'].$constructor, value);
+    }
+    constructor(realm, objectPrototype) {
+        const intrinsics = realm['[[Intrinsics]]'];
+        super(realm, '%BooleanPrototype%', objectPrototype, 1, intrinsics.empty);
+        this['[[BooleanData]]'] = new $Boolean(realm, false);
     }
 }
 
@@ -14866,10 +14866,10 @@ class $GeneratorInstance extends $Object {
     }
 }
 class $GeneratorState {
+    get isAbrupt() { return false; }
     constructor(value) {
         this.value = value;
     }
-    get isAbrupt() { return false; }
 }
 function $GeneratorValidate(ctx, generator) {
     const realm = ctx.Realm;
@@ -15254,6 +15254,7 @@ function $AsyncGeneratorEnqueue(ctx, generator, completion) {
 }
 
 class $ProxyExoticObject extends $Object {
+    get isProxy() { return true; }
     constructor(realm, target, handler) {
         super(realm, 'ProxyExoticObject', realm['[[Intrinsics]]'].null, 1, realm['[[Intrinsics]]'].empty);
         if (!target.isObject) {
@@ -15271,7 +15272,6 @@ class $ProxyExoticObject extends $Object {
         this['[[ProxyTarget]]'] = target;
         this['[[ProxyHandler]]'] = handler;
     }
-    get isProxy() { return true; }
     '[[GetPrototypeOf]]'(ctx) {
         const realm = ctx.Realm;
         const intrinsics = realm['[[Intrinsics]]'];
@@ -16960,20 +16960,20 @@ class ResolveSet {
     }
 }
 class ResolvedBindingRecord {
+    get isAbrupt() { return false; }
+    get isNull() { return false; }
+    get isAmbiguous() { return false; }
     constructor(Module, BindingName) {
         this.Module = Module;
         this.BindingName = BindingName;
     }
-    get isAbrupt() { return false; }
-    get isNull() { return false; }
-    get isAmbiguous() { return false; }
 }
 class DeferredModule {
+    get isAbrupt() { return false; }
     constructor($file, realm) {
         this.$file = $file;
         this.realm = realm;
     }
-    get isAbrupt() { return false; }
     ResolveExport(ctx, exportName, resolveSet) {
         throw new Error('Method not implemented.');
     }
@@ -16991,6 +16991,7 @@ class DeferredModule {
     }
 }
 class Realm {
+    get isAbrupt() { return false; }
     constructor(container, logger, PromiseJobs) {
         this.container = container;
         this.logger = logger;
@@ -16999,7 +17000,6 @@ class Realm {
         this.contextId = 0;
         this.stack = new ExecutionContextStack(logger);
     }
-    get isAbrupt() { return false; }
     static Create(container, promiseJobs) {
         const logger = container.get(kernel.ILogger).root.scopeTo('Realm');
         logger.debug('Creating new realm');
@@ -17412,6 +17412,7 @@ function determineEntryFileByConvention(files, isPrimaryEntryPoint) {
     return files.slice().sort(compareExternalModuleEntryFile)[0];
 }
 class NPMPackageLoader {
+    static get inject() { return [kernel.IContainer, kernel.ILogger, IFileSystem]; }
     constructor(container, logger, fs) {
         this.container = container;
         this.logger = logger;
@@ -17422,7 +17423,6 @@ class NPMPackageLoader {
         this.pkgResolvePromiseCache = new Map();
         this.logger = logger.root.scopeTo('NPMPackageLoader');
     }
-    static get inject() { return [kernel.IContainer, kernel.ILogger, IFileSystem]; }
     async loadEntryPackage(projectDir) {
         const start = Date.now();
         this.logger.info(`load()`);
@@ -17571,18 +17571,18 @@ async function loadDependency(dep) {
     await dep.pkg.loadDependencies();
 }
 class NPMPackageDependency {
-    constructor(issuer, refName) {
-        this.issuer = issuer;
-        this.refName = refName;
-        this._pkg = void 0;
-        this.loadPromise = void 0;
-    }
     get pkg() {
         const pkg = this._pkg;
         if (pkg === void 0) {
             throw new Error(`Package ${this.refName} is not yet loaded`);
         }
         return pkg;
+    }
+    constructor(issuer, refName) {
+        this.issuer = issuer;
+        this.refName = refName;
+        this._pkg = void 0;
+        this.loadPromise = void 0;
     }
     async load() {
         if (this._pkg === void 0) {
@@ -17743,6 +17743,13 @@ class EntrySourceFileProvider {
     }
 }
 class ServiceHost {
+    get jsdom() {
+        let jsdom$1 = this._jsdom;
+        if (jsdom$1 === null) {
+            jsdom$1 = this._jsdom = new jsdom.JSDOM('');
+        }
+        return jsdom$1;
+    }
     constructor(container, logger = container.get(kernel.ILogger), fs = container.get(IFileSystem)) {
         this.container = container;
         this.logger = logger;
@@ -17752,13 +17759,6 @@ class ServiceHost {
         this.moduleCache = new Map();
         this.scriptCache = new Map();
         this.agent = new Agent(logger);
-    }
-    get jsdom() {
-        let jsdom$1 = this._jsdom;
-        if (jsdom$1 === null) {
-            jsdom$1 = this._jsdom = new jsdom.JSDOM('');
-        }
-        return jsdom$1;
     }
     async loadEntryFile(ctx, dir) {
         this.logger.info(`Loading entry file at: ${dir}`);

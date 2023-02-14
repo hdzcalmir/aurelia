@@ -1,7 +1,7 @@
 import { Constructable, ResourceType } from '@aurelia/kernel';
 import { IRoute } from '../route';
-export declare type RouteType<T extends Constructable = Constructable> = ResourceType<T, InstanceType<T>, IRoute>;
-export declare type RouteDecorator = <T extends Constructable>(Type: T) => T;
+export type RouteType<T extends Constructable = Constructable> = ResourceType<T, InstanceType<T>, IRoute>;
+export type RouteDecorator = <T extends Constructable>(Type: T) => T;
 /**
  * Associate a static route configuration with this type.
  *

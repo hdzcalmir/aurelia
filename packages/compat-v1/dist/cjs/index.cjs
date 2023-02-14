@@ -172,11 +172,11 @@ exports.DelegateBindingCommand = class DelegateBindingCommand {
 exports.DelegateBindingCommand = r([ e.bindingCommand("delegate") ], exports.DelegateBindingCommand);
 
 exports.ListenerBindingRenderer = class ListenerBindingRenderer {
-    constructor(t) {
-        this.t = t;
-    }
     static get inject() {
         return [ v ];
+    }
+    constructor(t) {
+        this.t = t;
     }
     render(t, e, i, s, n) {
         const r = c(n, i.from, 8);

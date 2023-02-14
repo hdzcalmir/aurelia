@@ -6,8 +6,8 @@ import { I$Node, Context, $$AssignmentExpressionOrHigher, $$JsxOpeningLikeElemen
 import { $$ESModuleOrScript } from './modules';
 import { $Identifier, $PropertyAccessExpression, $ThisExpression } from './expressions';
 import { $StringLiteral } from './literals';
-export declare type $$JsxParent = ($JsxElement | $JsxFragment);
-export declare type $$JsxChild = ($JsxText | $JsxExpression | $JsxElement | $JsxSelfClosingElement | $JsxFragment);
+export type $$JsxParent = ($JsxElement | $JsxFragment);
+export type $$JsxChild = ($JsxText | $JsxExpression | $JsxElement | $JsxSelfClosingElement | $JsxFragment);
 export declare function $$jsxChildList(nodes: readonly JsxChild[], parent: $$JsxParent, ctx: Context): readonly $$JsxChild[];
 export declare class $JsxElement implements I$Node {
     readonly node: JsxElement;
@@ -26,11 +26,11 @@ export declare class $JsxElement implements I$Node {
     constructor(node: JsxElement, parent: $$JsxParent, ctx: Context, idx: number, mos?: $$ESModuleOrScript, realm?: Realm, depth?: number, logger?: ILogger, path?: string);
     Evaluate(ctx: ExecutionContext): $AnyNonEmpty;
 }
-export declare type $$JsxNamed = ($JsxOpeningElement | $JsxClosingElement | $JsxSelfClosingElement);
-export declare type $$JsxTagNamePropertyAccess = $PropertyAccessExpression & {
+export type $$JsxNamed = ($JsxOpeningElement | $JsxClosingElement | $JsxSelfClosingElement);
+export type $$JsxTagNamePropertyAccess = $PropertyAccessExpression & {
     expression: $$JsxTagNameExpression;
 };
-export declare type $$JsxTagNameExpression = ($Identifier | $ThisExpression | $$JsxTagNamePropertyAccess);
+export type $$JsxTagNameExpression = ($Identifier | $ThisExpression | $$JsxTagNamePropertyAccess);
 export declare function $$jsxTagNameExpression(node: JsxTagNameExpression, parent: $$JsxNamed, ctx: Context, idx: number): $$JsxTagNameExpression;
 export declare class $JsxSelfClosingElement implements I$Node {
     readonly node: JsxSelfClosingElement;
@@ -149,7 +149,7 @@ export declare class $JsxAttribute implements I$Node {
     readonly $initializer: $StringLiteral | $JsxExpression | undefined;
     constructor(node: JsxAttribute, parent: $JsxAttributes, ctx: Context, idx: number, mos?: $$ESModuleOrScript, realm?: Realm, depth?: number, logger?: ILogger, path?: string);
 }
-export declare type $$JsxAttributeLike = ($JsxAttribute | $JsxSpreadAttribute);
+export type $$JsxAttributeLike = ($JsxAttribute | $JsxSpreadAttribute);
 export declare function $$jsxAttributeLikeList(nodes: readonly JsxAttributeLike[], parent: $JsxAttributes, ctx: Context): readonly $$JsxAttributeLike[];
 export declare class $JsxAttributes implements I$Node {
     readonly node: JsxAttributes;

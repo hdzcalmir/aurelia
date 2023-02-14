@@ -4,7 +4,7 @@ import { RoutingScope } from '../routing-scope';
 /**
  * Public API - The routing instructions are the core of the router's navigations
  */
-export declare type EndpointHandle = string | Endpoint;
+export type EndpointHandle = string | Endpoint;
 export declare class InstructionEndpoint {
     name: string | null;
     instance: Endpoint | null;

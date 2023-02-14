@@ -11,8 +11,8 @@ export interface IInstructionComponent extends InstructionComponent {
  * routing instructions, but can be found in for example load instructions as well. The instruction
  * components are resolved "non-early" to support dynamic, local resolutions.
  */
-export declare type ComponentAppellation = string | RouteableComponentType | IRouteableComponent | CustomElementDefinition | Constructable;
-export declare type ComponentAppellationFunction = (instruction?: RoutingInstruction) => ComponentAppellation | Promise<ComponentAppellation>;
+export type ComponentAppellation = string | RouteableComponentType | IRouteableComponent | CustomElementDefinition | Constructable;
+export type ComponentAppellationFunction = (instruction?: RoutingInstruction) => ComponentAppellation | Promise<ComponentAppellation>;
 export declare class InstructionComponent {
     /**
      * The name of the component.

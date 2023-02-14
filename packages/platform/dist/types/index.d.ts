@@ -23,7 +23,7 @@ export declare class Platform<TGlobal extends typeof globalThis = typeof globalT
     protected cancelMacroTask(): void;
     protected flushMacroTask(): void;
 }
-declare type TaskCallback<T = any> = (delta: number) => T;
+type TaskCallback<T = any> = (delta: number) => T;
 export declare class TaskQueue {
     readonly platform: Platform;
     private readonly $request;
@@ -63,7 +63,7 @@ export declare const enum TaskStatus {
     completed = 2,
     canceled = 3
 }
-declare type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;
+type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;
 export interface ITask<T = any> {
     readonly result: Promise<UnwrapPromise<T>>;
     readonly status: TaskStatus;
@@ -94,7 +94,7 @@ export declare const enum TaskQueuePriority {
     macroTask = 1,
     postRender = 2
 }
-export declare type QueueTaskOptions = {
+export type QueueTaskOptions = {
     /**
      * The number of milliseconds to wait before queueing the task.
      *

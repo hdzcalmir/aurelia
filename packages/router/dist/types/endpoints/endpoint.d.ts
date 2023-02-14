@@ -19,8 +19,8 @@ export interface IEndpointOptions {
      */
     noHistory?: boolean;
 }
-export declare type EndpointType = Viewport | ViewportScope;
-export declare type EndpointTypeName = 'Viewport' | 'ViewportScope';
+export type EndpointType = Viewport | ViewportScope;
+export type EndpointTypeName = 'Viewport' | 'ViewportScope';
 export interface IEndpoint extends Endpoint {
 }
 export declare class Endpoint {

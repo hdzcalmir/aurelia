@@ -1,7 +1,7 @@
 import { Constructable, IDisposable } from './interfaces';
 import { IResourceKind, ResourceDefinition, ResourceType } from './resource';
-export declare type ResolveCallback<T = any> = (handler: IContainer, requestor: IContainer, resolver: IResolver<T>) => T;
-export declare type InterfaceSymbol<K = any> = (target: Injectable<K>, property: string, index: number) => void;
+export type ResolveCallback<T = any> = (handler: IContainer, requestor: IContainer, resolver: IResolver<T>) => T;
+export type InterfaceSymbol<K = any> = (target: Injectable<K>, property: string, index: number) => void;
 interface IResolverLike<C, K = any> {
     readonly $isResolver: true;
     resolve(handler: C, requestor: C): Resolved<K>;
@@ -15,7 +15,7 @@ export interface IDisposableResolver<K = any> extends IResolver<K> {
 export interface IRegistration<K = any> {
     register(container: IContainer, key?: Key): IResolver<K>;
 }
-export declare type Transformer<K> = (instance: Resolved<K>) => Resolved<K>;
+export type Transformer<K> = (instance: Resolved<K>) => Resolved<K>;
 export interface IFactory<T extends Constructable = any> {
     readonly Type: T;
     registerTransformer(transformer: Transformer<T>): void;
@@ -46,7 +46,7 @@ export interface IContainer extends IServiceLocator, IDisposable {
     registerTransformer<K extends Key, T = K>(key: K, transformer: Transformer<T>): boolean;
     getResolver<K extends Key, T = K>(key: K | Key, autoRegister?: boolean): IResolver<T> | null;
     registerFactory<T extends Constructable>(key: T, factory: IFactory<T>): void;
-    invoke<T, TDeps extends unknown[] = unknown[]>(key: Constructable<T>, dynamicDependencies?: TDeps): T;
+    invoke<T extends {}, TDeps extends unknown[] = unknown[]>(key: Constructable<T>, dynamicDependencies?: TDeps): T;
     getFactory<T extends Constructable>(key: T): IFactory<T>;
     createChild(config?: IContainerConfiguration): IContainer;
     disposeResolvers(): void;
@@ -64,13 +64,13 @@ export declare class ResolverBuilder<K> {
     cachedCallback(value: ResolveCallback<K>): IResolver<K>;
     aliasTo(destinationKey: Key): IResolver<K>;
 }
-export declare type RegisterSelf<T extends Constructable> = {
+export type RegisterSelf<T extends Constructable> = {
     register(container: IContainer): IResolver<InstanceType<T>>;
     registerInRequestor: boolean;
 };
-export declare type Key = PropertyKey | object | InterfaceSymbol | Constructable | IResolver;
-export declare type Resolved<K> = (K extends InterfaceSymbol<infer T> ? T : K extends Constructable ? InstanceType<K> : K extends IResolverLike<any, infer T1> ? T1 extends Constructable ? InstanceType<T1> : T1 : K);
-export declare type Injectable<T = {}> = Constructable<T> & {
+export type Key = PropertyKey | object | InterfaceSymbol | Constructable | IResolver;
+export type Resolved<K> = (K extends InterfaceSymbol<infer T> ? T : K extends Constructable ? InstanceType<K> : K extends IResolverLike<any, infer T1> ? T1 extends Constructable ? InstanceType<T1> : T1 : K);
+export type Injectable<T = {}> = Constructable<T> & {
     inject?: Key[];
 };
 export interface IContainerConfiguration {
@@ -210,7 +210,7 @@ export declare function transient<T extends Constructable>(): typeof transientDe
  * ```
  */
 export declare function transient<T extends Constructable>(target: T & Partial<RegisterSelf<T>>): T & RegisterSelf<T>;
-declare type SingletonOptions = {
+type SingletonOptions = {
     scoped: boolean;
 };
 declare const singletonDecorator: <T extends Constructable<{}>>(target: T & Partial<RegisterSelf<T>>) => T & RegisterSelf<T>;
@@ -266,10 +266,10 @@ export declare const all: (key: any, searchAncestors?: boolean) => ReturnType<ty
  * see { @link DI.createInterface } on interactions with interfaces
  */
 export declare const lazy: (key: any) => any;
-export declare type ILazyResolver<K = any> = IResolver<K> & {
+export type ILazyResolver<K = any> = IResolver<K> & {
     __isLazy: undefined;
 } & ((...args: unknown[]) => any);
-export declare type IResolvedLazy<K> = () => Resolved<K>;
+export type IResolvedLazy<K> = () => Resolved<K>;
 /**
  * Allows you to optionally inject a dependency depending on whether the [[`Key`]] is present, for example
  * ```ts
@@ -331,13 +331,13 @@ export declare const ignore: {
  * see { @link DI.createInterface } on interactions with interfaces
  */
 export declare const factory: <K>(key: K) => IFactoryResolver<K>;
-export declare type IFactoryResolver<K = any> = IResolver<K> & {
+export type IFactoryResolver<K = any> = IResolver<K> & {
     __isFactory: undefined;
 } & ((...args: unknown[]) => any);
-export declare type IResolvedFactory<K> = (...args: unknown[]) => Resolved<K>;
+export type IResolvedFactory<K> = (...args: unknown[]) => Resolved<K>;
 export declare const newInstanceForScope: <K>(key: K) => INewInstanceResolver<K>;
 export declare const newInstanceOf: <K>(key: K) => INewInstanceResolver<K>;
-export declare type INewInstanceResolver<T> = {
+export type INewInstanceResolver<T> = {
     __newInstance: undefined;
     (...args: unknown[]): any;
 };

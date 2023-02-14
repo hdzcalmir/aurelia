@@ -1,5 +1,5 @@
 import type { Collection, ICollectionSubscriber, IndexMap, ISubscriber, ISubscriberRecord } from '../observation';
-export declare type IAnySubscriber = ISubscriber | ICollectionSubscriber;
+export type IAnySubscriber = ISubscriber | ICollectionSubscriber;
 export declare function subscriberCollection(): ClassDecorator;
 export declare function subscriberCollection(target: Function): void;
 export declare class SubscriberRecord<T extends IAnySubscriber> implements ISubscriberRecord<T> {

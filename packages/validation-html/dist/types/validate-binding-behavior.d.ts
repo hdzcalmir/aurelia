@@ -37,7 +37,7 @@ export declare class ValidateBindingBehavior implements BindingBehaviorInstance 
     bind(scope: Scope, binding: IBinding): void;
     unbind(scope: Scope, binding: IBinding): void;
 }
-declare type MediatedBinding<K extends string> = {
+type MediatedBinding<K extends string> = {
     [key in K]: (newValue: unknown, previousValue: unknown) => void;
 };
 export interface BindingMediator<K extends string> extends IConnectable, IAstEvaluator {

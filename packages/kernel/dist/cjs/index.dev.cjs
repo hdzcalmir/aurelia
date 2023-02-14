@@ -400,6 +400,9 @@ function fromDefinitionOrDefault(name, def, getDefault) {
 const InstrinsicTypeNames = new Set('Array ArrayBuffer Boolean DataView Date Error EvalError Float32Array Float64Array Function Int8Array Int16Array Int32Array Map Number Object Promise RangeError ReferenceError RegExp Set SharedArrayBuffer String SyntaxError TypeError Uint8Array Uint8ClampedArray Uint16Array Uint32Array URIError WeakMap WeakSet'.split(' '));
 let containerId = 0;
 class Container {
+    get depth() {
+        return this.parent === null ? 0 : this.parent.depth + 1;
+    }
     constructor(parent, config) {
         this.parent = parent;
         this.config = config;
@@ -424,9 +427,6 @@ class Container {
             }
         }
         this._resolvers.set(IContainer, containerResolver);
-    }
-    get depth() {
-        return this.parent === null ? 0 : this.parent.depth + 1;
     }
     register(...params) {
         if (++this._registerDepth === 100) {
@@ -1226,15 +1226,15 @@ const Registration = {
     defer: deferRegistration,
 };
 class InstanceProvider {
+    get friendlyName() {
+        return this._name;
+    }
     constructor(name, instance) {
         this._instance = null;
         this._name = name;
         if (instance !== void 0) {
             this._instance = instance;
         }
-    }
-    get friendlyName() {
-        return this._name;
     }
     prepare(instance) {
         this._instance = instance;
@@ -1436,6 +1436,9 @@ exports.DefaultLogEventFactory = __decorate([
     __param(0, ILogConfig)
 ], exports.DefaultLogEventFactory);
 exports.ConsoleSink = class ConsoleSink {
+    static register(container) {
+        singletonRegistration(ISink, ConsoleSink).register(container);
+    }
     constructor(p) {
         const $console = p.console;
         this.handleEvent = function emit(event) {
@@ -1475,9 +1478,6 @@ exports.ConsoleSink = class ConsoleSink {
                 }
             }
         };
-    }
-    static register(container) {
-        singletonRegistration(ISink, ConsoleSink).register(container);
     }
 };
 exports.ConsoleSink = __decorate([

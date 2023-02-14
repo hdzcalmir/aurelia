@@ -4,7 +4,7 @@ import { Deserializer } from './ast-serialization';
 import { IPropertyRule, IRuleProperty, IValidationExpressionHydrator, IValidationRule, IValidationVisitor, IValidateable } from './rule-interfaces';
 import { IValidationRules, PropertyRule, RuleProperty } from './rule-provider';
 import { EqualsRule, IValidationMessageProvider, LengthRule, RangeRule, RegexRule, RequiredRule, SizeRule } from './rules';
-export declare type Visitable<T extends IValidationRule> = (PropertyRule | RuleProperty | T) & {
+export type Visitable<T extends IValidationRule> = (PropertyRule | RuleProperty | T) & {
     accept(visitor: ValidationSerializer): string;
 };
 export declare class ValidationSerializer implements IValidationVisitor {

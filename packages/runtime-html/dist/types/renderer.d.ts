@@ -1,4 +1,5 @@
-import { IExpressionParser, IObserverLocator } from '@aurelia/runtime';
+import { type IContainer, type Class, type IRegistry } from '@aurelia/kernel';
+import { IExpressionParser, IObserverLocator, type Interpolation, type IsBindingBehavior, type ForOfStatement } from '@aurelia/runtime';
 import { BindingMode } from './binding/interfaces-bindings';
 import { CustomElementDefinition } from './resources/custom-element';
 import { IProjections } from './resources/slot-injectables';
@@ -8,8 +9,6 @@ import { IController } from './templating/controller';
 import { IPlatform } from './platform';
 import { IRendering } from './templating/rendering';
 import type { AttrSyntax } from './resources/attribute-pattern';
-import type { IContainer, Class, IRegistry } from '@aurelia/kernel';
-import type { Interpolation, IsBindingBehavior, ForOfStatement } from '@aurelia/runtime';
 import type { IHydratableController } from './templating/controller';
 import type { PartialCustomElementDefinition } from './resources/custom-element';
 export declare const enum InstructionType {
@@ -34,7 +33,7 @@ export declare const enum InstructionType {
     spreadBinding = "hs",
     spreadElementProp = "hp"
 }
-export declare type InstructionTypeName = string;
+export type InstructionTypeName = string;
 export interface IInstruction {
     readonly type: InstructionTypeName;
 }
@@ -294,9 +293,9 @@ export interface IRenderer<TType extends InstructionTypeName = InstructionTypeNa
     renderingCtrl: IHydratableController, target: unknown, instruction: IInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare const IRenderer: import("@aurelia/kernel").InterfaceSymbol<IRenderer<string>>;
-declare type DecoratableInstructionRenderer<TType extends string, TProto, TClass> = Class<TProto & Partial<IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>>, TClass> & Partial<IRegistry>;
-declare type DecoratedInstructionRenderer<TType extends string, TProto, TClass> = Class<TProto & IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>, TClass> & IRegistry;
-declare type InstructionRendererDecorator<TType extends string> = <TProto, TClass>(target: DecoratableInstructionRenderer<TType, TProto, TClass>) => DecoratedInstructionRenderer<TType, TProto, TClass>;
+type DecoratableInstructionRenderer<TType extends string, TProto, TClass> = Class<TProto & Partial<IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>>, TClass> & Partial<IRegistry>;
+type DecoratedInstructionRenderer<TType extends string, TProto, TClass> = Class<TProto & IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>, TClass> & IRegistry;
+type InstructionRendererDecorator<TType extends string> = <TProto, TClass>(target: DecoratableInstructionRenderer<TType, TProto, TClass>) => DecoratedInstructionRenderer<TType, TProto, TClass>;
 export declare function renderer<TType extends string>(targetType: TType): InstructionRendererDecorator<TType>;
 export declare class SetPropertyRenderer implements IRenderer {
     target: InstructionType.setProperty;

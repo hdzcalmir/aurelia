@@ -10,7 +10,7 @@ declare module '@aurelia/kernel' {
         find<T extends ICustomAttributeViewModel>(kind: typeof CustomAttribute, name: string): CustomAttributeDefinition<Constructable<T>> | null;
     }
 }
-export declare type PartialCustomAttributeDefinition = PartialResourceDefinition<{
+export type PartialCustomAttributeDefinition = PartialResourceDefinition<{
     readonly defaultBindingMode?: BindingMode;
     readonly isTemplateController?: boolean;
     readonly bindables?: Record<string, PartialBindableDefinition> | readonly string[];
@@ -31,8 +31,8 @@ export declare type PartialCustomAttributeDefinition = PartialResourceDefinition
     readonly watches?: IWatchDefinition[];
     readonly dependencies?: readonly Key[];
 }>;
-export declare type CustomAttributeType<T extends Constructable = Constructable> = ResourceType<T, ICustomAttributeViewModel, PartialCustomAttributeDefinition>;
-export declare type CustomAttributeKind = IResourceKind<CustomAttributeType, CustomAttributeDefinition> & {
+export type CustomAttributeType<T extends Constructable = Constructable> = ResourceType<T, ICustomAttributeViewModel, PartialCustomAttributeDefinition>;
+export type CustomAttributeKind = IResourceKind<CustomAttributeType, CustomAttributeDefinition> & {
     for<C extends ICustomAttributeViewModel = ICustomAttributeViewModel>(node: Node, name: string): ICustomAttributeController<C> | undefined;
     isType<T>(value: T): value is (T extends Constructable ? CustomAttributeType<T> : never);
     define<T extends Constructable>(name: string, Type: T): CustomAttributeType<T>;
@@ -43,7 +43,7 @@ export declare type CustomAttributeKind = IResourceKind<CustomAttributeType, Cus
     annotate<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K, value: PartialCustomAttributeDefinition[K]): void;
     getAnnotation<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K): PartialCustomAttributeDefinition[K];
 };
-export declare type CustomAttributeDecorator = <T extends Constructable>(Type: T) => CustomAttributeType<T>;
+export type CustomAttributeDecorator = <T extends Constructable>(Type: T) => CustomAttributeType<T>;
 /**
  * Decorator: Indicates that the decorated class is a custom attribute.
  */

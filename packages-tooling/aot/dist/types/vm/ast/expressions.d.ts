@@ -66,8 +66,8 @@ export declare class $SuperExpression implements I$Node {
     constructor(node: SuperExpression, parent: $AnyParentNode, ctx: Context, idx: number, mos?: $$ESModuleOrScript, realm?: Realm, depth?: number, logger?: ILogger, path?: string);
     Evaluate(ctx: ExecutionContext): $AnyNonEmpty;
 }
-export declare type $NodeWithSpreadElements = ($ArrayLiteralExpression | $CallExpression | $NewExpression);
-export declare type $$ArgumentOrArrayLiteralElement = ($$AssignmentExpressionOrHigher | $SpreadElement | $OmittedExpression);
+export type $NodeWithSpreadElements = ($ArrayLiteralExpression | $CallExpression | $NewExpression);
+export type $$ArgumentOrArrayLiteralElement = ($$AssignmentExpressionOrHigher | $SpreadElement | $OmittedExpression);
 export declare function $argumentOrArrayLiteralElement(node: $ArgumentOrArrayLiteralElementNode, parent: $NodeWithSpreadElements, ctx: Context, idx: number): $$ArgumentOrArrayLiteralElement;
 export declare function $argumentOrArrayLiteralElementList(nodes: readonly $ArgumentOrArrayLiteralElementNode[] | undefined, parent: $NodeWithSpreadElements, ctx: Context): readonly $$ArgumentOrArrayLiteralElement[];
 export declare class $ArrayLiteralExpression implements I$Node {
@@ -91,7 +91,7 @@ export declare class $ArrayLiteralExpression implements I$Node {
     AccumulateArray(ctx: ExecutionContext, array: $ArrayExoticObject, nextIndex: $Number): $Number | $Error;
     Evaluate(ctx: ExecutionContext): $ArrayExoticObject | $Error;
 }
-export declare type $$ObjectLiteralElementLike = ($PropertyAssignment | $ShorthandPropertyAssignment | $SpreadAssignment | $MethodDeclaration | $GetAccessorDeclaration | $SetAccessorDeclaration);
+export type $$ObjectLiteralElementLike = ($PropertyAssignment | $ShorthandPropertyAssignment | $SpreadAssignment | $MethodDeclaration | $GetAccessorDeclaration | $SetAccessorDeclaration);
 export declare function $$objectLiteralElementLikeList(nodes: readonly ObjectLiteralElementLike[], parent: $ObjectLiteralExpression, ctx: Context): readonly $$ObjectLiteralElementLike[];
 export declare class $ObjectLiteralExpression implements I$Node {
     readonly node: ObjectLiteralExpression;
@@ -231,7 +231,7 @@ export declare class $NewExpression implements I$Node {
     constructor(node: NewExpression, parent: $AnyParentNode, ctx: Context, idx: number, mos?: $$ESModuleOrScript, realm?: Realm, depth?: number, logger?: ILogger, path?: string);
     Evaluate(ctx: ExecutionContext): $AnyNonEmpty;
 }
-export declare type $$TemplateLiteral = ($NoSubstitutionTemplateLiteral | $TemplateExpression);
+export type $$TemplateLiteral = ($NoSubstitutionTemplateLiteral | $TemplateExpression);
 export declare class $TaggedTemplateExpression implements I$Node {
     readonly node: TaggedTemplateExpression;
     readonly parent: $AnyParentNode;

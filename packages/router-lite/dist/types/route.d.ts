@@ -11,7 +11,7 @@ import { RouteNode } from './route-tree';
  * (which in turn are quite similar, but do have a few minor but important differences that make them non-interchangeable)
  * as well as `IRedirectRouteConfig`
  */
-export declare type Routeable = string | IChildRouteConfig | IRedirectRouteConfig | RouteableComponent;
+export type Routeable = string | IChildRouteConfig | IRedirectRouteConfig | RouteableComponent;
 export interface IRouteConfig {
     /**
      * The id for this route, which can be used in the view for generating hrefs.
@@ -77,8 +77,8 @@ export interface IChildRouteConfig extends IRouteConfig {
 }
 export interface IRedirectRouteConfig extends Pick<IRouteConfig, 'caseSensitive' | 'redirectTo' | 'path'> {
 }
-export declare type TransitionPlan = 'none' | 'replace' | 'invoke-lifecycles';
-export declare type TransitionPlanOrFunc = TransitionPlan | ((current: RouteNode, next: RouteNode) => TransitionPlan);
+export type TransitionPlan = 'none' | 'replace' | 'invoke-lifecycles';
+export type TransitionPlanOrFunc = TransitionPlan | ((current: RouteNode, next: RouteNode) => TransitionPlan);
 export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     readonly id: string | null;
     readonly path: string | string[] | null;
@@ -115,8 +115,8 @@ export declare const Route: {
      */
     getConfig(Type: RouteType): RouteConfig;
 };
-export declare type RouteType<T extends Constructable = Constructable> = ResourceType<T, InstanceType<T>, IRouteConfig>;
-export declare type RouteDecorator = <T extends Constructable>(Type: T) => T;
+export type RouteType<T extends Constructable = Constructable> = ResourceType<T, InstanceType<T>, IRouteConfig>;
+export type RouteDecorator = <T extends Constructable>(Type: T) => T;
 /**
  * Associate a static route configuration with this type.
  *

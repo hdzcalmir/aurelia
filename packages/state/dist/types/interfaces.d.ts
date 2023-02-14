@@ -1,6 +1,6 @@
 import { type MaybePromise, type IRegistry } from '@aurelia/kernel';
 export declare const IActionHandler: import("@aurelia/kernel").InterfaceSymbol<IActionHandler<any>>;
-export declare type IActionHandler<T = any> = (state: T, action: unknown, ...params: any) => MaybePromise<T>;
+export type IActionHandler<T = any> = (state: T, action: unknown, ...params: any) => MaybePromise<T>;
 export declare const IStore: import("@aurelia/kernel").InterfaceSymbol<IStore<object>>;
 export interface IStore<T extends object> {
     subscribe(subscriber: IStoreSubscriber<T>): void;
@@ -15,7 +15,7 @@ export interface IStore<T extends object> {
     dispatch(action: unknown, ...params: any[]): void | Promise<void>;
 }
 export declare const IState: import("@aurelia/kernel").InterfaceSymbol<object>;
-export declare type IRegistrableReducer = IActionHandler & IRegistry;
+export type IRegistrableReducer = IActionHandler & IRegistry;
 export interface IStoreSubscriber<T extends object> {
     handleStateChange(state: T, prevState: T): void;
 }

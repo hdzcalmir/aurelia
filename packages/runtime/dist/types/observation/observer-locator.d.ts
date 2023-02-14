@@ -14,14 +14,14 @@ export interface INodeObserverLocator {
     getAccessor(obj: object, key: PropertyKey, requestor: IObserverLocator): IAccessor | IObserver;
 }
 export declare const INodeObserverLocator: import("@aurelia/kernel").InterfaceSymbol<INodeObserverLocator>;
-export declare type ExtendedPropertyDescriptor = PropertyDescriptor & {
+export type ExtendedPropertyDescriptor = PropertyDescriptor & {
     get?: ObservableGetter;
     set?: ObservableSetter;
 };
-export declare type ObservableGetter = PropertyDescriptor['get'] & {
+export type ObservableGetter = PropertyDescriptor['get'] & {
     getObserver?(obj: unknown, requestor: IObserverLocator): IObserver;
 };
-export declare type ObservableSetter = PropertyDescriptor['set'] & {
+export type ObservableSetter = PropertyDescriptor['set'] & {
     getObserver?(obj: unknown, requestor: IObserverLocator): IObserver;
 };
 export declare class ObserverLocator {
@@ -34,7 +34,7 @@ export declare class ObserverLocator {
     getSetObserver(observedSet: Set<unknown>): ICollectionObserver<CollectionKind.set>;
     private createObserver;
 }
-export declare type RepeatableCollection = Collection | null | undefined | number;
+export type RepeatableCollection = Collection | null | undefined | number;
 export declare const getCollectionObserver: (collection: RepeatableCollection) => CollectionObserver | undefined;
 export declare const getObserverLookup: <T extends IObserver>(instance: object) => Record<PropertyKey, T>;
 //# sourceMappingURL=observer-locator.d.ts.map

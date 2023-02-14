@@ -7,7 +7,7 @@
 import { IRouter, IRouterConfiguration } from '../index';
 import { RouteableComponentType } from '../interfaces';
 import { IContainer } from '@aurelia/kernel';
-export declare type Parameters = {
+export type Parameters = {
     [key: string]: unknown;
 };
 export interface IComponentParameter {
@@ -17,7 +17,7 @@ export interface IComponentParameter {
 /**
  * Public API - The routing instructions are the core of the router's navigations
  */
-export declare type ComponentParameters = string | Record<string, unknown> | unknown[];
+export type ComponentParameters = string | Record<string, unknown> | unknown[];
 export declare class InstructionParameters {
     parametersString: string | null;
     parametersRecord: Parameters | null;

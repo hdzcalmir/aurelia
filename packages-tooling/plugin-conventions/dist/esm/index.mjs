@@ -1,7 +1,7 @@
 import { camelCase, kebabCase } from '@aurelia/kernel';
 import * as path from 'path';
 import modifyCode from 'modify-code';
-import * as ts from 'typescript';
+import { createSourceFile, ScriptTarget, isImportDeclaration, isStringLiteral, isNamedImports, isClassDeclaration, canHaveModifiers, getModifiers, SyntaxKind, canHaveDecorators, getDecorators, isCallExpression, isIdentifier } from 'typescript';
 import { parseFragment } from 'parse5';
 import * as fs from 'fs';
 
@@ -32,7 +32,7 @@ function resourceName(filePath) {
 
 function preprocessResource(unit, options) {
     const expectedResourceName = resourceName(unit.path);
-    const sf = ts.createSourceFile(unit.path, unit.contents, ts.ScriptTarget.Latest);
+    const sf = createSourceFile(unit.path, unit.contents, ScriptTarget.Latest);
     let exportedClassName;
     let auImport = { names: [], start: 0, end: 0 };
     let runtimeImport = { names: [], start: 0, end: 0 };
@@ -144,12 +144,12 @@ function modifyResource(unit, m, options) {
     return m;
 }
 function captureImport(s, lib, code) {
-    if (ts.isImportDeclaration(s) &&
-        ts.isStringLiteral(s.moduleSpecifier) &&
+    if (isImportDeclaration(s) &&
+        isStringLiteral(s.moduleSpecifier) &&
         s.moduleSpecifier.text === lib &&
         s.importClause &&
         s.importClause.namedBindings &&
-        ts.isNamedImports(s.importClause.namedBindings)) {
+        isNamedImports(s.importClause.namedBindings)) {
         return {
             names: s.importClause.namedBindings.elements.map(e => e.name.text),
             start: ensureTokenStart(s.pos, code),
@@ -168,23 +168,29 @@ function ensureTokenStart(start, code) {
     return start;
 }
 function isExported(node) {
-    if (!node.modifiers)
+    if (!canHaveModifiers(node))
         return false;
-    for (const mod of node.modifiers) {
-        if (mod.kind === ts.SyntaxKind.ExportKeyword)
+    const modifiers = getModifiers(node);
+    if (modifiers === void 0)
+        return false;
+    for (const mod of modifiers) {
+        if (mod.kind === SyntaxKind.ExportKeyword)
             return true;
     }
     return false;
 }
 const KNOWN_DECORATORS = ['view', 'customElement', 'customAttribute', 'valueConverter', 'bindingBehavior', 'bindingCommand', 'templateController'];
 function findDecoratedResourceType(node) {
-    if (!node.decorators)
+    if (!canHaveDecorators(node))
         return;
-    for (const d of node.decorators) {
-        if (!ts.isCallExpression(d.expression))
+    const decorators = getDecorators(node);
+    if (decorators === void 0)
+        return;
+    for (const d of decorators) {
+        if (!isCallExpression(d.expression))
             return;
         const exp = d.expression.expression;
-        if (ts.isIdentifier(exp)) {
+        if (isIdentifier(exp)) {
             const name = exp.text;
             if (KNOWN_DECORATORS.includes(name)) {
                 return {
@@ -199,7 +205,7 @@ function isKindOfSame(name1, name2) {
     return name1.replace(/-/g, '') === name2.replace(/-/g, '');
 }
 function findResource(node, expectedResourceName, filePair, isViewPair, code) {
-    if (!ts.isClassDeclaration(node))
+    if (!isClassDeclaration(node))
         return;
     if (!node.name)
         return;
@@ -222,7 +228,7 @@ function findResource(node, expectedResourceName, filePair, isViewPair, code) {
         if (isImplicitResource &&
             foundType.type === 'customElement' &&
             foundType.expression.arguments.length === 1 &&
-            ts.isStringLiteral(foundType.expression.arguments[0])) {
+            isStringLiteral(foundType.expression.arguments[0])) {
             const customName = foundType.expression.arguments[0];
             return {
                 className,

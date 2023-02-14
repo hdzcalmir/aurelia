@@ -258,6 +258,7 @@ function createCoercer(coercer, nullable) {
 }
 
 class BindableObserver {
+    get type() { return 1; }
     constructor(obj, key, cbName, set, $controller, _coercionConfig) {
         this.set = set;
         this.$controller = $controller;
@@ -284,7 +285,6 @@ class BindableObserver {
             this._createGetterSetter();
         }
     }
-    get type() { return 1; }
     getValue() {
         return this._value;
     }
@@ -499,15 +499,15 @@ class Interpretation {
     }
 }
 class AttrParsingState {
+    get _pattern() {
+        return this._isEndpoint ? this._patterns[0] : null;
+    }
     constructor(charSpec, ...patterns) {
         this.charSpec = charSpec;
         this._nextStates = [];
         this._types = null;
         this._isEndpoint = false;
         this._patterns = patterns;
-    }
-    get _pattern() {
-        return this._isEndpoint ? this._patterns[0] : null;
     }
     findChild(charSpec) {
         const nextStates = this._nextStates;
@@ -1985,6 +1985,7 @@ function templateController(nameOrDef) {
     };
 }
 class CustomAttributeDefinition {
+    get type() { return 2; }
     constructor(Type, name, aliases, key, defaultBindingMode, isTemplateController, bindables, noMultiBindings, watches, dependencies) {
         this.Type = Type;
         this.name = name;
@@ -1997,7 +1998,6 @@ class CustomAttributeDefinition {
         this.watches = watches;
         this.dependencies = dependencies;
     }
-    get type() { return 2; }
     static create(nameOrDef, Type) {
         let name;
         let def;
@@ -2265,6 +2265,7 @@ const mixinNoopSubscribable = (target) => {
 };
 
 class ClassAttributeAccessor {
+    get doNotCache() { return true; }
     constructor(obj) {
         this.obj = obj;
         this.type = 2 | 4;
@@ -2274,7 +2275,6 @@ class ClassAttributeAccessor {
         this._version = 0;
         this._hasChanges = false;
     }
-    get doNotCache() { return true; }
     getValue() {
         return this.value;
     }
@@ -2505,6 +2505,9 @@ const StyleConfiguration = {
 const { enter, exit } = ConnectableSwitcher;
 const { wrap, unwrap } = ProxyObservable;
 class ComputedWatcher {
+    get value() {
+        return this._value;
+    }
     constructor(obj, observerLocator, $get, cb, useProxy) {
         this.obj = obj;
         this.$get = $get;
@@ -2514,9 +2517,6 @@ class ComputedWatcher {
         this._value = void 0;
         this._callback = cb;
         this.oL = observerLocator;
-    }
-    get value() {
-        return this._value;
     }
     handleChange() {
         this.run();
@@ -2564,6 +2564,9 @@ class ComputedWatcher {
     }
 }
 class ExpressionWatcher {
+    get value() {
+        return this._value;
+    }
     constructor(scope, l, oL, expression, callback) {
         this.scope = scope;
         this.l = l;
@@ -2573,9 +2576,6 @@ class ExpressionWatcher {
         this.obj = scope.bindingContext;
         this._expression = expression;
         this._callback = callback;
-    }
-    get value() {
-        return this._value;
     }
     handleChange(value) {
         const expr = this._expression;
@@ -2748,6 +2748,12 @@ ViewFactory.maxCacheSize = 0xFFFF;
 
 const IRendering = createInterface('IRendering', x => x.singleton(Rendering));
 class Rendering {
+    get renderers() {
+        return this._renderers ?? (this._renderers = this._ctn.getAll(IRenderer, false).reduce((all, r) => {
+            all[r.target] = r;
+            return all;
+        }, createLookup()));
+    }
     constructor(container) {
         this._compilationCache = new WeakMap();
         this._fragmentCache = new WeakMap();
@@ -2756,12 +2762,6 @@ class Rendering {
         this._exprParser = ctn.get(IExpressionParser);
         this._observerLocator = ctn.get(IObserverLocator);
         this._empty = new FragmentNodeSequence(this._platform, this._platform.document.createDocumentFragment());
-    }
-    get renderers() {
-        return this._renderers ?? (this._renderers = this._ctn.getAll(IRenderer, false).reduce((all, r) => {
-            all[r.target] = r;
-            return all;
-        }, createLookup()));
     }
     compile(definition, container, compilationInstruction) {
         if (definition.needsCompile !== false) {
@@ -2878,6 +2878,44 @@ var MountTarget;
 const optionalCeFind = { optional: true };
 const controllerLookup = new WeakMap();
 class Controller {
+    get lifecycleHooks() {
+        return this._lifecycleHooks;
+    }
+    get isActive() {
+        return (this.state & (1 | 2)) > 0 && (this.state & 4) === 0;
+    }
+    get name() {
+        if (this.parent === null) {
+            switch (this.vmKind) {
+                case 1:
+                    return `[${this.definition.name}]`;
+                case 0:
+                    return this.definition.name;
+                case 2:
+                    return this.viewFactory.name;
+            }
+        }
+        switch (this.vmKind) {
+            case 1:
+                return `${this.parent.name}>[${this.definition.name}]`;
+            case 0:
+                return `${this.parent.name}>${this.definition.name}`;
+            case 2:
+                return this.viewFactory.name === this.parent.definition?.name
+                    ? `${this.parent.name}[view]`
+                    : `${this.parent.name}[view:${this.viewFactory.name}]`;
+        }
+    }
+    get hooks() {
+        return this._hooks;
+    }
+    get viewModel() {
+        return this._vm;
+    }
+    set viewModel(v) {
+        this._vm = v;
+        this._hooks = v == null || this.vmKind === 2 ? HooksDefinition.none : new HooksDefinition(v);
+    }
     constructor(container, vmKind, definition, viewFactory, viewModel, host, location) {
         this.container = container;
         this.vmKind = vmKind;
@@ -2920,44 +2958,6 @@ class Controller {
         }
         this.location = location;
         this._rendering = container.root.get(IRendering);
-    }
-    get lifecycleHooks() {
-        return this._lifecycleHooks;
-    }
-    get isActive() {
-        return (this.state & (1 | 2)) > 0 && (this.state & 4) === 0;
-    }
-    get name() {
-        if (this.parent === null) {
-            switch (this.vmKind) {
-                case 1:
-                    return `[${this.definition.name}]`;
-                case 0:
-                    return this.definition.name;
-                case 2:
-                    return this.viewFactory.name;
-            }
-        }
-        switch (this.vmKind) {
-            case 1:
-                return `${this.parent.name}>[${this.definition.name}]`;
-            case 0:
-                return `${this.parent.name}>${this.definition.name}`;
-            case 2:
-                return this.viewFactory.name === this.parent.definition?.name
-                    ? `${this.parent.name}[view]`
-                    : `${this.parent.name}[view:${this.viewFactory.name}]`;
-        }
-    }
-    get hooks() {
-        return this._hooks;
-    }
-    get viewModel() {
-        return this._vm;
-    }
-    set viewModel(v) {
-        this._vm = v;
-        this._hooks = v == null || this.vmKind === 2 ? HooksDefinition.none : new HooksDefinition(v);
     }
     static getCached(viewModel) {
         return controllerLookup.get(viewModel);
@@ -4080,6 +4080,12 @@ function isRenderLocation(node) {
     return node.textContent === 'au-end';
 }
 class FragmentNodeSequence {
+    get firstChild() {
+        return this._firstChild;
+    }
+    get lastChild() {
+        return this._lastChild;
+    }
     constructor(platform, fragment) {
         this.platform = platform;
         this.next = void 0;
@@ -4111,12 +4117,6 @@ class FragmentNodeSequence {
         }
         this._firstChild = fragment.firstChild;
         this._lastChild = fragment.lastChild;
-    }
-    get firstChild() {
-        return this._firstChild;
-    }
-    get lastChild() {
-        return this._lastChild;
     }
     findTargets() {
         return this.t;
@@ -4277,6 +4277,7 @@ function strict(target) {
 }
 const definitionLookup = new WeakMap();
 class CustomElementDefinition {
+    get type() { return 1; }
     constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, childrenObservers, containerless, isStrictBinding, shadowOptions, hasSlots, enhance, watches, processContent) {
         this.Type = Type;
         this.name = name;
@@ -4300,7 +4301,6 @@ class CustomElementDefinition {
         this.watches = watches;
         this.processContent = processContent;
     }
-    get type() { return 1; }
     static create(nameOrDef, Type = null) {
         if (Type === null) {
             const def = nameOrDef;
@@ -4768,10 +4768,10 @@ SetPropertyRenderer = __decorate([
     renderer("re")
 ], SetPropertyRenderer);
 let CustomElementRenderer = class CustomElementRenderer {
+    static get inject() { return [IRendering]; }
     constructor(rendering) {
         this._rendering = rendering;
     }
-    static get inject() { return [IRendering]; }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         let def;
         let Ctor;
@@ -4815,10 +4815,10 @@ CustomElementRenderer = __decorate([
     renderer("ra")
 ], CustomElementRenderer);
 let CustomAttributeRenderer = class CustomAttributeRenderer {
+    static get inject() { return [IRendering]; }
     constructor(rendering) {
         this._rendering = rendering;
     }
-    static get inject() { return [IRendering]; }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         let ctxContainer = renderingCtrl.container;
         let def;
@@ -4852,11 +4852,11 @@ CustomAttributeRenderer = __decorate([
     renderer("rb")
 ], CustomAttributeRenderer);
 let TemplateControllerRenderer = class TemplateControllerRenderer {
+    static get inject() { return [IRendering, IPlatform]; }
     constructor(rendering, platform) {
         this._rendering = rendering;
         this._platform = platform;
     }
-    static get inject() { return [IRendering, IPlatform]; }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         let ctxContainer = renderingCtrl.container;
         let def;
@@ -5002,11 +5002,11 @@ AttributeBindingRenderer = __decorate([
     renderer("hc")
 ], AttributeBindingRenderer);
 let SpreadRenderer = class SpreadRenderer {
+    static get inject() { return [ITemplateCompiler, IRendering]; }
     constructor(_compiler, _rendering) {
         this._compiler = _compiler;
         this._rendering = _rendering;
     }
-    static get inject() { return [ITemplateCompiler, IRendering]; }
     render(renderingCtrl, target, _instruction, platform, exprParser, observerLocator) {
         const container = renderingCtrl.container;
         const hydrationContext = container.get(IHydrationContext);
@@ -5049,13 +5049,6 @@ SpreadRenderer = __decorate([
     renderer("hs")
 ], SpreadRenderer);
 class SpreadBinding {
-    constructor(_innerBindings, _hydrationContext) {
-        this._innerBindings = _innerBindings;
-        this._hydrationContext = _hydrationContext;
-        this.isBound = false;
-        this.ctrl = _hydrationContext.controller;
-        this.locator = this.ctrl.container;
-    }
     get container() {
         return this.locator;
     }
@@ -5067,6 +5060,13 @@ class SpreadBinding {
     }
     get state() {
         return this.ctrl.state;
+    }
+    constructor(_innerBindings, _hydrationContext) {
+        this._innerBindings = _innerBindings;
+        this._hydrationContext = _hydrationContext;
+        this.isBound = false;
+        this.ctrl = _hydrationContext.controller;
+        this.locator = this.ctrl.container;
     }
     get(key) {
         return this.locator.get(key);
@@ -5137,10 +5137,10 @@ function createElementContainer(p, renderingCtrl, host, instruction, location, a
     return ctn;
 }
 class ViewFactoryProvider {
+    get $isResolver() { return true; }
     constructor(factory) {
         this.f = factory;
     }
-    get $isResolver() { return true; }
     resolve() {
         const f = this.f;
         if (f === null) {
@@ -5172,11 +5172,11 @@ function invokeAttribute(p, definition, renderingCtrl, host, instruction, viewFa
     return { vm: ctn.invoke(definition.Type), ctn };
 }
 class RenderLocationProvider {
+    get name() { return 'IRenderLocation'; }
+    get $isResolver() { return true; }
     constructor(_location) {
         this._location = _location;
     }
-    get name() { return 'IRenderLocation'; }
-    get $isResolver() { return true; }
     resolve() {
         return this._location;
     }
@@ -5359,11 +5359,11 @@ DefaultBindingCommand = __decorate([
     bindingCommand('bind')
 ], DefaultBindingCommand);
 let ForBindingCommand = class ForBindingCommand {
+    get type() { return 0; }
+    static get inject() { return [IAttributeParser]; }
     constructor(attrParser) {
         this._attrParser = attrParser;
     }
-    get type() { return 0; }
-    static get inject() { return [IAttributeParser]; }
     build(info, exprParser) {
         const target = info.bindable === null
             ? camelCase(info.attr.target)
@@ -5466,6 +5466,9 @@ class NoopSVGAnalyzer {
     }
 }
 class SVGAnalyzer {
+    static register(container) {
+        return singletonRegistration(ISVGAnalyzer, this).register(container);
+    }
     constructor(platform) {
         this._svgElements = objectAssign(createLookup(), {
             'a': o('class externalResourcesRequired id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup requiredExtensions requiredFeatures style systemLanguage target transform xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space'),
@@ -5574,9 +5577,6 @@ class SVGAnalyzer {
             svg.glyphref = tmp;
         }
     }
-    static register(container) {
-        return singletonRegistration(ISVGAnalyzer, this).register(container);
-    }
     isStandardSvgAttribute(node, attributeName) {
         if (!(node instanceof this.SVGElement)) {
             return false;
@@ -5589,6 +5589,7 @@ SVGAnalyzer.inject = [IPlatform];
 
 const IAttrMapper = createInterface('IAttrMapper', x => x.singleton(AttrMapper));
 class AttrMapper {
+    static get inject() { return [ISVGAnalyzer]; }
     constructor(svg) {
         this.svg = svg;
         this.fns = [];
@@ -5622,7 +5623,6 @@ class AttrMapper {
             readonly: 'readOnly',
         });
     }
-    static get inject() { return [ISVGAnalyzer]; }
     useMapping(config) {
         var _a;
         let newAttrMapping;
@@ -6795,7 +6795,7 @@ class CompilationContext {
                 throw createError(`AUR0713: Unknown binding command: ${name}.
 ${name === 'delegate'
                         ? `The ".delegate" binding command has been removed in v2. Binding command ".trigger" should be used instead.
-If you are migrating v1 application, install compat package to add back the ".delegate" binding command for ease of migration.  
+If you are migrating v1 application, install compat package to add back the ".delegate" binding command for ease of migration.
 `
                         : ''}${name === 'call'
                         ? `The ".call" binding command has been deprecated removed in v2.
@@ -6853,11 +6853,6 @@ const orderSensitiveInputType = {
 };
 const bindableAttrsInfoCache = new WeakMap();
 class BindablesInfo {
-    constructor(attrs, bindables, primary) {
-        this.attrs = attrs;
-        this.bindables = bindables;
-        this.primary = primary;
-    }
     static from(def, isAttr) {
         let info = bindableAttrsInfoCache.get(def);
         if (info == null) {
@@ -6894,6 +6889,11 @@ class BindablesInfo {
             bindableAttrsInfoCache.set(def, info = new BindablesInfo(attrs, bindables, primary));
         }
         return info;
+    }
+    constructor(attrs, bindables, primary) {
+        this.attrs = attrs;
+        this.bindables = bindables;
+        this.primary = primary;
     }
 }
 
@@ -6948,10 +6948,10 @@ const TemplateCompilerHooks = objectFreeze({
     }
 });
 class TemplateCompilerHooksDefinition {
+    get name() { return ''; }
     constructor(Type) {
         this.Type = Type;
     }
-    get name() { return ''; }
     register(c) {
         c.register(singletonRegistration(ITemplateCompilerHooks, this.Type));
     }
@@ -7132,12 +7132,12 @@ bindingBehavior('self')(SelfBindingBehavior);
 
 const nsMap = createLookup();
 class AttributeNSAccessor {
+    static forNs(ns) {
+        return nsMap[ns] ?? (nsMap[ns] = new AttributeNSAccessor(ns));
+    }
     constructor(ns) {
         this.ns = ns;
         this.type = 2 | 4;
-    }
-    static forNs(ns) {
-        return nsMap[ns] ?? (nsMap[ns] = new AttributeNSAccessor(ns));
     }
     getValue(obj, propertyKey) {
         return obj.getAttributeNS(this.ns, propertyKey);
@@ -9585,6 +9585,15 @@ RejectedAttributePattern = __decorate([
 ], RejectedAttributePattern);
 
 class AuCompose {
+    static get inject() {
+        return [IContainer, IController, INode, IRenderLocation, IPlatform, IInstruction, transient(CompositionContextFactory)];
+    }
+    get pending() {
+        return this._pending;
+    }
+    get composition() {
+        return this._composition;
+    }
     constructor(_container, parent, host, _location, _platform, instruction, contextFactory) {
         this._container = _container;
         this.parent = parent;
@@ -9596,15 +9605,6 @@ class AuCompose {
         this._rendering = _container.get(IRendering);
         this._instruction = instruction;
         this._contextFactory = contextFactory;
-    }
-    static get inject() {
-        return [IContainer, IController, INode, IRenderLocation, IPlatform, IInstruction, transient(CompositionContextFactory)];
-    }
-    get pending() {
-        return this._pending;
-    }
-    get composition() {
-        return this._composition;
     }
     attaching(initiator, _parent, _flags) {
         return this._pending = onResolve(this.queue(new ChangeInfo(this.view, this.viewModel, this.model, void 0), initiator), (context) => {
@@ -9845,6 +9845,7 @@ class CompositionController {
 }
 
 let AuSlot = class AuSlot {
+    static get inject() { return [IRenderLocation, IInstruction, IHydrationContext, IRendering]; }
     constructor(location, instruction, hdrContext, rendering) {
         this._parentScope = null;
         this._outerScope = null;
@@ -9862,7 +9863,6 @@ let AuSlot = class AuSlot {
         this._hdrContext = hdrContext;
         this.view = factory.create().setLocation(location);
     }
-    static get inject() { return [IRenderLocation, IInstruction, IHydrationContext, IRendering]; }
     binding(_initiator, _parent, _flags) {
         this._parentScope = this.$controller.scope.parent;
         let outerScope;
@@ -10075,6 +10075,18 @@ function createConfiguration(optionsProvider) {
 
 const IAurelia = createInterface('IAurelia');
 class Aurelia {
+    get isRunning() { return this._isRunning; }
+    get isStarting() { return this._isStarting; }
+    get isStopping() { return this._isStopping; }
+    get root() {
+        if (this._root == null) {
+            if (this.next == null) {
+                throw createError(`AUR0767: root is not defined`);
+            }
+            return this.next;
+        }
+        return this._root;
+    }
     constructor(container = DI.createContainer()) {
         this.container = container;
         this._isRunning = false;
@@ -10089,18 +10101,6 @@ class Aurelia {
         }
         registerResolver(container, IAurelia, new InstanceProvider('IAurelia', this));
         registerResolver(container, IAppRoot, this._rootProvider = new InstanceProvider('IAppRoot'));
-    }
-    get isRunning() { return this._isRunning; }
-    get isStarting() { return this._isStarting; }
-    get isStopping() { return this._isStopping; }
-    get root() {
-        if (this._root == null) {
-            if (this.next == null) {
-                throw createError(`AUR0767: root is not defined`);
-            }
-            return this.next;
-        }
-        return this._root;
     }
     register(...params) {
         this.container.register(...params);

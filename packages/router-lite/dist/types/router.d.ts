@@ -12,8 +12,8 @@ import { RouteDefinition } from './route-definition';
 import { ViewportAgent } from './viewport-agent';
 export declare function isManagedState(state: {} | null): state is ManagedState;
 export declare function toManagedState(state: {} | null, navId: number): ManagedState;
-export declare type HistoryStrategy = 'none' | 'replace' | 'push';
-export declare type ValueOrFunc<T extends string> = T | ((instructions: ViewportInstructionTree) => T);
+export type HistoryStrategy = 'none' | 'replace' | 'push';
+export type ValueOrFunc<T extends string> = T | ((instructions: ViewportInstructionTree) => T);
 export interface IRouterOptions extends Partial<RouterOptions> {
     /**
      * Set a custom routing root by setting this path.

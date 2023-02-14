@@ -58,8 +58,8 @@ export interface DialogOpenPromise extends Promise<DialogOpenResult> {
      */
     whenClosed<TResult1, TResult2>(onfulfilled?: (value: DialogCloseResult) => TResult1 | PromiseLike<TResult1>, onrejected?: (reason: unknown) => TResult2 | PromiseLike<TResult2>): Promise<TResult1 | TResult2>;
 }
-export declare type DialogActionKey = 'Escape' | 'Enter';
-export declare type DialogMouseEventType = 'click' | 'mouseup' | 'mousedown';
+export type DialogActionKey = 'Escape' | 'Enter';
+export type DialogMouseEventType = 'click' | 'mouseup' | 'mousedown';
 export interface IDialogSettings<TModel = unknown, TVm extends object = object> {
     /**
      * The view model url, constructor or instance for the dialog.
@@ -117,12 +117,12 @@ export interface IDialogSettings<TModel = unknown, TVm extends object = object> 
      */
     rejectOnCancel?: boolean;
 }
-export declare type IDialogLoadedSettings<T extends object = object> = Omit<IDialogSettings<T>, 'component' | 'template' | 'keyboard'> & {
+export type IDialogLoadedSettings<T extends object = object> = Omit<IDialogSettings<T>, 'component' | 'template' | 'keyboard'> & {
     component?: Constructable<T> | T;
     template?: string | Element;
     readonly keyboard: DialogActionKey[];
 };
-export declare type IDialogGlobalSettings = Pick<IDialogSettings, 'lock' | 'startingZIndex' | 'rejectOnCancel'>;
+export type IDialogGlobalSettings = Pick<IDialogSettings, 'lock' | 'startingZIndex' | 'rejectOnCancel'>;
 export declare const IDialogGlobalSettings: import("@aurelia/kernel").InterfaceSymbol<IDialogGlobalSettings>;
 export interface DialogError<T> extends Error {
     wasCancelled: boolean;
@@ -131,13 +131,13 @@ export interface DialogError<T> extends Error {
 /**
  * The error thrown when a "cancel" occurs and DialogSettings.rejectOnCancel is set to "true".
  */
-export declare type DialogCancelError<T> = DialogError<T> & {
+export type DialogCancelError<T> = DialogError<T> & {
     wasCancelled: true;
 };
 /**
  * The error thrown when the dialog is closed with the `DialogController.prototype.error` method.
  */
-export declare type DialogCloseError<T> = DialogError<T> & {
+export type DialogCloseError<T> = DialogError<T> & {
     wasCancelled: false;
 };
 export declare class DialogOpenResult {
