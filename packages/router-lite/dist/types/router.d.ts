@@ -1,103 +1,18 @@
 import { IContainer, ILogger } from '@aurelia/kernel';
-import { CustomElementDefinition, IPlatform } from '@aurelia/runtime-html';
+import { type CustomElementDefinition, IPlatform } from '@aurelia/runtime-html';
 import { IRouteContext } from './route-context';
 import { IRouterEvents, ManagedState, RoutingTrigger } from './router-events';
 import { ILocationManager } from './location-manager';
 import { RouteType } from './route';
 import { IRouteViewModel } from './component-agent';
-import { RouteTree, RouteNode } from './route-tree';
-import { IViewportInstruction, NavigationInstruction, RouteContextLike, ViewportInstructionTree, Params } from './instructions';
+import { RouteTree } from './route-tree';
+import { IViewportInstruction, NavigationInstruction, RouteContextLike, ViewportInstructionTree } from './instructions';
 import { UnwrapPromise } from './util';
 import { RouteDefinition } from './route-definition';
-import { ViewportAgent } from './viewport-agent';
+import { type ViewportAgent } from './viewport-agent';
+import { INavigationOptions, NavigationOptions, type RouterOptions } from './options';
 export declare function isManagedState(state: {} | null): state is ManagedState;
 export declare function toManagedState(state: {} | null, navId: number): ManagedState;
-export type HistoryStrategy = 'none' | 'replace' | 'push';
-export type ValueOrFunc<T extends string> = T | ((instructions: ViewportInstructionTree) => T);
-export interface IRouterOptions extends Partial<RouterOptions> {
-    /**
-     * Set a custom routing root by setting this path.
-     * When not set, path from the `document.baseURI` is used by default.
-     */
-    basePath?: string | null;
-}
-export declare class RouterOptions {
-    readonly useUrlFragmentHash: boolean;
-    readonly useHref: boolean;
-    /**
-     * The strategy to use for interacting with the browser's `history` object (if applicable).
-     *
-     * - `none`: do not interact with the `history` object at all.
-     * - `replace`: replace the current state in history
-     * - `push`: push a new state onto the history (default)
-     * - A function that returns one of the 3 above values based on the navigation.
-     *
-     * Default: `push`
-     */
-    readonly historyStrategy: ValueOrFunc<HistoryStrategy>;
-    /**
-     * An optional handler to build the title.
-     * When configured, the work of building the title string is completely handed over to this function.
-     * If this function returns `null`, the title is not updated.
-     */
-    readonly buildTitle: ((transition: Transition) => string | null) | null;
-    static get DEFAULT(): RouterOptions;
-    protected constructor(useUrlFragmentHash: boolean, useHref: boolean, 
-    /**
-     * The strategy to use for interacting with the browser's `history` object (if applicable).
-     *
-     * - `none`: do not interact with the `history` object at all.
-     * - `replace`: replace the current state in history
-     * - `push`: push a new state onto the history (default)
-     * - A function that returns one of the 3 above values based on the navigation.
-     *
-     * Default: `push`
-     */
-    historyStrategy: ValueOrFunc<HistoryStrategy>, 
-    /**
-     * An optional handler to build the title.
-     * When configured, the work of building the title string is completely handed over to this function.
-     * If this function returns `null`, the title is not updated.
-     */
-    buildTitle: ((transition: Transition) => string | null) | null);
-    static create(input: IRouterOptions): RouterOptions;
-    protected stringifyProperties(): string;
-    clone(): RouterOptions;
-    toString(): string;
-}
-export interface INavigationOptions extends Partial<NavigationOptions> {
-}
-export declare class NavigationOptions extends RouterOptions {
-    readonly title: string | ((node: RouteNode) => string | null) | null;
-    readonly titleSeparator: string;
-    /**
-     * Specify a context to use for relative navigation.
-     *
-     * - `null` (or empty): navigate relative to the root (absolute navigation)
-     * - `IRouteContext`: navigate relative to specifically this RouteContext (advanced users).
-     * - `HTMLElement`: navigate relative to the routeable component (page) that directly or indirectly contains this element.
-     * - `ICustomElementViewModel` (the `this` object when working from inside a view model): navigate relative to this component (if it was loaded as a route), or the routeable component (page) directly or indirectly containing it.
-     * - `ICustomElementController`: same as `ICustomElementViewModel`, but using the controller object instead of the view model object (advanced users).
-     */
-    readonly context: RouteContextLike | null;
-    /**
-     * Specify an object to be serialized to a query string, and then set to the query string of the new URL.
-     */
-    readonly queryParams: Params | null;
-    /**
-     * Specify the hash fragment for the new URL.
-     */
-    readonly fragment: string;
-    /**
-     * Specify any kind of state to be stored together with the history entry for this navigation.
-     */
-    readonly state: Params | null;
-    static get DEFAULT(): NavigationOptions;
-    private constructor();
-    static create(input: INavigationOptions): NavigationOptions;
-    clone(): NavigationOptions;
-    toString(): string;
-}
 export declare class Transition {
     readonly id: number;
     readonly prevInstructions: ViewportInstructionTree;
@@ -130,6 +45,7 @@ export declare class Router {
     private readonly logger;
     private readonly events;
     private readonly locationMgr;
+    readonly options: Readonly<RouterOptions>;
     private _ctx;
     private get ctx();
     private _routeTree;
@@ -137,7 +53,6 @@ export declare class Router {
     private _currentTr;
     get currentTr(): Transition;
     private set currentTr(value);
-    options: RouterOptions;
     private navigated;
     private navigationId;
     private instructions;
@@ -145,7 +60,7 @@ export declare class Router {
     private locationChangeSubscription;
     private _isNavigating;
     get isNavigating(): boolean;
-    constructor(container: IContainer, p: IPlatform, logger: ILogger, events: IRouterEvents, locationMgr: ILocationManager);
+    constructor(container: IContainer, p: IPlatform, logger: ILogger, events: IRouterEvents, locationMgr: ILocationManager, options: Readonly<RouterOptions>);
     /**
      * Get the closest RouteContext relative to the provided component, controller or node.
      *

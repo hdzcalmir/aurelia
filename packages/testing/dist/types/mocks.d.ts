@@ -104,6 +104,8 @@ export declare class MockBrowserHistoryLocation {
     pushState(data: Record<string, unknown>, title: string, path: string): void;
     replaceState(data: Record<string, unknown>, title: string, path: string): void;
     go(movement: number): void;
+    back(): void;
+    forward(): void;
     private notifyChange;
 }
 export declare class ChangeSet implements IDisposable {

@@ -1,5 +1,5 @@
 import { IEventAggregator, IDisposable, ILogger } from '@aurelia/kernel';
-import { ViewportInstructionTree } from './instructions';
+import type { ViewportInstructionTree } from './instructions';
 export type RoutingTrigger = 'popstate' | 'hashchange' | 'api';
 export declare const AuNavId: "au-nav-id";
 export type AuNavId = typeof AuNavId;

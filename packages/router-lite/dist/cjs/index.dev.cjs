@@ -297,6 +297,59 @@ function shallowEquals(a, b) {
     return true;
 }
 
+function valueOrFuncToValue(instructions, valueOrFunc) {
+    if (typeof valueOrFunc === 'function') {
+        return valueOrFunc(instructions);
+    }
+    return valueOrFunc;
+}
+const IRouterOptions = kernel.DI.createInterface('RouterOptions');
+class RouterOptions {
+    constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle) {
+        this.useUrlFragmentHash = useUrlFragmentHash;
+        this.useHref = useHref;
+        this.historyStrategy = historyStrategy;
+        this.buildTitle = buildTitle;
+    }
+    static create(input) {
+        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null);
+    }
+    _stringifyProperties() {
+        return [
+            ['historyStrategy', 'history'],
+        ].map(([key, name]) => {
+            const value = this[key];
+            return `${name}:${typeof value === 'function' ? value : `'${value}'`}`;
+        }).join(',');
+    }
+    clone() {
+        return new RouterOptions(this.useUrlFragmentHash, this.useHref, this.historyStrategy, this.buildTitle);
+    }
+    toString() {
+        return `RO(${this._stringifyProperties()})`;
+    }
+}
+class NavigationOptions {
+    constructor(historyStrategy, title, titleSeparator, context, queryParams, fragment, state) {
+        this.historyStrategy = historyStrategy;
+        this.title = title;
+        this.titleSeparator = titleSeparator;
+        this.context = context;
+        this.queryParams = queryParams;
+        this.fragment = fragment;
+        this.state = state;
+    }
+    static create(routerOptions, input) {
+        return new NavigationOptions(input.historyStrategy ?? routerOptions.historyStrategy, input.title ?? null, input.titleSeparator ?? ' | ', input.context ?? null, input.queryParams ?? null, input.fragment ?? '', input.state ?? null);
+    }
+    clone() {
+        return new NavigationOptions(this.historyStrategy, this.title, this.titleSeparator, this.context, { ...this.queryParams }, this.fragment, this.state === null ? null : { ...this.state });
+    }
+    _getHistoryStrategy(instructions) {
+        return valueOrFuncToValue(instructions, this.historyStrategy);
+    }
+}
+
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -427,7 +480,7 @@ class NavigationErrorEvent {
 const IBaseHref = kernel.DI.createInterface('IBaseHref');
 const ILocationManager = kernel.DI.createInterface('ILocationManager', x => x.singleton(BrowserLocationManager));
 let BrowserLocationManager = class BrowserLocationManager {
-    constructor(logger, events, history, location, window, baseHref) {
+    constructor(logger, events, history, location, window, baseHref, routerOptions) {
         this.logger = logger;
         this.events = events;
         this.history = history;
@@ -437,24 +490,18 @@ let BrowserLocationManager = class BrowserLocationManager {
         this.eventId = 0;
         logger = this.logger = logger.root.scopeTo('LocationManager');
         logger.debug(`baseHref set to path: ${baseHref.href}`);
+        this._event = routerOptions.useUrlFragmentHash ? 'hashchange' : 'popstate';
     }
     startListening() {
         this.logger.trace(`startListening()`);
-        this.window.addEventListener('popstate', this.onPopState, false);
-        this.window.addEventListener('hashchange', this.onHashChange, false);
+        this.window.addEventListener(this._event, this, false);
     }
     stopListening() {
         this.logger.trace(`stopListening()`);
-        this.window.removeEventListener('popstate', this.onPopState, false);
-        this.window.removeEventListener('hashchange', this.onHashChange, false);
+        this.window.removeEventListener(this._event, this, false);
     }
-    onPopState(event) {
-        this.logger.trace(`onPopState()`);
-        this.events.publish(new LocationChangeEvent(++this.eventId, this.getPath(), 'popstate', event.state));
-    }
-    onHashChange(_event) {
-        this.logger.trace(`onHashChange()`);
-        this.events.publish(new LocationChangeEvent(++this.eventId, this.getPath(), 'hashchange', null));
+    handleEvent(event) {
+        this.events.publish(new LocationChangeEvent(++this.eventId, this.getPath(), this._event, 'state' in event ? event.state : null));
     }
     pushState(state, title, url) {
         url = this.addBaseHref(url);
@@ -519,19 +566,14 @@ let BrowserLocationManager = class BrowserLocationManager {
         return path;
     }
 };
-__decorate([
-    kernel.bound
-], BrowserLocationManager.prototype, "onPopState", null);
-__decorate([
-    kernel.bound
-], BrowserLocationManager.prototype, "onHashChange", null);
 BrowserLocationManager = __decorate([
     __param(0, kernel.ILogger),
     __param(1, IRouterEvents),
     __param(2, runtimeHtml.IHistory),
     __param(3, runtimeHtml.ILocation),
     __param(4, runtimeHtml.IWindow),
-    __param(5, IBaseHref)
+    __param(5, IBaseHref),
+    __param(6, IRouterOptions)
 ], BrowserLocationManager);
 function normalizePath(path) {
     let start;
@@ -557,477 +599,210 @@ function normalizeQuery(query) {
     return query.length > 0 && !query.startsWith('?') ? `?${query}` : query;
 }
 
-const terminal = ['?', '#', '/', '+', '(', ')', '.', '@', '!', '=', ',', '&', '\'', '~', ';'];
-class ParserState {
-    get done() {
-        return this.rest.length === 0;
+const noRoutes = kernel.emptyArray;
+function defaultReentryBehavior(current, next) {
+    if (!shallowEquals(current.params, next.params)) {
+        return 'replace';
     }
-    constructor(input) {
-        this.input = input;
-        this.buffers = [];
-        this.bufferIndex = 0;
-        this.index = 0;
-        this.rest = input;
-    }
-    startsWith(...values) {
-        const rest = this.rest;
-        return values.some(function (value) {
-            return rest.startsWith(value);
-        });
-    }
-    consumeOptional(str) {
-        if (this.startsWith(str)) {
-            this.rest = this.rest.slice(str.length);
-            this.index += str.length;
-            this.append(str);
-            return true;
-        }
-        return false;
-    }
-    consume(str) {
-        if (!this.consumeOptional(str)) {
-            this.expect(`'${str}'`);
-        }
-    }
-    expect(msg) {
-        throw new Error(`Expected ${msg} at index ${this.index} of '${this.input}', but got: '${this.rest}' (rest='${this.rest}')`);
-    }
-    ensureDone() {
-        if (!this.done) {
-            throw new Error(`Unexpected '${this.rest}' at index ${this.index} of '${this.input}'`);
-        }
-    }
-    advance() {
-        const char = this.rest[0];
-        this.rest = this.rest.slice(1);
-        ++this.index;
-        this.append(char);
-    }
-    record() {
-        this.buffers[this.bufferIndex++] = '';
-    }
-    playback() {
-        const bufferIndex = --this.bufferIndex;
-        const buffers = this.buffers;
-        const buffer = buffers[bufferIndex];
-        buffers[bufferIndex] = '';
-        return buffer;
-    }
-    discard() {
-        this.buffers[--this.bufferIndex] = '';
-    }
-    append(str) {
-        const bufferIndex = this.bufferIndex;
-        const buffers = this.buffers;
-        for (let i = 0; i < bufferIndex; ++i) {
-            buffers[i] += str;
-        }
-    }
+    return 'none';
 }
-exports.ExpressionKind = void 0;
-(function (ExpressionKind) {
-    ExpressionKind[ExpressionKind["Route"] = 0] = "Route";
-    ExpressionKind[ExpressionKind["CompositeSegment"] = 1] = "CompositeSegment";
-    ExpressionKind[ExpressionKind["ScopedSegment"] = 2] = "ScopedSegment";
-    ExpressionKind[ExpressionKind["SegmentGroup"] = 3] = "SegmentGroup";
-    ExpressionKind[ExpressionKind["Segment"] = 4] = "Segment";
-    ExpressionKind[ExpressionKind["Component"] = 5] = "Component";
-    ExpressionKind[ExpressionKind["Action"] = 6] = "Action";
-    ExpressionKind[ExpressionKind["Viewport"] = 7] = "Viewport";
-    ExpressionKind[ExpressionKind["ParameterList"] = 8] = "ParameterList";
-    ExpressionKind[ExpressionKind["Parameter"] = 9] = "Parameter";
-})(exports.ExpressionKind || (exports.ExpressionKind = {}));
-const fragmentRouteExpressionCache = new Map();
-const routeExpressionCache = new Map();
-class RouteExpression {
-    get kind() { return 0; }
-    constructor(raw, isAbsolute, root, queryParams, fragment, fragmentIsRoute) {
-        this.raw = raw;
-        this.isAbsolute = isAbsolute;
-        this.root = root;
-        this.queryParams = queryParams;
-        this.fragment = fragment;
-        this.fragmentIsRoute = fragmentIsRoute;
-    }
-    static parse(path, fragmentIsRoute) {
-        const cache = fragmentIsRoute ? fragmentRouteExpressionCache : routeExpressionCache;
-        let result = cache.get(path);
-        if (result === void 0) {
-            cache.set(path, result = RouteExpression.$parse(path, fragmentIsRoute));
-        }
-        return result;
-    }
-    static $parse(path, fragmentIsRoute) {
-        let fragment = null;
-        const fragmentStart = path.indexOf('#');
-        if (fragmentStart >= 0) {
-            const rawFragment = path.slice(fragmentStart + 1);
-            fragment = decodeURIComponent(rawFragment);
-            if (fragmentIsRoute) {
-                path = fragment;
-            }
-            else {
-                path = path.slice(0, fragmentStart);
-            }
-        }
-        let queryParams = null;
-        const queryStart = path.indexOf('?');
-        if (queryStart >= 0) {
-            const queryString = path.slice(queryStart + 1);
-            path = path.slice(0, queryStart);
-            queryParams = new URLSearchParams(queryString);
-        }
-        if (path === '') {
-            return new RouteExpression('', false, SegmentExpression.EMPTY, queryParams != null ? Object.freeze(queryParams) : emptyQuery, fragment, fragmentIsRoute);
-        }
-        const state = new ParserState(path);
-        state.record();
-        const isAbsolute = state.consumeOptional('/');
-        const root = CompositeSegmentExpression.parse(state);
-        state.ensureDone();
-        const raw = state.playback();
-        return new RouteExpression(raw, isAbsolute, root, queryParams != null ? Object.freeze(queryParams) : emptyQuery, fragment, fragmentIsRoute);
-    }
-    toInstructionTree(options) {
-        return new ViewportInstructionTree(options, this.isAbsolute, this.root.toInstructions(0, 0), mergeURLSearchParams(this.queryParams, options.queryParams, true), this.fragment ?? options.fragment);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class CompositeSegmentExpression {
-    get kind() { return 1; }
-    constructor(raw, siblings) {
-        this.raw = raw;
-        this.siblings = siblings;
-    }
-    static parse(state) {
-        state.record();
-        const append = state.consumeOptional('+');
-        const siblings = [];
-        do {
-            siblings.push(ScopedSegmentExpression.parse(state));
-        } while (state.consumeOptional('+'));
-        if (!append && siblings.length === 1) {
-            state.discard();
-            return siblings[0];
-        }
-        const raw = state.playback();
-        return new CompositeSegmentExpression(raw, siblings);
-    }
-    toInstructions(open, close) {
-        switch (this.siblings.length) {
-            case 0:
-                return [];
-            case 1:
-                return this.siblings[0].toInstructions(open, close);
-            case 2:
-                return [
-                    ...this.siblings[0].toInstructions(open, 0),
-                    ...this.siblings[1].toInstructions(0, close),
-                ];
-            default:
-                return [
-                    ...this.siblings[0].toInstructions(open, 0),
-                    ...this.siblings.slice(1, -1).flatMap(function (x) {
-                        return x.toInstructions(0, 0);
-                    }),
-                    ...this.siblings[this.siblings.length - 1].toInstructions(0, close),
-                ];
-        }
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ScopedSegmentExpression {
-    get kind() { return 2; }
-    constructor(raw, left, right) {
-        this.raw = raw;
-        this.left = left;
-        this.right = right;
-    }
-    static parse(state) {
-        state.record();
-        const left = SegmentGroupExpression.parse(state);
-        if (state.consumeOptional('/')) {
-            const right = ScopedSegmentExpression.parse(state);
-            const raw = state.playback();
-            return new ScopedSegmentExpression(raw, left, right);
-        }
-        state.discard();
-        return left;
-    }
-    toInstructions(open, close) {
-        const leftInstructions = this.left.toInstructions(open, 0);
-        const rightInstructions = this.right.toInstructions(0, close);
-        let cur = leftInstructions[leftInstructions.length - 1];
-        while (cur.children.length > 0) {
-            cur = cur.children[cur.children.length - 1];
-        }
-        cur.children.push(...rightInstructions);
-        return leftInstructions;
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class SegmentGroupExpression {
-    get kind() { return 3; }
-    constructor(raw, expression) {
-        this.raw = raw;
-        this.expression = expression;
-    }
-    static parse(state) {
-        state.record();
-        if (state.consumeOptional('(')) {
-            const expression = CompositeSegmentExpression.parse(state);
-            state.consume(')');
-            const raw = state.playback();
-            return new SegmentGroupExpression(raw, expression);
-        }
-        state.discard();
-        return SegmentExpression.parse(state);
-    }
-    toInstructions(open, close) {
-        return this.expression.toInstructions(open + 1, close + 1);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class SegmentExpression {
-    get kind() { return 4; }
-    static get EMPTY() { return new SegmentExpression('', ComponentExpression.EMPTY, ActionExpression.EMPTY, ViewportExpression.EMPTY, true); }
-    constructor(raw, component, action, viewport, scoped) {
-        this.raw = raw;
-        this.component = component;
-        this.action = action;
+class RouteConfig {
+    constructor(id, path, title, redirectTo, caseSensitive, transitionPlan, viewport, data, routes, fallback, component, nav) {
+        this.id = id;
+        this.path = path;
+        this.title = title;
+        this.redirectTo = redirectTo;
+        this.caseSensitive = caseSensitive;
+        this.transitionPlan = transitionPlan;
         this.viewport = viewport;
-        this.scoped = scoped;
+        this.data = data;
+        this.routes = routes;
+        this.fallback = fallback;
+        this.component = component;
+        this.nav = nav;
     }
-    static parse(state) {
-        state.record();
-        const component = ComponentExpression.parse(state);
-        const action = ActionExpression.parse(state);
-        const viewport = ViewportExpression.parse(state);
-        const scoped = !state.consumeOptional('!');
-        const raw = state.playback();
-        return new SegmentExpression(raw, component, action, viewport, scoped);
-    }
-    toInstructions(open, close) {
-        return [
-            ViewportInstruction.create({
-                component: this.component.name,
-                params: this.component.parameterList.toObject(),
-                viewport: this.viewport.name,
-                open,
-                close,
-            }),
-        ];
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ComponentExpression {
-    get kind() { return 5; }
-    static get EMPTY() { return new ComponentExpression('', '', ParameterListExpression.EMPTY); }
-    constructor(raw, name, parameterList) {
-        this.raw = raw;
-        this.name = name;
-        this.parameterList = parameterList;
-        switch (name.charAt(0)) {
-            case ':':
-                this.isParameter = true;
-                this.isStar = false;
-                this.isDynamic = true;
-                this.parameterName = name.slice(1);
-                break;
-            case '*':
-                this.isParameter = false;
-                this.isStar = true;
-                this.isDynamic = true;
-                this.parameterName = name.slice(1);
-                break;
-            default:
-                this.isParameter = false;
-                this.isStar = false;
-                this.isDynamic = false;
-                this.parameterName = name;
-                break;
+    static _create(configOrPath, Type, parentConfig) {
+        if (typeof configOrPath === 'string' || configOrPath instanceof Array) {
+            const path = configOrPath;
+            const redirectTo = Type?.redirectTo ?? null;
+            const caseSensitive = Type?.caseSensitive ?? false;
+            const id = Type?.id ?? (path instanceof Array ? path[0] : path);
+            const title = Type?.title ?? null;
+            const reentryBehavior = Type?.transitionPlan ?? parentConfig?.transitionPlan ?? null;
+            const viewport = Type?.viewport ?? null;
+            const data = Type?.data ?? {};
+            const children = Type?.routes ?? noRoutes;
+            return new RouteConfig(id, path, title, redirectTo, caseSensitive, reentryBehavior, viewport, data, children, Type?.fallback ?? null, null, Type?.nav ?? true);
         }
-    }
-    static parse(state) {
-        state.record();
-        state.record();
-        if (!state.done) {
-            if (state.startsWith('./')) {
-                state.advance();
-            }
-            else if (state.startsWith('../')) {
-                state.advance();
-                state.advance();
-            }
-            else {
-                while (!state.done && !state.startsWith(...terminal)) {
-                    state.advance();
-                }
-            }
-        }
-        const name = decodeURIComponent(state.playback());
-        if (name.length === 0) {
-            state.expect('component name');
-        }
-        const parameterList = ParameterListExpression.parse(state);
-        const raw = state.playback();
-        return new ComponentExpression(raw, name, parameterList);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ActionExpression {
-    get kind() { return 6; }
-    static get EMPTY() { return new ActionExpression('', '', ParameterListExpression.EMPTY); }
-    constructor(raw, name, parameterList) {
-        this.raw = raw;
-        this.name = name;
-        this.parameterList = parameterList;
-    }
-    static parse(state) {
-        state.record();
-        let name = '';
-        if (state.consumeOptional('.')) {
-            state.record();
-            while (!state.done && !state.startsWith(...terminal)) {
-                state.advance();
-            }
-            name = decodeURIComponent(state.playback());
-            if (name.length === 0) {
-                state.expect('method name');
-            }
-        }
-        const parameterList = ParameterListExpression.parse(state);
-        const raw = state.playback();
-        return new ActionExpression(raw, name, parameterList);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ViewportExpression {
-    get kind() { return 7; }
-    static get EMPTY() { return new ViewportExpression('', ''); }
-    constructor(raw, name) {
-        this.raw = raw;
-        this.name = name;
-    }
-    static parse(state) {
-        state.record();
-        let name = '';
-        if (state.consumeOptional('@')) {
-            state.record();
-            while (!state.done && !state.startsWith(...terminal)) {
-                state.advance();
-            }
-            name = decodeURIComponent(state.playback());
-            if (name.length === 0) {
-                state.expect('viewport name');
-            }
-        }
-        const raw = state.playback();
-        return new ViewportExpression(raw, name);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ParameterListExpression {
-    get kind() { return 8; }
-    static get EMPTY() { return new ParameterListExpression('', []); }
-    constructor(raw, expressions) {
-        this.raw = raw;
-        this.expressions = expressions;
-    }
-    static parse(state) {
-        state.record();
-        const expressions = [];
-        if (state.consumeOptional('(')) {
-            do {
-                expressions.push(ParameterExpression.parse(state, expressions.length));
-                if (!state.consumeOptional(',')) {
-                    break;
-                }
-            } while (!state.done && !state.startsWith(')'));
-            state.consume(')');
-        }
-        const raw = state.playback();
-        return new ParameterListExpression(raw, expressions);
-    }
-    toObject() {
-        const params = {};
-        for (const expr of this.expressions) {
-            params[expr.key] = expr.value;
-        }
-        return params;
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ParameterExpression {
-    get kind() { return 9; }
-    static get EMPTY() { return new ParameterExpression('', '', ''); }
-    constructor(raw, key, value) {
-        this.raw = raw;
-        this.key = key;
-        this.value = value;
-    }
-    static parse(state, index) {
-        state.record();
-        state.record();
-        while (!state.done && !state.startsWith(...terminal)) {
-            state.advance();
-        }
-        let key = decodeURIComponent(state.playback());
-        if (key.length === 0) {
-            state.expect('parameter key');
-        }
-        let value;
-        if (state.consumeOptional('=')) {
-            state.record();
-            while (!state.done && !state.startsWith(...terminal)) {
-                state.advance();
-            }
-            value = decodeURIComponent(state.playback());
-            if (value.length === 0) {
-                state.expect('parameter value');
-            }
+        else if (typeof configOrPath === 'object') {
+            const config = configOrPath;
+            validateRouteConfig(config, '');
+            const path = config.path ?? Type?.path ?? null;
+            const title = config.title ?? Type?.title ?? null;
+            const redirectTo = config.redirectTo ?? Type?.redirectTo ?? null;
+            const caseSensitive = config.caseSensitive ?? Type?.caseSensitive ?? false;
+            const id = config.id ?? Type?.id ?? (path instanceof Array ? path[0] : path);
+            const reentryBehavior = config.transitionPlan ?? Type?.transitionPlan ?? parentConfig?.transitionPlan ?? null;
+            const viewport = config.viewport ?? Type?.viewport ?? null;
+            const data = {
+                ...Type?.data,
+                ...config.data,
+            };
+            const children = [
+                ...(config.routes ?? noRoutes),
+                ...(Type?.routes ?? noRoutes),
+            ];
+            return new RouteConfig(id, path, title, redirectTo, caseSensitive, reentryBehavior, viewport, data, children, config.fallback ?? Type?.fallback ?? null, config.component ?? null, config.nav ?? true);
         }
         else {
-            value = key;
-            key = index.toString();
+            expectType('string, function/class or object', '', configOrPath);
         }
-        const raw = state.playback();
-        return new ParameterExpression(raw, key, value);
     }
-    toString() {
-        return this.raw;
+    applyChildRouteConfig(config, parentConfig) {
+        let parentPath = this.path ?? '';
+        if (typeof parentPath !== 'string') {
+            parentPath = parentPath[0];
+        }
+        validateRouteConfig(config, parentPath);
+        return new RouteConfig(config.id ?? this.id, config.path ?? this.path, config.title ?? this.title, config.redirectTo ?? this.redirectTo, config.caseSensitive ?? this.caseSensitive, config.transitionPlan ?? this.transitionPlan ?? parentConfig?.transitionPlan ?? null, config.viewport ?? this.viewport, config.data ?? this.data, config.routes ?? this.routes, config.fallback ?? this.fallback, config.component ?? this.component, config.nav ?? this.nav);
+    }
+    getTransitionPlan(cur, next) {
+        const plan = this.transitionPlan ?? defaultReentryBehavior;
+        return typeof plan === 'function' ? plan(cur, next) : plan;
     }
 }
-const AST = Object.freeze({
-    RouteExpression,
-    CompositeSegmentExpression,
-    ScopedSegmentExpression,
-    SegmentGroupExpression,
-    SegmentExpression,
-    ComponentExpression,
-    ActionExpression,
-    ViewportExpression,
-    ParameterListExpression,
-    ParameterExpression,
-});
+const Route = {
+    name: kernel.Protocol.resource.keyFor('route-configuration'),
+    isConfigured(Type) {
+        return metadata.Metadata.hasOwn(Route.name, Type);
+    },
+    configure(configOrPath, Type) {
+        const config = RouteConfig._create(configOrPath, Type, null);
+        metadata.Metadata.define(Route.name, config, Type);
+        return Type;
+    },
+    getConfig(Type) {
+        if (!Route.isConfigured(Type)) {
+            Route.configure({}, Type);
+        }
+        return metadata.Metadata.getOwn(Route.name, Type);
+    },
+};
+function route(configOrPath) {
+    return function (target) {
+        return Route.configure(configOrPath, target);
+    };
+}
+
+class RouteDefinition {
+    constructor(config, component, parentDefinition) {
+        this.config = config;
+        this.component = component;
+        this.hasExplicitPath = config.path !== null;
+        this.caseSensitive = config.caseSensitive;
+        this.path = ensureArrayOfStrings(config.path ?? component.name);
+        this.redirectTo = config.redirectTo ?? null;
+        this.viewport = config.viewport ?? defaultViewportName;
+        this.id = ensureString(config.id ?? this.path);
+        this.data = config.data ?? {};
+        this.fallback = config.fallback ?? parentDefinition?.fallback ?? null;
+    }
+    static resolve(routeable, parentDefinition, routeNode, context) {
+        const parentConfig = parentDefinition?.config ?? null;
+        if (isPartialRedirectRouteConfig(routeable))
+            return new RouteDefinition(RouteConfig._create(routeable, null, parentConfig), null, parentDefinition);
+        const instruction = this.createNavigationInstruction(routeable);
+        let ceDef;
+        switch (instruction.type) {
+            case 0: {
+                if (context === void 0)
+                    throw new Error(`When retrieving the RouteDefinition for a component name, a RouteContext (that can resolve it) must be provided`);
+                const component = context.container.find(runtimeHtml.CustomElement, instruction.value);
+                if (component === null)
+                    throw new Error(`Could not find a CustomElement named '${instruction.value}' in the current container scope of ${context}. This means the component is neither registered at Aurelia startup nor via the 'dependencies' decorator or static property.`);
+                ceDef = component;
+                break;
+            }
+            case 2:
+                ceDef = instruction.value;
+                break;
+            case 4:
+                ceDef = runtimeHtml.CustomElement.getDefinition(instruction.value.constructor);
+                break;
+            case 3:
+                if (context === void 0)
+                    throw new Error(`RouteContext must be provided when resolving an imported module`);
+                ceDef = context.resolveLazy(instruction.value);
+                break;
+        }
+        return kernel.onResolve(ceDef, def => {
+            let routeDefinition = $RouteDefinition.get(def);
+            const hasRouteConfigHook = instruction.type === 4 && typeof routeable.getRouteConfig === 'function';
+            if (routeDefinition === null) {
+                const type = def.Type;
+                let config = null;
+                if (hasRouteConfigHook) {
+                    config = RouteConfig._create(routeable.getRouteConfig(parentDefinition, routeNode) ?? kernel.emptyObject, type, parentConfig);
+                }
+                else {
+                    config = isPartialChildRouteConfig(routeable)
+                        ? Route.isConfigured(type)
+                            ? Route.getConfig(type).applyChildRouteConfig(routeable, parentConfig)
+                            : RouteConfig._create(routeable, type, parentConfig)
+                        : Route.getConfig(def.Type);
+                }
+                routeDefinition = new RouteDefinition(config, def, parentDefinition);
+                $RouteDefinition.define(routeDefinition, def);
+            }
+            else if (routeDefinition.config.routes.length === 0 && hasRouteConfigHook) {
+                routeDefinition.applyChildRouteConfig(routeable.getRouteConfig?.(parentDefinition, routeNode) ?? kernel.emptyObject);
+            }
+            return routeDefinition;
+        });
+    }
+    static createNavigationInstruction(routeable) {
+        return isPartialChildRouteConfig(routeable)
+            ? this.createNavigationInstruction(routeable.component)
+            : TypedNavigationInstruction.create(routeable);
+    }
+    applyChildRouteConfig(config) {
+        this.config = config = this.config.applyChildRouteConfig(config, null);
+        this.hasExplicitPath = config.path !== null;
+        this.caseSensitive = config.caseSensitive ?? this.caseSensitive;
+        this.path = ensureArrayOfStrings(config.path ?? this.path);
+        this.redirectTo = config.redirectTo ?? null;
+        this.viewport = config.viewport ?? defaultViewportName;
+        this.id = ensureString(config.id ?? this.path);
+        this.data = config.data ?? {};
+        this.fallback = config.fallback ?? this.fallback;
+    }
+    register(container) {
+        this.component?.register(container);
+    }
+    toString() {
+        const path = this.config.path === null ? 'null' : `'${this.config.path}'`;
+        if (this.component !== null) {
+            return `RD(config.path:${path},c.name:'${this.component.name}',vp:'${this.viewport}')`;
+        }
+        else {
+            return `RD(config.path:${path},redirectTo:'${this.redirectTo}')`;
+        }
+    }
+}
+const $RouteDefinition = {
+    name: kernel.Protocol.resource.keyFor('route-definition'),
+    isDefined(def) {
+        return metadata.Metadata.hasOwn($RouteDefinition.name, def);
+    },
+    define(routeDefinition, customElementDefinition) {
+        metadata.Metadata.define($RouteDefinition.name, routeDefinition, customElementDefinition);
+    },
+    get(customElementDefinition) {
+        return $RouteDefinition.isDefined(customElementDefinition)
+            ? metadata.Metadata.getOwn($RouteDefinition.name, customElementDefinition)
+            : null;
+    },
+};
 
 class ViewportRequest {
     constructor(viewportName, componentName) {
@@ -2208,62 +1983,6 @@ function isManagedState(state) {
 function toManagedState(state, navId) {
     return { ...state, [AuNavId]: navId };
 }
-function valueOrFuncToValue(instructions, valueOrFunc) {
-    if (typeof valueOrFunc === 'function') {
-        return valueOrFunc(instructions);
-    }
-    return valueOrFunc;
-}
-class RouterOptions {
-    static get DEFAULT() { return RouterOptions.create({}); }
-    constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle) {
-        this.useUrlFragmentHash = useUrlFragmentHash;
-        this.useHref = useHref;
-        this.historyStrategy = historyStrategy;
-        this.buildTitle = buildTitle;
-    }
-    static create(input) {
-        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null);
-    }
-    getHistoryStrategy(instructions) {
-        return valueOrFuncToValue(instructions, this.historyStrategy);
-    }
-    stringifyProperties() {
-        return [
-            ['historyStrategy', 'history'],
-        ].map(([key, name]) => {
-            const value = this[key];
-            return `${name}:${typeof value === 'function' ? value : `'${value}'`}`;
-        }).join(',');
-    }
-    clone() {
-        return new RouterOptions(this.useUrlFragmentHash, this.useHref, this.historyStrategy, this.buildTitle);
-    }
-    toString() {
-        return `RO(${this.stringifyProperties()})`;
-    }
-}
-class NavigationOptions extends RouterOptions {
-    static get DEFAULT() { return NavigationOptions.create({}); }
-    constructor(routerOptions, title, titleSeparator, context, queryParams, fragment, state) {
-        super(routerOptions.useUrlFragmentHash, routerOptions.useHref, routerOptions.historyStrategy, routerOptions.buildTitle);
-        this.title = title;
-        this.titleSeparator = titleSeparator;
-        this.context = context;
-        this.queryParams = queryParams;
-        this.fragment = fragment;
-        this.state = state;
-    }
-    static create(input) {
-        return new NavigationOptions(RouterOptions.create(input), input.title ?? null, input.titleSeparator ?? ' | ', input.context ?? null, input.queryParams ?? null, input.fragment ?? '', input.state ?? null);
-    }
-    clone() {
-        return new NavigationOptions(super.clone(), this.title, this.titleSeparator, this.context, { ...this.queryParams }, this.fragment, this.state === null ? null : { ...this.state });
-    }
-    toString() {
-        return `NO(${super.stringifyProperties()})`;
-    }
-}
 class UnknownRouteError extends Error {
 }
 class Transition {
@@ -2332,7 +2051,7 @@ exports.Router = class Router {
         let routeTree = this._routeTree;
         if (routeTree === null) {
             const ctx = this.ctx;
-            routeTree = this._routeTree = new RouteTree(NavigationOptions.create({ ...this.options }), emptyQuery, null, RouteNode.create({
+            routeTree = this._routeTree = new RouteTree(NavigationOptions.create(this.options, {}), emptyQuery, null, RouteNode.create({
                 path: '',
                 finalPath: '',
                 context: ctx,
@@ -2353,7 +2072,7 @@ exports.Router = class Router {
                 finalInstructions: this.instructions,
                 instructionsChanged: true,
                 trigger: 'api',
-                options: NavigationOptions.DEFAULT,
+                options: NavigationOptions.create(this.options, {}),
                 managedState: null,
                 previousRouteTree: this.routeTree.clone(),
                 routeTree: this.routeTree,
@@ -2372,19 +2091,18 @@ exports.Router = class Router {
     get isNavigating() {
         return this._isNavigating;
     }
-    constructor(container, p, logger, events, locationMgr) {
+    constructor(container, p, logger, events, locationMgr, options) {
         this.container = container;
         this.p = p;
         this.logger = logger;
         this.events = events;
         this.locationMgr = locationMgr;
+        this.options = options;
         this._ctx = null;
         this._routeTree = null;
         this._currentTr = null;
-        this.options = RouterOptions.DEFAULT;
         this.navigated = false;
         this.navigationId = 0;
-        this.instructions = ViewportInstructionTree.create('');
         this.nextTr = null;
         this.locationChangeSubscription = null;
         this._hasTitleBuilder = false;
@@ -2392,12 +2110,10 @@ exports.Router = class Router {
         this._cannotBeUnloaded = false;
         this.vpaLookup = new Map();
         this.logger = logger.root.scopeTo('Router');
+        this.instructions = ViewportInstructionTree.create('', options);
     }
     resolveContext(context) {
         return RouteContext.resolve(this.ctx, context);
-    }
-    _setOptions(routerOptions) {
-        this.options = RouterOptions.create(routerOptions);
     }
     start(performInitialNavigation) {
         this._hasTitleBuilder = typeof this.options.buildTitle === 'function';
@@ -2405,11 +2121,9 @@ exports.Router = class Router {
         this.locationChangeSubscription = this.events.subscribe('au:router:location-change', e => {
             this.p.taskQueue.queueTask(() => {
                 const state = isManagedState(e.state) ? e.state : null;
-                const options = NavigationOptions.create({
-                    ...this.options,
-                    historyStrategy: 'replace',
-                });
-                const instructions = ViewportInstructionTree.create(e.url, options, this.ctx);
+                const routerOptions = this.options;
+                const options = NavigationOptions.create(routerOptions, { historyStrategy: 'replace' });
+                const instructions = ViewportInstructionTree.create(e.url, routerOptions, options, this.ctx);
                 this.enqueue(instructions, e.trigger, state, null);
             });
         });
@@ -2430,7 +2144,7 @@ exports.Router = class Router {
         const ctx = this.resolveContext(context);
         const instructions = instructionOrInstructions instanceof ViewportInstructionTree
             ? instructionOrInstructions
-            : this.createViewportInstructions(instructionOrInstructions, { context: ctx });
+            : this.createViewportInstructions(instructionOrInstructions, { context: ctx, historyStrategy: this.options.historyStrategy });
         this.logger.trace('isActive(instructions:%s,ctx:%s)', instructions, ctx);
         return this.routeTree.contains(instructions);
     }
@@ -2465,7 +2179,8 @@ exports.Router = class Router {
                 }
             }
         }
-        return ViewportInstructionTree.create(instructionOrInstructions, NavigationOptions.create({ ...this.options, ...options, context }), this.ctx);
+        const routerOptions = this.options;
+        return ViewportInstructionTree.create(instructionOrInstructions, routerOptions, NavigationOptions.create(routerOptions, { ...options, context }), this.ctx);
     }
     enqueue(instructions, trigger, state, failedTr) {
         const lastTr = this.currentTr;
@@ -2541,8 +2256,10 @@ exports.Router = class Router {
         let navigationContext = this.resolveContext(tr.options.context);
         const trChildren = tr.instructions.children;
         const nodeChildren = navigationContext.node.children;
+        const useHash = this.options.useUrlFragmentHash;
         const shouldProcess = !this.navigated
             || this._cannotBeUnloaded
+            || tr.trigger === (useHash ? 'hashchange' : 'popstate')
             || trChildren.length !== nodeChildren.length
             || trChildren.some((x, i) => !(nodeChildren[i]?.originalInstruction.equals(x) ?? false))
             || this.ctx.definition.config.getTransitionPlan(tr.previousRouteTree.root, tr.routeTree.root) === 'replace';
@@ -2628,8 +2345,8 @@ exports.Router = class Router {
                 this.navigated = true;
                 this.instructions = tr.finalInstructions = tr.routeTree.finalizeInstructions();
                 this._isNavigating = false;
-                const newUrl = tr.finalInstructions.toUrl(this.options.useUrlFragmentHash);
-                switch (tr.options.getHistoryStrategy(this.instructions)) {
+                const newUrl = tr.finalInstructions.toUrl(useHash);
+                switch (tr.options._getHistoryStrategy(this.instructions)) {
                     case 'none':
                         break;
                     case 'push':
@@ -2714,7 +2431,8 @@ exports.Router = __decorate([
     __param(1, runtimeHtml.IPlatform),
     __param(2, kernel.ILogger),
     __param(3, IRouterEvents),
-    __param(4, ILocationManager)
+    __param(4, ILocationManager),
+    __param(5, IRouterOptions)
 ], exports.Router);
 function updateNode(log, vit, ctx, node) {
     log.trace(`updateNode(ctx:%s,node:%s)`, ctx, node);
@@ -2739,6 +2457,479 @@ function updateNode(log, vit, ctx, node) {
     }));
 }
 
+const terminal = ['?', '#', '/', '+', '(', ')', '.', '@', '!', '=', ',', '&', '\'', '~', ';'];
+class ParserState {
+    get done() {
+        return this.rest.length === 0;
+    }
+    constructor(input) {
+        this.input = input;
+        this.buffers = [];
+        this.bufferIndex = 0;
+        this.index = 0;
+        this.rest = input;
+    }
+    startsWith(...values) {
+        const rest = this.rest;
+        return values.some(function (value) {
+            return rest.startsWith(value);
+        });
+    }
+    consumeOptional(str) {
+        if (this.startsWith(str)) {
+            this.rest = this.rest.slice(str.length);
+            this.index += str.length;
+            this.append(str);
+            return true;
+        }
+        return false;
+    }
+    consume(str) {
+        if (!this.consumeOptional(str)) {
+            this.expect(`'${str}'`);
+        }
+    }
+    expect(msg) {
+        throw new Error(`Expected ${msg} at index ${this.index} of '${this.input}', but got: '${this.rest}' (rest='${this.rest}')`);
+    }
+    ensureDone() {
+        if (!this.done) {
+            throw new Error(`Unexpected '${this.rest}' at index ${this.index} of '${this.input}'`);
+        }
+    }
+    advance() {
+        const char = this.rest[0];
+        this.rest = this.rest.slice(1);
+        ++this.index;
+        this.append(char);
+    }
+    record() {
+        this.buffers[this.bufferIndex++] = '';
+    }
+    playback() {
+        const bufferIndex = --this.bufferIndex;
+        const buffers = this.buffers;
+        const buffer = buffers[bufferIndex];
+        buffers[bufferIndex] = '';
+        return buffer;
+    }
+    discard() {
+        this.buffers[--this.bufferIndex] = '';
+    }
+    append(str) {
+        const bufferIndex = this.bufferIndex;
+        const buffers = this.buffers;
+        for (let i = 0; i < bufferIndex; ++i) {
+            buffers[i] += str;
+        }
+    }
+}
+exports.ExpressionKind = void 0;
+(function (ExpressionKind) {
+    ExpressionKind[ExpressionKind["Route"] = 0] = "Route";
+    ExpressionKind[ExpressionKind["CompositeSegment"] = 1] = "CompositeSegment";
+    ExpressionKind[ExpressionKind["ScopedSegment"] = 2] = "ScopedSegment";
+    ExpressionKind[ExpressionKind["SegmentGroup"] = 3] = "SegmentGroup";
+    ExpressionKind[ExpressionKind["Segment"] = 4] = "Segment";
+    ExpressionKind[ExpressionKind["Component"] = 5] = "Component";
+    ExpressionKind[ExpressionKind["Action"] = 6] = "Action";
+    ExpressionKind[ExpressionKind["Viewport"] = 7] = "Viewport";
+    ExpressionKind[ExpressionKind["ParameterList"] = 8] = "ParameterList";
+    ExpressionKind[ExpressionKind["Parameter"] = 9] = "Parameter";
+})(exports.ExpressionKind || (exports.ExpressionKind = {}));
+const fragmentRouteExpressionCache = new Map();
+const routeExpressionCache = new Map();
+class RouteExpression {
+    get kind() { return 0; }
+    constructor(raw, isAbsolute, root, queryParams, fragment, fragmentIsRoute) {
+        this.raw = raw;
+        this.isAbsolute = isAbsolute;
+        this.root = root;
+        this.queryParams = queryParams;
+        this.fragment = fragment;
+        this.fragmentIsRoute = fragmentIsRoute;
+    }
+    static parse(path, fragmentIsRoute) {
+        const cache = fragmentIsRoute ? fragmentRouteExpressionCache : routeExpressionCache;
+        let result = cache.get(path);
+        if (result === void 0) {
+            cache.set(path, result = RouteExpression.$parse(path, fragmentIsRoute));
+        }
+        return result;
+    }
+    static $parse(path, fragmentIsRoute) {
+        let fragment = null;
+        const fragmentStart = path.indexOf('#');
+        if (fragmentStart >= 0) {
+            const rawFragment = path.slice(fragmentStart + 1);
+            fragment = decodeURIComponent(rawFragment);
+            if (fragmentIsRoute) {
+                path = fragment;
+            }
+            else {
+                path = path.slice(0, fragmentStart);
+            }
+        }
+        let queryParams = null;
+        const queryStart = path.indexOf('?');
+        if (queryStart >= 0) {
+            const queryString = path.slice(queryStart + 1);
+            path = path.slice(0, queryStart);
+            queryParams = new URLSearchParams(queryString);
+        }
+        if (path === '') {
+            return new RouteExpression('', false, SegmentExpression.EMPTY, queryParams != null ? Object.freeze(queryParams) : emptyQuery, fragment, fragmentIsRoute);
+        }
+        const state = new ParserState(path);
+        state.record();
+        const isAbsolute = state.consumeOptional('/');
+        const root = CompositeSegmentExpression.parse(state);
+        state.ensureDone();
+        const raw = state.playback();
+        return new RouteExpression(raw, isAbsolute, root, queryParams != null ? Object.freeze(queryParams) : emptyQuery, fragment, fragmentIsRoute);
+    }
+    toInstructionTree(options) {
+        return new ViewportInstructionTree(options, this.isAbsolute, this.root.toInstructions(0, 0), mergeURLSearchParams(this.queryParams, options.queryParams, true), this.fragment ?? options.fragment);
+    }
+    toString() {
+        return this.raw;
+    }
+}
+class CompositeSegmentExpression {
+    get kind() { return 1; }
+    constructor(raw, siblings) {
+        this.raw = raw;
+        this.siblings = siblings;
+    }
+    static parse(state) {
+        state.record();
+        const append = state.consumeOptional('+');
+        const siblings = [];
+        do {
+            siblings.push(ScopedSegmentExpression.parse(state));
+        } while (state.consumeOptional('+'));
+        if (!append && siblings.length === 1) {
+            state.discard();
+            return siblings[0];
+        }
+        const raw = state.playback();
+        return new CompositeSegmentExpression(raw, siblings);
+    }
+    toInstructions(open, close) {
+        switch (this.siblings.length) {
+            case 0:
+                return [];
+            case 1:
+                return this.siblings[0].toInstructions(open, close);
+            case 2:
+                return [
+                    ...this.siblings[0].toInstructions(open, 0),
+                    ...this.siblings[1].toInstructions(0, close),
+                ];
+            default:
+                return [
+                    ...this.siblings[0].toInstructions(open, 0),
+                    ...this.siblings.slice(1, -1).flatMap(function (x) {
+                        return x.toInstructions(0, 0);
+                    }),
+                    ...this.siblings[this.siblings.length - 1].toInstructions(0, close),
+                ];
+        }
+    }
+    toString() {
+        return this.raw;
+    }
+}
+class ScopedSegmentExpression {
+    get kind() { return 2; }
+    constructor(raw, left, right) {
+        this.raw = raw;
+        this.left = left;
+        this.right = right;
+    }
+    static parse(state) {
+        state.record();
+        const left = SegmentGroupExpression.parse(state);
+        if (state.consumeOptional('/')) {
+            const right = ScopedSegmentExpression.parse(state);
+            const raw = state.playback();
+            return new ScopedSegmentExpression(raw, left, right);
+        }
+        state.discard();
+        return left;
+    }
+    toInstructions(open, close) {
+        const leftInstructions = this.left.toInstructions(open, 0);
+        const rightInstructions = this.right.toInstructions(0, close);
+        let cur = leftInstructions[leftInstructions.length - 1];
+        while (cur.children.length > 0) {
+            cur = cur.children[cur.children.length - 1];
+        }
+        cur.children.push(...rightInstructions);
+        return leftInstructions;
+    }
+    toString() {
+        return this.raw;
+    }
+}
+class SegmentGroupExpression {
+    get kind() { return 3; }
+    constructor(raw, expression) {
+        this.raw = raw;
+        this.expression = expression;
+    }
+    static parse(state) {
+        state.record();
+        if (state.consumeOptional('(')) {
+            const expression = CompositeSegmentExpression.parse(state);
+            state.consume(')');
+            const raw = state.playback();
+            return new SegmentGroupExpression(raw, expression);
+        }
+        state.discard();
+        return SegmentExpression.parse(state);
+    }
+    toInstructions(open, close) {
+        return this.expression.toInstructions(open + 1, close + 1);
+    }
+    toString() {
+        return this.raw;
+    }
+}
+class SegmentExpression {
+    get kind() { return 4; }
+    static get EMPTY() { return new SegmentExpression('', ComponentExpression.EMPTY, ActionExpression.EMPTY, ViewportExpression.EMPTY, true); }
+    constructor(raw, component, action, viewport, scoped) {
+        this.raw = raw;
+        this.component = component;
+        this.action = action;
+        this.viewport = viewport;
+        this.scoped = scoped;
+    }
+    static parse(state) {
+        state.record();
+        const component = ComponentExpression.parse(state);
+        const action = ActionExpression.parse(state);
+        const viewport = ViewportExpression.parse(state);
+        const scoped = !state.consumeOptional('!');
+        const raw = state.playback();
+        return new SegmentExpression(raw, component, action, viewport, scoped);
+    }
+    toInstructions(open, close) {
+        return [
+            ViewportInstruction.create({
+                component: this.component.name,
+                params: this.component.parameterList.toObject(),
+                viewport: this.viewport.name,
+                open,
+                close,
+            }),
+        ];
+    }
+    toString() {
+        return this.raw;
+    }
+}
+class ComponentExpression {
+    get kind() { return 5; }
+    static get EMPTY() { return new ComponentExpression('', '', ParameterListExpression.EMPTY); }
+    constructor(raw, name, parameterList) {
+        this.raw = raw;
+        this.name = name;
+        this.parameterList = parameterList;
+        switch (name.charAt(0)) {
+            case ':':
+                this.isParameter = true;
+                this.isStar = false;
+                this.isDynamic = true;
+                this.parameterName = name.slice(1);
+                break;
+            case '*':
+                this.isParameter = false;
+                this.isStar = true;
+                this.isDynamic = true;
+                this.parameterName = name.slice(1);
+                break;
+            default:
+                this.isParameter = false;
+                this.isStar = false;
+                this.isDynamic = false;
+                this.parameterName = name;
+                break;
+        }
+    }
+    static parse(state) {
+        state.record();
+        state.record();
+        if (!state.done) {
+            if (state.startsWith('./')) {
+                state.advance();
+            }
+            else if (state.startsWith('../')) {
+                state.advance();
+                state.advance();
+            }
+            else {
+                while (!state.done && !state.startsWith(...terminal)) {
+                    state.advance();
+                }
+            }
+        }
+        const name = decodeURIComponent(state.playback());
+        if (name.length === 0) {
+            state.expect('component name');
+        }
+        const parameterList = ParameterListExpression.parse(state);
+        const raw = state.playback();
+        return new ComponentExpression(raw, name, parameterList);
+    }
+    toString() {
+        return this.raw;
+    }
+}
+class ActionExpression {
+    get kind() { return 6; }
+    static get EMPTY() { return new ActionExpression('', '', ParameterListExpression.EMPTY); }
+    constructor(raw, name, parameterList) {
+        this.raw = raw;
+        this.name = name;
+        this.parameterList = parameterList;
+    }
+    static parse(state) {
+        state.record();
+        let name = '';
+        if (state.consumeOptional('.')) {
+            state.record();
+            while (!state.done && !state.startsWith(...terminal)) {
+                state.advance();
+            }
+            name = decodeURIComponent(state.playback());
+            if (name.length === 0) {
+                state.expect('method name');
+            }
+        }
+        const parameterList = ParameterListExpression.parse(state);
+        const raw = state.playback();
+        return new ActionExpression(raw, name, parameterList);
+    }
+    toString() {
+        return this.raw;
+    }
+}
+class ViewportExpression {
+    get kind() { return 7; }
+    static get EMPTY() { return new ViewportExpression('', ''); }
+    constructor(raw, name) {
+        this.raw = raw;
+        this.name = name;
+    }
+    static parse(state) {
+        state.record();
+        let name = '';
+        if (state.consumeOptional('@')) {
+            state.record();
+            while (!state.done && !state.startsWith(...terminal)) {
+                state.advance();
+            }
+            name = decodeURIComponent(state.playback());
+            if (name.length === 0) {
+                state.expect('viewport name');
+            }
+        }
+        const raw = state.playback();
+        return new ViewportExpression(raw, name);
+    }
+    toString() {
+        return this.raw;
+    }
+}
+class ParameterListExpression {
+    get kind() { return 8; }
+    static get EMPTY() { return new ParameterListExpression('', []); }
+    constructor(raw, expressions) {
+        this.raw = raw;
+        this.expressions = expressions;
+    }
+    static parse(state) {
+        state.record();
+        const expressions = [];
+        if (state.consumeOptional('(')) {
+            do {
+                expressions.push(ParameterExpression.parse(state, expressions.length));
+                if (!state.consumeOptional(',')) {
+                    break;
+                }
+            } while (!state.done && !state.startsWith(')'));
+            state.consume(')');
+        }
+        const raw = state.playback();
+        return new ParameterListExpression(raw, expressions);
+    }
+    toObject() {
+        const params = {};
+        for (const expr of this.expressions) {
+            params[expr.key] = expr.value;
+        }
+        return params;
+    }
+    toString() {
+        return this.raw;
+    }
+}
+class ParameterExpression {
+    get kind() { return 9; }
+    static get EMPTY() { return new ParameterExpression('', '', ''); }
+    constructor(raw, key, value) {
+        this.raw = raw;
+        this.key = key;
+        this.value = value;
+    }
+    static parse(state, index) {
+        state.record();
+        state.record();
+        while (!state.done && !state.startsWith(...terminal)) {
+            state.advance();
+        }
+        let key = decodeURIComponent(state.playback());
+        if (key.length === 0) {
+            state.expect('parameter key');
+        }
+        let value;
+        if (state.consumeOptional('=')) {
+            state.record();
+            while (!state.done && !state.startsWith(...terminal)) {
+                state.advance();
+            }
+            value = decodeURIComponent(state.playback());
+            if (value.length === 0) {
+                state.expect('parameter value');
+            }
+        }
+        else {
+            value = key;
+            key = index.toString();
+        }
+        const raw = state.playback();
+        return new ParameterExpression(raw, key, value);
+    }
+    toString() {
+        return this.raw;
+    }
+}
+const AST = Object.freeze({
+    RouteExpression,
+    CompositeSegmentExpression,
+    ScopedSegmentExpression,
+    SegmentGroupExpression,
+    SegmentExpression,
+    ComponentExpression,
+    ActionExpression,
+    ViewportExpression,
+    ParameterListExpression,
+    ParameterExpression,
+});
+
+const defaultViewportName = 'default';
 class ViewportInstruction {
     constructor(open, close, recognizedRoute, component, viewport, params, children) {
         this.open = open;
@@ -2800,7 +2991,8 @@ class ViewportInstruction {
     toUrlComponent(recursive = true) {
         const component = this.component.toUrlComponent();
         const params = this.params === null || Object.keys(this.params).length === 0 ? '' : `(${stringifyParams(this.params)})`;
-        const viewport = component.length === 0 || this.viewport === null || this.viewport.length === 0 ? '' : `@${this.viewport}`;
+        const vp = this.viewport;
+        const viewport = component.length === 0 || vp === null || vp.length === 0 || vp === defaultViewportName ? '' : `@${vp}`;
         const thisPart = `${'('.repeat(this.open)}${component}${params}${viewport}${')'.repeat(this.close)}`;
         const childPart = recursive ? this.children.map(x => x.toUrlComponent()).join('+') : '';
         if (thisPart.length > 0) {
@@ -2864,8 +3056,8 @@ class ViewportInstructionTree {
         this.queryParams = queryParams;
         this.fragment = fragment;
     }
-    static create(instructionOrInstructions, options, rootCtx) {
-        const $options = NavigationOptions.create({ ...options });
+    static create(instructionOrInstructions, routerOptions, options, rootCtx) {
+        const $options = NavigationOptions.create(routerOptions, { ...options });
         let context = $options.context;
         if (!(context instanceof RouteContext) && rootCtx != null) {
             context = RouteContext.resolve(rootCtx, context);
@@ -2889,7 +3081,7 @@ class ViewportInstructionTree {
             return new ViewportInstructionTree($options, false, children, query, $options.fragment);
         }
         if (typeof instructionOrInstructions === 'string') {
-            const expr = RouteExpression.parse(instructionOrInstructions, $options.useUrlFragmentHash);
+            const expr = RouteExpression.parse(instructionOrInstructions, routerOptions.useUrlFragmentHash);
             return expr.toInstructionTree($options);
         }
         const eagerVi = hasContext ? context.generateViewportInstruction(instructionOrInstructions) : null;
@@ -3019,220 +3211,14 @@ class TypedNavigationInstruction {
     }
 }
 
-const noRoutes = kernel.emptyArray;
-function defaultReentryBehavior(current, next) {
-    if (!shallowEquals(current.params, next.params)) {
-        return 'replace';
-    }
-    return 'none';
-}
-class RouteConfig {
-    constructor(id, path, title, redirectTo, caseSensitive, transitionPlan, viewport, data, routes, fallback, component, nav) {
-        this.id = id;
-        this.path = path;
-        this.title = title;
-        this.redirectTo = redirectTo;
-        this.caseSensitive = caseSensitive;
-        this.transitionPlan = transitionPlan;
-        this.viewport = viewport;
-        this.data = data;
-        this.routes = routes;
-        this.fallback = fallback;
-        this.component = component;
-        this.nav = nav;
-    }
-    static _create(configOrPath, Type, parentConfig) {
-        if (typeof configOrPath === 'string' || configOrPath instanceof Array) {
-            const path = configOrPath;
-            const redirectTo = Type?.redirectTo ?? null;
-            const caseSensitive = Type?.caseSensitive ?? false;
-            const id = Type?.id ?? (path instanceof Array ? path[0] : path);
-            const title = Type?.title ?? null;
-            const reentryBehavior = Type?.transitionPlan ?? parentConfig?.transitionPlan ?? null;
-            const viewport = Type?.viewport ?? null;
-            const data = Type?.data ?? {};
-            const children = Type?.routes ?? noRoutes;
-            return new RouteConfig(id, path, title, redirectTo, caseSensitive, reentryBehavior, viewport, data, children, Type?.fallback ?? null, null, Type?.nav ?? true);
-        }
-        else if (typeof configOrPath === 'object') {
-            const config = configOrPath;
-            validateRouteConfig(config, '');
-            const path = config.path ?? Type?.path ?? null;
-            const title = config.title ?? Type?.title ?? null;
-            const redirectTo = config.redirectTo ?? Type?.redirectTo ?? null;
-            const caseSensitive = config.caseSensitive ?? Type?.caseSensitive ?? false;
-            const id = config.id ?? Type?.id ?? (path instanceof Array ? path[0] : path);
-            const reentryBehavior = config.transitionPlan ?? Type?.transitionPlan ?? parentConfig?.transitionPlan ?? null;
-            const viewport = config.viewport ?? Type?.viewport ?? null;
-            const data = {
-                ...Type?.data,
-                ...config.data,
-            };
-            const children = [
-                ...(config.routes ?? noRoutes),
-                ...(Type?.routes ?? noRoutes),
-            ];
-            return new RouteConfig(id, path, title, redirectTo, caseSensitive, reentryBehavior, viewport, data, children, config.fallback ?? Type?.fallback ?? null, config.component ?? null, config.nav ?? true);
-        }
-        else {
-            expectType('string, function/class or object', '', configOrPath);
-        }
-    }
-    applyChildRouteConfig(config, parentConfig) {
-        let parentPath = this.path ?? '';
-        if (typeof parentPath !== 'string') {
-            parentPath = parentPath[0];
-        }
-        validateRouteConfig(config, parentPath);
-        return new RouteConfig(config.id ?? this.id, config.path ?? this.path, config.title ?? this.title, config.redirectTo ?? this.redirectTo, config.caseSensitive ?? this.caseSensitive, config.transitionPlan ?? this.transitionPlan ?? parentConfig?.transitionPlan ?? null, config.viewport ?? this.viewport, config.data ?? this.data, config.routes ?? this.routes, config.fallback ?? this.fallback, config.component ?? this.component, config.nav ?? this.nav);
-    }
-    getTransitionPlan(cur, next) {
-        const plan = this.transitionPlan ?? defaultReentryBehavior;
-        return typeof plan === 'function' ? plan(cur, next) : plan;
-    }
-}
-const Route = {
-    name: kernel.Protocol.resource.keyFor('route-configuration'),
-    isConfigured(Type) {
-        return metadata.Metadata.hasOwn(Route.name, Type);
-    },
-    configure(configOrPath, Type) {
-        const config = RouteConfig._create(configOrPath, Type, null);
-        metadata.Metadata.define(Route.name, config, Type);
-        return Type;
-    },
-    getConfig(Type) {
-        if (!Route.isConfigured(Type)) {
-            Route.configure({}, Type);
-        }
-        return metadata.Metadata.getOwn(Route.name, Type);
-    },
-};
-function route(configOrPath) {
-    return function (target) {
-        return Route.configure(configOrPath, target);
-    };
-}
-
-const defaultViewportName = 'default';
-class RouteDefinition {
-    constructor(config, component, parentDefinition) {
-        this.config = config;
-        this.component = component;
-        this.hasExplicitPath = config.path !== null;
-        this.caseSensitive = config.caseSensitive;
-        this.path = ensureArrayOfStrings(config.path ?? component.name);
-        this.redirectTo = config.redirectTo ?? null;
-        this.viewport = config.viewport ?? defaultViewportName;
-        this.id = ensureString(config.id ?? this.path);
-        this.data = config.data ?? {};
-        this.fallback = config.fallback ?? parentDefinition?.fallback ?? null;
-    }
-    static resolve(routeable, parentDefinition, routeNode, context) {
-        const parentConfig = parentDefinition?.config ?? null;
-        if (isPartialRedirectRouteConfig(routeable))
-            return new RouteDefinition(RouteConfig._create(routeable, null, parentConfig), null, parentDefinition);
-        const instruction = this.createNavigationInstruction(routeable);
-        let ceDef;
-        switch (instruction.type) {
-            case 0: {
-                if (context === void 0)
-                    throw new Error(`When retrieving the RouteDefinition for a component name, a RouteContext (that can resolve it) must be provided`);
-                const component = context.container.find(runtimeHtml.CustomElement, instruction.value);
-                if (component === null)
-                    throw new Error(`Could not find a CustomElement named '${instruction.value}' in the current container scope of ${context}. This means the component is neither registered at Aurelia startup nor via the 'dependencies' decorator or static property.`);
-                ceDef = component;
-                break;
-            }
-            case 2:
-                ceDef = instruction.value;
-                break;
-            case 4:
-                ceDef = runtimeHtml.CustomElement.getDefinition(instruction.value.constructor);
-                break;
-            case 3:
-                if (context === void 0)
-                    throw new Error(`RouteContext must be provided when resolving an imported module`);
-                ceDef = context.resolveLazy(instruction.value);
-                break;
-        }
-        return kernel.onResolve(ceDef, def => {
-            let routeDefinition = $RouteDefinition.get(def);
-            const hasRouteConfigHook = instruction.type === 4 && typeof routeable.getRouteConfig === 'function';
-            if (routeDefinition === null) {
-                const type = def.Type;
-                let config = null;
-                if (hasRouteConfigHook) {
-                    config = RouteConfig._create(routeable.getRouteConfig(parentDefinition, routeNode) ?? kernel.emptyObject, type, parentConfig);
-                }
-                else {
-                    config = isPartialChildRouteConfig(routeable)
-                        ? Route.isConfigured(type)
-                            ? Route.getConfig(type).applyChildRouteConfig(routeable, parentConfig)
-                            : RouteConfig._create(routeable, type, parentConfig)
-                        : Route.getConfig(def.Type);
-                }
-                routeDefinition = new RouteDefinition(config, def, parentDefinition);
-                $RouteDefinition.define(routeDefinition, def);
-            }
-            else if (routeDefinition.config.routes.length === 0 && hasRouteConfigHook) {
-                routeDefinition.applyChildRouteConfig(routeable.getRouteConfig?.(parentDefinition, routeNode) ?? kernel.emptyObject);
-            }
-            return routeDefinition;
-        });
-    }
-    static createNavigationInstruction(routeable) {
-        return isPartialChildRouteConfig(routeable)
-            ? this.createNavigationInstruction(routeable.component)
-            : TypedNavigationInstruction.create(routeable);
-    }
-    applyChildRouteConfig(config) {
-        this.config = config = this.config.applyChildRouteConfig(config, null);
-        this.hasExplicitPath = config.path !== null;
-        this.caseSensitive = config.caseSensitive ?? this.caseSensitive;
-        this.path = ensureArrayOfStrings(config.path ?? this.path);
-        this.redirectTo = config.redirectTo ?? null;
-        this.viewport = config.viewport ?? defaultViewportName;
-        this.id = ensureString(config.id ?? this.path);
-        this.data = config.data ?? {};
-        this.fallback = config.fallback ?? this.fallback;
-    }
-    register(container) {
-        this.component?.register(container);
-    }
-    toString() {
-        const path = this.config.path === null ? 'null' : `'${this.config.path}'`;
-        if (this.component !== null) {
-            return `RD(config.path:${path},c.name:'${this.component.name}',vp:'${this.viewport}')`;
-        }
-        else {
-            return `RD(config.path:${path},redirectTo:'${this.redirectTo}')`;
-        }
-    }
-}
-const $RouteDefinition = {
-    name: kernel.Protocol.resource.keyFor('route-definition'),
-    isDefined(def) {
-        return metadata.Metadata.hasOwn($RouteDefinition.name, def);
-    },
-    define(routeDefinition, customElementDefinition) {
-        metadata.Metadata.define($RouteDefinition.name, routeDefinition, customElementDefinition);
-    },
-    get(customElementDefinition) {
-        return $RouteDefinition.isDefined(customElementDefinition)
-            ? metadata.Metadata.getOwn($RouteDefinition.name, customElementDefinition)
-            : null;
-    },
-};
-
-const componentAgentLookup = new WeakMap();
 class ComponentAgent {
-    constructor(instance, controller, definition, routeNode, ctx) {
+    constructor(instance, controller, definition, routeNode, ctx, routerOptions) {
         this.instance = instance;
         this.controller = controller;
         this.definition = definition;
         this.routeNode = routeNode;
         this.ctx = ctx;
+        this.routerOptions = routerOptions;
         this._logger = ctx.container.get(kernel.ILogger).scopeTo(`ComponentAgent<${ctx.friendlyPath}>`);
         this._logger.trace(`constructor()`);
         const lifecycleHooks = controller.lifecycleHooks;
@@ -3244,16 +3230,6 @@ class ComponentAgent {
         this._hasLoad = 'loading' in instance;
         this._hasCanUnload = 'canUnload' in instance;
         this._hasUnload = 'unloading' in instance;
-    }
-    static for(componentInstance, hostController, routeNode, ctx) {
-        let componentAgent = componentAgentLookup.get(componentInstance);
-        if (componentAgent === void 0) {
-            const container = ctx.container;
-            const definition = RouteDefinition.resolve(componentInstance.constructor, ctx.definition, null);
-            const controller = runtimeHtml.Controller.$el(container, componentInstance, hostController.host, null);
-            componentAgentLookup.set(componentInstance, componentAgent = new ComponentAgent(componentInstance, controller, definition, routeNode, ctx));
-        }
-        return componentAgent;
     }
     activate(initiator, parent, flags) {
         if (initiator === null) {
@@ -3334,7 +3310,7 @@ class ComponentAgent {
                     return hook.canLoad(this.instance, next.params, next, this.routeNode);
                 }, ret => {
                     if (tr.guardsResult === true && ret !== true) {
-                        tr.guardsResult = ret === false ? false : ViewportInstructionTree.create(ret, void 0, rootCtx);
+                        tr.guardsResult = ret === false ? false : ViewportInstructionTree.create(ret, this.routerOptions, void 0, rootCtx);
                     }
                     b.pop();
                     res();
@@ -3352,7 +3328,7 @@ class ComponentAgent {
                     return this.instance.canLoad(next.params, next, this.routeNode);
                 }, ret => {
                     if (tr.guardsResult === true && ret !== true) {
-                        tr.guardsResult = ret === false ? false : ViewportInstructionTree.create(ret, void 0, rootCtx);
+                        tr.guardsResult = ret === false ? false : ViewportInstructionTree.create(ret, this.routerOptions, void 0, rootCtx);
                     }
                     b.pop();
                 });
@@ -3622,12 +3598,16 @@ class RouteContext {
     createComponentAgent(hostController, routeNode) {
         this.logger.trace(`createComponentAgent(routeNode:%s)`, routeNode);
         this.hostControllerProvider.prepare(hostController);
-        const componentInstance = this.container.get(routeNode.component.key);
+        const container = this.container;
+        const componentInstance = container.get(routeNode.component.key);
+        const parentDefinition = this.definition;
         if (!this._childRoutesConfigured) {
-            const routeDef = RouteDefinition.resolve(componentInstance, this.definition, routeNode);
+            const routeDef = RouteDefinition.resolve(componentInstance, parentDefinition, routeNode);
             this.processDefinition(routeDef);
         }
-        const componentAgent = ComponentAgent.for(componentInstance, hostController, routeNode, this);
+        const definition = RouteDefinition.resolve(componentInstance.constructor, parentDefinition, null);
+        const controller = runtimeHtml.Controller.$el(container, componentInstance, hostController.host, null);
+        const componentAgent = new ComponentAgent(componentInstance, controller, definition, routeNode, this, this._router.options);
         this.hostControllerProvider.dispose();
         return componentAgent;
     }
@@ -4219,12 +4199,13 @@ function configure(container, options) {
     else {
         options = {};
     }
+    const routerOptions = RouterOptions.create(options);
     return container.register(kernel.Registration.cachedCallback(IBaseHref, (handler, _, __) => {
         const window = handler.get(runtimeHtml.IWindow);
         const url = new URL(window.document.baseURI);
         url.pathname = normalizePath(basePath ?? url.pathname);
         return url;
-    }), runtimeHtml.AppTask.hydrated(IRouter, router => router._setOptions(options)), runtimeHtml.AppTask.hydrated(kernel.IContainer, RouteContext.setRoot), runtimeHtml.AppTask.activated(IRouter, router => router.start(true)), runtimeHtml.AppTask.deactivated(IRouter, router => {
+    }), kernel.Registration.instance(IRouterOptions, routerOptions), runtimeHtml.AppTask.hydrated(kernel.IContainer, RouteContext.setRoot), runtimeHtml.AppTask.activated(IRouter, router => router.start(true)), runtimeHtml.AppTask.deactivated(IRouter, router => {
         router.stop();
     }), ...DefaultComponents, ...DefaultResources);
 }
@@ -4308,6 +4289,7 @@ exports.ILocationManager = ILocationManager;
 exports.IRouteContext = IRouteContext;
 exports.IRouter = IRouter;
 exports.IRouterEvents = IRouterEvents;
+exports.IRouterOptions = IRouterOptions;
 exports.IStateManager = IStateManager;
 exports.LoadCustomAttributeRegistration = LoadCustomAttributeRegistration;
 exports.LocationChangeEvent = LocationChangeEvent;

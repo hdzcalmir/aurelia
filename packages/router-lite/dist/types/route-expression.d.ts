@@ -1,5 +1,5 @@
 import { ViewportInstructionTree, ViewportInstruction, Params } from './instructions';
-import { NavigationOptions } from './router';
+import { type NavigationOptions } from './options';
 declare class ParserState {
     private readonly input;
     get done(): boolean;

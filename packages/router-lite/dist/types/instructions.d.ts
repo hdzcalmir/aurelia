@@ -2,8 +2,9 @@ import { IModule } from '@aurelia/kernel';
 import { ICustomElementViewModel, ICustomElementController, PartialCustomElementDefinition, CustomElementDefinition } from '@aurelia/runtime-html';
 import { IRouteViewModel } from './component-agent';
 import { RouteType } from './route';
-import { $RecognizedRoute, IRouteContext } from './route-context';
-import { INavigationOptions, NavigationOptions } from './router';
+import { type $RecognizedRoute, IRouteContext } from './route-context';
+import { INavigationOptions, NavigationOptions, type RouterOptions } from './options';
+export declare const defaultViewportName = "default";
 export type RouteContextLike = IRouteContext | ICustomElementViewModel | ICustomElementController | HTMLElement;
 /**
  * Either a `RouteableComponent`, a string (name) that can be resolved to one or a ViewportInstruction:
@@ -99,7 +100,7 @@ export declare class ViewportInstructionTree {
     readonly queryParams: Readonly<URLSearchParams>;
     readonly fragment: string | null;
     constructor(options: NavigationOptions, isAbsolute: boolean, children: ViewportInstruction[], queryParams: Readonly<URLSearchParams>, fragment: string | null);
-    static create(instructionOrInstructions: NavigationInstruction | NavigationInstruction[], options?: INavigationOptions, rootCtx?: IRouteContext | null): ViewportInstructionTree;
+    static create(instructionOrInstructions: NavigationInstruction | NavigationInstruction[], routerOptions: RouterOptions, options?: INavigationOptions, rootCtx?: IRouteContext | null): ViewportInstructionTree;
     equals(other: ViewportInstructionTree): boolean;
     toUrl(useUrlFragmentHash?: boolean): string;
     toPath(): string;

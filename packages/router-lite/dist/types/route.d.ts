@@ -1,6 +1,6 @@
 import { Constructable, ResourceType } from '@aurelia/kernel';
 import { RouteableComponent } from './instructions';
-import { RouteNode } from './route-tree';
+import type { RouteNode } from './route-tree';
 /**
  * Either a `RouteableComponent` or a name/config that can be resolved to a one:
  * - `string`: a string representing the component name. Must be resolveable via DI from the context of the component relative to which the navigation occurs (specified in the `dependencies` array, `<import>`ed in the view, declared as an inline template, or registered globally)

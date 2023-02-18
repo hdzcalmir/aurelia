@@ -4090,13 +4090,22 @@ class MockBrowserHistoryLocation {
         return;
     }
     get parts() {
-        const e = [];
-        const t = this.path.split("#");
-        if (t.length > 1) e.unshift(t.pop()); else e.unshift(void 0);
-        const n = t[0].split("?");
-        if (n.length > 1) e.unshift(n.pop()); else e.unshift(void 0);
-        e.unshift(n[0]);
-        return e;
+        const e = this.path;
+        try {
+            const t = new URL(e);
+            let n = t.hash;
+            if (n.length > 1) n = n.substring(1);
+            const i = t.search;
+            return [ t.pathname, i.length > 1 ? i : void 0, n.length ? n : void 0 ];
+        } catch (e) {
+            const t = [];
+            const n = this.path.split("#");
+            if (n.length > 1) t.unshift(n.pop()); else t.unshift(void 0);
+            const i = n[0].split("?");
+            if (i.length > 1) t.unshift(i.pop()); else t.unshift(void 0);
+            t.unshift(i[0]);
+            return t;
+        }
     }
     pushState(e, t, n) {
         this.states.splice(this.index + 1);
@@ -4115,6 +4124,12 @@ class MockBrowserHistoryLocation {
             this.index = t;
             this.notifyChange();
         }
+    }
+    back() {
+        this.go(-1);
+    }
+    forward() {
+        this.go(1);
     }
     notifyChange() {
         if (this.changeCallback) this.changeCallback(null).catch((e => {

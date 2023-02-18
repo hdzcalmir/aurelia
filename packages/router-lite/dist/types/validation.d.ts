@@ -1,6 +1,6 @@
-import { PartialCustomElementDefinition } from '@aurelia/runtime-html';
-import { IChildRouteConfig, IRedirectRouteConfig } from './route';
-import { IViewportInstruction, Params, RouteableComponent } from './instructions';
+import { type PartialCustomElementDefinition } from '@aurelia/runtime-html';
+import type { IChildRouteConfig, IRedirectRouteConfig } from './route';
+import type { IViewportInstruction, Params, RouteableComponent } from './instructions';
 export declare function isPartialCustomElementDefinition(value: RouteableComponent | IChildRouteConfig | null | undefined): value is PartialCustomElementDefinition;
 export declare function isPartialChildRouteConfig(value: RouteableComponent | IChildRouteConfig | IRedirectRouteConfig | null | undefined): value is IChildRouteConfig;
 export declare function isPartialRedirectRouteConfig(value: RouteableComponent | IChildRouteConfig | IRedirectRouteConfig | null | undefined): value is IRedirectRouteConfig;

@@ -1,6 +1,6 @@
 {
   "name": "@aurelia/plugin-gulp",
-  "version": "2.1.0-dev.202302181301",
+  "version": "2.1.0-dev.202302182151",
   "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.mjs",
   "exports": {
@@ -47,11 +47,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@aurelia/kernel": "2.1.0-dev.202302181301",
-    "@aurelia/metadata": "2.1.0-dev.202302181301",
-    "@aurelia/platform": "2.1.0-dev.202302181301",
-    "@aurelia/plugin-conventions": "2.1.0-dev.202302181301",
-    "@aurelia/runtime": "2.1.0-dev.202302181301",
+    "@aurelia/kernel": "2.1.0-dev.202302182151",
+    "@aurelia/metadata": "2.1.0-dev.202302182151",
+    "@aurelia/platform": "2.1.0-dev.202302182151",
+    "@aurelia/plugin-conventions": "2.1.0-dev.202302182151",
+    "@aurelia/runtime": "2.1.0-dev.202302182151",
     "vinyl": "^2.2.0"
   },
   "devDependencies": {
