@@ -1,7 +1,7 @@
 {
   "name": "@aurelia/monorepo",
   "private": true,
-  "version": "2.1.0-dev.202302182151",
+  "version": "2.1.0-dev.202302190926",
   "workspaces": [
     "packages/__tests__",
     "packages/__e2e__/hmr-vite",
