@@ -736,22 +736,26 @@ class RouteDefinition {
             const hasRouteConfigHook = instruction.type === 4 && typeof routeable.getRouteConfig === 'function';
             if (routeDefinition === null) {
                 const type = def.Type;
-                let config = null;
-                if (hasRouteConfigHook) {
-                    config = RouteConfig._create(routeable.getRouteConfig(parentDefinition, routeNode) ?? emptyObject, type, parentConfig);
-                }
-                else {
-                    config = isPartialChildRouteConfig(routeable)
-                        ? Route.isConfigured(type)
-                            ? Route.getConfig(type).applyChildRouteConfig(routeable, parentConfig)
-                            : RouteConfig._create(routeable, type, parentConfig)
-                        : Route.getConfig(def.Type);
-                }
+                if (hasRouteConfigHook)
+                    return onResolve(routeable.getRouteConfig(parentDefinition, routeNode), (value) => {
+                        const config = RouteConfig._create(value ?? emptyObject, type, parentConfig);
+                        routeDefinition = new RouteDefinition(config, def, parentDefinition);
+                        $RouteDefinition.define(routeDefinition, def);
+                        return routeDefinition;
+                    });
+                const config = isPartialChildRouteConfig(routeable)
+                    ? Route.isConfigured(type)
+                        ? Route.getConfig(type).applyChildRouteConfig(routeable, parentConfig)
+                        : RouteConfig._create(routeable, type, parentConfig)
+                    : Route.getConfig(def.Type);
                 routeDefinition = new RouteDefinition(config, def, parentDefinition);
                 $RouteDefinition.define(routeDefinition, def);
             }
             else if (routeDefinition.config.routes.length === 0 && hasRouteConfigHook) {
-                routeDefinition.applyChildRouteConfig(routeable.getRouteConfig?.(parentDefinition, routeNode) ?? emptyObject);
+                return onResolve(routeable.getRouteConfig?.(parentDefinition, routeNode), value => {
+                    routeDefinition.applyChildRouteConfig(value ?? emptyObject);
+                    return routeDefinition;
+                });
             }
             return routeDefinition;
         });
@@ -996,8 +1000,11 @@ class ViewportAgent {
                         case 'invoke-lifecycles':
                             return this.curCA.canLoad(tr, this.nextNode, b1);
                         case 'replace':
-                            this.nextCA = this.nextNode.context.createComponentAgent(this.hostController, this.nextNode);
-                            return this.nextCA.canLoad(tr, this.nextNode, b1);
+                            b1.push();
+                            void onResolve(this.nextNode.context.createComponentAgent(this.hostController, this.nextNode), ca => {
+                                (this.nextCA = ca).canLoad(tr, this.nextNode, b1);
+                                b1.pop();
+                            });
                     }
                 case 64:
                     this.logger.trace(`canLoad() - nothing to load at %s`, this);
@@ -1842,31 +1849,32 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
             const ced = $handler.component;
             const vpa = ctx.resolveViewportAgent(new ViewportRequest(vpName, ced.name));
             const router = ctx.container.get(IRouter);
-            const childCtx = router.getRouteContext(vpa, ced, null, vpa.hostController.container, ctx.definition);
-            log.trace('createConfiguredNode setting the context node');
-            const $node = childCtx.node = RouteNode.create({
-                path: rr.route.endpoint.route.path,
-                finalPath: route.path,
-                context: childCtx,
-                instruction: vi,
-                originalInstruction: originalVi,
-                params: {
-                    ...rr.route.params,
-                },
-                queryParams: rt.queryParams,
-                fragment: rt.fragment,
-                data: $handler.data,
-                viewport: vpName,
-                component: ced,
-                title: $handler.config.title,
-                residue: [
-                    ...(rr.residue === null ? [] : [ViewportInstruction.create(rr.residue)]),
-                    ...vi.children,
-                ],
+            return onResolve(router.getRouteContext(vpa, ced, null, vpa.hostController.container, ctx.definition), childCtx => {
+                log.trace('createConfiguredNode setting the context node');
+                const $node = childCtx.node = RouteNode.create({
+                    path: rr.route.endpoint.route.path,
+                    finalPath: route.path,
+                    context: childCtx,
+                    instruction: vi,
+                    originalInstruction: originalVi,
+                    params: {
+                        ...rr.route.params,
+                    },
+                    queryParams: rt.queryParams,
+                    fragment: rt.fragment,
+                    data: $handler.data,
+                    viewport: vpName,
+                    component: ced,
+                    title: $handler.config.title,
+                    residue: [
+                        ...(rr.residue === null ? [] : [ViewportInstruction.create(rr.residue)]),
+                        ...vi.children,
+                    ],
+                });
+                $node.setTree(node.tree);
+                log.trace(`createConfiguredNode(vi:%s) -> %s`, vi, $node);
+                return $node;
             });
-            $node.setTree(node.tree);
-            log.trace(`createConfiguredNode(vi:%s) -> %s`, vi, $node);
-            return $node;
         }
         const origPath = RouteExpression.parse(route.path, false);
         const redirPath = RouteExpression.parse($handler.redirectTo, false);
@@ -2146,20 +2154,21 @@ let Router = class Router {
     }
     getRouteContext(viewportAgent, componentDefinition, componentInstance, container, parentDefinition) {
         const logger = container.get(ILogger).scopeTo('RouteContext');
-        const routeDefinition = RouteDefinition.resolve(typeof componentInstance?.getRouteConfig === 'function' ? componentInstance : componentDefinition.Type, parentDefinition, null);
-        let routeDefinitionLookup = this.vpaLookup.get(viewportAgent);
-        if (routeDefinitionLookup === void 0) {
-            this.vpaLookup.set(viewportAgent, routeDefinitionLookup = new WeakMap());
-        }
-        let routeContext = routeDefinitionLookup.get(routeDefinition);
-        if (routeContext !== void 0) {
-            logger.trace(`returning existing RouteContext for %s`, routeDefinition);
+        return onResolve(RouteDefinition.resolve(typeof componentInstance?.getRouteConfig === 'function' ? componentInstance : componentDefinition.Type, parentDefinition, null), routeDefinition => {
+            let routeDefinitionLookup = this.vpaLookup.get(viewportAgent);
+            if (routeDefinitionLookup === void 0) {
+                this.vpaLookup.set(viewportAgent, routeDefinitionLookup = new WeakMap());
+            }
+            let routeContext = routeDefinitionLookup.get(routeDefinition);
+            if (routeContext !== void 0) {
+                logger.trace(`returning existing RouteContext for %s`, routeDefinition);
+                return routeContext;
+            }
+            logger.trace(`creating new RouteContext for %s`, routeDefinition);
+            const parent = container.has(IRouteContext, true) ? container.get(IRouteContext) : null;
+            routeDefinitionLookup.set(routeDefinition, routeContext = new RouteContext(viewportAgent, parent, componentDefinition, routeDefinition, container, this));
             return routeContext;
-        }
-        logger.trace(`creating new RouteContext for %s`, routeDefinition);
-        const parent = container.has(IRouteContext, true) ? container.get(IRouteContext) : null;
-        routeDefinitionLookup.set(routeDefinition, routeContext = new RouteContext(viewportAgent, parent, componentDefinition, routeDefinition, container, this));
-        return routeContext;
+        });
     }
     createViewportInstructions(instructionOrInstructions, options) {
         if (instructionOrInstructions instanceof ViewportInstructionTree)
@@ -3536,9 +3545,10 @@ class RouteContext {
             logAndThrow(new Error(`The provided IAppRoot does not (yet) have a controller. A possible cause is calling this API manually before Aurelia.start() is called`), logger);
         }
         const router = container.get(IRouter);
-        const routeContext = router.getRouteContext(null, controller.definition, controller.viewModel, controller.container, null);
-        container.register(Registration.instance(IRouteContext, routeContext));
-        routeContext.node = router.routeTree.root;
+        return onResolve(router.getRouteContext(null, controller.definition, controller.viewModel, controller.container, null), routeContext => {
+            container.register(Registration.instance(IRouteContext, routeContext));
+            routeContext.node = router.routeTree.root;
+        });
     }
     static resolve(root, context) {
         const rootContainer = root.container;
@@ -3597,15 +3607,16 @@ class RouteContext {
         const container = this.container;
         const componentInstance = container.get(routeNode.component.key);
         const parentDefinition = this.definition;
-        if (!this._childRoutesConfigured) {
-            const routeDef = RouteDefinition.resolve(componentInstance, parentDefinition, routeNode);
-            this.processDefinition(routeDef);
-        }
-        const definition = RouteDefinition.resolve(componentInstance.constructor, parentDefinition, null);
-        const controller = Controller.$el(container, componentInstance, hostController.host, null);
-        const componentAgent = new ComponentAgent(componentInstance, controller, definition, routeNode, this, this._router.options);
-        this.hostControllerProvider.dispose();
-        return componentAgent;
+        const task = this._childRoutesConfigured
+            ? void 0
+            : onResolve(RouteDefinition.resolve(componentInstance, parentDefinition, routeNode), routeDef => this.processDefinition(routeDef));
+        return onResolve(task, () => {
+            const definition = RouteDefinition.resolve(componentInstance.constructor, parentDefinition, null);
+            const controller = Controller.$el(container, componentInstance, hostController.host, null);
+            const componentAgent = new ComponentAgent(componentInstance, controller, definition, routeNode, this, this._router.options);
+            this.hostControllerProvider.dispose();
+            return componentAgent;
+        });
     }
     registerViewport(viewport) {
         const agent = ViewportAgent.for(viewport, this);

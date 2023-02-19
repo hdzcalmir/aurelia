@@ -81,7 +81,7 @@ export declare class RouteContext {
      *
      * @param container - The container from which to resolve the `IAppRoot` and in which to register the `RouteContext`
      */
-    static setRoot(container: IContainer): void;
+    static setRoot(container: IContainer): void | Promise<void>;
     static resolve(root: IRouteContext, context: unknown): IRouteContext;
     dispose(): void;
     resolveViewportAgent(req: ViewportRequest): ViewportAgent;
@@ -93,7 +93,7 @@ export declare class RouteContext {
      * @param hostController - The `ICustomElementController` whose component (typically `au-viewport`) will host this component.
      * @param routeNode - The routeNode that describes the component + state.
      */
-    createComponentAgent(hostController: ICustomElementController, routeNode: RouteNode): ComponentAgent;
+    createComponentAgent(hostController: ICustomElementController, routeNode: RouteNode): ComponentAgent | Promise<ComponentAgent>;
     registerViewport(viewport: IViewport): ViewportAgent;
     unregisterViewport(viewport: IViewport): void;
     recognize(path: string, searchAncestor?: boolean): $RecognizedRoute | null;

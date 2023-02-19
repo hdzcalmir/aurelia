@@ -158,7 +158,7 @@ export declare class Router {
      * @param container - The `controller.container` of the component hosting the viewport that the route will be loaded into.
      *
      */
-    getRouteContext(viewportAgent: ViewportAgent | null, componentDefinition: CustomElementDefinition, componentInstance: IRouteViewModel | null, container: IContainer, parentDefinition: RouteDefinition | null): IRouteContext;
+    getRouteContext(viewportAgent: ViewportAgent | null, componentDefinition: CustomElementDefinition, componentInstance: IRouteViewModel | null, container: IContainer, parentDefinition: RouteDefinition | null): IRouteContext | Promise<IRouteContext>;
     createViewportInstructions(instructionOrInstructions: NavigationInstruction | readonly NavigationInstruction[], options?: INavigationOptions): ViewportInstructionTree;
     /**
      * Enqueue an instruction tree to be processed as soon as possible.
