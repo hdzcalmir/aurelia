@@ -301,14 +301,15 @@ function valueOrFuncToValue(instructions, valueOrFunc) {
 }
 const IRouterOptions = DI.createInterface('RouterOptions');
 class RouterOptions {
-    constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle) {
+    constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle, useNavigationModel) {
         this.useUrlFragmentHash = useUrlFragmentHash;
         this.useHref = useHref;
         this.historyStrategy = historyStrategy;
         this.buildTitle = buildTitle;
+        this.useNavigationModel = useNavigationModel;
     }
     static create(input) {
-        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null);
+        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null, input.useNavigationModel ?? true);
     }
     _stringifyProperties() {
         return [
@@ -317,9 +318,6 @@ class RouterOptions {
             const value = this[key];
             return `${name}:${typeof value === 'function' ? value : `'${value}'`}`;
         }).join(',');
-    }
-    clone() {
-        return new RouterOptions(this.useUrlFragmentHash, this.useHref, this.historyStrategy, this.buildTitle);
     }
     toString() {
         return `RO(${this._stringifyProperties()})`;
@@ -1596,13 +1594,18 @@ class RouteNode {
         const { [RESIDUE]: _, ...params } = input.params ?? {};
         return new RouteNode(++nodeId, input.path, input.finalPath, input.context, input.originalInstruction ?? input.instruction, input.instruction, params, input.queryParams ?? emptyQuery, input.fragment ?? null, input.data ?? {}, input.viewport ?? null, input.title ?? null, input.component, input.children ?? [], input.residue ?? []);
     }
-    contains(instructions) {
+    contains(instructions, preferEndpointMatch) {
         if (this.context === instructions.options.context) {
             const nodeChildren = this.children;
             const instructionChildren = instructions.children;
             for (let i = 0, ii = nodeChildren.length; i < ii; ++i) {
                 for (let j = 0, jj = instructionChildren.length; j < jj; ++j) {
-                    if (i + j < ii && (nodeChildren[i + j].originalInstruction?.contains(instructionChildren[j]) ?? false)) {
+                    const instructionChild = instructionChildren[j];
+                    const instructionEndpoint = preferEndpointMatch ? instructionChild.recognizedRoute?.route.endpoint : null;
+                    const nodeChild = nodeChildren[i + j];
+                    if (i + j < ii
+                        && ((instructionEndpoint != null && nodeChild.instruction?.recognizedRoute?.route.endpoint === instructionEndpoint)
+                            || (nodeChild.originalInstruction?.contains(instructionChild) ?? false))) {
                         if (j + 1 === jj) {
                             return true;
                         }
@@ -1614,7 +1617,7 @@ class RouteNode {
             }
         }
         return this.children.some(function (x) {
-            return x.contains(instructions);
+            return x.contains(instructions, preferEndpointMatch);
         });
     }
     appendChild(child) {
@@ -1709,8 +1712,8 @@ class RouteTree {
         this.fragment = fragment;
         this.root = root;
     }
-    contains(instructions) {
-        return this.root.contains(instructions);
+    contains(instructions, preferEndpointMatch) {
+        return this.root.contains(instructions, preferEndpointMatch);
     }
     clone() {
         const clone = new RouteTree(this.options.clone(), new URLSearchParams(this.queryParams), this.fragment, this.root.clone());
@@ -1815,6 +1818,7 @@ function createAndAppendNodes(log, node, vi) {
                         vi.viewport = child.viewport;
                         vi.children = child.children;
                     }
+                    vi.recognizedRoute = rr;
                     log.trace('createNode after adjustment vi:%s', vi);
                     return appendNode(log, node, createConfiguredNode(log, node, vi, rr, originalInstruction));
                 }
@@ -2150,7 +2154,7 @@ let Router = class Router {
             ? instructionOrInstructions
             : this.createViewportInstructions(instructionOrInstructions, { context: ctx, historyStrategy: this.options.historyStrategy });
         this.logger.trace('isActive(instructions:%s,ctx:%s)', instructions, ctx);
-        return this.routeTree.contains(instructions);
+        return this.routeTree.contains(instructions, false);
     }
     getRouteContext(viewportAgent, componentDefinition, componentInstance, container, parentDefinition) {
         const logger = container.get(ILogger).scopeTo('RouteContext');
@@ -3469,11 +3473,16 @@ class RouteContext {
         container.registerResolver(IController, this.hostControllerProvider = new InstanceProvider(), true);
         container.registerResolver(IRouteContext, new InstanceProvider('IRouteContext', this));
         container.register(definition);
-        this.recognizer = new RouteRecognizer();
-        const navModel = this._navigationModel = new NavigationModel([]);
-        container
-            .get(IRouterEvents)
-            .subscribe('au:router:navigation-end', () => navModel.setIsActive(_router, this));
+        this._recognizer = new RouteRecognizer();
+        if (_router.options.useNavigationModel) {
+            const navModel = this._navigationModel = new NavigationModel([]);
+            container
+                .get(IRouterEvents)
+                .subscribe('au:router:navigation-end', () => navModel.setIsActive(_router, this));
+        }
+        else {
+            this._navigationModel = null;
+        }
         this.processDefinition(definition);
     }
     processDefinition(definition) {
@@ -3487,6 +3496,7 @@ class RouteContext {
             return;
         }
         const navModel = this._navigationModel;
+        const hasNavModel = navModel !== null;
         let i = 0;
         for (; i < len; i++) {
             const child = children[i];
@@ -3508,7 +3518,9 @@ class RouteContext {
                         return this.childRoutes[idx] = resolvedRouteDef;
                     });
                     this.childRoutes.push(p);
-                    navModel.addRoute(p);
+                    if (hasNavModel) {
+                        navModel.addRoute(p);
+                    }
                     allPromises.push(p.then(noop));
                 }
                 else {
@@ -3516,7 +3528,9 @@ class RouteContext {
                         this.$addRoute(path, routeDef.caseSensitive, routeDef);
                     }
                     this.childRoutes.push(routeDef);
-                    navModel.addRoute(routeDef);
+                    if (hasNavModel) {
+                        navModel.addRoute(routeDef);
+                    }
                 }
             }
         }
@@ -3645,7 +3659,7 @@ class RouteContext {
         let _continue = true;
         let result = null;
         while (_continue) {
-            result = _current.recognizer.recognize(path);
+            result = _current._recognizer.recognize(path);
             if (result === null) {
                 if (!searchAncestor || _current.isRoot)
                     return null;
@@ -3670,12 +3684,12 @@ class RouteContext {
             for (const path of routeDef.path) {
                 this.$addRoute(path, routeDef.caseSensitive, routeDef);
             }
-            this._navigationModel.addRoute(routeDef);
+            this._navigationModel?.addRoute(routeDef);
             this.childRoutes.push(routeDef);
         });
     }
     $addRoute(path, caseSensitive, handler) {
-        this.recognizer.add({
+        this._recognizer.add({
             path,
             caseSensitive,
             handler,
@@ -3735,7 +3749,7 @@ class RouteContext {
         if (def === void 0)
             return null;
         const params = instruction.params;
-        const recognizer = this.recognizer;
+        const recognizer = this._recognizer;
         const paths = def.path;
         const numPaths = paths.length;
         const errors = [];
@@ -3899,20 +3913,37 @@ class NavigationModel {
     }
 }
 class NavigationRoute {
-    constructor(id, path, title, data) {
+    constructor(id, path, redirectTo, title, data) {
         this.id = id;
         this.path = path;
+        this.redirectTo = redirectTo;
         this.title = title;
         this.data = data;
+        this._trees = null;
     }
     static create(routeDef) {
-        return new NavigationRoute(routeDef.id, routeDef.path, routeDef.config.title, routeDef.data);
+        return new NavigationRoute(routeDef.id, routeDef.path, routeDef.redirectTo, routeDef.config.title, routeDef.data);
     }
     get isActive() {
         return this._isActive;
     }
     setIsActive(router, context) {
-        this._isActive = this.path.some(path => router.isActive(path, context));
+        let trees = this._trees;
+        if (trees === null) {
+            const routerOptions = router.options;
+            trees = this._trees = this.path.map(p => {
+                const ep = context._recognizer.getEndpoint(p);
+                if (ep === null)
+                    throw new Error(`No endpoint found for path '${p}'`);
+                return new ViewportInstructionTree(NavigationOptions.create(routerOptions, { context }), false, [
+                    ViewportInstruction.create({
+                        recognizedRoute: new $RecognizedRoute(new RecognizedRoute(ep, emptyObject), null),
+                        component: p,
+                    })
+                ], emptyQuery, null);
+            });
+        }
+        this._isActive = trees.some(vit => router.routeTree.contains(vit, true));
     }
 }
 

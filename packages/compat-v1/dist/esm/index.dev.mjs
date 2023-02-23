@@ -1,5 +1,5 @@
-import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astEvaluate, astAssign, astVisit, astBind, astUnbind, Unparser } from '@aurelia/runtime';
-import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, AppTask, IEventTarget, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding } from '@aurelia/runtime-html';
+import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astEvaluate, astAssign, astVisit, astBind, astUnbind, Unparser, getCollectionObserver, Scope, IExpressionParser, IObserverLocator } from '@aurelia/runtime';
+import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, AppTask, IEventTarget, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, ExpressionWatcher } from '@aurelia/runtime-html';
 import { camelCase, DI } from '@aurelia/kernel';
 
 let defined$1 = false;
@@ -418,6 +418,54 @@ const PreventFormActionlessSubmit = AppTask.creating(IEventTarget, appRoot => {
     }, false);
 });
 
+class BindingEngine {
+    constructor(parser, observerLocator) {
+        this.parser = parser;
+        this.observerLocator = observerLocator;
+    }
+    propertyObserver(object, prop) {
+        return {
+            subscribe: (callback) => {
+                const observer = this.observerLocator.getObserver(object, prop);
+                const subscriber = {
+                    handleChange: (newValue, oldValue) => callback(newValue, oldValue)
+                };
+                observer.subscribe(subscriber);
+                return {
+                    dispose: () => observer.unsubscribe(subscriber)
+                };
+            },
+        };
+    }
+    collectionObserver(collection) {
+        return {
+            subscribe: (callback) => {
+                const observer = getCollectionObserver(collection);
+                const subscriber = {
+                    handleCollectionChange: (collection, indexMap) => callback(collection, indexMap)
+                };
+                observer?.subscribe(subscriber);
+                return {
+                    dispose: () => observer?.unsubscribe(subscriber)
+                };
+            }
+        };
+    }
+    expressionObserver(bindingContext, expression) {
+        const scope = Scope.create(bindingContext, {}, true);
+        return {
+            subscribe: callback => {
+                const observer = new ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 16), callback);
+                observer.bind();
+                return {
+                    dispose: () => observer.unbind()
+                };
+            }
+        };
+    }
+}
+BindingEngine.inject = [IExpressionParser, IObserverLocator];
+
 const compatRegistration = {
     register(container) {
         defineAstMethods();
@@ -428,5 +476,5 @@ const compatRegistration = {
     }
 };
 
-export { CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, PreventFormActionlessSubmit, callSyntax, compatRegistration, delegateSyntax };
+export { BindingEngine, CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, PreventFormActionlessSubmit, callSyntax, compatRegistration, delegateSyntax };
 //# sourceMappingURL=index.dev.mjs.map

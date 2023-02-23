@@ -888,7 +888,7 @@ function O(t, e, s, r) {
             const i = O(t.object, e, s, r);
             let n;
             if (s?.strict) {
-                if (null == i) return i;
+                if (null == i) return;
                 if (null !== r) r.observe(i, t.name);
                 n = i[t.name];
                 if (s?.boundFn && o(n)) return n.bind(i);

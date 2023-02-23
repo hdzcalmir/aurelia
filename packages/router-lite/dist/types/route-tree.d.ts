@@ -67,7 +67,7 @@ export declare class RouteNode implements IRouteNode {
     static create(input: IRouteNode & {
         originalInstruction?: ViewportInstruction<ITypedNavigationInstruction_ResolvedComponent> | null;
     }): RouteNode;
-    contains(instructions: ViewportInstructionTree): boolean;
+    contains(instructions: ViewportInstructionTree, preferEndpointMatch: boolean): boolean;
     appendChild(child: RouteNode): void;
     clearChildren(): void;
     getTitle(separator: string): string | null;
@@ -81,7 +81,7 @@ export declare class RouteTree {
     readonly fragment: string | null;
     root: RouteNode;
     constructor(options: NavigationOptions, queryParams: Readonly<URLSearchParams>, fragment: string | null, root: RouteNode);
-    contains(instructions: ViewportInstructionTree): boolean;
+    contains(instructions: ViewportInstructionTree, preferEndpointMatch: boolean): boolean;
     clone(): RouteTree;
     finalizeInstructions(): ViewportInstructionTree;
     toString(): string;

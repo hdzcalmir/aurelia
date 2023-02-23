@@ -826,7 +826,7 @@ function astEvaluate(ast, s, e, c) {
             let ret;
             if (e?.strict) {
                 if (instance == null) {
-                    return instance;
+                    return undefined;
                 }
                 if (c !== null) {
                     c.observe(instance, ast.name);

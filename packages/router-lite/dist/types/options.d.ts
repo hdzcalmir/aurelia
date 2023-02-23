@@ -26,6 +26,11 @@ export declare class RouterOptions {
      * If this function returns `null`, the title is not updated.
      */
     readonly buildTitle: ((transition: Transition) => string | null) | null;
+    /**
+     * When set to `false`, the navigation model won't be generated.
+     * The default value is `true`.
+     */
+    readonly useNavigationModel: boolean;
     protected constructor(useUrlFragmentHash: boolean, useHref: boolean, 
     /**
      * The strategy to use for interacting with the browser's `history` object (if applicable).
@@ -43,9 +48,13 @@ export declare class RouterOptions {
      * When configured, the work of building the title string is completely handed over to this function.
      * If this function returns `null`, the title is not updated.
      */
-    buildTitle: ((transition: Transition) => string | null) | null);
+    buildTitle: ((transition: Transition) => string | null) | null, 
+    /**
+     * When set to `false`, the navigation model won't be generated.
+     * The default value is `true`.
+     */
+    useNavigationModel: boolean);
     static create(input: IRouterOptions): RouterOptions;
-    clone(): RouterOptions;
     toString(): string;
 }
 export interface INavigationOptions extends Partial<NavigationOptions> {

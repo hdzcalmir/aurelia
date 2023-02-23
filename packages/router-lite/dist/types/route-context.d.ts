@@ -68,10 +68,9 @@ export declare class RouteContext {
     private readonly moduleLoader;
     private readonly logger;
     private readonly hostControllerProvider;
-    private readonly recognizer;
     private _childRoutesConfigured;
     private readonly _navigationModel;
-    get navigationModel(): INavigationModel;
+    get navigationModel(): INavigationModel | null;
     constructor(viewportAgent: ViewportAgent | null, parent: IRouteContext | null, component: CustomElementDefinition, definition: RouteDefinition, parentContainer: IContainer, _router: IRouter);
     private processDefinition;
     /**
