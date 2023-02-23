@@ -2610,20 +2610,25 @@ class Rendering {
     createNodes(t) {
         if (true === t.enhance) return new FragmentNodeSequence(this.p, t.template);
         let e;
-        const i = this.Lt;
-        if (i.has(t)) e = i.get(t); else {
-            const s = this.p;
-            const n = s.document;
-            const r = t.template;
-            let o;
-            if (null === r) e = null; else if (r instanceof s.Node) if ("TEMPLATE" === r.nodeName) e = n.adoptNode(r.content); else (e = n.adoptNode(n.createDocumentFragment())).appendChild(r.cloneNode(true)); else {
-                o = n.createElement("template");
-                if (St(r)) o.innerHTML = r;
-                n.adoptNode(e = o.content);
+        let i = false;
+        const s = this.Lt;
+        const n = this.p;
+        const r = n.document;
+        if (s.has(t)) e = s.get(t); else {
+            const o = t.template;
+            let l;
+            if (null === o) e = null; else if (o instanceof n.Node) if ("TEMPLATE" === o.nodeName) {
+                e = o.content;
+                i = true;
+            } else (e = r.createDocumentFragment()).appendChild(o.cloneNode(true)); else {
+                l = r.createElement("template");
+                if (St(o)) l.innerHTML = o;
+                e = l.content;
+                i = true;
             }
-            i.set(t, e);
+            s.set(t, e);
         }
-        return null == e ? this.Dt : new FragmentNodeSequence(this.p, e.cloneNode(true));
+        return null == e ? this.Dt : new FragmentNodeSequence(this.p, i ? r.importNode(e, true) : r.adoptNode(e.cloneNode(true)));
     }
     render(t, e, i, s) {
         const n = i.instructions;
