@@ -1,11 +1,14 @@
 import { ILogger } from '@aurelia/kernel';
 import { type LifecycleFlags, ICustomElementViewModel, IHydratedController, ICompiledCustomElementController } from '@aurelia/runtime-html';
 import { IRouteContext } from '../route-context';
+import { type ViewportInstruction } from '../instructions';
+import { type RouteNode } from '../route-tree';
+export type FallbackFunction = (viewportInstruction: ViewportInstruction, routeNode: RouteNode, context: IRouteContext) => string | null;
 export interface IViewport {
     readonly name: string;
     readonly usedBy: string;
     readonly default: string;
-    readonly fallback: string;
+    readonly fallback: string | FallbackFunction;
 }
 export declare class ViewportCustomElement implements ICustomElementViewModel, IViewport {
     private readonly logger;
@@ -13,7 +16,7 @@ export declare class ViewportCustomElement implements ICustomElementViewModel, I
     name: string;
     usedBy: string;
     default: string;
-    fallback: string;
+    fallback: string | FallbackFunction;
     private agent;
     private controller;
     constructor(logger: ILogger, ctx: IRouteContext);

@@ -136,7 +136,6 @@ function validateRouteConfig(config, parentPath) {
             case 'id':
             case 'viewport':
             case 'redirectTo':
-            case 'fallback':
                 if (typeof value !== 'string') {
                     expectType('string', path, value);
                 }
@@ -202,6 +201,15 @@ function validateRouteConfig(config, parentPath) {
                         break;
                     default:
                         expectType('string(\'none\'|\'replace\'|\'invoke-lifecycles\') or function', path, value);
+                }
+                break;
+            case 'fallback':
+                switch (typeof value) {
+                    case 'string':
+                    case 'function':
+                        break;
+                    default:
+                        expectType('string or function', path, value);
                 }
                 break;
             default:
@@ -704,6 +712,12 @@ class RouteDefinition {
         this.id = ensureString(config.id ?? this.path);
         this.data = config.data ?? {};
         this.fallback = config.fallback ?? parentDefinition?.fallback ?? null;
+    }
+    _getFallback(viewportInstruction, routeNode, context) {
+        const fallback = this.fallback;
+        return typeof fallback === 'function'
+            ? fallback(viewportInstruction, routeNode, context)
+            : fallback;
     }
     static resolve(routeable, parentDefinition, routeNode, context) {
         const parentConfig = parentDefinition?.config ?? null;
@@ -1797,7 +1811,9 @@ function createAndAppendNodes(log, node, vi) {
                         if (vp === null || vp.length === 0)
                             vp = defaultViewportName;
                         const vpa = ctx.getFallbackViewportAgent(vp);
-                        const fallback = vpa !== null ? vpa.viewport.fallback : ctx.definition.fallback;
+                        const fallback = vpa !== null
+                            ? vpa.viewport._getFallback(vi, node, ctx)
+                            : ctx.definition._getFallback(vi, node, ctx);
                         if (fallback === null)
                             throw new UnknownRouteError(`Neither the route '${name}' matched any configured route at '${ctx.friendlyPath}' nor a fallback is configured for the viewport '${vp}' - did you forget to add '${name}' to the routes list of the route decorator of '${ctx.component.name}'?`);
                         log.trace(`Fallback is set to '${fallback}'. Looking for a recognized route.`);
@@ -3963,6 +3979,12 @@ exports.ViewportCustomElement = class ViewportCustomElement {
         this.controller = (void 0);
         this.logger = logger.scopeTo(`au-viewport<${ctx.friendlyPath}>`);
         this.logger.trace('constructor()');
+    }
+    _getFallback(viewportInstruction, routeNode, context) {
+        const fallback = this.fallback;
+        return typeof fallback === 'function'
+            ? fallback(viewportInstruction, routeNode, context)
+            : fallback;
     }
     hydrated(controller) {
         this.logger.trace('hydrated()');
