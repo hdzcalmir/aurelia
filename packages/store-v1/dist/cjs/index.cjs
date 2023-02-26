@@ -386,23 +386,23 @@ function v(t) {
 }
 
 async function g(t, e, ...r) {
-    const i = (t, r) => s => {
+    const i = (t, r) => async s => {
         if (e) {
             console.group(`Step ${r}`);
             console.log(s);
             console.groupEnd();
         }
-        t(s);
+        await t(s);
     };
-    const o = (t, e) => r => {
+    const o = (t, e) => async r => {
         try {
-            t(r);
+            await t(r);
         } catch (t) {
             e(t);
         }
     };
-    const n = (t, e) => r => {
-        t(r);
+    const n = (t, e) => async r => {
+        await t(r);
         e();
     };
     return new Promise(((e, c) => {

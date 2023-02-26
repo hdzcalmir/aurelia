@@ -2,9 +2,10 @@ import { IModule } from '@aurelia/kernel';
 import { ICustomElementViewModel, ICustomElementController, PartialCustomElementDefinition, CustomElementDefinition } from '@aurelia/runtime-html';
 import { IRouteViewModel } from './component-agent';
 import { RouteType } from './route';
-import { $RecognizedRoute, IRouteContext } from './route-context';
-import { INavigationOptions, NavigationOptions } from './router';
-export declare type RouteContextLike = IRouteContext | ICustomElementViewModel | ICustomElementController | HTMLElement;
+import { type $RecognizedRoute, IRouteContext } from './route-context';
+import { INavigationOptions, NavigationOptions, type RouterOptions } from './options';
+export declare const defaultViewportName = "default";
+export type RouteContextLike = IRouteContext | ICustomElementViewModel | ICustomElementController | HTMLElement;
 /**
  * Either a `RouteableComponent`, a string (name) that can be resolved to one or a ViewportInstruction:
  * - `string`: a string representing the component name. Must be resolveable via DI from the context of the component relative to which the navigation occurs (specified in the `dependencies` array, `<import>`ed in the view, declared as an inline template, or registered globally)
@@ -14,7 +15,7 @@ export declare type RouteContextLike = IRouteContext | ICustomElementViewModel |
  * NOTE: differs from `Routeable` only in having `IViewportIntruction` instead of `IChildRouteConfig`
  * (which in turn are quite similar, but do have a few minor but important differences that make them non-interchangeable)
  */
-export declare type NavigationInstruction = string | IViewportInstruction | RouteableComponent;
+export type NavigationInstruction = string | IViewportInstruction | RouteableComponent;
 /**
  * A component type, instance of definition that can be navigated to:
  * - `RouteType`: a custom element class with optional static properties that specify routing-specific attributes.
@@ -22,8 +23,8 @@ export declare type NavigationInstruction = string | IViewportInstruction | Rout
  * - `PartialCustomElementDefinition`: either a complete `CustomElementDefinition` or a partial definition (e.g. an object literal with at least the `name` property)
  * - `IRouteViewModel`: an existing component instance.
  */
-export declare type RouteableComponent = RouteType | (() => RouteType) | Promise<IModule> | PartialCustomElementDefinition | IRouteViewModel;
-export declare type Params = {
+export type RouteableComponent = RouteType | (() => RouteType) | Promise<IModule> | CustomElementDefinition | IRouteViewModel;
+export type Params = {
     [key: string]: string | undefined;
 };
 export interface IViewportInstruction {
@@ -99,7 +100,7 @@ export declare class ViewportInstructionTree {
     readonly queryParams: Readonly<URLSearchParams>;
     readonly fragment: string | null;
     constructor(options: NavigationOptions, isAbsolute: boolean, children: ViewportInstruction[], queryParams: Readonly<URLSearchParams>, fragment: string | null);
-    static create(instructionOrInstructions: NavigationInstruction | NavigationInstruction[], options?: INavigationOptions, rootCtx?: IRouteContext | null): ViewportInstructionTree;
+    static create(instructionOrInstructions: NavigationInstruction | NavigationInstruction[], routerOptions: RouterOptions, options?: INavigationOptions, rootCtx?: IRouteContext | null): ViewportInstructionTree;
     equals(other: ViewportInstructionTree): boolean;
     toUrl(useUrlFragmentHash?: boolean): string;
     toPath(): string;
@@ -129,9 +130,9 @@ export interface ITypedNavigationInstruction_Promise extends ITypedNavigationIns
 }
 export interface ITypedNavigationInstruction_IRouteViewModel extends ITypedNavigationInstruction<IRouteViewModel, NavigationInstructionType.IRouteViewModel> {
 }
-export declare type ITypedNavigationInstruction_T = (ITypedNavigationInstruction_Component | ITypedNavigationInstruction_ViewportInstruction);
-export declare type ITypedNavigationInstruction_Component = (ITypedNavigationInstruction_ResolvedComponent | ITypedNavigationInstruction_Promise);
-export declare type ITypedNavigationInstruction_ResolvedComponent = (ITypedNavigationInstruction_string | ITypedNavigationInstruction_CustomElementDefinition | ITypedNavigationInstruction_IRouteViewModel);
+export type ITypedNavigationInstruction_T = (ITypedNavigationInstruction_Component | ITypedNavigationInstruction_ViewportInstruction);
+export type ITypedNavigationInstruction_Component = (ITypedNavigationInstruction_ResolvedComponent | ITypedNavigationInstruction_Promise);
+export type ITypedNavigationInstruction_ResolvedComponent = (ITypedNavigationInstruction_string | ITypedNavigationInstruction_CustomElementDefinition | ITypedNavigationInstruction_IRouteViewModel);
 export declare class TypedNavigationInstruction<TInstruction extends NavigationInstruction, TType extends NavigationInstructionType> implements ITypedNavigationInstruction<TInstruction, TType> {
     readonly type: TType;
     readonly value: TInstruction;

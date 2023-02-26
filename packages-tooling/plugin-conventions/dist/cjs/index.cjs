@@ -5,7 +5,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var path = require('path');
 var modifyCode = require('modify-code');
-var ts = require('typescript');
+var typescript = require('typescript');
 var parse5 = require('parse5');
 var fs = require('fs');
 
@@ -25,7 +25,6 @@ function _interopNamespace(e) {
 
 var path__namespace = /*#__PURE__*/_interopNamespace(path);
 var modifyCode__default = /*#__PURE__*/_interopDefaultLegacy(modifyCode);
-var ts__namespace = /*#__PURE__*/_interopNamespace(ts);
 var fs__namespace = /*#__PURE__*/_interopNamespace(fs);
 
 function nameConvention(className) {
@@ -53,109 +52,9 @@ function resourceName(filePath) {
     return kernel.kebabCase(name);
 }
 
-const getHmrCode = (className, moduleText = 'module') => {
-    const code = `
-    import { Metadata as $$M } from '@aurelia/metadata';
-    import { ExpressionKind as $$EK } from '@aurelia/runtime';
-    import { Controller as $$C, CustomElement as $$CE, IHydrationContext as $$IHC } from '@aurelia/runtime-html';
-
-    // @ts-ignore
-    const controllers = [];
-
-    // @ts-ignore
-    if (${moduleText}.hot) {
-
-    // @ts-ignore
-    ${moduleText}.hot.accept();
-
-    // @ts-ignore
-    const hot = ${moduleText}.hot;
-
-    let aurelia = hot.data?.aurelia;
-
-    // @ts-ignore
-    document.addEventListener('au-started', (event) => {aurelia= event.detail; });
-    const currentClassType = ${className};
-
-    // @ts-ignore
-    const proto = ${className}.prototype
-
-    // @ts-ignore
-    const ogCreated = proto ? proto.created : undefined;
-
-    if (proto) {
-      // @ts-ignore
-      proto.created = function(controller) {
-        // @ts-ignore
-        ogCreated && ogCreated.call(this, controller);
-        controllers.push(controller);
-      }
-    }
-
-    // @ts-ignore
-    hot.dispose(function (data) {
-      // @ts-ignore
-      data.controllers = controllers;
-      data.aurelia = aurelia;
-    });
-
-    if (hot.data?.aurelia) {
-      const newDefinition = $$CE.getDefinition(currentClassType);
-      $$M.define(newDefinition.name, newDefinition, currentClassType);
-      $$M.define(newDefinition.name, newDefinition, newDefinition);
-      hot.data.aurelia.container.res[$$CE.keyFrom(newDefinition.name)] = newDefinition;
-
-      const previousControllers = hot.data.controllers;
-      if(previousControllers == null || previousControllers.length === 0) {
-        // @ts-ignore
-        hot.invalidate();
-      }
-
-      // @ts-ignore
-      previousControllers.forEach(controller => {
-        const values = { ...controller.viewModel };
-        const hydrationContext = controller.container.get($$IHC)
-        const hydrationInst = hydrationContext.instruction;
-
-        const bindableNames = Object.keys(controller.definition.bindables);
-        // @ts-ignore
-        Object.keys(values).forEach(key => {
-          if (bindableNames.includes(key)) {
-            return;
-          }
-          // if there' some bindings that target the existing property
-          // @ts-ignore
-          const isTargettedByBinding = controller.bindings?.some(y =>
-            y.ast?.$kind === $$EK.AccessScope
-              && y.ast.name === key && y.targetProperty
-          );
-          if (!isTargettedByBinding) {
-            delete values[key];
-          }
-        });
-        const h = controller.host;
-        delete controller._compiledDef;
-        controller.viewModel = controller.container.invoke(currentClassType);
-        controller.definition = newDefinition;
-        Object.assign(controller.viewModel, values);
-        if (controller._hydrateCustomElement) {
-          controller._hydrateCustomElement(hydrationInst, hydrationContext);
-        } else {
-          controller.hE(hydrationInst, hydrationContext);
-        }
-        h.parentNode.replaceChild(controller.host, h);
-        controller.hostController = null;
-        controller.deactivate(controller, controller.parent ?? null, 0);
-        controller.activate(controller, controller.parent ?? null, 0);
-      });
-    }
-  }`;
-    return code;
-};
-
 function preprocessResource(unit, options) {
     const expectedResourceName = resourceName(unit.path);
-    const sf = ts__namespace.createSourceFile(unit.path, unit.contents, ts__namespace.ScriptTarget.Latest);
+    const sf = typescript.createSourceFile(unit.path, unit.contents, typescript.ScriptTarget.Latest);
     let exportedClassName;
     let auImport = { names: [], start: 0, end: 0 };
     let runtimeImport = { names: [], start: 0, end: 0 };
@@ -223,21 +122,23 @@ function preprocessResource(unit, options) {
             implicitElement,
             localDeps,
             conventionalDecorators,
-            customElementName
+            customElementName,
+            transformHtmlImportSpecifier: options.transformHtmlImportSpecifier,
         });
     }
     if (options.hmr && exportedClassName && process.env.NODE_ENV !== 'production') {
-        const hmr = getHmrCode(exportedClassName, options.hmrModule);
-        m.append(hmr);
+        if (options.getHmrCode) {
+            m.append(options.getHmrCode(exportedClassName, unit.path));
+        }
     }
     return m.transform();
 }
 function modifyResource(unit, m, options) {
-    const { implicitElement, localDeps, conventionalDecorators, customElementName } = options;
+    const { implicitElement, localDeps, conventionalDecorators, customElementName, transformHtmlImportSpecifier = s => s, } = options;
     if (implicitElement && unit.filePair) {
         const dec = unit.isViewPair ? 'view' : 'customElement';
         const viewDef = '__au2ViewDef';
-        m.prepend(`import * as ${viewDef} from './${unit.filePair}';\n`);
+        m.prepend(`import * as ${viewDef} from './${transformHtmlImportSpecifier(unit.filePair)}';\n`);
         if (localDeps.length) {
             const elementStatement = unit.contents.slice(implicitElement.pos, implicitElement.end);
             m.replace(implicitElement.pos, implicitElement.end, '');
@@ -265,12 +166,12 @@ function modifyResource(unit, m, options) {
     return m;
 }
 function captureImport(s, lib, code) {
-    if (ts__namespace.isImportDeclaration(s) &&
-        ts__namespace.isStringLiteral(s.moduleSpecifier) &&
+    if (typescript.isImportDeclaration(s) &&
+        typescript.isStringLiteral(s.moduleSpecifier) &&
         s.moduleSpecifier.text === lib &&
         s.importClause &&
         s.importClause.namedBindings &&
-        ts__namespace.isNamedImports(s.importClause.namedBindings)) {
+        typescript.isNamedImports(s.importClause.namedBindings)) {
         return {
             names: s.importClause.namedBindings.elements.map(e => e.name.text),
             start: ensureTokenStart(s.pos, code),
@@ -289,23 +190,29 @@ function ensureTokenStart(start, code) {
     return start;
 }
 function isExported(node) {
-    if (!node.modifiers)
+    if (!typescript.canHaveModifiers(node))
         return false;
-    for (const mod of node.modifiers) {
-        if (mod.kind === ts__namespace.SyntaxKind.ExportKeyword)
+    const modifiers = typescript.getModifiers(node);
+    if (modifiers === void 0)
+        return false;
+    for (const mod of modifiers) {
+        if (mod.kind === typescript.SyntaxKind.ExportKeyword)
             return true;
     }
     return false;
 }
 const KNOWN_DECORATORS = ['view', 'customElement', 'customAttribute', 'valueConverter', 'bindingBehavior', 'bindingCommand', 'templateController'];
 function findDecoratedResourceType(node) {
-    if (!node.decorators)
+    if (!typescript.canHaveDecorators(node))
         return;
-    for (const d of node.decorators) {
-        if (!ts__namespace.isCallExpression(d.expression))
+    const decorators = typescript.getDecorators(node);
+    if (decorators === void 0)
+        return;
+    for (const d of decorators) {
+        if (!typescript.isCallExpression(d.expression))
             return;
         const exp = d.expression.expression;
-        if (ts__namespace.isIdentifier(exp)) {
+        if (typescript.isIdentifier(exp)) {
             const name = exp.text;
             if (KNOWN_DECORATORS.includes(name)) {
                 return {
@@ -320,7 +227,7 @@ function isKindOfSame(name1, name2) {
     return name1.replace(/-/g, '') === name2.replace(/-/g, '');
 }
 function findResource(node, expectedResourceName, filePair, isViewPair, code) {
-    if (!ts__namespace.isClassDeclaration(node))
+    if (!typescript.isClassDeclaration(node))
         return;
     if (!node.name)
         return;
@@ -343,7 +250,7 @@ function findResource(node, expectedResourceName, filePair, isViewPair, code) {
         if (isImplicitResource &&
             foundType.type === 'customElement' &&
             foundType.expression.arguments.length === 1 &&
-            ts__namespace.isStringLiteral(foundType.expression.arguments[0])) {
+            typescript.isStringLiteral(foundType.expression.arguments[0])) {
             const customName = foundType.expression.arguments[0];
             return {
                 className,
@@ -571,9 +478,15 @@ function preprocessHtmlTemplate(unit, options, hasViewModel) {
         throw new Error(`<slot> cannot be used in ${unit.path}. <slot> is only available when using ShadowDOM. Please turn on ShadowDOM, or use <au-slot> in non-ShadowDOM mode. https://docs.aurelia.io/app-basics/components-revisited#au-slot`);
     }
     deps.forEach((d, i) => {
+        var _a;
         const ext = path__namespace.extname(d);
-        if (!ext || ext === '.js' || ext === '.ts' || options.templateExtensions.includes(ext)) {
+        if (!ext || ext === '.js' || ext === '.ts') {
             statements.push(`import * as d${i} from ${s(d)};\n`);
+            viewDeps.push(`d${i}`);
+            return;
+        }
+        if (options.templateExtensions.includes(ext)) {
+            statements.push(`import * as d${i} from ${s(((_a = options.transformHtmlImportSpecifier) !== null && _a !== void 0 ? _a : (s => s))(d))};\n`);
             viewDeps.push(`d${i}`);
             return;
         }
@@ -660,8 +573,8 @@ export function register(container) {
 }
 `);
     }
-    if (hmrEnabled) {
-        m.append(getHmrCode('_e', options.hmrModule));
+    if (hmrEnabled && options.getHmrCode) {
+        m.append(options.getHmrCode('_e', options.hmrModule));
     }
     const { code, map } = m.transform();
     map.sourcesContent = [unit.contents];

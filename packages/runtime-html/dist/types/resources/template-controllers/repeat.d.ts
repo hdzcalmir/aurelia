@@ -3,7 +3,7 @@ import { IRenderLocation } from '../../dom';
 import { IViewFactory } from '../../templating/view';
 import { HydrateTemplateController } from '../../renderer';
 import type { LifecycleFlags, ISyntheticView, ICustomAttributeController, IHydratableController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, ControllerVisitor } from '../../templating/controller';
-declare type Items<C extends Collection = unknown[]> = C | undefined;
+type Items<C extends Collection = unknown[]> = C | undefined;
 export declare class Repeat<C extends Collection = unknown[]> implements ICustomAttributeViewModel {
     views: ISyntheticView[];
     forOf: ForOfStatement;

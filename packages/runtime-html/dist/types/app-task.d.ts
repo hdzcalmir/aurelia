@@ -1,5 +1,5 @@
 import type { IContainer, IRegistry, Key, Resolved } from '@aurelia/kernel';
-export declare type TaskSlot = 'creating' | 'hydrating' | 'hydrated' | 'activating' | 'activated' | 'deactivating' | 'deactivated';
+export type TaskSlot = 'creating' | 'hydrating' | 'hydrated' | 'activating' | 'activated' | 'deactivating' | 'deactivated';
 export declare const IAppTask: import("@aurelia/kernel").InterfaceSymbol<IAppTask>;
 export interface IAppTask {
     readonly slot: TaskSlot;
@@ -65,6 +65,6 @@ export declare const AppTask: Readonly<{
         <T_1 extends Key = Key>(key: T_1, callback: AppTaskCallback<T_1>): IRegistry;
     };
 }>;
-export declare type AppTaskCallbackNoArg = () => unknown | Promise<unknown>;
-export declare type AppTaskCallback<T> = (arg: Resolved<T>) => unknown | Promise<unknown>;
+export type AppTaskCallbackNoArg = () => unknown | Promise<unknown>;
+export type AppTaskCallback<T> = (arg: Resolved<T>) => unknown | Promise<unknown>;
 //# sourceMappingURL=app-task.d.ts.map

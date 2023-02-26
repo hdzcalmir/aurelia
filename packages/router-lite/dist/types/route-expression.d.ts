@@ -1,5 +1,5 @@
 import { ViewportInstructionTree, ViewportInstruction, Params } from './instructions';
-import { NavigationOptions } from './router';
+import { type NavigationOptions } from './options';
 declare class ParserState {
     private readonly input;
     get done(): boolean;
@@ -31,7 +31,7 @@ export declare const enum ExpressionKind {
     ParameterList = 8,
     Parameter = 9
 }
-export declare type RouteExpressionOrHigher = CompositeSegmentExpressionOrHigher | RouteExpression;
+export type RouteExpressionOrHigher = CompositeSegmentExpressionOrHigher | RouteExpression;
 export declare class RouteExpression {
     readonly raw: string;
     readonly isAbsolute: boolean;
@@ -46,8 +46,8 @@ export declare class RouteExpression {
     toInstructionTree(options: NavigationOptions): ViewportInstructionTree;
     toString(): string;
 }
-export declare type CompositeSegmentExpressionOrHigher = ScopedSegmentExpressionOrHigher | CompositeSegmentExpression;
-export declare type CompositeSegmentExpressionOrLower = RouteExpression | CompositeSegmentExpression;
+export type CompositeSegmentExpressionOrHigher = ScopedSegmentExpressionOrHigher | CompositeSegmentExpression;
+export type CompositeSegmentExpressionOrLower = RouteExpression | CompositeSegmentExpression;
 /**
  * A single 'traditional' (slash-separated) segment consisting of one or more sibling segments.
  *
@@ -78,8 +78,8 @@ export declare class CompositeSegmentExpression {
     toInstructions(open: number, close: number): ViewportInstruction[];
     toString(): string;
 }
-export declare type ScopedSegmentExpressionOrHigher = SegmentGroupExpressionOrHigher | ScopedSegmentExpression;
-export declare type ScopedSegmentExpressionOrLower = CompositeSegmentExpressionOrLower | ScopedSegmentExpression;
+export type ScopedSegmentExpressionOrHigher = SegmentGroupExpressionOrHigher | ScopedSegmentExpression;
+export type ScopedSegmentExpressionOrLower = CompositeSegmentExpressionOrLower | ScopedSegmentExpression;
 /**
  * The (single) left-hand side and the (one or more) right-hand side of a slash-separated segment.
  *
@@ -103,8 +103,8 @@ export declare class ScopedSegmentExpression {
     toInstructions(open: number, close: number): ViewportInstruction[];
     toString(): string;
 }
-export declare type SegmentGroupExpressionOrHigher = SegmentExpression | SegmentGroupExpression;
-export declare type SegmentGroupExpressionOrLower = ScopedSegmentExpressionOrLower | SegmentGroupExpression;
+export type SegmentGroupExpressionOrHigher = SegmentExpression | SegmentGroupExpression;
+export type SegmentGroupExpressionOrLower = ScopedSegmentExpressionOrLower | SegmentGroupExpression;
 /**
  * Any kind of segment wrapped in parentheses, increasing its precedence.
  * Specifically, the parentheses are needed to deeply specify scoped siblings.

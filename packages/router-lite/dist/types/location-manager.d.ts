@@ -1,5 +1,6 @@
 import { ILogger } from '@aurelia/kernel';
 import { IHistory, ILocation, IWindow } from '@aurelia/runtime-html';
+import { type RouterOptions } from './options';
 import { IRouterEvents } from './router-events';
 export interface IPopStateEvent extends PopStateEvent {
 }
@@ -24,11 +25,10 @@ export declare class BrowserLocationManager {
     private readonly window;
     private readonly baseHref;
     private eventId;
-    constructor(logger: ILogger, events: IRouterEvents, history: IHistory, location: ILocation, window: IWindow, baseHref: URL);
+    constructor(logger: ILogger, events: IRouterEvents, history: IHistory, location: ILocation, window: IWindow, baseHref: URL, routerOptions: Readonly<RouterOptions>);
     startListening(): void;
     stopListening(): void;
-    private onPopState;
-    private onHashChange;
+    handleEvent(event: IPopStateEvent | IHashChangeEvent): void;
     pushState(state: {} | null, title: string, url: string): void;
     replaceState(state: {} | null, title: string, url: string): void;
     getPath(): string;

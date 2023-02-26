@@ -13,7 +13,7 @@ export declare class Observation implements IObservation {
      */
     run(fn: EffectFunc): IEffect;
 }
-export declare type EffectFunc = (runner: IConnectable) => void;
+export type EffectFunc = (runner: IConnectable) => void;
 export interface IEffect extends IConnectable {
     run(): void;
     stop(): void;

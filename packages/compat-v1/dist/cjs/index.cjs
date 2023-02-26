@@ -51,10 +51,10 @@ const o = () => Object.create(null);
 
 const l = t => "function" === typeof t;
 
-const h = t => "string" === typeof t;
+const c = t => "string" === typeof t;
 
-const c = (t, e, i) => {
-    if (h(e)) return t.parse(e, i);
+const h = (t, e, i) => {
+    if (c(e)) return t.parse(e, i);
     return e;
 };
 
@@ -93,7 +93,7 @@ exports.CallBindingCommand = r([ e.bindingCommand("call") ], exports.CallBinding
 
 exports.CallBindingRenderer = class CallBindingRenderer {
     render(t, e, i, s, n, r) {
-        const o = c(n, i.from, 16 | 8);
+        const o = h(n, i.from, 16 | 8);
         t.addBinding(new CallBinding(t.container, r, o, g(e), i.to));
     }
 };
@@ -172,14 +172,14 @@ exports.DelegateBindingCommand = class DelegateBindingCommand {
 exports.DelegateBindingCommand = r([ e.bindingCommand("delegate") ], exports.DelegateBindingCommand);
 
 exports.ListenerBindingRenderer = class ListenerBindingRenderer {
-    constructor(t) {
-        this.t = t;
-    }
     static get inject() {
         return [ v ];
     }
+    constructor(t) {
+        this.t = t;
+    }
     render(t, e, i, s, n) {
-        const r = c(n, i.from, 8);
+        const r = h(n, i.from, 8);
         t.addBinding(new DelegateListenerBinding(t.container, r, e, i.to, this.t, new DelegateListenerOptions(i.preventDefault)));
     }
 };
@@ -261,8 +261,8 @@ class ListenerTracker {
         this.u = e;
         this.i = i;
         this.B = 0;
-        this.L = new Map;
         this.C = new Map;
+        this.L = new Map;
     }
     O() {
         if (1 === ++this.B) this.h.addEventListener(this.u, this, this.i);
@@ -275,17 +275,17 @@ class ListenerTracker {
             this.B = 0;
             this.h.removeEventListener(this.u, this, this.i);
         }
-        this.L.clear();
         this.C.clear();
+        this.L.clear();
     }
     j(t) {
-        const e = true === this.i.capture ? this.L : this.C;
+        const e = true === this.i.capture ? this.C : this.L;
         let i = e.get(t);
         if (void 0 === i) e.set(t, i = o());
         return i;
     }
     handleEvent(t) {
-        const e = true === this.i.capture ? this.L : this.C;
+        const e = true === this.i.capture ? this.C : this.L;
         const i = t.composedPath();
         if (true === this.i.capture) i.reverse();
         for (const s of i) {
@@ -357,7 +357,7 @@ const D = () => {
     }));
 };
 
-const m = e.AppTask.creating(e.IEventTarget, (t => {
+const C = e.AppTask.creating(e.IEventTarget, (t => {
     t.addEventListener("submit", (t => {
         const e = t.target;
         const i = e.action;
@@ -365,15 +365,66 @@ const m = e.AppTask.creating(e.IEventTarget, (t => {
     }), false);
 }));
 
-const L = {
+class BindingEngine {
+    constructor(t, e) {
+        this.parser = t;
+        this.observerLocator = e;
+    }
+    propertyObserver(t, e) {
+        return {
+            subscribe: i => {
+                const s = this.observerLocator.getObserver(t, e);
+                const n = {
+                    handleChange: (t, e) => i(t, e)
+                };
+                s.subscribe(n);
+                return {
+                    dispose: () => s.unsubscribe(n)
+                };
+            }
+        };
+    }
+    collectionObserver(e) {
+        return {
+            subscribe: i => {
+                const s = t.getCollectionObserver(e);
+                const n = {
+                    handleCollectionChange: (t, e) => i(t, e)
+                };
+                s?.subscribe(n);
+                return {
+                    dispose: () => s?.unsubscribe(n)
+                };
+            }
+        };
+    }
+    expressionObserver(i, s) {
+        const n = t.Scope.create(i, {}, true);
+        return {
+            subscribe: t => {
+                const i = new e.ExpressionWatcher(n, null, this.observerLocator, this.parser.parse(s, 16), t);
+                i.bind();
+                return {
+                    dispose: () => i.unbind()
+                };
+            }
+        };
+    }
+}
+
+BindingEngine.inject = [ t.IExpressionParser, t.IObserverLocator ];
+
+const m = {
     register(t) {
         n();
         D();
-        t.register(m);
+        t.register(C);
         p.register(t);
         a.register(t);
     }
 };
+
+exports.BindingEngine = BindingEngine;
 
 exports.CallBinding = CallBinding;
 
@@ -389,11 +440,11 @@ exports.EventDelegator = EventDelegator;
 
 exports.IEventDelegator = v;
 
-exports.PreventFormActionlessSubmit = m;
+exports.PreventFormActionlessSubmit = C;
 
 exports.callSyntax = a;
 
-exports.compatRegistration = L;
+exports.compatRegistration = m;
 
 exports.delegateSyntax = p;
 //# sourceMappingURL=index.cjs.map

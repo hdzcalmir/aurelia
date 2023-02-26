@@ -23,22 +23,22 @@ export declare const enum CompletionType {
     return = 4,
     throw = 5
 }
-export declare type AbruptCompletionType = (CompletionType.break | CompletionType.continue | CompletionType.return | CompletionType.throw);
-export declare type PotentialNonEmptyCompletionType = (CompletionType.normal | CompletionType.return | CompletionType.throw);
-export declare type PotentialEmptyCompletionType = (CompletionType.normal | CompletionType.break | CompletionType.continue);
-export declare type CompletionTarget = $String | $Empty;
+export type AbruptCompletionType = (CompletionType.break | CompletionType.continue | CompletionType.return | CompletionType.throw);
+export type PotentialNonEmptyCompletionType = (CompletionType.normal | CompletionType.return | CompletionType.throw);
+export type PotentialEmptyCompletionType = (CompletionType.normal | CompletionType.break | CompletionType.continue);
+export type CompletionTarget = $String | $Empty;
 export declare const nextValueId: () => number;
-export declare type $Primitive = ($Undefined | $Null | $Boolean | $String | $Symbol | $Number);
-export declare type $AnyNonEmpty = ($Primitive | $AnyObject | $Error);
-export declare type $AnyNonEmptyNonError = ($Primitive | $AnyObject);
-export declare type $AnyObject = ($ArgumentsExoticObject | $ArrayExoticObject | $BoundFunctionExoticObject | $BuiltinFunction | $Function | $ImmutablePrototypeExoticObject | $IntegerIndexedExoticObject | $NamespaceExoticObject | $Object | $ProxyExoticObject | $StringExoticObject);
-export declare type $AnyNonError = ($Empty | $AnyNonEmpty);
-export declare type $Any = ($AnyNonError | $Error);
-export declare type $PropertyKey = ($String | $Symbol);
-export declare type ESType = 'Undefined' | 'Null' | 'Boolean' | 'String' | 'Symbol' | 'Number' | 'Object';
-export declare type $NonNumberPrimitive = Exclude<$Primitive, $Number>;
-export declare type $NonNilPrimitive = Exclude<$Primitive, $Undefined | $Null>;
-export declare type $NonNil = Exclude<$AnyNonError, $Undefined | $Null>;
+export type $Primitive = ($Undefined | $Null | $Boolean | $String | $Symbol | $Number);
+export type $AnyNonEmpty = ($Primitive | $AnyObject | $Error);
+export type $AnyNonEmptyNonError = ($Primitive | $AnyObject);
+export type $AnyObject = ($ArgumentsExoticObject | $ArrayExoticObject | $BoundFunctionExoticObject | $BuiltinFunction | $Function | $ImmutablePrototypeExoticObject | $IntegerIndexedExoticObject | $NamespaceExoticObject | $Object | $ProxyExoticObject | $StringExoticObject);
+export type $AnyNonError = ($Empty | $AnyNonEmpty);
+export type $Any = ($AnyNonError | $Error);
+export type $PropertyKey = ($String | $Symbol);
+export type ESType = 'Undefined' | 'Null' | 'Boolean' | 'String' | 'Symbol' | 'Number' | 'Object';
+export type $NonNumberPrimitive = Exclude<$Primitive, $Number>;
+export type $NonNilPrimitive = Exclude<$Primitive, $Undefined | $Null>;
+export type $NonNil = Exclude<$AnyNonError, $Undefined | $Null>;
 export declare function getPath(obj: {
     path: string;
 }): string;

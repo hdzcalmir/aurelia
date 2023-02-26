@@ -12,7 +12,7 @@ declare module '@aurelia/kernel' {
         find<T extends ICustomElementViewModel>(kind: CustomElementKind, name: string): CustomElementDefinition<Constructable<T>> | null;
     }
 }
-export declare type PartialCustomElementDefinition = PartialResourceDefinition<{
+export type PartialCustomElementDefinition = PartialResourceDefinition<{
     readonly cache?: '*' | number;
     readonly capture?: boolean | ((attr: string) => boolean);
     readonly template?: null | string | Node;
@@ -33,8 +33,8 @@ export declare type PartialCustomElementDefinition = PartialResourceDefinition<{
     readonly watches?: IWatchDefinition[];
     readonly processContent?: ProcessContentHook | null;
 }>;
-export declare type CustomElementType<C extends Constructable = Constructable> = ResourceType<C, ICustomElementViewModel & (C extends Constructable<infer P> ? P : {}), PartialCustomElementDefinition>;
-export declare type CustomElementKind = IResourceKind<CustomElementType, CustomElementDefinition> & {
+export type CustomElementType<C extends Constructable = Constructable> = ResourceType<C, ICustomElementViewModel & (C extends Constructable<infer P> ? P : {}), PartialCustomElementDefinition>;
+export type CustomElementKind = IResourceKind<CustomElementType, CustomElementDefinition> & {
     /**
      * Returns the closest controller that is associated with either this node (if it is a custom element) or the first
      * parent node (including containerless) that is a custom element.
@@ -104,14 +104,14 @@ export declare type CustomElementKind = IResourceKind<CustomElementType, CustomE
     createInjectable<T extends Key = Key>(): InjectableToken<T>;
     generateType<P extends {} = {}>(name: string, proto?: P): CustomElementType<Constructable<P>>;
 };
-export declare type CustomElementDecorator = <T extends Constructable>(Type: T) => CustomElementType<T>;
+export type CustomElementDecorator = <T extends Constructable>(Type: T) => CustomElementType<T>;
 /**
  * Decorator: Indicates that the decorated class is a custom element.
  */
 export declare function customElement(definition: PartialCustomElementDefinition): CustomElementDecorator;
 export declare function customElement(name: string): CustomElementDecorator;
 export declare function customElement(nameOrDef: string | PartialCustomElementDefinition): CustomElementDecorator;
-declare type ShadowOptions = Pick<PartialCustomElementDefinition, 'shadowOptions'>['shadowOptions'];
+type ShadowOptions = Pick<PartialCustomElementDefinition, 'shadowOptions'>['shadowOptions'];
 /**
  * Decorator: Indicates that the custom element should render its view in ShadowDOM.
  */
@@ -171,10 +171,10 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     static getOrCreate(partialDefinition: PartialCustomElementDefinition): CustomElementDefinition;
     register(container: IContainer): void;
 }
-export declare type InjectableToken<K = any> = (target: Injectable<K>, property: string, index: number) => void;
+export type InjectableToken<K = any> = (target: Injectable<K>, property: string, index: number) => void;
 export declare const CustomElement: Readonly<CustomElementKind>;
-declare type DecoratorFactoryMethod<TClass> = (target: Constructable<TClass>, propertyKey: string, descriptor: PropertyDescriptor) => void;
-declare type ProcessContentHook = (node: INode, platform: IPlatform) => boolean | void;
+type DecoratorFactoryMethod<TClass> = (target: Constructable<TClass>, propertyKey: string, descriptor: PropertyDescriptor) => void;
+type ProcessContentHook = (node: INode, platform: IPlatform) => boolean | void;
 export declare function processContent(hook: ProcessContentHook): CustomElementDecorator;
 export declare function processContent<TClass>(): DecoratorFactoryMethod<TClass>;
 /**

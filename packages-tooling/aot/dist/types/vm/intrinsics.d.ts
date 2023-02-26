@@ -29,8 +29,8 @@ import { $IsNaN } from './globals/is-nan';
 import { $ParseFloat } from './globals/parse-float';
 import { $ParseInt } from './globals/parse-int';
 import { $DecodeURI, $DecodeURIComponent, $EncodeURI, $EncodeURIComponent } from './globals/uri-handling';
-export declare type $True = $Boolean<true>;
-export declare type $False = $Boolean<false>;
+export type $True = $Boolean<true>;
+export type $False = $Boolean<false>;
 /**
  * http://www.ecma-international.org/ecma-262/#table-7
  *
@@ -352,7 +352,7 @@ export declare class Intrinsics implements IDisposable {
     constructor(realm: Realm);
     dispose(this: Writable<Partial<Intrinsics>>): void;
 }
-export declare type IntrinsicObjectKey = {
+export type IntrinsicObjectKey = {
     [K in keyof Intrinsics]: Intrinsics[K] extends $Object ? K : never;
 }[keyof Intrinsics];
 //# sourceMappingURL=intrinsics.d.ts.map

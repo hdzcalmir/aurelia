@@ -3743,7 +3743,7 @@ class RoutingScope {
                 coordinator.dequeueAppendedInstructions(matchedInstructions, earlierMatchedInstructions, remainingInstructions));
             if (matchedInstructions.length === 0 && remainingInstructions.length === 0) {
                 const pendingEndpoints = earlierMatchedInstructions
-                    .map(instr => instr.endpoint.instance?.connectedCE.pendingPromise?.promise)
+                    .map(instr => (instr.endpoint.instance?.connectedCE).pendingPromise?.promise)
                     .filter(promise => promise != null);
                 if (pendingEndpoints.length > 0) {
                     await Promise.any(pendingEndpoints);
@@ -4153,6 +4153,9 @@ class QueueTask {
     }
 }
 class TaskQueue {
+    get isActive() {
+        return this.task !== null;
+    }
     constructor(callback) {
         this.callback = callback;
         this.pending = [];
@@ -4185,9 +4188,6 @@ class TaskQueue {
                 }
             }
         };
-    }
-    get isActive() {
-        return this.task !== null;
     }
     get length() {
         return this.pending.length;
@@ -4828,6 +4828,7 @@ class Title {
 
 const IRouter = kernel.DI.createInterface('IRouter', x => x.singleton(Router));
 class Router {
+    static get inject() { return [kernel.IContainer, kernel.IEventAggregator, exports.Navigator, BrowserViewerStore, BrowserViewerStore, IRouterConfiguration]; }
     constructor(container, ea, navigator, viewer, store, configuration) {
         this.container = container;
         this.ea = ea;
@@ -4904,7 +4905,6 @@ class Router {
             });
         };
     }
-    static get inject() { return [kernel.IContainer, kernel.IEventAggregator, exports.Navigator, BrowserViewerStore, BrowserViewerStore, IRouterConfiguration]; }
     get isNavigating() {
         return this.coordinators.length > 0;
     }

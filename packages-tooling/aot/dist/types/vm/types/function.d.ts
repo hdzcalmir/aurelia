@@ -41,8 +41,8 @@ export declare class $Function<T extends string = string> extends $Object<T> {
 }
 export declare function $OrdinaryCreateFromConstructor<T extends IntrinsicObjectKey = IntrinsicObjectKey, TSlots extends {} = {}>(ctx: ExecutionContext, constructor: $Function, intrinsicDefaultProto: T, internalSlotsList?: TSlots): ($Object<T> & TSlots) | $Error;
 export declare function $GetPrototypeFromConstructor<T extends IntrinsicObjectKey = IntrinsicObjectKey>(ctx: ExecutionContext, constructor: $Function, intrinsicDefaultProto: T): Intrinsics[T] | $Error;
-export declare type ConstructorKind = 'base' | 'derived';
-export declare type ThisMode = 'lexical' | 'strict' | 'global';
+export type ConstructorKind = 'base' | 'derived';
+export type ThisMode = 'lexical' | 'strict' | 'global';
 export declare abstract class $BuiltinFunction<T extends string = string> extends $Function<T> {
     readonly '<$BuiltinFunction>': unknown;
     constructor(realm: Realm, IntrinsicName: T, proto: $AnyObject);

@@ -14,7 +14,7 @@ export declare const enum CommandType {
     None = 0,
     IgnoreAttr = 1
 }
-export declare type PartialBindingCommandDefinition = PartialResourceDefinition<{
+export type PartialBindingCommandDefinition = PartialResourceDefinition<{
     readonly type?: string | null;
 }>;
 export interface IPlainAttrCommandInfo {
@@ -29,19 +29,19 @@ export interface IBindableCommandInfo {
     readonly bindable: BindableDefinition;
     readonly def: CustomAttributeDefinition | CustomElementDefinition;
 }
-export declare type ICommandBuildInfo = IPlainAttrCommandInfo | IBindableCommandInfo;
-export declare type BindingCommandInstance<T extends {} = {}> = {
+export type ICommandBuildInfo = IPlainAttrCommandInfo | IBindableCommandInfo;
+export type BindingCommandInstance<T extends {} = {}> = {
     type: CommandType;
     build(info: ICommandBuildInfo, parser: IExpressionParser, mapper: IAttrMapper): IInstruction;
 } & T;
-export declare type BindingCommandType<T extends Constructable = Constructable> = ResourceType<T, BindingCommandInstance, PartialBindingCommandDefinition>;
-export declare type BindingCommandKind = IResourceKind<BindingCommandType, BindingCommandDefinition> & {
+export type BindingCommandType<T extends Constructable = Constructable> = ResourceType<T, BindingCommandInstance, PartialBindingCommandDefinition>;
+export type BindingCommandKind = IResourceKind<BindingCommandType, BindingCommandDefinition> & {
     define<T extends Constructable>(name: string, Type: T): BindingCommandType<T>;
     define<T extends Constructable>(def: PartialBindingCommandDefinition, Type: T): BindingCommandType<T>;
     define<T extends Constructable>(nameOrDef: string | PartialBindingCommandDefinition, Type: T): BindingCommandType<T>;
     getAnnotation<K extends keyof PartialBindingCommandDefinition>(Type: Constructable, prop: K): PartialBindingCommandDefinition[K];
 };
-export declare type BindingCommandDecorator = <T extends Constructable>(Type: T) => BindingCommandType<T>;
+export type BindingCommandDecorator = <T extends Constructable>(Type: T) => BindingCommandType<T>;
 export declare function bindingCommand(name: string): BindingCommandDecorator;
 export declare function bindingCommand(definition: PartialBindingCommandDefinition): BindingCommandDecorator;
 export declare class BindingCommandDefinition<T extends Constructable = Constructable> implements ResourceDefinition<T, BindingCommandInstance> {

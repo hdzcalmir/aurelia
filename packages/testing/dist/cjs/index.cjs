@@ -691,13 +691,6 @@ function et(e, t) {
 }
 
 class TestContext {
-    constructor() {
-        this.c = void 0;
-        this.p = void 0;
-        this.t = void 0;
-        this.oL = void 0;
-        this.i = void 0;
-    }
     get wnd() {
         return this.platform.globalThis;
     }
@@ -761,6 +754,13 @@ class TestContext {
     get domParser() {
         if (void 0 === this.i) this.i = this.doc.createElement("div");
         return this.i;
+    }
+    constructor() {
+        this.c = void 0;
+        this.p = void 0;
+        this.t = void 0;
+        this.oL = void 0;
+        this.i = void 0;
     }
     static create() {
         return new TestContext;
@@ -4090,13 +4090,22 @@ class MockBrowserHistoryLocation {
         return;
     }
     get parts() {
-        const e = [];
-        const t = this.path.split("#");
-        if (t.length > 1) e.unshift(t.pop()); else e.unshift(void 0);
-        const n = t[0].split("?");
-        if (n.length > 1) e.unshift(n.pop()); else e.unshift(void 0);
-        e.unshift(n[0]);
-        return e;
+        const e = this.path;
+        try {
+            const t = new URL(e);
+            let n = t.hash;
+            if (n.length > 1) n = n.substring(1);
+            const i = t.search;
+            return [ t.pathname, i.length > 1 ? i : void 0, n.length ? n : void 0 ];
+        } catch (e) {
+            const t = [];
+            const n = this.path.split("#");
+            if (n.length > 1) t.unshift(n.pop()); else t.unshift(void 0);
+            const i = n[0].split("?");
+            if (i.length > 1) t.unshift(i.pop()); else t.unshift(void 0);
+            t.unshift(i[0]);
+            return t;
+        }
     }
     pushState(e, t, n) {
         this.states.splice(this.index + 1);
@@ -4116,6 +4125,12 @@ class MockBrowserHistoryLocation {
             this.notifyChange();
         }
     }
+    back() {
+        this.go(-1);
+    }
+    forward() {
+        this.go(1);
+    }
     notifyChange() {
         if (this.changeCallback) this.changeCallback(null).catch((e => {
             throw e;
@@ -4124,16 +4139,16 @@ class MockBrowserHistoryLocation {
 }
 
 class ChangeSet {
-    constructor(e, t, n) {
-        this.index = e;
-        this.O = t;
-        this.ov = n;
-    }
     get newValue() {
         return this.O;
     }
     get oldValue() {
         return this.ov;
+    }
+    constructor(e, t, n) {
+        this.index = e;
+        this.O = t;
+        this.ov = n;
     }
     dispose() {
         this.O = void 0;
@@ -4142,18 +4157,18 @@ class ChangeSet {
 }
 
 class ProxyChangeSet {
+    get newValue() {
+        return this.O;
+    }
+    get oldValue() {
+        return this.ov;
+    }
     constructor(e, t, n, i, r) {
         this.index = e;
         this.flags = t;
         this.key = n;
         this.O = i;
         this.ov = r;
-    }
-    get newValue() {
-        return this.O;
-    }
-    get oldValue() {
-        return this.ov;
     }
     dispose() {
         this.O = void 0;
@@ -4162,12 +4177,12 @@ class ProxyChangeSet {
 }
 
 class CollectionChangeSet {
+    get indexMap() {
+        return this.j;
+    }
     constructor(e, t) {
         this.index = e;
         this.j = t;
-    }
-    get indexMap() {
-        return this.j;
     }
     dispose() {
         this.j = void 0;
@@ -4175,12 +4190,6 @@ class CollectionChangeSet {
 }
 
 class SpySubscriber {
-    constructor() {
-        this.A = void 0;
-        this.R = void 0;
-        this.q = void 0;
-        this.M = 0;
-    }
     get changes() {
         if (void 0 === this.A) return [];
         return this.A;
@@ -4204,6 +4213,12 @@ class SpySubscriber {
     }
     get callCount() {
         return this.M;
+    }
+    constructor() {
+        this.A = void 0;
+        this.R = void 0;
+        this.q = void 0;
+        this.M = 0;
     }
     handleChange(e, t) {
         if (void 0 === this.A) this.A = [ new ChangeSet(this.M++, e, t) ]; else this.A.push(new ChangeSet(this.M++, e, t));

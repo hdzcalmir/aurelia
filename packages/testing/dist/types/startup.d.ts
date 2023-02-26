@@ -3,7 +3,7 @@ import { IObserverLocator } from '@aurelia/runtime';
 import { Aurelia, IPlatform, type ICustomElementViewModel } from '@aurelia/runtime-html';
 import { TestContext } from './test-context';
 export declare const onFixtureCreated: <T>(callback: (fixture: IFixture<T>) => unknown) => import("@aurelia/kernel").IDisposable;
-export declare type ObjectType<T> = T extends Constructable<infer U> ? U : T;
+export type ObjectType<T> = T extends Constructable<infer U> ? U : T;
 export declare function createFixture<T extends object>(template: string | Node, $class?: T, registrations?: unknown[], autoStart?: boolean, ctx?: TestContext): IFixture<ICustomElementViewModel & ObjectType<T>>;
 export declare namespace createFixture {
     var html: <T = Record<PropertyKey, any>>(html: string | TemplateStringsArray, ...values: TemplateValues<T>[]) => CreateBuilder<T, "component" | "deps">;
@@ -119,7 +119,7 @@ export interface IFixture<T> {
     scrollBy(selector: string, options: number | ScrollToOptions): void;
     flush(): void;
 }
-export declare type ITrigger = ((selector: string, event: string, init?: CustomEventInit) => void) & {
+export type ITrigger = ((selector: string, event: string, init?: CustomEventInit) => void) & {
     click(selector: string, init?: CustomEventInit): void;
     change(selector: string, init?: CustomEventInit): void;
     input(selector: string, init?: CustomEventInit): void;
@@ -131,8 +131,8 @@ export interface IFixtureBuilderBase<T, E = {}> {
     component(comp: T): this & E;
     deps(...args: unknown[]): this & E;
 }
-declare type BuilderMethodNames = 'html' | 'component' | 'deps';
-declare type CreateBuilder<T, Availables extends BuilderMethodNames> = {
+type BuilderMethodNames = 'html' | 'component' | 'deps';
+type CreateBuilder<T, Availables extends BuilderMethodNames> = {
     [key in Availables]: key extends 'html' ? {
         (html: string): CreateBuilder<T, Exclude<Availables, 'html'>>;
         (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, Exclude<Availables, 'html'>>;
@@ -140,7 +140,7 @@ declare type CreateBuilder<T, Availables extends BuilderMethodNames> = {
 } & ('html' extends Availables ? {} : {
     build(): IFixture<T>;
 });
-declare type TaggedTemplateLambda<M> = (vm: M) => unknown;
-declare type TemplateValues<M> = string | number | TaggedTemplateLambda<M>;
+type TaggedTemplateLambda<M> = (vm: M) => unknown;
+type TemplateValues<M> = string | number | TaggedTemplateLambda<M>;
 export {};
 //# sourceMappingURL=startup.d.ts.map

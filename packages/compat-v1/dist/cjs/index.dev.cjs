@@ -201,10 +201,10 @@ exports.DelegateBindingCommand = __decorate([
     runtimeHtml.bindingCommand('delegate')
 ], exports.DelegateBindingCommand);
 exports.ListenerBindingRenderer = class ListenerBindingRenderer {
+    static get inject() { return [IEventDelegator]; }
     constructor(eventDelegator) {
         this._eventDelegator = eventDelegator;
     }
-    static get inject() { return [IEventDelegator]; }
     render(renderingCtrl, target, instruction, platform, exprParser) {
         const expr = ensureExpression(exprParser, instruction.from, 8);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
@@ -422,6 +422,54 @@ const PreventFormActionlessSubmit = runtimeHtml.AppTask.creating(runtimeHtml.IEv
     }, false);
 });
 
+class BindingEngine {
+    constructor(parser, observerLocator) {
+        this.parser = parser;
+        this.observerLocator = observerLocator;
+    }
+    propertyObserver(object, prop) {
+        return {
+            subscribe: (callback) => {
+                const observer = this.observerLocator.getObserver(object, prop);
+                const subscriber = {
+                    handleChange: (newValue, oldValue) => callback(newValue, oldValue)
+                };
+                observer.subscribe(subscriber);
+                return {
+                    dispose: () => observer.unsubscribe(subscriber)
+                };
+            },
+        };
+    }
+    collectionObserver(collection) {
+        return {
+            subscribe: (callback) => {
+                const observer = runtime.getCollectionObserver(collection);
+                const subscriber = {
+                    handleCollectionChange: (collection, indexMap) => callback(collection, indexMap)
+                };
+                observer?.subscribe(subscriber);
+                return {
+                    dispose: () => observer?.unsubscribe(subscriber)
+                };
+            }
+        };
+    }
+    expressionObserver(bindingContext, expression) {
+        const scope = runtime.Scope.create(bindingContext, {}, true);
+        return {
+            subscribe: callback => {
+                const observer = new runtimeHtml.ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 16), callback);
+                observer.bind();
+                return {
+                    dispose: () => observer.unbind()
+                };
+            }
+        };
+    }
+}
+BindingEngine.inject = [runtime.IExpressionParser, runtime.IObserverLocator];
+
 const compatRegistration = {
     register(container) {
         defineAstMethods();
@@ -432,6 +480,7 @@ const compatRegistration = {
     }
 };
 
+exports.BindingEngine = BindingEngine;
 exports.CallBinding = CallBinding;
 exports.CallBindingInstruction = CallBindingInstruction;
 exports.DelegateBindingInstruction = DelegateBindingInstruction;

@@ -6,7 +6,7 @@ export declare const enum IterationType {
     isSet = 2,
     isMap = 3
 }
-export declare type Memos = {
+export type Memos = {
     val1: Map<any, any>;
     val2: Map<any, any>;
     position: number;

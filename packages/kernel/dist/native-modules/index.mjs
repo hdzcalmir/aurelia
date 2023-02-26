@@ -332,6 +332,9 @@ const N = new Set("Array ArrayBuffer Boolean DataView Date Error EvalError Float
 let W = 0;
 
 class Container {
+    get depth() {
+        return null === this.parent ? 0 : this.parent.depth + 1;
+    }
     constructor(t, e) {
         this.parent = t;
         this.config = e;
@@ -350,9 +353,6 @@ class Container {
             if (e.inheritParentResources) this.res = Object.assign(u(), t.res, this.root.res); else this.res = u();
         }
         this.u.set($t, z);
-    }
-    get depth() {
-        return null === this.parent ? 0 : this.parent.depth + 1;
     }
     register(...t) {
         if (100 === ++this.t) throw V(t);
@@ -1036,26 +1036,26 @@ const Gt = {
 };
 
 class InstanceProvider {
-    constructor(t, e) {
-        this.A = null;
-        this.j = t;
-        if (void 0 !== e) this.A = e;
-    }
     get friendlyName() {
-        return this.j;
+        return this.A;
+    }
+    constructor(t, e) {
+        this.j = null;
+        this.A = t;
+        if (void 0 !== e) this.j = e;
     }
     prepare(t) {
-        this.A = t;
+        this.j = t;
     }
     get $isResolver() {
         return true;
     }
     resolve() {
-        if (null == this.A) throw Kt(this.j);
-        return this.A;
+        if (null == this.j) throw Kt(this.A);
+        return this.j;
     }
     dispose() {
-        this.A = null;
+        this.j = null;
     }
 }
 
@@ -1224,6 +1224,9 @@ let he = class DefaultLogEventFactory {
 he = Xt([ Yt(0, ee) ], he);
 
 let de = class ConsoleSink {
+    static register(t) {
+        rt(ne, ConsoleSink).register(t);
+    }
     constructor(t) {
         const e = t.console;
         this.handleEvent = function t(n) {
@@ -1266,9 +1269,6 @@ let de = class ConsoleSink {
                 }
             }
         };
-    }
-    static register(t) {
-        rt(ne, ConsoleSink).register(t);
     }
 };
 

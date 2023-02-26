@@ -17,7 +17,7 @@ export declare class ShadowDOMRegistry implements IRegistry {
     constructor(css: (string | CSSStyleSheet)[]);
     register(container: IContainer): void;
 }
-declare type HasAdoptedStyleSheets = ShadowRoot & {
+type HasAdoptedStyleSheets = ShadowRoot & {
     adoptedStyleSheets: CSSStyleSheet[];
 };
 export interface IShadowDOMStyles {

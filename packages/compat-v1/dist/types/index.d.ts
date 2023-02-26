@@ -9,4 +9,5 @@ export declare const compatRegistration: IRegistry;
 export { PreventFormActionlessSubmit, };
 export { CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, callSyntax, } from './compat-call';
 export { DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, delegateSyntax, } from './compat-delegate';
+export { BindingEngine, } from './compat-binding-engine';
 //# sourceMappingURL=index.d.ts.map

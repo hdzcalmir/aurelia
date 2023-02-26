@@ -8,7 +8,7 @@ import { $Undefined } from './undefined';
 import { $Function } from './function';
 import { ILogger, IDisposable, Writable } from '@aurelia/kernel';
 import { $Error } from './error';
-export declare type $EnvRec = ($DeclarativeEnvRec | $ObjectEnvRec | $FunctionEnvRec | $GlobalEnvRec | $ModuleEnvRec);
+export type $EnvRec = ($DeclarativeEnvRec | $ObjectEnvRec | $FunctionEnvRec | $GlobalEnvRec | $ModuleEnvRec);
 export declare class $Binding implements IDisposable {
     isMutable: boolean;
     isStrict: boolean;
@@ -86,7 +86,7 @@ export declare class $ObjectEnvRec implements IDisposable {
     WithBaseObject(ctx: ExecutionContext): $AnyObject | $Undefined;
     dispose(this: Writable<Partial<$ObjectEnvRec>>): void;
 }
-export declare type BindingStatus = 'lexical' | 'initialized' | 'uninitialized';
+export type BindingStatus = 'lexical' | 'initialized' | 'uninitialized';
 export declare class $FunctionEnvRec extends $DeclarativeEnvRec implements IDisposable {
     readonly logger: ILogger;
     readonly '<$FunctionEnvRec>': unknown;

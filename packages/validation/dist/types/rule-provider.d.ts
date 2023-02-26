@@ -18,7 +18,7 @@ export declare class RuleProperty implements IRuleProperty {
     constructor(expression?: IsBindingBehavior | undefined, name?: string | number | undefined, displayName?: string | ValidationDisplayNameAccessor | undefined);
     accept(visitor: IValidationVisitor): string;
 }
-export declare type RuleCondition<TObject extends IValidateable = IValidateable, TValue = any> = (value: TValue, object?: TObject) => boolean | Promise<boolean>;
+export type RuleCondition<TObject extends IValidateable = IValidateable, TValue = any> = (value: TValue, object?: TObject) => boolean | Promise<boolean>;
 export declare const validationRulesRegistrar: Readonly<{
     name: "validation-rules";
     defaultRuleSetName: "__default";
@@ -212,7 +212,7 @@ export declare class ValidationRules<TObject extends IValidateable = IValidateab
     applyModelBasedRules(target: IValidateable, rules: ModelBasedRule[]): void;
 }
 export declare const rootObjectSymbol = "$root";
-export declare type PropertyAccessor<TObject extends IValidateable = IValidateable, TValue = unknown> = (object: TObject) => TValue;
+export type PropertyAccessor<TObject extends IValidateable = IValidateable, TValue = unknown> = (object: TObject) => TValue;
 export declare function parsePropertyName(property: string | PropertyAccessor, parser: IExpressionParser): [string, IsBindingBehavior];
 /**
  * The result of validating an individual validation rule.

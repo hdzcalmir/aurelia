@@ -3214,6 +3214,9 @@ class QueueTask {
 }
 
 class TaskQueue {
+    get isActive() {
+        return null !== this.task;
+    }
     constructor(t) {
         this.callback = t;
         this.pending = [];
@@ -3235,9 +3238,6 @@ class TaskQueue {
                 }));
             }
         };
-    }
-    get isActive() {
-        return null !== this.task;
     }
     get length() {
         return this.pending.length;
@@ -3780,6 +3780,9 @@ class Title {
 const v = t.DI.createInterface("IRouter", (t => t.singleton(Router)));
 
 class Router {
+    static get inject() {
+        return [ t.IContainer, t.IEventAggregator, exports.Navigator, g, g, N ];
+    }
     constructor(t, i, s, n, e, r) {
         this.container = t;
         this.ea = i;
@@ -3846,9 +3849,6 @@ class Router {
                 }
             }));
         };
-    }
-    static get inject() {
-        return [ t.IContainer, t.IEventAggregator, exports.Navigator, g, g, N ];
     }
     get isNavigating() {
         return this.coordinators.length > 0;

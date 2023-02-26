@@ -67,6 +67,9 @@ const O = {
 };
 
 class VirtualRepeat {
+    static get inject() {
+        return [ a, u, f, d, s, g ];
+    }
     constructor(t, s, e, i, r, n) {
         this.location = t;
         this.instruction = s;
@@ -88,9 +91,6 @@ class VirtualRepeat {
         this.C = new CollectionObservationMediator(this, h ? "handleInnerCollectionChange" : "handleCollectionChange");
         this.local = l.declaration.name;
         this.taskQueue = n.domWriteQueue;
-    }
-    static get inject() {
-        return [ a, u, f, d, s, g ];
     }
     attaching() {
         const t = this.c;
@@ -367,12 +367,12 @@ var L;
 })(L || (L = {}));
 
 class Calculation {
+    static from(t, s) {
+        return new Calculation(t, s);
+    }
     constructor(t, s) {
         this.signals = t;
         this.minViews = s;
-    }
-    static from(t, s) {
-        return new Calculation(t, s);
     }
 }
 
@@ -491,15 +491,15 @@ class NullCollectionStrategy {
 }
 
 class ScrollerObserverLocator {
-    constructor(t) {
-        this.cache = new WeakMap;
-        this.p = t;
-    }
     static get inject() {
         return [ g ];
     }
     static register(t) {
         return e.singleton(w, this).register(t);
+    }
+    constructor(t) {
+        this.cache = new WeakMap;
+        this.p = t;
     }
     getObserver(t) {
         const s = this.cache;
@@ -587,14 +587,14 @@ class ScrollerInfo {
 const A = t => t.window.ResizeObserver;
 
 class DefaultDomRenderer {
-    constructor(t) {
-        this.p = t;
-    }
     static get inject() {
         return [ g ];
     }
     static register(t) {
         return e.singleton(m, this).register(t);
+    }
+    constructor(t) {
+        this.p = t;
     }
     render(t) {
         const s = this.p.document;

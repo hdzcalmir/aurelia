@@ -27,6 +27,9 @@ const C = Object.freeze({
 });
 
 class Store {
+    static register(t) {
+        i.singleton(D, this).register(t);
+    }
     constructor(t, i, s) {
         this.t = new Set;
         this.i = 0;
@@ -34,9 +37,6 @@ class Store {
         this._state = t ?? new State;
         this.u = i;
         this.B = s;
-    }
-    static register(t) {
-        i.singleton(D, this).register(t);
     }
     subscribe(t) {
         this.t.add(t);

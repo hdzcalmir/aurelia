@@ -114,7 +114,7 @@ export declare const StandardConfiguration: {
     register(container: IContainer): IContainer;
     customize(cb?: ConfigurationOptionsProvider): any;
 };
-export declare type ConfigurationOptionsProvider = (options: IRuntimeHtmlConfigurationOptions) => void;
+export type ConfigurationOptionsProvider = (options: IRuntimeHtmlConfigurationOptions) => void;
 interface IRuntimeHtmlConfigurationOptions {
     coercingOptions: ICoercionConfiguration;
 }

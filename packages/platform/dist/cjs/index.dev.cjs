@@ -56,6 +56,18 @@ class Platform {
     }
 }
 class TaskQueue {
+    get isEmpty() {
+        return (this._pendingAsyncCount === 0 &&
+            this._processing.length === 0 &&
+            this._pending.length === 0 &&
+            this._delayed.length === 0);
+    }
+    get _hasNoMoreFiniteWork() {
+        return (this._pendingAsyncCount === 0 &&
+            this._processing.every(isPersistent) &&
+            this._pending.every(isPersistent) &&
+            this._delayed.every(isPersistent));
+    }
     constructor(platform, $request, $cancel) {
         this.platform = platform;
         this.$request = $request;
@@ -86,18 +98,6 @@ class TaskQueue {
         };
         this._now = platform.performanceNow;
         this._tracer = new Tracer(platform.console);
-    }
-    get isEmpty() {
-        return (this._pendingAsyncCount === 0 &&
-            this._processing.length === 0 &&
-            this._pending.length === 0 &&
-            this._delayed.length === 0);
-    }
-    get _hasNoMoreFiniteWork() {
-        return (this._pendingAsyncCount === 0 &&
-            this._processing.every(isPersistent) &&
-            this._pending.every(isPersistent) &&
-            this._delayed.every(isPersistent));
     }
     flush(time = this._now()) {
         if (this._tracer.enabled) {
@@ -339,22 +339,6 @@ exports.TaskStatus = void 0;
     TaskStatus[TaskStatus["canceled"] = 3] = "canceled";
 })(exports.TaskStatus || (exports.TaskStatus = {}));
 class Task {
-    constructor(tracer, taskQueue, createdTime, queueTime, preempt, persistent, suspend, reusable, callback) {
-        this.taskQueue = taskQueue;
-        this.createdTime = createdTime;
-        this.queueTime = queueTime;
-        this.preempt = preempt;
-        this.persistent = persistent;
-        this.suspend = suspend;
-        this.reusable = reusable;
-        this.callback = callback;
-        this.id = ++id;
-        this._resolve = void 0;
-        this._reject = void 0;
-        this._result = void 0;
-        this._status = 0;
-        this._tracer = tracer;
-    }
     get result() {
         const result = this._result;
         if (result === void 0) {
@@ -377,6 +361,22 @@ class Task {
     }
     get status() {
         return this._status;
+    }
+    constructor(tracer, taskQueue, createdTime, queueTime, preempt, persistent, suspend, reusable, callback) {
+        this.taskQueue = taskQueue;
+        this.createdTime = createdTime;
+        this.queueTime = queueTime;
+        this.preempt = preempt;
+        this.persistent = persistent;
+        this.suspend = suspend;
+        this.reusable = reusable;
+        this.callback = callback;
+        this.id = ++id;
+        this._resolve = void 0;
+        this._reject = void 0;
+        this._result = void 0;
+        this._status = 0;
+        this._tracer = tracer;
     }
     run(time = this.taskQueue.platform.performanceNow()) {
         if (this._tracer.enabled) {

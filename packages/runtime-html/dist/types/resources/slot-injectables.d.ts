@@ -1,5 +1,5 @@
 import { CustomElementDefinition } from './custom-element';
-export declare type IProjections = Record<string, CustomElementDefinition>;
+export type IProjections = Record<string, CustomElementDefinition>;
 export declare const IProjections: import("@aurelia/kernel").InterfaceSymbol<IProjections>;
 export interface IAuSlotsInfo extends AuSlotsInfo {
 }

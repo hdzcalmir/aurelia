@@ -1,6 +1,6 @@
-import { type Params } from './instructions';
-import { RouteNode } from './route-tree';
-export declare type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;
+import { Params } from './instructions';
+import type { RouteNode } from './route-tree';
+export type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;
 export declare class Batch {
     private stack;
     private cb;

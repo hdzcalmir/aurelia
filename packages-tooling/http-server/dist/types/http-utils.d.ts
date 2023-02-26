@@ -40,7 +40,7 @@ export declare class HTTPError extends Error {
 export declare function readBuffer(req: IncomingMessage | Http2ServerRequest): Promise<Buffer>;
 export declare function getContentType(path: string): ContentType;
 export declare function getContentEncoding(path: string): ContentEncoding;
-export declare type Headers = IncomingHttpHeaders | IncomingHttp2Headers;
+export type Headers = IncomingHttpHeaders | IncomingHttp2Headers;
 export declare class QualifiedHeaderValues {
     readonly headerName: string;
     readonly mostPrioritized: {

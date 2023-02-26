@@ -1,6 +1,5 @@
-import { type IAstEvaluator, type IBinding, type IConnectableBinding } from '@aurelia/runtime';
+import { type IAstEvaluator, type IBinding, type IConnectableBinding, type IObservable, type IObserverLocator, type IsExpression, type Scope } from '@aurelia/runtime';
 import type { IIndexable, IServiceLocator } from '@aurelia/kernel';
-import type { IObservable, IObserverLocator, IsExpression, Scope } from '@aurelia/runtime';
 export interface LetBinding extends IAstEvaluator, IConnectableBinding {
 }
 export declare class LetBinding implements IBinding {

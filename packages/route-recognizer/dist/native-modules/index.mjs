@@ -134,12 +134,12 @@ function e(t, e) {
 }
 
 class RecognizeResult {
+    get isEmpty() {
+        return 0 === this.candidates.length;
+    }
     constructor(t) {
         this.candidates = [];
         this.candidates = [ new Candidate([ "" ], [ t ], [], this) ];
-    }
-    get isEmpty() {
-        return 0 === this.candidates.length;
     }
     getSolution() {
         const s = this.candidates.filter(t);
@@ -334,12 +334,12 @@ function n(t) {
 }
 
 class StaticSegment {
+    get kind() {
+        return 4;
+    }
     constructor(t, e) {
         this.value = t;
         this.caseSensitive = e;
-    }
-    get kind() {
-        return 4;
     }
     appendTo(t) {
         const {value: e, value: {length: s}} = this;
@@ -355,12 +355,12 @@ class StaticSegment {
 }
 
 class DynamicSegment {
+    get kind() {
+        return 3;
+    }
     constructor(t, e) {
         this.name = t;
         this.optional = e;
-    }
-    get kind() {
-        return 3;
     }
     appendTo(t) {
         t = t.append(this, "/");

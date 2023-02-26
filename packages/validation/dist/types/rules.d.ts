@@ -30,7 +30,7 @@ export interface ValidationRuleAlias {
 export interface ValidationRuleDefinition {
     aliases: ValidationRuleAlias[];
 }
-export declare type RuleType<TRule extends IValidationRule> = Class<TRule, {
+export type RuleType<TRule extends IValidationRule> = Class<TRule, {
     $TYPE: string;
 }>;
 export declare const ValidationRuleAliasMessage: Readonly<{
@@ -108,7 +108,7 @@ export declare class SizeRule extends BaseValidationRule<unknown[]> implements I
     execute(value: unknown[]): boolean | Promise<boolean>;
     accept(visitor: IValidationVisitor): string;
 }
-declare type Range = {
+type Range = {
     min?: number;
     max?: number;
 };

@@ -1,6 +1,5 @@
-import { AccessorType } from '@aurelia/runtime';
+import { AccessorType, type IObserverLocator, type ISubscriberCollection } from '@aurelia/runtime';
 import type { INode } from '../dom';
-import type { IObserverLocator, ISubscriberCollection } from '@aurelia/runtime';
 import { INodeObserver, INodeObserverConfigBase } from './observer-locator';
 declare function defaultMatcher(a: unknown, b: unknown): boolean;
 export interface ISelectElement extends HTMLSelectElement {

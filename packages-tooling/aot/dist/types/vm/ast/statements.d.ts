@@ -126,10 +126,10 @@ export declare class $EmptyStatement implements I$Node {
     constructor(node: EmptyStatement, parent: $NodeWithStatements, ctx: Context, idx: number, mos?: $$ESModuleOrScript, realm?: Realm, depth?: number, logger?: ILogger, path?: string);
     Evaluate(ctx: ExecutionContext): $Any;
 }
-export declare type ExpressionStatement_T<T extends Expression> = ExpressionStatement & {
+export type ExpressionStatement_T<T extends Expression> = ExpressionStatement & {
     readonly expression: T;
 };
-export declare type DirectivePrologue = readonly ExpressionStatement_T<StringLiteral>[] & {
+export type DirectivePrologue = readonly ExpressionStatement_T<StringLiteral>[] & {
     readonly ContainsUseStrict?: true;
 };
 export declare class $ExpressionStatement implements I$Node {
@@ -212,7 +212,7 @@ export declare class $WhileStatement implements I$Node {
     constructor(node: WhileStatement, parent: $NodeWithStatements, ctx: Context, idx: number, mos?: $$ESModuleOrScript, realm?: Realm, depth?: number, logger?: ILogger, path?: string);
     EvaluateLabelled(ctx: ExecutionContext, labelSet: $StringSet): $Any;
 }
-export declare type $$Initializer = ($$AssignmentExpressionOrHigher | $VariableDeclarationList);
+export type $$Initializer = ($$AssignmentExpressionOrHigher | $VariableDeclarationList);
 export declare class $ForStatement implements I$Node {
     readonly node: ForStatement;
     readonly parent: $NodeWithStatements;
@@ -466,7 +466,7 @@ export declare class $DebuggerStatement implements I$Node {
     constructor(node: DebuggerStatement, parent: $NodeWithStatements, ctx: Context, idx: number, mos?: $$ESModuleOrScript, realm?: Realm, depth?: number, logger?: ILogger, path?: string);
     Evaluate(ctx: ExecutionContext): $Any;
 }
-export declare type $$CaseOrDefaultClause = $CaseClause | $DefaultClause;
+export type $$CaseOrDefaultClause = $CaseClause | $DefaultClause;
 export declare function $$clauseList(nodes: readonly CaseOrDefaultClause[], parent: $CaseBlock, ctx: Context): readonly $$CaseOrDefaultClause[];
 export declare class $CaseBlock implements I$Node {
     readonly node: CaseBlock;

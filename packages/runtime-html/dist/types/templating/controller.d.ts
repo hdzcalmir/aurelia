@@ -10,7 +10,7 @@ import type { INode, INodeSequence, IRenderLocation } from '../dom';
 import type { IViewFactory } from './view';
 import type { IInstruction } from '../renderer';
 import type { PartialCustomElementDefinition } from '../resources/custom-element';
-declare type BindingContext<C extends IViewModel> = Required<ICompileHooks> & Required<IActivationHooks<IHydratedController | null>> & C;
+type BindingContext<C extends IViewModel> = Required<ICompileHooks> & Required<IActivationHooks<IHydratedController | null>> & C;
 export declare const enum LifecycleFlags {
     none = 0,
     fromBind = 1,
@@ -173,7 +173,7 @@ export declare const enum ViewModelKind {
  * In terms of specificity this is identical to `IController`. The only difference is that this
  * type is further initialized and thus has more properties and APIs available.
  */
-export declare type IHydratedController = ISyntheticView | ICustomElementController | ICustomAttributeController;
+export type IHydratedController = ISyntheticView | ICustomElementController | ICustomAttributeController;
 /**
  * A controller that is ready for activation. It can be `ICustomElementController` or `ICustomAttributeController`.
  *
@@ -181,7 +181,7 @@ export declare type IHydratedController = ISyntheticView | ICustomElementControl
  *
  * In contrast, `ISyntheticView` has neither a view model nor lifecycle hooks (but its child controllers, if any, may).
  */
-export declare type IHydratedComponentController = ICustomElementController | ICustomAttributeController;
+export type IHydratedComponentController = ICustomElementController | ICustomAttributeController;
 /**
  * A controller that is ready for activation. It can be `ISyntheticView` or `ICustomElementController`.
  *
@@ -191,13 +191,13 @@ export declare type IHydratedComponentController = ICustomElementController | IC
  *
  * Note: the parent of a `ISyntheticView` is always a `IHydratedComponentController` because views cannot directly own other views. Views may own components, and components may own views or components.
  */
-export declare type IHydratedParentController = ISyntheticView | ICustomElementController;
+export type IHydratedParentController = ISyntheticView | ICustomElementController;
 /**
  * A callback that is invoked on each controller in the component tree.
  *
  * Return `true` to stop traversal.
  */
-export declare type ControllerVisitor = (controller: IHydratedController) => void | true;
+export type ControllerVisitor = (controller: IHydratedController) => void | true;
 /**
  * The base type for all controller types.
  *
@@ -414,8 +414,8 @@ export interface ICustomElementController<C extends ICustomElementViewModel = IC
     deactivate(initiator: IHydratedController, parent: IHydratedController | null, flags: LifecycleFlags): void | Promise<void>;
 }
 export declare const IController: import("@aurelia/kernel").InterfaceSymbol<IController<IViewModel>>;
-export declare const IHydrationContext: import("@aurelia/kernel").InterfaceSymbol<IHydrationContext<unknown>>;
-export interface IHydrationContext<T = unknown> extends HydrationContext<T> {
+export declare const IHydrationContext: import("@aurelia/kernel").InterfaceSymbol<IHydrationContext<ICustomElementViewModel>>;
+export interface IHydrationContext<T extends ICustomElementViewModel = ICustomElementViewModel> extends HydrationContext<T> {
 }
 declare class HydrationContext<T extends ICustomElementViewModel> {
     readonly instruction: IControllerElementHydrationInstruction | null;
@@ -484,7 +484,7 @@ export interface IControllerElementHydrationInstruction {
      */
     readonly containerless?: boolean;
 }
-export declare type ControllerLifecyleHookLookup = LifecycleHooksLookup<{
+export type ControllerLifecyleHookLookup = LifecycleHooksLookup<{
     hydrating: ICompileHooks['hydrating'];
     hydrated: ICompileHooks['hydrated'];
     created: ICompileHooks['created'];

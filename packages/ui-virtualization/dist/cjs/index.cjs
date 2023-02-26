@@ -73,6 +73,9 @@ const f = {
 };
 
 class VirtualRepeat {
+    static get inject() {
+        return [ e.IRenderLocation, e.IInstruction, e.IController, e.IViewFactory, t.IContainer, e.IPlatform ];
+    }
     constructor(t, s, e, r, i, n) {
         this.location = t;
         this.instruction = s;
@@ -94,9 +97,6 @@ class VirtualRepeat {
         this.C = new CollectionObservationMediator(this, a ? "handleInnerCollectionChange" : "handleCollectionChange");
         this.local = c.declaration.name;
         this.taskQueue = n.domWriteQueue;
-    }
-    static get inject() {
-        return [ e.IRenderLocation, e.IInstruction, e.IController, e.IViewFactory, t.IContainer, e.IPlatform ];
     }
     attaching() {
         const t = this.c;
@@ -373,12 +373,12 @@ var d;
 })(d || (d = {}));
 
 class Calculation {
+    static from(t, s) {
+        return new Calculation(t, s);
+    }
     constructor(t, s) {
         this.signals = t;
         this.minViews = s;
-    }
-    static from(t, s) {
-        return new Calculation(t, s);
     }
 }
 
@@ -497,15 +497,15 @@ class NullCollectionStrategy {
 }
 
 class ScrollerObserverLocator {
-    constructor(t) {
-        this.cache = new WeakMap;
-        this.p = t;
-    }
     static get inject() {
         return [ e.IPlatform ];
     }
     static register(s) {
         return t.Registration.singleton(i, this).register(s);
+    }
+    constructor(t) {
+        this.cache = new WeakMap;
+        this.p = t;
     }
     getObserver(t) {
         const s = this.cache;
@@ -593,14 +593,14 @@ class ScrollerInfo {
 const D = t => t.window.ResizeObserver;
 
 class DefaultDomRenderer {
-    constructor(t) {
-        this.p = t;
-    }
     static get inject() {
         return [ e.IPlatform ];
     }
     static register(s) {
         return t.Registration.singleton(r, this).register(s);
+    }
+    constructor(t) {
+        this.p = t;
     }
     render(t) {
         const s = this.p.document;

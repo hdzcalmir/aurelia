@@ -65,8 +65,8 @@ export declare function toLookup<T1 extends {}, T2 extends {}, T3 extends {}, T4
  * @returns `true` is the function is a native function, otherwise `false`
  */
 export declare const isNativeFunction: (fn: Function) => boolean;
-declare type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;
-declare type MaybePromise<T> = T extends Promise<infer R> ? (T | R) : (T | Promise<T>);
+type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;
+type MaybePromise<T> = T extends Promise<infer R> ? (T | R) : (T | Promise<T>);
 /**
  * Normalize a potential promise via a callback, to ensure things stay synchronous when they can.
  *

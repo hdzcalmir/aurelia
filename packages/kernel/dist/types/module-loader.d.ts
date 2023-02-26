@@ -78,7 +78,7 @@ export interface ITypedModuleItem_Constructable extends ITypedModuleItem<false, 
 }
 export interface ITypedModuleItem_ConstructableRegistry extends ITypedModuleItem<true, true, Constructable & IRegistry> {
 }
-export declare type ITypedModuleItem_T = (ITypedModuleItem_Unknown | ITypedModuleItem_Registry | ITypedModuleItem_Constructable | ITypedModuleItem_ConstructableRegistry);
+export type ITypedModuleItem_T = (ITypedModuleItem_Unknown | ITypedModuleItem_Registry | ITypedModuleItem_Constructable | ITypedModuleItem_ConstructableRegistry);
 export declare class ModuleItem {
     readonly key: string;
     readonly value: unknown;

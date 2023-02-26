@@ -85,7 +85,7 @@ export declare class MockValueConverter {
 export declare class MockContext {
     log: any[];
 }
-export declare type ExposedContext = IContainer & IDisposable & IContainer;
+export type ExposedContext = IContainer & IDisposable & IContainer;
 export declare class MockBrowserHistoryLocation {
     changeCallback?: (ev: PopStateEvent) => Promise<void>;
     private readonly states;
@@ -104,6 +104,8 @@ export declare class MockBrowserHistoryLocation {
     pushState(data: Record<string, unknown>, title: string, path: string): void;
     replaceState(data: Record<string, unknown>, title: string, path: string): void;
     go(movement: number): void;
+    back(): void;
+    forward(): void;
     private notifyChange;
 }
 export declare class ChangeSet implements IDisposable {

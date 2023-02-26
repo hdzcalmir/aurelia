@@ -8,7 +8,7 @@ export interface IConnectableBinding extends IConnectable, IBinding, ISubscriber
      */
     obs: BindingObserverRecord;
 }
-declare type ObservationRecordImplType = {
+type ObservationRecordImplType = {
     version: number;
     count: number;
 } & Record<string, unknown>;
@@ -28,11 +28,11 @@ export declare class BindingObserverRecord {
     clear(): void;
     clearAll(): void;
 }
-declare type Connectable = {
+type Connectable = {
     oL: IObserverLocator;
 } & IConnectable & Partial<ISubscriber & ICollectionSubscriber>;
-declare type DecoratableConnectable<TProto, TClass> = Class<TProto & Connectable, TClass>;
-declare type DecoratedConnectable<TProto, TClass> = Class<TProto & Connectable, TClass>;
+type DecoratableConnectable<TProto, TClass> = Class<TProto & Connectable, TClass>;
+type DecoratedConnectable<TProto, TClass> = Class<TProto & Connectable, TClass>;
 declare function connectableDecorator<TProto, TClass>(target: DecoratableConnectable<TProto, TClass>): DecoratedConnectable<TProto, TClass>;
 export declare function connectable(): typeof connectableDecorator;
 export declare function connectable<TProto, TClass>(target: DecoratableConnectable<TProto, TClass>): DecoratedConnectable<TProto, TClass>;

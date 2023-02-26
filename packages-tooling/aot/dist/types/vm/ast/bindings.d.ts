@@ -16,7 +16,7 @@ import { $EnumMember } from './types';
 import { $Number } from '../types/number';
 import { $ArrayExoticObject } from '../exotics/array';
 import { $List } from '../types/list';
-export declare type $$NamedDeclaration = ($GetAccessorDeclaration | $SetAccessorDeclaration | $MethodDeclaration | $PropertyAssignment | $ShorthandPropertyAssignment | $SpreadAssignment | $BindingElement | $EnumMember | $PropertyDeclaration);
+export type $$NamedDeclaration = ($GetAccessorDeclaration | $SetAccessorDeclaration | $MethodDeclaration | $PropertyAssignment | $ShorthandPropertyAssignment | $SpreadAssignment | $BindingElement | $EnumMember | $PropertyDeclaration);
 export declare class $ComputedPropertyName implements I$Node {
     readonly node: ComputedPropertyName;
     readonly parent: $$NamedDeclaration;
@@ -54,7 +54,7 @@ export declare class $ObjectBindingPattern implements I$Node {
     constructor(node: ObjectBindingPattern, parent: $$DestructurableBinding, ctx: Context, idx: number, mos?: $$ESModuleOrScript, realm?: Realm, depth?: number, logger?: ILogger, path?: string);
     InitializeBinding(ctx: ExecutionContext, value: $AnyNonEmpty, environment: $EnvRec | undefined): $Any;
 }
-export declare type $$ArrayBindingElement = ($BindingElement | $OmittedExpression);
+export type $$ArrayBindingElement = ($BindingElement | $OmittedExpression);
 export declare function $$arrayBindingElement(node: ArrayBindingElement, parent: $ArrayBindingPattern, ctx: Context, idx: number): $$ArrayBindingElement;
 export declare function $$arrayBindingElementList(nodes: readonly ArrayBindingElement[], parent: $ArrayBindingPattern, ctx: Context): readonly $$ArrayBindingElement[];
 export declare function $bindingElementList(nodes: readonly BindingElement[], parent: $$BindingPattern, ctx: Context): readonly $BindingElement[];
@@ -79,7 +79,7 @@ export declare class $ArrayBindingPattern implements I$Node {
     InitializeBinding(ctx: ExecutionContext, value: $AnyObject, environment: $EnvRec | undefined): $Any;
     InitializeIteratorBinding(ctx: ExecutionContext, iteratorRecord: $IteratorRecord, environment: $EnvRec | undefined): $Any;
 }
-export declare type $$BindingPattern = ($ArrayBindingPattern | $ObjectBindingPattern);
+export type $$BindingPattern = ($ArrayBindingPattern | $ObjectBindingPattern);
 export declare class $BindingElement implements I$Node {
     readonly node: BindingElement;
     readonly parent: $$BindingPattern;

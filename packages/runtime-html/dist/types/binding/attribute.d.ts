@@ -1,8 +1,7 @@
-import { type IBinding, IAstEvaluator, IConnectableBinding } from '@aurelia/runtime';
+import { type IBinding, IAstEvaluator, IConnectableBinding, type ForOfStatement, type IObserverLocator, type IsBindingBehavior, type Scope } from '@aurelia/runtime';
 import { BindingMode } from './interfaces-bindings';
 import type { TaskQueue } from '@aurelia/platform';
 import type { IServiceLocator } from '@aurelia/kernel';
-import type { ForOfStatement, IObserverLocator, IsBindingBehavior, Scope } from '@aurelia/runtime';
 import type { INode } from '../dom';
 import type { IBindingController } from './interfaces-bindings';
 export interface AttributeBinding extends IAstEvaluator, IConnectableBinding {

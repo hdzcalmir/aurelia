@@ -10,7 +10,7 @@ export declare const enum ValueConverters {
     numberFormatValueConverterName = "nf",
     relativeTimeValueConverterName = "rt"
 }
-export declare type BindingWithBehavior = IBinding & {
+export type BindingWithBehavior = IBinding & {
     ast: BindingBehaviorExpression;
 };
 export declare function createIntlFormatValueConverterExpression(name: string, binding: BindingWithBehavior): void;

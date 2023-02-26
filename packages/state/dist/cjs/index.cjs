@@ -33,6 +33,9 @@ const o = Object.freeze({
 });
 
 class Store {
+    static register(s) {
+        t.Registration.singleton(n, this).register(s);
+    }
     constructor(t, s, i) {
         this.t = new Set;
         this.i = 0;
@@ -40,9 +43,6 @@ class Store {
         this._state = t ?? new State;
         this.u = s;
         this.B = i;
-    }
-    static register(s) {
-        t.Registration.singleton(n, this).register(s);
     }
     subscribe(t) {
         this.t.add(t);

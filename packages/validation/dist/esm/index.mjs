@@ -1019,12 +1019,6 @@ class ValidationSerializer {
 }
 
 let K = class ValidationDeserializer {
-    constructor(e, t, s) {
-        this.locator = e;
-        this.messageProvider = t;
-        this.parser = s;
-        this.astDeserializer = new Deserializer;
-    }
     static register(e) {
         this.container = e;
     }
@@ -1034,6 +1028,12 @@ let K = class ValidationDeserializer {
         const r = new ValidationDeserializer(this.container, s, i);
         const n = JSON.parse(e);
         return r.hydrate(n, t);
+    }
+    constructor(e, t, s) {
+        this.locator = e;
+        this.messageProvider = t;
+        this.parser = s;
+        this.astDeserializer = new Deserializer;
     }
     hydrate(e, t) {
         switch (e.$TYPE) {

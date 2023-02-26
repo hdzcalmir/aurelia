@@ -8,7 +8,7 @@ export interface ValidationI18nCustomizationOptions extends ValidationHtmlCustom
     DefaultNamespace?: string;
     DefaultKeyPrefix?: string;
 }
-export declare type I18nKeyConfiguration = Pick<ValidationI18nCustomizationOptions, 'DefaultNamespace' | 'DefaultKeyPrefix'>;
+export type I18nKeyConfiguration = Pick<ValidationI18nCustomizationOptions, 'DefaultNamespace' | 'DefaultKeyPrefix'>;
 export declare const I18nKeyConfiguration: import("@aurelia/kernel").InterfaceSymbol<I18nKeyConfiguration>;
 export declare class LocalizedValidationController extends ValidationController {
     private readonly localeChangeSubscription;

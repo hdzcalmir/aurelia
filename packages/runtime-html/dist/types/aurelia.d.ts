@@ -1,5 +1,5 @@
 import { IAppRoot, ISinglePageApp } from './app-root';
-import { ICustomElementController, IHydratedParentController } from './templating/controller';
+import { ICustomElementController, ICustomElementViewModel, IHydratedParentController } from './templating/controller';
 import type { Constructable, IContainer, IDisposable } from '@aurelia/kernel';
 export interface IAurelia extends Aurelia {
 }
@@ -17,7 +17,7 @@ export declare class Aurelia implements IDisposable {
     /**
      * @param parentController - The owning controller of the view created by this enhance call
      */
-    enhance<T, K = T extends Constructable<infer I> ? I : T>(config: IEnhancementConfig<T>, parentController?: IHydratedParentController | null): ICustomElementController<K> | Promise<ICustomElementController<K>>;
+    enhance<T extends ICustomElementViewModel, K extends ICustomElementViewModel = T extends Constructable<infer I extends ICustomElementViewModel> ? I : T>(config: IEnhancementConfig<T>, parentController?: IHydratedParentController | null): ICustomElementController<K> | Promise<ICustomElementController<K>>;
     waitForIdle(): Promise<void>;
     start(root?: IAppRoot | undefined): void | Promise<void>;
     stop(dispose?: boolean): void | Promise<void>;

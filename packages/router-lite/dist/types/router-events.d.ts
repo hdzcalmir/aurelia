@@ -1,9 +1,9 @@
 import { IEventAggregator, IDisposable, ILogger } from '@aurelia/kernel';
-import { ViewportInstructionTree } from './instructions';
-export declare type RoutingTrigger = 'popstate' | 'hashchange' | 'api';
+import type { ViewportInstructionTree } from './instructions';
+export type RoutingTrigger = 'popstate' | 'hashchange' | 'api';
 export declare const AuNavId: "au-nav-id";
-export declare type AuNavId = typeof AuNavId;
-export declare type ManagedState = {
+export type AuNavId = typeof AuNavId;
+export type ManagedState = {
     [k: string]: unknown;
     [AuNavId]: number;
 };
@@ -61,13 +61,13 @@ export declare class NavigationErrorEvent {
     constructor(id: number, instructions: ViewportInstructionTree, error: unknown);
     toString(): string;
 }
-declare type NameToEvent = {
+type NameToEvent = {
     [LocationChangeEvent.prototype.name]: LocationChangeEvent;
     [NavigationStartEvent.prototype.name]: NavigationStartEvent;
     [NavigationEndEvent.prototype.name]: NavigationEndEvent;
     [NavigationCancelEvent.prototype.name]: NavigationCancelEvent;
     [NavigationErrorEvent.prototype.name]: NavigationErrorEvent;
 };
-export declare type RouterEvent = (LocationChangeEvent | NavigationStartEvent | NavigationEndEvent | NavigationCancelEvent | NavigationErrorEvent);
+export type RouterEvent = (LocationChangeEvent | NavigationStartEvent | NavigationEndEvent | NavigationCancelEvent | NavigationErrorEvent);
 export {};
 //# sourceMappingURL=router-events.d.ts.map

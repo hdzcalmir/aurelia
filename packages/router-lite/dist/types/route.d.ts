@@ -1,17 +1,17 @@
 import { Constructable, ResourceType } from '@aurelia/kernel';
 import { RouteableComponent } from './instructions';
-import { RouteNode } from './route-tree';
+import type { RouteNode } from './route-tree';
 /**
  * Either a `RouteableComponent` or a name/config that can be resolved to a one:
  * - `string`: a string representing the component name. Must be resolveable via DI from the context of the component relative to which the navigation occurs (specified in the `dependencies` array, `<import>`ed in the view, declared as an inline template, or registered globally)
  * - `IChildRouteConfig`: a standalone child route config object.
- * - `Routeable`: see `Routeable`.
+ * - `RouteableComponent`: see `RouteableComponent`.
  *
  * NOTE: differs from `NavigationInstruction` only in having `IChildRouteConfig` instead of `IViewportIntruction`
  * (which in turn are quite similar, but do have a few minor but important differences that make them non-interchangeable)
  * as well as `IRedirectRouteConfig`
  */
-export declare type Routeable = string | IChildRouteConfig | IRedirectRouteConfig | RouteableComponent;
+export type Routeable = string | IChildRouteConfig | IRedirectRouteConfig | RouteableComponent;
 export interface IRouteConfig {
     /**
      * The id for this route, which can be used in the view for generating hrefs.
@@ -31,8 +31,6 @@ export interface IRouteConfig {
     readonly title?: string | ((node: RouteNode) => string | null) | null;
     /**
      * The path to which to redirect when the url matches the path in this config.
-     *
-     * If the path begins with a slash (`/`), the redirect path is considered absolute, otherwise it is considered relative to the parent path.
      */
     readonly redirectTo?: string | null;
     /**
@@ -42,11 +40,9 @@ export interface IRouteConfig {
     /**
      * How to behave when this component scheduled to be loaded again in the same viewport:
      *
-     * - `replace`: completely removes the current component and creates a new one, behaving as if the component changed.
-     * - `invoke-lifecycles`: calls `canUnload`, `canLoad`, `unloading` and `loading` (default if only the parameters have changed)
-     * - `none`: does nothing (default if nothing has changed for the viewport)
-     *
-     * By default, calls the router lifecycle hooks only if the parameters have changed, otherwise does nothing.
+     * - `replace`: completely removes the current component and creates a new one, behaving as if the component changed  (default if only the parameters have changed).
+     * - `invoke-lifecycles`: calls `canUnload`, `canLoad`, `unloading` and `loading`.
+     * - `none`: does nothing (default if nothing has changed for the viewport).
      */
     readonly transitionPlan?: TransitionPlanOrFunc | null;
     /**
@@ -81,8 +77,8 @@ export interface IChildRouteConfig extends IRouteConfig {
 }
 export interface IRedirectRouteConfig extends Pick<IRouteConfig, 'caseSensitive' | 'redirectTo' | 'path'> {
 }
-export declare type TransitionPlan = 'none' | 'replace' | 'invoke-lifecycles';
-export declare type TransitionPlanOrFunc = TransitionPlan | ((current: RouteNode, next: RouteNode) => TransitionPlan);
+export type TransitionPlan = 'none' | 'replace' | 'invoke-lifecycles';
+export type TransitionPlanOrFunc = TransitionPlan | ((current: RouteNode, next: RouteNode) => TransitionPlan);
 export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     readonly id: string | null;
     readonly path: string | string[] | null;
@@ -119,8 +115,8 @@ export declare const Route: {
      */
     getConfig(Type: RouteType): RouteConfig;
 };
-export declare type RouteType<T extends Constructable = Constructable> = ResourceType<T, InstanceType<T>, IRouteConfig>;
-export declare type RouteDecorator = <T extends Constructable>(Type: T) => T;
+export type RouteType<T extends Constructable = Constructable> = ResourceType<T, InstanceType<T>, IRouteConfig>;
+export type RouteDecorator = <T extends Constructable>(Type: T) => T;
 /**
  * Associate a static route configuration with this type.
  *

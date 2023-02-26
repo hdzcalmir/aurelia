@@ -4,7 +4,7 @@ import { HistoryOptions } from './history';
 import { Middleware, MiddlewarePlacement } from './middleware';
 import { LogDefinitions } from './logging';
 import { DevToolsOptions, DevToolsExtension } from './devtools';
-export declare type Reducer<T, P extends unknown[] = unknown[]> = (state: T, ...params: P) => T | false | Promise<T | false>;
+export type Reducer<T, P extends unknown[] = unknown[]> = (state: T, ...params: P) => T | false | Promise<T | false>;
 export declare enum PerformanceMeasurement {
     StartEnd = "startEnd",
     All = "all"

@@ -1,6 +1,5 @@
-import { AccessorType, type ISubscriberCollection, type ICollectionSubscriberCollection, type IObserver } from '../observation';
+import { AccessorType, type ISubscriberCollection, type ICollectionSubscriberCollection, type IObserver, type CollectionKind, type ICollectionObserver, type IndexMap, type ISubscriber } from '../observation';
 import { CollectionLengthObserver } from './collection-length-observer';
-import type { CollectionKind, ICollectionObserver, IndexMap, ISubscriber } from '../observation';
 export declare function enableArrayObservation(): void;
 export declare function disableArrayObservation(): void;
 export interface ArrayObserver extends ICollectionObserver<CollectionKind.array>, ICollectionSubscriberCollection {

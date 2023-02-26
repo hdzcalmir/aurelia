@@ -1,6 +1,6 @@
-import { PartialCustomElementDefinition } from '@aurelia/runtime-html';
-import { IChildRouteConfig, IRedirectRouteConfig } from './route';
-import { IViewportInstruction, RouteableComponent } from './instructions';
+import { type PartialCustomElementDefinition } from '@aurelia/runtime-html';
+import type { IChildRouteConfig, IRedirectRouteConfig } from './route';
+import type { IViewportInstruction, Params, RouteableComponent } from './instructions';
 export declare function isPartialCustomElementDefinition(value: RouteableComponent | IChildRouteConfig | null | undefined): value is PartialCustomElementDefinition;
 export declare function isPartialChildRouteConfig(value: RouteableComponent | IChildRouteConfig | IRedirectRouteConfig | null | undefined): value is IChildRouteConfig;
 export declare function isPartialRedirectRouteConfig(value: RouteableComponent | IChildRouteConfig | IRedirectRouteConfig | null | undefined): value is IRedirectRouteConfig;
@@ -13,5 +13,5 @@ export declare function expectType(expected: string, prop: string, value: unknow
  * This property is checked for in `validateComponent`.
  */
 export declare function validateRouteConfig(config: Partial<IChildRouteConfig> | null | undefined, parentPath: string): void;
-export declare function shallowEquals<T>(a: T, b: T): boolean;
+export declare function shallowEquals(a: Params | null, b: Params | null): boolean;
 //# sourceMappingURL=validation.d.ts.map

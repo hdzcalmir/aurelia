@@ -2,7 +2,7 @@ export interface Action<T = unknown> {
     type: T;
     params?: unknown[];
 }
-export declare type ActionCreator<T> = (...args: unknown[]) => T;
+export type ActionCreator<T> = (...args: unknown[]) => T;
 export interface DevToolsExtension {
     connect: (options?: DevToolsOptions) => DevTools<unknown>;
 }

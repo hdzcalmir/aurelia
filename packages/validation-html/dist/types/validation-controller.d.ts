@@ -3,7 +3,7 @@ import { BindingBehaviorExpression, IExpressionParser } from '@aurelia/runtime';
 import { LifecycleFlags, IPlatform, PropertyBinding } from '@aurelia/runtime-html';
 import { PropertyAccessor, PropertyRule, ValidationResult, IValidator, ValidateInstruction, type IValidateable } from '@aurelia/validation';
 import type { Scope } from '@aurelia/runtime';
-export declare type BindingWithBehavior = PropertyBinding & {
+export type BindingWithBehavior = PropertyBinding & {
     ast: BindingBehaviorExpression;
     target: Element | object;
 };
@@ -194,7 +194,7 @@ export declare class ValidationController implements IValidationController {
     constructor(validator: IValidator, parser: IExpressionParser, platform: IPlatform, locator: IServiceLocator);
     addObject(object: IValidateable, rules?: PropertyRule[]): void;
     removeObject(object: IValidateable): void;
-    addError<TObject>(message: string, object: TObject, propertyName?: string | PropertyAccessor): ValidationResult;
+    addError<TObject extends IValidateable>(message: string, object: TObject, propertyName?: string | PropertyAccessor): ValidationResult;
     removeError(result: ValidationResult): void;
     addSubscriber(subscriber: ValidationResultsSubscriber): void;
     removeSubscriber(subscriber: ValidationResultsSubscriber): void;

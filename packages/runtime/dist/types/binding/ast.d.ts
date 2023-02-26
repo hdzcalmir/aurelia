@@ -35,22 +35,22 @@ export declare const enum ExpressionKind {
     DestructuringAssignmentRestLeaf = 27,
     Custom = 28
 }
-export declare type UnaryOperator = 'void' | 'typeof' | '!' | '-' | '+';
-export declare type BinaryOperator = '??' | '&&' | '||' | '==' | '===' | '!=' | '!==' | 'instanceof' | 'in' | '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=';
-export declare type IsPrimary = AccessThisExpression | AccessScopeExpression | ArrayLiteralExpression | ObjectLiteralExpression | PrimitiveLiteralExpression | TemplateExpression;
-export declare type IsLiteral = ArrayLiteralExpression | ObjectLiteralExpression | PrimitiveLiteralExpression | TemplateExpression;
-export declare type IsLeftHandSide = IsPrimary | CallFunctionExpression | CallMemberExpression | CallScopeExpression | AccessMemberExpression | AccessKeyedExpression | TaggedTemplateExpression;
-export declare type IsUnary = IsLeftHandSide | UnaryExpression;
-export declare type IsBinary = IsUnary | BinaryExpression;
-export declare type IsConditional = IsBinary | ConditionalExpression;
-export declare type IsAssign = IsConditional | AssignExpression | ArrowFunction;
-export declare type IsValueConverter = CustomExpression | IsAssign | ValueConverterExpression;
-export declare type IsBindingBehavior = IsValueConverter | BindingBehaviorExpression;
-export declare type IsAssignable = AccessScopeExpression | AccessKeyedExpression | AccessMemberExpression | AssignExpression;
-export declare type IsExpression = IsBindingBehavior | Interpolation;
-export declare type BindingIdentifierOrPattern = BindingIdentifier | ArrayBindingPattern | ObjectBindingPattern;
-export declare type IsExpressionOrStatement = IsExpression | ForOfStatement | BindingIdentifierOrPattern | DestructuringAssignmentExpression | DestructuringAssignmentSingleExpression | DestructuringAssignmentRestExpression;
-export declare type AnyBindingExpression = Interpolation | ForOfStatement | IsBindingBehavior;
+export type UnaryOperator = 'void' | 'typeof' | '!' | '-' | '+';
+export type BinaryOperator = '??' | '&&' | '||' | '==' | '===' | '!=' | '!==' | 'instanceof' | 'in' | '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=';
+export type IsPrimary = AccessThisExpression | AccessScopeExpression | ArrayLiteralExpression | ObjectLiteralExpression | PrimitiveLiteralExpression | TemplateExpression;
+export type IsLiteral = ArrayLiteralExpression | ObjectLiteralExpression | PrimitiveLiteralExpression | TemplateExpression;
+export type IsLeftHandSide = IsPrimary | CallFunctionExpression | CallMemberExpression | CallScopeExpression | AccessMemberExpression | AccessKeyedExpression | TaggedTemplateExpression;
+export type IsUnary = IsLeftHandSide | UnaryExpression;
+export type IsBinary = IsUnary | BinaryExpression;
+export type IsConditional = IsBinary | ConditionalExpression;
+export type IsAssign = IsConditional | AssignExpression | ArrowFunction;
+export type IsValueConverter = CustomExpression | IsAssign | ValueConverterExpression;
+export type IsBindingBehavior = IsValueConverter | BindingBehaviorExpression;
+export type IsAssignable = AccessScopeExpression | AccessKeyedExpression | AccessMemberExpression | AssignExpression;
+export type IsExpression = IsBindingBehavior | Interpolation;
+export type BindingIdentifierOrPattern = BindingIdentifier | ArrayBindingPattern | ObjectBindingPattern;
+export type IsExpressionOrStatement = IsExpression | ForOfStatement | BindingIdentifierOrPattern | DestructuringAssignmentExpression | DestructuringAssignmentSingleExpression | DestructuringAssignmentRestExpression;
+export type AnyBindingExpression = Interpolation | ForOfStatement | IsBindingBehavior;
 export declare class CustomExpression {
     readonly value: unknown;
     readonly $kind = ExpressionKind.Custom;
@@ -61,7 +61,7 @@ export declare class CustomExpression {
     unbind(s: Scope, b: IAstEvaluator & IConnectableBinding): void;
     accept<T>(_visitor: IVisitor<T>): T;
 }
-export declare type BindingBehaviorInstance<T extends {} = {}> = {
+export type BindingBehaviorInstance<T extends {} = {}> = {
     type?: 'instance' | 'factory';
     bind?(scope: Scope, binding: IBinding, ...args: unknown[]): void;
     unbind?(scope: Scope, binding: IBinding, ...args: unknown[]): void;
@@ -77,7 +77,7 @@ export declare class BindingBehaviorExpression {
     readonly key: string;
     constructor(expression: IsBindingBehavior, name: string, args: readonly IsAssign[]);
 }
-export declare type ValueConverterInstance<T extends {} = {}> = {
+export type ValueConverterInstance<T extends {} = {}> = {
     signals?: string[];
     toView(input: unknown, ...args: unknown[]): unknown;
     fromView?(input: unknown, ...args: unknown[]): unknown;
@@ -281,8 +281,8 @@ export interface IAstEvaluator {
     /** Allow an AST to retrieve a signaler instance for connecting/disconnecting */
     getSignaler?(): ISignaler;
     /** Allow an AST to retrieve a value converter that it needs */
-    getConverter?<T>(name: string): ValueConverterInstance<T> | undefined;
+    getConverter?<T extends {}>(name: string): ValueConverterInstance<T> | undefined;
     /** Allow an AST to retrieve a binding behavior that it needs */
-    getBehavior?<T>(name: string): BindingBehaviorInstance<T> | undefined;
+    getBehavior?<T extends {}>(name: string): BindingBehaviorInstance<T> | undefined;
 }
 //# sourceMappingURL=ast.d.ts.map

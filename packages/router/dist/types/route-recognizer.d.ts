@@ -10,7 +10,7 @@ declare class $$Endpoint extends $Endpoint<Route> {
 }
 export interface RouteRecognizer extends $RouteRecognizer<Route> {
 }
-export declare type IConfigurableRoute = $IConfigurableRoute<Route>;
+export type IConfigurableRoute = $IConfigurableRoute<Route>;
 export interface ConfigurableRoute extends $ConfigurableRoute<Route> {
 }
 export interface RecognizedRoute extends $RecognizedRoute<Route> {

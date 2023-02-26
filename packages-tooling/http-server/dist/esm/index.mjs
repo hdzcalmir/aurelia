@@ -363,10 +363,6 @@ Http2FileServer = __decorate([
     __param(1, ILogger)
 ], Http2FileServer);
 class PushInfo {
-    constructor(fd, headers) {
-        this.fd = fd;
-        this.headers = headers;
-    }
     static create(path, cacheControlDirective) {
         const stat = statSync(path);
         return new PushInfo(openSync(path, 'r'), {
@@ -376,6 +372,10 @@ class PushInfo {
             [HTTP2_HEADER_CONTENT_ENCODING]: getContentEncoding(path),
             [HTTP2_HEADER_CACHE_CONTROL]: cacheControlDirective
         });
+    }
+    constructor(fd, headers) {
+        this.fd = fd;
+        this.headers = headers;
     }
 }
 function determineContentEncoding(context) {

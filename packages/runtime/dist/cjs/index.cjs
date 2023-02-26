@@ -888,7 +888,7 @@ function O(t, e, s, r) {
             const i = O(t.object, e, s, r);
             let n;
             if (s?.strict) {
-                if (null == i) return i;
+                if (null == i) return;
                 if (null !== r) r.observe(i, t.name);
                 n = i[t.name];
                 if (s?.boundFn && o(n)) return n.bind(i);
@@ -906,12 +906,12 @@ function O(t, e, s, r) {
       case 11:
         {
             const i = O(t.object, e, s, r);
+            const n = O(t.key, e, s, r);
             if (u(i)) {
-                const n = O(t.key, e, s, r);
                 if (null !== r) r.observe(i, n);
                 return i[n];
             }
-            return;
+            return null == i ? void 0 : i[n];
         }
 
       case 12:
@@ -3978,18 +3978,6 @@ const jr = Object.freeze({
 });
 
 class ComputedObserver {
-    constructor(t, e, s, r, i) {
-        this.type = 1;
-        this.v = void 0;
-        this.ov = void 0;
-        this.ir = false;
-        this.D = false;
-        this.o = t;
-        this.$get = e;
-        this.$set = s;
-        this.up = r;
-        this.oL = i;
-    }
     static create(t, e, s, r, n) {
         const o = s.get;
         const c = s.set;
@@ -4005,6 +3993,18 @@ class ComputedObserver {
             }
         });
         return u;
+    }
+    constructor(t, e, s, r, i) {
+        this.type = 1;
+        this.v = void 0;
+        this.ov = void 0;
+        this.ir = false;
+        this.D = false;
+        this.o = t;
+        this.$get = e;
+        this.$set = s;
+        this.up = r;
+        this.oL = i;
     }
     getValue() {
         if (0 === this.subs.count) return this.$get.call(this.o, this);
@@ -4169,13 +4169,13 @@ class DirtyCheckProperty {
 W(DirtyCheckProperty);
 
 class PrimitiveObserver {
+    get doNotCache() {
+        return true;
+    }
     constructor(t, e) {
         this.type = 0;
         this.o = t;
         this.k = e;
-    }
-    get doNotCache() {
-        return true;
     }
     getValue() {
         return this.o[this.k];
@@ -4401,11 +4401,11 @@ const Qr = t => n(`AUR0199:${b(t)}`);
 const Xr = d("IObservation", (t => t.singleton(Observation)));
 
 class Observation {
-    constructor(t) {
-        this.oL = t;
-    }
     static get inject() {
         return [ Kr ];
+    }
+    constructor(t) {
+        this.oL = t;
     }
     run(t) {
         const e = new Effect(this.oL, t);

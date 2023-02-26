@@ -1,7 +1,6 @@
 import { IPlatform } from '@aurelia/kernel';
-import { AccessorType, type IObserver, type ISubscriberCollection } from '../observation';
+import { AccessorType, type IObserver, type ISubscriberCollection, type IObservable, type ISubscriber } from '../observation';
 import type { IIndexable } from '@aurelia/kernel';
-import type { IObservable, ISubscriber } from '../observation';
 export interface IDirtyChecker extends DirtyChecker {
 }
 export declare const IDirtyChecker: import("@aurelia/kernel").InterfaceSymbol<IDirtyChecker>;
