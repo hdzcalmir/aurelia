@@ -8747,13 +8747,16 @@ let Yo = class AuSlot {
         this.ss = null;
         this.rs = null;
         let n;
-        const r = e.auSlot;
-        const o = i.instruction?.projections?.[r.name];
-        if (null == o) {
-            n = s.getViewFactory(r.fallback, i.controller.container);
+        let r;
+        const o = e.auSlot;
+        const l = i.instruction?.projections?.[o.name];
+        if (null == l) {
+            n = s.getViewFactory(o.fallback, i.controller.container);
             this.os = false;
         } else {
-            n = s.getViewFactory(o, i.parent.controller.container);
+            r = i.parent.controller.container.createChild();
+            Xt(r, i.controller.definition.Type, new d(void 0, i.controller.viewModel));
+            n = s.getViewFactory(l, r);
             this.os = true;
         }
         this.ls = i;

@@ -9855,6 +9855,7 @@ let AuSlot = class AuSlot {
         this._parentScope = null;
         this._outerScope = null;
         let factory;
+        let container;
         const slotInfo = instruction.auSlot;
         const projection = hdrContext.instruction?.projections?.[slotInfo.name];
         if (projection == null) {
@@ -9862,7 +9863,9 @@ let AuSlot = class AuSlot {
             this._hasProjection = false;
         }
         else {
-            factory = rendering.getViewFactory(projection, hdrContext.parent.controller.container);
+            container = hdrContext.parent.controller.container.createChild();
+            registerResolver(container, hdrContext.controller.definition.Type, new InstanceProvider(void 0, hdrContext.controller.viewModel));
+            factory = rendering.getViewFactory(projection, container);
             this._hasProjection = true;
         }
         this._hdrContext = hdrContext;

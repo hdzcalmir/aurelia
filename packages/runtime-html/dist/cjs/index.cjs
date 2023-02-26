@@ -8749,21 +8749,24 @@ exports.AuSlot = class AuSlot {
     static get inject() {
         return [ Ss, fi, Ke, qe ];
     }
-    constructor(t, e, s, i) {
+    constructor(e, s, i, n) {
         this.li = null;
         this.hi = null;
-        let n;
-        const r = e.auSlot;
-        const o = s.instruction?.projections?.[r.name];
-        if (null == o) {
-            n = i.getViewFactory(r.fallback, s.controller.container);
+        let r;
+        let o;
+        const l = s.auSlot;
+        const h = i.instruction?.projections?.[l.name];
+        if (null == h) {
+            r = n.getViewFactory(l.fallback, i.controller.container);
             this.ai = false;
         } else {
-            n = i.getViewFactory(o, s.parent.controller.container);
+            o = i.parent.controller.container.createChild();
+            Z(o, i.controller.definition.Type, new t.InstanceProvider(void 0, i.controller.viewModel));
+            r = n.getViewFactory(h, o);
             this.ai = true;
         }
-        this.ui = s;
-        this.view = n.create().setLocation(t);
+        this.ui = i;
+        this.view = r.create().setLocation(e);
     }
     binding(t, e, i) {
         this.li = this.$controller.scope.parent;
