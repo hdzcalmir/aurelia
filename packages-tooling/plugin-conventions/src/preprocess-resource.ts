@@ -1,6 +1,22 @@
 import modifyCode, { ModifyCodeResult } from 'modify-code';
-import * as ts from 'typescript';
-import { getHmrCode } from './hmr';
+import {
+  type CallExpression,
+  createSourceFile,
+  ScriptTarget,
+  type Statement,
+  type Node,
+  isImportDeclaration,
+  isStringLiteral,
+  isNamedImports,
+  SyntaxKind,
+  canHaveDecorators,
+  getDecorators,
+  isCallExpression,
+  isIdentifier,
+  isClassDeclaration,
+  canHaveModifiers,
+  getModifiers,
+} from 'typescript';
 import { nameConvention } from './name-convention';
 import { IFileUnit, IPreprocessOptions, ResourceType } from './options';
 import { resourceName } from './resource-name';
@@ -27,7 +43,7 @@ interface IFoundResource {
 
 interface IFoundDecorator {
   type: ResourceType;
-  expression: ts.CallExpression;
+  expression: CallExpression;
 }
 
 interface IModifyResourceOptions {
@@ -38,11 +54,12 @@ interface IModifyResourceOptions {
   localDeps: string[];
   conventionalDecorators: [number, string][];
   customElementName?: IPos;
+  transformHtmlImportSpecifier?: (path: string) => string;
 }
 
 export function preprocessResource(unit: IFileUnit, options: IPreprocessOptions): ModifyCodeResult {
   const expectedResourceName = resourceName(unit.path);
-  const sf = ts.createSourceFile(unit.path, unit.contents, ts.ScriptTarget.Latest);
+  const sf = createSourceFile(unit.path, unit.contents, ScriptTarget.Latest);
   let exportedClassName: string | undefined;
   let auImport: ICapturedImport = { names: [], start: 0, end: 0 };
   let runtimeImport: ICapturedImport = { names: [], start: 0, end: 0 };
@@ -134,13 +151,17 @@ export function preprocessResource(unit: IFileUnit, options: IPreprocessOptions)
       implicitElement,
       localDeps,
       conventionalDecorators,
-      customElementName
+      customElementName,
+      transformHtmlImportSpecifier: options.transformHtmlImportSpecifier,
     });
   }
 
   if (options.hmr && exportedClassName && process.env.NODE_ENV !== 'production') {
-    const hmr = getHmrCode(exportedClassName, options.hmrModule);
-    m.append(hmr);
+    // const hmr = getHmrCode(exportedClassName, options.hmrModule);
+    // m.append(hmr);
+    if (options.getHmrCode) {
+      m.append(options.getHmrCode(exportedClassName, unit.path));
+    }
   }
 
   return m.transform();
@@ -151,7 +172,8 @@ function modifyResource(unit: IFileUnit, m: ReturnType<typeof modifyCode>, optio
     implicitElement,
     localDeps,
     conventionalDecorators,
-    customElementName
+    customElementName,
+    transformHtmlImportSpecifier = s => s,
   } = options;
 
   if (implicitElement && unit.filePair) {
@@ -160,7 +182,7 @@ function modifyResource(unit: IFileUnit, m: ReturnType<typeof modifyCode>, optio
     const dec = unit.isViewPair ? 'view' : 'customElement';
 
     const viewDef = '__au2ViewDef';
-    m.prepend(`import * as ${viewDef} from './${unit.filePair}';\n`);
+    m.prepend(`import * as ${viewDef} from './${transformHtmlImportSpecifier(unit.filePair)}';\n`);
 
     if (localDeps.length) {
       // When in-file deps are used, move the body of custom element to end of the file,
@@ -193,13 +215,13 @@ function modifyResource(unit: IFileUnit, m: ReturnType<typeof modifyCode>, optio
   return m;
 }
 
-function captureImport(s: ts.Statement, lib: string, code: string): ICapturedImport | void {
-  if (ts.isImportDeclaration(s) &&
-    ts.isStringLiteral(s.moduleSpecifier) &&
+function captureImport(s: Statement, lib: string, code: string): ICapturedImport | void {
+  if (isImportDeclaration(s) &&
+    isStringLiteral(s.moduleSpecifier) &&
     s.moduleSpecifier.text === lib &&
     s.importClause &&
     s.importClause.namedBindings &&
-    ts.isNamedImports(s.importClause.namedBindings)) {
+    isNamedImports(s.importClause.namedBindings)) {
     return {
       names: s.importClause.namedBindings.elements.map(e => e.name.text),
       start: ensureTokenStart(s.pos, code),
@@ -222,22 +244,26 @@ function ensureTokenStart(start: number, code: string) {
   return start;
 }
 
-function isExported(node: ts.Node): boolean {
-  if (!node.modifiers) return false;
-  for (const mod of node.modifiers) {
-    if (mod.kind === ts.SyntaxKind.ExportKeyword) return true;
+function isExported(node: Node): boolean {
+  if (!canHaveModifiers(node)) return false;
+  const modifiers = getModifiers(node);
+  if(modifiers === void 0) return false;
+  for (const mod of modifiers) {
+    if (mod.kind === SyntaxKind.ExportKeyword) return true;
   }
   return false;
 }
 
 const KNOWN_DECORATORS = ['view', 'customElement', 'customAttribute', 'valueConverter', 'bindingBehavior', 'bindingCommand', 'templateController'];
 
-function findDecoratedResourceType(node: ts.Node): IFoundDecorator | void {
-  if (!node.decorators) return;
-  for (const d of node.decorators) {
-    if (!ts.isCallExpression(d.expression)) return;
+function findDecoratedResourceType(node: Node): IFoundDecorator | void {
+  if (!canHaveDecorators(node)) return;
+  const decorators = getDecorators(node);
+  if(decorators === void 0) return;
+  for (const d of decorators) {
+    if (!isCallExpression(d.expression)) return;
     const exp = d.expression.expression;
-    if (ts.isIdentifier(exp)) {
+    if (isIdentifier(exp)) {
       const name = exp.text;
       if (KNOWN_DECORATORS.includes(name)) {
         return {
@@ -253,8 +279,8 @@ function isKindOfSame(name1: string, name2: string): boolean {
   return name1.replace(/-/g, '') === name2.replace(/-/g, '');
 }
 
-function findResource(node: ts.Node, expectedResourceName: string, filePair: string | undefined, isViewPair: boolean | undefined, code: string): IFoundResource | void {
-  if (!ts.isClassDeclaration(node)) return;
+function findResource(node: Node, expectedResourceName: string, filePair: string | undefined, isViewPair: boolean | undefined, code: string): IFoundResource | void {
+  if (!isClassDeclaration(node)) return;
   if (!node.name) return;
   if (!isExported(node)) return;
   const pos = ensureTokenStart(node.pos, code);
@@ -281,10 +307,10 @@ function findResource(node: ts.Node, expectedResourceName: string, filePair: str
       isImplicitResource &&
       foundType.type === 'customElement' &&
       foundType.expression.arguments.length === 1 &&
-      ts.isStringLiteral(foundType.expression.arguments[0])
+      isStringLiteral(foundType.expression.arguments[0])
     ) {
       // @customElement('custom-name')
-      const customName = foundType.expression.arguments[0] as ts.StringLiteral;
+      const customName = foundType.expression.arguments[0];
       return {
         className,
         implicitStatement: { pos: pos, end: node.end },

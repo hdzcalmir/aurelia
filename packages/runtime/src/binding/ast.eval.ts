@@ -145,7 +145,7 @@ export function astEvaluate(ast: IsExpressionOrStatement, s: Scope, e: IAstEvalu
       let ret: unknown;
       if (e?.strict) {
         if (instance == null) {
-          return instance;
+          return undefined;
         }
         if (c !== null) {
           c.observe(instance, ast.name);
@@ -171,14 +171,16 @@ export function astEvaluate(ast: IsExpressionOrStatement, s: Scope, e: IAstEvalu
     }
     case ExpressionKind.AccessKeyed: {
       const instance = astEvaluate(ast.object, s, e, c) as IIndexable;
+      const key = astEvaluate(ast.key, s, e, c) as string;
       if (isObject(instance)) {
-        const key = astEvaluate(ast.key, s, e, c) as string;
         if (c !== null) {
           c.observe(instance, key);
         }
         return instance[key];
       }
-      return void 0;
+      return instance == null
+        ? void 0
+        : instance[key];
     }
     case ExpressionKind.TaggedTemplate: {
       const results = ast.expressions.map(expr => astEvaluate(expr, s, e, c));

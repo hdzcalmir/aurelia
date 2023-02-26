@@ -480,6 +480,39 @@ describe('AccessKeyedExpression', function () {
     assert.strictEqual(binding.calls.length, 2, 'binding.calls.length');
   });
 
+  describe('returns the right value when accessing keyed on primitive', function () {
+
+    it('returns string when accessing string character', function () {
+      const value = astEvaluate(
+        new AccessKeyedExpression(new PrimitiveLiteralExpression('a'), new PrimitiveLiteralExpression(0)),
+        null,
+        null,
+        null
+      );
+      assert.strictEqual(value, 'a');
+    });
+
+    it('returns undefined when accessing keyed on null/undefined', function () {
+      const value = astEvaluate(
+        new AccessKeyedExpression(PrimitiveLiteralExpression.$null, new PrimitiveLiteralExpression(0)),
+        null,
+        null,
+        null
+      );
+      assert.strictEqual(value, undefined);
+    });
+
+    it('returns prototype method when accessing keyed on primitive', function () {
+      const value = astEvaluate(
+        new AccessKeyedExpression(new PrimitiveLiteralExpression(0), new PrimitiveLiteralExpression('toFixed')),
+        null,
+        null,
+        null
+      );
+      assert.strictEqual(value, Number.prototype.toFixed);
+    });
+  });
+
   describe('does not attempt to observe property when object is primitive', function () {
     const objects: [string, any][] = [
       [`     null`, null],
@@ -611,11 +644,7 @@ describe('AccessMemberExpression', function () {
       if (canHaveProperty) {
         assert.strictEqual(actual, value, `actual`);
       } else {
-        if (obj === null) {
-          assert.strictEqual(actual, null, `actual`);
-        } else {
-          assert.strictEqual(actual, undefined, `actual`);
-        }
+        assert.strictEqual(actual, undefined, `actual`);
       }
       const binding = new MockBinding();
       astEvaluate(sut, scope, dummyLocator, binding);

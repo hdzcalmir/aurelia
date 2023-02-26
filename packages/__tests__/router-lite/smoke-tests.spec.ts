@@ -788,7 +788,7 @@ describe('router (smoke tests)', function () {
   });
 
   for (const [name, fallback] of [['ce name', 'ce-a'], ['route', 'a'], ['route-id', 'r1']]) {
-    it('will load the fallback when navigating to a non-existing route - with ${name} - viewport', async function () {
+    it(`will load the fallback when navigating to a non-existing route - with ${name} - viewport`, async function () {
       @customElement({ name: 'ce-a', template: 'a' })
       class A { }
       @route({
@@ -799,15 +799,17 @@ describe('router (smoke tests)', function () {
       @customElement({
         name: 'root',
         template: `root<au-viewport fallback="${fallback}">`,
-        dependencies: [A],
       })
       class Root { }
 
       const ctx = TestContext.create();
       const { container } = ctx;
 
-      container.register(TestRouterConfiguration.for(LogLevel.warn));
-      container.register(RouterConfiguration);
+      container.register(
+        TestRouterConfiguration.for(LogLevel.warn),
+        RouterConfiguration,
+        A,
+      );
 
       const component = container.get(Root);
       const router = container.get(IRouter);
@@ -829,7 +831,7 @@ describe('router (smoke tests)', function () {
       assert.areTaskQueuesEmpty();
     });
 
-    it('will load the global-fallback when navigating to a non-existing route - with ${name}', async function () {
+    it(`will load the global-fallback when navigating to a non-existing route - with ${name}`, async function () {
       @customElement({ name: 'ce-a', template: 'a' })
       class A { }
       @route({
@@ -841,15 +843,17 @@ describe('router (smoke tests)', function () {
       @customElement({
         name: 'root',
         template: `root<au-viewport>`,
-        dependencies: [A],
       })
       class Root { }
 
       const ctx = TestContext.create();
       const { container } = ctx;
 
-      container.register(TestRouterConfiguration.for(LogLevel.warn));
-      container.register(RouterConfiguration);
+      container.register(
+        TestRouterConfiguration.for(LogLevel.warn),
+        RouterConfiguration,
+        A,
+      );
 
       const component = container.get(Root);
       const router = container.get(IRouter);
@@ -883,15 +887,17 @@ describe('router (smoke tests)', function () {
       @customElement({
         name: 'root',
         template: `root<au-viewport></au-viewport><au-viewport></au-viewport>`,
-        dependencies: [A],
       })
       class Root { }
 
       const ctx = TestContext.create();
       const { container } = ctx;
 
-      container.register(TestRouterConfiguration.for(LogLevel.warn));
-      container.register(RouterConfiguration);
+      container.register(
+        TestRouterConfiguration.for(LogLevel.warn),
+        RouterConfiguration,
+        A,
+      );
 
       const component = container.get(Root);
       const router = container.get(IRouter);
@@ -929,15 +935,17 @@ describe('router (smoke tests)', function () {
     @customElement({
       name: 'root',
       template: `root<au-viewport>`,
-      dependencies: [A, NF],
     })
     class Root { }
 
     const ctx = TestContext.create();
     const { container } = ctx;
 
-    container.register(TestRouterConfiguration.for(LogLevel.warn));
-    container.register(RouterConfiguration);
+    container.register(
+      TestRouterConfiguration.for(LogLevel.warn),
+      RouterConfiguration,
+      NF,
+    );
 
     const component = container.get(Root);
     const router = container.get(IRouter);
@@ -1510,6 +1518,674 @@ describe('router (smoke tests)', function () {
     assert.areTaskQueuesEmpty();
   });
 
+  it('Router#load accepts viewport instructions with specific viewport name - component: class', async function () {
+    @customElement({ name: 'gc-11', template: 'gc11' })
+    class GrandChildOneOne { }
+
+    @customElement({ name: 'gc-12', template: 'gc12' })
+    class GrandChildOneTwo { }
+
+    @route({
+      routes: [
+        { id: 'gc11', path: ['', 'gc11'], component: GrandChildOneOne },
+        { id: 'gc12', path: 'gc12', component: GrandChildOneTwo },
+      ],
+    })
+    @customElement({ name: 'c-one', template: `c1 <au-viewport></au-viewport>`, })
+    class ChildOne { }
+
+    @customElement({ name: 'gc-21', template: 'gc21' })
+    class GrandChildTwoOne { }
+
+    @customElement({ name: 'gc-22', template: 'gc22' })
+    class GrandChildTwoTwo { }
+
+    @route({
+      routes: [
+        { id: 'gc21', path: ['', 'gc21'], component: GrandChildTwoOne },
+        { id: 'gc22', path: 'gc22', component: GrandChildTwoTwo },
+      ],
+    })
+    @customElement({
+      name: 'c-two',
+      template: `c2 \${id} <au-viewport></au-viewport>`,
+    })
+    class ChildTwo {
+      private id: string;
+      public loading(params: Params) {
+        this.id = params.id ?? 'NA';
+      }
+    }
+
+    @route({
+      routes: [
+        {
+          path: ['', 'c1'],
+          component: ChildOne,
+        },
+        {
+          path: 'c2/:id?',
+          component: ChildTwo,
+        },
+      ],
+    })
+    @customElement({ name: 'my-app', template: '<au-viewport name="vp1"></au-viewport><au-viewport name="vp2" default.bind="null"></au-viewport>' })
+    class MyApp { }
+
+    const { au, container, host } = await start({ appRoot: MyApp });
+    const router = container.get(IRouter);
+    const queue = container.get(IPlatform).domWriteQueue;
+    await queue.yield();
+    const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
+    assert.html.textContent(vps[1], '', 'round#1 vp2');
+
+    await router.load([
+      {
+        component: ChildOne,
+        children: [{ component: GrandChildOneTwo }],
+        viewport: 'vp2',
+      },
+      {
+        component: ChildTwo,
+        params: { id: 21 },
+        children: [{ component: GrandChildTwoTwo }],
+        viewport: 'vp1',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 21 gc22', 'round#2 vp1');
+    assert.html.textContent(vps[1], 'c1 gc12', 'round#2 vp2');
+
+    await router.load([
+      {
+        component: ChildTwo,
+        viewport: 'vp2',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#3 vp1');
+    assert.html.textContent(vps[1], 'c2 NA gc21', 'round#3 vp2');
+
+    await au.stop();
+  });
+
+  it('Router#load accepts hierarchical viewport instructions with route-id', async function () {
+    @customElement({ name: 'gc-11', template: 'gc11' })
+    class GrandChildOneOne { }
+
+    @customElement({ name: 'gc-12', template: 'gc12' })
+    class GrandChildOneTwo { }
+
+    @route({
+      routes: [
+        { id: 'gc11', path: ['', 'gc-11'], component: GrandChildOneOne },
+        { id: 'gc12', path: 'gc-12', component: GrandChildOneTwo },
+      ],
+    })
+    @customElement({ name: 'c-one', template: `c1 <au-viewport></au-viewport>`, })
+    class ChildOne { }
+
+    @customElement({ name: 'gc-21', template: 'gc21' })
+    class GrandChildTwoOne { }
+
+    @customElement({ name: 'gc-22', template: 'gc22 ${id}' })
+    class GrandChildTwoTwo {
+      private id: string;
+      public loading(params: Params) {
+        this.id = params.id ?? 'NA';
+      }
+    }
+
+    @route({
+      routes: [
+        { id: 'gc21', path: ['', 'gc-21'], component: GrandChildTwoOne },
+        { id: 'gc22', path: 'gc-22/:id?', component: GrandChildTwoTwo },
+      ],
+    })
+    @customElement({
+      name: 'c-two',
+      template: `c2 \${id} <au-viewport></au-viewport>`,
+    })
+    class ChildTwo {
+      private id: string;
+      public loading(params: Params) {
+        this.id = params.id ?? 'NA';
+      }
+    }
+
+    @route({
+      routes: [
+        {
+          id: 'c1',
+          path: ['', 'c-1'],
+          component: ChildOne,
+        },
+        {
+          id: 'c2',
+          path: 'c-2/:id?',
+          component: ChildTwo,
+        },
+      ],
+    })
+    @customElement({ name: 'my-app', template: '<au-viewport name="vp1"></au-viewport><au-viewport name="vp2" default.bind="null"></au-viewport>' })
+    class MyApp { }
+
+    const { au, container, host } = await start({ appRoot: MyApp });
+    const router = container.get(IRouter);
+    const queue = container.get(IPlatform).domWriteQueue;
+    await queue.yield();
+    const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
+    assert.html.textContent(vps[1], '', 'round#1 vp2');
+
+    await router.load([
+      {
+        component: 'c1',
+        children: [{ component: 'gc12' }],
+        viewport: 'vp2',
+      },
+      {
+        component: 'c2',
+        params: { id: 21 },
+        children: [{ component: 'gc22' }],
+        viewport: 'vp1',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 21 gc22 NA', 'round#2 vp1');
+    assert.html.textContent(vps[1], 'c1 gc12', 'round#2 vp2');
+
+    await router.load([
+      {
+        component: 'c2',
+        viewport: 'vp2',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#3 vp1');
+    assert.html.textContent(vps[1], 'c2 NA gc21', 'round#3 vp2');
+
+    await router.load([
+      {
+        component: 'c1',
+        children: [{ component: 'gc12' }],
+        viewport: 'vp2',
+      },
+      {
+        component: 'c2',
+        params: { id: 21 },
+        children: [{ component: 'gc22', params: { id: 42 } }],
+        viewport: 'vp1',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 21 gc22 42', 'round#4 vp1');
+    assert.html.textContent(vps[1], 'c1 gc12', 'round#4 vp2');
+
+    await router.load([
+      {
+        component: 'c1',
+        children: [{ component: 'gc12' }],
+        viewport: 'vp1',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc12', 'round#5 vp1');
+    assert.html.textContent(vps[1], '', 'round#5 vp2');
+
+    await au.stop();
+  });
+
+  it('Router#load supports class-returning-function as component', async function () {
+    @customElement({ name: 'gc-11', template: 'gc11' })
+    class GrandChildOneOne { }
+
+    @customElement({ name: 'gc-12', template: 'gc12' })
+    class GrandChildOneTwo { }
+
+    @route({
+      routes: [
+        { id: 'gc11', path: ['', 'gc-11'], component: GrandChildOneOne },
+        { id: 'gc12', path: 'gc-12', component: GrandChildOneTwo },
+      ],
+    })
+    @customElement({ name: 'c-one', template: `c1 <au-viewport></au-viewport>`, })
+    class ChildOne { }
+
+    @customElement({ name: 'gc-21', template: 'gc21' })
+    class GrandChildTwoOne { }
+
+    @customElement({ name: 'gc-22', template: 'gc22 ${id}' })
+    class GrandChildTwoTwo {
+      private id: string;
+      public loading(params: Params) {
+        this.id = params.id ?? 'NA';
+      }
+    }
+
+    @route({
+      routes: [
+        { id: 'gc21', path: ['', 'gc-21'], component: GrandChildTwoOne },
+        { id: 'gc22', path: 'gc-22/:id?', component: GrandChildTwoTwo },
+      ],
+    })
+    @customElement({
+      name: 'c-two',
+      template: `c2 \${id} <au-viewport></au-viewport>`,
+    })
+    class ChildTwo {
+      private id: string;
+      public loading(params: Params) {
+        this.id = params.id ?? 'NA';
+      }
+    }
+
+    @route({
+      routes: [
+        {
+          id: 'c1',
+          path: ['', 'c-1'],
+          component: ChildOne,
+        },
+        {
+          id: 'c2',
+          path: 'c-2/:id?',
+          component: ChildTwo,
+        },
+      ],
+    })
+    @customElement({ name: 'my-app', template: '<au-viewport name="vp1"></au-viewport><au-viewport name="vp2" default.bind="null"></au-viewport>' })
+    class MyApp { }
+
+    const { au, container, host } = await start({ appRoot: MyApp });
+    const router = container.get(IRouter);
+    const queue = container.get(IPlatform).domWriteQueue;
+    await queue.yield();
+    const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
+    assert.html.textContent(vps[1], '', 'round#1 vp2');
+
+    // single
+    await router.load(() => ChildTwo);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 NA gc21', 'round#2 vp1');
+    assert.html.textContent(vps[1], '', 'round#2 vp2');
+
+    // sibling
+    await router.load([() => ChildTwo, () => ChildOne]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 NA gc21', 'round#3 vp1');
+    assert.html.textContent(vps[1], 'c1 gc11', 'round#3 vp2');
+
+    // viewport instruction
+    await router.load([
+      { component: () => ChildTwo, viewport: 'vp2' },
+      { component: () => ChildOne, viewport: 'vp1' },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#4 vp1');
+    assert.html.textContent(vps[1], 'c2 NA gc21', 'round#4 vp2');
+
+    // viewport instruction - params
+    await router.load([
+      { component: () => ChildTwo, viewport: 'vp1', params: { id: 42 } },
+      { component: () => ChildOne, viewport: 'vp2' },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 42 gc21', 'round#5 vp1');
+    assert.html.textContent(vps[1], 'c1 gc11', 'round#5 vp2');
+
+    // viewport instruction - children
+    await router.load([
+      { component: () => ChildTwo, viewport: 'vp2', children: [() => GrandChildTwoTwo] },
+      { component: () => ChildOne, viewport: 'vp1', children: [() => GrandChildOneTwo] },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc12', 'round#6 vp1');
+    assert.html.textContent(vps[1], 'c2 NA gc22 NA', 'round#6 vp2');
+
+    // viewport instruction - parent-params - children
+    await router.load([
+      { component: () => ChildTwo, viewport: 'vp1', params: { id: 42 }, children: [() => GrandChildTwoTwo] },
+      { component: () => ChildOne, viewport: 'vp2' },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 42 gc22 NA', 'round#7 vp1');
+    assert.html.textContent(vps[1], 'c1 gc11', 'round#7 vp2');
+
+    // viewport instruction - parent-params - children-params
+    await router.load([
+      { component: () => ChildTwo, viewport: 'vp2', params: { id: 42 }, children: [{ component: () => GrandChildTwoTwo, params: { id: 21 } }] },
+      { component: () => ChildOne, viewport: 'vp1', children: [() => GrandChildOneTwo] },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc12', 'round#8 vp1');
+    assert.html.textContent(vps[1], 'c2 42 gc22 21', 'round#8 vp2');
+
+    await au.stop();
+  });
+
+  // Use-case: router.load(import('./class'))
+  it('Router#load supports promise as component', async function () {
+    @customElement({ name: 'gc-11', template: 'gc11' })
+    class GrandChildOneOne { }
+
+    @customElement({ name: 'gc-12', template: 'gc12' })
+    class GrandChildOneTwo { }
+
+    @route({
+      routes: [
+        { id: 'gc11', path: ['', 'gc-11'], component: GrandChildOneOne },
+        { id: 'gc12', path: 'gc-12', component: GrandChildOneTwo },
+      ],
+    })
+    @customElement({ name: 'c-one', template: `c1 <au-viewport></au-viewport>`, })
+    class ChildOne { }
+
+    @customElement({ name: 'gc-21', template: 'gc21' })
+    class GrandChildTwoOne { }
+
+    @customElement({ name: 'gc-22', template: 'gc22 ${id}' })
+    class GrandChildTwoTwo {
+      private id: string;
+      public loading(params: Params) {
+        this.id = params.id ?? 'NA';
+      }
+    }
+
+    @route({
+      routes: [
+        { id: 'gc21', path: ['', 'gc-21'], component: GrandChildTwoOne },
+        { id: 'gc22', path: 'gc-22/:id?', component: GrandChildTwoTwo },
+      ],
+    })
+    @customElement({
+      name: 'c-two',
+      template: `c2 \${id} <au-viewport></au-viewport>`,
+    })
+    class ChildTwo {
+      private id: string;
+      public loading(params: Params) {
+        this.id = params.id ?? 'NA';
+      }
+    }
+
+    @route({
+      routes: [
+        {
+          id: 'c1',
+          path: ['', 'c-1'],
+          component: ChildOne,
+        },
+        {
+          id: 'c2',
+          path: 'c-2/:id?',
+          component: ChildTwo,
+        },
+      ],
+    })
+    @customElement({ name: 'my-app', template: '<au-viewport name="vp1"></au-viewport><au-viewport name="vp2" default.bind="null"></au-viewport>' })
+    class MyApp { }
+
+    const { au, container, host } = await start({ appRoot: MyApp });
+    const router = container.get(IRouter);
+    const queue = container.get(IPlatform).domWriteQueue;
+    await queue.yield();
+    const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
+    assert.html.textContent(vps[1], '', 'round#1 vp2');
+
+    // single - default
+    await router.load(Promise.resolve({ default: ChildTwo }));
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 NA gc21', 'round#2 vp1');
+    assert.html.textContent(vps[1], '', 'round#2 vp2');
+
+    // single - non-default
+    await router.load(Promise.resolve({ ChildOne }));
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#3 vp1');
+    assert.html.textContent(vps[1], '', 'round#3 vp2');
+
+    // single - chained
+    await router.load(Promise.resolve({ ChildOne, ChildTwo }).then(x => x.ChildTwo));
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 NA gc21', 'round#4 vp1');
+    assert.html.textContent(vps[1], '', 'round#4 vp2');
+
+    // sibling
+    await router.load([Promise.resolve({ ChildTwo }), Promise.resolve({ ChildOne })]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 NA gc21', 'round#5 vp1');
+    assert.html.textContent(vps[1], 'c1 gc11', 'round#5 vp2');
+
+    // viewport instruction
+    await router.load([
+      { component: Promise.resolve({ ChildTwo }), viewport: 'vp2' },
+      { component: Promise.resolve({ ChildOne }), viewport: 'vp1' },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#6 vp1');
+    assert.html.textContent(vps[1], 'c2 NA gc21', 'round#6 vp2');
+
+    // viewport instruction - params
+    await router.load([
+      { component: Promise.resolve({ ChildTwo }), viewport: 'vp1', params: { id: 42 } },
+      { component: Promise.resolve({ ChildOne }), viewport: 'vp2' },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 42 gc21', 'round#7 vp1');
+    assert.html.textContent(vps[1], 'c1 gc11', 'round#7 vp2');
+
+    // viewport instruction - children
+    await router.load([
+      { component: Promise.resolve({ ChildTwo }), viewport: 'vp2', children: [() => GrandChildTwoTwo] },
+      { component: Promise.resolve({ ChildOne }), viewport: 'vp1', children: [() => GrandChildOneTwo] },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc12', 'round#8 vp1');
+    assert.html.textContent(vps[1], 'c2 NA gc22 NA', 'round#8 vp2');
+
+    // viewport instruction - parent-params - children
+    await router.load([
+      { component: Promise.resolve({ ChildTwo }), viewport: 'vp1', params: { id: 42 }, children: [() => GrandChildTwoTwo] },
+      { component: Promise.resolve({ ChildOne }), viewport: 'vp2' },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 42 gc22 NA', 'round#9 vp1');
+    assert.html.textContent(vps[1], 'c1 gc11', 'round#9 vp2');
+
+    // viewport instruction - parent-params - children-params
+    await router.load([
+      { component: Promise.resolve({ ChildTwo }), viewport: 'vp2', params: { id: 42 }, children: [{ component: () => GrandChildTwoTwo, params: { id: 21 } }] },
+      { component: Promise.resolve({ ChildOne }), viewport: 'vp1', children: [() => GrandChildOneTwo] },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc12', 'round#10 vp1');
+    assert.html.textContent(vps[1], 'c2 42 gc22 21', 'round#10 vp2');
+
+    await au.stop();
+  });
+
+  it('Router#load accepts viewport instructions with specific viewport name - component: mixed', async function () {
+    @customElement({ name: 'gc-11', template: 'gc11' })
+    class GrandChildOneOne { }
+
+    @customElement({ name: 'gc-12', template: 'gc12' })
+    class GrandChildOneTwo { }
+
+    @route({
+      routes: [
+        { id: 'gc11', path: ['', 'gc-11'], component: GrandChildOneOne },
+        { id: 'gc12', path: 'gc-12', component: GrandChildOneTwo },
+      ],
+    })
+    @customElement({ name: 'c-one', template: `c1 <au-viewport></au-viewport>`, })
+    class ChildOne { }
+
+    @customElement({ name: 'gc-21', template: 'gc21' })
+    class GrandChildTwoOne { }
+
+    @customElement({ name: 'gc-22', template: 'gc22 ${id}' })
+    class GrandChildTwoTwo {
+      private id: string;
+      public loading(params: Params) {
+        this.id = params.id ?? 'NA';
+      }
+    }
+
+    @route({
+      routes: [
+        { id: 'gc21', path: ['', 'gc-21'], component: GrandChildTwoOne },
+        { id: 'gc22', path: 'gc-22/:id?', component: GrandChildTwoTwo },
+      ],
+    })
+    @customElement({
+      name: 'c-two',
+      template: `c2 \${id} <au-viewport></au-viewport>`,
+    })
+    class ChildTwo {
+      private id: string;
+      public loading(params: Params) {
+        this.id = params.id ?? 'NA';
+      }
+    }
+
+    @route({
+      routes: [
+        {
+          id: 'c1',
+          path: ['', 'c-1'],
+          component: ChildOne,
+        },
+        {
+          id: 'c2',
+          path: 'c-2/:id?',
+          component: ChildTwo,
+        },
+      ],
+    })
+    @customElement({ name: 'my-app', template: '<au-viewport name="vp1"></au-viewport><au-viewport name="vp2" default.bind="null"></au-viewport>' })
+    class MyApp { }
+
+    const { au, container, host } = await start({ appRoot: MyApp });
+    const router = container.get(IRouter);
+    const queue = container.get(IPlatform).domWriteQueue;
+    await queue.yield();
+    const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
+    assert.html.textContent(vps[1], '', 'round#1 vp2');
+
+    await router.load([
+      {
+        component: 'c1', /* route-id */
+        children: [{ component: 'gc-12' /* path */ }],
+        viewport: 'vp2',
+      },
+      {
+        component: ChildTwo, /* class */
+        params: { id: 21 },
+        children: [{ component: 'gc22' /* route-id */ }],
+        viewport: 'vp1',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 21 gc22 NA', 'round#2 vp1');
+    assert.html.textContent(vps[1], 'c1 gc12', 'round#2 vp2');
+
+    await router.load([
+      {
+        component: CustomElement.getDefinition(ChildTwo), /* definition */
+        viewport: 'vp2',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#3 vp1');
+    assert.html.textContent(vps[1], 'c2 NA gc21', 'round#3 vp2');
+
+    await router.load([
+      {
+        component: CustomElement.getDefinition(ChildTwo), /* definition */
+        params: { id: 42 },
+        children: [{ component: GrandChildTwoTwo /* class */, params: { id: 21 } }],
+        viewport: 'vp1',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 42 gc22 21', 'round#4 vp1');
+    assert.html.textContent(vps[1], '', 'round#4 vp2');
+
+    await router.load([
+      {
+        component: CustomElement.getDefinition(ChildTwo), /* definition */
+        children: [{ component: GrandChildTwoTwo /* class */ }],
+        viewport: 'vp1',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 NA gc22 NA', 'round#5 vp1');
+    assert.html.textContent(vps[1], '', 'round#5 vp2');
+
+    await router.load([
+      {
+        component: () => ChildTwo,
+        params: { id: 42 },
+        children: [{ component: Promise.resolve({ GrandChildTwoTwo }), params: { id: 21 } }],
+        viewport: 'vp2',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c1 gc11', 'round#6 vp1');
+    assert.html.textContent(vps[1], 'c2 42 gc22 21', 'round#6 vp2');
+
+    await router.load([
+      {
+        component: Promise.resolve({ ChildTwo }),
+        params: { id: 21 },
+        children: [{ component: CustomElement.getDefinition(GrandChildTwoTwo), params: { id: 42 } }],
+        viewport: 'vp1',
+      },
+    ]);
+    await queue.yield();
+
+    assert.html.textContent(vps[0], 'c2 21 gc22 42', 'round#7 vp1');
+    assert.html.textContent(vps[1], '', 'round#7 vp2');
+
+    await au.stop();
+  });
   // TODO(sayan): add more tests for parameter parsing with multiple route parameters including optional parameter.
 
   it('does not interfere with standard "href" attribute', async function () {
@@ -1539,15 +2215,18 @@ describe('router (smoke tests)', function () {
     await au.stop();
   });
 
+  // #region location URL generation
   {
-    @customElement({ name: 'vm-a', template: `view-a foo: \${params.foo} | query: \${query.toString()}` })
+    @customElement({ name: 'vm-a', template: `view-a foo: \${params.foo} | query: \${query.toString()} | fragment: \${fragment}` })
     class VmA {
       public params!: Params;
       public query!: Readonly<URLSearchParams>;
+      public fragment: string;
 
       public loading(params: Params, next: RouteNode) {
         this.params = params;
         this.query = next.queryParams;
+        this.fragment = next.fragment;
       }
     }
     @customElement({ name: 'vm-b', template: 'view-b' })
@@ -1555,17 +2234,53 @@ describe('router (smoke tests)', function () {
       public constructor(
         @IRouter public readonly router: IRouter,
       ) { }
-      public async redirect1() {
+      public async redirectToPath() {
         await this.router.load('a?foo=bar');
       }
-      public async redirect2() {
+      public async redirectWithQueryObj() {
         await this.router.load('a', { queryParams: { foo: 'bar' } });
       }
-      public async redirect3() {
+      public async redirectWithMultivaluedQuery() {
         await this.router.load('a?foo=fizz', { queryParams: { foo: 'bar' } });
       }
-      public async redirect4() {
+      public async redirectWithRouteParamAndQueryObj() {
         await this.router.load('a/fizz', { queryParams: { foo: 'bar' } });
+      }
+      public async redirectWithClassAndQueryObj() {
+        await this.router.load(VmA, { queryParams: { foo: 'bar' } });
+      }
+      public async redirectVpInstrcAndQueryObj() {
+        await this.router.load({ component: VmA, params: { foo: '42' } }, { queryParams: { foo: 'bar' } });
+      }
+      public async redirectVpInstrcRouteIdAndQueryObj() {
+        await this.router.load({ component: 'a' /** route-id */, params: { foo: '42', bar: 'foo' } }, { queryParams: { bar: 'fizz' } });
+      }
+      public async redirectFragment() {
+        await this.router.load('a#foobar');
+      }
+      public async redirectFragmentInNavOpt() {
+        await this.router.load('a', { fragment: 'foobar' });
+      }
+      public async redirectFragmentInPathAndNavOpt() {
+        await this.router.load('a#foobar', { fragment: 'fizzbuzz' });
+      }
+      public async redirectFragmentWithVpInstrc() {
+        await this.router.load({ component: 'a', params: { foo: '42' } }, { fragment: 'foobar' });
+      }
+      public async redirectFragmentWithVpInstrcRawUrl() {
+        await this.router.load({ component: 'a/42' }, { fragment: 'foobar' });
+      }
+      public async redirectFragmentSiblingViewport() {
+        await this.router.load([{ component: 'a/42' }, { component: 'a' }], { fragment: 'foobar' });
+      }
+      public async redirectSiblingViewport() {
+        await this.router.load([{ component: 'a/42' }, { component: 'a' }], { queryParams: { foo: 'bar' } });
+      }
+      public async redirectWithQueryAndFragment() {
+        await this.router.load({ component: 'a', params: { foo: '42' } }, { queryParams: { foo: 'bar' }, fragment: 'foobar' });
+      }
+      public async redirectWithQueryAndFragmentSiblingViewport() {
+        await this.router.load([{ component: 'a', params: { foo: '42' } }, { component: 'a', params: { foo: '84' } }], { queryParams: { foo: 'bar' }, fragment: 'foobar' });
       }
     }
 
@@ -1576,7 +2291,7 @@ describe('router (smoke tests)', function () {
         { path: ['', 'b'], component: VmB, title: 'B', transitionPlan: 'invoke-lifecycles' },
       ],
     })
-    @customElement({ name: 'app-root', template: '<au-viewport></au-viewport>' })
+    @customElement({ name: 'app-root', template: '<au-viewport></au-viewport> <au-viewport default.bind="null"></au-viewport>' })
     class AppRoot { }
 
     async function start(buildTitle: IRouterOptions['buildTitle'] | null = null) {
@@ -1595,46 +2310,194 @@ describe('router (smoke tests)', function () {
       return { host, au, container };
     }
 
-    it('queryString - #1', async function () {
-      const { host, au } = await start();
+    it('queryString - #1 - query string in string routing instruction', async function () {
+      const { host, au, container } = await start();
       const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
 
-      await vmb.redirect1();
+      await vmb.redirectToPath();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar');
+      assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar | fragment:');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\?foo=bar$/);
 
       await au.stop();
     });
 
-    it('queryString - #2', async function () {
-      const { host, au } = await start();
+    it('queryString - #2 - structured query string object', async function () {
+      const { host, au, container } = await start();
       const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
 
-      await vmb.redirect2();
+      await vmb.redirectWithQueryObj();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar');
+      assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar | fragment:');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\?foo=bar$/);
 
       await au.stop();
     });
 
-    it('queryString - #3', async function () {
-      const { host, au } = await start();
+    it('queryString - #3 - multi-valued query string - value from both string path and structured query params', async function () {
+      const { host, au, container } = await start();
       const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
 
-      await vmb.redirect3();
+      await vmb.redirectWithMultivaluedQuery();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: foo=fizz&foo=bar');
+      assert.html.textContent(host, 'view-a foo: undefined | query: foo=fizz&foo=bar | fragment:');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\?foo=fizz&foo=bar$/);
 
       await au.stop();
     });
 
-    it('queryString - #4', async function () {
-      const { host, au } = await start();
+    it('queryString - #4 - structured query string along with path parameter', async function () {
+      const { host, au, container } = await start();
       const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
 
-      await vmb.redirect4();
+      await vmb.redirectWithRouteParamAndQueryObj();
 
-      assert.html.textContent(host, 'view-a foo: fizz | query: foo=bar');
+      assert.html.textContent(host, 'view-a foo: fizz | query: foo=bar | fragment:');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/fizz\?foo=bar$/);
+
+      await au.stop();
+    });
+
+    it('queryString - #5 - structured query string with class as routing instruction', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectWithClassAndQueryObj();
+
+      assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar | fragment:');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\?foo=bar$/);
+
+      await au.stop();
+    });
+
+    it('queryString - #6 - structured query string with viewport instruction', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectVpInstrcAndQueryObj();
+
+      assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment:');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42\?foo=bar$/);
+
+      await au.stop();
+    });
+
+    it('queryString - #7 - structured query string with viewport instruction - route-id and multi-valued key', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectVpInstrcRouteIdAndQueryObj();
+
+      assert.html.textContent(host, 'view-a foo: 42 | query: bar=fizz&bar=foo | fragment:');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42\?bar=fizz&bar=foo$/);
+
+      await au.stop();
+    });
+
+    it('queryString - #8 - sibling viewports', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectSiblingViewport();
+
+      assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment: view-a foo: undefined | query: foo=bar | fragment:');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42\+a\?foo=bar$/);
+
+      await au.stop();
+    });
+
+    it('fragment - #1 - raw fragment in path', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectFragment();
+
+      assert.html.textContent(host, 'view-a foo: undefined | query: | fragment: foobar');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a#foobar$/);
+
+      await au.stop();
+    });
+
+    it('fragment - #2 - fragment in navigation options', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectFragmentInNavOpt();
+
+      assert.html.textContent(host, 'view-a foo: undefined | query: | fragment: foobar');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a#foobar$/);
+
+      await au.stop();
+    });
+
+    it('fragment - #3 - fragment in path always wins over the fragment in navigation options', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectFragmentInPathAndNavOpt();
+
+      assert.html.textContent(host, 'view-a foo: undefined | query: | fragment: foobar');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a#foobar$/);
+
+      await au.stop();
+    });
+
+    it('fragment - #4 - with viewport instruction', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectFragmentWithVpInstrc();
+
+      assert.html.textContent(host, 'view-a foo: 42 | query: | fragment: foobar');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42#foobar$/);
+
+      await au.stop();
+    });
+
+    it('fragment - #5 - with viewport instruction - raw url', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectFragmentWithVpInstrcRawUrl();
+
+      assert.html.textContent(host, 'view-a foo: 42 | query: | fragment: foobar');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42#foobar$/);
+
+      await au.stop();
+    });
+
+    it('fragment - #6 - sibling viewport', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectFragmentSiblingViewport();
+
+      assert.html.textContent(host, 'view-a foo: 42 | query: | fragment: foobar view-a foo: undefined | query: | fragment: foobar');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42\+a#foobar$/);
+
+      await au.stop();
+    });
+
+    it('query and fragment', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectWithQueryAndFragment();
+
+      assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment: foobar');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42\?foo=bar#foobar$/);
+
+      await au.stop();
+    });
+
+    it('query and fragment - sibling viewport', async function () {
+      const { host, au, container } = await start();
+      const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
+
+      await vmb.redirectWithQueryAndFragmentSiblingViewport();
+
+      assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment: foobar view-a foo: 84 | query: foo=bar | fragment: foobar');
+      assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42\+a\/84\?foo=bar#foobar$/);
 
       await au.stop();
     });
@@ -1644,7 +2507,7 @@ describe('router (smoke tests)', function () {
       assert.strictEqual(container.get(IPlatform).document.title, 'B | base');
       const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
 
-      await vmb.redirect1();
+      await vmb.redirectToPath();
 
       assert.strictEqual(container.get(IPlatform).document.title, 'A | base');
 
@@ -1659,21 +2522,62 @@ describe('router (smoke tests)', function () {
       assert.strictEqual(container.get(IPlatform).document.title, 'base - B');
       const vmb = CustomElement.for<VmB>(host.querySelector('vm-b')).viewModel;
 
-      await vmb.redirect1();
+      await vmb.redirectToPath();
 
       assert.strictEqual(container.get(IPlatform).document.title, 'base - A');
 
       await au.stop();
     });
-
-    // TODO(sayan): add more tests for title involving children and sibling routes
   }
+  // TODO(sayan): add more tests for title involving children and sibling routes
+
+  it('root/child/grandchild/great-grandchild', async function () {
+    @customElement({ name: 'gcc-1', template: `gcc1` })
+    class GGC1 { }
+
+    @route({
+      routes: [
+        { path: '', component: GGC1 },
+      ],
+    })
+    @customElement({ name: 'gc-1', template: `<au-viewport></au-viewport>`, })
+    class GC1 { }
+
+    @route({
+      routes: [
+        { path: '', redirectTo: 'gc1' },
+        { id: 'gc1', path: 'gc1', component: GC1 },
+      ],
+    })
+    @customElement({ name: 'c-1', template: `<au-viewport></au-viewport>`, })
+    class C1 { }
+
+    @route({
+      routes: [
+        { path: '', redirectTo: 'c1' },
+        { path: 'c1', component: C1, },
+      ],
+    })
+    @customElement({ name: 'ro-ot', template: `<au-viewport></au-viewport>`, })
+    class Root { }
+
+    const { au, container, host } = await start({ appRoot: Root });
+
+    assert.html.textContent(host, 'gcc1');
+    assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /c1\/gc1$/);
+
+    await au.stop();
+  });
+  // #endregion
 
   // TODO(sayan): add tests here for the location URL building in relation for sibling, parent/children relationship and viewport name
 
-  describe('navigation plan', function () {
+  describe('navigation model', function () {
 
-    function getNavBarCe(hasAsyncRouteConfig: boolean = false) {
+    function getNavBarCe(
+      hasAsyncRouteConfig: boolean = false,
+      includeRedirection: boolean = false,
+    ) {
       @valueConverter('firstNonEmpty')
       class FirstNonEmpty {
         public toView(paths: string[]): string {
@@ -1685,15 +2589,15 @@ describe('router (smoke tests)', function () {
 
       @customElement({
         name: 'nav-bar',
-        template: `<nav>
+        template: `<nav if.bind="navModel">
         <ul>
-          <li repeat.for="route of navModel.routes"><a href.bind="route.path | firstNonEmpty" active.class="route.isActive">\${route.title}</a></li>
+          <li repeat.for="route of navModel.routes${includeRedirection ? '' : '.filter(r => !r.redirectTo)'}"><a href.bind="route.path | firstNonEmpty" active.class="route.isActive">\${route.title}</a></li>
         </ul>
-      </nav>`,
+      </nav><template else>no nav model</template>`,
         dependencies: [FirstNonEmpty]
       })
       class NavBar implements ICustomElementViewModel {
-        private readonly navModel: INavigationModel;
+        private readonly navModel: INavigationModel | null;
         public constructor(
           @IRouteContext routeCtx: IRouteContext,
           @INode private readonly node: INode,
@@ -1702,7 +2606,7 @@ describe('router (smoke tests)', function () {
         }
 
         public binding(_initiator: IHydratedController, _parent: IHydratedController, _flags: LifecycleFlags): void | Promise<void> {
-          if (hasAsyncRouteConfig) return this.navModel.resolve();
+          if (hasAsyncRouteConfig) return this.navModel?.resolve();
         }
 
         public assert(expected: { href: string; text: string; active?: boolean }[], message: string = ''): void {
@@ -1863,7 +2767,8 @@ describe('router (smoke tests)', function () {
 
       @customElement({ name: 'ro-ot', template: '<nav-bar></nav-bar> root <au-viewport></au-viewport>' })
       class Root implements IRouteViewModel {
-        public getRouteConfig(_parentDefinition: RouteDefinition, _routeNode: RouteNode): IRouteConfig {
+        public async getRouteConfig(_parentDefinition: RouteDefinition, _routeNode: RouteNode): Promise<IRouteConfig> {
+          await new Promise((resolve) => setTimeout(resolve, 10));
           return {
             routes: [
               { path: ['', 'p1'], component: P1, title: 'P1' },
@@ -2048,6 +2953,408 @@ describe('router (smoke tests)', function () {
       await queue.yield();
       rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
       assert.notEqual(host.querySelector('ce-p3'), null);
+
+      await au.stop();
+    });
+
+    it('parameterized route', async function () {
+      @customElement({ name: 'ce-c11', template: 'c11' })
+      class C11 { }
+      @customElement({ name: 'ce-c12', template: 'c12' })
+      class C12 { }
+      @customElement({ name: 'ce-c21', template: 'c21' })
+      class C21 { }
+      @customElement({ name: 'ce-c22', template: 'c22' })
+      class C22 { }
+
+      @route({
+        routes: [
+          { path: ['', 'c11'], component: C11, title: 'C11' },
+          { path: ['c12/:id', 'c12'], component: C12, title: 'C12' },
+        ]
+      })
+      @customElement({ name: 'ce-p1', template: '<nav-bar></nav-bar> p1 <au-viewport></au-viewport>' })
+      class P1 { }
+
+      @route({
+        routes: [
+          { path: ['c21', 'c21/:id'], component: C21, title: 'C21' },
+          { path: ['', 'c22'], component: C22, title: 'C22' },
+        ]
+      })
+      @customElement({ name: 'ce-p2', template: '<nav-bar></nav-bar> p2 <au-viewport></au-viewport>' })
+      class P2 implements IRouteViewModel { }
+
+      @route({
+        routes: [
+          { path: ['', 'p1'], component: P1, title: 'P1' },
+          { path: ['p2/:id', 'p2'], component: P2, title: 'P2' },
+        ]
+      })
+      @customElement({ name: 'ro-ot', template: '<nav-bar></nav-bar> root <au-viewport></au-viewport>' })
+      class Root { }
+
+      const ctx = TestContext.create();
+      const { container } = ctx;
+
+      const navBarCe = getNavBarCe();
+      container.register(
+        StandardConfiguration,
+        TestRouterConfiguration.for(LogLevel.warn),
+        RouterConfiguration,
+        navBarCe,
+      );
+
+      const au = new Aurelia(container);
+      const host = ctx.createElement('div');
+
+      await au.app({ component: Root, host }).start();
+
+      const queue = container.get(IPlatform).domWriteQueue;
+      const router = container.get(IRouter);
+
+      // Start
+      await queue.yield();
+      type NavBar = InstanceType<typeof navBarCe>;
+      const rootNavbar = CustomElement.for<NavBar>(host.querySelector('nav-bar')).viewModel;
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: true }, { href: 'p2/:id', text: 'P2', active: false }], 'start root');
+      let childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p1>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c11', text: 'C11', active: true }, { href: 'c12/:id', text: 'C12', active: false }], 'start child navbar');
+
+      // Round#2
+      await router.load('p2/42');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2/:id', text: 'P2', active: true }], 'round#1 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p2>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c21', text: 'C21', active: false }, { href: 'c22', text: 'C22', active: true }], 'round#1 child navbar');
+
+      // Round#2
+      await router.load('p1/c12');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: true }, { href: 'p2/:id', text: 'P2', active: false }], 'round#2 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p1>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c11', text: 'C11', active: false }, { href: 'c12/:id', text: 'C12', active: true }], 'round#2 child navbar');
+
+      // Round#3
+      await router.load('p2');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2/:id', text: 'P2', active: true }], 'round#3 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p2>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c21', text: 'C21', active: false }, { href: 'c22', text: 'C22', active: true }], 'round#3 child navbar');
+
+      // Round#4
+      await router.load('p1/c12/42');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: true }, { href: 'p2/:id', text: 'P2', active: false }], 'round#4 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p1>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c11', text: 'C11', active: false }, { href: 'c12/:id', text: 'C12', active: true }], 'round#4 child navbar');
+
+      // Round#5
+      await router.load('p2/42/C21/21');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2/:id', text: 'P2', active: true }], 'round#5 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p2>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c21', text: 'C21', active: true }, { href: 'c22', text: 'C22', active: false }], 'round#5 child navbar');
+
+      await au.stop();
+    });
+
+    it('with redirection', async function () {
+      @customElement({ name: 'ce-c11', template: 'c11' })
+      class C11 { }
+      @customElement({ name: 'ce-c12', template: 'c12' })
+      class C12 { }
+      @customElement({ name: 'ce-c21', template: 'c21' })
+      class C21 { }
+      @customElement({ name: 'ce-c22', template: 'c22' })
+      class C22 { }
+
+      @route({
+        routes: [
+          { path: '', redirectTo: 'c11' },
+          { path: 'c11', component: C11, title: 'C11' },
+          { path: 'c12', component: C12, title: 'C12' },
+        ]
+      })
+      @customElement({ name: 'ce-p1', template: '<nav-bar></nav-bar> p1 <au-viewport></au-viewport>' })
+      class P1 { }
+
+      @route({
+        routes: [
+          { path: '', redirectTo: 'c22' },
+          { path: 'c21', component: C21, title: 'C21' },
+          { path: 'c22', component: C22, title: 'C22' },
+        ]
+      })
+      @customElement({ name: 'ce-p2', template: '<nav-bar></nav-bar> p2 <au-viewport></au-viewport>' })
+      class P2 { }
+      @customElement({ name: 'ce-p3', template: 'p3' })
+      class P3 { }
+
+      @route({
+        routes: [
+          { path: '', redirectTo: 'p1' },
+          { path: 'p1', component: P1, title: 'P1' },
+          { path: 'p2', component: P2, title: 'P2' },
+          { path: 'p3', component: P3, title: 'P3', nav: false },
+        ]
+      })
+      @customElement({ name: 'ro-ot', template: '<nav-bar></nav-bar> root <au-viewport></au-viewport>' })
+      class Root { }
+
+      const ctx = TestContext.create();
+      const { container } = ctx;
+
+      const navBarCe = getNavBarCe();
+      container.register(
+        StandardConfiguration,
+        TestRouterConfiguration.for(LogLevel.warn),
+        RouterConfiguration,
+        navBarCe
+      );
+
+      const au = new Aurelia(container);
+      const host = ctx.createElement('div');
+
+      await au.app({ component: Root, host }).start();
+
+      const queue = container.get(IPlatform).domWriteQueue;
+      const router = container.get(IRouter);
+
+      // Start
+      await queue.yield();
+      type NavBar = InstanceType<typeof navBarCe>;
+      const rootNavbar = CustomElement.for<NavBar>(host.querySelector('nav-bar')).viewModel;
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: true }, { href: 'p2', text: 'P2', active: false }], 'start root');
+      let childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p1>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c11', text: 'C11', active: true }, { href: 'c12', text: 'C12', active: false }], 'start child navbar');
+
+      // Round#1
+      await router.load('p2');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: true }], 'round#1 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p2>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c21', text: 'C21', active: false }, { href: 'c22', text: 'C22', active: true }], 'round#1 child navbar');
+
+      // Round#2
+      await router.load('p1/c12');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: true }, { href: 'p2', text: 'P2', active: false }], 'round#2 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p1>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c11', text: 'C11', active: false }, { href: 'c12', text: 'C12', active: true }], 'round#2 navbar');
+
+      // Round#3
+      await router.load('p2/c21');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: true }], 'round#3 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p2>nav-bar')).viewModel;
+      childNavBar.assert([{ href: 'c21', text: 'C21', active: true }, { href: 'c22', text: 'C22', active: false }], 'round#3 navbar');
+
+      // Round#4 - nav:false, but routeable
+      await router.load('p3');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
+      assert.notEqual(host.querySelector('ce-p3'), null);
+
+      await au.stop();
+    });
+
+    it('with redirection - path with redirection is shown', async function () {
+      @customElement({ name: 'ce-c11', template: 'c11' })
+      class C11 { }
+      @customElement({ name: 'ce-c12', template: 'c12' })
+      class C12 { }
+      @customElement({ name: 'ce-c21', template: 'c21' })
+      class C21 { }
+      @customElement({ name: 'ce-c22', template: 'c22' })
+      class C22 { }
+
+      @route({
+        routes: [
+          { path: '', redirectTo: 'c11' },
+          { path: 'c11', component: C11, title: 'C11' },
+          { path: 'c12', component: C12, title: 'C12' },
+        ]
+      })
+      @customElement({ name: 'ce-p1', template: '<nav-bar></nav-bar> p1 <au-viewport></au-viewport>' })
+      class P1 { }
+
+      @route({
+        routes: [
+          { path: '', redirectTo: 'c22' },
+          { path: 'c21', component: C21, title: 'C21' },
+          { path: 'c22', component: C22, title: 'C22' },
+        ]
+      })
+      @customElement({ name: 'ce-p2', template: '<nav-bar></nav-bar> p2 <au-viewport></au-viewport>' })
+      class P2 { }
+      @customElement({ name: 'ce-p3', template: 'p3' })
+      class P3 { }
+
+      @route({
+        routes: [
+          { path: '', redirectTo: 'p1' },
+          { path: 'p1', component: P1, title: 'P1' },
+          { path: 'p2', component: P2, title: 'P2' },
+          { path: 'p3', component: P3, title: 'P3', nav: false },
+        ]
+      })
+      @customElement({ name: 'ro-ot', template: '<nav-bar></nav-bar> root <au-viewport></au-viewport>' })
+      class Root { }
+
+      const ctx = TestContext.create();
+      const { container } = ctx;
+
+      const navBarCe = getNavBarCe(false, true);
+      container.register(
+        StandardConfiguration,
+        TestRouterConfiguration.for(LogLevel.warn),
+        RouterConfiguration,
+        navBarCe
+      );
+
+      const au = new Aurelia(container);
+      const host = ctx.createElement('div');
+
+      await au.app({ component: Root, host }).start();
+
+      const queue = container.get(IPlatform).domWriteQueue;
+      const router = container.get(IRouter);
+
+      // Start
+      await queue.yield();
+      type NavBar = InstanceType<typeof navBarCe>;
+      const rootNavbar = CustomElement.for<NavBar>(host.querySelector('nav-bar')).viewModel;
+      rootNavbar.assert([{ href: '', text: 'null', active: true }, { href: 'p1', text: 'P1', active: true }, { href: 'p2', text: 'P2', active: false }], 'start root');
+      let childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p1>nav-bar')).viewModel;
+      childNavBar.assert([{ href: '', text: 'null', active: true }, { href: 'c11', text: 'C11', active: true }, { href: 'c12', text: 'C12', active: false }], 'start child navbar');
+
+      // Round#1
+      await router.load('p2');
+      await queue.yield();
+      rootNavbar.assert([{ href: '', text: 'null', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: true }], 'round#1 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p2>nav-bar')).viewModel;
+      childNavBar.assert([{ href: '', text: 'null', active: true }, { href: 'c21', text: 'C21', active: false }, { href: 'c22', text: 'C22', active: true }], 'round#1 child navbar');
+
+      // Round#2
+      await router.load('p1/c12');
+      await queue.yield();
+      rootNavbar.assert([{ href: '', text: 'null', active: false }, { href: 'p1', text: 'P1', active: true }, { href: 'p2', text: 'P2', active: false }], 'round#2 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p1>nav-bar')).viewModel;
+      childNavBar.assert([{ href: '', text: 'null', active: false }, { href: 'c11', text: 'C11', active: false }, { href: 'c12', text: 'C12', active: true }], 'round#2 navbar');
+
+      // Round#3
+      await router.load('p2/c21');
+      await queue.yield();
+      rootNavbar.assert([{ href: '', text: 'null', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: true }], 'round#3 root');
+      childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p2>nav-bar')).viewModel;
+      childNavBar.assert([{ href: '', text: 'null', active: false }, { href: 'c21', text: 'C21', active: true }, { href: 'c22', text: 'C22', active: false }], 'round#3 navbar');
+
+      // Round#4 - nav:false, but routeable
+      await router.load('p3');
+      await queue.yield();
+      rootNavbar.assert([{ href: '', text: 'null', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
+      assert.notEqual(host.querySelector('ce-p3'), null);
+
+      await au.stop();
+    });
+
+    it('parameterized redirection', async function () {
+      @customElement({ name: 'ce-p1', template: 'p1' })
+      class P1 { }
+
+      @customElement({ name: 'ce-p2', template: 'p2' })
+      class P2 { }
+
+      @route({
+        routes: [
+          { path: 'foo/:id', redirectTo: 'p1/:id' },
+          { path: 'bar/:id', redirectTo: 'p2/:id' },
+          { path: 'p1/:id', component: P1, title: 'P1' },
+          { path: 'p2/:id', component: P2, title: 'P2' },
+        ]
+      })
+      @customElement({ name: 'ro-ot', template: '<nav-bar></nav-bar> root <au-viewport></au-viewport>' })
+      class Root { }
+
+      const ctx = TestContext.create();
+      const { container } = ctx;
+
+      const navBarCe = getNavBarCe();
+      container.register(
+        StandardConfiguration,
+        TestRouterConfiguration.for(LogLevel.warn),
+        RouterConfiguration,
+        navBarCe
+      );
+
+      const au = new Aurelia(container);
+      const host = ctx.createElement('div');
+
+      await au.app({ component: Root, host }).start();
+
+      const queue = container.get(IPlatform).domWriteQueue;
+      const router = container.get(IRouter);
+
+      // Start
+      await queue.yield();
+      type NavBar = InstanceType<typeof navBarCe>;
+      const rootNavbar = CustomElement.for<NavBar>(host.querySelector('nav-bar')).viewModel;
+      rootNavbar.assert([{ href: 'p1/:id', text: 'P1', active: false }, { href: 'p2/:id', text: 'P2', active: false }], 'start root');
+
+      // Round#1
+      await router.load('bar/42');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1/:id', text: 'P1', active: false }, { href: 'p2/:id', text: 'P2', active: true }], 'round#1 root');
+
+      // Round#2
+      await router.load('foo/42');
+      await queue.yield();
+      rootNavbar.assert([{ href: 'p1/:id', text: 'P1', active: true }, { href: 'p2/:id', text: 'P2', active: false }], 'round#2 root');
+
+      await au.stop();
+    });
+
+    it('can be deactivated', async function () {
+      @customElement({ name: 'ce-c11', template: 'c11' })
+      class C11 { }
+
+      @route({
+        routes: [
+          { path: ['', 'c11'], component: C11, title: 'C11' },
+        ]
+      })
+      @customElement({ name: 'ce-p1', template: '<nav-bar></nav-bar> p1 <au-viewport></au-viewport>' })
+      class P1 { }
+
+      @route({
+        routes: [
+          { path: ['', 'p1'], component: P1, title: 'P1' },
+        ]
+      })
+      @customElement({ name: 'ro-ot', template: '<nav-bar></nav-bar> root <au-viewport></au-viewport>' })
+      class Root { }
+
+      const ctx = TestContext.create();
+      const { container } = ctx;
+
+      const navBarCe = getNavBarCe();
+      container.register(
+        StandardConfiguration,
+        TestRouterConfiguration.for(LogLevel.warn),
+        RouterConfiguration.customize({ useNavigationModel: false }),
+        navBarCe
+      );
+
+      const au = new Aurelia(container);
+      const host = ctx.createElement('div');
+
+      await au.app({ component: Root, host }).start();
+
+      const queue = container.get(IPlatform).domWriteQueue;
+
+      await queue.yield();
+      assert.html.textContent(host, 'no nav model root no nav model p1 c11');
 
       await au.stop();
     });
@@ -2258,12 +3565,128 @@ describe('router (smoke tests)', function () {
     await au.app({ component: Root, host }).start();
 
     assert.html.textContent(host, 'p2');
+    const location = container.get(ILocation) as unknown as MockBrowserHistoryLocation;
+    assert.match(location.path, /p2$/);
 
     await router.load('p1');
     assert.html.textContent(host, 'p1');
+    assert.match(location.path, /p1$/);
 
     await router.load('foo');
     assert.html.textContent(host, 'p2');
+    assert.match(location.path, /p2$/);
+
+    await au.stop();
+  });
+
+  it('parameterized redirect', async function () {
+    @customElement({ name: 'ce-p1', template: 'p1' })
+    class P1 { }
+
+    @customElement({ name: 'ce-p2', template: `p2 \${id}` })
+    class P2 implements IRouteViewModel {
+      private id: string;
+      public loading(params: Params, _next: RouteNode, _current: RouteNode): void | Promise<void> {
+        this.id = params.id;
+      }
+    }
+    @route({
+      routes: [
+        { path: '', redirectTo: 'p2' },
+        { path: 'foo', redirectTo: 'p2/42' },
+        { path: 'fizz/:bar', redirectTo: 'p2/:bar' },
+        { path: 'bar', redirectTo: 'p2/43+p2/44' },
+        { path: 'p1', component: P1, title: 'P1' },
+        { path: 'p2/:id?', component: P2, title: 'P2' },
+      ]
+    })
+    @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport><au-viewport default.bind="null"></au-viewport>' })
+    class Root { }
+
+    const ctx = TestContext.create();
+    const { container } = ctx;
+    container.register(
+      StandardConfiguration,
+      TestRouterConfiguration.for(LogLevel.warn),
+      RouterConfiguration,
+      P1,
+      P2,
+    );
+
+    const au = new Aurelia(container);
+    const host = ctx.createElement('div');
+    const router = container.get(IRouter);
+
+    await au.app({ component: Root, host }).start();
+
+    assert.html.textContent(host, 'p2');
+    const location = container.get(ILocation) as unknown as MockBrowserHistoryLocation;
+    assert.match(location.path, /p2$/);
+
+    await router.load('p1');
+    assert.html.textContent(host, 'p1');
+    assert.match(location.path, /p1$/);
+
+    await router.load('foo');
+    assert.html.textContent(host, 'p2 42');
+    assert.match(location.path, /p2\/42$/);
+
+    await router.load('fizz/21');
+    assert.html.textContent(host, 'p2 21');
+    assert.match(location.path, /p2\/21$/);
+
+    try {
+      await router.load('bar');
+      assert.fail('Expected error for non-simple redirect.');
+    } catch (e) {
+      assert.match((e as Error).message, /^Unexpected expression kind/, 'Expected error due to unexpected path segment.');
+    }
+
+    await au.stop();
+  });
+
+  it('parameterized redirect - parameter rearrange', async function () {
+    @customElement({ name: 'ce-p1', template: 'p1' })
+    class P1 { }
+
+    @customElement({ name: 'ce-p2', template: `p2 \${p1} \${p2}` })
+    class P2 implements IRouteViewModel {
+      private p1: string;
+      private p2: string;
+      public loading(params: Params, _next: RouteNode, _current: RouteNode): void | Promise<void> {
+        this.p1 = params.p1;
+        this.p2 = params.p2;
+      }
+    }
+    @route({
+      routes: [
+        { path: 'fizz/:foo/:bar', redirectTo: 'p2/:bar/:foo' },
+        { path: 'p2/:p1?/:p2?', component: P2, title: 'P2' },
+      ]
+    })
+    @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport><au-viewport default.bind="null"></au-viewport>' })
+    class Root { }
+
+    const ctx = TestContext.create();
+    const { container } = ctx;
+    container.register(
+      StandardConfiguration,
+      TestRouterConfiguration.for(LogLevel.warn),
+      RouterConfiguration,
+      P1,
+      P2,
+    );
+
+    const au = new Aurelia(container);
+    const host = ctx.createElement('div');
+    const router = container.get(IRouter);
+
+    await au.app({ component: Root, host }).start();
+    const location = container.get(ILocation) as unknown as MockBrowserHistoryLocation;
+
+    await router.load('fizz/1/2');
+    assert.html.textContent(host, 'p2 2 1');
+    assert.match(location.path, /p2\/2\/1$/);
 
     await au.stop();
   });

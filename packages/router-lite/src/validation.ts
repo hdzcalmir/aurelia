@@ -1,8 +1,8 @@
-import { IIndexable } from '@aurelia/kernel';
-import { isCustomElementViewModel, PartialCustomElementDefinition } from '@aurelia/runtime-html';
+import type { IIndexable } from '@aurelia/kernel';
+import { isCustomElementViewModel, type PartialCustomElementDefinition } from '@aurelia/runtime-html';
 
-import { IChildRouteConfig, IRedirectRouteConfig, Routeable } from './route';
-import { IViewportInstruction, RouteableComponent } from './instructions';
+import type { IChildRouteConfig, IRedirectRouteConfig, Routeable } from './route';
+import type { IViewportInstruction, Params, RouteableComponent } from './instructions';
 import { tryStringify } from './util';
 
 /**
@@ -214,7 +214,9 @@ function validateComponent(component: Routeable | null | undefined, parentPath: 
   }
 }
 
-export function shallowEquals<T>(a: T, b: T): boolean {
+// This function is intentionally restricted to Params type as it is used only for Params.
+// Feel free to extends the typings as per need.
+export function shallowEquals(a: Params | null, b: Params | null): boolean {
   if (a === b) {
     return true;
   }
