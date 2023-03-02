@@ -86,6 +86,10 @@ export interface IFixture<T> {
      */
     assertHtml(selector: string, html: string): void;
     /**
+     * Assert an element based on the given selector has the given css classes
+     */
+    assertClass(selector: string, ...classes: string[]): void;
+    /**
      * Assert the attribute value of an element matching the given selector inside the application host equals to a given string.
      *
      * Will throw if there' more than one elements with matching selector

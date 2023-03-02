@@ -7591,6 +7591,13 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             assert.strictEqual(getInnerHtml(host, compact), selectorOrHtml);
         }
     }
+    function assertClass(selector, ...classes) {
+        const el = queryBy(selector);
+        if (el === null) {
+            throw new Error(`No element found for selector "${selector}" to assert className contains "${classes}"`);
+        }
+        classes.forEach(c => assert.contains(el.classList, c));
+    }
     function assertAttr(selector, name, value) {
         const el = queryBy(selector);
         if (el === null) {
@@ -7665,6 +7672,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             this.queryBy = queryBy;
             this.assertText = assertText;
             this.assertHtml = assertHtml;
+            this.assertClass = assertClass;
             this.assertAttr = assertAttr;
             this.assertAttrNS = assertAttrNS;
             this.assertValue = assertValue;

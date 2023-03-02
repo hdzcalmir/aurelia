@@ -2382,22 +2382,18 @@ class CSSModulesProcessorRegistry {
             noMultiBindings: true,
         }, (_a = class CustomAttributeClass {
                 constructor(element) {
-                    this.element = element;
+                    this._accessor = new ClassAttributeAccessor(element);
                 }
                 binding() {
                     this.valueChanged();
                 }
                 valueChanged() {
-                    if (!this.value) {
-                        this.element.className = '';
-                        return;
-                    }
-                    this.element.className = getClassesToAdd(this.value).map(x => classLookup[x] || x).join(' ');
+                    this._accessor.setValue(this.value?.split(/\s+/g).map(x => classLookup[x] || x) ?? '');
                 }
             },
             _a.inject = [INode],
             _a));
-        container.register(ClassCustomAttribute);
+        container.register(ClassCustomAttribute, instanceRegistration(ICssModulesMapping, classLookup));
     }
 }
 function shadowCSS(...css) {
@@ -4024,6 +4020,7 @@ const IEventTarget = createInterface('IEventTarget', x => x.cachedCallback(handl
     return handler.get(IPlatform).document;
 }));
 const IRenderLocation = createInterface('IRenderLocation');
+const ICssModulesMapping = createInterface('CssModules');
 
 const effectiveParentNodeOverrides = new WeakMap();
 function getEffectiveParentNode(node) {
@@ -5000,7 +4997,13 @@ StylePropertyBindingRenderer = __decorate([
 ], StylePropertyBindingRenderer);
 let AttributeBindingRenderer = class AttributeBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target, instruction.attr, instruction.to, 2));
+        const container = renderingCtrl.container;
+        const classMapping = container.has(ICssModulesMapping, false)
+            ? container.get(ICssModulesMapping)
+            : null;
+        renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target, instruction.attr, classMapping == null
+            ? instruction.to
+            : instruction.to.split(/\s/g).map(c => classMapping[c] ?? c).join(' '), 2));
     }
 };
 AttributeBindingRenderer = __decorate([

@@ -3727,28 +3727,33 @@ function ir(e, t, n = [], i = true, r = TestContext.create()) {
             Bi.strictEqual(S(i, n), t);
         } else Bi.strictEqual(S(c, n), e);
     }
-    function E(e, t, n) {
+    function E(e, ...t) {
+        const n = w(e);
+        if (null === n) throw new Error(`No element found for selector "${e}" to assert className contains "${t}"`);
+        t.forEach((e => Bi.contains(n.classList, e)));
+    }
+    function A(e, t, n) {
         const i = w(e);
         if (null === i) throw new Error(`No element found for selector "${e}" to compare attribute "${t}" against "${n}"`);
         Bi.strictEqual(i.getAttribute(t), n);
     }
-    function A(e, t, n, i) {
+    function R(e, t, n, i) {
         const r = w(e);
         if (null === r) throw new Error(`No element found for selector "${e}" to compare attribute "${n}" against "${i}"`);
         Bi.strictEqual(r.getAttributeNS(t, n), i);
     }
-    function R(e, t) {
+    function q(e, t) {
         const n = w(e);
         if (null === n) throw new Error(`No element found for selector "${e}" to compare value against "${t}"`);
         Bi.strictEqual(n.value, t);
     }
-    function q(e, t, n) {
+    function M(e, t, n) {
         const i = w(e);
         if (null === i) throw new Error(`No element found for selector "${e}" to fire event "${t}"`);
         i.dispatchEvent(new r.CustomEvent(t, n));
     }
     [ "click", "change", "input", "scroll" ].forEach((e => {
-        Object.defineProperty(q, e, {
+        Object.defineProperty(M, e, {
             configurable: true,
             writable: true,
             value: (t, n) => {
@@ -3758,13 +3763,13 @@ function ir(e, t, n = [], i = true, r = TestContext.create()) {
             }
         });
     }));
-    function M(e, t) {
+    function L(e, t) {
         const n = "string" === typeof e ? w(e) : e;
         if (null === n || !/input|textarea/i.test(n.nodeName)) throw new Error(`No <input>/<textarea> element found for selector "${e}" to emulate input for "${t}"`);
         n.value = t;
         n.dispatchEvent(new s.window.Event("input"));
     }
-    const L = (e, t) => {
+    const T = (e, t) => {
         const n = w(e);
         if (null === n) throw new Error(`No element found for selector "${e}" to scroll by "${JSON.stringify(t)}"`);
         n.scrollBy("number" === typeof t ? {
@@ -3772,10 +3777,10 @@ function ir(e, t, n = [], i = true, r = TestContext.create()) {
         } : t);
         n.dispatchEvent(new s.window.Event("scroll"));
     };
-    const T = e => {
+    const z = e => {
         r.platform.domWriteQueue.flush(e);
     };
-    const z = new class Results {
+    const F = new class Results {
         constructor() {
             this.startPromise = b;
             this.ctx = r;
@@ -3793,14 +3798,15 @@ function ir(e, t, n = [], i = true, r = TestContext.create()) {
             this.queryBy = w;
             this.assertText = C;
             this.assertHtml = O;
-            this.assertAttr = E;
-            this.assertAttrNS = A;
-            this.assertValue = R;
+            this.assertClass = E;
+            this.assertAttr = A;
+            this.assertAttrNS = R;
+            this.assertValue = q;
             this.createEvent = (e, t) => new s.CustomEvent(e, t);
-            this.trigger = q;
-            this.type = M;
-            this.scrollBy = L;
-            this.flush = T;
+            this.trigger = M;
+            this.type = L;
+            this.scrollBy = T;
+            this.flush = z;
         }
         start() {
             return f.app({
@@ -3828,8 +3834,8 @@ function ir(e, t, n = [], i = true, r = TestContext.create()) {
             return Promise.resolve(this);
         }
     };
-    tr.publish("fixture:created", z);
-    return z;
+    tr.publish("fixture:created", F);
+    return F;
 }
 
 class FixtureBuilder {
