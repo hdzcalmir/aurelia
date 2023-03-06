@@ -1,0 +1,1 @@
+//# sourceMappingURL=resource-indexer.spec.d.ts.map

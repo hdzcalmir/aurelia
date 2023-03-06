@@ -1,0 +1,76 @@
+import { User } from './molecules/user-preference/user-preference.js';
+import { Thing } from './molecules/specs-viewer/thing-viewer.js';
+import { SelectOption } from './atoms/select-dropdown/select-dropdown.js';
+import { Card } from './molecules/cards/cards.js';
+type Contact = {
+    number: number;
+    type: string;
+};
+export type Product = {
+    id: number;
+    name: string;
+};
+type Item = {
+    id: number;
+    name: string;
+};
+export declare class App {
+    private text1;
+    private text2;
+    private text3;
+    text4: string;
+    text5: string;
+    inputOneTime: string;
+    inputTwoWay: string;
+    inputToView: string;
+    inputFromView: string;
+    inputBlrTw: string;
+    inputBlrFv: string;
+    things: Thing[];
+    user: User;
+    contacts1: Map<number, string>;
+    contacts2: Map<number, string>;
+    chosenContact1: number;
+    chosenContact2: number;
+    contacts3: Contact[];
+    chosenContact3: Contact;
+    contacts4: Contact[];
+    chosenContact4: Contact;
+    contacts5: Contact[];
+    chosenContact5: Contact;
+    matcher: (a: Contact, b: Contact) => boolean;
+    contacts6: string[];
+    chosenContact6: string;
+    contacts7: string[];
+    chosenContact7: string;
+    likesCake: boolean;
+    noDisplayValue: string;
+    trueValue: string;
+    falseValue: string;
+    hasAgreed: boolean;
+    products1: Product[];
+    chosenProducts1: Product[];
+    products2: Product[];
+    chosenProducts2: Product[];
+    productMatcher: (a: Product, b: Product) => boolean;
+    somethingDone: boolean;
+    items1: SelectOption[];
+    selectedItem1: number;
+    items2: SelectOption[];
+    selectedItem2: Item;
+    items3: SelectOption[];
+    selectedItem3: Item;
+    optionMatcher: (a: Item, b: Item) => boolean;
+    items4: SelectOption[];
+    selectedItem4: Item;
+    selectedItems1: number[];
+    selectedItems2: Item[];
+    selectedItems3: Item[];
+    selectedItems4: Item[];
+    heroes: Card[];
+    selectedHero: Card;
+    changeTexts(): void;
+    doSomething(): void;
+}
+export {};
+//# sourceMappingURL=app.d.ts.map
