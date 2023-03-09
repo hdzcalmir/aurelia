@@ -4987,14 +4987,51 @@ let SetStyleAttributeRenderer = class SetStyleAttributeRenderer {
 SetStyleAttributeRenderer = __decorate([
     renderer("hg")
 ], SetStyleAttributeRenderer);
+const ambiguousStyles = [
+    'height',
+    'width',
+    'border-width',
+    'padding',
+    'padding-left',
+    'padding-right',
+    'padding-top',
+    'padding-right',
+    'padding-inline',
+    'padding-block',
+    'margin',
+    'margin-left',
+    'margin-right',
+    'margin-top',
+    'margin-bottom',
+    'margin-inline',
+    'margin-block',
+    'top',
+    'right',
+    'bottom',
+    'left',
+];
 let StylePropertyBindingRenderer = class StylePropertyBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        {
+            if (ambiguousStyles.includes(instruction.to)) {
+                renderingCtrl.addBinding(new DevStylePropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target.style, instruction.to, 2));
+                return;
+            }
+        }
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target.style, instruction.to, 2));
     }
 };
 StylePropertyBindingRenderer = __decorate([
     renderer("hd")
 ], StylePropertyBindingRenderer);
+class DevStylePropertyBinding extends PropertyBinding {
+    updateTarget(value) {
+        if (typeof value === 'number' && value > 0) {
+            console.warn(`[DEV]: Setting number ${value} as value for style.${this.targetProperty}. Did you meant "${value}px"?`);
+        }
+        return super.updateTarget(value);
+    }
+}
 let AttributeBindingRenderer = class AttributeBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const container = renderingCtrl.container;
@@ -9615,7 +9652,7 @@ class AuCompose {
         this._contextFactory = contextFactory;
     }
     attaching(initiator, _parent, _flags) {
-        return this._pending = onResolve(this.queue(new ChangeInfo(this.view, this.viewModel, this.model, void 0), initiator), (context) => {
+        return this._pending = onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, void 0), initiator), (context) => {
             if (this._contextFactory.isCurrent(context)) {
                 this._pending = void 0;
             }
@@ -9633,7 +9670,7 @@ class AuCompose {
             this._composition.update(this.model);
             return;
         }
-        this._pending = onResolve(this._pending, () => onResolve(this.queue(new ChangeInfo(this.view, this.viewModel, this.model, name), void 0), (context) => {
+        this._pending = onResolve(this._pending, () => onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, name), void 0), (context) => {
             if (this._contextFactory.isCurrent(context)) {
                 this._pending = void 0;
             }
@@ -9670,9 +9707,9 @@ class AuCompose {
         let comp;
         let compositionHost;
         let removeCompositionHost;
-        const { view, viewModel, model } = context.change;
+        const { _template: template, _component: component, _model: model } = context.change;
         const { _container: container, host, $controller, _location: loc } = this;
-        const vmDef = this.getDef(viewModel);
+        const vmDef = this.getDef(component);
         const childCtn = container.createChild();
         const parentNode = loc == null ? host.parentNode : loc.parentNode;
         if (vmDef !== null) {
@@ -9690,13 +9727,13 @@ class AuCompose {
                     compositionHost.remove();
                 };
             }
-            comp = this.getVm(childCtn, viewModel, compositionHost);
+            comp = this._getComp(childCtn, component, compositionHost);
         }
         else {
             compositionHost = loc == null
                 ? host
                 : loc;
-            comp = this.getVm(childCtn, viewModel, compositionHost);
+            comp = this._getComp(childCtn, component, compositionHost);
         }
         const compose = () => {
             if (vmDef !== null) {
@@ -9706,7 +9743,7 @@ class AuCompose {
             else {
                 const targetDef = CustomElementDefinition.create({
                     name: CustomElement.generateName(),
-                    template: view,
+                    template: template,
                 });
                 const viewFactory = this._rendering.getViewFactory(targetDef, childCtn);
                 const controller = Controller.$view(viewFactory, $controller);
@@ -9729,7 +9766,7 @@ class AuCompose {
             return compose();
         }
     }
-    getVm(container, comp, host) {
+    _getComp(container, comp, host) {
         if (comp == null) {
             return new EmptyComponent();
         }
@@ -9741,7 +9778,7 @@ class AuCompose {
         registerResolver(container, p.Element, registerResolver(container, INode, new InstanceProvider('ElementResolver', isLocation ? null : host)));
         registerResolver(container, IRenderLocation, new InstanceProvider('IRenderLocation', isLocation ? host : null));
         const instance = container.invoke(comp);
-        registerResolver(container, comp, new InstanceProvider('au-compose.viewModel', instance));
+        registerResolver(container, comp, new InstanceProvider('au-compose.component', instance));
         return instance;
     }
     getDef(component) {
@@ -9755,10 +9792,10 @@ class AuCompose {
 }
 __decorate([
     bindable
-], AuCompose.prototype, "view", void 0);
+], AuCompose.prototype, "template", void 0);
 __decorate([
     bindable
-], AuCompose.prototype, "viewModel", void 0);
+], AuCompose.prototype, "component", void 0);
 __decorate([
     bindable
 ], AuCompose.prototype, "model", void 0);
@@ -9790,31 +9827,31 @@ class CompositionContextFactory {
     }
 }
 class ChangeInfo {
-    constructor(view, viewModel, model, src) {
-        this.view = view;
-        this.viewModel = viewModel;
-        this.model = model;
-        this.src = src;
+    constructor(_template, _component, _model, _src) {
+        this._template = _template;
+        this._component = _component;
+        this._model = _model;
+        this._src = _src;
     }
     load() {
-        if (isPromise(this.view) || isPromise(this.viewModel)) {
+        if (isPromise(this._template) || isPromise(this._component)) {
             return Promise
-                .all([this.view, this.viewModel])
-                .then(([view, viewModel]) => {
-                return new LoadedChangeInfo(view, viewModel, this.model, this.src);
+                .all([this._template, this._component])
+                .then(([template, component]) => {
+                return new LoadedChangeInfo(template, component, this._model, this._src);
             });
         }
         else {
-            return new LoadedChangeInfo(this.view, this.viewModel, this.model, this.src);
+            return new LoadedChangeInfo(this._template, this._component, this._model, this._src);
         }
     }
 }
 class LoadedChangeInfo {
-    constructor(view, viewModel, model, src) {
-        this.view = view;
-        this.viewModel = viewModel;
-        this.model = model;
-        this.src = src;
+    constructor(_template, _component, _model, _src) {
+        this._template = _template;
+        this._component = _component;
+        this._model = _model;
+        this._src = _src;
     }
 }
 class CompositionContext {

@@ -4,7 +4,7 @@ import { assert, TestContext } from '@aurelia/testing';
 import { createFixture } from './_shared/create-fixture.js';
 const define = CustomElement.define;
 describe('router/viewport-content.spec.ts', function () {
-    function $setup(dependencies = []) {
+    function $setup(_dependencies = []) {
         const ctx = TestContext.create();
         const container = ctx.container;
         const router = container.get(IRouter);
@@ -12,8 +12,8 @@ describe('router/viewport-content.spec.ts', function () {
         return { container, router, viewport };
     }
     it('can be created', function () {
-        const { container, router, viewport } = $setup();
-        const sut = new ViewportContent(router, viewport);
+        const { router, viewport } = $setup();
+        new ViewportContent(router, viewport);
     });
     describe('resolving globals', function () {
         this.timeout(5000);

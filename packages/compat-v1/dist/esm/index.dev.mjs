@@ -1,5 +1,5 @@
 import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astEvaluate, astAssign, astVisit, astBind, astUnbind, Unparser, getCollectionObserver, Scope, IExpressionParser, IObserverLocator } from '@aurelia/runtime';
-import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, AppTask, IEventTarget, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, ExpressionWatcher } from '@aurelia/runtime-html';
+import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, AppTask, IEventTarget, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, BindablesInfo, ExpressionWatcher } from '@aurelia/runtime-html';
 import { camelCase, DI } from '@aurelia/kernel';
 
 let defined$1 = false;
@@ -83,6 +83,16 @@ function __decorate(decorators, target, key, desc) {
 const createLookup = () => Object.create(null);
 const isFunction = (v) => typeof v === 'function';
 const isString = (v) => typeof v === 'string';
+const def = Reflect.defineProperty;
+const defineHiddenProp = (obj, key, value) => {
+    def(obj, key, {
+        enumerable: false,
+        configurable: true,
+        writable: true,
+        value
+    });
+    return value;
+};
 const ensureExpression = (parser, srcOrExpr, expressionType) => {
     if (isString(srcOrExpr)) {
         return parser.parse(srcOrExpr, expressionType);
@@ -418,6 +428,80 @@ const PreventFormActionlessSubmit = AppTask.creating(IEventTarget, appRoot => {
     }, false);
 });
 
+let compatEnabled = false;
+let addedMetadata = false;
+const prototype = AuCompose.prototype;
+const ignore = Symbol();
+const originalAttaching = prototype.attaching;
+const originalPropertyChanged = prototype.propertyChanged;
+function enableComposeCompat() {
+    if (compatEnabled) {
+        return;
+    }
+    compatEnabled = true;
+    if (!addedMetadata) {
+        addedMetadata = true;
+        const def = CustomElement.getDefinition(AuCompose);
+        const viewModelBindable = def.bindables.viewModel = BindableDefinition.create('viewModel', AuCompose);
+        const viewBindable = def.bindables.view = BindableDefinition.create('view', AuCompose);
+        const bindableInfo = BindablesInfo.from(def, false);
+        if (!('view' in bindableInfo.attrs)) {
+            bindableInfo.attrs.view = bindableInfo.bindables.view = viewBindable;
+            bindableInfo.attrs['view-model'] = bindableInfo.bindables.viewModel = viewModelBindable;
+        }
+    }
+    defineHiddenProp(prototype, 'viewModelChanged', function (value) {
+        this.component = value;
+    });
+    defineHiddenProp(prototype, 'viewChanged', function (value) {
+        this.template = value;
+    });
+    defineHiddenProp(prototype, 'attaching', function (...rest) {
+        this[ignore] = true;
+        if (this.viewModel !== void 0) {
+            this.component = this.viewModel;
+        }
+        if (this.view !== void 0) {
+            this.template = this.view;
+        }
+        this[ignore] = false;
+        return originalAttaching.apply(this, rest);
+    });
+    defineHiddenProp(prototype, 'propertyChanged', function (name) {
+        if (this[ignore]) {
+            return;
+        }
+        switch (name) {
+            case 'viewModel':
+            case 'view': return;
+        }
+        return originalPropertyChanged.call(this, name);
+    });
+}
+function disableComposeCompat() {
+    if (!compatEnabled) {
+        return;
+    }
+    if (addedMetadata) {
+        addedMetadata = false;
+        const def = CustomElement.getDefinition(AuCompose);
+        delete def.bindables.viewModel;
+        delete def.bindables.view;
+        const bindableInfo = BindablesInfo.from(def, false);
+        if (('view' in bindableInfo.attrs)) {
+            delete bindableInfo.attrs.view;
+            delete bindableInfo.bindables.view;
+            delete bindableInfo.attrs['view-model'];
+            delete bindableInfo.bindables.viewModel;
+        }
+    }
+    compatEnabled = false;
+    delete prototype.viewModelChanged;
+    delete prototype.viewChanged;
+    defineHiddenProp(prototype, 'attaching', originalAttaching);
+    defineHiddenProp(prototype, 'propertyChanged', originalPropertyChanged);
+}
+
 class BindingEngine {
     constructor(parser, observerLocator) {
         this.parser = parser;
@@ -470,11 +554,12 @@ const compatRegistration = {
     register(container) {
         defineAstMethods();
         defineBindingMethods();
+        enableComposeCompat();
         container.register(PreventFormActionlessSubmit);
         delegateSyntax.register(container);
         callSyntax.register(container);
     }
 };
 
-export { BindingEngine, CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, PreventFormActionlessSubmit, callSyntax, compatRegistration, delegateSyntax };
+export { BindingEngine, CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, PreventFormActionlessSubmit, callSyntax, compatRegistration, delegateSyntax, disableComposeCompat, enableComposeCompat };
 //# sourceMappingURL=index.dev.mjs.map

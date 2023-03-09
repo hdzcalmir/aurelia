@@ -1512,13 +1512,9 @@ rt(CollectionLengthObserver);
 
 rt(CollectionSizeObserver);
 
-const ot = "__au_array_obs__";
+const ot = Symbol.for("__au_arr_obs__");
 
-const ct = (() => {
-    let t = y(ot, Array);
-    if (null == t) E(ot, t = new WeakMap, Array);
-    return t;
-})();
+const ct = Array[ot] ?? v(Array, ot, new WeakMap);
 
 function ut(t, e) {
     if (t === e) return 0;
@@ -1957,13 +1953,9 @@ function Ut(t, e) {
     }
 }
 
-const Lt = "__au_set_obs__";
+const Lt = Symbol.for("__au_set_obs__");
 
-const Pt = (() => {
-    let t = y(Lt, Set);
-    if (null == t) E(Lt, t = new WeakMap, Set);
-    return t;
-})();
+const Pt = Set[Lt] ?? v(Set, Lt, new WeakMap);
 
 const _t = Set.prototype;
 
@@ -2111,13 +2103,9 @@ function Wt(t) {
     return e;
 }
 
-const Jt = "__au_map_obs__";
+const Jt = Symbol.for("__au_map_obs__");
 
-const qt = (() => {
-    let t = y(Jt, Map);
-    if (null == t) E(Jt, t = new WeakMap, Map);
-    return t;
-})();
+const qt = Map[Jt] ?? v(Map, Jt, new WeakMap);
 
 const Gt = Map.prototype;
 

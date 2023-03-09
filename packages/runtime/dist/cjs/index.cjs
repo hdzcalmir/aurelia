@@ -40,11 +40,11 @@ function p(t, e, s) {
     return s;
 }
 
-function w(t, e, s) {
+function b(t, e, s) {
     if (!(e in t)) p(t, e, s);
 }
 
-const b = String;
+const w = String;
 
 const d = t.DI.createInterface;
 
@@ -404,7 +404,7 @@ class Unparser {
         A(t.target, this);
     }
     visitCustom(t) {
-        this.text += b(t.value);
+        this.text += w(t.value);
     }
     writeArgs(t) {
         this.text += "(";
@@ -1031,7 +1031,7 @@ function O(t, e, s, r) {
             let i = t.parts[0];
             let n = 0;
             for (;n < t.expressions.length; ++n) {
-                i += b(O(t.expressions[n], e, s, r));
+                i += w(O(t.expressions[n], e, s, r));
                 i += t.parts[n + 1];
             }
             return i;
@@ -1402,8 +1402,8 @@ function q(t) {
     i(e, "subs", {
         get: J
     });
-    w(e, "subscribe", G);
-    w(e, "unsubscribe", H);
+    b(e, "subscribe", G);
+    b(e, "unsubscribe", H);
 }
 
 class SubscriberRecord {
@@ -1501,8 +1501,8 @@ class CollectionSizeObserver {
 
 function Q(t) {
     const e = t.prototype;
-    w(e, "subscribe", X);
-    w(e, "unsubscribe", Y);
+    b(e, "subscribe", X);
+    b(e, "unsubscribe", Y);
     W(t);
 }
 
@@ -1518,13 +1518,9 @@ Q(CollectionLengthObserver);
 
 Q(CollectionSizeObserver);
 
-const Z = "__au_array_obs__";
+const Z = Symbol.for("__au_arr_obs__");
 
-const tt = (() => {
-    let t = x(Z, Array);
-    if (null == t) g(Z, t = new WeakMap, Array);
-    return t;
-})();
+const tt = Array[Z] ?? p(Array, Z, new WeakMap);
 
 function et(t, e) {
     if (t === e) return 0;
@@ -1563,7 +1559,7 @@ function it(t, e, s, r, i) {
     let n = 0, o = 0;
     let c, u, h;
     let a, l, f;
-    let p, w, b;
+    let p, b, w;
     let d, v;
     let x, g, A, y;
     let m, E, O, k;
@@ -1588,8 +1584,8 @@ function it(t, e, s, r, i) {
             u = d;
             l = v;
         }
-        w = i(c, h);
-        if (w >= 0) {
+        b = i(c, h);
+        if (b >= 0) {
             d = c;
             v = a;
             c = h;
@@ -1599,8 +1595,8 @@ function it(t, e, s, r, i) {
             u = d;
             l = v;
         } else {
-            b = i(u, h);
-            if (b > 0) {
+            w = i(u, h);
+            if (w > 0) {
                 d = u;
                 v = l;
                 u = h;
@@ -1689,9 +1685,9 @@ const pt = {
     sort: ft
 };
 
-const wt = [ "push", "unshift", "pop", "shift", "splice", "reverse", "sort" ];
+const bt = [ "push", "unshift", "pop", "shift", "splice", "reverse", "sort" ];
 
-const bt = {
+const wt = {
     push: function(...t) {
         const e = tt.get(this);
         if (void 0 === e) return ot.apply(this, t);
@@ -1830,7 +1826,7 @@ const bt = {
     }
 };
 
-for (const t of wt) i(bt[t], "observing", {
+for (const t of bt) i(wt[t], "observing", {
     value: true,
     writable: false,
     configurable: false,
@@ -1844,12 +1840,12 @@ const vt = "__au_arr_on__";
 function xt() {
     if (!(x(vt, Array) ?? false)) {
         g(vt, true, Array);
-        for (const t of wt) if (true !== nt[t].observing) p(nt, t, bt[t]);
+        for (const t of bt) if (true !== nt[t].observing) p(nt, t, wt[t]);
     }
 }
 
 function gt() {
-    for (const t of wt) if (true === nt[t].observing) p(nt, t, pt[t]);
+    for (const t of bt) if (true === nt[t].observing) p(nt, t, pt[t]);
 }
 
 class ArrayObserver {
@@ -1963,13 +1959,9 @@ function Et(t, e) {
     }
 }
 
-const Ot = "__au_set_obs__";
+const Ot = Symbol.for("__au_set_obs__");
 
-const kt = (() => {
-    let t = x(Ot, Set);
-    if (null == t) g(Ot, t = new WeakMap, Set);
-    return t;
-})();
+const kt = Set[Ot] ?? p(Set, Ot, new WeakMap);
 
 const Ct = Set.prototype;
 
@@ -2117,13 +2109,9 @@ function Tt(t) {
     return e;
 }
 
-const Dt = "__au_map_obs__";
+const Dt = Symbol.for("__au_map_obs__");
 
-const Vt = (() => {
-    let t = x(Dt, Map);
-    if (null == t) g(Dt, t = new WeakMap, Map);
-    return t;
-})();
+const Vt = Map[Dt] ?? p(Map, Dt, new WeakMap);
 
 const Ft = Map.prototype;
 
@@ -2351,14 +2339,14 @@ function ce(t, e) {
 
 function ue(t) {
     const e = t.prototype;
-    w(e, "observe", ee);
-    w(e, "observeCollection", se);
-    w(e, "subscribeTo", re);
+    b(e, "observe", ee);
+    b(e, "observeCollection", se);
+    b(e, "subscribeTo", re);
     i(e, "obs", {
         get: te
     });
-    w(e, "handleChange", ie);
-    w(e, "handleCollectionChange", ne);
+    b(e, "handleChange", ie);
+    b(e, "handleCollectionChange", ne);
     return t;
 }
 
@@ -2454,9 +2442,9 @@ const fe = PrimitiveLiteralExpression.$false;
 
 const pe = PrimitiveLiteralExpression.$true;
 
-const we = PrimitiveLiteralExpression.$null;
+const be = PrimitiveLiteralExpression.$null;
 
-const be = PrimitiveLiteralExpression.$undefined;
+const we = PrimitiveLiteralExpression.$undefined;
 
 const de = AccessThisExpression.$this;
 
@@ -3035,7 +3023,7 @@ function Ve(t) {
     qe();
     const s = new Array;
     while (7340051 !== Ee) if (Ze(6291471)) {
-        s.push(be);
+        s.push(we);
         if (7340051 === Ee) break;
     } else {
         s.push(_e(62, ~2 & t));
@@ -3212,7 +3200,7 @@ function Qe() {
         Je();
         s.push(Re(e));
         r = ge;
-    } else if (ge >= Ae) throw ws(); else Je();
+    } else if (ge >= Ae) throw bs(); else Je();
     const i = xe.slice(r, ge);
     Je();
     s.push(i);
@@ -3229,7 +3217,7 @@ function Xe() {
         t = false;
         break;
     } else e += "$"; else if (92 === ke) e += Re(le(Je())); else {
-        if (ge >= Ae) throw bs();
+        if (ge >= Ae) throw ws();
         e += Re(ke);
     }
     Je();
@@ -3239,7 +3227,7 @@ function Xe() {
 }
 
 const Ye = () => {
-    if (ge >= Ae) throw bs();
+    if (ge >= Ae) throw ws();
     ge--;
     return Xe();
 };
@@ -3282,9 +3270,9 @@ const fs = () => n(`AUR0163:${xe}`);
 
 const ps = () => n(`AUR0164:${xe}`);
 
-const ws = () => n(`AUR0165:${xe}`);
+const bs = () => n(`AUR0165:${xe}`);
 
-const bs = () => n(`AUR0166:${xe}`);
+const ws = () => n(`AUR0166:${xe}`);
 
 const ds = t => n(`AUR0167:${xe}<${Ss[63 & t]}`);
 
@@ -3312,7 +3300,7 @@ const ks = () => n(`AUR0178:${xe}`);
 
 const Cs = () => n(`AUR0179:${xe}`);
 
-const Ss = [ fe, pe, we, be, "$this", null, "$parent", "(", "{", ".", "..", "...", "?.", "}", ")", ",", "[", "]", ":", ";", "?", "'", '"', "&", "|", "??", "||", "&&", "==", "!=", "===", "!==", "<", ">", "<=", ">=", "in", "instanceof", "+", "-", "typeof", "void", "*", "%", "/", "=", "!", 2163759, 2163760, "of", "=>" ];
+const Ss = [ fe, pe, be, we, "$this", null, "$parent", "(", "{", ".", "..", "...", "?.", "}", ")", ",", "[", "]", ":", ";", "?", "'", '"', "&", "|", "??", "||", "&&", "==", "!=", "===", "!==", "<", ">", "<=", ">=", "in", "instanceof", "+", "-", "typeof", "void", "*", "%", "/", "=", "!", 2163759, 2163760, "of", "=>" ];
 
 const $s = Object.assign(Object.create(null), {
     true: 8193,
@@ -3626,10 +3614,10 @@ const sr = {
             return pr;
 
           case "push":
-            return br;
+            return wr;
 
           case "pop":
-            return wr;
+            return br;
 
           case "reduce":
             return Er;
@@ -3751,11 +3739,11 @@ function pr(t) {
     return e.join(t);
 }
 
-function wr() {
+function br() {
     return Hs(Xs(this).pop());
 }
 
-function br(...t) {
+function wr(...t) {
     return Xs(this).push(...t);
 }
 
@@ -4114,7 +4102,7 @@ class DirtyChecker {
         };
     }
     createProperty(t, e) {
-        if (Vr.throw) throw n(`AUR0222:${b(e)}`);
+        if (Vr.throw) throw n(`AUR0222:${w(e)}`);
         return new DirtyCheckProperty(this, t, e);
     }
     addProperty(t) {
@@ -4144,7 +4132,7 @@ class DirtyCheckProperty {
         return this.obj[this.key];
     }
     setValue(t) {
-        throw n(`Trying to set value for property ${b(this.key)} in dirty checker`);
+        throw n(`Trying to set value for property ${w(this.key)} in dirty checker`);
     }
     isDirty() {
         return this.ov !== this.obj[this.key];
@@ -4396,7 +4384,7 @@ const Hr = t => {
     return e;
 };
 
-const Qr = t => n(`AUR0199:${b(t)}`);
+const Qr = t => n(`AUR0199:${w(t)}`);
 
 const Xr = d("IObservation", (t => t.singleton(Observation)));
 
@@ -4482,7 +4470,7 @@ function ti(t, e, s) {
         } : r || {};
         if (o) e = r.name;
         if (null == e || "" === e) throw n(`AUR0224`);
-        const c = r.callback || `${b(e)}Changed`;
+        const c = r.callback || `${w(e)}Changed`;
         let u = Zr;
         if (s) {
             delete s.value;

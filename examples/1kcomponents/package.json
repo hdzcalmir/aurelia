@@ -17,17 +17,17 @@
     "postbuild:all": "rollup -c"
   },
   "dependencies": {
-    "@aurelia/kernel": "2.1.0-dev.202303060828",
-    "@aurelia/metadata": "2.1.0-dev.202303060828",
-    "@aurelia/platform": "2.1.0-dev.202303060828",
-    "@aurelia/platform-browser": "2.1.0-dev.202303060828",
-    "@aurelia/runtime": "2.1.0-dev.202303060828",
-    "@aurelia/runtime-html": "2.1.0-dev.202303060828",
+    "@aurelia/kernel": "2.1.0-dev.202303091738",
+    "@aurelia/metadata": "2.1.0-dev.202303091738",
+    "@aurelia/platform": "2.1.0-dev.202303091738",
+    "@aurelia/platform-browser": "2.1.0-dev.202303091738",
+    "@aurelia/runtime": "2.1.0-dev.202303091738",
+    "@aurelia/runtime-html": "2.1.0-dev.202303091738",
     "d3-scale-chromatic": "^3.0.0",
     "perf-monitor": "latest"
   },
   "devDependencies": {
-    "@aurelia/http-server": "2.1.0-dev.202303060828",
+    "@aurelia/http-server": "2.1.0-dev.202303091738",
     "webpack": "^5.72.0",
     "webpack-bundle-analyzer": "^4.5.0",
     "webpack-cli": "^4.9.2"

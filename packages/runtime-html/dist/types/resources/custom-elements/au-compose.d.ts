@@ -14,11 +14,18 @@ export interface IDynamicComponentActivate<T> {
     activate?(model?: T): unknown | Promise<unknown>;
 }
 type MaybePromise<T> = T | Promise<T>;
-type ChangeSource = 'view' | 'viewModel' | 'model' | 'scopeBehavior';
+type ChangeSource = keyof Pick<AuCompose, 'template' | 'component' | 'model' | 'scopeBehavior'>;
 export declare class AuCompose {
-    view?: string | Promise<string>;
-    viewModel?: Constructable | object | Promise<Constructable | object>;
+    template?: string | Promise<string>;
+    component?: Constructable | object | Promise<Constructable | object>;
     model?: unknown;
+    /**
+     * Control scoping behavior of the view created by the au-compose.
+     * This only affects template-only composition. Does not have effects on custom element composition.
+     *
+     * auto = inherit parent scope
+     * scoped = do not inherit parent scope
+     */
     scopeBehavior: 'auto' | 'scoped';
     get pending(): Promise<void> | void;
     get composition(): ICompositionController | undefined;
@@ -45,19 +52,19 @@ declare class CompositionContextFactory {
     invalidate(): void;
 }
 declare class ChangeInfo {
-    readonly view: MaybePromise<string> | undefined;
-    readonly viewModel: MaybePromise<Constructable | object> | undefined;
-    readonly model: unknown | undefined;
-    readonly src: ChangeSource | undefined;
-    constructor(view: MaybePromise<string> | undefined, viewModel: MaybePromise<Constructable | object> | undefined, model: unknown | undefined, src: ChangeSource | undefined);
+    readonly _template: MaybePromise<string> | undefined;
+    readonly _component: MaybePromise<Constructable | object> | undefined;
+    readonly _model: unknown | undefined;
+    readonly _src: ChangeSource | undefined;
+    constructor(_template: MaybePromise<string> | undefined, _component: MaybePromise<Constructable | object> | undefined, _model: unknown | undefined, _src: ChangeSource | undefined);
     load(): MaybePromise<LoadedChangeInfo>;
 }
 declare class LoadedChangeInfo {
-    readonly view: string | undefined;
-    readonly viewModel: Constructable | object | undefined;
-    readonly model: unknown | undefined;
-    readonly src: ChangeSource | undefined;
-    constructor(view: string | undefined, viewModel: Constructable | object | undefined, model: unknown | undefined, src: ChangeSource | undefined);
+    readonly _template: string | undefined;
+    readonly _component: Constructable | object | undefined;
+    readonly _model: unknown | undefined;
+    readonly _src: ChangeSource | undefined;
+    constructor(_template: string | undefined, _component: Constructable | object | undefined, _model: unknown | undefined, _src: ChangeSource | undefined);
 }
 declare class CompositionContext {
     readonly id: number;

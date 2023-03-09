@@ -1516,14 +1516,9 @@ function unsubscribe(subscriber) {
 implementLengthObserver(CollectionLengthObserver);
 implementLengthObserver(CollectionSizeObserver);
 
-const lookupMetadataKey$2 = '__au_array_obs__';
-const observerLookup$2 = (() => {
-    let lookup = getOwnMetadata(lookupMetadataKey$2, Array);
-    if (lookup == null) {
-        defineMetadata(lookupMetadataKey$2, lookup = new WeakMap(), Array);
-    }
-    return lookup;
-})();
+const lookupMetadataKey$2 = Symbol.for('__au_arr_obs__');
+const observerLookup$2 = (Array[lookupMetadataKey$2]
+    ?? defineHiddenProp(Array, lookupMetadataKey$2, new WeakMap()));
 function sortCompare(x, y) {
     if (x === y) {
         return 0;
@@ -2004,14 +1999,9 @@ function synchronizeIndices(items, indexMap) {
     }
 }
 
-const lookupMetadataKey$1 = '__au_set_obs__';
-const observerLookup$1 = (() => {
-    let lookup = getOwnMetadata(lookupMetadataKey$1, Set);
-    if (lookup == null) {
-        defineMetadata(lookupMetadataKey$1, lookup = new WeakMap(), Set);
-    }
-    return lookup;
-})();
+const lookupMetadataKey$1 = Symbol.for('__au_set_obs__');
+const observerLookup$1 = (Set[lookupMetadataKey$1]
+    ?? defineHiddenProp(Set, lookupMetadataKey$1, new WeakMap()));
 const proto$1 = Set.prototype;
 const $add = proto$1.add;
 const $clear$1 = proto$1.clear;
@@ -2150,14 +2140,9 @@ function getSetObserver(observedSet) {
     return observer;
 }
 
-const lookupMetadataKey = '__au_map_obs__';
-const observerLookup = (() => {
-    let lookup = getOwnMetadata(lookupMetadataKey, Map);
-    if (lookup == null) {
-        defineMetadata(lookupMetadataKey, lookup = new WeakMap(), Map);
-    }
-    return lookup;
-})();
+const lookupMetadataKey = Symbol.for('__au_map_obs__');
+const observerLookup = (Map[lookupMetadataKey]
+    ?? defineHiddenProp(Map, lookupMetadataKey, new WeakMap()));
 const proto = Map.prototype;
 const $set = proto.set;
 const $clear = proto.clear;

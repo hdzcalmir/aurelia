@@ -4599,5 +4599,63 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await au.stop();
         });
     });
+    it('navigate repeatedly to parent route from child route works - GH 1701', async function () {
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'c-1', template: 'c1 <a load="../c2"></a>' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'c-2', template: 'c2 <a load="route: p; context.bind: null"></a>' })
+        ], C2);
+        let P1 = class P1 {
+        };
+        P1 = __decorate([
+            route({
+                routes: [
+                    { path: '', component: C1 },
+                    { path: 'c2', component: C2 },
+                ]
+            }),
+            customElement({ name: 'p-1', template: '<au-viewport></au-viewport>' })
+        ], P1);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { path: '', redirectTo: 'p' },
+                    { path: 'p', component: P1 },
+                ]
+            }),
+            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const queue = container.get(IPlatform).taskQueue;
+        assert.html.textContent(host, 'c1', 'initial');
+        host.querySelector('a').click();
+        await queue.yield();
+        assert.html.textContent(host, 'c2', 'round#1 of loading c2');
+        host.querySelector('a').click(); // <- go to parent #1
+        await queue.yield();
+        // round#2
+        assert.html.textContent(host, 'c1', 'navigate to parent from c2 #1');
+        host.querySelector('a').click();
+        await queue.yield();
+        assert.html.textContent(host, 'c2', 'round#2 of loading c2');
+        host.querySelector('a').click(); // <- go to parent #2
+        await queue.yield();
+        // round#3
+        assert.html.textContent(host, 'c1', 'navigate to parent from c2 #2');
+        host.querySelector('a').click();
+        await queue.yield();
+        assert.html.textContent(host, 'c2', 'round#3 of loading c2');
+        host.querySelector('a').click(); // <- go to parent #3
+        await queue.yield();
+        assert.html.textContent(host, 'c1', 'navigate to parent from c2 #3');
+        await au.stop();
+    });
 });
 //# sourceMappingURL=smoke-tests.spec.js.map
