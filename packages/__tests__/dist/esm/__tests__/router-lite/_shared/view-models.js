@@ -66,40 +66,40 @@ export class TestRouteViewModelBase {
         this.hia = hia;
         this.specs = specs;
     }
-    binding(initiator, parent, flags) {
+    binding(initiator, parent) {
         return this.specs.binding.invoke(this, () => {
             this.hia.binding.notify(this.name);
-            return this.$binding(initiator, parent, flags);
+            return this.$binding(initiator, parent);
         });
     }
-    bound(initiator, parent, flags) {
+    bound(initiator, parent) {
         return this.specs.bound.invoke(this, () => {
             this.hia.bound.notify(this.name);
-            return this.$bound(initiator, parent, flags);
+            return this.$bound(initiator, parent);
         });
     }
-    attaching(initiator, parent, flags) {
+    attaching(initiator, parent) {
         return this.specs.attaching.invoke(this, () => {
             this.hia.attaching.notify(this.name);
-            return this.$attaching(initiator, parent, flags);
+            return this.$attaching(initiator, parent);
         });
     }
-    attached(initiator, flags) {
+    attached(initiator) {
         return this.specs.attached.invoke(this, () => {
             this.hia.attached.notify(this.name);
-            return this.$attached(initiator, flags);
+            return this.$attached(initiator);
         });
     }
-    detaching(initiator, parent, flags) {
+    detaching(initiator, parent) {
         return this.specs.detaching.invoke(this, () => {
             this.hia.detaching.notify(this.name);
-            return this.$detaching(initiator, parent, flags);
+            return this.$detaching(initiator, parent);
         });
     }
-    unbinding(initiator, parent, flags) {
+    unbinding(initiator, parent) {
         return this.specs.unbinding.invoke(this, () => {
             this.hia.unbinding.notify(this.name);
-            return this.$unbinding(initiator, parent, flags);
+            return this.$unbinding(initiator, parent);
         });
     }
     dispose() {
@@ -132,22 +132,22 @@ export class TestRouteViewModelBase {
             return this.$unloading(next, current);
         });
     }
-    $binding(_initiator, _parent, _flags) {
+    $binding(_initiator, _parent) {
         // do nothing
     }
-    $bound(_initiator, _parent, _flags) {
+    $bound(_initiator, _parent) {
         // do nothing
     }
-    $attaching(_initiator, _parent, _flags) {
+    $attaching(_initiator, _parent) {
         // do nothing
     }
-    $attached(_initiator, _flags) {
+    $attached(_initiator) {
         // do nothing
     }
-    $detaching(_initiator, _parent, _flags) {
+    $detaching(_initiator, _parent) {
         // do nothing
     }
-    $unbinding(_initiator, _parent, _flags) {
+    $unbinding(_initiator, _parent) {
         // do nothing
     }
     $canLoad(_params, _next, _current) {

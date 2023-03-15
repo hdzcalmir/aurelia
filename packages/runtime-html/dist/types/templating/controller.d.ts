@@ -11,12 +11,6 @@ import type { IViewFactory } from './view';
 import type { IInstruction } from '../renderer';
 import type { PartialCustomElementDefinition } from '../resources/custom-element';
 type BindingContext<C extends IViewModel> = Required<ICompileHooks> & Required<IActivationHooks<IHydratedController | null>> & C;
-export declare const enum LifecycleFlags {
-    none = 0,
-    fromBind = 1,
-    fromUnbind = 2,
-    dispose = 4
-}
 export declare const enum MountTarget {
     none = 0,
     host = 1,
@@ -61,7 +55,6 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
     private logger;
     private debug;
     get hooks(): HooksDefinition;
-    flags: LifecycleFlags;
     get viewModel(): BindingContext<C> | null;
     set viewModel(v: BindingContext<C> | null);
     constructor(container: IContainer, vmKind: ViewModelKind, definition: CustomElementDefinition | CustomAttributeDefinition | null, 
@@ -124,10 +117,9 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
      */
     static $view(viewFactory: IViewFactory, parentController?: ISyntheticView | ICustomElementController | ICustomAttributeController | undefined): ISyntheticView;
     private $initiator;
-    private $flags;
-    activate(initiator: IHydratedController, parent: IHydratedController | null, flags: LifecycleFlags, scope?: Scope | null): void | Promise<void>;
+    activate(initiator: IHydratedController, parent: IHydratedController | null, scope?: Scope | null): void | Promise<void>;
     private bind;
-    deactivate(initiator: IHydratedController, parent: IHydratedController | null, flags: LifecycleFlags): void | Promise<void>;
+    deactivate(initiator: IHydratedController, _parent: IHydratedController | null): void | Promise<void>;
     private removeNodes;
     private unbind;
     private $resolve;
@@ -211,7 +203,6 @@ export interface IController<C extends IViewModel = IViewModel> extends IDisposa
      */
     readonly name: string;
     readonly container: IContainer;
-    readonly flags: LifecycleFlags;
     readonly vmKind: ViewModelKind;
     readonly definition: CustomElementDefinition | CustomAttributeDefinition | null;
     readonly host: HTMLElement | null;
@@ -279,8 +270,8 @@ export interface ISyntheticView extends IHydratableController {
      * The physical DOM nodes that will be appended during the attach operation.
      */
     readonly nodes: INodeSequence;
-    activate(initiator: IHydratedController, parent: IHydratedController, flags: LifecycleFlags, scope: Scope): void | Promise<void>;
-    deactivate(initiator: IHydratedController, parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
+    activate(initiator: IHydratedController, parent: IHydratedController, scope: Scope): void | Promise<void>;
+    deactivate(initiator: IHydratedController, parent: IHydratedController): void | Promise<void>;
     /**
      * Lock this view's scope to the provided `Scope`. The scope, which is normally set during `activate()`, will then not change anymore.
      *
@@ -346,8 +337,8 @@ export interface ICustomAttributeController<C extends ICustomAttributeViewModel 
     readonly scope: Scope;
     readonly children: null;
     readonly bindings: null;
-    activate(initiator: IHydratedController, parent: IHydratedController, flags: LifecycleFlags, scope: Scope): void | Promise<void>;
-    deactivate(initiator: IHydratedController, parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
+    activate(initiator: IHydratedController, parent: IHydratedController, scope: Scope): void | Promise<void>;
+    deactivate(initiator: IHydratedController, parent: IHydratedController): void | Promise<void>;
 }
 /**
  * A representation of `IController` specific to a custom element whose `create` hook is about to be invoked (if present).
@@ -410,8 +401,8 @@ export interface ICustomElementController<C extends ICustomElementViewModel = IC
      */
     readonly viewModel: C;
     readonly lifecycleHooks: LifecycleHooksLookup;
-    activate(initiator: IHydratedController, parent: IHydratedController | null, flags: LifecycleFlags, scope?: Scope): void | Promise<void>;
-    deactivate(initiator: IHydratedController, parent: IHydratedController | null, flags: LifecycleFlags): void | Promise<void>;
+    activate(initiator: IHydratedController, parent: IHydratedController | null, scope?: Scope): void | Promise<void>;
+    deactivate(initiator: IHydratedController, parent: IHydratedController | null): void | Promise<void>;
 }
 export declare const IController: import("@aurelia/kernel").InterfaceSymbol<IController<IViewModel>>;
 export declare const IHydrationContext: import("@aurelia/kernel").InterfaceSymbol<IHydrationContext<ICustomElementViewModel>>;
@@ -424,12 +415,12 @@ declare class HydrationContext<T extends ICustomElementViewModel> {
     constructor(controller: Controller, instruction: IControllerElementHydrationInstruction | null, parent: IHydrationContext | undefined);
 }
 export interface IActivationHooks<TParent> {
-    binding?(initiator: IHydratedController, parent: TParent, flags: LifecycleFlags): void | Promise<void>;
-    bound?(initiator: IHydratedController, parent: TParent, flags: LifecycleFlags): void | Promise<void>;
-    attaching?(initiator: IHydratedController, parent: TParent, flags: LifecycleFlags): void | Promise<void>;
-    attached?(initiator: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
-    detaching?(initiator: IHydratedController, parent: TParent, flags: LifecycleFlags): void | Promise<void>;
-    unbinding?(initiator: IHydratedController, parent: TParent, flags: LifecycleFlags): void | Promise<void>;
+    binding?(initiator: IHydratedController, parent: TParent): void | Promise<void>;
+    bound?(initiator: IHydratedController, parent: TParent): void | Promise<void>;
+    attaching?(initiator: IHydratedController, parent: TParent): void | Promise<void>;
+    attached?(initiator: IHydratedController): void | Promise<void>;
+    detaching?(initiator: IHydratedController, parent: TParent): void | Promise<void>;
+    unbinding?(initiator: IHydratedController, parent: TParent): void | Promise<void>;
     dispose?(): void;
     /**
      * If this component controls the instantiation and lifecycles of one or more controllers,

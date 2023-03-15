@@ -1930,18 +1930,18 @@ class ViewportContent extends EndpointContent {
             return instance.unload(this.instruction, navigation);
         }
     }
-    activateComponent(step, initiator, parent, flags, connectedCE, boundCallback, attachPromise) {
+    activateComponent(step, initiator, parent, connectedCE, boundCallback, attachPromise) {
         return Runner.run(step, () => this.contentStates.await('loaded'), () => this.waitForParent(parent), () => {
             if (this.contentStates.has('activating') || this.contentStates.has('activated')) {
                 return;
             }
             this.contentStates.set('activating', void 0);
-            return this.controller?.activate(initiator ?? this.controller, parent, flags, void 0);
+            return this.controller?.activate(initiator ?? this.controller, parent, void 0);
         }, () => {
             this.contentStates.set('activated', void 0);
         });
     }
-    deactivateComponent(step, initiator, parent, flags, connectedCE, stateful = false) {
+    deactivateComponent(step, initiator, parent, connectedCE, stateful = false) {
         if (!this.contentStates.has('activated') && !this.contentStates.has('activating')) {
             return;
         }
@@ -1956,7 +1956,7 @@ class ViewportContent extends EndpointContent {
             }
             this.contentStates.delete('activated');
             this.contentStates.delete('activating');
-            return this.controller?.deactivate(initiator ?? this.controller, parent, flags);
+            return this.controller?.deactivate(initiator ?? this.controller, parent);
         });
     }
     disposeComponent(connectedCE, cache, stateful = false) {
@@ -1972,7 +1972,7 @@ class ViewportContent extends EndpointContent {
         }
     }
     freeContent(step, connectedCE, navigation, cache, stateful = false) {
-        return Runner.run(step, () => this.unload(navigation), (innerStep) => this.deactivateComponent(innerStep, null, connectedCE.controller, 0, connectedCE, stateful), () => this.disposeComponent(connectedCE, cache, stateful));
+        return Runner.run(step, () => this.unload(navigation), (innerStep) => this.deactivateComponent(innerStep, null, connectedCE.controller, connectedCE, stateful), () => this.disposeComponent(connectedCE, cache, stateful));
     }
     toComponentName() {
         return this.instruction.component.name;
@@ -2402,26 +2402,26 @@ class Viewport extends Endpoint$1 {
         return this.getNavigationContent(coordinator).load(step);
     }
     addContent(step, coordinator) {
-        return this.activate(step, null, this.connectedController, 0, coordinator);
+        return this.activate(step, null, this.connectedController, coordinator);
     }
     removeContent(step, coordinator) {
         if (this.isEmpty) {
             return;
         }
         const manualDispose = this.router.statefulHistory || (this.options.stateful ?? false);
-        return Runner.run(step, () => coordinator.addEndpointState(this, 'bound'), () => coordinator.waitForSyncState('bound'), (innerStep) => this.deactivate(innerStep, null, this.connectedController, manualDispose ? 0 : 4), () => manualDispose ? this.dispose() : void 0);
+        return Runner.run(step, () => coordinator.addEndpointState(this, 'bound'), () => coordinator.waitForSyncState('bound'), (innerStep) => this.deactivate(innerStep, null, this.connectedController), () => manualDispose ? this.dispose() : void 0);
     }
-    activate(step, initiator, parent, flags, coordinator) {
+    activate(step, initiator, parent, coordinator) {
         if (this.activeContent.componentInstance !== null) {
-            return Runner.run(step, () => this.activeContent.canLoad(), (innerStep) => this.activeContent.load(innerStep), (innerStep) => this.activeContent.activateComponent(innerStep, initiator, parent, flags, this.connectedCE, () => coordinator?.addEndpointState(this, 'bound'), coordinator?.waitForSyncState('bound')));
+            return Runner.run(step, () => this.activeContent.canLoad(), (innerStep) => this.activeContent.load(innerStep), (innerStep) => this.activeContent.activateComponent(innerStep, initiator, parent, this.connectedCE, () => coordinator?.addEndpointState(this, 'bound'), coordinator?.waitForSyncState('bound')));
         }
     }
-    deactivate(step, initiator, parent, flags) {
+    deactivate(step, initiator, parent) {
         const content = this.getContent();
         if (content?.componentInstance != null &&
             !content.reload &&
             content.componentInstance !== this.getNextContent()?.componentInstance) {
-            return content.deactivateComponent(step, initiator, parent, flags, this.connectedCE, this.router.statefulHistory || this.options.stateful);
+            return content.deactivateComponent(step, initiator, parent, this.connectedCE, this.router.statefulHistory || this.options.stateful);
         }
     }
     unload(coordinator, step) {
@@ -5415,7 +5415,7 @@ let ViewportCustomElement = class ViewportCustomElement {
             }
         });
     }
-    binding(initiator, _parent, flags) {
+    binding(initiator, _parent) {
         this.isBound = true;
         return Runner.run(null, () => waitForRouterStart(this.router, this.ea), () => {
             if (!this.router.isRestrictedNavigation) {
@@ -5428,17 +5428,17 @@ let ViewportCustomElement = class ViewportCustomElement {
             }
         }, () => {
             if (this.endpoint !== null && this.endpoint.getNextContent() === null) {
-                return this.endpoint.activate(null, initiator, this.controller, flags, void 0)?.asValue;
+                return this.endpoint.activate(null, initiator, this.controller, void 0)?.asValue;
             }
         });
     }
-    detaching(initiator, parent, flags) {
+    detaching(initiator, parent) {
         if (this.endpoint !== null) {
             this.isBound = false;
-            return this.endpoint.deactivate(null, initiator, parent, flags);
+            return this.endpoint.deactivate(null, initiator, parent);
         }
     }
-    unbinding(_initiator, _parent, _flags) {
+    unbinding(_initiator, _parent) {
         if (this.endpoint !== null) {
             return this.disconnect(null);
         }
@@ -5555,7 +5555,7 @@ let ViewportScopeCustomElement = class ViewportScopeCustomElement {
     hydrated(controller) {
         this.controller = controller;
     }
-    bound(_initiator, _parent, _flags) {
+    bound(_initiator, _parent) {
         this.isBound = true;
         this.$controller.scope = this.parentController.scope;
         this.connect();
@@ -5563,7 +5563,7 @@ let ViewportScopeCustomElement = class ViewportScopeCustomElement {
             this.viewportScope.binding();
         }
     }
-    unbinding(_initiator, _parent, _flags) {
+    unbinding(_initiator, _parent) {
         if (this.viewportScope !== null) {
             this.viewportScope.unbinding();
         }

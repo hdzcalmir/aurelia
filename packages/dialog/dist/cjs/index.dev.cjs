@@ -85,7 +85,7 @@ class DialogController {
             const cmp = this.cmp;
             return kernel.onResolve(cmp.activate?.(model), () => {
                 const ctrlr = this.controller = runtimeHtml.Controller.$el(container, cmp, contentHost, null, runtimeHtml.CustomElementDefinition.create(this.getDefinition(cmp) ?? { name: runtimeHtml.CustomElement.generateName(), template }));
-                return kernel.onResolve(ctrlr.activate(ctrlr, null, 1), () => {
+                return kernel.onResolve(ctrlr.activate(ctrlr, null), () => {
                     dom.overlay.addEventListener(settings.mouseEvent ?? 'click', this);
                     return DialogOpenResult.create(false, this);
                 });
@@ -112,7 +112,7 @@ class DialogController {
                     }
                     return DialogCloseResult.create("abort");
                 }
-                return kernel.onResolve(cmp.deactivate?.(dialogResult), () => kernel.onResolve(controller.deactivate(controller, null, 2), () => {
+                return kernel.onResolve(cmp.deactivate?.(dialogResult), () => kernel.onResolve(controller.deactivate(controller, null), () => {
                     dom.dispose();
                     dom.overlay.removeEventListener(mouseEvent ?? 'click', this);
                     if (!rejectOnCancel && status !== "error") {
@@ -139,7 +139,7 @@ class DialogController {
     }
     error(value) {
         const closeError = createDialogCloseError(value);
-        return new Promise(r => r(kernel.onResolve(this.cmp.deactivate?.(DialogCloseResult.create("error", closeError)), () => kernel.onResolve(this.controller.deactivate(this.controller, null, 2), () => {
+        return new Promise(r => r(kernel.onResolve(this.cmp.deactivate?.(DialogCloseResult.create("error", closeError)), () => kernel.onResolve(this.controller.deactivate(this.controller, null), () => {
             this.dom.dispose();
             this._reject(closeError);
         }))));

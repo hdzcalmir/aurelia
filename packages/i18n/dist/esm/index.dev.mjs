@@ -1,6 +1,6 @@
 import { DI, IEventAggregator, toArray, camelCase, Registration } from '@aurelia/kernel';
 import { bindingBehavior, valueConverter, mixinAstEvaluator, mixingBindingLimited, CustomElement, attributePattern, bindingCommand, renderer, AttrSyntax, AttributePattern, BindingCommand, AppTask } from '@aurelia/runtime-html';
-import { ValueConverterExpression, ISignaler, connectable, CustomExpression, Interpolation, astEvaluate, astUnbind, astBind } from '@aurelia/runtime';
+import { ValueConverterExpression, nowrap, ISignaler, connectable, CustomExpression, Interpolation, astEvaluate, astUnbind, astBind } from '@aurelia/runtime';
 import i18next from 'i18next';
 
 /******************************************************************************
@@ -212,6 +212,9 @@ let I18nService = class I18nService {
         await this.i18next.init(this.options);
     }
 };
+__decorate([
+    nowrap
+], I18nService.prototype, "i18next", void 0);
 I18nService = __decorate([
     __param(0, I18nWrapper),
     __param(1, I18nInitOptions),

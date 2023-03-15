@@ -45,7 +45,7 @@ describe('3-runtime-html/enhance.spec.ts', function () {
         const app = controller.scope.bindingContext;
         await testFunction(new EnhanceTestExecutionContext(ctx, container, host, app, child));
         await au.stop();
-        await controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+        await controller.deactivate(controller, null);
         ctx.doc.body.removeChild(host);
         au.dispose();
     }
@@ -118,7 +118,7 @@ describe('3-runtime-html/enhance.spec.ts', function () {
                 host.innerHTML = template;
                 component = CustomElement.define('app', App2);
                 const controller = await au.enhance({ host, component });
-                dispose = () => controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+                dispose = () => controller.deactivate(controller, null);
             }
             assert.html.textContent('div', message, 'div', host);
             host.querySelector('button').click();
@@ -150,7 +150,7 @@ describe('3-runtime-html/enhance.spec.ts', function () {
         const au = new Aurelia(container);
         const controller = await au.enhance({ host, component });
         await au.stop();
-        await controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+        await controller.deactivate(controller, null);
         ctx.doc.body.removeChild(host);
         assert.deepStrictEqual(component.eventLog, [
             'define',
@@ -192,7 +192,7 @@ describe('3-runtime-html/enhance.spec.ts', function () {
             }
             // The inverse order of the stop and detaching is intentional
             async detaching() {
-                await this.enhanceView.deactivate(this.enhanceView, null, 0 /* LifecycleFlags.none */);
+                await this.enhanceView.deactivate(this.enhanceView, null);
                 assert.html.innerEqual(this.enhancedHost, '<my-element class="au"></my-element>', 'enhanced.innerHtml');
                 assert.html.innerEqual(this.container, '<div><my-element class="au"></my-element></div>', 'enhanced.innerHtml');
             }
@@ -230,9 +230,9 @@ describe('3-runtime-html/enhance.spec.ts', function () {
         const controller = await au.enhance({ host, component: { message: 'hello world' } });
         assert.html.textContent(host, '012');
         assert.strictEqual(host.querySelectorAll('div').length, 3);
-        await controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+        await controller.deactivate(controller, null);
         assert.html.textContent(host, '');
-        await controller.activate(controller, null, 0 /* LifecycleFlags.none */);
+        await controller.activate(controller, null);
         assert.html.textContent(host, '012');
         assert.strictEqual(host.querySelectorAll('div').length, 3);
     });
@@ -265,7 +265,7 @@ describe('3-runtime-html/enhance.spec.ts', function () {
                         }, this.$controller);
                     }
                     detaching() {
-                        void this.enhancedView.deactivate(this.enhancedView, null, 0 /* LifecycleFlags.none */);
+                        void this.enhancedView.deactivate(this.enhancedView, null);
                         parentController = void 0;
                     }
                 },
@@ -301,7 +301,7 @@ describe('3-runtime-html/enhance.spec.ts', function () {
             }))
         });
         assert.strictEqual(host.innerHTML, '<div class="au" data-id="12"></div>');
-        await controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+        await controller.deactivate(controller, null);
     });
     it('uses resources given in the container', async function () {
         const ctx = TestContext.create();
@@ -321,7 +321,7 @@ describe('3-runtime-html/enhance.spec.ts', function () {
         });
         assert.strictEqual(host.innerHTML, '<div class="au" data-id="11"></div>');
         assert.strictEqual(container.find(ValueConverter, 'plus10'), null, 'It should register resources with child contaienr only.');
-        await controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+        await controller.deactivate(controller, null);
     });
     it('throws on template with a predefined "au"', async function () {
         const ctx = TestContext.create();
@@ -348,7 +348,7 @@ describe('3-runtime-html/enhance.spec.ts', function () {
         const controller = await au.enhance({ host, component: { id: 1 } });
         assert.html.textContent(host, '012');
         assert.throws(() => au.enhance({ host, component: {} }));
-        await controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+        await controller.deactivate(controller, null);
     });
     it('does not throw on enhancement that did not result in "au" class', async function () {
         const ctx = TestContext.create();
@@ -359,8 +359,8 @@ describe('3-runtime-html/enhance.spec.ts', function () {
         const controller = await au.enhance({ host, component: { id: 1 } });
         assert.html.textContent(host, '012');
         const controller2 = await au.enhance({ host, component: {} });
-        await controller2.deactivate(controller2, null, 0 /* LifecycleFlags.none */);
-        await controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+        await controller2.deactivate(controller2, null);
+        await controller.deactivate(controller, null);
     });
 });
 //# sourceMappingURL=enhance.spec.js.map

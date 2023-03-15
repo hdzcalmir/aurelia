@@ -2,7 +2,7 @@ import { Constructable, IContainer } from '@aurelia/kernel';
 import { IRenderLocation } from '../../dom';
 import { IPlatform } from '../../platform';
 import { HydrateElementInstruction } from '../../renderer';
-import { LifecycleFlags, ICustomElementController, IHydratedController, ISyntheticView } from '../../templating/controller';
+import { ICustomElementController, IHydratedController, ISyntheticView } from '../../templating/controller';
 /**
  * An optional interface describing the dialog activate convention.
  */
@@ -35,7 +35,7 @@ export declare class AuCompose {
     /** @internal */ host: HTMLElement, 
     /** @internal */ _location: IRenderLocation, 
     /** @internal */ _platform: IPlatform, instruction: HydrateElementInstruction, contextFactory: CompositionContextFactory);
-    attaching(initiator: IHydratedController, _parent: IHydratedController, _flags: LifecycleFlags): void | Promise<void>;
+    attaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void>;
     detaching(initiator: IHydratedController): void | Promise<void>;
 }
 export interface ICompositionController {

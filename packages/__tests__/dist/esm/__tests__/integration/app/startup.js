@@ -54,7 +54,7 @@ export async function startup(config = {}) {
     }
     else {
         const controller = (await au.enhance({ host, component }));
-        $deactivate = () => controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+        $deactivate = () => controller.deactivate(controller, null);
     }
     async function tearDown() {
         await au.stop();

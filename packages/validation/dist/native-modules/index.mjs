@@ -311,37 +311,37 @@ class PropertyRule {
         const e = this.$rules.length - 1;
         return this.$rules[e];
     }
-    async validate(e, t, s, i) {
-        if (void 0 === i) i = c.create({
+    async validate(e, t, s) {
+        if (void 0 === s) s = c.create({
             [V]: e
         });
-        const r = this.property.expression;
-        let n;
-        if (void 0 === r) n = e; else n = l(r, i, this, null);
-        let a = true;
-        const o = async s => {
+        const i = this.property.expression;
+        let r;
+        if (void 0 === i) r = e; else r = l(i, s, this, null);
+        let n = true;
+        const a = async s => {
             const i = async t => {
-                let s = t.execute(n, e);
+                let s = t.execute(r, e);
                 if (s instanceof Promise) s = await s;
-                a = a && s;
-                const {displayName: i, name: r} = this.property;
+                n = n && s;
+                const {displayName: i, name: a} = this.property;
                 let o;
                 if (!s) {
-                    const s = c.create(new ValidationMessageEvaluationContext(this.messageProvider, this.messageProvider.getDisplayName(r, i), r, n, t, e));
+                    const s = c.create(new ValidationMessageEvaluationContext(this.messageProvider, this.messageProvider.getDisplayName(a, i), a, r, t, e));
                     o = l(this.messageProvider.getMessage(t), s, this, null);
                 }
-                return new ValidationResult(s, o, r, e, t, this);
+                return new ValidationResult(s, o, a, e, t, this);
             };
-            const r = [];
-            for (const n of s) if (n.canExecute(e) && (void 0 === t || n.tag === t)) r.push(i(n));
-            return Promise.all(r);
+            const a = [];
+            for (const r of s) if (r.canExecute(e) && (void 0 === t || r.tag === t)) a.push(i(r));
+            return Promise.all(a);
         };
-        const u = async (e, t) => {
-            const s = await o(t);
+        const o = async (e, t) => {
+            const s = await a(t);
             e.push(...s);
             return e;
         };
-        return this.$rules.reduce((async (e, t) => e.then((async e => a ? u(e, t) : Promise.resolve(e)))), Promise.resolve([]));
+        return this.$rules.reduce((async (e, t) => e.then((async e => n ? o(e, t) : Promise.resolve(e)))), Promise.resolve([]));
     }
     then() {
         this.$rules.push([]);
@@ -1263,13 +1263,12 @@ F = f([ p(0, i), p(1, g), p(2, $) ], F);
 d()(F);
 
 class ValidateInstruction {
-    constructor(e = void 0, t = void 0, s = void 0, i = void 0, r = void 0, n = 0) {
+    constructor(e = void 0, t = void 0, s = void 0, i = void 0, r = void 0) {
         this.object = e;
         this.propertyName = t;
         this.rules = s;
         this.objectTag = i;
         this.propertyTag = r;
-        this.flags = n;
     }
 }
 
@@ -1280,13 +1279,12 @@ class StandardValidator {
         const t = e.object;
         const s = e.propertyName;
         const i = e.propertyTag;
-        const r = e.flags;
-        const n = e.rules ?? z.get(t, e.objectTag) ?? [];
-        const a = c.create({
+        const r = e.rules ?? z.get(t, e.objectTag) ?? [];
+        const n = c.create({
             [V]: t
         });
-        if (void 0 !== s) return await (n.find((e => e.property.name === s))?.validate(t, i, r, a)) ?? [];
-        return (await Promise.all(n.map((async e => e.validate(t, i, r, a))))).flat();
+        if (void 0 !== s) return await (r.find((e => e.property.name === s))?.validate(t, i, n)) ?? [];
+        return (await Promise.all(r.map((async e => e.validate(t, i, n))))).flat();
     }
 }
 

@@ -38,7 +38,7 @@ describe('3-runtime-html/process-content.spec.ts', function () {
                 host.innerHTML = template;
                 const controller = await au.enhance({ host, component: CustomElement.define({ name: 'app', isStrictBinding: true }, App) });
                 app = controller.viewModel;
-                stop = () => controller.deactivate(controller, null, 0 /* LifecycleFlags.none */);
+                stop = () => controller.deactivate(controller, null);
             }
             else {
                 await au.app({ host, component: CustomElement.define({ name: 'app', isStrictBinding: true, template }, App) })

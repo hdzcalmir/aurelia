@@ -3715,9 +3715,12 @@ const ConnectableSwitcher = Object.freeze({
 const R$get = Reflect.get;
 const toStringTag = Object.prototype.toString;
 const proxyMap = new WeakMap();
+const nowrapClassKey = '__au_nw__';
+const nowrapPropKey = '__au_nw';
 function canWrap(obj) {
     switch (toStringTag.call(obj)) {
         case '[object Object]':
+            return obj.constructor[nowrapClassKey] !== true;
         case '[object Array]':
         case '[object Map]':
         case '[object Set]':
@@ -3739,12 +3742,13 @@ function getRaw(obj) {
 function unwrap(v) {
     return canWrap(v) && v[rawKey] || v;
 }
-function doNotCollect(key) {
+function doNotCollect(object, key) {
     return key === 'constructor'
         || key === '__proto__'
         || key === '$observers'
         || key === Symbol.toPrimitive
-        || key === Symbol.toStringTag;
+        || key === Symbol.toStringTag
+        || object.constructor[`${nowrapPropKey}_${safeString(key)}__`] === true;
 }
 function createProxy(obj) {
     const handler = isArray(obj)
@@ -3762,7 +3766,7 @@ const objectHandler = {
             return target;
         }
         const connectable = currentConnectable();
-        if (!connecting || doNotCollect(key) || connectable == null) {
+        if (!connecting || doNotCollect(target, key) || connectable == null) {
             return R$get(target, key, receiver);
         }
         connectable.observe(target, key);
@@ -3774,7 +3778,7 @@ const arrayHandler = {
         if (key === rawKey) {
             return target;
         }
-        if (!connecting || doNotCollect(key) || _connectable == null) {
+        if (!connecting || doNotCollect(target, key) || _connectable == null) {
             return R$get(target, key, receiver);
         }
         switch (key) {
@@ -3960,7 +3964,7 @@ const collectionHandler = {
             return target;
         }
         const connectable = currentConnectable();
-        if (!connecting || doNotCollect(key) || connectable == null) {
+        if (!connecting || doNotCollect(target, key) || connectable == null) {
             return R$get(target, key, receiver);
         }
         switch (key) {
@@ -4710,6 +4714,24 @@ function getNotifier(obj, key, callbackKey, initialValue, set) {
     return notifier;
 }
 
+function nowrap(target, key) {
+    if (target == null) {
+        return (t, k) => deco(t, k);
+    }
+    else {
+        return deco(target, key);
+    }
+    function deco(target, key) {
+        const isClassDecorator = !key;
+        if (isClassDecorator) {
+            defineHiddenProp(target, nowrapClassKey, true);
+        }
+        else {
+            defineHiddenProp(target.constructor, `${nowrapPropKey}_${safeString(key)}__`, true);
+        }
+    }
+}
+
 const ISignaler = createInterface('ISignaler', x => x.singleton(Signaler));
 class Signaler {
     constructor() {
@@ -4816,6 +4838,7 @@ exports.enableSetObservation = enableSetObservation;
 exports.getCollectionObserver = getCollectionObserver;
 exports.getObserverLookup = getObserverLookup;
 exports.isIndexMap = isIndexMap;
+exports.nowrap = nowrap;
 exports.observable = observable;
 exports.parseExpression = parseExpression;
 exports.subscriberCollection = subscriberCollection;

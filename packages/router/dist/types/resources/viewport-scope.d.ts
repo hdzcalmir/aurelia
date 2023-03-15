@@ -4,7 +4,7 @@
  * In its current state, it is NOT a good source for learning about the inner workings and design of the router.
  *
  */
-import { LifecycleFlags, INode, ICompiledCustomElementController, ICustomElementViewModel, ICustomElementController, IHydratedController, ISyntheticView } from '@aurelia/runtime-html';
+import { INode, ICompiledCustomElementController, ICustomElementViewModel, ICustomElementController, IHydratedController, ISyntheticView } from '@aurelia/runtime-html';
 import { IContainer } from '@aurelia/kernel';
 import { IRouter } from '../index';
 import { ViewportScope } from '../endpoints/viewport-scope';
@@ -25,8 +25,8 @@ export declare class ViewportScopeCustomElement implements ICustomElementViewMod
     private isBound;
     constructor(router: IRouter, element: INode<HTMLElement>, container: IContainer, parent: ViewportScopeCustomElement, parentController: IHydratedController);
     hydrated(controller: ICompiledCustomElementController): void;
-    bound(_initiator: IHydratedController, _parent: ISyntheticView | ICustomElementController | null, _flags: LifecycleFlags): void;
-    unbinding(_initiator: IHydratedController, _parent: ISyntheticView | ICustomElementController | null, _flags: LifecycleFlags): void | Promise<void>;
+    bound(_initiator: IHydratedController, _parent: ISyntheticView | ICustomElementController | null): void;
+    unbinding(_initiator: IHydratedController, _parent: ISyntheticView | ICustomElementController | null): void | Promise<void>;
     connect(): void;
     disconnect(): void;
     private getAttribute;

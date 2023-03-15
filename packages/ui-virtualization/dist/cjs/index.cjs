@@ -148,7 +148,7 @@ class VirtualRepeat {
         if (0 === i) {
             for (c = 0; h > c; ++c) {
                 a = o[c];
-                void a.deactivate(e, e, 2);
+                void a.deactivate(e, e);
                 a.nodes.remove();
             }
             o.length = 0;
@@ -158,7 +158,7 @@ class VirtualRepeat {
         if (h > l) {
             while (h > l) {
                 a = o[h - 1];
-                void a.deactivate(e, e, 2);
+                void a.deactivate(e, e);
                 a.nodes.remove();
                 --h;
             }
@@ -167,7 +167,7 @@ class VirtualRepeat {
         if (h > i) {
             while (h > i) {
                 a = o[h - 1];
-                void a.deactivate(e, e, 2);
+                void a.deactivate(e, e);
                 a.nodes.remove();
                 --h;
             }
@@ -199,7 +199,7 @@ class VirtualRepeat {
                 y.overrideContext.$index = m;
                 y.overrideContext.$length = i;
                 p(y.overrideContext);
-                void a.activate(e, e, 1, y);
+                void a.activate(e, e, y);
             }
         }
         this.C.start(t);
@@ -320,7 +320,7 @@ class VirtualRepeat {
         n.overrideContext.$length = r.count();
         p(n.overrideContext);
         t.nodes.insertBefore(this.dom.bottom);
-        void t.activate(e, e, 0, n);
+        void t.activate(e, e, n);
         return t;
     }
     getOrCreateFirstView() {

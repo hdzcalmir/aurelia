@@ -1,4 +1,4 @@
-import { LifecycleFlags, type IHydratedController, type ICustomElementController } from '@aurelia/runtime-html';
+import { type IHydratedController, type ICustomElementController } from '@aurelia/runtime-html';
 import type { IViewport } from './resources/viewport';
 import { type RouteNode } from './route-tree';
 import type { IRouteContext } from './route-context';
@@ -31,8 +31,8 @@ export declare class ViewportAgent {
     private currTransition;
     constructor(viewport: IViewport, hostController: ICustomElementController, ctx: IRouteContext);
     static for(viewport: IViewport, ctx: IRouteContext): ViewportAgent;
-    activateFromViewport(initiator: IHydratedController, parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
-    deactivateFromViewport(initiator: IHydratedController, parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
+    activateFromViewport(initiator: IHydratedController, parent: IHydratedController): void | Promise<void>;
+    deactivateFromViewport(initiator: IHydratedController, parent: IHydratedController): void | Promise<void>;
     handles(req: ViewportRequest): boolean;
     isAvailable(): boolean;
     canUnload(tr: Transition, b: Batch): void;

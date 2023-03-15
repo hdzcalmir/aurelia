@@ -1,6 +1,5 @@
 import { Key } from '@aurelia/kernel';
 import { ExpressionKind, IRateLimitOptions } from '@aurelia/runtime';
-import { LifecycleFlags } from '@aurelia/runtime-html';
 import type { IContainer, IDisposable, IIndexable, IServiceLocator } from '@aurelia/kernel';
 import type { Scope, IBinding, IConnectableBinding, IndexMap, IObserverLocator, ISignaler, BindingObserverRecord, Collection, ISubscribable, ICollectionSubscribable } from '@aurelia/runtime';
 export declare class MockBinding implements IConnectableBinding {
@@ -119,13 +118,12 @@ export declare class ChangeSet implements IDisposable {
 }
 export declare class ProxyChangeSet implements IDisposable {
     readonly index: number;
-    readonly flags: LifecycleFlags;
     readonly key: PropertyKey;
     get newValue(): any;
     get oldValue(): any;
     private _newValue;
     private _oldValue;
-    constructor(index: number, flags: LifecycleFlags, key: PropertyKey, newValue: any, oldValue: any);
+    constructor(index: number, key: PropertyKey, newValue: any, oldValue: any);
     dispose(): void;
 }
 export declare class CollectionChangeSet implements IDisposable {
@@ -137,7 +135,6 @@ export declare class CollectionChangeSet implements IDisposable {
 }
 export declare class SpySubscriber implements IDisposable {
     get changes(): ChangeSet[];
-    get proxyChanges(): ProxyChangeSet[];
     get collectionChanges(): CollectionChangeSet[];
     get hasChanges(): boolean;
     get hasProxyChanges(): boolean;

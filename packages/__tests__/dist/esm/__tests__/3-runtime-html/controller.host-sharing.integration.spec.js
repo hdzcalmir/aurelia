@@ -51,16 +51,16 @@ describe('3-runtime-html/controller.host-sharing.integration.spec.ts', function 
                             }
                             attaching(initiator) {
                                 // No async hooks so all of these are synchronous.
-                                void this.childController.activate(initiator, this.$controller, 0 /* LifecycleFlags.none */);
+                                void this.childController.activate(initiator, this.$controller);
                             }
                             detaching(initiator) {
-                                void this.childController.deactivate(initiator, this.$controller, 0 /* LifecycleFlags.none */);
+                                void this.childController.deactivate(initiator, this.$controller);
                             }
                             activateChild() {
-                                void this.childController.activate(this.childController, this.$controller, 0 /* LifecycleFlags.none */);
+                                void this.childController.activate(this.childController, this.$controller);
                             }
                             deactivateChild() {
-                                void this.childController.deactivate(this.childController, this.$controller, 0 /* LifecycleFlags.none */);
+                                void this.childController.deactivate(this.childController, this.$controller);
                             }
                         };
                         TheParent = __decorate([

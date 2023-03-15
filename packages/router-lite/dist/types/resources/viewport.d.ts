@@ -1,5 +1,5 @@
 import { ILogger } from '@aurelia/kernel';
-import { type LifecycleFlags, ICustomElementViewModel, IHydratedController, ICompiledCustomElementController } from '@aurelia/runtime-html';
+import { ICustomElementViewModel, IHydratedController, ICompiledCustomElementController } from '@aurelia/runtime-html';
 import { IRouteContext } from '../route-context';
 import { type ViewportInstruction } from '../instructions';
 import { type RouteNode } from '../route-tree';
@@ -21,8 +21,8 @@ export declare class ViewportCustomElement implements ICustomElementViewModel, I
     private controller;
     constructor(logger: ILogger, ctx: IRouteContext);
     hydrated(controller: ICompiledCustomElementController): void;
-    attaching(initiator: IHydratedController, _parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
-    detaching(initiator: IHydratedController, _parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
+    attaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void>;
+    detaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void>;
     dispose(): void;
     toString(): string;
 }

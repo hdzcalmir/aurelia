@@ -269,93 +269,93 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
         assert.strictEqual(appHost.querySelector('input').value, 'hello');
         await tearDown();
     });
-});
-describe('[UNIT] 3-runtime-html/template-compiler.hooks.spec.ts', function () {
-    function createFixture() {
-        const ctx = TestContext.create();
-        const container = ctx.container;
-        const sut = ctx.templateCompiler;
-        return { ctx, container, sut };
-    }
-    it('invokes before compile hooks', function () {
-        const template = `<template></template>`;
-        const { container, sut } = createFixture();
-        let hookCallCount = 0;
-        container.register(Registration.instance(ITemplateCompilerHooks, {
-            compiling(template) {
-                hookCallCount++;
-                template.setAttribute('data-hello', 'world');
-            }
-        }));
-        const definition = sut.compile({ name: 'lorem-ipsum', template }, container, null);
-        assert.strictEqual(hookCallCount, 1);
-        assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
-    });
-    it('invokes all hooks', function () {
-        const template = `<template></template>`;
-        const { container, sut } = createFixture();
-        let hookCallCount = 0;
-        container.register(Registration.instance(ITemplateCompilerHooks, {
-            compiling(template) {
-                hookCallCount++;
-                template.setAttribute('data-hello', 'world');
-            }
-        }));
-        container.register(Registration.instance(ITemplateCompilerHooks, {
-            compiling(template) {
-                hookCallCount++;
-                template.setAttribute('data-world', 'hello');
-            }
-        }));
-        const definition = sut.compile({ name: 'lorem-ipsum', template }, container, null);
-        assert.strictEqual(hookCallCount, 2);
-        assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
-        assert.strictEqual(definition.template.getAttribute('data-world'), 'hello');
-    });
-    it('does not throw if the compile hooks does not have any hooks', function () {
-        const template = `<template></template>`;
-        const { container, sut } = createFixture();
-        container.register(Registration.instance(ITemplateCompilerHooks, {}));
-        assert.doesNotThrow(() => sut.compile({ name: 'lorem-ipsum', template }, container, null));
-    });
-    it('invokes hooks with resources semantic - only leaf', function () {
-        const template = `<template></template>`;
-        const { container, sut } = createFixture();
-        let hookCallCount = 0;
-        const createResolver = () => Registration.instance(ITemplateCompilerHooks, {
-            compiling(template) {
-                hookCallCount++;
-                template.setAttribute('data-hello', 'world');
-            }
+    describe('[UNIT]', function () {
+        function createFixture() {
+            const ctx = TestContext.create();
+            const container = ctx.container;
+            const sut = ctx.templateCompiler;
+            return { ctx, container, sut };
+        }
+        it('invokes before compile hooks', function () {
+            const template = `<template></template>`;
+            const { container, sut } = createFixture();
+            let hookCallCount = 0;
+            container.register(Registration.instance(ITemplateCompilerHooks, {
+                compiling(template) {
+                    hookCallCount++;
+                    template.setAttribute('data-hello', 'world');
+                }
+            }));
+            const definition = sut.compile({ name: 'lorem-ipsum', template }, container, null);
+            assert.strictEqual(hookCallCount, 1);
+            assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
         });
-        const middleContainer = container.createChild();
-        const leafContainer = middleContainer.createChild();
-        middleContainer.register(createResolver());
-        leafContainer.register(createResolver());
-        const definition = sut.compile({ name: 'lorem-ipsum', template }, leafContainer, null);
-        assert.strictEqual(hookCallCount, 1);
-        assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
-    });
-    it('invokes hooks with resources semantic - leaf + root', function () {
-        const template = `<template></template>`;
-        const { container, sut } = createFixture();
-        let hookCallCount = 0;
-        const createResolver = (value) => Registration.instance(ITemplateCompilerHooks, {
-            compiling(template) {
-                hookCallCount++;
-                template.setAttribute(`data-${value}`, value);
-            }
+        it('invokes all hooks', function () {
+            const template = `<template></template>`;
+            const { container, sut } = createFixture();
+            let hookCallCount = 0;
+            container.register(Registration.instance(ITemplateCompilerHooks, {
+                compiling(template) {
+                    hookCallCount++;
+                    template.setAttribute('data-hello', 'world');
+                }
+            }));
+            container.register(Registration.instance(ITemplateCompilerHooks, {
+                compiling(template) {
+                    hookCallCount++;
+                    template.setAttribute('data-world', 'hello');
+                }
+            }));
+            const definition = sut.compile({ name: 'lorem-ipsum', template }, container, null);
+            assert.strictEqual(hookCallCount, 2);
+            assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
+            assert.strictEqual(definition.template.getAttribute('data-world'), 'hello');
         });
-        const middleContainer = container.createChild();
-        const leafContainer = middleContainer.createChild();
-        container.register(createResolver('root'));
-        middleContainer.register(createResolver('middle'));
-        leafContainer.register(createResolver('leaf'));
-        const definition = sut.compile({ name: 'lorem-ipsum', template }, leafContainer, null);
-        assert.strictEqual(hookCallCount, 2);
-        assert.strictEqual(definition.template.getAttribute('data-root'), 'root');
-        assert.strictEqual(definition.template.getAttribute('data-middle'), null);
-        assert.strictEqual(definition.template.getAttribute('data-leaf'), 'leaf');
+        it('does not throw if the compile hooks does not have any hooks', function () {
+            const template = `<template></template>`;
+            const { container, sut } = createFixture();
+            container.register(Registration.instance(ITemplateCompilerHooks, {}));
+            assert.doesNotThrow(() => sut.compile({ name: 'lorem-ipsum', template }, container, null));
+        });
+        it('invokes hooks with resources semantic - only leaf', function () {
+            const template = `<template></template>`;
+            const { container, sut } = createFixture();
+            let hookCallCount = 0;
+            const createResolver = () => Registration.instance(ITemplateCompilerHooks, {
+                compiling(template) {
+                    hookCallCount++;
+                    template.setAttribute('data-hello', 'world');
+                }
+            });
+            const middleContainer = container.createChild();
+            const leafContainer = middleContainer.createChild();
+            middleContainer.register(createResolver());
+            leafContainer.register(createResolver());
+            const definition = sut.compile({ name: 'lorem-ipsum', template }, leafContainer, null);
+            assert.strictEqual(hookCallCount, 1);
+            assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
+        });
+        it('invokes hooks with resources semantic - leaf + root', function () {
+            const template = `<template></template>`;
+            const { container, sut } = createFixture();
+            let hookCallCount = 0;
+            const createResolver = (value) => Registration.instance(ITemplateCompilerHooks, {
+                compiling(template) {
+                    hookCallCount++;
+                    template.setAttribute(`data-${value}`, value);
+                }
+            });
+            const middleContainer = container.createChild();
+            const leafContainer = middleContainer.createChild();
+            container.register(createResolver('root'));
+            middleContainer.register(createResolver('middle'));
+            leafContainer.register(createResolver('leaf'));
+            const definition = sut.compile({ name: 'lorem-ipsum', template }, leafContainer, null);
+            assert.strictEqual(hookCallCount, 2);
+            assert.strictEqual(definition.template.getAttribute('data-root'), 'root');
+            assert.strictEqual(definition.template.getAttribute('data-middle'), null);
+            assert.strictEqual(definition.template.getAttribute('data-leaf'), 'leaf');
+        });
     });
 });
 //# sourceMappingURL=template-compiler.hooks.spec.js.map

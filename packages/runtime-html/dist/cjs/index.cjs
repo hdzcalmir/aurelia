@@ -2671,15 +2671,6 @@ class Rendering {
 
 Rendering.inject = [ t.IContainer ];
 
-exports.LifecycleFlags = void 0;
-
-(function(t) {
-    t[t["none"] = 0] = "none";
-    t[t["fromBind"] = 1] = "fromBind";
-    t[t["fromUnbind"] = 2] = "fromUnbind";
-    t[t["dispose"] = 4] = "dispose";
-})(exports.LifecycleFlags || (exports.LifecycleFlags = {}));
-
 var qe;
 
 (function(t) {
@@ -2759,9 +2750,7 @@ class Controller {
         this.state = 0;
         this.Mt = false;
         this.Ft = t.emptyArray;
-        this.flags = 0;
         this.$initiator = null;
-        this.$flags = 0;
         this.$resolve = void 0;
         this.$reject = void 0;
         this.$promise = void 0;
@@ -2809,20 +2798,19 @@ class Controller {
     }
     hE(e, i) {
         const n = this.container;
-        const r = this.flags;
-        const o = this.$t;
-        let l = this.definition;
-        this.scope = s.Scope.create(o, null, true);
-        if (l.watches.length > 0) je(this, n, l, o);
-        Fe(this, l, r, o);
-        this.Ft = Oe(this, l, o);
+        const r = this.$t;
+        let o = this.definition;
+        this.scope = s.Scope.create(r, null, true);
+        if (o.watches.length > 0) je(this, n, o, r);
+        Fe(this, o, r);
+        this.Ft = Oe(this, o, r);
         if (this.Ut.hasDefine) {
-            const t = o.define(this, i, l);
-            if (void 0 !== t && t !== l) l = CustomElementDefinition.getOrCreate(t);
+            const t = r.define(this, i, o);
+            if (void 0 !== t && t !== o) o = CustomElementDefinition.getOrCreate(t);
         }
         this.qt = Ee.resolve(n);
-        l.register(n);
-        if (null !== l.injectable) Z(n, l.injectable, new t.InstanceProvider("definition.injectable", o));
+        o.register(n);
+        if (null !== o.injectable) Z(n, o.injectable, new t.InstanceProvider("definition.injectable", r));
         if (null == e || false !== e.hydrate) {
             this.hS(e);
             this.hC();
@@ -2865,7 +2853,7 @@ class Controller {
         const t = this.definition;
         const e = this.$t;
         if (t.watches.length > 0) je(this, this.container, t, e);
-        Fe(this, t, this.flags, e);
+        Fe(this, t, e);
         e.$controller = this;
         this.qt = Ee.resolve(this.container);
         if (void 0 !== this.qt.created) this.qt.created.forEach(Ye, this);
@@ -2876,7 +2864,7 @@ class Controller {
         this.isStrictBinding = this.Wt.isStrictBinding;
         this.r.render(this, (this.nodes = this.r.createNodes(this.Wt)).findTargets(), this.Wt, void 0);
     }
-    activate(e, s, i, n) {
+    activate(e, s, i) {
         switch (this.state) {
           case 0:
           case 8:
@@ -2894,31 +2882,29 @@ class Controller {
             throw b(`AUR0503:${this.name} ${Ge(this.state)}`);
         }
         this.parent = s;
-        i |= 1;
         switch (this.vmKind) {
           case 0:
-            this.scope.parent = n ?? null;
+            this.scope.parent = i ?? null;
             break;
 
           case 1:
-            this.scope = n ?? null;
+            this.scope = i ?? null;
             break;
 
           case 2:
-            if (void 0 === n || null === n) throw b(`AUR0504`);
-            if (!this.hasLockedScope) this.scope = n;
+            if (void 0 === i || null === i) throw b(`AUR0504`);
+            if (!this.hasLockedScope) this.scope = i;
             break;
         }
         if (this.isStrictBinding) ;
         this.$initiator = e;
-        this.$flags = i;
         this.zt();
-        let r;
-        if (2 !== this.vmKind && null != this.qt.binding) r = t.resolveAll(...this.qt.binding.map(ts, this));
-        if (this.Ut.hasBinding) r = t.resolveAll(r, this.$t.binding(this.$initiator, this.parent, this.$flags));
-        if (I(r)) {
+        let n;
+        if (2 !== this.vmKind && null != this.qt.binding) n = t.resolveAll(...this.qt.binding.map(ts, this));
+        if (this.Ut.hasBinding) n = t.resolveAll(n, this.$t.binding(this.$initiator, this.parent));
+        if (I(n)) {
             this.Gt();
-            r.then((() => {
+            n.then((() => {
                 this.bind();
             })).catch((t => {
                 this.Xt(t);
@@ -2945,7 +2931,7 @@ class Controller {
             }
         }
         if (2 !== this.vmKind && null != this.qt.bound) i = t.resolveAll(...this.qt.bound.map(es, this));
-        if (this.Ut.hasBound) i = t.resolveAll(i, this.$t.bound(this.$initiator, this.parent, this.$flags));
+        if (this.Ut.hasBound) i = t.resolveAll(i, this.$t.bound(this.$initiator, this.parent));
         if (I(i)) {
             this.Gt();
             i.then((() => {
@@ -3009,7 +2995,7 @@ class Controller {
         let e = 0;
         let s;
         if (2 !== this.vmKind && null != this.qt.attaching) s = t.resolveAll(...this.qt.attaching.map(ss, this));
-        if (this.Ut.hasAttaching) s = t.resolveAll(s, this.$t.attaching(this.$initiator, this.parent, this.$flags));
+        if (this.Ut.hasAttaching) s = t.resolveAll(s, this.$t.attaching(this.$initiator, this.parent));
         if (I(s)) {
             this.Gt();
             this.zt();
@@ -3019,10 +3005,10 @@ class Controller {
                 this.Xt(t);
             }));
         }
-        if (null !== this.children) for (;e < this.children.length; ++e) void this.children[e].activate(this.$initiator, this, this.$flags, this.scope);
+        if (null !== this.children) for (;e < this.children.length; ++e) void this.children[e].activate(this.$initiator, this, this.scope);
         this.Yt();
     }
-    deactivate(e, s, i) {
+    deactivate(e, s) {
         switch (~16 & this.state) {
           case 2:
             this.state = 4;
@@ -3038,18 +3024,17 @@ class Controller {
             throw b(`AUR0505:${this.name} ${Ge(this.state)}`);
         }
         this.$initiator = e;
-        this.$flags = i;
         if (e === this) this.Zt();
-        let n = 0;
-        let r;
-        if (this.Ft.length) for (;n < this.Ft.length; ++n) this.Ft[n].stop();
-        if (null !== this.children) for (n = 0; n < this.children.length; ++n) void this.children[n].deactivate(e, this, i);
-        if (2 !== this.vmKind && null != this.qt.detaching) r = t.resolveAll(...this.qt.detaching.map(ns, this));
-        if (this.Ut.hasDetaching) r = t.resolveAll(r, this.$t.detaching(this.$initiator, this.parent, this.$flags));
-        if (I(r)) {
+        let i = 0;
+        let n;
+        if (this.Ft.length) for (;i < this.Ft.length; ++i) this.Ft[i].stop();
+        if (null !== this.children) for (i = 0; i < this.children.length; ++i) void this.children[i].deactivate(e, this);
+        if (2 !== this.vmKind && null != this.qt.detaching) n = t.resolveAll(...this.qt.detaching.map(ns, this));
+        if (this.Ut.hasDetaching) n = t.resolveAll(n, this.$t.detaching(this.$initiator, this.parent));
+        if (I(n)) {
             this.Gt();
             e.Zt();
-            r.then((() => {
+            n.then((() => {
                 e.Jt();
             })).catch((t => {
                 e.Xt(t);
@@ -3081,9 +3066,8 @@ class Controller {
         }
     }
     unbind() {
-        const t = 2 | this.$flags;
-        let e = 0;
-        if (null !== this.bindings) for (;e < this.bindings.length; ++e) this.bindings[e].unbind();
+        let t = 0;
+        if (null !== this.bindings) for (;t < this.bindings.length; ++t) this.bindings[t].unbind();
         this.parent = null;
         switch (this.vmKind) {
           case 1:
@@ -3099,8 +3083,7 @@ class Controller {
             this.scope.parent = null;
             break;
         }
-        if (4 === (4 & t) && this.$initiator === this) this.dispose();
-        this.state = 32 & this.state | 8;
+        this.state = 8;
         this.$initiator = null;
         this.te();
     }
@@ -3137,7 +3120,7 @@ class Controller {
     Yt() {
         if (0 === --this.Ot) {
             if (2 !== this.vmKind && null != this.qt.attached) hs = t.resolveAll(...this.qt.attached.map(is, this));
-            if (this.Ut.hasAttached) hs = t.resolveAll(hs, this.$t.attached(this.$initiator, this.$flags));
+            if (this.Ut.hasAttached) hs = t.resolveAll(hs, this.$t.attached(this.$initiator));
             if (I(hs)) {
                 this.Gt();
                 hs.then((() => {
@@ -3173,7 +3156,7 @@ class Controller {
                 if (2 !== e.vmKind && null != e.qt.unbinding) s = t.resolveAll(...e.qt.unbinding.map(rs, this));
                 if (e.Ut.hasUnbinding) {
                     if (e.debug) e.logger.trace("unbinding()");
-                    s = t.resolveAll(s, e.viewModel.unbinding(e.$initiator, e.parent, e.$flags));
+                    s = t.resolveAll(s, e.viewModel.unbinding(e.$initiator, e.parent));
                 }
                 if (I(s)) {
                     this.Gt();
@@ -3304,22 +3287,22 @@ function Me(t) {
     return e;
 }
 
-function Fe(t, e, i, n) {
-    const r = e.bindables;
-    const o = C(r);
-    const l = o.length;
-    if (l > 0) {
+function Fe(t, e, i) {
+    const n = e.bindables;
+    const r = C(n);
+    const o = r.length;
+    if (o > 0) {
         let e;
-        let i;
+        let l;
         let h = 0;
-        const a = Me(n);
+        const a = Me(i);
         const c = t.container;
         const u = c.has(s.ICoercionConfiguration, true) ? c.get(s.ICoercionConfiguration) : null;
-        for (;h < l; ++h) {
-            e = o[h];
+        for (;h < o; ++h) {
+            e = r[h];
             if (void 0 === a[e]) {
-                i = r[e];
-                a[e] = new BindableObserver(n, e, i.callback, i.set, t, u);
+                l = n[e];
+                a[e] = new BindableObserver(i, e, l.callback, l.set, t, u);
             }
         }
     }
@@ -3470,27 +3453,27 @@ function Je(t) {
 }
 
 function ts(t) {
-    return t.instance.binding(this.$t, this["$initiator"], this.parent, this["$flags"]);
+    return t.instance.binding(this.$t, this["$initiator"], this.parent);
 }
 
 function es(t) {
-    return t.instance.bound(this.$t, this["$initiator"], this.parent, this["$flags"]);
+    return t.instance.bound(this.$t, this["$initiator"], this.parent);
 }
 
 function ss(t) {
-    return t.instance.attaching(this.$t, this["$initiator"], this.parent, this["$flags"]);
+    return t.instance.attaching(this.$t, this["$initiator"], this.parent);
 }
 
 function is(t) {
-    return t.instance.attached(this.$t, this["$initiator"], this["$flags"]);
+    return t.instance.attached(this.$t, this["$initiator"]);
 }
 
 function ns(t) {
-    return t.instance.detaching(this.$t, this["$initiator"], this.parent, this["$flags"]);
+    return t.instance.detaching(this.$t, this["$initiator"], this.parent);
 }
 
 function rs(t) {
-    return t.instance.unbinding(this.$t, this["$initiator"], this.parent, this["$flags"]);
+    return t.instance.unbinding(this.$t, this["$initiator"], this.parent);
 }
 
 let os;
@@ -3532,10 +3515,10 @@ class AppRoot {
         }));
     }
     activate() {
-        return t.onResolve(this.ie, (() => t.onResolve(this.ne("activating"), (() => t.onResolve(this.controller.activate(this.controller, null, 1, void 0), (() => this.ne("activated")))))));
+        return t.onResolve(this.ie, (() => t.onResolve(this.ne("activating"), (() => t.onResolve(this.controller.activate(this.controller, null, void 0), (() => this.ne("activated")))))));
     }
     deactivate() {
-        return t.onResolve(this.ne("deactivating"), (() => t.onResolve(this.controller.deactivate(this.controller, null, 0), (() => this.ne("deactivated")))));
+        return t.onResolve(this.ne("deactivating"), (() => t.onResolve(this.controller.deactivate(this.controller, null), (() => this.ne("deactivated")))));
     }
     ne(e) {
         return t.resolveAll(...this.container.getAll(Mt).reduce(((t, s) => {
@@ -7308,14 +7291,14 @@ class Portal {
         (this.view = t.create()).setLocation(this.ks = ps(s));
         Es(this.view.nodes, e);
     }
-    attaching(t, e, s) {
+    attaching(t) {
         if (null == this.callbackContext) this.callbackContext = this.$controller.scope.bindingContext;
-        const i = this.ys = this.As();
-        this.Cs(i, this.position);
-        return this.Bs(t, i, s);
+        const e = this.ys = this.As();
+        this.Cs(e, this.position);
+        return this.Bs(t, e);
     }
-    detaching(t, e, s) {
-        return this.Rs(t, this.ys, s);
+    detaching(t) {
+        return this.Rs(t, this.ys);
     }
     targetChanged() {
         const {$controller: e} = this;
@@ -7323,41 +7306,41 @@ class Portal {
         const s = this.As();
         if (this.ys === s) return;
         this.ys = s;
-        const i = t.onResolve(this.Rs(null, s, e.flags), (() => {
+        const i = t.onResolve(this.Rs(null, s), (() => {
             this.Cs(s, this.position);
-            return this.Bs(null, s, e.flags);
+            return this.Bs(null, s);
         }));
         if (I(i)) i.catch(D);
     }
     positionChanged() {
         const {$controller: e, ys: s} = this;
         if (!e.isActive) return;
-        const i = t.onResolve(this.Rs(null, s, e.flags), (() => {
+        const i = t.onResolve(this.Rs(null, s), (() => {
             this.Cs(s, this.position);
-            return this.Bs(null, s, e.flags);
+            return this.Bs(null, s);
         }));
         if (I(i)) i.catch(D);
     }
-    Bs(e, s, i) {
-        const {activating: n, callbackContext: r, view: o} = this;
-        return t.onResolve(n?.call(r, s, o), (() => this.Ss(e, s, i)));
+    Bs(e, s) {
+        const {activating: i, callbackContext: n, view: r} = this;
+        return t.onResolve(i?.call(n, s, r), (() => this.Ss(e, s)));
     }
-    Ss(e, s, i) {
-        const {$controller: n, view: r} = this;
-        if (null === e) r.nodes.insertBefore(this.ks); else return t.onResolve(r.activate(e ?? r, n, i, n.scope), (() => this.Is(s)));
+    Ss(e, s) {
+        const {$controller: i, view: n} = this;
+        if (null === e) n.nodes.insertBefore(this.ks); else return t.onResolve(n.activate(e ?? n, i, i.scope), (() => this.Is(s)));
         return this.Is(s);
     }
     Is(t) {
         const {activated: e, callbackContext: s, view: i} = this;
         return e?.call(s, t, i);
     }
-    Rs(e, s, i) {
-        const {deactivating: n, callbackContext: r, view: o} = this;
-        return t.onResolve(n?.call(r, s, o), (() => this.Ts(e, s, i)));
+    Rs(e, s) {
+        const {deactivating: i, callbackContext: n, view: r} = this;
+        return t.onResolve(i?.call(n, s, r), (() => this.Ts(e, s)));
     }
-    Ts(e, s, i) {
-        const {$controller: n, view: r} = this;
-        if (null === e) r.nodes.remove(); else return t.onResolve(r.deactivate(e, n, i), (() => this.Ps(s)));
+    Ts(e, s) {
+        const {$controller: i, view: n} = this;
+        if (null === e) n.nodes.remove(); else return t.onResolve(n.deactivate(e, i), (() => this.Ps(s)));
         return this.Ps(s);
     }
     Ps(t) {
@@ -7462,47 +7445,47 @@ class If {
         this.Ds = t;
         this.l = e;
     }
-    attaching(e, s, i) {
-        let n;
-        const r = this.$controller;
-        const o = this.Ls++;
-        const l = () => !this.Es && this.Ls === o + 1;
+    attaching(e, s) {
+        let i;
+        const n = this.$controller;
+        const r = this.Ls++;
+        const o = () => !this.Es && this.Ls === r + 1;
         return t.onResolve(this.pending, (() => {
-            if (!l()) return;
+            if (!o()) return;
             this.pending = void 0;
-            if (this.value) n = this.view = this.ifView = this.cache && null != this.ifView ? this.ifView : this.Ds.create(); else n = this.view = this.elseView = this.cache && null != this.elseView ? this.elseView : this.elseFactory?.create();
-            if (null == n) return;
-            n.setLocation(this.l);
-            this.pending = t.onResolve(n.activate(e, r, i, r.scope), (() => {
-                if (l()) this.pending = void 0;
+            if (this.value) i = this.view = this.ifView = this.cache && null != this.ifView ? this.ifView : this.Ds.create(); else i = this.view = this.elseView = this.cache && null != this.elseView ? this.elseView : this.elseFactory?.create();
+            if (null == i) return;
+            i.setLocation(this.l);
+            this.pending = t.onResolve(i.activate(e, n, n.scope), (() => {
+                if (o()) this.pending = void 0;
             }));
         }));
     }
-    detaching(e, s, i) {
+    detaching(e, s) {
         this.Es = true;
         return t.onResolve(this.pending, (() => {
             this.Es = false;
             this.pending = void 0;
-            void this.view?.deactivate(e, this.$controller, i);
+            void this.view?.deactivate(e, this.$controller);
         }));
     }
-    valueChanged(e, s, i) {
+    valueChanged(e, s) {
         if (!this.$controller.isActive) return;
         e = !!e;
         s = !!s;
         if (e === s) return;
-        const n = this.view;
-        const r = this.$controller;
-        const o = this.Ls++;
-        const l = () => !this.Es && this.Ls === o + 1;
-        let h;
-        return t.onResolve(this.pending, (() => this.pending = t.onResolve(n?.deactivate(n, r, i), (() => {
-            if (!l()) return;
-            if (e) h = this.view = this.ifView = this.cache && null != this.ifView ? this.ifView : this.Ds.create(); else h = this.view = this.elseView = this.cache && null != this.elseView ? this.elseView : this.elseFactory?.create();
-            if (null == h) return;
-            h.setLocation(this.l);
-            return t.onResolve(h.activate(h, r, i, r.scope), (() => {
-                if (l()) this.pending = void 0;
+        const i = this.view;
+        const n = this.$controller;
+        const r = this.Ls++;
+        const o = () => !this.Es && this.Ls === r + 1;
+        let l;
+        return t.onResolve(this.pending, (() => this.pending = t.onResolve(i?.deactivate(i, n), (() => {
+            if (!o()) return;
+            if (e) l = this.view = this.ifView = this.cache && null != this.ifView ? this.ifView : this.Ds.create(); else l = this.view = this.elseView = this.cache && null != this.elseView ? this.elseView : this.elseFactory?.create();
+            if (null == l) return;
+            l.setLocation(this.l);
+            return t.onResolve(l.activate(l, n, n.scope), (() => {
+                if (o()) this.pending = void 0;
             }));
         }))));
     }
@@ -7570,18 +7553,18 @@ class Repeat {
         this.Ns = i;
         this.f = n;
     }
-    binding(t, e, i) {
-        const n = this.Ns.bindings;
-        const r = n.length;
+    binding(t, e) {
+        const i = this.Ns.bindings;
+        const n = i.length;
+        let r;
         let o;
-        let l;
-        let h = 0;
-        for (;r > h; ++h) {
-            o = n[h];
-            if (o.target === this && "items" === o.targetProperty) {
-                l = this.forOf = o.ast;
-                this.js = o;
-                let t = l.iterable;
+        let l = 0;
+        for (;n > l; ++l) {
+            r = i[l];
+            if (r.target === this && "items" === r.targetProperty) {
+                o = this.forOf = r.ast;
+                this.js = r;
+                let t = o.iterable;
                 while (null != t && Hn.includes(t.$kind)) {
                     t = t.expression;
                     this.$s = true;
@@ -7591,18 +7574,18 @@ class Repeat {
             }
         }
         this.Hs();
-        const a = l.declaration;
-        if (!(this.Vs = 24 === a.$kind || 25 === a.$kind)) this.local = s.astEvaluate(a, this.$controller.scope, o, null);
+        const h = o.declaration;
+        if (!(this.Vs = 24 === h.$kind || 25 === h.$kind)) this.local = s.astEvaluate(h, this.$controller.scope, r, null);
     }
-    attaching(t, e, s) {
+    attaching(t, e) {
         this.Ws();
         return this.zs(t);
     }
-    detaching(t, e, s) {
+    detaching(t, e) {
         this.Hs();
         return this.Gs(t);
     }
-    unbinding(t, e, s) {
+    unbinding(t, e) {
         this.qs.clear();
         this._s.clear();
     }
@@ -7772,7 +7755,7 @@ class Repeat {
             i.nodes.unlink();
             n = rr(c, a, f, p, u, l, d);
             Qn(n.overrideContext, g, x);
-            s = i.activate(t ?? i, r, 0, n);
+            s = i.activate(t ?? i, r, n);
             if (I(s)) (e ?? (e = [])).push(s);
         }));
         if (void 0 !== e) return 1 === e.length ? e[0] : Promise.all(e);
@@ -7787,7 +7770,7 @@ class Repeat {
         for (;l > n; ++n) {
             i = r[n];
             i.release();
-            s = i.deactivate(t ?? i, o, 0);
+            s = i.deactivate(t ?? i, o);
             if (I(s)) (e ?? (e = [])).push(s);
         }
         if (void 0 !== e) return 1 === e.length ? e[0] : Promise.all(e);
@@ -7803,7 +7786,7 @@ class Repeat {
         for (;l > h; ++h) {
             i = r[o[h]];
             i.release();
-            s = i.deactivate(i, n, 0);
+            s = i.deactivate(i, n);
             if (I(s)) (e ?? (e = [])).push(s);
         }
         h = 0;
@@ -7844,7 +7827,7 @@ class Repeat {
                 o = rr(m, u[l], g, w, x, c, p);
                 Qn(o.overrideContext, l, b);
                 r.setLocation(f);
-                n = r.activate(r, h, 0, o);
+                n = r.activate(r, h, o);
                 if (I(n)) (i ?? (i = [])).push(n);
             } else if (B < 0 || 1 === k || l !== y[B]) {
                 if (p) s.astAssign(A, r.scope, x, u[l]); else r.scope.bindingContext[c] = u[l];
@@ -8042,23 +8025,23 @@ class With {
     constructor(t, e) {
         this.view = t.create().setLocation(e);
     }
-    valueChanged(t, e, i) {
-        const n = this.$controller;
-        const r = this.view.bindings;
-        let o;
-        let l = 0, h = 0;
-        if (n.isActive && null != r) {
-            o = s.Scope.fromParent(n.scope, void 0 === t ? {} : t);
-            for (h = r.length; h > l; ++l) r[l].bind(o);
+    valueChanged(t, e) {
+        const i = this.$controller;
+        const n = this.view.bindings;
+        let r;
+        let o = 0, l = 0;
+        if (i.isActive && null != n) {
+            r = s.Scope.fromParent(i.scope, void 0 === t ? {} : t);
+            for (l = n.length; l > o; ++o) n[o].bind(r);
         }
     }
-    attaching(t, e, i) {
-        const {$controller: n, value: r} = this;
-        const o = s.Scope.fromParent(n.scope, void 0 === r ? {} : r);
-        return this.view.activate(t, n, i, o);
+    attaching(t, e) {
+        const {$controller: i, value: n} = this;
+        const r = s.Scope.fromParent(i.scope, void 0 === n ? {} : n);
+        return this.view.activate(t, i, r);
     }
-    detaching(t, e, s) {
-        return this.view.deactivate(t, this.$controller, s);
+    detaching(t, e) {
+        return this.view.deactivate(t, this.$controller);
     }
     dispose() {
         this.view.dispose();
@@ -8086,17 +8069,17 @@ exports.Switch = class Switch {
     link(t, e, s, i) {
         this.view = this.f.create(this.$controller).setLocation(this.l);
     }
-    attaching(t, e, s) {
-        const i = this.view;
-        const n = this.$controller;
-        this.queue((() => i.activate(t, n, s, n.scope)));
+    attaching(t, e) {
+        const s = this.view;
+        const i = this.$controller;
+        this.queue((() => s.activate(t, i, i.scope)));
         this.queue((() => this.swap(t, this.value)));
         return this.promise;
     }
-    detaching(t, e, s) {
+    detaching(t, e) {
         this.queue((() => {
             const e = this.view;
-            return e.deactivate(t, this.$controller, s);
+            return e.deactivate(t, this.$controller);
         }));
         return this.promise;
     }
@@ -8161,8 +8144,8 @@ exports.Switch = class Switch {
         const n = i.length;
         if (0 === n) return;
         const r = s.scope;
-        if (1 === n) return i[0].activate(e, 0, r);
-        return t.resolveAll(...i.map((t => t.activate(e, 0, r))));
+        if (1 === n) return i[0].activate(e, r);
+        return t.resolveAll(...i.map((t => t.activate(e, r))));
     }
     Js(e, s = []) {
         const i = this.activeCases;
@@ -8172,12 +8155,12 @@ exports.Switch = class Switch {
             const t = i[0];
             if (!s.includes(t)) {
                 i.length = 0;
-                return t.deactivate(e, 0);
+                return t.deactivate(e);
             }
             return;
         }
         return t.onResolve(t.resolveAll(...i.reduce(((t, i) => {
-            if (!s.includes(i)) t.push(i.deactivate(e, 0));
+            if (!s.includes(i)) t.push(i.deactivate(e));
             return t;
         }), [])), (() => {
             i.length = 0;
@@ -8221,8 +8204,8 @@ exports.Case = class Case {
             this.linkToSwitch(r);
         } else throw b(`AUR0815`);
     }
-    detaching(t, e, s) {
-        return this.deactivate(t, s);
+    detaching(t, e) {
+        return this.deactivate(t);
     }
     isMatch(t) {
         this.Ve.debug("isMatch()");
@@ -8243,16 +8226,16 @@ exports.Case = class Case {
     handleCollectionChange() {
         this.$switch.caseChanged(this);
     }
-    activate(t, e, s) {
-        let i = this.view;
-        if (void 0 === i) i = this.view = this.f.create().setLocation(this.l);
-        if (i.isActive) return;
-        return i.activate(t ?? i, this.$controller, e, s);
+    activate(t, e) {
+        let s = this.view;
+        if (void 0 === s) s = this.view = this.f.create().setLocation(this.l);
+        if (s.isActive) return;
+        return s.activate(t ?? s, this.$controller, e);
     }
-    deactivate(t, e) {
-        const s = this.view;
-        if (void 0 === s || !s.isActive) return;
-        return s.deactivate(t ?? s, this.$controller, e);
+    deactivate(t) {
+        const e = this.view;
+        if (void 0 === e || !e.isActive) return;
+        return e.deactivate(t ?? e, this.$controller);
     }
     dispose() {
         this.Us?.unsubscribe(this);
@@ -8316,63 +8299,63 @@ exports.PromiseTemplateController = class PromiseTemplateController {
     link(t, e, s, i) {
         this.view = this.f.create(this.$controller).setLocation(this.l);
     }
-    attaching(e, i, n) {
-        const r = this.view;
-        const o = this.$controller;
-        return t.onResolve(r.activate(e, o, n, this.viewScope = s.Scope.fromParent(o.scope, {})), (() => this.swap(e, n)));
+    attaching(e, i) {
+        const n = this.view;
+        const r = this.$controller;
+        return t.onResolve(n.activate(e, r, this.viewScope = s.Scope.fromParent(r.scope, {})), (() => this.swap(e)));
     }
-    valueChanged(t, e, s) {
+    valueChanged(t, e) {
         if (!this.$controller.isActive) return;
-        this.swap(null, s);
+        this.swap(null);
     }
-    swap(e, s) {
-        const n = this.value;
-        if (!I(n)) {
-            this.logger.warn(`The value '${String(n)}' is not a promise. No change will be done.`);
+    swap(e) {
+        const s = this.value;
+        if (!I(s)) {
+            this.logger.warn(`The value '${String(s)}' is not a promise. No change will be done.`);
             return;
         }
-        const r = this.p.domWriteQueue;
-        const o = this.fulfilled;
-        const l = this.rejected;
-        const h = this.pending;
-        const a = this.viewScope;
-        let c;
-        const u = {
+        const n = this.p.domWriteQueue;
+        const r = this.fulfilled;
+        const o = this.rejected;
+        const l = this.pending;
+        const h = this.viewScope;
+        let a;
+        const c = {
             reusable: false
         };
-        const f = () => {
-            void t.resolveAll(c = (this.preSettledTask = r.queueTask((() => t.resolveAll(o?.deactivate(e, s), l?.deactivate(e, s), h?.activate(e, s, a))), u)).result.catch((t => {
+        const u = () => {
+            void t.resolveAll(a = (this.preSettledTask = n.queueTask((() => t.resolveAll(r?.deactivate(e), o?.deactivate(e), l?.activate(e, h))), c)).result.catch((t => {
                 if (!(t instanceof i.TaskAbortError)) throw t;
-            })), n.then((i => {
-                if (this.value !== n) return;
-                const f = () => {
-                    this.postSettlePromise = (this.postSettledTask = r.queueTask((() => t.resolveAll(h?.deactivate(e, s), l?.deactivate(e, s), o?.activate(e, s, a, i))), u)).result;
+            })), s.then((i => {
+                if (this.value !== s) return;
+                const u = () => {
+                    this.postSettlePromise = (this.postSettledTask = n.queueTask((() => t.resolveAll(l?.deactivate(e), o?.deactivate(e), r?.activate(e, h, i))), c)).result;
                 };
-                if (1 === this.preSettledTask.status) void c.then(f); else {
+                if (1 === this.preSettledTask.status) void a.then(u); else {
                     this.preSettledTask.cancel();
-                    f();
+                    u();
                 }
             }), (i => {
-                if (this.value !== n) return;
-                const f = () => {
-                    this.postSettlePromise = (this.postSettledTask = r.queueTask((() => t.resolveAll(h?.deactivate(e, s), o?.deactivate(e, s), l?.activate(e, s, a, i))), u)).result;
+                if (this.value !== s) return;
+                const u = () => {
+                    this.postSettlePromise = (this.postSettledTask = n.queueTask((() => t.resolveAll(l?.deactivate(e), r?.deactivate(e), o?.activate(e, h, i))), c)).result;
                 };
-                if (1 === this.preSettledTask.status) void c.then(f); else {
+                if (1 === this.preSettledTask.status) void a.then(u); else {
                     this.preSettledTask.cancel();
-                    f();
+                    u();
                 }
             })));
         };
-        if (1 === this.postSettledTask?.status) void this.postSettlePromise.then(f); else {
+        if (1 === this.postSettledTask?.status) void this.postSettlePromise.then(u); else {
             this.postSettledTask?.cancel();
-            f();
+            u();
         }
     }
-    detaching(t, e, s) {
+    detaching(t, e) {
         this.preSettledTask?.cancel();
         this.postSettledTask?.cancel();
         this.preSettledTask = this.postSettledTask = null;
-        return this.view.deactivate(t, this.$controller, s);
+        return this.view.deactivate(t, this.$controller);
     }
     dispose() {
         this.view?.dispose();
@@ -8393,19 +8376,19 @@ exports.PendingTemplateController = class PendingTemplateController {
     link(t, e, s, i) {
         lr(t).pending = this;
     }
-    activate(t, e, s) {
-        let i = this.view;
-        if (void 0 === i) i = this.view = this.f.create().setLocation(this.l);
-        if (i.isActive) return;
-        return i.activate(i, this.$controller, e, s);
+    activate(t, e) {
+        let s = this.view;
+        if (void 0 === s) s = this.view = this.f.create().setLocation(this.l);
+        if (s.isActive) return;
+        return s.activate(s, this.$controller, e);
     }
-    deactivate(t, e) {
-        const s = this.view;
-        if (void 0 === s || !s.isActive) return;
-        return s.deactivate(s, this.$controller, e);
+    deactivate(t) {
+        const e = this.view;
+        if (void 0 === e || !e.isActive) return;
+        return e.deactivate(e, this.$controller);
     }
-    detaching(t, e, s) {
-        return this.deactivate(t, s);
+    detaching(t) {
+        return this.deactivate(t);
     }
     dispose() {
         this.view?.dispose();
@@ -8428,20 +8411,20 @@ exports.FulfilledTemplateController = class FulfilledTemplateController {
     link(t, e, s, i) {
         lr(t).fulfilled = this;
     }
-    activate(t, e, s, i) {
-        this.value = i;
-        let n = this.view;
-        if (void 0 === n) n = this.view = this.f.create().setLocation(this.l);
-        if (n.isActive) return;
-        return n.activate(n, this.$controller, e, s);
+    activate(t, e, s) {
+        this.value = s;
+        let i = this.view;
+        if (void 0 === i) i = this.view = this.f.create().setLocation(this.l);
+        if (i.isActive) return;
+        return i.activate(i, this.$controller, e);
     }
-    deactivate(t, e) {
-        const s = this.view;
-        if (void 0 === s || !s.isActive) return;
-        return s.deactivate(s, this.$controller, e);
+    deactivate(t) {
+        const e = this.view;
+        if (void 0 === e || !e.isActive) return;
+        return e.deactivate(e, this.$controller);
     }
-    detaching(t, e, s) {
-        return this.deactivate(t, s);
+    detaching(t, e) {
+        return this.deactivate(t);
     }
     dispose() {
         this.view?.dispose();
@@ -8464,20 +8447,20 @@ exports.RejectedTemplateController = class RejectedTemplateController {
     link(t, e, s, i) {
         lr(t).rejected = this;
     }
-    activate(t, e, s, i) {
-        this.value = i;
-        let n = this.view;
-        if (void 0 === n) n = this.view = this.f.create().setLocation(this.l);
-        if (n.isActive) return;
-        return n.activate(n, this.$controller, e, s);
+    activate(t, e, s) {
+        this.value = s;
+        let i = this.view;
+        if (void 0 === i) i = this.view = this.f.create().setLocation(this.l);
+        if (i.isActive) return;
+        return i.activate(i, this.$controller, e);
     }
-    deactivate(t, e) {
-        const s = this.view;
-        if (void 0 === s || !s.isActive) return;
-        return s.deactivate(s, this.$controller, e);
+    deactivate(t) {
+        const e = this.view;
+        if (void 0 === e || !e.isActive) return;
+        return e.deactivate(e, this.$controller);
     }
-    detaching(t, e, s) {
-        return this.deactivate(t, s);
+    detaching(t, e) {
+        return this.deactivate(t);
     }
     dispose() {
         this.view?.dispose();
@@ -8553,7 +8536,7 @@ class AuCompose {
         this.oi = r;
         this.li = o;
     }
-    attaching(e, s, i) {
+    attaching(e, s) {
         return this.ni = t.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, void 0), e), (t => {
             if (this.li.isCurrent(t)) this.ni = void 0;
         }));
@@ -8583,7 +8566,7 @@ class AuCompose {
                     if (i.isCurrent(e)) {
                         this.ri = r;
                         return t.onResolve(n?.deactivate(s), (() => e));
-                    } else return t.onResolve(r.controller.deactivate(r.controller, this.$controller, 2), (() => {
+                    } else return t.onResolve(r.controller.deactivate(r.controller, this.$controller), (() => {
                         r.controller.dispose();
                         return e;
                     }));
@@ -8624,7 +8607,7 @@ class AuCompose {
                 const s = Controller.$el(p, i, n, {
                     projections: this.oi.projections
                 }, d);
-                return new CompositionController(s, (t => s.activate(t ?? s, u, 1, u.scope.parent)), (e => t.onResolve(s.deactivate(e ?? s, u, 2), r)), (t => i.activate?.(t)), e);
+                return new CompositionController(s, (t => s.activate(t ?? s, u, u.scope.parent)), (e => t.onResolve(s.deactivate(e ?? s, u), r)), (t => i.activate?.(t)), e);
             } else {
                 const t = CustomElementDefinition.create({
                     name: oi.generateName(),
@@ -8634,7 +8617,7 @@ class AuCompose {
                 const l = Controller.$view(r, u);
                 const h = "auto" === this.scopeBehavior ? s.Scope.fromParent(this.parent.scope, i) : s.Scope.create(i);
                 if (Ds(n)) l.setLocation(n); else l.setHost(n);
-                return new CompositionController(l, (t => l.activate(t ?? l, u, 1, h)), (t => l.deactivate(t ?? l, u, 2)), (t => i.activate?.(t)), e);
+                return new CompositionController(l, (t => l.activate(t ?? l, u, h)), (t => l.deactivate(t ?? l, u)), (t => i.activate?.(t)), e);
             }
         };
         if ("activate" in i) return t.onResolve(i.activate(h), (() => m())); else return m();
@@ -8768,19 +8751,19 @@ exports.AuSlot = class AuSlot {
         this.mi = i;
         this.view = r.create().setLocation(e);
     }
-    binding(t, e, i) {
+    binding(t, e) {
         this.di = this.$controller.scope.parent;
-        let n;
+        let i;
         if (this.xi) {
-            n = this.mi.controller.scope.parent;
-            (this.pi = s.Scope.fromParent(n, n.bindingContext)).overrideContext.$host = this.expose ?? this.di.bindingContext;
+            i = this.mi.controller.scope.parent;
+            (this.pi = s.Scope.fromParent(i, i.bindingContext)).overrideContext.$host = this.expose ?? this.di.bindingContext;
         }
     }
-    attaching(t, e, s) {
-        return this.view.activate(t, this.$controller, s, this.xi ? this.pi : this.di);
+    attaching(t, e) {
+        return this.view.activate(t, this.$controller, this.xi ? this.pi : this.di);
     }
-    detaching(t, e, s) {
-        return this.view.deactivate(t, this.$controller, s);
+    detaching(t, e) {
+        return this.view.deactivate(t, this.$controller);
     }
     exposeChanged(t) {
         if (this.xi && null != this.pi) this.pi.overrideContext.$host = t;
@@ -9010,7 +8993,7 @@ class Aurelia {
             template: n,
             enhance: true
         }));
-        return t.onResolve(h.activate(h, s, 1), (() => h));
+        return t.onResolve(h.activate(h, s), (() => h));
     }
     async waitForIdle() {
         const t = this.root.platform;

@@ -4169,12 +4169,11 @@ class ProxyChangeSet {
     get oldValue() {
         return this.ov;
     }
-    constructor(e, t, n, i, r) {
+    constructor(e, t, n, i) {
         this.index = e;
-        this.flags = t;
-        this.key = n;
-        this.O = i;
-        this.ov = r;
+        this.key = t;
+        this.O = n;
+        this.ov = i;
     }
     dispose() {
         this.O = void 0;
@@ -4200,50 +4199,46 @@ class SpySubscriber {
         if (void 0 === this.A) return [];
         return this.A;
     }
-    get proxyChanges() {
+    get collectionChanges() {
         if (void 0 === this.R) return [];
         return this.R;
-    }
-    get collectionChanges() {
-        if (void 0 === this.q) return [];
-        return this.q;
     }
     get hasChanges() {
         return void 0 !== this.A;
     }
     get hasProxyChanges() {
-        return void 0 !== this.R;
+        return void 0 !== this.q;
     }
     get hasCollectionChanges() {
-        return void 0 !== this.q;
+        return void 0 !== this.R;
     }
     get callCount() {
         return this.M;
     }
     constructor() {
         this.A = void 0;
-        this.R = void 0;
         this.q = void 0;
+        this.R = void 0;
         this.M = 0;
     }
     handleChange(e, t) {
         if (void 0 === this.A) this.A = [ new ChangeSet(this.M++, e, t) ]; else this.A.push(new ChangeSet(this.M++, e, t));
     }
     handleCollectionChange(e, t) {
-        if (void 0 === this.q) this.q = [ new CollectionChangeSet(this.M++, t) ]; else this.q.push(new CollectionChangeSet(this.M++, t));
+        if (void 0 === this.R) this.R = [ new CollectionChangeSet(this.M++, t) ]; else this.R.push(new CollectionChangeSet(this.M++, t));
     }
     dispose() {
         if (void 0 !== this.A) {
             this.A.forEach((e => e.dispose()));
             this.A = void 0;
         }
-        if (void 0 !== this.R) {
-            this.R.forEach((e => e.dispose()));
-            this.R = void 0;
-        }
         if (void 0 !== this.q) {
             this.q.forEach((e => e.dispose()));
             this.q = void 0;
+        }
+        if (void 0 !== this.R) {
+            this.R.forEach((e => e.dispose()));
+            this.R = void 0;
         }
         this.M = 0;
     }

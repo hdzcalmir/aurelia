@@ -8039,9 +8039,8 @@ class ProxyChangeSet {
     get oldValue() {
         return this._oldValue;
     }
-    constructor(index, flags, key, newValue, oldValue) {
+    constructor(index, key, newValue, oldValue) {
         this.index = index;
-        this.flags = flags;
         this.key = key;
         this._newValue = newValue;
         this._oldValue = oldValue;
@@ -8069,12 +8068,6 @@ class SpySubscriber {
             return [];
         }
         return this._changes;
-    }
-    get proxyChanges() {
-        if (this._proxyChanges === void 0) {
-            return [];
-        }
-        return this._proxyChanges;
     }
     get collectionChanges() {
         if (this._collectionChanges === void 0) {

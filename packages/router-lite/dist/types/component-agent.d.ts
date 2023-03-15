@@ -1,4 +1,4 @@
-import type { LifecycleFlags, ICustomElementController, IHydratedController, ICustomElementViewModel, ILifecycleHooks } from '@aurelia/runtime-html';
+import type { ICustomElementController, IHydratedController, ICustomElementViewModel, ILifecycleHooks } from '@aurelia/runtime-html';
 import type { RouteDefinition } from './route-definition';
 import type { RouteNode } from './route-tree';
 import { IRouteContext } from './route-context';
@@ -31,8 +31,8 @@ export declare class ComponentAgent<T extends IRouteViewModel = IRouteViewModel>
     readonly canUnloadHooks: readonly ILifecycleHooks<IRouteViewModel, 'canUnload'>[];
     readonly unloadHooks: readonly ILifecycleHooks<IRouteViewModel, 'unloading'>[];
     constructor(instance: T, controller: ICustomElementController<T>, definition: RouteDefinition, routeNode: RouteNode, ctx: IRouteContext, routerOptions: RouterOptions);
-    activate(initiator: IHydratedController | null, parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
-    deactivate(initiator: IHydratedController | null, parent: IHydratedController, flags: LifecycleFlags): void | Promise<void>;
+    activate(initiator: IHydratedController | null, parent: IHydratedController): void | Promise<void>;
+    deactivate(initiator: IHydratedController | null, parent: IHydratedController): void | Promise<void>;
     dispose(): void;
     canUnload(tr: Transition, next: RouteNode | null, b: Batch): void;
     canLoad(tr: Transition, next: RouteNode, b: Batch): void;

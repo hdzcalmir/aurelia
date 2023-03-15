@@ -207,6 +207,8 @@ exports.I18nService = class I18nService {
     }
 };
 
+o([ s.nowrap ], exports.I18nService.prototype, "i18next", void 0);
+
 exports.I18nService = o([ a(0, u), a(1, h), a(2, t.IEventAggregator), a(3, s.ISignaler) ], exports.I18nService);
 
 exports.DateFormatValueConverter = class DateFormatValueConverter {

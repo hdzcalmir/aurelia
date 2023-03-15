@@ -860,7 +860,7 @@ class ViewportAgent {
         }
         return viewportAgent;
     }
-    activateFromViewport(initiator, parent, flags) {
+    activateFromViewport(initiator, parent) {
         const tr = this.currTransition;
         if (tr !== null) {
             ensureTransitionHasNotErrored(tr);
@@ -874,7 +874,7 @@ class ViewportAgent {
                         return;
                     case 4096:
                         this.logger.trace(`activateFromViewport() - activating existing componentAgent at %s`, this);
-                        return this.curCA.activate(initiator, parent, flags);
+                        return this.curCA.activate(initiator, parent);
                     default:
                         this.unexpectedState('activateFromViewport 1');
                 }
@@ -891,7 +891,7 @@ class ViewportAgent {
                 this.unexpectedState('activateFromViewport 2');
         }
     }
-    deactivateFromViewport(initiator, parent, flags) {
+    deactivateFromViewport(initiator, parent) {
         const tr = this.currTransition;
         if (tr !== null) {
             ensureTransitionHasNotErrored(tr);
@@ -903,7 +903,7 @@ class ViewportAgent {
                 return;
             case 4096:
                 this.logger.trace(`deactivateFromViewport() - deactivating existing componentAgent at %s`, this);
-                return this.curCA.deactivate(initiator, parent, flags);
+                return this.curCA.deactivate(initiator, parent);
             case 128:
                 this.logger.trace(`deactivateFromViewport() - already deactivating at %s`, this);
                 return;
@@ -1172,7 +1172,7 @@ class ViewportAgent {
                     case 'replace': {
                         const controller = this.hostController;
                         tr.run(() => {
-                            return this.curCA.deactivate(initiator, controller, 4);
+                            return this.curCA.deactivate(initiator, controller);
                         }, () => {
                             b.pop();
                         });
@@ -1219,10 +1219,9 @@ class ViewportAgent {
                             return;
                         case 'replace': {
                             const controller = this.hostController;
-                            const activateFlags = 0;
                             tr.run(() => {
                                 b1.push();
-                                return this.nextCA.activate(initiator, controller, activateFlags);
+                                return this.nextCA.activate(initiator, controller);
                             }, () => {
                                 b1.pop();
                             });
@@ -1280,14 +1279,14 @@ class ViewportAgent {
                 Batch.start(b1 => {
                     tr.run(() => {
                         b1.push();
-                        return curCA.deactivate(null, controller, 4);
+                        return kernel.onResolve(curCA.deactivate(null, controller), () => curCA.dispose());
                     }, () => {
                         b1.pop();
                     });
                 }).continueWith(b1 => {
                     tr.run(() => {
                         b1.push();
-                        return nextCA.activate(null, controller, 0);
+                        return nextCA.activate(null, controller);
                     }, () => {
                         b1.pop();
                     });
@@ -1418,7 +1417,7 @@ class ViewportAgent {
                 break;
             case 4:
             case 1: {
-                this._cancellationPromise = kernel.onResolve(this.nextCA?.deactivate(null, this.hostController, 0), () => {
+                this._cancellationPromise = kernel.onResolve(this.nextCA?.deactivate(null, this.hostController), () => {
                     this.nextCA?.dispose();
                     this.$plan = 'replace';
                     this.nextState = 64;
@@ -3240,21 +3239,21 @@ class ComponentAgent {
         this._hasCanUnload = 'canUnload' in instance;
         this._hasUnload = 'unloading' in instance;
     }
-    activate(initiator, parent, flags) {
+    activate(initiator, parent) {
         if (initiator === null) {
             this._logger.trace(`activate() - initial`);
-            return this.controller.activate(this.controller, parent, flags);
+            return this.controller.activate(this.controller, parent);
         }
         this._logger.trace(`activate()`);
-        void this.controller.activate(initiator, parent, flags);
+        void this.controller.activate(initiator, parent);
     }
-    deactivate(initiator, parent, flags) {
+    deactivate(initiator, parent) {
         if (initiator === null) {
             this._logger.trace(`deactivate() - initial`);
-            return this.controller.deactivate(this.controller, parent, flags);
+            return this.controller.deactivate(this.controller, parent);
         }
         this._logger.trace(`deactivate()`);
-        void this.controller.deactivate(initiator, parent, flags);
+        void this.controller.deactivate(initiator, parent);
     }
     dispose() {
         this._logger.trace(`dispose()`);
@@ -3971,13 +3970,13 @@ exports.ViewportCustomElement = class ViewportCustomElement {
         this.controller = controller;
         this.agent = this.ctx.registerViewport(this);
     }
-    attaching(initiator, _parent, flags) {
+    attaching(initiator, _parent) {
         this.logger.trace('attaching()');
-        return this.agent.activateFromViewport(initiator, this.controller, flags);
+        return this.agent.activateFromViewport(initiator, this.controller);
     }
-    detaching(initiator, _parent, flags) {
+    detaching(initiator, _parent) {
         this.logger.trace('detaching()');
-        return this.agent.deactivateFromViewport(initiator, this.controller, flags);
+        return this.agent.deactivateFromViewport(initiator, this.controller);
     }
     dispose() {
         this.logger.trace('dispose()');

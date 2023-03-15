@@ -1,6 +1,5 @@
 import { Class, ILogger, IServiceLocator } from '@aurelia/kernel';
 import { IExpressionParser, Interpolation, IsBindingBehavior, PrimitiveLiteralExpression, Scope, IAstEvaluator } from '@aurelia/runtime';
-import { LifecycleFlags } from '@aurelia/runtime-html';
 import { ValidationRuleAlias, IValidationMessageProvider } from './rules';
 import { IValidateable, ValidationRuleExecutionPredicate, IValidationVisitor, ValidationDisplayNameAccessor, IRuleProperty, IPropertyRule, IValidationExpressionHydrator, IValidationRule } from './rule-interfaces';
 /**
@@ -39,7 +38,7 @@ export declare class PropertyRule<TObject extends IValidateable = IValidateable,
     constructor(locator: IServiceLocator, validationRules: IValidationRules, messageProvider: IValidationMessageProvider, property: RuleProperty, $rules?: IValidationRule[][]);
     accept(visitor: IValidationVisitor): string;
     private getLeafRules;
-    validate(object?: IValidateable, tag?: string, _flags?: LifecycleFlags, scope?: Scope): Promise<ValidationResult[]>;
+    validate(object?: IValidateable, tag?: string, scope?: Scope): Promise<ValidationResult[]>;
     /**
      * Validate subsequent rules after previously declared rules have been validated successfully.
      * Use to postpone validation of costly rules until less expensive rules pass validation.

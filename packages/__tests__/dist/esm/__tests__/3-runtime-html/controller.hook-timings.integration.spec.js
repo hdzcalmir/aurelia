@@ -1807,19 +1807,19 @@ class TestVM {
         this.unbindingDI = unbinding(mgr, p);
         this.disposeDI = dispose(mgr, p);
     }
-    binding(i, p, f) { return this.bindingDI.invoke(this, () => { this.$binding(i, p, f); }); }
-    bound(i, p, f) { return this.boundDI.invoke(this, () => { this.$bound(i, p, f); }); }
-    attaching(i, p, f) { return this.attachingDI.invoke(this, () => { this.$attaching(i, p, f); }); }
-    attached(i, f) { return this.attachedDI.invoke(this, () => { this.$attached(i, f); }); }
-    detaching(i, p, f) { return this.detachingDI.invoke(this, () => { this.$detaching(i, p, f); }); }
-    unbinding(i, p, f) { return this.unbindingDI.invoke(this, () => { this.$unbinding(i, p, f); }); }
+    binding(i, p) { return this.bindingDI.invoke(this, () => { this.$binding(i, p); }); }
+    bound(i, p) { return this.boundDI.invoke(this, () => { this.$bound(i, p); }); }
+    attaching(i, p) { return this.attachingDI.invoke(this, () => { this.$attaching(i, p); }); }
+    attached(i) { return this.attachedDI.invoke(this, () => { this.$attached(i); }); }
+    detaching(i, p) { return this.detachingDI.invoke(this, () => { this.$detaching(i, p); }); }
+    unbinding(i, p) { return this.unbindingDI.invoke(this, () => { this.$unbinding(i, p); }); }
     dispose() { void this.disposeDI.invoke(this, () => { this.$dispose(); }); }
-    $binding(_i, _p, _f) { }
-    $bound(_i, _p, _f) { }
-    $attaching(_i, _p, _f) { }
-    $attached(_i, _f) { }
-    $detaching(_i, _p, _f) { }
-    $unbinding(_i, _p, _f) { }
+    $binding(_i, _p) { }
+    $bound(_i, _p) { }
+    $attaching(_i, _p) { }
+    $attached(_i) { }
+    $detaching(_i, _p) { }
+    $unbinding(_i, _p) { }
     $dispose() {
         this.bindingDI = void 0;
         this.boundDI = void 0;

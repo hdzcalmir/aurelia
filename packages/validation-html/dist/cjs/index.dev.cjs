@@ -72,7 +72,7 @@ class PropertyInfo {
         this.propertyName = propertyName;
     }
 }
-function getPropertyInfo(binding, info, _flags = 0) {
+function getPropertyInfo(binding, info) {
     let propertyInfo = info.propertyInfo;
     if (propertyInfo !== void 0) {
         return propertyInfo;
@@ -175,7 +175,7 @@ exports.ValidationController = class ValidationController {
         this.bindings.delete(binding);
     }
     async validate(instruction) {
-        const { object: obj, objectTag, flags } = instruction ?? {};
+        const { object: obj, objectTag } = instruction ?? {};
         let instructions;
         if (obj !== void 0) {
             instructions = [new validation.ValidateInstruction(obj, instruction.propertyName, instruction.rules ?? this.objects.get(obj), objectTag, instruction.propertyTag)];
@@ -186,7 +186,7 @@ exports.ValidationController = class ValidationController {
                     .map(([object, rules]) => new validation.ValidateInstruction(object, void 0, rules, objectTag)),
                 ...(!objectTag ? Array.from(this.bindings.entries()) : [])
                     .reduce((acc, [binding, info]) => {
-                    const propertyInfo = getPropertyInfo(binding, info, flags);
+                    const propertyInfo = getPropertyInfo(binding, info);
                     if (propertyInfo !== void 0 && !this.objects.has(propertyInfo.object)) {
                         acc.push(new validation.ValidateInstruction(propertyInfo.object, propertyInfo.propertyName, info.rules));
                     }

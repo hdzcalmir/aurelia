@@ -66,49 +66,49 @@ export class TestRouteViewModelBase {
         this.hia = hia;
         this.specs = specs;
     }
-    binding(initiator, parent, flags) {
+    binding(initiator, parent) {
         // this.hia.binding.notify(`${this.viewport?.name}:${this.name}`);
         // this.hia.binding.notify(`${this.viewport?.name}.${this.name}`);
         return this.specs.binding.invoke(this, () => {
             // this.hia.binding.notify(`${this.viewport?.name}.${this.name}`);
-            return this.$binding(initiator, parent, flags);
+            return this.$binding(initiator, parent);
         }, this.hia.binding);
     }
-    bound(initiator, parent, flags) {
+    bound(initiator, parent) {
         // this.hia.bound.notify(`${this.viewport?.name}.${this.name}`);
         return this.specs.bound.invoke(this, () => {
             // this.hia.bound.notify(`${this.viewport?.name}.${this.name}`);
-            return this.$bound(initiator, parent, flags);
+            return this.$bound(initiator, parent);
         }, this.hia.bound);
     }
-    attaching(initiator, parent, flags) {
+    attaching(initiator, parent) {
         // this.hia.attaching.notify(`${this.viewport?.name}:${this.name}`);
         // this.hia.attaching.notify(`${this.viewport?.name}.${this.name}`);
         return this.specs.attaching.invoke(this, () => {
             // this.hia.attaching.notify(`${this.viewport?.name}.${this.name}`);
-            return this.$attaching(initiator, parent, flags);
+            return this.$attaching(initiator, parent);
         }, this.hia.attaching);
     }
-    attached(initiator, flags) {
+    attached(initiator) {
         // this.hia.attached.notify(`${this.viewport?.name}.${this.name}`);
         return this.specs.attached.invoke(this, () => {
             // this.hia.attached.notify(`${this.viewport?.name}.${this.name}`);
-            return this.$attached(initiator, flags);
+            return this.$attached(initiator);
         }, this.hia.attached);
     }
-    detaching(initiator, parent, flags) {
+    detaching(initiator, parent) {
         // this.hia.detaching.notify(`${this.viewport?.name}.${this.name}`);
         return this.specs.detaching.invoke(this, () => {
             // this.hia.detaching.notify(`${this.viewport?.name}.${this.name}`);
-            return this.$detaching(initiator, parent, flags);
+            return this.$detaching(initiator, parent);
         }, this.hia.detaching);
     }
-    unbinding(initiator, parent, flags) {
+    unbinding(initiator, parent) {
         // console.log(`unbinding ${this.name} ${this.$controller.host.outerHTML}`);
         // this.hia.unbinding.notify(`${this.viewport?.name}.${this.name}`);
         return this.specs.unbinding.invoke(this, () => {
             // this.hia.unbinding.notify(`${this.viewport?.name}.${this.name}`);
-            return this.$unbinding(initiator, parent, flags);
+            return this.$unbinding(initiator, parent);
         }, this.hia.unbinding);
     }
     dispose() {
@@ -169,22 +169,22 @@ export class TestRouteViewModelBase {
             return this.$unloading(instruction, navigation);
         }, this.hia.unloading);
     }
-    $binding(_initiator, _parent, _flags) {
+    $binding(_initiator, _parent) {
         // do nothing
     }
-    $bound(_initiator, _parent, _flags) {
+    $bound(_initiator, _parent) {
         // do nothing
     }
-    $attaching(_initiator, _parent, _flags) {
+    $attaching(_initiator, _parent) {
         // do nothing
     }
-    $attached(_initiator, _flags) {
+    $attached(_initiator) {
         // do nothing
     }
-    $detaching(_initiator, _parent, _flags) {
+    $detaching(_initiator, _parent) {
         // do nothing
     }
-    $unbinding(_initiator, _parent, _flags) {
+    $unbinding(_initiator, _parent) {
         // do nothing
     }
     $canLoad(_params, _instruction, _navigation) {

@@ -154,7 +154,7 @@ describe('3-runtime-html/styles.spec.ts', function () {
             });
             const component = new FooBar();
             const controller = Controller.$el(ctx.container.createChild(), component, host, null, null);
-            void controller.activate(controller, null, 0 /* LifecycleFlags.none */);
+            void controller.activate(controller, null);
             assert.strictEqual(controller.shadowRoot.firstElementChild.innerHTML, css);
         });
         if (!AdoptedStyleSheetsStyles.supported(PLATFORM)) {

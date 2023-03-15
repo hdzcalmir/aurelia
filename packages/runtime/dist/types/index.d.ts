@@ -15,6 +15,7 @@ export { type IObjectObservationAdapter, IObserverLocator, INodeObserverLocator,
 export { PrimitiveObserver, } from './observation/primitive-observer';
 export { PropertyAccessor, } from './observation/property-accessor';
 export { ProxyObservable, } from './observation/proxy-observation';
+export { nowrap, } from './observation/proxy-decorators';
 export { SetterObserver, } from './observation/setter-observer';
 export { ISignaler, } from './observation/signaler';
 export { SubscriberRecord, subscriberCollection, } from './observation/subscriber-collection';

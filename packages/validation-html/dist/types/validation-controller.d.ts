@@ -1,6 +1,6 @@
 import { IServiceLocator, type IContainer, type IFactory, type Constructable, type Transformer, type Key } from '@aurelia/kernel';
 import { BindingBehaviorExpression, IExpressionParser } from '@aurelia/runtime';
-import { LifecycleFlags, IPlatform, PropertyBinding } from '@aurelia/runtime-html';
+import { IPlatform, PropertyBinding } from '@aurelia/runtime-html';
 import { PropertyAccessor, PropertyRule, ValidationResult, IValidator, ValidateInstruction, type IValidateable } from '@aurelia/validation';
 import type { Scope } from '@aurelia/runtime';
 export type BindingWithBehavior = PropertyBinding & {
@@ -80,7 +80,7 @@ declare class PropertyInfo {
     propertyName: string;
     constructor(object: any, propertyName: string);
 }
-export declare function getPropertyInfo(binding: BindingWithBehavior, info: BindingInfo, _flags?: LifecycleFlags): PropertyInfo | undefined;
+export declare function getPropertyInfo(binding: BindingWithBehavior, info: BindingInfo): PropertyInfo | undefined;
 /**
  * Orchestrates validation.
  * Manages a set of bindings, subscribers and objects.

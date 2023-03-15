@@ -2563,7 +2563,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                     this.node = node;
                     this.navModel = routeCtx.navigationModel;
                 }
-                binding(_initiator, _parent, _flags) {
+                binding(_initiator, _parent) {
                     if (hasAsyncRouteConfig)
                         return this.navModel?.resolve();
                 }
