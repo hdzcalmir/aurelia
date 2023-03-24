@@ -1,8 +1,6 @@
 import {
-  LogLevel,
   Constructable,
   kebabCase,
-  ILogConfig,
 } from '@aurelia/kernel';
 import {
   assert,
@@ -72,7 +70,7 @@ function assertIsActive(
   assert.strictEqual(isActive, expected, `expected isActive to return ${expected} (assertId ${assertId})`);
 }
 
-describe('router (smoke tests)', function () {
+describe('router/smoke-tests.spec.ts', function () {
   describe('without any configuration, deps registered globally', function () {
     @customElement({ name: name(A01), template: `${name(A01)}${vp(0)}` })
     class A01 { }
@@ -358,7 +356,7 @@ describe('router (smoke tests)', function () {
     });
 
     it(`${name(Root1)} can load ${name(A11)}/${name(A01)},${name(A11)}/${name(A02)} in order`, async function () {
-      const { router, host, tearDown, startTracing, stopTracing } = await createFixture(Root1, Z, getDefaultHIAConfig, getRouterOptions);
+      const { router, host, tearDown } = await createFixture(Root1, Z, getDefaultHIAConfig, getRouterOptions);
 
       await router.load(`a11/a01`);
       assertComponentsVisible(host, [Root1, A11, A01]);

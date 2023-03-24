@@ -32,7 +32,7 @@ import { ListenerBinding, ListenerBindingOptions } from './binding/listener-bind
 import { CustomElement, CustomElementDefinition, findElementControllerFor } from './resources/custom-element';
 import { AuSlotsInfo, IAuSlotsInfo, IProjections } from './resources/slot-injectables';
 import { CustomAttribute, CustomAttributeDefinition, findAttributeControllerFor } from './resources/custom-attribute';
-import { convertToRenderLocation, IRenderLocation, INode, setRef } from './dom';
+import { convertToRenderLocation, IRenderLocation, INode, setRef, ICssModulesMapping } from './dom';
 import { Controller, ICustomElementController, ICustomElementViewModel, IController, ICustomAttributeViewModel, IHydrationContext, ViewModelKind } from './templating/controller';
 import { IPlatform } from './platform';
 import { IViewFactory } from './templating/view';
@@ -923,6 +923,31 @@ export class SetStyleAttributeRenderer implements IRenderer {
   }
 }
 
+/* istanbul ignore next */
+const ambiguousStyles = [
+  'height',
+  'width',
+  'border-width',
+  'padding',
+  'padding-left',
+  'padding-right',
+  'padding-top',
+  'padding-right',
+  'padding-inline',
+  'padding-block',
+  'margin',
+  'margin-left',
+  'margin-right',
+  'margin-top',
+  'margin-bottom',
+  'margin-inline',
+  'margin-block',
+  'top',
+  'right',
+  'bottom',
+  'left',
+];
+
 @renderer(InstructionType.stylePropertyBinding)
 /** @internal */
 export class StylePropertyBindingRenderer implements IRenderer {
@@ -935,6 +960,22 @@ export class StylePropertyBindingRenderer implements IRenderer {
     exprParser: IExpressionParser,
     observerLocator: IObserverLocator,
   ): void {
+    if (__DEV__) {
+      /* istanbul ignore next */
+      if (ambiguousStyles.includes(instruction.to)) {
+        renderingCtrl.addBinding(new DevStylePropertyBinding(
+          renderingCtrl,
+          renderingCtrl.container,
+          observerLocator,
+          platform.domWriteQueue,
+          ensureExpression(exprParser, instruction.from, ExpressionType.IsProperty),
+          target.style,
+          instruction.to,
+          BindingMode.toView,
+        ));
+        return;
+      }
+    }
     renderingCtrl.addBinding(new PropertyBinding(
       renderingCtrl,
       renderingCtrl.container,
@@ -945,6 +986,17 @@ export class StylePropertyBindingRenderer implements IRenderer {
       instruction.to,
       BindingMode.toView,
     ));
+  }
+}
+
+/* istanbul ignore next */
+class DevStylePropertyBinding extends PropertyBinding {
+  public updateTarget(value: unknown): void {
+    if (typeof value === 'number' && value > 0) {
+      // eslint-disable-next-line no-console
+      console.warn(`[DEV]: Setting number ${value} as value for style.${this.targetProperty}. Did you meant "${value}px"?`);
+    }
+    return super.updateTarget(value);
   }
 }
 
@@ -960,15 +1012,22 @@ export class AttributeBindingRenderer implements IRenderer {
     exprParser: IExpressionParser,
     observerLocator: IObserverLocator,
   ): void {
+    const container = renderingCtrl.container;
+    const classMapping =
+      container.has(ICssModulesMapping, false)
+        ? container.get(ICssModulesMapping)
+        : null;
     renderingCtrl.addBinding(new AttributeBinding(
       renderingCtrl,
-      renderingCtrl.container,
+      container,
       observerLocator,
       platform.domWriteQueue,
       ensureExpression(exprParser, instruction.from, ExpressionType.IsProperty),
       target,
       instruction.attr/* targetAttribute */,
-      instruction.to/* targetKey */,
+      classMapping == null
+        ? instruction.to/* targetKey */
+        : instruction.to.split(/\s/g).map(c => classMapping[c] ?? c).join(' '),
       BindingMode.toView,
     ));
   }

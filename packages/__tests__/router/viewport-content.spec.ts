@@ -5,8 +5,8 @@ import { createFixture } from './_shared/create-fixture.js';
 
 const define = (CustomElement as any).define;
 
-describe('ViewportContent', function () {
-  function $setup(dependencies: any[] = []) {
+describe('router/viewport-content.spec.ts', function () {
+  function $setup(_dependencies: any[] = []) {
     const ctx = TestContext.create();
     const container = ctx.container;
     const router = container.get(IRouter);
@@ -15,8 +15,8 @@ describe('ViewportContent', function () {
   }
 
   it('can be created', function () {
-    const { container, router, viewport } = $setup();
-    const sut = new ViewportContent(router, viewport);
+    const { router, viewport } = $setup();
+    new ViewportContent(router, viewport);
   });
 
   describe('resolving globals', function () {

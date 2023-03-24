@@ -1,6 +1,5 @@
 import { DI, Registration } from '@aurelia/kernel';
 import {
-  LifecycleFlags,
   CustomAttribute,
   CustomElement,
   INode,
@@ -17,7 +16,7 @@ import {
 } from '@aurelia/runtime-html';
 import { assert, PLATFORM, TestContext } from '@aurelia/testing';
 
-describe('Styles', function () {
+describe('3-runtime-html/styles.spec.ts', function () {
   async function startApp(configure: (au: Aurelia) => void) {
     const ctx = TestContext.create();
     const au = new Aurelia(ctx.container);
@@ -48,7 +47,7 @@ describe('Styles', function () {
     });
 
     it('class attribute maps class names', function () {
-      const element = { className: '' };
+      const element = PLATFORM.document.createElement('div');
       const container = DI.createContainer();
       container.register(Registration.instance(INode, element));
       const cssModulesLookup = {
@@ -67,7 +66,7 @@ describe('Styles', function () {
     });
 
     it('style function uses correct registry', function () {
-      const element = { className: '' };
+      const element = PLATFORM.document.createElement('div');
       const container = DI.createContainer();
       const childContainer = container.createChild();
       const cssModulesLookup = {
@@ -209,7 +208,7 @@ describe('Styles', function () {
       const component = new FooBar();
       const controller = Controller.$el(ctx.container.createChild(), component, host, null, null);
 
-      void controller.activate(controller, null, LifecycleFlags.none);
+      void controller.activate(controller, null);
 
       assert.strictEqual(controller.shadowRoot.firstElementChild.innerHTML, css);
     });

@@ -6,10 +6,11 @@ import { IInstruction } from '../../renderer';
 import { IHydrationContext } from '../../templating/controller';
 import { IRendering } from '../../templating/rendering';
 
-import type { Writable } from '@aurelia/kernel';
-import type { LifecycleFlags, ControllerVisitor, ICustomElementController, ICustomElementViewModel, IHydratedController, IHydratedParentController, ISyntheticView } from '../../templating/controller';
+import { IContainer, InstanceProvider, Writable } from '@aurelia/kernel';
+import type { ControllerVisitor, ICustomElementController, ICustomElementViewModel, IHydratedController, IHydratedParentController, ISyntheticView } from '../../templating/controller';
 import type { IViewFactory } from '../../templating/view';
 import type { HydrateElementInstruction } from '../../renderer';
+import { registerResolver } from '../../utilities-di';
 
 @customElement({
   name: 'au-slot',
@@ -37,13 +38,20 @@ export class AuSlot implements ICustomElementViewModel {
     rendering: IRendering,
   ) {
     let factory: IViewFactory;
+    let container: IContainer;
     const slotInfo = instruction.auSlot!;
     const projection = hdrContext.instruction?.projections?.[slotInfo.name];
     if (projection == null) {
       factory = rendering.getViewFactory(slotInfo.fallback, hdrContext.controller.container);
       this._hasProjection = false;
     } else {
-      factory = rendering.getViewFactory(projection, hdrContext.parent!.controller.container);
+      container = hdrContext.parent!.controller.container.createChild();
+      registerResolver(
+        container,
+        hdrContext.controller.definition.Type,
+        new InstanceProvider(void 0, hdrContext.controller.viewModel)
+      );
+      factory = rendering.getViewFactory(projection, container);
       this._hasProjection = true;
     }
     this._hdrContext = hdrContext;
@@ -53,7 +61,6 @@ export class AuSlot implements ICustomElementViewModel {
   public binding(
     _initiator: IHydratedController,
     _parent: IHydratedParentController,
-    _flags: LifecycleFlags,
   ): void | Promise<void> {
     this._parentScope = this.$controller.scope.parent!;
     let outerScope: Scope;
@@ -71,23 +78,20 @@ export class AuSlot implements ICustomElementViewModel {
 
   public attaching(
     initiator: IHydratedController,
-    parent: IHydratedParentController,
-    flags: LifecycleFlags,
+    _parent: IHydratedParentController,
   ): void | Promise<void> {
     return this.view.activate(
       initiator,
       this.$controller,
-      flags,
       this._hasProjection ? this._outerScope! : this._parentScope!,
     );
   }
 
   public detaching(
     initiator: IHydratedController,
-    parent: IHydratedParentController,
-    flags: LifecycleFlags,
+    _parent: IHydratedParentController,
   ): void | Promise<void> {
-    return this.view.deactivate(initiator, this.$controller, flags);
+    return this.view.deactivate(initiator, this.$controller);
   }
 
   public exposeChanged(v: object): void {

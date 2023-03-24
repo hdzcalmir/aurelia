@@ -1,10 +1,11 @@
 import { LogLevel, Constructable, kebabCase, ILogConfig, Registration, noop, IModule } from '@aurelia/kernel';
 import { assert, MockBrowserHistoryLocation, TestContext } from '@aurelia/testing';
-import { RouterConfiguration, IRouter, NavigationInstruction, IRouteContext, RouteNode, Params, route, INavigationModel, IRouterOptions, IRouteViewModel, IRouteConfig, RouteDefinition, Router, HistoryStrategy, IRouterEvents } from '@aurelia/router-lite';
-import { LifecycleFlags, Aurelia, valueConverter, customElement, CustomElement, ICustomElementViewModel, IHistory, IHydratedController, ILocation, INode, IPlatform, IWindow, StandardConfiguration, watch } from '@aurelia/runtime-html';
+import { RouterConfiguration, IRouter, NavigationInstruction, IRouteContext, RouteNode, Params, route, INavigationModel, IRouterOptions, IRouteViewModel, IRouteConfig, RouteDefinition, Router, HistoryStrategy, IRouterEvents, ITypedNavigationInstruction_string, ViewportInstruction } from '@aurelia/router-lite';
+import { Aurelia, valueConverter, customElement, CustomElement, ICustomElementViewModel, IHistory, IHydratedController, ILocation, INode, IPlatform, IWindow, StandardConfiguration, watch } from '@aurelia/runtime-html';
 
-import { TestRouterConfiguration } from './_shared/configuration.js';
+import { getLocationChangeHandlerRegistration, TestRouterConfiguration } from './_shared/configuration.js';
 import { start } from './_shared/create-fixture.js';
+import { isNode } from '../util.js';
 
 function vp(count: number): string {
   return '<au-viewport></au-viewport>'.repeat(count);
@@ -82,7 +83,7 @@ async function createFixture<T extends Constructable>(
   };
 }
 
-describe('router (smoke tests)', function () {
+describe('router-lite/smoke-tests.spec.ts', function () {
   @customElement({ name: 'a01', template: `a01${vp(0)}` })
   class A01 { }
   @customElement({ name: 'a02', template: `a02${vp(0)}` })
@@ -1140,6 +1141,281 @@ describe('router (smoke tests)', function () {
     await router.load('u1@1+u2@2');
 
     assertComponentsVisible(host, [Root, [A, B]]);
+
+    await au.stop(true);
+    assert.areTaskQueuesEmpty();
+  });
+
+  it('fallback as function is supported - route configuration', async function () {
+    @customElement({ name: 'ce-a', template: 'a' })
+    class A { }
+    @customElement({ name: 'n-f-1', template: 'nf1' })
+    class NF1 { }
+    @customElement({ name: 'n-f-2', template: 'nf2' })
+    class NF2 { }
+    @route({
+      routes: [
+        { id: 'r1', path: ['', 'a'], component: A },
+        { id: 'r2', path: ['nf1'], component: NF1 },
+        { id: 'r3', path: ['nf2'], component: NF2 },
+      ],
+      fallback(vi: ViewportInstruction, _rn: RouteNode, _ctx: IRouteContext): string {
+        return (vi.component as ITypedNavigationInstruction_string).value === 'foo' ? 'r2' : 'r3';
+      },
+    })
+    @customElement({
+      name: 'root',
+      template: `root<au-viewport>`,
+    })
+    class Root { }
+
+    const ctx = TestContext.create();
+    const { container } = ctx;
+
+    container.register(
+      TestRouterConfiguration.for(LogLevel.warn),
+      RouterConfiguration,
+      NF1,
+    );
+
+    const component = container.get(Root);
+    const router = container.get(IRouter);
+
+    const au = new Aurelia(container);
+    const host = ctx.createElement('div');
+
+    au.app({ component, host });
+
+    await au.start();
+
+    assertComponentsVisible(host, [Root, [A]]);
+
+    await router.load('foo');
+
+    assertComponentsVisible(host, [Root, [NF1]]);
+
+    await router.load('bar');
+
+    assertComponentsVisible(host, [Root, [NF2]]);
+
+    await au.stop(true);
+    assert.areTaskQueuesEmpty();
+  });
+
+  it('fallback as function is supported - route configuration - hierarchical', async function () {
+    @customElement({ name: 'ce-c1', template: 'c1' })
+    class C1 { }
+
+    @customElement({ name: 'ce-c2', template: 'c2' })
+    class C2 { }
+
+    @route({
+      routes: [
+        { id: 'r1', path: ['', 'c'], component: C1 },
+      ]
+    })
+    @customElement({ name: 'ce-p1', template: 'p1<au-viewport></au-viewport>' })
+    class P1 { }
+
+    @route({
+      routes: [
+        { id: 'r1', path: ['', 'c'], component: C2 },
+      ]
+    })
+    @customElement({ name: 'ce-p2', template: 'p2<au-viewport></au-viewport>' })
+    class P2 { }
+
+    @customElement({ name: 'n-f-1', template: 'nf1' })
+    class NF1 { }
+    @customElement({ name: 'n-f-2', template: 'nf2' })
+    class NF2 { }
+    @route({
+      routes: [
+        { id: 'r1', path: ['', 'p1'], component: P1 },
+        { id: 'r2', path: ['p2'], component: P2 },
+        { id: 'r3', path: ['nf1'], component: NF1 },
+        { id: 'r4', path: ['nf2'], component: NF2 },
+      ],
+      fallback(vi: ViewportInstruction, rn: RouteNode, _ctx: IRouteContext): string {
+        return rn.component.Type === P1 ? 'n-f-1' : 'n-f-2';
+      },
+    })
+    @customElement({
+      name: 'root',
+      template: `root<au-viewport>`,
+    })
+    class Root { }
+
+    const ctx = TestContext.create();
+    const { container } = ctx;
+
+    container.register(
+      TestRouterConfiguration.for(LogLevel.warn),
+      RouterConfiguration,
+      NF1,
+      NF2,
+    );
+
+    const component = container.get(Root);
+    const router = container.get(IRouter);
+
+    const au = new Aurelia(container);
+    const host = ctx.createElement('div');
+
+    au.app({ component, host });
+
+    await au.start();
+
+    assertComponentsVisible(host, [Root, [P1, [C1]]]);
+
+    await router.load('p2/foo');
+
+    assertComponentsVisible(host, [Root, [P2, [NF2]]]);
+
+    await router.load('p1/foo');
+
+    assertComponentsVisible(host, [Root, [P1, [NF1]]]);
+
+    await au.stop(true);
+    assert.areTaskQueuesEmpty();
+  });
+
+  it('fallback as function is supported - viewport', async function () {
+    @customElement({ name: 'ce-a', template: 'a' })
+    class A { }
+    @customElement({ name: 'n-f-1', template: 'nf1' })
+    class NF1 { }
+    @customElement({ name: 'n-f-2', template: 'nf2' })
+    class NF2 { }
+    @route({
+      routes: [
+        { id: 'r1', path: ['', 'a'], component: A },
+        { id: 'r2', path: ['nf1'], component: NF1 },
+        { id: 'r3', path: ['nf2'], component: NF2 },
+      ],
+    })
+    @customElement({
+      name: 'root',
+      template: `root<au-viewport fallback.bind>`,
+    })
+    class Root {
+      fallback(vi: ViewportInstruction, _rn: RouteNode, _ctx: IRouteContext): string {
+        return (vi.component as ITypedNavigationInstruction_string).value === 'foo' ? 'r2' : 'r3';
+      }
+    }
+
+    const ctx = TestContext.create();
+    const { container } = ctx;
+
+    container.register(
+      TestRouterConfiguration.for(LogLevel.warn),
+      RouterConfiguration,
+      NF1,
+    );
+
+    const component = container.get(Root);
+    const router = container.get(IRouter);
+
+    const au = new Aurelia(container);
+    const host = ctx.createElement('div');
+
+    au.app({ component, host });
+
+    await au.start();
+
+    assertComponentsVisible(host, [Root, [A]]);
+
+    await router.load('foo');
+
+    assertComponentsVisible(host, [Root, [NF1]]);
+
+    await router.load('bar');
+
+    assertComponentsVisible(host, [Root, [NF2]]);
+
+    await au.stop(true);
+    assert.areTaskQueuesEmpty();
+  });
+
+  it('fallback as function is supported - viewport - hierarchical', async function () {
+
+    function fallback(vi: ViewportInstruction, rn: RouteNode, _ctx: IRouteContext): string {
+      return rn.component.Type === P1 ? 'n-f-1' : 'n-f-2';
+    }
+
+    @customElement({ name: 'ce-c1', template: 'c1' })
+    class C1 { }
+
+    @customElement({ name: 'ce-c2', template: 'c2' })
+    class C2 { }
+
+    @route({
+      routes: [
+        { id: 'r1', path: ['', 'c'], component: C1 },
+      ]
+    })
+    @customElement({ name: 'ce-p1', template: 'p1<au-viewport fallback.bind></au-viewport>' })
+    class P1 {
+      private readonly fallback = fallback;
+    }
+
+    @route({
+      routes: [
+        { id: 'r1', path: ['', 'c'], component: C2 },
+      ]
+    })
+    @customElement({ name: 'ce-p2', template: 'p2<au-viewport fallback.bind></au-viewport>' })
+    class P2 {
+      private readonly fallback = fallback;
+    }
+
+    @customElement({ name: 'n-f-1', template: 'nf1' })
+    class NF1 { }
+    @customElement({ name: 'n-f-2', template: 'nf2' })
+    class NF2 { }
+    @route({
+      routes: [
+        { id: 'r1', path: ['', 'p1'], component: P1 },
+        { id: 'r2', path: ['p2'], component: P2 },
+        { id: 'r3', path: ['nf1'], component: NF1 },
+        { id: 'r4', path: ['nf2'], component: NF2 },
+      ],
+    })
+    @customElement({
+      name: 'root',
+      template: `root<au-viewport>`,
+    })
+    class Root { }
+
+    const ctx = TestContext.create();
+    const { container } = ctx;
+
+    container.register(
+      TestRouterConfiguration.for(LogLevel.warn),
+      RouterConfiguration,
+      NF1,
+      NF2,
+    );
+
+    const component = container.get(Root);
+    const router = container.get(IRouter);
+
+    const au = new Aurelia(container);
+    const host = ctx.createElement('div');
+
+    au.app({ component, host });
+
+    await au.start();
+
+    assertComponentsVisible(host, [Root, [P1, [C1]]]);
+
+    await router.load('p2/foo');
+
+    assertComponentsVisible(host, [Root, [P2, [NF2]]]);
+
+    await router.load('p1/foo');
+
+    assertComponentsVisible(host, [Root, [P1, [NF1]]]);
 
     await au.stop(true);
     assert.areTaskQueuesEmpty();
@@ -2605,7 +2881,7 @@ describe('router (smoke tests)', function () {
           this.navModel = routeCtx.navigationModel;
         }
 
-        public binding(_initiator: IHydratedController, _parent: IHydratedController, _flags: LifecycleFlags): void | Promise<void> {
+        public binding(_initiator: IHydratedController, _parent: IHydratedController): void | Promise<void> {
           if (hasAsyncRouteConfig) return this.navModel?.resolve();
         }
 
@@ -4469,5 +4745,331 @@ describe('router (smoke tests)', function () {
         await au.stop();
       });
     }
+
+    (isNode() ? it.skip : it)('explicit history strategy can be used for individual navigation - configured: push', async function () {
+      @customElement({ name: 'ce-three', template: 'ce3' })
+      class CeThree implements IRouteViewModel { }
+      @customElement({ name: 'ce-two', template: 'ce2' })
+      class CeTwo implements IRouteViewModel { }
+      @customElement({ name: 'ce-one', template: 'ce1' })
+      class CeOne implements IRouteViewModel { }
+
+      @route({
+        routes: [
+          {
+            id: 'ce1',
+            path: ['', 'ce1'],
+            component: CeOne,
+          },
+          {
+            id: 'ce2',
+            path: ['ce2'],
+            component: CeTwo,
+          },
+          {
+            id: 'ce3',
+            path: ['ce3'],
+            component: CeThree,
+          },
+        ]
+      })
+      @customElement({ name: 'ro-ot', template: '<span id="history">${history}</span><au-viewport></au-viewport>' })
+      class Root {
+        private history: string;
+        public constructor(
+          @IHistory history: IHistory,
+          @IRouterEvents events: IRouterEvents
+        ) {
+          let i = 0;
+          events.subscribe('au:router:navigation-end', () => {
+            this.history = `#${++i} - len: ${history.length} - state: ${JSON.stringify(history.state)}`;
+          });
+        }
+      }
+
+      const { au, container, host } = await start({ appRoot: Root, historyStrategy: 'push', registrations: [getLocationChangeHandlerRegistration()] });
+      const platform = container.get(IPlatform);
+      const dwQueue = platform.domWriteQueue;
+      await dwQueue.yield();
+
+      const historyEl = host.querySelector<HTMLSpanElement>('#history');
+      const vp = host.querySelector<HTMLSpanElement>('au-viewport');
+
+      const router = container.get<Router>(IRouter);
+
+      assert.html.textContent(vp, 'ce1', 'start - component');
+      assert.html.textContent(historyEl, '#1 - len: 1 - state: {"au-nav-id":1}', 'start - history');
+
+      await router.load('ce2');
+      await dwQueue.yield();
+      assert.html.textContent(vp, 'ce2', 'round#2 - component');
+      assert.html.textContent(historyEl, '#2 - len: 2 - state: {"au-nav-id":2}', 'round#2 - history');
+
+      await router.load('ce3', { historyStrategy: 'replace' });
+      await dwQueue.yield();
+      assert.html.textContent(vp, 'ce3', 'round#3 - component');
+      assert.html.textContent(historyEl, '#3 - len: 2 - state: {"au-nav-id":3}', 'round#3 - history');
+
+      // going back should load the ce1
+      const history = container.get(IHistory);
+      const tQueue = platform.taskQueue;
+      history.back();
+      await tQueue.yield();
+      assert.html.textContent(vp, 'ce1', 'back - component');
+      await dwQueue.yield();
+      assert.html.textContent(historyEl, '#4 - len: 2 - state: {"au-nav-id":4}', 'back - history');
+
+      // going forward should load ce3
+      history.forward();
+      await tQueue.yield();
+      assert.html.textContent(vp, 'ce3', 'forward - component');
+      await dwQueue.yield();
+      assert.html.textContent(historyEl, '#5 - len: 2 - state: {"au-nav-id":5}', 'forward - history');
+
+      // strategy: none
+      await router.load('ce1', { historyStrategy: 'none' });
+      await dwQueue.yield();
+      assert.html.textContent(vp, 'ce1', 'strategy: none - component');
+      assert.html.textContent(historyEl, '#6 - len: 2 - state: {"au-nav-id":5}', 'strategy: none - history');
+
+      await au.stop();
+    });
+
+    (isNode() ? it.skip : it)('explicit history strategy can be used for individual navigation - configured: replace', async function () {
+      @customElement({ name: 'ce-three', template: 'ce3' })
+      class CeThree implements IRouteViewModel { }
+      @customElement({ name: 'ce-two', template: 'ce2' })
+      class CeTwo implements IRouteViewModel { }
+      @customElement({ name: 'ce-one', template: 'ce1' })
+      class CeOne implements IRouteViewModel { }
+
+      @route({
+        routes: [
+          {
+            id: 'ce1',
+            path: ['', 'ce1'],
+            component: CeOne,
+          },
+          {
+            id: 'ce2',
+            path: ['ce2'],
+            component: CeTwo,
+          },
+          {
+            id: 'ce3',
+            path: ['ce3'],
+            component: CeThree,
+          },
+        ]
+      })
+      @customElement({ name: 'ro-ot', template: '<span id="history">${history}</span><au-viewport></au-viewport>' })
+      class Root {
+        private history: string;
+        public constructor(
+          @IHistory history: IHistory,
+          @IRouterEvents events: IRouterEvents
+        ) {
+          let i = 0;
+          events.subscribe('au:router:navigation-end', () => {
+            this.history = `#${++i} - len: ${history.length} - state: ${JSON.stringify(history.state)}`;
+          });
+        }
+      }
+
+      const { au, container, host } = await start({ appRoot: Root, historyStrategy: 'replace', registrations: [getLocationChangeHandlerRegistration()] });
+      const platform = container.get(IPlatform);
+      const dwQueue = platform.domWriteQueue;
+      await dwQueue.yield();
+
+      const historyEl = host.querySelector<HTMLSpanElement>('#history');
+      const vp = host.querySelector<HTMLSpanElement>('au-viewport');
+
+      const router = container.get<Router>(IRouter);
+
+      assert.html.textContent(vp, 'ce1', 'start - component');
+      assert.html.textContent(historyEl, '#1 - len: 1 - state: {"au-nav-id":1}', 'start - history');
+
+      await router.load('ce2');
+      await dwQueue.yield();
+      assert.html.textContent(vp, 'ce2', 'round#2 - component');
+      assert.html.textContent(historyEl, '#2 - len: 1 - state: {"au-nav-id":2}', 'round#2 - history');
+
+      await router.load('ce3', { historyStrategy: 'push' });
+      await dwQueue.yield();
+      assert.html.textContent(vp, 'ce3', 'round#3 - component');
+      assert.html.textContent(historyEl, '#3 - len: 2 - state: {"au-nav-id":3}', 'round#3 - history');
+
+      // going back should load the ce2
+      const history = container.get(IHistory);
+      const tQueue = platform.taskQueue;
+      history.back();
+      await tQueue.yield();
+      assert.html.textContent(vp, 'ce2', 'back - component');
+      await dwQueue.yield();
+      assert.html.textContent(historyEl, '#4 - len: 2 - state: {"au-nav-id":4}', 'back - history');
+
+      // going forward should load ce3
+      history.forward();
+      await tQueue.yield();
+      assert.html.textContent(vp, 'ce3', 'forward - component');
+      await dwQueue.yield();
+      assert.html.textContent(historyEl, '#5 - len: 2 - state: {"au-nav-id":5}', 'forward - history');
+
+      // strategy: none
+      await router.load('ce1', { historyStrategy: 'none' });
+      await dwQueue.yield();
+      assert.html.textContent(vp, 'ce1', 'strategy: none - component');
+      assert.html.textContent(historyEl, '#6 - len: 2 - state: {"au-nav-id":5}', 'strategy: none - history');
+
+      await au.stop();
+    });
+
+    (isNode() ? it.skip : it)('explicit history strategy can be used for individual navigation - configured: none', async function () {
+      @customElement({ name: 'ce-three', template: 'ce3' })
+      class CeThree implements IRouteViewModel { }
+      @customElement({ name: 'ce-two', template: 'ce2' })
+      class CeTwo implements IRouteViewModel { }
+      @customElement({ name: 'ce-one', template: 'ce1' })
+      class CeOne implements IRouteViewModel { }
+
+      @route({
+        routes: [
+          {
+            id: 'ce1',
+            path: ['', 'ce1'],
+            component: CeOne,
+          },
+          {
+            id: 'ce2',
+            path: ['ce2'],
+            component: CeTwo,
+          },
+          {
+            id: 'ce3',
+            path: ['ce3'],
+            component: CeThree,
+          },
+        ]
+      })
+      @customElement({ name: 'ro-ot', template: '<span id="history">${history}</span><au-viewport></au-viewport>' })
+      class Root {
+        private history: string;
+        public constructor(
+          @IHistory history: IHistory,
+          @IRouterEvents events: IRouterEvents
+        ) {
+          let i = 0;
+          events.subscribe('au:router:navigation-end', () => {
+            this.history = `#${++i} - len: ${history.length} - state: ${JSON.stringify(history.state)}`;
+          });
+        }
+      }
+
+      const { au, container, host } = await start({ appRoot: Root, historyStrategy: 'none', registrations: [getLocationChangeHandlerRegistration()] });
+      const platform = container.get(IPlatform);
+      const dwQueue = platform.domWriteQueue;
+      await dwQueue.yield();
+
+      const historyEl = host.querySelector<HTMLSpanElement>('#history');
+      const vp = host.querySelector<HTMLSpanElement>('au-viewport');
+
+      const router = container.get<Router>(IRouter);
+
+      assert.html.textContent(vp, 'ce1', 'start - component');
+      assert.html.textContent(historyEl, '#1 - len: 1 - state: {"au-nav-id":1}', 'start - history');
+
+      await router.load('ce2');
+      await dwQueue.yield();
+      assert.html.textContent(vp, 'ce2', 'round#2 - component');
+      assert.html.textContent(historyEl, '#2 - len: 1 - state: {"au-nav-id":1}', 'round#2 - history');
+
+      await router.load('ce3', { historyStrategy: 'push' });
+      await dwQueue.yield();
+      assert.html.textContent(vp, 'ce3', 'round#3 - component');
+      assert.html.textContent(historyEl, '#3 - len: 2 - state: {"au-nav-id":3}', 'round#3 - history');
+
+      // going back should load the ce1
+      const history = container.get(IHistory);
+      const tQueue = platform.taskQueue;
+      history.back();
+      await tQueue.yield();
+      assert.html.textContent(vp, 'ce1', 'back - component');
+      await dwQueue.yield();
+      assert.html.textContent(historyEl, '#4 - len: 2 - state: {"au-nav-id":4}', 'back - history');
+
+      // going forward should load ce3
+      history.forward();
+      await tQueue.yield();
+      assert.html.textContent(vp, 'ce3', 'forward - component');
+      await dwQueue.yield();
+      assert.html.textContent(historyEl, '#5 - len: 2 - state: {"au-nav-id":5}', 'forward - history');
+
+      await router.load('ce2', { historyStrategy: 'replace' });
+      await dwQueue.yield();
+      assert.html.textContent(vp, 'ce2', 'round#4 - component');
+      assert.html.textContent(historyEl, '#6 - len: 2 - state: {"au-nav-id":6}', 'round#4 - history');
+
+      await au.stop();
+    });
+  });
+
+  it('navigate repeatedly to parent route from child route works - GH 1701', async function () {
+    @customElement({ name: 'c-1', template: 'c1 <a load="../c2"></a>' })
+    class C1 { }
+
+    @customElement({ name: 'c-2', template: 'c2 <a load="route: p; context.bind: null"></a>' })
+    class C2 { }
+
+    @route({
+      routes: [
+        { path: '', component: C1 },
+        { path: 'c2', component: C2 },
+      ]
+    })
+    @customElement({ name: 'p-1', template: '<au-viewport></au-viewport>' })
+    class P1 { }
+
+    @route({
+      routes: [
+        { path: '', redirectTo: 'p' },
+        { path: 'p', component: P1 },
+
+      ]
+    })
+    @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+    class Root { }
+
+    const { au, host, container } = await start({ appRoot: Root });
+    const queue = container.get(IPlatform).taskQueue;
+
+    assert.html.textContent(host, 'c1', 'initial');
+    host.querySelector('a').click();
+    await queue.yield();
+
+    assert.html.textContent(host, 'c2', 'round#1 of loading c2');
+    host.querySelector('a').click(); // <- go to parent #1
+    await queue.yield();
+
+    // round#2
+    assert.html.textContent(host, 'c1', 'navigate to parent from c2 #1');
+    host.querySelector('a').click();
+    await queue.yield();
+
+    assert.html.textContent(host, 'c2', 'round#2 of loading c2');
+    host.querySelector('a').click(); // <- go to parent #2
+    await queue.yield();
+
+    // round#3
+    assert.html.textContent(host, 'c1', 'navigate to parent from c2 #2');
+    host.querySelector('a').click();
+    await queue.yield();
+
+    assert.html.textContent(host, 'c2', 'round#3 of loading c2');
+    host.querySelector('a').click(); // <- go to parent #3
+    await queue.yield();
+
+    assert.html.textContent(host, 'c1', 'navigate to parent from c2 #3');
+
+    await au.stop();
   });
 });

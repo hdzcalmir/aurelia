@@ -1,6 +1,5 @@
 import { ILogger } from '@aurelia/kernel';
 import {
-  type LifecycleFlags,
   bindable,
   customElement,
   ICustomElementViewModel,
@@ -11,13 +10,18 @@ import {
 
 import type { ViewportAgent } from '../viewport-agent';
 import { IRouteContext } from '../route-context';
-import { defaultViewportName } from '../instructions';
+import { defaultViewportName, type ViewportInstruction } from '../instructions';
+import { type RouteNode } from '../route-tree';
+
+export type FallbackFunction = (viewportInstruction: ViewportInstruction, routeNode: RouteNode, context: IRouteContext) => string | null;
 
 export interface IViewport {
   readonly name: string;
   readonly usedBy: string;
   readonly default: string;
-  readonly fallback: string;
+  readonly fallback: string | FallbackFunction;
+  /** @internal */
+  _getFallback(viewportInstruction: ViewportInstruction, routeNode: RouteNode, context: IRouteContext): string | null;
 }
 
 @customElement({ name: 'au-viewport' })
@@ -25,7 +29,7 @@ export class ViewportCustomElement implements ICustomElementViewModel, IViewport
   @bindable public name: string = defaultViewportName;
   @bindable public usedBy: string = '';
   @bindable public default: string = '';
-  @bindable public fallback: string = '';
+  @bindable public fallback: string | FallbackFunction = '';
 
   private agent: ViewportAgent = (void 0)!;
   private controller: ICustomElementController = (void 0)!;
@@ -39,6 +43,14 @@ export class ViewportCustomElement implements ICustomElementViewModel, IViewport
     this.logger.trace('constructor()');
   }
 
+  /** @internal */
+  public _getFallback(viewportInstruction: ViewportInstruction, routeNode: RouteNode, context: IRouteContext): string | null {
+    const fallback = this.fallback;
+    return typeof fallback === 'function'
+      ? fallback(viewportInstruction, routeNode, context)
+      : fallback;
+  }
+
   public hydrated(controller: ICompiledCustomElementController): void {
     this.logger.trace('hydrated()');
 
@@ -46,16 +58,16 @@ export class ViewportCustomElement implements ICustomElementViewModel, IViewport
     this.agent = this.ctx.registerViewport(this);
   }
 
-  public attaching(initiator: IHydratedController, _parent: IHydratedController, flags: LifecycleFlags): void | Promise<void> {
+  public attaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void> {
     this.logger.trace('attaching()');
 
-    return this.agent.activateFromViewport(initiator, this.controller, flags);
+    return this.agent.activateFromViewport(initiator, this.controller);
   }
 
-  public detaching(initiator: IHydratedController, _parent: IHydratedController, flags: LifecycleFlags): void | Promise<void> {
+  public detaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void> {
     this.logger.trace('detaching()');
 
-    return this.agent.deactivateFromViewport(initiator, this.controller, flags);
+    return this.agent.deactivateFromViewport(initiator, this.controller);
   }
 
   public dispose(): void {

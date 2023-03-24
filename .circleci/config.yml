@@ -339,12 +339,16 @@ jobs:
       - restore_cache:
           key: cache-{{ checksum "package-lock.json" }}-install
       - restore_cache:
-          key: cache-{{ .Revision }}-build-false
+          key: cache-{{ .Revision }}-build-true
       - run:
           name: "Split test glob"
           command: |
-            echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=timings)
-            echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=timings) > packages/__tests__/tests.txt
+            # the following 2 lines work, but the test break on this mode, not in local though
+            # it's quite hard to debug on this mode so not using for now
+            # echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=timings --timings-type=filename)
+            # echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=timings --timings-type=filename) > packages/__tests__/tests.txt
+            echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=name)
+            echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=name) > packages/__tests__/tests.txt
       - run:
           name: "Run unit tests"
           command: |
@@ -362,6 +366,9 @@ jobs:
                 when: always
             - store_test_results:
                 path: packages/__tests__/coverage
+            - store_artifacts:
+                path: packages/__tests__/coverage/test-results.xml
+                destination: test-results
 
   unit_test_esm_node:
     executor: docker_circleci
@@ -376,10 +383,14 @@ jobs:
           key: cache-{{ checksum "package-lock.json" }}-install
       - restore_cache:
           name: "Restore build artifacts"
-          key: cache-{{ .Revision }}-build-false
+          key: cache-{{ .Revision }}-build-true
       - run:
           name: "Split test glob"
           command: |
+            # # echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=timings --timings-type=filename)
+            # # echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=timings --timings-type=filename) > packages/__tests__/tests.txt
+            # echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=name)
+            # echo $(circleci tests glob "packages/__tests__/dist/**/*.spec.js" | circleci tests split --split-by=name) > packages/__tests__/tests.txt
             cd packages/__tests__
             echo $(circleci tests glob "dist/**/*.spec.js" | circleci tests split --split-by=timings)
             echo $(circleci tests glob "dist/**/*.spec.js" | circleci tests split --split-by=timings) > tests.txt
@@ -406,7 +417,7 @@ jobs:
           key: cache-{{ checksum "package-lock.json" }}-install
       - restore_cache:
           name: "Restore build artifacts"
-          key: cache-{{ .Revision }}-build-false
+          key: cache-{{ .Revision }}-build-true
       # - run: npm run build
       # - run: npm run change-tsconfigs:invert
       # - run: npm run build
@@ -436,7 +447,7 @@ jobs:
       - restore_cache:
           name: "Restore dependencies"
           key: cache-{{ checksum "package-lock.json" }}-install
-      - run: npm run lint:packages:ci
+      - run: npx turbo lint:ci --filter=@aurelia/*
       - run: npm run lint:other:ci
 
   merge_and_dist:
@@ -544,24 +555,42 @@ jobs:
       path:
         type: string
     steps:
-      - checkout_install:
-          install_chrome: false
-          install_firefox: false
-          install: true
+      - checkout
+      - restore_cache:
+          key: cache-mac-{{ checksum "package-lock.json" }}-install
+      - run: |
+          # cache restored
+          if [[ $(ls -l node_modules | grep -c ^d) -gt 10 ]]; then
+            exit 0
+          else
+            npm ci
+          fi
+      - save_cache:
+          key: cache-mac-{{ checksum "package-lock.json" }}-install
+          paths:
+            - node_modules
+            - packages/__tests__/node_modules
+
+            - packages-tooling/__tests__/node_modules
+            - packages-tooling/aot/node_modules
+            - packages-tooling/au/node_modules
+            - packages-tooling/babel-jest/node_modules
+            - packages-tooling/http-server/node_modules
+            - packages-tooling/parcel-transformer/node_modules
+            - packages-tooling/plugin-conventions/node_modules
+            - packages-tooling/plugin-gulp/node_modules
+            - packages-tooling/ts-jest/node_modules
+            - packages-tooling/webpack-loader/node_modules
       # instead of doing the following 2 commands
       # - checkout_install
-      - run: npm run build
       # just restore some cache from previous steps
       # - run: chown -R $USER:$USER /home/circleci
-      # - restore_cache:
-      #     key: cache-{{ checksum "package-lock.json" }}-install
-      # - restore_cache:
-      #     key: cache-{{ .Revision }}-build-false
+      - run: npm run build:release
       - run:
           name: "Run e2e script"
           working_directory: << parameters.path >>
           command: |
-            npx playwright install chrome webkit
+            npx playwright install webkit
             npm run test
           no_output_timeout: "1m"
 
@@ -777,7 +806,7 @@ jobs:
           echo "Non doc file changes: $(git diff --name-only $COMMIT_RANGE | grep -v '^doc' -c)"
 
           if [[ $(git diff --name-only $COMMIT_RANGE | grep -v '*' -c) -gt 0 ]] && [[ $(git diff --name-only $COMMIT_RANGE | grep -v '^doc' -c) -eq 0 ]]; then
-            echo "There is only doc work, cancelling workflow..."
+            echo "There is only doc work, cancelling workflow $CIRCLE_WORKFLOW_ID ..."
             curl --request POST \
               --url https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel?circle-token=$CIRCLE_API_TOKEN
 
@@ -800,11 +829,11 @@ workflows:
           name: checkout_install
           requires:
               - check_doc_abort
-      - build_and_cache:
-          <<: *filter_ignore_develop_release
-          name: build_dev
-          requires:
-              - checkout_install
+      # - build_and_cache:
+      #     <<: *filter_ignore_develop_release
+      #     name: build_dev
+      #     requires:
+      #         - checkout_install
       - build_and_cache:
           <<: *filter_ignore_develop_release
           name: build_release
@@ -818,7 +847,7 @@ workflows:
           npm_command: "test-chrome"
           install_chrome: true
           requires:
-            - build_dev
+            - build_release
       # - unit_test_esm:
       #     <<: *filter_ignore_develop_release
       #     name: test_firefox
@@ -826,18 +855,18 @@ workflows:
       #     install_firefox: true
       #     coverage: false
       #     requires:
-      #       - build_dev
+      #       - build_release
       - unit_test_esm_node:
           <<: *filter_ignore_develop_release
           name: test_node
           requires:
-            - build_dev
+            - build_release
       - unit_test_cjs:
           <<: *filter_ignore_develop_release
           name: test_toolings
           npm_command: "test-node"
           requires:
-            - build_dev
+            - build_release
       #- unit_test_aot:
       #   <<: *filter_ignore_develop_release
       #   name: test_test262
@@ -865,12 +894,14 @@ workflows:
           requires:
             - build_release
 
-      - e2e_safari:
-          <<: *filter_ignore_develop_release
-          name: safari16_select
-          path: "packages/__e2e__/select-safari16"
-          requires:
-            - check_doc_abort
+      # no longer necessary since the changes related to fragment adoption has been reverted
+      # though keeping it around for a bit longer in case there's a need again
+      # - e2e_safari:
+      #     <<: *filter_ignore_develop_release
+      #     name: safari16_select
+      #     path: "packages/__e2e__/select-safari16"
+      #     requires:
+      #       - check_doc_abort
       - e2e_test:
           <<: *filter_ignore_develop_release
           name: e2e_hmr_webpack
@@ -947,6 +978,11 @@ workflows:
           dist_file_name: merge_and_dist_topic
           requires:
             - build_release
+            
+      - request_publish_dev:
+          <<: *filter_only_master
+          type: approval
+          no_output_timeout: 20m
       - publish_npm:
           <<: *filter_only_master
           name: publish_npm_dev
@@ -954,7 +990,9 @@ workflows:
           branch: develop
           swap: true
           requires:
+            - request_publish_dev
             - merge_and_dist_master
+          
 
   # Runs build and tests, and pushes the built artifacts to the release branch (which then triggers publish_latest)
   # Triggered by push to tag
@@ -963,11 +1001,11 @@ workflows:
       - checkout_install_cache:
           <<: *filter_only_tag
           name: checkout_install
-      - build_and_cache:
-          <<: *filter_only_tag
-          name: build_dev
-          requires:
-            - checkout_install
+      # - build_and_cache:
+      #     <<: *filter_only_tag
+      #     name: build_release
+      #     requires:
+      #       - checkout_install
       - build_and_cache:
           <<: *filter_only_tag
           name: build_release
@@ -981,7 +1019,7 @@ workflows:
           npm_command: "test-chrome"
           install_chrome: true
           requires:
-            - build_dev
+            - build_release
       # - unit_test_esm:
       #     <<: *filter_only_tag
       #     name: test_firefox
@@ -989,18 +1027,18 @@ workflows:
       #     install_firefox: true
       #     coverage: false
       #     requires:
-      #       - build_dev
+      #       - build_release
       - unit_test_esm_node:
           <<: *filter_only_tag
           name: test_node
           requires:
-            - build_dev
+            - build_release
       - unit_test_cjs:
           <<: *filter_only_tag
           name: test_toolings
           npm_command: "test-node"
           requires:
-            - build_dev
+            - build_release
 
       - e2e_test:
           <<: *filter_ignore_develop_release

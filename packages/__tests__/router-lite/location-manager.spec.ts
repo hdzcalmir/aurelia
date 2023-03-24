@@ -1,26 +1,15 @@
-import { IContainer, IPlatform, type IRegistry } from '@aurelia/kernel';
-import { IRouter, IRouterEvents, IRouterOptions, route } from '@aurelia/router-lite';
-import { AppTask, customElement, IHistory, IWindow } from '@aurelia/runtime-html';
-import { assert, MockBrowserHistoryLocation } from '@aurelia/testing';
+import { IPlatform } from '@aurelia/kernel';
+import { IRouter, IRouterEvents, route } from '@aurelia/router-lite';
+import { customElement, IHistory, IWindow } from '@aurelia/runtime-html';
+import { assert } from '@aurelia/testing';
 import { isNode } from '../util.js';
+import { getLocationChangeHandlerRegistration } from './_shared/configuration.js';
 import { start } from './_shared/create-fixture.js';
 
-describe('location-manager', function () {
-  if (isNode()) return;
-  function getCommonRegistrations(): IRegistry[] {
-    return [
-      AppTask.hydrated(IContainer, container => {
-        const useHash = container.get(IRouterOptions).useUrlFragmentHash;
-        const window = container.get(IWindow);
-        const mockBrowserHistoryLocation = container.get<MockBrowserHistoryLocation>(IHistory);
-        mockBrowserHistoryLocation.changeCallback = () => {
-          window.dispatchEvent(useHash ? new HashChangeEvent('hashchange') : new PopStateEvent('popstate'));
-          return Promise.resolve();
-        };
-      })
-    ];
+describe('router-lite/location-manager.spec.ts', function () {
+  if (isNode()) {
+    return;
   }
-
   for (const [useHash, event] of [[true, 'hashchange'], [false, 'popstate']] as const) {
     it(`listens to ${event} event and facilitates navigation when useUrlFragmentHash is set to ${useHash}`, async function () {
       @customElement({ name: 'c-1', template: 'c1' })
@@ -37,7 +26,7 @@ describe('location-manager', function () {
       @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
       class Root { }
 
-      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: getCommonRegistrations(), historyStrategy: 'push' });
+      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: [getLocationChangeHandlerRegistration()], historyStrategy: 'push' });
       const router = container.get(IRouter);
       const queue = container.get(IPlatform).taskQueue;
       const eventLog: ['popstate' | 'hashchange', string][] = [];
@@ -152,7 +141,7 @@ describe('location-manager', function () {
       @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
       class Root { }
 
-      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: getCommonRegistrations(), historyStrategy: 'push' });
+      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: [getLocationChangeHandlerRegistration()], historyStrategy: 'push' });
       const router = container.get(IRouter);
       const queue = container.get(IPlatform).taskQueue;
       const eventLog: ['popstate' | 'hashchange', string][] = [];
@@ -254,7 +243,7 @@ describe('location-manager', function () {
       @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport> <au-viewport></au-viewport>' })
       class Root { }
 
-      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: getCommonRegistrations(), historyStrategy: 'push' });
+      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: [getLocationChangeHandlerRegistration()], historyStrategy: 'push' });
       const router = container.get(IRouter);
       const queue = container.get(IPlatform).taskQueue;
       const eventLog: ['popstate' | 'hashchange', string][] = [];
@@ -370,7 +359,7 @@ describe('location-manager', function () {
       @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport> <au-viewport></au-viewport>' })
       class Root { }
 
-      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: getCommonRegistrations(), historyStrategy: 'push' });
+      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: [getLocationChangeHandlerRegistration()], historyStrategy: 'push' });
       const router = container.get(IRouter);
       const queue = container.get(IPlatform).taskQueue;
       const eventLog: ['popstate' | 'hashchange', string][] = [];
@@ -454,7 +443,7 @@ describe('location-manager', function () {
       class GC1 { }
       @customElement({ name: 'gc-2', template: 'gc2 <button click.trigger="goBack()"></button>' })
       class GC2 {
-        public constructor(@IHistory private readonly history: IHistory) {}
+        public constructor(@IHistory private readonly history: IHistory) { }
         private goBack() { history.back(); }
       }
 
@@ -478,7 +467,7 @@ describe('location-manager', function () {
       @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
       class Root { }
 
-      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: getCommonRegistrations(), historyStrategy: 'push' });
+      const { au, container, host } = await start({ appRoot: Root, useHash, registrations: [getLocationChangeHandlerRegistration()], historyStrategy: 'push' });
       const router = container.get(IRouter);
       const queue = container.get(IPlatform).taskQueue;
       const history = container.get(IHistory);
