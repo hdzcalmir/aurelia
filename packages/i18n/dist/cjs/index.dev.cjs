@@ -220,6 +220,9 @@ exports.I18nService = class I18nService {
         await this.i18next.init(this.options);
     }
 };
+__decorate([
+    runtime.nowrap
+], exports.I18nService.prototype, "i18next", void 0);
 exports.I18nService = __decorate([
     __param(0, I18nWrapper),
     __param(1, I18nInitOptions),

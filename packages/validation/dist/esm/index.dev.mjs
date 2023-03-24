@@ -301,7 +301,7 @@ class PropertyRule {
         const depth = this.$rules.length - 1;
         return this.$rules[depth];
     }
-    async validate(object, tag, _flags, scope) {
+    async validate(object, tag, scope) {
         if (scope === void 0) {
             scope = Scope.create({ [rootObjectSymbol]: object });
         }
@@ -1227,13 +1227,12 @@ ModelValidationExpressionHydrator = __decorate([
 mixinAstEvaluator()(ModelValidationExpressionHydrator);
 
 class ValidateInstruction {
-    constructor(object = (void 0), propertyName = (void 0), rules = (void 0), objectTag = (void 0), propertyTag = (void 0), flags = 0) {
+    constructor(object = (void 0), propertyName = (void 0), rules = (void 0), objectTag = (void 0), propertyTag = (void 0)) {
         this.object = object;
         this.propertyName = propertyName;
         this.rules = rules;
         this.objectTag = objectTag;
         this.propertyTag = propertyTag;
-        this.flags = flags;
     }
 }
 const IValidator = DI.createInterface('IValidator');
@@ -1242,13 +1241,12 @@ class StandardValidator {
         const object = instruction.object;
         const propertyName = instruction.propertyName;
         const propertyTag = instruction.propertyTag;
-        const flags = instruction.flags;
         const rules = instruction.rules ?? validationRulesRegistrar.get(object, instruction.objectTag) ?? [];
         const scope = Scope.create({ [rootObjectSymbol]: object });
         if (propertyName !== void 0) {
-            return (await rules.find((r) => r.property.name === propertyName)?.validate(object, propertyTag, flags, scope)) ?? [];
+            return (await rules.find((r) => r.property.name === propertyName)?.validate(object, propertyTag, scope)) ?? [];
         }
-        return (await Promise.all(rules.map(async (rule) => rule.validate(object, propertyTag, flags, scope)))).flat();
+        return (await Promise.all(rules.map(async (rule) => rule.validate(object, propertyTag, scope)))).flat();
     }
 }
 

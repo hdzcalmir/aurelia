@@ -101,7 +101,7 @@ class DialogController {
                     name: e.CustomElement.generateName(),
                     template: n
                 }));
-                return t.onResolve(o.activate(o, null, 1), (() => {
+                return t.onResolve(o.activate(o, null), (() => {
                     g.overlay.addEventListener(s.mouseEvent ?? "click", this);
                     return DialogOpenResult.create(false, this);
                 }));
@@ -124,7 +124,7 @@ class DialogController {
                     if (c) throw f(null, "Dialog cancellation rejected");
                     return DialogCloseResult.create("abort");
                 }
-                return t.onResolve(n.deactivate?.(a), (() => t.onResolve(o.deactivate(o, null, 2), (() => {
+                return t.onResolve(n.deactivate?.(a), (() => t.onResolve(o.deactivate(o, null), (() => {
                     r.dispose();
                     r.overlay.removeEventListener(l ?? "click", this);
                     if (!c && "error" !== e) this.t(a); else this.i(f(s, "Dialog cancelled with a rejection on cancel"));
@@ -146,7 +146,7 @@ class DialogController {
     }
     error(e) {
         const s = p(e);
-        return new Promise((e => e(t.onResolve(this.cmp.deactivate?.(DialogCloseResult.create("error", s)), (() => t.onResolve(this.controller.deactivate(this.controller, null, 2), (() => {
+        return new Promise((e => e(t.onResolve(this.cmp.deactivate?.(DialogCloseResult.create("error", s)), (() => t.onResolve(this.controller.deactivate(this.controller, null), (() => {
             this.dom.dispose();
             this.i(s);
         })))))));

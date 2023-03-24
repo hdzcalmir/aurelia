@@ -2386,22 +2386,18 @@ class CSSModulesProcessorRegistry {
             noMultiBindings: true,
         }, (_a = class CustomAttributeClass {
                 constructor(element) {
-                    this.element = element;
+                    this._accessor = new ClassAttributeAccessor(element);
                 }
                 binding() {
                     this.valueChanged();
                 }
                 valueChanged() {
-                    if (!this.value) {
-                        this.element.className = '';
-                        return;
-                    }
-                    this.element.className = getClassesToAdd(this.value).map(x => classLookup[x] || x).join(' ');
+                    this._accessor.setValue(this.value?.split(/\s+/g).map(x => classLookup[x] || x) ?? '');
                 }
             },
             _a.inject = [INode],
             _a));
-        container.register(ClassCustomAttribute);
+        container.register(ClassCustomAttribute, instanceRegistration(ICssModulesMapping, classLookup));
     }
 }
 function shadowCSS(...css) {
@@ -2870,13 +2866,6 @@ class Rendering {
 }
 Rendering.inject = [kernel.IContainer];
 
-exports.LifecycleFlags = void 0;
-(function (LifecycleFlags) {
-    LifecycleFlags[LifecycleFlags["none"] = 0] = "none";
-    LifecycleFlags[LifecycleFlags["fromBind"] = 1] = "fromBind";
-    LifecycleFlags[LifecycleFlags["fromUnbind"] = 2] = "fromUnbind";
-    LifecycleFlags[LifecycleFlags["dispose"] = 4] = "dispose";
-})(exports.LifecycleFlags || (exports.LifecycleFlags = {}));
 var MountTarget;
 (function (MountTarget) {
     MountTarget[MountTarget["none"] = 0] = "none";
@@ -2950,9 +2939,7 @@ class Controller {
         this.state = 0;
         this._fullyNamed = false;
         this._childrenObs = kernel.emptyArray;
-        this.flags = 0;
         this.$initiator = null;
-        this.$flags = 0;
         this.$resolve = void 0;
         this.$reject = void 0;
         this.$promise = void 0;
@@ -3023,14 +3010,13 @@ class Controller {
             }
         }
         const container = this.container;
-        const flags = this.flags;
         const instance = this._vm;
         let definition = this.definition;
         this.scope = runtime.Scope.create(instance, null, true);
         if (definition.watches.length > 0) {
             createWatchers(this, container, definition, instance);
         }
-        createObservers(this, definition, flags, instance);
+        createObservers(this, definition, instance);
         this._childrenObs = createChildrenObservers(this, definition, instance);
         if (this._hooks.hasDefine) {
             if (this.debug) {
@@ -3119,7 +3105,7 @@ class Controller {
         if (definition.watches.length > 0) {
             createWatchers(this, this.container, definition, instance);
         }
-        createObservers(this, definition, this.flags, instance);
+        createObservers(this, definition, instance);
         instance.$controller = this;
         this._lifecycleHooks = LifecycleHooks.resolve(this.container);
         if (this._lifecycleHooks.created !== void 0) {
@@ -3137,7 +3123,7 @@ class Controller {
         this.isStrictBinding = this._compiledDef.isStrictBinding;
         this._rendering.render(this, (this.nodes = this._rendering.createNodes(this._compiledDef)).findTargets(), this._compiledDef, void 0);
     }
-    activate(initiator, parent, flags, scope) {
+    activate(initiator, parent, scope) {
         switch (this.state) {
             case 0:
             case 8:
@@ -3158,7 +3144,6 @@ class Controller {
             this._fullyNamed = true;
             (this.logger ?? (this.logger = this.container.get(kernel.ILogger).root.scopeTo(this.name))).trace(`activate()`);
         }
-        flags |= 1;
         switch (this.vmKind) {
             case 0:
                 this.scope.parent = scope ?? null;
@@ -3177,7 +3162,6 @@ class Controller {
         }
         if (this.isStrictBinding) ;
         this.$initiator = initiator;
-        this.$flags = flags;
         this._enterActivating();
         let ret;
         if (this.vmKind !== 2 && this._lifecycleHooks.binding != null) {
@@ -3190,7 +3174,7 @@ class Controller {
             if (this.debug) {
                 this.logger.trace(`binding()`);
             }
-            ret = kernel.resolveAll(ret, this._vm.binding(this.$initiator, this.parent, this.$flags));
+            ret = kernel.resolveAll(ret, this._vm.binding(this.$initiator, this.parent));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
@@ -3235,7 +3219,7 @@ class Controller {
             if (this.debug) {
                 this.logger.trace(`bound()`);
             }
-            ret = kernel.resolveAll(ret, this._vm.bound(this.$initiator, this.parent, this.$flags));
+            ret = kernel.resolveAll(ret, this._vm.bound(this.$initiator, this.parent));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
@@ -3311,7 +3295,7 @@ class Controller {
             if (this.debug) {
                 this.logger.trace(`attaching()`);
             }
-            ret = kernel.resolveAll(ret, this._vm.attaching(this.$initiator, this.parent, this.$flags));
+            ret = kernel.resolveAll(ret, this._vm.attaching(this.$initiator, this.parent));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
@@ -3324,12 +3308,12 @@ class Controller {
         }
         if (this.children !== null) {
             for (; i < this.children.length; ++i) {
-                void this.children[i].activate(this.$initiator, this, this.$flags, this.scope);
+                void this.children[i].activate(this.$initiator, this, this.scope);
             }
         }
         this._leaveActivating();
     }
-    deactivate(initiator, parent, flags) {
+    deactivate(initiator, _parent) {
         switch ((this.state & ~16)) {
             case 2:
                 this.state = 4;
@@ -3346,7 +3330,6 @@ class Controller {
             this.logger.trace(`deactivate()`);
         }
         this.$initiator = initiator;
-        this.$flags = flags;
         if (initiator === this) {
             this._enterDetaching();
         }
@@ -3359,7 +3342,7 @@ class Controller {
         }
         if (this.children !== null) {
             for (i = 0; i < this.children.length; ++i) {
-                void this.children[i].deactivate(initiator, this, flags);
+                void this.children[i].deactivate(initiator, this);
             }
         }
         if (this.vmKind !== 2 && this._lifecycleHooks.detaching != null) {
@@ -3372,7 +3355,7 @@ class Controller {
             if (this.debug) {
                 this.logger.trace(`detaching()`);
             }
-            ret = kernel.resolveAll(ret, this._vm.detaching(this.$initiator, this.parent, this.$flags));
+            ret = kernel.resolveAll(ret, this._vm.detaching(this.$initiator, this.parent));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
@@ -3420,7 +3403,6 @@ class Controller {
         if (this.debug) {
             this.logger.trace(`unbind()`);
         }
-        const flags = this.$flags | 2;
         let i = 0;
         if (this.bindings !== null) {
             for (; i < this.bindings.length; ++i) {
@@ -3446,10 +3428,7 @@ class Controller {
                 this.scope.parent = null;
                 break;
         }
-        if ((flags & 4) === 4 && this.$initiator === this) {
-            this.dispose();
-        }
-        this.state = (this.state & 32) | 8;
+        this.state = 8;
         this.$initiator = null;
         this._resolve();
     }
@@ -3498,7 +3477,7 @@ class Controller {
                 if (this.debug) {
                     this.logger.trace(`attached()`);
                 }
-                _retPromise = kernel.resolveAll(_retPromise, this._vm.attached(this.$initiator, this.$flags));
+                _retPromise = kernel.resolveAll(_retPromise, this._vm.attached(this.$initiator));
             }
             if (isPromise(_retPromise)) {
                 this._ensurePromise();
@@ -3548,7 +3527,7 @@ class Controller {
                     if (cur.debug) {
                         cur.logger.trace('unbinding()');
                     }
-                    ret = kernel.resolveAll(ret, cur.viewModel.unbinding(cur.$initiator, cur.parent, cur.$flags));
+                    ret = kernel.resolveAll(ret, cur.viewModel.unbinding(cur.$initiator, cur.parent));
                 }
                 if (isPromise(ret)) {
                     this._ensurePromise();
@@ -3707,7 +3686,7 @@ function getLookup(instance) {
     }
     return lookup;
 }
-function createObservers(controller, definition, _flags, instance) {
+function createObservers(controller, definition, instance) {
     const bindables = definition.bindables;
     const observableNames = getOwnPropertyNames(bindables);
     const length = observableNames.length;
@@ -3874,22 +3853,22 @@ function callHydratedHook(l) {
     l.instance.hydrated(this._vm, this);
 }
 function callBindingHook(l) {
-    return l.instance.binding(this._vm, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.binding(this._vm, this['$initiator'], this.parent);
 }
 function callBoundHook(l) {
-    return l.instance.bound(this._vm, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.bound(this._vm, this['$initiator'], this.parent);
 }
 function callAttachingHook(l) {
-    return l.instance.attaching(this._vm, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.attaching(this._vm, this['$initiator'], this.parent);
 }
 function callAttachedHook(l) {
-    return l.instance.attached(this._vm, this['$initiator'], this['$flags']);
+    return l.instance.attached(this._vm, this['$initiator']);
 }
 function callDetachingHook(l) {
-    return l.instance.detaching(this._vm, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.detaching(this._vm, this['$initiator'], this.parent);
 }
 function callUnbindingHook(l) {
-    return l.instance.unbinding(this._vm, this['$initiator'], this.parent, this['$flags']);
+    return l.instance.unbinding(this._vm, this['$initiator'], this.parent);
 }
 let _resolve;
 let _reject;
@@ -3931,7 +3910,7 @@ class AppRoot {
     activate() {
         return kernel.onResolve(this._hydratePromise, () => {
             return kernel.onResolve(this._runAppTasks('activating'), () => {
-                return kernel.onResolve(this.controller.activate(this.controller, null, 1, void 0), () => {
+                return kernel.onResolve(this.controller.activate(this.controller, null, void 0), () => {
                     return this._runAppTasks('activated');
                 });
             });
@@ -3939,7 +3918,7 @@ class AppRoot {
     }
     deactivate() {
         return kernel.onResolve(this._runAppTasks('deactivating'), () => {
-            return kernel.onResolve(this.controller.deactivate(this.controller, null, 0), () => {
+            return kernel.onResolve(this.controller.deactivate(this.controller, null), () => {
                 return this._runAppTasks('deactivated');
             });
         });
@@ -4028,6 +4007,7 @@ const IEventTarget = createInterface('IEventTarget', x => x.cachedCallback(handl
     return handler.get(IPlatform).document;
 }));
 const IRenderLocation = createInterface('IRenderLocation');
+const ICssModulesMapping = createInterface('CssModules');
 
 const effectiveParentNodeOverrides = new WeakMap();
 function getEffectiveParentNode(node) {
@@ -4994,17 +4974,60 @@ exports.SetStyleAttributeRenderer = class SetStyleAttributeRenderer {
 exports.SetStyleAttributeRenderer = __decorate([
     renderer("hg")
 ], exports.SetStyleAttributeRenderer);
+const ambiguousStyles = [
+    'height',
+    'width',
+    'border-width',
+    'padding',
+    'padding-left',
+    'padding-right',
+    'padding-top',
+    'padding-right',
+    'padding-inline',
+    'padding-block',
+    'margin',
+    'margin-left',
+    'margin-right',
+    'margin-top',
+    'margin-bottom',
+    'margin-inline',
+    'margin-block',
+    'top',
+    'right',
+    'bottom',
+    'left',
+];
 exports.StylePropertyBindingRenderer = class StylePropertyBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        {
+            if (ambiguousStyles.includes(instruction.to)) {
+                renderingCtrl.addBinding(new DevStylePropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target.style, instruction.to, 2));
+                return;
+            }
+        }
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target.style, instruction.to, 2));
     }
 };
 exports.StylePropertyBindingRenderer = __decorate([
     renderer("hd")
 ], exports.StylePropertyBindingRenderer);
+class DevStylePropertyBinding extends PropertyBinding {
+    updateTarget(value) {
+        if (typeof value === 'number' && value > 0) {
+            console.warn(`[DEV]: Setting number ${value} as value for style.${this.targetProperty}. Did you meant "${value}px"?`);
+        }
+        return super.updateTarget(value);
+    }
+}
 exports.AttributeBindingRenderer = class AttributeBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target, instruction.attr, instruction.to, 2));
+        const container = renderingCtrl.container;
+        const classMapping = container.has(ICssModulesMapping, false)
+            ? container.get(ICssModulesMapping)
+            : null;
+        renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16), target, instruction.attr, classMapping == null
+            ? instruction.to
+            : instruction.to.split(/\s/g).map(c => classMapping[c] ?? c).join(' '), 2));
     }
 };
 exports.AttributeBindingRenderer = __decorate([
@@ -8073,16 +8096,16 @@ class Portal {
         (this.view = factory.create()).setLocation(this._targetLocation = createLocation(p));
         setEffectiveParentNode(this.view.nodes, originalLoc);
     }
-    attaching(initiator, parent, flags) {
+    attaching(initiator) {
         if (this.callbackContext == null) {
             this.callbackContext = this.$controller.scope.bindingContext;
         }
         const newTarget = this._resolvedTarget = this._getTarget();
         this._moveLocation(newTarget, this.position);
-        return this._activating(initiator, newTarget, flags);
+        return this._activating(initiator, newTarget);
     }
-    detaching(initiator, parent, flags) {
-        return this._deactivating(initiator, this._resolvedTarget, flags);
+    detaching(initiator) {
+        return this._deactivating(initiator, this._resolvedTarget);
     }
     targetChanged() {
         const { $controller } = this;
@@ -8094,9 +8117,9 @@ class Portal {
             return;
         }
         this._resolvedTarget = newTarget;
-        const ret = kernel.onResolve(this._deactivating(null, newTarget, $controller.flags), () => {
+        const ret = kernel.onResolve(this._deactivating(null, newTarget), () => {
             this._moveLocation(newTarget, this.position);
-            return this._activating(null, newTarget, $controller.flags);
+            return this._activating(null, newTarget);
         });
         if (isPromise(ret)) {
             ret.catch(rethrow);
@@ -8107,27 +8130,27 @@ class Portal {
         if (!$controller.isActive) {
             return;
         }
-        const ret = kernel.onResolve(this._deactivating(null, _resolvedTarget, $controller.flags), () => {
+        const ret = kernel.onResolve(this._deactivating(null, _resolvedTarget), () => {
             this._moveLocation(_resolvedTarget, this.position);
-            return this._activating(null, _resolvedTarget, $controller.flags);
+            return this._activating(null, _resolvedTarget);
         });
         if (isPromise(ret)) {
             ret.catch(rethrow);
         }
     }
-    _activating(initiator, target, flags) {
+    _activating(initiator, target) {
         const { activating, callbackContext, view } = this;
         return kernel.onResolve(activating?.call(callbackContext, target, view), () => {
-            return this._activate(initiator, target, flags);
+            return this._activate(initiator, target);
         });
     }
-    _activate(initiator, target, flags) {
+    _activate(initiator, target) {
         const { $controller, view } = this;
         if (initiator === null) {
             view.nodes.insertBefore(this._targetLocation);
         }
         else {
-            return kernel.onResolve(view.activate(initiator ?? view, $controller, flags, $controller.scope), () => {
+            return kernel.onResolve(view.activate(initiator ?? view, $controller, $controller.scope), () => {
                 return this._activated(target);
             });
         }
@@ -8137,19 +8160,19 @@ class Portal {
         const { activated, callbackContext, view } = this;
         return activated?.call(callbackContext, target, view);
     }
-    _deactivating(initiator, target, flags) {
+    _deactivating(initiator, target) {
         const { deactivating, callbackContext, view } = this;
         return kernel.onResolve(deactivating?.call(callbackContext, target, view), () => {
-            return this._deactivate(initiator, target, flags);
+            return this._deactivate(initiator, target);
         });
     }
-    _deactivate(initiator, target, flags) {
+    _deactivate(initiator, target) {
         const { $controller, view } = this;
         if (initiator === null) {
             view.nodes.remove();
         }
         else {
-            return kernel.onResolve(view.deactivate(initiator, $controller, flags), () => {
+            return kernel.onResolve(view.deactivate(initiator, $controller), () => {
                 return this._deactivated(target);
             });
         }
@@ -8268,7 +8291,7 @@ class If {
         this._ifFactory = ifFactory;
         this._location = location;
     }
-    attaching(initiator, parent, f) {
+    attaching(initiator, _parent) {
         let view;
         const ctrl = this.$controller;
         const swapId = this._swapId++;
@@ -8292,22 +8315,22 @@ class If {
                 return;
             }
             view.setLocation(this._location);
-            this.pending = kernel.onResolve(view.activate(initiator, ctrl, f, ctrl.scope), () => {
+            this.pending = kernel.onResolve(view.activate(initiator, ctrl, ctrl.scope), () => {
                 if (isCurrent()) {
                     this.pending = void 0;
                 }
             });
         });
     }
-    detaching(initiator, parent, flags) {
+    detaching(initiator, _parent) {
         this._wantsDeactivate = true;
         return kernel.onResolve(this.pending, () => {
             this._wantsDeactivate = false;
             this.pending = void 0;
-            void this.view?.deactivate(initiator, this.$controller, flags);
+            void this.view?.deactivate(initiator, this.$controller);
         });
     }
-    valueChanged(newValue, oldValue, f) {
+    valueChanged(newValue, oldValue) {
         if (!this.$controller.isActive) {
             return;
         }
@@ -8321,7 +8344,7 @@ class If {
         const swapId = this._swapId++;
         const isCurrent = () => !this._wantsDeactivate && this._swapId === swapId + 1;
         let view;
-        return kernel.onResolve(this.pending, () => this.pending = kernel.onResolve(currView?.deactivate(currView, ctrl, f), () => {
+        return kernel.onResolve(this.pending, () => this.pending = kernel.onResolve(currView?.deactivate(currView, ctrl), () => {
             if (!isCurrent()) {
                 return;
             }
@@ -8339,7 +8362,7 @@ class If {
                 return;
             }
             view.setLocation(this._location);
-            return kernel.onResolve(view.activate(view, ctrl, f, ctrl.scope), () => {
+            return kernel.onResolve(view.activate(view, ctrl, ctrl.scope), () => {
                 if (isCurrent()) {
                     this.pending = void 0;
                 }
@@ -8436,7 +8459,7 @@ class Repeat {
         this._parent = parent;
         this._factory = factory;
     }
-    binding(_initiator, _parent, _flags) {
+    binding(_initiator, _parent) {
         const bindings = this._parent.bindings;
         const ii = bindings.length;
         let binding = (void 0);
@@ -8462,15 +8485,15 @@ class Repeat {
             this.local = runtime.astEvaluate(dec, this.$controller.scope, binding, null);
         }
     }
-    attaching(initiator, _parent, _flags) {
+    attaching(initiator, _parent) {
         this._normalizeToArray();
         return this._activateAllViews(initiator);
     }
-    detaching(initiator, _parent, _flags) {
+    detaching(initiator, _parent) {
         this._refreshCollectionObserver();
         return this._deactivateAllViews(initiator);
     }
-    unbinding(_initiator, _parent, _flags) {
+    unbinding(_initiator, _parent) {
         this._scopeMap.clear();
         this._keyMap.clear();
     }
@@ -8714,7 +8737,7 @@ class Repeat {
             view.nodes.unlink();
             viewScope = getScope(_scopeMap, item, forOf, parentScope, _forOfBinding, local, _hasDestructuredLocal);
             setContextualProperties(viewScope.overrideContext, i, newLen);
-            ret = view.activate(initiator ?? view, $controller, 0, viewScope);
+            ret = view.activate(initiator ?? view, $controller, viewScope);
             if (isPromise(ret)) {
                 (promises ?? (promises = [])).push(ret);
             }
@@ -8735,7 +8758,7 @@ class Repeat {
         for (; ii > i; ++i) {
             view = views[i];
             view.release();
-            ret = view.deactivate(initiator ?? view, $controller, 0);
+            ret = view.deactivate(initiator ?? view, $controller);
             if (isPromise(ret)) {
                 (promises ?? (promises = [])).push(ret);
             }
@@ -8757,7 +8780,7 @@ class Repeat {
         for (; deletedLen > i; ++i) {
             view = views[deleted[i]];
             view.release();
-            ret = view.deactivate(view, $controller, 0);
+            ret = view.deactivate(view, $controller);
             if (isPromise(ret)) {
                 (promises ?? (promises = [])).push(ret);
             }
@@ -8808,7 +8831,7 @@ class Repeat {
                 viewScope = getScope(_scopeMap, _normalizedItems[i], forOf, parentScope, _forOfBinding, local, _hasDestructuredLocal);
                 setContextualProperties(viewScope.overrideContext, i, newLen);
                 view.setLocation(_location);
-                ret = view.activate(view, $controller, 0, viewScope);
+                ret = view.activate(view, $controller, viewScope);
                 if (isPromise(ret)) {
                     (promises ?? (promises = [])).push(ret);
                 }
@@ -9017,7 +9040,7 @@ class With {
     constructor(factory, location) {
         this.view = factory.create().setLocation(location);
     }
-    valueChanged(newValue, _oldValue, _flags) {
+    valueChanged(newValue, _oldValue) {
         const $controller = this.$controller;
         const bindings = this.view.bindings;
         let scope;
@@ -9029,13 +9052,13 @@ class With {
             }
         }
     }
-    attaching(initiator, parent, flags) {
+    attaching(initiator, _parent) {
         const { $controller, value } = this;
         const scope = runtime.Scope.fromParent($controller.scope, value === void 0 ? {} : value);
-        return this.view.activate(initiator, $controller, flags, scope);
+        return this.view.activate(initiator, $controller, scope);
     }
-    detaching(initiator, parent, flags) {
-        return this.view.deactivate(initiator, this.$controller, flags);
+    detaching(initiator, _parent) {
+        return this.view.deactivate(initiator, this.$controller);
     }
     dispose() {
         this.view.dispose();
@@ -9064,17 +9087,17 @@ exports.Switch = class Switch {
     link(_controller, _childController, _target, _instruction) {
         this.view = this._factory.create(this.$controller).setLocation(this._location);
     }
-    attaching(initiator, parent, flags) {
+    attaching(initiator, _parent) {
         const view = this.view;
         const $controller = this.$controller;
-        this.queue(() => view.activate(initiator, $controller, flags, $controller.scope));
+        this.queue(() => view.activate(initiator, $controller, $controller.scope));
         this.queue(() => this.swap(initiator, this.value));
         return this.promise;
     }
-    detaching(initiator, parent, flags) {
+    detaching(initiator, _parent) {
         this.queue(() => {
             const view = this.view;
-            return view.deactivate(initiator, this.$controller, flags);
+            return view.deactivate(initiator, this.$controller);
         });
         return this.promise;
     }
@@ -9161,9 +9184,9 @@ exports.Switch = class Switch {
         }
         const scope = controller.scope;
         if (length === 1) {
-            return cases[0].activate(initiator, 0, scope);
+            return cases[0].activate(initiator, scope);
         }
-        return kernel.resolveAll(...cases.map(($case) => $case.activate(initiator, 0, scope)));
+        return kernel.resolveAll(...cases.map(($case) => $case.activate(initiator, scope)));
     }
     _clearActiveCases(initiator, newActiveCases = []) {
         const cases = this.activeCases;
@@ -9175,13 +9198,13 @@ exports.Switch = class Switch {
             const firstCase = cases[0];
             if (!newActiveCases.includes(firstCase)) {
                 cases.length = 0;
-                return firstCase.deactivate(initiator, 0);
+                return firstCase.deactivate(initiator);
             }
             return;
         }
         return kernel.onResolve(kernel.resolveAll(...cases.reduce((acc, $case) => {
             if (!newActiveCases.includes($case)) {
-                acc.push($case.deactivate(initiator, 0));
+                acc.push($case.deactivate(initiator));
             }
             return acc;
         }, [])), () => {
@@ -9237,8 +9260,8 @@ exports.Case = class Case {
             throw createError(`AUR0815: The parent switch not found; only "*[switch] > *[case|default-case]" relation is supported.`);
         }
     }
-    detaching(initiator, parent, flags) {
-        return this.deactivate(initiator, flags);
+    detaching(initiator, _parent) {
+        return this.deactivate(initiator);
     }
     isMatch(value) {
         this._logger.debug('isMatch()');
@@ -9264,7 +9287,7 @@ exports.Case = class Case {
     handleCollectionChange() {
         this.$switch.caseChanged(this);
     }
-    activate(initiator, flags, scope) {
+    activate(initiator, scope) {
         let view = this.view;
         if (view === void 0) {
             view = this.view = this._factory.create().setLocation(this._location);
@@ -9272,14 +9295,14 @@ exports.Case = class Case {
         if (view.isActive) {
             return;
         }
-        return view.activate(initiator ?? view, this.$controller, flags, scope);
+        return view.activate(initiator ?? view, this.$controller, scope);
     }
-    deactivate(initiator, flags) {
+    deactivate(initiator) {
         const view = this.view;
         if (view === void 0 || !view.isActive) {
             return;
         }
-        return view.deactivate(initiator ?? view, this.$controller, flags);
+        return view.deactivate(initiator ?? view, this.$controller);
     }
     dispose() {
         this._observer?.unsubscribe(this);
@@ -9344,18 +9367,18 @@ exports.PromiseTemplateController = class PromiseTemplateController {
     link(_controller, _childController, _target, _instruction) {
         this.view = this._factory.create(this.$controller).setLocation(this._location);
     }
-    attaching(initiator, parent, flags) {
+    attaching(initiator, _parent) {
         const view = this.view;
         const $controller = this.$controller;
-        return kernel.onResolve(view.activate(initiator, $controller, flags, this.viewScope = runtime.Scope.fromParent($controller.scope, {})), () => this.swap(initiator, flags));
+        return kernel.onResolve(view.activate(initiator, $controller, this.viewScope = runtime.Scope.fromParent($controller.scope, {})), () => this.swap(initiator));
     }
-    valueChanged(_newValue, _oldValue, flags) {
+    valueChanged(_newValue, _oldValue) {
         if (!this.$controller.isActive) {
             return;
         }
-        this.swap(null, flags);
+        this.swap(null);
     }
-    swap(initiator, flags) {
+    swap(initiator) {
         const value = this.value;
         if (!isPromise(value)) {
             this.logger.warn(`The value '${String(value)}' is not a promise. No change will be done.`);
@@ -9370,7 +9393,7 @@ exports.PromiseTemplateController = class PromiseTemplateController {
         const defaultQueuingOptions = { reusable: false };
         const $swap = () => {
             void kernel.resolveAll(preSettlePromise = (this.preSettledTask = q.queueTask(() => {
-                return kernel.resolveAll(fulfilled?.deactivate(initiator, flags), rejected?.deactivate(initiator, flags), pending?.activate(initiator, flags, s));
+                return kernel.resolveAll(fulfilled?.deactivate(initiator), rejected?.deactivate(initiator), pending?.activate(initiator, s));
             }, defaultQueuingOptions)).result.catch((err) => { if (!(err instanceof platform.TaskAbortError))
                 throw err; }), value
                 .then((data) => {
@@ -9378,7 +9401,7 @@ exports.PromiseTemplateController = class PromiseTemplateController {
                     return;
                 }
                 const fulfill = () => {
-                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => kernel.resolveAll(pending?.deactivate(initiator, flags), rejected?.deactivate(initiator, flags), fulfilled?.activate(initiator, flags, s, data)), defaultQueuingOptions)).result;
+                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => kernel.resolveAll(pending?.deactivate(initiator), rejected?.deactivate(initiator), fulfilled?.activate(initiator, s, data)), defaultQueuingOptions)).result;
                 };
                 if (this.preSettledTask.status === 1) {
                     void preSettlePromise.then(fulfill);
@@ -9392,7 +9415,7 @@ exports.PromiseTemplateController = class PromiseTemplateController {
                     return;
                 }
                 const reject = () => {
-                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => kernel.resolveAll(pending?.deactivate(initiator, flags), fulfilled?.deactivate(initiator, flags), rejected?.activate(initiator, flags, s, err)), defaultQueuingOptions)).result;
+                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => kernel.resolveAll(pending?.deactivate(initiator), fulfilled?.deactivate(initiator), rejected?.activate(initiator, s, err)), defaultQueuingOptions)).result;
                 };
                 if (this.preSettledTask.status === 1) {
                     void preSettlePromise.then(reject);
@@ -9411,11 +9434,11 @@ exports.PromiseTemplateController = class PromiseTemplateController {
             $swap();
         }
     }
-    detaching(initiator, parent, flags) {
+    detaching(initiator, _parent) {
         this.preSettledTask?.cancel();
         this.postSettledTask?.cancel();
         this.preSettledTask = this.postSettledTask = null;
-        return this.view.deactivate(initiator, this.$controller, flags);
+        return this.view.deactivate(initiator, this.$controller);
     }
     dispose() {
         this.view?.dispose();
@@ -9441,7 +9464,7 @@ exports.PendingTemplateController = class PendingTemplateController {
     link(controller, _childController, _target, _instruction) {
         getPromiseController(controller).pending = this;
     }
-    activate(initiator, flags, scope) {
+    activate(initiator, scope) {
         let view = this.view;
         if (view === void 0) {
             view = this.view = this._factory.create().setLocation(this._location);
@@ -9449,17 +9472,17 @@ exports.PendingTemplateController = class PendingTemplateController {
         if (view.isActive) {
             return;
         }
-        return view.activate(view, this.$controller, flags, scope);
+        return view.activate(view, this.$controller, scope);
     }
-    deactivate(initiator, flags) {
+    deactivate(_initiator) {
         const view = this.view;
         if (view === void 0 || !view.isActive) {
             return;
         }
-        return view.deactivate(view, this.$controller, flags);
+        return view.deactivate(view, this.$controller);
     }
-    detaching(initiator, parent, flags) {
-        return this.deactivate(initiator, flags);
+    detaching(initiator) {
+        return this.deactivate(initiator);
     }
     dispose() {
         this.view?.dispose();
@@ -9483,7 +9506,7 @@ exports.FulfilledTemplateController = class FulfilledTemplateController {
     link(controller, _childController, _target, _instruction) {
         getPromiseController(controller).fulfilled = this;
     }
-    activate(initiator, flags, scope, resolvedValue) {
+    activate(initiator, scope, resolvedValue) {
         this.value = resolvedValue;
         let view = this.view;
         if (view === void 0) {
@@ -9492,17 +9515,17 @@ exports.FulfilledTemplateController = class FulfilledTemplateController {
         if (view.isActive) {
             return;
         }
-        return view.activate(view, this.$controller, flags, scope);
+        return view.activate(view, this.$controller, scope);
     }
-    deactivate(initiator, flags) {
+    deactivate(_initiator) {
         const view = this.view;
         if (view === void 0 || !view.isActive) {
             return;
         }
-        return view.deactivate(view, this.$controller, flags);
+        return view.deactivate(view, this.$controller);
     }
-    detaching(initiator, parent, flags) {
-        return this.deactivate(initiator, flags);
+    detaching(initiator, _parent) {
+        return this.deactivate(initiator);
     }
     dispose() {
         this.view?.dispose();
@@ -9526,7 +9549,7 @@ exports.RejectedTemplateController = class RejectedTemplateController {
     link(controller, _childController, _target, _instruction) {
         getPromiseController(controller).rejected = this;
     }
-    activate(initiator, flags, scope, error) {
+    activate(initiator, scope, error) {
         this.value = error;
         let view = this.view;
         if (view === void 0) {
@@ -9535,17 +9558,17 @@ exports.RejectedTemplateController = class RejectedTemplateController {
         if (view.isActive) {
             return;
         }
-        return view.activate(view, this.$controller, flags, scope);
+        return view.activate(view, this.$controller, scope);
     }
-    deactivate(initiator, flags) {
+    deactivate(_initiator) {
         const view = this.view;
         if (view === void 0 || !view.isActive) {
             return;
         }
-        return view.deactivate(view, this.$controller, flags);
+        return view.deactivate(view, this.$controller);
     }
-    detaching(initiator, parent, flags) {
-        return this.deactivate(initiator, flags);
+    detaching(initiator, _parent) {
+        return this.deactivate(initiator);
     }
     dispose() {
         this.view?.dispose();
@@ -9615,8 +9638,8 @@ class AuCompose {
         this._instruction = instruction;
         this._contextFactory = contextFactory;
     }
-    attaching(initiator, _parent, _flags) {
-        return this._pending = kernel.onResolve(this.queue(new ChangeInfo(this.view, this.viewModel, this.model, void 0), initiator), (context) => {
+    attaching(initiator, _parent) {
+        return this._pending = kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, void 0), initiator), (context) => {
             if (this._contextFactory.isCurrent(context)) {
                 this._pending = void 0;
             }
@@ -9634,7 +9657,7 @@ class AuCompose {
             this._composition.update(this.model);
             return;
         }
-        this._pending = kernel.onResolve(this._pending, () => kernel.onResolve(this.queue(new ChangeInfo(this.view, this.viewModel, this.model, name), void 0), (context) => {
+        this._pending = kernel.onResolve(this._pending, () => kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, name), void 0), (context) => {
             if (this._contextFactory.isCurrent(context)) {
                 this._pending = void 0;
             }
@@ -9653,7 +9676,7 @@ class AuCompose {
                                 return kernel.onResolve(compositionCtrl?.deactivate(initiator), () => context);
                             }
                             else {
-                                return kernel.onResolve(result.controller.deactivate(result.controller, this.$controller, 2), () => {
+                                return kernel.onResolve(result.controller.deactivate(result.controller, this.$controller), () => {
                                     result.controller.dispose();
                                     return context;
                                 });
@@ -9671,9 +9694,9 @@ class AuCompose {
         let comp;
         let compositionHost;
         let removeCompositionHost;
-        const { view, viewModel, model } = context.change;
+        const { _template: template, _component: component, _model: model } = context.change;
         const { _container: container, host, $controller, _location: loc } = this;
-        const vmDef = this.getDef(viewModel);
+        const vmDef = this.getDef(component);
         const childCtn = container.createChild();
         const parentNode = loc == null ? host.parentNode : loc.parentNode;
         if (vmDef !== null) {
@@ -9691,23 +9714,23 @@ class AuCompose {
                     compositionHost.remove();
                 };
             }
-            comp = this.getVm(childCtn, viewModel, compositionHost);
+            comp = this._getComp(childCtn, component, compositionHost);
         }
         else {
             compositionHost = loc == null
                 ? host
                 : loc;
-            comp = this.getVm(childCtn, viewModel, compositionHost);
+            comp = this._getComp(childCtn, component, compositionHost);
         }
         const compose = () => {
             if (vmDef !== null) {
                 const controller = Controller.$el(childCtn, comp, compositionHost, { projections: this._instruction.projections }, vmDef);
-                return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, 1, $controller.scope.parent), (deactachInitiator) => kernel.onResolve(controller.deactivate(deactachInitiator ?? controller, $controller, 2), removeCompositionHost), (model) => comp.activate?.(model), context);
+                return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, $controller.scope.parent), (deactachInitiator) => kernel.onResolve(controller.deactivate(deactachInitiator ?? controller, $controller), removeCompositionHost), (model) => comp.activate?.(model), context);
             }
             else {
                 const targetDef = CustomElementDefinition.create({
                     name: CustomElement.generateName(),
-                    template: view,
+                    template: template,
                 });
                 const viewFactory = this._rendering.getViewFactory(targetDef, childCtn);
                 const controller = Controller.$view(viewFactory, $controller);
@@ -9720,7 +9743,7 @@ class AuCompose {
                 else {
                     controller.setHost(compositionHost);
                 }
-                return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, 1, scope), (detachInitiator) => controller.deactivate(detachInitiator ?? controller, $controller, 2), (model) => comp.activate?.(model), context);
+                return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, scope), (detachInitiator) => controller.deactivate(detachInitiator ?? controller, $controller), (model) => comp.activate?.(model), context);
             }
         };
         if ('activate' in comp) {
@@ -9730,7 +9753,7 @@ class AuCompose {
             return compose();
         }
     }
-    getVm(container, comp, host) {
+    _getComp(container, comp, host) {
         if (comp == null) {
             return new EmptyComponent();
         }
@@ -9742,7 +9765,7 @@ class AuCompose {
         registerResolver(container, p.Element, registerResolver(container, INode, new kernel.InstanceProvider('ElementResolver', isLocation ? null : host)));
         registerResolver(container, IRenderLocation, new kernel.InstanceProvider('IRenderLocation', isLocation ? host : null));
         const instance = container.invoke(comp);
-        registerResolver(container, comp, new kernel.InstanceProvider('au-compose.viewModel', instance));
+        registerResolver(container, comp, new kernel.InstanceProvider('au-compose.component', instance));
         return instance;
     }
     getDef(component) {
@@ -9756,10 +9779,10 @@ class AuCompose {
 }
 __decorate([
     bindable
-], AuCompose.prototype, "view", void 0);
+], AuCompose.prototype, "template", void 0);
 __decorate([
     bindable
-], AuCompose.prototype, "viewModel", void 0);
+], AuCompose.prototype, "component", void 0);
 __decorate([
     bindable
 ], AuCompose.prototype, "model", void 0);
@@ -9791,31 +9814,31 @@ class CompositionContextFactory {
     }
 }
 class ChangeInfo {
-    constructor(view, viewModel, model, src) {
-        this.view = view;
-        this.viewModel = viewModel;
-        this.model = model;
-        this.src = src;
+    constructor(_template, _component, _model, _src) {
+        this._template = _template;
+        this._component = _component;
+        this._model = _model;
+        this._src = _src;
     }
     load() {
-        if (isPromise(this.view) || isPromise(this.viewModel)) {
+        if (isPromise(this._template) || isPromise(this._component)) {
             return Promise
-                .all([this.view, this.viewModel])
-                .then(([view, viewModel]) => {
-                return new LoadedChangeInfo(view, viewModel, this.model, this.src);
+                .all([this._template, this._component])
+                .then(([template, component]) => {
+                return new LoadedChangeInfo(template, component, this._model, this._src);
             });
         }
         else {
-            return new LoadedChangeInfo(this.view, this.viewModel, this.model, this.src);
+            return new LoadedChangeInfo(this._template, this._component, this._model, this._src);
         }
     }
 }
 class LoadedChangeInfo {
-    constructor(view, viewModel, model, src) {
-        this.view = view;
-        this.viewModel = viewModel;
-        this.model = model;
-        this.src = src;
+    constructor(_template, _component, _model, _src) {
+        this._template = _template;
+        this._component = _component;
+        this._model = _model;
+        this._src = _src;
     }
 }
 class CompositionContext {
@@ -9859,6 +9882,7 @@ exports.AuSlot = class AuSlot {
         this._parentScope = null;
         this._outerScope = null;
         let factory;
+        let container;
         const slotInfo = instruction.auSlot;
         const projection = hdrContext.instruction?.projections?.[slotInfo.name];
         if (projection == null) {
@@ -9866,13 +9890,15 @@ exports.AuSlot = class AuSlot {
             this._hasProjection = false;
         }
         else {
-            factory = rendering.getViewFactory(projection, hdrContext.parent.controller.container);
+            container = hdrContext.parent.controller.container.createChild();
+            registerResolver(container, hdrContext.controller.definition.Type, new kernel.InstanceProvider(void 0, hdrContext.controller.viewModel));
+            factory = rendering.getViewFactory(projection, container);
             this._hasProjection = true;
         }
         this._hdrContext = hdrContext;
         this.view = factory.create().setLocation(location);
     }
-    binding(_initiator, _parent, _flags) {
+    binding(_initiator, _parent) {
         this._parentScope = this.$controller.scope.parent;
         let outerScope;
         if (this._hasProjection) {
@@ -9881,11 +9907,11 @@ exports.AuSlot = class AuSlot {
                 .overrideContext.$host = this.expose ?? this._parentScope.bindingContext;
         }
     }
-    attaching(initiator, parent, flags) {
-        return this.view.activate(initiator, this.$controller, flags, this._hasProjection ? this._outerScope : this._parentScope);
+    attaching(initiator, _parent) {
+        return this.view.activate(initiator, this.$controller, this._hasProjection ? this._outerScope : this._parentScope);
     }
-    detaching(initiator, parent, flags) {
-        return this.view.deactivate(initiator, this.$controller, flags);
+    detaching(initiator, _parent) {
+        return this.view.deactivate(initiator, this.$controller);
     }
     exposeChanged(v) {
         if (this._hasProjection && this._outerScope != null) {
@@ -10135,7 +10161,7 @@ class Aurelia {
         registerResolver(ctn, IEventTarget, new kernel.InstanceProvider('IEventTarget', host));
         parentController = parentController ?? null;
         const view = Controller.$el(ctn, bc, host, null, CustomElementDefinition.create({ name: generateElementName(), template: host, enhance: true }));
-        return kernel.onResolve(view.activate(view, parentController, 1), () => view);
+        return kernel.onResolve(view.activate(view, parentController), () => view);
     }
     async waitForIdle() {
         const platform = this.root.platform;

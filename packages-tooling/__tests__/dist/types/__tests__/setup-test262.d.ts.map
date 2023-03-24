@@ -1,0 +1,1 @@
+{"version":3,"file":"setup-test262.d.ts","sourceRoot":"","sources":["../../../setup-test262.ts"],"names":[],"mappings":"AAAA,OAAO,EAUL,SAAS,EAMV,MAAM,iBAAiB,CAAC;AAoPzB,qBAAa,gBAAgB;IAC3B,OAAO,CAAC,QAAQ,CAAC,MAAM,CAAmB;IAC1C,OAAO,CAAC,MAAM,CAAkB;IAEzB,IAAI,CAAC,KAAK,EAAE,SAAS,GAAG,IAAI;IAcnC,OAAO,CAAC,KAAK;CAYd"}

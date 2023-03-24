@@ -55,10 +55,10 @@ class WcCustomElementRegistry {
             }
             connectedCallback() {
                 this.auInit();
-                this.auCtrl.activate(this.auCtrl, null, 0);
+                this.auCtrl.activate(this.auCtrl, null);
             }
             disconnectedCallback() {
-                this.auCtrl.deactivate(this.auCtrl, null, 0);
+                this.auCtrl.deactivate(this.auCtrl, null);
             }
             adoptedCallback() {
                 this.auInit();

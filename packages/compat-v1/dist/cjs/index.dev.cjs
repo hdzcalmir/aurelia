@@ -87,6 +87,16 @@ function __decorate(decorators, target, key, desc) {
 const createLookup = () => Object.create(null);
 const isFunction = (v) => typeof v === 'function';
 const isString = (v) => typeof v === 'string';
+const def = Reflect.defineProperty;
+const defineHiddenProp = (obj, key, value) => {
+    def(obj, key, {
+        enumerable: false,
+        configurable: true,
+        writable: true,
+        value
+    });
+    return value;
+};
 const ensureExpression = (parser, srcOrExpr, expressionType) => {
     if (isString(srcOrExpr)) {
         return parser.parse(srcOrExpr, expressionType);
@@ -422,6 +432,80 @@ const PreventFormActionlessSubmit = runtimeHtml.AppTask.creating(runtimeHtml.IEv
     }, false);
 });
 
+let compatEnabled = false;
+let addedMetadata = false;
+const prototype = runtimeHtml.AuCompose.prototype;
+const ignore = Symbol();
+const originalAttaching = prototype.attaching;
+const originalPropertyChanged = prototype.propertyChanged;
+function enableComposeCompat() {
+    if (compatEnabled) {
+        return;
+    }
+    compatEnabled = true;
+    if (!addedMetadata) {
+        addedMetadata = true;
+        const def = runtimeHtml.CustomElement.getDefinition(runtimeHtml.AuCompose);
+        const viewModelBindable = def.bindables.viewModel = runtimeHtml.BindableDefinition.create('viewModel', runtimeHtml.AuCompose);
+        const viewBindable = def.bindables.view = runtimeHtml.BindableDefinition.create('view', runtimeHtml.AuCompose);
+        const bindableInfo = runtimeHtml.BindablesInfo.from(def, false);
+        if (!('view' in bindableInfo.attrs)) {
+            bindableInfo.attrs.view = bindableInfo.bindables.view = viewBindable;
+            bindableInfo.attrs['view-model'] = bindableInfo.bindables.viewModel = viewModelBindable;
+        }
+    }
+    defineHiddenProp(prototype, 'viewModelChanged', function (value) {
+        this.component = value;
+    });
+    defineHiddenProp(prototype, 'viewChanged', function (value) {
+        this.template = value;
+    });
+    defineHiddenProp(prototype, 'attaching', function (...rest) {
+        this[ignore] = true;
+        if (this.viewModel !== void 0) {
+            this.component = this.viewModel;
+        }
+        if (this.view !== void 0) {
+            this.template = this.view;
+        }
+        this[ignore] = false;
+        return originalAttaching.apply(this, rest);
+    });
+    defineHiddenProp(prototype, 'propertyChanged', function (name) {
+        if (this[ignore]) {
+            return;
+        }
+        switch (name) {
+            case 'viewModel':
+            case 'view': return;
+        }
+        return originalPropertyChanged.call(this, name);
+    });
+}
+function disableComposeCompat() {
+    if (!compatEnabled) {
+        return;
+    }
+    if (addedMetadata) {
+        addedMetadata = false;
+        const def = runtimeHtml.CustomElement.getDefinition(runtimeHtml.AuCompose);
+        delete def.bindables.viewModel;
+        delete def.bindables.view;
+        const bindableInfo = runtimeHtml.BindablesInfo.from(def, false);
+        if (('view' in bindableInfo.attrs)) {
+            delete bindableInfo.attrs.view;
+            delete bindableInfo.bindables.view;
+            delete bindableInfo.attrs['view-model'];
+            delete bindableInfo.bindables.viewModel;
+        }
+    }
+    compatEnabled = false;
+    delete prototype.viewModelChanged;
+    delete prototype.viewChanged;
+    defineHiddenProp(prototype, 'attaching', originalAttaching);
+    defineHiddenProp(prototype, 'propertyChanged', originalPropertyChanged);
+}
+
 class BindingEngine {
     constructor(parser, observerLocator) {
         this.parser = parser;
@@ -474,6 +558,7 @@ const compatRegistration = {
     register(container) {
         defineAstMethods();
         defineBindingMethods();
+        enableComposeCompat();
         container.register(PreventFormActionlessSubmit);
         delegateSyntax.register(container);
         callSyntax.register(container);
@@ -492,4 +577,6 @@ exports.PreventFormActionlessSubmit = PreventFormActionlessSubmit;
 exports.callSyntax = callSyntax;
 exports.compatRegistration = compatRegistration;
 exports.delegateSyntax = delegateSyntax;
+exports.disableComposeCompat = disableComposeCompat;
+exports.enableComposeCompat = enableComposeCompat;
 //# sourceMappingURL=index.dev.cjs.map

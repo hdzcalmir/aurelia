@@ -1,5 +1,5 @@
 import { IContainer, IEventAggregator } from '@aurelia/kernel';
-import { LifecycleFlags, INode, HydrateElementInstruction, ICompiledCustomElementController, ICustomElementViewModel, ICustomElementController, IHydratedController, IHydratedParentController, ISyntheticView } from '@aurelia/runtime-html';
+import { INode, HydrateElementInstruction, ICompiledCustomElementController, ICustomElementViewModel, ICustomElementController, IHydratedController, IHydratedParentController, ISyntheticView } from '@aurelia/runtime-html';
 import { IRouter, NavigationFlags } from '../index';
 import { Viewport } from '../endpoints/viewport';
 import { Step } from '../utilities/runner';
@@ -85,9 +85,9 @@ export declare class ViewportCustomElement implements ICustomElementViewModel {
     private isBound;
     constructor(router: IRouter, element: INode<HTMLElement>, container: IContainer, ea: IEventAggregator, parentViewport: ViewportCustomElement, instruction: HydrateElementInstruction);
     hydrated(controller: ICompiledCustomElementController): void | Promise<void>;
-    binding(initiator: IHydratedController, _parent: IHydratedParentController | null, flags: LifecycleFlags): void | Promise<void>;
-    detaching(initiator: IHydratedController, parent: ISyntheticView | ICustomElementController | null, flags: LifecycleFlags): void | Promise<void>;
-    unbinding(_initiator: IHydratedController, _parent: ISyntheticView | ICustomElementController | null, _flags: LifecycleFlags): void | Promise<void>;
+    binding(initiator: IHydratedController, _parent: IHydratedParentController | null): void | Promise<void>;
+    detaching(initiator: IHydratedController, parent: ISyntheticView | ICustomElementController | null): void | Promise<void>;
+    unbinding(_initiator: IHydratedController, _parent: ISyntheticView | ICustomElementController | null): void | Promise<void>;
     dispose(): void;
     /**
      * Connect this custom element to a router endpoint (Viewport).

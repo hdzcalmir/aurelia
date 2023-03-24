@@ -1,6 +1,6 @@
 import { IRenderLocation } from '../../dom';
 import { IViewFactory } from '../../templating/view';
-import type { LifecycleFlags, ISyntheticView, ICustomAttributeController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, ControllerVisitor, IHydratableController } from '../../templating/controller';
+import type { ISyntheticView, ICustomAttributeController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, ControllerVisitor, IHydratableController } from '../../templating/controller';
 import type { IInstruction } from '../../renderer';
 import type { INode } from '../../dom';
 export declare class If implements ICustomAttributeViewModel {
@@ -16,9 +16,9 @@ export declare class If implements ICustomAttributeViewModel {
     cache: boolean;
     private pending;
     constructor(ifFactory: IViewFactory, location: IRenderLocation);
-    attaching(initiator: IHydratedController, parent: IHydratedController, f: LifecycleFlags): void | Promise<void>;
-    detaching(initiator: IHydratedController, parent: IHydratedParentController, flags: LifecycleFlags): void | Promise<void>;
-    valueChanged(newValue: unknown, oldValue: unknown, f: LifecycleFlags): void | Promise<void>;
+    attaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void>;
+    detaching(initiator: IHydratedController, _parent: IHydratedParentController): void | Promise<void>;
+    valueChanged(newValue: unknown, oldValue: unknown): void | Promise<void>;
     dispose(): void;
     accept(visitor: ControllerVisitor): void | true;
 }

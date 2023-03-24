@@ -96,7 +96,6 @@ exports.IPlatform = runtimeHtml.IPlatform;
 exports.IRenderLocation = runtimeHtml.IRenderLocation;
 exports.ITemplateCompiler = runtimeHtml.ITemplateCompiler;
 exports.ITemplateCompilerHooks = runtimeHtml.ITemplateCompilerHooks;
-exports.LifecycleFlags = runtimeHtml.LifecycleFlags;
 exports.LifecycleHooks = runtimeHtml.LifecycleHooks;
 exports.NodeObserverLocator = runtimeHtml.NodeObserverLocator;
 exports.ShortHandBindingSyntax = runtimeHtml.ShortHandBindingSyntax;

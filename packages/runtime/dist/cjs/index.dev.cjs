@@ -1516,14 +1516,9 @@ function unsubscribe(subscriber) {
 implementLengthObserver(CollectionLengthObserver);
 implementLengthObserver(CollectionSizeObserver);
 
-const lookupMetadataKey$2 = '__au_array_obs__';
-const observerLookup$2 = (() => {
-    let lookup = getOwnMetadata(lookupMetadataKey$2, Array);
-    if (lookup == null) {
-        defineMetadata(lookupMetadataKey$2, lookup = new WeakMap(), Array);
-    }
-    return lookup;
-})();
+const lookupMetadataKey$2 = Symbol.for('__au_arr_obs__');
+const observerLookup$2 = (Array[lookupMetadataKey$2]
+    ?? defineHiddenProp(Array, lookupMetadataKey$2, new WeakMap()));
 function sortCompare(x, y) {
     if (x === y) {
         return 0;
@@ -2004,14 +1999,9 @@ function synchronizeIndices(items, indexMap) {
     }
 }
 
-const lookupMetadataKey$1 = '__au_set_obs__';
-const observerLookup$1 = (() => {
-    let lookup = getOwnMetadata(lookupMetadataKey$1, Set);
-    if (lookup == null) {
-        defineMetadata(lookupMetadataKey$1, lookup = new WeakMap(), Set);
-    }
-    return lookup;
-})();
+const lookupMetadataKey$1 = Symbol.for('__au_set_obs__');
+const observerLookup$1 = (Set[lookupMetadataKey$1]
+    ?? defineHiddenProp(Set, lookupMetadataKey$1, new WeakMap()));
 const proto$1 = Set.prototype;
 const $add = proto$1.add;
 const $clear$1 = proto$1.clear;
@@ -2150,14 +2140,9 @@ function getSetObserver(observedSet) {
     return observer;
 }
 
-const lookupMetadataKey = '__au_map_obs__';
-const observerLookup = (() => {
-    let lookup = getOwnMetadata(lookupMetadataKey, Map);
-    if (lookup == null) {
-        defineMetadata(lookupMetadataKey, lookup = new WeakMap(), Map);
-    }
-    return lookup;
-})();
+const lookupMetadataKey = Symbol.for('__au_map_obs__');
+const observerLookup = (Map[lookupMetadataKey]
+    ?? defineHiddenProp(Map, lookupMetadataKey, new WeakMap()));
 const proto = Map.prototype;
 const $set = proto.set;
 const $clear = proto.clear;
@@ -3730,9 +3715,12 @@ const ConnectableSwitcher = Object.freeze({
 const R$get = Reflect.get;
 const toStringTag = Object.prototype.toString;
 const proxyMap = new WeakMap();
+const nowrapClassKey = '__au_nw__';
+const nowrapPropKey = '__au_nw';
 function canWrap(obj) {
     switch (toStringTag.call(obj)) {
         case '[object Object]':
+            return obj.constructor[nowrapClassKey] !== true;
         case '[object Array]':
         case '[object Map]':
         case '[object Set]':
@@ -3754,12 +3742,13 @@ function getRaw(obj) {
 function unwrap(v) {
     return canWrap(v) && v[rawKey] || v;
 }
-function doNotCollect(key) {
+function doNotCollect(object, key) {
     return key === 'constructor'
         || key === '__proto__'
         || key === '$observers'
         || key === Symbol.toPrimitive
-        || key === Symbol.toStringTag;
+        || key === Symbol.toStringTag
+        || object.constructor[`${nowrapPropKey}_${safeString(key)}__`] === true;
 }
 function createProxy(obj) {
     const handler = isArray(obj)
@@ -3777,7 +3766,7 @@ const objectHandler = {
             return target;
         }
         const connectable = currentConnectable();
-        if (!connecting || doNotCollect(key) || connectable == null) {
+        if (!connecting || doNotCollect(target, key) || connectable == null) {
             return R$get(target, key, receiver);
         }
         connectable.observe(target, key);
@@ -3789,7 +3778,7 @@ const arrayHandler = {
         if (key === rawKey) {
             return target;
         }
-        if (!connecting || doNotCollect(key) || _connectable == null) {
+        if (!connecting || doNotCollect(target, key) || _connectable == null) {
             return R$get(target, key, receiver);
         }
         switch (key) {
@@ -3975,7 +3964,7 @@ const collectionHandler = {
             return target;
         }
         const connectable = currentConnectable();
-        if (!connecting || doNotCollect(key) || connectable == null) {
+        if (!connecting || doNotCollect(target, key) || connectable == null) {
             return R$get(target, key, receiver);
         }
         switch (key) {
@@ -4725,6 +4714,24 @@ function getNotifier(obj, key, callbackKey, initialValue, set) {
     return notifier;
 }
 
+function nowrap(target, key) {
+    if (target == null) {
+        return (t, k) => deco(t, k);
+    }
+    else {
+        return deco(target, key);
+    }
+    function deco(target, key) {
+        const isClassDecorator = !key;
+        if (isClassDecorator) {
+            defineHiddenProp(target, nowrapClassKey, true);
+        }
+        else {
+            defineHiddenProp(target.constructor, `${nowrapPropKey}_${safeString(key)}__`, true);
+        }
+    }
+}
+
 const ISignaler = createInterface('ISignaler', x => x.singleton(Signaler));
 class Signaler {
     constructor() {
@@ -4831,6 +4838,7 @@ exports.enableSetObservation = enableSetObservation;
 exports.getCollectionObserver = getCollectionObserver;
 exports.getObserverLookup = getObserverLookup;
 exports.isIndexMap = isIndexMap;
+exports.nowrap = nowrap;
 exports.observable = observable;
 exports.parseExpression = parseExpression;
 exports.subscriberCollection = subscriberCollection;

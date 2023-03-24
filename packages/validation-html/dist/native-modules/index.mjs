@@ -64,50 +64,50 @@ class PropertyInfo {
     }
 }
 
-function A(t, i, s = 0) {
-    let e = i.propertyInfo;
-    if (void 0 !== e) return e;
-    const n = i.scope;
-    let r = t.ast.expression;
-    let o = true;
-    let a = "";
-    while (void 0 !== r && 1 !== r?.$kind) {
+function A(t, i) {
+    let s = i.propertyInfo;
+    if (void 0 !== s) return s;
+    const e = i.scope;
+    let n = t.ast.expression;
+    let r = true;
+    let o = "";
+    while (void 0 !== n && 1 !== n?.$kind) {
         let i;
-        switch (r.$kind) {
+        switch (n.$kind) {
           case 18:
           case 17:
-            r = r.expression;
+            n = n.expression;
             continue;
 
           case 10:
-            i = r.name;
+            i = n.name;
             break;
 
           case 11:
             {
-                const s = r.key;
-                if (o) o = 4 === s.$kind;
-                i = `[${E(s, n, t, null).toString()}]`;
+                const s = n.key;
+                if (r) r = 4 === s.$kind;
+                i = `[${E(s, e, t, null).toString()}]`;
                 break;
             }
 
           default:
-            throw new Error(`Unknown expression of type ${r.constructor.name}`);
+            throw new Error(`Unknown expression of type ${n.constructor.name}`);
         }
-        const s = a.startsWith("[") ? "" : ".";
-        a = 0 === a.length ? i : `${i}${s}${a}`;
-        r = r.object;
+        const s = o.startsWith("[") ? "" : ".";
+        o = 0 === o.length ? i : `${i}${s}${o}`;
+        n = n.object;
     }
-    if (void 0 === r) throw new Error(`Unable to parse binding expression: ${t.ast.expression}`);
-    let l;
-    if (0 === a.length) {
-        a = r.name;
-        l = n.bindingContext;
-    } else l = E(r, n, t, null);
-    if (null === l || void 0 === l) return;
-    e = new PropertyInfo(l, a);
-    if (o) i.propertyInfo = e;
-    return e;
+    if (void 0 === n) throw new Error(`Unable to parse binding expression: ${t.ast.expression}`);
+    let a;
+    if (0 === o.length) {
+        o = n.name;
+        a = e.bindingContext;
+    } else a = E(n, e, t, null);
+    if (null === a || void 0 === a) return;
+    s = new PropertyInfo(a, o);
+    if (r) i.propertyInfo = s;
+    return s;
 }
 
 const k = t.createInterface("IValidationController");
@@ -156,30 +156,30 @@ let I = class ValidationController {
         this.bindings.delete(t);
     }
     async validate(t) {
-        const {object: i, objectTag: s, flags: e} = t ?? {};
-        let n;
-        if (void 0 !== i) n = [ new l(i, t.propertyName, t.rules ?? this.objects.get(i), s, t.propertyTag) ]; else n = [ ...Array.from(this.objects.entries()).map((([t, i]) => new l(t, void 0, i, s))), ...(!s ? Array.from(this.bindings.entries()) : []).reduce(((t, [i, s]) => {
-            const n = A(i, s, e);
-            if (void 0 !== n && !this.objects.has(n.object)) t.push(new l(n.object, n.propertyName, s.rules));
+        const {object: i, objectTag: s} = t ?? {};
+        let e;
+        if (void 0 !== i) e = [ new l(i, t.propertyName, t.rules ?? this.objects.get(i), s, t.propertyTag) ]; else e = [ ...Array.from(this.objects.entries()).map((([t, i]) => new l(t, void 0, i, s))), ...(!s ? Array.from(this.bindings.entries()) : []).reduce(((t, [i, s]) => {
+            const e = A(i, s);
+            if (void 0 !== e && !this.objects.has(e.object)) t.push(new l(e.object, e.propertyName, s.rules));
             return t;
         }), []) ];
         this.validating = true;
-        const r = this.platform.domReadQueue.queueTask((async () => {
+        const n = this.platform.domReadQueue.queueTask((async () => {
             try {
-                const i = await Promise.all(n.map((async t => this.validator.validate(t))));
+                const i = await Promise.all(e.map((async t => this.validator.validate(t))));
                 const s = i.reduce(((t, i) => {
                     t.push(...i);
                     return t;
                 }), []);
-                const e = this.getInstructionPredicate(t);
-                const r = this.results.filter(e);
+                const n = this.getInstructionPredicate(t);
+                const r = this.results.filter(n);
                 this.processResultDelta("validate", r, s);
                 return new ControllerValidateResult(void 0 === s.find((t => !t.valid)), s, t);
             } finally {
                 this.validating = false;
             }
         }));
-        return r.result;
+        return n.result;
     }
     reset(t) {
         const i = this.getInstructionPredicate(t);

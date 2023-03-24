@@ -325,37 +325,37 @@ class PropertyRule {
         const e = this.$rules.length - 1;
         return this.$rules[e];
     }
-    async validate(e, t, r, i) {
-        if (void 0 === i) i = s.Scope.create({
+    async validate(e, t, r) {
+        if (void 0 === r) r = s.Scope.create({
             [f]: e
         });
-        const n = this.property.expression;
-        let o;
-        if (void 0 === n) o = e; else o = s.astEvaluate(n, i, this, null);
-        let a = true;
-        const u = async r => {
+        const i = this.property.expression;
+        let n;
+        if (void 0 === i) n = e; else n = s.astEvaluate(i, r, this, null);
+        let o = true;
+        const a = async r => {
             const i = async t => {
-                let r = t.execute(o, e);
+                let r = t.execute(n, e);
                 if (r instanceof Promise) r = await r;
-                a = a && r;
-                const {displayName: i, name: n} = this.property;
+                o = o && r;
+                const {displayName: i, name: a} = this.property;
                 let u;
                 if (!r) {
-                    const r = s.Scope.create(new ValidationMessageEvaluationContext(this.messageProvider, this.messageProvider.getDisplayName(n, i), n, o, t, e));
+                    const r = s.Scope.create(new ValidationMessageEvaluationContext(this.messageProvider, this.messageProvider.getDisplayName(a, i), a, n, t, e));
                     u = s.astEvaluate(this.messageProvider.getMessage(t), r, this, null);
                 }
-                return new ValidationResult(r, u, n, e, t, this);
+                return new ValidationResult(r, u, a, e, t, this);
             };
-            const n = [];
-            for (const s of r) if (s.canExecute(e) && (void 0 === t || s.tag === t)) n.push(i(s));
-            return Promise.all(n);
+            const a = [];
+            for (const s of r) if (s.canExecute(e) && (void 0 === t || s.tag === t)) a.push(i(s));
+            return Promise.all(a);
         };
-        const c = async (e, t) => {
-            const s = await u(t);
+        const u = async (e, t) => {
+            const s = await a(t);
             e.push(...s);
             return e;
         };
-        return this.$rules.reduce((async (e, t) => e.then((async e => a ? c(e, t) : Promise.resolve(e)))), Promise.resolve([]));
+        return this.$rules.reduce((async (e, t) => e.then((async e => o ? u(e, t) : Promise.resolve(e)))), Promise.resolve([]));
     }
     then() {
         this.$rules.push([]);
@@ -1277,13 +1277,12 @@ exports.ModelValidationExpressionHydrator = a([ u(0, e.IServiceLocator), u(1, c)
 r.mixinAstEvaluator()(exports.ModelValidationExpressionHydrator);
 
 class ValidateInstruction {
-    constructor(e = void 0, t = void 0, s = void 0, r = void 0, i = void 0, n = 0) {
+    constructor(e = void 0, t = void 0, s = void 0, r = void 0, i = void 0) {
         this.object = e;
         this.propertyName = t;
         this.rules = s;
         this.objectTag = r;
         this.propertyTag = i;
-        this.flags = n;
     }
 }
 
@@ -1294,13 +1293,12 @@ class StandardValidator {
         const t = e.object;
         const r = e.propertyName;
         const i = e.propertyTag;
-        const n = e.flags;
-        const o = e.rules ?? $.get(t, e.objectTag) ?? [];
-        const a = s.Scope.create({
+        const n = e.rules ?? $.get(t, e.objectTag) ?? [];
+        const o = s.Scope.create({
             [f]: t
         });
-        if (void 0 !== r) return await (o.find((e => e.property.name === r))?.validate(t, i, n, a)) ?? [];
-        return (await Promise.all(o.map((async e => e.validate(t, i, n, a))))).flat();
+        if (void 0 !== r) return await (n.find((e => e.property.name === r))?.validate(t, i, o)) ?? [];
+        return (await Promise.all(n.map((async e => e.validate(t, i, o))))).flat();
     }
 }
 

@@ -15,6 +15,7 @@ export declare const IRenderLocation: import("@aurelia/kernel").InterfaceSymbol<
 export type IRenderLocation<T extends ChildNode = ChildNode> = T & {
     $start?: IRenderLocation<T>;
 };
+export declare const ICssModulesMapping: import("@aurelia/kernel").InterfaceSymbol<Record<string, string>>;
 /**
  * Represents a DocumentFragment
  */

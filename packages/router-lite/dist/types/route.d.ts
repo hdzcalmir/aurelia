@@ -1,6 +1,7 @@
 import { Constructable, ResourceType } from '@aurelia/kernel';
 import { RouteableComponent } from './instructions';
 import type { RouteNode } from './route-tree';
+import { FallbackFunction } from './resources/viewport';
 /**
  * Either a `RouteableComponent` or a name/config that can be resolved to a one:
  * - `string`: a string representing the component name. Must be resolveable via DI from the context of the component relative to which the navigation occurs (specified in the `dependencies` array, `<import>`ed in the view, declared as an inline template, or registered globally)
@@ -61,7 +62,7 @@ export interface IRouteConfig {
      * When set, will be used to redirect unknown/unconfigured routes to this route.
      * Can be a route-id, route-path (route), or a custom element name; this is also the resolution/fallback order.
      */
-    readonly fallback?: string | null;
+    readonly fallback?: string | FallbackFunction | null;
     /**
      * When set to `false`, the routes won't be included in the navigation model.
      *
@@ -89,10 +90,10 @@ export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     readonly viewport: string | null;
     readonly data: Record<string, unknown>;
     readonly routes: readonly Routeable[];
-    readonly fallback: string | null;
+    readonly fallback: string | FallbackFunction | null;
     readonly component: Routeable;
     readonly nav: boolean;
-    protected constructor(id: string | null, path: string | string[] | null, title: string | ((node: RouteNode) => string | null) | null, redirectTo: string | null, caseSensitive: boolean, transitionPlan: TransitionPlanOrFunc | null, viewport: string | null, data: Record<string, unknown>, routes: readonly Routeable[], fallback: string | null, component: Routeable, nav: boolean);
+    protected constructor(id: string | null, path: string | string[] | null, title: string | ((node: RouteNode) => string | null) | null, redirectTo: string | null, caseSensitive: boolean, transitionPlan: TransitionPlanOrFunc | null, viewport: string | null, data: Record<string, unknown>, routes: readonly Routeable[], fallback: string | FallbackFunction | null, component: Routeable, nav: boolean);
     /**
      * Creates a new route config applying the child route config.
      * Note that the current rote config is not mutated.

@@ -3,6 +3,7 @@ import { type CustomElementDefinition } from '@aurelia/runtime-html';
 import { RouteConfig, IChildRouteConfig, Routeable } from './route';
 import type { IRouteContext } from './route-context';
 import type { RouteNode } from './route-tree';
+import { FallbackFunction } from './resources/viewport';
 export declare class RouteDefinition {
     readonly config: RouteConfig;
     readonly component: CustomElementDefinition | null;
@@ -13,7 +14,7 @@ export declare class RouteDefinition {
     readonly viewport: string;
     readonly id: string;
     readonly data: Record<string, unknown>;
-    readonly fallback: string | null;
+    readonly fallback: string | FallbackFunction | null;
     constructor(config: RouteConfig, component: CustomElementDefinition | null, parentDefinition: RouteDefinition | null);
     static resolve(routeable: Promise<IModule>, parentDefinition: RouteDefinition | null, routeNode: RouteNode | null, context: IRouteContext): RouteDefinition | Promise<RouteDefinition>;
     static resolve(routeable: string | IChildRouteConfig, parentDefinition: RouteDefinition | null, routeNode: RouteNode | null, context: IRouteContext): RouteDefinition;

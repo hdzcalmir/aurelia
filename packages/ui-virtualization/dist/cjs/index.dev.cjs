@@ -159,7 +159,7 @@ class VirtualRepeat {
         if (itemCount === 0) {
             for (i = 0; currViewCount > i; ++i) {
                 view = views[i];
-                void view.deactivate(controller, controller, 2);
+                void view.deactivate(controller, controller);
                 view.nodes.remove();
             }
             views.length = 0;
@@ -169,7 +169,7 @@ class VirtualRepeat {
         if (currViewCount > maxViewsRequired) {
             while (currViewCount > maxViewsRequired) {
                 view = views[currViewCount - 1];
-                void view.deactivate(controller, controller, 2);
+                void view.deactivate(controller, controller);
                 view.nodes.remove();
                 --currViewCount;
             }
@@ -178,7 +178,7 @@ class VirtualRepeat {
         if (currViewCount > itemCount) {
             while (currViewCount > itemCount) {
                 view = views[currViewCount - 1];
-                void view.deactivate(controller, controller, 2);
+                void view.deactivate(controller, controller);
                 view.nodes.remove();
                 --currViewCount;
             }
@@ -213,7 +213,7 @@ class VirtualRepeat {
                 scope.overrideContext.$index = idx;
                 scope.overrideContext.$length = itemCount;
                 enhanceOverrideContext(scope.overrideContext);
-                void view.activate(controller, controller, 1, scope);
+                void view.activate(controller, controller, scope);
             }
         }
         this._obsMediator.start(items);
@@ -353,7 +353,7 @@ class VirtualRepeat {
         itemScope.overrideContext.$length = collectionStrategy.count();
         enhanceOverrideContext(itemScope.overrideContext);
         firstView.nodes.insertBefore(this.dom.bottom);
-        void firstView.activate(repeatController, repeatController, 0, itemScope);
+        void firstView.activate(repeatController, repeatController, itemScope);
         return firstView;
     }
     getOrCreateFirstView() {

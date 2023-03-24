@@ -53,29 +53,41 @@ const l = t => "function" === typeof t;
 
 const c = t => "string" === typeof t;
 
-const h = (t, e, i) => {
+const h = Reflect.defineProperty;
+
+const u = (t, e, i) => {
+    h(t, e, {
+        enumerable: false,
+        configurable: true,
+        writable: true,
+        value: i
+    });
+    return i;
+};
+
+const a = (t, e, i) => {
     if (c(e)) return t.parse(e, i);
     return e;
 };
 
-const u = Symbol(".call");
+const d = Symbol(".call");
 
-const a = {
+const f = {
     register(t) {
-        if (!t[u]) {
-            t[u] = true;
+        if (!t[d]) {
+            t[d] = true;
             t.register(exports.CallBindingCommand, exports.CallBindingRenderer);
         }
     }
 };
 
-const d = "rh";
+const g = "rh";
 
 class CallBindingInstruction {
     constructor(t, e) {
         this.from = t;
         this.to = e;
-        this.type = d;
+        this.type = g;
     }
 }
 
@@ -93,14 +105,14 @@ exports.CallBindingCommand = r([ e.bindingCommand("call") ], exports.CallBinding
 
 exports.CallBindingRenderer = class CallBindingRenderer {
     render(t, e, i, s, n, r) {
-        const o = h(n, i.from, 16 | 8);
-        t.addBinding(new CallBinding(t.container, r, o, g(e), i.to));
+        const o = a(n, i.from, 16 | 8);
+        t.addBinding(new CallBinding(t.container, r, o, p(e), i.to));
     }
 };
 
-exports.CallBindingRenderer = r([ e.renderer(d) ], exports.CallBindingRenderer);
+exports.CallBindingRenderer = r([ e.renderer(g) ], exports.CallBindingRenderer);
 
-function g(t) {
+function p(t) {
     if (null != t.viewModel) return t.viewModel;
     return t;
 }
@@ -147,18 +159,18 @@ e.mixingBindingLimited(CallBinding, (() => "callSource"));
 
 e.mixinAstEvaluator(true)(CallBinding);
 
-const f = Symbol(".delegate");
+const b = Symbol(".delegate");
 
-const p = {
+const v = {
     register(t) {
-        if (!t[f]) {
-            t[f] = true;
-            t.register(v, exports.DelegateBindingCommand, exports.ListenerBindingRenderer);
+        if (!t[b]) {
+            t[b] = true;
+            t.register(w, exports.DelegateBindingCommand, exports.ListenerBindingRenderer);
         }
     }
 };
 
-const b = "dl";
+const x = "dl";
 
 exports.DelegateBindingCommand = class DelegateBindingCommand {
     get type() {
@@ -173,18 +185,18 @@ exports.DelegateBindingCommand = r([ e.bindingCommand("delegate") ], exports.Del
 
 exports.ListenerBindingRenderer = class ListenerBindingRenderer {
     static get inject() {
-        return [ v ];
+        return [ w ];
     }
     constructor(t) {
         this.t = t;
     }
     render(t, e, i, s, n) {
-        const r = h(n, i.from, 8);
+        const r = a(n, i.from, 8);
         t.addBinding(new DelegateListenerBinding(t.container, r, e, i.to, this.t, new DelegateListenerOptions(i.preventDefault)));
     }
 };
 
-exports.ListenerBindingRenderer = r([ e.renderer(b) ], exports.ListenerBindingRenderer);
+exports.ListenerBindingRenderer = r([ e.renderer(x) ], exports.ListenerBindingRenderer);
 
 class DelegateBindingInstruction {
     constructor(t, e, i) {
@@ -251,12 +263,12 @@ e.mixingBindingLimited(DelegateListenerBinding, (() => "callSource"));
 
 e.mixinAstEvaluator(true, true)(DelegateListenerBinding);
 
-const x = {
+const B = {
     capture: false
 };
 
 class ListenerTracker {
-    constructor(t, e, i = x) {
+    constructor(t, e, i = B) {
         this.h = t;
         this.u = e;
         this.i = i;
@@ -302,18 +314,18 @@ class ListenerTracker {
 class DelegateSubscription {
     constructor(t, e, i, s) {
         this.R = t;
-        this._ = e;
+        this.M = e;
         this.u = i;
         t.O();
         e[i] = s;
     }
     dispose() {
         this.R.I();
-        this._[this.u] = void 0;
+        this.M[this.u] = void 0;
     }
 }
 
-const v = i.DI.createInterface("IEventDelegator", (t => t.cachedCallback((t => {
+const w = i.DI.createInterface("IEventDelegator", (t => t.cachedCallback((t => {
     const i = t.invoke(EventDelegator);
     t.register(e.AppTask.deactivating((() => i.dispose())));
     return i;
@@ -321,29 +333,29 @@ const v = i.DI.createInterface("IEventDelegator", (t => t.cachedCallback((t => {
 
 class EventDelegator {
     constructor() {
-        this.M = o();
+        this._ = o();
     }
     addEventListener(t, e, i, s, n) {
         var r;
-        const o = (r = this.M)[i] ?? (r[i] = new Map);
+        const o = (r = this._)[i] ?? (r[i] = new Map);
         let l = o.get(t);
         if (void 0 === l) o.set(t, l = new ListenerTracker(t, i, n));
         return new DelegateSubscription(l, l.j(e), i, s);
     }
     dispose() {
-        for (const t in this.M) {
-            const e = this.M[t];
+        for (const t in this._) {
+            const e = this._[t];
             for (const t of e.values()) t.dispose();
             e.clear();
         }
     }
 }
 
-let B = false;
+let C = false;
 
 const D = () => {
-    if (B) return;
-    B = true;
+    if (C) return;
+    C = true;
     [ [ e.PropertyBinding, "Property binding" ], [ e.AttributeBinding, "Attribute binding" ], [ e.ListenerBinding, "Listener binding" ], [ CallBinding, "Call binding" ], [ e.LetBinding, "Let binding" ], [ e.InterpolationPartBinding, "Interpolation binding" ], [ e.ContentBinding, "Text binding" ], [ e.RefBinding, "Ref binding" ], [ DelegateListenerBinding, "Delegate Listener binding" ] ].forEach((([e, i]) => {
         Object.defineProperty(e.prototype, "sourceExpression", {
             configurable: true,
@@ -357,13 +369,85 @@ const D = () => {
     }));
 };
 
-const C = e.AppTask.creating(e.IEventTarget, (t => {
+const m = e.AppTask.creating(e.IEventTarget, (t => {
     t.addEventListener("submit", (t => {
         const e = t.target;
         const i = e.action;
         if ("form" === e.tagName.toLowerCase() && !i) t.preventDefault();
     }), false);
 }));
+
+let L = false;
+
+let y = false;
+
+const E = e.AuCompose.prototype;
+
+const O = Symbol();
+
+const S = E.attaching;
+
+const I = E.propertyChanged;
+
+function j() {
+    if (L) return;
+    L = true;
+    if (!y) {
+        y = true;
+        const t = e.CustomElement.getDefinition(e.AuCompose);
+        const i = t.bindables.viewModel = e.BindableDefinition.create("viewModel", e.AuCompose);
+        const s = t.bindables.view = e.BindableDefinition.create("view", e.AuCompose);
+        const n = e.BindablesInfo.from(t, false);
+        if (!("view" in n.attrs)) {
+            n.attrs.view = n.bindables.view = s;
+            n.attrs["view-model"] = n.bindables.viewModel = i;
+        }
+    }
+    u(E, "viewModelChanged", (function(t) {
+        this.component = t;
+    }));
+    u(E, "viewChanged", (function(t) {
+        this.template = t;
+    }));
+    u(E, "attaching", (function(...t) {
+        this[O] = true;
+        if (void 0 !== this.viewModel) this.component = this.viewModel;
+        if (void 0 !== this.view) this.template = this.view;
+        this[O] = false;
+        return S.apply(this, t);
+    }));
+    u(E, "propertyChanged", (function(t) {
+        if (this[O]) return;
+        switch (t) {
+          case "viewModel":
+          case "view":
+            return;
+        }
+        return I.call(this, t);
+    }));
+}
+
+function R() {
+    if (!L) return;
+    if (y) {
+        y = false;
+        const t = e.CustomElement.getDefinition(e.AuCompose);
+        delete t.bindables.viewModel;
+        delete t.bindables.view;
+        const i = e.BindablesInfo.from(t, false);
+        if ("view" in i.attrs) {
+            delete i.attrs.view;
+            delete i.bindables.view;
+            delete i.attrs["view-model"];
+            delete i.bindables.viewModel;
+        }
+    }
+    L = false;
+    delete E.viewModelChanged;
+    delete E.viewChanged;
+    u(E, "attaching", S);
+    u(E, "propertyChanged", I);
+}
 
 class BindingEngine {
     constructor(t, e) {
@@ -414,13 +498,14 @@ class BindingEngine {
 
 BindingEngine.inject = [ t.IExpressionParser, t.IObserverLocator ];
 
-const m = {
+const M = {
     register(t) {
         n();
         D();
-        t.register(C);
-        p.register(t);
-        a.register(t);
+        j();
+        t.register(m);
+        v.register(t);
+        f.register(t);
     }
 };
 
@@ -438,13 +523,17 @@ exports.DelegateListenerOptions = DelegateListenerOptions;
 
 exports.EventDelegator = EventDelegator;
 
-exports.IEventDelegator = v;
+exports.IEventDelegator = w;
 
-exports.PreventFormActionlessSubmit = C;
+exports.PreventFormActionlessSubmit = m;
 
-exports.callSyntax = a;
+exports.callSyntax = f;
 
-exports.compatRegistration = m;
+exports.compatRegistration = M;
 
-exports.delegateSyntax = p;
+exports.delegateSyntax = v;
+
+exports.disableComposeCompat = R;
+
+exports.enableComposeCompat = j;
 //# sourceMappingURL=index.cjs.map

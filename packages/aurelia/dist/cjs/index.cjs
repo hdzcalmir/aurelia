@@ -152,8 +152,6 @@ exports.ITemplateCompiler = r.ITemplateCompiler;
 
 exports.ITemplateCompilerHooks = r.ITemplateCompilerHooks;
 
-exports.LifecycleFlags = r.LifecycleFlags;
-
 exports.LifecycleHooks = r.LifecycleHooks;
 
 exports.NodeObserverLocator = r.NodeObserverLocator;

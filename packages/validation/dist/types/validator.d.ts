@@ -1,4 +1,3 @@
-import { LifecycleFlags } from '@aurelia/runtime-html';
 import { ValidationResult, PropertyRule } from './rule-provider';
 import { IValidateable } from './rule-interfaces';
 /**
@@ -10,7 +9,6 @@ export declare class ValidateInstruction<TObject extends IValidateable = IValida
     rules: PropertyRule[];
     objectTag: string;
     propertyTag: string;
-    flags: LifecycleFlags;
     /**
      * @template TObject
      * @param {TObject} [object=(void 0)!] - The object to validate.
@@ -18,9 +16,8 @@ export declare class ValidateInstruction<TObject extends IValidateable = IValida
      * @param {PropertyRule[]} [rules=(void 0)!] - The rules to validate.
      * @param {string} [objectTag=(void 0)!] - The tag indicating the ruleset defined for the object.
      * @param {string} [propertyTag=(void 0)!] - The tag indicating the ruleset for the property.
-     * @param {LifecycleFlags} [flags=LifecycleFlags.none] - Use this to enable lifecycle flag sensitive expression evaluation.
      */
-    constructor(object?: TObject, propertyName?: keyof TObject | string, rules?: PropertyRule[], objectTag?: string, propertyTag?: string, flags?: LifecycleFlags);
+    constructor(object?: TObject, propertyName?: keyof TObject | string, rules?: PropertyRule[], objectTag?: string, propertyTag?: string);
 }
 export declare const IValidator: import("@aurelia/kernel").InterfaceSymbol<IValidator>;
 /**
@@ -30,6 +27,7 @@ export interface IValidator {
     /**
      * Core validate function that works with a validate instruction.
      *
+     * @template T
      * @param {ValidateInstruction<T>} instruction - The instruction on how to perform the validation.
      * - case `{object}` - the default ruleset defined on the instance or the class are used.
      * - case `{object, propertyName}` - only the rules defined for the particular property are validated.

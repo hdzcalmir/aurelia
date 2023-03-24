@@ -132,7 +132,6 @@ function validateRouteConfig(config, parentPath) {
             case 'id':
             case 'viewport':
             case 'redirectTo':
-            case 'fallback':
                 if (typeof value !== 'string') {
                     expectType('string', path, value);
                 }
@@ -198,6 +197,15 @@ function validateRouteConfig(config, parentPath) {
                         break;
                     default:
                         expectType('string(\'none\'|\'replace\'|\'invoke-lifecycles\') or function', path, value);
+                }
+                break;
+            case 'fallback':
+                switch (typeof value) {
+                    case 'string':
+                    case 'function':
+                        break;
+                    default:
+                        expectType('string or function', path, value);
                 }
                 break;
             default:
@@ -701,6 +709,12 @@ class RouteDefinition {
         this.data = config.data ?? {};
         this.fallback = config.fallback ?? parentDefinition?.fallback ?? null;
     }
+    _getFallback(viewportInstruction, routeNode, context) {
+        const fallback = this.fallback;
+        return typeof fallback === 'function'
+            ? fallback(viewportInstruction, routeNode, context)
+            : fallback;
+    }
     static resolve(routeable, parentDefinition, routeNode, context) {
         const parentConfig = parentDefinition?.config ?? null;
         if (isPartialRedirectRouteConfig(routeable))
@@ -842,7 +856,7 @@ class ViewportAgent {
         }
         return viewportAgent;
     }
-    activateFromViewport(initiator, parent, flags) {
+    activateFromViewport(initiator, parent) {
         const tr = this.currTransition;
         if (tr !== null) {
             ensureTransitionHasNotErrored(tr);
@@ -856,7 +870,7 @@ class ViewportAgent {
                         return;
                     case 4096:
                         this.logger.trace(`activateFromViewport() - activating existing componentAgent at %s`, this);
-                        return this.curCA.activate(initiator, parent, flags);
+                        return this.curCA.activate(initiator, parent);
                     default:
                         this.unexpectedState('activateFromViewport 1');
                 }
@@ -873,7 +887,7 @@ class ViewportAgent {
                 this.unexpectedState('activateFromViewport 2');
         }
     }
-    deactivateFromViewport(initiator, parent, flags) {
+    deactivateFromViewport(initiator, parent) {
         const tr = this.currTransition;
         if (tr !== null) {
             ensureTransitionHasNotErrored(tr);
@@ -885,7 +899,7 @@ class ViewportAgent {
                 return;
             case 4096:
                 this.logger.trace(`deactivateFromViewport() - deactivating existing componentAgent at %s`, this);
-                return this.curCA.deactivate(initiator, parent, flags);
+                return this.curCA.deactivate(initiator, parent);
             case 128:
                 this.logger.trace(`deactivateFromViewport() - already deactivating at %s`, this);
                 return;
@@ -1154,7 +1168,7 @@ class ViewportAgent {
                     case 'replace': {
                         const controller = this.hostController;
                         tr.run(() => {
-                            return this.curCA.deactivate(initiator, controller, 4);
+                            return this.curCA.deactivate(initiator, controller);
                         }, () => {
                             b.pop();
                         });
@@ -1201,10 +1215,9 @@ class ViewportAgent {
                             return;
                         case 'replace': {
                             const controller = this.hostController;
-                            const activateFlags = 0;
                             tr.run(() => {
                                 b1.push();
-                                return this.nextCA.activate(initiator, controller, activateFlags);
+                                return this.nextCA.activate(initiator, controller);
                             }, () => {
                                 b1.pop();
                             });
@@ -1262,14 +1275,14 @@ class ViewportAgent {
                 Batch.start(b1 => {
                     tr.run(() => {
                         b1.push();
-                        return curCA.deactivate(null, controller, 4);
+                        return onResolve(curCA.deactivate(null, controller), () => curCA.dispose());
                     }, () => {
                         b1.pop();
                     });
                 }).continueWith(b1 => {
                     tr.run(() => {
                         b1.push();
-                        return nextCA.activate(null, controller, 0);
+                        return nextCA.activate(null, controller);
                     }, () => {
                         b1.pop();
                     });
@@ -1400,7 +1413,7 @@ class ViewportAgent {
                 break;
             case 4:
             case 1: {
-                this._cancellationPromise = onResolve(this.nextCA?.deactivate(null, this.hostController, 0), () => {
+                this._cancellationPromise = onResolve(this.nextCA?.deactivate(null, this.hostController), () => {
                     this.nextCA?.dispose();
                     this.$plan = 'replace';
                     this.nextState = 64;
@@ -1793,7 +1806,9 @@ function createAndAppendNodes(log, node, vi) {
                         if (vp === null || vp.length === 0)
                             vp = defaultViewportName;
                         const vpa = ctx.getFallbackViewportAgent(vp);
-                        const fallback = vpa !== null ? vpa.viewport.fallback : ctx.definition.fallback;
+                        const fallback = vpa !== null
+                            ? vpa.viewport._getFallback(vi, node, ctx)
+                            : ctx.definition._getFallback(vi, node, ctx);
                         if (fallback === null)
                             throw new UnknownRouteError(`Neither the route '${name}' matched any configured route at '${ctx.friendlyPath}' nor a fallback is configured for the viewport '${vp}' - did you forget to add '${name}' to the routes list of the route decorator of '${ctx.component.name}'?`);
                         log.trace(`Fallback is set to '${fallback}'. Looking for a recognized route.`);
@@ -2115,7 +2130,6 @@ let Router = class Router {
         this.locationChangeSubscription = null;
         this._hasTitleBuilder = false;
         this._isNavigating = false;
-        this._cannotBeUnloaded = false;
         this.vpaLookup = new Map();
         this.logger = logger.root.scopeTo('Router');
         this.instructions = ViewportInstructionTree.create('', options);
@@ -2263,24 +2277,6 @@ let Router = class Router {
         this.nextTr = null;
         this._isNavigating = true;
         let navigationContext = this.resolveContext(tr.options.context);
-        const trChildren = tr.instructions.children;
-        const nodeChildren = navigationContext.node.children;
-        const useHash = this.options.useUrlFragmentHash;
-        const shouldProcess = !this.navigated
-            || this._cannotBeUnloaded
-            || tr.trigger === (useHash ? 'hashchange' : 'popstate')
-            || trChildren.length !== nodeChildren.length
-            || trChildren.some((x, i) => !(nodeChildren[i]?.originalInstruction.equals(x) ?? false))
-            || this.ctx.definition.config.getTransitionPlan(tr.previousRouteTree.root, tr.routeTree.root) === 'replace';
-        if (!shouldProcess) {
-            this.logger.trace(`run(tr:%s) - NOT processing route`, tr);
-            this.navigated = true;
-            this._isNavigating = false;
-            tr.resolve(false);
-            this.runNextTransition();
-            return;
-        }
-        this._cannotBeUnloaded = false;
         this.logger.trace(`run(tr:%s) - processing route`, tr);
         this.events.publish(new NavigationStartEvent(tr.id, tr.instructions, tr.trigger, tr.managedState));
         if (this.nextTr !== null) {
@@ -2318,7 +2314,6 @@ let Router = class Router {
             }).continueWith(b => {
                 if (tr.guardsResult !== true) {
                     b.push();
-                    this._cannotBeUnloaded = tr.guardsResult === false;
                     this.cancelNavigation(tr);
                 }
             }).continueWith(b => {
@@ -2354,7 +2349,7 @@ let Router = class Router {
                 this.navigated = true;
                 this.instructions = tr.finalInstructions = tr.routeTree.finalizeInstructions();
                 this._isNavigating = false;
-                const newUrl = tr.finalInstructions.toUrl(useHash);
+                const newUrl = tr.finalInstructions.toUrl(this.options.useUrlFragmentHash);
                 switch (tr.options._getHistoryStrategy(this.instructions)) {
                     case 'none':
                         break;
@@ -3240,21 +3235,21 @@ class ComponentAgent {
         this._hasCanUnload = 'canUnload' in instance;
         this._hasUnload = 'unloading' in instance;
     }
-    activate(initiator, parent, flags) {
+    activate(initiator, parent) {
         if (initiator === null) {
             this._logger.trace(`activate() - initial`);
-            return this.controller.activate(this.controller, parent, flags);
+            return this.controller.activate(this.controller, parent);
         }
         this._logger.trace(`activate()`);
-        void this.controller.activate(initiator, parent, flags);
+        void this.controller.activate(initiator, parent);
     }
-    deactivate(initiator, parent, flags) {
+    deactivate(initiator, parent) {
         if (initiator === null) {
             this._logger.trace(`deactivate() - initial`);
-            return this.controller.deactivate(this.controller, parent, flags);
+            return this.controller.deactivate(this.controller, parent);
         }
         this._logger.trace(`deactivate()`);
-        void this.controller.deactivate(initiator, parent, flags);
+        void this.controller.deactivate(initiator, parent);
     }
     dispose() {
         this._logger.trace(`dispose()`);
@@ -3960,18 +3955,24 @@ let ViewportCustomElement = class ViewportCustomElement {
         this.logger = logger.scopeTo(`au-viewport<${ctx.friendlyPath}>`);
         this.logger.trace('constructor()');
     }
+    _getFallback(viewportInstruction, routeNode, context) {
+        const fallback = this.fallback;
+        return typeof fallback === 'function'
+            ? fallback(viewportInstruction, routeNode, context)
+            : fallback;
+    }
     hydrated(controller) {
         this.logger.trace('hydrated()');
         this.controller = controller;
         this.agent = this.ctx.registerViewport(this);
     }
-    attaching(initiator, _parent, flags) {
+    attaching(initiator, _parent) {
         this.logger.trace('attaching()');
-        return this.agent.activateFromViewport(initiator, this.controller, flags);
+        return this.agent.activateFromViewport(initiator, this.controller);
     }
-    detaching(initiator, _parent, flags) {
+    detaching(initiator, _parent) {
         this.logger.trace('detaching()');
-        return this.agent.deactivateFromViewport(initiator, this.controller, flags);
+        return this.agent.deactivateFromViewport(initiator, this.controller);
     }
     dispose() {
         this.logger.trace('dispose()');

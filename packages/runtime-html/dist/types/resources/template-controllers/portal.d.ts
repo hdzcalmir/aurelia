@@ -1,7 +1,7 @@
 import { IRenderLocation } from '../../dom';
 import { IPlatform } from '../../platform';
 import { IViewFactory } from '../../templating/view';
-import type { LifecycleFlags, ControllerVisitor, ICustomAttributeController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, ISyntheticView } from '../../templating/controller';
+import type { ControllerVisitor, ICustomAttributeController, ICustomAttributeViewModel, IHydratedController, ISyntheticView } from '../../templating/controller';
 export type PortalTarget = string | Element | null | undefined;
 export type PortalLifecycleCallback = (target: PortalTarget, view: ISyntheticView) => void | Promise<void>;
 export declare class Portal implements ICustomAttributeViewModel {
@@ -18,8 +18,8 @@ export declare class Portal implements ICustomAttributeViewModel {
     callbackContext: unknown;
     view: ISyntheticView;
     constructor(factory: IViewFactory, originalLoc: IRenderLocation, p: IPlatform);
-    attaching(initiator: IHydratedController, parent: IHydratedParentController, flags: LifecycleFlags): void | Promise<void>;
-    detaching(initiator: IHydratedController, parent: IHydratedParentController, flags: LifecycleFlags): void | Promise<void>;
+    attaching(initiator: IHydratedController): void | Promise<void>;
+    detaching(initiator: IHydratedController): void | Promise<void>;
     targetChanged(): void;
     positionChanged(): void;
     dispose(): void;

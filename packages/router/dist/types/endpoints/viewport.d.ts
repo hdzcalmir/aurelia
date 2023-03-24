@@ -1,4 +1,4 @@
-import { LifecycleFlags, IHydratedController, IHydratedParentController } from '@aurelia/runtime-html';
+import { IHydratedController, IHydratedParentController } from '@aurelia/runtime-html';
 import { ComponentAppellation, IRouteableComponent, LoadInstruction } from '../interfaces';
 import { IRouter } from '../router';
 import { ViewportContent } from './viewport-content';
@@ -210,7 +210,7 @@ export declare class Viewport extends Endpoint {
      * @param flags - The lifecycle flags for `activate`
      * @param coordinator - The navigation coordinator
      */
-    activate(step: Step<void> | null, initiator: IHydratedController | null, parent: IHydratedParentController | null, flags: LifecycleFlags, coordinator: NavigationCoordinator | undefined): void | Step<void>;
+    activate(step: Step<void> | null, initiator: IHydratedController | null, parent: IHydratedParentController | null, coordinator: NavigationCoordinator | undefined): void | Step<void>;
     /**
      * Deactivate the current content component. Called both when
      * transitioning and when the custom element triggers it.
@@ -219,7 +219,7 @@ export declare class Viewport extends Endpoint {
      * @param parent - The parent controller
      * @param flags - The lifecycle flags for `deactivate`
      */
-    deactivate(step: Step<void> | null, initiator: IHydratedController | null, parent: IHydratedParentController | null, flags: LifecycleFlags): void | Promise<void>;
+    deactivate(step: Step<void> | null, initiator: IHydratedController | null, parent: IHydratedParentController | null): void | Promise<void>;
     /**
      * Unload the current content.
      *
