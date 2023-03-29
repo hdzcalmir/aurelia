@@ -4,8 +4,7 @@ import { type CustomElementDefinition, ICustomElementController, PartialCustomEl
 import { ComponentAgent, IRouteViewModel } from './component-agent';
 import { NavigationInstruction, Params, ViewportInstruction } from './instructions';
 import { IViewport } from './resources/viewport';
-import { IChildRouteConfig, RouteType } from './route';
-import { RouteDefinition } from './route-definition';
+import { IChildRouteConfig, RouteConfig, RouteType } from './route';
 import type { RouteNode } from './route-tree';
 import { IRouter } from './router';
 import { ViewportAgent, type ViewportRequest } from './viewport-agent';
@@ -17,24 +16,23 @@ type PathGenerationResult = {
     query: Params;
 };
 export type EagerInstruction = {
-    component: string | RouteDefinition | PartialCustomElementDefinition | IRouteViewModel | IChildRouteConfig | RouteType;
+    component: string | RouteConfig | PartialCustomElementDefinition | IRouteViewModel | IChildRouteConfig | RouteType;
     params: Params;
 };
 export declare function isEagerInstruction(val: NavigationInstruction | EagerInstruction): val is EagerInstruction;
 /**
  * Holds the information of a component in the context of a specific container.
  *
- * The `RouteContext` is cached using a 3-part composite key consisting of the CustomElementDefinition, the RouteDefinition and the RenderContext.
+ * The `RouteContext` is cached using a 3-part composite key consisting of the CustomElementDefinition, the RouteConfig and the RenderContext.
  *
  * This means there can be more than one `RouteContext` per component type if either:
- * - The `RouteDefinition` for a type is overridden manually via `Route.define`
+ * - The `RouteConfig` for a type is overridden manually via `Route.configure`
  * - Different components (with different `RenderContext`s) reference the same component via a child route config
  */
 export declare class RouteContext {
     readonly parent: IRouteContext | null;
     readonly component: CustomElementDefinition;
-    readonly definition: RouteDefinition;
-    readonly parentContainer: IContainer;
+    readonly config: RouteConfig;
     private readonly _router;
     private readonly childViewportAgents;
     readonly root: IRouteContext;
@@ -51,9 +49,9 @@ export declare class RouteContext {
      */
     readonly friendlyPath: string;
     /**
-     * The (fully resolved) configured child routes of this context's `RouteDefinition`
+     * The (fully resolved) configured child routes of this context's `RouteConfig`
      */
-    readonly childRoutes: (RouteDefinition | Promise<RouteDefinition>)[];
+    readonly childRoutes: (RouteConfig | Promise<RouteConfig>)[];
     get resolved(): Promise<void> | null;
     get allResolved(): Promise<void> | null;
     private prevNode;
@@ -71,8 +69,8 @@ export declare class RouteContext {
     private _childRoutesConfigured;
     private readonly _navigationModel;
     get navigationModel(): INavigationModel | null;
-    constructor(viewportAgent: ViewportAgent | null, parent: IRouteContext | null, component: CustomElementDefinition, definition: RouteDefinition, parentContainer: IContainer, _router: IRouter);
-    private processDefinition;
+    constructor(viewportAgent: ViewportAgent | null, parent: IRouteContext | null, component: CustomElementDefinition, config: RouteConfig, parentContainer: IContainer, _router: IRouter);
+    private processConfiguration;
     /**
      * Create a new `RouteContext` and register it in the provided container.
      *
@@ -108,9 +106,9 @@ export declare class RouteContext {
     private printTree;
 }
 export declare class $RecognizedRoute {
-    readonly route: RecognizedRoute<RouteDefinition | Promise<RouteDefinition>>;
+    readonly route: RecognizedRoute<RouteConfig | Promise<RouteConfig>>;
     readonly residue: string | null;
-    constructor(route: RecognizedRoute<RouteDefinition | Promise<RouteDefinition>>, residue: string | null);
+    constructor(route: RecognizedRoute<RouteConfig | Promise<RouteConfig>>, residue: string | null);
     toString(): string;
 }
 export declare const INavigationModel: import("@aurelia/kernel").InterfaceSymbol<INavigationModel>;
@@ -125,7 +123,7 @@ export interface INavigationModel {
     resolve(): Promise<void> | void;
 }
 export interface INavigationRoute {
-    readonly id: string;
+    readonly id: string | null;
     readonly path: string[];
     readonly title: string | ((node: RouteNode) => string | null) | null;
     readonly data: Record<string, unknown>;

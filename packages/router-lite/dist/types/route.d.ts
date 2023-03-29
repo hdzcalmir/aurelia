@@ -2,6 +2,7 @@ import { Constructable, ResourceType } from '@aurelia/kernel';
 import { RouteableComponent } from './instructions';
 import type { RouteNode } from './route-tree';
 import { FallbackFunction } from './resources/viewport';
+export declare const noRoutes: readonly Routeable[];
 /**
  * Either a `RouteableComponent` or a name/config that can be resolved to a one:
  * - `string`: a string representing the component name. Must be resolveable via DI from the context of the component relative to which the navigation occurs (specified in the `dependencies` array, `<import>`ed in the view, declared as an inline template, or registered globally)
@@ -81,24 +82,21 @@ export interface IRedirectRouteConfig extends Pick<IRouteConfig, 'caseSensitive'
 export type TransitionPlan = 'none' | 'replace' | 'invoke-lifecycles';
 export type TransitionPlanOrFunc = TransitionPlan | ((current: RouteNode, next: RouteNode) => TransitionPlan);
 export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
-    readonly id: string | null;
-    readonly path: string | string[] | null;
+    readonly id: string;
     readonly title: string | ((node: RouteNode) => string | null) | null;
     readonly redirectTo: string | null;
     readonly caseSensitive: boolean;
     readonly transitionPlan: TransitionPlanOrFunc | null;
-    readonly viewport: string | null;
+    readonly viewport: string;
     readonly data: Record<string, unknown>;
     readonly routes: readonly Routeable[];
     readonly fallback: string | FallbackFunction | null;
     readonly component: Routeable;
     readonly nav: boolean;
-    protected constructor(id: string | null, path: string | string[] | null, title: string | ((node: RouteNode) => string | null) | null, redirectTo: string | null, caseSensitive: boolean, transitionPlan: TransitionPlanOrFunc | null, viewport: string | null, data: Record<string, unknown>, routes: readonly Routeable[], fallback: string | FallbackFunction | null, component: Routeable, nav: boolean);
-    /**
-     * Creates a new route config applying the child route config.
-     * Note that the current rote config is not mutated.
-     */
-    applyChildRouteConfig(config: IChildRouteConfig, parentConfig: RouteConfig | null): RouteConfig;
+    get path(): string[];
+    protected constructor(id: string, 
+    /** @internal */
+    _path: string[], title: string | ((node: RouteNode) => string | null) | null, redirectTo: string | null, caseSensitive: boolean, transitionPlan: TransitionPlanOrFunc | null, viewport: string, data: Record<string, unknown>, routes: readonly Routeable[], fallback: string | FallbackFunction | null, component: Routeable, nav: boolean);
     getTransitionPlan(cur: RouteNode, next: RouteNode): TransitionPlan;
 }
 export declare const Route: {

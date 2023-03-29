@@ -1,14 +1,13 @@
 import { IContainer, ILogger } from '@aurelia/kernel';
-import { type CustomElementDefinition, IPlatform } from '@aurelia/runtime-html';
+import { CustomElementDefinition, IPlatform } from '@aurelia/runtime-html';
 import { IRouteContext } from './route-context';
 import { IRouterEvents, ManagedState, RoutingTrigger } from './router-events';
 import { ILocationManager } from './location-manager';
-import { RouteType } from './route';
+import { RouteConfig, RouteType } from './route';
 import { IRouteViewModel } from './component-agent';
 import { RouteTree } from './route-tree';
 import { IViewportInstruction, NavigationInstruction, RouteContextLike, ViewportInstructionTree } from './instructions';
 import { UnwrapPromise } from './util';
-import { RouteDefinition } from './route-definition';
 import { type ViewportAgent } from './viewport-agent';
 import { INavigationOptions, NavigationOptions, type RouterOptions } from './options';
 export declare function isManagedState(state: {} | null): state is ManagedState;
@@ -158,7 +157,7 @@ export declare class Router {
      * @param container - The `controller.container` of the component hosting the viewport that the route will be loaded into.
      *
      */
-    getRouteContext(viewportAgent: ViewportAgent | null, componentDefinition: CustomElementDefinition, componentInstance: IRouteViewModel | null, container: IContainer, parentDefinition: RouteDefinition | null): IRouteContext | Promise<IRouteContext>;
+    getRouteContext(viewportAgent: ViewportAgent | null, componentDefinition: CustomElementDefinition, componentInstance: IRouteViewModel | null, container: IContainer, parentRouteConfig: RouteConfig | null, parentContext: IRouteContext | null, $rdConfig: RouteConfig | null): IRouteContext | Promise<IRouteContext>;
     createViewportInstructions(instructionOrInstructions: NavigationInstruction | readonly NavigationInstruction[], options?: INavigationOptions): ViewportInstructionTree;
     /**
      * Enqueue an instruction tree to be processed as soon as possible.

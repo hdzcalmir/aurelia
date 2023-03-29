@@ -5,7 +5,6 @@ export { type RouteableComponent, type NavigationInstruction, IViewportInstructi
 export { ILocationManager, } from './location-manager';
 export { type Routeable, type IRouteConfig, type IChildRouteConfig, RouteConfig, Route, type RouteType, route, } from './route';
 export { IRouteContext, RouteContext, type INavigationModel, type INavigationRoute, } from './route-context';
-export { RouteDefinition, } from './route-definition';
 export { AST, RouteExpression, CompositeSegmentExpression, ScopedSegmentExpression, SegmentGroupExpression, SegmentExpression, ComponentExpression, ActionExpression, ViewportExpression, ParameterListExpression, ParameterExpression, ExpressionKind, } from './route-expression';
 export { RouteNode, RouteTree, } from './route-tree';
 export { isManagedState, toManagedState, IRouter, Router, Transition, } from './router';

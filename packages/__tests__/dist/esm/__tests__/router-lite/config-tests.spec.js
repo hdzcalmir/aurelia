@@ -564,7 +564,7 @@ describe('router-lite/config-tests.spec.ts', function () {
         assert.html.textContent(host, 'root p c2');
         assert.strictEqual(au.root.controller.viewModel.getRouteConfigCalled, 1);
         assert.strictEqual(CustomElement.for(host.querySelector('ce-p')).viewModel.getRouteConfigCalled, 1);
-        await au.stop();
+        await au.stop(true);
     });
 });
 function getAllAsyncSpecs(count) {

@@ -1,6 +1,6 @@
 import { DI, Registration, optional, all, ILogger, camelCase } from '@aurelia/kernel';
 import { mixinAstEvaluator, mixingBindingLimited, bindingBehavior, attributePattern, bindingCommand, renderer, AttrSyntax, lifecycleHooks, CustomElement, CustomAttribute, ILifecycleHooks } from '@aurelia/runtime-html';
-import { Scope, connectable, astEvaluate, astBind, astUnbind, IExpressionParser } from '@aurelia/runtime';
+import { Scope, connectable, astEvaluate, astBind, astUnbind } from '@aurelia/runtime';
 
 const IActionHandler = DI.createInterface('IActionHandler');
 const IStore = DI.createInterface('IStore');
@@ -8,13 +8,13 @@ const IState = DI.createInterface('IState');
 
 const actionHandlerSymbol = '__au_ah__';
 const ActionHandler = Object.freeze({
-    define(reducer) {
-        function registry(state, action, ...params) {
-            return reducer(state, action, ...params);
+    define(actionHandler) {
+        function registry(state, action) {
+            return actionHandler(state, action);
         }
         registry[actionHandlerSymbol] = true;
         registry.register = function (c) {
-            Registration.instance(IActionHandler, reducer).register(c);
+            Registration.instance(IActionHandler, actionHandler).register(c);
         };
         return registry;
     },
@@ -25,12 +25,12 @@ class Store {
     static register(c) {
         Registration.singleton(IStore, this).register(c);
     }
-    constructor(initialState, reducers, logger) {
+    constructor(initialState, actionHandlers, logger) {
         this._subs = new Set();
         this._dispatching = 0;
         this._dispatchQueues = [];
         this._state = initialState ?? new State();
-        this._handlers = reducers;
+        this._handlers = actionHandlers;
         this._logger = logger;
     }
     subscribe(subscriber) {
@@ -61,23 +61,23 @@ class Store {
             return new Proxy(this._state, new StateProxyHandler(this, this._logger));
         }
     }
-    dispatch(type, ...params) {
+    dispatch(action) {
         if (this._dispatching > 0) {
-            this._dispatchQueues.push({ type, params });
+            this._dispatchQueues.push(action);
             return;
         }
         this._dispatching++;
         let $$action;
-        const reduce = ($state, $action, params) => this._handlers.reduce(($state, handler) => {
+        const reduce = ($state, $action) => this._handlers.reduce(($state, handler) => {
             if ($state instanceof Promise) {
-                return $state.then($ => handler($, $action, ...params ?? []));
+                return $state.then($ => handler($, $action));
             }
-            return handler($state, $action, ...params ?? []);
+            return handler($state, $action);
         }, $state);
         const afterDispatch = ($state) => {
             if (this._dispatchQueues.length > 0) {
                 $$action = this._dispatchQueues.shift();
-                const newState = reduce($state, $$action.type, $$action.params);
+                const newState = reduce($state, $$action);
                 if (newState instanceof Promise) {
                     return newState.then($ => afterDispatch($));
                 }
@@ -86,7 +86,7 @@ class Store {
                 }
             }
         };
-        const newState = reduce(this._state, type, params);
+        const newState = reduce(this._state, action);
         if (newState instanceof Promise) {
             return newState.then($state => {
                 this._setState($state);
@@ -347,10 +347,7 @@ class StateDispatchBinding {
         scope.overrideContext.$event = e;
         const value = astEvaluate(this.ast, scope, this, null);
         delete scope.overrideContext.$event;
-        if (!this.isAction(value)) {
-            throw new Error(`Invalid dispatch value from expression on ${this._target} on event: "${e.type}"`);
-        }
-        void this._store.dispatch(value.type, ...(value.params instanceof Array ? value.params : []));
+        void this._store.dispatch(value);
     }
     handleEvent(e) {
         this.callSource(e);
@@ -379,11 +376,6 @@ class StateDispatchBinding {
         const scope = this._scope;
         const overrideContext = scope.overrideContext;
         scope.bindingContext = overrideContext.bindingContext = state;
-    }
-    isAction(value) {
-        return value != null
-            && typeof value === 'object'
-            && 'type' in value;
     }
 }
 connectable(StateDispatchBinding);
@@ -467,16 +459,15 @@ StateBindingInstructionRenderer = __decorate([
     renderer('sb')
 ], StateBindingInstructionRenderer);
 let DispatchBindingInstructionRenderer = class DispatchBindingInstructionRenderer {
-    constructor(_exprParser, _stateContainer) {
-        this._exprParser = _exprParser;
+    constructor(_stateContainer) {
         this._stateContainer = _stateContainer;
     }
-    render(renderingCtrl, target, instruction) {
-        const expr = ensureExpression(this._exprParser, instruction.ast, 16);
+    render(renderingCtrl, target, instruction, platform, exprParser) {
+        const expr = ensureExpression(exprParser, instruction.ast, 16);
         renderingCtrl.addBinding(new StateDispatchBinding(renderingCtrl.container, expr, target, instruction.from, this._stateContainer));
     }
 };
-DispatchBindingInstructionRenderer.inject = [IExpressionParser, IStore];
+DispatchBindingInstructionRenderer.inject = [IStore];
 DispatchBindingInstructionRenderer = __decorate([
     renderer('sd')
 ], DispatchBindingInstructionRenderer);
@@ -497,12 +488,12 @@ const standardRegistrations = [
     StateBindingBehavior,
     Store,
 ];
-const createConfiguration = (initialState, reducers) => {
+const createConfiguration = (initialState, actionHandlers) => {
     return {
         register: (c) => {
-            c.register(Registration.instance(IState, initialState), ...standardRegistrations, ...reducers.map(ActionHandler.define));
+            c.register(Registration.instance(IState, initialState), ...standardRegistrations, ...actionHandlers.map(ActionHandler.define));
         },
-        init: (state, ...reducers) => createConfiguration(state, reducers),
+        init: (state, ...actionHandlers) => createConfiguration(state, actionHandlers),
     };
 };
 const StateDefaultConfiguration = createConfiguration({}, []);

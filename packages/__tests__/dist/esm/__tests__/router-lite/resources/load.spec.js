@@ -57,7 +57,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         a1.active = true;
         a2.active = false;
         assertAnchors(anchors, [a1, a2], 'round#3');
-        await au.stop();
+        await au.stop(true);
     });
     it('un-configured parameters are added to the querystring', async function () {
         let Foo = class Foo {
@@ -83,7 +83,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         await queue.yield();
         const anchor = host.querySelector('a');
         assert.match(anchor.href, /foo\/3\?a=2/);
-        await au.stop();
+        await au.stop(true);
     });
     it('the most matched path is generated', async function () {
         let Foo = class Foo {
@@ -115,7 +115,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         anchors[2].click();
         await queue.yield();
         assert.html.textContent(host, 'foo');
-        await au.stop();
+        await au.stop(true);
     });
     it('allow navigating to route defined in parent context using ../ prefix', async function () {
         let Product = class Product {
@@ -168,7 +168,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         host.querySelector('a').click();
         await queue.yield();
         assert.html.textContent(host, 'products');
-        await au.stop();
+        await au.stop(true);
     });
     it('allow navigating to route defined in parent context using explicit routing context', async function () {
         let Product = class Product {
@@ -226,7 +226,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         host.querySelector('a').click();
         await queue.yield();
         assert.html.textContent(host, 'products');
-        await au.stop();
+        await au.stop(true);
     });
     it('allow navigating to route defined in grand-parent context using ../../ prefix', async function () {
         let L21 = class L21 {
@@ -280,7 +280,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         host.querySelector('a').click();
         await queue.yield();
         assert.html.textContent(host, 'l11 l21');
-        await au.stop();
+        await au.stop(true);
     });
     it('allow navigating to route defined in grand-parent context using explicit routing context', async function () {
         let L21 = class L21 {
@@ -342,7 +342,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         host.querySelector('a').click();
         await queue.yield();
         assert.html.textContent(host, 'l11 l21');
-        await au.stop();
+        await au.stop(true);
     });
     it('allow explicitly binding the routing context to null to perform navigation from root', async function () {
         let L21 = class L21 {
@@ -434,7 +434,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         host.querySelector('a').click();
         await queue.yield();
         assert.html.textContent(host, 'l11 l21', '#5 l24 -> l11');
-        await au.stop();
+        await au.stop(true);
     });
     it('adds hash correctly to the href when useUrlFragmentHash is set', async function () {
         let CeOne = class CeOne {
@@ -486,7 +486,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         anchors[2].click();
         await queue.yield();
         assert.html.textContent(host, 'ce2');
-        await au.stop();
+        await au.stop(true);
     });
 });
 //# sourceMappingURL=load.spec.js.map

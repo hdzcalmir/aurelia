@@ -1,5 +1,5 @@
 import { type ILogger } from '@aurelia/kernel';
-import type { CustomElementDefinition } from '@aurelia/runtime-html';
+import { CustomElementDefinition } from '@aurelia/runtime-html';
 import { ITypedNavigationInstruction_ResolvedComponent, Params, ViewportInstruction, ViewportInstructionTree } from './instructions';
 import { type IRouteContext } from './route-context';
 import { type NavigationOptions } from './options';

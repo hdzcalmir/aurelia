@@ -71,7 +71,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await queue.yield();
         assert.html.textContent(vp1, 'ce2');
         assert.html.textContent(vp2, 'ce1');
-        await au.stop();
+        await au.stop(true);
     });
     it('sibling viewports in children with non-default routes are supported by binding the default property to null', async function () {
         let CeOneOne = class CeOneOne {
@@ -155,7 +155,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await router.load('ce-two@$1+ce-one@$2');
         await queue.yield();
         assert.html.textContent(host, 'ce2 ce21 ce1 ce11');
-        await au.stop();
+        await au.stop(true);
     });
     it('sibling viewports in children with non-default routes are supported by binding the default property to null - transition plan: invoke-lifecycle', async function () {
         let CeTwoOne = class CeTwoOne {
@@ -230,7 +230,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await queue.yield();
         assert.html.textContent(vp1, 'ce1');
         assert.html.textContent(vp2, 'ce2 ce21');
-        await au.stop();
+        await au.stop(true);
     });
     it('sibling viewports - load non-empty-route@non-default-vp+empty-alias-route@default-vp', async function () {
         let CeOne = class CeOne {
@@ -278,7 +278,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await router.load('ce-two/42@$2+ce-one@$1');
         await queue.yield();
         assert.html.textContent(host, 'ce1 ce2 42');
-        await au.stop();
+        await au.stop(true);
     });
     // precondition: exists a mixture of named and unnamed viewports
     // action: components are attempted to be loaded into named viewports
@@ -340,7 +340,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await router.load('ce-one+ce-two/42');
         await queue.yield();
         assertText(vps, ['ce1', 'ce2 42', '', '', '']);
-        await au.stop();
+        await au.stop(true);
     });
     it('viewport configuration for route is respected', async function () {
         let CeOne = class CeOne {
@@ -412,7 +412,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         catch {
             /** ignore */
         }
-        await au.stop();
+        await au.stop(true);
     });
     it('multiple routes can use the same viewport', async function () {
         let CeOne = class CeOne {
@@ -474,7 +474,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         catch {
             /** ignore */
         }
-        await au.stop();
+        await au.stop(true);
     });
     it('used-by is respected', async function () {
         let CeOne = class CeOne {
@@ -532,7 +532,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await router.load('ce1+43/foo/42');
         await queue.yield();
         assertText(vps, ['', '43 ce2 42', 'ce1']);
-        await au.stop();
+        await au.stop(true);
     });
     it('comma-separated used-by is respected', async function () {
         let CeOne = class CeOne {
@@ -597,7 +597,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         catch {
             /* ignore */
         }
-        await au.stop();
+        await au.stop(true);
     });
     it('a preceding default (without used-by) can load components', async function () {
         let CeOne = class CeOne {
@@ -654,7 +654,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await router.load('43/foo/42+ce1');
         await queue.yield();
         assertText(vps, ['43 ce2 42', 'ce1']);
-        await au.stop();
+        await au.stop(true);
     });
 });
 //# sourceMappingURL=viewport.spec.js.map

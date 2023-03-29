@@ -109,7 +109,7 @@ describe('router-lite/events.spec.ts', function () {
             'au:router:navigation-start - 3 - \'c1\'',
             'au:router:navigation-end - 3 - \'c1\'',
         ]);
-        await au.stop();
+        await au.stop(true);
     });
     it('cancelled navigation - canLoad', async function () {
         let ChildOne = class ChildOne {
@@ -157,7 +157,7 @@ describe('router-lite/events.spec.ts', function () {
             'au:router:navigation-start - 3 - \'c2/42\'',
             'au:router:navigation-end - 3 - \'c2/42\'',
         ]);
-        await au.stop();
+        await au.stop(true);
     });
     it('cancelled navigation - canUnload', async function () {
         let ChildOne = class ChildOne {
@@ -195,7 +195,7 @@ describe('router-lite/events.spec.ts', function () {
             'au:router:navigation-start - 2 - \'c2\'',
             'au:router:navigation-cancel - 2 - \'c2\' - guardsResult is false',
         ]);
-        await au.stop();
+        await au.stop(true);
     });
     it('cancelled navigation - unknown route', async function () {
         let ChildOne = class ChildOne {
@@ -240,7 +240,7 @@ describe('router-lite/events.spec.ts', function () {
             'au:router:navigation-start - 3 - \'\'',
             'au:router:navigation-end - 3 - \'\'',
         ]);
-        await au.stop();
+        await au.stop(true);
     });
     it('erred navigation', async function () {
         let ChildOne = class ChildOne {
@@ -293,7 +293,7 @@ describe('router-lite/events.spec.ts', function () {
         const transition = vpa['currTransition'];
         transition.guardsResult = true;
         transition.error = void 0;
-        await au.stop();
+        await au.stop(true);
     });
 });
 //# sourceMappingURL=events.spec.js.map

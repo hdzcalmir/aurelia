@@ -38,8 +38,7 @@ export declare class StateBindingInstructionRenderer implements IRenderer {
 export declare class DispatchBindingInstructionRenderer implements IRenderer {
     readonly target: 'sd';
     constructor(
-    /** @internal */ _exprParser: IExpressionParser, 
     /** @internal */ _stateContainer: IStore<object>);
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: DispatchBindingInstruction): void;
+    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: DispatchBindingInstruction, platform: IPlatform, exprParser: IExpressionParser): void;
 }
 //# sourceMappingURL=state-templating.d.ts.map
