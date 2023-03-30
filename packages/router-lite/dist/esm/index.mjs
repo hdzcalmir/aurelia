@@ -648,6 +648,11 @@ class RouteConfig {
         const s = this.fallback;
         return "function" === typeof s ? s(t, e, i) : s;
     }
+    register(t) {
+        const e = this.component;
+        if (null == e) return;
+        t.register(e);
+    }
 }
 
 const gt = {
@@ -3201,9 +3206,9 @@ class RouteContext {
             const t = this.$t = new NavigationModel([]);
             h.get(ot).subscribe("au:router:navigation-end", (() => t.setIsActive(o, this)));
         } else this.$t = null;
-        this.processConfiguration(s);
+        this.yt(s);
     }
-    processConfiguration(t) {
+    yt(t) {
         const e = [];
         const i = [];
         const s = t.routes ?? dt;
@@ -3312,7 +3317,7 @@ class RouteContext {
         this.hostControllerProvider.prepare(t);
         const i = this.container;
         const s = i.get(e.component.key);
-        const n = this.Et ? void 0 : h(vt(s, false, this.config, e, null), (t => this.processConfiguration(t)));
+        const n = this.Et ? void 0 : h(vt(s, false, this.config, e, null), (t => this.yt(t)));
         return h(n, (() => {
             const n = E.$el(i, s, t.host, null);
             const r = new ComponentAgent(s, n, e, this, this.xt.options);
@@ -3532,13 +3537,13 @@ i.createInterface("INavigationModel");
 class NavigationModel {
     constructor(t) {
         this.routes = t;
-        this.yt = void 0;
+        this.Rt = void 0;
     }
     resolve() {
-        return h(this.yt, p);
+        return h(this.Rt, p);
     }
     setIsActive(t, e) {
-        void h(this.yt, (() => {
+        void h(this.Rt, (() => {
             for (const i of this.routes) i.setIsActive(t, e);
         }));
     }
@@ -3551,9 +3556,9 @@ class NavigationModel {
         const i = e.length;
         e.push(void 0);
         let s;
-        s = this.yt = h(this.yt, (() => h(t, (t => {
+        s = this.Rt = h(this.Rt, (() => h(t, (t => {
             if (t.nav) e[i] = NavigationRoute.create(t); else e.splice(i, 1);
-            if (this.yt === s) this.yt = void 0;
+            if (this.Rt === s) this.Rt = void 0;
         }))));
     }
 }
@@ -3565,19 +3570,19 @@ class NavigationRoute {
         this.redirectTo = i;
         this.title = s;
         this.data = n;
-        this.Rt = null;
+        this.kt = null;
     }
     static create(t) {
         return new NavigationRoute(t.id, q(t.path ?? o), t.redirectTo, t.title, t.data);
     }
     get isActive() {
-        return this.kt;
+        return this.St;
     }
     setIsActive(t, e) {
-        let i = this.Rt;
+        let i = this.kt;
         if (null === i) {
             const s = t.options;
-            i = this.Rt = this.path.map((t => {
+            i = this.kt = this.path.map((t => {
                 const i = e.bt.getEndpoint(t);
                 if (null === i) throw new Error(`No endpoint found for path '${t}'`);
                 return new ViewportInstructionTree(NavigationOptions.create(s, {
@@ -3588,7 +3593,7 @@ class NavigationRoute {
                 }) ], Tt, null);
             }));
         }
-        this.kt = i.some((e => t.routeTree.contains(e, true)));
+        this.St = i.some((e => t.routeTree.contains(e, true)));
     }
 }
 
@@ -3800,9 +3805,9 @@ let ie = class HrefCustomAttribute {
         }
     }
     handleEvent(t) {
-        this.St(t);
+        this.Ct(t);
     }
-    St(t) {
+    Ct(t) {
         if (t.altKey || t.ctrlKey || t.shiftKey || t.metaKey || 0 !== t.button || this.isExternal || !this.isEnabled) return;
         const e = this.el.getAttribute("href");
         if (null !== e) {

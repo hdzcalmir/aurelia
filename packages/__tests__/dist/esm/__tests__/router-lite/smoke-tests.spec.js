@@ -4659,13 +4659,18 @@ describe('router-lite/smoke-tests.spec.ts', function () {
     });
     describe('multiple configurations for same component', function () {
         it('multiple configurations for the same component under the same parent', async function () {
-            let C1 = class C1 {
+            var C1_1;
+            let C1 = C1_1 = class C1 {
+                constructor() {
+                    this.id = ++C1_1.id;
+                }
                 loading(_params, next, _current) {
                     this.data = next.data;
                 }
             };
-            C1 = __decorate([
-                customElement({ name: 'c-1', template: 'c1' })
+            C1.id = 0;
+            C1 = C1_1 = __decorate([
+                customElement({ name: 'c-1', template: 'c1 ${id}' })
             ], C1);
             let Root = class Root {
             };
@@ -4682,12 +4687,12 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const { au, host, container } = await start({ appRoot: Root });
             const doc = container.get(IPlatform).document;
             const router = container.get(IRouter);
-            assert.html.textContent(host, 'c1');
+            assert.html.textContent(host, 'c1 1');
             assert.strictEqual(doc.title, 't1');
             let ce = CustomElement.for(host.querySelector('c-1')).viewModel;
             assert.deepStrictEqual(ce.data, { foo: 'bar' });
             await router.load('c1');
-            assert.html.textContent(host, 'c1');
+            assert.html.textContent(host, 'c1 2');
             assert.strictEqual(doc.title, 't2');
             ce = CustomElement.for(host.querySelector('c-1')).viewModel;
             assert.deepStrictEqual(ce.data, { awesome: 'possum' });
@@ -4853,22 +4858,22 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             });
         }
         it(`component defines transition plan - parent overloads`, async function () {
-            var C1_1;
-            let C1 = C1_1 = class C1 {
+            var C1_2;
+            let C1 = C1_2 = class C1 {
                 constructor(ctx) {
-                    this.instanceId = ++C1_1.instanceId;
+                    this.instanceId = ++C1_2.instanceId;
                     this.activationId = 0;
                     this.parent = ctx.parent.component.name;
                 }
                 canLoad(params) {
-                    this.activationId = ++C1_1.activationId;
+                    this.activationId = ++C1_2.activationId;
                     this.routeId = params.id;
                     return true;
                 }
             };
             C1.instanceId = 0;
             C1.activationId = 0;
-            C1 = C1_1 = __decorate([
+            C1 = C1_2 = __decorate([
                 route({ path: 'c1/:id', transitionPlan: 'replace' }),
                 customElement({ name: 'c-1', template: '${parent}/c1 - ${routeId} - ${instanceId} - ${activationId}' }),
                 __param(0, IRouteContext),

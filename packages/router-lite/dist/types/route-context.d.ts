@@ -70,7 +70,7 @@ export declare class RouteContext {
     private readonly _navigationModel;
     get navigationModel(): INavigationModel | null;
     constructor(viewportAgent: ViewportAgent | null, parent: IRouteContext | null, component: CustomElementDefinition, config: RouteConfig, parentContainer: IContainer, _router: IRouter);
-    private processConfiguration;
+    private _processConfig;
     /**
      * Create a new `RouteContext` and register it in the provided container.
      *

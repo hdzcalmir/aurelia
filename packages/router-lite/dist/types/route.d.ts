@@ -1,4 +1,4 @@
-import { Constructable, ResourceType } from '@aurelia/kernel';
+import { Constructable, ResourceType, IContainer } from '@aurelia/kernel';
 import { RouteableComponent } from './instructions';
 import type { RouteNode } from './route-tree';
 import { FallbackFunction } from './resources/viewport';
@@ -98,6 +98,7 @@ export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     /** @internal */
     _path: string[], title: string | ((node: RouteNode) => string | null) | null, redirectTo: string | null, caseSensitive: boolean, transitionPlan: TransitionPlanOrFunc | null, viewport: string, data: Record<string, unknown>, routes: readonly Routeable[], fallback: string | FallbackFunction | null, component: Routeable, nav: boolean);
     getTransitionPlan(cur: RouteNode, next: RouteNode): TransitionPlan;
+    register(container: IContainer): void;
 }
 export declare const Route: {
     name: string;

@@ -712,6 +712,12 @@ class RouteConfig {
             ? fallback(viewportInstruction, routeNode, context)
             : fallback;
     }
+    register(container) {
+        const component = this.component;
+        if (component == null)
+            return;
+        container.register(component);
+    }
 }
 const Route = {
     name: Protocol.resource.keyFor('route-configuration'),
@@ -3452,9 +3458,9 @@ class RouteContext {
         else {
             this._navigationModel = null;
         }
-        this.processConfiguration(config);
+        this._processConfig(config);
     }
-    processConfiguration(config) {
+    _processConfig(config) {
         const promises = [];
         const allPromises = [];
         const childrenRoutes = config.routes ?? noRoutes;
@@ -3591,7 +3597,7 @@ class RouteContext {
         const componentInstance = container.get(routeNode.component.key);
         const task = this._childRoutesConfigured
             ? void 0
-            : onResolve(resolveRouteConfiguration(componentInstance, false, this.config, routeNode, null), config => this.processConfiguration(config));
+            : onResolve(resolveRouteConfiguration(componentInstance, false, this.config, routeNode, null), config => this._processConfig(config));
         return onResolve(task, () => {
             const controller = Controller.$el(container, componentInstance, hostController.host, null);
             const componentAgent = new ComponentAgent(componentInstance, controller, routeNode, this, this._router.options);
