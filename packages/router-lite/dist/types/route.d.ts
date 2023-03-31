@@ -94,9 +94,7 @@ export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     readonly component: Routeable;
     readonly nav: boolean;
     get path(): string[];
-    protected constructor(id: string, 
-    /** @internal */
-    _path: string[], title: string | ((node: RouteNode) => string | null) | null, redirectTo: string | null, caseSensitive: boolean, transitionPlan: TransitionPlanOrFunc | null, viewport: string, data: Record<string, unknown>, routes: readonly Routeable[], fallback: string | FallbackFunction | null, component: Routeable, nav: boolean);
+    private constructor();
     getTransitionPlan(cur: RouteNode, next: RouteNode): TransitionPlan;
     register(container: IContainer): void;
 }
