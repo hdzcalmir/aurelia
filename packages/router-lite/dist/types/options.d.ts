@@ -1,4 +1,5 @@
 import type { Params, RouteContextLike, ViewportInstructionTree } from './instructions';
+import { TransitionPlan } from './route';
 import type { RouteNode } from './route-tree';
 import type { Transition } from './router';
 export type HistoryStrategy = 'none' | 'replace' | 'push';
@@ -88,6 +89,7 @@ export declare class NavigationOptions implements INavigationOptions {
      * Specify any kind of state to be stored together with the history entry for this navigation.
      */
     readonly state: Params | null;
+    readonly transitionPlan: TransitionPlan | null;
     private constructor();
     static create(routerOptions: RouterOptions, input: INavigationOptions): NavigationOptions;
     clone(): NavigationOptions;

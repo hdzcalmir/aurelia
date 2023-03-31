@@ -332,7 +332,7 @@ class RouterOptions {
     }
 }
 class NavigationOptions {
-    constructor(historyStrategy, title, titleSeparator, context, queryParams, fragment, state) {
+    constructor(historyStrategy, title, titleSeparator, context, queryParams, fragment, state, transitionPlan) {
         this.historyStrategy = historyStrategy;
         this.title = title;
         this.titleSeparator = titleSeparator;
@@ -340,12 +340,13 @@ class NavigationOptions {
         this.queryParams = queryParams;
         this.fragment = fragment;
         this.state = state;
+        this.transitionPlan = transitionPlan;
     }
     static create(routerOptions, input) {
-        return new NavigationOptions(input.historyStrategy ?? routerOptions.historyStrategy, input.title ?? null, input.titleSeparator ?? ' | ', input.context ?? null, input.queryParams ?? null, input.fragment ?? '', input.state ?? null);
+        return new NavigationOptions(input.historyStrategy ?? routerOptions.historyStrategy, input.title ?? null, input.titleSeparator ?? ' | ', input.context ?? null, input.queryParams ?? null, input.fragment ?? '', input.state ?? null, input.transitionPlan ?? null);
     }
     clone() {
-        return new NavigationOptions(this.historyStrategy, this.title, this.titleSeparator, this.context, { ...this.queryParams }, this.fragment, this.state === null ? null : { ...this.state });
+        return new NavigationOptions(this.historyStrategy, this.title, this.titleSeparator, this.context, { ...this.queryParams }, this.fragment, this.state === null ? null : { ...this.state }, this.transitionPlan);
     }
     _getHistoryStrategy(instructions) {
         return valueOrFuncToValue(instructions, this.historyStrategy);
@@ -1354,7 +1355,7 @@ class ViewportAgent {
             this.$plan = 'replace';
         }
         else {
-            this.$plan = next.context.config.getTransitionPlan(cur, next);
+            this.$plan = options.transitionPlan ?? next.context.config.getTransitionPlan(cur, next);
         }
         this.logger.trace(`scheduleUpdate(next:%s) - plan set to '%s'`, next, this.$plan);
     }

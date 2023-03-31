@@ -297,7 +297,7 @@ class RouterOptions {
 }
 
 class NavigationOptions {
-    constructor(t, e, i, s, n, r, o) {
+    constructor(t, e, i, s, n, r, o, h) {
         this.historyStrategy = t;
         this.title = e;
         this.titleSeparator = i;
@@ -305,16 +305,17 @@ class NavigationOptions {
         this.queryParams = n;
         this.fragment = r;
         this.state = o;
+        this.transitionPlan = h;
     }
     static create(t, e) {
-        return new NavigationOptions(e.historyStrategy ?? t.historyStrategy, e.title ?? null, e.titleSeparator ?? " | ", e.context ?? null, e.queryParams ?? null, e.fragment ?? "", e.state ?? null);
+        return new NavigationOptions(e.historyStrategy ?? t.historyStrategy, e.title ?? null, e.titleSeparator ?? " | ", e.context ?? null, e.queryParams ?? null, e.fragment ?? "", e.state ?? null, e.transitionPlan ?? null);
     }
     clone() {
         return new NavigationOptions(this.historyStrategy, this.title, this.titleSeparator, this.context, {
             ...this.queryParams
         }, this.fragment, null === this.state ? null : {
             ...this.state
-        });
+        }, this.transitionPlan);
     }
     i(t) {
         return et(t, this.historyStrategy);
@@ -1304,7 +1305,7 @@ class ViewportAgent {
             this.P("scheduleUpdate 2");
         }
         const i = this.curCA?.routeNode ?? null;
-        if (null === i || i.component !== e.component) this.$plan = "replace"; else this.$plan = e.context.config.getTransitionPlan(i, e);
+        if (null === i || i.component !== e.component) this.$plan = "replace"; else this.$plan = t.transitionPlan ?? e.context.config.getTransitionPlan(i, e);
         this.logger.trace(`scheduleUpdate(next:%s) - plan set to '%s'`, e, this.$plan);
     }
     Y() {

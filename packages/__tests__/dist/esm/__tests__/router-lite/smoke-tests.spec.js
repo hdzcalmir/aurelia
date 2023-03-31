@@ -4252,6 +4252,83 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             assert.html.textContent(host, 'ce1 1 2 ce2 2 2', 'round#2');
             await au.stop(true);
         });
+        it('transitionPlan can be overridden per instruction basis', async function () {
+            var CeTwo_5, CeOne_7;
+            let CeTwo = CeTwo_5 = class CeTwo {
+                constructor() {
+                    this.id1 = ++CeTwo_5.id1;
+                }
+                canLoad(params) {
+                    this.id = params.id;
+                    this.id2 = ++CeTwo_5.id2;
+                    return true;
+                }
+            };
+            CeTwo.id1 = 0;
+            CeTwo.id2 = 0;
+            CeTwo = CeTwo_5 = __decorate([
+                customElement({ name: 'ce-two', template: 'ce2 ${id1} ${id2} ${id}' })
+            ], CeTwo);
+            let CeOne = CeOne_7 = class CeOne {
+                constructor() {
+                    this.id1 = ++CeOne_7.id1;
+                }
+                canLoad(params) {
+                    this.id = params.id;
+                    this.id2 = ++CeOne_7.id2;
+                    return true;
+                }
+            };
+            CeOne.id1 = 0;
+            CeOne.id2 = 0;
+            CeOne = CeOne_7 = __decorate([
+                customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2} ${id}' })
+            ], CeOne);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    transitionPlan: 'replace',
+                    routes: [
+                        {
+                            id: 'ce1',
+                            path: ['ce1/:id'],
+                            component: CeOne,
+                            transitionPlan: 'invoke-lifecycles',
+                        },
+                        {
+                            id: 'ce2',
+                            path: ['ce2/:id'],
+                            component: CeTwo,
+                            transitionPlan: 'replace',
+                        },
+                    ]
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, container, host } = await start({ appRoot: Root });
+            const queue = container.get(IPlatform).domWriteQueue;
+            const router = container.get(IRouter);
+            await router.load('ce1/42');
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 1 42', 'round#1');
+            await router.load('ce1/43');
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 2 43', 'round#2');
+            await router.load('ce1/44', { transitionPlan: 'replace' });
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 2 3 44', 'round#3');
+            await router.load('ce2/42');
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 1 1 42', 'round#4');
+            await router.load('ce2/43');
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 2 2 43', 'round#5');
+            await router.load('ce2/44', { transitionPlan: 'invoke-lifecycles' });
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 2 3 44', 'round#6');
+            await au.stop(true);
+        });
     });
     describe('history strategy', function () {
         class TestData {
