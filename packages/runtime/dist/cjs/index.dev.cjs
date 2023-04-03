@@ -3758,6 +3758,7 @@ function createProxy(obj) {
             : objectHandler;
     const proxiedObj = new Proxy(obj, handler);
     proxyMap.set(obj, proxiedObj);
+    proxyMap.set(proxiedObj, proxiedObj);
     return proxiedObj;
 }
 const objectHandler = {

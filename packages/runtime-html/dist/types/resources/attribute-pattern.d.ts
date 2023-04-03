@@ -74,7 +74,7 @@ export interface AttributePattern {
     getPatternDefinitions<TProto, TClass>(Type: DecoratedAttributePattern<TProto, TClass>): AttributePatternDefinition[];
 }
 export declare function attributePattern(...patternDefs: AttributePatternDefinition[]): AttributePatternDecorator;
-export declare class AttributePatternResourceDefinition implements ResourceDefinition<Constructable, IAttributePattern> {
+export declare class AttributePatternResourceDefinition implements ResourceDefinition<Constructable, Partial<IAttributePattern>> {
     Type: ResourceType<Constructable, Partial<IAttributePattern>>;
     name: string;
     constructor(Type: ResourceType<Constructable, Partial<IAttributePattern>>);

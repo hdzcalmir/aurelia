@@ -32,7 +32,7 @@ export declare enum ValidationTrigger {
 }
 export declare const IDefaultTrigger: import("@aurelia/kernel").InterfaceSymbol<ValidationTrigger>;
 export declare class ValidateBindingBehavior implements BindingBehaviorInstance {
-    protected static inject: (import("@aurelia/kernel").InterfaceSymbol<IPlatform> | import("@aurelia/kernel").InterfaceSymbol<IObserverLocator>)[];
+    protected static inject: import("@aurelia/kernel").InterfaceSymbol<IPlatform>[];
     constructor(platform: IPlatform, observerLocator: IObserverLocator);
     bind(scope: Scope, binding: IBinding): void;
     unbind(scope: Scope, binding: IBinding): void;

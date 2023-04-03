@@ -9,7 +9,7 @@ export declare class NPMPackageLoader {
     private readonly pkgPromiseCache;
     private readonly pkgResolveCache;
     private readonly pkgResolvePromiseCache;
-    static get inject(): (import("@aurelia/kernel").InterfaceSymbol<IFileSystem> | import("@aurelia/kernel").InterfaceSymbol<ILogger> | import("@aurelia/kernel").InterfaceSymbol<IContainer>)[];
+    static get inject(): import("@aurelia/kernel").InterfaceSymbol<IFileSystem>[];
     constructor(container: IContainer, logger: ILogger, fs: IFileSystem);
     loadEntryPackage(projectDir: string): Promise<NPMPackage>;
     getCachedPackage(refName: string): NPMPackage;

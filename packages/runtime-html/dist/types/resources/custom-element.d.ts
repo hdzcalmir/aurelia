@@ -171,7 +171,7 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     static getOrCreate(partialDefinition: PartialCustomElementDefinition): CustomElementDefinition;
     register(container: IContainer): void;
 }
-export type InjectableToken<K = any> = (target: Injectable<K>, property: string, index: number) => void;
+export type InjectableToken<K = any> = (target: Injectable, property: string | symbol | undefined, index: number) => void;
 export declare const CustomElement: Readonly<CustomElementKind>;
 type DecoratorFactoryMethod<TClass> = (target: Constructable<TClass>, propertyKey: string, descriptor: PropertyDescriptor) => void;
 type ProcessContentHook = (node: INode, platform: IPlatform) => boolean | void;

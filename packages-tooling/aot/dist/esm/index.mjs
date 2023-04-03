@@ -1,7 +1,7 @@
 import { realpathSync, readdirSync, mkdirSync, constants, accessSync, statSync, lstatSync, readFileSync, exists, existsSync, writeFileSync, promises } from 'fs';
 import { join, resolve, dirname, basename } from 'path';
 import { ILogger, DI, emptyArray, IContainer, Registration } from '@aurelia/kernel';
-import { getLineAndCharacterOfPosition, SyntaxKind, canHaveModifiers, getModifiers, ModifierFlags, factory, NodeFlags, createSourceFile, ScriptTarget } from 'typescript';
+import { getLineAndCharacterOfPosition, SyntaxKind, canHaveModifiers, getModifiers, ModifierFlags, getDecorators, factory, NodeFlags, createSourceFile, ScriptTarget } from 'typescript';
 import { JSDOM } from 'jsdom';
 
 /******************************************************************************
@@ -6610,7 +6610,7 @@ class $ClassDeclaration {
         if (hasBit(modifierFlags, ModifierFlags.Export)) {
             ctx |= 4096;
         }
-        this.$decorators = $decoratorList(node.decorators, this, ctx);
+        this.$decorators = $decoratorList(getDecorators(node), this, ctx);
         let $name;
         if (node.name === void 0) {
             $name = this.$name = new $Undefined(realm, void 0, void 0, this);
@@ -6839,7 +6839,7 @@ class $PropertyDeclaration {
         this.logger = logger;
         this.path = path;
         const modifierFlags = this.modifierFlags = modifiersToModifierFlags(canHaveModifiers(node) ? getModifiers(node) : undefined);
-        this.$decorators = $decoratorList(node.decorators, this, ctx);
+        this.$decorators = $decoratorList(getDecorators(node), this, ctx);
         this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$initializer = $assignmentExpression(node.initializer, this, ctx, -1);
         this.IsStatic = hasBit(modifierFlags, ModifierFlags.Static);
@@ -6881,7 +6881,7 @@ class $InterfaceDeclaration {
         this.IsType = true;
         const intrinsics = realm['[[Intrinsics]]'];
         ctx |= 128;
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         if (hasBit(modifierFlags, ModifierFlags.Export)) {
             ctx |= 4096;
         }
@@ -6923,7 +6923,7 @@ class $TypeAliasDeclaration {
         this.IsType = true;
         const intrinsics = realm['[[Intrinsics]]'];
         ctx |= 128;
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         if (hasBit(modifierFlags, ModifierFlags.Export)) {
             ctx |= 4096;
         }
@@ -6974,7 +6974,7 @@ class $EnumDeclaration {
         this.LexicallyScopedDeclarations = emptyArray;
         this.IsType = true;
         const intrinsics = realm['[[Intrinsics]]'];
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         if (hasBit(modifierFlags, ModifierFlags.Export)) {
             ctx |= 4096;
         }
@@ -8441,7 +8441,7 @@ class $ModuleDeclaration {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         if (node.name.kind === SyntaxKind.Identifier) {
             this.$name = new $Identifier(node.name, this, ctx, -1);
         }
@@ -8488,7 +8488,7 @@ class $ImportEqualsDeclaration {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         this.$name = $identifier(node.name, this, ctx, -1);
         switch (node.moduleReference.kind) {
             case SyntaxKind.Identifier:
@@ -8517,7 +8517,7 @@ class $ImportDeclaration {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         const $moduleSpecifier = this.$moduleSpecifier = new $StringLiteral(node.moduleSpecifier, this, ctx, -1);
         const moduleSpecifier = this.moduleSpecifier = $moduleSpecifier.StringValue;
         if (node.importClause === void 0) {
@@ -8670,7 +8670,7 @@ class $ExportAssignment {
         this.logger = logger;
         this.path = path;
         const intrinsics = realm['[[Intrinsics]]'];
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         this.$expression = $assignmentExpression(node.expression, this, ctx, -1);
         this.BoundNames = [intrinsics['*default*']];
     }
@@ -8694,7 +8694,7 @@ class $ExportDeclaration {
         this.TypeDeclarations = emptyArray;
         this.IsType = false;
         const intrinsics = realm['[[Intrinsics]]'];
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         let moduleSpecifier;
         if (node.moduleSpecifier === void 0) {
             this.$moduleSpecifier = void 0;
@@ -8873,7 +8873,7 @@ class $VariableStatement {
         this.TypeDeclarations = emptyArray;
         this.IsType = false;
         const intrinsics = realm['[[Intrinsics]]'];
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         ctx |= 4;
         if (hasBit(this.modifierFlags, ModifierFlags.Export)) {
             ctx |= 4096;
@@ -9680,7 +9680,7 @@ class $SwitchStatement {
         const realm = ctx.Realm;
         const intrinsics = realm['[[Intrinsics]]'];
         const { $caseBlock: { $clauses: clauses } } = this;
-        const { undefined: $undefined, empty } = realm['[[Intrinsics]]'];
+        const { undefined: $undefined } = realm['[[Intrinsics]]'];
         if (clauses.length === 0) {
             return new $Undefined(realm);
         }
@@ -10061,7 +10061,7 @@ class $MethodDeclaration {
         this.logger = logger;
         this.path = path;
         const modifierFlags = this.modifierFlags = modifiersToModifierFlags(canHaveModifiers(node) ? getModifiers(node) : undefined);
-        this.$decorators = $decoratorList(node.decorators, this, ctx);
+        this.$decorators = $decoratorList(getDecorators(node), this, ctx);
         const $name = this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$parameters = new $FormalParameterList(node.parameters, this, ctx);
         const $body = this.$body = new $Block(node.body, this, ctx, -1);
@@ -10138,7 +10138,7 @@ class $GetAccessorDeclaration {
         this.path = path;
         this.functionKind = 0;
         const modifierFlags = this.modifierFlags = modifiersToModifierFlags(canHaveModifiers(node) ? getModifiers(node) : undefined);
-        this.$decorators = $decoratorList(node.decorators, this, ctx);
+        this.$decorators = $decoratorList(getDecorators(node), this, ctx);
         const $name = this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$parameters = new $FormalParameterList(node.parameters, this, ctx);
         const $body = this.$body = new $Block(node.body, this, ctx, -1);
@@ -10189,7 +10189,7 @@ class $SetAccessorDeclaration {
         this.path = path;
         this.functionKind = 0;
         const modifierFlags = this.modifierFlags = modifiersToModifierFlags(canHaveModifiers(node) ? getModifiers(node) : undefined);
-        this.$decorators = $decoratorList(node.decorators, this, ctx);
+        this.$decorators = $decoratorList(getDecorators(node), this, ctx);
         const $name = this.$name = $$propertyName(node.name, this, ctx | 512, -1);
         this.$parameters = new $FormalParameterList(node.parameters, this, ctx);
         const $body = this.$body = new $Block(node.body, this, ctx, -1);
@@ -10499,7 +10499,7 @@ class $ShorthandPropertyAssignment {
         this.depth = depth;
         this.logger = logger;
         this.path = path;
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         const $name = this.$name = $identifier(node.name, this, ctx, -1);
         this.$objectAssignmentInitializer = $assignmentExpression(node.objectAssignmentInitializer, this, ctx, -1);
         this.PropName = $name.PropName;
@@ -13214,7 +13214,7 @@ class $FunctionExpression {
         this.IsFunctionDefinition = true;
         this.TypeDeclarations = emptyArray;
         this.IsType = false;
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         const DirectivePrologue = this.DirectivePrologue = GetDirectivePrologue(node.body.statements);
         if (DirectivePrologue.ContainsUseStrict) {
             ctx |= 65536;
@@ -13394,7 +13394,7 @@ class $FunctionDeclaration {
         this.TypeDeclarations = emptyArray;
         this.IsType = false;
         const intrinsics = realm['[[Intrinsics]]'];
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         if (hasBit(modifierFlags, ModifierFlags.Export)) {
             ctx |= 4096;
         }
@@ -13402,7 +13402,7 @@ class $FunctionDeclaration {
         if (this.DirectivePrologue.ContainsUseStrict) {
             ctx |= 65536;
         }
-        this.$decorators = $decoratorList(node.decorators, this, ctx);
+        this.$decorators = $decoratorList(getDecorators(node), this, ctx);
         const $name = this.$name = $identifier(node.name, this, ctx, -1);
         this.$parameters = new $FormalParameterList(node.parameters, this, ctx);
         const $body = this.$body = new $Block(node.body, this, ctx, -1);
@@ -13742,7 +13742,7 @@ class $ArrowFunction {
         this.VarScopedDeclarations = emptyArray;
         this.TypeDeclarations = emptyArray;
         this.IsType = false;
-        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(node.modifiers);
+        const modifierFlags = this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
         if (node.body.kind === SyntaxKind.Block) {
             const DirectivePrologue = this.DirectivePrologue = GetDirectivePrologue(node.body.statements);
             if (DirectivePrologue.ContainsUseStrict) {
@@ -13801,8 +13801,8 @@ class $ConstructorDeclaration {
         this.logger = logger;
         this.path = path;
         this.functionKind = 0;
-        this.modifierFlags = modifiersToModifierFlags(node.modifiers);
-        this.$decorators = $decoratorList(node.decorators, this, ctx);
+        this.modifierFlags = modifiersToModifierFlags(getModifiers(node));
+        this.$decorators = $decoratorList(getDecorators(node), this, ctx);
         this.$parameters = new $FormalParameterList(node.parameters, this, ctx);
         const $body = this.$body = new $Block(node.body, this, ctx, -1);
         this.LexicallyDeclaredNames = $body.TopLevelLexicallyDeclaredNames;
@@ -13840,7 +13840,7 @@ class $ParameterDeclaration {
         this.path = path;
         this.modifierFlags = this.combinedModifierFlags = modifiersToModifierFlags(canHaveModifiers(node) ? getModifiers(node) : undefined);
         ctx |= 16;
-        this.$decorators = $decoratorList(node.decorators, this, ctx);
+        this.$decorators = $decoratorList(getDecorators(node), this, ctx);
         const $name = this.$name = $$bindingName(node.name, this, ctx, -1);
         this.BoundNames = $name.BoundNames;
         if (node.initializer === void 0) {

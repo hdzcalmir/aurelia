@@ -3558,6 +3558,7 @@ function ar(t) {
     const e = w(t) ? fr : p(t) || b(t) ? Mr : lr;
     const s = new Proxy(t, e);
     tr.set(t, s);
+    tr.set(s, s);
     return s;
 }
 

@@ -3564,6 +3564,7 @@ function sr(t) {
     const e = h(t) ? ir : l(t) || a(t) ? Sr : rr;
     const s = new Proxy(t, e);
     qs.set(t, s);
+    qs.set(s, s);
     return s;
 }
 

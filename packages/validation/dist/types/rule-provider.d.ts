@@ -148,11 +148,11 @@ export declare class PropertyRule<TObject extends IValidateable = IValidateable,
     /**
      * Targets an object with validation rules.
      */
-    ensureObject(): PropertyRule<IValidateable<any>, unknown>;
+    ensureObject(): PropertyRule<IValidateable, unknown>;
     /**
      * Rules that have been defined using the fluent API.
      */
-    get rules(): PropertyRule<IValidateable<any>, unknown>[];
+    get rules(): PropertyRule<IValidateable, unknown>[];
     /**
      * Applies the rules to a class or object, making them discoverable by the StandardValidator.
      *
@@ -195,7 +195,7 @@ export interface IValidationRules<TObject extends IValidateable = IValidateable>
     off<TAnotherObject extends IValidateable = IValidateable>(target?: Class<TAnotherObject> | TAnotherObject, tag?: string): void;
     applyModelBasedRules(target: IValidateable, rules: ModelBasedRule[]): void;
 }
-export declare const IValidationRules: import("@aurelia/kernel").InterfaceSymbol<IValidationRules<IValidateable<any>>>;
+export declare const IValidationRules: import("@aurelia/kernel").InterfaceSymbol<IValidationRules<IValidateable>>;
 export declare class ValidationRules<TObject extends IValidateable = IValidateable> implements IValidationRules<TObject> {
     private readonly locator;
     private readonly parser;

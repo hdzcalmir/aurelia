@@ -5,7 +5,7 @@ import type { ControllerVisitor, ICustomAttributeController, ICustomAttributeVie
 export type PortalTarget = string | Element | null | undefined;
 export type PortalLifecycleCallback = (target: PortalTarget, view: ISyntheticView) => void | Promise<void>;
 export declare class Portal implements ICustomAttributeViewModel {
-    static inject: (import("@aurelia/kernel").InterfaceSymbol<IPlatform> | import("@aurelia/kernel").InterfaceSymbol<IViewFactory> | import("@aurelia/kernel").InterfaceSymbol<IRenderLocation<ChildNode>>)[];
+    static inject: import("@aurelia/kernel").InterfaceSymbol<IPlatform>[];
     readonly $controller: ICustomAttributeController<this>;
     target: PortalTarget;
     position: InsertPosition;

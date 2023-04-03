@@ -107,7 +107,7 @@ export declare const Route: {
     /**
      * Apply the specified configuration to the specified type, overwriting any existing configuration.
      */
-    configure<T extends RouteType<Constructable<{}>>>(configOrPath: IRouteConfig | IChildRouteConfig | string | string[], Type: T): T;
+    configure<T extends RouteType<Constructable>>(configOrPath: IRouteConfig | IChildRouteConfig | string | string[], Type: T): T;
     /**
      * Get the `RouteConfig` associated with the specified type, creating a new one if it does not yet exist.
      */
