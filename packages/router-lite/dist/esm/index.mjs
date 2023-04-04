@@ -564,7 +564,8 @@ class RouteConfig {
     get path() {
         const t = this.u;
         if (t.length > 0) return t;
-        return this.u = [ x.getDefinition(this.component).name ];
+        const e = x.getDefinition(this.component);
+        return this.u = [ e.name, ...e.aliases ];
     }
     constructor(t, e, i, s, n, r, o, h, a, c, u, l) {
         this.id = t;

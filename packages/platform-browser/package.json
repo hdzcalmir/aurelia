@@ -1,6 +1,6 @@
 {
   "name": "@aurelia/platform-browser",
-  "version": "2.1.0-dev.202304040145",
+  "version": "2.1.0-dev.202304041853",
   "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.mjs",
   "exports": {
@@ -48,7 +48,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@aurelia/platform": "2.1.0-dev.202304040145"
+    "@aurelia/platform": "2.1.0-dev.202304041853"
   },
   "devDependencies": {
     "typescript": "5.0.2"

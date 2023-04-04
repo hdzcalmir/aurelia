@@ -570,7 +570,8 @@ class RouteConfig {
     get path() {
         const t = this.u;
         if (t.length > 0) return t;
-        return this.u = [ s.CustomElement.getDefinition(this.component).name ];
+        const e = s.CustomElement.getDefinition(this.component);
+        return this.u = [ e.name, ...e.aliases ];
     }
     constructor(t, e, s, i, n, r, o, h, a, c, u, l) {
         this.id = t;

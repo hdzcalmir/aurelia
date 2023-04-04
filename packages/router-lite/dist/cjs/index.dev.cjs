@@ -618,7 +618,8 @@ class RouteConfig {
         const path = this._path;
         if (path.length > 0)
             return path;
-        return this._path = [runtimeHtml.CustomElement.getDefinition(this.component).name];
+        const ceDfn = runtimeHtml.CustomElement.getDefinition(this.component);
+        return this._path = [ceDfn.name, ...ceDfn.aliases];
     }
     constructor(id, _path, title, redirectTo, caseSensitive, transitionPlan, viewport, data, routes, fallback, component, nav) {
         this.id = id;
