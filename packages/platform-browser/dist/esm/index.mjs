@@ -1,28 +1,28 @@
-import { Platform as t, TaskQueue as i } from "@aurelia/platform";
+import { Platform as t, TaskQueue as s } from "@aurelia/platform";
 
-const s = new Map;
+const i = new Map;
 
 class BrowserPlatform extends t {
-    constructor(t, s = {}) {
-        super(t, s);
+    constructor(t, i = {}) {
+        super(t, i);
         this.t = false;
         this.i = -1;
         this.h = false;
         this.u = -1;
-        ("Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver " + "window document location history navigator customElements").split(" ").forEach((i => this[i] = i in s ? s[i] : t[i]));
-        "fetch requestAnimationFrame cancelAnimationFrame".split(" ").forEach((i => this[i] = i in s ? s[i] : t[i]?.bind(t) ?? e(i)));
+        ("Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver " + "window document customElements").split(" ").forEach((s => this[s] = s in i ? i[s] : t[s]));
+        "fetch requestAnimationFrame cancelAnimationFrame".split(" ").forEach((s => this[s] = s in i ? i[s] : t[s]?.bind(t) ?? e(s)));
         this.flushDomRead = this.flushDomRead.bind(this);
         this.flushDomWrite = this.flushDomWrite.bind(this);
-        this.domReadQueue = new i(this, this.requestDomRead.bind(this), this.cancelDomRead.bind(this));
-        this.domWriteQueue = new i(this, this.requestDomWrite.bind(this), this.cancelDomWrite.bind(this));
+        this.domReadQueue = new s(this, this.requestDomRead.bind(this), this.cancelDomRead.bind(this));
+        this.domWriteQueue = new s(this, this.requestDomWrite.bind(this), this.cancelDomWrite.bind(this));
     }
-    static getOrCreate(t, i = {}) {
-        let e = s.get(t);
-        if (void 0 === e) s.set(t, e = new BrowserPlatform(t, i));
+    static getOrCreate(t, s = {}) {
+        let e = i.get(t);
+        if (void 0 === e) i.set(t, e = new BrowserPlatform(t, s));
         return e;
     }
-    static set(t, i) {
-        s.set(t, i);
+    static set(t, s) {
+        i.set(t, s);
     }
     requestDomRead() {
         this.t = true;

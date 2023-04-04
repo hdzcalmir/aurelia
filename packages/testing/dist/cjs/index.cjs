@@ -698,7 +698,7 @@ class TestContext {
         return this.platform.document;
     }
     get userAgent() {
-        return this.platform.navigator.userAgent;
+        return this.platform.window.navigator.userAgent;
     }
     get UIEvent() {
         return this.platform.globalThis.UIEvent;

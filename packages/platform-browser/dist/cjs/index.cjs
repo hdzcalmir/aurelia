@@ -15,7 +15,7 @@ class BrowserPlatform extends t.Platform {
         this.i = -1;
         this.h = false;
         this.u = -1;
-        ("Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver " + "window document location history navigator customElements").split(" ").forEach((t => this[t] = t in e ? e[t] : s[t]));
+        ("Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver " + "window document customElements").split(" ").forEach((t => this[t] = t in e ? e[t] : s[t]));
         "fetch requestAnimationFrame cancelAnimationFrame".split(" ").forEach((t => this[t] = t in e ? e[t] : s[t]?.bind(s) ?? i(t)));
         this.flushDomRead = this.flushDomRead.bind(this);
         this.flushDomWrite = this.flushDomWrite.bind(this);

@@ -1,9 +1,10 @@
 import { CustomElement, SVGAnalyzerRegistration, } from '@aurelia/runtime-html';
 import { assert, createFixture, PLATFORM, TestContext } from '@aurelia/testing';
 import { Registration } from '@aurelia/kernel';
+import { isNode } from '../util.js';
 describe('3-runtime-html/template-compiler.test-apps.spec.ts', function () {
     it('renders fractal tree', async function () {
-        if (PLATFORM.navigator.userAgent.includes('jsdom')) {
+        if (isNode()) {
             return;
         }
         const ctx = TestContext.create();

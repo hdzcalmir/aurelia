@@ -838,7 +838,7 @@ function isDeepStrictEqual(val1, val2) {
 class TestContext {
     get wnd() { return this.platform.globalThis; }
     get doc() { return this.platform.document; }
-    get userAgent() { return this.platform.navigator.userAgent; }
+    get userAgent() { return this.platform.window.navigator.userAgent; }
     get UIEvent() { return this.platform.globalThis.UIEvent; }
     get Event() { return this.platform.globalThis.Event; }
     get CustomEvent() { return this.platform.globalThis.CustomEvent; }
