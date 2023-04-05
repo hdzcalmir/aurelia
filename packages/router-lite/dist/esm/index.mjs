@@ -152,14 +152,14 @@ function K(t, e) {
             break;
 
           case "component":
-            X(i, n);
+            X(i, n, "component");
             break;
 
           case "routes":
             if (!(i instanceof Array)) Z("Array", n, i);
             for (const t of i) {
                 const e = `${n}[${i.indexOf(t)}]`;
-                X(t, e);
+                X(t, e, "component");
             }
             break;
 
@@ -186,14 +186,7 @@ function K(t, e) {
             break;
 
           case "fallback":
-            switch (typeof i) {
-              case "string":
-              case "function":
-                break;
-
-              default:
-                Z("string or function", n, i);
-            }
+            X(i, n, "fallback");
             break;
 
           default:
@@ -225,7 +218,7 @@ function Q(t, e) {
     }
 }
 
-function X(t, e) {
+function X(t, e, i) {
     switch (typeof t) {
       case "function":
         break;
@@ -240,7 +233,7 @@ function X(t, e) {
             K(t, e);
             break;
         }
-        if (!w(t) && !W(t)) Z(`an object with at least a 'component' property (see Routeable)`, e, t);
+        if (!w(t) && !W(t)) Z(`an object with at least a '${i}' property (see Routeable)`, e, t);
         break;
 
       case "string":
@@ -648,7 +641,7 @@ class RouteConfig {
     }
     N(t, e, i) {
         const s = this.fallback;
-        return "function" === typeof s ? s(t, e, i) : s;
+        return "function" === typeof s && !x.isType(s) ? s(t, e, i) : s;
     }
     register(t) {
         const e = this.component;
@@ -1648,21 +1641,21 @@ function It(t, e, i) {
                     }
                 }
                 let o = 0;
-                let h = i.component.value;
-                let a = i;
-                while (1 === a.children.length) {
-                    a = a.children[0];
-                    if (0 === a.component.type) {
+                let a = i.component.value;
+                let u = i;
+                while (1 === u.children.length) {
+                    u = u.children[0];
+                    if (0 === u.component.type) {
                         ++o;
-                        h = `${h}/${a.component.value}`;
+                        a = `${a}/${u.component.value}`;
                     } else break;
                 }
-                r = s.recognize(h);
+                r = s.recognize(a);
                 t.trace("createNode recognized route: %s", r);
-                const u = r?.residue ?? null;
-                t.trace("createNode residue:", u);
-                const l = null === u;
-                if (null === r || u === h) {
+                const l = r?.residue ?? null;
+                t.trace("createNode residue:", l);
+                const f = null === l;
+                if (null === r || l === a) {
                     const n = s.generateViewportInstruction({
                         component: i.component.value,
                         params: i.params ?? c,
@@ -1679,23 +1672,25 @@ function It(t, e, i) {
                     if ("" === r) return;
                     let o = i.viewport;
                     if (null === o || 0 === o.length) o = Ft;
-                    const h = s.getFallbackViewportAgent(o);
-                    const a = null !== h ? h.viewport.N(i, e, s) : s.config.N(i, e, s);
-                    if (null === a) throw new UnknownRouteError(`Neither the route '${r}' matched any configured route at '${s.friendlyPath}' nor a fallback is configured for the viewport '${o}' - did you forget to add '${r}' to the routes list of the route decorator of '${s.component.name}'?`);
-                    t.trace(`Fallback is set to '${a}'. Looking for a recognized route.`);
-                    const u = s.childRoutes.find((t => t.id === a));
-                    if (void 0 !== u) return Vt(t, e, At(t, u, e, i));
-                    t.trace(`No route configuration for the fallback '${a}' is found; trying to recognize the route.`);
-                    const l = s.recognize(a, true);
-                    if (null !== l && l.residue !== a) return Vt(t, e, Nt(t, e, i, l, null));
-                    t.trace(`The fallback '${a}' is not recognized as a route; treating as custom element name.`);
-                    return Vt(t, e, At(t, vt(a, false, s.config, null, s), e, i));
+                    const a = s.getFallbackViewportAgent(o);
+                    const u = null !== a ? a.viewport.N(i, e, s) : s.config.N(i, e, s);
+                    if (null === u) throw new UnknownRouteError(`Neither the route '${r}' matched any configured route at '${s.friendlyPath}' nor a fallback is configured for the viewport '${o}' - did you forget to add '${r}' to the routes list of the route decorator of '${s.component.name}'?`);
+                    if ("string" === typeof u) {
+                        t.trace(`Fallback is set to '${u}'. Looking for a recognized route.`);
+                        const n = s.childRoutes.find((t => t.id === u));
+                        if (void 0 !== n) return Vt(t, e, At(t, n, e, i));
+                        t.trace(`No route configuration for the fallback '${u}' is found; trying to recognize the route.`);
+                        const r = s.recognize(u, true);
+                        if (null !== r && r.residue !== u) return Vt(t, e, Nt(t, e, i, r, null));
+                    }
+                    t.trace(`The fallback '${u}' is not recognized as a route; treating as custom element name.`);
+                    return h(vt(u, false, s.config, null, s), (s => Vt(t, e, At(t, s, e, i))));
                 }
                 r.residue = null;
-                i.component.value = l ? h : h.slice(0, -(u.length + 1));
+                i.component.value = f ? a : a.slice(0, -(l.length + 1));
                 for (let t = 0; t < o; ++t) {
                     const t = i.children[0];
-                    if (u?.startsWith(t.component.value) ?? false) break;
+                    if (l?.startsWith(t.component.value) ?? false) break;
                     i.viewport = t.viewport;
                     i.children = t.children;
                 }
@@ -3312,7 +3307,7 @@ class RouteContext {
         return this.childViewportAgents.filter((t => t.j()));
     }
     getFallbackViewportAgent(t) {
-        return this.childViewportAgents.find((e => e.j() && e.viewport.name === t && e.viewport.fallback.length > 0)) ?? null;
+        return this.childViewportAgents.find((e => e.j() && e.viewport.name === t && "" !== e.viewport.fallback)) ?? null;
     }
     createComponentAgent(t, e) {
         this.logger.trace(`createComponentAgent(routeNode:%s)`, e);
@@ -3614,7 +3609,7 @@ let Xt = class ViewportCustomElement {
     }
     N(t, e, i) {
         const s = this.fallback;
-        return "function" === typeof s ? s(t, e, i) : s;
+        return "function" === typeof s && !x.isType(s) ? s(t, e, i) : s;
     }
     hydrated(t) {
         this.logger.trace("hydrated()");

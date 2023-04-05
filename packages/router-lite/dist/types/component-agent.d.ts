@@ -2,8 +2,7 @@ import type { ICustomElementController, ICustomElementViewModel } from '@aurelia
 import type { RouteNode } from './route-tree';
 import { IRouteContext } from './route-context';
 import { Params, NavigationInstruction } from './instructions';
-import { IRouteConfig } from './route';
-import type { RouterOptions } from './options';
+import type { RouterOptions, IRouteConfig } from './options';
 export interface IRouteViewModel extends ICustomElementViewModel {
     getRouteConfig?(parentConfig: IRouteConfig | null, routeNode: RouteNode | null): IRouteConfig | Promise<IRouteConfig>;
     canLoad?(params: Params, next: RouteNode, current: RouteNode | null): boolean | NavigationInstruction | NavigationInstruction[] | Promise<boolean | NavigationInstruction | NavigationInstruction[]>;

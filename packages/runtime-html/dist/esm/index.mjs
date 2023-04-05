@@ -5735,7 +5735,7 @@ class TemplateCompiler {
             (S ?? (S = [])).push(M.build(qr, e.ep, e.m));
         }
         _r();
-        if (this.Le(t) && null != S && S.length > 1) this.De(t, S);
+        if (this.Le(t, S) && null != S && S.length > 1) this.De(t, S);
         if (u) {
             q = new HydrateElementInstruction(this.resolveResources ? c : c.name, void 0, I ?? l, null, H, g);
             if (a === Yr) {
@@ -6038,8 +6038,9 @@ class TemplateCompiler {
         const a = o.length;
         for (;a > h; ++h) on(o[h]).dependencies.push(...e.def.dependencies ?? l, ...e.deps ?? l);
     }
-    Le(t) {
-        return "INPUT" === t.nodeName && 1 === Fr[t.type];
+    Le(t, e) {
+        const i = t.nodeName;
+        return "INPUT" === i && 1 === Fr[t.type] || "SELECT" === i && (t.hasAttribute("multiple") || e?.some((t => "rg" === t.type && "multiple" === t.to)));
     }
     De(t, e) {
         switch (t.nodeName) {
@@ -6067,6 +6068,31 @@ class TemplateCompiler {
                     }
                 }
                 if (void 0 !== s && void 0 !== i && s < i) [t[i], t[s]] = [ t[s], t[i] ];
+                break;
+            }
+
+          case "SELECT":
+            {
+                const t = e;
+                let i = 0;
+                let s = 0;
+                let n = 0;
+                let r;
+                for (let e = 0; e < t.length && n < 2; ++e) {
+                    r = t[e];
+                    switch (r.to) {
+                      case "multiple":
+                        s = e;
+                        n++;
+                        break;
+
+                      case "value":
+                        i = e;
+                        n++;
+                        break;
+                    }
+                    if (2 === n && i < s) [t[s], t[i]] = [ t[i], t[s] ];
+                }
             }
         }
     }

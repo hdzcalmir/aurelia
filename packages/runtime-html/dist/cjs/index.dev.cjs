@@ -6294,7 +6294,7 @@ class TemplateCompiler {
             (plainAttrInstructions ?? (plainAttrInstructions = [])).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
         }
         resetCommandBuildInfo();
-        if (this._shouldReorderAttrs(el) && plainAttrInstructions != null && plainAttrInstructions.length > 1) {
+        if (this._shouldReorderAttrs(el, plainAttrInstructions) && plainAttrInstructions != null && plainAttrInstructions.length > 1) {
             this._reorder(el, plainAttrInstructions);
         }
         if (isCustomElement) {
@@ -6702,8 +6702,11 @@ class TemplateCompiler {
             getElementDefinition(localElTypes[i]).dependencies.push(...context.def.dependencies ?? kernel.emptyArray, ...context.deps ?? kernel.emptyArray);
         }
     }
-    _shouldReorderAttrs(el) {
-        return el.nodeName === 'INPUT' && orderSensitiveInputType[el.type] === 1;
+    _shouldReorderAttrs(el, instructions) {
+        const nodeName = el.nodeName;
+        return nodeName === 'INPUT' && orderSensitiveInputType[el.type] === 1
+            || nodeName === 'SELECT' && (el.hasAttribute('multiple')
+                || instructions?.some(i => i.type === "rg" && i.to === 'multiple'));
     }
     _reorder(el, instructions) {
         switch (el.nodeName) {
@@ -6730,6 +6733,30 @@ class TemplateCompiler {
                 }
                 if (checkedIndex !== void 0 && modelOrValueOrMatcherIndex !== void 0 && checkedIndex < modelOrValueOrMatcherIndex) {
                     [_instructions[modelOrValueOrMatcherIndex], _instructions[checkedIndex]] = [_instructions[checkedIndex], _instructions[modelOrValueOrMatcherIndex]];
+                }
+                break;
+            }
+            case 'SELECT': {
+                const _instructions = instructions;
+                let valueIndex = 0;
+                let multipleIndex = 0;
+                let found = 0;
+                let instruction;
+                for (let i = 0; i < _instructions.length && found < 2; ++i) {
+                    instruction = _instructions[i];
+                    switch (instruction.to) {
+                        case 'multiple':
+                            multipleIndex = i;
+                            found++;
+                            break;
+                        case 'value':
+                            valueIndex = i;
+                            found++;
+                            break;
+                    }
+                    if (found === 2 && valueIndex < multipleIndex) {
+                        [_instructions[multipleIndex], _instructions[valueIndex]] = [_instructions[valueIndex], _instructions[multipleIndex]];
+                    }
                 }
             }
         }
@@ -7482,7 +7509,7 @@ class SelectValueObserver {
         this._arrayObserver = void 0;
         if (array != null) {
             if (!this._el.multiple) {
-                throw createError(`AUR0654: Only null or Array instances can be bound to a multi-select.`);
+                throw createError(`AUR0654: array values can only be bound to a multi-select.`);
             }
             (this._arrayObserver = this._observerLocator.getArrayObserver(array)).subscribe(this);
         }

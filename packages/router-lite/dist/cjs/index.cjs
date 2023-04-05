@@ -158,14 +158,14 @@ function g(t, e) {
             break;
 
           case "component":
-            v(s, n);
+            v(s, n, "component");
             break;
 
           case "routes":
             if (!(s instanceof Array)) d("Array", n, s);
             for (const t of s) {
                 const e = `${n}[${s.indexOf(t)}]`;
-                v(t, e);
+                v(t, e, "component");
             }
             break;
 
@@ -192,14 +192,7 @@ function g(t, e) {
             break;
 
           case "fallback":
-            switch (typeof s) {
-              case "string":
-              case "function":
-                break;
-
-              default:
-                d("string or function", n, s);
-            }
+            v(s, n, "fallback");
             break;
 
           default:
@@ -231,7 +224,7 @@ function w(t, e) {
     }
 }
 
-function v(t, e) {
+function v(t, e, i) {
     switch (typeof t) {
       case "function":
         break;
@@ -246,7 +239,7 @@ function v(t, e) {
             g(t, e);
             break;
         }
-        if (!s.isCustomElementViewModel(t) && !u(t)) d(`an object with at least a 'component' property (see Routeable)`, e, t);
+        if (!s.isCustomElementViewModel(t) && !u(t)) d(`an object with at least a '${i}' property (see Routeable)`, e, t);
         break;
 
       case "string":
@@ -652,9 +645,9 @@ class RouteConfig {
     I() {
         return new RouteConfig(this.id, this.path, this.title, this.redirectTo, this.caseSensitive, this.transitionPlan, this.viewport, this.data, this.routes, this.fallback, this.component, this.nav);
     }
-    N(t, e, s) {
-        const i = this.fallback;
-        return "function" === typeof i ? i(t, e, s) : i;
+    N(t, e, i) {
+        const n = this.fallback;
+        return "function" === typeof n && !s.CustomElement.isType(n) ? n(t, e, i) : n;
     }
     register(t) {
         const e = this.component;
@@ -1688,14 +1681,16 @@ function W(t, s, i) {
                     const c = n.getFallbackViewportAgent(h);
                     const u = null !== c ? c.viewport.N(i, s, n) : n.config.N(i, s, n);
                     if (null === u) throw new UnknownRouteError(`Neither the route '${o}' matched any configured route at '${n.friendlyPath}' nor a fallback is configured for the viewport '${h}' - did you forget to add '${o}' to the routes list of the route decorator of '${n.component.name}'?`);
-                    t.trace(`Fallback is set to '${u}'. Looking for a recognized route.`);
-                    const l = n.childRoutes.find((t => t.id === u));
-                    if (void 0 !== l) return Y(t, s, J(t, l, s, i));
-                    t.trace(`No route configuration for the fallback '${u}' is found; trying to recognize the route.`);
-                    const f = n.recognize(u, true);
-                    if (null !== f && f.residue !== u) return Y(t, s, G(t, s, i, f, null));
+                    if ("string" === typeof u) {
+                        t.trace(`Fallback is set to '${u}'. Looking for a recognized route.`);
+                        const e = n.childRoutes.find((t => t.id === u));
+                        if (void 0 !== e) return Y(t, s, J(t, e, s, i));
+                        t.trace(`No route configuration for the fallback '${u}' is found; trying to recognize the route.`);
+                        const r = n.recognize(u, true);
+                        if (null !== r && r.residue !== u) return Y(t, s, G(t, s, i, r, null));
+                    }
                     t.trace(`The fallback '${u}' is not recognized as a route; treating as custom element name.`);
-                    return Y(t, s, J(t, L(u, false, n.config, null, n), s, i));
+                    return e.onResolve(L(u, false, n.config, null, n), (e => Y(t, s, J(t, e, s, i))));
                 }
                 o.residue = null;
                 i.component.value = f ? c : c.slice(0, -(l.length + 1));
@@ -3318,7 +3313,7 @@ class RouteContext {
         return this.childViewportAgents.filter((t => t.j()));
     }
     getFallbackViewportAgent(t) {
-        return this.childViewportAgents.find((e => e.j() && e.viewport.name === t && e.viewport.fallback.length > 0)) ?? null;
+        return this.childViewportAgents.find((e => e.j() && e.viewport.name === t && "" !== e.viewport.fallback)) ?? null;
     }
     createComponentAgent(t, i) {
         this.logger.trace(`createComponentAgent(routeNode:%s)`, i);
@@ -3618,9 +3613,9 @@ exports.ViewportCustomElement = class ViewportCustomElement {
         this.logger = t.scopeTo(`au-viewport<${e.friendlyPath}>`);
         this.logger.trace("constructor()");
     }
-    N(t, e, s) {
-        const i = this.fallback;
-        return "function" === typeof i ? i(t, e, s) : i;
+    N(t, e, i) {
+        const n = this.fallback;
+        return "function" === typeof n && !s.CustomElement.isType(n) ? n(t, e, i) : n;
     }
     hydrated(t) {
         this.logger.trace("hydrated()");

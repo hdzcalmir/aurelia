@@ -169,7 +169,7 @@ function validateRouteConfig(config, parentPath) {
                 }
                 break;
             case 'component':
-                validateComponent(value, path);
+                validateComponent(value, path, 'component');
                 break;
             case 'routes': {
                 if (!(value instanceof Array)) {
@@ -177,7 +177,7 @@ function validateRouteConfig(config, parentPath) {
                 }
                 for (const route of value) {
                     const childPath = `${path}[${value.indexOf(route)}]`;
-                    validateComponent(route, childPath);
+                    validateComponent(route, childPath, 'component');
                 }
                 break;
             }
@@ -200,13 +200,7 @@ function validateRouteConfig(config, parentPath) {
                 }
                 break;
             case 'fallback':
-                switch (typeof value) {
-                    case 'string':
-                    case 'function':
-                        break;
-                    default:
-                        expectType('string or function', path, value);
-                }
+                validateComponent(value, path, 'fallback');
                 break;
             default:
                 throw new Error(`Unknown route config property: "${parentPath}.${key}". Please specify known properties only.`);
@@ -244,7 +238,7 @@ function validateRedirectRouteConfig(config, parentPath) {
         }
     }
 }
-function validateComponent(component, parentPath) {
+function validateComponent(component, parentPath, property) {
     switch (typeof component) {
         case 'function':
             break;
@@ -262,7 +256,7 @@ function validateComponent(component, parentPath) {
             }
             if (!isCustomElementViewModel(component) &&
                 !isPartialCustomElementDefinition(component)) {
-                expectType(`an object with at least a 'component' property (see Routeable)`, parentPath, component);
+                expectType(`an object with at least a '${property}' property (see Routeable)`, parentPath, component);
             }
             break;
         case 'string':
@@ -711,6 +705,7 @@ class RouteConfig {
     _getFallback(viewportInstruction, routeNode, context) {
         const fallback = this.fallback;
         return typeof fallback === 'function'
+            && !CustomElement.isType(fallback)
             ? fallback(viewportInstruction, routeNode, context)
             : fallback;
     }
@@ -1795,16 +1790,18 @@ function createAndAppendNodes(log, node, vi) {
                             : ctx.config._getFallback(vi, node, ctx);
                         if (fallback === null)
                             throw new UnknownRouteError(`Neither the route '${name}' matched any configured route at '${ctx.friendlyPath}' nor a fallback is configured for the viewport '${vp}' - did you forget to add '${name}' to the routes list of the route decorator of '${ctx.component.name}'?`);
-                        log.trace(`Fallback is set to '${fallback}'. Looking for a recognized route.`);
-                        const rd = ctx.childRoutes.find(x => x.id === fallback);
-                        if (rd !== void 0)
-                            return appendNode(log, node, createFallbackNode(log, rd, node, vi));
-                        log.trace(`No route configuration for the fallback '${fallback}' is found; trying to recognize the route.`);
-                        const rr = ctx.recognize(fallback, true);
-                        if (rr !== null && rr.residue !== fallback)
-                            return appendNode(log, node, createConfiguredNode(log, node, vi, rr, null));
+                        if (typeof fallback === 'string') {
+                            log.trace(`Fallback is set to '${fallback}'. Looking for a recognized route.`);
+                            const rd = ctx.childRoutes.find(x => x.id === fallback);
+                            if (rd !== void 0)
+                                return appendNode(log, node, createFallbackNode(log, rd, node, vi));
+                            log.trace(`No route configuration for the fallback '${fallback}' is found; trying to recognize the route.`);
+                            const rr = ctx.recognize(fallback, true);
+                            if (rr !== null && rr.residue !== fallback)
+                                return appendNode(log, node, createConfiguredNode(log, node, vi, rr, null));
+                        }
                         log.trace(`The fallback '${fallback}' is not recognized as a route; treating as custom element name.`);
-                        return appendNode(log, node, createFallbackNode(log, resolveRouteConfiguration(fallback, false, ctx.config, null, ctx), node, vi));
+                        return onResolve(resolveRouteConfiguration(fallback, false, ctx.config, null, ctx), rc => appendNode(log, node, createFallbackNode(log, rc, node, vi)));
                     }
                     rr.residue = null;
                     vi.component.value = noResidue
@@ -3590,7 +3587,7 @@ class RouteContext {
         return this.childViewportAgents.filter(x => x._isAvailable());
     }
     getFallbackViewportAgent(name) {
-        return this.childViewportAgents.find(x => x._isAvailable() && x.viewport.name === name && x.viewport.fallback.length > 0) ?? null;
+        return this.childViewportAgents.find(x => x._isAvailable() && x.viewport.name === name && x.viewport.fallback !== '') ?? null;
     }
     createComponentAgent(hostController, routeNode) {
         this.logger.trace(`createComponentAgent(routeNode:%s)`, routeNode);
@@ -3945,6 +3942,7 @@ let ViewportCustomElement = class ViewportCustomElement {
     _getFallback(viewportInstruction, routeNode, context) {
         const fallback = this.fallback;
         return typeof fallback === 'function'
+            && !CustomElement.isType(fallback)
             ? fallback(viewportInstruction, routeNode, context)
             : fallback;
     }
