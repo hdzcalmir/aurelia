@@ -35,8 +35,11 @@ function au(options = {}) {
                 'router-lite',
             ].reduce((aliases, pkg) => {
                 const name = pkg === 'aurelia' ? pkg : `@aurelia/${pkg}`;
-                const packageLocation = require.resolve(name);
-                aliases[name] = resolve(packageLocation, `../../esm/index.dev.mjs`);
+                try {
+                    const packageLocation = require.resolve(name);
+                    aliases[name] = resolve(packageLocation, `../../esm/index.dev.mjs`);
+                }
+                catch (_a) { }
                 return aliases;
             }, ((_b = (_c = ((_a = config.resolve) !== null && _a !== void 0 ? _a : (config.resolve = {}))).alias) !== null && _b !== void 0 ? _b : (_c.alias = {})));
         },
