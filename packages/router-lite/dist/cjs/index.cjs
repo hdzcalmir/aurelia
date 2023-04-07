@@ -274,15 +274,16 @@ function x(t, e) {
 const $ = e.DI.createInterface("RouterOptions");
 
 class RouterOptions {
-    constructor(t, e, s, i, n) {
+    constructor(t, e, s, i, n, r) {
         this.useUrlFragmentHash = t;
         this.useHref = e;
         this.historyStrategy = s;
         this.buildTitle = i;
         this.useNavigationModel = n;
+        this.activeClass = r;
     }
     static create(t) {
-        return new RouterOptions(t.useUrlFragmentHash ?? false, t.useHref ?? true, t.historyStrategy ?? "push", t.buildTitle ?? null, t.useNavigationModel ?? true);
+        return new RouterOptions(t.useUrlFragmentHash ?? false, t.useHref ?? true, t.historyStrategy ?? "push", t.buildTitle ?? null, t.useNavigationModel ?? true, t.activeClass ?? null);
     }
     t() {
         return [ [ "historyStrategy", "history" ] ].map((([t, e]) => {
@@ -3672,13 +3673,12 @@ exports.ViewportCustomElement = E([ s.customElement({
 const gt = [ "name", "usedBy", "default", "fallback" ];
 
 exports.LoadCustomAttribute = class LoadCustomAttribute {
-    constructor(t, e, s, i, n, r) {
-        this.target = t;
-        this.el = e;
-        this.router = s;
-        this.events = i;
-        this.ctx = n;
-        this.locationMgr = r;
+    constructor(t, e, s, i, n) {
+        this.el = t;
+        this.router = e;
+        this.events = s;
+        this.ctx = i;
+        this.locationMgr = n;
         this.attribute = "href";
         this.active = false;
         this.href = null;
@@ -3692,14 +3692,18 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
                 context: this.context
             });
         };
-        this.isEnabled = !e.hasAttribute("external") && !e.hasAttribute("data-external");
+        this.isEnabled = !t.hasAttribute("external") && !t.hasAttribute("data-external");
+        this.activeClass = e.options.activeClass;
     }
     binding() {
         if (this.isEnabled) this.el.addEventListener("click", this.onClick);
         this.valueChanged();
         this.navigationEndListener = this.events.subscribe("au:router:navigation-end", (t => {
             this.valueChanged();
-            this.active = null !== this.instructions && this.router.isActive(this.instructions, this.context);
+            const e = this.active = null !== this.instructions && this.router.isActive(this.instructions, this.context);
+            const s = this.activeClass;
+            if (null === s) return;
+            if (e) this.el.classList.add(s); else this.el.classList.remove(s);
         }));
     }
     attaching() {
@@ -3766,21 +3770,20 @@ E([ s.bindable({
     callback: "valueChanged"
 }) ], exports.LoadCustomAttribute.prototype, "context", void 0);
 
-exports.LoadCustomAttribute = E([ s.customAttribute("load"), b(0, s.IEventTarget), b(1, s.INode), b(2, X), b(3, R), b(4, ct), b(5, C) ], exports.LoadCustomAttribute);
+exports.LoadCustomAttribute = E([ s.customAttribute("load"), b(0, s.INode), b(1, X), b(2, R), b(3, ct), b(4, C) ], exports.LoadCustomAttribute);
 
 exports.HrefCustomAttribute = class HrefCustomAttribute {
     get isExternal() {
         return this.el.hasAttribute("external") || this.el.hasAttribute("data-external");
     }
-    constructor(t, e, s, i, n) {
-        this.target = t;
-        this.el = e;
-        this.router = s;
-        this.ctx = i;
+    constructor(t, e, s, i) {
+        this.el = t;
+        this.router = e;
+        this.ctx = s;
         this.isInitialized = false;
-        if (s.options.useHref && "A" === e.nodeName) switch (e.getAttribute("target")) {
+        if (e.options.useHref && "A" === t.nodeName) switch (t.getAttribute("target")) {
           case null:
-          case n.name:
+          case i.name:
           case "_self":
             this.isEnabled = true;
             break;
@@ -3829,7 +3832,7 @@ E([ s.bindable({
 exports.HrefCustomAttribute = E([ s.customAttribute({
     name: "href",
     noMultiBindings: true
-}), b(0, s.IEventTarget), b(1, s.INode), b(2, X), b(3, ct), b(4, s.IWindow) ], exports.HrefCustomAttribute);
+}), b(0, s.INode), b(1, X), b(2, ct), b(3, s.IWindow) ], exports.HrefCustomAttribute);
 
 const wt = X;
 

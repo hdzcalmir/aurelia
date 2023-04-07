@@ -1,6 +1,6 @@
 {
   "name": "@aurelia/vite-plugin",
-  "version": "2.1.0-dev.202304070940",
+  "version": "2.1.0-dev.202304071730",
   "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.mjs",
   "exports": {
@@ -48,11 +48,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@aurelia/kernel": "2.1.0-dev.202304070940",
-    "@aurelia/metadata": "2.1.0-dev.202304070940",
-    "@aurelia/platform": "2.1.0-dev.202304070940",
-    "@aurelia/plugin-conventions": "2.1.0-dev.202304070940",
-    "@aurelia/runtime": "2.1.0-dev.202304070940",
+    "@aurelia/kernel": "2.1.0-dev.202304071730",
+    "@aurelia/metadata": "2.1.0-dev.202304071730",
+    "@aurelia/platform": "2.1.0-dev.202304071730",
+    "@aurelia/plugin-conventions": "2.1.0-dev.202304071730",
+    "@aurelia/runtime": "2.1.0-dev.202304071730",
     "@rollup/pluginutils": "5.0.2",
     "vite": "^4.2.1",
     "loader-utils": "^2.0.0"

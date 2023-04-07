@@ -1,6 +1,6 @@
 import { Metadata, isObject } from '@aurelia/metadata';
 import { DI, IEventAggregator, ILogger, Protocol, emptyArray, onResolve, resolveAll, emptyObject, IContainer, isArrayIndex, IModuleLoader, InstanceProvider, noop, Registration } from '@aurelia/kernel';
-import { isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, customElement, bindable, customAttribute, IEventTarget, INode, getRef, CustomAttribute, AppTask } from '@aurelia/runtime-html';
+import { isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, customElement, bindable, customAttribute, INode, getRef, CustomAttribute, AppTask } from '@aurelia/runtime-html';
 import { RecognizedRoute, Endpoint, ConfigurableRoute, RESIDUE, RouteRecognizer } from '@aurelia/route-recognizer';
 
 class Batch {
@@ -303,15 +303,16 @@ function valueOrFuncToValue(instructions, valueOrFunc) {
 }
 const IRouterOptions = DI.createInterface('RouterOptions');
 class RouterOptions {
-    constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle, useNavigationModel) {
+    constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle, useNavigationModel, activeClass) {
         this.useUrlFragmentHash = useUrlFragmentHash;
         this.useHref = useHref;
         this.historyStrategy = historyStrategy;
         this.buildTitle = buildTitle;
         this.useNavigationModel = useNavigationModel;
+        this.activeClass = activeClass;
     }
     static create(input) {
-        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null, input.useNavigationModel ?? true);
+        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null, input.useNavigationModel ?? true, input.activeClass ?? null);
     }
     _stringifyProperties() {
         return [
@@ -4013,8 +4014,7 @@ const props = [
 ];
 
 let LoadCustomAttribute = class LoadCustomAttribute {
-    constructor(target, el, router, events, ctx, locationMgr) {
-        this.target = target;
+    constructor(el, router, events, ctx, locationMgr) {
         this.el = el;
         this.router = router;
         this.events = events;
@@ -4036,6 +4036,7 @@ let LoadCustomAttribute = class LoadCustomAttribute {
             void this.router.load(this.instructions, { context: this.context });
         };
         this.isEnabled = !el.hasAttribute('external') && !el.hasAttribute('data-external');
+        this.activeClass = router.options.activeClass;
     }
     binding() {
         if (this.isEnabled) {
@@ -4044,7 +4045,16 @@ let LoadCustomAttribute = class LoadCustomAttribute {
         this.valueChanged();
         this.navigationEndListener = this.events.subscribe('au:router:navigation-end', _e => {
             this.valueChanged();
-            this.active = this.instructions !== null && this.router.isActive(this.instructions, this.context);
+            const active = this.active = this.instructions !== null && this.router.isActive(this.instructions, this.context);
+            const activeClass = this.activeClass;
+            if (activeClass === null)
+                return;
+            if (active) {
+                this.el.classList.add(activeClass);
+            }
+            else {
+                this.el.classList.remove(activeClass);
+            }
         });
     }
     attaching() {
@@ -4116,20 +4126,18 @@ __decorate([
 ], LoadCustomAttribute.prototype, "context", void 0);
 LoadCustomAttribute = __decorate([
     customAttribute('load'),
-    __param(0, IEventTarget),
-    __param(1, INode),
-    __param(2, IRouter),
-    __param(3, IRouterEvents),
-    __param(4, IRouteContext),
-    __param(5, ILocationManager)
+    __param(0, INode),
+    __param(1, IRouter),
+    __param(2, IRouterEvents),
+    __param(3, IRouteContext),
+    __param(4, ILocationManager)
 ], LoadCustomAttribute);
 
 let HrefCustomAttribute = class HrefCustomAttribute {
     get isExternal() {
         return this.el.hasAttribute('external') || this.el.hasAttribute('data-external');
     }
-    constructor(target, el, router, ctx, w) {
-        this.target = target;
+    constructor(el, router, ctx, w) {
         this.el = el;
         this.router = router;
         this.ctx = ctx;
@@ -4196,11 +4204,10 @@ __decorate([
 ], HrefCustomAttribute.prototype, "value", void 0);
 HrefCustomAttribute = __decorate([
     customAttribute({ name: 'href', noMultiBindings: true }),
-    __param(0, IEventTarget),
-    __param(1, INode),
-    __param(2, IRouter),
-    __param(3, IRouteContext),
-    __param(4, IWindow)
+    __param(0, INode),
+    __param(1, IRouter),
+    __param(2, IRouteContext),
+    __param(3, IWindow)
 ], HrefCustomAttribute);
 
 const RouterRegistration = IRouter;

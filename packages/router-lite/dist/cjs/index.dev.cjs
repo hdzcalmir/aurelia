@@ -307,15 +307,16 @@ function valueOrFuncToValue(instructions, valueOrFunc) {
 }
 const IRouterOptions = kernel.DI.createInterface('RouterOptions');
 class RouterOptions {
-    constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle, useNavigationModel) {
+    constructor(useUrlFragmentHash, useHref, historyStrategy, buildTitle, useNavigationModel, activeClass) {
         this.useUrlFragmentHash = useUrlFragmentHash;
         this.useHref = useHref;
         this.historyStrategy = historyStrategy;
         this.buildTitle = buildTitle;
         this.useNavigationModel = useNavigationModel;
+        this.activeClass = activeClass;
     }
     static create(input) {
-        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null, input.useNavigationModel ?? true);
+        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null, input.useNavigationModel ?? true, input.activeClass ?? null);
     }
     _stringifyProperties() {
         return [
@@ -4017,8 +4018,7 @@ const props = [
 ];
 
 exports.LoadCustomAttribute = class LoadCustomAttribute {
-    constructor(target, el, router, events, ctx, locationMgr) {
-        this.target = target;
+    constructor(el, router, events, ctx, locationMgr) {
         this.el = el;
         this.router = router;
         this.events = events;
@@ -4040,6 +4040,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
             void this.router.load(this.instructions, { context: this.context });
         };
         this.isEnabled = !el.hasAttribute('external') && !el.hasAttribute('data-external');
+        this.activeClass = router.options.activeClass;
     }
     binding() {
         if (this.isEnabled) {
@@ -4048,7 +4049,16 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
         this.valueChanged();
         this.navigationEndListener = this.events.subscribe('au:router:navigation-end', _e => {
             this.valueChanged();
-            this.active = this.instructions !== null && this.router.isActive(this.instructions, this.context);
+            const active = this.active = this.instructions !== null && this.router.isActive(this.instructions, this.context);
+            const activeClass = this.activeClass;
+            if (activeClass === null)
+                return;
+            if (active) {
+                this.el.classList.add(activeClass);
+            }
+            else {
+                this.el.classList.remove(activeClass);
+            }
         });
     }
     attaching() {
@@ -4120,20 +4130,18 @@ __decorate([
 ], exports.LoadCustomAttribute.prototype, "context", void 0);
 exports.LoadCustomAttribute = __decorate([
     runtimeHtml.customAttribute('load'),
-    __param(0, runtimeHtml.IEventTarget),
-    __param(1, runtimeHtml.INode),
-    __param(2, IRouter),
-    __param(3, IRouterEvents),
-    __param(4, IRouteContext),
-    __param(5, ILocationManager)
+    __param(0, runtimeHtml.INode),
+    __param(1, IRouter),
+    __param(2, IRouterEvents),
+    __param(3, IRouteContext),
+    __param(4, ILocationManager)
 ], exports.LoadCustomAttribute);
 
 exports.HrefCustomAttribute = class HrefCustomAttribute {
     get isExternal() {
         return this.el.hasAttribute('external') || this.el.hasAttribute('data-external');
     }
-    constructor(target, el, router, ctx, w) {
-        this.target = target;
+    constructor(el, router, ctx, w) {
         this.el = el;
         this.router = router;
         this.ctx = ctx;
@@ -4200,11 +4208,10 @@ __decorate([
 ], exports.HrefCustomAttribute.prototype, "value", void 0);
 exports.HrefCustomAttribute = __decorate([
     runtimeHtml.customAttribute({ name: 'href', noMultiBindings: true }),
-    __param(0, runtimeHtml.IEventTarget),
-    __param(1, runtimeHtml.INode),
-    __param(2, IRouter),
-    __param(3, IRouteContext),
-    __param(4, runtimeHtml.IWindow)
+    __param(0, runtimeHtml.INode),
+    __param(1, IRouter),
+    __param(2, IRouteContext),
+    __param(3, runtimeHtml.IWindow)
 ], exports.HrefCustomAttribute);
 
 const RouterRegistration = IRouter;

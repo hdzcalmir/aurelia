@@ -59,6 +59,107 @@ describe('router-lite/resources/load.spec.ts', function () {
         assertAnchors(anchors, [a1, a2], 'round#3');
         await au.stop(true);
     });
+    it('adds activeClass when configured', async function () {
+        let Foo = class Foo {
+        };
+        Foo = __decorate([
+            customElement({ name: 'fo-o', template: '' })
+        ], Foo);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'foo', path: 'foo/:id', component: Foo }
+                ]
+            }),
+            customElement({
+                name: 'ro-ot',
+                template: `
+    <a load="route:foo; params.bind:{id: 1}"></a>
+    <a load="route:foo/2"></a>
+    <au-viewport></au-viewport>`
+            })
+        ], Root);
+        const activeClass = 'au-rl-active';
+        const { au, host, container } = await start({ appRoot: Root, registrations: [Foo], activeClass });
+        const queue = container.get(IPlatform).domWriteQueue;
+        await queue.yield();
+        const anchors = host.querySelectorAll('a');
+        const a1 = { href: 'foo/1', active: false };
+        const a2 = { href: 'foo/2', active: false };
+        assertAnchorsWithClass(anchors, [a1, a2], activeClass, 'round#1');
+        anchors[1].click();
+        await queue.yield();
+        a2.active = true;
+        assertAnchorsWithClass(anchors, [a1, a2], activeClass, 'round#2');
+        anchors[0].click();
+        await queue.yield();
+        a1.active = true;
+        a2.active = false;
+        assertAnchorsWithClass(anchors, [a1, a2], activeClass, 'round#3');
+        await au.stop(true);
+        function assertAnchorsWithClass(anchors, expected, activeClass = null, message = '') {
+            const len = anchors.length;
+            assert.strictEqual(len, expected.length, `${message} length`);
+            for (let i = 0; i < len; i++) {
+                const anchor = anchors[i];
+                const item = expected[i];
+                assert.strictEqual(anchor.href.endsWith(item.href), true, `${message} - #${i} href - actual: ${anchor.href} - expected: ${item.href}`);
+                assert.strictEqual(anchor.classList.contains(activeClass), !!item.active, `${message} - #${i} active`);
+            }
+        }
+    });
+    it('does not add activeClass when not configured', async function () {
+        let Foo = class Foo {
+        };
+        Foo = __decorate([
+            customElement({ name: 'fo-o', template: '' })
+        ], Foo);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'foo', path: 'foo/:id', component: Foo }
+                ]
+            }),
+            customElement({
+                name: 'ro-ot',
+                template: `
+    <a load="route:foo; params.bind:{id: 1}"></a>
+    <a load="route:foo/2"></a>
+    <au-viewport></au-viewport>`
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root, registrations: [Foo] });
+        const queue = container.get(IPlatform).domWriteQueue;
+        await queue.yield();
+        const anchors = host.querySelectorAll('a');
+        const a1 = { href: 'foo/1', active: false };
+        const a2 = { href: 'foo/2', active: false };
+        assertAnchorsWithoutClass(anchors, [a1, a2], 'round#1');
+        anchors[1].click();
+        await queue.yield();
+        a2.active = true;
+        assertAnchorsWithoutClass(anchors, [a1, a2], 'round#2');
+        anchors[0].click();
+        await queue.yield();
+        a1.active = true;
+        a2.active = false;
+        assertAnchorsWithoutClass(anchors, [a1, a2], 'round#3');
+        await au.stop(true);
+        function assertAnchorsWithoutClass(anchors, expected, message = '') {
+            const len = anchors.length;
+            assert.strictEqual(len, expected.length, `${message} length`);
+            for (let i = 0; i < len; i++) {
+                const anchor = anchors[i];
+                const item = expected[i];
+                assert.strictEqual(anchor.href.endsWith(item.href), true, `${message} - #${i} href - actual: ${anchor.href} - expected: ${item.href}`);
+                assert.strictEqual(anchor.classList.value, 'au', `${message} - #${i} active`);
+            }
+        }
+    });
     it('un-configured parameters are added to the querystring', async function () {
         let Foo = class Foo {
         };

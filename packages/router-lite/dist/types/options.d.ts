@@ -1,7 +1,7 @@
 import type { Params, RouteContextLike, RouteableComponent, ViewportInstruction, ViewportInstructionTree } from './instructions';
 import type { RouteNode } from './route-tree';
 import type { Transition } from './router';
-import { IRouteContext } from './route-context';
+import type { IRouteContext } from './route-context';
 export type HistoryStrategy = 'none' | 'replace' | 'push';
 export type ValueOrFunc<T extends string> = T | ((instructions: ViewportInstructionTree) => T);
 export declare const IRouterOptions: import("@aurelia/kernel").InterfaceSymbol<Readonly<RouterOptions>>;
@@ -32,6 +32,12 @@ export declare class RouterOptions {
      * The default value is `true`.
      */
     readonly useNavigationModel: boolean;
+    /**
+     * The class that is added to the element by the `load` custom attribute, if the associated instruction is active.
+     * If no value is provided while configuring router, no class will be added.
+     * The default value is `null`.
+     */
+    readonly activeClass: string | null;
     protected constructor(useUrlFragmentHash: boolean, useHref: boolean, 
     /**
      * The strategy to use for interacting with the browser's `history` object (if applicable).
@@ -54,7 +60,13 @@ export declare class RouterOptions {
      * When set to `false`, the navigation model won't be generated.
      * The default value is `true`.
      */
-    useNavigationModel: boolean);
+    useNavigationModel: boolean, 
+    /**
+     * The class that is added to the element by the `load` custom attribute, if the associated instruction is active.
+     * If no value is provided while configuring router, no class will be added.
+     * The default value is `null`.
+     */
+    activeClass: string | null);
     static create(input: IRouterOptions): RouterOptions;
     toString(): string;
 }
