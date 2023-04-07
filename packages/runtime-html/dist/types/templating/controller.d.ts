@@ -406,13 +406,10 @@ export interface ICustomElementController<C extends ICustomElementViewModel = IC
 }
 export declare const IController: import("@aurelia/kernel").InterfaceSymbol<IController<IViewModel>>;
 export declare const IHydrationContext: import("@aurelia/kernel").InterfaceSymbol<IHydrationContext<ICustomElementViewModel>>;
-export interface IHydrationContext<T extends ICustomElementViewModel = ICustomElementViewModel> extends HydrationContext<T> {
-}
-declare class HydrationContext<T extends ICustomElementViewModel> {
+export interface IHydrationContext<T extends ICustomElementViewModel = ICustomElementViewModel> {
+    readonly controller: ICustomElementController<T>;
     readonly instruction: IControllerElementHydrationInstruction | null;
     readonly parent: IHydrationContext | undefined;
-    readonly controller: ICustomElementController<T>;
-    constructor(controller: Controller, instruction: IControllerElementHydrationInstruction | null, parent: IHydrationContext | undefined);
 }
 export interface IActivationHooks<TParent> {
     binding?(initiator: IHydratedController, parent: TParent): void | Promise<void>;
@@ -475,10 +472,5 @@ export interface IControllerElementHydrationInstruction {
      */
     readonly containerless?: boolean;
 }
-export type ControllerLifecyleHookLookup = LifecycleHooksLookup<{
-    hydrating: ICompileHooks['hydrating'];
-    hydrated: ICompileHooks['hydrated'];
-    created: ICompileHooks['created'];
-}>;
 export {};
 //# sourceMappingURL=controller.d.ts.map

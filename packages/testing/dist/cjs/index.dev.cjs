@@ -7493,7 +7493,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
                 Object.setPrototypeOf($class, $Ctor.prototype);
                 return $class;
             };
-    const annotations = ['aliases', 'bindables', 'cache', 'capture', 'childrenObservers', 'containerless', 'dependencies', 'enhance'];
+    const annotations = ['aliases', 'bindables', 'cache', 'capture', 'containerless', 'dependencies', 'enhance'];
     if ($$class !== $class && $class != null) {
         annotations.forEach(anno => {
             metadata.Metadata.define(anno, runtimeHtml.CustomElement.getAnnotation($class, anno), $$class);
@@ -7562,10 +7562,10 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             if (el === null) {
                 throw new Error(`No element found for selector "${selector}" to compare text content with "${text}"`);
             }
-            assert.strictEqual(el.textContent, text);
+            assert.strictEqual(getVisibleText(el), text);
         }
         else {
-            assert.strictEqual(host.textContent, selector);
+            assert.strictEqual(getVisibleText(host), selector);
         }
     }
     function getInnerHtml(el, compact) {

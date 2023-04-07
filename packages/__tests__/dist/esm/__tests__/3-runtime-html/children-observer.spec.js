@@ -115,6 +115,28 @@ describe('3-runtime-html/children-observer.spec.ts', function () {
             await au.stop();
             au.dispose();
         });
+        it('updates subscribers', async function () {
+            let El = class El {
+            };
+            __decorate([
+                children('div'),
+                __metadata("design:type", Array)
+            ], El.prototype, "nodes", void 0);
+            El = __decorate([
+                customElement({
+                    name: 'e-l',
+                    template: 'child count: ${nodes.length}',
+                    shadowOptions: { mode: 'open' }
+                })
+            ], El);
+            const { assertText } = createFixture('<e-l ref=el><div repeat.for="i of items">', class App {
+                constructor() {
+                    this.items = 3;
+                }
+            }, [El]);
+            await new Promise(r => setTimeout(r, 50));
+            assertText('child count: 3');
+        });
     });
     function createAppAndStart(childrenOptions) {
         const ctx = TestContext.create();

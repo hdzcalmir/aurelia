@@ -79,6 +79,7 @@ exports.AuSlotsInfo = runtimeHtml.AuSlotsInfo;
 exports.Bindable = runtimeHtml.Bindable;
 exports.BindingBehavior = runtimeHtml.BindingBehavior;
 exports.BindingMode = runtimeHtml.BindingMode;
+exports.ChildrenBinding = runtimeHtml.ChildrenBinding;
 exports.Controller = runtimeHtml.Controller;
 exports.CustomAttribute = runtimeHtml.CustomAttribute;
 exports.CustomElement = runtimeHtml.CustomElement;

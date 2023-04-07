@@ -30,6 +30,7 @@ function ensureProto(proto, key, defaultValue) {
         defineHiddenProp(proto, key, defaultValue);
     }
 }
+const objectAssign = Object.assign;
 const safeString = String;
 const createInterface = kernel.DI.createInterface;
 const createLookup = () => O.create(null);
@@ -3505,7 +3506,7 @@ const TokenValues = [
     2163759, 2163760,
     'of', '=>'
 ];
-const KeywordLookup = Object.assign(Object.create(null), {
+const KeywordLookup = objectAssign(Object.create(null), {
     true: 8193,
     null: 8194,
     false: 8192,
@@ -4104,12 +4105,10 @@ class ComputedObserver {
         const getter = descriptor.get;
         const setter = descriptor.set;
         const observer = new ComputedObserver(obj, getter, setter, useProxy, observerLocator);
-        const $get = (() => observer.getValue());
-        $get.getObserver = () => observer;
         def(obj, key, {
             enumerable: descriptor.enumerable,
             configurable: true,
-            get: $get,
+            get: objectAssign((() => observer.getValue()), { getObserver: () => observer }),
             set: (v) => {
                 observer.setValue(v);
             },

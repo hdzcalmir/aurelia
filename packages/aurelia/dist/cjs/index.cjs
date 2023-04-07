@@ -118,6 +118,8 @@ exports.BindingBehavior = r.BindingBehavior;
 
 exports.BindingMode = r.BindingMode;
 
+exports.ChildrenBinding = r.ChildrenBinding;
+
 exports.Controller = r.Controller;
 
 exports.CustomAttribute = r.CustomAttribute;

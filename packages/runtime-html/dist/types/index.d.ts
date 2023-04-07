@@ -52,7 +52,7 @@ export { ITemplateCompilerRegistration, INodeObserverLocatorRegistration, Defaul
 export { ITemplateElementFactory } from './compiler/template-element-factory';
 export { BindablesInfo, TemplateCompiler, ITemplateCompilerHooks, TemplateCompilerHooks, templateCompilerHooks, } from './compiler/template-compiler';
 export { allResources, } from './utilities-di';
-export { type PartialChildrenDefinition, ChildrenDefinition, Children, children, ChildrenObserver, } from './templating/children';
+export { type PartialChildrenDefinition, children, ChildrenBinding, } from './templating/children';
 export { Controller, isCustomElementController, isCustomElementViewModel, ViewModelKind, HooksDefinition, State, type ControllerVisitor, type IViewModel, IController, type IComponentController, type IContextualCustomElementController, type IControllerElementHydrationInstruction, type IHydratableController, IHydrationContext, type IDryCustomElementController, type ICustomAttributeController, type IHydratedController, type IHydratedComponentController, type IHydratedParentController, type ICompiledCustomElementController, type ICustomElementController, type ICustomElementViewModel, type ICustomAttributeViewModel, type IHydratedCustomElementViewModel, type IHydratedCustomAttributeViewModel, type ISyntheticView, } from './templating/controller';
 export { ILifecycleHooks, LifecycleHooksEntry, LifecycleHooksDefinition, type LifecycleHooksLookup, type LifecycleHook, LifecycleHooks, lifecycleHooks, } from './templating/lifecycle-hooks';
 export { IRendering, Rendering, } from './templating/rendering';
