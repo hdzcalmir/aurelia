@@ -2043,18 +2043,19 @@ exports.Router = class Router {
     createViewportInstructions(t, e) {
         if (t instanceof ViewportInstructionTree) return t;
         let s = e?.context ?? null;
-        if ("string" === typeof t) {
-            t = this.locationMgr.removeBaseHref(t);
-            if (t.startsWith("../") && null !== s) {
-                s = this.resolveContext(s);
-                while (t.startsWith("../") && null !== (s?.parent ?? null)) {
-                    t = t.slice(3);
-                    s = s.parent;
-                }
+        if ("string" === typeof t) t = this.locationMgr.removeBaseHref(t);
+        const i = "string" !== typeof t && "component" in t;
+        let n = i ? t.component : t;
+        if ("string" === typeof n && n.startsWith("../") && null !== s) {
+            s = this.resolveContext(s);
+            while (n.startsWith("../") && null !== (s?.parent ?? null)) {
+                n = n.slice(3);
+                s = s.parent;
             }
         }
-        const i = this.options;
-        return ViewportInstructionTree.create(t, i, NavigationOptions.create(i, {
+        if (i) t.component = n; else t = n;
+        const r = this.options;
+        return ViewportInstructionTree.create(t, r, NavigationOptions.create(r, {
             ...e,
             context: s
         }), this.ctx);
@@ -3703,7 +3704,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
             const e = this.active = null !== this.instructions && this.router.isActive(this.instructions, this.context);
             const s = this.activeClass;
             if (null === s) return;
-            if (e) this.el.classList.add(s); else this.el.classList.remove(s);
+            this.el.classList.toggle(s, e);
         }));
     }
     attaching() {

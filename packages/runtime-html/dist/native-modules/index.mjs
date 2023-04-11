@@ -2,7 +2,7 @@ import { Protocol as t, getPrototypeChain as e, firstDefined as i, kebabCase as 
 
 import { Metadata as R, isObject as S } from "../metadata/dist/native-modules/index.mjs";
 
-import { subscriberCollection as I, astEvaluate as T, ISignaler as E, connectable as L, astBind as P, astUnbind as _, astAssign as U, ConnectableSwitcher as D, ProxyObservable as $, IExpressionParser as q, IObserverLocator as M, Scope as F, ICoercionConfiguration as O, AccessScopeExpression as V, PrimitiveLiteralExpression as N, PropertyAccessor as j, INodeObserverLocator as H, getObserverLookup as W, SetterObserver as z, IDirtyChecker as G, createIndexMap as X, applyMutationsToIndices as K, getCollectionObserver as Q, synchronizeIndices as Y, BindingContext as Z } from "../runtime/dist/native-modules/index.mjs";
+import { subscriberCollection as I, astEvaluate as T, ISignaler as E, connectable as L, astBind as P, astUnbind as _, astAssign as $, ConnectableSwitcher as U, ProxyObservable as D, IExpressionParser as q, IObserverLocator as M, Scope as F, ICoercionConfiguration as O, AccessScopeExpression as V, PrimitiveLiteralExpression as N, PropertyAccessor as j, INodeObserverLocator as H, getObserverLookup as W, SetterObserver as z, IDirtyChecker as G, createIndexMap as X, applyMutationsToIndices as K, getCollectionObserver as Q, synchronizeIndices as Y, BindingContext as Z } from "../runtime/dist/native-modules/index.mjs";
 
 import { TaskAbortError as J } from "../platform/dist/native-modules/index.mjs";
 
@@ -95,11 +95,11 @@ const _t = (t, e, i) => {
     return i;
 };
 
-function Ut(t, e) {
+function $t(t, e) {
     let i;
     function s(t, e) {
         if (arguments.length > 1) i.property = e;
-        rt($t, BindableDefinition.create(e, t, i), t.constructor, e);
+        rt(Dt, BindableDefinition.create(e, t, i), t.constructor, e);
         ut(t.constructor, qt.keyFrom(e));
     }
     if (arguments.length > 1) {
@@ -114,15 +114,15 @@ function Ut(t, e) {
     return s;
 }
 
-function Dt(t) {
-    return t.startsWith($t);
+function Ut(t) {
+    return t.startsWith(Dt);
 }
 
-const $t = ht("bindable");
+const Dt = ht("bindable");
 
 const qt = wt({
-    name: $t,
-    keyFrom: t => `${$t}:${t}`,
+    name: Dt,
+    keyFrom: t => `${Dt}:${t}`,
     from(t, ...e) {
         const i = {};
         const s = Array.isArray;
@@ -154,8 +154,8 @@ const qt = wt({
                     r = s;
                 }
                 e = BindableDefinition.create(n, t, r);
-                if (!nt($t, t, n)) ut(t, qt.keyFrom(n));
-                rt($t, e, t, n);
+                if (!nt(Dt, t, n)) ut(t, qt.keyFrom(n));
+                rt(Dt, e, t, n);
                 return i;
             },
             mode(t) {
@@ -182,7 +182,7 @@ const qt = wt({
         return i;
     },
     getAll(t) {
-        const i = $t.length + 1;
+        const i = Dt.length + 1;
         const s = [];
         const n = e(t);
         let r = n.length;
@@ -193,9 +193,9 @@ const qt = wt({
         let c;
         while (--r >= 0) {
             a = n[r];
-            l = ft(a).filter(Dt);
+            l = ft(a).filter(Ut);
             h = l.length;
-            for (c = 0; c < h; ++c) s[o++] = st($t, a, l[c].slice(i));
+            for (c = 0; c < h; ++c) s[o++] = st(Dt, a, l[c].slice(i));
         }
         return s;
     }
@@ -430,29 +430,29 @@ class CharSpec {
 class Interpretation {
     constructor() {
         this.parts = l;
-        this.U = "";
-        this.$ = {};
+        this.$ = "";
+        this.U = {};
         this.q = {};
     }
     get pattern() {
-        const t = this.U;
+        const t = this.$;
         if ("" === t) return null; else return t;
     }
     set pattern(t) {
         if (null == t) {
-            this.U = "";
+            this.$ = "";
             this.parts = l;
         } else {
-            this.U = t;
+            this.$ = t;
             this.parts = this.q[t];
         }
     }
     append(t, e) {
-        const i = this.$;
+        const i = this.U;
         if (void 0 === i[t]) i[t] = e; else i[t] += e;
     }
     next(t) {
-        const e = this.$;
+        const e = this.U;
         let i;
         if (void 0 !== e[t]) {
             i = this.q;
@@ -463,7 +463,7 @@ class Interpretation {
 }
 
 class AttrParsingState {
-    get U() {
+    get $() {
         return this.M ? this.F[0] : null;
     }
     constructor(t, ...e) {
@@ -607,8 +607,8 @@ class SyntaxInterpreter {
         if (s.length > 0) {
             s.sort(te);
             r = s[0];
-            if (!r.charSpec.isSymbol) e.next(r.U);
-            e.pattern = r.U;
+            if (!r.charSpec.isSymbol) e.next(r.$);
+            e.pattern = r.$;
         }
         return e;
     }
@@ -1159,7 +1159,7 @@ const Pe = (t, e) => {
         const i = e(this, t);
         const s = this[i];
         const n = (...t) => s.call(this, ...t);
-        const r = "debounce" === t.type ? _e(t, n, this) : Ue(t, n, this);
+        const r = "debounce" === t.type ? _e(t, n, this) : $e(t, n, this);
         this[i] = r;
         return {
             dispose: () => {
@@ -1194,7 +1194,7 @@ const _e = (t, e, i) => {
     return l;
 };
 
-const Ue = (t, e, i) => {
+const $e = (t, e, i) => {
     let s;
     let n;
     let r = 0;
@@ -1227,7 +1227,7 @@ const Ue = (t, e, i) => {
     return c;
 };
 
-const De = {
+const Ue = {
     reusable: false,
     preempt: true
 };
@@ -1266,7 +1266,7 @@ class AttributeBinding {
                 this.lt = this.ct.queueTask((() => {
                     this.lt = null;
                     this.updateTarget(e);
-                }), De);
+                }), Ue);
                 t?.cancel();
             } else this.updateTarget(e);
         }
@@ -1305,7 +1305,7 @@ L(AttributeBinding);
 
 Se(true)(AttributeBinding);
 
-const $e = {
+const De = {
     reusable: false,
     preempt: true
 };
@@ -1350,7 +1350,7 @@ class InterpolationBinding {
             this.lt = this.ct.queueTask((() => {
                 this.lt = null;
                 r.setValue(s, this.target, this.targetProperty);
-            }), $e);
+            }), De);
             l?.cancel();
             l = null;
         } else r.setValue(s, this.target, this.targetProperty);
@@ -1515,7 +1515,7 @@ class ContentBinding {
         this.lt = this.ct.queueTask((() => {
             this.lt = null;
             this.updateTarget(t);
-        }), $e);
+        }), De);
         e?.cancel();
     }
 }
@@ -1603,7 +1603,7 @@ class PropertyBinding {
         this.ut.setValue(t, this.target, this.targetProperty);
     }
     updateSource(t) {
-        U(this.ast, this.s, this, t);
+        $(this.ast, this.s, this, t);
     }
     handleChange() {
         if (!this.isBound) return;
@@ -1699,13 +1699,13 @@ class RefBinding {
         }
         this.s = t;
         P(this.ast, t, this);
-        U(this.ast, this.s, this, this.target);
+        $(this.ast, this.s, this, this.target);
         this.isBound = true;
     }
     unbind() {
         if (!this.isBound) return;
         this.isBound = false;
-        if (T(this.ast, this.s, this, null) === this.target) U(this.ast, this.s, this, null);
+        if (T(this.ast, this.s, this, null) === this.target) $(this.ast, this.s, this, null);
         _(this.ast, this.s, this);
         this.s = void 0;
     }
@@ -2190,9 +2190,9 @@ const mi = {
     }
 };
 
-const {enter: gi, exit: pi} = D;
+const {enter: gi, exit: pi} = U;
 
-const {wrap: vi, unwrap: xi} = $;
+const {wrap: vi, unwrap: xi} = D;
 
 class ComputedWatcher {
     get value() {
@@ -2520,7 +2520,7 @@ const Ii = new WeakMap;
 
 class Controller {
     get lifecycleHooks() {
-        return this.Ut;
+        return this.$t;
     }
     get isActive() {
         return (this.state & (1 | 2)) > 0 && 0 === (4 & this.state);
@@ -2548,14 +2548,14 @@ class Controller {
         }
     }
     get hooks() {
-        return this.Dt;
+        return this.Ut;
     }
     get viewModel() {
-        return this.$t;
+        return this.Dt;
     }
     set viewModel(t) {
-        this.$t = t;
-        this.Dt = null == t || 2 === this.vmKind ? HooksDefinition.none : new HooksDefinition(t);
+        this.Dt = t;
+        this.Ut = null == t || 2 === this.vmKind ? HooksDefinition.none : new HooksDefinition(t);
     }
     constructor(t, e, i, s, n, r, o) {
         this.container = t;
@@ -2578,7 +2578,7 @@ class Controller {
         this.shadowRoot = null;
         this.nodes = null;
         this.location = null;
-        this.Ut = null;
+        this.$t = null;
         this.state = 0;
         this.qt = false;
         this.$initiator = null;
@@ -2588,8 +2588,8 @@ class Controller {
         this.Mt = 0;
         this.Ft = 0;
         this.Ot = 0;
-        this.$t = n;
-        this.Dt = 2 === e ? HooksDefinition.none : new HooksDefinition(n);
+        this.Dt = n;
+        this.Ut = 2 === e ? HooksDefinition.none : new HooksDefinition(n);
         this.location = o;
         this.r = t.root.get(Bi);
     }
@@ -2629,16 +2629,16 @@ class Controller {
     }
     hE(t, e) {
         const i = this.container;
-        const s = this.$t;
+        const s = this.Dt;
         let n = this.definition;
         this.scope = F.create(s, null, true);
         if (n.watches.length > 0) _i(this, i, n, s);
         Ei(this, n, s);
-        if (this.Dt.hasDefine) {
+        if (this.Ut.hasDefine) {
             const t = s.define(this, e, n);
             if (void 0 !== t && t !== n) n = CustomElementDefinition.getOrCreate(t);
         }
-        this.Ut = ki.resolve(i);
+        this.$t = ki.resolve(i);
         n.register(i);
         if (null !== n.injectable) Kt(i, n.injectable, new d("definition.injectable", s));
         if (null == t || false !== t.hydrate) {
@@ -2647,8 +2647,8 @@ class Controller {
         }
     }
     hS(t) {
-        if (null != this.Ut.hydrating) this.Ut.hydrating.forEach(Hi, this);
-        if (this.Dt.hasHydrating) this.$t.hydrating(this);
+        if (null != this.$t.hydrating) this.$t.hydrating.forEach(Hi, this);
+        if (this.Ut.hasHydrating) this.Dt.hydrating(this);
         const e = this.jt = this.r.compile(this.definition, this.container, t);
         const {shadowOptions: i, isStrictBinding: s, hasSlots: n, containerless: r} = e;
         let o = this.location;
@@ -2661,7 +2661,7 @@ class Controller {
         ps(this.host, this.definition.key, this);
         if (null !== i || n) {
             if (null != o) throw vt(`AUR0501`);
-            ps(this.shadowRoot = this.host.attachShadow(i ?? $i), Vs, this);
+            ps(this.shadowRoot = this.host.attachShadow(i ?? Di), Vs, this);
             ps(this.shadowRoot, this.definition.key, this);
             this.mountTarget = 2;
         } else if (null != o) {
@@ -2669,25 +2669,25 @@ class Controller {
             ps(o, this.definition.key, this);
             this.mountTarget = 3;
         } else this.mountTarget = 1;
-        this.$t.$controller = this;
+        this.Dt.$controller = this;
         this.nodes = this.r.createNodes(e);
-        if (void 0 !== this.Ut.hydrated) this.Ut.hydrated.forEach(Wi, this);
-        if (this.Dt.hasHydrated) this.$t.hydrated(this);
+        if (void 0 !== this.$t.hydrated) this.$t.hydrated.forEach(Wi, this);
+        if (this.Ut.hasHydrated) this.Dt.hydrated(this);
     }
     hC() {
         this.r.render(this, this.nodes.findTargets(), this.jt, this.host);
-        if (void 0 !== this.Ut.created) this.Ut.created.forEach(ji, this);
-        if (this.Dt.hasCreated) this.$t.created(this);
+        if (void 0 !== this.$t.created) this.$t.created.forEach(ji, this);
+        if (this.Ut.hasCreated) this.Dt.created(this);
     }
     Vt() {
         const t = this.definition;
-        const e = this.$t;
+        const e = this.Dt;
         if (t.watches.length > 0) _i(this, this.container, t, e);
         Ei(this, t, e);
         e.$controller = this;
-        this.Ut = ki.resolve(this.container);
-        if (void 0 !== this.Ut.created) this.Ut.created.forEach(ji, this);
-        if (this.Dt.hasCreated) this.$t.created(this);
+        this.$t = ki.resolve(this.container);
+        if (void 0 !== this.$t.created) this.$t.created.forEach(ji, this);
+        if (this.Ut.hasCreated) this.Dt.created(this);
     }
     Nt() {
         this.jt = this.r.compile(this.viewFactory.def, this.container, null);
@@ -2730,8 +2730,8 @@ class Controller {
         this.$initiator = t;
         this.Ht();
         let s;
-        if (2 !== this.vmKind && null != this.Ut.binding) s = m(...this.Ut.binding.map(zi, this));
-        if (this.Dt.hasBinding) s = m(s, this.$t.binding(this.$initiator, this.parent));
+        if (2 !== this.vmKind && null != this.$t.binding) s = m(...this.$t.binding.map(zi, this));
+        if (this.Ut.hasBinding) s = m(s, this.Dt.binding(this.$initiator, this.parent));
         if (Bt(s)) {
             this.Wt();
             s.then((() => {
@@ -2756,8 +2756,8 @@ class Controller {
                 ++t;
             }
         }
-        if (2 !== this.vmKind && null != this.Ut.bound) i = m(...this.Ut.bound.map(Gi, this));
-        if (this.Dt.hasBound) i = m(i, this.$t.bound(this.$initiator, this.parent));
+        if (2 !== this.vmKind && null != this.$t.bound) i = m(...this.$t.bound.map(Gi, this));
+        if (this.Ut.hasBound) i = m(i, this.Dt.bound(this.$initiator, this.parent));
         if (Bt(i)) {
             this.Wt();
             i.then((() => {
@@ -2820,8 +2820,8 @@ class Controller {
         }
         let t = 0;
         let e;
-        if (2 !== this.vmKind && null != this.Ut.attaching) e = m(...this.Ut.attaching.map(Xi, this));
-        if (this.Dt.hasAttaching) e = m(e, this.$t.attaching(this.$initiator, this.parent));
+        if (2 !== this.vmKind && null != this.$t.attaching) e = m(...this.$t.attaching.map(Xi, this));
+        if (this.Ut.hasAttaching) e = m(e, this.Dt.attaching(this.$initiator, this.parent));
         if (Bt(e)) {
             this.Wt();
             this.Ht();
@@ -2854,8 +2854,8 @@ class Controller {
         let i = 0;
         let s;
         if (null !== this.children) for (i = 0; i < this.children.length; ++i) void this.children[i].deactivate(t, this);
-        if (2 !== this.vmKind && null != this.Ut.detaching) s = m(...this.Ut.detaching.map(Qi, this));
-        if (this.Dt.hasDetaching) s = m(s, this.$t.detaching(this.$initiator, this.parent));
+        if (2 !== this.vmKind && null != this.$t.detaching) s = m(...this.$t.detaching.map(Qi, this));
+        if (this.Ut.hasDetaching) s = m(s, this.Dt.detaching(this.$initiator, this.parent));
         if (Bt(s)) {
             this.Wt();
             t.Qt();
@@ -2944,8 +2944,8 @@ class Controller {
     }
     Kt() {
         if (0 === --this.Mt) {
-            if (2 !== this.vmKind && null != this.Ut.attached) ts = m(...this.Ut.attached.map(Ki, this));
-            if (this.Dt.hasAttached) ts = m(ts, this.$t.attached(this.$initiator));
+            if (2 !== this.vmKind && null != this.$t.attached) ts = m(...this.$t.attached.map(Ki, this));
+            if (this.Ut.hasAttached) ts = m(ts, this.Dt.attached(this.$initiator));
             if (Bt(ts)) {
                 this.Wt();
                 ts.then((() => {
@@ -2978,8 +2978,8 @@ class Controller {
                     if (t.debug) t.logger.trace(`detach()`);
                     t.removeNodes();
                 }
-                if (2 !== t.vmKind && null != t.Ut.unbinding) e = m(...t.Ut.unbinding.map(Yi, this));
-                if (t.Dt.hasUnbinding) {
+                if (2 !== t.vmKind && null != t.$t.unbinding) e = m(...t.$t.unbinding.map(Yi, this));
+                if (t.Ut.hasUnbinding) {
                     if (t.debug) t.logger.trace("unbinding()");
                     e = m(e, t.viewModel.unbinding(t.$initiator, t.parent));
                 }
@@ -3028,10 +3028,10 @@ class Controller {
     is(t) {
         switch (this.vmKind) {
           case 1:
-            return ti(this.$t.constructor).name === t;
+            return ti(this.Dt.constructor).name === t;
 
           case 0:
-            return Ks(this.$t.constructor).name === t;
+            return Ks(this.Dt.constructor).name === t;
 
           case 2:
             return this.viewFactory.name === t;
@@ -3074,7 +3074,7 @@ class Controller {
     dispose() {
         if (32 === (32 & this.state)) return;
         this.state |= 32;
-        if (this.Dt.hasDispose) this.$t.dispose();
+        if (this.Ut.hasDispose) this.Dt.dispose();
         if (null !== this.children) {
             this.children.forEach(Ni);
             this.children = null;
@@ -3084,18 +3084,18 @@ class Controller {
         this.nodes = null;
         this.location = null;
         this.viewFactory = null;
-        if (null !== this.$t) {
-            Ii.delete(this.$t);
-            this.$t = null;
+        if (null !== this.Dt) {
+            Ii.delete(this.Dt);
+            this.Dt = null;
         }
-        this.$t = null;
+        this.Dt = null;
         this.host = null;
         this.shadowRoot = null;
         this.container.disposeResolvers();
     }
     accept(t) {
         if (true === t(this)) return true;
-        if (this.Dt.hasAccept && true === this.$t.accept(t)) return true;
+        if (this.Ut.hasAccept && true === this.Dt.accept(t)) return true;
         if (null !== this.children) {
             const {children: e} = this;
             for (let i = 0, s = e.length; i < s; ++i) if (true === e[i].accept(t)) return true;
@@ -3165,11 +3165,11 @@ function _i(t, e, i, s) {
     }
 }
 
-function Ui(t) {
+function $i(t) {
     return t instanceof Controller && 0 === t.vmKind;
 }
 
-function Di(t) {
+function Ui(t) {
     return S(t) && zs(t.constructor);
 }
 
@@ -3192,7 +3192,7 @@ class HooksDefinition {
 
 HooksDefinition.none = new HooksDefinition({});
 
-const $i = {
+const Di = {
     mode: "open"
 };
 
@@ -3244,39 +3244,39 @@ function Ni(t) {
 }
 
 function ji(t) {
-    t.instance.created(this.$t, this);
+    t.instance.created(this.Dt, this);
 }
 
 function Hi(t) {
-    t.instance.hydrating(this.$t, this);
+    t.instance.hydrating(this.Dt, this);
 }
 
 function Wi(t) {
-    t.instance.hydrated(this.$t, this);
+    t.instance.hydrated(this.Dt, this);
 }
 
 function zi(t) {
-    return t.instance.binding(this.$t, this["$initiator"], this.parent);
+    return t.instance.binding(this.Dt, this["$initiator"], this.parent);
 }
 
 function Gi(t) {
-    return t.instance.bound(this.$t, this["$initiator"], this.parent);
+    return t.instance.bound(this.Dt, this["$initiator"], this.parent);
 }
 
 function Xi(t) {
-    return t.instance.attaching(this.$t, this["$initiator"], this.parent);
+    return t.instance.attaching(this.Dt, this["$initiator"], this.parent);
 }
 
 function Ki(t) {
-    return t.instance.attached(this.$t, this["$initiator"]);
+    return t.instance.attached(this.Dt, this["$initiator"]);
 }
 
 function Qi(t) {
-    return t.instance.detaching(this.$t, this["$initiator"], this.parent);
+    return t.instance.detaching(this.Dt, this["$initiator"], this.parent);
 }
 
 function Yi(t) {
-    return t.instance.unbinding(this.$t, this["$initiator"], this.parent);
+    return t.instance.unbinding(this.Dt, this["$initiator"], this.parent);
 }
 
 let Zi;
@@ -3629,7 +3629,7 @@ function _s(t) {
     Hs(t, "isStrictBinding", true);
 }
 
-const Us = new WeakMap;
+const $s = new WeakMap;
 
 class CustomElementDefinition {
     get type() {
@@ -3663,17 +3663,17 @@ class CustomElementDefinition {
             if (It(i)) throw vt(`AUR0761:${t}`);
             const s = p("name", i, js);
             if (St(i.Type)) e = i.Type; else e = Ys(v(s));
-            return new CustomElementDefinition(e, s, a(i.aliases), p("key", i, (() => Ns(s))), p("cache", i, $s), p("capture", i, Ms), p("template", i, qs), a(i.instructions), a(i.dependencies), p("injectable", i, qs), p("needsCompile", i, Fs), a(i.surrogates), qt.from(e, i.bindables), p("containerless", i, Ms), p("isStrictBinding", i, Ms), p("shadowOptions", i, qs), p("hasSlots", i, Ms), p("enhance", i, Ms), p("watches", i, Os), x("processContent", e, qs));
+            return new CustomElementDefinition(e, s, a(i.aliases), p("key", i, (() => Ns(s))), p("cache", i, Ds), p("capture", i, Ms), p("template", i, qs), a(i.instructions), a(i.dependencies), p("injectable", i, qs), p("needsCompile", i, Fs), a(i.surrogates), qt.from(e, i.bindables), p("containerless", i, Ms), p("isStrictBinding", i, Ms), p("shadowOptions", i, qs), p("hasSlots", i, Ms), p("enhance", i, Ms), p("watches", i, Os), x("processContent", e, qs));
         }
-        if (It(t)) return new CustomElementDefinition(e, t, a(Xs(e, "aliases"), e.aliases), Ns(t), x("cache", e, $s), x("capture", e, Ms), x("template", e, qs), a(Xs(e, "instructions"), e.instructions), a(Xs(e, "dependencies"), e.dependencies), x("injectable", e, qs), x("needsCompile", e, Fs), a(Xs(e, "surrogates"), e.surrogates), qt.from(e, ...qt.getAll(e), Xs(e, "bindables"), e.bindables), x("containerless", e, Ms), x("isStrictBinding", e, Ms), x("shadowOptions", e, qs), x("hasSlots", e, Ms), x("enhance", e, Ms), a(We.getAnnotation(e), e.watches), x("processContent", e, qs));
+        if (It(t)) return new CustomElementDefinition(e, t, a(Xs(e, "aliases"), e.aliases), Ns(t), x("cache", e, Ds), x("capture", e, Ms), x("template", e, qs), a(Xs(e, "instructions"), e.instructions), a(Xs(e, "dependencies"), e.dependencies), x("injectable", e, qs), x("needsCompile", e, Fs), a(Xs(e, "surrogates"), e.surrogates), qt.from(e, ...qt.getAll(e), Xs(e, "bindables"), e.bindables), x("containerless", e, Ms), x("isStrictBinding", e, Ms), x("shadowOptions", e, qs), x("hasSlots", e, Ms), x("enhance", e, Ms), a(We.getAnnotation(e), e.watches), x("processContent", e, qs));
         const i = p("name", t, js);
-        return new CustomElementDefinition(e, i, a(Xs(e, "aliases"), t.aliases, e.aliases), Ns(i), w("cache", t, e, $s), w("capture", t, e, Ms), w("template", t, e, qs), a(Xs(e, "instructions"), t.instructions, e.instructions), a(Xs(e, "dependencies"), t.dependencies, e.dependencies), w("injectable", t, e, qs), w("needsCompile", t, e, Fs), a(Xs(e, "surrogates"), t.surrogates, e.surrogates), qt.from(e, ...qt.getAll(e), Xs(e, "bindables"), e.bindables, t.bindables), w("containerless", t, e, Ms), w("isStrictBinding", t, e, Ms), w("shadowOptions", t, e, qs), w("hasSlots", t, e, Ms), w("enhance", t, e, Ms), a(t.watches, We.getAnnotation(e), e.watches), w("processContent", t, e, qs));
+        return new CustomElementDefinition(e, i, a(Xs(e, "aliases"), t.aliases, e.aliases), Ns(i), w("cache", t, e, Ds), w("capture", t, e, Ms), w("template", t, e, qs), a(Xs(e, "instructions"), t.instructions, e.instructions), a(Xs(e, "dependencies"), t.dependencies, e.dependencies), w("injectable", t, e, qs), w("needsCompile", t, e, Fs), a(Xs(e, "surrogates"), t.surrogates, e.surrogates), qt.from(e, ...qt.getAll(e), Xs(e, "bindables"), e.bindables, t.bindables), w("containerless", t, e, Ms), w("isStrictBinding", t, e, Ms), w("shadowOptions", t, e, qs), w("hasSlots", t, e, Ms), w("enhance", t, e, Ms), a(t.watches, We.getAnnotation(e), e.watches), w("processContent", t, e, qs));
     }
     static getOrCreate(t) {
         if (t instanceof CustomElementDefinition) return t;
-        if (Us.has(t)) return Us.get(t);
+        if ($s.has(t)) return $s.get(t);
         const e = CustomElementDefinition.create(t);
-        Us.set(t, e);
+        $s.set(t, e);
         rt(Vs, e, e.Type);
         return e;
     }
@@ -3687,13 +3687,13 @@ class CustomElementDefinition {
     }
 }
 
-const Ds = {
+const Us = {
     name: void 0,
     searchParents: false,
     optional: false
 };
 
-const $s = () => 0;
+const Ds = () => 0;
 
 const qs = () => null;
 
@@ -3726,7 +3726,7 @@ const Ws = (t, e) => {
 
 const zs = t => St(t) && nt(Vs, t);
 
-const Gs = (t, e = Ds) => {
+const Gs = (t, e = Us) => {
     if (void 0 === e.name && true !== e.searchParents) {
         const i = gs(t, Vs);
         if (null === i) {
@@ -4466,19 +4466,19 @@ function Pn(t, e) {
 
 const _n = t => new SpreadBinding([], t);
 
-const Un = "IController";
+const $n = "IController";
 
-const Dn = "IInstruction";
+const Un = "IInstruction";
 
-const $n = "IRenderLocation";
+const Dn = "IRenderLocation";
 
 const qn = "IAuSlotsInfo";
 
 function Mn(t, e, i, s, n, r) {
     const o = e.container.createChild();
     Kt(o, t.HTMLElement, Kt(o, t.Element, Kt(o, vs, new d("ElementResolver", i))));
-    Kt(o, Oi, new d(Un, e));
-    Kt(o, ln, new d(Dn, s));
+    Kt(o, Oi, new d($n, e));
+    Kt(o, ln, new d(Un, s));
     Kt(o, ws, null == n ? On : new RenderLocationProvider(n));
     Kt(o, Ci, Vn);
     Kt(o, rn, null == r ? Nn : new d(qn, r));
@@ -4504,9 +4504,9 @@ function Fn(t, e, i, s, n, r, o, l) {
     const h = i.container.createChild();
     Kt(h, t.HTMLElement, Kt(h, t.Element, Kt(h, vs, new d("ElementResolver", s))));
     i = i instanceof Controller ? i : i.ctrl;
-    Kt(h, Oi, new d(Un, i));
-    Kt(h, ln, new d(Dn, n));
-    Kt(h, ws, null == o ? On : new d($n, o));
+    Kt(h, Oi, new d($n, i));
+    Kt(h, ln, new d(Un, n));
+    Kt(h, ws, null == o ? On : new d(Dn, o));
     Kt(h, Ci, null == r ? Vn : new ViewFactoryProvider(r));
     Kt(h, rn, null == l ? Nn : new d(qn, l));
     return {
@@ -5117,7 +5117,7 @@ class TemplateCompiler {
         const r = It(s.template) || !t.enhance ? n.xe.createTemplate(s.template) : s.template;
         const o = r.nodeName === xr && null != r.content;
         const h = o ? r.content : r;
-        const a = e.get(jt(Dr));
+        const a = e.get(jt(Ur));
         const c = a.length;
         let u = 0;
         if (c > 0) while (c > u) {
@@ -5422,9 +5422,9 @@ class TemplateCompiler {
         let L;
         let P;
         let _;
+        let $;
         let U;
         let D;
-        let $;
         let q;
         let M = null;
         let F;
@@ -5491,8 +5491,8 @@ class TemplateCompiler {
                 if (E) _ = this.Be(t, N, T, e); else {
                     O = F.primary;
                     if (null === M) {
-                        $ = p.parse(N, 1);
-                        _ = [ null === $ ? new SetPropertyInstruction(N, O.property) : new InterpolationInstruction($, O.property) ];
+                        D = p.parse(N, 1);
+                        _ = [ null === D ? new SetPropertyInstruction(N, O.property) : new InterpolationInstruction(D, O.property) ];
                     } else {
                         Sr.node = t;
                         Sr.attr = R;
@@ -5502,7 +5502,7 @@ class TemplateCompiler {
                     }
                 }
                 v();
-                if (T.isTemplateController) (U ?? (U = [])).push(new HydrateTemplateController(Rr, this.resolveResources ? T : T.name, void 0, _)); else (P ?? (P = [])).push(new HydrateAttributeInstruction(this.resolveResources ? T : T.name, null != T.aliases && T.aliases.includes(V) ? V : void 0, _));
+                if (T.isTemplateController) ($ ?? ($ = [])).push(new HydrateTemplateController(Rr, this.resolveResources ? T : T.name, void 0, _)); else (P ?? (P = [])).push(new HydrateAttributeInstruction(this.resolveResources ? T : T.name, null != T.aliases && T.aliases.includes(V) ? V : void 0, _));
                 continue;
             }
             if (null === M) {
@@ -5510,16 +5510,16 @@ class TemplateCompiler {
                     F = BindablesInfo.from(c, false);
                     L = F.attrs[V];
                     if (void 0 !== L) {
-                        $ = p.parse(N, 1);
-                        (I ?? (I = [])).push(null == $ ? new SetPropertyInstruction(N, L.property) : new InterpolationInstruction($, L.property));
+                        D = p.parse(N, 1);
+                        (I ?? (I = [])).push(null == D ? new SetPropertyInstruction(N, L.property) : new InterpolationInstruction(D, L.property));
                         v();
                         continue;
                     }
                 }
-                $ = p.parse(N, 1);
-                if (null != $) {
+                D = p.parse(N, 1);
+                if (null != D) {
                     v();
-                    (S ?? (S = [])).push(new InterpolationInstruction($, e.m.map(t, V) ?? b(V)));
+                    (S ?? (S = [])).push(new InterpolationInstruction(D, e.m.map(t, V) ?? b(V)));
                 }
                 continue;
             }
@@ -5573,14 +5573,14 @@ class TemplateCompiler {
             this.Te(t);
         }
         let z;
-        if (null != U) {
-            y = U.length - 1;
+        if (null != $) {
+            y = $.length - 1;
             k = y;
-            D = U[k];
+            U = $[k];
             let n;
             if (yr(t)) {
                 n = e.t();
-                fs(n, [ e.Ue(wr), e.Ue(br), this.Te(e.h(vr)) ]);
+                fs(n, [ e.$e(wr), e.$e(br), this.Te(e.h(vr)) ]);
             } else {
                 this._e(t, e);
                 if ("TEMPLATE" === t.nodeName) n = t; else {
@@ -5647,7 +5647,7 @@ class TemplateCompiler {
                 C = t.firstChild;
                 while (null !== C) C = this.be(C, o);
             }
-            D.def = CustomElementDefinition.create({
+            U.def = CustomElementDefinition.create({
                 name: js(),
                 template: r,
                 instructions: o.rows,
@@ -5655,19 +5655,19 @@ class TemplateCompiler {
                 isStrictBinding: e.root.def.isStrictBinding
             });
             while (k-- > 0) {
-                D = U[k];
+                U = $[k];
                 n = e.t();
                 v = this.Te(e.h(vr));
-                fs(n, [ e.Ue(wr), e.Ue(br), v ]);
-                D.def = CustomElementDefinition.create({
+                fs(n, [ e.$e(wr), e.$e(br), v ]);
+                U.def = CustomElementDefinition.create({
                     name: js(),
                     template: n,
                     needsCompile: false,
-                    instructions: [ [ U[k + 1] ] ],
+                    instructions: [ [ $[k + 1] ] ],
                     isStrictBinding: e.root.def.isStrictBinding
                 });
             }
-            e.rows.push([ D ]);
+            e.rows.push([ U ]);
         } else {
             if (null != w) e.rows.push(w);
             let i = t.firstChild;
@@ -5741,10 +5741,10 @@ class TemplateCompiler {
         let a;
         if (null !== s) {
             ({parts: r, expressions: o} = s);
-            if (a = r[0]) hs(i, e.De(a), t);
+            if (a = r[0]) hs(i, e.Ue(a), t);
             for (l = 0, h = o.length; h > l; ++l) {
-                as(i, t, [ e.Ue(wr), e.Ue(br), this.Te(e.h(vr)) ]);
-                if (a = r[l + 1]) hs(i, e.De(a), t);
+                as(i, t, [ e.$e(wr), e.$e(br), this.Te(e.h(vr)) ]);
+                if (a = r[l + 1]) hs(i, e.Ue(a), t);
                 e.rows.push([ new TextBindingInstruction(o[l], e.root.def.isStrictBinding) ]);
             }
             i.removeChild(t);
@@ -5829,14 +5829,14 @@ class TemplateCompiler {
                 a.add({
                     property: e,
                     attribute: i ?? void 0,
-                    mode: Ur(t)
+                    mode: $r(t)
                 });
                 const s = t.getAttributeNames().filter((t => !Lr.includes(t)));
                 if (s.length > 0) ;
                 l.removeChild(t);
             }
             o.push(n);
-            e.$e(Ws({
+            e.De(Ws({
                 name: s,
                 template: t
             }, n));
@@ -5915,7 +5915,7 @@ class TemplateCompiler {
         if (yr(t)) return t;
         const i = t.parentNode;
         const s = this.Te(e.h(vr));
-        as(i, t, [ e.Ue(wr), e.Ue(br), s ]);
+        as(i, t, [ e.$e(wr), e.$e(br), s ]);
         i.removeChild(t);
         return s;
     }
@@ -5954,15 +5954,15 @@ class CompilationContext {
         this.localEls = o ? s.localEls : new Set;
         this.rows = r ?? [];
     }
-    $e(t) {
+    De(t) {
         var e;
         ((e = this.root).deps ?? (e.deps = [])).push(t);
         this.root.c.register(t);
     }
-    De(t) {
+    Ue(t) {
         return ls(this.p, t);
     }
-    Ue(t) {
+    $e(t) {
         return rs(this.p, t);
     }
     h(t) {
@@ -6091,7 +6091,7 @@ const _r = (t, e) => {
     return i;
 };
 
-const Ur = t => {
+const $r = t => {
     switch (t.getAttribute("mode")) {
       case "oneTime":
         return 1;
@@ -6111,18 +6111,18 @@ const Ur = t => {
     }
 };
 
-const Dr = Ht("ITemplateCompilerHooks");
+const Ur = Ht("ITemplateCompilerHooks");
 
-const $r = new WeakMap;
+const Dr = new WeakMap;
 
 const qr = at("compiler-hooks");
 
 const Mr = wt({
     name: qr,
     define(t) {
-        let e = $r.get(t);
+        let e = Dr.get(t);
         if (void 0 === e) {
-            $r.set(t, e = new TemplateCompilerHooksDefinition(t));
+            Dr.set(t, e = new TemplateCompilerHooksDefinition(t));
             rt(qr, e, t);
             ct(t, qr);
         }
@@ -6138,7 +6138,7 @@ class TemplateCompilerHooksDefinition {
         this.Type = t;
     }
     register(t) {
-        t.register(Wt(Dr, this.Type));
+        t.register(Wt(Ur, this.Type));
     }
 }
 
@@ -7059,7 +7059,7 @@ class Focus {
 
 Focus.inject = [ vs, ii ];
 
-et([ Ut({
+et([ $t({
     mode: 6
 }) ], Focus.prototype, "value", void 0);
 
@@ -7102,7 +7102,7 @@ let co = class Show {
     }
 };
 
-et([ Ut ], co.prototype, "value", void 0);
+et([ $t ], co.prototype, "value", void 0);
 
 co = et([ it(0, vs), it(1, ii), it(2, ln) ], co);
 
@@ -7235,27 +7235,27 @@ class Portal {
 
 Portal.inject = [ Ci, ws, ii ];
 
-et([ Ut({
+et([ $t({
     primary: true
 }) ], Portal.prototype, "target", void 0);
 
-et([ Ut() ], Portal.prototype, "position", void 0);
+et([ $t() ], Portal.prototype, "position", void 0);
 
-et([ Ut({
+et([ $t({
     callback: "targetChanged"
 }) ], Portal.prototype, "renderContext", void 0);
 
-et([ Ut() ], Portal.prototype, "strict", void 0);
+et([ $t() ], Portal.prototype, "strict", void 0);
 
-et([ Ut() ], Portal.prototype, "deactivating", void 0);
+et([ $t() ], Portal.prototype, "deactivating", void 0);
 
-et([ Ut() ], Portal.prototype, "activating", void 0);
+et([ $t() ], Portal.prototype, "activating", void 0);
 
-et([ Ut() ], Portal.prototype, "deactivated", void 0);
+et([ $t() ], Portal.prototype, "deactivated", void 0);
 
-et([ Ut() ], Portal.prototype, "activated", void 0);
+et([ $t() ], Portal.prototype, "activated", void 0);
 
-et([ Ut() ], Portal.prototype, "callbackContext", void 0);
+et([ $t() ], Portal.prototype, "callbackContext", void 0);
 
 Ge("portal")(Portal);
 
@@ -7329,9 +7329,9 @@ class If {
 
 If.inject = [ Ci, ws ];
 
-et([ Ut ], If.prototype, "value", void 0);
+et([ $t ], If.prototype, "value", void 0);
 
-et([ Ut({
+et([ $t({
     set: t => "" === t || !!t && "false" !== t
 }) ], If.prototype, "cache", void 0);
 
@@ -7371,18 +7371,18 @@ class Repeat {
         this.Li = false;
         this.Pi = null;
         this._i = void 0;
-        this.Ui = false;
+        this.$i = false;
         const r = t.props[0].props[0];
         if (void 0 !== r) {
             const {to: t, value: i, command: s} = r;
             if ("key" === t) if (null === s) this.key = i; else if ("bind" === s) this.key = e.parse(i, 16); else throw vt(`AUR775:${s}`); else throw vt(`AUR776:${t}`);
         }
         this.l = i;
-        this.Di = s;
+        this.Ui = s;
         this.f = n;
     }
     binding(t, e) {
-        const i = this.Di.bindings;
+        const i = this.Ui.bindings;
         const s = i.length;
         let n;
         let r;
@@ -7391,7 +7391,7 @@ class Repeat {
             n = i[o];
             if (n.target === this && "items" === n.targetProperty) {
                 r = this.forOf = n.ast;
-                this.$i = n;
+                this.Di = n;
                 let t = r.iterable;
                 while (null != t && fo.includes(t.$kind)) {
                     t = t.expression;
@@ -7403,7 +7403,7 @@ class Repeat {
         }
         this.qi();
         const l = r.declaration;
-        if (!(this.Ui = 24 === l.$kind || 25 === l.$kind)) this.local = T(l, this.$controller.scope, n, null);
+        if (!(this.$i = 24 === l.$kind || 25 === l.$kind)) this.local = T(l, this.$controller.scope, n, null);
     }
     attaching(t, e) {
         this.Mi();
@@ -7429,7 +7429,7 @@ class Repeat {
         if (this.Ei) {
             if (this.Li) return;
             this.Li = true;
-            this.items = T(this.forOf.iterable, i.scope, this.$i, null);
+            this.items = T(this.forOf.iterable, i.scope, this.Di, null);
             this.Li = false;
             return;
         }
@@ -7447,8 +7447,8 @@ class Repeat {
             const l = o.length;
             const h = this.forOf;
             const a = h.declaration;
-            const c = this.$i;
-            const u = this.Ui;
+            const c = this.Di;
+            const u = this.$i;
             e = X(l);
             let f = 0;
             if (0 === s) for (;f < l; ++f) e[f] = -2; else if (0 === l) if (u) for (f = 0; f < s; ++f) {
@@ -7475,10 +7475,15 @@ class Repeat {
                 f = 0;
                 t: {
                     while (true) {
-                        m = d[f];
-                        g = o[f];
-                        p = r ? So(A, n, m, Io(C, d[f], h, B, c, t, u), c) : m;
-                        v = r ? So(A, n, g, Io(C, o[f], h, B, c, t, u), c) : g;
+                        if (r) {
+                            m = d[f];
+                            g = o[f];
+                            p = So(A, n, m, Io(C, m, h, B, c, t, u), c);
+                            v = So(A, n, g, Io(C, g, h, B, c, t, u), c);
+                        } else {
+                            m = p = To(d[f], f);
+                            g = v = To(o[f], f);
+                        }
                         if (p !== v) {
                             A.set(m, p);
                             A.set(g, v);
@@ -7490,10 +7495,15 @@ class Repeat {
                     if (w !== b) break t;
                     x = b;
                     while (true) {
-                        m = d[x];
-                        g = o[x];
-                        p = r ? So(A, n, m, Io(C, m, h, B, c, t, u), c) : m;
-                        v = r ? So(A, n, g, Io(C, g, h, B, c, t, u), c) : g;
+                        if (r) {
+                            m = d[x];
+                            g = o[x];
+                            p = So(A, n, m, Io(C, m, h, B, c, t, u), c);
+                            v = So(A, n, g, Io(C, g, h, B, c, t, u), c);
+                        } else {
+                            m = p = To(d[f], f);
+                            g = v = To(o[f], f);
+                        }
                         if (p !== v) {
                             A.set(m, p);
                             A.set(g, v);
@@ -7506,21 +7516,21 @@ class Repeat {
                 const R = f;
                 const S = f;
                 for (f = S; f <= b; ++f) {
-                    if (A.has(g = o[f])) v = A.get(g); else {
+                    if (A.has(g = r ? o[f] : To(o[f], f))) v = A.get(g); else {
                         v = r ? So(A, n, g, Io(C, g, h, B, c, t, u), c) : g;
                         A.set(g, v);
                     }
                     k.set(v, f);
                 }
                 for (f = R; f <= w; ++f) {
-                    if (A.has(m = d[f])) p = A.get(m); else p = r ? So(A, n, m, i[f].scope, c) : m;
+                    if (A.has(m = r ? d[f] : To(d[f], f))) p = A.get(m); else p = r ? So(A, n, m, i[f].scope, c) : m;
                     y.set(p, f);
                     if (k.has(p)) e[k.get(p)] = f; else {
                         e.deletedIndices.push(f);
                         e.deletedItems.push(m);
                     }
                 }
-                for (f = S; f <= b; ++f) if (!y.has(A.get(o[f]))) e[f] = -2;
+                for (f = S; f <= b; ++f) if (!y.has(A.get(r ? o[f] : To(o[f], f)))) e[f] = -2;
                 y.clear();
                 k.clear();
             }
@@ -7542,7 +7552,7 @@ class Repeat {
         let i = this.Ei;
         let s;
         if (i) {
-            e = this.Hi = T(this.Pi, t, this.$i, null) ?? null;
+            e = this.Hi = T(this.Pi, t, this.Di, null) ?? null;
             i = this.Ei = !Lt(this.items, e);
         }
         const n = this.Ti;
@@ -7574,7 +7584,7 @@ class Repeat {
         let i;
         let s;
         let n;
-        const {$controller: r, f: o, local: l, l: h, items: a, Ii: c, $i: u, forOf: f, Ui: d} = this;
+        const {$controller: r, f: o, local: l, l: h, items: a, Ii: c, Di: u, forOf: f, $i: d} = this;
         const m = r.scope;
         const g = yo(a);
         const p = this.views = Array(g);
@@ -7631,7 +7641,7 @@ class Repeat {
         let n;
         let r;
         let o = 0;
-        const {$controller: l, f: h, local: a, _i: c, l: u, views: f, Ui: d, $i: m, Ii: g, forOf: p} = this;
+        const {$controller: l, f: h, local: a, _i: c, l: u, views: f, $i: d, Di: m, Ii: g, forOf: p} = this;
         const v = e.length;
         for (;v > o; ++o) if (-2 === e[o]) {
             n = h.create();
@@ -7658,11 +7668,11 @@ class Repeat {
                 s = n.activate(n, l, r);
                 if (Bt(s)) (i ?? (i = [])).push(s);
             } else if (C < 0 || 1 === y || o !== b[C]) {
-                if (d) U(k, n.scope, m, c[o]); else n.scope.bindingContext[a] = c[o];
+                if (d) $(k, n.scope, m, c[o]); else n.scope.bindingContext[a] = c[o];
                 wo(n.scope.overrideContext, o, w);
                 n.nodes.insertBefore(n.location);
             } else {
-                if (d) U(k, n.scope, m, c[o]); else n.scope.bindingContext[a] = c[o];
+                if (d) $(k, n.scope, m, c[o]); else n.scope.bindingContext[a] = c[o];
                 if (t !== w) wo(n.scope.overrideContext, o, w);
                 --C;
             }
@@ -7681,7 +7691,7 @@ class Repeat {
 
 Repeat.inject = [ ln, q, ws, Oi, Ci ];
 
-et([ Ut ], Repeat.prototype, "items", void 0);
+et([ $t ], Repeat.prototype, "items", void 0);
 
 Ge("repeat")(Repeat);
 
@@ -7843,10 +7853,28 @@ const So = (t, e, i, s, n) => {
 const Io = (t, e, i, s, n, r, o) => {
     let l = t.get(e);
     if (void 0 === l) {
-        if (o) U(i.declaration, l = F.fromParent(s, new Z), n, e); else l = F.fromParent(s, new Z(r, e));
+        if (o) $(i.declaration, l = F.fromParent(s, new Z), n, e); else l = F.fromParent(s, new Z(r, e));
         t.set(e, l);
     }
     return l;
+};
+
+const To = (t, e) => {
+    const i = typeof t;
+    switch (i) {
+      case "object":
+        if (null !== t) return t;
+
+      case "string":
+      case "number":
+      case "bigint":
+      case "undefined":
+      case "boolean":
+        return `${e}${i}${t}`;
+
+      default:
+        return t;
+    }
 };
 
 class With {
@@ -7882,11 +7910,11 @@ class With {
 
 With.inject = [ Ci, ws ];
 
-et([ Ut ], With.prototype, "value", void 0);
+et([ $t ], With.prototype, "value", void 0);
 
 Ge("with")(With);
 
-let To = class Switch {
+let Eo = class Switch {
     constructor(t, e) {
         this.f = t;
         this.l = e;
@@ -8007,18 +8035,18 @@ let To = class Switch {
     }
 };
 
-et([ Ut ], To.prototype, "value", void 0);
+et([ $t ], Eo.prototype, "value", void 0);
 
-To = et([ Ge("switch"), it(0, Ci), it(1, ws) ], To);
+Eo = et([ Ge("switch"), it(0, Ci), it(1, ws) ], Eo);
 
-let Eo = 0;
+let Lo = 0;
 
-let Lo = class Case {
+let Po = class Case {
     constructor(t, e, i, s) {
         this.f = t;
         this.Xi = e;
         this.l = i;
-        this.id = ++Eo;
+        this.id = ++Lo;
         this.fallThrough = false;
         this.view = void 0;
         this.Ki = s.config.level <= 1;
@@ -8027,7 +8055,7 @@ let Lo = class Case {
     link(t, e, i, s) {
         const n = t.parent;
         const r = n?.viewModel;
-        if (r instanceof To) {
+        if (r instanceof Eo) {
             this.$switch = r;
             this.linkToSwitch(r);
         } else throw vt(`AUR0815`);
@@ -8084,11 +8112,11 @@ let Lo = class Case {
     }
 };
 
-Lo.inject = [ Ci, M, ws, k ];
+Po.inject = [ Ci, M, ws, k ];
 
-et([ Ut ], Lo.prototype, "value", void 0);
+et([ $t ], Po.prototype, "value", void 0);
 
-et([ Ut({
+et([ $t({
     set: t => {
         switch (t) {
           case "true":
@@ -8102,20 +8130,20 @@ et([ Ut({
         }
     },
     mode: 1
-}) ], Lo.prototype, "fallThrough", void 0);
+}) ], Po.prototype, "fallThrough", void 0);
 
-Lo = et([ Ge("case") ], Lo);
+Po = et([ Ge("case") ], Po);
 
-let Po = class DefaultCase extends Lo {
+let _o = class DefaultCase extends Po {
     linkToSwitch(t) {
         if (void 0 !== t.defaultCase) throw vt(`AUR0816`);
         t.defaultCase = this;
     }
 };
 
-Po = et([ Ge("default-case") ], Po);
+_o = et([ Ge("default-case") ], _o);
 
-let _o = class PromiseTemplateController {
+let $o = class PromiseTemplateController {
     constructor(t, e, i, s) {
         this.f = t;
         this.l = e;
@@ -8191,9 +8219,9 @@ let _o = class PromiseTemplateController {
     }
 };
 
-et([ Ut ], _o.prototype, "value", void 0);
+et([ $t ], $o.prototype, "value", void 0);
 
-_o = et([ Ge("promise"), it(0, Ci), it(1, ws), it(2, ii), it(3, k) ], _o);
+$o = et([ Ge("promise"), it(0, Ci), it(1, ws), it(2, ii), it(3, k) ], $o);
 
 let Uo = class PendingTemplateController {
     constructor(t, e) {
@@ -8202,7 +8230,7 @@ let Uo = class PendingTemplateController {
         this.view = void 0;
     }
     link(t, e, i, s) {
-        qo(t).pending = this;
+        Mo(t).pending = this;
     }
     activate(t, e) {
         let i = this.view;
@@ -8224,7 +8252,7 @@ let Uo = class PendingTemplateController {
     }
 };
 
-et([ Ut({
+et([ $t({
     mode: 2
 }) ], Uo.prototype, "value", void 0);
 
@@ -8237,7 +8265,7 @@ let Do = class FulfilledTemplateController {
         this.view = void 0;
     }
     link(t, e, i, s) {
-        qo(t).fulfilled = this;
+        Mo(t).fulfilled = this;
     }
     activate(t, e, i) {
         this.value = i;
@@ -8260,20 +8288,20 @@ let Do = class FulfilledTemplateController {
     }
 };
 
-et([ Ut({
+et([ $t({
     mode: 4
 }) ], Do.prototype, "value", void 0);
 
 Do = et([ Ge("then"), it(0, Ci), it(1, ws) ], Do);
 
-let $o = class RejectedTemplateController {
+let qo = class RejectedTemplateController {
     constructor(t, e) {
         this.f = t;
         this.l = e;
         this.view = void 0;
     }
     link(t, e, i, s) {
-        qo(t).rejected = this;
+        Mo(t).rejected = this;
     }
     activate(t, e, i) {
         this.value = i;
@@ -8296,51 +8324,51 @@ let $o = class RejectedTemplateController {
     }
 };
 
-et([ Ut({
+et([ $t({
     mode: 4
-}) ], $o.prototype, "value", void 0);
+}) ], qo.prototype, "value", void 0);
 
-$o = et([ Ge("catch"), it(0, Ci), it(1, ws) ], $o);
+qo = et([ Ge("catch"), it(0, Ci), it(1, ws) ], qo);
 
-function qo(t) {
+function Mo(t) {
     const e = t.parent;
     const i = e?.viewModel;
-    if (i instanceof _o) return i;
+    if (i instanceof $o) return i;
     throw vt(`AUR0813`);
 }
 
-let Mo = class PromiseAttributePattern {
+let Fo = class PromiseAttributePattern {
     "promise.resolve"(t, e, i) {
         return new AttrSyntax(t, e, "promise", "bind");
     }
 };
 
-Mo = et([ se({
+Fo = et([ se({
     pattern: "promise.resolve",
     symbols: ""
-}) ], Mo);
+}) ], Fo);
 
-let Fo = class FulfilledAttributePattern {
+let Oo = class FulfilledAttributePattern {
     then(t, e, i) {
         return new AttrSyntax(t, e, "then", "from-view");
     }
 };
 
-Fo = et([ se({
+Oo = et([ se({
     pattern: "then",
     symbols: ""
-}) ], Fo);
+}) ], Oo);
 
-let Oo = class RejectedAttributePattern {
+let Vo = class RejectedAttributePattern {
     catch(t, e, i) {
         return new AttrSyntax(t, e, "catch", "from-view");
     }
 };
 
-Oo = et([ se({
+Vo = et([ se({
     pattern: "catch",
     symbols: ""
-}) ], Oo);
+}) ], Vo);
 
 class AuCompose {
     static get inject() {
@@ -8467,13 +8495,13 @@ class AuCompose {
     }
 }
 
-et([ Ut ], AuCompose.prototype, "template", void 0);
+et([ $t ], AuCompose.prototype, "template", void 0);
 
-et([ Ut ], AuCompose.prototype, "component", void 0);
+et([ $t ], AuCompose.prototype, "component", void 0);
 
-et([ Ut ], AuCompose.prototype, "model", void 0);
+et([ $t ], AuCompose.prototype, "model", void 0);
 
-et([ Ut({
+et([ $t({
     set: t => {
         if ("scoped" === t || "auto" === t) return t;
         throw vt(`AUR0805`);
@@ -8556,7 +8584,7 @@ class CompositionController {
     }
 }
 
-let Vo = class AuSlot {
+let No = class AuSlot {
     static get inject() {
         return [ ws, ln, Vi, Bi ];
     }
@@ -8605,21 +8633,21 @@ let Vo = class AuSlot {
     }
 };
 
-et([ Ut ], Vo.prototype, "expose", void 0);
+et([ $t ], No.prototype, "expose", void 0);
 
-Vo = et([ Ts({
+No = et([ Ts({
     name: "au-slot",
     template: null,
     containerless: true
-}) ], Vo);
+}) ], No);
 
-const No = Ht("ISanitizer", (t => t.singleton(class {
+const jo = Ht("ISanitizer", (t => t.singleton(class {
     sanitize() {
         throw vt('"sanitize" method not implemented');
     }
 })));
 
-let jo = class SanitizeValueConverter {
+let Ho = class SanitizeValueConverter {
     constructor(t) {
         this.gs = t;
     }
@@ -8629,123 +8657,123 @@ let jo = class SanitizeValueConverter {
     }
 };
 
-jo = et([ it(0, No) ], jo);
+Ho = et([ it(0, jo) ], Ho);
 
-ke("sanitize")(jo);
+ke("sanitize")(Ho);
 
-const Ho = DebounceBindingBehavior;
+const Wo = DebounceBindingBehavior;
 
-const Wo = OneTimeBindingBehavior;
+const zo = OneTimeBindingBehavior;
 
-const zo = ToViewBindingBehavior;
+const Go = ToViewBindingBehavior;
 
-const Go = FromViewBindingBehavior;
+const Xo = FromViewBindingBehavior;
 
-const Xo = SignalBindingBehavior;
+const Ko = SignalBindingBehavior;
 
-const Ko = ThrottleBindingBehavior;
+const Qo = ThrottleBindingBehavior;
 
-const Qo = TwoWayBindingBehavior;
+const Yo = TwoWayBindingBehavior;
 
-const Yo = TemplateCompiler;
+const Zo = TemplateCompiler;
 
-const Zo = NodeObserverLocator;
+const Jo = NodeObserverLocator;
 
-const Jo = [ Yo, Zo ];
+const tl = [ Zo, Jo ];
 
-const tl = SVGAnalyzer;
+const el = SVGAnalyzer;
 
-const el = ue;
+const il = ue;
 
-const il = ce;
+const sl = ce;
 
-const sl = ae;
+const nl = ae;
 
-const nl = he;
+const rl = he;
 
-const rl = fe;
+const ol = fe;
 
-const ol = [ sl, nl, rl ];
+const ll = [ nl, rl, ol ];
 
-const ll = [ el, il ];
+const hl = [ il, sl ];
 
-const hl = Jn;
+const al = Jn;
 
-const al = tr;
+const cl = tr;
 
-const cl = Yn;
+const ul = Yn;
 
-const ul = Kn;
+const fl = Kn;
 
-const fl = Qn;
+const dl = Qn;
 
-const dl = Zn;
+const ml = Zn;
 
-const ml = or;
+const gl = or;
 
-const gl = er;
+const pl = er;
 
-const pl = ir;
+const vl = ir;
 
-const vl = sr;
+const xl = sr;
 
-const xl = rr;
+const wl = rr;
 
-const wl = nr;
+const bl = nr;
 
-const bl = lr;
+const yl = lr;
 
-const yl = [ hl, ul, cl, fl, dl, al, ml, gl, pl, xl, wl, vl, bl ];
+const kl = [ al, fl, ul, dl, ml, cl, gl, pl, vl, wl, bl, xl, yl ];
 
-const kl = jo;
+const Al = Ho;
 
-const Al = If;
+const Cl = If;
 
-const Cl = Else;
+const Bl = Else;
 
-const Bl = Repeat;
+const Rl = Repeat;
 
-const Rl = With;
+const Sl = With;
 
-const Sl = To;
-
-const Il = Lo;
+const Il = Eo;
 
 const Tl = Po;
 
 const El = _o;
 
-const Ll = Uo;
+const Ll = $o;
 
-const Pl = Do;
+const Pl = Uo;
 
-const _l = $o;
+const _l = Do;
 
-const Ul = Mo;
+const $l = qo;
 
-const Dl = Fo;
+const Ul = Fo;
 
-const $l = Oo;
+const Dl = Oo;
 
-const ql = SelfBindingBehavior;
+const ql = Vo;
 
-const Ml = UpdateTriggerBindingBehavior;
+const Ml = SelfBindingBehavior;
 
-const Fl = AuCompose;
+const Fl = UpdateTriggerBindingBehavior;
 
-const Ol = Portal;
+const Ol = AuCompose;
 
-const Vl = Focus;
+const Vl = Portal;
 
-const Nl = co;
+const Nl = Focus;
 
-const jl = [ Ho, Wo, zo, Go, Xo, Ko, Qo, kl, Al, Cl, Bl, Rl, Sl, Il, Tl, El, Ll, Pl, _l, Ul, Dl, $l, AttrBindingBehavior, ql, Ml, Fl, Ol, Vl, Nl, Vo ];
+const jl = co;
 
-const Hl = [ kn, An, bn, yn, gn, pn, vn, xn, wn, Bn, En, Rn, Sn, In, Tn, Cn, Ln ];
+const Hl = [ Wo, zo, Go, Xo, Ko, Qo, Yo, Al, Cl, Bl, Rl, Sl, Il, Tl, El, Ll, Pl, _l, $l, Ul, Dl, ql, AttrBindingBehavior, Ml, Fl, Ol, Vl, Nl, jl, No ];
 
-const Wl = zl(n);
+const Wl = [ kn, An, bn, yn, gn, pn, vn, xn, wn, Bn, En, Rn, Sn, In, Tn, Cn, Ln ];
 
-function zl(t) {
+const zl = Gl(n);
+
+function Gl(t) {
     return {
         optionsProvider: t,
         register(e) {
@@ -8756,15 +8784,15 @@ function zl(t) {
                 }
             };
             t(i);
-            return e.register(Gt(O, i.coercingOptions), ...Jo, ...jl, ...ol, ...yl, ...Hl);
+            return e.register(Gt(O, i.coercingOptions), ...tl, ...Hl, ...ll, ...kl, ...Wl);
         },
         customize(e) {
-            return zl(e ?? t);
+            return Gl(e ?? t);
         }
     };
 }
 
-const Gl = Ht("IAurelia");
+const Xl = Ht("IAurelia");
 
 class Aurelia {
     get isRunning() {
@@ -8792,8 +8820,8 @@ class Aurelia {
         this.next = void 0;
         this.ws = void 0;
         this.bs = void 0;
-        if (t.has(Gl, true)) throw vt(`AUR0768`);
-        Kt(t, Gl, new d("IAurelia", this));
+        if (t.has(Xl, true)) throw vt(`AUR0768`);
+        Kt(t, Xl, new d("IAurelia", this));
         Kt(t, es, this.ys = new d("IAppRoot"));
     }
     register(...t) {
@@ -8883,7 +8911,7 @@ class Aurelia {
     }
 }
 
-var Xl;
+var Kl;
 
 (function(t) {
     t[t["oneTime"] = 1] = "oneTime";
@@ -8891,16 +8919,16 @@ var Xl;
     t[t["fromView"] = 4] = "fromView";
     t[t["twoWay"] = 6] = "twoWay";
     t[t["default"] = 8] = "default";
-})(Xl || (Xl = {}));
+})(Kl || (Kl = {}));
 
-var Kl;
+var Ql;
 
 (function(t) {
     t[t["Element"] = 1] = "Element";
     t[t["Attribute"] = 2] = "Attribute";
-})(Kl || (Kl = {}));
+})(Ql || (Ql = {}));
 
-function Ql(t, e) {
+function Yl(t, e) {
     let i;
     const s = "dependencies";
     function n(t, e, n) {
@@ -8927,7 +8955,7 @@ function Ql(t, e) {
 }
 
 class ChildrenBinding {
-    static create(t, e, i, s, n = Jl, r = th, o = eh, l = Yl) {
+    static create(t, e, i, s, n = th, r = eh, o = ih, l = Zl) {
         const h = new ChildrenBinding(t, e, s, n, r, o, l);
         Pt(e, i, {
             enumerable: true,
@@ -8939,11 +8967,11 @@ class ChildrenBinding {
         });
         return h;
     }
-    constructor(t, e, i, s = Jl, n = th, r = eh, o = Yl) {
+    constructor(t, e, i, s = th, n = eh, r = ih, o = Zl) {
         this.Cs = void 0;
-        this.Bs = Jl;
-        this.Rs = th;
-        this.Ss = eh;
+        this.Bs = th;
+        this.Rs = eh;
+        this.Ss = ih;
         this.isBound = false;
         this.ht = t;
         this.cb = (this.obj = e)[i];
@@ -8977,36 +9005,36 @@ class ChildrenBinding {
         this.subs.notify(this.Cs, void 0);
     }
     get() {
-        throw Zl("get");
+        throw Jl("get");
     }
     useScope() {}
     limit() {
-        throw Zl("limit");
+        throw Jl("limit");
     }
     Es() {
-        return sh(this.ht, this.Bs, this.Rs, this.Ss);
+        return nh(this.ht, this.Bs, this.Rs, this.Ss);
     }
 }
 
 I(ChildrenBinding);
 
-const Yl = {
+const Zl = {
     childList: true
 };
 
-const Zl = t => vt(`Method "${t}": not implemented`);
+const Jl = t => vt(`Method "${t}": not implemented`);
 
-const Jl = t => t.host.childNodes;
+const th = t => t.host.childNodes;
 
-const th = (t, e, i) => !!i;
+const eh = (t, e, i) => !!i;
 
-const eh = (t, e, i) => i;
+const ih = (t, e, i) => i;
 
-const ih = {
+const sh = {
     optional: true
 };
 
-const sh = (t, e, i, s) => {
+const nh = (t, e, i, s) => {
     const n = e(t);
     const r = n.length;
     const o = [];
@@ -9016,7 +9044,7 @@ const sh = (t, e, i, s) => {
     let c = 0;
     for (;c < r; ++c) {
         l = n[c];
-        h = Gs(l, ih);
+        h = Gs(l, sh);
         a = h?.viewModel ?? null;
         if (i(l, h, a)) o.push(s(l, h, a));
     }
@@ -9032,11 +9060,11 @@ class ChildrenLifecycleHooks {
     }
     hydrating(t, e) {
         const i = this.def;
-        e.addBinding(ChildrenBinding.create(e, e.viewModel, i.name, i.callback ?? `${mt(i.name)}Changed`, i.query ?? Jl, i.filter ?? th, i.map ?? eh, i.options ?? Yl));
+        e.addBinding(ChildrenBinding.create(e, e.viewModel, i.name, i.callback ?? `${mt(i.name)}Changed`, i.query ?? th, i.filter ?? eh, i.map ?? ih, i.options ?? Zl));
     }
 }
 
 Ai()(ChildrenLifecycleHooks);
 
-export { AdoptedStyleSheetsStyles, AppRoot, Oe as AppTask, ue as AtPrefixedTriggerAttributePattern, el as AtPrefixedTriggerAttributePatternRegistration, AttrBindingBehavior, sr as AttrBindingCommand, vl as AttrBindingCommandRegistration, AttrSyntax, AttributeBinding, AttributeBindingInstruction, En as AttributeBindingRenderer, AttributeNSAccessor, le as AttributePattern, AuCompose, Vo as AuSlot, AuSlotsInfo, Aurelia, qt as Bindable, BindableDefinition, BindableObserver, BindablesInfo, ye as BindingBehavior, BindingBehaviorDefinition, Xn as BindingCommand, BindingCommandDefinition, Xl as BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, ir as CaptureBindingCommand, pl as CaptureBindingCommandRegistration, Lo as Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, rr as ClassBindingCommand, xl as ClassBindingCommandRegistration, ce as ColonPrefixedBindAttributePattern, il as ColonPrefixedBindAttributePatternRegistration, jn as CommandType, ComputedWatcher, ContentBinding, Controller, ei as CustomAttribute, CustomAttributeDefinition, vn as CustomAttributeRenderer, Zs as CustomElement, CustomElementDefinition, pn as CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, Ho as DebounceBindingBehaviorRegistration, Jn as DefaultBindingCommand, hl as DefaultBindingCommandRegistration, yl as DefaultBindingLanguage, ol as DefaultBindingSyntax, Po as DefaultCase, Jo as DefaultComponents, Hl as DefaultRenderers, jl as DefaultResources, Kl as DefinitionType, he as DotSeparatedAttributePattern, nl as DotSeparatedAttributePatternRegistration, Else, Cl as ElseRegistration, ExpressionWatcher, FlushQueue, Focus, tr as ForBindingCommand, al as ForBindingCommandRegistration, FragmentNodeSequence, FromViewBindingBehavior, Go as FromViewBindingBehaviorRegistration, Yn as FromViewBindingCommand, cl as FromViewBindingCommandRegistration, Do as FulfilledTemplateController, HooksDefinition, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, es as IAppRoot, Fe as IAppTask, cr as IAttrMapper, ie as IAttributeParser, ee as IAttributePattern, rn as IAuSlotsInfo, Gl as IAurelia, Oi as IController, xs as IEventTarget, Te as IFlushQueue, Is as IHistory, Vi as IHydrationContext, ln as IInstruction, wi as ILifecycleHooks, Ss as ILocation, vs as INode, Zo as INodeObserverLocatorRegistration, ii as IPlatform, nn as IProjections, ws as IRenderLocation, cn as IRenderer, Bi as IRendering, hr as ISVGAnalyzer, No as ISanitizer, di as IShadowDOMGlobalStyles, fi as IShadowDOMStyles, Zt as ISyntaxInterpreter, an as ITemplateCompiler, Dr as ITemplateCompilerHooks, Yo as ITemplateCompilerRegistration, dr as ITemplateElementFactory, Ci as IViewFactory, Rs as IWindow, If, Al as IfRegistration, on as InstructionType, InterpolationBinding, yn as InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, An as IteratorBindingRenderer, LetBinding, LetBindingInstruction, wn as LetElementRenderer, ki as LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, Bn as ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, Wo as OneTimeBindingBehaviorRegistration, Kn as OneTimeBindingCommand, ul as OneTimeBindingCommandRegistration, Uo as PendingTemplateController, Portal, _o as PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, kn as PropertyBindingRenderer, ae as RefAttributePattern, sl as RefAttributePatternRegistration, RefBinding, ml as RefBindingCommandRegistration, RefBindingInstruction, bn as RefBindingRenderer, $o as RejectedTemplateController, Rendering, Repeat, Bl as RepeatRegistration, SVGAnalyzer, tl as SVGAnalyzerRegistration, jo as SanitizeValueConverter, kl as SanitizeValueConverterRegistration, SelectValueObserver, SelfBindingBehavior, ql as SelfBindingBehaviorRegistration, SetAttributeInstruction, Rn as SetAttributeRenderer, SetClassAttributeInstruction, Sn as SetClassAttributeRenderer, SetPropertyInstruction, gn as SetPropertyRenderer, SetStyleAttributeInstruction, In as SetStyleAttributeRenderer, ShadowDOMRegistry, ll as ShortHandBindingSyntax, SignalBindingBehavior, Xo as SignalBindingBehaviorRegistration, SpreadBindingInstruction, SpreadElementPropBindingInstruction, Ln as SpreadRenderer, Wl as StandardConfiguration, Mi as State, StyleAttributeAccessor, nr as StyleBindingCommand, wl as StyleBindingCommandRegistration, mi as StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, Tn as StylePropertyBindingRenderer, To as Switch, TemplateCompiler, Mr as TemplateCompilerHooks, xn as TemplateControllerRenderer, TextBindingInstruction, Cn as TextBindingRenderer, ThrottleBindingBehavior, Ko as ThrottleBindingBehaviorRegistration, ToViewBindingBehavior, zo as ToViewBindingBehaviorRegistration, Qn as ToViewBindingCommand, fl as ToViewBindingCommandRegistration, er as TriggerBindingCommand, gl as TriggerBindingCommandRegistration, TwoWayBindingBehavior, Qo as TwoWayBindingBehaviorRegistration, Zn as TwoWayBindingCommand, dl as TwoWayBindingCommandRegistration, UpdateTriggerBindingBehavior, Ml as UpdateTriggerBindingBehaviorRegistration, ValueAttributeObserver, Be as ValueConverter, ValueConverterDefinition, ViewFactory, qi as ViewModelKind, We as Watch, With, Rl as WithRegistration, Qt as alias, jt as allResources, se as attributePattern, Ut as bindable, xe as bindingBehavior, Hn as bindingCommand, sn as capture, Ql as children, Mt as coercer, Ls as containerless, Cs as convertToRenderLocation, ai as cssModules, ze as customAttribute, Ts as customElement, ks as getEffectiveParentNode, gs as getRef, Ui as isCustomElementController, Di as isCustomElementViewModel, hn as isInstruction, Bs as isRenderLocation, Ai as lifecycleHooks, Se as mixinAstEvaluator, Re as mixinUseScope, Pe as mixingBindingLimited, tn as processContent, Yt as registerAliases, un as renderer, As as setEffectiveParentNode, ps as setRef, ci as shadowCSS, _s as strict, Fr as templateCompilerHooks, Ge as templateController, Es as useShadowDOM, ke as valueConverter, Ne as watch };
+export { AdoptedStyleSheetsStyles, AppRoot, Oe as AppTask, ue as AtPrefixedTriggerAttributePattern, il as AtPrefixedTriggerAttributePatternRegistration, AttrBindingBehavior, sr as AttrBindingCommand, xl as AttrBindingCommandRegistration, AttrSyntax, AttributeBinding, AttributeBindingInstruction, En as AttributeBindingRenderer, AttributeNSAccessor, le as AttributePattern, AuCompose, No as AuSlot, AuSlotsInfo, Aurelia, qt as Bindable, BindableDefinition, BindableObserver, BindablesInfo, ye as BindingBehavior, BindingBehaviorDefinition, Xn as BindingCommand, BindingCommandDefinition, Kl as BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, ir as CaptureBindingCommand, vl as CaptureBindingCommandRegistration, Po as Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, rr as ClassBindingCommand, wl as ClassBindingCommandRegistration, ce as ColonPrefixedBindAttributePattern, sl as ColonPrefixedBindAttributePatternRegistration, jn as CommandType, ComputedWatcher, ContentBinding, Controller, ei as CustomAttribute, CustomAttributeDefinition, vn as CustomAttributeRenderer, Zs as CustomElement, CustomElementDefinition, pn as CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, Wo as DebounceBindingBehaviorRegistration, Jn as DefaultBindingCommand, al as DefaultBindingCommandRegistration, kl as DefaultBindingLanguage, ll as DefaultBindingSyntax, _o as DefaultCase, tl as DefaultComponents, Wl as DefaultRenderers, Hl as DefaultResources, Ql as DefinitionType, he as DotSeparatedAttributePattern, rl as DotSeparatedAttributePatternRegistration, Else, Bl as ElseRegistration, ExpressionWatcher, FlushQueue, Focus, tr as ForBindingCommand, cl as ForBindingCommandRegistration, FragmentNodeSequence, FromViewBindingBehavior, Xo as FromViewBindingBehaviorRegistration, Yn as FromViewBindingCommand, ul as FromViewBindingCommandRegistration, Do as FulfilledTemplateController, HooksDefinition, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, es as IAppRoot, Fe as IAppTask, cr as IAttrMapper, ie as IAttributeParser, ee as IAttributePattern, rn as IAuSlotsInfo, Xl as IAurelia, Oi as IController, xs as IEventTarget, Te as IFlushQueue, Is as IHistory, Vi as IHydrationContext, ln as IInstruction, wi as ILifecycleHooks, Ss as ILocation, vs as INode, Jo as INodeObserverLocatorRegistration, ii as IPlatform, nn as IProjections, ws as IRenderLocation, cn as IRenderer, Bi as IRendering, hr as ISVGAnalyzer, jo as ISanitizer, di as IShadowDOMGlobalStyles, fi as IShadowDOMStyles, Zt as ISyntaxInterpreter, an as ITemplateCompiler, Ur as ITemplateCompilerHooks, Zo as ITemplateCompilerRegistration, dr as ITemplateElementFactory, Ci as IViewFactory, Rs as IWindow, If, Cl as IfRegistration, on as InstructionType, InterpolationBinding, yn as InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, An as IteratorBindingRenderer, LetBinding, LetBindingInstruction, wn as LetElementRenderer, ki as LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, Bn as ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, zo as OneTimeBindingBehaviorRegistration, Kn as OneTimeBindingCommand, fl as OneTimeBindingCommandRegistration, Uo as PendingTemplateController, Portal, $o as PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, kn as PropertyBindingRenderer, ae as RefAttributePattern, nl as RefAttributePatternRegistration, RefBinding, gl as RefBindingCommandRegistration, RefBindingInstruction, bn as RefBindingRenderer, qo as RejectedTemplateController, Rendering, Repeat, Rl as RepeatRegistration, SVGAnalyzer, el as SVGAnalyzerRegistration, Ho as SanitizeValueConverter, Al as SanitizeValueConverterRegistration, SelectValueObserver, SelfBindingBehavior, Ml as SelfBindingBehaviorRegistration, SetAttributeInstruction, Rn as SetAttributeRenderer, SetClassAttributeInstruction, Sn as SetClassAttributeRenderer, SetPropertyInstruction, gn as SetPropertyRenderer, SetStyleAttributeInstruction, In as SetStyleAttributeRenderer, ShadowDOMRegistry, hl as ShortHandBindingSyntax, SignalBindingBehavior, Ko as SignalBindingBehaviorRegistration, SpreadBindingInstruction, SpreadElementPropBindingInstruction, Ln as SpreadRenderer, zl as StandardConfiguration, Mi as State, StyleAttributeAccessor, nr as StyleBindingCommand, bl as StyleBindingCommandRegistration, mi as StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, Tn as StylePropertyBindingRenderer, Eo as Switch, TemplateCompiler, Mr as TemplateCompilerHooks, xn as TemplateControllerRenderer, TextBindingInstruction, Cn as TextBindingRenderer, ThrottleBindingBehavior, Qo as ThrottleBindingBehaviorRegistration, ToViewBindingBehavior, Go as ToViewBindingBehaviorRegistration, Qn as ToViewBindingCommand, dl as ToViewBindingCommandRegistration, er as TriggerBindingCommand, pl as TriggerBindingCommandRegistration, TwoWayBindingBehavior, Yo as TwoWayBindingBehaviorRegistration, Zn as TwoWayBindingCommand, ml as TwoWayBindingCommandRegistration, UpdateTriggerBindingBehavior, Fl as UpdateTriggerBindingBehaviorRegistration, ValueAttributeObserver, Be as ValueConverter, ValueConverterDefinition, ViewFactory, qi as ViewModelKind, We as Watch, With, Sl as WithRegistration, Qt as alias, jt as allResources, se as attributePattern, $t as bindable, xe as bindingBehavior, Hn as bindingCommand, sn as capture, Yl as children, Mt as coercer, Ls as containerless, Cs as convertToRenderLocation, ai as cssModules, ze as customAttribute, Ts as customElement, ks as getEffectiveParentNode, gs as getRef, $i as isCustomElementController, Ui as isCustomElementViewModel, hn as isInstruction, Bs as isRenderLocation, Ai as lifecycleHooks, Se as mixinAstEvaluator, Re as mixinUseScope, Pe as mixingBindingLimited, tn as processContent, Yt as registerAliases, un as renderer, As as setEffectiveParentNode, ps as setRef, ci as shadowCSS, _s as strict, Fr as templateCompilerHooks, Ge as templateController, Es as useShadowDOM, ke as valueConverter, Ne as watch };
 

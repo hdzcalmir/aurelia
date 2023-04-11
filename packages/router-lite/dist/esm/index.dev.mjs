@@ -2179,13 +2179,21 @@ let Router = class Router {
         let context = (options?.context ?? null);
         if (typeof instructionOrInstructions === 'string') {
             instructionOrInstructions = this.locationMgr.removeBaseHref(instructionOrInstructions);
-            if (instructionOrInstructions.startsWith('../') && context !== null) {
-                context = this.resolveContext(context);
-                while (instructionOrInstructions.startsWith('../') && (context?.parent ?? null) !== null) {
-                    instructionOrInstructions = instructionOrInstructions.slice(3);
-                    context = context.parent;
-                }
+        }
+        const isVpInstr = typeof instructionOrInstructions !== 'string' && 'component' in instructionOrInstructions;
+        let $instruction = isVpInstr ? instructionOrInstructions.component : instructionOrInstructions;
+        if (typeof $instruction === 'string' && $instruction.startsWith('../') && context !== null) {
+            context = this.resolveContext(context);
+            while ($instruction.startsWith('../') && (context?.parent ?? null) !== null) {
+                $instruction = $instruction.slice(3);
+                context = context.parent;
             }
+        }
+        if (isVpInstr) {
+            instructionOrInstructions.component = $instruction;
+        }
+        else {
+            instructionOrInstructions = $instruction;
         }
         const routerOptions = this.options;
         return ViewportInstructionTree.create(instructionOrInstructions, routerOptions, NavigationOptions.create(routerOptions, { ...options, context }), this.ctx);
@@ -4049,12 +4057,7 @@ let LoadCustomAttribute = class LoadCustomAttribute {
             const activeClass = this.activeClass;
             if (activeClass === null)
                 return;
-            if (active) {
-                this.el.classList.add(activeClass);
-            }
-            else {
-                this.el.classList.remove(activeClass);
-            }
+            this.el.classList.toggle(activeClass, active);
         });
     }
     attaching() {

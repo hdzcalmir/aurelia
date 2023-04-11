@@ -8408,14 +8408,16 @@ class Repeat {
                 i = 0;
                 outer: {
                     while (true) {
-                        oldItem = oldItems[i];
-                        newItem = newItems[i];
-                        oldKey = hasKey
-                            ? getKeyValue(keyMap, key, oldItem, getScope(scopeMap, oldItems[i], forOf, parentScope, binding, local, hasDestructuredLocal), binding)
-                            : oldItem;
-                        newKey = hasKey
-                            ? getKeyValue(keyMap, key, newItem, getScope(scopeMap, newItems[i], forOf, parentScope, binding, local, hasDestructuredLocal), binding)
-                            : newItem;
+                        if (hasKey) {
+                            oldItem = oldItems[i];
+                            newItem = newItems[i];
+                            oldKey = getKeyValue(keyMap, key, oldItem, getScope(scopeMap, oldItem, forOf, parentScope, binding, local, hasDestructuredLocal), binding);
+                            newKey = getKeyValue(keyMap, key, newItem, getScope(scopeMap, newItem, forOf, parentScope, binding, local, hasDestructuredLocal), binding);
+                        }
+                        else {
+                            oldItem = oldKey = ensureUnique(oldItems[i], i);
+                            newItem = newKey = ensureUnique(newItems[i], i);
+                        }
                         if (oldKey !== newKey) {
                             keyMap.set(oldItem, oldKey);
                             keyMap.set(newItem, newKey);
@@ -8431,14 +8433,16 @@ class Repeat {
                     }
                     j = newEnd;
                     while (true) {
-                        oldItem = oldItems[j];
-                        newItem = newItems[j];
-                        oldKey = hasKey
-                            ? getKeyValue(keyMap, key, oldItem, getScope(scopeMap, oldItem, forOf, parentScope, binding, local, hasDestructuredLocal), binding)
-                            : oldItem;
-                        newKey = hasKey
-                            ? getKeyValue(keyMap, key, newItem, getScope(scopeMap, newItem, forOf, parentScope, binding, local, hasDestructuredLocal), binding)
-                            : newItem;
+                        if (hasKey) {
+                            oldItem = oldItems[j];
+                            newItem = newItems[j];
+                            oldKey = getKeyValue(keyMap, key, oldItem, getScope(scopeMap, oldItem, forOf, parentScope, binding, local, hasDestructuredLocal), binding);
+                            newKey = getKeyValue(keyMap, key, newItem, getScope(scopeMap, newItem, forOf, parentScope, binding, local, hasDestructuredLocal), binding);
+                        }
+                        else {
+                            oldItem = oldKey = ensureUnique(oldItems[i], i);
+                            newItem = newKey = ensureUnique(newItems[i], i);
+                        }
                         if (oldKey !== newKey) {
                             keyMap.set(oldItem, oldKey);
                             keyMap.set(newItem, newKey);
@@ -8453,7 +8457,7 @@ class Repeat {
                 const oldStart = i;
                 const newStart = i;
                 for (i = newStart; i <= newEnd; ++i) {
-                    if (keyMap.has(newItem = newItems[i])) {
+                    if (keyMap.has(newItem = hasKey ? newItems[i] : ensureUnique(newItems[i], i))) {
                         newKey = keyMap.get(newItem);
                     }
                     else {
@@ -8465,7 +8469,7 @@ class Repeat {
                     newIndices.set(newKey, i);
                 }
                 for (i = oldStart; i <= oldEnd; ++i) {
-                    if (keyMap.has(oldItem = oldItems[i])) {
+                    if (keyMap.has(oldItem = hasKey ? oldItems[i] : ensureUnique(oldItems[i], i))) {
                         oldKey = keyMap.get(oldItem);
                     }
                     else {
@@ -8483,7 +8487,7 @@ class Repeat {
                     }
                 }
                 for (i = newStart; i <= newEnd; ++i) {
-                    if (!oldIndices.has(keyMap.get(newItems[i]))) {
+                    if (!oldIndices.has(keyMap.get(hasKey ? newItems[i] : ensureUnique(newItems[i], i)))) {
                         indexMap[i] = -2;
                     }
                 }
@@ -8859,6 +8863,22 @@ const getScope = (scopeMap, item, forOf, parentScope, binding, local, hasDestruc
         scopeMap.set(item, scope);
     }
     return scope;
+};
+const ensureUnique = (item, index) => {
+    const type = typeof item;
+    switch (type) {
+        case 'object':
+            if (item !== null)
+                return item;
+        case 'string':
+        case 'number':
+        case 'bigint':
+        case 'undefined':
+        case 'boolean':
+            return `${index}${type}${item}`;
+        default:
+            return item;
+    }
 };
 
 class With {

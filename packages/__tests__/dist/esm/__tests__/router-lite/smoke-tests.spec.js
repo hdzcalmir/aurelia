@@ -2112,7 +2112,6 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await au.stop(true);
         assert.areTaskQueuesEmpty();
     });
-    // TODO(sayan): add more tests
     for (const attr of ['href', 'load']) {
         it(`will load the root-level fallback when navigating to a non-existing route - parent-child - children without fallback - attr: ${attr}`, async function () {
             let GrandChildOneOne = class GrandChildOneOne {
@@ -6072,6 +6071,86 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             }
             await au.stop();
         });
+    });
+    it('local dependencies of the routed view model works', async function () {
+        let C11 = class C11 {
+        };
+        C11 = __decorate([
+            customElement({ name: 'c-11', template: 'c11' })
+        ], C11);
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'c-1', template: 'c1 <c-11></c-11>', dependencies: [C11] })
+        ], C1);
+        let C21 = class C21 {
+        };
+        C21 = __decorate([
+            customElement({ name: 'c-21', template: 'c21' })
+        ], C21);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'c-2', template: 'c2 <c-21></c-21>', dependencies: [C21] })
+        ], C2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { path: 'c1', component: C1 },
+                    { path: 'c2', component: C2 },
+                ]
+            }),
+            customElement({ name: 'root', template: '<au-viewport></au-viewport>' })
+        ], Root);
+        const { au, container, host } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assert.html.textContent(host, '');
+        await router.load('c1');
+        assert.html.textContent(host, 'c1 c11');
+        await router.load('c2');
+        assert.html.textContent(host, 'c2 c21');
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    // use-case: master page
+    it('custom element containing au-viewport works', async function () {
+        let MasterPage = class MasterPage {
+        };
+        MasterPage = __decorate([
+            customElement({ name: 'master-page', template: 'mp <au-viewport></au-viewport>' })
+        ], MasterPage);
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'c-1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'c-2', template: 'c2' })
+        ], C2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { path: 'c1', component: C1 },
+                    { path: 'c2', component: C2 },
+                ]
+            }),
+            customElement({ name: 'root', template: '<master-page></master-page>' })
+        ], Root);
+        const { au, container, host } = await start({ appRoot: Root, registrations: [MasterPage] });
+        const router = container.get(IRouter);
+        assert.html.textContent(host, 'mp');
+        await router.load('c1');
+        assert.html.textContent(host, 'mp c1');
+        await router.load('c2');
+        assert.html.textContent(host, 'mp c2');
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
     });
 });
 //# sourceMappingURL=smoke-tests.spec.js.map

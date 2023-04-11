@@ -60,15 +60,24 @@ describe('router-lite/resources/load.spec.ts', function () {
         await au.stop(true);
     });
     it('adds activeClass when configured', async function () {
-        let Foo = class Foo {
+        var Foo_1;
+        let Foo = Foo_1 = class Foo {
+            constructor() {
+                this.instanceId = ++Foo_1.instanceId;
+            }
+            loading(params) {
+                this.id = params.id;
+            }
         };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: '' })
+        Foo.instanceId = 0;
+        Foo = Foo_1 = __decorate([
+            customElement({ name: 'fo-o', template: '${instanceId} ${id}' })
         ], Foo);
         let Root = class Root {
         };
         Root = __decorate([
             route({
+                transitionPlan: 'replace',
                 routes: [
                     { id: 'foo', path: 'foo/:id', component: Foo }
                 ]
@@ -93,11 +102,21 @@ describe('router-lite/resources/load.spec.ts', function () {
         await queue.yield();
         a2.active = true;
         assertAnchorsWithClass(anchors, [a1, a2], activeClass, 'round#2');
+        assert.html.textContent(host, '1 2');
+        anchors[1].click();
+        await queue.yield();
+        assertAnchorsWithClass(anchors, [a1, a2], activeClass, 'round#3');
+        assert.html.textContent(host, '2 2');
         anchors[0].click();
         await queue.yield();
         a1.active = true;
         a2.active = false;
-        assertAnchorsWithClass(anchors, [a1, a2], activeClass, 'round#3');
+        assertAnchorsWithClass(anchors, [a1, a2], activeClass, 'round#4');
+        assert.html.textContent(host, '3 1');
+        anchors[0].click();
+        await queue.yield();
+        assertAnchorsWithClass(anchors, [a1, a2], activeClass, 'round#5');
+        assert.html.textContent(host, '4 1');
         await au.stop(true);
         function assertAnchorsWithClass(anchors, expected, activeClass = null, message = '') {
             const len = anchors.length;
@@ -271,6 +290,59 @@ describe('router-lite/resources/load.spec.ts', function () {
         assert.html.textContent(host, 'products');
         await au.stop(true);
     });
+    it('allow navigating to route defined in parent context using ../ prefix - with parameters', async function () {
+        let Product = class Product {
+            canLoad(params, _next, _current) {
+                this.id = params.id;
+                return true;
+            }
+        };
+        Product = __decorate([
+            customElement({ name: 'pro-duct', template: `product \${id} <a load="../products"></a>` })
+        ], Product);
+        let Products = class Products {
+        };
+        Products = __decorate([
+            customElement({ name: 'pro-ducts', template: `<a load="route:../product; params.bind:{id:'1'}"></a><a load="route:../product; params.bind:{id:'2'}"></a> products` })
+        ], Products);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'products', path: ['', 'products'], component: Products },
+                    { id: 'product', path: 'product/:id', component: Product },
+                ]
+            }),
+            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root, registrations: [Products, Product] });
+        const queue = container.get(IPlatform).domWriteQueue;
+        await queue.yield();
+        assert.html.textContent(host, 'products');
+        const anchors = Array.from(host.querySelectorAll('a'));
+        const hrefs = anchors.map(a => a.href);
+        assert.match(hrefs[0], /product\/1$/);
+        assert.match(hrefs[1], /product\/2$/);
+        anchors[0].click();
+        await queue.yield();
+        assert.html.textContent(host, 'product 1');
+        // go back
+        const back = host.querySelector('a');
+        assert.match(back.href, /products$/);
+        back.click();
+        await queue.yield();
+        assert.html.textContent(host, 'products');
+        // 2nd round
+        host.querySelector('a:nth-of-type(2)').click();
+        await queue.yield();
+        assert.html.textContent(host, 'product 2');
+        // go back
+        host.querySelector('a').click();
+        await queue.yield();
+        assert.html.textContent(host, 'products');
+        await au.stop(true);
+    });
     it('allow navigating to route defined in parent context using explicit routing context', async function () {
         let Product = class Product {
             canLoad(params, next, _current) {
@@ -367,6 +439,61 @@ describe('router-lite/resources/load.spec.ts', function () {
                 routes: [
                     { id: 'l11', path: ['', 'l11'], component: L11 },
                     { id: 'l12', path: 'l12', component: L12 },
+                ]
+            }),
+            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root, registrations: [L11, L12, L21, L22] });
+        const queue = container.get(IPlatform).domWriteQueue;
+        await queue.yield();
+        assert.html.textContent(host, 'l11 l21');
+        host.querySelector('a').click();
+        await queue.yield();
+        assert.html.textContent(host, 'l12 l22');
+        host.querySelector('a').click();
+        await queue.yield();
+        assert.html.textContent(host, 'l11 l21');
+        await au.stop(true);
+    });
+    it('allow navigating to route defined in grand-parent context using ../../ prefix - with parameters', async function () {
+        let L21 = class L21 {
+        };
+        L21 = __decorate([
+            customElement({ name: 'l-21', template: `l21 <a load="route:../../l12; params.bind:{id: '42'}"></a>` })
+        ], L21);
+        let L22 = class L22 {
+        };
+        L22 = __decorate([
+            customElement({ name: 'l-22', template: `l22 <a load="route:../../l11; params.bind:{id: '42'}"></a>` })
+        ], L22);
+        let L11 = class L11 {
+        };
+        L11 = __decorate([
+            route({
+                routes: [
+                    { id: 'l21', path: ['', 'l21'], component: L21 },
+                ]
+            }),
+            customElement({ name: 'l-11', template: `l11 <au-viewport></au-viewport>` })
+        ], L11);
+        let L12 = class L12 {
+        };
+        L12 = __decorate([
+            route({
+                routes: [
+                    { id: 'l22', path: ['', 'l22'], component: L22 },
+                ]
+            }),
+            customElement({ name: 'l-12', template: `l12 <au-viewport></au-viewport>` })
+        ], L12);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { path: '', redirectTo: 'l11/42' },
+                    { id: 'l11', path: 'l11/:id', component: L11 },
+                    { id: 'l12', path: 'l12/:id', component: L12 },
                 ]
             }),
             customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
