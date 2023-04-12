@@ -128,7 +128,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         //   [
         //     createMyElement(`<au-slot name="s1">s1fb</au-slot>|<au-slot>d</au-slot>`),
         //   ],
-        //   { 'my-element': ['<div>p</div>s1fb|d', new AuSlotsInfo([])] },
+        //   { 'my-element': ['<div>p</div>s1fb|d', new SlotsInfo([])] },
         // );
         yield new TestData('projections for multiple instances works correctly', `<my-element><div au-slot>p1</div></my-element>
        <my-element><div au-slot>p2</div></my-element>`, [
@@ -1299,7 +1299,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                     template: '<au-slot>dfb</au-slot><au-slot name="s1">s1fb</au-slot>'
                 })
             ], MyElement1);
-            yield new TestData('@IAuSlotsInfo works with inheritance - #1', '<my-element><div au-slot="s1">s1p</div></my-element>', [MyElement1], { 'my-element': ['dfb<div>s1p</div>', new AuSlotsInfo(['s1'])] });
+            yield new TestData('@ISlotsInfo works with inheritance - #1', '<my-element><div au-slot="s1">s1p</div></my-element>', [MyElement1], { 'my-element': ['dfb<div>s1p</div>', new AuSlotsInfo(['s1'])] });
             class Base2 extends Base {
             }
             let MyElement2 = class MyElement2 extends Base2 {
@@ -1310,7 +1310,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                     template: '<au-slot>dfb</au-slot><au-slot name="s1">s1fb</au-slot>'
                 })
             ], MyElement2);
-            yield new TestData('@IAuSlotsInfo works with inheritance - #2', '<my-element><div au-slot="s1">s1p</div></my-element>', [MyElement2], { 'my-element': ['dfb<div>s1p</div>', new AuSlotsInfo(['s1'])] });
+            yield new TestData('@ISlotsInfo works with inheritance - #2', '<my-element><div au-slot="s1">s1p</div></my-element>', [MyElement2], { 'my-element': ['dfb<div>s1p</div>', new AuSlotsInfo(['s1'])] });
         }
         {
             let CeOne = class CeOne {
@@ -1355,7 +1355,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                 __param(0, IAuSlotsInfo),
                 __metadata("design:paramtypes", [Object])
             ], CeThree);
-            yield new TestData('@IAuSlotsInfo works correctly with element nesting', '<ce-one><span au-slot="s1">s1p</span></ce-one><ce-two></ce-two><ce-three><div au-slot="s1">s1p</div></ce-three>', [CeOne, CeTwo, CeThree], {
+            yield new TestData('@ISlotsInfo works correctly with element nesting', '<ce-one><span au-slot="s1">s1p</span></ce-one><ce-two></ce-two><ce-three><div au-slot="s1">s1p</div></ce-three>', [CeOne, CeTwo, CeThree], {
                 'ce-one': ['dfb<span>s1p</span>', new AuSlotsInfo(['s1'])],
                 'ce-two': ['ce two', new AuSlotsInfo([])],
                 'ce-three': ['<div>s1p</div><ce-one class="au"><span>dp</span>s1fb</ce-one><ce-two class="au">ce two</ce-two>', new AuSlotsInfo(['s1'])],
@@ -1517,16 +1517,16 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             const { host, error } = ctx;
             try {
                 assert.deepEqual(error, null);
-                for (const [selector, [expectedInnerHtml, expectedAuSlotsInfo]] of Object.entries(expected)) {
+                for (const [selector, [expectedInnerHtml, expectedSlotsInfo]] of Object.entries(expected)) {
                     if (selector) {
                         assert.html.innerEqual(selector, typeof expectedInnerHtml === 'string' ? expectedInnerHtml : expectedInnerHtml.outerHTML, `${selector}.innerHTML`, host);
                     }
                     else {
                         assert.html.innerEqual(host, typeof expectedInnerHtml === 'string' ? expectedInnerHtml : expectedInnerHtml.outerHTML, `root.innerHTML`);
                     }
-                    if (expectedAuSlotsInfo != null) {
+                    if (expectedSlotsInfo != null) {
                         const slots = CustomElement.for(host.querySelector(selector)).viewModel.slots;
-                        assert.deepStrictEqual(slots, expectedAuSlotsInfo);
+                        assert.deepStrictEqual(slots, expectedSlotsInfo);
                     }
                 }
                 if (additionalAssertion != null) {

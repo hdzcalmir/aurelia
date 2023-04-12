@@ -4,7 +4,7 @@ import { CustomAttributeDefinition } from '../resources/custom-attribute';
 import type { IContainer, Writable, IDisposable } from '@aurelia/kernel';
 import type { IBinding } from '@aurelia/runtime';
 import type { AttrSyntax } from '../resources/attribute-pattern';
-import type { IProjections } from '../resources/slot-injectables';
+import type { IAuSlotProjections } from './controller.projection';
 import type { LifecycleHooksLookup } from './lifecycle-hooks';
 import type { INode, INodeSequence, IRenderLocation } from '../dom';
 import type { IViewFactory } from './view';
@@ -462,7 +462,7 @@ export interface IHydratedCustomAttributeViewModel extends ICustomAttributeViewM
     readonly $controller: ICustomAttributeController<this>;
 }
 export interface IControllerElementHydrationInstruction {
-    readonly projections: IProjections | null;
+    readonly projections: IAuSlotProjections | null;
     /**
      * A list of captured attributes/binding in raw format
      */

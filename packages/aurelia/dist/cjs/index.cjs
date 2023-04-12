@@ -134,6 +134,8 @@ exports.IAttrMapper = r.IAttrMapper;
 
 exports.IAttributePattern = r.IAttributePattern;
 
+exports.IAuSlotWatcher = r.IAuSlotWatcher;
+
 exports.IAuSlotsInfo = r.IAuSlotsInfo;
 
 exports.IAurelia = r.IAurelia;
@@ -199,6 +201,8 @@ exports.registerAliases = r.registerAliases;
 exports.renderer = r.renderer;
 
 exports.shadowCSS = r.shadowCSS;
+
+exports.slotted = r.slotted;
 
 exports.strict = r.strict;
 
