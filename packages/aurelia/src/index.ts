@@ -499,8 +499,7 @@ export {
   Bindable,
   coercer,
 
-  // PartialChildrenDefinition,
-  // ChildrenDefinition,
+  PartialChildrenDefinition,
   // Children,
   children,
 
@@ -672,8 +671,11 @@ export {
 
   // Subject,
   // Compose,
+  IAuSlot,
   IAuSlotsInfo,
   AuSlotsInfo,
+  IAuSlotWatcher,
+  slotted,
 
   // IProjectorLocatorRegistration,
   // ITargetAccessorLocatorRegistration,
@@ -683,7 +685,7 @@ export {
   // DefaultComponents as RuntimeHtmlDefaultComponents,
 
   // CompiledTemplate,
-  // ChildrenObserver,
+  ChildrenBinding,
   // IRenderer,
   // IInstructionTypeClassifier,
   // IRenderingEngine,

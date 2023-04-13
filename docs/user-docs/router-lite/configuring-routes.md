@@ -81,12 +81,12 @@ Apart from the static API including the `@route` decorator, there is also an ins
 This is shown in the example below.
 
 ```typescript
-import { IRouteConfig, RouteDefinition, RouteNode } from '@aurelia/router-lite';
+import { IRouteConfig, RouteNode } from '@aurelia/router-lite';
 import { Home } from './home';
 import { About } from './about';
 
 export class MyApp {
-  public getRouteConfig(_parentDefinition: RouteDefinition | null, _routeNode: RouteNode | null): IRouteConfig {
+  public getRouteConfig(_parentConfig: IRouteConfig | null, _routeNode: RouteNode | null): IRouteConfig {
     return {
       routes: [
         {
@@ -109,17 +109,17 @@ See this in action below.
 
 {% embed url="https://stackblitz.com/edit/router-lite-getrouteconfig-hook?ctl=1&embed=1&file=src/my-app.ts" %}
 
-Note that the hook is also supplied with a parent route definition, and the new route node.
-These values can be nullable; for example, for root node there is no parent route definition.
+Note that the hook is also supplied with a parent route configuration, and the new route node.
+These values can be nullable; for example, for root node there is no parent route configuration.
 
 The `getRouteConfig` can also be `async`.
 This is shown in the example below.
 
 ```typescript
-import { IRouteConfig, RouteDefinition, RouteNode } from '@aurelia/router-lite';
+import { IRouteConfig, RouteNode } from '@aurelia/router-lite';
 
 export class MyApp {
-  public getRouteConfig(_parentDefinition: RouteDefinition | null, _routeNode: RouteNode | null): IRouteConfig {
+  public getRouteConfig(_parentConfig: IRouteConfig | null, _routeNode: RouteNode | null): IRouteConfig {
     return {
       routes: [
         {
@@ -525,6 +525,10 @@ You can also see this in action below.
 
 {% embed url="https://stackblitz.com/edit/router-lite-fallback-using-function?ctl=1&embed=1&file=src/my-app.html" %}
 
+You can also use non-string fallbacks.
+For example, you can use a class as the value for `fallback`; such as `fallback: NotFound`.
+Or, if you are using a function, you choose to return a class instead of returning a string.
+These combinations are also supported by router-lite.
 
 ## Case sensitive routes
 
@@ -816,3 +820,293 @@ export class MyApp {}
 You can see this configuration in action below.
 
 {% embed url="https://stackblitz.com/edit/router-lite-component-ce-instance-jx3kee?ctl=1&embed=1&file=src/my-app.ts" %}
+
+## Using classes as routes
+
+Using router-lite it is also possible to use the routed view model classes directly as routes configuration.
+While doing so, if no paths have been explicitly configured for the components, the custom element name and aliases can be used as routing instructions.
+The following example demonstrates that the `C1` and `C2` classes are used directly as the child routes for the `Root`.
+
+```typescript
+@customElement({ name: 'c-1', template: 'c1', aliases: ['c-a', 'c-one'] })
+class C1 { }
+
+@customElement({ name: 'c-2', template: 'c2', aliases: ['c-b', 'c-two'] })
+class C2 { }
+
+@route({
+  routes: [C1, C2]
+})
+@customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+class Root { }
+```
+
+The example above implies that `router.load('c-1')`, or `router.load('c-a')` and `router.load('c-2')`, `router.load('c-two')` will load the `C1` and `C2` respectively.
+
+{% hint style="info" %}
+To know more about the router API refer [this section](./navigating.md#using-the-router-api).
+{% endhint %}
+
+## Distributed routing configurations
+
+The examples discussed so far demonstrate the classic use-cases of route configurations where the parents define the child routes.
+Another aspect of these examples are that all the route configurations are centralized on the parent component.
+This section provides some examples where that configuration is distributed across different components.
+
+We start by noting that every component can define its own path.
+This is shown in the following example.
+
+{% tabs %}
+{% tab title="my-app.ts" %}
+```typescript
+import { customElement } from '@aurelia/runtime-html';
+import { route } from '@aurelia/router-lite';
+import { Home } from './home';
+import { About } from './about';
+
+@route({
+  routes: [Home, About],
+})
+@customElement({
+  name: 'my-app',
+  template: `
+<nav>
+  <a href="home">Home</a>
+  <a href="about">About</a>
+</nav>
+
+<au-viewport></au-viewport>
+`
+})
+export class MyApp {}
+
+```
+{% endtab %}
+{% tab title="home.ts" %}
+```typescript
+import { route } from '@aurelia/router-lite';
+import { customElement } from '@aurelia/runtime-html';
+
+@route(['', 'home'])
+@customElement({ name: 'ho-me', template: '<h1>${message}</h1>' })
+export class Home {
+  private readonly message: string = 'Welcome to Aurelia2 router-lite!';
+}
+```
+{% endtab %}
+{% tab title="about.ts" %}
+```typescript
+import { route } from '@aurelia/router-lite';
+import { customElement } from '@aurelia/runtime-html';
+
+@route('about')
+@customElement({ name: 'ab-out', template: '<h1>${message}</h1>' })
+export class About {
+  private readonly message = 'Aurelia2 router-lite is simple';
+}
+```
+{% endtab %}
+{% endtabs %}
+
+The example shows that both `Home` and `About` uses the `@route` decorator to define their own paths.
+This reduces the child-route configuration for `MyApp` to `@route({ routes: [Home, About] })`.
+The example can be seen in action below.
+
+{% embed url="https://stackblitz.com/edit/router-lite-path-on-vm?ctl=1&embed=1&file=src/my-app.ts" %}
+
+Note that other properties of route configuration can also be used in this way.
+
+{% tabs %}
+{% tab title="my-app.ts" %}
+```typescript
+import { customElement } from '@aurelia/runtime-html';
+import { route } from '@aurelia/router-lite';
+import { Home } from './home';
+import { About } from './about';
+
+@route({
+  routes: [Home, About],
+})
+@customElement({
+  name: 'my-app',
+  template: `
+<nav>
+  <a href="home">Home</a>
+  <a href="about">About</a>
+</nav>
+
+<au-viewport></au-viewport>
+`
+})
+export class MyApp {}
+
+```
+{% endtab %}
+{% tab title="home.ts" %}
+```typescript
+import { route } from '@aurelia/router-lite';
+import { customElement } from '@aurelia/runtime-html';
+
+@route({ path: ['', 'home'], title: 'Home' })
+@customElement({ name: 'ho-me', template: '<h1>${message}</h1>' })
+export class Home {
+  private readonly message: string = 'Welcome to Aurelia2 router-lite!';
+}
+```
+{% endtab %}
+{% tab title="about.ts" %}
+```typescript
+import { route } from '@aurelia/router-lite';
+import { customElement } from '@aurelia/runtime-html';
+
+@route({ path: 'about', title: 'About' })
+@customElement({ name: 'ab-out', template: '<h1>${message}</h1>' })
+export class About {
+  private readonly message = 'Aurelia2 router-lite is simple';
+}
+```
+{% endtab %}
+{% endtabs %}
+
+The previous example demonstrates that the `Home` and `About` components define the `title` for themselves.
+The example can be seen in action below.
+
+{% embed url="https://stackblitz.com/edit/router-lite-route-config-on-vm?ctl=1&embed=1&file=src/home.ts" %}
+
+While adapting to distributes routing configuration, the parent can still override the configuration for its children.
+This makes sense, because even if a component defines its own `path`, `title` etc. the parent may choose to reach (route) the component via a different path or display a different title when the component is loaded.
+This is shown below, where the `MyApp` overrides the routing configurations defined by `About`.
+
+{% tabs %}
+{% tab title="my-app.ts" %}
+```typescript
+import { customElement } from '@aurelia/runtime-html';
+import { route } from '@aurelia/router-lite';
+import { Home } from './home';
+import { About } from './about';
+
+@route({
+  routes: [
+    Home,
+    { path: 'about-us', component: About, title: 'About us' }
+  ],
+})
+@customElement({
+  name: 'my-app',
+  template: `
+<nav>
+  <a href="home">Home</a>
+  <a href="about-us">About</a>
+</nav>
+
+<au-viewport></au-viewport>
+`
+})
+export class MyApp {}
+
+```
+{% endtab %}
+{% tab title="home.ts" %}
+```typescript
+import { route } from '@aurelia/router-lite';
+import { customElement } from '@aurelia/runtime-html';
+
+@route({ path: ['', 'home'], title: 'Home' })
+@customElement({ name: 'ho-me', template: '<h1>${message}</h1>' })
+export class Home {
+  private readonly message: string = 'Welcome to Aurelia2 router-lite!';
+}
+```
+{% endtab %}
+{% tab title="about.ts" %}
+```typescript
+import { route } from '@aurelia/router-lite';
+import { customElement } from '@aurelia/runtime-html';
+
+@route({ path: 'about', title: 'About' })
+@customElement({ name: 'ab-out', template: '<h1>${message}</h1>' })
+export class About {
+  private readonly message = 'Aurelia2 router-lite is simple';
+}
+```
+{% endtab %}
+{% endtabs %}
+
+This can be seen in action below.
+
+{% embed url="https://stackblitz.com/edit/router-lite-parent-overrides-comp-route-config?ctl=1&embed=1&file=src/my-app.ts" %}
+
+You can also use the `@route` decorator and the `getRouteConfig` together.
+
+{% tabs %}
+{% tab title="my-app.ts" %}
+```typescript
+import { customElement } from '@aurelia/runtime-html';
+import {
+  IRouteConfig,
+  IRouteViewModel,
+  route,
+  RouteNode,
+} from '@aurelia/router-lite';
+import template from './my-app.html';
+import { Home } from './home';
+import { About } from './about';
+
+@route({ title: 'Aurelia2' })
+@customElement({
+  name: 'my-app',
+  template: `
+<nav>
+  <a href="home">Home</a>
+  <a href="about">About</a>
+</nav>
+
+<au-viewport></au-viewport>
+`
+})
+export class MyApp implements IRouteViewModel {
+  public getRouteConfig?(
+    parentConfig: IRouteConfig | null,
+    routeNode: RouteNode | null
+  ): IRouteConfig {
+    return {
+      routes: [Home, About],
+    };
+  }
+}
+```
+{% endtab %}
+{% tab title="home.ts" %}
+```typescript
+import { route } from '@aurelia/router-lite';
+import { customElement } from '@aurelia/runtime-html';
+
+@route({ path: ['', 'home'], title: 'Home' })
+@customElement({ name: 'ho-me', template: '<h1>${message}</h1>' })
+export class Home {
+  private readonly message: string = 'Welcome to Aurelia2 router-lite!';
+}
+```
+{% endtab %}
+{% tab title="about.ts" %}
+```typescript
+import { route } from '@aurelia/router-lite';
+import { customElement } from '@aurelia/runtime-html';
+
+@route({ path: 'about', title: 'About' })
+@customElement({ name: 'ab-out', template: '<h1>${message}</h1>' })
+export class About {
+  private readonly message = 'Aurelia2 router-lite is simple';
+}
+```
+{% endtab %}
+{% endtabs %}
+
+This can be seen in action below.
+
+{% embed url="https://stackblitz.com/edit/router-lite-hybrid-config?ctl=1&embed=1&file=src/my-app.ts" %}
+
+The advantage of this kind of distributed configuration is that the routing configuration of every component is defined by every component itself, thereby encouraging encapsulation, leaving the routing configuration at the parent level to merely listing out its child components.
+On the other hand, highly distributed route configuration may prevent easy overview of the configured routes.
+That's the trade-off.
+Feel free to mix and match as per your need and aesthetics.

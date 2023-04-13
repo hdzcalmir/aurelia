@@ -20,6 +20,7 @@ import {
   ITemplateCompiler,
   PropertyBindingInstruction,
   SpreadElementPropBindingInstruction,
+  InstructionType,
 } from '../renderer';
 import { IPlatform } from '../platform';
 import { Bindable, BindableDefinition } from '../bindable';
@@ -42,9 +43,9 @@ import type {
 import type { AnyBindingExpression } from '@aurelia/runtime';
 import type { CustomAttributeDefinition } from '../resources/custom-attribute';
 import type { PartialCustomElementDefinition } from '../resources/custom-element';
-import type { IProjections } from '../resources/slot-injectables';
 import type { BindingCommandInstance, ICommandBuildInfo } from '../resources/binding-command';
 import type { ICompliationInstruction, IInstruction, } from '../renderer';
+import type { IAuSlotProjections } from '../templating/controller.projection';
 
 export class TemplateCompiler implements ITemplateCompiler {
   public static register(container: IContainer): IResolver<ITemplateCompiler> {
@@ -646,6 +647,9 @@ export class TemplateCompiler implements ITemplateCompiler {
     let attrName: string;
     let attrValue: string;
     let attrSyntax: AttrSyntax;
+    /**
+     * A list of plain attribute bindings/interpolation bindings
+     */
     let plainAttrInstructions: IInstruction[] | undefined;
     let elBindableInstructions: IInstruction[] | undefined;
     let attrDef: CustomAttributeDefinition | null = null;
@@ -920,7 +924,7 @@ export class TemplateCompiler implements ITemplateCompiler {
 
     resetCommandBuildInfo();
 
-    if (this._shouldReorderAttrs(el) && plainAttrInstructions != null && plainAttrInstructions.length > 1) {
+    if (this._shouldReorderAttrs(el, plainAttrInstructions) && plainAttrInstructions != null && plainAttrInstructions.length > 1) {
       this._reorder(el, plainAttrInstructions);
     }
 
@@ -1020,7 +1024,7 @@ export class TemplateCompiler implements ITemplateCompiler {
 
       let childEl: Element;
       let targetSlot: string | null;
-      let projections: IProjections | undefined;
+      let projections: IAuSlotProjections | undefined;
       let slotTemplateRecord: Record<string, (Node | Element | DocumentFragment)[]> | undefined;
       let slotTemplates: (Node | Element | DocumentFragment)[];
       let slotTemplate: Node | Element | DocumentFragment;
@@ -1213,7 +1217,7 @@ export class TemplateCompiler implements ITemplateCompiler {
       let child = el.firstChild as Node | null;
       let childEl: Element;
       let targetSlot: string | null;
-      let projections: IProjections | null = null;
+      let projections: IAuSlotProjections | null = null;
       let slotTemplateRecord: Record<string, (Node | Element | DocumentFragment)[]> | undefined;
       let slotTemplates: (Node | Element | DocumentFragment)[];
       let slotTemplate: Node | Element | DocumentFragment;
@@ -1575,8 +1579,13 @@ export class TemplateCompiler implements ITemplateCompiler {
   }
 
   /** @internal */
-  private _shouldReorderAttrs(el: Element): boolean {
-    return el.nodeName === 'INPUT' && orderSensitiveInputType[(el as HTMLInputElement).type] === 1;
+  private _shouldReorderAttrs(el: Element, instructions?: IInstruction[]): boolean | undefined {
+    const nodeName = el.nodeName;
+    return nodeName === 'INPUT' && orderSensitiveInputType[(el as HTMLInputElement).type] === 1
+      || nodeName === 'SELECT' && (
+        (el as HTMLSelectElement).hasAttribute('multiple')
+        || instructions?.some(i => i.type === InstructionType.propertyBinding && (i as PropertyBindingInstruction | InterpolationInstruction).to === 'multiple')
+      );
   }
 
   /** @internal */
@@ -1607,6 +1616,32 @@ export class TemplateCompiler implements ITemplateCompiler {
         }
         if (checkedIndex !== void 0 && modelOrValueOrMatcherIndex !== void 0 && checkedIndex < modelOrValueOrMatcherIndex) {
           [_instructions[modelOrValueOrMatcherIndex], _instructions[checkedIndex]] = [_instructions[checkedIndex], _instructions[modelOrValueOrMatcherIndex]];
+        }
+        break;
+      }
+      case 'SELECT': {
+        const _instructions = instructions as (PropertyBindingInstruction | InterpolationInstruction)[];
+        let valueIndex = 0;
+        let multipleIndex = 0;
+        // a variable to stop the loop as soon as we find both value & multiple binding indices
+        let found = 0;
+        let instruction: PropertyBindingInstruction | InterpolationInstruction;
+        // swap the order of multiple and value bindings
+        for (let i = 0; i < _instructions.length && found < 2; ++i) {
+          instruction = _instructions[i];
+          switch (instruction.to) {
+            case 'multiple':
+              multipleIndex = i;
+              found++;
+              break;
+            case 'value':
+              valueIndex = i;
+              found++;
+              break;
+          }
+          if (found === 2 && valueIndex < multipleIndex) {
+            [_instructions[multipleIndex], _instructions[valueIndex]] = [_instructions[valueIndex], _instructions[multipleIndex]];
+          }
         }
       }
     }

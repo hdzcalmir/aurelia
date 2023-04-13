@@ -547,6 +547,16 @@ This is shown in the following example.
 
 {% embed url="https://stackblitz.com/edit/router-lite-load-nullroot-context?ctl=1&embed=1&file=src/child1.ts" %}
 
+When the route context selection involves only ancestor context, then the `../` prefix can be used when using string instruction.
+This also works when using the route-id.
+The following code snippets shows, how the previous example can be written using the `../` prefix.
+
+
+```html
+<a load="route: ../r2">c2</a>
+```
+
+
 ### `active` status
 
 When using the `load` attribute, you can also leverage the bindable `active` property which is `true` whenever the associated route, bound to the `href` is active.
@@ -579,6 +589,12 @@ This can also be seen in the live example below.
 {% hint style="info" %}
 Note that the [navigation model](./navigation-model.md) also offers a [`isActive` property](./navigation-model.md#using-the-isactive-property).
 {% endhint %}
+
+### "active" CSS class
+
+The `active` bindable can be used for other purposes, other than adding CSS classes to the element.
+However, if that's what you need mostly the `active` property for, you may choose to configure the [`activeClass` property](./router-configuration.md#configure-active-class) in the router configuration.
+When configured, the `load` custom attribute will add that configured class to the element when the associated routing instruction is active.
 
 ## Using the Router API
 
@@ -1018,6 +1034,62 @@ router.load('c3', { historyStrategy: 'replace' })
 ```
 
 then performing a `history.back()` should load the `c1` route, as the state for `c2` is replaced.
+
+**transitionPlan**
+
+Using this navigation option, you can override the [configured transition plan](./transition-plans.md) per routing instruction basis.
+The following example demonstrates that even though the routes are configured with a specific transition plans, using the router API, the transition plans can be overridden.
+
+```typescript
+@route({
+  transitionPlan: 'replace',
+  routes: [
+    {
+      id: 'ce1',
+      path: ['ce1/:id'],
+      component: CeOne,
+      transitionPlan: 'invoke-lifecycles',
+    },
+    {
+      id: 'ce2',
+      path: ['ce2/:id'],
+      component: CeTwo,
+      transitionPlan: 'replace',
+    },
+  ],
+})
+@customElement({
+  name: 'my-app',
+  template: `
+<button click.trigger="navigate('ce1/42')">ce1/42 (default: invoke lifecycles)</button><br>
+<button click.trigger="navigate('ce1/43')">ce1/43 (default: invoke lifecycles)</button><br>
+<button click.trigger="navigate('ce1/44', 'replace')">ce1/44 (override: replace)</button><br>
+<br>
+
+<button click.trigger="navigate('ce2/42')">ce2/42 (default: replace)</button><br>
+<button click.trigger="navigate('ce2/43')">ce2/43 (default: replace)</button><br>
+<button click.trigger="navigate('ce2/44', 'invoke-lifecycles')">ce2/44 (override: invoke lifecycles)</button><br>
+
+<au-viewport></au-viewport>
+`,
+})
+export class MyApp {
+  public constructor(@IRouter private readonly router: IRouter) {}
+  private navigate(
+    path: string,
+    transitionPlan?: 'replace' | 'invoke-lifecycles'
+  ) {
+    void this.router.load(
+      path,
+      transitionPlan ? { transitionPlan } : undefined
+    );
+  }
+}
+```
+
+This can be seen in action below.
+
+{% embed url="https://stackblitz.com/edit/router-lite-transitionplan-nav-opt?ctl=1&embed=1&file=src/my-app.ts" %}
 
 ## Redirection and unknown paths
 

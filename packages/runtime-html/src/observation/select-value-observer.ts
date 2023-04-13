@@ -11,6 +11,7 @@ import type { INode } from '../dom';
 import { createError, hasOwnProperty, isArray } from '../utilities';
 import { INodeObserver, INodeObserverConfigBase } from './observer-locator';
 import { mixinNodeObserverUseConfig } from './observation-utils';
+import { createMutationObserver } from '../utilities-dom';
 
 const childObserverOptions = {
   childList: true,
@@ -237,8 +238,7 @@ export class SelectValueObserver implements INodeObserver {
    * @internal
    */
   public _start(): void {
-    (this._nodeObserver = new this._el.ownerDocument.defaultView!.MutationObserver(this._handleNodeChange.bind(this)))
-      .observe(this._el, childObserverOptions);
+    (this._nodeObserver = createMutationObserver(this._el, this._handleNodeChange.bind(this))).observe(this._el, childObserverOptions);
     this._observeArray(this._value instanceof Array ? this._value : null);
     this._observing = true;
   }
@@ -265,7 +265,7 @@ export class SelectValueObserver implements INodeObserver {
     if (array != null) {
       if (!this._el.multiple) {
         if (__DEV__)
-          throw createError(`AUR0654: Only null or Array instances can be bound to a multi-select.`);
+          throw createError(`AUR0654: array values can only be bound to a multi-select.`);
         else
           throw createError(`AUR0654`);
       }

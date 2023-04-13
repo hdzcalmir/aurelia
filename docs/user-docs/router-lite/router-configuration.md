@@ -184,7 +184,7 @@ au.register(
   RouterConfiguration.customize({
     buildTitle(tr: Transition) {
       const root = tr.routeTree.root;
-      const baseTitle = root.context.definition.config.title;
+      const baseTitle = root.context.config.title;
       const titlePart = root.children.map(c => c.title).join(' - ');
       return `${baseTitle} - ${titlePart}`;
     },
@@ -243,7 +243,7 @@ import { AppTask, Aurelia } from '@aurelia/runtime-html';
         // Use the I18N to translate the titles using the keys from data.i18n.
         i18n ??= container.get(I18N);
         const root = tr.routeTree.root;
-        const baseTitle = root.context.definition.config.title;
+        const baseTitle = root.context.config.title;
         const child = tr.routeTree.root.children[0];
         return `${baseTitle} - ${i18n.tr(child.data.i18n as string)}`;
       },
@@ -387,3 +387,11 @@ As you interact with this example, you can see that there is absolutely no chang
 ### Override configured history strategy
 
 You can use the [navigation options](./navigating.md#using-navigation-options) to override the configured history strategy for individual routing instructions.
+
+## Configure active class
+
+Using the `activeClass` option you can add a class name to the router configuration.
+This class name is used by the [`load` custom attribute](./navigating.md#using-the-load-custom-attribute) when the associated instruction is active.
+The default value for this option is `null`, which also means that the `load` custom attribute won't add any class proactively.
+Note that the router-lite does not define any CSS class out-of-the-box.
+If you want to use this feature, make sure that you defines the class as well in your stylesheet.

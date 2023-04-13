@@ -58,8 +58,6 @@ export interface IViewportInstruction {
    * - `PartialCustomElementDefinition`: either a complete `CustomElementDefinition` or a partial definition (e.g. an object literal with at least the `name` property)
    * - `IRouteViewModel`: an existing component instance.
    *
-   * For a string component route-recognizer of the 'resolved' `RoutingContext` will be employed.
-   * Whereas for non-sting components, a `RouteDefinition` will be resolved, and a (new) `ViewportInstruction` will be created out of that.
    */
   readonly component: string | RouteableComponent;
   /**
@@ -180,7 +178,7 @@ export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_
   public toUrlComponent(recursive: boolean = true): string {
     // TODO(fkleuver): use the context to determine create full tree
     const component = this.component.toUrlComponent();
-    const params = this.params === null || Object.keys(this.params).length === 0 ? '' : `(${stringifyParams(this.params)})`;
+    const params = this.params === null || Object.keys(this.params).length === 0 ? '' : `(${stringifyParams(this.params)})`; /** TODO(sayan): review the path generation usage and correct this stringifyParams artefact. */
     const vp = this.viewport;
     const viewport = component.length === 0 || vp === null || vp.length === 0 || vp === defaultViewportName ? '' : `@${vp}`;
     const thisPart = `${'('.repeat(this.open)}${component}${params}${viewport}${')'.repeat(this.close)}`;
