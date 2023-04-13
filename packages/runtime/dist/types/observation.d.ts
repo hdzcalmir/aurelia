@@ -7,14 +7,15 @@ export interface IBinding {
     bind(scope: Scope): void;
     unbind(): void;
     get: IServiceLocator['get'];
-    useScope(scope: Scope): void;
-    limit(opts: IRateLimitOptions): IDisposable;
+    useScope?(scope: Scope): void;
+    limit?(opts: IRateLimitOptions): IDisposable;
 }
 export interface IRateLimitOptions {
     type: 'throttle' | 'debounce';
     delay: number;
     queue: TaskQueue;
     now: () => number;
+    signals: string[];
 }
 export declare const ICoercionConfiguration: import("@aurelia/kernel").InterfaceSymbol<ICoercionConfiguration>;
 export interface ICoercionConfiguration {
@@ -41,9 +42,9 @@ export interface ISubscriber<TValue = unknown> {
 export interface ICollectionSubscriber {
     handleCollectionChange(collection: Collection, indexMap: IndexMap): void;
 }
-export interface ISubscribable {
-    subscribe(subscriber: ISubscriber): void;
-    unsubscribe(subscriber: ISubscriber): void;
+export interface ISubscribable<T = ISubscriber> {
+    subscribe(subscriber: T): void;
+    unsubscribe(subscriber: T): void;
 }
 export interface ICollectionSubscribable {
     subscribe(subscriber: ICollectionSubscriber): void;

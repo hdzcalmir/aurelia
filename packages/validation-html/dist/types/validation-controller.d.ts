@@ -17,13 +17,13 @@ export declare const enum ValidateEventKind {
 export declare class ControllerValidateResult {
     valid: boolean;
     results: ValidationResult[];
-    instruction?: ValidateInstruction<IValidateable<any>> | undefined;
+    instruction?: ValidateInstruction<IValidateable> | undefined;
     /**
      * @param {boolean} valid - `true` if the validation passed, else `false`.
      * @param {ValidationResult[]} results - The validation result of every rule that was evaluated.
      * @param {ValidateInstruction} [instruction] - The instruction passed to the controller's validate method.
      */
-    constructor(valid: boolean, results: ValidationResult[], instruction?: ValidateInstruction<IValidateable<any>> | undefined);
+    constructor(valid: boolean, results: ValidationResult[], instruction?: ValidateInstruction<IValidateable> | undefined);
 }
 /**
  * Describes the validation result and target elements pair.
@@ -64,7 +64,7 @@ export interface ValidationResultsSubscriber {
 export declare class BindingInfo {
     target: Element;
     scope: Scope;
-    rules?: PropertyRule<IValidateable<any>, unknown>[] | undefined;
+    rules?: PropertyRule<IValidateable, unknown>[] | undefined;
     propertyInfo: PropertyInfo | undefined;
     /**
      * @param {Element} target - The HTMLElement associated with the binding.
@@ -73,7 +73,7 @@ export declare class BindingInfo {
      * @param {(PropertyInfo | undefined)} [propertyInfo=void 0] - Information describing the associated property for the binding.
      * @memberof BindingInfo
      */
-    constructor(target: Element, scope: Scope, rules?: PropertyRule<IValidateable<any>, unknown>[] | undefined, propertyInfo?: PropertyInfo | undefined);
+    constructor(target: Element, scope: Scope, rules?: PropertyRule<IValidateable, unknown>[] | undefined, propertyInfo?: PropertyInfo | undefined);
 }
 declare class PropertyInfo {
     object: any;

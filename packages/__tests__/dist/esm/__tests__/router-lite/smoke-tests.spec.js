@@ -972,7 +972,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await au.stop(true);
         assert.areTaskQueuesEmpty();
     });
-    it('fallback as function is supported - route configuration', async function () {
+    it('function as fallback is supported - route configuration', async function () {
         let A = class A {
         };
         A = __decorate([
@@ -1023,7 +1023,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await au.stop(true);
         assert.areTaskQueuesEmpty();
     });
-    it('fallback as function is supported - route configuration - hierarchical', async function () {
+    it('function as fallback is supported - route configuration - hierarchical', async function () {
         let C1 = class C1 {
         };
         C1 = __decorate([
@@ -1100,7 +1100,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await au.stop(true);
         assert.areTaskQueuesEmpty();
     });
-    it('fallback as function is supported - viewport', async function () {
+    it('function as fallback is supported - viewport', async function () {
         let A = class A {
         };
         A = __decorate([
@@ -1151,7 +1151,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await au.stop(true);
         assert.areTaskQueuesEmpty();
     });
-    it('fallback as function is supported - viewport - hierarchical', async function () {
+    it('function as fallback is supported - viewport - hierarchical', async function () {
         function fallback(vi, rn, _ctx) {
             return rn.component.Type === P1 ? 'n-f-1' : 'n-f-2';
         }
@@ -1226,6 +1226,884 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         const host = ctx.createElement('div');
         au.app({ component, host });
         await au.start();
+        assertComponentsVisible(host, [Root, [P1, [C1]]]);
+        await router.load('p2/foo');
+        assertComponentsVisible(host, [Root, [P2, [NF2]]]);
+        await router.load('p1/foo');
+        assertComponentsVisible(host, [Root, [P1, [NF1]]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('class as fallback is supported - route configuration', async function () {
+        let A = class A {
+        };
+        A = __decorate([
+            customElement({ name: 'ce-a', template: 'a' })
+        ], A);
+        let NF = class NF {
+        };
+        NF = __decorate([
+            customElement({ name: 'n-f', template: 'nf' })
+        ], NF);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'a'], component: A },
+                    { id: 'r2', path: ['nf1'], component: NF },
+                ],
+                fallback: NF,
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [A]]);
+        await router.load('foo');
+        assertComponentsVisible(host, [Root, [NF]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('class as fallback is supported - route configuration - hierarchical', async function () {
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'ce-c1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'ce-c2', template: 'c2' })
+        ], C2);
+        let P1 = class P1 {
+        };
+        P1 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C1 },
+                ]
+            }),
+            customElement({ name: 'ce-p1', template: 'p1<au-viewport></au-viewport>' })
+        ], P1);
+        let P2 = class P2 {
+        };
+        P2 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C2 },
+                ]
+            }),
+            customElement({ name: 'ce-p2', template: 'p2<au-viewport></au-viewport>' })
+        ], P2);
+        let NF = class NF {
+        };
+        NF = __decorate([
+            customElement({ name: 'n-f', template: 'nf' })
+        ], NF);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'p1'], component: P1 },
+                    { id: 'r2', path: ['p2'], component: P2 },
+                    { id: 'r3', path: ['nf1'], component: NF },
+                ],
+                fallback: NF,
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [P1, [C1]]]);
+        await router.load('p2/foo');
+        assertComponentsVisible(host, [Root, [P2, [NF]]]);
+        await router.load('p1/foo');
+        assertComponentsVisible(host, [Root, [P1, [NF]]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('function returning class as fallback is supported - route configuration', async function () {
+        let A = class A {
+        };
+        A = __decorate([
+            customElement({ name: 'ce-a', template: 'a' })
+        ], A);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'a'], component: A },
+                    { id: 'r2', path: ['nf1'], component: NF1 },
+                    { id: 'r3', path: ['nf2'], component: NF2 },
+                ],
+                fallback(vi, _rn, _ctx) {
+                    return vi.component.value === 'foo' ? NF1 : NF2;
+                },
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [A]]);
+        await router.load('foo');
+        assertComponentsVisible(host, [Root, [NF1]]);
+        await router.load('bar');
+        assertComponentsVisible(host, [Root, [NF2]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('function returning class as fallback is supported - route configuration - hierarchical', async function () {
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'ce-c1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'ce-c2', template: 'c2' })
+        ], C2);
+        let P1 = class P1 {
+        };
+        P1 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C1 },
+                ]
+            }),
+            customElement({ name: 'ce-p1', template: 'p1<au-viewport></au-viewport>' })
+        ], P1);
+        let P2 = class P2 {
+        };
+        P2 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C2 },
+                ]
+            }),
+            customElement({ name: 'ce-p2', template: 'p2<au-viewport></au-viewport>' })
+        ], P2);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'p1'], component: P1 },
+                    { id: 'r2', path: ['p2'], component: P2 },
+                    { id: 'r3', path: ['nf1'], component: NF1 },
+                    { id: 'r4', path: ['nf2'], component: NF2 },
+                ],
+                fallback(vi, rn, _ctx) {
+                    return rn.component.Type === P1 ? NF1 : NF2;
+                },
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [P1, [C1]]]);
+        await router.load('p2/foo');
+        assertComponentsVisible(host, [Root, [P2, [NF2]]]);
+        await router.load('p1/foo');
+        assertComponentsVisible(host, [Root, [P1, [NF1]]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('promise resolving to class as fallback is supported - route configuration', async function () {
+        let A = class A {
+        };
+        A = __decorate([
+            customElement({ name: 'ce-a', template: 'a' })
+        ], A);
+        let NF = class NF {
+        };
+        NF = __decorate([
+            customElement({ name: 'n-f', template: 'nf' })
+        ], NF);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'a'], component: A },
+                    { id: 'r2', path: ['nf1'], component: NF },
+                ],
+                fallback: Promise.resolve(NF),
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [A]]);
+        await router.load('foo');
+        assertComponentsVisible(host, [Root, [NF]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('promise resolving to class as fallback is supported - route configuration - hierarchical', async function () {
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'ce-c1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'ce-c2', template: 'c2' })
+        ], C2);
+        let P1 = class P1 {
+        };
+        P1 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C1 },
+                ]
+            }),
+            customElement({ name: 'ce-p1', template: 'p1<au-viewport></au-viewport>' })
+        ], P1);
+        let P2 = class P2 {
+        };
+        P2 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C2 },
+                ]
+            }),
+            customElement({ name: 'ce-p2', template: 'p2<au-viewport></au-viewport>' })
+        ], P2);
+        let NF = class NF {
+        };
+        NF = __decorate([
+            customElement({ name: 'n-f', template: 'nf' })
+        ], NF);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'p1'], component: P1 },
+                    { id: 'r2', path: ['p2'], component: P2 },
+                    { id: 'r3', path: ['nf1'], component: NF },
+                ],
+                fallback: Promise.resolve(NF),
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [P1, [C1]]]);
+        await router.load('p2/foo');
+        assertComponentsVisible(host, [Root, [P2, [NF]]]);
+        await router.load('p1/foo');
+        assertComponentsVisible(host, [Root, [P1, [NF]]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('function returning a promise resolving to class as fallback is supported - route configuration', async function () {
+        let A = class A {
+        };
+        A = __decorate([
+            customElement({ name: 'ce-a', template: 'a' })
+        ], A);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'a'], component: A },
+                    { id: 'r2', path: ['nf1'], component: NF1 },
+                    { id: 'r3', path: ['nf2'], component: NF2 },
+                ],
+                fallback(vi, _rn, _ctx) {
+                    return Promise.resolve(vi.component.value === 'foo' ? NF1 : NF2);
+                },
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [A]]);
+        await router.load('foo');
+        assertComponentsVisible(host, [Root, [NF1]]);
+        await router.load('bar');
+        assertComponentsVisible(host, [Root, [NF2]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('function returning a promise resolving to class as fallback is supported - route configuration - hierarchical', async function () {
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'ce-c1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'ce-c2', template: 'c2' })
+        ], C2);
+        let P1 = class P1 {
+        };
+        P1 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C1 },
+                ]
+            }),
+            customElement({ name: 'ce-p1', template: 'p1<au-viewport></au-viewport>' })
+        ], P1);
+        let P2 = class P2 {
+        };
+        P2 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C2 },
+                ]
+            }),
+            customElement({ name: 'ce-p2', template: 'p2<au-viewport></au-viewport>' })
+        ], P2);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'p1'], component: P1 },
+                    { id: 'r2', path: ['p2'], component: P2 },
+                    { id: 'r3', path: ['nf1'], component: NF1 },
+                    { id: 'r4', path: ['nf2'], component: NF2 },
+                ],
+                fallback(vi, rn, _ctx) {
+                    return Promise.resolve(rn.component.Type === P1 ? NF1 : NF2);
+                },
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [P1, [C1]]]);
+        await router.load('p2/foo');
+        assertComponentsVisible(host, [Root, [P2, [NF2]]]);
+        await router.load('p1/foo');
+        assertComponentsVisible(host, [Root, [P1, [NF1]]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('class as fallback is supported - viewport', async function () {
+        let A = class A {
+        };
+        A = __decorate([
+            customElement({ name: 'ce-a', template: 'a' })
+        ], A);
+        let NF = class NF {
+        };
+        NF = __decorate([
+            customElement({ name: 'n-f', template: 'nf' })
+        ], NF);
+        let Root = class Root {
+            constructor() {
+                this.fallback = NF;
+            }
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'a'], component: A },
+                    { id: 'r2', path: ['nf1'], component: NF },
+                ],
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport fallback.bind>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [A]]);
+        await router.load('foo');
+        assertComponentsVisible(host, [Root, [NF]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('class as fallback is supported - viewport - hierarchical', async function () {
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'ce-c1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'ce-c2', template: 'c2' })
+        ], C2);
+        let P1 = class P1 {
+            constructor() {
+                this.fallback = NF1;
+            }
+        };
+        P1 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C1 },
+                ]
+            }),
+            customElement({ name: 'ce-p1', template: 'p1<au-viewport fallback.bind></au-viewport>' })
+        ], P1);
+        let P2 = class P2 {
+            constructor() {
+                this.fallback = NF2;
+            }
+        };
+        P2 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C2 },
+                ]
+            }),
+            customElement({ name: 'ce-p2', template: 'p2<au-viewport fallback.bind></au-viewport>' })
+        ], P2);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'p1'], component: P1 },
+                    { id: 'r2', path: ['p2'], component: P2 },
+                    { id: 'r3', path: ['nf1'], component: NF1 },
+                    { id: 'r4', path: ['nf2'], component: NF2 },
+                ],
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [P1, [C1]]]);
+        await router.load('p2/foo');
+        assertComponentsVisible(host, [Root, [P2, [NF2]]]);
+        await router.load('p1/foo');
+        assertComponentsVisible(host, [Root, [P1, [NF1]]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('function returning class as fallback is supported - viewport', async function () {
+        let A = class A {
+        };
+        A = __decorate([
+            customElement({ name: 'ce-a', template: 'a' })
+        ], A);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+            fallback(vi, _rn, _ctx) {
+                return vi.component.value === 'foo' ? NF1 : NF2;
+            }
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'a'], component: A },
+                    { id: 'r2', path: ['nf1'], component: NF1 },
+                    { id: 'r3', path: ['nf2'], component: NF2 },
+                ],
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport fallback.bind>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [A]]);
+        await router.load('foo');
+        assertComponentsVisible(host, [Root, [NF1]]);
+        await router.load('bar');
+        assertComponentsVisible(host, [Root, [NF2]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('function returning class as fallback is supported - viewport - hierarchical', async function () {
+        function fallback(vi, rn, _ctx) {
+            return rn.component.Type === P1 ? NF1 : NF2;
+        }
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'ce-c1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'ce-c2', template: 'c2' })
+        ], C2);
+        let P1 = class P1 {
+            constructor() {
+                this.fallback = fallback;
+            }
+        };
+        P1 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C1 },
+                ]
+            }),
+            customElement({ name: 'ce-p1', template: 'p1<au-viewport fallback.bind></au-viewport>' })
+        ], P1);
+        let P2 = class P2 {
+            constructor() {
+                this.fallback = fallback;
+            }
+        };
+        P2 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C2 },
+                ]
+            }),
+            customElement({ name: 'ce-p2', template: 'p2<au-viewport fallback.bind></au-viewport>' })
+        ], P2);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'p1'], component: P1 },
+                    { id: 'r2', path: ['p2'], component: P2 },
+                    { id: 'r3', path: ['nf1'], component: NF1 },
+                    { id: 'r4', path: ['nf2'], component: NF2 },
+                ],
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [P1, [C1]]]);
+        await router.load('p2/foo');
+        assertComponentsVisible(host, [Root, [P2, [NF2]]]);
+        await router.load('p1/foo');
+        assertComponentsVisible(host, [Root, [P1, [NF1]]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('promise resolving to class as fallback is supported - viewport', async function () {
+        let A = class A {
+        };
+        A = __decorate([
+            customElement({ name: 'ce-a', template: 'a' })
+        ], A);
+        let NF = class NF {
+        };
+        NF = __decorate([
+            customElement({ name: 'n-f', template: 'nf' })
+        ], NF);
+        let Root = class Root {
+            constructor() {
+                this.fallback = Promise.resolve(NF);
+            }
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'a'], component: A },
+                    { id: 'r2', path: ['nf1'], component: NF },
+                ],
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport fallback.bind>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [A]]);
+        await router.load('foo');
+        assertComponentsVisible(host, [Root, [NF]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('promise resolving to class as fallback is supported - viewport - hierarchical', async function () {
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'ce-c1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'ce-c2', template: 'c2' })
+        ], C2);
+        let P1 = class P1 {
+            constructor() {
+                this.fallback = Promise.resolve(NF1);
+            }
+        };
+        P1 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C1 },
+                ]
+            }),
+            customElement({ name: 'ce-p1', template: 'p1<au-viewport fallback.bind></au-viewport>' })
+        ], P1);
+        let P2 = class P2 {
+            constructor() {
+                this.fallback = Promise.resolve(NF2);
+            }
+        };
+        P2 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C2 },
+                ]
+            }),
+            customElement({ name: 'ce-p2', template: 'p2<au-viewport fallback.bind></au-viewport>' })
+        ], P2);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'p1'], component: P1 },
+                    { id: 'r2', path: ['p2'], component: P2 },
+                    { id: 'r3', path: ['nf1'], component: NF1 },
+                    { id: 'r4', path: ['nf2'], component: NF2 },
+                ],
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [P1, [C1]]]);
+        await router.load('p2/foo');
+        assertComponentsVisible(host, [Root, [P2, [NF2]]]);
+        await router.load('p1/foo');
+        assertComponentsVisible(host, [Root, [P1, [NF1]]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('function returning a promise resolving to class as fallback is supported - viewport', async function () {
+        let A = class A {
+        };
+        A = __decorate([
+            customElement({ name: 'ce-a', template: 'a' })
+        ], A);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+            fallback(vi, _rn, _ctx) {
+                return Promise.resolve(vi.component.value === 'foo' ? NF1 : NF2);
+            }
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'a'], component: A },
+                    { id: 'r2', path: ['nf1'], component: NF1 },
+                    { id: 'r3', path: ['nf2'], component: NF2 },
+                ],
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport fallback.bind>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assertComponentsVisible(host, [Root, [A]]);
+        await router.load('foo');
+        assertComponentsVisible(host, [Root, [NF1]]);
+        await router.load('bar');
+        assertComponentsVisible(host, [Root, [NF2]]);
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    it('function returning a promise resolving to class as fallback is supported - viewport - hierarchical', async function () {
+        function fallback(vi, rn, _ctx) {
+            return Promise.resolve(rn.component.Type === P1 ? NF1 : NF2);
+        }
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'ce-c1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'ce-c2', template: 'c2' })
+        ], C2);
+        let P1 = class P1 {
+            constructor() {
+                this.fallback = fallback;
+            }
+        };
+        P1 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C1 },
+                ]
+            }),
+            customElement({ name: 'ce-p1', template: 'p1<au-viewport fallback.bind></au-viewport>' })
+        ], P1);
+        let P2 = class P2 {
+            constructor() {
+                this.fallback = fallback;
+            }
+        };
+        P2 = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'c'], component: C2 },
+                ]
+            }),
+            customElement({ name: 'ce-p2', template: 'p2<au-viewport fallback.bind></au-viewport>' })
+        ], P2);
+        let NF1 = class NF1 {
+        };
+        NF1 = __decorate([
+            customElement({ name: 'n-f-1', template: 'nf1' })
+        ], NF1);
+        let NF2 = class NF2 {
+        };
+        NF2 = __decorate([
+            customElement({ name: 'n-f-2', template: 'nf2' })
+        ], NF2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'r1', path: ['', 'p1'], component: P1 },
+                    { id: 'r2', path: ['p2'], component: P2 },
+                    { id: 'r3', path: ['nf1'], component: NF1 },
+                    { id: 'r4', path: ['nf2'], component: NF2 },
+                ],
+            }),
+            customElement({
+                name: 'root',
+                template: `root<au-viewport>`,
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
         assertComponentsVisible(host, [Root, [P1, [C1]]]);
         await router.load('p2/foo');
         assertComponentsVisible(host, [Root, [P2, [NF2]]]);
@@ -1688,7 +2566,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await queue.yield();
         assert.html.textContent(vps[0], 'c1 gc11', 'round#3 vp1');
         assert.html.textContent(vps[1], 'c2 NA gc21', 'round#3 vp2');
-        await au.stop();
+        await au.stop(true);
     });
     it('Router#load accepts hierarchical viewport instructions with route-id', async function () {
         let GrandChildOneOne = class GrandChildOneOne {
@@ -1819,7 +2697,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await queue.yield();
         assert.html.textContent(vps[0], 'c1 gc12', 'round#5 vp1');
         assert.html.textContent(vps[1], '', 'round#5 vp2');
-        await au.stop();
+        await au.stop(true);
     });
     it('Router#load supports class-returning-function as component', async function () {
         let GrandChildOneOne = class GrandChildOneOne {
@@ -1949,7 +2827,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await queue.yield();
         assert.html.textContent(vps[0], 'c1 gc12', 'round#8 vp1');
         assert.html.textContent(vps[1], 'c2 42 gc22 21', 'round#8 vp2');
-        await au.stop();
+        await au.stop(true);
     });
     // Use-case: router.load(import('./class'))
     it('Router#load supports promise as component', async function () {
@@ -2090,7 +2968,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await queue.yield();
         assert.html.textContent(vps[0], 'c1 gc12', 'round#10 vp1');
         assert.html.textContent(vps[1], 'c2 42 gc22 21', 'round#10 vp2');
-        await au.stop();
+        await au.stop(true);
     });
     it('Router#load accepts viewport instructions with specific viewport name - component: mixed', async function () {
         let GrandChildOneOne = class GrandChildOneOne {
@@ -2238,7 +3116,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await queue.yield();
         assert.html.textContent(vps[0], 'c2 21 gc22 42', 'round#7 vp1');
         assert.html.textContent(vps[1], '', 'round#7 vp2');
-        await au.stop();
+        await au.stop(true);
     });
     // TODO(sayan): add more tests for parameter parsing with multiple route parameters including optional parameter.
     it('does not interfere with standard "href" attribute', async function () {
@@ -2258,7 +3136,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         component.href = null;
         ctx.platform.domWriteQueue.flush();
         assert.strictEqual(host.querySelector('a').getAttribute('href'), null);
-        await au.stop();
+        await au.stop(true);
     });
     // #region location URL generation
     {
@@ -2357,7 +3235,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectToPath();
             assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar | fragment:');
             assert.match(container.get(ILocation).path, /a\?foo=bar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('queryString - #2 - structured query string object', async function () {
             const { host, au, container } = await start();
@@ -2365,7 +3243,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectWithQueryObj();
             assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar | fragment:');
             assert.match(container.get(ILocation).path, /a\?foo=bar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('queryString - #3 - multi-valued query string - value from both string path and structured query params', async function () {
             const { host, au, container } = await start();
@@ -2373,7 +3251,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectWithMultivaluedQuery();
             assert.html.textContent(host, 'view-a foo: undefined | query: foo=fizz&foo=bar | fragment:');
             assert.match(container.get(ILocation).path, /a\?foo=fizz&foo=bar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('queryString - #4 - structured query string along with path parameter', async function () {
             const { host, au, container } = await start();
@@ -2381,7 +3259,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectWithRouteParamAndQueryObj();
             assert.html.textContent(host, 'view-a foo: fizz | query: foo=bar | fragment:');
             assert.match(container.get(ILocation).path, /a\/fizz\?foo=bar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('queryString - #5 - structured query string with class as routing instruction', async function () {
             const { host, au, container } = await start();
@@ -2389,7 +3267,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectWithClassAndQueryObj();
             assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar | fragment:');
             assert.match(container.get(ILocation).path, /a\?foo=bar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('queryString - #6 - structured query string with viewport instruction', async function () {
             const { host, au, container } = await start();
@@ -2397,7 +3275,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectVpInstrcAndQueryObj();
             assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment:');
             assert.match(container.get(ILocation).path, /a\/42\?foo=bar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('queryString - #7 - structured query string with viewport instruction - route-id and multi-valued key', async function () {
             const { host, au, container } = await start();
@@ -2405,7 +3283,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectVpInstrcRouteIdAndQueryObj();
             assert.html.textContent(host, 'view-a foo: 42 | query: bar=fizz&bar=foo | fragment:');
             assert.match(container.get(ILocation).path, /a\/42\?bar=fizz&bar=foo$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('queryString - #8 - sibling viewports', async function () {
             const { host, au, container } = await start();
@@ -2413,7 +3291,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectSiblingViewport();
             assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment: view-a foo: undefined | query: foo=bar | fragment:');
             assert.match(container.get(ILocation).path, /a\/42\+a\?foo=bar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('fragment - #1 - raw fragment in path', async function () {
             const { host, au, container } = await start();
@@ -2421,7 +3299,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectFragment();
             assert.html.textContent(host, 'view-a foo: undefined | query: | fragment: foobar');
             assert.match(container.get(ILocation).path, /a#foobar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('fragment - #2 - fragment in navigation options', async function () {
             const { host, au, container } = await start();
@@ -2429,7 +3307,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectFragmentInNavOpt();
             assert.html.textContent(host, 'view-a foo: undefined | query: | fragment: foobar');
             assert.match(container.get(ILocation).path, /a#foobar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('fragment - #3 - fragment in path always wins over the fragment in navigation options', async function () {
             const { host, au, container } = await start();
@@ -2437,7 +3315,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectFragmentInPathAndNavOpt();
             assert.html.textContent(host, 'view-a foo: undefined | query: | fragment: foobar');
             assert.match(container.get(ILocation).path, /a#foobar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('fragment - #4 - with viewport instruction', async function () {
             const { host, au, container } = await start();
@@ -2445,7 +3323,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectFragmentWithVpInstrc();
             assert.html.textContent(host, 'view-a foo: 42 | query: | fragment: foobar');
             assert.match(container.get(ILocation).path, /a\/42#foobar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('fragment - #5 - with viewport instruction - raw url', async function () {
             const { host, au, container } = await start();
@@ -2453,7 +3331,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectFragmentWithVpInstrcRawUrl();
             assert.html.textContent(host, 'view-a foo: 42 | query: | fragment: foobar');
             assert.match(container.get(ILocation).path, /a\/42#foobar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('fragment - #6 - sibling viewport', async function () {
             const { host, au, container } = await start();
@@ -2461,7 +3339,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectFragmentSiblingViewport();
             assert.html.textContent(host, 'view-a foo: 42 | query: | fragment: foobar view-a foo: undefined | query: | fragment: foobar');
             assert.match(container.get(ILocation).path, /a\/42\+a#foobar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('query and fragment', async function () {
             const { host, au, container } = await start();
@@ -2469,7 +3347,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectWithQueryAndFragment();
             assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment: foobar');
             assert.match(container.get(ILocation).path, /a\/42\?foo=bar#foobar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('query and fragment - sibling viewport', async function () {
             const { host, au, container } = await start();
@@ -2477,7 +3355,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await vmb.redirectWithQueryAndFragmentSiblingViewport();
             assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment: foobar view-a foo: 84 | query: foo=bar | fragment: foobar');
             assert.match(container.get(ILocation).path, /a\/42\+a\/84\?foo=bar#foobar$/);
-            await au.stop();
+            await au.stop(true);
         });
         it('shows title correctly', async function () {
             const { host, au, container } = await start();
@@ -2485,18 +3363,18 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const vmb = CustomElement.for(host.querySelector('vm-b')).viewModel;
             await vmb.redirectToPath();
             assert.strictEqual(container.get(IPlatform).document.title, 'A | base');
-            await au.stop();
+            await au.stop(true);
         });
         it('respects custom buildTitle', async function () {
             const { host, au, container } = await start((tr) => {
                 const root = tr.routeTree.root;
-                return `${root.context.definition.config.title} - ${root.children.map(c => c.title).join(' - ')}`;
+                return `${root.context.config.title} - ${root.children.map(c => c.title).join(' - ')}`;
             });
             assert.strictEqual(container.get(IPlatform).document.title, 'base - B');
             const vmb = CustomElement.for(host.querySelector('vm-b')).viewModel;
             await vmb.redirectToPath();
             assert.strictEqual(container.get(IPlatform).document.title, 'base - A');
-            await au.stop();
+            await au.stop(true);
         });
     }
     // TODO(sayan): add more tests for title involving children and sibling routes
@@ -2541,7 +3419,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         const { au, container, host } = await start({ appRoot: Root });
         assert.html.textContent(host, 'gcc1');
         assert.match(container.get(ILocation).path, /c1\/gc1$/);
-        await au.stop();
+        await au.stop(true);
     });
     // #endregion
     // TODO(sayan): add tests here for the location URL building in relation for sibling, parent/children relationship and viewport name
@@ -2694,7 +3572,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await queue.yield();
             rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
             assert.notEqual(host.querySelector('ce-p3'), null);
-            await au.stop();
+            await au.stop(true);
         });
         it('getRouteConfig hook', async function () {
             let C11 = class C11 {
@@ -2801,7 +3679,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await queue.yield();
             rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
             assert.notEqual(host.querySelector('ce-p3'), null);
-            await au.stop();
+            await au.stop(true);
         });
         it('async configuration', async function () {
             let C11 = class C11 {
@@ -2908,7 +3786,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await queue.yield();
             rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
             assert.notEqual(host.querySelector('ce-p3'), null);
-            await au.stop();
+            await au.stop(true);
         });
         it('parameterized route', async function () {
             let C11 = class C11 {
@@ -3009,7 +3887,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2/:id', text: 'P2', active: true }], 'round#5 root');
             childNavBar = CustomElement.for(host.querySelector('ce-p2>nav-bar')).viewModel;
             childNavBar.assert([{ href: 'c21', text: 'C21', active: true }, { href: 'c22', text: 'C22', active: false }], 'round#5 child navbar');
-            await au.stop();
+            await au.stop(true);
         });
         it('with redirection', async function () {
             let C11 = class C11 {
@@ -3112,7 +3990,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await queue.yield();
             rootNavbar.assert([{ href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
             assert.notEqual(host.querySelector('ce-p3'), null);
-            await au.stop();
+            await au.stop(true);
         });
         it('with redirection - path with redirection is shown', async function () {
             let C11 = class C11 {
@@ -3215,7 +4093,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await queue.yield();
             rootNavbar.assert([{ href: '', text: 'null', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
             assert.notEqual(host.querySelector('ce-p3'), null);
-            await au.stop();
+            await au.stop(true);
         });
         it('parameterized redirection', async function () {
             let P1 = class P1 {
@@ -3262,7 +4140,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await router.load('foo/42');
             await queue.yield();
             rootNavbar.assert([{ href: 'p1/:id', text: 'P1', active: true }, { href: 'p2/:id', text: 'P2', active: false }], 'round#2 root');
-            await au.stop();
+            await au.stop(true);
         });
         it('can be deactivated', async function () {
             let C11 = class C11 {
@@ -3300,7 +4178,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const queue = container.get(IPlatform).domWriteQueue;
             await queue.yield();
             assert.html.textContent(host, 'no nav model root no nav model p1 c11');
-            await au.stop();
+            await au.stop(true);
         });
         class InvalidAsyncComponentTestData {
             constructor(name, component) {
@@ -3338,7 +4216,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 catch (er) {
                     assert.match(er.message, /does not appear to be a component or CustomElement recognizable by Aurelia/);
                 }
-                await au.stop();
+                await au.stop(true);
             });
         }
     });
@@ -3390,7 +4268,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         log.length = 0;
         await container.get(IRouter).load('p2');
         assert.deepStrictEqual(log, [true, false]);
-        await au.stop();
+        await au.stop(true);
     });
     it('custom base path can be configured', async function () {
         let P1 = class P1 {
@@ -3448,7 +4326,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await router.load('/mega-dodo/guide1/p2');
         assert.strictEqual(host.querySelector('ce-p1'), null);
         assert.notEqual(host.querySelector('ce-p2'), null);
-        await au.stop();
+        await au.stop(true);
     });
     it('multiple paths can redirect to same path', async function () {
         let P1 = class P1 {
@@ -3489,7 +4367,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await router.load('foo');
         assert.html.textContent(host, 'p2');
         assert.match(location.path, /p2$/);
-        await au.stop();
+        await au.stop(true);
     });
     it('parameterized redirect', async function () {
         let P1 = class P1 {
@@ -3546,7 +4424,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         catch (e) {
             assert.match(e.message, /^Unexpected expression kind/, 'Expected error due to unexpected path segment.');
         }
-        await au.stop();
+        await au.stop(true);
     });
     it('parameterized redirect - parameter rearrange', async function () {
         let P1 = class P1 {
@@ -3585,7 +4463,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await router.load('fizz/1/2');
         assert.html.textContent(host, 'p2 2 1');
         assert.match(location.path, /p2\/2\/1$/);
-        await au.stop();
+        await au.stop(true);
     });
     describe('path generation', function () {
         it('at root', async function () {
@@ -3688,7 +4566,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             // use path (non-eager resolution)
             assert.strictEqual(await router.load('bar/1?b=3'), true);
             BaseRouteViewModel.assertAndClear('bar', [{ id: '1' }, new URLSearchParams({ b: '3' })], 'params7');
-            await au.stop();
+            await au.stop(true);
         });
         it('at root - with siblings', async function () {
             class BaseRouteViewModel {
@@ -3785,7 +4663,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             // path that cannot be eagerly resolved
             assert.strictEqual(await router.load('foo/11+bar/21?b=3'), true);
             BaseRouteViewModel.assertAndClear('params5', ['foo', [{ id: '11' }, new URLSearchParams({ b: '3' })]], ['bar', [{ id: '21' }, new URLSearchParams({ b: '3' })]]);
-            await au.stop();
+            await au.stop(true);
         });
         it('with parent-child hierarchy', async function () {
             class BaseRouteViewModel {
@@ -3898,7 +4776,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             assert.strictEqual(await router.load({ component: CeL23, params: { id: '5', a: '6' } }, { context: ce12 }), true);
             assert.match(location.path, /12\/1\/23\/5\/tt\/6$/);
             BaseRouteViewModel.assertAndClear('params5', ['cel23', [{ id: '5', a: '6' }, new URLSearchParams()]]);
-            await au.stop();
+            await au.stop(true);
         });
     });
     describe('transition plan', function () {
@@ -3941,7 +4819,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             host.querySelector('a').click();
             await queue.yield();
             assert.html.textContent(host, 'ce1 2 2', 'round#2');
-            await au.stop();
+            await au.stop(true);
         });
         it('replace - inherited - sibling', async function () {
             var CeOne_2, CeTwo_1;
@@ -4001,7 +4879,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             host.querySelector('a').click();
             await queue.yield();
             assert.html.textContent(host, 'ce1 2 2 ce2 2 2', 'round#2');
-            await au.stop();
+            await au.stop(true);
         });
         it('transitionPlan function #1', async function () {
             var CeOne_3, Root_1;
@@ -4047,7 +4925,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await router.currentTr.promise;
             await queue.yield();
             assert.html.textContent(host, 'ce1 1 2', 'round#2');
-            await au.stop();
+            await au.stop(true);
         });
         it('transitionPlan function #2 - sibling', async function () {
             var CeTwo_2, CeOne_4;
@@ -4112,7 +4990,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await router.currentTr.promise;
             await queue.yield();
             assert.html.textContent(host, 'ce1 2 2 ce2 1 2', 'round#2');
-            await au.stop();
+            await au.stop(true);
         });
         it('transitionPlan function #3 - parent-child - parent:replace,child:invoke-lifecycles', async function () {
             var CeTwo_3, CeOne_5;
@@ -4181,7 +5059,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await router.currentTr.promise;
             await queue.yield();
             assert.html.textContent(host, 'ce1 2 2 ce2 2 2', 'round#2'); // this happens as the ce-one (parent) is replaced causing replacement of child
-            await au.stop();
+            await au.stop(true);
         });
         it('transitionPlan function #3 - parent-child - parent:invoke-lifecycles,child:replace', async function () {
             var CeTwo_4, CeOne_6;
@@ -4250,7 +5128,84 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await router.currentTr.promise;
             await queue.yield();
             assert.html.textContent(host, 'ce1 1 2 ce2 2 2', 'round#2');
-            await au.stop();
+            await au.stop(true);
+        });
+        it('transitionPlan can be overridden per instruction basis', async function () {
+            var CeTwo_5, CeOne_7;
+            let CeTwo = CeTwo_5 = class CeTwo {
+                constructor() {
+                    this.id1 = ++CeTwo_5.id1;
+                }
+                canLoad(params) {
+                    this.id = params.id;
+                    this.id2 = ++CeTwo_5.id2;
+                    return true;
+                }
+            };
+            CeTwo.id1 = 0;
+            CeTwo.id2 = 0;
+            CeTwo = CeTwo_5 = __decorate([
+                customElement({ name: 'ce-two', template: 'ce2 ${id1} ${id2} ${id}' })
+            ], CeTwo);
+            let CeOne = CeOne_7 = class CeOne {
+                constructor() {
+                    this.id1 = ++CeOne_7.id1;
+                }
+                canLoad(params) {
+                    this.id = params.id;
+                    this.id2 = ++CeOne_7.id2;
+                    return true;
+                }
+            };
+            CeOne.id1 = 0;
+            CeOne.id2 = 0;
+            CeOne = CeOne_7 = __decorate([
+                customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2} ${id}' })
+            ], CeOne);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    transitionPlan: 'replace',
+                    routes: [
+                        {
+                            id: 'ce1',
+                            path: ['ce1/:id'],
+                            component: CeOne,
+                            transitionPlan: 'invoke-lifecycles',
+                        },
+                        {
+                            id: 'ce2',
+                            path: ['ce2/:id'],
+                            component: CeTwo,
+                            transitionPlan: 'replace',
+                        },
+                    ]
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, container, host } = await start({ appRoot: Root });
+            const queue = container.get(IPlatform).domWriteQueue;
+            const router = container.get(IRouter);
+            await router.load('ce1/42');
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 1 42', 'round#1');
+            await router.load('ce1/43');
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 2 43', 'round#2');
+            await router.load('ce1/44', { transitionPlan: 'replace' });
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 2 3 44', 'round#3');
+            await router.load('ce2/42');
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 1 1 42', 'round#4');
+            await router.load('ce2/43');
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 2 2 43', 'round#5');
+            await router.load('ce2/44', { transitionPlan: 'invoke-lifecycles' });
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 2 3 44', 'round#6');
+            await au.stop(true);
         });
     });
     describe('history strategy', function () {
@@ -4335,7 +5290,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                     await queue.yield();
                     assert.html.textContent(history, expectations[i], `round#${i}`);
                 }
-                await au.stop();
+                await au.stop(true);
             });
         }
         (isNode() ? it.skip : it)('explicit history strategy can be used for individual navigation - configured: push', async function () {
@@ -4423,7 +5378,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await dwQueue.yield();
             assert.html.textContent(vp, 'ce1', 'strategy: none - component');
             assert.html.textContent(historyEl, '#6 - len: 2 - state: {"au-nav-id":5}', 'strategy: none - history');
-            await au.stop();
+            await au.stop(true);
         });
         (isNode() ? it.skip : it)('explicit history strategy can be used for individual navigation - configured: replace', async function () {
             let CeThree = class CeThree {
@@ -4510,7 +5465,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await dwQueue.yield();
             assert.html.textContent(vp, 'ce1', 'strategy: none - component');
             assert.html.textContent(historyEl, '#6 - len: 2 - state: {"au-nav-id":5}', 'strategy: none - history');
-            await au.stop();
+            await au.stop(true);
         });
         (isNode() ? it.skip : it)('explicit history strategy can be used for individual navigation - configured: none', async function () {
             let CeThree = class CeThree {
@@ -4596,7 +5551,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await dwQueue.yield();
             assert.html.textContent(vp, 'ce2', 'round#4 - component');
             assert.html.textContent(historyEl, '#6 - len: 2 - state: {"au-nav-id":6}', 'round#4 - history');
-            await au.stop();
+            await au.stop(true);
         });
     });
     it('navigate repeatedly to parent route from child route works - GH 1701', async function () {
@@ -4655,7 +5610,547 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         host.querySelector('a').click(); // <- go to parent #3
         await queue.yield();
         assert.html.textContent(host, 'c1', 'navigate to parent from c2 #3');
-        await au.stop();
+        await au.stop(true);
+    });
+    describe('multiple configurations for same component', function () {
+        it('multiple configurations for the same component under the same parent', async function () {
+            var C1_1;
+            let C1 = C1_1 = class C1 {
+                constructor() {
+                    this.id = ++C1_1.id;
+                }
+                loading(_params, next, _current) {
+                    this.data = next.data;
+                }
+            };
+            C1.id = 0;
+            C1 = C1_1 = __decorate([
+                customElement({ name: 'c-1', template: 'c1 ${id}' })
+            ], C1);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    routes: [
+                        { path: '', component: C1, title: 't1', data: { foo: 'bar' } },
+                        { path: 'c1', component: C1, title: 't2', data: { awesome: 'possum' } },
+                    ],
+                    transitionPlan: 'replace'
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, host, container } = await start({ appRoot: Root });
+            const doc = container.get(IPlatform).document;
+            const router = container.get(IRouter);
+            assert.html.textContent(host, 'c1 1');
+            assert.strictEqual(doc.title, 't1');
+            let ce = CustomElement.for(host.querySelector('c-1')).viewModel;
+            assert.deepStrictEqual(ce.data, { foo: 'bar' });
+            await router.load('c1');
+            assert.html.textContent(host, 'c1 2');
+            assert.strictEqual(doc.title, 't2');
+            ce = CustomElement.for(host.querySelector('c-1')).viewModel;
+            assert.deepStrictEqual(ce.data, { awesome: 'possum' });
+            await au.stop(true);
+        });
+        it('same component is added under different parents', async function () {
+            let C1 = class C1 {
+                loading(_params, next, _current) {
+                    this.data = next.data;
+                }
+            };
+            C1 = __decorate([
+                customElement({ name: 'c-1', template: 'c1' })
+            ], C1);
+            let P1 = class P1 {
+            };
+            P1 = __decorate([
+                route({
+                    routes: [
+                        { path: '', component: C1, title: 'p1c1', data: { foo: 'bar' } }
+                    ]
+                }),
+                customElement({ name: 'p-1', template: '<au-viewport></au-viewport>' })
+            ], P1);
+            let P2 = class P2 {
+            };
+            P2 = __decorate([
+                route({
+                    routes: [
+                        { path: '', component: C1, title: 'p2c1', data: { awesome: 'possum' } }
+                    ]
+                }),
+                customElement({ name: 'p-2', template: '<au-viewport></au-viewport>' })
+            ], P2);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    routes: [
+                        { path: ['', 'p1'], component: P1 },
+                        { path: 'p2', component: P2 },
+                    ]
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, host, container } = await start({ appRoot: Root });
+            const doc = container.get(IPlatform).document;
+            const router = container.get(IRouter);
+            assert.html.textContent(host, 'c1');
+            assert.strictEqual(doc.title, 'p1c1');
+            let ce = CustomElement.for(host.querySelector('c-1')).viewModel;
+            assert.deepStrictEqual(ce.data, { foo: 'bar' });
+            await router.load('p2');
+            assert.html.textContent(host, 'c1');
+            assert.strictEqual(doc.title, 'p2c1');
+            ce = CustomElement.for(host.querySelector('c-1')).viewModel;
+            assert.deepStrictEqual(ce.data, { awesome: 'possum' });
+            await au.stop(true);
+        });
+        for (const config of ['c1', { path: 'c1' }]) {
+            it(`component defines its own path - with redirect - config: ${JSON.stringify(config)}`, async function () {
+                let C1 = class C1 {
+                    constructor(ctx) {
+                        this.parent = ctx.parent.component.name;
+                    }
+                };
+                C1 = __decorate([
+                    route(config),
+                    customElement({ name: 'c-1', template: '${parent}/c1' }),
+                    __param(0, IRouteContext),
+                    __metadata("design:paramtypes", [Object])
+                ], C1);
+                let P1 = class P1 {
+                };
+                P1 = __decorate([
+                    route({
+                        routes: [
+                            { path: '', redirectTo: 'c1' },
+                            C1,
+                        ]
+                    }),
+                    customElement({ name: 'p-1', template: '<au-viewport></au-viewport>' })
+                ], P1);
+                let P2 = class P2 {
+                };
+                P2 = __decorate([
+                    route({
+                        routes: [
+                            { path: '', redirectTo: 'c1' },
+                            C1,
+                        ]
+                    }),
+                    customElement({ name: 'p-2', template: '<au-viewport></au-viewport>' })
+                ], P2);
+                let Root = class Root {
+                };
+                Root = __decorate([
+                    route({
+                        routes: [
+                            { path: ['', 'p1'], component: P1 },
+                            { path: 'p2', component: P2 },
+                        ]
+                    }),
+                    customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+                ], Root);
+                const { au, host, container } = await start({ appRoot: Root });
+                const router = container.get(IRouter);
+                assert.html.textContent(host, 'p-1/c1');
+                await router.load('p2');
+                assert.html.textContent(host, 'p-2/c1');
+                await au.stop(true);
+            });
+            it(`component defines its own path - without redirect - config: ${JSON.stringify(config)}`, async function () {
+                let C1 = class C1 {
+                    constructor(ctx) {
+                        this.parent = ctx.parent.component.name;
+                    }
+                };
+                C1 = __decorate([
+                    route(config),
+                    customElement({ name: 'c-1', template: '${parent}/c1' }),
+                    __param(0, IRouteContext),
+                    __metadata("design:paramtypes", [Object])
+                ], C1);
+                let P1 = class P1 {
+                };
+                P1 = __decorate([
+                    route({
+                        routes: [
+                            C1,
+                        ]
+                    }),
+                    customElement({ name: 'p-1', template: '<au-viewport></au-viewport>' })
+                ], P1);
+                let P2 = class P2 {
+                };
+                P2 = __decorate([
+                    route({
+                        routes: [
+                            C1,
+                        ]
+                    }),
+                    customElement({ name: 'p-2', template: '<au-viewport></au-viewport>' })
+                ], P2);
+                let Root = class Root {
+                };
+                Root = __decorate([
+                    route({
+                        routes: [
+                            { path: ['', 'p1'], component: P1 },
+                            { path: 'p2', component: P2 },
+                        ]
+                    }),
+                    customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+                ], Root);
+                const { au, host, container } = await start({ appRoot: Root });
+                const router = container.get(IRouter);
+                await router.load('p1/c1');
+                assert.html.textContent(host, 'p-1/c1');
+                await router.load('p2/c1');
+                assert.html.textContent(host, 'p-2/c1');
+                await au.stop(true);
+            });
+        }
+        it(`component defines transition plan - parent overloads`, async function () {
+            var C1_2;
+            let C1 = C1_2 = class C1 {
+                constructor(ctx) {
+                    this.instanceId = ++C1_2.instanceId;
+                    this.activationId = 0;
+                    this.parent = ctx.parent.component.name;
+                }
+                canLoad(params) {
+                    this.activationId = ++C1_2.activationId;
+                    this.routeId = params.id;
+                    return true;
+                }
+            };
+            C1.instanceId = 0;
+            C1.activationId = 0;
+            C1 = C1_2 = __decorate([
+                route({ path: 'c1/:id', transitionPlan: 'replace' }),
+                customElement({ name: 'c-1', template: '${parent}/c1 - ${routeId} - ${instanceId} - ${activationId}' }),
+                __param(0, IRouteContext),
+                __metadata("design:paramtypes", [Object])
+            ], C1);
+            let P1 = class P1 {
+            };
+            P1 = __decorate([
+                route({
+                    routes: [
+                        C1,
+                    ]
+                }),
+                customElement({ name: 'p-1', template: '<au-viewport></au-viewport>' })
+            ], P1);
+            let P2 = class P2 {
+            };
+            P2 = __decorate([
+                route({
+                    routes: [
+                        { component: C1, transitionPlan: 'invoke-lifecycles' },
+                    ]
+                }),
+                customElement({ name: 'p-2', template: '<au-viewport></au-viewport>' })
+            ], P2);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    routes: [
+                        { path: ['', 'p1'], component: P1 },
+                        { path: 'p2', component: P2 },
+                    ]
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, host, container } = await start({ appRoot: Root });
+            const router = container.get(IRouter);
+            await router.load('p1/c1/42');
+            assert.html.textContent(host, 'p-1/c1 - 42 - 1 - 1');
+            await router.load('p1/c1/24');
+            assert.html.textContent(host, 'p-1/c1 - 24 - 2 - 2');
+            await router.load('p2/c1/42');
+            assert.html.textContent(host, 'p-2/c1 - 42 - 3 - 3');
+            await router.load('p2/c1/24');
+            await container.get(IPlatform).domWriteQueue.yield();
+            assert.html.textContent(host, 'p-2/c1 - 24 - 3 - 4');
+            await au.stop(true);
+        });
+        it('distributed configuration', async function () {
+            let C1 = class C1 {
+                constructor(ctx) {
+                    this.parent = ctx.parent.component.name;
+                }
+            };
+            C1 = __decorate([
+                route('c1'),
+                customElement({ name: 'c-1', template: '${parent}/c1' }),
+                __param(0, IRouteContext),
+                __metadata("design:paramtypes", [Object])
+            ], C1);
+            let P1 = class P1 {
+                getRouteConfig(_parentConfig, _routeNode) {
+                    return {
+                        routes: [C1]
+                    };
+                }
+            };
+            P1 = __decorate([
+                route('p1'),
+                customElement({ name: 'p-1', template: '<au-viewport></au-viewport>' })
+            ], P1);
+            let P2 = class P2 {
+                getRouteConfig(_parentConfig, _routeNode) {
+                    return {
+                        routes: [C1]
+                    };
+                }
+            };
+            P2 = __decorate([
+                route('p2'),
+                customElement({ name: 'p-2', template: '<au-viewport></au-viewport>' })
+            ], P2);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    routes: [
+                        P1,
+                        P2,
+                    ]
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, host, container } = await start({ appRoot: Root });
+            const router = container.get(IRouter);
+            await router.load('p1/c1');
+            assert.html.textContent(host, 'p-1/c1');
+            await router.load('p2/c1');
+            assert.html.textContent(host, 'p-2/c1');
+            await au.stop(true);
+        });
+    });
+    describe('custom element aliases as routing instruction', function () {
+        it('using the aliases as path works', async function () {
+            let C1 = class C1 {
+            };
+            C1 = __decorate([
+                customElement({ name: 'c-1', template: 'c1', aliases: ['c-a', 'c-one'] })
+            ], C1);
+            let C2 = class C2 {
+            };
+            C2 = __decorate([
+                customElement({ name: 'c-2', template: 'c2', aliases: ['c-b', 'c-two'] })
+            ], C2);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    routes: [C1, C2]
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, container, host } = await start({ appRoot: Root });
+            const router = container.get(IRouter);
+            assert.html.textContent(host, '');
+            await router.load('c-a');
+            assert.html.textContent(host, 'c1');
+            await router.load('c-b');
+            assert.html.textContent(host, 'c2');
+            await router.load('c-1');
+            assert.html.textContent(host, 'c1');
+            await router.load('c-2');
+            assert.html.textContent(host, 'c2');
+            await router.load('c-one');
+            assert.html.textContent(host, 'c1');
+            await router.load('c-two');
+            assert.html.textContent(host, 'c2');
+            await au.stop();
+        });
+        it('order of route decorator and the customElement decorator does not matter', async function () {
+            let C1 = class C1 {
+            };
+            C1 = __decorate([
+                route({ title: 'c1' }),
+                customElement({ name: 'c-1', template: 'c1', aliases: ['c-a', 'c-one'] })
+            ], C1);
+            let C2 = class C2 {
+            };
+            C2 = __decorate([
+                customElement({ name: 'c-2', template: 'c2', aliases: ['c-b', 'c-two'] }),
+                route({ title: 'c2' })
+            ], C2);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    routes: [C1, C2]
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, container, host } = await start({ appRoot: Root });
+            const router = container.get(IRouter);
+            const doc = container.get(IPlatform).document;
+            assert.html.textContent(host, '');
+            await router.load('c-a');
+            assert.html.textContent(host, 'c1');
+            assert.strictEqual(doc.title, 'c1');
+            await router.load('c-b');
+            assert.html.textContent(host, 'c2');
+            assert.strictEqual(doc.title, 'c2');
+            await router.load('c-1');
+            assert.html.textContent(host, 'c1');
+            assert.strictEqual(doc.title, 'c1');
+            await router.load('c-2');
+            assert.html.textContent(host, 'c2');
+            assert.strictEqual(doc.title, 'c2');
+            await router.load('c-one');
+            assert.html.textContent(host, 'c1');
+            assert.strictEqual(doc.title, 'c1');
+            await router.load('c-two');
+            assert.html.textContent(host, 'c2');
+            assert.strictEqual(doc.title, 'c2');
+            await au.stop();
+        });
+        it('explicitly defined paths always override CE name or aliases', async function () {
+            let C1 = class C1 {
+            };
+            C1 = __decorate([
+                route('c1'),
+                customElement({ name: 'c-1', template: 'c1', aliases: ['c-a'] })
+            ], C1);
+            let C2 = class C2 {
+            };
+            C2 = __decorate([
+                customElement({ name: 'c-2', template: 'c2', aliases: ['c-b'] })
+            ], C2);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    routes: [C1, { path: 'c2', component: C2 }]
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, container, host } = await start({ appRoot: Root });
+            const router = container.get(IRouter);
+            assert.html.textContent(host, '');
+            await router.load('c1');
+            assert.html.textContent(host, 'c1');
+            await router.load('c2');
+            assert.html.textContent(host, 'c2');
+            try {
+                await router.load('c-1');
+                assert.fail('expected error 1');
+            }
+            catch (er) {
+                assert.match(er.message, /'c-1' matched any configured route/);
+            }
+            try {
+                await router.load('c-a');
+                assert.fail('expected error 2');
+            }
+            catch (er) {
+                assert.match(er.message, /'c-a' matched any configured route/);
+            }
+            try {
+                await router.load('c-2');
+                assert.fail('expected error 3');
+            }
+            catch (er) {
+                assert.match(er.message, /'c-2' matched any configured route/);
+            }
+            try {
+                await router.load('c-b');
+                assert.fail('expected error 4');
+            }
+            catch (er) {
+                assert.match(er.message, /'c-b' matched any configured route/);
+            }
+            await au.stop();
+        });
+    });
+    it('local dependencies of the routed view model works', async function () {
+        let C11 = class C11 {
+        };
+        C11 = __decorate([
+            customElement({ name: 'c-11', template: 'c11' })
+        ], C11);
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'c-1', template: 'c1 <c-11></c-11>', dependencies: [C11] })
+        ], C1);
+        let C21 = class C21 {
+        };
+        C21 = __decorate([
+            customElement({ name: 'c-21', template: 'c21' })
+        ], C21);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'c-2', template: 'c2 <c-21></c-21>', dependencies: [C21] })
+        ], C2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { path: 'c1', component: C1 },
+                    { path: 'c2', component: C2 },
+                ]
+            }),
+            customElement({ name: 'root', template: '<au-viewport></au-viewport>' })
+        ], Root);
+        const { au, container, host } = await start({ appRoot: Root });
+        const router = container.get(IRouter);
+        assert.html.textContent(host, '');
+        await router.load('c1');
+        assert.html.textContent(host, 'c1 c11');
+        await router.load('c2');
+        assert.html.textContent(host, 'c2 c21');
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
+    });
+    // use-case: master page
+    it('custom element containing au-viewport works', async function () {
+        let MasterPage = class MasterPage {
+        };
+        MasterPage = __decorate([
+            customElement({ name: 'master-page', template: 'mp <au-viewport></au-viewport>' })
+        ], MasterPage);
+        let C1 = class C1 {
+        };
+        C1 = __decorate([
+            customElement({ name: 'c-1', template: 'c1' })
+        ], C1);
+        let C2 = class C2 {
+        };
+        C2 = __decorate([
+            customElement({ name: 'c-2', template: 'c2' })
+        ], C2);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { path: 'c1', component: C1 },
+                    { path: 'c2', component: C2 },
+                ]
+            }),
+            customElement({ name: 'root', template: '<master-page></master-page>' })
+        ], Root);
+        const { au, container, host } = await start({ appRoot: Root, registrations: [MasterPage] });
+        const router = container.get(IRouter);
+        assert.html.textContent(host, 'mp');
+        await router.load('c1');
+        assert.html.textContent(host, 'mp c1');
+        await router.load('c2');
+        assert.html.textContent(host, 'mp c2');
+        await au.stop(true);
+        assert.areTaskQueuesEmpty();
     });
 });
 //# sourceMappingURL=smoke-tests.spec.js.map

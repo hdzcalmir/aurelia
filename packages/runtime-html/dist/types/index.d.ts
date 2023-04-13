@@ -42,7 +42,6 @@ export { PromiseTemplateController, FulfilledTemplateController, PendingTemplate
 export { Focus, } from './resources/custom-attributes/focus';
 export { Portal, type PortalTarget, type PortalLifecycleCallback, } from './resources/template-controllers/portal';
 export { AuSlot, } from './resources/custom-elements/au-slot';
-export { IProjections, AuSlotsInfo, IAuSlotsInfo, } from './resources/slot-injectables';
 export { DefinitionType, } from './resources/resources-shared';
 export { capture, containerless, customElement, CustomElement, type CustomElementDecorator, type CustomElementKind, type CustomElementType, CustomElementDefinition, type PartialCustomElementDefinition, strict, useShadowDOM, processContent, } from './resources/custom-element';
 export { AuCompose, type IDynamicComponentActivate, } from './resources/custom-elements/au-compose';
@@ -52,8 +51,9 @@ export { ITemplateCompilerRegistration, INodeObserverLocatorRegistration, Defaul
 export { ITemplateElementFactory } from './compiler/template-element-factory';
 export { BindablesInfo, TemplateCompiler, ITemplateCompilerHooks, TemplateCompilerHooks, templateCompilerHooks, } from './compiler/template-compiler';
 export { allResources, } from './utilities-di';
-export { type PartialChildrenDefinition, ChildrenDefinition, Children, children, ChildrenObserver, } from './templating/children';
+export { type PartialChildrenDefinition, children, ChildrenBinding, } from './templating/children';
 export { Controller, isCustomElementController, isCustomElementViewModel, ViewModelKind, HooksDefinition, State, type ControllerVisitor, type IViewModel, IController, type IComponentController, type IContextualCustomElementController, type IControllerElementHydrationInstruction, type IHydratableController, IHydrationContext, type IDryCustomElementController, type ICustomAttributeController, type IHydratedController, type IHydratedComponentController, type IHydratedParentController, type ICompiledCustomElementController, type ICustomElementController, type ICustomElementViewModel, type ICustomAttributeViewModel, type IHydratedCustomElementViewModel, type IHydratedCustomAttributeViewModel, type ISyntheticView, } from './templating/controller';
+export { type IAuSlotProjections, type IAuSlot, type IAuSlotSubscriber, IAuSlotWatcher, IAuSlotsInfo, type PartialSlottedDefinition, AuSlotsInfo, slotted, } from './templating/controller.projection';
 export { ILifecycleHooks, LifecycleHooksEntry, LifecycleHooksDefinition, type LifecycleHooksLookup, type LifecycleHook, LifecycleHooks, lifecycleHooks, } from './templating/lifecycle-hooks';
 export { IRendering, Rendering, } from './templating/rendering';
 export { ViewFactory, IViewFactory, } from './templating/view';

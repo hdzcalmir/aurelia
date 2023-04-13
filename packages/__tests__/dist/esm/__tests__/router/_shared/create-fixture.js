@@ -111,12 +111,11 @@ export async function createFixture(Component, deps = [], createHIAConfig = null
     };
 }
 export async function clearBrowserState(platform, router = null) {
-    const { href } = platform.location;
-    // const { state } = platform.history;
+    const { href } = platform.window.location;
     const index = href.indexOf('#');
     if (index >= 0) {
         if (router?.viewer?.replaceNavigatorState == null) {
-            platform.history.replaceState({}, '', href.slice(0, index));
+            platform.window.history.replaceState({}, '', href.slice(0, index));
             await Promise.resolve();
         }
         else {

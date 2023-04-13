@@ -52,7 +52,7 @@ export declare const toArray: <T = unknown>(input: ArrayLike<T>) => T[];
 export declare const bound: <T extends Function>(target: Object, key: string | symbol, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T>;
 export declare const mergeArrays: <T>(...arrays: (readonly T[] | undefined)[]) => T[];
 export declare const firstDefined: <T>(...values: readonly (T | undefined)[]) => T;
-export declare const getPrototypeChain: <T extends Constructable<{}>>(Type: T) => readonly [T, ...Constructable<{}>[]];
+export declare const getPrototypeChain: <T extends Constructable>(Type: T) => readonly [T, ...Constructable[]];
 export declare function toLookup<T1 extends {}>(obj1: T1): T1;
 export declare function toLookup<T1 extends {}, T2 extends {}>(obj1: T1, obj2: T2): Overwrite<T1, T2>;
 export declare function toLookup<T1 extends {}, T2 extends {}, T3 extends {}>(obj1: T1, obj2: T2, obj3: T3): Overwrite<T1, Overwrite<T1, T2>>;

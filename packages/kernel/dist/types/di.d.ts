@@ -1,7 +1,7 @@
 import { Constructable, IDisposable } from './interfaces';
 import { IResourceKind, ResourceDefinition, ResourceType } from './resource';
 export type ResolveCallback<T = any> = (handler: IContainer, requestor: IContainer, resolver: IResolver<T>) => T;
-export type InterfaceSymbol<K = any> = (target: Injectable<K>, property: string, index: number) => void;
+export type InterfaceSymbol<K = any> = (target: Injectable | AbstractInjectable, property: string | symbol | undefined, index?: number) => void;
 interface IResolverLike<C, K = any> {
     readonly $isResolver: true;
     resolve(handler: C, requestor: C): Resolved<K>;
@@ -71,6 +71,9 @@ export type RegisterSelf<T extends Constructable> = {
 export type Key = PropertyKey | object | InterfaceSymbol | Constructable | IResolver;
 export type Resolved<K> = (K extends InterfaceSymbol<infer T> ? T : K extends Constructable ? InstanceType<K> : K extends IResolverLike<any, infer T1> ? T1 extends Constructable ? InstanceType<T1> : T1 : K);
 export type Injectable<T = {}> = Constructable<T> & {
+    inject?: Key[];
+};
+export type AbstractInjectable<T = {}> = (abstract new (...args: any[]) => T) & {
     inject?: Key[];
 };
 export interface IContainerConfiguration {
@@ -164,7 +167,7 @@ export declare const DI: {
      * Foo.register(container);
      * ```
      */
-    transient<T extends Constructable<{}>>(target: T & Partial<RegisterSelf<T>>): T & RegisterSelf<T>;
+    transient<T extends Constructable>(target: T & Partial<RegisterSelf<T>>): T & RegisterSelf<T>;
     /**
      * Registers the `target` class as a singleton dependency; the class will only be created once. Each
      * consecutive time the dependency is resolved, the same instance will be returned.
@@ -182,7 +185,7 @@ export declare const DI: {
      * Foo.register(container);
      * ```
      */
-    singleton<T_1 extends Constructable<{}>>(target: T_1 & Partial<RegisterSelf<T_1>>, options?: SingletonOptions): T_1 & RegisterSelf<T_1>;
+    singleton<T_1 extends Constructable>(target: T_1 & Partial<RegisterSelf<T_1>>, options?: SingletonOptions): T_1 & RegisterSelf<T_1>;
 };
 export declare const IContainer: InterfaceSymbol<IContainer>;
 export declare const IServiceLocator: InterfaceSymbol<IServiceLocator>;
@@ -213,7 +216,7 @@ export declare function transient<T extends Constructable>(target: T & Partial<R
 type SingletonOptions = {
     scoped: boolean;
 };
-declare const singletonDecorator: <T extends Constructable<{}>>(target: T & Partial<RegisterSelf<T>>) => T & RegisterSelf<T>;
+declare const singletonDecorator: <T extends Constructable>(target: T & Partial<RegisterSelf<T>>) => T & RegisterSelf<T>;
 /**
  * Registers the decorated class as a singleton dependency; the class will only be created once. Each
  * consecutive time the dependency is resolved, the same instance will be returned.
@@ -404,7 +407,7 @@ export declare const Registration: {
      * @param key - key to register the singleton class with
      * @param value - the singleton class to instantiate when a container resolves the associated key
      */
-    singleton: <T_1 extends Constructable<{}>>(key: Key, value: T_1) => IRegistration<InstanceType<T_1>>;
+    singleton: <T_1 extends Constructable>(key: Key, value: T_1) => IRegistration<InstanceType<T_1>>;
     /**
      * Creates an instance from a class.
      * Every time you request this {@linkcode Key} you will get a new instance.
@@ -415,7 +418,7 @@ export declare const Registration: {
      * @param key - key to register the transient class with
      * @param value - the class to instantiate when a container resolves the associated key
      */
-    transient: <T_2 extends Constructable<{}>>(key: Key, value: T_2) => IRegistration<InstanceType<T_2>>;
+    transient: <T_2 extends Constructable>(key: Key, value: T_2) => IRegistration<InstanceType<T_2>>;
     /**
      * Creates an instance from the method passed.
      * Every time you request this {@linkcode Key} you will get a new instance.

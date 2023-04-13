@@ -304,7 +304,10 @@ let StateBindingBehavior = class StateBindingBehavior {
                 subscriber._wrappedScope = scope;
             }
             this._store.subscribe(subscriber);
-            binding.useScope(scope);
+            if (!binding.useScope) {
+                console.warn(`Binding ${binding.constructor.name} does not support "state" binding behavior`);
+            }
+            binding.useScope?.(scope);
         }
     }
     unbind(scope, binding) {

@@ -30,7 +30,7 @@ export declare const Protocol: {
     resource: Readonly<{
         name: "au:resource";
         appendTo(target: Constructable, key: string): void;
-        has: (target: unknown) => target is Constructable<{}>;
+        has: (target: unknown) => target is Constructable;
         getAll(target: Constructable): readonly ResourceDefinition[];
         getKeys(target: Constructable): readonly string[];
         isKey: (key: string) => boolean;

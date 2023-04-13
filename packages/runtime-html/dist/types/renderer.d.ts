@@ -2,13 +2,13 @@ import { type IContainer, type Class, type IRegistry } from '@aurelia/kernel';
 import { IExpressionParser, IObserverLocator, type Interpolation, type IsBindingBehavior, type ForOfStatement } from '@aurelia/runtime';
 import { BindingMode } from './binding/interfaces-bindings';
 import { CustomElementDefinition } from './resources/custom-element';
-import { IProjections } from './resources/slot-injectables';
 import { CustomAttributeDefinition } from './resources/custom-attribute';
 import { INode } from './dom';
 import { IController } from './templating/controller';
 import { IPlatform } from './platform';
 import { IRendering } from './templating/rendering';
 import type { AttrSyntax } from './resources/attribute-pattern';
+import { IAuSlotProjections } from './templating/controller.projection';
 import type { IHydratableController } from './templating/controller';
 import type { PartialCustomElementDefinition } from './resources/custom-element';
 export declare const enum InstructionType {
@@ -280,7 +280,7 @@ export interface ICompliationInstruction {
      * Where each key is the matching slot name for <au-slot/> inside,
      * and each value is the definition to render and project
      */
-    projections: IProjections | null;
+    projections: IAuSlotProjections | null;
 }
 export interface IInstructionTypeClassifier<TType extends string = string> {
     target: TType;

@@ -118,6 +118,8 @@ exports.BindingBehavior = r.BindingBehavior;
 
 exports.BindingMode = r.BindingMode;
 
+exports.ChildrenBinding = r.ChildrenBinding;
+
 exports.Controller = r.Controller;
 
 exports.CustomAttribute = r.CustomAttribute;
@@ -131,6 +133,8 @@ exports.IAppRoot = r.IAppRoot;
 exports.IAttrMapper = r.IAttrMapper;
 
 exports.IAttributePattern = r.IAttributePattern;
+
+exports.IAuSlotWatcher = r.IAuSlotWatcher;
 
 exports.IAuSlotsInfo = r.IAuSlotsInfo;
 
@@ -197,6 +201,8 @@ exports.registerAliases = r.registerAliases;
 exports.renderer = r.renderer;
 
 exports.shadowCSS = r.shadowCSS;
+
+exports.slotted = r.slotted;
 
 exports.strict = r.strict;
 

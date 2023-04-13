@@ -2,7 +2,6 @@ import { DefinitionType } from './resources-shared';
 import type { Constructable, IContainer, IResourceKind, ResourceType, PartialResourceDefinition, Key, ResourceDefinition, Injectable } from '@aurelia/kernel';
 import type { BindableDefinition, PartialBindableDefinition } from '../bindable';
 import type { INode } from '../dom';
-import type { PartialChildrenDefinition, ChildrenDefinition } from '../templating/children';
 import type { ICustomElementViewModel, ICustomElementController } from '../templating/controller';
 import type { IPlatform } from '../platform';
 import type { IInstruction } from '../renderer';
@@ -22,7 +21,6 @@ export type PartialCustomElementDefinition = PartialResourceDefinition<{
     readonly needsCompile?: boolean;
     readonly surrogates?: readonly IInstruction[];
     readonly bindables?: Record<string, PartialBindableDefinition> | readonly string[];
-    readonly childrenObservers?: Record<string, PartialChildrenDefinition>;
     readonly containerless?: boolean;
     readonly isStrictBinding?: boolean;
     readonly shadowOptions?: {
@@ -150,7 +148,6 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     readonly needsCompile: boolean;
     readonly surrogates: readonly IInstruction[];
     readonly bindables: Record<string, BindableDefinition>;
-    readonly childrenObservers: Record<string, ChildrenDefinition>;
     readonly containerless: boolean;
     readonly isStrictBinding: boolean;
     readonly shadowOptions: {
@@ -171,7 +168,7 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     static getOrCreate(partialDefinition: PartialCustomElementDefinition): CustomElementDefinition;
     register(container: IContainer): void;
 }
-export type InjectableToken<K = any> = (target: Injectable<K>, property: string, index: number) => void;
+export type InjectableToken<K = any> = (target: Injectable, property: string | symbol | undefined, index: number) => void;
 export declare const CustomElement: Readonly<CustomElementKind>;
 type DecoratorFactoryMethod<TClass> = (target: Constructable<TClass>, propertyKey: string, descriptor: PropertyDescriptor) => void;
 type ProcessContentHook = (node: INode, platform: IPlatform) => boolean | void;

@@ -10,8 +10,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { assert, TestContext, PLATFORM, } from '@aurelia/testing';
+import { assert, TestContext, } from '@aurelia/testing';
 import { bindable, bindingBehavior, valueConverter, customAttribute, CustomElement, INode, CustomAttribute, Aurelia, ValueConverter, } from '@aurelia/runtime-html';
+import { isNode } from '../util.js';
 describe('3-runtime-html/template-compiler.primary-bindable.spec.ts', function () {
     const testCases = [
         {
@@ -594,7 +595,7 @@ describe('3-runtime-html/template-compiler.primary-bindable.spec.ts', function (
             ctx.container.register(RouteHref);
             au.app({ component: App, host });
             await au.start();
-            if (PLATFORM.navigator.userAgent.includes('jsdom')) {
+            if (isNode()) {
                 assert.strictEqual(host.querySelector('a').href, `/?route=home.main`);
             }
             else {
@@ -616,7 +617,7 @@ describe('3-runtime-html/template-compiler.primary-bindable.spec.ts', function (
             ctx.container.register(RouteHref, DotConverter);
             au.app({ component: App, host });
             await au.start();
-            if (PLATFORM.navigator.userAgent.includes('jsdom')) {
+            if (isNode()) {
                 assert.strictEqual(host.querySelector('a').href, '/?route=home--main');
             }
             else {
@@ -642,7 +643,7 @@ describe('3-runtime-html/template-compiler.primary-bindable.spec.ts', function (
             au.app({ component: App, host });
             await au.start();
             const anchorEl = host.querySelector('a');
-            if (PLATFORM.navigator.userAgent.includes('jsdom')) {
+            if (isNode()) {
                 assert.strictEqual(anchorEl.href, '/?route=home.main');
             }
             else {
@@ -650,7 +651,7 @@ describe('3-runtime-html/template-compiler.primary-bindable.spec.ts', function (
             }
             const app = au.root.controller.viewModel;
             app.appId = 'appId-appId';
-            if (PLATFORM.navigator.userAgent.includes('jsdom')) {
+            if (isNode()) {
                 assert.strictEqual(anchorEl.href, '/?params=[object Object]');
             }
             else {

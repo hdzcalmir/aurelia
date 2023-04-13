@@ -22,14 +22,10 @@ export declare class Focus implements ICustomAttributeViewModel {
     /**
      * Invoked when the attribute is afterDetachChildren from the DOM.
      */
-    afterDetachChildren(): void;
+    detaching(): void;
     /**
      * EventTarget interface handler for better memory usage
      */
     handleEvent(e: FocusEvent): void;
-    /**
-     * Focus/blur based on current value
-     */
-    private _apply;
 }
 //# sourceMappingURL=focus.d.ts.map

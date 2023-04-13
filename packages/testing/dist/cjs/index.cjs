@@ -698,7 +698,7 @@ class TestContext {
         return this.platform.document;
     }
     get userAgent() {
-        return this.platform.navigator.userAgent;
+        return this.platform.window.navigator.userAgent;
     }
     get UIEvent() {
         return this.platform.globalThis.UIEvent;
@@ -3665,7 +3665,7 @@ function Mi(e, n, r = [], o = true, a = TestContext.create()) {
         Object.setPrototypeOf(n, e.prototype);
         return n;
     };
-    const m = [ "aliases", "bindables", "cache", "capture", "childrenObservers", "containerless", "dependencies", "enhance" ];
+    const m = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
     if (p !== n && null != n) m.forEach((e => {
         s.Metadata.define(e, i.CustomElement.getAnnotation(n, e), p);
     }));
@@ -3716,8 +3716,8 @@ function Mi(e, n, r = [], o = true, a = TestContext.create()) {
         if (2 === arguments.length) {
             const n = k(e);
             if (null === n) throw new Error(`No element found for selector "${e}" to compare text content with "${t}"`);
-            mi.strictEqual(n.textContent, t);
-        } else mi.strictEqual(h.textContent, e);
+            mi.strictEqual(vn(n), t);
+        } else mi.strictEqual(vn(h), e);
     }
     function S(e, t) {
         let n = e.innerHTML;

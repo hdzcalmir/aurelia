@@ -1,4 +1,4 @@
-import { IServiceLocator, type Constructable } from '@aurelia/kernel';
+import { type IServiceLocator, type Constructable } from '@aurelia/kernel';
 import { IBinding, IRateLimitOptions, Scope, type ISubscriber } from '@aurelia/runtime';
 import { PropertyBinding } from './property-binding';
 /**

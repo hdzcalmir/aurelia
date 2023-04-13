@@ -9,9 +9,6 @@ export declare class BrowserPlatform<TGlobal extends typeof globalThis = typeof 
     readonly MutationObserver: TGlobal['MutationObserver'];
     readonly window: TGlobal['window'];
     readonly document: TGlobal['document'];
-    readonly location: TGlobal['location'];
-    readonly history: TGlobal['history'];
-    readonly navigator: TGlobal['navigator'];
     readonly customElements: TGlobal['customElements'];
     readonly fetch: TGlobal['window']['fetch'];
     readonly requestAnimationFrame: TGlobal['requestAnimationFrame'];

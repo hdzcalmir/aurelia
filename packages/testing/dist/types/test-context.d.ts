@@ -13,10 +13,10 @@ export declare class TestContext {
     get Event(): {
         new (type: string, eventInitDict?: EventInit | undefined): Event;
         prototype: Event;
-        readonly AT_TARGET: number;
-        readonly BUBBLING_PHASE: number;
-        readonly CAPTURING_PHASE: number;
-        readonly NONE: number;
+        readonly NONE: 0;
+        readonly CAPTURING_PHASE: 1;
+        readonly AT_TARGET: 2;
+        readonly BUBBLING_PHASE: 3;
     };
     get CustomEvent(): {
         new <T>(type: string, eventInitDict?: CustomEventInit<T> | undefined): CustomEvent<T>;
@@ -25,24 +25,24 @@ export declare class TestContext {
     get Node(): {
         new (): Node;
         prototype: Node;
-        readonly ATTRIBUTE_NODE: number;
-        readonly CDATA_SECTION_NODE: number;
-        readonly COMMENT_NODE: number;
-        readonly DOCUMENT_FRAGMENT_NODE: number;
-        readonly DOCUMENT_NODE: number;
-        readonly DOCUMENT_POSITION_CONTAINED_BY: number;
-        readonly DOCUMENT_POSITION_CONTAINS: number;
-        readonly DOCUMENT_POSITION_DISCONNECTED: number;
-        readonly DOCUMENT_POSITION_FOLLOWING: number;
-        readonly DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC: number;
-        readonly DOCUMENT_POSITION_PRECEDING: number;
-        readonly DOCUMENT_TYPE_NODE: number;
-        readonly ELEMENT_NODE: number;
-        readonly ENTITY_NODE: number;
-        readonly ENTITY_REFERENCE_NODE: number;
-        readonly NOTATION_NODE: number;
-        readonly PROCESSING_INSTRUCTION_NODE: number;
-        readonly TEXT_NODE: number;
+        readonly ELEMENT_NODE: 1;
+        readonly ATTRIBUTE_NODE: 2;
+        readonly TEXT_NODE: 3;
+        readonly CDATA_SECTION_NODE: 4;
+        readonly ENTITY_REFERENCE_NODE: 5;
+        readonly ENTITY_NODE: 6;
+        readonly PROCESSING_INSTRUCTION_NODE: 7;
+        readonly COMMENT_NODE: 8;
+        readonly DOCUMENT_NODE: 9;
+        readonly DOCUMENT_TYPE_NODE: 10;
+        readonly DOCUMENT_FRAGMENT_NODE: 11;
+        readonly NOTATION_NODE: 12;
+        readonly DOCUMENT_POSITION_DISCONNECTED: 1;
+        readonly DOCUMENT_POSITION_PRECEDING: 2;
+        readonly DOCUMENT_POSITION_FOLLOWING: 4;
+        readonly DOCUMENT_POSITION_CONTAINS: 8;
+        readonly DOCUMENT_POSITION_CONTAINED_BY: 16;
+        readonly DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC: 32;
     };
     get Element(): {
         new (): Element;

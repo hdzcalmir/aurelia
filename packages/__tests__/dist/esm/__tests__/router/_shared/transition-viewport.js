@@ -1,4 +1,4 @@
-export class TransitionViewport {
+class TransitionViewport {
     static getPrepended(prefix, component, ...hooks) {
         return hooks.map(hook => hook !== '' ? `${prefix}.${component}.${hook}` : '');
     }
@@ -418,4 +418,5 @@ export class TransitionViewport {
 TransitionViewport.routingHooks = ['canUnload', 'canLoad', 'unloading', 'loading'];
 TransitionViewport.addHooks = ['binding', 'bound', 'attaching', 'attached'];
 TransitionViewport.removeHooks = ['detaching', 'unbinding', 'dispose'];
+export { TransitionViewport };
 //# sourceMappingURL=transition-viewport.js.map

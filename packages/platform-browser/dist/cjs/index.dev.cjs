@@ -13,7 +13,7 @@ class BrowserPlatform extends platform.Platform {
         this._domWriteRequested = false;
         this._domWriteHandle = -1;
         ('Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver '
-            + 'window document location history navigator customElements')
+            + 'window document customElements')
             .split(' ')
             .forEach(prop => this[prop] = prop in overrides ? overrides[prop] : g[prop]);
         'fetch requestAnimationFrame cancelAnimationFrame'.split(' ').forEach(prop => this[prop] = prop in overrides ? overrides[prop] : (g[prop]?.bind(g) ?? notImplemented(prop)));

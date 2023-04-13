@@ -241,7 +241,7 @@ let k = class StateBindingBehavior {
             n = O.get(i);
             if (null == n) O.set(i, n = new StateSubscriber(i, t)); else n.H = t;
             this.A.subscribe(n);
-            i.useScope(t);
+            i.useScope?.(t);
         }
     }
     unbind(t, i) {

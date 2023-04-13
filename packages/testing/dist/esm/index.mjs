@@ -692,7 +692,7 @@ class TestContext {
         return this.platform.document;
     }
     get userAgent() {
-        return this.platform.navigator.userAgent;
+        return this.platform.window.navigator.userAgent;
     }
     get UIEvent() {
         return this.platform.globalThis.UIEvent;
@@ -3659,7 +3659,7 @@ function ir(e, t, n = [], i = true, r = TestContext.create()) {
         Object.setPrototypeOf(t, e.prototype);
         return t;
     };
-    const d = [ "aliases", "bindables", "cache", "capture", "childrenObservers", "containerless", "dependencies", "enhance" ];
+    const d = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
     if (h !== t && null != t) d.forEach((e => {
         j.define(e, x.getAnnotation(t, e), h);
     }));
@@ -3710,8 +3710,8 @@ function ir(e, t, n = [], i = true, r = TestContext.create()) {
         if (2 === arguments.length) {
             const n = w(e);
             if (null === n) throw new Error(`No element found for selector "${e}" to compare text content with "${t}"`);
-            Bi.strictEqual(n.textContent, t);
-        } else Bi.strictEqual(c.textContent, e);
+            Bi.strictEqual(Vn(n), t);
+        } else Bi.strictEqual(Vn(c), e);
     }
     function S(e, t) {
         let n = e.innerHTML;

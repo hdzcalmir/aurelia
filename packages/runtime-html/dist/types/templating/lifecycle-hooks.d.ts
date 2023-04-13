@@ -32,7 +32,7 @@ export declare const LifecycleHooks: Readonly<{
     /**
      * @param def - Placeholder for future extensions. Currently always an empty object.
      */
-    define<T extends Constructable<{}>>(def: {}, Type: T): T;
+    define<T extends Constructable>(def: {}, Type: T): T;
     /**
      * @param ctx - The container where the resolution starts
      * @param Type - The constructor of the Custom element/ Custom attribute with lifecycle metadata
