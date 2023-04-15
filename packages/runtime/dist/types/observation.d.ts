@@ -7,14 +7,15 @@ export interface IBinding {
     bind(scope: Scope): void;
     unbind(): void;
     get: IServiceLocator['get'];
-    useScope(scope: Scope): void;
-    limit(opts: IRateLimitOptions): IDisposable;
+    useScope?(scope: Scope): void;
+    limit?(opts: IRateLimitOptions): IDisposable;
 }
 export interface IRateLimitOptions {
     type: 'throttle' | 'debounce';
     delay: number;
     queue: TaskQueue;
     now: () => number;
+    signals: string[];
 }
 export declare const ICoercionConfiguration: import("@aurelia/kernel").InterfaceSymbol<ICoercionConfiguration>;
 export interface ICoercionConfiguration {

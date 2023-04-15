@@ -1,6 +1,6 @@
 import { Metadata as t, isObject as e } from "@aurelia/metadata";
 
-import { DI as i, IEventAggregator as s, ILogger as n, Protocol as r, emptyArray as o, onResolve as h, resolveAll as a, emptyObject as c, IContainer as u, isArrayIndex as l, IModuleLoader as f, InstanceProvider as p, noop as d, Registration as g } from "@aurelia/kernel";
+import { DI as i, IEventAggregator as s, ILogger as n, Protocol as r, emptyArray as o, onResolve as h, resolveAll as a, emptyObject as c, Registration as u, IContainer as l, isArrayIndex as f, IModuleLoader as p, InstanceProvider as d, noop as g } from "@aurelia/kernel";
 
 import { isCustomElementViewModel as w, IHistory as v, ILocation as m, IWindow as $, CustomElement as x, Controller as E, IPlatform as b, CustomElementDefinition as y, IController as R, IAppRoot as k, isCustomElementController as S, customElement as C, bindable as I, customAttribute as N, INode as V, getRef as A, CustomAttribute as T, AppTask as P } from "@aurelia/runtime-html";
 
@@ -1978,6 +1978,7 @@ let Lt = class Router {
         this.vpaLookup = new Map;
         this.logger = i.root.scopeTo("Router");
         this.instructions = ViewportInstructionTree.create("", r);
+        t.registerResolver(Router, u.instance(Router, this));
     }
     resolveContext(t) {
         return RouteContext.resolve(this.ctx, t);
@@ -2250,7 +2251,7 @@ let Lt = class Router {
     }
 };
 
-Lt = it([ st(0, u), st(1, b), st(2, n), st(3, rt), st(4, at), st(5, et) ], Lt);
+Lt = it([ st(0, l), st(1, b), st(2, n), st(3, rt), st(4, at), st(5, et) ], Lt);
 
 function Ot(t, e, i, s) {
     t.trace(`updateNode(ctx:%s,node:%s)`, i, s);
@@ -2809,7 +2810,7 @@ function Ft(t) {
     const i = Array(e.length);
     const s = [];
     const n = [];
-    for (const t of e) if (l(t)) s.push(Number(t)); else n.push(t);
+    for (const t of e) if (f(t)) s.push(Number(t)); else n.push(t);
     for (let r = 0; r < e.length; ++r) {
         const e = s.indexOf(r);
         if (e > -1) {
@@ -3195,10 +3196,12 @@ class RouteContext {
         }
         this.logger = r.get(n).scopeTo(`RouteContext<${this.friendlyPath}>`);
         this.logger.trace("constructor()");
-        this.moduleLoader = r.get(f);
+        this.moduleLoader = r.get(p);
         const h = this.container = r.createChild();
-        h.registerResolver(R, this.hostControllerProvider = new p, true);
-        h.registerResolver(Wt, new p("IRouteContext", this));
+        h.registerResolver(R, this.hostControllerProvider = new d, true);
+        const a = new d("IRouteContext", this);
+        h.registerResolver(Wt, a);
+        h.registerResolver(RouteContext, a);
         h.register(s);
         this.bt = new _;
         if (o.options.useNavigationModel) {
@@ -3235,7 +3238,7 @@ class RouteContext {
                     const s = e.then((e => this.childRoutes[t] = e));
                     this.childRoutes.push(s);
                     if (h) r.addRoute(s);
-                    i.push(s.then(d));
+                    i.push(s.then(g));
                 } else {
                     for (const t of e.path ?? o) this.$addRoute(t, e.caseSensitive, e);
                     this.childRoutes.push(e);
@@ -3259,7 +3262,7 @@ class RouteContext {
         if (void 0 === i) Zt(new Error(`The provided IAppRoot does not (yet) have a controller. A possible cause is calling this API manually before Aurelia.start() is called`), e);
         const s = t.get(Ut);
         return h(s.getRouteContext(null, i.definition, i.viewModel, i.container, null, null, null), (e => {
-            t.register(g.instance(Wt, e));
+            t.register(u.instance(Wt, e));
             e.node = s.routeTree.root;
         }));
     }
@@ -3531,15 +3534,13 @@ class $RecognizedRoute {
     }
 }
 
-i.createInterface("INavigationModel");
-
 class NavigationModel {
     constructor(t) {
         this.routes = t;
         this.Rt = void 0;
     }
     resolve() {
-        return h(this.Rt, d);
+        return h(this.Rt, g);
     }
     setIsActive(t, e) {
         void h(this.Rt, (() => {
@@ -3845,12 +3846,12 @@ function ae(t, i) {
     let s = null;
     if (e(i)) s = i.basePath ?? null; else i = {};
     const n = RouterOptions.create(i);
-    return t.register(g.cachedCallback(ht, ((t, e, i) => {
+    return t.register(u.cachedCallback(ht, ((t, e, i) => {
         const n = t.get($);
         const r = new URL(n.document.baseURI);
         r.pathname = ut(s ?? r.pathname);
         return r;
-    })), g.instance(et, n), P.hydrated(u, RouteContext.setRoot), P.activated(Ut, (t => t.start(true))), P.deactivated(Ut, (t => {
+    })), u.instance(et, n), u.instance(RouterOptions, n), P.hydrated(l, RouteContext.setRoot), P.activated(Ut, (t => t.start(true))), P.deactivated(Ut, (t => {
         t.stop();
     })), ...se, ...he);
 }

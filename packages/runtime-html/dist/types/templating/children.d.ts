@@ -1,7 +1,6 @@
-import { IServiceLocator, IDisposable } from '@aurelia/kernel';
-import { IBinding } from '@aurelia/runtime';
+import { type IServiceLocator } from '@aurelia/kernel';
+import { type IBinding, type ISubscriberCollection } from '@aurelia/runtime';
 import { type ICustomElementViewModel, type ICustomElementController } from './controller';
-import type { ISubscriberCollection } from '@aurelia/runtime';
 import type { INode } from '../dom';
 export type PartialChildrenDefinition = {
     callback?: PropertyKey;
@@ -45,7 +44,5 @@ export declare class ChildrenBinding implements IBinding {
     bind(): void;
     unbind(): void;
     get(): ReturnType<IServiceLocator['get']>;
-    useScope(): void;
-    limit(): IDisposable;
 }
 //# sourceMappingURL=children.d.ts.map

@@ -2120,6 +2120,7 @@ exports.Router = class Router {
         this.vpaLookup = new Map();
         this.logger = logger.root.scopeTo('Router');
         this.instructions = ViewportInstructionTree.create('', options);
+        container.registerResolver(Router, kernel.Registration.instance(Router, this));
     }
     resolveContext(context) {
         return RouteContext.resolve(this.ctx, context);
@@ -3458,7 +3459,9 @@ class RouteContext {
         this.moduleLoader = parentContainer.get(kernel.IModuleLoader);
         const container = this.container = parentContainer.createChild();
         container.registerResolver(runtimeHtml.IController, this.hostControllerProvider = new kernel.InstanceProvider(), true);
-        container.registerResolver(IRouteContext, new kernel.InstanceProvider('IRouteContext', this));
+        const ctxProvider = new kernel.InstanceProvider('IRouteContext', this);
+        container.registerResolver(IRouteContext, ctxProvider);
+        container.registerResolver(RouteContext, ctxProvider);
         container.register(config);
         this._recognizer = new routeRecognizer.RouteRecognizer();
         if (_router.options.useNavigationModel) {
@@ -3864,7 +3867,6 @@ class $RecognizedRoute {
         return `RR(route:(endpoint:(route:(path:${cr.path},handler:${cr.handler})),params:${JSON.stringify(route.params)}),residue:${this.residue})`;
     }
 }
-kernel.DI.createInterface('INavigationModel');
 class NavigationModel {
     constructor(routes) {
         this.routes = routes;
@@ -4243,7 +4245,7 @@ function configure(container, options) {
         const url = new URL(window.document.baseURI);
         url.pathname = normalizePath(basePath ?? url.pathname);
         return url;
-    }), kernel.Registration.instance(IRouterOptions, routerOptions), runtimeHtml.AppTask.hydrated(kernel.IContainer, RouteContext.setRoot), runtimeHtml.AppTask.activated(IRouter, router => router.start(true)), runtimeHtml.AppTask.deactivated(IRouter, router => {
+    }), kernel.Registration.instance(IRouterOptions, routerOptions), kernel.Registration.instance(RouterOptions, routerOptions), runtimeHtml.AppTask.hydrated(kernel.IContainer, RouteContext.setRoot), runtimeHtml.AppTask.activated(IRouter, router => router.start(true)), runtimeHtml.AppTask.deactivated(IRouter, router => {
         router.stop();
     }), ...DefaultComponents, ...DefaultResources);
 }

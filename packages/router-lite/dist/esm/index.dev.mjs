@@ -1,5 +1,5 @@
 import { Metadata, isObject } from '@aurelia/metadata';
-import { DI, IEventAggregator, ILogger, Protocol, emptyArray, onResolve, resolveAll, emptyObject, IContainer, isArrayIndex, IModuleLoader, InstanceProvider, noop, Registration } from '@aurelia/kernel';
+import { DI, IEventAggregator, ILogger, Protocol, emptyArray, onResolve, resolveAll, emptyObject, Registration, IContainer, isArrayIndex, IModuleLoader, InstanceProvider, noop } from '@aurelia/kernel';
 import { isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, customElement, bindable, customAttribute, INode, getRef, CustomAttribute, AppTask } from '@aurelia/runtime-html';
 import { RecognizedRoute, Endpoint, ConfigurableRoute, RESIDUE, RouteRecognizer } from '@aurelia/route-recognizer';
 
@@ -2116,6 +2116,7 @@ let Router = class Router {
         this.vpaLookup = new Map();
         this.logger = logger.root.scopeTo('Router');
         this.instructions = ViewportInstructionTree.create('', options);
+        container.registerResolver(Router, Registration.instance(Router, this));
     }
     resolveContext(context) {
         return RouteContext.resolve(this.ctx, context);
@@ -3454,7 +3455,9 @@ class RouteContext {
         this.moduleLoader = parentContainer.get(IModuleLoader);
         const container = this.container = parentContainer.createChild();
         container.registerResolver(IController, this.hostControllerProvider = new InstanceProvider(), true);
-        container.registerResolver(IRouteContext, new InstanceProvider('IRouteContext', this));
+        const ctxProvider = new InstanceProvider('IRouteContext', this);
+        container.registerResolver(IRouteContext, ctxProvider);
+        container.registerResolver(RouteContext, ctxProvider);
         container.register(config);
         this._recognizer = new RouteRecognizer();
         if (_router.options.useNavigationModel) {
@@ -3860,7 +3863,6 @@ class $RecognizedRoute {
         return `RR(route:(endpoint:(route:(path:${cr.path},handler:${cr.handler})),params:${JSON.stringify(route.params)}),residue:${this.residue})`;
     }
 }
-DI.createInterface('INavigationModel');
 class NavigationModel {
     constructor(routes) {
         this.routes = routes;
@@ -4239,7 +4241,7 @@ function configure(container, options) {
         const url = new URL(window.document.baseURI);
         url.pathname = normalizePath(basePath ?? url.pathname);
         return url;
-    }), Registration.instance(IRouterOptions, routerOptions), AppTask.hydrated(IContainer, RouteContext.setRoot), AppTask.activated(IRouter, router => router.start(true)), AppTask.deactivated(IRouter, router => {
+    }), Registration.instance(IRouterOptions, routerOptions), Registration.instance(RouterOptions, routerOptions), AppTask.hydrated(IContainer, RouteContext.setRoot), AppTask.activated(IRouter, router => router.start(true)), AppTask.deactivated(IRouter, router => {
         router.stop();
     }), ...DefaultComponents, ...DefaultResources);
 }

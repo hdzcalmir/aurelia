@@ -81,6 +81,8 @@ const defineHiddenProp = (obj, key, value) => {
     });
     return value;
 };
+const addSignalListener = (signaler, signal, listener) => signaler.addSignalListener(signal, listener);
+const removeSignalListener = (signaler, signal, listener) => signaler.removeSignalListener(signal, listener);
 
 function bindable(configOrTarget, prop) {
     let config;
@@ -1248,14 +1250,23 @@ const mixingBindingLimited = (target, getMethodName) => {
         }
         withLimitationBindings.add(this);
         const prop = getMethodName(this, opts);
+        const signals = opts.signals;
+        const signaler = signals.length > 0 ? this.get(ISignaler) : null;
         const originalFn = this[prop];
         const callOriginal = (...args) => originalFn.call(this, ...args);
         const limitedFn = opts.type === 'debounce'
             ? debounced(opts, callOriginal, this)
             : throttled(opts, callOriginal, this);
+        const signalListener = signaler ? { handleChange: limitedFn.flush } : null;
         this[prop] = limitedFn;
+        if (signaler) {
+            signals.forEach(s => addSignalListener(signaler, s, signalListener));
+        }
         return {
             dispose: () => {
+                if (signaler) {
+                    signals.forEach(s => removeSignalListener(signaler, s, signalListener));
+                }
                 withLimitationBindings.delete(this);
                 limitedFn.dispose();
                 delete this[prop];
@@ -1267,21 +1278,31 @@ const debounced = (opts, callOriginal, binding) => {
     let limiterTask;
     let task;
     let latestValue;
+    let isPending = false;
     const taskQueue = opts.queue;
+    const callOriginalCallback = () => callOriginal(latestValue);
     const fn = (v) => {
         latestValue = v;
         if (binding.isBound) {
             task = limiterTask;
-            limiterTask = taskQueue.queueTask(() => callOriginal(latestValue), { delay: opts.delay, reusable: false });
+            limiterTask = taskQueue.queueTask(callOriginalCallback, { delay: opts.delay, reusable: false });
             task?.cancel();
         }
         else {
-            callOriginal(latestValue);
+            callOriginalCallback();
         }
     };
-    fn.dispose = () => {
+    const dispose = fn.dispose = () => {
         task?.cancel();
         limiterTask?.cancel();
+        task = limiterTask = void 0;
+    };
+    fn.flush = () => {
+        isPending = limiterTask?.status === 0;
+        dispose();
+        if (isPending) {
+            callOriginalCallback();
+        }
     };
     return fn;
 };
@@ -1291,8 +1312,10 @@ const throttled = (opts, callOriginal, binding) => {
     let last = 0;
     let elapsed = 0;
     let latestValue;
+    let isPending = false;
     const taskQueue = opts.queue;
     const now = () => opts.now();
+    const callOriginalCallback = () => callOriginal(latestValue);
     const fn = (v) => {
         latestValue = v;
         if (binding.isBound) {
@@ -1300,23 +1323,31 @@ const throttled = (opts, callOriginal, binding) => {
             task = limiterTask;
             if (elapsed > opts.delay) {
                 last = now();
-                callOriginal(latestValue);
+                callOriginalCallback();
             }
             else {
                 limiterTask = taskQueue.queueTask(() => {
                     last = now();
-                    callOriginal(latestValue);
+                    callOriginalCallback();
                 }, { delay: opts.delay - elapsed, reusable: false });
             }
             task?.cancel();
         }
         else {
-            callOriginal(latestValue);
+            callOriginalCallback();
         }
     };
-    fn.dispose = () => {
+    const dispose = fn.dispose = () => {
         task?.cancel();
         limiterTask?.cancel();
+        task = limiterTask = void 0;
+    };
+    fn.flush = () => {
+        isPending = limiterTask?.status === 0;
+        dispose();
+        if (isPending) {
+            callOriginalCallback();
+        }
     };
     return fn;
 };
@@ -4377,11 +4408,6 @@ class AuSlotWatcherBinding {
     get() {
         throw new Error('not implemented');
     }
-    useScope(_scope) {
-    }
-    limit(_opts) {
-        throw new Error('not implemented');
-    }
 }
 subscriberCollection(AuSlotWatcherBinding);
 class SlottedLifecycleHooks {
@@ -5034,12 +5060,6 @@ class SpreadBinding {
             throw createError('Spread binding does not support spreading custom attributes/template controllers');
         }
         this.ctrl.addChild(controller);
-    }
-    limit() {
-        throw createError('not implemented');
-    }
-    useScope() {
-        throw createError('not implemented');
     }
 }
 function addClasses(classList, className) {
@@ -6966,13 +6986,13 @@ class DebounceBindingBehavior {
     constructor(platform) {
         this._platform = platform;
     }
-    bind(scope, binding, delay) {
-        delay = Number(delay);
+    bind(scope, binding, delay, signals) {
         const opts = {
             type: 'debounce',
-            delay: delay > 0 ? delay : defaultDelay$1,
+            delay: delay ?? defaultDelay$1,
             now: this._platform.performanceNow,
             queue: this._platform.taskQueue,
+            signals: isString(signals) ? [signals] : (signals ?? emptyArray),
         };
         const handler = binding.limit?.(opts);
         if (handler == null) {
@@ -7007,7 +7027,7 @@ class SignalBindingBehavior {
         this._lookup.set(binding, names);
         let name;
         for (name of names) {
-            this._signaler.addSignalListener(name, binding);
+            addSignalListener(this._signaler, name, binding);
         }
     }
     unbind(scope, binding) {
@@ -7015,7 +7035,7 @@ class SignalBindingBehavior {
         this._lookup.delete(binding);
         let name;
         for (name of names) {
-            this._signaler.removeSignalListener(name, binding);
+            removeSignalListener(this._signaler, name, binding);
         }
     }
 }
@@ -7029,13 +7049,13 @@ class ThrottleBindingBehavior {
         this._now = platform.performanceNow;
         this._taskQueue = platform.taskQueue;
     }
-    bind(scope, binding, delay) {
-        delay = Number(delay);
+    bind(scope, binding, delay, signals) {
         const opts = {
             type: 'throttle',
-            delay: delay > 0 ? delay : defaultDelay,
+            delay: delay ?? defaultDelay,
             now: this._now,
             queue: this._taskQueue,
+            signals: isString(signals) ? [signals] : (signals ?? emptyArray),
         };
         const handler = binding.limit?.(opts);
         if (handler == null) {
@@ -10380,11 +10400,6 @@ class ChildrenBinding {
     }
     get() {
         throw notImplemented('get');
-    }
-    useScope() {
-    }
-    limit() {
-        throw notImplemented('limit');
     }
     _getNodes() {
         return filterChildren(this._controller, this._query, this._filter, this._map);

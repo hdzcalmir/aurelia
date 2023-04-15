@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { TestContext, assert, createFixture } from '@aurelia/testing';
 import { customElement, bindable, Aurelia } from '@aurelia/runtime-html';
 import { delegateSyntax } from '@aurelia/compat-v1';
+import { ISignaler } from '@aurelia/runtime';
 async function wait(ms) {
     await new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -355,53 +356,93 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
             assert.strictEqual(a, 3);
             assert.strictEqual(aCount, 2);
         });
+        it('updates let on flush signals', async function () {
+            let a = void 0;
+            let aCount = 0;
+            const { ctx, component } = createFixture('<let to-binding-context a.bind="b & debounce :25 : `hurry`">', class {
+                constructor() {
+                    this.b = 1;
+                }
+                set a(v) {
+                    aCount++;
+                    a = v;
+                }
+            });
+            assert.strictEqual(a, 1);
+            assert.strictEqual(aCount, 1);
+            component.b = 2;
+            assert.strictEqual(a, 1, 'debounce holds 2 from propagating');
+            assert.strictEqual(aCount, 1);
+            component.b = 3;
+            assert.strictEqual(a, 1, 'debounce holds 3 from propagating');
+            assert.strictEqual(aCount, 1);
+            ctx.container.get(ISignaler).dispatchSignal('hurry');
+            assert.strictEqual(a, 3);
+            assert.strictEqual(aCount, 2);
+        });
+        it('updates let on flush multiple signals', async function () {
+            let a = void 0;
+            let aCount = 0;
+            const { ctx, component } = createFixture('<let to-binding-context a.bind="b & debounce :25 : [`hurry`, `running`]">', class {
+                constructor() {
+                    this.b = 1;
+                }
+                set a(v) {
+                    aCount++;
+                    a = v;
+                }
+            });
+            assert.strictEqual(a, 1);
+            assert.strictEqual(aCount, 1);
+            component.b = 2;
+            assert.strictEqual(a, 1, 'debounce holds 2 from propagating');
+            assert.strictEqual(aCount, 1);
+            component.b = 3;
+            assert.strictEqual(a, 1, 'debounce holds 3 from propagating');
+            assert.strictEqual(aCount, 1);
+            ctx.container.get(ISignaler).dispatchSignal('running');
+            assert.strictEqual(a, 3);
+            assert.strictEqual(aCount, 2);
+        });
     });
     describe('throttle', function () {
         // this following test should work, if we ever bring back the v1 behavior:
         // - throttle target -> source in 2 way
         // - throttle source -> target in 1 way
         // ============================================
-        // it('works with [oneWay] binding to elements', async function () {
-        //   @customElement({
-        //     name: 'app',
-        //     template: `<input ref="receiver" value.to-view="value & throttle:25">`,
-        //   })
-        //   class App {
-        //     public value: string = '0';
-        //     public receiver: HTMLInputElement;
-        //   }
-        //   const { au, host, ctx } = createFixture();
-        //   const component = new App();
-        //   au.app({ component, host });
-        //   await au.start();
-        //   const receiver = component.receiver;
-        //   component.value = '1';
-        //   assert.strictEqual(receiver.value, '0', 'target value pre #1');
-        //   ctx.platform.domWriteQueue.flush();
-        //   assert.strictEqual(receiver.value, '1', 'target value #1');
-        //   component.value = '2';
-        //   assert.strictEqual(receiver.value, '1', 'target value pre #2');
-        //   ctx.platform.domWriteQueue.flush();
-        //   assert.strictEqual(receiver.value, '1', 'target value #2');
-        //   await wait(20);
-        //   assert.strictEqual(receiver.value, '1', 'target value pre #2 + wait(20)');
-        //   ctx.platform.domWriteQueue.flush();
-        //   assert.strictEqual(receiver.value, '1', 'target value #2 + wait(20)');
-        //   component.value = '3';
-        //   assert.strictEqual(receiver.value, '1', 'target value pre #3');
-        //   ctx.platform.domWriteQueue.flush();
-        //   assert.strictEqual(receiver.value, '1', 'target value #3');
-        //   await wait(10);
-        //   assert.strictEqual(receiver.value, '1', 'target value pre #3 + wait(10)');
-        //   ctx.platform.domWriteQueue.flush();
-        //   assert.strictEqual(receiver.value, '3', 'target value #3 + wait(10)');
-        //   await wait(50);
-        //   assert.strictEqual(receiver.value, '3', 'target value pre #4');
-        //   ctx.platform.domWriteQueue.flush();
-        //   assert.strictEqual(receiver.value, '3', 'target value #4');
-        //   await au.stop();
-        //   au.dispose();
-        // });
+        it('works with [oneWay] binding to elements', async function () {
+            let App = class App {
+                constructor() {
+                    this.value = '0';
+                }
+            };
+            App = __decorate([
+                customElement({
+                    name: 'app',
+                    template: `<input ref="receiver" value.to-view="value & throttle:25">`,
+                })
+            ], App);
+            const { component, flush } = createFixture('<input ref="receiver" value.to-view="value & throttle:25">', App);
+            const receiver = component.receiver;
+            component.value = '1';
+            assert.strictEqual(receiver.value, '0', 'target value pre #1');
+            flush();
+            assert.strictEqual(receiver.value, '1', 'target value #1');
+            component.value = '2';
+            assert.strictEqual(receiver.value, '1', 'target value pre #2');
+            flush();
+            assert.strictEqual(receiver.value, '1', 'target value #2');
+            await wait(20);
+            assert.strictEqual(receiver.value, '1', 'target value pre #2 + wait(20)');
+            flush();
+            assert.strictEqual(receiver.value, '1', 'target value #2 + wait(20)');
+            component.value = '3';
+            assert.strictEqual(receiver.value, '1', 'target value pre #3');
+            flush();
+            assert.strictEqual(receiver.value, '1', 'target value #3');
+            await wait(10);
+            assert.strictEqual(receiver.value, '3', 'target value pre #3 + wait(10) (total wait 30 > 25)');
+        });
         it('works with [twoWay] bindings to other components', async function () {
             let Receiver = class Receiver {
                 constructor() {
@@ -418,22 +459,12 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
                     template: null,
                 })
             ], Receiver);
-            let App = class App {
+            class App {
                 constructor() {
                     this.value = '0';
                 }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `<au-receiver view-model.ref="receiver" value.bind="value & throttle:25"></au-receiver>`,
-                    dependencies: [Receiver],
-                })
-            ], App);
-            const { au, host } = $createFixture();
-            const component = new App();
-            au.app({ component, host });
-            await au.start();
+            }
+            const { component } = createFixture(`<au-receiver view-model.ref="receiver" value.bind="value & throttle:25"></au-receiver>`, App, [Receiver]);
             const receiver = component.receiver;
             component.value = '1';
             assert.strictEqual(receiver.value, '1');
@@ -483,8 +514,48 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
             // it('works with toView bindings to other [components]',
             // for similar scenario
             assert.strictEqual(receiver.value, '6', `change 6 propagated`); // change from line 555 above
-            await au.stop();
-            au.dispose();
+        });
+        it('flushes on signals', function () {
+            class App {
+                constructor() {
+                    this.value = '0';
+                }
+            }
+            const { ctx, component, flush } = createFixture('<input ref="receiver" value.to-view="value & throttle:25:`hurry`">', App);
+            const receiver = component.receiver;
+            const signaler = ctx.container.get(ISignaler);
+            component.value = '1';
+            // this flush hasn't set a time for throttle yet, since it' only the first run of throttle
+            flush();
+            assert.strictEqual(receiver.value, '1');
+            component.value = '2';
+            assert.strictEqual(receiver.value, '1');
+            // this flush is gonna call a throttled updateTarget, since we just called in in the flush above
+            flush();
+            assert.strictEqual(receiver.value, '1');
+            signaler.dispatchSignal('hurry');
+            assert.strictEqual(receiver.value, '2');
+        });
+        it('flushes on multiple signals', function () {
+            class App {
+                constructor() {
+                    this.value = '0';
+                }
+            }
+            const { ctx, component, flush } = createFixture('<input ref="receiver" value.to-view="value & throttle:25:[`now`, `hurry`]">', App);
+            const receiver = component.receiver;
+            const signaler = ctx.container.get(ISignaler);
+            component.value = '1';
+            // this flush hasn't set a time for throttle yet, since it' only the first run of throttle
+            flush();
+            assert.strictEqual(receiver.value, '1');
+            component.value = '2';
+            assert.strictEqual(receiver.value, '1');
+            // this flush is gonna call a throttled updateTarget, since we just called in in the flush above
+            flush();
+            assert.strictEqual(receiver.value, '1');
+            signaler.dispatchSignal('hurry');
+            assert.strictEqual(receiver.value, '2');
         });
     });
     it('works with updateTrigger', async function () {

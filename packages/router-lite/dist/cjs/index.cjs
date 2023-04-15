@@ -1965,13 +1965,13 @@ exports.Router = class Router {
     get isNavigating() {
         return this.et;
     }
-    constructor(t, e, s, i, n, r) {
+    constructor(t, s, i, n, r, o) {
         this.container = t;
-        this.p = e;
-        this.logger = s;
-        this.events = i;
-        this.locationMgr = n;
-        this.options = r;
+        this.p = s;
+        this.logger = i;
+        this.events = n;
+        this.locationMgr = r;
+        this.options = o;
         this.K = null;
         this.X = null;
         this.tt = null;
@@ -1982,8 +1982,9 @@ exports.Router = class Router {
         this.st = false;
         this.et = false;
         this.vpaLookup = new Map;
-        this.logger = s.root.scopeTo("Router");
-        this.instructions = ViewportInstructionTree.create("", r);
+        this.logger = i.root.scopeTo("Router");
+        this.instructions = ViewportInstructionTree.create("", o);
+        t.registerResolver(Router, e.Registration.instance(Router, this));
     }
     resolveContext(t) {
         return RouteContext.resolve(this.ctx, t);
@@ -3204,7 +3205,9 @@ class RouteContext {
         this.moduleLoader = h.get(e.IModuleLoader);
         const c = this.container = h.createChild();
         c.registerResolver(s.IController, this.hostControllerProvider = new e.InstanceProvider, true);
-        c.registerResolver(ct, new e.InstanceProvider("IRouteContext", this));
+        const u = new e.InstanceProvider("IRouteContext", this);
+        c.registerResolver(ct, u);
+        c.registerResolver(RouteContext, u);
         c.register(o);
         this.bt = new i.RouteRecognizer;
         if (a.options.useNavigationModel) {
@@ -3537,8 +3540,6 @@ class $RecognizedRoute {
     }
 }
 
-e.DI.createInterface("INavigationModel");
-
 class NavigationModel {
     constructor(t) {
         this.routes = t;
@@ -3856,7 +3857,7 @@ function bt(i, n) {
         const o = new URL(n.document.baseURI);
         o.pathname = N(r ?? o.pathname);
         return o;
-    })), e.Registration.instance($, o), s.AppTask.hydrated(e.IContainer, RouteContext.setRoot), s.AppTask.activated(X, (t => t.start(true))), s.AppTask.deactivated(X, (t => {
+    })), e.Registration.instance($, o), e.Registration.instance(RouterOptions, o), s.AppTask.hydrated(e.IContainer, RouteContext.setRoot), s.AppTask.activated(X, (t => t.start(true))), s.AppTask.deactivated(X, (t => {
         t.stop();
     })), ...vt, ...Et);
 }

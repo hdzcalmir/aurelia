@@ -247,7 +247,7 @@ exports.StateBindingBehavior = class StateBindingBehavior {
             e = f.get(s);
             if (null == e) f.set(s, e = new StateSubscriber(s, t)); else e.H = t;
             this.j.subscribe(e);
-            s.useScope(t);
+            s.useScope?.(t);
         }
     }
     unbind(t, s) {
