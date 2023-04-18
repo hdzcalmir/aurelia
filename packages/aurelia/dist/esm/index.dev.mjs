@@ -31,9 +31,12 @@ class Aurelia extends Aurelia$1 {
     }
     app(config) {
         if (CustomElement.isType(config)) {
+            // Default to custom element element name
             const definition = CustomElement.getDefinition(config);
             let host = document.querySelector(definition.name);
             if (host === null) {
+                // When no target is found, default to body.
+                // For example, when user forgot to write <my-app></my-app> in html.
                 host = document.body;
             }
             return super.app({

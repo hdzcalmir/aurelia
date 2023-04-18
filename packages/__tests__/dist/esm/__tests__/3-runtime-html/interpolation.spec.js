@@ -1,6 +1,6 @@
 import { assert, createContainer, createFixture, createObserverLocator, createScopeForTest, } from '@aurelia/testing';
 import { Interpolation, ConditionalExpression, AccessScopeExpression } from '@aurelia/runtime';
-import { CustomElement, InterpolationBinding, SVGAnalyzerRegistration, IPlatform, ValueConverter, } from '@aurelia/runtime-html';
+import { CustomElement, InterpolationBinding, SVGAnalyzer, IPlatform, ValueConverter, } from '@aurelia/runtime-html';
 const testDateString = new Date('Sat Feb 02 2002 00:00:00 GMT+0000 (Coordinated Universal Time)').toString();
 const ThreeHoursAheadDateString = new Date('Sat Feb 02 2002 03:00:00 GMT+0000 (Coordinated Universal Time)').toString();
 const ThreeDaysDateString = new Date('Sat Feb 03 2002 00:00:00 GMT+0000 (Coordinated Universal Time)').toString();
@@ -664,7 +664,7 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
                 constructor() {
                     this.progress = 0;
                 }
-            }, [SVGAnalyzerRegistration]);
+            }, [SVGAnalyzer]);
             await startPromise;
             const textArea = appHost.querySelector('use');
             assert.strictEqual(textArea.getAttribute('href'), '#red');

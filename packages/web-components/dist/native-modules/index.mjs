@@ -2,7 +2,7 @@ import { DI as t, IContainer as s, InstanceProvider as e } from "../kernel/dist/
 
 import { CustomElementDefinition as n, CustomElement as i, IPlatform as o, IRendering as l, INode as c, Controller as r, setRef as u } from "../runtime-html/dist/native-modules/index.mjs";
 
-const a = t.createInterface((t => t.singleton(WcCustomElementRegistry)));
+const a = /*@__PURE__*/ t.createInterface((t => t.singleton(WcCustomElementRegistry)));
 
 class WcCustomElementRegistry {
     constructor(t, s, e) {
@@ -11,9 +11,13 @@ class WcCustomElementRegistry {
         this.r = e;
     }
     define(t, s, o) {
-        if (!t.includes("-")) throw h('Invalid web-components custom element name. It must include a "-"');
+        if (!t.includes("-")) {
+            throw createError('Invalid web-components custom element name. It must include a "-"');
+        }
         let l;
-        if (null == s) throw h("Invalid custom element definition");
+        if (s == null) {
+            throw createError("Invalid custom element definition");
+        }
         switch (typeof s) {
           case "function":
             l = i.isType(s) ? i.getDefinition(s) : n.create(i.generateName(), s);
@@ -23,19 +27,23 @@ class WcCustomElementRegistry {
             l = n.getOrCreate(s);
             break;
         }
-        if (l.containerless) throw h("Containerless custom element is not supported. Consider using buitl-in extends instead");
+        if (l.containerless) {
+            throw createError("Containerless custom element is not supported. Consider using buitl-in extends instead");
+        }
         const a = o?.extends ? this.p.document.createElement(o.extends).constructor : this.p.HTMLElement;
-        const C = this.ctn;
-        const d = this.r;
-        const f = l.bindables;
-        const b = this.p;
+        const m = this.ctn;
+        const h = this.r;
+        const C = l.bindables;
+        const d = this.p;
         class CustomElementClass extends a {
             auInit() {
-                if (this.auInited) return;
+                if (this.auInited) {
+                    return;
+                }
                 this.auInited = true;
-                const t = C.createChild();
-                m(t, b.HTMLElement, m(t, b.Element, m(t, c, new e("ElementProvider", this))));
-                const s = d.compile(l, t, {
+                const t = m.createChild();
+                registerResolver(t, d.HTMLElement, registerResolver(t, d.Element, registerResolver(t, c, new e("ElementProvider", this))));
+                const s = h.compile(l, t, {
                     projections: null
                 });
                 const n = t.invoke(s.Type);
@@ -57,18 +65,22 @@ class WcCustomElementRegistry {
                 this.auCtrl.viewModel[t] = e;
             }
         }
-        CustomElementClass.observedAttributes = Object.keys(f);
-        for (const t in f) Object.defineProperty(CustomElementClass.prototype, t, {
-            configurable: true,
-            enumerable: false,
-            get() {
-                return this["auCtrl"].viewModel[t];
-            },
-            set(s) {
-                if (!this["auInited"]) this["auInit"]();
-                this["auCtrl"].viewModel[t] = s;
-            }
-        });
+        CustomElementClass.observedAttributes = Object.keys(C);
+        for (const t in C) {
+            Object.defineProperty(CustomElementClass.prototype, t, {
+                configurable: true,
+                enumerable: false,
+                get() {
+                    return this["auCtrl"].viewModel[t];
+                },
+                set(s) {
+                    if (!this["auInited"]) {
+                        this["auInit"]();
+                    }
+                    this["auCtrl"].viewModel[t] = s;
+                }
+            });
+        }
         this.p.customElements.define(t, CustomElementClass, o);
         return CustomElementClass;
     }
@@ -76,9 +88,9 @@ class WcCustomElementRegistry {
 
 WcCustomElementRegistry.inject = [ s, o, l ];
 
-const m = (t, s, e) => t.registerResolver(s, e);
+const registerResolver = (t, s, e) => t.registerResolver(s, e);
 
-const h = t => new Error(t);
+const createError = t => new Error(t);
 
 export { a as IWcElementRegistry, WcCustomElementRegistry };
 

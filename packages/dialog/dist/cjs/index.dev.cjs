@@ -5,16 +5,32 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var runtimeHtml = require('@aurelia/runtime-html');
 
+/** @internal */
 const createInterface = kernel.DI.createInterface;
+/** @internal */
 const singletonRegistration = kernel.Registration.singleton;
+/** @internal */
 const instanceRegistration = kernel.Registration.instance;
+/** @internal */
 const callbackRegistration = kernel.Registration.callback;
 
-const IDialogService = createInterface('IDialogService');
-const IDialogController = createInterface('IDialogController');
-const IDialogDomRenderer = createInterface('IDialogDomRenderer');
-const IDialogDom = createInterface('IDialogDom');
-const IDialogGlobalSettings = createInterface('IDialogGlobalSettings');
+/**
+ * The dialog service for composing view & view model into a dialog
+ */
+const IDialogService = /*@__PURE__*/ createInterface('IDialogService');
+/**
+ * The controller asscociated with every dialog view model
+ */
+const IDialogController = /*@__PURE__*/ createInterface('IDialogController');
+/**
+ * An interface describing the object responsible for creating the dom structure of a dialog
+ */
+const IDialogDomRenderer = /*@__PURE__*/ createInterface('IDialogDomRenderer');
+/**
+ * An interface describing the DOM structure of a dialog
+ */
+const IDialogDom = /*@__PURE__*/ createInterface('IDialogDom');
+const IDialogGlobalSettings = /*@__PURE__*/ createInterface('IDialogGlobalSettings');
 class DialogOpenResult {
     constructor(wasCancelled, dialog) {
         this.wasCancelled = wasCancelled;
@@ -38,13 +54,22 @@ exports.DialogDeactivationStatuses = void 0;
     DialogDeactivationStatuses["Ok"] = "ok";
     DialogDeactivationStatuses["Error"] = "error";
     DialogDeactivationStatuses["Cancel"] = "cancel";
+    /**
+     * If a view model refused to deactivate in canDeactivate,
+     * then this status should be used to reflect that
+     */
     DialogDeactivationStatuses["Abort"] = "abort";
 })(exports.DialogDeactivationStatuses || (exports.DialogDeactivationStatuses = {}));
+// #endregion
 
-const createError = (message) => new Error(message);
-const isPromise = (v) => v instanceof Promise;
-const isFunction = (v) => typeof v === 'function';
+/** @internal */ const createError = (message) => new Error(message);
+/** @internal */ const isPromise = (v) => v instanceof Promise;
+// eslint-disable-next-line @typescript-eslint/ban-types
+/** @internal */ const isFunction = (v) => typeof v === 'function';
 
+/**
+ * A controller object for a Dialog instance.
+ */
 class DialogController {
     static get inject() { return [runtimeHtml.IPlatform, kernel.IContainer]; }
     constructor(p, container) {
@@ -55,6 +80,7 @@ class DialogController {
             this._reject = reject;
         });
     }
+    /** @internal */
     activate(settings) {
         const container = this.ctn.createChild();
         const { model, template, rejectOnCancel } = settings;
@@ -66,6 +92,12 @@ class DialogController {
             : null;
         const contentHost = dom.contentHost;
         this.settings = settings;
+        // application root host may be a different element with the dialog root host
+        // example:
+        // <body>
+        //   <my-app>
+        //   <au-dialog-container>
+        // when it's different, needs to ensure delegate bindings work
         if (rootEventTarget == null || !rootEventTarget.contains(dialogTargetHost)) {
             container.register(instanceRegistration(runtimeHtml.IEventTarget, dialogTargetHost));
         }
@@ -95,6 +127,7 @@ class DialogController {
             throw e;
         });
     }
+    /** @internal */
     deactivate(status, value) {
         if (this._closingPromise) {
             return this._closingPromise;
@@ -105,17 +138,18 @@ class DialogController {
         const promise = new Promise(r => {
             r(kernel.onResolve(cmp.canDeactivate?.(dialogResult) ?? true, canDeactivate => {
                 if (canDeactivate !== true) {
+                    // we are done, do not block consecutive calls
                     deactivating = false;
                     this._closingPromise = void 0;
                     if (rejectOnCancel) {
                         throw createDialogCancelError(null, 'Dialog cancellation rejected');
                     }
-                    return DialogCloseResult.create("abort");
+                    return DialogCloseResult.create("abort" /* DialogDeactivationStatuses.Abort */);
                 }
                 return kernel.onResolve(cmp.deactivate?.(dialogResult), () => kernel.onResolve(controller.deactivate(controller, null), () => {
                     dom.dispose();
                     dom.overlay.removeEventListener(mouseEvent ?? 'click', this);
-                    if (!rejectOnCancel && status !== "error") {
+                    if (!rejectOnCancel && status !== "error" /* DialogDeactivationStatuses.Error */) {
                         this._resolve(dialogResult);
                     }
                     else {
@@ -128,25 +162,46 @@ class DialogController {
             this._closingPromise = void 0;
             throw reason;
         });
+        // when component canDeactivate is synchronous, and returns something other than true
+        // then the below assignment will override
+        // the assignment inside the callback without the deactivating variable check
         this._closingPromise = deactivating ? promise : void 0;
         return promise;
     }
+    /**
+     * Closes the dialog with a successful output.
+     *
+     * @param value - The returned success output.
+     */
     ok(value) {
-        return this.deactivate("ok", value);
+        return this.deactivate("ok" /* DialogDeactivationStatuses.Ok */, value);
     }
+    /**
+     * Closes the dialog with a cancel output.
+     *
+     * @param value - The returned cancel output.
+     */
     cancel(value) {
-        return this.deactivate("cancel", value);
+        return this.deactivate("cancel" /* DialogDeactivationStatuses.Cancel */, value);
     }
+    /**
+     * Closes the dialog with an error output.
+     *
+     * @param value - A reason for closing with an error.
+     * @returns Promise An empty promise object.
+     */
     error(value) {
         const closeError = createDialogCloseError(value);
-        return new Promise(r => r(kernel.onResolve(this.cmp.deactivate?.(DialogCloseResult.create("error", closeError)), () => kernel.onResolve(this.controller.deactivate(this.controller, null), () => {
+        return new Promise(r => r(kernel.onResolve(this.cmp.deactivate?.(DialogCloseResult.create("error" /* DialogDeactivationStatuses.Error */, closeError)), () => kernel.onResolve(this.controller.deactivate(this.controller, null), () => {
             this.dom.dispose();
             this._reject(closeError);
         }))));
     }
+    /** @internal */
     handleEvent(event) {
-        if (this.settings.overlayDismiss
-            && !this.dom.contentHost.contains(event.target)) {
+        if ( /* user allows dismiss on overlay click */this.settings.overlayDismiss
+            && /* did not click inside the host element */ !this.dom.contentHost.contains(event.target)) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.cancel();
         }
     }
@@ -186,6 +241,9 @@ function createDialogCloseError(output) {
     return error;
 }
 
+/**
+ * A default implementation for the dialog service allowing for the creation of dialogs.
+ */
 class DialogService {
     get controllers() {
         return this.dlgs.slice(0);
@@ -194,20 +252,44 @@ class DialogService {
         const dlgs = this.dlgs;
         return dlgs.length > 0 ? dlgs[dlgs.length - 1] : null;
     }
+    // tslint:disable-next-line:member-ordering
     static get inject() { return [kernel.IContainer, runtimeHtml.IPlatform, IDialogGlobalSettings]; }
     constructor(_ctn, p, _defaultSettings) {
         this._ctn = _ctn;
         this.p = p;
         this._defaultSettings = _defaultSettings;
+        /**
+         * The current dialog controllers
+         *
+         * @internal
+         */
         this.dlgs = [];
     }
     static register(container) {
         container.register(singletonRegistration(IDialogService, this), runtimeHtml.AppTask.deactivating(IDialogService, dialogService => kernel.onResolve(dialogService.closeAll(), (openDialogController) => {
             if (openDialogController.length > 0) {
+                // todo: what to do?
                 throw createError(`AUR0901: There are still ${openDialogController.length} open dialog(s).`);
             }
         })));
     }
+    /**
+     * Opens a new dialog.
+     *
+     * @param settings - Dialog settings for this dialog instance.
+     * @returns A promise that settles when the dialog is closed.
+     *
+     * Example usage:
+     * ```ts
+     * dialogService.open({ component: () => MyDialog, template: 'my-template' })
+     * dialogService.open({ component: () => MyDialog, template: document.createElement('my-template') })
+     *
+     * // JSX to hyperscript
+     * dialogService.open({ component: () => MyDialog, template: <my-template /> })
+     *
+     * dialogService.open({ component: () => import('...'), template: () => fetch('my.server/dialog-view.html') })
+     * ```
+     */
     open(settings) {
         return asDialogOpenPromise(new Promise(resolve => {
             const $settings = DialogSettings.from(this._defaultSettings, settings);
@@ -231,19 +313,27 @@ class DialogService {
             }));
         }));
     }
+    /**
+     * Closes all open dialogs at the time of invocation.
+     *
+     * @returns All controllers whose close operation was cancelled.
+     */
     closeAll() {
         return Promise
             .all(Array.from(this.dlgs)
             .map(controller => {
             if (controller.settings.rejectOnCancel) {
+                // this will throw when calling cancel
+                // so only leave return null as noop
                 return controller.cancel().then(() => null);
             }
-            return controller.cancel().then(result => result.status === "cancel"
+            return controller.cancel().then(result => result.status === "cancel" /* DialogDeactivationStatuses.Cancel */
                 ? null
                 : controller);
         }))
             .then(unclosedControllers => unclosedControllers.filter(unclosed => !!unclosed));
     }
+    /** @internal */
     remove(controller) {
         const dlgs = this.dlgs;
         const idx = dlgs.indexOf(controller);
@@ -254,6 +344,7 @@ class DialogService {
             this.p.window.removeEventListener('keydown', this);
         }
     }
+    /** @internal */
     handleEvent(e) {
         const keyEvent = e;
         const key = getActionKey(keyEvent);
@@ -295,12 +386,14 @@ class DialogSettings {
             ? maybePromise.then(() => loaded)
             : loaded;
     }
+    /** @internal */
     _validate() {
         if (this.component == null && this.template == null) {
             throw createError(`AUR0903: Invalid Dialog Settings. You must provide "component", "template" or both.`);
         }
         return this;
     }
+    /** @internal */
     _normalize() {
         if (this.keyboard == null) {
             this.keyboard = this.lock ? [] : ['Enter', 'Escape'];
@@ -362,6 +455,7 @@ class DefaultDialogDomRenderer {
         return new DefaultDialogDom(wrapper, overlay, host);
     }
 }
+/** @internal */
 DefaultDialogDomRenderer.inject = [runtimeHtml.IPlatform];
 class DefaultDialogDom {
     constructor(wrapper, overlay, contentHost) {
@@ -383,7 +477,15 @@ function createDialogConfiguration(settingsProvider, registrations) {
         },
     };
 }
-const DialogConfiguration = createDialogConfiguration(() => {
+/**
+ * A noop configuration for Dialog, should be used as:
+```ts
+DialogConfiguration.customize(settings => {
+  // adjust default value of the settings
+}, [all_implementations_here])
+```
+ */
+const DialogConfiguration = /*@__PURE__*/ createDialogConfiguration(() => {
     throw createError(`AUR0904: Invalid dialog configuration. ` +
             'Specify the implementations for ' +
             '<IDialogService>, <IDialogGlobalSettings> and <IDialogDomRenderer>, ' +
@@ -393,7 +495,7 @@ const DialogConfiguration = createDialogConfiguration(() => {
             container.register(singletonRegistration(IDialogGlobalSettings, this));
         }
     }]);
-const DialogDefaultConfiguration = createDialogConfiguration(kernel.noop, [
+const DialogDefaultConfiguration = /*@__PURE__*/ createDialogConfiguration(kernel.noop, [
     DialogService,
     DefaultDialogGlobalSettings,
     DefaultDialogDomRenderer,

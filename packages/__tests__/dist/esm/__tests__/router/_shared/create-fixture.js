@@ -51,7 +51,7 @@ export function translateOptions(routerOptionsSpec) {
         // routingHookIntegration: integration,
     };
 }
-export const IActivityTracker = DI.createInterface('IActivityTracker', x => x.singleton(ActivityTracker));
+export const IActivityTracker = /*@__PURE__*/ DI.createInterface('IActivityTracker', x => x.singleton(ActivityTracker));
 export class ActivityTracker {
     constructor() {
         this.activeVMs = [];

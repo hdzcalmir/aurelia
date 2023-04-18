@@ -35,6 +35,7 @@ class Candidate {
         this.skippedStates = skippedStates;
         this.result = result;
         this.head = states[states.length - 1];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.endpoint = this.head?.endpoint;
     }
     advance(ch) {
@@ -112,6 +113,7 @@ class Candidate {
     getParams() {
         const { states, chars, endpoint } = this;
         const params = {};
+        // First initialize all properties with undefined so they all exist (even if they're not filled, e.g. non-matched optional params)
         for (const param of endpoint.params) {
             params[param.name] = void 0;
         }
@@ -123,12 +125,41 @@ class Candidate {
                     params[name] = chars[i];
                 }
                 else {
+                    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                     params[name] += chars[i];
                 }
             }
         }
         return params;
     }
+    /**
+     * Compares this candidate to another candidate to determine the correct sorting order.
+     *
+     * This algorithm is different from `sortSolutions` in v1's route-recognizer in that it compares
+     * the candidates segment-by-segment, rather than merely comparing the cumulative of segment types
+     *
+     * This resolves v1's ambiguity in situations like `/foo/:id/bar` vs. `/foo/bar/:id`, which had the
+     * same sorting value because they both consist of two static segments and one dynamic segment.
+     *
+     * With this algorithm, `/foo/bar/:id` would always be sorted first because the second segment is different,
+     * and static wins over dynamic.
+     *
+     * ### NOTE
+     * This algorithm violates some of the invariants of v1's algorithm,
+     * but those invariants were arguably not very sound to begin with. Example:
+     *
+     * `/foo/*path/bar/baz` vs. `/foo/bar/*path1/*path2`
+     * - in v1, the first would win because that match has fewer stars
+     * - in v2, the second will win because there is a bigger static match at the start of the pattern
+     *
+     * The algorithm should be more logical and easier to reason about in v2, but it's important to be aware of
+     * subtle difference like this which might surprise some users who happened to rely on this behavior from v1,
+     * intentionally or unintentionally.
+     *
+     * @param b - The candidate to compare this to.
+     * Parameter name is `b` because the method should be used like so: `states.sort((a, b) => a.compareTo(b))`.
+     * This will bring the candidate with the highest score to the first position of the array.
+     */
     compareTo(b) {
         const statesA = this.states;
         const statesB = b.states;
@@ -187,6 +218,8 @@ class Candidate {
                 return -1;
             }
         }
+        // This should only be possible with a single pattern with multiple consecutive star segments.
+        // TODO: probably want to warn or even throw here, but leave it be for now.
         return 0;
     }
 }
@@ -228,6 +261,9 @@ class RecognizeResult {
         }
     }
 }
+/**
+ * Reserved parameter name that's used when registering a route with residual star segment (catch-all).
+ */
 const RESIDUE = '$$residue';
 class RouteRecognizer {
     constructor() {
@@ -240,6 +276,7 @@ class RouteRecognizer {
         if (routeOrRoutes instanceof Array) {
             for (const route of routeOrRoutes) {
                 params = this.$add(route, false).params;
+                // add residue iff the last parameter is not a star segment.
                 if (!addResidue || (params[params.length - 1]?.isStar ?? false))
                     continue;
                 this.$add({ ...route, path: `${route.path}/*${RESIDUE}` }, true);
@@ -247,10 +284,12 @@ class RouteRecognizer {
         }
         else {
             params = this.$add(routeOrRoutes, false).params;
+            // add residue iff the last parameter is not a star segment.
             if (addResidue && !(params[params.length - 1]?.isStar ?? false)) {
                 this.$add({ ...routeOrRoutes, path: `${routeOrRoutes.path}/*${RESIDUE}` }, true);
             }
         }
+        // Clear the cache whenever there are state changes, because the recognizeResults could be arbitrarily different as a result
         this.cache.clear();
     }
     $add(route, addResidue) {
@@ -259,13 +298,15 @@ class RouteRecognizer {
         if (lookup.has(path))
             throw createError(`Cannot add duplicate path '${path}'.`);
         const $route = new ConfigurableRoute(path, route.caseSensitive === true, route.handler);
+        // Normalize leading, trailing and double slashes by ignoring empty segments
         const parts = path === '' ? [''] : path.split('/').filter(isNotEmpty);
         const params = [];
         let state = this.rootState;
         for (const part of parts) {
+            // Each segment always begins with a slash, so we represent this with a non-segment state
             state = state.append(null, '/');
             switch (part.charAt(0)) {
-                case ':': {
+                case ':': { // route parameter
                     const isOptional = part.endsWith('?');
                     const name = isOptional ? part.slice(1, -1) : part.slice(1);
                     if (name === RESIDUE)
@@ -274,22 +315,22 @@ class RouteRecognizer {
                     state = new DynamicSegment(name, isOptional).appendTo(state);
                     break;
                 }
-                case '*': {
+                case '*': { // dynamic route
                     const name = part.slice(1);
                     let kind;
                     if (name === RESIDUE) {
                         if (!addResidue)
                             throw new Error(`Invalid parameter name; usage of the reserved parameter name '${RESIDUE}' is used.`);
-                        kind = 1;
+                        kind = 1 /* SegmentKind.residue */;
                     }
                     else {
-                        kind = 2;
+                        kind = 2 /* SegmentKind.star */;
                     }
                     params.push(new Parameter(name, true, true));
                     state = new StarSegment(name, kind).appendTo(state);
                     break;
                 }
-                default: {
+                default: { // standard path route
                     state = new StaticSegment(part, $route.caseSensitive).appendTo(state);
                     break;
                 }
@@ -343,20 +384,20 @@ class State {
         this.nextStates = null;
         this.endpoint = null;
         switch (segment?.kind) {
-            case 3:
+            case 3 /* SegmentKind.dynamic */:
                 this.length = prevState.length + 1;
                 this.isSeparator = false;
                 this.isDynamic = true;
                 this.isOptional = segment.optional;
                 break;
-            case 2:
-            case 1:
+            case 2 /* SegmentKind.star */:
+            case 1 /* SegmentKind.residue */:
                 this.length = prevState.length + 1;
                 this.isSeparator = false;
                 this.isDynamic = true;
                 this.isOptional = false;
                 break;
-            case 4:
+            case 4 /* SegmentKind.static */:
                 this.length = prevState.length + 1;
                 this.isSeparator = false;
                 this.isDynamic = false;
@@ -403,13 +444,14 @@ class State {
     isMatch(ch) {
         const segment = this.segment;
         switch (segment?.kind) {
-            case 3:
+            case 3 /* SegmentKind.dynamic */:
                 return !this.value.includes(ch);
-            case 2:
-            case 1:
+            case 2 /* SegmentKind.star */:
+            case 1 /* SegmentKind.residue */:
                 return true;
-            case 4:
+            case 4 /* SegmentKind.static */:
             case undefined:
+                // segment separators (slashes) are non-segments. We could say return ch === '/' as well, technically.
                 return this.value.includes(ch);
         }
     }
@@ -419,7 +461,7 @@ function isNotEmpty(segment) {
 }
 
 class StaticSegment {
-    get kind() { return 4; }
+    get kind() { return 4 /* SegmentKind.static */; }
     constructor(value, caseSensitive) {
         this.value = value;
         this.caseSensitive = caseSensitive;
@@ -428,35 +470,41 @@ class StaticSegment {
         const { value, value: { length } } = this;
         if (this.caseSensitive) {
             for (let i = 0; i < length; ++i) {
-                state = state.append(this, value.charAt(i));
+                state = state.append(
+                /* segment */ this, 
+                /* value   */ value.charAt(i));
             }
         }
         else {
             for (let i = 0; i < length; ++i) {
                 const ch = value.charAt(i);
-                state = state.append(this, ch.toUpperCase() + ch.toLowerCase());
+                state = state.append(
+                /* segment */ this, 
+                /* value   */ ch.toUpperCase() + ch.toLowerCase());
             }
         }
         return state;
     }
     equals(b) {
-        return (b.kind === 4 &&
+        return (b.kind === 4 /* SegmentKind.static */ &&
             b.caseSensitive === this.caseSensitive &&
             b.value === this.value);
     }
 }
 class DynamicSegment {
-    get kind() { return 3; }
+    get kind() { return 3 /* SegmentKind.dynamic */; }
     constructor(name, optional) {
         this.name = name;
         this.optional = optional;
     }
     appendTo(state) {
-        state = state.append(this, '/');
+        state = state.append(
+        /* segment */ this, 
+        /* value   */ '/');
         return state;
     }
     equals(b) {
-        return (b.kind === 3 &&
+        return (b.kind === 3 /* SegmentKind.dynamic */ &&
             b.optional === this.optional &&
             b.name === this.name);
     }
@@ -467,11 +515,13 @@ class StarSegment {
         this.kind = kind;
     }
     appendTo(state) {
-        state = state.append(this, '');
+        state = state.append(
+        /* segment */ this, 
+        /* value   */ '');
         return state;
     }
     equals(b) {
-        return ((b.kind === 2 || b.kind === 1) &&
+        return ((b.kind === 2 /* SegmentKind.star */ || b.kind === 1 /* SegmentKind.residue */) &&
             b.name === this.name);
     }
 }

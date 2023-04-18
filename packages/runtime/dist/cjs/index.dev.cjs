@@ -6,16 +6,37 @@ var kernel = require('@aurelia/kernel');
 var metadata = require('@aurelia/metadata');
 
 const O = Object;
+/**
+ * A shortcut to Object.prototype.hasOwnProperty
+ * Needs to do explicit .call
+ *
+ * @internal
+ */
 const hasOwnProp = O.prototype.hasOwnProperty;
+/**
+ * Reflect does not throw on invalid property def
+ *
+ * @internal
+ */
 const def = Reflect.defineProperty;
+/** @internal */
 const createError = (message) => new Error(message);
+/** @internal */
+// eslint-disable-next-line @typescript-eslint/ban-types
 const isFunction = (v) => typeof v === 'function';
+/** @internal */
 const isString = (v) => typeof v === 'string';
+/** @internal */
 const isObject = (v) => v instanceof O;
+/** @internal */
 const isArray = (v) => v instanceof Array;
+/** @internal */
 const isSet = (v) => v instanceof Set;
+/** @internal */
 const isMap = (v) => v instanceof Map;
+/** @internal */
 const areEqual = O.is;
+/** @internal */
 function defineHiddenProp(obj, key, value) {
     def(obj, key, {
         enumerable: false,
@@ -25,52 +46,54 @@ function defineHiddenProp(obj, key, value) {
     });
     return value;
 }
+/** @internal */
 function ensureProto(proto, key, defaultValue) {
     if (!(key in proto)) {
         defineHiddenProp(proto, key, defaultValue);
     }
 }
-const objectAssign = Object.assign;
-const safeString = String;
-const createInterface = kernel.DI.createInterface;
-const createLookup = () => O.create(null);
-const getOwnMetadata = metadata.Metadata.getOwn;
-metadata.Metadata.hasOwn;
-const defineMetadata = metadata.Metadata.define;
-kernel.Protocol.annotation.keyFor;
-kernel.Protocol.resource.keyFor;
-kernel.Protocol.resource.appendTo;
+/** @internal */ const objectAssign = Object.assign;
+// this is used inside template literal, since TS errs without String(...value)
+/** @internal */ const safeString = String;
+/** @internal */ const createInterface = kernel.DI.createInterface;
+/** @internal */ const createLookup = () => O.create(null);
+/** @internal */ const getOwnMetadata = metadata.Metadata.getOwn;
+/** @internal */ metadata.Metadata.hasOwn;
+/** @internal */ const defineMetadata = metadata.Metadata.define;
+/** @internal */ kernel.Protocol.annotation.keyFor;
+/** @internal */ kernel.Protocol.resource.keyFor;
+/** @internal */ kernel.Protocol.resource.appendTo;
 
 const astVisit = (ast, visitor) => {
     switch (ast.$kind) {
-        case 11: return visitor.visitAccessKeyed(ast);
-        case 10: return visitor.visitAccessMember(ast);
-        case 1: return visitor.visitAccessScope(ast);
-        case 0: return visitor.visitAccessThis(ast);
-        case 19: return visitor.visitArrayBindingPattern(ast);
-        case 24: return visitor.visitDestructuringAssignmentExpression(ast);
-        case 2: return visitor.visitArrayLiteral(ast);
-        case 16: return visitor.visitArrowFunction(ast);
-        case 15: return visitor.visitAssign(ast);
-        case 13: return visitor.visitBinary(ast);
-        case 18: return visitor.visitBindingBehavior(ast);
-        case 21: return visitor.visitBindingIdentifier(ast);
-        case 9: return visitor.visitCallFunction(ast);
-        case 8: return visitor.visitCallMember(ast);
-        case 7: return visitor.visitCallScope(ast);
-        case 14: return visitor.visitConditional(ast);
-        case 26: return visitor.visitDestructuringAssignmentSingleExpression(ast);
-        case 22: return visitor.visitForOfStatement(ast);
-        case 23: return visitor.visitInterpolation(ast);
-        case 20: return visitor.visitObjectBindingPattern(ast);
-        case 25: return visitor.visitDestructuringAssignmentExpression(ast);
-        case 3: return visitor.visitObjectLiteral(ast);
-        case 4: return visitor.visitPrimitiveLiteral(ast);
-        case 12: return visitor.visitTaggedTemplate(ast);
-        case 5: return visitor.visitTemplate(ast);
-        case 6: return visitor.visitUnary(ast);
-        case 17: return visitor.visitValueConverter(ast);
-        case 28: return visitor.visitCustom(ast);
+        case 11 /* ExpressionKind.AccessKeyed */: return visitor.visitAccessKeyed(ast);
+        case 10 /* ExpressionKind.AccessMember */: return visitor.visitAccessMember(ast);
+        case 1 /* ExpressionKind.AccessScope */: return visitor.visitAccessScope(ast);
+        case 0 /* ExpressionKind.AccessThis */: return visitor.visitAccessThis(ast);
+        case 19 /* ExpressionKind.ArrayBindingPattern */: return visitor.visitArrayBindingPattern(ast);
+        case 24 /* ExpressionKind.ArrayDestructuring */: return visitor.visitDestructuringAssignmentExpression(ast);
+        case 2 /* ExpressionKind.ArrayLiteral */: return visitor.visitArrayLiteral(ast);
+        case 16 /* ExpressionKind.ArrowFunction */: return visitor.visitArrowFunction(ast);
+        case 15 /* ExpressionKind.Assign */: return visitor.visitAssign(ast);
+        case 13 /* ExpressionKind.Binary */: return visitor.visitBinary(ast);
+        case 18 /* ExpressionKind.BindingBehavior */: return visitor.visitBindingBehavior(ast);
+        case 21 /* ExpressionKind.BindingIdentifier */: return visitor.visitBindingIdentifier(ast);
+        case 9 /* ExpressionKind.CallFunction */: return visitor.visitCallFunction(ast);
+        case 8 /* ExpressionKind.CallMember */: return visitor.visitCallMember(ast);
+        case 7 /* ExpressionKind.CallScope */: return visitor.visitCallScope(ast);
+        case 14 /* ExpressionKind.Conditional */: return visitor.visitConditional(ast);
+        case 26 /* ExpressionKind.DestructuringAssignmentLeaf */: return visitor.visitDestructuringAssignmentSingleExpression(ast);
+        case 22 /* ExpressionKind.ForOfStatement */: return visitor.visitForOfStatement(ast);
+        case 23 /* ExpressionKind.Interpolation */: return visitor.visitInterpolation(ast);
+        case 20 /* ExpressionKind.ObjectBindingPattern */: return visitor.visitObjectBindingPattern(ast);
+        case 25 /* ExpressionKind.ObjectDestructuring */: return visitor.visitDestructuringAssignmentExpression(ast);
+        case 3 /* ExpressionKind.ObjectLiteral */: return visitor.visitObjectLiteral(ast);
+        case 4 /* ExpressionKind.PrimitiveLiteral */: return visitor.visitPrimitiveLiteral(ast);
+        case 12 /* ExpressionKind.TaggedTemplate */: return visitor.visitTaggedTemplate(ast);
+        case 5 /* ExpressionKind.Template */: return visitor.visitTemplate(ast);
+        case 6 /* ExpressionKind.Unary */: return visitor.visitUnary(ast);
+        case 17 /* ExpressionKind.ValueConverter */: return visitor.visitValueConverter(ast);
+        case 28 /* ExpressionKind.Custom */: return visitor.visitCustom(ast);
         default: {
             throw createError(`Unknown ast node ${JSON.stringify(ast)}`);
         }
@@ -218,7 +241,7 @@ class Unparser {
     }
     visitUnary(expr) {
         this.text += `(${expr.operation}`;
-        if (expr.operation.charCodeAt(0) >= 97) {
+        if (expr.operation.charCodeAt(0) >= /* a */ 97) {
             this.text += ' ';
         }
         astVisit(expr.expression, this);
@@ -227,7 +250,7 @@ class Unparser {
     visitBinary(expr) {
         this.text += '(';
         astVisit(expr.left, this);
-        if (expr.operation.charCodeAt(0) === 105) {
+        if (expr.operation.charCodeAt(0) === /* i */ 105) {
             this.text += ` ${expr.operation} `;
         }
         else {
@@ -315,7 +338,7 @@ class Unparser {
     }
     visitDestructuringAssignmentExpression(expr) {
         const $kind = expr.$kind;
-        const isObjDes = $kind === 25;
+        const isObjDes = $kind === 25 /* ExpressionKind.ObjectDestructuring */;
         this.text += isObjDes ? '{' : '[';
         const list = expr.list;
         const len = list.length;
@@ -324,11 +347,11 @@ class Unparser {
         for (i = 0; i < len; i++) {
             item = list[i];
             switch (item.$kind) {
-                case 26:
+                case 26 /* ExpressionKind.DestructuringAssignmentLeaf */:
                     astVisit(item, this);
                     break;
-                case 24:
-                case 25: {
+                case 24 /* ExpressionKind.ArrayDestructuring */:
+                case 25 /* ExpressionKind.ObjectDestructuring */: {
                     const source = item.source;
                     if (source) {
                         astVisit(source, this);
@@ -405,7 +428,7 @@ exports.ExpressionKind = void 0;
 class CustomExpression {
     constructor(value) {
         this.value = value;
-        this.$kind = 28;
+        this.$kind = 28 /* ExpressionKind.Custom */;
     }
     evaluate(_s, _e, _c) {
         return this.value;
@@ -413,9 +436,13 @@ class CustomExpression {
     assign(s, e, val) {
         return val;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     bind(s, b) {
+        // empty
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     unbind(s, b) {
+        // empty
     }
     accept(_visitor) {
         return (void 0);
@@ -426,7 +453,7 @@ class BindingBehaviorExpression {
         this.expression = expression;
         this.name = name;
         this.args = args;
-        this.$kind = 18;
+        this.$kind = 18 /* ExpressionKind.BindingBehavior */;
         this.key = `_bb_${name}`;
     }
 }
@@ -435,14 +462,14 @@ class ValueConverterExpression {
         this.expression = expression;
         this.name = name;
         this.args = args;
-        this.$kind = 17;
+        this.$kind = 17 /* ExpressionKind.ValueConverter */;
     }
 }
 class AssignExpression {
     constructor(target, value) {
         this.target = target;
         this.value = value;
-        this.$kind = 15;
+        this.$kind = 15 /* ExpressionKind.Assign */;
     }
 }
 class ConditionalExpression {
@@ -450,13 +477,13 @@ class ConditionalExpression {
         this.condition = condition;
         this.yes = yes;
         this.no = no;
-        this.$kind = 14;
+        this.$kind = 14 /* ExpressionKind.Conditional */;
     }
 }
 class AccessThisExpression {
     constructor(ancestor = 0) {
         this.ancestor = ancestor;
-        this.$kind = 0;
+        this.$kind = 0 /* ExpressionKind.AccessThis */;
     }
 }
 AccessThisExpression.$this = new AccessThisExpression(0);
@@ -465,7 +492,7 @@ class AccessScopeExpression {
     constructor(name, ancestor = 0) {
         this.name = name;
         this.ancestor = ancestor;
-        this.$kind = 1;
+        this.$kind = 1 /* ExpressionKind.AccessScope */;
     }
 }
 class AccessMemberExpression {
@@ -473,7 +500,7 @@ class AccessMemberExpression {
         this.object = object;
         this.name = name;
         this.optional = optional;
-        this.$kind = 10;
+        this.$kind = 10 /* ExpressionKind.AccessMember */;
     }
 }
 class AccessKeyedExpression {
@@ -481,7 +508,7 @@ class AccessKeyedExpression {
         this.object = object;
         this.key = key;
         this.optional = optional;
-        this.$kind = 11;
+        this.$kind = 11 /* ExpressionKind.AccessKeyed */;
     }
 }
 class CallScopeExpression {
@@ -490,7 +517,7 @@ class CallScopeExpression {
         this.args = args;
         this.ancestor = ancestor;
         this.optional = optional;
-        this.$kind = 7;
+        this.$kind = 7 /* ExpressionKind.CallScope */;
     }
 }
 class CallMemberExpression {
@@ -500,7 +527,7 @@ class CallMemberExpression {
         this.args = args;
         this.optionalMember = optionalMember;
         this.optionalCall = optionalCall;
-        this.$kind = 8;
+        this.$kind = 8 /* ExpressionKind.CallMember */;
     }
 }
 class CallFunctionExpression {
@@ -508,7 +535,7 @@ class CallFunctionExpression {
         this.func = func;
         this.args = args;
         this.optional = optional;
-        this.$kind = 9;
+        this.$kind = 9 /* ExpressionKind.CallFunction */;
     }
 }
 class BinaryExpression {
@@ -516,20 +543,20 @@ class BinaryExpression {
         this.operation = operation;
         this.left = left;
         this.right = right;
-        this.$kind = 13;
+        this.$kind = 13 /* ExpressionKind.Binary */;
     }
 }
 class UnaryExpression {
     constructor(operation, expression) {
         this.operation = operation;
         this.expression = expression;
-        this.$kind = 6;
+        this.$kind = 6 /* ExpressionKind.Unary */;
     }
 }
 class PrimitiveLiteralExpression {
     constructor(value) {
         this.value = value;
-        this.$kind = 4;
+        this.$kind = 4 /* ExpressionKind.PrimitiveLiteral */;
     }
 }
 PrimitiveLiteralExpression.$undefined = new PrimitiveLiteralExpression(void 0);
@@ -540,7 +567,7 @@ PrimitiveLiteralExpression.$empty = new PrimitiveLiteralExpression('');
 class ArrayLiteralExpression {
     constructor(elements) {
         this.elements = elements;
-        this.$kind = 2;
+        this.$kind = 2 /* ExpressionKind.ArrayLiteral */;
     }
 }
 ArrayLiteralExpression.$empty = new ArrayLiteralExpression(kernel.emptyArray);
@@ -548,7 +575,7 @@ class ObjectLiteralExpression {
     constructor(keys, values) {
         this.keys = keys;
         this.values = values;
-        this.$kind = 3;
+        this.$kind = 3 /* ExpressionKind.ObjectLiteral */;
     }
 }
 ObjectLiteralExpression.$empty = new ObjectLiteralExpression(kernel.emptyArray, kernel.emptyArray);
@@ -556,7 +583,7 @@ class TemplateExpression {
     constructor(cooked, expressions = kernel.emptyArray) {
         this.cooked = cooked;
         this.expressions = expressions;
-        this.$kind = 5;
+        this.$kind = 5 /* ExpressionKind.Template */;
     }
 }
 TemplateExpression.$empty = new TemplateExpression(['']);
@@ -565,46 +592,57 @@ class TaggedTemplateExpression {
         this.cooked = cooked;
         this.func = func;
         this.expressions = expressions;
-        this.$kind = 12;
+        this.$kind = 12 /* ExpressionKind.TaggedTemplate */;
         cooked.raw = raw;
     }
 }
 class ArrayBindingPattern {
+    // We'll either have elements, or keys+values, but never all 3
     constructor(elements) {
         this.elements = elements;
-        this.$kind = 19;
+        this.$kind = 19 /* ExpressionKind.ArrayBindingPattern */;
     }
 }
 class ObjectBindingPattern {
+    // We'll either have elements, or keys+values, but never all 3
     constructor(keys, values) {
         this.keys = keys;
         this.values = values;
-        this.$kind = 20;
+        this.$kind = 20 /* ExpressionKind.ObjectBindingPattern */;
     }
 }
 class BindingIdentifier {
     constructor(name) {
         this.name = name;
-        this.$kind = 21;
+        this.$kind = 21 /* ExpressionKind.BindingIdentifier */;
     }
 }
+// https://tc39.github.io/ecma262/#sec-iteration-statements
+// https://tc39.github.io/ecma262/#sec-for-in-and-for-of-statements
 class ForOfStatement {
     constructor(declaration, iterable, semiIdx) {
         this.declaration = declaration;
         this.iterable = iterable;
         this.semiIdx = semiIdx;
-        this.$kind = 22;
+        this.$kind = 22 /* ExpressionKind.ForOfStatement */;
     }
 }
+/*
+* Note: this implementation is far simpler than the one in vCurrent and might be missing important stuff (not sure yet)
+* so while this implementation is identical to Template and we could reuse that one, we don't want to lock outselves in to potentially the wrong abstraction
+* but this class might be a candidate for removal if it turns out it does provide all we need
+*/
 class Interpolation {
     constructor(parts, expressions = kernel.emptyArray) {
         this.parts = parts;
         this.expressions = expressions;
-        this.$kind = 23;
+        this.$kind = 23 /* ExpressionKind.Interpolation */;
         this.isMulti = expressions.length > 1;
         this.firstExpression = expressions[0];
     }
 }
+// spec: https://tc39.es/ecma262/#sec-destructuring-assignment
+/** This is an internal API */
 class DestructuringAssignmentExpression {
     constructor($kind, list, source, initializer) {
         this.$kind = $kind;
@@ -613,19 +651,21 @@ class DestructuringAssignmentExpression {
         this.initializer = initializer;
     }
 }
+/** This is an internal API */
 class DestructuringAssignmentSingleExpression {
     constructor(target, source, initializer) {
         this.target = target;
         this.source = source;
         this.initializer = initializer;
-        this.$kind = 26;
+        this.$kind = 26 /* ExpressionKind.DestructuringAssignmentLeaf */;
     }
 }
+/** This is an internal API */
 class DestructuringAssignmentRestExpression {
     constructor(target, indexOrProperties) {
         this.target = target;
         this.indexOrProperties = indexOrProperties;
-        this.$kind = 26;
+        this.$kind = 26 /* ExpressionKind.DestructuringAssignmentLeaf */;
     }
 }
 class ArrowFunction {
@@ -633,10 +673,13 @@ class ArrowFunction {
         this.args = args;
         this.body = body;
         this.rest = rest;
-        this.$kind = 16;
+        this.$kind = 16 /* ExpressionKind.ArrowFunction */;
     }
 }
 
+/**
+ * A class for creating context in synthetic scope to keep the number of classes of context in scope small
+ */
 class BindingContext {
     constructor(key, value) {
         if (key !== void 0) {
@@ -658,6 +701,7 @@ class Scope {
         let overrideContext = scope.overrideContext;
         let currentScope = scope;
         if (ancestor > 0) {
+            // jump up the required number of ancestor contexts (eg $parent.$parent requires two jumps)
             while (ancestor > 0) {
                 ancestor--;
                 currentScope = currentScope.parent;
@@ -666,8 +710,18 @@ class Scope {
                 }
             }
             overrideContext = currentScope.overrideContext;
+            // Here we are giving benefit of doubt considering the dev has used one or more `$parent` token, and thus should know what s/he is targeting.
             return name in overrideContext ? overrideContext : currentScope.bindingContext;
         }
+        // walk the scope hierarchy until
+        // the first scope that has the property in its contexts
+        // or
+        // the closet boundary scope
+        // -------------------------
+        // this behavior is different with v1
+        // where it would fallback to the immediate scope instead of the root one
+        // TODO: maybe avoid immediate loop and return earlier
+        // -------------------------
         while (currentScope != null
             && !currentScope.isBoundary
             && !(name in currentScope.overrideContext)
@@ -704,10 +758,12 @@ const nullContextError = () => {
 class OverrideContext {
 }
 
+/* eslint-disable no-fallthrough */
 const getContext = Scope.getContext;
+// eslint-disable-next-line max-lines-per-function
 function astEvaluate(ast, s, e, c) {
     switch (ast.$kind) {
-        case 0: {
+        case 0 /* ExpressionKind.AccessThis */: {
             let oc = s.overrideContext;
             let currentScope = s;
             let i = ast.ancestor;
@@ -717,7 +773,7 @@ function astEvaluate(ast, s, e, c) {
             }
             return i < 1 && currentScope ? currentScope.bindingContext : void 0;
         }
-        case 1: {
+        case 1 /* ExpressionKind.AccessScope */: {
             const obj = getContext(s, ast.name, ast.ancestor);
             if (c !== null) {
                 c.observe(obj, ast.name);
@@ -727,6 +783,7 @@ function astEvaluate(ast, s, e, c) {
                 throw createError(`AUR0105: Unable to find $host context. Did you forget [au-slot] attribute?`);
             }
             if (e?.strict) {
+                // return evaluatedValue;
                 return e?.boundFn && isFunction(evaluatedValue)
                     ? evaluatedValue.bind(obj)
                     : evaluatedValue;
@@ -737,18 +794,18 @@ function astEvaluate(ast, s, e, c) {
                     ? evaluatedValue.bind(obj)
                     : evaluatedValue;
         }
-        case 2:
+        case 2 /* ExpressionKind.ArrayLiteral */:
             return ast.elements.map(expr => astEvaluate(expr, s, e, c));
-        case 3: {
+        case 3 /* ExpressionKind.ObjectLiteral */: {
             const instance = {};
             for (let i = 0; i < ast.keys.length; ++i) {
                 instance[ast.keys[i]] = astEvaluate(ast.values[i], s, e, c);
             }
             return instance;
         }
-        case 4:
+        case 4 /* ExpressionKind.PrimitiveLiteral */:
             return ast.value;
-        case 5: {
+        case 5 /* ExpressionKind.Template */: {
             let result = ast.cooked[0];
             for (let i = 0; i < ast.expressions.length; ++i) {
                 result += String(astEvaluate(ast.expressions[i], s, e, c));
@@ -756,7 +813,7 @@ function astEvaluate(ast, s, e, c) {
             }
             return result;
         }
-        case 6:
+        case 6 /* ExpressionKind.Unary */:
             switch (ast.operation) {
                 case 'void':
                     return void astEvaluate(ast.expression, s, e, c);
@@ -771,29 +828,34 @@ function astEvaluate(ast, s, e, c) {
                 default:
                     throw createError(`AUR0109: Unknown unary operator: '${ast.operation}'`);
             }
-        case 7: {
+        case 7 /* ExpressionKind.CallScope */: {
             const args = ast.args.map(a => astEvaluate(a, s, e, c));
             const context = getContext(s, ast.name, ast.ancestor);
+            // ideally, should observe property represents by ast.name as well
+            // because it could be changed
+            // todo: did it ever surprise anyone?
             const func = getFunction(e?.strictFnCall, context, ast.name);
             if (func) {
                 return func.apply(context, args);
             }
             return void 0;
         }
-        case 8: {
+        case 8 /* ExpressionKind.CallMember */: {
             const instance = astEvaluate(ast.object, s, e, c);
             const args = ast.args.map(a => astEvaluate(a, s, e, c));
             const func = getFunction(e?.strictFnCall, instance, ast.name);
             let ret;
             if (func) {
                 ret = func.apply(instance, args);
+                // todo(doc): investigate & document in engineering doc the difference
+                //            between observing before/after func.apply
                 if (isArray(instance) && autoObserveArrayMethods.includes(ast.name)) {
                     c?.observeCollection(instance);
                 }
             }
             return ret;
         }
-        case 9: {
+        case 9 /* ExpressionKind.CallFunction */: {
             const func = astEvaluate(ast.func, s, e, c);
             if (isFunction(func)) {
                 return func(...ast.args.map(a => astEvaluate(a, s, e, c)));
@@ -803,7 +865,7 @@ function astEvaluate(ast, s, e, c) {
             }
             throw createError(`AUR0107: Expression is not a function.`);
         }
-        case 16: {
+        case 16 /* ExpressionKind.ArrowFunction */: {
             const func = (...args) => {
                 const params = ast.args;
                 const rest = ast.rest;
@@ -822,7 +884,7 @@ function astEvaluate(ast, s, e, c) {
             };
             return func;
         }
-        case 10: {
+        case 10 /* ExpressionKind.AccessMember */: {
             const instance = astEvaluate(ast.object, s, e, c);
             let ret;
             if (e?.strict) {
@@ -841,6 +903,7 @@ function astEvaluate(ast, s, e, c) {
             if (c !== null && isObject(instance)) {
                 c.observe(instance, ast.name);
             }
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (instance) {
                 ret = instance[ast.name];
                 if (e?.boundFn && isFunction(ret)) {
@@ -850,7 +913,7 @@ function astEvaluate(ast, s, e, c) {
             }
             return '';
         }
-        case 11: {
+        case 11 /* ExpressionKind.AccessKeyed */: {
             const instance = astEvaluate(ast.object, s, e, c);
             const key = astEvaluate(ast.key, s, e, c);
             if (isObject(instance)) {
@@ -863,7 +926,7 @@ function astEvaluate(ast, s, e, c) {
                 ? void 0
                 : instance[key];
         }
-        case 12: {
+        case 12 /* ExpressionKind.TaggedTemplate */: {
             const results = ast.expressions.map(expr => astEvaluate(expr, s, e, c));
             const func = astEvaluate(ast.func, s, e, c);
             if (!isFunction(func)) {
@@ -871,21 +934,25 @@ function astEvaluate(ast, s, e, c) {
             }
             return func(ast.cooked, ...results);
         }
-        case 13: {
+        case 13 /* ExpressionKind.Binary */: {
             const left = ast.left;
             const right = ast.right;
             switch (ast.operation) {
                 case '&&':
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     return astEvaluate(left, s, e, c) && astEvaluate(right, s, e, c);
                 case '||':
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     return astEvaluate(left, s, e, c) || astEvaluate(right, s, e, c);
                 case '??':
                     return astEvaluate(left, s, e, c) ?? astEvaluate(right, s, e, c);
                 case '==':
+                    // eslint-disable-next-line eqeqeq
                     return astEvaluate(left, s, e, c) == astEvaluate(right, s, e, c);
                 case '===':
                     return astEvaluate(left, s, e, c) === astEvaluate(right, s, e, c);
                 case '!=':
+                    // eslint-disable-next-line eqeqeq
                     return astEvaluate(left, s, e, c) != astEvaluate(right, s, e, c);
                 case '!==':
                     return astEvaluate(left, s, e, c) !== astEvaluate(right, s, e, c);
@@ -903,12 +970,17 @@ function astEvaluate(ast, s, e, c) {
                     }
                     return false;
                 }
+                // note: autoConvertAdd (and the null check) is removed because the default spec behavior is already largely similar
+                // and where it isn't, you kind of want it to behave like the spec anyway (e.g. return NaN when adding a number to undefined)
+                // ast makes bugs in user code easier to track down for end users
+                // also, skipping these checks and leaving it to the runtime is a nice little perf boost and simplifies our code
                 case '+': {
                     const $left = astEvaluate(left, s, e, c);
                     const $right = astEvaluate(right, s, e, c);
                     if (e?.strict) {
                         return $left + $right;
                     }
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!$left || !$right) {
                         if (isNumberOrBigInt($left) || isNumberOrBigInt($right)) {
                             return ($left || 0) + ($right || 0);
@@ -939,11 +1011,12 @@ function astEvaluate(ast, s, e, c) {
                     throw createError(`AUR0108: Unknown binary operator: '${ast.operation}'`);
             }
         }
-        case 14:
+        case 14 /* ExpressionKind.Conditional */:
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             return astEvaluate(ast.condition, s, e, c) ? astEvaluate(ast.yes, s, e, c) : astEvaluate(ast.no, s, e, c);
-        case 15:
+        case 15 /* ExpressionKind.Assign */:
             return astAssign(ast.target, s, e, astEvaluate(ast.value, s, e, c));
-        case 17: {
+        case 17 /* ExpressionKind.ValueConverter */: {
             const vc = e?.getConverter?.(ast.name);
             if (vc == null) {
                 throw createError(`AUR0103: ValueConverter named '${ast.name}' could not be found. Did you forget to register it as a dependency?`);
@@ -953,13 +1026,13 @@ function astEvaluate(ast, s, e, c) {
             }
             return astEvaluate(ast.expression, s, e, c);
         }
-        case 18:
+        case 18 /* ExpressionKind.BindingBehavior */:
             return astEvaluate(ast.expression, s, e, c);
-        case 21:
+        case 21 /* ExpressionKind.BindingIdentifier */:
             return ast.name;
-        case 22:
+        case 22 /* ExpressionKind.ForOfStatement */:
             return astEvaluate(ast.iterable, s, e, c);
-        case 23:
+        case 23 /* ExpressionKind.Interpolation */:
             if (ast.isMulti) {
                 let result = ast.parts[0];
                 let i = 0;
@@ -972,30 +1045,46 @@ function astEvaluate(ast, s, e, c) {
             else {
                 return `${ast.parts[0]}${astEvaluate(ast.firstExpression, s, e, c)}${ast.parts[1]}`;
             }
-        case 26:
+        case 26 /* ExpressionKind.DestructuringAssignmentLeaf */:
             return astEvaluate(ast.target, s, e, c);
-        case 24: {
+        case 24 /* ExpressionKind.ArrayDestructuring */: {
             return ast.list.map(x => astEvaluate(x, s, e, c));
         }
-        case 19:
-        case 20:
-        case 25:
+        // TODO: this should come after batch
+        // as a destructuring expression like [x, y] = value
+        //
+        // should only trigger change only once:
+        // batch(() => {
+        //   object.x = value[0]
+        //   object.y = value[1]
+        // })
+        //
+        // instead of twice:
+        // object.x = value[0]
+        // object.y = value[1]
+        case 19 /* ExpressionKind.ArrayBindingPattern */:
+        // TODO
+        // similar to array binding ast, this should only come after batch
+        // for a single notification per destructing,
+        // regardless number of property assignments on the scope binding context
+        case 20 /* ExpressionKind.ObjectBindingPattern */:
+        case 25 /* ExpressionKind.ObjectDestructuring */:
         default:
             return void 0;
-        case 28:
+        case 28 /* ExpressionKind.Custom */:
             return ast.evaluate(s, e, c);
     }
 }
 function astAssign(ast, s, e, val) {
     switch (ast.$kind) {
-        case 1: {
+        case 1 /* ExpressionKind.AccessScope */: {
             if (ast.name === '$host') {
                 throw createError(`AUR0106: Invalid assignment. $host is a reserved keyword.`);
             }
             const obj = getContext(s, ast.name, ast.ancestor);
             return obj[ast.name] = val;
         }
-        case 10: {
+        case 10 /* ExpressionKind.AccessMember */: {
             const obj = astEvaluate(ast.object, s, e, null);
             if (isObject(obj)) {
                 if (ast.name === 'length' && isArray(obj) && !isNaN(val)) {
@@ -1010,7 +1099,7 @@ function astAssign(ast, s, e, val) {
             }
             return val;
         }
-        case 11: {
+        case 11 /* ExpressionKind.AccessKeyed */: {
             const instance = astEvaluate(ast.object, s, e, null);
             const key = astEvaluate(ast.key, s, e, null);
             if (isArray(instance)) {
@@ -1025,10 +1114,10 @@ function astAssign(ast, s, e, val) {
             }
             return instance[key] = val;
         }
-        case 15:
+        case 15 /* ExpressionKind.Assign */:
             astAssign(ast.value, s, e, val);
             return astAssign(ast.target, s, e, val);
-        case 17: {
+        case 17 /* ExpressionKind.ValueConverter */: {
             const vc = e?.getConverter?.(ast.name);
             if (vc == null) {
                 throw converterNotFoundError(ast.name);
@@ -1038,10 +1127,10 @@ function astAssign(ast, s, e, val) {
             }
             return astAssign(ast.expression, s, e, val);
         }
-        case 18:
+        case 18 /* ExpressionKind.BindingBehavior */:
             return astAssign(ast.expression, s, e, val);
-        case 24:
-        case 25: {
+        case 24 /* ExpressionKind.ArrayDestructuring */:
+        case 25 /* ExpressionKind.ObjectDestructuring */: {
             const list = ast.list;
             const len = list.length;
             let i;
@@ -1049,11 +1138,11 @@ function astAssign(ast, s, e, val) {
             for (i = 0; i < len; i++) {
                 item = list[i];
                 switch (item.$kind) {
-                    case 26:
+                    case 26 /* ExpressionKind.DestructuringAssignmentLeaf */:
                         astAssign(item, s, e, val);
                         break;
-                    case 24:
-                    case 25: {
+                    case 24 /* ExpressionKind.ArrayDestructuring */:
+                    case 25 /* ExpressionKind.ObjectDestructuring */: {
                         if (typeof val !== 'object' || val === null) {
                             {
                                 throw createError(`AUR0112: Cannot use non-object value for destructuring assignment.`);
@@ -1070,7 +1159,7 @@ function astAssign(ast, s, e, val) {
             }
             break;
         }
-        case 26: {
+        case 26 /* ExpressionKind.DestructuringAssignmentLeaf */: {
             if (ast instanceof DestructuringAssignmentSingleExpression) {
                 if (val == null) {
                     return;
@@ -1113,13 +1202,14 @@ function astAssign(ast, s, e, val) {
                             acc[k] = v;
                         }
                         return acc;
+                        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     }, {});
                 }
                 astAssign(ast.target, s, e, restValue);
             }
             break;
         }
-        case 28:
+        case 28 /* ExpressionKind.Custom */:
             return ast.assign(s, e, val);
         default:
             return void 0;
@@ -1127,7 +1217,7 @@ function astAssign(ast, s, e, val) {
 }
 function astBind(ast, s, b) {
     switch (ast.$kind) {
-        case 18: {
+        case 18 /* ExpressionKind.BindingBehavior */: {
             const name = ast.name;
             const key = ast.key;
             const behavior = b.getBehavior?.(name);
@@ -1144,36 +1234,41 @@ function astBind(ast, s, b) {
             astBind(ast.expression, s, b);
             return;
         }
-        case 17: {
+        case 17 /* ExpressionKind.ValueConverter */: {
             const name = ast.name;
             const vc = b.getConverter?.(name);
             if (vc == null) {
                 throw converterNotFoundError(name);
             }
+            // note: the cast is expected. To connect, it just needs to be a IConnectable
+            // though to work with signal, it needs to have `handleChange`
+            // so having `handleChange` as a guard in the connectable as a safe measure is needed
+            // to make sure signaler works
             const signals = vc.signals;
             if (signals != null) {
                 const signaler = b.getSignaler?.();
                 const ii = signals.length;
                 let i = 0;
                 for (; i < ii; ++i) {
+                    // todo: signaler api
                     signaler?.addSignalListener(signals[i], b);
                 }
             }
             astBind(ast.expression, s, b);
             return;
         }
-        case 22: {
+        case 22 /* ExpressionKind.ForOfStatement */: {
             astBind(ast.iterable, s, b);
             break;
         }
-        case 28: {
+        case 28 /* ExpressionKind.Custom */: {
             ast.bind?.(s, b);
         }
     }
 }
 function astUnbind(ast, s, b) {
     switch (ast.$kind) {
-        case 18: {
+        case 18 /* ExpressionKind.BindingBehavior */: {
             const key = ast.key;
             const $b = b;
             if ($b[key] !== void 0) {
@@ -1183,7 +1278,7 @@ function astUnbind(ast, s, b) {
             astUnbind(ast.expression, s, b);
             break;
         }
-        case 17: {
+        case 17 /* ExpressionKind.ValueConverter */: {
             const vc = b.getConverter?.(ast.name);
             if (vc?.signals === void 0) {
                 return;
@@ -1191,16 +1286,18 @@ function astUnbind(ast, s, b) {
             const signaler = b.getSignaler?.();
             let i = 0;
             for (; i < vc.signals.length; ++i) {
+                // the cast is correct, as the value converter expression would only add
+                // a IConnectable that also implements `ISubscriber` interface to the signaler
                 signaler?.removeSignalListener(vc.signals[i], b);
             }
             astUnbind(ast.expression, s, b);
             break;
         }
-        case 22: {
+        case 22 /* ExpressionKind.ForOfStatement */: {
             astUnbind(ast.iterable, s, b);
             break;
         }
-        case 28: {
+        case 28 /* ExpressionKind.Custom */: {
             ast.unbind?.(s, b);
         }
     }
@@ -1222,6 +1319,11 @@ const getFunction = (mustEvaluate, obj, name) => {
     }
     throw createError(`AUR0111: Expected '${name}' to be a function`);
 };
+/**
+ * Determines if the value passed is a number or bigint for parsing purposes
+ *
+ * @param value - Value to evaluate
+ */
 const isNumberOrBigInt = (value) => {
     switch (typeof value) {
         case 'number':
@@ -1231,6 +1333,11 @@ const isNumberOrBigInt = (value) => {
             return false;
     }
 };
+/**
+ * Determines if the value passed is a string or Date for parsing purposes
+ *
+ * @param value - Value to evaluate
+ */
 const isStringOrDate = (value) => {
     switch (typeof value) {
         case 'string':
@@ -1242,8 +1349,18 @@ const isStringOrDate = (value) => {
     }
 };
 const autoObserveArrayMethods = 'at map filter includes indexOf lastIndexOf findIndex find flat flatMap join reduce reduceRight slice every some sort'.split(' ');
+// sort,      // bad supported, self mutation + unclear dependency
+// push,      // not supported, self mutation + unclear dependency
+// pop,       // not supported, self mutation + unclear dependency
+// shift,     // not supported, self mutation + unclear dependency
+// splice,    // not supported, self mutation + unclear dependency
+// unshift,   // not supported, self mutation + unclear dependency
+// reverse,   // not supported, self mutation + unclear dependency
+// keys,    // not meaningful in template
+// values,  // not meaningful in template
+// entries, // not meaningful in template
 
-const ICoercionConfiguration = kernel.DI.createInterface('ICoercionConfiguration');
+const ICoercionConfiguration = /*@__PURE__*/ kernel.DI.createInterface('ICoercionConfiguration');
 exports.CollectionKind = void 0;
 (function (CollectionKind) {
     CollectionKind[CollectionKind["indexed"] = 8] = "indexed";
@@ -1257,7 +1374,18 @@ exports.AccessorType = void 0;
     AccessorType[AccessorType["None"] = 0] = "None";
     AccessorType[AccessorType["Observer"] = 1] = "Observer";
     AccessorType[AccessorType["Node"] = 2] = "Node";
+    // misc characteristic of accessors/observers when update
+    //
+    // by default, everything is synchronous
+    // except changes that are supposed to cause reflow/heavy computation
+    // an observer can use this flag to signal binding that don't carelessly tell it to update
+    // queue it instead
+    // todo: https://gist.github.com/paulirish/5d52fb081b3570c81e3a
+    // todo: https://csstriggers.com/
     AccessorType[AccessorType["Layout"] = 4] = "Layout";
+    // by default, everything is an object
+    // eg: a property is accessed on an object
+    // unless explicitly not so
     AccessorType[AccessorType["Primtive"] = 8] = "Primtive";
     AccessorType[AccessorType["Array"] = 18] = "Array";
     AccessorType[AccessorType["Set"] = 34] = "Set";
@@ -1315,6 +1443,7 @@ function isIndexMap(value) {
 }
 
 let currBatch = new Map();
+// eslint-disable-next-line import/no-mutable-exports
 let batching = false;
 function batch(fn) {
     const prevBatch = currBatch;
@@ -1391,13 +1520,186 @@ function subscriberCollection(target) {
 }
 function subscriberCollectionDeco(target) {
     const proto = target.prototype;
+    // not configurable, as in devtool, the getter could be invoked on the prototype,
+    // and become permanently broken
     def(proto, 'subs', { get: getSubscriberRecord });
     ensureProto(proto, 'subscribe', addSubscriber);
     ensureProto(proto, 'unsubscribe', removeSubscriber);
 }
+/* eslint-enable @typescript-eslint/ban-types */
+// export class SubscriberRecord<T extends IAnySubscriber> implements ISubscriberRecord<T> {
+//   /**
+//    * subscriber flags: bits indicating the existence status of the subscribers of this record
+//    */
+//   private sf: SubFlags = SubFlags.None;
+//   private s0?: T;
+//   private s1?: T;
+//   private s2?: T;
+//   /**
+//    * subscriber rest: When there's more than 3 subscribers, use an array to store the subscriber references
+//    */
+//   private sr?: T[];
+//   public count: number = 0;
+//   public add(subscriber: T): boolean {
+//     if (this.has(subscriber)) {
+//       return false;
+//     }
+//     const subscriberFlags = this.sf;
+//     if ((subscriberFlags & SubFlags.Sub0) === 0) {
+//       this.s0 = subscriber;
+//       this.sf |= SubFlags.Sub0;
+//     } else if ((subscriberFlags & SubFlags.Sub1) === 0) {
+//       this.s1 = subscriber;
+//       this.sf |= SubFlags.Sub1;
+//     } else if ((subscriberFlags & SubFlags.Sub2) === 0) {
+//       this.s2 = subscriber;
+//       this.sf |= SubFlags.Sub2;
+//     } else if ((subscriberFlags & SubFlags.SubRest) === 0) {
+//       this.sr = [subscriber];
+//       this.sf |= SubFlags.SubRest;
+//     } else {
+//       this.sr!.push(subscriber); // Non-null is implied by else branch of (subscriberFlags & SF.SubscribersRest) === 0
+//     }
+//     ++this.count;
+//     return true;
+//   }
+//   public has(subscriber: T): boolean {
+//     // Flags here is just a perf tweak
+//     // Compared to not using flags, it's a moderate speed-up when this collection does not have the subscriber;
+//     // and minor slow-down when it does, and the former is more common than the latter.
+//     const subscriberFlags = this.sf;
+//     if ((subscriberFlags & SubFlags.Sub0) > 0 && this.s0 === subscriber) {
+//       return true;
+//     }
+//     if ((subscriberFlags & SubFlags.Sub1) > 0 && this.s1 === subscriber) {
+//       return true;
+//     }
+//     if ((subscriberFlags & SubFlags.Sub2) > 0 && this.s2 === subscriber) {
+//       return true;
+//     }
+//     if ((subscriberFlags & SubFlags.SubRest) > 0) {
+//       const subscribers = this.sr!; // Non-null is implied by (subscriberFlags & SF.SubscribersRest) > 0
+//       const ii = subscribers.length;
+//       let i = 0;
+//       for (; i < ii; ++i) {
+//         if (subscribers[i] === subscriber) {
+//           return true;
+//         }
+//       }
+//     }
+//     return false;
+//   }
+//   public any(): boolean {
+//     return this.sf !== SubFlags.None;
+//   }
+//   public remove(subscriber: T): boolean {
+//     const subscriberFlags = this.sf;
+//     if ((subscriberFlags & SubFlags.Sub0) > 0 && this.s0 === subscriber) {
+//       this.s0 = void 0;
+//       this.sf = (this.sf | SubFlags.Sub0) ^ SubFlags.Sub0;
+//       --this.count;
+//       return true;
+//     } else if ((subscriberFlags & SubFlags.Sub1) > 0 && this.s1 === subscriber) {
+//       this.s1 = void 0;
+//       this.sf = (this.sf | SubFlags.Sub1) ^ SubFlags.Sub1;
+//       --this.count;
+//       return true;
+//     } else if ((subscriberFlags & SubFlags.Sub2) > 0 && this.s2 === subscriber) {
+//       this.s2 = void 0;
+//       this.sf = (this.sf | SubFlags.Sub2) ^ SubFlags.Sub2;
+//       --this.count;
+//       return true;
+//     } else if ((subscriberFlags & SubFlags.SubRest) > 0) {
+//       const subscribers = this.sr!; // Non-null is implied by (subscriberFlags & SF.SubscribersRest) > 0
+//       const ii = subscribers.length;
+//       let i = 0;
+//       for (; i < ii; ++i) {
+//         if (subscribers[i] === subscriber) {
+//           subscribers.splice(i, 1);
+//           if (ii === 1) {
+//             this.sf = (this.sf | SubFlags.SubRest) ^ SubFlags.SubRest;
+//           }
+//           --this.count;
+//           return true;
+//         }
+//       }
+//     }
+//     return false;
+//   }
+//   public notify(val: unknown, oldVal: unknown): void {
+//     if (batching) {
+//       addValueBatch(this, val, oldVal);
+//       return;
+//     }
+//     /**
+//      * Note: change handlers may have the side-effect of adding/removing subscribers to this collection during this
+//      * callSubscribers invocation, so we're caching them all before invoking any.
+//      * Subscribers added during this invocation are not invoked (and they shouldn't be).
+//      * Subscribers removed during this invocation will still be invoked (and they also shouldn't be,
+//      * however this is accounted for via $isBound and similar flags on the subscriber objects)
+//      */
+//     const sub0 = this.s0 as ISubscriber;
+//     const sub1 = this.s1 as ISubscriber;
+//     const sub2 = this.s2 as ISubscriber;
+//     let subs = this.sr as ISubscriber[];
+//     if (subs !== void 0) {
+//       subs = subs.slice();
+//     }
+//     if (sub0 !== void 0) {
+//       sub0.handleChange(val, oldVal);
+//     }
+//     if (sub1 !== void 0) {
+//       sub1.handleChange(val, oldVal);
+//     }
+//     if (sub2 !== void 0) {
+//       sub2.handleChange(val, oldVal);
+//     }
+//     if (subs !== void 0) {
+//       const ii = subs.length;
+//       let sub: ISubscriber | undefined;
+//       let i = 0;
+//       for (; i < ii; ++i) {
+//         sub = subs[i];
+//         if (sub !== void 0) {
+//           sub.handleChange(val, oldVal);
+//         }
+//       }
+//     }
+//   }
+//   public notifyCollection(collection: Collection, indexMap: IndexMap): void {
+//     const sub0 = this.s0 as ICollectionSubscriber;
+//     const sub1 = this.s1 as ICollectionSubscriber;
+//     const sub2 = this.s2 as ICollectionSubscriber;
+//     let subs = this.sr as ICollectionSubscriber[];
+//     if (subs !== void 0) {
+//       subs = subs.slice();
+//     }
+//     if (sub0 !== void 0) {
+//       sub0.handleCollectionChange(collection, indexMap);
+//     }
+//     if (sub1 !== void 0) {
+//       sub1.handleCollectionChange(collection, indexMap);
+//     }
+//     if (sub2 !== void 0) {
+//       sub2.handleCollectionChange(collection, indexMap);
+//     }
+//     if (subs !== void 0) {
+//       const ii = subs.length;
+//       let sub: ICollectionSubscriber | undefined;
+//       let i = 0;
+//       for (; i < ii; ++i) {
+//         sub = subs[i];
+//         if (sub !== void 0) {
+//           sub.handleCollectionChange(collection, indexMap);
+//         }
+//       }
+//     }
+//   }
+// }
 class SubscriberRecord {
     constructor() {
         this.count = 0;
+        /** @internal */
         this._subs = [];
     }
     add(subscriber) {
@@ -1422,6 +1724,13 @@ class SubscriberRecord {
             addValueBatch(this, val, oldVal);
             return;
         }
+        /**
+         * Note: change handlers may have the side-effect of adding/removing subscribers to this collection during this
+         * callSubscribers invocation, so we're caching them all before invoking any.
+         * Subscribers added during this invocation are not invoked (and they shouldn't be).
+         * Subscribers removed during this invocation will still be invoked (and they also shouldn't be,
+         * however this is accounted for via $isBound and similar flags on the subscriber objects)
+         */
         const _subs = this._subs.slice(0);
         const len = _subs.length;
         let i = 0;
@@ -1449,23 +1758,41 @@ function addSubscriber(subscriber) {
 function removeSubscriber(subscriber) {
     return this.subs.remove(subscriber);
 }
+// /**
+//  * Subscriber flags to indicate subcription on a record
+//  */
+// const enum SubFlags {
+//   None      = 0,
+//   Sub0      = 0b0001,
+//   Sub1      = 0b0010,
+//   Sub2      = 0b0100,
+//   SubRest   = 0b1000,
+//   Any       = 0b1111,
+// }
 
 class CollectionLengthObserver {
     constructor(owner) {
         this.owner = owner;
-        this.type = 18;
+        this.type = 18 /* AccessorType.Array */;
         this._value = (this._obj = owner.collection).length;
     }
     getValue() {
         return this._obj.length;
     }
     setValue(newValue) {
+        // if in the template, length is two-way bound directly
+        // then there's a chance that the new value is invalid
+        // add a guard so that we don't accidentally broadcast invalid values
         if (newValue !== this._value) {
             if (!Number.isNaN(newValue)) {
                 this._obj.splice(newValue);
                 this._value = this._obj.length;
+                // todo: maybe use splice so that it'll notify everything properly
+                // this._obj.length = newValue;
+                // this.subs.notify(newValue, currentValue);
             }
             else {
+                // eslint-disable-next-line no-console
                 console.warn(`Invalid value "${newValue}" for array length`);
             }
         }
@@ -1482,7 +1809,7 @@ class CollectionSizeObserver {
     constructor(owner) {
         this.owner = owner;
         this._value = (this._obj = owner.collection).size;
-        this.type = isMap(this._obj) ? 66 : 34;
+        this.type = isMap(this._obj) ? 66 /* AccessorType.Map */ : 34 /* AccessorType.Set */;
     }
     getValue() {
         return this._obj.size;
@@ -1517,9 +1844,11 @@ function unsubscribe(subscriber) {
 implementLengthObserver(CollectionLengthObserver);
 implementLengthObserver(CollectionSizeObserver);
 
+// multiple applications of Aurelia wouldn't have different observers for the same Array object
 const lookupMetadataKey$2 = Symbol.for('__au_arr_obs__');
 const observerLookup$2 = (Array[lookupMetadataKey$2]
     ?? defineHiddenProp(Array, lookupMetadataKey$2, new WeakMap()));
+// https://tc39.github.io/ecma262/#sec-sortcompare
 function sortCompare(x, y) {
     if (x === y) {
         return 0;
@@ -1572,6 +1901,7 @@ function quickSort(arr, indexMap, from, to, compareFn) {
     let vtmp, itmp;
     let vpivot, ipivot, lowEnd, highStart;
     let velement, ielement, order, vtopElement;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         if (to - from <= 10) {
             insertionSort(arr, indexMap, from, to, compareFn);
@@ -1641,6 +1971,7 @@ function quickSort(arr, indexMap, from, to, compareFn) {
             else if (order > 0) {
                 do {
                     highStart--;
+                    // eslint-disable-next-line eqeqeq
                     if (highStart == i) {
                         break partition;
                     }
@@ -1672,6 +2003,7 @@ function quickSort(arr, indexMap, from, to, compareFn) {
         }
     }
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const proto$2 = Array.prototype;
 const $push = proto$2.push;
 const $unshift = proto$2.unshift;
@@ -1683,6 +2015,7 @@ const $sort = proto$2.sort;
 const native$2 = { push: $push, unshift: $unshift, pop: $pop, shift: $shift, splice: $splice, reverse: $reverse, sort: $sort };
 const methods$2 = ['push', 'unshift', 'pop', 'shift', 'splice', 'reverse', 'sort'];
 const observe$3 = {
+    // https://tc39.github.io/ecma262/#sec-array.prototype.push
     push: function (...args) {
         const o = observerLookup$2.get(this);
         if (o === void 0) {
@@ -1703,6 +2036,7 @@ const observe$3 = {
         o.notify();
         return this.length;
     },
+    // https://tc39.github.io/ecma262/#sec-array.prototype.unshift
     unshift: function (...args) {
         const o = observerLookup$2.get(this);
         if (o === void 0) {
@@ -1719,6 +2053,7 @@ const observe$3 = {
         o.notify();
         return len;
     },
+    // https://tc39.github.io/ecma262/#sec-array.prototype.pop
     pop: function () {
         const o = observerLookup$2.get(this);
         if (o === void 0) {
@@ -1726,6 +2061,7 @@ const observe$3 = {
         }
         const indexMap = o.indexMap;
         const element = $pop.call(this);
+        // only mark indices as deleted if they actually existed in the original array
         const index = indexMap.length - 1;
         if (indexMap[index] > -1) {
             indexMap.deletedIndices.push(indexMap[index]);
@@ -1735,6 +2071,7 @@ const observe$3 = {
         o.notify();
         return element;
     },
+    // https://tc39.github.io/ecma262/#sec-array.prototype.shift
     shift: function () {
         const o = observerLookup$2.get(this);
         if (o === void 0) {
@@ -1742,6 +2079,7 @@ const observe$3 = {
         }
         const indexMap = o.indexMap;
         const element = $shift.call(this);
+        // only mark indices as deleted if they actually existed in the original array
         if (indexMap[0] > -1) {
             indexMap.deletedIndices.push(indexMap[0]);
             indexMap.deletedItems.push(element);
@@ -1750,6 +2088,7 @@ const observe$3 = {
         o.notify();
         return element;
     },
+    // https://tc39.github.io/ecma262/#sec-array.prototype.splice
     splice: function (...args) {
         const start = args[0];
         const deleteCount = args[1];
@@ -1767,6 +2106,7 @@ const observe$3 = {
         if (actualDeleteCount > 0) {
             const to = i + actualDeleteCount;
             while (i < to) {
+                // only mark indices as deleted if they actually existed in the original array
                 if (indexMap[i] > -1) {
                     indexMap.deletedIndices.push(indexMap[i]);
                     indexMap.deletedItems.push(this[i]);
@@ -1787,11 +2127,13 @@ const observe$3 = {
             $splice.apply(indexMap, args);
         }
         const deleted = $splice.apply(this, args);
+        // only notify when there's deletion, or addition
         if (actualDeleteCount > 0 || i > 0) {
             o.notify();
         }
         return deleted;
     },
+    // https://tc39.github.io/ecma262/#sec-array.prototype.reverse
     reverse: function () {
         const o = observerLookup$2.get(this);
         if (o === void 0) {
@@ -1816,6 +2158,8 @@ const observe$3 = {
         o.notify();
         return this;
     },
+    // https://tc39.github.io/ecma262/#sec-array.prototype.sort
+    // https://github.com/v8/v8/blob/master/src/js/array.js
     sort: function (compareFn) {
         const o = observerLookup$2.get(this);
         if (o === void 0) {
@@ -1834,10 +2178,13 @@ const observe$3 = {
             }
             i++;
         }
-        if (compareFn === void 0 || !isFunction(compareFn)) {
+        if (compareFn === void 0 || !isFunction(compareFn) /* spec says throw a TypeError, should we do that too? */) {
             compareFn = sortCompare;
         }
         quickSort(this, o.indexMap, 0, i, compareFn);
+        // todo(fred): it shouldn't notify if the sort produce a stable array:
+        //             where every item has the same index before/after
+        //             though this is inefficient we loop a few times like this
         let shouldNotify = false;
         for (i = 0, len = o.indexMap.length; len > i; ++i) {
             if (o.indexMap[i] !== i) {
@@ -1857,6 +2204,7 @@ for (const method of methods$2) {
 let enableArrayObservationCalled = false;
 const observationEnabledKey$2 = '__au_arr_on__';
 function enableArrayObservation() {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!(getOwnMetadata(observationEnabledKey$2, Array) ?? false)) {
         defineMetadata(observationEnabledKey$2, true, Array);
         for (const method of methods$2) {
@@ -1875,7 +2223,7 @@ function disableArrayObservation() {
 }
 class ArrayObserver {
     constructor(array) {
-        this.type = 18;
+        this.type = 18 /* AccessorType.Array */;
         if (!enableArrayObservationCalled) {
             enableArrayObservationCalled = true;
             enableArrayObservation();
@@ -1903,6 +2251,8 @@ class ArrayObserver {
     }
     getIndexObserver(index) {
         var _a;
+        // It's unnecessary to destroy/recreate index observer all the time,
+        // so just create once, and add/remove instead
         return (_a = this.indexObservers)[index] ?? (_a[index] = new ArrayIndexObserver(this, index));
     }
 }
@@ -1927,9 +2277,14 @@ class ArrayIndexObserver {
             indexMap.deletedIndices.push(indexMap[index]);
         }
         indexMap[index] = -2;
+        // do not need to update current value here
+        // as it will be updated inside handle collection change
         arrayObserver.collection[index] = newValue;
         arrayObserver.notify();
     }
+    /**
+     * From interface `ICollectionSubscriber`
+     */
     handleCollectionChange(_arr, indexMap) {
         const index = this.index;
         const noChange = indexMap[index] === index;
@@ -1938,6 +2293,7 @@ class ArrayIndexObserver {
         }
         const prevValue = this.value;
         const currValue = this.value = this.getValue();
+        // hmm
         if (prevValue !== currValue) {
             this.subs.notify(currValue, prevValue);
         }
@@ -1962,13 +2318,26 @@ function getArrayObserver(array) {
     }
     return observer;
 }
+/**
+ * A compare function to pass to `Array.prototype.sort` for sorting numbers.
+ * This is needed for numeric sort, since the default sorts them as strings.
+ */
 const compareNumber = (a, b) => a - b;
+/**
+ * Applies offsets to the non-negative indices in the IndexMap
+ * based on added and deleted items relative to those indices.
+ *
+ * e.g. turn `[-2, 0, 1]` into `[-2, 1, 2]`, allowing the values at the indices to be
+ * used for sorting/reordering items if needed
+ */
 function applyMutationsToIndices(indexMap) {
     let offset = 0;
     let j = 0;
     let i = 0;
     const $indexMap = cloneIndexMap(indexMap);
+    // during a batch, items could be deleted in a non-linear order with multiple splices
     if ($indexMap.deletedIndices.length > 1) {
+        // TODO: also synchronize deletedItems when we need them
         $indexMap.deletedIndices.sort(compareNumber);
     }
     const len = $indexMap.length;
@@ -1986,6 +2355,10 @@ function applyMutationsToIndices(indexMap) {
     }
     return $indexMap;
 }
+/**
+ * After `applyMutationsToIndices`, this function can be used to reorder items in a derived
+ * array (e.g.  the items in the `views` in the repeater are derived from the `items` property)
+ */
 function synchronizeIndices(items, indexMap) {
     const copy = items.slice();
     const len = indexMap.length;
@@ -2000,16 +2373,21 @@ function synchronizeIndices(items, indexMap) {
     }
 }
 
+// multiple applications of Aurelia wouldn't have different observers for the same Set object
 const lookupMetadataKey$1 = Symbol.for('__au_set_obs__');
 const observerLookup$1 = (Set[lookupMetadataKey$1]
     ?? defineHiddenProp(Set, lookupMetadataKey$1, new WeakMap()));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const proto$1 = Set.prototype;
 const $add = proto$1.add;
 const $clear$1 = proto$1.clear;
 const $delete$1 = proto$1.delete;
 const native$1 = { add: $add, clear: $clear$1, delete: $delete$1 };
 const methods$1 = ['add', 'clear', 'delete'];
+// note: we can't really do much with Set due to the internal data structure not being accessible so we're just using the native calls
+// fortunately, add/delete/clear are easy to reconstruct for the indexMap
 const observe$2 = {
+    // https://tc39.github.io/ecma262/#sec-set.prototype.add
     add: function (value) {
         const o = observerLookup$1.get(this);
         if (o === undefined) {
@@ -2026,6 +2404,7 @@ const observe$2 = {
         o.notify();
         return this;
     },
+    // https://tc39.github.io/ecma262/#sec-set.prototype.clear
     clear: function () {
         const o = observerLookup$1.get(this);
         if (o === undefined) {
@@ -2035,6 +2414,7 @@ const observe$2 = {
         if (size > 0) {
             const indexMap = o.indexMap;
             let i = 0;
+            // deepscan-disable-next-line
             for (const key of this.keys()) {
                 if (indexMap[i] > -1) {
                     indexMap.deletedIndices.push(indexMap[i]);
@@ -2048,6 +2428,7 @@ const observe$2 = {
         }
         return undefined;
     },
+    // https://tc39.github.io/ecma262/#sec-set.prototype.delete
     delete: function (value) {
         const o = observerLookup$1.get(this);
         if (o === undefined) {
@@ -2088,6 +2469,7 @@ for (const method of methods$1) {
 let enableSetObservationCalled = false;
 const observationEnabledKey$1 = '__au_set_on__';
 function enableSetObservation() {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!(getOwnMetadata(observationEnabledKey$1, Set) ?? false)) {
         defineMetadata(observationEnabledKey$1, true, Set);
         for (const method of methods$1) {
@@ -2106,7 +2488,7 @@ function disableSetObservation() {
 }
 class SetObserver {
     constructor(observedSet) {
-        this.type = 34;
+        this.type = 34 /* AccessorType.Set */;
         if (!enableSetObservationCalled) {
             enableSetObservationCalled = true;
             enableSetObservation();
@@ -2141,16 +2523,21 @@ function getSetObserver(observedSet) {
     return observer;
 }
 
+// multiple applications of Aurelia wouldn't have different observers for the same Map object
 const lookupMetadataKey = Symbol.for('__au_map_obs__');
 const observerLookup = (Map[lookupMetadataKey]
     ?? defineHiddenProp(Map, lookupMetadataKey, new WeakMap()));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const proto = Map.prototype;
 const $set = proto.set;
 const $clear = proto.clear;
 const $delete = proto.delete;
 const native = { set: $set, clear: $clear, delete: $delete };
 const methods = ['set', 'clear', 'delete'];
+// note: we can't really do much with Map due to the internal data structure not being accessible so we're just using the native calls
+// fortunately, map/delete/clear are easy to reconstruct for the indexMap
 const observe$1 = {
+    // https://tc39.github.io/ecma262/#sec-map.prototype.map
     set: function (key, value) {
         const o = observerLookup.get(this);
         if (o === undefined) {
@@ -2181,6 +2568,7 @@ const observe$1 = {
         o.notify();
         return this;
     },
+    // https://tc39.github.io/ecma262/#sec-map.prototype.clear
     clear: function () {
         const o = observerLookup.get(this);
         if (o === undefined) {
@@ -2190,6 +2578,7 @@ const observe$1 = {
         if (size > 0) {
             const indexMap = o.indexMap;
             let i = 0;
+            // deepscan-disable-next-line
             for (const key of this.keys()) {
                 if (indexMap[i] > -1) {
                     indexMap.deletedIndices.push(indexMap[i]);
@@ -2203,6 +2592,7 @@ const observe$1 = {
         }
         return undefined;
     },
+    // https://tc39.github.io/ecma262/#sec-map.prototype.delete
     delete: function (value) {
         const o = observerLookup.get(this);
         if (o === undefined) {
@@ -2243,6 +2633,7 @@ for (const method of methods) {
 let enableMapObservationCalled = false;
 const observationEnabledKey = '__au_map_on__';
 function enableMapObservation() {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!(getOwnMetadata(observationEnabledKey, Map) ?? false)) {
         defineMetadata(observationEnabledKey, true, Map);
         for (const method of methods) {
@@ -2261,7 +2652,7 @@ function disableMapObservation() {
 }
 class MapObserver {
     constructor(map) {
-        this.type = 66;
+        this.type = 66 /* AccessorType.Map */;
         if (!enableMapObservationCalled) {
             enableMapObservationCalled = true;
             enableMapObservation();
@@ -2331,9 +2722,16 @@ class BindingObserverRecord {
     constructor(b) {
         this.version = 0;
         this.count = 0;
+        // a map of the observers (subscribables) that the owning binding of this record
+        // is currently subscribing to. The values are the version of the observers,
+        // as the observers version may need to be changed during different evaluation
+        /** @internal */
         this.o = new Map();
         this.b = b;
     }
+    /**
+     * Add, and subscribe to a given observer
+     */
     add(observer) {
         if (!this.o.has(observer)) {
             observer.subscribe(this.b);
@@ -2341,6 +2739,9 @@ class BindingObserverRecord {
         }
         this.o.set(observer, this.version);
     }
+    /**
+     * Unsubscribe the observers that are not up to date with the record version
+     */
     clear() {
         this.o.forEach(unsubscribeStale, this);
         this.count = this.o.size;
@@ -2366,6 +2767,8 @@ function connectableDecorator(target) {
     ensureProto(proto, 'observeCollection', observeCollection$1);
     ensureProto(proto, 'subscribeTo', subscribeTo);
     def(proto, 'obs', { get: getObserverRecord });
+    // optionally add these two methods to normalize a connectable impl
+    // though don't override if it already exists
     ensureProto(proto, 'handleChange', noopHandleChange);
     ensureProto(proto, 'handleCollectionChange', noopHandleCollectionChange);
     return target;
@@ -2374,25 +2777,26 @@ function connectable(target) {
     return target == null ? connectableDecorator : connectableDecorator(target);
 }
 
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 const IExpressionParser = createInterface('IExpressionParser', x => x.singleton(ExpressionParser));
 class ExpressionParser {
     constructor() {
-        this._expressionLookup = createLookup();
-        this._forOfLookup = createLookup();
-        this._interpolationLookup = createLookup();
+        /** @internal */ this._expressionLookup = createLookup();
+        /** @internal */ this._forOfLookup = createLookup();
+        /** @internal */ this._interpolationLookup = createLookup();
     }
     parse(expression, expressionType) {
         let found;
         switch (expressionType) {
-            case 32:
+            case 32 /* ExpressionType.IsCustom */:
                 return new CustomExpression(expression);
-            case 1:
+            case 1 /* ExpressionType.Interpolation */:
                 found = this._interpolationLookup[expression];
                 if (found === void 0) {
                     found = this._interpolationLookup[expression] = this.$parse(expression, expressionType);
                 }
                 return found;
-            case 2:
+            case 2 /* ExpressionType.IsIterator */:
                 found = this._forOfLookup[expression];
                 if (found === void 0) {
                     found = this._forOfLookup[expression] = this.$parse(expression, expressionType);
@@ -2400,7 +2804,8 @@ class ExpressionParser {
                 return found;
             default: {
                 if (expression.length === 0) {
-                    if ((expressionType & (8 | 16)) > 0) {
+                    // only allow function to be empty
+                    if ((expressionType & (8 /* ExpressionType.IsFunction */ | 16 /* ExpressionType.IsProperty */)) > 0) {
                         return PrimitiveLiteralExpression.$empty;
                     }
                     throw invalidEmptyExpression();
@@ -2413,33 +2818,34 @@ class ExpressionParser {
             }
         }
     }
+    /** @internal */
     $parse(expression, expressionType) {
         $input = expression;
         $index = 0;
         $length = expression.length;
         $scopeDepth = 0;
         $startIndex = 0;
-        $currentToken = 6291456;
+        $currentToken = 6291456 /* Token.EOF */;
         $tokenValue = '';
         $currentChar = $charCodeAt(0);
         $assignable = true;
         $optional = false;
         $semicolonIndex = -1;
-        return parse(61, expressionType === void 0 ? 16 : expressionType);
+        return parse(61 /* Precedence.Variadic */, expressionType === void 0 ? 16 /* ExpressionType.IsProperty */ : expressionType);
     }
 }
 
 function unescapeCode(code) {
     switch (code) {
-        case 98: return 8;
-        case 116: return 9;
-        case 110: return 10;
-        case 118: return 11;
-        case 102: return 12;
-        case 114: return 13;
-        case 34: return 34;
-        case 39: return 39;
-        case 92: return 92;
+        case 98 /* Char.LowerB */: return 8 /* Char.Backspace */;
+        case 116 /* Char.LowerT */: return 9 /* Char.Tab */;
+        case 110 /* Char.LowerN */: return 10 /* Char.LineFeed */;
+        case 118 /* Char.LowerV */: return 11 /* Char.VerticalTab */;
+        case 102 /* Char.LowerF */: return 12 /* Char.FormFeed */;
+        case 114 /* Char.LowerR */: return 13 /* Char.CarriageReturn */;
+        case 34 /* Char.DoubleQuote */: return 34 /* Char.DoubleQuote */;
+        case 39 /* Char.SingleQuote */: return 39 /* Char.SingleQuote */;
+        case 92 /* Char.Backslash */: return 92 /* Char.Backslash */;
         default: return code;
     }
 }
@@ -2461,12 +2867,13 @@ exports.ExpressionType = void 0;
     ExpressionType[ExpressionType["IsProperty"] = 16] = "IsProperty";
     ExpressionType[ExpressionType["IsCustom"] = 32] = "IsCustom";
 })(exports.ExpressionType || (exports.ExpressionType = {}));
+/* eslint-enable @typescript-eslint/indent */
 let $input = '';
 let $index = 0;
 let $length = 0;
 let $scopeDepth = 0;
 let $startIndex = 0;
-let $currentToken = 6291456;
+let $currentToken = 6291456 /* Token.EOF */;
 let $tokenValue = '';
 let $currentChar;
 let $assignable = true;
@@ -2481,76 +2888,133 @@ function parseExpression(input, expressionType) {
     $length = input.length;
     $scopeDepth = 0;
     $startIndex = 0;
-    $currentToken = 6291456;
+    $currentToken = 6291456 /* Token.EOF */;
     $tokenValue = '';
     $currentChar = $charCodeAt(0);
     $assignable = true;
     $optional = false;
     $semicolonIndex = -1;
-    return parse(61, expressionType === void 0 ? 16 : expressionType);
+    return parse(61 /* Precedence.Variadic */, expressionType === void 0 ? 16 /* ExpressionType.IsProperty */ : expressionType);
 }
+// This is performance-critical code which follows a subset of the well-known ES spec.
+// Knowing the spec, or parsers in general, will help with understanding this code and it is therefore not the
+// single source of information for being able to figure it out.
+// It generally does not need to change unless the spec changes or spec violations are found, or optimization
+// opportunities are found (which would likely not fix these warnings in any case).
+// It's therefore not considered to have any tangible impact on the maintainability of the code base.
+// For reference, most of the parsing logic is based on: https://tc39.github.io/ecma262/#sec-ecmascript-language-expressions
+// eslint-disable-next-line max-lines-per-function
 function parse(minPrecedence, expressionType) {
-    if (expressionType === 32) {
+    if (expressionType === 32 /* ExpressionType.IsCustom */) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return new CustomExpression($input);
     }
     if ($index === 0) {
-        if (expressionType & 1) {
+        if (expressionType & 1 /* ExpressionType.Interpolation */) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return parseInterpolation();
         }
         nextToken();
-        if ($currentToken & 4194304) {
+        if ($currentToken & 4194304 /* Token.ExpressionTerminal */) {
             throw invalidStartOfExpression();
         }
     }
-    $assignable = 513 > minPrecedence;
+    $assignable = 513 /* Precedence.Binary */ > minPrecedence;
     $optional = false;
     let optionalThisTail = false;
     let result = void 0;
     let ancestor = 0;
-    if ($currentToken & 131072) {
-        const op = TokenValues[$currentToken & 63];
+    if ($currentToken & 131072 /* Token.UnaryOp */) {
+        /**
+         * parseUnaryExpression
+         *
+         * https://tc39.github.io/ecma262/#sec-unary-operators
+         *
+         * UnaryExpression :
+         * 1. LeftHandSideExpression
+         * 2. void UnaryExpression
+         * 3. typeof UnaryExpression
+         * 4. + UnaryExpression
+         * 5. - UnaryExpression
+         * 6. ! UnaryExpression
+         *
+         * IsValidAssignmentTarget
+         * 2,3,4,5,6 = false
+         * 1 = see parseLeftHandSideExpression
+         *
+         * Note: technically we should throw on ++ / -- / +++ / ---, but there's nothing to gain from that
+         */
+        const op = TokenValues[$currentToken & 63 /* Token.Type */];
         nextToken();
-        result = new UnaryExpression(op, parse(514, expressionType));
+        result = new UnaryExpression(op, parse(514 /* Precedence.LeftHandSide */, expressionType));
         $assignable = false;
     }
     else {
+        /**
+         * parsePrimaryExpression
+         *
+         * https://tc39.github.io/ecma262/#sec-primary-expression
+         *
+         * PrimaryExpression :
+         * 1. this
+         * 2. IdentifierName
+         * 3. Literal
+         * 4. ArrayLiteralExpression
+         * 5. ObjectLiteralExpression
+         * 6. TemplateLiteral
+         * 7. ParenthesizedExpression
+         *
+         * Literal :
+         * NullLiteral
+         * BooleanLiteral
+         * NumericLiteral
+         * StringLiteral
+         *
+         * ParenthesizedExpression :
+         * ( AssignmentExpression )
+         *
+         * IsValidAssignmentTarget
+         * 1,3,4,5,6,7 = false
+         * 2 = true
+         */
         primary: switch ($currentToken) {
-            case 12294:
+            case 12294 /* Token.ParentScope */: // $parent
                 ancestor = $scopeDepth;
                 $assignable = false;
                 do {
                     nextToken();
                     ++ancestor;
                     switch ($currentToken) {
-                        case 65545:
+                        case 65545 /* Token.Dot */:
                             nextToken();
-                            if (($currentToken & 12288) === 0) {
+                            if (($currentToken & 12288 /* Token.IdentifierName */) === 0) {
                                 throw expectedIdentifier();
                             }
                             break;
-                        case 10:
-                        case 11:
+                        case 10 /* Token.DotDot */:
+                        case 11 /* Token.DotDotDot */:
                             throw expectedIdentifier();
-                        case 2162700:
+                        case 2162700 /* Token.QuestionDot */:
                             $optional = true;
                             nextToken();
-                            if (($currentToken & 12288) === 0) {
+                            if (($currentToken & 12288 /* Token.IdentifierName */) === 0) {
                                 result = ancestor === 0 ? $this : ancestor === 1 ? $parent : new AccessThisExpression(ancestor);
                                 optionalThisTail = true;
                                 break primary;
                             }
                             break;
                         default:
-                            if ($currentToken & 2097152) {
+                            if ($currentToken & 2097152 /* Token.AccessScopeTerminal */) {
                                 result = ancestor === 0 ? $this : ancestor === 1 ? $parent : new AccessThisExpression(ancestor);
                                 break primary;
                             }
                             throw invalidMemberExpression();
                     }
-                } while ($currentToken === 12294);
-            case 4096: {
+                } while ($currentToken === 12294 /* Token.ParentScope */);
+            // falls through
+            case 4096 /* Token.Identifier */: { // identifier
                 const id = $tokenValue;
-                if (expressionType & 2) {
+                if (expressionType & 2 /* ExpressionType.IsIterator */) {
                     result = new BindingIdentifier(id);
                 }
                 else {
@@ -2558,14 +3022,14 @@ function parse(minPrecedence, expressionType) {
                 }
                 $assignable = !$optional;
                 nextToken();
-                if (consumeOpt(50)) {
-                    if ($currentToken === 524296) {
+                if (consumeOpt(50 /* Token.Arrow */)) {
+                    if ($currentToken === 524296 /* Token.OpenBrace */) {
                         throw functionBodyInArrowFN();
                     }
                     const _optional = $optional;
                     const _scopeDepth = $scopeDepth;
                     ++$scopeDepth;
-                    const body = parse(62, 0);
+                    const body = parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */);
                     $optional = _optional;
                     $scopeDepth = _scopeDepth;
                     $assignable = false;
@@ -2573,11 +3037,11 @@ function parse(minPrecedence, expressionType) {
                 }
                 break;
             }
-            case 10:
+            case 10 /* Token.DotDot */:
                 throw unexpectedDoubleDot();
-            case 11:
+            case 11 /* Token.DotDotDot */:
                 throw invalidSpreadOp();
-            case 12292:
+            case 12292 /* Token.ThisScope */: // $this
                 $assignable = false;
                 nextToken();
                 switch ($scopeDepth) {
@@ -2592,34 +3056,34 @@ function parse(minPrecedence, expressionType) {
                         break;
                 }
                 break;
-            case 2688007:
+            case 2688007 /* Token.OpenParen */:
                 result = parseCoverParenthesizedExpressionAndArrowParameterList(expressionType);
                 break;
-            case 2688016:
+            case 2688016 /* Token.OpenBracket */:
                 result = $input.search(/\s+of\s+/) > $index ? parseArrayDestructuring() : parseArrayLiteralExpression(expressionType);
                 break;
-            case 524296:
+            case 524296 /* Token.OpenBrace */:
                 result = parseObjectLiteralExpression(expressionType);
                 break;
-            case 2163759:
+            case 2163759 /* Token.TemplateTail */:
                 result = new TemplateExpression([$tokenValue]);
                 $assignable = false;
                 nextToken();
                 break;
-            case 2163760:
+            case 2163760 /* Token.TemplateContinuation */:
                 result = parseTemplate(expressionType, result, false);
                 break;
-            case 16384:
-            case 32768:
+            case 16384 /* Token.StringLiteral */:
+            case 32768 /* Token.NumericLiteral */:
                 result = new PrimitiveLiteralExpression($tokenValue);
                 $assignable = false;
                 nextToken();
                 break;
-            case 8194:
-            case 8195:
-            case 8193:
-            case 8192:
-                result = TokenValues[$currentToken & 63];
+            case 8194 /* Token.NullKeyword */:
+            case 8195 /* Token.UndefinedKeyword */:
+            case 8193 /* Token.TrueKeyword */:
+            case 8192 /* Token.FalseKeyword */:
+                result = TokenValues[$currentToken & 63 /* Token.Type */];
                 $assignable = false;
                 nextToken();
                 break;
@@ -2631,100 +3095,128 @@ function parse(minPrecedence, expressionType) {
                     throw unconsumedToken();
                 }
         }
-        if (expressionType & 2) {
+        if (expressionType & 2 /* ExpressionType.IsIterator */) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return parseForOfStatement(result);
         }
-        if (514 < minPrecedence) {
+        if (514 /* Precedence.LeftHandSide */ < minPrecedence) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return result;
         }
-        if ($currentToken === 10 || $currentToken === 11) {
+        if ($currentToken === 10 /* Token.DotDot */ || $currentToken === 11 /* Token.DotDotDot */) {
             throw expectedIdentifier();
         }
-        if (result.$kind === 0) {
+        if (result.$kind === 0 /* ExpressionKind.AccessThis */) {
             switch ($currentToken) {
-                case 2162700:
+                case 2162700 /* Token.QuestionDot */:
                     $optional = true;
                     $assignable = false;
                     nextToken();
-                    if (($currentToken & 13312) === 0) {
+                    if (($currentToken & 13312 /* Token.OptionalSuffix */) === 0) {
                         throw unexpectedTokenInOptionalChain();
                     }
-                    if ($currentToken & 12288) {
+                    if ($currentToken & 12288 /* Token.IdentifierName */) {
                         result = new AccessScopeExpression($tokenValue, result.ancestor);
                         nextToken();
                     }
-                    else if ($currentToken === 2688007) {
+                    else if ($currentToken === 2688007 /* Token.OpenParen */) {
                         result = new CallFunctionExpression(result, parseArguments(), true);
                     }
-                    else if ($currentToken === 2688016) {
+                    else if ($currentToken === 2688016 /* Token.OpenBracket */) {
                         result = parseKeyedExpression(result, true);
                     }
                     else {
                         throw invalidTaggedTemplateOnOptionalChain();
                     }
                     break;
-                case 65545:
+                case 65545 /* Token.Dot */:
                     $assignable = !$optional;
                     nextToken();
-                    if (($currentToken & 12288) === 0) {
+                    if (($currentToken & 12288 /* Token.IdentifierName */) === 0) {
                         throw expectedIdentifier();
                     }
                     result = new AccessScopeExpression($tokenValue, result.ancestor);
                     nextToken();
                     break;
-                case 10:
-                case 11:
+                case 10 /* Token.DotDot */:
+                case 11 /* Token.DotDotDot */:
                     throw expectedIdentifier();
-                case 2688007:
+                case 2688007 /* Token.OpenParen */:
                     result = new CallFunctionExpression(result, parseArguments(), optionalThisTail);
                     break;
-                case 2688016:
+                case 2688016 /* Token.OpenBracket */:
                     result = parseKeyedExpression(result, optionalThisTail);
                     break;
-                case 2163759:
+                case 2163759 /* Token.TemplateTail */:
                     result = createTemplateTail(result);
                     break;
-                case 2163760:
+                case 2163760 /* Token.TemplateContinuation */:
                     result = parseTemplate(expressionType, result, true);
                     break;
             }
         }
-        while (($currentToken & 65536) > 0) {
+        /**
+         * parseMemberExpression (Token.Dot, Token.OpenBracket, Token.TemplateContinuation)
+         *
+         * MemberExpression :
+         * 1. PrimaryExpression
+         * 2. MemberExpression [ AssignmentExpression ]
+         * 3. MemberExpression . IdentifierName
+         * 4. MemberExpression TemplateLiteral
+         *
+         * IsValidAssignmentTarget
+         * 1,4 = false
+         * 2,3 = true
+         *
+         *
+         * parseCallExpression (Token.OpenParen)
+         * CallExpression :
+         * 1. MemberExpression Arguments
+         * 2. CallExpression Arguments
+         * 3. CallExpression [ AssignmentExpression ]
+         * 4. CallExpression . IdentifierName
+         * 5. CallExpression TemplateLiteral
+         *
+         * IsValidAssignmentTarget
+         * 1,2,5 = false
+         * 3,4 = true
+         */
+        while (($currentToken & 65536 /* Token.LeftHandSide */) > 0) {
             switch ($currentToken) {
-                case 2162700:
+                case 2162700 /* Token.QuestionDot */:
                     result = parseOptionalChainLHS(result);
                     break;
-                case 65545:
+                case 65545 /* Token.Dot */:
                     nextToken();
-                    if (($currentToken & 12288) === 0) {
+                    if (($currentToken & 12288 /* Token.IdentifierName */) === 0) {
                         throw expectedIdentifier();
                     }
                     result = parseMemberExpressionLHS(result, false);
                     break;
-                case 10:
-                case 11:
+                case 10 /* Token.DotDot */:
+                case 11 /* Token.DotDotDot */:
                     throw expectedIdentifier();
-                case 2688007:
-                    if (result.$kind === 1) {
+                case 2688007 /* Token.OpenParen */:
+                    if (result.$kind === 1 /* ExpressionKind.AccessScope */) {
                         result = new CallScopeExpression(result.name, parseArguments(), result.ancestor, false);
                     }
-                    else if (result.$kind === 10) {
+                    else if (result.$kind === 10 /* ExpressionKind.AccessMember */) {
                         result = new CallMemberExpression(result.object, result.name, parseArguments(), result.optional, false);
                     }
                     else {
                         result = new CallFunctionExpression(result, parseArguments(), false);
                     }
                     break;
-                case 2688016:
+                case 2688016 /* Token.OpenBracket */:
                     result = parseKeyedExpression(result, false);
                     break;
-                case 2163759:
+                case 2163759 /* Token.TemplateTail */:
                     if ($optional) {
                         throw invalidTaggedTemplateOnOptionalChain();
                     }
                     result = createTemplateTail(result);
                     break;
-                case 2163760:
+                case 2163760 /* Token.TemplateContinuation */:
                     if ($optional) {
                         throw invalidTaggedTemplateOnOptionalChain();
                     }
@@ -2733,75 +3225,151 @@ function parse(minPrecedence, expressionType) {
             }
         }
     }
-    if ($currentToken === 10 || $currentToken === 11) {
+    if ($currentToken === 10 /* Token.DotDot */ || $currentToken === 11 /* Token.DotDotDot */) {
         throw expectedIdentifier();
     }
-    if (513 < minPrecedence) {
+    if (513 /* Precedence.Binary */ < minPrecedence) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return result;
     }
-    while (($currentToken & 262144) > 0) {
+    /**
+     * parseBinaryExpression
+     *
+     * https://tc39.github.io/ecma262/#sec-multiplicative-operators
+     *
+     * MultiplicativeExpression : (local precedence 6)
+     * UnaryExpression
+     * MultiplicativeExpression * / % UnaryExpression
+     *
+     * AdditiveExpression : (local precedence 5)
+     * MultiplicativeExpression
+     * AdditiveExpression + - MultiplicativeExpression
+     *
+     * RelationalExpression : (local precedence 4)
+     * AdditiveExpression
+     * RelationalExpression < > <= >= instanceof in AdditiveExpression
+     *
+     * EqualityExpression : (local precedence 3)
+     * RelationalExpression
+     * EqualityExpression == != === !== RelationalExpression
+     *
+     * LogicalANDExpression : (local precedence 2)
+     * EqualityExpression
+     * LogicalANDExpression && EqualityExpression
+     *
+     * LogicalORExpression : (local precedence 1)
+     * LogicalANDExpression
+     * LogicalORExpression || LogicalANDExpression
+     *
+     * CoalesceExpression :
+     * CoalesceExpressionHead ?? BitwiseORExpression
+     *
+     * CoalesceExpressionHead :
+     * CoelesceExpression
+     * BitwiseORExpression
+     *
+     * ShortCircuitExpression :
+     * LogicalORExpression
+     * CoalesceExpression
+     */
+    while (($currentToken & 262144 /* Token.BinaryOp */) > 0) {
         const opToken = $currentToken;
-        if ((opToken & 960) <= minPrecedence) {
+        if ((opToken & 960 /* Token.Precedence */) <= minPrecedence) {
             break;
         }
         nextToken();
-        result = new BinaryExpression(TokenValues[opToken & 63], result, parse(opToken & 960, expressionType));
+        result = new BinaryExpression(TokenValues[opToken & 63 /* Token.Type */], result, parse(opToken & 960 /* Token.Precedence */, expressionType));
         $assignable = false;
     }
-    if (63 < minPrecedence) {
+    if (63 /* Precedence.Conditional */ < minPrecedence) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return result;
     }
-    if (consumeOpt(6291478)) {
-        const yes = parse(62, expressionType);
-        consume(6291476);
-        result = new ConditionalExpression(result, yes, parse(62, expressionType));
+    /**
+     * parseConditionalExpression
+     * https://tc39.github.io/ecma262/#prod-ConditionalExpression
+     *
+     * ConditionalExpression :
+     * 1. ShortCircuitExpression
+     * 2. ShortCircuitExpression ? AssignmentExpression : AssignmentExpression
+     *
+     * IsValidAssignmentTarget
+     * 1,2 = false
+     */
+    if (consumeOpt(6291478 /* Token.Question */)) {
+        const yes = parse(62 /* Precedence.Assign */, expressionType);
+        consume(6291476 /* Token.Colon */);
+        result = new ConditionalExpression(result, yes, parse(62 /* Precedence.Assign */, expressionType));
         $assignable = false;
     }
-    if (62 < minPrecedence) {
+    if (62 /* Precedence.Assign */ < minPrecedence) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return result;
     }
-    if (consumeOpt(4194349)) {
+    /**
+     * parseAssignmentExpression
+     *
+     * https://tc39.github.io/ecma262/#prod-AssignmentExpression
+     * Note: AssignmentExpression here is equivalent to ES Expression because we don't parse the comma operator
+     *
+     * AssignmentExpression :
+     * 1. ConditionalExpression
+     * 2. LeftHandSideExpression = AssignmentExpression
+     *
+     * IsValidAssignmentTarget
+     * 1,2 = false
+     */
+    if (consumeOpt(4194349 /* Token.Equals */)) {
         if (!$assignable) {
             throw lhsNotAssignable();
         }
-        result = new AssignExpression(result, parse(62, expressionType));
+        result = new AssignExpression(result, parse(62 /* Precedence.Assign */, expressionType));
     }
-    if (61 < minPrecedence) {
+    if (61 /* Precedence.Variadic */ < minPrecedence) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return result;
     }
-    while (consumeOpt(6291480)) {
-        if ($currentToken === 6291456) {
+    /**
+     * parseValueConverter
+     */
+    while (consumeOpt(6291480 /* Token.Bar */)) {
+        if ($currentToken === 6291456 /* Token.EOF */) {
             throw expectedValueConverterIdentifier();
         }
         const name = $tokenValue;
         nextToken();
         const args = new Array();
-        while (consumeOpt(6291476)) {
-            args.push(parse(62, expressionType));
+        while (consumeOpt(6291476 /* Token.Colon */)) {
+            args.push(parse(62 /* Precedence.Assign */, expressionType));
         }
         result = new ValueConverterExpression(result, name, args);
     }
-    while (consumeOpt(6291479)) {
-        if ($currentToken === 6291456) {
+    /**
+     * parseBindingBehavior
+     */
+    while (consumeOpt(6291479 /* Token.Ampersand */)) {
+        if ($currentToken === 6291456 /* Token.EOF */) {
             throw expectedBindingBehaviorIdentifier();
         }
         const name = $tokenValue;
         nextToken();
         const args = new Array();
-        while (consumeOpt(6291476)) {
-            args.push(parse(62, expressionType));
+        while (consumeOpt(6291476 /* Token.Colon */)) {
+            args.push(parse(62 /* Precedence.Assign */, expressionType));
         }
         result = new BindingBehaviorExpression(result, name, args);
     }
-    if ($currentToken !== 6291456) {
-        if ((expressionType & 1) > 0 && $currentToken === 7340045) {
+    if ($currentToken !== 6291456 /* Token.EOF */) {
+        if ((expressionType & 1 /* ExpressionType.Interpolation */) > 0 && $currentToken === 7340045 /* Token.CloseBrace */) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return result;
         }
-        if ((expressionType & 4) > 0 && $currentToken === 6291477) {
+        if ((expressionType & 4 /* ExpressionType.IsChainable */) > 0 && $currentToken === 6291477 /* Token.Semicolon */) {
             if ($index === $length) {
                 throw unconsumedToken();
             }
             $semicolonIndex = $index - 1;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return result;
         }
         if ($tokenRaw() === 'of') {
@@ -2809,32 +3377,39 @@ function parse(minPrecedence, expressionType) {
         }
         throw unconsumedToken();
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return result;
 }
+/**
+ * [key,]
+ * [key]
+ * [,value]
+ * [key,value]
+ */
 function parseArrayDestructuring() {
     const items = [];
-    const dae = new DestructuringAssignmentExpression(24, items, void 0, void 0);
+    const dae = new DestructuringAssignmentExpression(24 /* ExpressionKind.ArrayDestructuring */, items, void 0, void 0);
     let target = '';
     let $continue = true;
     let index = 0;
     while ($continue) {
         nextToken();
         switch ($currentToken) {
-            case 7340051:
+            case 7340051 /* Token.CloseBracket */:
                 $continue = false;
                 addItem();
                 break;
-            case 6291471:
+            case 6291471 /* Token.Comma */:
                 addItem();
                 break;
-            case 4096:
+            case 4096 /* Token.Identifier */:
                 target = $tokenRaw();
                 break;
             default:
                 throw unexpectedTokenInDestructuring();
         }
     }
-    consume(7340051);
+    consume(7340051 /* Token.CloseBracket */);
     return dae;
     function addItem() {
         if (target !== '') {
@@ -2850,13 +3425,13 @@ function parseArguments() {
     const _optional = $optional;
     nextToken();
     const args = [];
-    while ($currentToken !== 7340046) {
-        args.push(parse(62, 0));
-        if (!consumeOpt(6291471)) {
+    while ($currentToken !== 7340046 /* Token.CloseParen */) {
+        args.push(parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */));
+        if (!consumeOpt(6291471 /* Token.Comma */)) {
             break;
         }
     }
-    consume(7340046);
+    consume(7340046 /* Token.CloseParen */);
     $assignable = false;
     $optional = _optional;
     return args;
@@ -2864,8 +3439,8 @@ function parseArguments() {
 function parseKeyedExpression(result, optional) {
     const _optional = $optional;
     nextToken();
-    result = new AccessKeyedExpression(result, parse(62, 0), optional);
-    consume(7340051);
+    result = new AccessKeyedExpression(result, parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */), optional);
+    consume(7340051 /* Token.CloseBracket */);
     $assignable = !_optional;
     $optional = _optional;
     return result;
@@ -2874,24 +3449,24 @@ function parseOptionalChainLHS(lhs) {
     $optional = true;
     $assignable = false;
     nextToken();
-    if (($currentToken & 13312) === 0) {
+    if (($currentToken & 13312 /* Token.OptionalSuffix */) === 0) {
         throw unexpectedTokenInOptionalChain();
     }
-    if ($currentToken & 12288) {
+    if ($currentToken & 12288 /* Token.IdentifierName */) {
         return parseMemberExpressionLHS(lhs, true);
     }
-    if ($currentToken === 2688007) {
-        if (lhs.$kind === 1) {
+    if ($currentToken === 2688007 /* Token.OpenParen */) {
+        if (lhs.$kind === 1 /* ExpressionKind.AccessScope */) {
             return new CallScopeExpression(lhs.name, parseArguments(), lhs.ancestor, true);
         }
-        else if (lhs.$kind === 10) {
+        else if (lhs.$kind === 10 /* ExpressionKind.AccessMember */) {
             return new CallMemberExpression(lhs.object, lhs.name, parseArguments(), lhs.optional, true);
         }
         else {
             return new CallFunctionExpression(lhs, parseArguments(), true);
         }
     }
-    if ($currentToken === 2688016) {
+    if ($currentToken === 2688016 /* Token.OpenBracket */) {
         return parseKeyedExpression(lhs, true);
     }
     throw invalidTaggedTemplateOnOptionalChain();
@@ -2899,7 +3474,7 @@ function parseOptionalChainLHS(lhs) {
 function parseMemberExpressionLHS(lhs, optional) {
     const rhs = $tokenValue;
     switch ($currentToken) {
-        case 2162700: {
+        case 2162700 /* Token.QuestionDot */: {
             $optional = true;
             $assignable = false;
             const indexSave = $index;
@@ -2910,10 +3485,10 @@ function parseMemberExpressionLHS(lhs, optional) {
             const assignableSave = $assignable;
             const optionalSave = $optional;
             nextToken();
-            if (($currentToken & 13312) === 0) {
+            if (($currentToken & 13312 /* Token.OptionalSuffix */) === 0) {
                 throw unexpectedTokenInOptionalChain();
             }
-            if ($currentToken === 2688007) {
+            if ($currentToken === 2688007 /* Token.OpenParen */) {
                 return new CallMemberExpression(lhs, rhs, parseArguments(), optional, true);
             }
             $index = indexSave;
@@ -2925,7 +3500,7 @@ function parseMemberExpressionLHS(lhs, optional) {
             $optional = optionalSave;
             return new AccessMemberExpression(lhs, rhs, optional);
         }
-        case 2688007: {
+        case 2688007 /* Token.OpenParen */: {
             $assignable = false;
             return new CallMemberExpression(lhs, rhs, parseArguments(), optional, false);
         }
@@ -2937,6 +3512,14 @@ function parseMemberExpressionLHS(lhs, optional) {
     }
 }
 
+/**
+ * https://tc39.es/ecma262/#prod-CoverParenthesizedExpressionAndArrowParameterList
+ * CoverParenthesizedExpressionAndArrowParameterList :
+ * ( Expression )
+ * ( )
+ * ( BindingIdentifier )
+ * ( Expression , BindingIdentifier )
+ */
 function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) {
     nextToken();
     const indexSave = $index;
@@ -2947,101 +3530,116 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
     const assignableSave = $assignable;
     const optionalSave = $optional;
     const arrowParams = [];
-    let paramsState = 1;
+    let paramsState = 1 /* ArrowFnParams.Valid */;
     let isParamList = false;
+    // eslint-disable-next-line no-constant-condition
     loop: while (true) {
-        if ($currentToken === 11) {
+        if ($currentToken === 11 /* Token.DotDotDot */) {
             nextToken();
-            if ($currentToken !== 4096) {
+            if ($currentToken !== 4096 /* Token.Identifier */) {
                 throw expectedIdentifier();
             }
             arrowParams.push(new BindingIdentifier($tokenValue));
             nextToken();
-            if ($currentToken === 6291471) {
+            if ($currentToken === 6291471 /* Token.Comma */) {
                 throw restParamsMustBeLastParam();
             }
-            if ($currentToken !== 7340046) {
+            if ($currentToken !== 7340046 /* Token.CloseParen */) {
                 throw invalidSpreadOp();
             }
             nextToken();
-            if ($currentToken !== 50) {
+            if ($currentToken !== 50 /* Token.Arrow */) {
                 throw invalidSpreadOp();
             }
             nextToken();
             const _optional = $optional;
             const _scopeDepth = $scopeDepth;
             ++$scopeDepth;
-            const body = parse(62, 0);
+            const body = parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */);
             $optional = _optional;
             $scopeDepth = _scopeDepth;
             $assignable = false;
             return new ArrowFunction(arrowParams, body, true);
         }
         switch ($currentToken) {
-            case 4096:
+            case 4096 /* Token.Identifier */:
                 arrowParams.push(new BindingIdentifier($tokenValue));
                 nextToken();
                 break;
-            case 7340046:
+            case 7340046 /* Token.CloseParen */:
+                // ()     - only valid if followed directly by an arrow
                 nextToken();
                 break loop;
-            case 524296:
-            case 2688016:
+            /* eslint-disable */
+            case 524296 /* Token.OpenBrace */:
+            // ({     - may be a valid parenthesized expression
+            case 2688016 /* Token.OpenBracket */:
+                // ([     - may be a valid parenthesized expression
                 nextToken();
-                paramsState = 4;
+                paramsState = 4 /* ArrowFnParams.Destructuring */;
                 break;
-            case 6291471:
-                paramsState = 2;
+            /* eslint-enable */
+            case 6291471 /* Token.Comma */:
+                // (,     - never valid
+                // (a,,   - never valid
+                paramsState = 2 /* ArrowFnParams.Invalid */;
                 isParamList = true;
                 break loop;
-            case 2688007:
-                paramsState = 2;
+            case 2688007 /* Token.OpenParen */:
+                // ((     - may be a valid nested parenthesized expression or arrow fn
+                // (a,(   - never valid
+                paramsState = 2 /* ArrowFnParams.Invalid */;
                 break loop;
             default:
                 nextToken();
-                paramsState = 2;
+                paramsState = 2 /* ArrowFnParams.Invalid */;
                 break;
         }
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         switch ($currentToken) {
-            case 6291471:
+            case 6291471 /* Token.Comma */:
                 nextToken();
                 isParamList = true;
-                if (paramsState === 1) {
+                if (paramsState === 1 /* ArrowFnParams.Valid */) {
                     break;
                 }
+                // ([something invalid],   - treat as arrow fn / invalid arrow params
                 break loop;
-            case 7340046:
+            case 7340046 /* Token.CloseParen */:
                 nextToken();
                 break loop;
-            case 4194349:
-                if (paramsState === 1) {
-                    paramsState = 3;
+            case 4194349 /* Token.Equals */:
+                // (a=a     - may be a valid parenthesized expression
+                if (paramsState === 1 /* ArrowFnParams.Valid */) {
+                    paramsState = 3 /* ArrowFnParams.Default */;
                 }
                 break loop;
-            case 50:
+            case 50 /* Token.Arrow */:
+                // (a,a=>  - never valid
                 if (isParamList) {
                     throw invalidArrowParameterList();
                 }
+                // (a=>    - may be a valid parenthesized expression with nested arrow fn
                 nextToken();
-                paramsState = 2;
+                paramsState = 2 /* ArrowFnParams.Invalid */;
                 break loop;
             default:
-                if (paramsState === 1) {
-                    paramsState = 2;
+                if (paramsState === 1 /* ArrowFnParams.Valid */) {
+                    paramsState = 2 /* ArrowFnParams.Invalid */;
                 }
                 break loop;
         }
     }
-    if ($currentToken === 50) {
-        if (paramsState === 1) {
+    if ($currentToken === 50 /* Token.Arrow */) {
+        if (paramsState === 1 /* ArrowFnParams.Valid */) {
             nextToken();
-            if ($currentToken === 524296) {
+            if ($currentToken === 524296 /* Token.OpenBrace */) {
                 throw functionBodyInArrowFN();
             }
             const _optional = $optional;
             const _scopeDepth = $scopeDepth;
             ++$scopeDepth;
-            const body = parse(62, 0);
+            const body = parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */);
             $optional = _optional;
             $scopeDepth = _scopeDepth;
             $assignable = false;
@@ -3049,16 +3647,18 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
         }
         throw invalidArrowParameterList();
     }
-    else if (paramsState === 1 && arrowParams.length === 0) {
-        throw missingExpectedToken(50);
+    else if (paramsState === 1 /* ArrowFnParams.Valid */ && arrowParams.length === 0) {
+        // ()    - never valid as a standalone expression
+        throw missingExpectedToken(50 /* Token.Arrow */);
     }
     if (isParamList) {
+        // ([something invalid],   - treat as arrow fn / invalid arrow params
         switch (paramsState) {
-            case 2:
+            case 2 /* ArrowFnParams.Invalid */:
                 throw invalidArrowParameterList();
-            case 3:
+            case 3 /* ArrowFnParams.Default */:
                 throw defaultParamsInArrowFn();
-            case 4:
+            case 4 /* ArrowFnParams.Destructuring */:
                 throw destructuringParamsInArrowFn();
         }
     }
@@ -3070,36 +3670,54 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
     $assignable = assignableSave;
     $optional = optionalSave;
     const _optional = $optional;
-    const expr = parse(62, expressionType);
+    const expr = parse(62 /* Precedence.Assign */, expressionType);
     $optional = _optional;
-    consume(7340046);
-    if ($currentToken === 50) {
+    consume(7340046 /* Token.CloseParen */);
+    if ($currentToken === 50 /* Token.Arrow */) {
+        // we only get here if there was a valid parenthesized expression which was not valid as arrow fn params
         switch (paramsState) {
-            case 2:
+            case 2 /* ArrowFnParams.Invalid */:
                 throw invalidArrowParameterList();
-            case 3:
+            case 3 /* ArrowFnParams.Default */:
                 throw defaultParamsInArrowFn();
-            case 4:
+            case 4 /* ArrowFnParams.Destructuring */:
                 throw destructuringParamsInArrowFn();
         }
     }
     return expr;
 }
+/**
+ * parseArrayLiteralExpression
+ * https://tc39.github.io/ecma262/#prod-ArrayLiteralExpression
+ *
+ * ArrayLiteralExpression :
+ * [ Elision(opt) ]
+ * [ ElementList ]
+ * [ ElementList, Elision(opt) ]
+ *
+ * ElementList :
+ * Elision(opt) AssignmentExpression
+ * ElementList, Elision(opt) AssignmentExpression
+ *
+ * Elision :
+ * ,
+ * Elision ,
+ */
 function parseArrayLiteralExpression(expressionType) {
     const _optional = $optional;
     nextToken();
     const elements = new Array();
-    while ($currentToken !== 7340051) {
-        if (consumeOpt(6291471)) {
+    while ($currentToken !== 7340051 /* Token.CloseBracket */) {
+        if (consumeOpt(6291471 /* Token.Comma */)) {
             elements.push($undefined);
-            if ($currentToken === 7340051) {
+            if ($currentToken === 7340051 /* Token.CloseBracket */) {
                 break;
             }
         }
         else {
-            elements.push(parse(62, expressionType & ~2));
-            if (consumeOpt(6291471)) {
-                if ($currentToken === 7340051) {
+            elements.push(parse(62 /* Precedence.Assign */, expressionType & ~2 /* ExpressionType.IsIterator */));
+            if (consumeOpt(6291471 /* Token.Comma */)) {
+                if ($currentToken === 7340051 /* Token.CloseBracket */) {
                     break;
                 }
             }
@@ -3109,8 +3727,8 @@ function parseArrayLiteralExpression(expressionType) {
         }
     }
     $optional = _optional;
-    consume(7340051);
-    if (expressionType & 2) {
+    consume(7340051 /* Token.CloseBracket */);
+    if (expressionType & 2 /* ExpressionType.IsIterator */) {
         return new ArrayBindingPattern(elements);
     }
     else {
@@ -3119,56 +3737,80 @@ function parseArrayLiteralExpression(expressionType) {
     }
 }
 function parseForOfStatement(result) {
-    if ((result.$kind & (19
-        | 20
-        | 21)) === 0) {
+    if ((result.$kind & (19 /* ExpressionKind.ArrayBindingPattern */
+        | 20 /* ExpressionKind.ObjectBindingPattern */
+        | 21 /* ExpressionKind.BindingIdentifier */)) === 0) {
         throw invalidLHSBindingIdentifierInForOf();
     }
-    if ($currentToken !== 4204593) {
+    if ($currentToken !== 4204593 /* Token.OfKeyword */) {
         throw invalidLHSBindingIdentifierInForOf();
     }
     nextToken();
     const declaration = result;
-    const statement = parse(61, 4);
+    const statement = parse(61 /* Precedence.Variadic */, 4 /* ExpressionType.IsChainable */);
     return new ForOfStatement(declaration, statement, $semicolonIndex);
 }
+/**
+ * parseObjectLiteralExpression
+ * https://tc39.github.io/ecma262/#prod-Literal
+ *
+ * ObjectLiteralExpression :
+ * { }
+ * { PropertyDefinitionList }
+ *
+ * PropertyDefinitionList :
+ * PropertyDefinition
+ * PropertyDefinitionList, PropertyDefinition
+ *
+ * PropertyDefinition :
+ * IdentifierName
+ * PropertyName : AssignmentExpression
+ *
+ * PropertyName :
+ * IdentifierName
+ * StringLiteral
+ * NumericLiteral
+ */
 function parseObjectLiteralExpression(expressionType) {
     const _optional = $optional;
     const keys = new Array();
     const values = new Array();
     nextToken();
-    while ($currentToken !== 7340045) {
+    while ($currentToken !== 7340045 /* Token.CloseBrace */) {
         keys.push($tokenValue);
-        if ($currentToken & 49152) {
+        // Literal = mandatory colon
+        if ($currentToken & 49152 /* Token.StringOrNumericLiteral */) {
             nextToken();
-            consume(6291476);
-            values.push(parse(62, expressionType & ~2));
+            consume(6291476 /* Token.Colon */);
+            values.push(parse(62 /* Precedence.Assign */, expressionType & ~2 /* ExpressionType.IsIterator */));
         }
-        else if ($currentToken & 12288) {
+        else if ($currentToken & 12288 /* Token.IdentifierName */) {
+            // IdentifierName = optional colon
             const currentChar = $currentChar;
             const currentToken = $currentToken;
             const index = $index;
             nextToken();
-            if (consumeOpt(6291476)) {
-                values.push(parse(62, expressionType & ~2));
+            if (consumeOpt(6291476 /* Token.Colon */)) {
+                values.push(parse(62 /* Precedence.Assign */, expressionType & ~2 /* ExpressionType.IsIterator */));
             }
             else {
+                // Shorthand
                 $currentChar = currentChar;
                 $currentToken = currentToken;
                 $index = index;
-                values.push(parse(515, expressionType & ~2));
+                values.push(parse(515 /* Precedence.Primary */, expressionType & ~2 /* ExpressionType.IsIterator */));
             }
         }
         else {
             throw invalidPropDefInObjLiteral();
         }
-        if ($currentToken !== 7340045) {
-            consume(6291471);
+        if ($currentToken !== 7340045 /* Token.CloseBrace */) {
+            consume(6291471 /* Token.Comma */);
         }
     }
     $optional = _optional;
-    consume(7340045);
-    if (expressionType & 2) {
+    consume(7340045 /* Token.CloseBrace */);
+    if (expressionType & 2 /* ExpressionType.IsIterator */) {
         return new ObjectBindingPattern(keys, values);
     }
     else {
@@ -3183,14 +3825,14 @@ function parseInterpolation() {
     let result = '';
     while ($index < length) {
         switch ($currentChar) {
-            case 36:
-                if ($charCodeAt($index + 1) === 123) {
+            case 36 /* Char.Dollar */:
+                if ($charCodeAt($index + 1) === 123 /* Char.OpenBrace */) {
                     parts.push(result);
                     result = '';
                     $index += 2;
                     $currentChar = $charCodeAt($index);
                     nextToken();
-                    const expression = parse(61, 1);
+                    const expression = parse(61 /* Precedence.Variadic */, 1 /* ExpressionType.Interpolation */);
                     expressions.push(expression);
                     continue;
                 }
@@ -3198,7 +3840,7 @@ function parseInterpolation() {
                     result += '$';
                 }
                 break;
-            case 92:
+            case 92 /* Char.Backslash */:
                 result += stringFromCharCode(unescapeCode(nextChar()));
                 break;
             default:
@@ -3212,15 +3854,48 @@ function parseInterpolation() {
     }
     return null;
 }
+/**
+ * parseTemplateLiteralExpression
+ * https://tc39.github.io/ecma262/#prod-Literal
+ *
+ * TemplateExpression :
+ * NoSubstitutionTemplate
+ * TemplateHead
+ *
+ * NoSubstitutionTemplate :
+ * ` TemplateCharacters(opt) `
+ *
+ * TemplateHead :
+ * ` TemplateCharacters(opt) ${
+ *
+ * TemplateSubstitutionTail :
+ * TemplateMiddle
+ * TemplateTail
+ *
+ * TemplateMiddle :
+ * } TemplateCharacters(opt) ${
+ *
+ * TemplateTail :
+ * } TemplateCharacters(opt) `
+ *
+ * TemplateCharacters :
+ * TemplateCharacter TemplateCharacters(opt)
+ *
+ * TemplateCharacter :
+ * $ [lookahead ≠ {]
+ * \ EscapeSequence
+ * SourceCharacter (but not one of ` or \ or $)
+ */
 function parseTemplate(expressionType, result, tagged) {
     const _optional = $optional;
     const cooked = [$tokenValue];
-    consume(2163760);
-    const expressions = [parse(62, expressionType)];
-    while (($currentToken = scanTemplateTail()) !== 2163759) {
+    // TODO: properly implement raw parts / decide whether we want this
+    consume(2163760 /* Token.TemplateContinuation */);
+    const expressions = [parse(62 /* Precedence.Assign */, expressionType)];
+    while (($currentToken = scanTemplateTail()) !== 2163759 /* Token.TemplateTail */) {
         cooked.push($tokenValue);
-        consume(2163760);
-        expressions.push(parse(62, expressionType));
+        consume(2163760 /* Token.TemplateContinuation */);
+        expressions.push(parse(62 /* Precedence.Assign */, expressionType));
     }
     cooked.push($tokenValue);
     $assignable = false;
@@ -3243,56 +3918,60 @@ function createTemplateTail(result) {
 function nextToken() {
     while ($index < $length) {
         $startIndex = $index;
-        if (($currentToken = (CharScanners[$currentChar]())) != null) {
+        if (($currentToken = (CharScanners[$currentChar]())) != null) { // a null token means the character must be skipped
             return;
         }
     }
-    $currentToken = 6291456;
+    $currentToken = 6291456 /* Token.EOF */;
 }
 function nextChar() {
     return $currentChar = $charCodeAt(++$index);
 }
 function scanIdentifier() {
+    // run to the next non-idPart
     while (IdParts[nextChar()])
         ;
     const token = KeywordLookup[$tokenValue = $tokenRaw()];
-    return token === undefined ? 4096 : token;
+    return token === undefined ? 4096 /* Token.Identifier */ : token;
 }
 function scanNumber(isFloat) {
     let char = $currentChar;
     if (isFloat === false) {
         do {
             char = nextChar();
-        } while (char <= 57 && char >= 48);
-        if (char !== 46) {
+        } while (char <= 57 /* Char.Nine */ && char >= 48 /* Char.Zero */);
+        if (char !== 46 /* Char.Dot */) {
             $tokenValue = parseInt($tokenRaw(), 10);
-            return 32768;
+            return 32768 /* Token.NumericLiteral */;
         }
+        // past this point it's always a float
         char = nextChar();
         if ($index >= $length) {
+            // unless the number ends with a dot - that behaves a little different in native ES expressions
+            // but in our AST that behavior has no effect because numbers are always stored in variables
             $tokenValue = parseInt($tokenRaw().slice(0, -1), 10);
-            return 32768;
+            return 32768 /* Token.NumericLiteral */;
         }
     }
-    if (char <= 57 && char >= 48) {
+    if (char <= 57 /* Char.Nine */ && char >= 48 /* Char.Zero */) {
         do {
             char = nextChar();
-        } while (char <= 57 && char >= 48);
+        } while (char <= 57 /* Char.Nine */ && char >= 48 /* Char.Zero */);
     }
     else {
         $currentChar = $charCodeAt(--$index);
     }
     $tokenValue = parseFloat($tokenRaw());
-    return 32768;
+    return 32768 /* Token.NumericLiteral */;
 }
 function scanString() {
     const quote = $currentChar;
-    nextChar();
+    nextChar(); // Skip initial quote.
     let unescaped = 0;
     const buffer = new Array();
     let marker = $index;
     while ($currentChar !== quote) {
-        if ($currentChar === 92) {
+        if ($currentChar === 92 /* Char.Backslash */) {
             buffer.push($input.slice(marker, $index));
             nextChar();
             unescaped = unescapeCode($currentChar);
@@ -3308,18 +3987,19 @@ function scanString() {
         }
     }
     const last = $input.slice(marker, $index);
-    nextChar();
+    nextChar(); // Skip terminating quote.
+    // Compute the unescaped string value.
     buffer.push(last);
     const unescapedStr = buffer.join('');
     $tokenValue = unescapedStr;
-    return 16384;
+    return 16384 /* Token.StringLiteral */;
 }
 function scanTemplate() {
     let tail = true;
     let result = '';
-    while (nextChar() !== 96) {
-        if ($currentChar === 36) {
-            if (($index + 1) < $length && $charCodeAt($index + 1) === 123) {
+    while (nextChar() !== 96 /* Char.Backtick */) {
+        if ($currentChar === 36 /* Char.Dollar */) {
+            if (($index + 1) < $length && $charCodeAt($index + 1) === 123 /* Char.OpenBrace */) {
                 $index++;
                 tail = false;
                 break;
@@ -3328,7 +4008,7 @@ function scanTemplate() {
                 result += '$';
             }
         }
-        else if ($currentChar === 92) {
+        else if ($currentChar === 92 /* Char.Backslash */) {
             result += stringFromCharCode(unescapeCode(nextChar()));
         }
         else {
@@ -3341,9 +4021,9 @@ function scanTemplate() {
     nextChar();
     $tokenValue = result;
     if (tail) {
-        return 2163759;
+        return 2163759 /* Token.TemplateTail */;
     }
-    return 2163760;
+    return 2163760 /* Token.TemplateContinuation */;
 }
 const scanTemplateTail = () => {
     if ($index >= $length) {
@@ -3367,6 +4047,7 @@ const consume = (token) => {
         throw missingExpectedToken(token);
     }
 };
+// #region errors
 const invalidStartOfExpression = () => {
     {
         return createError(`AUR0151: Invalid start of expression: '${$input}'`);
@@ -3444,7 +4125,7 @@ const unterminatedTemplateLiteral = () => {
 };
 const missingExpectedToken = (token) => {
     {
-        return createError(`AUR0167: Missing expected token '${TokenValues[token & 63]}' in '${$input}' `);
+        return createError(`AUR0167: Missing expected token '${TokenValues[token & 63 /* Token.Type */]}' in '${$input}' `);
     }
 };
 const unexpectedCharacter = () => {
@@ -3498,33 +4179,54 @@ const unexpectedDoubleDot = () => {
         return createError(`AUR0179: Unexpected token '.' at position ${$index - 1} in ${$input}`);
     }
 };
+// #endregion
+/**
+ * Array for mapping tokens to token values. The indices of the values
+ * correspond to the token bits 0-38.
+ * For this to work properly, the values in the array must be kept in
+ * the same order as the token bits.
+ * Usage: TokenValues[token & Token.Type]
+ */
 const TokenValues = [
-    $false, $true, $null, $undefined, '$this', null, '$parent',
+    $false, $true, $null, $undefined, '$this', null /* '$host' */, '$parent',
     '(', '{', '.', '..', '...', '?.', '}', ')', ',', '[', ']', ':', ';', '?', '\'', '"',
     '&', '|', '??', '||', '&&', '==', '!=', '===', '!==', '<', '>',
     '<=', '>=', 'in', 'instanceof', '+', '-', 'typeof', 'void', '*', '%', '/', '=', '!',
-    2163759, 2163760,
+    2163759 /* Token.TemplateTail */, 2163760 /* Token.TemplateContinuation */,
     'of', '=>'
 ];
 const KeywordLookup = objectAssign(Object.create(null), {
-    true: 8193,
-    null: 8194,
-    false: 8192,
-    undefined: 8195,
-    $this: 12292,
-    $parent: 12294,
-    in: 6562212,
-    instanceof: 6562213,
-    typeof: 139304,
-    void: 139305,
-    of: 4204593,
+    true: 8193 /* Token.TrueKeyword */,
+    null: 8194 /* Token.NullKeyword */,
+    false: 8192 /* Token.FalseKeyword */,
+    undefined: 8195 /* Token.UndefinedKeyword */,
+    $this: 12292 /* Token.ThisScope */,
+    $parent: 12294 /* Token.ParentScope */,
+    in: 6562212 /* Token.InKeyword */,
+    instanceof: 6562213 /* Token.InstanceOfKeyword */,
+    typeof: 139304 /* Token.TypeofKeyword */,
+    void: 139305 /* Token.VoidKeyword */,
+    of: 4204593 /* Token.OfKeyword */,
 });
+/**
+ * Ranges of code points in pairs of 2 (eg 0x41-0x5B, 0x61-0x7B, ...) where the second value is not inclusive (5-7 means 5 and 6)
+ * Single values are denoted by the second value being a 0
+ *
+ * Copied from output generated with "node build/generate-unicode.js"
+ *
+ * See also: https://en.wikibooks.org/wiki/Unicode/Character_reference/0000-0FFF
+ */
 const codes = {
+    /* [$0-9A-Za_a-z] */
     AsciiIdPart: [0x24, 0, 0x30, 0x3A, 0x41, 0x5B, 0x5F, 0, 0x61, 0x7B],
-    IdStart: [0x24, 0, 0x41, 0x5B, 0x5F, 0, 0x61, 0x7B, 0xAA, 0, 0xBA, 0, 0xC0, 0xD7, 0xD8, 0xF7, 0xF8, 0x2B9, 0x2E0, 0x2E5, 0x1D00, 0x1D26, 0x1D2C, 0x1D5D, 0x1D62, 0x1D66, 0x1D6B, 0x1D78, 0x1D79, 0x1DBF, 0x1E00, 0x1F00, 0x2071, 0, 0x207F, 0, 0x2090, 0x209D, 0x212A, 0x212C, 0x2132, 0, 0x214E, 0, 0x2160, 0x2189, 0x2C60, 0x2C80, 0xA722, 0xA788, 0xA78B, 0xA7AF, 0xA7B0, 0xA7B8, 0xA7F7, 0xA800, 0xAB30, 0xAB5B, 0xAB5C, 0xAB65, 0xFB00, 0xFB07, 0xFF21, 0xFF3B, 0xFF41, 0xFF5B],
-    Digit: [0x30, 0x3A],
-    Skip: [0, 0x21, 0x7F, 0xA1]
+    IdStart: /* IdentifierStart */ [0x24, 0, 0x41, 0x5B, 0x5F, 0, 0x61, 0x7B, 0xAA, 0, 0xBA, 0, 0xC0, 0xD7, 0xD8, 0xF7, 0xF8, 0x2B9, 0x2E0, 0x2E5, 0x1D00, 0x1D26, 0x1D2C, 0x1D5D, 0x1D62, 0x1D66, 0x1D6B, 0x1D78, 0x1D79, 0x1DBF, 0x1E00, 0x1F00, 0x2071, 0, 0x207F, 0, 0x2090, 0x209D, 0x212A, 0x212C, 0x2132, 0, 0x214E, 0, 0x2160, 0x2189, 0x2C60, 0x2C80, 0xA722, 0xA788, 0xA78B, 0xA7AF, 0xA7B0, 0xA7B8, 0xA7F7, 0xA800, 0xAB30, 0xAB5B, 0xAB5C, 0xAB65, 0xFB00, 0xFB07, 0xFF21, 0xFF3B, 0xFF41, 0xFF5B],
+    Digit: /* DecimalNumber */ [0x30, 0x3A],
+    Skip: /* Skippable */ [0, 0x21, 0x7F, 0xA1]
 };
+/**
+ * Decompress the ranges into an array of numbers so that the char code
+ * can be used as an index to the lookup
+ */
 const decompress = (lookup, $set, compressed, value) => {
     const rangeCount = compressed.length;
     for (let i = 0; i < rangeCount; i += 2) {
@@ -3541,15 +4243,21 @@ const decompress = (lookup, $set, compressed, value) => {
         }
     }
 };
+// CharFuncLookup functions
 const returnToken = (token) => () => {
     nextChar();
     return token;
 };
+// ASCII IdentifierPart lookup
 const AsciiIdParts = new Set();
 decompress(null, AsciiIdParts, codes.AsciiIdPart, true);
+// IdentifierPart lookup
 const IdParts = new Uint8Array(0xFFFF);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 decompress(IdParts, null, codes.IdStart, 1);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 decompress(IdParts, null, codes.Digit, 1);
+// Character scanning function lookup
 const CharScanners = new Array(0xFFFF);
 CharScanners.fill(unexpectedCharacter, 0, 0xFFFF);
 decompress(CharScanners, null, codes.Skip, () => {
@@ -3558,111 +4266,125 @@ decompress(CharScanners, null, codes.Skip, () => {
 });
 decompress(CharScanners, null, codes.IdStart, scanIdentifier);
 decompress(CharScanners, null, codes.Digit, () => scanNumber(false));
-CharScanners[34] =
-    CharScanners[39] = () => {
+CharScanners[34 /* Char.DoubleQuote */] =
+    CharScanners[39 /* Char.SingleQuote */] = () => {
         return scanString();
     };
-CharScanners[96] = () => {
+CharScanners[96 /* Char.Backtick */] = () => {
     return scanTemplate();
 };
-CharScanners[33] = () => {
-    if (nextChar() !== 61) {
-        return 131118;
+// !, !=, !==
+CharScanners[33 /* Char.Exclamation */] = () => {
+    if (nextChar() !== 61 /* Char.Equals */) {
+        return 131118 /* Token.Exclamation */;
     }
-    if (nextChar() !== 61) {
-        return 6553949;
+    if (nextChar() !== 61 /* Char.Equals */) {
+        return 6553949 /* Token.ExclamationEquals */;
     }
     nextChar();
-    return 6553951;
+    return 6553951 /* Token.ExclamationEqualsEquals */;
 };
-CharScanners[61] = () => {
-    if (nextChar() === 62) {
+// =, ==, ===, =>
+CharScanners[61 /* Char.Equals */] = () => {
+    if (nextChar() === 62 /* Char.GreaterThan */) {
         nextChar();
-        return 50;
+        return 50 /* Token.Arrow */;
     }
-    if ($currentChar !== 61) {
-        return 4194349;
+    if ($currentChar !== 61 /* Char.Equals */) {
+        return 4194349 /* Token.Equals */;
     }
-    if (nextChar() !== 61) {
-        return 6553948;
-    }
-    nextChar();
-    return 6553950;
-};
-CharScanners[38] = () => {
-    if (nextChar() !== 38) {
-        return 6291479;
+    if (nextChar() !== 61 /* Char.Equals */) {
+        return 6553948 /* Token.EqualsEquals */;
     }
     nextChar();
-    return 6553883;
+    return 6553950 /* Token.EqualsEqualsEquals */;
 };
-CharScanners[124] = () => {
-    if (nextChar() !== 124) {
-        return 6291480;
+// &, &&
+CharScanners[38 /* Char.Ampersand */] = () => {
+    if (nextChar() !== 38 /* Char.Ampersand */) {
+        return 6291479 /* Token.Ampersand */;
     }
     nextChar();
-    return 6553818;
+    return 6553883 /* Token.AmpersandAmpersand */;
 };
-CharScanners[63] = () => {
-    if (nextChar() === 46) {
+// |, ||
+CharScanners[124 /* Char.Bar */] = () => {
+    if (nextChar() !== 124 /* Char.Bar */) {
+        return 6291480 /* Token.Bar */;
+    }
+    nextChar();
+    return 6553818 /* Token.BarBar */;
+};
+// ?, ??, ?.
+CharScanners[63 /* Char.Question */] = () => {
+    if (nextChar() === 46 /* Char.Dot */) {
         const peek = $charCodeAt($index + 1);
-        if (peek <= 48 || peek >= 57) {
+        if (peek <= 48 /* Char.Zero */ || peek >= 57 /* Char.Nine */) {
             nextChar();
-            return 2162700;
+            return 2162700 /* Token.QuestionDot */;
         }
-        return 6291478;
+        return 6291478 /* Token.Question */;
     }
-    if ($currentChar !== 63) {
-        return 6291478;
+    if ($currentChar !== 63 /* Char.Question */) {
+        return 6291478 /* Token.Question */;
     }
     nextChar();
-    return 6553753;
+    return 6553753 /* Token.QuestionQuestion */;
 };
-CharScanners[46] = () => {
-    if (nextChar() <= 57 && $currentChar >= 48) {
+// ., ...
+CharScanners[46 /* Char.Dot */] = () => {
+    if (nextChar() <= 57 /* Char.Nine */ && $currentChar >= 48 /* Char.Zero */) {
         return scanNumber(true);
     }
-    if ($currentChar === 46) {
-        if (nextChar() !== 46) {
-            return 10;
+    if ($currentChar === 46 /* Char.Dot */) {
+        if (nextChar() !== 46 /* Char.Dot */) {
+            return 10 /* Token.DotDot */;
         }
         nextChar();
-        return 11;
+        return 11 /* Token.DotDotDot */;
     }
-    return 65545;
+    return 65545 /* Token.Dot */;
 };
-CharScanners[60] = () => {
-    if (nextChar() !== 61) {
-        return 6554016;
-    }
-    nextChar();
-    return 6554018;
-};
-CharScanners[62] = () => {
-    if (nextChar() !== 61) {
-        return 6554017;
+// <, <=
+CharScanners[60 /* Char.LessThan */] = () => {
+    if (nextChar() !== 61 /* Char.Equals */) {
+        return 6554016 /* Token.LessThan */;
     }
     nextChar();
-    return 6554019;
+    return 6554018 /* Token.LessThanEquals */;
 };
-CharScanners[37] = returnToken(6554155);
-CharScanners[40] = returnToken(2688007);
-CharScanners[41] = returnToken(7340046);
-CharScanners[42] = returnToken(6554154);
-CharScanners[43] = returnToken(2490854);
-CharScanners[44] = returnToken(6291471);
-CharScanners[45] = returnToken(2490855);
-CharScanners[47] = returnToken(6554156);
-CharScanners[58] = returnToken(6291476);
-CharScanners[59] = returnToken(6291477);
-CharScanners[91] = returnToken(2688016);
-CharScanners[93] = returnToken(7340051);
-CharScanners[123] = returnToken(524296);
-CharScanners[125] = returnToken(7340045);
+// >, >=
+CharScanners[62 /* Char.GreaterThan */] = () => {
+    if (nextChar() !== 61 /* Char.Equals */) {
+        return 6554017 /* Token.GreaterThan */;
+    }
+    nextChar();
+    return 6554019 /* Token.GreaterThanEquals */;
+};
+CharScanners[37 /* Char.Percent */] = returnToken(6554155 /* Token.Percent */);
+CharScanners[40 /* Char.OpenParen */] = returnToken(2688007 /* Token.OpenParen */);
+CharScanners[41 /* Char.CloseParen */] = returnToken(7340046 /* Token.CloseParen */);
+CharScanners[42 /* Char.Asterisk */] = returnToken(6554154 /* Token.Asterisk */);
+CharScanners[43 /* Char.Plus */] = returnToken(2490854 /* Token.Plus */);
+CharScanners[44 /* Char.Comma */] = returnToken(6291471 /* Token.Comma */);
+CharScanners[45 /* Char.Minus */] = returnToken(2490855 /* Token.Minus */);
+CharScanners[47 /* Char.Slash */] = returnToken(6554156 /* Token.Slash */);
+CharScanners[58 /* Char.Colon */] = returnToken(6291476 /* Token.Colon */);
+CharScanners[59 /* Char.Semicolon */] = returnToken(6291477 /* Token.Semicolon */);
+CharScanners[91 /* Char.OpenBracket */] = returnToken(2688016 /* Token.OpenBracket */);
+CharScanners[93 /* Char.CloseBracket */] = returnToken(7340051 /* Token.CloseBracket */);
+CharScanners[123 /* Char.OpenBrace */] = returnToken(524296 /* Token.OpenBrace */);
+CharScanners[125 /* Char.CloseBrace */] = returnToken(7340045 /* Token.CloseBrace */);
 
+/**
+ * Current subscription collector
+ */
+// eslint-disable-next-line import/no-mutable-exports
 let _connectable = null;
 const connectables = [];
+// eslint-disable-next-line
 let connecting = false;
+// todo: layer based collection pause/resume?
 function pauseConnecting() {
     connecting = false;
 }
@@ -3716,39 +4438,58 @@ const ConnectableSwitcher = Object.freeze({
 const R$get = Reflect.get;
 const toStringTag = Object.prototype.toString;
 const proxyMap = new WeakMap();
+/** @internal */
 const nowrapClassKey = '__au_nw__';
+/** @internal */
 const nowrapPropKey = '__au_nw';
 function canWrap(obj) {
     switch (toStringTag.call(obj)) {
         case '[object Object]':
+            // enable inheritance decoration
             return obj.constructor[nowrapClassKey] !== true;
         case '[object Array]':
         case '[object Map]':
         case '[object Set]':
+            // it's unlikely that methods on the following 2 objects need to be observed for changes
+            // so while they are valid/ we don't wrap them either
+            // case '[object Math]':
+            // case '[object Reflect]':
             return true;
         default:
             return false;
     }
 }
 const rawKey = '__raw__';
+/** @internal */
 function wrap(v) {
     return canWrap(v) ? getProxy(v) : v;
 }
+/** @internal */
 function getProxy(obj) {
+    // deepscan-disable-next-line
     return proxyMap.get(obj) ?? createProxy(obj);
 }
+/** @internal */
 function getRaw(obj) {
+    // todo: get in a weakmap if null/undef
     return obj[rawKey] ?? obj;
 }
+/** @internal */
 function unwrap(v) {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     return canWrap(v) && v[rawKey] || v;
 }
 function doNotCollect(object, key) {
     return key === 'constructor'
         || key === '__proto__'
+        // probably should revert to v1 naming style for consistency with builtin?
+        // __o__ is shorters & less chance of conflict with other libs as well
         || key === '$observers'
         || key === Symbol.toPrimitive
         || key === Symbol.toStringTag
+        // limit to string first
+        // symbol can be added later
+        // looking up from the constructor means inheritance is supported
         || object.constructor[`${nowrapPropKey}_${safeString(key)}__`] === true;
 }
 function createProxy(obj) {
@@ -3764,6 +4505,7 @@ function createProxy(obj) {
 }
 const objectHandler = {
     get(target, key, receiver) {
+        // maybe use symbol?
         if (key === rawKey) {
             return target;
         }
@@ -3771,12 +4513,14 @@ const objectHandler = {
         if (!connecting || doNotCollect(target, key) || connectable == null) {
             return R$get(target, key, receiver);
         }
+        // todo: static
         connectable.observe(target, key);
         return wrap(R$get(target, key, receiver));
     },
 };
 const arrayHandler = {
     get(target, key, receiver) {
+        // maybe use symbol?
         if (key === rawKey) {
             return target;
         }
@@ -3842,6 +4586,7 @@ const arrayHandler = {
         _connectable.observe(target, key);
         return wrap(R$get(target, key, receiver));
     },
+    // for (let i in array) ...
     ownKeys(target) {
         currentConnectable()?.observe(target, 'length');
         return Reflect.ownKeys(target);
@@ -3849,7 +4594,9 @@ const arrayHandler = {
 };
 function wrappedArrayMap(cb, thisArg) {
     const raw = getRaw(this);
-    const res = raw.map((v, i) => unwrap(cb.call(thisArg, wrap(v), i, this)));
+    const res = raw.map((v, i) => 
+    // do we wrap `thisArg`?
+    unwrap(cb.call(thisArg, wrap(v), i, this)));
     observeCollection(_connectable, raw);
     return wrap(res);
 }
@@ -3861,7 +4608,9 @@ function wrappedArrayEvery(cb, thisArg) {
 }
 function wrappedArrayFilter(cb, thisArg) {
     const raw = getRaw(this);
-    const res = raw.filter((v, i) => unwrap(cb.call(thisArg, wrap(v), i, this)));
+    const res = raw.filter((v, i) => 
+    // do we wrap `thisArg`?
+    unwrap(cb.call(thisArg, wrap(v), i, this)));
     observeCollection(_connectable, raw);
     return wrap(res);
 }
@@ -3960,8 +4709,11 @@ function wrappedReduceRight(cb, initValue) {
     observeCollection(_connectable, raw);
     return wrap(res);
 }
+// the below logic takes inspiration from Vue, Mobx
+// much thanks to them for working out this
 const collectionHandler = {
     get(target, key, receiver) {
+        // maybe use symbol?
         if (key === rawKey) {
             return target;
         }
@@ -4012,7 +4764,7 @@ function wrappedForEach(cb, thisArg) {
     const raw = getRaw(this);
     observeCollection(_connectable, raw);
     return raw.forEach((v, key) => {
-        cb.call(thisArg, wrap(v), wrap(key), this);
+        cb.call(/* should wrap or not?? */ thisArg, wrap(v), wrap(key), this);
     });
 }
 function wrappedHas(v) {
@@ -4077,6 +4829,8 @@ function wrappedEntries() {
     const raw = getRaw(this);
     observeCollection(_connectable, raw);
     const iterator = raw.entries();
+    // return a wrapped iterator which returns observed versions of the
+    // values emitted from the real iterator
     return {
         next() {
             const next = iterator.next();
@@ -4084,6 +4838,7 @@ function wrappedEntries() {
             const done = next.done;
             return done
                 ? { value: void 0, done }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 : { value: [wrap(value[0]), wrap(value[1])], done };
         },
         [Symbol.iterator]() {
@@ -4108,18 +4863,23 @@ class ComputedObserver {
         def(obj, key, {
             enumerable: descriptor.enumerable,
             configurable: true,
-            get: objectAssign((() => observer.getValue()), { getObserver: () => observer }),
-            set: (v) => {
+            get: objectAssign((( /* Computed Observer */) => observer.getValue()), { getObserver: () => observer }),
+            set: (/* Computed Observer */ v) => {
                 observer.setValue(v);
             },
         });
         return observer;
     }
     constructor(obj, get, set, useProxy, observerLocator) {
-        this.type = 1;
+        this.type = 1 /* AccessorType.Observer */;
+        /** @internal */
         this._value = void 0;
+        /** @internal */
         this._oldValue = void 0;
+        // todo: maybe use a counter allow recursive call to a certain level
+        /** @internal */
         this._isRunning = false;
+        /** @internal */
         this._isDirty = false;
         this._obj = obj;
         this.$get = get;
@@ -4137,9 +4897,11 @@ class ComputedObserver {
         }
         return this._value;
     }
+    // deepscan-disable-next-line
     setValue(v) {
         if (isFunction(this.$set)) {
             if (v !== this._value) {
+                // setting running true as a form of batching
                 this._isRunning = true;
                 this.$set.call(this._obj, v);
                 this._isRunning = false;
@@ -4163,6 +4925,9 @@ class ComputedObserver {
         }
     }
     subscribe(subscriber) {
+        // in theory, a collection subscriber could be added before a property subscriber
+        // and it should be handled similarly in subscribeToCollection
+        // though not handling for now, and wait until the merge of normal + collection subscription
         if (this.subs.add(subscriber) && this.subs.count === 1) {
             this.compute();
             this._isDirty = false;
@@ -4204,13 +4969,37 @@ class ComputedObserver {
 }
 connectable(ComputedObserver);
 subscriberCollection(ComputedObserver);
+// a reusable variable for `.flush()` methods of observers
+// so that there doesn't need to create an env record for every call
 let oV$1 = void 0;
 
 const IDirtyChecker = createInterface('IDirtyChecker', x => x.singleton(DirtyChecker));
 const DirtyCheckSettings = {
+    /**
+     * Default: `6`
+     *
+     * Adjust the global dirty check frequency.
+     * Measures in "timeouts per check", such that (given a default of 250 timeouts per second in modern browsers):
+     * - A value of 1 will result in 250 dirty checks per second (or 1 dirty check per second for an inactive tab)
+     * - A value of 25 will result in 10 dirty checks per second (or 1 dirty check per 25 seconds for an inactive tab)
+     */
     timeoutsPerCheck: 25,
+    /**
+     * Default: `false`
+     *
+     * Disable dirty-checking entirely. Properties that cannot be observed without dirty checking
+     * or an adapter, will simply not be observed.
+     */
     disabled: false,
+    /**
+     * Default: `false`
+     *
+     * Throw an error if a property is being dirty-checked.
+     */
     throw: false,
+    /**
+     * Resets all dirty checking settings to the framework's defaults.
+     */
     resetToDefault() {
         this.timeoutsPerCheck = 6;
         this.disabled = false;
@@ -4266,12 +5055,16 @@ class DirtyChecker {
         }
     }
 }
+/**
+ * @internal
+ */
 DirtyChecker.inject = [kernel.IPlatform];
 class DirtyCheckProperty {
     constructor(dirtyChecker, obj, key) {
         this.obj = obj;
         this.key = key;
-        this.type = 0;
+        this.type = 0 /* AccessorType.None */;
+        /** @internal */
         this._oldValue = void 0;
         this._dirtyChecker = dirtyChecker;
     }
@@ -4279,6 +5072,8 @@ class DirtyCheckProperty {
         return this.obj[this.key];
     }
     setValue(_v) {
+        // todo: this should be allowed, probably
+        // but the construction of dirty checker should throw instead
         throw createError(`Trying to set value for property ${safeString(this.key)} in dirty checker`);
     }
     isDirty() {
@@ -4307,11 +5102,12 @@ subscriberCollection(DirtyCheckProperty);
 class PrimitiveObserver {
     get doNotCache() { return true; }
     constructor(obj, key) {
-        this.type = 0;
+        this.type = 0 /* AccessorType.None */;
         this._obj = obj;
         this._key = key;
     }
     getValue() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-explicit-any
         return this._obj[this._key];
     }
     setValue() { }
@@ -4321,7 +5117,9 @@ class PrimitiveObserver {
 
 class PropertyAccessor {
     constructor() {
-        this.type = 0;
+        // the only thing can be guaranteed is it's an object
+        // even if this property accessor is used to access an element
+        this.type = 0 /* AccessorType.None */;
     }
     getValue(obj, key) {
         return obj[key];
@@ -4331,10 +5129,17 @@ class PropertyAccessor {
     }
 }
 
+/**
+ * Observer for the mutation of object property value employing getter-setter strategy.
+ * This is used for observing object properties that has no decorator.
+ */
 class SetterObserver {
     constructor(obj, key) {
-        this.type = 1;
+        // todo(bigopon): tweak the flag based on typeof obj (array/set/map/iterator/proxy etc...)
+        this.type = 1 /* AccessorType.Observer */;
+        /** @internal */
         this._value = void 0;
+        /** @internal */
         this._observing = false;
         this._obj = obj;
         this._key = key;
@@ -4352,6 +5157,12 @@ class SetterObserver {
             this.subs.notify(newValue, oV);
         }
         else {
+            // If subscribe() has been called, the target property descriptor is replaced by these getter/setter methods,
+            // so calling obj[propertyKey] will actually return this.value.
+            // However, if subscribe() was not yet called (indicated by !this.observing), the target descriptor
+            // is unmodified and we need to explicitly set the property value.
+            // This will happen in one-time, to-view and two-way bindings during bind, meaning that the bind will not actually update the target value.
+            // This wasn't visible in vCurrent due to connect-queue always doing a delayed update, so in many cases it didn't matter whether bind updated the target or not.
             this._obj[this._key] = newValue;
         }
     }
@@ -4368,8 +5179,8 @@ class SetterObserver {
             def(this._obj, this._key, {
                 enumerable: true,
                 configurable: true,
-                get: () => this.getValue(),
-                set: (value) => {
+                get: ( /* Setter Observer */) => this.getValue(),
+                set: (/* Setter Observer */ value) => {
                     this.setValue(value);
                 },
             });
@@ -4385,14 +5196,17 @@ class SetterObserver {
                 value: this._value,
             });
             this._observing = false;
+            // todo(bigopon/fred): add .removeAllSubscribers()
         }
         return this;
     }
 }
 class SetterNotifier {
     constructor(obj, callbackKey, set, initialValue) {
-        this.type = 1;
+        this.type = 1 /* AccessorType.Observer */;
+        /** @internal */
         this._value = void 0;
+        /** @internal */
         this._oldValue = void 0;
         this._obj = obj;
         this._setter = set;
@@ -4412,6 +5226,8 @@ class SetterNotifier {
             this._oldValue = this._value;
             this._value = value;
             this.cb?.call(this._obj, this._value, this._oldValue);
+            // this._value might have been updated during the callback
+            // we only want to notify subscribers with the latest values
             oV = this._oldValue;
             this._oldValue = this._value;
             this.subs.notify(this._value, oV);
@@ -4420,6 +5236,8 @@ class SetterNotifier {
 }
 subscriberCollection(SetterObserver);
 subscriberCollection(SetterNotifier);
+// a reusable variable for `.flush()` methods of observers
+// so that there doesn't need to create an env record for every call
 let oV = void 0;
 
 const propertyAccessor = new PropertyAccessor();
@@ -4445,7 +5263,7 @@ class DefaultNodeObserverLocator {
 }
 class ObserverLocator {
     constructor(dirtyChecker, nodeObserverLocator) {
-        this._adapters = [];
+        /** @internal */ this._adapters = [];
         this._dirtyChecker = dirtyChecker;
         this._nodeObserverLocator = nodeObserverLocator;
     }
@@ -4513,6 +5331,7 @@ class ObserverLocator {
                 break;
         }
         let pd = getOwnPropDesc(obj, key);
+        // Only instance properties will yield a descriptor here, otherwise walk up the proto chain
         if (pd === void 0) {
             let proto = getProto(obj);
             while (proto !== null) {
@@ -4525,6 +5344,7 @@ class ObserverLocator {
                 }
             }
         }
+        // If the descriptor does not have a 'value' prop, it must have a getter and/or setter
         if (pd !== void 0 && !hasOwnProp.call(pd, 'value')) {
             let obs = this._getAdapterObserver(obj, key, pd);
             if (obs == null) {
@@ -4532,12 +5352,15 @@ class ObserverLocator {
             }
             return obs == null
                 ? pd.configurable
-                    ? ComputedObserver.create(obj, key, pd, this, true)
+                    ? ComputedObserver.create(obj, key, pd, this, /* AOT: not true for IE11 */ true)
                     : this._dirtyChecker.createProperty(obj, key)
                 : obs;
         }
+        // Ordinary get/set observation (the common use case)
+        // TODO: think about how to handle a data property that does not sit on the instance (should we do anything different?)
         return new SetterObserver(obj, key);
     }
+    /** @internal */
     _getAdapterObserver(obj, key, pd) {
         if (this._adapters.length > 0) {
             for (const adapter of this._adapters) {
@@ -4550,7 +5373,7 @@ class ObserverLocator {
         return null;
     }
 }
-ObserverLocator.inject = [IDirtyChecker, INodeObserverLocator];
+/** @internal */ ObserverLocator.inject = [IDirtyChecker, INodeObserverLocator];
 const getCollectionObserver = (collection) => {
     let obs;
     if (isArray(collection)) {
@@ -4585,8 +5408,13 @@ class Observation {
     constructor(oL) {
         this.oL = oL;
     }
+    /**
+     * Run an effect function an track the dependencies inside it,
+     * to re-run whenever a dependency has changed
+     */
     run(fn) {
         const effect = new Effect(this.oL, fn);
+        // todo: batch effect run after it's in
         effect.run();
         return effect;
     }
@@ -4595,6 +5423,7 @@ class Effect {
     constructor(oL, fn) {
         this.oL = oL;
         this.fn = fn;
+        // to configure this, potentially a 2nd parameter is needed for run
         this.maxRunCount = 10;
         this.queued = false;
         this.running = false;
@@ -4629,6 +5458,10 @@ class Effect {
             this.running = false;
             exitConnectable(this);
         }
+        // when doing this.fn(this), there's a chance that it has recursive effect
+        // continue to run for a certain number before bailing
+        // whenever there's a dependency change while running, this.queued will be true
+        // so we use it as an indicator to continue to run the effect
         if (this.queued) {
             if (this.runCount > this.maxRunCount) {
                 this.runCount = 0;
@@ -4650,19 +5483,40 @@ connectable(Effect);
 function getObserversLookup(obj) {
     if (obj.$observers === void 0) {
         def(obj, '$observers', { value: {} });
+        // todo: define in a weakmap
     }
     return obj.$observers;
 }
 const noValue = {};
+// impl, wont be seen
 function observable(targetOrConfig, key, descriptor) {
+    // either this check, or arguments.length === 3
+    // or could be both, so can throw against user error for better DX
     if (key == null) {
+        // for:
+        //    @observable('prop')
+        //    class {}
+        //
+        //    @observable({ name: 'prop', callback: ... })
+        //    class {}
+        //
+        //    class {
+        //      @observable() prop
+        //      @observable({ callback: ... }) prop2
+        //    }
         return ((t, k, d) => deco(t, k, d, targetOrConfig));
     }
+    // for:
+    //    class {
+    //      @observable prop
+    //    }
     return deco(targetOrConfig, key, descriptor);
     function deco(target, key, descriptor, config) {
+        // class decorator?
         const isClassDecorator = key === void 0;
         config = typeof config !== 'object'
             ? { name: config }
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             : (config || {});
         if (isClassDecorator) {
             key = config.name;
@@ -4670,9 +5524,13 @@ function observable(targetOrConfig, key, descriptor) {
         if (key == null || key === '') {
             throw createError(`AUR0224: Invalid usage, cannot determine property name for @observable`);
         }
+        // determine callback name based on config or convention.
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/strict-boolean-expressions
         const callback = config.callback || `${safeString(key)}Changed`;
         let initialValue = noValue;
         if (descriptor) {
+            // we're adding a getter and setter which means the property descriptor
+            // cannot have a "value" or "writable" attribute
             delete descriptor.value;
             delete descriptor.writable;
             initialValue = descriptor.initializer?.();
@@ -4681,11 +5539,13 @@ function observable(targetOrConfig, key, descriptor) {
         else {
             descriptor = { configurable: true };
         }
+        // make the accessor enumerable by default, as fields are enumerable
         if (!('enumerable' in descriptor)) {
             descriptor.enumerable = true;
         }
+        // todo(bigopon/fred): discuss string api for converter
         const $set = config.set;
-        descriptor.get = function g() {
+        descriptor.get = function g( /* @observable */) {
             const notifier = getNotifier(this, key, callback, initialValue, $set);
             currentConnectable()?.subscribeTo(notifier);
             return notifier.getValue();
@@ -4693,7 +5553,7 @@ function observable(targetOrConfig, key, descriptor) {
         descriptor.set = function s(newValue) {
             getNotifier(this, key, callback, initialValue, $set).setValue(newValue);
         };
-        descriptor.get.getObserver = function gO(obj) {
+        descriptor.get.getObserver = function gO(/* @observable */ obj) {
             return getNotifier(obj, key, callback, initialValue, $set);
         };
         if (isClassDecorator) {
@@ -4713,24 +5573,54 @@ function getNotifier(obj, key, callbackKey, initialValue, set) {
     }
     return notifier;
 }
+/*
+          | typescript       | babel
+----------|------------------|-------------------------
+property  | config           | config
+w/parens  | target, key      | target, key, descriptor
+----------|------------------|-------------------------
+property  | target, key      | target, key, descriptor
+no parens | n/a              | n/a
+----------|------------------|-------------------------
+class     | config           | config
+          | target           | target
+*/
 
+/**
+ * A decorator to signal proxy observation shouldn't make an effort to wrap an object
+ */
 function nowrap(target, key) {
     if (target == null) {
+        // for
+        //    @nowrap()
+        //    class {}
+        // or
+        //    class { @nowrap() prop }
         return (t, k) => deco(t, k);
     }
     else {
+        // for
+        //    @nowrap
+        //    class {}
+        // or
+        //    class {
+        //      @nowrap prop
+        //    }
         return deco(target, key);
     }
     function deco(target, key) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const isClassDecorator = !key;
         if (isClassDecorator) {
             defineHiddenProp(target, nowrapClassKey, true);
         }
         else {
+            // defining on the constructor means inheritance lookup is supported
             defineHiddenProp(target.constructor, `${nowrapPropKey}_${safeString(key)}__`, true);
         }
     }
 }
+/* eslint-enable */
 
 const ISignaler = createInterface('ISignaler', x => x.singleton(Signaler));
 class Signaler {

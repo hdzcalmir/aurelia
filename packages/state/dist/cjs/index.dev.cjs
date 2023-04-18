@@ -6,9 +6,9 @@ var kernel = require('@aurelia/kernel');
 var runtimeHtml = require('@aurelia/runtime-html');
 var runtime = require('@aurelia/runtime');
 
-const IActionHandler = kernel.DI.createInterface('IActionHandler');
-const IStore = kernel.DI.createInterface('IStore');
-const IState = kernel.DI.createInterface('IState');
+const IActionHandler = /*@__PURE__*/ kernel.DI.createInterface('IActionHandler');
+const IStore = /*@__PURE__*/ kernel.DI.createInterface('IStore');
+const IState = /*@__PURE__*/ kernel.DI.createInterface('IState');
 
 const actionHandlerSymbol = '__au_ah__';
 const ActionHandler = Object.freeze({
@@ -30,9 +30,9 @@ class Store {
         kernel.Registration.singleton(IStore, this).register(c);
     }
     constructor(initialState, actionHandlers, logger) {
-        this._subs = new Set();
-        this._dispatching = 0;
-        this._dispatchQueues = [];
+        /** @internal */ this._subs = new Set();
+        /** @internal */ this._dispatching = 0;
+        /** @internal */ this._dispatchQueues = [];
         this._state = initialState ?? new State();
         this._handlers = actionHandlers;
         this._logger = logger;
@@ -55,6 +55,7 @@ class Store {
         }
         this._subs.delete(subscriber);
     }
+    /** @internal */
     _setState(state) {
         const prevState = this._state;
         this._state = state;
@@ -108,19 +109,23 @@ class Store {
         }
     }
 }
-Store.inject = [kernel.optional(IState), kernel.all(IActionHandler), kernel.ILogger];
+/** @internal */ Store.inject = [kernel.optional(IState), kernel.all(IActionHandler), kernel.ILogger];
 class State {
 }
 class StateProxyHandler {
-    constructor(_owner, _logger) {
+    constructor(
+    /** @internal */ _owner, 
+    /** @internal */ _logger) {
         this._owner = _owner;
         this._logger = _logger;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     set(target, prop, value, receiver) {
         this._logger.warn(`Setting State is immutable. Dispatch an action to create a new state`);
         return true;
     }
 }
+/* eslint-enable */
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -144,12 +149,14 @@ function __decorate(decorators, target, key, desc) {
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
 
+/** @internal */
 function createStateBindingScope(state, scope) {
     const overrideContext = { bindingContext: state };
     const stateScope = runtime.Scope.create(state, overrideContext, true);
     stateScope.parent = scope;
     return stateScope;
 }
+/** @internal */
 function isSubscribable$1(v) {
     return v instanceof Object && 'subscribe' in v;
 }
@@ -157,12 +164,14 @@ function isSubscribable$1(v) {
 class StateBinding {
     constructor(controller, locator, observerLocator, taskQueue, ast, target, prop, store) {
         this.isBound = false;
-        this._task = null;
-        this._value = void 0;
-        this._sub = void 0;
-        this._updateCount = 0;
+        /** @internal */ this._task = null;
+        /** @internal */ this._value = void 0;
+        /** @internal */ this._sub = void 0;
+        /** @internal */ this._updateCount = 0;
+        // see Listener binding for explanation
+        /** @internal */
         this.boundFn = false;
-        this.mode = 2;
+        this.mode = 2 /* BindingMode.toView */;
         this._controller = controller;
         this.l = locator;
         this._taskQueue = taskQueue;
@@ -203,7 +212,7 @@ class StateBinding {
         }
         this._targetObserver = this.oL.getAccessor(this.target, this.targetProperty);
         this._store.subscribe(this);
-        this.updateTarget(this._value = runtime.astEvaluate(this.ast, this._scope = createStateBindingScope(this._store.getState(), _scope), this, this.mode > 1 ? this : null));
+        this.updateTarget(this._value = runtime.astEvaluate(this.ast, this._scope = createStateBindingScope(this._store.getState(), _scope), this, this.mode > 1 /* BindingMode.oneTime */ ? this : null));
         this.isBound = true;
     }
     unbind() {
@@ -212,6 +221,7 @@ class StateBinding {
         }
         this.isBound = false;
         this._unsub();
+        // also disregard incoming future value of promise resolution if any
         this._updateCount++;
         this._scope = void 0;
         this._task?.cancel();
@@ -222,13 +232,18 @@ class StateBinding {
         if (!this.isBound) {
             return;
         }
-        const shouldQueueFlush = this._controller.state !== 1 && (this._targetObserver.type & 4) > 0;
+        // Alpha: during bind a simple strategy for bind is always flush immediately
+        // todo:
+        //  (1). determine whether this should be the behavior
+        //  (2). if not, then fix tests to reflect the changes/platform to properly yield all with aurelia.start()
+        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */ && (this._targetObserver.type & 4 /* AccessorType.Layout */) > 0;
         const obsRecord = this.obs;
         obsRecord.version++;
         newValue = runtime.astEvaluate(this.ast, this._scope, this, this);
         obsRecord.clear();
         let task;
         if (shouldQueueFlush) {
+            // Queue the new one before canceling the old one, to prevent early yield
             task = this._task;
             this._task = this._taskQueue.queueTask(() => {
                 this.updateTarget(newValue);
@@ -249,14 +264,15 @@ class StateBinding {
         const _scope = this._scope;
         const overrideContext = _scope.overrideContext;
         _scope.bindingContext = overrideContext.bindingContext = overrideContext.$state = state;
-        const value = runtime.astEvaluate(this.ast, _scope, this, this.mode > 1 ? this : null);
-        const shouldQueueFlush = this._controller.state !== 1 && (this._targetObserver.type & 4) > 0;
+        const value = runtime.astEvaluate(this.ast, _scope, this, this.mode > 1 /* BindingMode.oneTime */ ? this : null);
+        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */ && (this._targetObserver.type & 4 /* AccessorType.Layout */) > 0;
         if (value === this._value) {
             return;
         }
         this._value = value;
         let task = null;
         if (shouldQueueFlush) {
+            // Queue the new one before canceling the old one, to prevent early yield
             task = this._task;
             this._task = this._taskQueue.queueTask(() => {
                 this.updateTarget(value);
@@ -268,6 +284,7 @@ class StateBinding {
             this.updateTarget(this._value);
         }
     }
+    /** @internal */
     _unsub() {
         if (typeof this._sub === 'function') {
             this._sub();
@@ -309,6 +326,7 @@ exports.StateBindingBehavior = class StateBindingBehavior {
             }
             this._store.subscribe(subscriber);
             if (!binding.useScope) {
+                // eslint-disable-next-line no-console
                 console.warn(`Binding ${binding.constructor.name} does not support "state" binding behavior`);
             }
             binding.useScope?.(scope);
@@ -322,7 +340,7 @@ exports.StateBindingBehavior = class StateBindingBehavior {
         }
     }
 };
-exports.StateBindingBehavior.inject = [IStore];
+/** @internal */ exports.StateBindingBehavior.inject = [IStore];
 exports.StateBindingBehavior = __decorate([
     runtimeHtml.bindingBehavior('state')
 ], exports.StateBindingBehavior);
@@ -342,6 +360,8 @@ class StateSubscriber {
 class StateDispatchBinding {
     constructor(locator, expr, target, prop, store) {
         this.isBound = false;
+        // see Listener binding for explanation
+        /** @internal */
         this.boundFn = false;
         this.l = locator;
         this._store = store;
@@ -406,7 +426,7 @@ exports.DispatchAttributePattern = __decorate([
     runtimeHtml.attributePattern({ pattern: 'PART.dispatch', symbols: '.' })
 ], exports.DispatchAttributePattern);
 exports.StateBindingCommand = class StateBindingCommand {
-    get type() { return 0; }
+    get type() { return 0 /* CommandType.None */; }
     get name() { return 'state'; }
     build(info, parser, attrMapper) {
         const attr = info.attr;
@@ -414,10 +434,14 @@ exports.StateBindingCommand = class StateBindingCommand {
         let value = attr.rawValue;
         if (info.bindable == null) {
             target = attrMapper.map(info.node, target)
+                // if the mapper doesn't know how to map it
+                // use the default behavior, which is camel-casing
                 ?? kernel.camelCase(target);
         }
         else {
-            if (value === '' && info.def.type === 1) {
+            // if it looks like: <my-el value.bind>
+            // it means        : <my-el value.bind="value">
+            if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = kernel.camelCase(target);
             }
             target = info.bindable.property;
@@ -429,7 +453,7 @@ exports.StateBindingCommand = __decorate([
     runtimeHtml.bindingCommand('state')
 ], exports.StateBindingCommand);
 exports.DispatchBindingCommand = class DispatchBindingCommand {
-    get type() { return 1; }
+    get type() { return 1 /* CommandType.IgnoreAttr */; }
     get name() { return 'dispatch'; }
     build(info) {
         const attr = info.attr;
@@ -454,27 +478,29 @@ class DispatchBindingInstruction {
     }
 }
 exports.StateBindingInstructionRenderer = class StateBindingInstructionRenderer {
-    constructor(_stateContainer) {
+    constructor(
+    /** @internal */ _stateContainer) {
         this._stateContainer = _stateContainer;
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 8), target, instruction.to, this._stateContainer));
+        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */), target, instruction.to, this._stateContainer));
     }
 };
-exports.StateBindingInstructionRenderer.inject = [IStore];
+/** @internal */ exports.StateBindingInstructionRenderer.inject = [IStore];
 exports.StateBindingInstructionRenderer = __decorate([
     runtimeHtml.renderer('sb')
 ], exports.StateBindingInstructionRenderer);
 exports.DispatchBindingInstructionRenderer = class DispatchBindingInstructionRenderer {
-    constructor(_stateContainer) {
+    constructor(
+    /** @internal */ _stateContainer) {
         this._stateContainer = _stateContainer;
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        const expr = ensureExpression(exprParser, instruction.ast, 16);
+        const expr = ensureExpression(exprParser, instruction.ast, 16 /* ExpressionType.IsProperty */);
         renderingCtrl.addBinding(new StateDispatchBinding(renderingCtrl.container, expr, target, instruction.from, this._stateContainer));
     }
 };
-exports.DispatchBindingInstructionRenderer.inject = [IStore];
+/** @internal */ exports.DispatchBindingInstructionRenderer.inject = [IStore];
 exports.DispatchBindingInstructionRenderer = __decorate([
     runtimeHtml.renderer('sd')
 ], exports.DispatchBindingInstructionRenderer);
@@ -508,9 +534,9 @@ const StateDefaultConfiguration = createConfiguration({}, []);
 let StateGetterBinding = class StateGetterBinding {
     constructor(target, prop, store, getValue) {
         this.isBound = false;
-        this._value = void 0;
-        this._sub = void 0;
-        this._updateCount = 0;
+        /** @internal */ this._value = void 0;
+        /** @internal */ this._sub = void 0;
+        /** @internal */ this._updateCount = 0;
         this._store = store;
         this.$get = getValue;
         this.target = target;
@@ -556,6 +582,7 @@ let StateGetterBinding = class StateGetterBinding {
         }
         this.isBound = false;
         this._unsub();
+        // also disregard incoming future value of promise resolution if any
         this._updateCount++;
         this._scope = void 0;
         this._store.unsubscribe(this);
@@ -571,6 +598,7 @@ let StateGetterBinding = class StateGetterBinding {
         this._value = value;
         this.updateTarget(value);
     }
+    /** @internal */
     _unsub() {
         if (typeof this._sub === 'function') {
             this._sub();
@@ -586,6 +614,17 @@ StateGetterBinding = __decorate([
     runtime.connectable()
 ], StateGetterBinding);
 
+/**
+ * A decorator for component properties whose values derived from global state
+ * Usage example:
+ *
+ * ```ts
+ * class MyComponent {
+ *  \@fromState(s => s.items)
+ *   data: Item[]
+ * }
+ * ```
+ */
 function fromState(getValue) {
     return function (target, key, desc) {
         if (typeof target === 'function') {

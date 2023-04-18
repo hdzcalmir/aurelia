@@ -5,7 +5,10 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var runtimeHtml = require('@aurelia/runtime-html');
 
-const IWcElementRegistry = kernel.DI.createInterface(x => x.singleton(WcCustomElementRegistry));
+const IWcElementRegistry = /*@__PURE__*/ kernel.DI.createInterface(x => x.singleton(WcCustomElementRegistry));
+/**
+ * A default implementation of `IWcElementRegistry` interface.
+ */
 class WcCustomElementRegistry {
     constructor(ctn, p, r) {
         this.ctn = ctn;
@@ -33,6 +36,7 @@ class WcCustomElementRegistry {
         if (elDef.containerless) {
             throw createError('Containerless custom element is not supported. Consider using buitl-in extends instead');
         }
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const BaseClass = options?.extends
             ? this.p.document.createElement(options.extends).constructor
             : this.p.HTMLElement;
@@ -48,16 +52,21 @@ class WcCustomElementRegistry {
                 this.auInited = true;
                 const childCtn = container.createChild();
                 registerResolver(childCtn, p.HTMLElement, registerResolver(childCtn, p.Element, registerResolver(childCtn, runtimeHtml.INode, new kernel.InstanceProvider('ElementProvider', this))));
-                const compiledDef = rendering.compile(elDef, childCtn, { projections: null });
+                const compiledDef = rendering.compile(elDef, childCtn, 
+                // todo: compile existing child element with [au-slot] into here
+                //       complication: what are the scope for the [au-slot] view?
+                { projections: null });
                 const viewModel = childCtn.invoke(compiledDef.Type);
                 const controller = this.auCtrl = runtimeHtml.Controller.$el(childCtn, viewModel, this, null, compiledDef);
                 runtimeHtml.setRef(this, compiledDef.key, controller);
             }
             connectedCallback() {
                 this.auInit();
+                // eslint-disable-next-line
                 this.auCtrl.activate(this.auCtrl, null);
             }
             disconnectedCallback() {
+                // eslint-disable-next-line
                 this.auCtrl.deactivate(this.auCtrl, null);
             }
             adoptedCallback() {
@@ -88,6 +97,7 @@ class WcCustomElementRegistry {
         return CustomElementClass;
     }
 }
+/** @internal */
 WcCustomElementRegistry.inject = [kernel.IContainer, runtimeHtml.IPlatform, runtimeHtml.IRendering];
 const registerResolver = (ctn, key, resolver) => ctn.registerResolver(key, resolver);
 const createError = (message) => new Error(message);

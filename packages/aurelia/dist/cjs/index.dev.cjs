@@ -33,9 +33,12 @@ class Aurelia extends runtimeHtml.Aurelia {
     }
     app(config) {
         if (runtimeHtml.CustomElement.isType(config)) {
+            // Default to custom element element name
             const definition = runtimeHtml.CustomElement.getDefinition(config);
             let host = document.querySelector(definition.name);
             if (host === null) {
+                // When no target is found, default to body.
+                // For example, when user forgot to write <my-app></my-app> in html.
                 host = document.body;
             }
             return super.app({

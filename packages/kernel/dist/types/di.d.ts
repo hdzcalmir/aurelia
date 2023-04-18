@@ -99,7 +99,6 @@ export declare class ContainerConfiguration implements IContainerConfiguration {
     private constructor();
     static from(config?: IContainerConfiguration): ContainerConfiguration;
 }
-export declare const getDependencies: (Type: Constructable | Injectable) => Key[];
 export declare const DI: {
     createContainer: (config?: Partial<IContainerConfiguration>) => IContainer;
     getDesignParamtypes: (Type: Constructable | Injectable) => readonly Key[] | undefined;

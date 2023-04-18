@@ -60,14 +60,14 @@ export class HookInvocationTracker {
         $this.aggregator = void 0;
     }
 }
-export const IHIAConfig = DI.createInterface('IHIAConfig');
+export const IHIAConfig = /*@__PURE__*/ DI.createInterface('IHIAConfig');
 export class HIAConfig {
     constructor(resolveLabels, resolveTimeoutMs) {
         this.resolveLabels = resolveLabels;
         this.resolveTimeoutMs = resolveTimeoutMs;
     }
 }
-export const IHookInvocationAggregator = DI.createInterface('IHookInvocationAggregator', x => x.singleton(HookInvocationAggregator));
+export const IHookInvocationAggregator = /*@__PURE__*/ DI.createInterface('IHookInvocationAggregator', x => x.singleton(HookInvocationAggregator));
 let HookInvocationAggregator = class HookInvocationAggregator {
     constructor(platform, config) {
         this.platform = platform;

@@ -6,21 +6,21 @@ Object.defineProperty(exports, "__esModule", {
 
 var t = require("@aurelia/kernel");
 
-var i = require("@aurelia/validation");
+var e = require("@aurelia/validation");
 
-var s = require("@aurelia/runtime-html");
+var i = require("@aurelia/runtime-html");
 
-var e = require("@aurelia/runtime");
+var s = require("@aurelia/runtime");
 
-function r(t, i, s, e) {
-    var r = arguments.length, n = r < 3 ? i : null === e ? e = Object.getOwnPropertyDescriptor(i, s) : e, o;
-    if ("object" === typeof Reflect && "function" === typeof Reflect.decorate) n = Reflect.decorate(t, i, s, e); else for (var a = t.length - 1; a >= 0; a--) if (o = t[a]) n = (r < 3 ? o(n) : r > 3 ? o(i, s, n) : o(i, s)) || n;
-    return r > 3 && n && Object.defineProperty(i, s, n), n;
+function __decorate(t, e, i, s) {
+    var r = arguments.length, o = r < 3 ? e : s === null ? s = Object.getOwnPropertyDescriptor(e, i) : s, n;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") o = Reflect.decorate(t, e, i, s); else for (var a = t.length - 1; a >= 0; a--) if (n = t[a]) o = (r < 3 ? n(o) : r > 3 ? n(e, i, o) : n(e, i)) || o;
+    return r > 3 && o && Object.defineProperty(e, i, o), o;
 }
 
-function n(t, i) {
-    return function(s, e) {
-        i(s, e, t);
+function __param(t, e) {
+    return function(i, s) {
+        e(i, s, t);
     };
 }
 
@@ -32,98 +32,110 @@ exports.ValidateEventKind = void 0;
 })(exports.ValidateEventKind || (exports.ValidateEventKind = {}));
 
 class ControllerValidateResult {
-    constructor(t, i, s) {
+    constructor(t, e, i) {
         this.valid = t;
-        this.results = i;
-        this.instruction = s;
+        this.results = e;
+        this.instruction = i;
     }
 }
 
 class ValidationResultTarget {
-    constructor(t, i) {
+    constructor(t, e) {
         this.result = t;
-        this.targets = i;
+        this.targets = e;
     }
 }
 
 class ValidationEvent {
-    constructor(t, i, s) {
+    constructor(t, e, i) {
         this.kind = t;
-        this.addedResults = i;
-        this.removedResults = s;
+        this.addedResults = e;
+        this.removedResults = i;
     }
 }
 
 class BindingInfo {
-    constructor(t, i, s, e = void 0) {
+    constructor(t, e, i, s = void 0) {
         this.target = t;
-        this.scope = i;
-        this.rules = s;
-        this.propertyInfo = e;
+        this.scope = e;
+        this.rules = i;
+        this.propertyInfo = s;
     }
 }
 
 class PropertyInfo {
-    constructor(t, i) {
+    constructor(t, e) {
         this.object = t;
-        this.propertyName = i;
+        this.propertyName = e;
     }
 }
 
-function o(t, i) {
-    let s = i.propertyInfo;
-    if (void 0 !== s) return s;
-    const r = i.scope;
-    let n = t.ast.expression;
-    let o = true;
+function getPropertyInfo(t, e) {
+    let i = e.propertyInfo;
+    if (i !== void 0) {
+        return i;
+    }
+    const r = e.scope;
+    let o = t.ast.expression;
+    let n = true;
     let a = "";
-    while (void 0 !== n && 1 !== n?.$kind) {
-        let i;
-        switch (n.$kind) {
+    while (o !== void 0 && o?.$kind !== 1) {
+        let e;
+        switch (o.$kind) {
           case 18:
           case 17:
-            n = n.expression;
+            o = o.expression;
             continue;
 
           case 10:
-            i = n.name;
+            e = o.name;
             break;
 
           case 11:
             {
-                const s = n.key;
-                if (o) o = 4 === s.$kind;
-                i = `[${e.astEvaluate(s, r, t, null).toString()}]`;
+                const i = o.key;
+                if (n) {
+                    n = i.$kind === 4;
+                }
+                e = `[${s.astEvaluate(i, r, t, null).toString()}]`;
                 break;
             }
 
           default:
-            throw new Error(`Unknown expression of type ${n.constructor.name}`);
+            throw new Error(`Unknown expression of type ${o.constructor.name}`);
         }
-        const s = a.startsWith("[") ? "" : ".";
-        a = 0 === a.length ? i : `${i}${s}${a}`;
-        n = n.object;
+        const i = a.startsWith("[") ? "" : ".";
+        a = a.length === 0 ? e : `${e}${i}${a}`;
+        o = o.object;
     }
-    if (void 0 === n) throw new Error(`Unable to parse binding expression: ${t.ast.expression}`);
+    if (o === void 0) {
+        throw new Error(`Unable to parse binding expression: ${t.ast.expression}`);
+    }
     let l;
-    if (0 === a.length) {
-        a = n.name;
+    if (a.length === 0) {
+        a = o.name;
         l = r.bindingContext;
-    } else l = e.astEvaluate(n, r, t, null);
-    if (null === l || void 0 === l) return;
-    s = new PropertyInfo(l, a);
-    if (o) i.propertyInfo = s;
-    return s;
+    } else {
+        l = s.astEvaluate(o, r, t, null);
+    }
+    if (l === null || l === void 0) {
+        return void 0;
+    }
+    i = new PropertyInfo(l, a);
+    if (n) {
+        e.propertyInfo = i;
+    }
+    return i;
 }
 
-const a = t.DI.createInterface("IValidationController");
+const r = /*@__PURE__*/ t.DI.createInterface("IValidationController");
 
 exports.ValidationController = class ValidationController {
-    constructor(t, i, s, e) {
+    constructor(t, e, i, s) {
         this.validator = t;
-        this.parser = i;
-        this.platform = s;
-        this.locator = e;
+        this.parser = e;
+        this.platform = i;
+        this.locator = s;
         this.bindings = new Map;
         this.subscribers = new Set;
         this.results = [];
@@ -131,22 +143,26 @@ exports.ValidationController = class ValidationController {
         this.elements = new WeakMap;
         this.objects = new Map;
     }
-    addObject(t, i) {
-        this.objects.set(t, i);
+    addObject(t, e) {
+        this.objects.set(t, e);
     }
     removeObject(t) {
         this.objects.delete(t);
-        this.processResultDelta("reset", this.results.filter((i => i.object === t)), []);
+        this.processResultDelta("reset", this.results.filter((e => e.object === t)), []);
     }
-    addError(t, s, e) {
+    addError(t, i, s) {
         let r;
-        if (void 0 !== e) [r] = i.parsePropertyName(e, this.parser);
-        const n = new i.ValidationResult(false, t, r, s, void 0, void 0, true);
-        this.processResultDelta("validate", [], [ n ]);
-        return n;
+        if (s !== void 0) {
+            [r] = e.parsePropertyName(s, this.parser);
+        }
+        const o = new e.ValidationResult(false, t, r, i, undefined, undefined, true);
+        this.processResultDelta("validate", [], [ o ]);
+        return o;
     }
     removeError(t) {
-        if (this.results.includes(t)) this.processResultDelta("reset", [ t ], []);
+        if (this.results.includes(t)) {
+            this.processResultDelta("reset", [ t ], []);
+        }
     }
     addSubscriber(t) {
         this.subscribers.add(t);
@@ -154,120 +170,150 @@ exports.ValidationController = class ValidationController {
     removeSubscriber(t) {
         this.subscribers.delete(t);
     }
-    registerBinding(t, i) {
-        this.bindings.set(t, i);
+    registerBinding(t, e) {
+        this.bindings.set(t, e);
     }
     unregisterBinding(t) {
         this.resetBinding(t);
         this.bindings.delete(t);
     }
     async validate(t) {
-        const {object: s, objectTag: e} = t ?? {};
+        const {object: i, objectTag: s} = t ?? {};
         let r;
-        if (void 0 !== s) r = [ new i.ValidateInstruction(s, t.propertyName, t.rules ?? this.objects.get(s), e, t.propertyTag) ]; else r = [ ...Array.from(this.objects.entries()).map((([t, s]) => new i.ValidateInstruction(t, void 0, s, e))), ...(!e ? Array.from(this.bindings.entries()) : []).reduce(((t, [s, e]) => {
-            const r = o(s, e);
-            if (void 0 !== r && !this.objects.has(r.object)) t.push(new i.ValidateInstruction(r.object, r.propertyName, e.rules));
-            return t;
-        }), []) ];
+        if (i !== void 0) {
+            r = [ new e.ValidateInstruction(i, t.propertyName, t.rules ?? this.objects.get(i), s, t.propertyTag) ];
+        } else {
+            r = [ ...Array.from(this.objects.entries()).map((([t, i]) => new e.ValidateInstruction(t, void 0, i, s))), ...(!s ? Array.from(this.bindings.entries()) : []).reduce(((t, [i, s]) => {
+                const r = getPropertyInfo(i, s);
+                if (r !== void 0 && !this.objects.has(r.object)) {
+                    t.push(new e.ValidateInstruction(r.object, r.propertyName, s.rules));
+                }
+                return t;
+            }), []) ];
+        }
         this.validating = true;
-        const n = this.platform.domReadQueue.queueTask((async () => {
+        const o = this.platform.domReadQueue.queueTask((async () => {
             try {
-                const i = await Promise.all(r.map((async t => this.validator.validate(t))));
-                const s = i.reduce(((t, i) => {
-                    t.push(...i);
+                const e = await Promise.all(r.map((async t => this.validator.validate(t))));
+                const i = e.reduce(((t, e) => {
+                    t.push(...e);
                     return t;
                 }), []);
-                const e = this.getInstructionPredicate(t);
-                const n = this.results.filter(e);
-                this.processResultDelta("validate", n, s);
-                return new ControllerValidateResult(void 0 === s.find((t => !t.valid)), s, t);
+                const s = this.getInstructionPredicate(t);
+                const o = this.results.filter(s);
+                this.processResultDelta("validate", o, i);
+                return new ControllerValidateResult(i.find((t => !t.valid)) === void 0, i, t);
             } finally {
                 this.validating = false;
             }
         }));
-        return n.result;
+        return o.result;
     }
     reset(t) {
-        const i = this.getInstructionPredicate(t);
-        const s = this.results.filter(i);
-        this.processResultDelta("reset", s, []);
+        const e = this.getInstructionPredicate(t);
+        const i = this.results.filter(e);
+        this.processResultDelta("reset", i, []);
     }
     async validateBinding(t) {
-        if (!t.isBound) return;
-        const s = this.bindings.get(t);
-        if (void 0 === s) return;
-        const e = o(t, s);
-        const r = s.rules;
-        if (void 0 === e) return;
-        const {object: n, propertyName: a} = e;
-        await this.validate(new i.ValidateInstruction(n, a, r));
+        if (!t.isBound) {
+            return;
+        }
+        const i = this.bindings.get(t);
+        if (i === void 0) {
+            return;
+        }
+        const s = getPropertyInfo(t, i);
+        const r = i.rules;
+        if (s === void 0) {
+            return;
+        }
+        const {object: o, propertyName: n} = s;
+        await this.validate(new e.ValidateInstruction(o, n, r));
     }
     resetBinding(t) {
-        const s = this.bindings.get(t);
-        if (void 0 === s) return;
-        const e = o(t, s);
-        if (void 0 === e) return;
-        s.propertyInfo = void 0;
-        const {object: r, propertyName: n} = e;
-        this.reset(new i.ValidateInstruction(r, n));
+        const i = this.bindings.get(t);
+        if (i === void 0) {
+            return;
+        }
+        const s = getPropertyInfo(t, i);
+        if (s === void 0) {
+            return;
+        }
+        i.propertyInfo = void 0;
+        const {object: r, propertyName: o} = s;
+        this.reset(new e.ValidateInstruction(r, o));
     }
     async revalidateErrors() {
-        const t = this.results.reduce(((t, {isManual: i, object: s, propertyRule: e, rule: r, valid: n}) => {
-            if (!n && !i && void 0 !== e && void 0 !== s && void 0 !== r) {
-                let i = t.get(s);
-                if (void 0 === i) t.set(s, i = new Map);
-                let n = i.get(e);
-                if (void 0 === n) i.set(e, n = []);
-                n.push(r);
+        const t = this.results.reduce(((t, {isManual: e, object: i, propertyRule: s, rule: r, valid: o}) => {
+            if (!o && !e && s !== void 0 && i !== void 0 && r !== void 0) {
+                let e = t.get(i);
+                if (e === void 0) {
+                    t.set(i, e = new Map);
+                }
+                let o = e.get(s);
+                if (o === void 0) {
+                    e.set(s, o = []);
+                }
+                o.push(r);
             }
             return t;
         }), new Map);
-        const s = [];
-        for (const [e, r] of t) s.push(this.validate(new i.ValidateInstruction(e, void 0, Array.from(r).map((([{validationRules: t, messageProvider: s, property: e}, r]) => new i.PropertyRule(this.locator, t, s, e, [ r ]))))));
-        await Promise.all(s);
+        const i = [];
+        for (const [s, r] of t) {
+            i.push(this.validate(new e.ValidateInstruction(s, undefined, Array.from(r).map((([{validationRules: t, messageProvider: i, property: s}, r]) => new e.PropertyRule(this.locator, t, i, s, [ r ]))))));
+        }
+        await Promise.all(i);
     }
     getInstructionPredicate(t) {
-        if (void 0 === t) return () => true;
-        const i = t.propertyName;
-        const s = t.rules;
-        return e => !e.isManual && e.object === t.object && (void 0 === i || e.propertyName === i) && (void 0 === s || s.includes(e.propertyRule) || s.some((t => void 0 === e.propertyRule || t.$rules.flat().every((t => e.propertyRule.$rules.flat().includes(t))))));
-    }
-    getAssociatedElements({object: t, propertyName: i}) {
-        const s = [];
-        for (const [e, r] of this.bindings.entries()) {
-            const n = o(e, r);
-            if (void 0 !== n && n.object === t && n.propertyName === i) s.push(r.target);
+        if (t === void 0) {
+            return () => true;
         }
-        return s;
+        const e = t.propertyName;
+        const i = t.rules;
+        return s => !s.isManual && s.object === t.object && (e === void 0 || s.propertyName === e) && (i === void 0 || i.includes(s.propertyRule) || i.some((t => s.propertyRule === void 0 || t.$rules.flat().every((t => s.propertyRule.$rules.flat().includes(t))))));
     }
-    processResultDelta(t, i, s) {
-        const e = new ValidationEvent(t, [], []);
-        s = s.slice(0);
-        const r = this.elements;
-        for (const t of i) {
-            const i = r.get(t);
-            r.delete(t);
-            e.removedResults.push(new ValidationResultTarget(t, i));
-            const n = s.findIndex((i => i.rule === t.rule && i.object === t.object && i.propertyName === t.propertyName));
-            if (-1 === n) this.results.splice(this.results.indexOf(t), 1); else {
-                const i = s.splice(n, 1)[0];
-                const o = this.getAssociatedElements(i);
-                r.set(i, o);
-                e.addedResults.push(new ValidationResultTarget(i, o));
-                this.results.splice(this.results.indexOf(t), 1, i);
+    getAssociatedElements({object: t, propertyName: e}) {
+        const i = [];
+        for (const [s, r] of this.bindings.entries()) {
+            const o = getPropertyInfo(s, r);
+            if (o !== void 0 && o.object === t && o.propertyName === e) {
+                i.push(r.target);
             }
         }
-        for (const t of s) {
-            const i = this.getAssociatedElements(t);
-            e.addedResults.push(new ValidationResultTarget(t, i));
-            r.set(t, i);
+        return i;
+    }
+    processResultDelta(t, e, i) {
+        const s = new ValidationEvent(t, [], []);
+        i = i.slice(0);
+        const r = this.elements;
+        for (const t of e) {
+            const e = r.get(t);
+            r.delete(t);
+            s.removedResults.push(new ValidationResultTarget(t, e));
+            const o = i.findIndex((e => e.rule === t.rule && e.object === t.object && e.propertyName === t.propertyName));
+            if (o === -1) {
+                this.results.splice(this.results.indexOf(t), 1);
+            } else {
+                const e = i.splice(o, 1)[0];
+                const n = this.getAssociatedElements(e);
+                r.set(e, n);
+                s.addedResults.push(new ValidationResultTarget(e, n));
+                this.results.splice(this.results.indexOf(t), 1, e);
+            }
+        }
+        for (const t of i) {
+            const e = this.getAssociatedElements(t);
+            s.addedResults.push(new ValidationResultTarget(t, e));
+            r.set(t, e);
             this.results.push(t);
         }
-        for (const t of this.subscribers) t.handleValidationEvent(e);
+        for (const t of this.subscribers) {
+            t.handleValidationEvent(s);
+        }
     }
 };
 
-exports.ValidationController = r([ n(0, i.IValidator), n(1, e.IExpressionParser), n(2, s.IPlatform), n(3, t.IServiceLocator) ], exports.ValidationController);
+exports.ValidationController = __decorate([ __param(0, e.IValidator), __param(1, s.IExpressionParser), __param(2, i.IPlatform), __param(3, t.IServiceLocator) ], exports.ValidationController);
 
 class ValidationControllerFactory {
     constructor() {
@@ -276,13 +322,13 @@ class ValidationControllerFactory {
     registerTransformer(t) {
         return false;
     }
-    construct(t, i) {
-        return t.invoke(exports.ValidationController, i);
+    construct(t, e) {
+        return t.invoke(exports.ValidationController, e);
     }
 }
 
-function l(t, i) {
-    switch (2 & t.compareDocumentPosition(i)) {
+function compareDocumentPositionFlat(t, e) {
+    switch (t.compareDocumentPosition(e) & 2) {
       case 0:
         return 0;
 
@@ -294,9 +340,9 @@ function l(t, i) {
     }
 }
 
-const h = `\n<slot></slot>\n<slot name='secondary'>\n  <span repeat.for="error of errors">\n    \${error.result.message}\n  </span>\n</slot>\n`;
+const o = `\n<slot></slot>\n<slot name='secondary'>\n  <span repeat.for="error of errors">\n    \${error.result.message}\n  </span>\n</slot>\n`;
 
-const c = {
+const n = {
     name: "validation-container",
     shadowOptions: {
         mode: "open"
@@ -305,24 +351,32 @@ const c = {
 };
 
 exports.ValidationContainerCustomElement = class ValidationContainerCustomElement {
-    constructor(t, i) {
+    constructor(t, e) {
         this.host = t;
-        this.scopedController = i;
+        this.scopedController = e;
         this.errors = [];
     }
     handleValidationEvent(t) {
-        for (const {result: i} of t.removedResults) {
-            const t = this.errors.findIndex((t => t.result === i));
-            if (-1 !== t) this.errors.splice(t, 1);
+        for (const {result: e} of t.removedResults) {
+            const t = this.errors.findIndex((t => t.result === e));
+            if (t !== -1) {
+                this.errors.splice(t, 1);
+            }
         }
-        for (const {result: i, targets: s} of t.addedResults) {
-            if (i.valid) continue;
-            const t = s.filter((t => this.host.contains(t)));
-            if (t.length > 0) this.errors.push(new ValidationResultTarget(i, t));
+        for (const {result: e, targets: i} of t.addedResults) {
+            if (e.valid) {
+                continue;
+            }
+            const t = i.filter((t => this.host.contains(t)));
+            if (t.length > 0) {
+                this.errors.push(new ValidationResultTarget(e, t));
+            }
         }
-        this.errors.sort(((t, i) => {
-            if (t.targets[0] === i.targets[0]) return 0;
-            return l(t.targets[0], i.targets[0]);
+        this.errors.sort(((t, e) => {
+            if (t.targets[0] === e.targets[0]) {
+                return 0;
+            }
+            return compareDocumentPositionFlat(t.targets[0], e.targets[0]);
         }));
     }
     binding() {
@@ -334,32 +388,40 @@ exports.ValidationContainerCustomElement = class ValidationContainerCustomElemen
     }
 };
 
-r([ s.bindable ], exports.ValidationContainerCustomElement.prototype, "controller", void 0);
+__decorate([ i.bindable ], exports.ValidationContainerCustomElement.prototype, "controller", void 0);
 
-r([ s.bindable ], exports.ValidationContainerCustomElement.prototype, "errors", void 0);
+__decorate([ i.bindable ], exports.ValidationContainerCustomElement.prototype, "errors", void 0);
 
-exports.ValidationContainerCustomElement = r([ n(0, s.INode), n(1, t.optional(a)) ], exports.ValidationContainerCustomElement);
+exports.ValidationContainerCustomElement = __decorate([ __param(0, i.INode), __param(1, t.optional(r)) ], exports.ValidationContainerCustomElement);
 
 exports.ValidationErrorsCustomAttribute = class ValidationErrorsCustomAttribute {
-    constructor(t, i) {
+    constructor(t, e) {
         this.host = t;
-        this.scopedController = i;
+        this.scopedController = e;
         this.errors = [];
         this.errorsInternal = [];
     }
     handleValidationEvent(t) {
-        for (const {result: i} of t.removedResults) {
-            const t = this.errorsInternal.findIndex((t => t.result === i));
-            if (-1 !== t) this.errorsInternal.splice(t, 1);
+        for (const {result: e} of t.removedResults) {
+            const t = this.errorsInternal.findIndex((t => t.result === e));
+            if (t !== -1) {
+                this.errorsInternal.splice(t, 1);
+            }
         }
-        for (const {result: i, targets: s} of t.addedResults) {
-            if (i.valid) continue;
-            const t = s.filter((t => this.host.contains(t)));
-            if (t.length > 0) this.errorsInternal.push(new ValidationResultTarget(i, t));
+        for (const {result: e, targets: i} of t.addedResults) {
+            if (e.valid) {
+                continue;
+            }
+            const t = i.filter((t => this.host.contains(t)));
+            if (t.length > 0) {
+                this.errorsInternal.push(new ValidationResultTarget(e, t));
+            }
         }
-        this.errorsInternal.sort(((t, i) => {
-            if (t.targets[0] === i.targets[0]) return 0;
-            return l(t.targets[0], i.targets[0]);
+        this.errorsInternal.sort(((t, e) => {
+            if (t.targets[0] === e.targets[0]) {
+                return 0;
+            }
+            return compareDocumentPositionFlat(t.targets[0], e.targets[0]);
         }));
         this.errors = this.errorsInternal;
     }
@@ -372,14 +434,14 @@ exports.ValidationErrorsCustomAttribute = class ValidationErrorsCustomAttribute 
     }
 };
 
-r([ s.bindable ], exports.ValidationErrorsCustomAttribute.prototype, "controller", void 0);
+__decorate([ i.bindable ], exports.ValidationErrorsCustomAttribute.prototype, "controller", void 0);
 
-r([ s.bindable({
+__decorate([ i.bindable({
     primary: true,
     mode: 6
 }) ], exports.ValidationErrorsCustomAttribute.prototype, "errors", void 0);
 
-exports.ValidationErrorsCustomAttribute = r([ s.customAttribute("validation-errors"), n(0, s.INode), n(1, t.optional(a)) ], exports.ValidationErrorsCustomAttribute);
+exports.ValidationErrorsCustomAttribute = __decorate([ i.customAttribute("validation-errors"), __param(0, i.INode), __param(1, t.optional(r)) ], exports.ValidationErrorsCustomAttribute);
 
 exports.ValidationTrigger = void 0;
 
@@ -392,325 +454,387 @@ exports.ValidationTrigger = void 0;
     t["changeOrFocusout"] = "changeOrFocusout";
 })(exports.ValidationTrigger || (exports.ValidationTrigger = {}));
 
-const u = t.DI.createInterface("IDefaultTrigger");
+const a = /*@__PURE__*/ t.DI.createInterface("IDefaultTrigger");
 
-const d = new WeakMap;
+const l = new WeakMap;
 
-const f = new WeakMap;
+const h = new WeakMap;
 
 exports.ValidateBindingBehavior = class ValidateBindingBehavior {
-    constructor(t, i) {
+    constructor(t, e) {
         this.p = t;
-        this.oL = i;
+        this.oL = e;
     }
-    bind(i, e) {
-        if (!(e instanceof s.PropertyBinding)) throw new Error("Validate behavior used on non property binding");
-        let r = d.get(e);
-        if (null == r) d.set(e, r = new ValidatitionConnector(this.p, this.oL, e.get(u), e, e.get(t.IContainer)));
-        let n = f.get(e);
-        if (null == n) f.set(e, n = new WithValidationTargetSubscriber(r, e, e.get(s.IFlushQueue)));
-        r.start(i);
-        e.useTargetSubscriber(n);
+    bind(e, s) {
+        if (!(s instanceof i.PropertyBinding)) {
+            throw new Error("Validate behavior used on non property binding");
+        }
+        let r = l.get(s);
+        if (r == null) {
+            l.set(s, r = new ValidatitionConnector(this.p, this.oL, s.get(a), s, s.get(t.IContainer)));
+        }
+        let o = h.get(s);
+        if (o == null) {
+            h.set(s, o = new WithValidationTargetSubscriber(r, s, s.get(i.IFlushQueue)));
+        }
+        r.start(e);
+        s.useTargetSubscriber(o);
     }
-    unbind(t, i) {
-        d.get(i)?.stop();
+    unbind(t, e) {
+        l.get(e)?.stop();
     }
 };
 
-exports.ValidateBindingBehavior.inject = [ s.IPlatform, e.IObserverLocator ];
+exports.ValidateBindingBehavior.inject = [ i.IPlatform, s.IObserverLocator ];
 
-exports.ValidateBindingBehavior = r([ s.bindingBehavior("validate") ], exports.ValidateBindingBehavior);
+exports.ValidateBindingBehavior = __decorate([ i.bindingBehavior("validate") ], exports.ValidateBindingBehavior);
 
 class ValidatitionConnector {
-    constructor(t, i, s, e, r) {
+    constructor(t, e, i, s, o) {
         this.isChangeTrigger = false;
         this.isDirty = false;
         this.validatedOnce = false;
         this.triggerEvent = null;
         this.task = null;
-        this.propertyBinding = e;
-        this.target = e.target;
-        this.defaultTrigger = s;
+        this.propertyBinding = s;
+        this.target = s.target;
+        this.defaultTrigger = i;
         this.p = t;
-        this.oL = i;
-        this.l = r;
-        this.t = new BindingMediator("handleTriggerChange", this, i, r);
-        this.i = new BindingMediator("handleControllerChange", this, i, r);
-        this.h = new BindingMediator("handleRulesChange", this, i, r);
-        if (r.has(a, true)) this.scopedController = r.get(a);
+        this.oL = e;
+        this.l = o;
+        this.t = new BindingMediator("handleTriggerChange", this, e, o);
+        this.i = new BindingMediator("handleControllerChange", this, e, o);
+        this.h = new BindingMediator("handleRulesChange", this, e, o);
+        if (o.has(r, true)) {
+            this.scopedController = o.get(r);
+        }
     }
     u() {
         this.isDirty = true;
         const t = this.triggerEvent;
-        if (this.isChangeTrigger && (null === t || null !== t && this.validatedOnce)) this.validateBinding();
+        if (this.isChangeTrigger && (t === null || t !== null && this.validatedOnce)) {
+            this.validateBinding();
+        }
     }
     handleEvent(t) {
-        if (!this.isChangeTrigger || this.isChangeTrigger && this.isDirty) this.validateBinding();
+        if (!this.isChangeTrigger || this.isChangeTrigger && this.isDirty) {
+            this.validateBinding();
+        }
     }
     start(t) {
         this.scope = t;
-        this.target = this.V();
-        const i = this.C();
-        this.R(i);
+        this.target = this._();
+        const e = this.V();
+        this.C(e);
     }
     stop() {
         this.task?.cancel();
         this.scope = void 0;
         this.task = null;
         const t = this.triggerEvent;
-        if (null !== t) this.target?.removeEventListener(t, this);
+        if (t !== null) {
+            this.target?.removeEventListener(t, this);
+        }
         this.controller?.removeSubscriber(this);
     }
-    handleTriggerChange(t, i) {
-        this.R(new ValidateArgumentsDelta(void 0, this.B(t), void 0));
+    handleTriggerChange(t, e) {
+        this.C(new ValidateArgumentsDelta(void 0, this.R(t), void 0));
     }
-    handleControllerChange(t, i) {
-        this.R(new ValidateArgumentsDelta(this.T(t), void 0, void 0));
+    handleControllerChange(t, e) {
+        this.C(new ValidateArgumentsDelta(this.B(t), void 0, void 0));
     }
-    handleRulesChange(t, i) {
-        this.R(new ValidateArgumentsDelta(void 0, void 0, this.M(t)));
+    handleRulesChange(t, e) {
+        this.C(new ValidateArgumentsDelta(void 0, void 0, this.T(t)));
     }
     handleValidationEvent(t) {
         if (this.validatedOnce || !this.isChangeTrigger) return;
-        const i = this.triggerEvent;
-        if (null === i) return;
-        const s = this.bindingInfo.propertyInfo?.propertyName;
-        if (void 0 === s) return;
-        this.validatedOnce = void 0 !== t.addedResults.find((t => t.result.propertyName === s));
+        const e = this.triggerEvent;
+        if (e === null) return;
+        const i = this.bindingInfo.propertyInfo?.propertyName;
+        if (i === void 0) return;
+        this.validatedOnce = t.addedResults.find((t => t.result.propertyName === i)) !== void 0;
     }
-    C() {
+    V() {
         const t = this.scope;
+        let e;
         let i;
-        let s;
         let r;
-        let n = this.propertyBinding.ast;
-        while ("validate" !== n.name && void 0 !== n) n = n.expression;
-        const o = n.args;
-        for (let n = 0, a = o.length; n < a; n++) {
-            const a = o[n];
-            switch (n) {
+        let o = this.propertyBinding.ast;
+        while (o.name !== "validate" && o !== void 0) {
+            o = o.expression;
+        }
+        const n = o.args;
+        for (let o = 0, a = n.length; o < a; o++) {
+            const a = n[o];
+            switch (o) {
               case 0:
-                s = this.B(e.astEvaluate(a, t, this, this.t));
+                i = this.R(s.astEvaluate(a, t, this, this.t));
                 break;
 
               case 1:
-                r = this.T(e.astEvaluate(a, t, this, this.i));
+                r = this.B(s.astEvaluate(a, t, this, this.i));
                 break;
 
               case 2:
-                i = this.M(e.astEvaluate(a, t, this, this.h));
+                e = this.T(s.astEvaluate(a, t, this, this.h));
                 break;
 
               default:
-                throw new Error(`Unconsumed argument#${n + 1} for validate binding behavior: ${e.astEvaluate(a, t, this, null)}`);
+                throw new Error(`Unconsumed argument#${o + 1} for validate binding behavior: ${s.astEvaluate(a, t, this, null)}`);
             }
         }
-        return new ValidateArgumentsDelta(this.T(r), this.B(s), i);
+        return new ValidateArgumentsDelta(this.B(r), this.R(i), e);
     }
     validateBinding() {
         const t = this.task;
         this.task = this.p.domReadQueue.queueTask((() => this.controller.validateBinding(this.propertyBinding)));
-        if (t !== this.task) t?.cancel();
+        if (t !== this.task) {
+            t?.cancel();
+        }
     }
-    R(t) {
-        const i = t.trigger ?? this.trigger;
-        const s = t.controller ?? this.controller;
-        const e = t.rules;
-        if (this.trigger !== i) {
+    C(t) {
+        const e = t.trigger ?? this.trigger;
+        const i = t.controller ?? this.controller;
+        const s = t.rules;
+        if (this.trigger !== e) {
             let t = this.triggerEvent;
-            if (null !== t) this.target.removeEventListener(t, this);
+            if (t !== null) {
+                this.target.removeEventListener(t, this);
+            }
             this.validatedOnce = false;
             this.isDirty = false;
-            this.trigger = i;
-            this.isChangeTrigger = i === exports.ValidationTrigger.change || i === exports.ValidationTrigger.changeOrBlur || i === exports.ValidationTrigger.changeOrFocusout;
-            t = this.triggerEvent = this.j(this.trigger);
-            if (null !== t) this.target.addEventListener(t, this);
+            this.trigger = e;
+            this.isChangeTrigger = e === exports.ValidationTrigger.change || e === exports.ValidationTrigger.changeOrBlur || e === exports.ValidationTrigger.changeOrFocusout;
+            t = this.triggerEvent = this.M(this.trigger);
+            if (t !== null) {
+                this.target.addEventListener(t, this);
+            }
         }
-        if (this.controller !== s || void 0 !== e) {
+        if (this.controller !== i || s !== void 0) {
             this.controller?.removeSubscriber(this);
             this.controller?.unregisterBinding(this.propertyBinding);
-            this.controller = s;
-            s.registerBinding(this.propertyBinding, this.$(e));
-            s.addSubscriber(this);
+            this.controller = i;
+            i.registerBinding(this.propertyBinding, this.P(s));
+            i.addSubscriber(this);
         }
     }
+    R(t) {
+        if (t === void 0 || t === null) {
+            t = this.defaultTrigger;
+        } else if (!Object.values(exports.ValidationTrigger).includes(t)) {
+            throw new Error(`${t} is not a supported validation trigger`);
+        }
+        return t;
+    }
     B(t) {
-        if (void 0 === t || null === t) t = this.defaultTrigger; else if (!Object.values(exports.ValidationTrigger).includes(t)) throw new Error(`${t} is not a supported validation trigger`);
+        if (t === void 0 || t === null) {
+            t = this.scopedController;
+        } else if (!(t instanceof exports.ValidationController)) {
+            throw new Error(`${t} is not of type ValidationController`);
+        }
         return t;
     }
     T(t) {
-        if (void 0 === t || null === t) t = this.scopedController; else if (!(t instanceof exports.ValidationController)) throw new Error(`${t} is not of type ValidationController`);
-        return t;
-    }
-    M(t) {
-        if (Array.isArray(t) && t.every((t => t instanceof i.PropertyRule))) return t;
-    }
-    V() {
-        const t = this.propertyBinding.target;
-        if (t instanceof this.p.Node) return t; else {
-            const i = t?.$controller;
-            if (void 0 === i) throw new Error("Invalid binding target");
-            return i.host;
+        if (Array.isArray(t) && t.every((t => t instanceof e.PropertyRule))) {
+            return t;
         }
     }
-    j(t) {
-        let i = null;
+    _() {
+        const t = this.propertyBinding.target;
+        if (t instanceof this.p.Node) {
+            return t;
+        } else {
+            const e = t?.$controller;
+            if (e === void 0) {
+                throw new Error("Invalid binding target");
+            }
+            return e.host;
+        }
+    }
+    M(t) {
+        let e = null;
         switch (t) {
           case exports.ValidationTrigger.blur:
           case exports.ValidationTrigger.changeOrBlur:
-            i = "blur";
+            e = "blur";
             break;
 
           case exports.ValidationTrigger.focusout:
           case exports.ValidationTrigger.changeOrFocusout:
-            i = "focusout";
+            e = "focusout";
             break;
         }
-        return i;
+        return e;
     }
-    $(t) {
+    P(t) {
         return this.bindingInfo = new BindingInfo(this.target, this.scope, t);
     }
 }
 
-ValidatitionConnector.inject = [ s.IPlatform, e.IObserverLocator, u ];
+ValidatitionConnector.inject = [ i.IPlatform, s.IObserverLocator, a ];
 
-e.connectable()(ValidatitionConnector);
+s.connectable()(ValidatitionConnector);
 
-s.mixinAstEvaluator(true)(ValidatitionConnector);
+i.mixinAstEvaluator(true)(ValidatitionConnector);
 
-class WithValidationTargetSubscriber extends s.BindingTargetSubscriber {
-    constructor(t, i, s) {
-        super(i, s);
-        this.A = t;
+class WithValidationTargetSubscriber extends i.BindingTargetSubscriber {
+    constructor(t, e, i) {
+        super(e, i);
+        this.I = t;
     }
-    handleChange(t, i) {
-        super.handleChange(t, i);
-        this.A.u();
+    handleChange(t, e) {
+        super.handleChange(t, e);
+        this.I.u();
     }
 }
 
 class ValidateArgumentsDelta {
-    constructor(t, i, s) {
+    constructor(t, e, i) {
         this.controller = t;
-        this.trigger = i;
-        this.rules = s;
+        this.trigger = e;
+        this.rules = i;
     }
 }
 
 class BindingMediator {
-    constructor(t, i, s, e) {
+    constructor(t, e, i, s) {
         this.key = t;
-        this.binding = i;
-        this.oL = s;
-        this.l = e;
+        this.binding = e;
+        this.oL = i;
+        this.l = s;
     }
-    handleChange(t, i) {
-        this.binding[this.key](t, i);
+    handleChange(t, e) {
+        this.binding[this.key](t, e);
     }
 }
 
-e.connectable()(BindingMediator);
+s.connectable()(BindingMediator);
 
-s.mixinAstEvaluator(true)(BindingMediator);
+i.mixinAstEvaluator(true)(BindingMediator);
 
-function p() {
+function getDefaultValidationHtmlConfiguration() {
     return {
-        ...i.getDefaultValidationConfiguration(),
+        ...e.getDefaultValidationConfiguration(),
         ValidationControllerFactoryType: ValidationControllerFactory,
         DefaultTrigger: exports.ValidationTrigger.focusout,
         UseSubscriberCustomAttribute: true,
-        SubscriberCustomElementTemplate: h
+        SubscriberCustomElementTemplate: o
     };
 }
 
-function v(e) {
+function createConfiguration(s) {
     return {
-        optionsProvider: e,
-        register(r) {
-            const n = p();
-            e(n);
-            r.registerFactory(a, new n.ValidationControllerFactoryType);
-            r.register(i.ValidationConfiguration.customize((t => {
-                for (const i of Object.keys(t)) if (i in n) t[i] = n[i];
-            })), t.Registration.instance(u, n.DefaultTrigger), exports.ValidateBindingBehavior);
-            if (n.UseSubscriberCustomAttribute) r.register(exports.ValidationErrorsCustomAttribute);
-            const o = n.SubscriberCustomElementTemplate;
-            if (o) r.register(s.CustomElement.define({
-                ...c,
-                template: o
-            }, exports.ValidationContainerCustomElement));
-            return r;
+        optionsProvider: s,
+        register(o) {
+            const l = getDefaultValidationHtmlConfiguration();
+            s(l);
+            o.registerFactory(r, new l.ValidationControllerFactoryType);
+            o.register(e.ValidationConfiguration.customize((t => {
+                for (const e of Object.keys(t)) {
+                    if (e in l) {
+                        t[e] = l[e];
+                    }
+                }
+            })), t.Registration.instance(a, l.DefaultTrigger), exports.ValidateBindingBehavior);
+            if (l.UseSubscriberCustomAttribute) {
+                o.register(exports.ValidationErrorsCustomAttribute);
+            }
+            const h = l.SubscriberCustomElementTemplate;
+            if (h) {
+                o.register(i.CustomElement.define({
+                    ...n,
+                    template: h
+                }, exports.ValidationContainerCustomElement));
+            }
+            return o;
         },
         customize(t) {
-            return v(t ?? e);
+            return createConfiguration(t ?? s);
         }
     };
 }
 
-const g = v(t.noop);
+const c = createConfiguration(t.noop);
 
-const w = "validation-result-id";
+const u = "validation-result-id";
 
-const x = "validation-result-container";
+const d = "validation-result-container";
 
-const b = t.DI.createInterface("IValidationResultPresenterService", (t => t.transient(exports.ValidationResultPresenterService)));
+const f = /*@__PURE__*/ t.DI.createInterface("IValidationResultPresenterService", (t => t.transient(exports.ValidationResultPresenterService)));
 
 exports.ValidationResultPresenterService = class ValidationResultPresenterService {
     constructor(t) {
         this.platform = t;
     }
     handleValidationEvent(t) {
-        for (const [i, s] of this.reverseMap(t.removedResults)) this.remove(i, s);
-        for (const [i, s] of this.reverseMap(t.addedResults)) this.add(i, s);
+        for (const [e, i] of this.reverseMap(t.removedResults)) {
+            this.remove(e, i);
+        }
+        for (const [e, i] of this.reverseMap(t.addedResults)) {
+            this.add(e, i);
+        }
     }
-    remove(t, i) {
-        const s = this.getValidationMessageContainer(t);
-        if (null === s) return;
-        this.removeResults(s, i);
+    remove(t, e) {
+        const i = this.getValidationMessageContainer(t);
+        if (i === null) {
+            return;
+        }
+        this.removeResults(i, e);
     }
-    add(t, i) {
-        const s = this.getValidationMessageContainer(t);
-        if (null === s) return;
-        this.showResults(s, i);
+    add(t, e) {
+        const i = this.getValidationMessageContainer(t);
+        if (i === null) {
+            return;
+        }
+        this.showResults(i, e);
     }
     getValidationMessageContainer(t) {
-        const i = t.parentElement;
-        if (null === i) return null;
-        let s = i.querySelector(`[${x}]`);
-        if (null === s) {
-            s = this.platform.document.createElement("div");
-            s.setAttribute(x, "");
-            i.appendChild(s);
+        const e = t.parentElement;
+        if (e === null) {
+            return null;
         }
-        return s;
+        let i = e.querySelector(`[${d}]`);
+        if (i === null) {
+            i = this.platform.document.createElement("div");
+            i.setAttribute(d, "");
+            e.appendChild(i);
+        }
+        return i;
     }
-    showResults(t, i) {
-        t.append(...i.reduce(((t, i) => {
-            if (!i.valid) {
-                const s = this.platform.document.createElement("span");
-                s.setAttribute(w, i.id.toString());
-                s.textContent = i.message;
-                t.push(s);
+    showResults(t, e) {
+        t.append(...e.reduce(((t, e) => {
+            if (!e.valid) {
+                const i = this.platform.document.createElement("span");
+                i.setAttribute(u, e.id.toString());
+                i.textContent = e.message;
+                t.push(i);
             }
             return t;
         }), []));
     }
-    removeResults(t, i) {
-        for (const s of i) if (!s.valid) t.querySelector(`[${w}="${s.id}"]`)?.remove();
+    removeResults(t, e) {
+        for (const i of e) {
+            if (!i.valid) {
+                t.querySelector(`[${u}="${i.id}"]`)?.remove();
+            }
+        }
     }
     reverseMap(t) {
-        const i = new Map;
-        for (const {result: s, targets: e} of t) for (const t of e) {
-            let e = i.get(t);
-            if (void 0 === e) i.set(t, e = []);
-            e.push(s);
+        const e = new Map;
+        for (const {result: i, targets: s} of t) {
+            for (const t of s) {
+                let s = e.get(t);
+                if (s === void 0) {
+                    e.set(t, s = []);
+                }
+                s.push(i);
+            }
         }
-        return i;
+        return e;
     }
 };
 
-exports.ValidationResultPresenterService = r([ n(0, s.IPlatform) ], exports.ValidationResultPresenterService);
+exports.ValidationResultPresenterService = __decorate([ __param(0, i.IPlatform) ], exports.ValidationResultPresenterService);
 
 exports.BindingInfo = BindingInfo;
 
@@ -718,25 +842,25 @@ exports.BindingMediator = BindingMediator;
 
 exports.ControllerValidateResult = ControllerValidateResult;
 
-exports.IDefaultTrigger = u;
+exports.IDefaultTrigger = a;
 
-exports.IValidationController = a;
+exports.IValidationController = r;
 
-exports.IValidationResultPresenterService = b;
+exports.IValidationResultPresenterService = f;
 
 exports.ValidationControllerFactory = ValidationControllerFactory;
 
 exports.ValidationEvent = ValidationEvent;
 
-exports.ValidationHtmlConfiguration = g;
+exports.ValidationHtmlConfiguration = c;
 
 exports.ValidationResultTarget = ValidationResultTarget;
 
-exports.defaultContainerDefinition = c;
+exports.defaultContainerDefinition = n;
 
-exports.defaultContainerTemplate = h;
+exports.defaultContainerTemplate = o;
 
-exports.getDefaultValidationHtmlConfiguration = p;
+exports.getDefaultValidationHtmlConfiguration = getDefaultValidationHtmlConfiguration;
 
-exports.getPropertyInfo = o;
+exports.getPropertyInfo = getPropertyInfo;
 //# sourceMappingURL=index.cjs.map

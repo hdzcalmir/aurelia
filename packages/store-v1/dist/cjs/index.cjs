@@ -12,73 +12,85 @@ var r = require("rxjs");
 
 var s = require("rxjs/operators");
 
-function i(t, e) {
-    if (!h(t)) throw Error("Provided state is not of type StateHistory");
-    if (e > 0) return o(t, e - 1);
-    if (e < 0) return n(t, t.past.length + e);
+function jump(t, e) {
+    if (!isStateHistory(t)) {
+        throw Error("Provided state is not of type StateHistory");
+    }
+    if (e > 0) return jumpToFuture(t, e - 1);
+    if (e < 0) return jumpToPast(t, t.past.length + e);
     return t;
 }
 
-function o(t, e) {
-    if (e < 0 || e >= t.future.length) return t;
+function jumpToFuture(t, e) {
+    if (e < 0 || e >= t.future.length) {
+        return t;
+    }
     const {past: r, future: s, present: i} = t;
     const o = [ ...r, i, ...s.slice(0, e) ];
     const n = s[e];
-    const c = s.slice(e + 1);
+    const a = s.slice(e + 1);
     return {
         past: o,
         present: n,
-        future: c
+        future: a
     };
 }
 
-function n(t, e) {
-    if (e < 0 || e >= t.past.length) return t;
+function jumpToPast(t, e) {
+    if (e < 0 || e >= t.past.length) {
+        return t;
+    }
     const {past: r, future: s, present: i} = t;
     const o = r.slice(0, e);
     const n = [ ...r.slice(e + 1), i, ...s ];
-    const c = r[e];
+    const a = r[e];
     return {
         past: o,
-        present: c,
+        present: a,
         future: n
     };
 }
 
-function c(t, e) {
+function nextStateHistory(t, e) {
     return {
         ...t,
-        past: [ ...t.past, t.present ],
-        present: e,
-        future: []
+        ...{
+            past: [ ...t.past, t.present ],
+            present: e,
+            future: []
+        }
     };
 }
 
-function a(t, e) {
-    if (h(t)) {
-        if (t.past.length > e) t.past = t.past.slice(t.past.length - e);
-        if (t.future.length > e) t.future = t.future.slice(0, e);
+function applyLimits(t, e) {
+    if (isStateHistory(t)) {
+        if (t.past.length > e) {
+            t.past = t.past.slice(t.past.length - e);
+        }
+        if (t.future.length > e) {
+            t.future = t.future.slice(0, e);
+        }
     }
     return t;
 }
 
-function h(t) {
-    return "undefined" !== typeof t.present && "undefined" !== typeof t.future && "undefined" !== typeof t.past && Array.isArray(t.future) && Array.isArray(t.past);
+function isStateHistory(t) {
+    return typeof t.present !== "undefined" && typeof t.future !== "undefined" && typeof t.past !== "undefined" && Array.isArray(t.future) && Array.isArray(t.past);
 }
 
-function u(t, e, r, s) {
-    var i = arguments.length, o = i < 3 ? e : null === s ? s = Object.getOwnPropertyDescriptor(e, r) : s, n;
-    if ("object" === typeof Reflect && "function" === typeof Reflect.decorate) o = Reflect.decorate(t, e, r, s); else for (var c = t.length - 1; c >= 0; c--) if (n = t[c]) o = (i < 3 ? n(o) : i > 3 ? n(e, r, o) : n(e, r)) || o;
+function __decorate(t, e, r, s) {
+    var i = arguments.length, o = i < 3 ? e : s === null ? s = Object.getOwnPropertyDescriptor(e, r) : s, n;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") o = Reflect.decorate(t, e, r, s); else for (var a = t.length - 1; a >= 0; a--) if (n = t[a]) o = (i < 3 ? n(o) : i > 3 ? n(e, r, o) : n(e, r)) || o;
     return i > 3 && o && Object.defineProperty(e, r, o), o;
 }
 
-function f(t, e) {
+function __param(t, e) {
     return function(r, s) {
         e(r, s, t);
     };
 }
 
-const p = "aurelia-store-state";
+const i = "aurelia-store-state";
 
 exports.MiddlewarePlacement = void 0;
 
@@ -87,27 +99,31 @@ exports.MiddlewarePlacement = void 0;
     t["After"] = "after";
 })(exports.MiddlewarePlacement || (exports.MiddlewarePlacement = {}));
 
-function d(e, r, s) {
-    const i = y.container.get(t.IPlatform).console;
-    const o = void 0 !== s?.logType && void 0 !== i[s.logType] ? s.logType : "log";
-    i[o]("New state: ", e);
+function logMiddleware(e, r, s) {
+    const i = o.container.get(t.IPlatform).console;
+    const n = s?.logType !== undefined && i[s.logType] !== undefined ? s.logType : "log";
+    i[n]("New state: ", e);
 }
 
-function l(t, r, s) {
-    const i = y.container.get(e.IWindow).localStorage;
-    if (void 0 !== i) {
-        const e = void 0 !== s?.key ? s.key : p;
-        i.setItem(e, JSON.stringify(t));
+function localStorageMiddleware(t, r, s) {
+    const n = o.container.get(e.IWindow).localStorage;
+    if (n !== undefined) {
+        const e = s?.key !== undefined ? s.key : i;
+        n.setItem(e, JSON.stringify(t));
     }
 }
 
-function x(t, r) {
-    const s = y.container.get(e.IWindow).localStorage;
-    if (void 0 === s) return t;
-    const i = s.getItem(void 0 === r ? p : r);
-    if (null === i || "" === i) return t;
+function rehydrateFromLocalStorage(t, r) {
+    const s = o.container.get(e.IWindow).localStorage;
+    if (s === undefined) {
+        return t;
+    }
+    const n = s.getItem(r === undefined ? i : r);
+    if (n === null || n === "") {
+        return t;
+    }
     try {
-        return JSON.parse(i);
+        return JSON.parse(n);
     } catch {}
     return t;
 }
@@ -122,8 +138,10 @@ exports.LogLevel = void 0;
     t["error"] = "error";
 })(exports.LogLevel || (exports.LogLevel = {}));
 
-function w(t, e, r) {
-    if (t.logDefinitions?.hasOwnProperty(e) && t.logDefinitions[e] && Object.values(exports.LogLevel).includes(t.logDefinitions[e])) return t.logDefinitions[e];
+function getLogType(t, e, r) {
+    if (t.logDefinitions?.hasOwnProperty(e) && t.logDefinitions[e] && Object.values(exports.LogLevel).includes(t.logDefinitions[e])) {
+        return t.logDefinitions[e];
+    }
     return r;
 }
 
@@ -134,13 +152,13 @@ exports.PerformanceMeasurement = void 0;
     t["All"] = "all";
 })(exports.PerformanceMeasurement || (exports.PerformanceMeasurement = {}));
 
-const y = {
+const o = {
     container: null
 };
 
 class UnregisteredActionError extends Error {
     constructor(t) {
-        super(`Tried to dispatch an unregistered action ${void 0 !== t && ("string" === typeof t ? t : t.name)}`);
+        super(`Tried to dispatch an unregistered action ${t !== undefined && (typeof t === "string" ? t : t.name)}`);
     }
 }
 
@@ -160,11 +178,15 @@ exports.Store = class Store {
         this.middlewares = new Map;
         this.dispatchQueue = [];
         this.options = i ?? {};
-        const o = true === this.options?.history?.undoable;
+        const o = this.options?.history?.undoable === true;
         this._state = new r.BehaviorSubject(t);
         this.state = this._state.asObservable();
-        if (true !== this.options?.devToolsOptions?.disable) this.setupDevTools();
-        if (o) this.registerHistoryMethods();
+        if (this.options?.devToolsOptions?.disable !== true) {
+            this.setupDevTools();
+        }
+        if (o) {
+            this.registerHistoryMethods();
+        }
     }
     registerMiddleware(t, e, r) {
         this.middlewares.set(t, {
@@ -173,22 +195,30 @@ exports.Store = class Store {
         });
     }
     unregisterMiddleware(t) {
-        if (this.middlewares.has(t)) this.middlewares.delete(t);
+        if (this.middlewares.has(t)) {
+            this.middlewares.delete(t);
+        }
     }
     isMiddlewareRegistered(t) {
         return this.middlewares.has(t);
     }
     registerAction(t, e) {
-        if (0 === e.length) throw new ActionRegistrationError("The reducer is expected to have one or more parameters, where the first will be the present state");
+        if (e.length === 0) {
+            throw new ActionRegistrationError("The reducer is expected to have one or more parameters, where the first will be the present state");
+        }
         this.actions.set(e, {
             type: t
         });
     }
     unregisterAction(t) {
-        if (this.actions.has(t)) this.actions.delete(t);
+        if (this.actions.has(t)) {
+            this.actions.delete(t);
+        }
     }
     isActionRegistered(t) {
-        if ("string" === typeof t) return void 0 !== Array.from(this.actions).find((e => e[1].type === t));
+        if (typeof t === "string") {
+            return Array.from(this.actions).find((e => e[1].type === t)) !== undefined;
+        }
         return this.actions.has(t);
     }
     resetToState(t) {
@@ -196,7 +226,9 @@ exports.Store = class Store {
     }
     async dispatch(t, ...e) {
         const r = this.lookupAction(t);
-        if (!r) return Promise.reject(new UnregisteredActionError(t));
+        if (!r) {
+            return Promise.reject(new UnregisteredActionError(t));
+        }
         return this.queueDispatch([ {
             reducer: r,
             params: e
@@ -208,7 +240,9 @@ exports.Store = class Store {
             dispatch: async () => this.queueDispatch(r),
             pipe: (e, ...i) => {
                 const o = this.lookupAction(e);
-                if (!o) throw new UnregisteredActionError(t);
+                if (!o) {
+                    throw new UnregisteredActionError(t);
+                }
                 r.push({
                     reducer: o,
                     params: i
@@ -219,11 +253,15 @@ exports.Store = class Store {
         return s.pipe(t, ...e);
     }
     lookupAction(t) {
-        if ("string" === typeof t) {
+        if (typeof t === "string") {
             const e = Array.from(this.actions).find((([e, r]) => r.type === t));
-            if (e) return e[0];
-        } else if (this.actions.has(t)) return t;
-        return;
+            if (e) {
+                return e[0];
+            }
+        } else if (this.actions.has(t)) {
+            return t;
+        }
+        return undefined;
     }
     async queueDispatch(t) {
         return new Promise(((e, r) => {
@@ -232,7 +270,9 @@ exports.Store = class Store {
                 resolve: e,
                 reject: r
             });
-            if (1 === this.dispatchQueue.length) this.handleQueue();
+            if (this.dispatchQueue.length === 1) {
+                this.handleQueue();
+            }
         }));
     }
     async handleQueue() {
@@ -250,8 +290,10 @@ exports.Store = class Store {
     }
     async internalDispatch(t) {
         const r = t.find((t => !this.actions.has(t.reducer)));
-        if (r) throw new UnregisteredActionError(r.reducer);
-        y.container.get(e.IWindow).performance.mark("dispatch-start");
+        if (r) {
+            throw new UnregisteredActionError(r.reducer);
+        }
+        o.container.get(e.IWindow).performance.mark("dispatch-start");
         const s = t.map((t => ({
             type: this.actions.get(t.reducer).type,
             params: t.params,
@@ -265,128 +307,146 @@ exports.Store = class Store {
                 params: t.params
             })))
         };
-        if (this.options.logDispatchedActions) this.logger[w(this.options, "dispatchedActions", exports.LogLevel.info)](`Dispatching: ${i.name}`);
-        const o = await this.executeMiddlewares(this._state.getValue(), exports.MiddlewarePlacement.Before, i);
-        if (false === o) {
-            y.container.get(e.IWindow).performance.clearMarks();
-            y.container.get(e.IWindow).performance.clearMeasures();
+        if (this.options.logDispatchedActions) {
+            this.logger[getLogType(this.options, "dispatchedActions", exports.LogLevel.info)](`Dispatching: ${i.name}`);
+        }
+        const n = await this.executeMiddlewares(this._state.getValue(), exports.MiddlewarePlacement.Before, i);
+        if (n === false) {
+            o.container.get(e.IWindow).performance.clearMarks();
+            o.container.get(e.IWindow).performance.clearMeasures();
             return;
         }
-        let n = o;
+        let a = n;
         for (const t of s) {
-            n = await t.reducer(n, ...t.params);
-            if (false === n) {
-                y.container.get(e.IWindow).performance.clearMarks();
-                y.container.get(e.IWindow).performance.clearMeasures();
+            a = await t.reducer(a, ...t.params);
+            if (a === false) {
+                o.container.get(e.IWindow).performance.clearMarks();
+                o.container.get(e.IWindow).performance.clearMeasures();
                 return;
             }
-            y.container.get(e.IWindow).performance.mark(`dispatch-after-reducer-${t.type}`);
-            if (!n && "object" !== typeof n) throw new ReducerNoStateError("The reducer has to return a new state");
+            o.container.get(e.IWindow).performance.mark(`dispatch-after-reducer-${t.type}`);
+            if (!a && typeof a !== "object") {
+                throw new ReducerNoStateError("The reducer has to return a new state");
+            }
         }
-        let c = await this.executeMiddlewares(n, exports.MiddlewarePlacement.After, i);
-        if (false === c) {
-            y.container.get(e.IWindow).performance.clearMarks();
-            y.container.get(e.IWindow).performance.clearMeasures();
+        let c = await this.executeMiddlewares(a, exports.MiddlewarePlacement.After, i);
+        if (c === false) {
+            o.container.get(e.IWindow).performance.clearMarks();
+            o.container.get(e.IWindow).performance.clearMeasures();
             return;
         }
-        if (h(c) && this.options.history?.limit) c = a(c, this.options.history.limit);
-        this._state.next(c);
-        y.container.get(e.IWindow).performance.mark("dispatch-end");
-        if (this.options.measurePerformance === exports.PerformanceMeasurement.StartEnd) {
-            y.container.get(e.IWindow).performance.measure("startEndDispatchDuration", "dispatch-start", "dispatch-end");
-            const t = y.container.get(e.IWindow).performance.getEntriesByName("startEndDispatchDuration");
-            this.logger[w(this.options, "performanceLog", exports.LogLevel.info)](`Total duration ${t[0].duration} of dispatched action ${i.name}:`, t);
-        } else if (this.options.measurePerformance === exports.PerformanceMeasurement.All) {
-            const t = y.container.get(e.IWindow).performance.getEntriesByType("mark");
-            const r = t[t.length - 1].startTime - t[0].startTime;
-            this.logger[w(this.options, "performanceLog", exports.LogLevel.info)](`Total duration ${r} of dispatched action ${i.name}:`, t);
+        if (isStateHistory(c) && this.options.history?.limit) {
+            c = applyLimits(c, this.options.history.limit);
         }
-        y.container.get(e.IWindow).performance.clearMarks();
-        y.container.get(e.IWindow).performance.clearMeasures();
+        this._state.next(c);
+        o.container.get(e.IWindow).performance.mark("dispatch-end");
+        if (this.options.measurePerformance === exports.PerformanceMeasurement.StartEnd) {
+            o.container.get(e.IWindow).performance.measure("startEndDispatchDuration", "dispatch-start", "dispatch-end");
+            const t = o.container.get(e.IWindow).performance.getEntriesByName("startEndDispatchDuration");
+            this.logger[getLogType(this.options, "performanceLog", exports.LogLevel.info)](`Total duration ${t[0].duration} of dispatched action ${i.name}:`, t);
+        } else if (this.options.measurePerformance === exports.PerformanceMeasurement.All) {
+            const t = o.container.get(e.IWindow).performance.getEntriesByType("mark");
+            const r = t[t.length - 1].startTime - t[0].startTime;
+            this.logger[getLogType(this.options, "performanceLog", exports.LogLevel.info)](`Total duration ${r} of dispatched action ${i.name}:`, t);
+        }
+        o.container.get(e.IWindow).performance.clearMarks();
+        o.container.get(e.IWindow).performance.clearMeasures();
         this.updateDevToolsState({
             type: i.name,
             params: i.params
         }, c);
     }
     executeMiddlewares(t, r, s) {
-        return Array.from(this.middlewares).filter((t => t[1].placement === r)).reduce((async (t, i, o) => {
+        return Array.from(this.middlewares).filter((t => t[1].placement === r)).reduce((async (t, i, n) => {
             try {
-                const o = await i[0](await t, this._state.getValue(), i[1].settings, s);
-                if (false === o) return false;
-                return o || await t;
+                const n = await i[0](await t, this._state.getValue(), i[1].settings, s);
+                if (n === false) {
+                    return false;
+                }
+                return n || await t;
             } catch (e) {
-                if (this.options.propagateError) throw e;
+                if (this.options.propagateError) {
+                    throw e;
+                }
                 return await t;
             } finally {
-                y.container.get(e.IWindow).performance.mark(`dispatch-${r}-${i[0].name}`);
+                o.container.get(e.IWindow).performance.mark(`dispatch-${r}-${i[0].name}`);
             }
         }), t);
     }
     setupDevTools() {
         if (this.t.__REDUX_DEVTOOLS_EXTENSION__) {
-            this.logger[w(this.options, "devToolsStatus", exports.LogLevel.debug)]("DevTools are available");
+            this.logger[getLogType(this.options, "devToolsStatus", exports.LogLevel.debug)]("DevTools are available");
             this.devToolsAvailable = true;
             this.devTools = this.t.__REDUX_DEVTOOLS_EXTENSION__.connect(this.options.devToolsOptions);
             this.devTools.init(this.initialState);
             this.devTools.subscribe((t => {
-                this.logger[w(this.options, "devToolsStatus", exports.LogLevel.debug)](`DevTools sent change ${t.type}`);
-                if ("ACTION" === t.type && void 0 !== t.payload) {
+                this.logger[getLogType(this.options, "devToolsStatus", exports.LogLevel.debug)](`DevTools sent change ${t.type}`);
+                if (t.type === "ACTION" && t.payload !== undefined) {
                     const e = Array.from(this.actions).find((function([e]) {
                         return e.name === t.payload?.name;
                     }));
                     const r = this.lookupAction(t.payload?.name) ?? e?.[0];
-                    if (!r) throw new DevToolsRemoteDispatchError("Tried to remotely dispatch an unregistered action");
-                    if (!t.payload.args || t.payload.args.length < 1) throw new DevToolsRemoteDispatchError("No action arguments provided");
+                    if (!r) {
+                        throw new DevToolsRemoteDispatchError("Tried to remotely dispatch an unregistered action");
+                    }
+                    if (!t.payload.args || t.payload.args.length < 1) {
+                        throw new DevToolsRemoteDispatchError("No action arguments provided");
+                    }
                     this.dispatch(r, ...t.payload.args.slice(1).map((t => JSON.parse(t)))).catch((() => {
                         throw new DevToolsRemoteDispatchError("Issue when trying to dispatch an action through devtools");
                     }));
                     return;
                 }
-                if ("DISPATCH" === t.type && t.payload) switch (t.payload.type) {
-                  case "JUMP_TO_STATE":
-                  case "JUMP_TO_ACTION":
-                    this._state.next(JSON.parse(t.state));
-                    return;
-
-                  case "COMMIT":
-                    this.devTools.init(this._state.getValue());
-                    return;
-
-                  case "RESET":
-                    this.devTools.init(this.initialState);
-                    this.resetToState(this.initialState);
-                    return;
-
-                  case "ROLLBACK":
-                    {
-                        const e = JSON.parse(t.state);
-                        this.resetToState(e);
-                        this.devTools.init(e);
+                if (t.type === "DISPATCH" && t.payload) {
+                    switch (t.payload.type) {
+                      case "JUMP_TO_STATE":
+                      case "JUMP_TO_ACTION":
+                        this._state.next(JSON.parse(t.state));
                         return;
+
+                      case "COMMIT":
+                        this.devTools.init(this._state.getValue());
+                        return;
+
+                      case "RESET":
+                        this.devTools.init(this.initialState);
+                        this.resetToState(this.initialState);
+                        return;
+
+                      case "ROLLBACK":
+                        {
+                            const e = JSON.parse(t.state);
+                            this.resetToState(e);
+                            this.devTools.init(e);
+                            return;
+                        }
                     }
                 }
             }));
         }
     }
     updateDevToolsState(t, e) {
-        if (this.devToolsAvailable && this.devTools) this.devTools.send(t, e);
+        if (this.devToolsAvailable && this.devTools) {
+            this.devTools.send(t, e);
+        }
     }
     registerHistoryMethods() {
-        this.registerAction("jump", i);
+        this.registerAction("jump", jump);
     }
 };
 
-exports.Store = u([ f(1, t.ILogger), f(2, e.IWindow) ], exports.Store);
+exports.Store = __decorate([ __param(1, t.ILogger), __param(2, e.IWindow) ], exports.Store);
 
-function v(t) {
-    const e = y.container.get(exports.Store);
+function dispatchify(t) {
+    const e = o.container.get(exports.Store);
     return async function(...r) {
         return e.dispatch(t, ...r);
     };
 }
 
-async function g(t, e, ...r) {
-    const i = (t, r) => async s => {
+async function executeSteps(t, e, ...r) {
+    const logStep = (t, r) => async s => {
         if (e) {
             console.group(`Step ${r}`);
             console.log(s);
@@ -394,43 +454,45 @@ async function g(t, e, ...r) {
         }
         await t(s);
     };
-    const o = (t, e) => async r => {
+    const tryStep = (t, e) => async r => {
         try {
             await t(r);
         } catch (t) {
             e(t);
         }
     };
-    const n = (t, e) => async r => {
+    const lastStep = (t, e) => async r => {
         await t(r);
         e();
     };
-    return new Promise(((e, c) => {
-        let a = 0;
+    return new Promise(((e, i) => {
+        let o = 0;
         r.slice(0, -1).forEach((e => {
-            t.state.pipe(s.skip(a), s.take(1), s.delay(0)).subscribe(o(i(e, a), c));
-            a++;
+            t.state.pipe(s.skip(o), s.take(1), s.delay(0)).subscribe(tryStep(logStep(e, o), i));
+            o++;
         }));
-        t.state.pipe(s.skip(a), s.take(1)).subscribe(n(o(i(r[r.length - 1], a), c), e));
+        t.state.pipe(s.skip(o), s.take(1)).subscribe(lastStep(tryStep(logStep(r[r.length - 1], o), i), e));
     }));
 }
 
-const m = t => t.state;
+const defaultSelector = t => t.state;
 
-function E(t) {
+function connectTo(t) {
     const s = {
-        selector: "function" === typeof t ? t : m,
+        selector: typeof t === "function" ? t : defaultSelector,
         ...t
     };
-    function i(t, e) {
+    function getSource(t, e) {
         const s = e(t);
-        if (s instanceof r.Observable) return s;
+        if (s instanceof r.Observable) {
+            return s;
+        }
         return t.state;
     }
-    function o() {
-        const t = "object" === typeof s.selector;
+    function createSelectors() {
+        const t = typeof s.selector === "object";
         const e = {
-            [s.target || "state"]: s.selector || m
+            [s.target || "state"]: s.selector || defaultSelector
         };
         return Object.entries({
             ...t ? s.selector : e
@@ -445,34 +507,46 @@ function E(t) {
         })));
     }
     return function(s) {
-        const n = "object" === typeof t && t.setup ? s.prototype[t.setup] : s.prototype.binding;
-        const c = "object" === typeof t && t.teardown ? s.prototype[t.teardown] : s.prototype.unbinding;
-        s.prototype["object" === typeof t && void 0 !== t.setup ? t.setup : "binding"] = function() {
-            if ("object" === typeof t && "string" === typeof t.onChanged && !(t.onChanged in this)) throw new Error("Provided onChanged handler does not exist on target VM");
-            const r = e.Controller.getCached(this) ? e.Controller.getCached(this).container.get(exports.Store) : y.container.get(exports.Store);
-            this._stateSubscriptions = o().map((t => i(r, t.selector).subscribe((e => {
+        const i = typeof t === "object" && t.setup ? s.prototype[t.setup] : s.prototype.binding;
+        const n = typeof t === "object" && t.teardown ? s.prototype[t.teardown] : s.prototype.unbinding;
+        s.prototype[typeof t === "object" && t.setup !== undefined ? t.setup : "binding"] = function() {
+            if (typeof t === "object" && typeof t.onChanged === "string" && !(t.onChanged in this)) {
+                throw new Error("Provided onChanged handler does not exist on target VM");
+            }
+            const r = e.Controller.getCached(this) ? e.Controller.getCached(this).container.get(exports.Store) : o.container.get(exports.Store);
+            this._stateSubscriptions = createSelectors().map((t => getSource(r, t.selector).subscribe((e => {
                 const r = t.targets.length - 1;
                 const s = t.targets.reduce(((t = {}, e) => t[e]), this);
                 Object.entries(t.changeHandlers).forEach((([i, o]) => {
-                    if (i in this) this[i](...[ t.targets[r], e, s ].slice(o, 3));
+                    if (i in this) {
+                        this[i](...[ t.targets[r], e, s ].slice(o, 3));
+                    }
                 }));
                 t.targets.reduce(((t, s, i) => {
                     t[s] = i === r ? e : t[s] || {};
                     return t[s];
                 }), this);
             }))));
-            if (n) return n.apply(this, arguments);
+            if (i) {
+                return i.apply(this, arguments);
+            }
         };
-        s.prototype["object" === typeof t && t.teardown ? t.teardown : "unbinding"] = function() {
-            if (this._stateSubscriptions && Array.isArray(this._stateSubscriptions)) this._stateSubscriptions.forEach((t => {
-                if (t instanceof r.Subscription && false === t.closed) t.unsubscribe();
-            }));
-            if (c) return c.apply(this, arguments);
+        s.prototype[typeof t === "object" && t.teardown ? t.teardown : "unbinding"] = function() {
+            if (this._stateSubscriptions && Array.isArray(this._stateSubscriptions)) {
+                this._stateSubscriptions.forEach((t => {
+                    if (t instanceof r.Subscription && t.closed === false) {
+                        t.unsubscribe();
+                    }
+                }));
+            }
+            if (n) {
+                return n.apply(this, arguments);
+            }
         };
     };
 }
 
-const T = {
+const n = {
     withInitialState(t) {
         Reflect.set(this, "state", t);
         return this;
@@ -482,56 +556,60 @@ const T = {
         return this;
     },
     register(r) {
-        y.container = r;
+        o.container = r;
         const s = Reflect.get(this, "state");
         const i = Reflect.get(this, "options");
-        const o = r.get(t.ILogger);
-        const n = r.get(e.IWindow);
-        if (!s) throw new Error("initialState must be provided via withInitialState builder method");
+        const n = r.get(t.ILogger);
+        const a = r.get(e.IWindow);
+        if (!s) {
+            throw new Error("initialState must be provided via withInitialState builder method");
+        }
         let c = s;
-        if (i?.history?.undoable && !h(s)) c = {
-            past: [],
-            present: s,
-            future: []
-        };
-        t.Registration.instance(exports.Store, new exports.Store(c, o, n, i)).register(r);
+        if (i?.history?.undoable && !isStateHistory(s)) {
+            c = {
+                past: [],
+                present: s,
+                future: []
+            };
+        }
+        t.Registration.instance(exports.Store, new exports.Store(c, n, a, i)).register(r);
         return r;
     }
 };
 
 exports.ActionRegistrationError = ActionRegistrationError;
 
-exports.DEFAULT_LOCAL_STORAGE_KEY = p;
+exports.DEFAULT_LOCAL_STORAGE_KEY = i;
 
 exports.DevToolsRemoteDispatchError = DevToolsRemoteDispatchError;
 
 exports.ReducerNoStateError = ReducerNoStateError;
 
-exports.STORE = y;
+exports.STORE = o;
 
-exports.StoreConfiguration = T;
+exports.StoreConfiguration = n;
 
 exports.UnregisteredActionError = UnregisteredActionError;
 
-exports.applyLimits = a;
+exports.applyLimits = applyLimits;
 
-exports.connectTo = E;
+exports.connectTo = connectTo;
 
-exports.dispatchify = v;
+exports.dispatchify = dispatchify;
 
-exports.executeSteps = g;
+exports.executeSteps = executeSteps;
 
-exports.getLogType = w;
+exports.getLogType = getLogType;
 
-exports.isStateHistory = h;
+exports.isStateHistory = isStateHistory;
 
-exports.jump = i;
+exports.jump = jump;
 
-exports.localStorageMiddleware = l;
+exports.localStorageMiddleware = localStorageMiddleware;
 
-exports.logMiddleware = d;
+exports.logMiddleware = logMiddleware;
 
-exports.nextStateHistory = c;
+exports.nextStateHistory = nextStateHistory;
 
-exports.rehydrateFromLocalStorage = x;
+exports.rehydrateFromLocalStorage = rehydrateFromLocalStorage;
 //# sourceMappingURL=index.cjs.map
