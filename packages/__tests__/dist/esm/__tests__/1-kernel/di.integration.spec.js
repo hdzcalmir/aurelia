@@ -85,7 +85,6 @@ describe('1-kernel/di.integration.spec.ts', function () {
         }
         let callback;
         let get;
-        // eslint-disable-next-line mocha/no-hooks
         beforeEach(function () {
             callbackCount = 0;
             container = DI.createContainer();
@@ -98,7 +97,6 @@ describe('1-kernel/di.integration.spec.ts', function () {
             ICachedCallback = DI.createInterface('ICachedCallback', x => x.cachedCallback(callbackToCache));
             get = createSpy(container, 'get', true);
         });
-        // eslint-disable-next-line mocha/no-hooks
         afterEach(function () {
             get.restore();
         });

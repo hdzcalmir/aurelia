@@ -1,10 +1,13 @@
-import { DI } from '@aurelia/kernel';
+import { DI, resolve, newInstanceForScope, newInstanceOf } from '@aurelia/kernel';
 import { assert } from '@aurelia/testing';
 describe('1-kernel/di.invoke.spec.ts', function () {
     let container;
-    // eslint-disable-next-line mocha/no-hooks
     beforeEach(function () {
         container = DI.createContainer();
+    });
+    afterEach(function () {
+        assert.throws(() => resolve(class Abc {
+        }));
     });
     it('plain usage', function () {
         let instanceCount = 0;
@@ -64,6 +67,75 @@ describe('1-kernel/di.invoke.spec.ts', function () {
         assert.strictEqual(instanceDeps.length, 2);
         assert.deepStrictEqual(instanceDeps[0], [depInstance, 'dep1', 'dep2', 'dep3']);
         assert.deepStrictEqual(instanceDeps[1], [depInstance, 'dep4', 'dep5']);
+    });
+    it('works with resolve', function () {
+        let id = 0;
+        class Model {
+            constructor() {
+                this.id = ++id;
+            }
+        }
+        const { a, b } = container.invoke(class {
+            constructor() {
+                this.a = resolve(Model);
+                this.b = resolve(Model);
+            }
+        });
+        assert.strictEqual(id, 1);
+        assert.strictEqual(a.id, 1);
+        assert.strictEqual(b.id, 1);
+    });
+    it('works with resolver + resolve', function () {
+        let id = 0;
+        class Model {
+            constructor() {
+                this.id = ++id;
+            }
+        }
+        const { a, b } = container.invoke(class {
+            constructor() {
+                this.a = resolve(Model);
+                this.b = resolve(newInstanceForScope(Model));
+            }
+        });
+        assert.strictEqual(id, 2);
+        assert.strictEqual(a.id, 1);
+        assert.strictEqual(b.id, 2);
+    });
+    it('works with a list of keys', function () {
+        let i = 0;
+        class Model {
+            constructor() {
+                this.v = ++i;
+            }
+        }
+        class Base {
+            constructor() {
+                this.a = resolve(Model, newInstanceOf(Model));
+            }
+        }
+        const { a: [{ v }, { v: v1 }] } = container.invoke(Base);
+        assert.strictEqual(v, 1);
+        assert.strictEqual(v1, 2);
+    });
+    describe('inheritance', function () {
+        it('works with a list of keys', function () {
+            let i = 0;
+            class Model {
+                constructor() {
+                    this.v = ++i;
+                }
+            }
+            class Base {
+                constructor() {
+                    this.a = resolve(Model, newInstanceOf(Model));
+                }
+            }
+            const { a: [{ v }, { v: v1 }] } = container.invoke(class extends Base {
+            });
+            assert.strictEqual(v, 1);
+            assert.strictEqual(v1, 2);
+        });
     });
 });
 //# sourceMappingURL=di.invoke.spec.js.map

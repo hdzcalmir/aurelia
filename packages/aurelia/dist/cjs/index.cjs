@@ -20,12 +20,12 @@ var x = require("@aurelia/runtime");
 
 const a = t.BrowserPlatform.getOrCreate(globalThis);
 
-function u() {
+function createContainer() {
     return e.DI.createContainer().register(e.Registration.instance(r.IPlatform, a), r.StandardConfiguration);
 }
 
 class Aurelia extends r.Aurelia {
-    constructor(e = u()) {
+    constructor(e = createContainer()) {
         super(e);
     }
     static start(e) {
@@ -44,7 +44,9 @@ class Aurelia extends r.Aurelia {
         if (r.CustomElement.isType(e)) {
             const t = r.CustomElement.getDefinition(e);
             let s = document.querySelector(t.name);
-            if (null === s) s = document.body;
+            if (s === null) {
+                s = document.body;
+            }
             return super.app({
                 host: s,
                 component: e
@@ -101,6 +103,8 @@ exports.noop = e.noop;
 exports.optional = e.optional;
 
 exports.pascalCase = e.pascalCase;
+
+exports.resolve = e.resolve;
 
 exports.singleton = e.singleton;
 

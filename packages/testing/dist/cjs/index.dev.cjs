@@ -9,6 +9,7 @@ var runtimeHtml = require('@aurelia/runtime-html');
 var platformBrowser = require('@aurelia/platform-browser');
 var metadata = require('@aurelia/metadata');
 
+// Significant portion of this code is copy-pasted from the node.js source
 const { getPrototypeOf, getOwnPropertyDescriptor, getOwnPropertyDescriptors, getOwnPropertyNames, getOwnPropertySymbols, defineProperty, defineProperties, } = Object;
 const Object_keys = Object.keys;
 const Object_is = Object.is;
@@ -158,6 +159,7 @@ function getOwnNonIndexProperties(val, showHidden) {
 function getEnumerables(val, keys) {
     return keys.filter(k => propertyIsEnumerable(val, k));
 }
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
 const colors = Object_freeze({
     bold(str) {
         return `\u001b[1m${str}\u001b[22m`;
@@ -338,6 +340,7 @@ function createSpy(instanceOrInnerFn, key, callThroughOrInnerFn) {
             descriptorOwner = Reflect.getPrototypeOf(descriptorOwner);
             descriptor = Reflect.getOwnPropertyDescriptor(descriptorOwner, key);
         }
+        // Already wrapped, restore first
         if (descriptor.value !== null && (typeof descriptor.value === 'object' || typeof descriptor.value === 'function') && typeof descriptor.value.restore === 'function') {
             descriptor.value.restore();
             descriptor = Reflect.getOwnPropertyDescriptor(descriptorOwner, key);
@@ -387,6 +390,8 @@ function createSpy(instanceOrInnerFn, key, callThroughOrInnerFn) {
     return $spy;
 }
 
+// Significant portion of this code is copy-pasted from the node.js source
+/* eslint-disable @typescript-eslint/ban-types */
 var IterationType;
 (function (IterationType) {
     IterationType[IterationType["noIterator"] = 0] = "noIterator";
@@ -486,6 +491,7 @@ function innerDeepEqual(val1, val2, strict, memos) {
     else {
         if (!isObject(val1)) {
             if (!isObject(val2)) {
+                // eslint-disable-next-line eqeqeq
                 return val1 == val2;
             }
             return false;
@@ -511,10 +517,10 @@ function innerDeepEqual(val1, val2, strict, memos) {
         if (keys1.length !== keys2.length) {
             return false;
         }
-        return keyCheck(val1, val2, strict, memos, 1, keys1);
+        return keyCheck(val1, val2, strict, memos, 1 /* IterationType.isArray */, keys1);
     }
     if (val1Tag === '[object Object]') {
-        return keyCheck(val1, val2, strict, memos, 0);
+        return keyCheck(val1, val2, strict, memos, 0 /* IterationType.noIterator */);
     }
     if (isDate(val1)) {
         if (Date_getTime(val1) !== Date_getTime(val2)) {
@@ -545,19 +551,19 @@ function innerDeepEqual(val1, val2, strict, memos) {
         if (keys1.length !== keys2.length) {
             return false;
         }
-        return keyCheck(val1, val2, strict, memos, 0, keys1);
+        return keyCheck(val1, val2, strict, memos, 0 /* IterationType.noIterator */, keys1);
     }
     else if (isSet(val1)) {
         if (!isSet(val2) || val1.size !== val2.size) {
             return false;
         }
-        return keyCheck(val1, val2, strict, memos, 2);
+        return keyCheck(val1, val2, strict, memos, 2 /* IterationType.isSet */);
     }
     else if (isMap(val1)) {
         if (!isMap(val2) || val1.size !== val2.size) {
             return false;
         }
-        return keyCheck(val1, val2, strict, memos, 3);
+        return keyCheck(val1, val2, strict, memos, 3 /* IterationType.isMap */);
     }
     else if (isAnyArrayBuffer(val1)) {
         if (!areEqualArrayBuffers(val1, val2)) {
@@ -567,7 +573,7 @@ function innerDeepEqual(val1, val2, strict, memos) {
     else if (isBoxedPrimitive(val1) && !isEqualBoxedPrimitive(val1, val2)) {
         return false;
     }
-    return keyCheck(val1, val2, strict, memos, 0);
+    return keyCheck(val1, val2, strict, memos, 0 /* IterationType.noIterator */);
 }
 function keyCheck(val1, val2, strict, memos, iterationType, aKeys) {
     if (arguments.length === 5) {
@@ -615,8 +621,8 @@ function keyCheck(val1, val2, strict, memos, iterationType, aKeys) {
         }
     }
     if (aKeys.length === 0
-        && (iterationType === 0
-            || iterationType === 1 && val1.length === 0
+        && (iterationType === 0 /* IterationType.noIterator */
+            || iterationType === 1 /* IterationType.isArray */ && val1.length === 0
             || val1.size === 0)) {
         return true;
     }
@@ -663,6 +669,7 @@ function findLooseMatchingPrimitives(val) {
             return false;
         case 'string':
             val = +val;
+        // Fall through
         case 'number':
             if (Number_isNaN(val)) {
                 return false;
@@ -783,17 +790,17 @@ function mapEquiv(a, b, strict, memos) {
 }
 function objEquiv(a, b, strict, keys, memos, iterationType) {
     let i = 0;
-    if (iterationType === 2) {
+    if (iterationType === 2 /* IterationType.isSet */) {
         if (!setEquiv(a, b, strict, memos)) {
             return false;
         }
     }
-    else if (iterationType === 3) {
+    else if (iterationType === 3 /* IterationType.isMap */) {
         if (!mapEquiv(a, b, strict, memos)) {
             return false;
         }
     }
-    else if (iterationType === 1) {
+    else if (iterationType === 1 /* IterationType.isArray */) {
         for (; i < a.length; i++) {
             if (hasOwnProperty(a, i)) {
                 if (!hasOwnProperty(b, i)
@@ -835,6 +842,7 @@ function isDeepStrictEqual(val1, val2) {
     return innerDeepEqual(val1, val2, true);
 }
 
+/* eslint-disable import/no-mutable-exports */
 class TestContext {
     get wnd() { return this.platform.globalThis; }
     get doc() { return this.platform.document; }
@@ -885,10 +893,14 @@ class TestContext {
         return this._domParser;
     }
     constructor() {
+        /** @internal */
         this._container = void 0;
+        /** @internal */
         this._platform = void 0;
+        /** @internal */
         this._templateCompiler = void 0;
         this.oL = void 0;
+        /** @internal */
         this._domParser = void 0;
     }
     static create() {
@@ -912,6 +924,11 @@ class TestContext {
         el.dispatchEvent(new this.CustomEvent('change', { bubbles: true }));
     }
 }
+// Note: our tests shouldn't rely directly on this global variable, but retrieve the platform from a container instead.
+// This keeps the door open for more easily mocking the task queues or certain globals (such as Date) in the future.
+// It's OK to use this for environment or feature checks necessary to conditionally run tests that only work in specific envs,
+// or for initializing test data (creating template elements) before actually running the tests that use that data.
+// For existing usages that "violate" the above: do NOT introduce more of them. Intent is to get rid of those in a future test cleanup pass. Please don't create more work for when that time comes.
 exports.PLATFORM = void 0;
 exports.PLATFORMRegistration = void 0;
 function setPlatform(p) {
@@ -922,11 +939,15 @@ function createContainer(...registries) {
     return kernel.DI.createContainer().register(exports.PLATFORMRegistration, ...registries);
 }
 
+// Significant portion of this code is copy-pasted from the node.js source
+
+/* eslint-disable max-lines-per-function, @typescript-eslint/ban-types */
 let maxStack_ErrorName;
 let maxStack_ErrorMessage;
 function isStackOverflowError(err) {
     if (maxStack_ErrorMessage === undefined) {
         try {
+            // eslint-disable-next-line no-inner-declarations
             function overflowStack() { overflowStack(); }
             overflowStack();
         }
@@ -956,6 +977,8 @@ const mandatoryInspectKeys = Object_keys(defaultInspectOptions);
 function getUserOptions(ctx) {
     const obj = {};
     for (const key of mandatoryInspectKeys) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore // TODO: https://github.com/microsoft/TypeScript/issues/31904
         obj[key] = ctx[key];
     }
     if (ctx.userOptions !== void 0) {
@@ -974,6 +997,8 @@ function getInspectContext(ctx) {
     };
     for (const key of mandatoryInspectKeys) {
         if (hasOwnProperty(ctx, key)) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore // TODO: https://github.com/microsoft/TypeScript/issues/31904
             obj[key] = ctx[key];
         }
     }
@@ -1031,6 +1056,7 @@ class AssertionError extends Error {
         else if (operator === 'notDeepStrictEqual'
             || operator === 'notStrictEqual') {
             let base = operatorText[operator];
+            // eslint-disable-next-line prefer-const
             let res = inspectValue(actual).split('\n');
             if (operator === 'notStrictEqual'
                 && isObject(actual)) {
@@ -1095,9 +1121,11 @@ class AssertionError extends Error {
         this.operator = operator;
         if (typeof Error.captureStackTrace === 'function') {
             Error.captureStackTrace(this, stackStartFn);
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             this.stack;
         }
         else {
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             Error().stack;
         }
         this.name = 'AssertionError';
@@ -1276,13 +1304,13 @@ const kArrayExtrasType = 2;
 const idStart = new Int8Array(0x80);
 const idPart = new Int8Array(0x80);
 for (let i = 0; i < 0x80; ++i) {
-    if (i === 36
-        || i === 95
-        || (i >= 65 && i <= 90)
-        || (i >= 97 && i <= 122)) {
+    if (i === 36 /* Char.Dollar */
+        || i === 95 /* Char.Underscore */
+        || (i >= 65 /* Char.UpperA */ && i <= 90 /* Char.UpperZ */)
+        || (i >= 97 /* Char.LowerA */ && i <= 122 /* Char.LowerZ */)) {
         idStart[i] = idPart[i] = 1;
     }
-    else if (i >= 49 && i <= 57) {
+    else if (i >= 49 /* Char.One */ && i <= 57 /* Char.Nine */) {
         idPart[i] = 1;
     }
 }
@@ -1300,6 +1328,7 @@ function isValidIdentifier(str) {
 }
 const readableRegExps = {};
 const kMinLineLength = 16;
+// Constants to map the iterator state.
 const kWeak = 0;
 const kIterator = 1;
 const kMapEntries = 2;
@@ -1308,6 +1337,9 @@ function groupArrayElements(ctx, output) {
     let maxLength = 0;
     let i = 0;
     const dataLen = new Array(output.length);
+    // Calculate the total length of all output entries and the individual max
+    // entries length of all output entries. We have to remove colors first,
+    // otherwise the length would not be calculated properly.
     for (; i < output.length; i++) {
         const len = ctx.colors ? removeColors(output[i]).length : output[i].length;
         dataLen[i] = len;
@@ -1316,16 +1348,37 @@ function groupArrayElements(ctx, output) {
             maxLength = len;
         }
     }
+    // Add two to `maxLength` as we add a single whitespace character plus a comma
+    // in-between two entries.
     const actualMax = maxLength + 2;
+    // Check if at least three entries fit next to each other and prevent grouping
+    // of arrays that contains entries of very different length (i.e., if a single
+    // entry is longer than 1/5 of all other entries combined). Otherwise the
+    // space in-between small entries would be enormous.
     if (actualMax * 3 + ctx.indentationLvl < ctx.breakLength
         && (totalLength / maxLength > 5 || maxLength <= 6)) {
         const approxCharHeights = 2.5;
         const bias = 1;
-        const columns = Math.min(Math.round(Math.sqrt(approxCharHeights * (actualMax - bias) * output.length)
-            / (actualMax - bias)), ctx.compact * 3, 10);
+        // Dynamically check how many columns seem possible.
+        const columns = Math.min(
+        // Ideally a square should be drawn. We expect a character to be about 2.5
+        // times as high as wide. This is the area formula to calculate a square
+        // which contains n rectangles of size `actualMax * approxCharHeights`.
+        // Divide that by `actualMax` to receive the correct number of columns.
+        // The added bias slightly increases the columns for short entries.
+        Math.round(Math.sqrt(approxCharHeights * (actualMax - bias) * output.length)
+            / (actualMax - bias)), 
+        // Limit array grouping for small `compact` modes as the user requested
+        // minimal grouping.
+        ctx.compact * 3, 
+        // Limit the columns to a maximum of ten.
+        10);
+        // Return with the original output if no grouping should happen.
         if (columns <= 1) {
             return output;
         }
+        // Calculate the maximum length of all entries that are visible in the first
+        // column of the group.
         const tmp = [];
         let firstLineMaxLength = dataLen[0];
         for (i = columns; i < dataLen.length; i += columns) {
@@ -1333,9 +1386,14 @@ function groupArrayElements(ctx, output) {
                 firstLineMaxLength = dataLen[i];
             }
         }
+        // Each iteration creates a single line of grouped entries.
         for (i = 0; i < output.length; i += columns) {
+            // Calculate extra color padding in case it's active. This has to be done
+            // line by line as some lines might contain more colors than others.
             let colorPadding = output[i].length - dataLen[i];
+            // Add padding to the first column of the output.
             let str = output[i].padStart(firstLineMaxLength + colorPadding, ' ');
+            // The last lines may contain less entries than columns.
             const max = Math.min(i + columns, output.length);
             for (let j = i + 1; j < max; j++) {
                 colorPadding = output[j].length - dataLen[j];
@@ -1501,6 +1559,8 @@ function setIteratorBraces(type, tag) {
     return [`[${tag}] {`, '}'];
 }
 let lazyNullPrototypeCache;
+// Creates a subclass and name
+// the constructor as `${clazz} : null prototype`
 function clazzWithNullPrototype(clazz, name) {
     if (lazyNullPrototypeCache === undefined) {
         lazyNullPrototypeCache = new Map();
@@ -1545,6 +1605,10 @@ function noPrototypeIterator(ctx, value, recurseTimes) {
     }
     return (void 0);
 }
+// type InspectFn = (obj: any, opts: IInspectContext) => any;
+// function getMessage(self: AssertionError): string {
+//   return `${truncate(inspect(self.actual), 128)} ${self.operator} ${truncate(inspect(self.expected), 128)}`;
+// }
 function formatNumber(fn, value) {
     return fn(Object_is(value, -0) ? '-0' : `${value}`, 'number');
 }
@@ -1562,6 +1626,7 @@ function formatPrimitive(fn, value, ctx) {
                 if (readableRegExps[divisor] === void 0) {
                     readableRegExps[divisor] = new RegExp(`(.|\\n){1,${divisor}}(\\s|$)|(\\n|.)+?(\\s|$)`, 'gm');
                 }
+                // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
                 const matches = value.match(readableRegExps[divisor]);
                 if (matches.length > 1) {
                     const indent = ' '.repeat(ctx.indentationLvl);
@@ -1707,6 +1772,7 @@ function formatSetIterInner(ctx, recurseTimes, entries, state) {
     }
     ctx.indentationLvl -= 2;
     if (state === kWeak) {
+        // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
         output.sort();
     }
     const remaining = entries.length - maxLength;
@@ -1738,6 +1804,7 @@ function formatMapIterInner(ctx, recurseTimes, entries, state) {
     }
     ctx.indentationLvl -= 2;
     if (state === kWeak) {
+        // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
         output.sort();
     }
     if (remaining > 0) {
@@ -1762,11 +1829,13 @@ function formatIterator(ctx, value, recurseTimes, braces) {
     }
     return formatSetIterInner(ctx, recurseTimes, entries, kIterator);
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function formatPromise(ctx, value, recurseTimes) {
     return ['[object Promise]'];
 }
 function formatProperty(ctx, value, recurseTimes, key, type) {
     switch (key) {
+        // Aurelia-specific:
         case '$controller':
             return `$controller: { id: ${value.$controller.name} } (omitted for brevity)`;
         case 'overrideContext':
@@ -1855,16 +1924,23 @@ function formatProperty(ctx, value, recurseTimes, key, type) {
 function formatRaw(ctx, value, recurseTimes, typedArray) {
     let keys = (void 0);
     const constructor = getConstructorName(value, ctx);
+    /* eslint-disable no-fallthrough */
     switch (constructor) {
+        // Aurelia-specific:
+        // Skip some standard components as their difference will not matter in assertions, but they will
+        // generate a lot of noise and slow down the inspection due to their size and property depth
         case 'Container':
         case 'ObserverLocator':
+        // Also skip window object as it's not a node instance and therefore not filtered by formatProperty
         case 'Window':
             return ctx.stylize(`${constructor} (omitted for brevity)`, 'special');
         case 'Function':
+            // It's likely a constructor, filter out some additional globals that don't matter in inspection
             if (value.name === 'Node') {
                 return ctx.stylize('Node constructor (omitted for brevity)', 'special');
             }
     }
+    /* eslint-enable no-fallthrough */
     let tag = value[Symbol.toStringTag];
     if (!isString(tag)) {
         tag = '';
@@ -1875,10 +1951,12 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
     let noIterator = true;
     let i = 0;
     let extrasType = kObjectType;
+    // Iterators and the rest are split to reduce checks.
     if (value[Symbol.iterator]) {
         noIterator = false;
         if (Array.isArray(value)) {
             keys = getOwnNonIndexProperties(value, ctx.showHidden);
+            // Only set the constructor for non ordinary ("Array [...]") arrays.
             const prefix = getPrefix(constructor, tag, 'Array');
             braces = [`${prefix === 'Array ' ? '' : prefix}[`, ']'];
             if (value.length === 0 && keys.length === 0) {
@@ -1957,6 +2035,7 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
             base = `[${name}]`;
         }
         else if (isRegExp(value)) {
+            // Make RegExps say that they are RegExps
             base = RegExp_toString(constructor !== null ? value : new RegExp(value));
             const prefix = getPrefix(constructor, tag, 'RegExp');
             if (prefix !== 'RegExp ') {
@@ -1967,6 +2046,7 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
             }
         }
         else if (isDate(value)) {
+            // Make dates with properties first say the date
             base = Number.isNaN(Date_getTime(value))
                 ? Date_toString(value)
                 : Date_toISOString(value);
@@ -1979,11 +2059,14 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
             }
         }
         else if (isError(value)) {
+            // Make error with message first say the error.
             base = formatError(value);
+            // Wrap the error in brackets in case it has no stack trace.
             const stackStart = base.indexOf('\n    at');
             if (stackStart === -1) {
                 base = `[${base}]`;
             }
+            // The message and the stack have to be indented as well!
             if (ctx.indentationLvl !== 0) {
                 const indentation = ' '.repeat(ctx.indentationLvl);
                 base = formatError(value).replace(/\n/g, `\n${indentation}`);
@@ -1997,6 +2080,9 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
             }
         }
         else if (isAnyArrayBuffer(value)) {
+            // Fast path for ArrayBuffer and SharedArrayBuffer.
+            // Can't do the same for DataView because it has a non-primitive
+            // .buffer property that we need to recurse for.
             const arrayType = isArrayBuffer(value)
                 ? 'ArrayBuffer'
                 : 'SharedArrayBuffer';
@@ -2012,6 +2098,7 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
         }
         else if (isDataView(value)) {
             braces[0] = `${getPrefix(constructor, tag, 'DataView')}{`;
+            // .buffer goes last, it's not a primitive like the others.
             keys.unshift('byteLength', 'byteOffset', 'buffer');
         }
         else if (isPromise(value)) {
@@ -2025,6 +2112,9 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
         else if (isWeakMap(value)) {
             braces[0] = `${getPrefix(constructor, tag, 'WeakMap')}{`;
             formatter = ctx.showHidden ? formatWeakMap : formatWeakCollection;
+            // } else if (isModuleNamespaceObject(value)) {
+            //   braces[0] = `[${tag}] {`;
+            //   formatter = formatNamespaceObject;
         }
         else if (isBoxedPrimitive(value)) {
             let type;
@@ -2035,6 +2125,9 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
             else if (isStringObject(value)) {
                 base = `[String: ${getBoxedValue(String_valueOf(value), ctx)}]`;
                 type = 'string';
+                // For boxed Strings, we have to remove the 0-n indexed entries,
+                // since they just noisy up the output and are redundant
+                // Make boxed primitive Strings look like such
                 keys = keys.slice(value.length);
             }
             else if (isBooleanObject(value)) {
@@ -2050,6 +2143,8 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
             }
         }
         else {
+            // The input prototype got manipulated. Special handle these. We have to
+            // rebuild the information so we are able to display everything.
             if (constructor === null) {
                 const specialIterator = noPrototypeIterator(ctx, value, recurseTimes);
                 if (specialIterator) {
@@ -2063,8 +2158,12 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
             else if (isSetIterator(value)) {
                 braces = setIteratorBraces('Set', tag);
                 formatter = formatIterator;
+                // Handle other regular objects again.
             }
             else if (keys.length === 0) {
+                // if (isExternal(value)) {
+                //   return ctx.stylize('[External]', 'special');
+                // }
                 return `${getPrefix(constructor, tag, 'Object')}{}`;
             }
             else {
@@ -2086,7 +2185,12 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
         const isNotNode = exports.PLATFORM?.Node != null && !(value instanceof exports.PLATFORM.Node);
         for (i = 0; i < keys.length; i++) {
             $key = keys[i];
-            if ((isNotNode || $key === 'textContent' || $key === 'outerHTML')
+            if (
+            // Aurelia-specific:
+            // Don't deep inspect html nodes, they are huge, have many irrelevant properties and make the diff unreadable
+            (isNotNode || $key === 'textContent' || $key === 'outerHTML')
+                // Aurelia-specific:
+                // By convention we use $$calls for the CallCollection tracker, never deep inspect that as it's never relevant to the assertion
                 && $key !== '$$calls') {
                 output.push(formatProperty(ctx, value, recurseTimes, keys[i], extrasType));
             }
@@ -2108,10 +2212,28 @@ function formatRaw(ctx, value, recurseTimes, typedArray) {
     }
     let combine = false;
     if (isNumber(ctx.compact)) {
+        // Memorize the original output length. In case the the output is grouped,
+        // prevent lining up the entries on a single line.
         const entries = output.length;
+        // Group array elements together if the array contains at least six separate
+        // entries.
         if (extrasType === kArrayExtrasType && output.length > 6) {
             output = groupArrayElements(ctx, output);
         }
+        // `ctx.currentDepth` is set to the most inner depth of the currently
+        // inspected object part while `recurseTimes` is the actual current depth
+        // that is inspected.
+        //
+        // Example:
+        //
+        // const a = { first: [ 1, 2, 3 ], second: { inner: [ 1, 2, 3 ] } }
+        //
+        // The deepest depth of `a` is 2 (a.second.inner) and `a.first` has a max
+        // depth of 1.
+        //
+        // Consolidate all entries of the local most inner depth up to
+        // `ctx.compact`, as long as the properties are smaller than
+        // `ctx.breakLength`.
         if (ctx.currentDepth - recurseTimes < ctx.compact
             && entries === output.length) {
             combine = true;
@@ -2175,6 +2297,28 @@ function inspectValue(val) {
     });
 }
 
+// Disabling this as it this is nowhere used. And also the ast-serialization infra is moved to validation package.
+// export function verifyASTEqual(actual: any, expected: any, errors?: string[], path?: string): any {
+//   if (expected == null) {
+//     if (actual != null) {
+//       assert.strictEqual(actual, null, `actual`);
+//     }
+//   } else if (actual == null) {
+//     const expectedSerialized = Serializer.serialize(expected);
+//     assert.strictEqual(actual, expectedSerialized, `actual`);
+//   } else {
+//     const expectedSerialized = Serializer.serialize(expected);
+//     const expectedUnparsed = Unparser.unparse(expected);
+//     const actualSerialized = Serializer.serialize(actual);
+//     const actualUnparsed = Unparser.unparse(actual);
+//     if (actualSerialized !== expectedSerialized) {
+//       assert.strictEqual(actualSerialized, expectedSerialized, `actualSerialized`);
+//     }
+//     if (actualUnparsed !== expectedUnparsed) {
+//       assert.strictEqual(actualUnparsed, expectedUnparsed, `actualUnparsed`);
+//     }
+//   }
+// }
 function verifyEqual(actual, expected, depth, property, index) {
     if (depth === undefined) {
         depth = 0;
@@ -2222,7 +2366,7 @@ function getVisibleText(host, removeWhiteSpace) {
     let text = '';
     let cur = runtimeHtml.CustomElement.for(host, { optional: true })?.shadowRoot?.firstChild ?? host.firstChild;
     while (cur !== null) {
-        if (cur.nodeType === 3) {
+        if (cur.nodeType === 3 /* NodeType.Text */) {
             text += cur.data;
         }
         cur = nextNode(host, cur);
@@ -2231,33 +2375,33 @@ function getVisibleText(host, removeWhiteSpace) {
 }
 function instructionTypeName(type) {
     switch (type) {
-        case "ha":
+        case "ha" /* InstructionType.textBinding */:
             return 'textBinding';
-        case "rf":
+        case "rf" /* InstructionType.interpolation */:
             return 'interpolation';
-        case "rg":
+        case "rg" /* InstructionType.propertyBinding */:
             return 'propertyBinding';
-        case "rk":
+        case "rk" /* InstructionType.iteratorBinding */:
             return 'iteratorBinding';
-        case "hb":
+        case "hb" /* InstructionType.listenerBinding */:
             return 'listenerBinding';
-        case "rj":
+        case "rj" /* InstructionType.refBinding */:
             return 'refBinding';
-        case "hd":
+        case "hd" /* InstructionType.stylePropertyBinding */:
             return 'stylePropertyBinding';
-        case "re":
+        case "re" /* InstructionType.setProperty */:
             return 'setProperty';
-        case "he":
+        case "he" /* InstructionType.setAttribute */:
             return 'setAttribute';
-        case "ra":
+        case "ra" /* InstructionType.hydrateElement */:
             return 'hydrateElement';
-        case "rb":
+        case "rb" /* InstructionType.hydrateAttribute */:
             return 'hydrateAttribute';
-        case "rc":
+        case "rc" /* InstructionType.hydrateTemplateController */:
             return 'hydrateTemplateController';
-        case "rd":
+        case "rd" /* InstructionType.hydrateLetElement */:
             return 'hydrateLetElement';
-        case "ri":
+        case "ri" /* InstructionType.letBinding */:
             return 'letBinding';
         default:
             return type;
@@ -2272,6 +2416,8 @@ function verifyBindingInstructionsEqual(actual, expected, errors, path) {
     }
     if (!(expected instanceof Object) || !(actual instanceof Object)) {
         if (actual !== expected) {
+            // Special treatment for generated names (TODO: we *can* predict the values and we might want to at some point,
+            // because this exception is essentially a loophole that will eventually somehow cause a bug to slip through)
             if (path.endsWith('.name')) {
                 if (String(expected) === 'unnamed' && String(actual).startsWith('unnamed-')) {
                     errors.push(`OK   : ${path} === ${expected} (${actual})`);
@@ -2341,11 +2487,13 @@ function ensureTaskQueuesEmpty(platform$1) {
     if (!platform$1) {
         platform$1 = platformBrowser.BrowserPlatform.getOrCreate(globalThis);
     }
+    // canceling pending heading to remove the sticky tasks
     platform.ensureEmpty(platform$1.taskQueue);
     platform.ensureEmpty(platform$1.domWriteQueue);
     platform.ensureEmpty(platform$1.domReadQueue);
 }
 
+// Significant portion of this code is copy-pasted from the node.js source
 const noException = Symbol('noException');
 function innerFail(obj) {
     if (isError(obj.message)) {
@@ -2395,6 +2543,7 @@ function compareExceptionKey(actual, expected, key, message, keys) {
     if (!(key in actual)
         || !isDeepStrictEqual(actual[key], expected[key])) {
         if (!message) {
+            // Create placeholder objects to create a nice output.
             const a = new Comparison(actual, keys);
             const b = new Comparison(expected, keys, actual);
             const err = new AssertionError({
@@ -2567,6 +2716,7 @@ function visibleTextEqual(host, expectedText, message) {
     }
 }
 function equal(actual, expected, message) {
+    // eslint-disable-next-line eqeqeq
     if (actual != expected) {
         innerFail({
             actual,
@@ -2699,6 +2849,7 @@ function lessThanOrEqualTo(left, right, message) {
     }
 }
 function notEqual(actual, expected, message) {
+    // eslint-disable-next-line eqeqeq
     if (actual == expected) {
         innerFail({
             actual,
@@ -3015,6 +3166,15 @@ const assert = Object_freeze({
     }
 });
 
+/* THIS IS AN AUTOGENERATED FILE.  DO NOT EDIT */
+/**
+ * This file is automatically generated by `mach devtools-css-db`. It contains
+ * a static list of CSS properties that can be computed by Gecko. The actual script
+ * to generate these files can be found at devtools/shared/css/generate-properties-db.js.
+ */
+/**
+ * A list of CSS Properties and their various characteristics.
+ */
 const CSS_PROPERTIES = {
     'align-content': {
         'values': [
@@ -7112,6 +7272,9 @@ const CSS_PROPERTIES = {
         ]
     }
 };
+/**
+ * A list of the pseudo elements.
+ */
 const PSEUDO_ELEMENTS = [
     ':after',
     ':before',
@@ -7122,6 +7285,9 @@ const PSEUDO_ELEMENTS = [
     ':selection',
     ':placeholder'
 ];
+// https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
+// These attributes are valid on every HTML element and we want to rule out any potential quirk by ensuring
+// the DataAttributeObserver functions correctly for each of them
 const globalAttributeNames = [
     'xml:lang',
     'xml:base',
@@ -7319,6 +7485,7 @@ async function eachCartesianJoinAsync(arrays, callback) {
     while (!stop) {
         const hasUpdate = updateIndices(arrays, argsIndices);
         if (hasUpdate) {
+            // eslint-disable-next-line no-await-in-loop
             await callback(...updateElementByIndices(arrays, args, argsIndices), callCount);
             callCount++;
             if (totalCallCount < callCount) {
@@ -7398,6 +7565,9 @@ function isNodeOrTextOrComment(obj) {
     return obj.nodeType > 0;
 }
 const eventCmds = { delegate: 1, capture: 1, call: 1 };
+/**
+ * jsx with aurelia binding command friendly version of h
+ */
 const hJsx = function (name, attrs, ...children) {
     const doc = this || exports.PLATFORM.document;
     const el = doc.createElement(name === 'let$' ? 'let' : name);
@@ -7405,6 +7575,8 @@ const hJsx = function (name, attrs, ...children) {
         let value;
         for (const attr in attrs) {
             value = attrs[attr];
+            // if attr is class or its alias
+            // split up by splace and add to element via classList API
             if (attr === 'class' || attr === 'className' || attr === 'cls') {
                 value = value == null
                     ? []
@@ -7414,12 +7586,20 @@ const hJsx = function (name, attrs, ...children) {
                 el.classList.add(...value);
             }
             else if (attr in el || attr === 'data' || attr.startsWith('_')) {
+                // for attributes with matching properties, simply assign
+                // other if special attribute like data, or ones start with _
+                // assign as well
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore // TODO: https://github.com/microsoft/TypeScript/issues/31904
                 el[attr] = value;
             }
             else if (attr === 'asElement') {
+                // if it's an asElement attribute, camel case it
                 el.setAttribute('as-element', value);
             }
             else {
+                // ortherwise do fallback check
+                // is it an event handler?
                 if (attr.startsWith('o') && attr[1] === 'n' && !attr.endsWith('$')) {
                     const decoded = kernel.kebabCase(attr.slice(2));
                     const parts = decoded.split('-');
@@ -7443,6 +7623,14 @@ const hJsx = function (name, attrs, ...children) {
                         }
                         el.setAttribute(parts.map(kernel.kebabCase).join('.'), value);
                     }
+                    // const lastIdx = attr.lastIndexOf('$');
+                    // if (lastIdx === -1) {
+                    //   el.setAttribute(kebabCase(attr), value);
+                    // } else {
+                    //   let cmd = attr.slice(lastIdx + 1);
+                    //   cmd = cmd ? kebabCase(cmd) : 'bind';
+                    //   el.setAttribute(`${kebabCase(attr.slice(0, lastIdx))}.${cmd}`, value);
+                    // }
                 }
             }
         }
@@ -7477,9 +7665,13 @@ const onFixtureCreated = (callback) => {
         }
     });
 };
+// eslint-disable-next-line max-lines-per-function
 function createFixture(template, $class, registrations = [], autoStart = true, ctx = TestContext.create()) {
     const { container } = ctx;
     container.register(...registrations);
+    // platform and observer locator have side effect when accessed on ctx
+    // they will trigger default registration of interfaces if there's been no registration before it
+    // hence evaluate platform + observer locator only after we have registered all the dependencies
     const { platform, observerLocator } = ctx;
     const root = ctx.doc.body.appendChild(ctx.createElement('div'));
     const host = root.appendChild(ctx.createElement('app'));
@@ -7703,6 +7895,9 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         get torn() {
             return tornCount > 0;
         }
+        /**
+         * @returns a promise that resolves after the associated app has started
+         */
         get started() {
             if (startPromise instanceof Promise) {
                 return Promise.resolve(startPromise).then(() => this);
@@ -7744,6 +7939,7 @@ function brokenProcessFastTemplate(html, ..._args) {
 createFixture.html = (html, ...values) => new FixtureBuilder().html(html, ...values);
 createFixture.component = (component) => new FixtureBuilder().component(component);
 createFixture.deps = (...deps) => new FixtureBuilder().deps(...deps);
+/* eslint-enable */
 
 class MockBinding {
     constructor() {
@@ -7852,7 +8048,7 @@ class MockPropertySubscriber {
 class MockTracingExpression {
     constructor(inner) {
         this.inner = inner;
-        this.$kind = 28;
+        this.$kind = 28 /* ExpressionKind.Custom */;
         this.hasBind = true;
         this.hasUnbind = true;
         this.calls = [];
@@ -7922,6 +8118,7 @@ class MockBrowserHistoryLocation {
     }
     get pathname() {
         const parts = this.parts;
+        // parts.shift();
         let path = parts.shift();
         if (!path.startsWith('/')) {
             path = `/${path}`;
@@ -7930,12 +8127,18 @@ class MockBrowserHistoryLocation {
     }
     get search() {
         const parts = this.parts;
+        // if (parts.shift()) {
+        //   parts.shift();
+        // }
         parts.shift();
         const part = parts.shift();
         return part !== undefined ? `?${part}` : '';
     }
     get hash() {
         const parts = this.parts;
+        // if (!parts.shift()) {
+        //   parts.shift();
+        // }
         parts.shift();
         parts.shift();
         const part = parts.shift();
@@ -7946,13 +8149,23 @@ class MockBrowserHistoryLocation {
             value = value.substring(1);
         }
         const parts = this.parts;
+        // const hashFirst = parts.shift();
         let path = parts.shift();
+        // if (hashFirst) {
+        //   parts.shift();
+        //   path += `#${value}`;
+        //   const part = parts.shift();
+        //   if (part !== undefined) {
+        //     path += `?${part}`;
+        //   }
+        // } else {
         const part = parts.shift();
         if (part !== undefined) {
             path += `?${part}`;
         }
         parts.shift();
         path += `#${value}`;
+        // }
         this.pushState({}, null, path);
         this.notifyChange();
     }
@@ -8202,6 +8415,20 @@ const TestConfiguration = {
     }
 };
 
+/**
+ * Template tag function that properly stringifies the template parameters. Currently supports:
+ *
+ * - undefined
+ * - null
+ * - boolean
+ * - number
+ * - Array (recurses through the items and wraps them in brackets)
+ * - Event (returns the type name)
+ * - Node (returns textContent or innerHTML)
+ * - Object (returns json representation)
+ * - Class constructor (returns class name)
+ * - Instance of custom class (returns class name + json representation)
+ */
 function _(strings, ...vars) {
     const ctx = { result: '' };
     const length = vars.length;
@@ -8213,6 +8440,9 @@ function _(strings, ...vars) {
 const newline = /\r?\n/g;
 const whitespace = /\s+/g;
 const toStringTag = Object.prototype.toString;
+/**
+ * stringify primitive value (null -> 'null' and undefined -> 'undefined') or complex values with recursion guard
+ */
 function stringify(value, ctx) {
     const Type = toStringTag.call(value);
     switch (Type) {
@@ -8301,7 +8531,7 @@ function htmlStringify(node, ctx) {
     if (node === undefined) {
         return 'undefined';
     }
-    if ((node.textContent != null && node.textContent.length) || node.nodeType === 3 || node.nodeType === 8) {
+    if ((node.textContent != null && node.textContent.length) || node.nodeType === 3 /* Text */ || node.nodeType === 8 /* Comment */) {
         const ret = node.textContent.replace(newline, '');
         if (ret.length > 10) {
             const len = ret.length;
@@ -8309,7 +8539,7 @@ function htmlStringify(node, ctx) {
         }
         return ret;
     }
-    if (node.nodeType === 1) {
+    if (node.nodeType === 1 /* Element */) {
         if (node.innerHTML.length) {
             const ret = node.innerHTML.replace(newline, '');
             if (ret.length > 10) {
@@ -8329,6 +8559,9 @@ function htmlStringify(node, ctx) {
     }
     return val;
 }
+/**
+ * pad a string with spaces on the right-hand side until it's the specified length
+ */
 function padRight(input, len) {
     const str = `${input}`;
     const strLen = str.length;
@@ -8337,6 +8570,9 @@ function padRight(input, len) {
     }
     return str + new Array(len - strLen + 1).join(' ');
 }
+/**
+ * pad a string with spaces on the left-hand side until it's the specified length
+ */
 function padLeft(input, len) {
     const str = `${input}`;
     const strLen = str.length;
@@ -8346,6 +8582,397 @@ function padLeft(input, len) {
     return new Array(len - strLen + 1).join(' ') + str;
 }
 
+// import {
+//   IInstruction,
+//   NodeSequenceFactory,
+//   TextBindingInstruction,
+// } from '@aurelia/runtime-html';
+// import {
+//   FakeView,
+//   FakeViewFactory,
+// } from './fakes';
+// import { TestContext } from './html-test-context';
+// import {
+//   defineComponentLifecycleMock,
+//   IComponentLifecycleMock,
+// } from './mocks';
+// export type TemplateCb = (builder: TemplateBuilder) => TemplateBuilder;
+// export type InstructionCb = (builder: InstructionBuilder) => InstructionBuilder;
+// export type DefinitionCb = (builder: DefinitionBuilder) => DefinitionBuilder;
+// export class TemplateBuilder {
+//   private template: HTMLTemplateElement;
+//   constructor() {
+//     this.template = document.createElement('template');
+//   }
+//   public static interpolation(): TemplateBuilder {
+//     return new TemplateBuilder().interpolation();
+//   }
+//   public static behavior(): TemplateBuilder {
+//     return new TemplateBuilder().behavior();
+//   }
+//   public interpolation(): TemplateBuilder {
+//     const marker = document.createElement('au-m');
+//     marker['classList'].add('au');
+//     const text = document.createTextNode(' ');
+//     this.template.content['appendChild'](marker);
+//     this.template.content['appendChild'](text);
+//     return this;
+//   }
+//   public behavior(): TemplateBuilder {
+//     const marker = document.createElement('au-m');
+//     marker['classList'].add('au');
+//     this.template.content['appendChild'](marker);
+//     return this;
+//   }
+//   public build(): HTMLTemplateElement {
+//     const { template } = this;
+//     this.template = null!;
+//     return template;
+//   }
+// }
+// export class InstructionBuilder {
+//   private instructions: IInstruction[];
+//   constructor() {
+//     this.instructions = [];
+//   }
+//   public static interpolation(source: string): InstructionBuilder;
+//   public static interpolation(parts: ReadonlyArray<string>): InstructionBuilder;
+//   public static interpolation(parts: ReadonlyArray<string>, sources: ReadonlyArray<string>): InstructionBuilder;
+//   public static interpolation(partsOrSource: ReadonlyArray<string> | string, sources?: ReadonlyArray<string>): InstructionBuilder;
+//   public static interpolation(partsOrSource: ReadonlyArray<string> | string, sources?: ReadonlyArray<string>): InstructionBuilder {
+//     return new InstructionBuilder().interpolation(partsOrSource, sources);
+//   }
+//   public static iterator(source: string, target: string): InstructionBuilder {
+//     return new InstructionBuilder().iterator(source, target);
+//   }
+//   public static toView(source: string, target?: string): InstructionBuilder {
+//     return new InstructionBuilder().toView(source, target);
+//   }
+//   public interpolation(source: string): InstructionBuilder;
+//   public interpolation(parts: ReadonlyArray<string>): InstructionBuilder;
+//   public interpolation(parts: ReadonlyArray<string>, sources: ReadonlyArray<string>): InstructionBuilder;
+//   public interpolation(partsOrSource: ReadonlyArray<string> | string, sources?: ReadonlyArray<string>): InstructionBuilder;
+//   public interpolation(partsOrSource: ReadonlyArray<string> | string, sources?: ReadonlyArray<string>): InstructionBuilder {
+//     let parts: string[];
+//     let expressions: IsBindingBehavior[];
+//     if (Array.isArray(partsOrSource)) {
+//       parts = partsOrSource;
+//       expressions = [];
+//       if (Array.isArray(sources)) {
+//         for (const source of sources) {
+//           expressions.push(parseExpression(source as string, BindingType.None as any) as any);
+//         }
+//       }
+//     } else {
+//       parts = ['', ''];
+//       expressions = [parseExpression(partsOrSource as string, BindingType.None as any) as any];
+//     }
+//     const instruction = new TextBindingInstruction(
+//       new Interpolation(parts, expressions)
+//     );
+//     this.instructions.push(instruction);
+//     return this;
+//   }
+//   public iterator(source: string, target: string): InstructionBuilder {
+//     const statement = parseExpression(source, BindingType.ForCommand as any) as any;
+//     const instruction = new IteratorBindingInstruction(statement, target);
+//     this.instructions.push(instruction);
+//     return this;
+//   }
+//   public toView(source: string, target?: string): InstructionBuilder {
+//     const statement = parseExpression(source, BindingType.ToViewCommand as any) as any;
+//     const instruction = new ToViewBindingInstruction(statement, target || 'value');
+//     this.instructions.push(instruction);
+//     return this;
+//   }
+//   public templateController(
+//     res: string,
+//     insCbOrBuilder: InstructionCb | InstructionBuilder,
+//     defCbOrBuilder: DefinitionCb | DefinitionBuilder
+//   ): InstructionBuilder {
+//     let childInstructions: IInstruction[];
+//     let definition: PartialCustomElementDefinition;
+//     if (insCbOrBuilder instanceof InstructionBuilder) {
+//       childInstructions = insCbOrBuilder.build();
+//     } else {
+//       childInstructions = insCbOrBuilder(new InstructionBuilder()).build();
+//     }
+//     if (defCbOrBuilder instanceof DefinitionBuilder) {
+//       definition = defCbOrBuilder.build();
+//     } else {
+//       definition = defCbOrBuilder(new DefinitionBuilder()).build();
+//     }
+//     const instruction = new HydrateTemplateController(definition, res, childInstructions, res === 'else');
+//     this.instructions.push(instruction);
+//     return this;
+//   }
+//   public element(res: string, ins: InstructionCb): InstructionBuilder {
+//     const childInstructions = ins(new InstructionBuilder()).build();
+//     const instruction = new HydrateElementInstruction(res, childInstructions);
+//     this.instructions.push(instruction);
+//     return this;
+//   }
+//   public attribute(res: string, ins: InstructionCb): InstructionBuilder {
+//     const childInstructions = ins(new InstructionBuilder()).build();
+//     const instruction = new HydrateAttributeInstruction(res, childInstructions);
+//     this.instructions.push(instruction);
+//     return this;
+//   }
+//   public build(): IInstruction[] {
+//     const { instructions } = this;
+//     this.instructions = null!;
+//     return instructions;
+//   }
+// }
+// export class DefinitionBuilder {
+//   private static lastId: number = 0;
+//   private name: string;
+//   private templateBuilder: TemplateBuilder;
+//   private instructionBuilder: InstructionBuilder;
+//   private instructions: IInstruction[][];
+//   constructor(name?: string) {
+//     // eslint-disable-next-line prefer-template
+//     this.name = name || ('$' + ++DefinitionBuilder.lastId);
+//     this.templateBuilder = new TemplateBuilder();
+//     this.instructionBuilder = new InstructionBuilder();
+//     this.instructions = [];
+//   }
+//   public static element(name?: string): DefinitionBuilder {
+//     return new DefinitionBuilder(name);
+//   }
+//   public static app(): DefinitionBuilder {
+//     return new DefinitionBuilder('app');
+//   }
+//   public static repeat(insCb: InstructionCb, defCb: DefinitionCb): DefinitionBuilder;
+//   public static repeat(insBuilder: InstructionBuilder, defBuilder: DefinitionBuilder): DefinitionBuilder;
+//   public static repeat(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder;
+//   public static repeat(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder {
+//     return new DefinitionBuilder().repeat(insCbOrBuilder, defCbOrBuilder);
+//   }
+//   public static if(insCb: InstructionCb, defCb: DefinitionCb): DefinitionBuilder;
+//   public static if(insBuilder: InstructionBuilder, defBuilder: DefinitionBuilder): DefinitionBuilder;
+//   public static if(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder;
+//   public static if(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder {
+//     return new DefinitionBuilder().if(insCbOrBuilder, defCbOrBuilder);
+//   }
+//   public static with(insCb: InstructionCb, defCb: DefinitionCb): DefinitionBuilder;
+//   public static with(insBuilder: InstructionBuilder, defBuilder: DefinitionBuilder): DefinitionBuilder;
+//   public static with(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder;
+//   public static with(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder {
+//     return new DefinitionBuilder().with(insCbOrBuilder, defCbOrBuilder);
+//   }
+//   public static else(def: DefinitionCb): DefinitionBuilder {
+//     return new DefinitionBuilder().else(def);
+//   }
+//   public static compose(ins: InstructionCb): DefinitionBuilder {
+//     return new DefinitionBuilder().compose(ins);
+//   }
+//   public static replaceable(insCb: InstructionCb, defCb: DefinitionCb): DefinitionBuilder;
+//   public static replaceable(insBuilder: InstructionBuilder, defBuilder: DefinitionBuilder): DefinitionBuilder;
+//   public static replaceable(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder;
+//   public static replaceable(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder {
+//     return new DefinitionBuilder().replaceable(insCbOrBuilder, defCbOrBuilder);
+//   }
+//   public static interpolation(source: string): DefinitionBuilder;
+//   public static interpolation(parts: ReadonlyArray<string>): DefinitionBuilder;
+//   public static interpolation(parts: ReadonlyArray<string>, sources: ReadonlyArray<string>): DefinitionBuilder;
+//   public static interpolation(partsOrSource: ReadonlyArray<string> | string, sources?: ReadonlyArray<string>): DefinitionBuilder;
+//   public static interpolation(partsOrSource: ReadonlyArray<string> | string, sources?: ReadonlyArray<string>): DefinitionBuilder {
+//     return new DefinitionBuilder().interpolation(partsOrSource, sources);
+//   }
+//   public repeat(insCb: InstructionCb, defCb: DefinitionCb): DefinitionBuilder;
+//   public repeat(insBuilder: InstructionBuilder, defBuilder: DefinitionBuilder): DefinitionBuilder;
+//   public repeat(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder;
+//   public repeat(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder {
+//     this.instructionBuilder.templateController('repeat', insCbOrBuilder, defCbOrBuilder);
+//     this.templateBuilder.behavior();
+//     return this.next();
+//   }
+//   public if(insCb: InstructionCb, defCb: DefinitionCb): DefinitionBuilder;
+//   public if(insBuilder: InstructionBuilder, defBuilder: DefinitionBuilder): DefinitionBuilder;
+//   public if(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder;
+//   public if(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder {
+//     this.instructionBuilder.templateController('if', insCbOrBuilder, defCbOrBuilder);
+//     this.templateBuilder.behavior();
+//     return this.next();
+//   }
+//   public with(insCb: InstructionCb, defCb: DefinitionCb): DefinitionBuilder;
+//   public with(insBuilder: InstructionBuilder, defBuilder: DefinitionBuilder): DefinitionBuilder;
+//   public with(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder;
+//   public with(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder {
+//     this.instructionBuilder.templateController('with', insCbOrBuilder, defCbOrBuilder);
+//     this.templateBuilder.behavior();
+//     return this.next();
+//   }
+//   public else(defCb: DefinitionCb): DefinitionBuilder;
+//   public else(defBuilder: DefinitionBuilder): DefinitionBuilder;
+//   public else(defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder;
+//   public else(defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder {
+//     this.instructionBuilder.templateController('else', b => b, defCbOrBuilder);
+//     this.templateBuilder.behavior();
+//     return this.next();
+//   }
+//   public compose(ins: InstructionCb): DefinitionBuilder {
+//     this.instructionBuilder.element('au-compose', ins);
+//     this.templateBuilder.behavior();
+//     return this.next();
+//   }
+//   public replaceable(insCb: InstructionCb, defCb: DefinitionCb): DefinitionBuilder;
+//   public replaceable(insBuilder: InstructionBuilder, defBuilder: DefinitionBuilder): DefinitionBuilder;
+//   public replaceable(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder;
+//   public replaceable(insCbOrBuilder: InstructionCb | InstructionBuilder, defCbOrBuilder: DefinitionCb | DefinitionBuilder): DefinitionBuilder {
+//     this.instructionBuilder.templateController('replaceable', insCbOrBuilder, defCbOrBuilder);
+//     this.templateBuilder.behavior();
+//     return this.next();
+//   }
+//   public interpolation(source: string): DefinitionBuilder;
+//   public interpolation(parts: ReadonlyArray<string>): DefinitionBuilder;
+//   public interpolation(parts: ReadonlyArray<string>, sources: ReadonlyArray<string>): DefinitionBuilder;
+//   public interpolation(partsOrSource: ReadonlyArray<string> | string, sources?: ReadonlyArray<string>): DefinitionBuilder;
+//   public interpolation(partsOrSource: ReadonlyArray<string> | string, sources?: ReadonlyArray<string>): DefinitionBuilder {
+//     this.instructionBuilder.interpolation(partsOrSource, sources);
+//     this.templateBuilder.interpolation();
+//     return this.next();
+//   }
+//   public build(): PartialCustomElementDefinition {
+//     const { name, templateBuilder, instructions } = this;
+//     const definition = { name, template: templateBuilder.build(), instructions };
+//     this.name = null!;
+//     this.templateBuilder = null!;
+//     this.instructionBuilder = null!;
+//     this.instructions = null!;
+//     return definition;
+//   }
+//   private next(): DefinitionBuilder {
+//     this.instructions.push(this.instructionBuilder.build());
+//     this.instructionBuilder = new InstructionBuilder();
+//     return this;
+//   }
+// }
+// export class TestBuilder<T extends Constructable> {
+//   private readonly container: IContainer;
+//   private readonly Type: T;
+//   constructor(Type: T) {
+//     this.container = StandardConfiguration.createContainer();
+//     this.container.register(Type as any);
+//     this.Type = Type;
+//   }
+//   public static app<T extends object>(obj: T, defBuilder: DefinitionBuilder): T extends Constructable ? TestBuilder<Class<InstanceType<T>, T>> : TestBuilder<Class<T, {}>>;
+//   public static app<T extends object>(obj: T, defCb: DefinitionCb): T extends Constructable ? TestBuilder<Class<InstanceType<T>, T>> : TestBuilder<Class<T, {}>>;
+//   public static app<T extends object>(obj: T, defCbOrBuilder: DefinitionCb | DefinitionBuilder): T extends Constructable ? TestBuilder<Class<InstanceType<T>, T>> : TestBuilder<Class<T, {}>> {
+//     let definition: PartialCustomElementDefinition;
+//     if (defCbOrBuilder instanceof DefinitionBuilder) {
+//       definition = defCbOrBuilder.build();
+//     } else {
+//       definition = defCbOrBuilder(DefinitionBuilder.app()).build();
+//     }
+//     const Type = (obj as { prototype?: any })['prototype'] ? obj : function (this: any): void {
+//       Object.assign(this, obj);
+//     };
+//     const App = CustomElement.define(definition, Type as any);
+//     return new TestBuilder(App) as any;
+//   }
+//   public element(obj: Record<string, unknown>, def: DefinitionCb): TestBuilder<T> {
+//     const definition = def(DefinitionBuilder.element()).build();
+//     const Type = (obj as { prototype?: any })['prototype'] ? obj : function (this: any): void {
+//       Object.assign(this, obj);
+//     };
+//     const Resource = CustomElement.define(definition, Type as any);
+//     this.container.register(Resource);
+//     return this;
+//   }
+//   public build(): TestContext<InstanceType<T>> {
+//     const { container, Type } = this;
+//     const host = document.createElement('div');
+//     const component = new Type();
+//     return new TestContext(container, host, component as any);
+//   }
+// }
+// export class TestContext<T extends object> {
+//   public container: IContainer;
+//   public host: INode;
+//   public component: IViewModel & T;
+//   public lifecycle: ILifecycle;
+//   public isHydrated: boolean;
+//   public assertCount: number;
+//   constructor(
+//     container: IContainer,
+//     host: INode,
+//     component: IViewModel & T
+//   ) {
+//     this.container = container;
+//     this.host = host;
+//     this.component = component;
+//     this.lifecycle = container.get<ILifecycle>(ILifecycle);
+//     this.isHydrated = false;
+//     this.assertCount = 0;
+//   }
+//   public hydrate(renderingEngine?: IRenderingEngine, host?: INode): void {
+//     renderingEngine = renderingEngine || this.container.get(IRenderingEngine);
+//     host = host || this.host;
+//     this.component.$hydrate(LF.none, this.container, host);
+//   }
+//   public bind(flags?: LF): void {
+//     flags = arguments.length === 1 ? flags : LF.fromAppTask | LF.fromBind;
+//     this.component.bind(flags!);
+//   }
+//   public attach(flags?: LF): void {
+//     flags = arguments.length === 1 ? flags : LF.fromAppTask | LF.fromAttach;
+//     this.component.$attach(flags!);
+//   }
+//   public detach(flags?: LF): void {
+//     flags = arguments.length === 1 ? flags : LF.fromStopTask | LF.fromDetach;
+//     this.component.$detach(flags!);
+//   }
+//   public unbind(flags?: LF): void {
+//     flags = arguments.length === 1 ? flags : LF.fromStopTask | LF.fromUnbind;
+//     this.component.unbind(flags!);
+//   }
+//   public start(): void {
+//     if (this.isHydrated === false) {
+//       this.hydrate();
+//     }
+//     this.bind();
+//     this.attach();
+//   }
+//   public startAndAssertTextContentEquals(text: string): void {
+//     this.start();
+//     this.assertTextContentEquals(text);
+//   }
+//   public stop(): void {
+//     this.detach();
+//     this.unbind();
+//   }
+//   public stopAndAssertTextContentEmpty(): void {
+//     this.stop();
+//     this.assertTextContentEmpty();
+//   }
+//   public flush(flags?: LF): void {
+//     flags = arguments.length === 1 ? flags : LF.fromAsyncFlush;
+//     this.lifecycle.processFlushQueue(flags!);
+//   }
+//   public assertTextContentEquals(text: string): void {
+//     ++this.assertCount;
+//     const { textContent } = this.host as { textContent?: string };
+//     if (textContent !== text) {
+//       throw new Error(`Expected host.textContent to equal "${text}", but got: "${textContent}" (assert #${this.assertCount})`);
+//     }
+//   }
+//   public assertTextContentEmpty(): void {
+//     ++this.assertCount;
+//     const { textContent } = this.host as { textContent?: string };
+//     if (textContent !== '') {
+//       throw new Error(`Expected host.textContent to be empty, but got: "${textContent}" (assert #${this.assertCount})`);
+//     }
+//   }
+//   public dispose(): void {
+//     this.container = null!;
+//     this.host = null!;
+//     this.component = null!;
+//     this.lifecycle = null!;
+//     this.isHydrated = null!;
+//   }
+// }
 function createObserverLocator(containerOrLifecycle) {
     let container;
     if (containerOrLifecycle === undefined || !('get' in containerOrLifecycle)) {
@@ -8368,6 +8995,59 @@ function createScopeForTest(bindingContext = {}, parentBindingContext, isBoundar
         ? runtime.Scope.fromParent(runtime.Scope.create(parentBindingContext), bindingContext)
         : runtime.Scope.create(bindingContext, null, isBoundary);
 }
+// export type CustomAttribute = Writable<IViewModel> & IComponentLifecycleMock;
+// export function createCustomAttribute(nameOrDef: string | PartialCustomAttributeDefinition = 'foo') {
+//   const Type = customAttribute(nameOrDef)(defineComponentLifecycleMock());
+//   const sut: CustomAttribute = new (Type as any)();
+//   return { Type, sut };
+// }
+// export function createTemplateController(nameOrDef: string | PartialCustomAttributeDefinition = 'foo') {
+//   const Type = templateController(nameOrDef)(defineComponentLifecycleMock());
+//   const sut: CustomAttribute = new (Type as any)();
+//   return { Type, sut };
+// }
+// export type CustomElement = Writable<IViewModel> & IComponentLifecycleMock;
+// export function createCustomElement(nameOrDef: string | PartialCustomElementDefinition) {
+//   if (arguments.length === 0) {
+//     nameOrDef = 'foo';
+//   }
+//   const Type = customElement(nameOrDef)(defineComponentLifecycleMock());
+//   const sut: CustomElement = new (Type as any)();
+//   return { Type, sut };
+// }
+// export function hydrateCustomElement<T>(Type: Constructable<T>, ctx: TestContext) {
+//   const { container, dom } = ctx;
+//   const ElementType: ICustomElementType = Type as any;
+//   const parent = ctx.createElement('div');
+//   const host = ctx.createElement(ElementType.description.name);
+//   const createView = (factory: IViewFactory<T>): IController<T> => {
+//     const view = new FakeView(ctx.lifecycle, factory);
+//     view.$nodes = new NodeSequenceFactory(dom, '<div>Fake View</div>').createNodeSequence() as INodeSequence<T>;
+//     return view;
+//   };
+//   const composable = new FakeViewFactory('fake-view', createView, ctx.lifecycle).create();
+//   const instruction: IHydrateElementInstruction = {
+//     type: InstructionType.composeElement,
+//     res: 'au-compose',
+//     instructions: []
+//   };
+//   dom.appendChild(parent, host);
+//   const composableProvider = new InstanceProvider();
+//   const elementProvider = new InstanceProvider();
+//   const instructionProvider = new InstanceProvider<IInstruction>();
+//   composableProvider.prepare(composable);
+//   elementProvider.prepare(host);
+//   instructionProvider.prepare(instruction);
+//   container.register(ElementType);
+//   container.registerResolver(IController, composableProvider);
+//   container.registerResolver(IInstruction, instructionProvider);
+//   dom.registerElementResolver(container, elementProvider);
+//   const element = container.get<T & IViewModel>(
+//     CustomElement.keyFrom(ElementType.description.name)
+//   ) as T & IViewModel & InstanceType<typeof Type>;
+//   element.$hydrate(LF.none, container, host);
+//   return { element, parent };
+// }
 
 class Call {
     constructor(instance, args, method, index) {

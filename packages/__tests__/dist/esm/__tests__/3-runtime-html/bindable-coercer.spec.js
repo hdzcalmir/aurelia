@@ -523,7 +523,6 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
         }
     }
     {
-        // eslint-disable-next-line mocha/no-hooks
         beforeEach(function () { Person2.coerced = 0; });
         class Person2 extends Person {
             static createPerson(value) { return createPerson.bind(Person2)(value); }

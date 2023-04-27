@@ -10,9 +10,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { kebabCase, ILogConfig, Registration, noop } from '@aurelia/kernel';
+import { kebabCase, ILogConfig, Registration, noop, inject } from '@aurelia/kernel';
 import { assert, TestContext } from '@aurelia/testing';
-import { RouterConfiguration, IRouter, IRouteContext, route, IRouterEvents } from '@aurelia/router-lite';
+import { RouterConfiguration, IRouter, IRouteContext, route, IRouterOptions, Router, IRouterEvents, RouterOptions, RouteContext } from '@aurelia/router-lite';
 import { Aurelia, valueConverter, customElement, CustomElement, IHistory, ILocation, INode, IPlatform, IWindow, StandardConfiguration, watch } from '@aurelia/runtime-html';
 import { getLocationChangeHandlerRegistration, TestRouterConfiguration } from './_shared/configuration.js';
 import { start } from './_shared/create-fixture.js';
@@ -6151,6 +6151,49 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         assert.html.textContent(host, 'mp c2');
         await au.stop(true);
         assert.areTaskQueuesEmpty();
+    });
+    it('Alias registrations work', async function () {
+        let C1 = class C1 {
+            constructor(router, routerOptions, ctx, ictx) {
+                this.router = router;
+                this.routerOptions = routerOptions;
+                this.ctx = ctx;
+                this.ictx = ictx;
+            }
+        };
+        C1 = __decorate([
+            route(''),
+            inject(Router, RouterOptions, RouteContext),
+            customElement({ name: 'c-1', template: 'c1' }),
+            __param(3, IRouteContext),
+            __metadata("design:paramtypes", [Router,
+                RouterOptions,
+                RouteContext, Object])
+        ], C1);
+        let Root = class Root {
+            constructor(router, routerOptions) {
+                this.router = router;
+                this.routerOptions = routerOptions;
+            }
+        };
+        Root = __decorate([
+            route({ routes: [C1] }),
+            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' }),
+            __param(0, IRouter),
+            __param(1, IRouterOptions),
+            __metadata("design:paramtypes", [Object, Object])
+        ], Root);
+        const { au, host, container, rootVm } = await start({ appRoot: Root });
+        assert.html.textContent(host, 'c1');
+        const c1vm = CustomElement.for(host.querySelector('c-1')).viewModel;
+        const router = container.get(IRouter);
+        assert.strictEqual(Object.is(router, rootVm.router), true, 'router != root Router');
+        assert.strictEqual(Object.is(router, c1vm.router), true, 'router != c1 router');
+        const routerOptions = container.get(IRouterOptions);
+        assert.strictEqual(Object.is(routerOptions, rootVm.routerOptions), true, 'options != root options');
+        assert.strictEqual(Object.is(routerOptions, c1vm.routerOptions), true, 'options != c1 options');
+        assert.strictEqual(Object.is(c1vm.ctx, c1vm.ictx), true, 'RouteCtx != IRouteCtx');
+        await au.stop(true);
     });
 });
 //# sourceMappingURL=smoke-tests.spec.js.map

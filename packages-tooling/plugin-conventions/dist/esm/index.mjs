@@ -1,7 +1,7 @@
 import { camelCase, kebabCase } from '@aurelia/kernel';
 import * as path from 'path';
 import modifyCode from 'modify-code';
-import { createSourceFile, ScriptTarget, isImportDeclaration, isStringLiteral, isNamedImports, isClassDeclaration, canHaveModifiers, getModifiers, SyntaxKind, canHaveDecorators, getDecorators, isCallExpression, isIdentifier } from 'typescript';
+import pkg from 'typescript';
 import { parseFragment } from 'parse5';
 import * as fs from 'fs';
 
@@ -30,6 +30,7 @@ function resourceName(filePath) {
     return kebabCase(name);
 }
 
+const { createSourceFile, ScriptTarget, isImportDeclaration, isStringLiteral, isNamedImports, isClassDeclaration, canHaveModifiers, getModifiers, SyntaxKind, canHaveDecorators, getDecorators, isCallExpression, isIdentifier } = pkg;
 function preprocessResource(unit, options) {
     const expectedResourceName = resourceName(unit.path);
     const sf = createSourceFile(unit.path, unit.contents, ScriptTarget.Latest);

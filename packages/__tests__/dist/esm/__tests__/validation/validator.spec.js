@@ -1,4 +1,4 @@
-/* eslint-disable mocha/no-hooks, mocha/no-sibling-hooks */
+/* eslint-disable mocha/no-sibling-hooks */
 import { DI } from '@aurelia/kernel';
 import { ValidationConfiguration, IValidator, StandardValidator, PropertyRule, IValidationRules, RegexRule, LengthRule, RequiredRule, SizeRule, EqualsRule, ValidateInstruction, ValidationRuleAliasMessage, } from '@aurelia/validation';
 import { assert } from '@aurelia/testing';

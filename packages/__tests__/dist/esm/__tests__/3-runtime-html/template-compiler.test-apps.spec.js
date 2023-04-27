@@ -1,4 +1,4 @@
-import { CustomElement, SVGAnalyzerRegistration, } from '@aurelia/runtime-html';
+import { CustomElement, SVGAnalyzer, } from '@aurelia/runtime-html';
 import { assert, createFixture, PLATFORM, TestContext } from '@aurelia/testing';
 import { Registration } from '@aurelia/kernel';
 import { isNode } from '../util.js';
@@ -10,7 +10,7 @@ describe('3-runtime-html/template-compiler.test-apps.spec.ts', function () {
         const ctx = TestContext.create();
         const state = new State();
         Registration.instance(State, state).register(ctx.container);
-        ctx.container.register(SVGAnalyzerRegistration, createPythagorasElement());
+        ctx.container.register(SVGAnalyzer, createPythagorasElement());
         const { startPromise, appHost, component, tearDown } = createFixture(`<div style='height: 50px;' css='max-width: \${width}px;'>
         <label>Count: \${totalNodes}</label>
       </div>

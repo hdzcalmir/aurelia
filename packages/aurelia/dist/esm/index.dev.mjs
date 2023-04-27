@@ -1,5 +1,5 @@
 import { DI, Registration } from '@aurelia/kernel';
-export { ColorOptions, ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, singleton, toArray, transient } from '@aurelia/kernel';
+export { ColorOptions, ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, resolve, singleton, toArray, transient } from '@aurelia/kernel';
 import { Aurelia as Aurelia$1, CustomElement, IPlatform, StandardConfiguration } from '@aurelia/runtime-html';
 export { AppTask, AuSlotsInfo, Bindable, BindingBehavior, BindingMode, ChildrenBinding, Controller, CustomAttribute, CustomElement, FlushQueue, IAppRoot, IAttrMapper, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IEventTarget, IFlushQueue, ILifecycleHooks, INode, IPlatform, IRenderLocation, ITemplateCompiler, ITemplateCompilerHooks, LifecycleHooks, NodeObserverLocator, ShortHandBindingSyntax, StyleConfiguration, TemplateCompilerHooks, ValueConverter, ViewFactory, alias, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, cssModules, customAttribute, customElement, lifecycleHooks, registerAliases, renderer, shadowCSS, slotted, strict, templateCompilerHooks, templateController, useShadowDOM, valueConverter } from '@aurelia/runtime-html';
 import { BrowserPlatform } from '@aurelia/platform-browser';
@@ -31,9 +31,12 @@ class Aurelia extends Aurelia$1 {
     }
     app(config) {
         if (CustomElement.isType(config)) {
+            // Default to custom element element name
             const definition = CustomElement.getDefinition(config);
             let host = document.querySelector(definition.name);
             if (host === null) {
+                // When no target is found, default to body.
+                // For example, when user forgot to write <my-app></my-app> in html.
                 host = document.body;
             }
             return super.app({

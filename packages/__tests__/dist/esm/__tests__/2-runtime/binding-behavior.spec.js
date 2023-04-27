@@ -9,7 +9,6 @@ import { bindingBehavior, BindingBehavior } from '@aurelia/runtime-html';
 import { assert } from '@aurelia/testing';
 describe(`2-runtime/binding-behavior.spec.ts`, function () {
     let container;
-    // eslint-disable-next-line mocha/no-hooks
     beforeEach(function () {
         container = DI.createContainer();
     });

@@ -24,8 +24,10 @@ export interface IFactory<T extends Constructable = any> {
 export interface IServiceLocator {
     readonly root: IServiceLocator;
     has<K extends Key>(key: K | Key, searchAncestors: boolean): boolean;
+    get<K extends Key>(key: IAllResolver<K>): readonly Resolved<K>[];
     get<K extends Key>(key: INewInstanceResolver<K>): Resolved<K>;
     get<K extends Key>(key: ILazyResolver<K>): IResolvedLazy<K>;
+    get<K extends Key>(key: IOptionalResolver<K>): Resolved<K> | undefined;
     get<K extends Key>(key: IFactoryResolver<K>): IResolvedFactory<K>;
     get<K extends Key>(key: IResolver<K>): Resolved<K>;
     get<K extends Key>(key: K): Resolved<K>;
@@ -99,7 +101,6 @@ export declare class ContainerConfiguration implements IContainerConfiguration {
     private constructor();
     static from(config?: IContainerConfiguration): ContainerConfiguration;
 }
-export declare const getDependencies: (Type: Constructable | Injectable) => Key[];
 export declare const DI: {
     createContainer: (config?: Partial<IContainerConfiguration>) => IContainer;
     getDesignParamtypes: (Type: Constructable | Injectable) => readonly Key[] | undefined;
@@ -240,7 +241,14 @@ export declare function singleton<T extends Constructable>(options?: SingletonOp
  * ```
  */
 export declare function singleton<T extends Constructable>(target: T & Partial<RegisterSelf<T>>): T & RegisterSelf<T>;
-export declare const all: (key: any, searchAncestors?: boolean) => ReturnType<typeof DI.inject>;
+/**
+ * Create a resolver that will resolve all values of a key from resolving container
+ */
+export declare const all: <T extends Key>(key: T, searchAncestors?: boolean) => IAllResolver<T>;
+export type IAllResolver<T> = IResolver<readonly Resolved<T>[]> & {
+    __isAll: undefined;
+    (...args: unknown[]): any;
+};
 /**
  * Lazily inject a dependency depending on whether the [[`Key`]] is present at the time of function call.
  *
@@ -268,8 +276,8 @@ export declare const all: (key: any, searchAncestors?: boolean) => ReturnType<ty
  * - @param key [[`Key`]]
  * see { @link DI.createInterface } on interactions with interfaces
  */
-export declare const lazy: (key: any) => any;
-export type ILazyResolver<K = any> = IResolver<K> & {
+export declare const lazy: <K extends Key>(key: K) => ILazyResolver<K>;
+export type ILazyResolver<K extends Key = Key> = IResolver<() => K> & {
     __isLazy: undefined;
 } & ((...args: unknown[]) => any);
 export type IResolvedLazy<K> = () => Resolved<K>;
@@ -295,7 +303,11 @@ export type IResolvedLazy<K> = () => Resolved<K>;
  *
  * see { @link DI.createInterface } on interactions with interfaces
  */
-export declare const optional: (key: any) => any;
+export declare const optional: <K extends Key>(key: K) => IOptionalResolver<K>;
+export type IOptionalResolver<K extends Key = Key> = IResolver<K | undefined> & {
+    __isOptional: undefined;
+    (...args: unknown[]): any;
+};
 /**
  * ignore tells the container not to try to inject a dependency
  */
@@ -338,20 +350,18 @@ export type IFactoryResolver<K = any> = IResolver<K> & {
     __isFactory: undefined;
 } & ((...args: unknown[]) => any);
 export type IResolvedFactory<K> = (...args: unknown[]) => Resolved<K>;
+/**
+ * Create a resolver that will resolve a new instance of a key, and register the newly created instance with the requestor container
+ */
 export declare const newInstanceForScope: <K>(key: K) => INewInstanceResolver<K>;
+/**
+ * Create a resolver that will resolve a new instance of a key
+ */
 export declare const newInstanceOf: <K>(key: K) => INewInstanceResolver<K>;
-export type INewInstanceResolver<T> = {
+export type INewInstanceResolver<T> = IResolver<T> & {
     __newInstance: undefined;
     (...args: unknown[]): any;
 };
-export declare const enum ResolverStrategy {
-    instance = 0,
-    singleton = 1,
-    transient = 2,
-    callback = 3,
-    array = 4,
-    alias = 5
-}
 export declare class Resolver implements IResolver, IRegistration {
     _key: Key;
     _strategy: ResolverStrategy;
@@ -363,7 +373,6 @@ export declare class Resolver implements IResolver, IRegistration {
     resolve(handler: IContainer, requestor: IContainer): any;
     getFactory(container: IContainer): IFactory | null;
 }
-export declare function containerGetKey(this: IContainer, d: Key): any;
 /**
  * An implementation of IRegistry that delegates registration to a
  * separately registered class. The ParameterizedRegistry facilitates the

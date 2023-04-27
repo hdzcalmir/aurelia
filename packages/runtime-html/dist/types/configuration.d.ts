@@ -1,55 +1,45 @@
-import { IContainer, IRegistry } from '@aurelia/kernel';
+import { IContainer } from '@aurelia/kernel';
+import { AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, SpreadAttributePattern, DotSeparatedAttributePattern, RefAttributePattern } from './resources/attribute-pattern';
+import { ForBindingCommand, OneTimeBindingCommand, TriggerBindingCommand } from './resources/binding-command';
+import { TemplateCompiler } from './compiler/template-compiler';
 import { CustomAttributeRenderer, CustomElementRenderer, InterpolationBindingRenderer, IteratorBindingRenderer, LetElementRenderer, PropertyBindingRenderer, RefBindingRenderer, SetPropertyRenderer, TemplateControllerRenderer, AttributeBindingRenderer, ListenerBindingRenderer, SetAttributeRenderer, StylePropertyBindingRenderer, TextBindingRenderer, SetClassAttributeRenderer, SetStyleAttributeRenderer, SpreadRenderer } from './renderer';
+import { DebounceBindingBehavior } from './resources/binding-behaviors/debounce';
+import { SignalBindingBehavior } from './resources/binding-behaviors/signals';
+import { ThrottleBindingBehavior } from './resources/binding-behaviors/throttle';
 import { AttrBindingBehavior } from './resources/binding-behaviors/attr';
+import { UpdateTriggerBindingBehavior } from './resources/binding-behaviors/update-trigger';
+import { Focus } from './resources/custom-attributes/focus';
+import { Show } from './resources/custom-attributes/show';
+import { Portal } from './resources/template-controllers/portal';
+import { Else, If } from './resources/template-controllers/if';
+import { Repeat } from './resources/template-controllers/repeat';
+import { With } from './resources/template-controllers/with';
+import { Switch, Case } from './resources/template-controllers/switch';
+import { PromiseTemplateController, PendingTemplateController, FulfilledTemplateController, RejectedTemplateController, PromiseAttributePattern, FulfilledAttributePattern, RejectedAttributePattern } from './resources/template-controllers/promise';
+import { AuCompose } from './resources/custom-elements/au-compose';
 import { AuSlot } from './resources/custom-elements/au-slot';
+import { SanitizeValueConverter } from './resources/value-converters/sanitize';
+import { NodeObserverLocator } from './observation/observer-locator';
 import { ICoercionConfiguration } from '@aurelia/runtime';
-export declare const DebounceBindingBehaviorRegistration: IRegistry;
-export declare const OneTimeBindingBehaviorRegistration: IRegistry;
-export declare const ToViewBindingBehaviorRegistration: IRegistry;
-export declare const FromViewBindingBehaviorRegistration: IRegistry;
-export declare const SignalBindingBehaviorRegistration: IRegistry;
-export declare const ThrottleBindingBehaviorRegistration: IRegistry;
-export declare const TwoWayBindingBehaviorRegistration: IRegistry;
-export declare const ITemplateCompilerRegistration: IRegistry;
-export declare const INodeObserverLocatorRegistration: IRegistry;
 /**
  * Default HTML-specific (but environment-agnostic) implementations for the following interfaces:
  * - `ITemplateCompiler`
  * - `ITargetAccessorLocator`
  * - `ITargetObserverLocator`
  */
-export declare const DefaultComponents: IRegistry[];
-export declare const SVGAnalyzerRegistration: IRegistry;
-export declare const AtPrefixedTriggerAttributePatternRegistration: IRegistry;
-export declare const ColonPrefixedBindAttributePatternRegistration: IRegistry;
-export declare const RefAttributePatternRegistration: IRegistry;
-export declare const DotSeparatedAttributePatternRegistration: IRegistry;
-export declare const SpreadAttributePatternRegistration: IRegistry;
+export declare const DefaultComponents: (typeof NodeObserverLocator | typeof TemplateCompiler)[];
 /**
  * Default binding syntax for the following attribute name patterns:
  * - `ref`
  * - `target.command` (dot-separated)
  */
-export declare const DefaultBindingSyntax: IRegistry[];
+export declare const DefaultBindingSyntax: (typeof DotSeparatedAttributePattern | typeof RefAttributePattern | typeof SpreadAttributePattern)[];
 /**
  * Binding syntax for short-hand attribute name patterns:
  * - `@target` (short-hand for `target.trigger`)
  * - `:target` (short-hand for `target.bind`)
  */
-export declare const ShortHandBindingSyntax: IRegistry[];
-export declare const DefaultBindingCommandRegistration: IRegistry;
-export declare const ForBindingCommandRegistration: IRegistry;
-export declare const FromViewBindingCommandRegistration: IRegistry;
-export declare const OneTimeBindingCommandRegistration: IRegistry;
-export declare const ToViewBindingCommandRegistration: IRegistry;
-export declare const TwoWayBindingCommandRegistration: IRegistry;
-export declare const RefBindingCommandRegistration: IRegistry;
-export declare const TriggerBindingCommandRegistration: IRegistry;
-export declare const CaptureBindingCommandRegistration: IRegistry;
-export declare const AttrBindingCommandRegistration: IRegistry;
-export declare const ClassBindingCommandRegistration: IRegistry;
-export declare const StyleBindingCommandRegistration: IRegistry;
-export declare const SpreadBindingCommandRegistration: IRegistry;
+export declare const ShortHandBindingSyntax: (typeof ColonPrefixedBindAttributePattern | typeof AtPrefixedTriggerAttributePattern)[];
 /**
  * Default HTML-specific (but environment-agnostic) binding commands:
  * - Property observation: `.bind`, `.one-time`, `.from-view`, `.to-view`, `.two-way`
@@ -57,28 +47,7 @@ export declare const SpreadBindingCommandRegistration: IRegistry;
  * - Collection observation: `.for`
  * - Event listeners: `.trigger`, `.delegate`, `.capture`
  */
-export declare const DefaultBindingLanguage: IRegistry[];
-export declare const SanitizeValueConverterRegistration: IRegistry;
-export declare const IfRegistration: IRegistry;
-export declare const ElseRegistration: IRegistry;
-export declare const RepeatRegistration: IRegistry;
-export declare const WithRegistration: IRegistry;
-export declare const SwitchRegistration: IRegistry;
-export declare const CaseRegistration: IRegistry;
-export declare const DefaultCaseRegistration: IRegistry;
-export declare const PromiseTemplateControllerRegistration: IRegistry;
-export declare const PendingTemplateControllerRegistration: IRegistry;
-export declare const FulfilledTemplateControllerRegistration: IRegistry;
-export declare const RejectedTemplateControllerRegistration: IRegistry;
-export declare const PromiseAttributePatternRegistration: IRegistry;
-export declare const FulfilledAttributePatternRegistration: IRegistry;
-export declare const RejectedAttributePatternRegistration: IRegistry;
-export declare const SelfBindingBehaviorRegistration: IRegistry;
-export declare const UpdateTriggerBindingBehaviorRegistration: IRegistry;
-export declare const AuComposeRegistration: IRegistry;
-export declare const PortalRegistration: IRegistry;
-export declare const FocusRegistration: IRegistry;
-export declare const ShowRegistration: IRegistry;
+export declare const DefaultBindingLanguage: (typeof OneTimeBindingCommand | typeof ForBindingCommand | typeof TriggerBindingCommand)[];
 /**
  * Default HTML-specific (but environment-agnostic) resources:
  * - Binding Behaviors: `oneTime`, `toView`, `fromView`, `twoWay`, `signal`, `debounce`, `throttle`, `attr`, `self`, `updateTrigger`
@@ -87,7 +56,7 @@ export declare const ShowRegistration: IRegistry;
  * - Template controllers: `if`/`else`, `repeat`, `with`
  * - Value Converters: `sanitize`
  */
-export declare const DefaultResources: (IRegistry | typeof AttrBindingBehavior | typeof AuSlot)[];
+export declare const DefaultResources: (typeof DebounceBindingBehavior | typeof SignalBindingBehavior | typeof ThrottleBindingBehavior | typeof AttrBindingBehavior | typeof UpdateTriggerBindingBehavior | typeof Focus | typeof Show | typeof Portal | typeof If | typeof Else | typeof Repeat | typeof With | typeof Switch | typeof Case | typeof PromiseTemplateController | typeof PendingTemplateController | typeof FulfilledTemplateController | typeof RejectedTemplateController | typeof PromiseAttributePattern | typeof FulfilledAttributePattern | typeof RejectedAttributePattern | typeof AuCompose | typeof AuSlot | typeof SanitizeValueConverter)[];
 /**
  * Default renderers for:
  * - PropertyBinding: `bind`, `one-time`, `to-view`, `from-view`, `two-way`

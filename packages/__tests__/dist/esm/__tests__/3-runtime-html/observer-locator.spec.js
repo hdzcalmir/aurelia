@@ -285,47 +285,69 @@ describe('3-runtime-html/observer-locator.spec.ts', function () {
             }
         }
     }
-    it(_ `getObserver() - Array.foo - returns ArrayObserver`, function () {
+    it(`getObserver() - Array.foo - returns ArrayObserver`, function () {
         const { sut } = createFixture();
         const obj = [];
         const actual = sut.getObserver(obj, 'foo');
         assert.strictEqual(actual.constructor.name, SetterObserver.name, `actual.constructor.name`);
         assert.instanceOf(actual, SetterObserver, `actual`);
     });
-    it(_ `getObserver() - Array.length - returns ArrayObserver`, function () {
+    it(`getObserver() - Array.length - returns ArrayObserver`, function () {
         const { sut } = createFixture();
         const obj = [];
         const actual = sut.getObserver(obj, 'length');
         assert.strictEqual(actual.constructor.name, CollectionLengthObserver.name, `actual.constructor.name`);
         assert.instanceOf(actual, CollectionLengthObserver, `actual`);
     });
-    it(_ `getObserver() - Set.foo - returns SetObserver`, function () {
+    it(`getObserver() - Set.foo - returns SetObserver`, function () {
         const { sut } = createFixture();
         const obj = new Set();
         const actual = sut.getObserver(obj, 'foo');
         assert.strictEqual(actual.constructor.name, SetterObserver.name, `actual.constructor.name`);
         assert.instanceOf(actual, SetterObserver, `actual`);
     });
-    it(_ `getObserver() - Set.size - returns SetObserver`, function () {
+    it(`getObserver() - Set.size - returns SetObserver`, function () {
         const { sut } = createFixture();
         const obj = new Set();
         const actual = sut.getObserver(obj, 'size');
         assert.strictEqual(actual.constructor.name, CollectionSizeObserver.name, `actual.constructor.name`);
         assert.instanceOf(actual, CollectionSizeObserver, `actual`);
     });
-    it(_ `getObserver() - Map.foo - returns MapObserver`, function () {
+    it(`getObserver() - Map.foo - returns MapObserver`, function () {
         const { sut } = createFixture();
         const obj = new Map();
         const actual = sut.getObserver(obj, 'foo');
         assert.strictEqual(actual.constructor.name, SetterObserver.name, `actual.constructor.name`);
         assert.instanceOf(actual, SetterObserver, `actual`);
     });
-    it(_ `getObserver() - Map.size - returns MapObserver`, function () {
+    it(`getObserver() - Map.size - returns MapObserver`, function () {
         const { sut } = createFixture();
         const obj = new Map();
         const actual = sut.getObserver(obj, 'size');
         assert.strictEqual(actual.constructor.name, CollectionSizeObserver.name, `actual.constructor.name`);
         assert.instanceOf(actual, CollectionSizeObserver, `actual`);
+    });
+    describe('with getter fn', function () {
+        it('on normal object', function () {
+            const { sut } = createFixture();
+            const obj = { prop: 1 };
+            let v = 0;
+            sut.getObserver(obj, o => o.prop).subscribe({
+                handleChange: () => v = 1
+            });
+            obj.prop = 2;
+            assert.strictEqual(v, 1);
+        });
+        it('on array', function () {
+            const { sut } = createFixture();
+            const obj = [{ prop: 1 }];
+            let v = 0;
+            sut.getObserver(obj, o => o[0].prop).subscribe({
+                handleChange: () => v = 1
+            });
+            obj.splice(0, 1, { prop: 2 });
+            assert.strictEqual(v, 1);
+        });
     });
 });
 //# sourceMappingURL=observer-locator.spec.js.map

@@ -5,7 +5,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var path = require('path');
 var modifyCode = require('modify-code');
-var typescript = require('typescript');
+var pkg = require('typescript');
 var parse5 = require('parse5');
 var fs = require('fs');
 
@@ -25,6 +25,7 @@ function _interopNamespace(e) {
 
 var path__namespace = /*#__PURE__*/_interopNamespace(path);
 var modifyCode__default = /*#__PURE__*/_interopDefaultLegacy(modifyCode);
+var pkg__default = /*#__PURE__*/_interopDefaultLegacy(pkg);
 var fs__namespace = /*#__PURE__*/_interopNamespace(fs);
 
 function nameConvention(className) {
@@ -52,9 +53,10 @@ function resourceName(filePath) {
     return kernel.kebabCase(name);
 }
 
+const { createSourceFile, ScriptTarget, isImportDeclaration, isStringLiteral, isNamedImports, isClassDeclaration, canHaveModifiers, getModifiers, SyntaxKind, canHaveDecorators, getDecorators, isCallExpression, isIdentifier } = pkg__default;
 function preprocessResource(unit, options) {
     const expectedResourceName = resourceName(unit.path);
-    const sf = typescript.createSourceFile(unit.path, unit.contents, typescript.ScriptTarget.Latest);
+    const sf = createSourceFile(unit.path, unit.contents, ScriptTarget.Latest);
     let exportedClassName;
     let auImport = { names: [], start: 0, end: 0 };
     let runtimeImport = { names: [], start: 0, end: 0 };
@@ -166,12 +168,12 @@ function modifyResource(unit, m, options) {
     return m;
 }
 function captureImport(s, lib, code) {
-    if (typescript.isImportDeclaration(s) &&
-        typescript.isStringLiteral(s.moduleSpecifier) &&
+    if (isImportDeclaration(s) &&
+        isStringLiteral(s.moduleSpecifier) &&
         s.moduleSpecifier.text === lib &&
         s.importClause &&
         s.importClause.namedBindings &&
-        typescript.isNamedImports(s.importClause.namedBindings)) {
+        isNamedImports(s.importClause.namedBindings)) {
         return {
             names: s.importClause.namedBindings.elements.map(e => e.name.text),
             start: ensureTokenStart(s.pos, code),
@@ -190,29 +192,29 @@ function ensureTokenStart(start, code) {
     return start;
 }
 function isExported(node) {
-    if (!typescript.canHaveModifiers(node))
+    if (!canHaveModifiers(node))
         return false;
-    const modifiers = typescript.getModifiers(node);
+    const modifiers = getModifiers(node);
     if (modifiers === void 0)
         return false;
     for (const mod of modifiers) {
-        if (mod.kind === typescript.SyntaxKind.ExportKeyword)
+        if (mod.kind === SyntaxKind.ExportKeyword)
             return true;
     }
     return false;
 }
 const KNOWN_DECORATORS = ['view', 'customElement', 'customAttribute', 'valueConverter', 'bindingBehavior', 'bindingCommand', 'templateController'];
 function findDecoratedResourceType(node) {
-    if (!typescript.canHaveDecorators(node))
+    if (!canHaveDecorators(node))
         return;
-    const decorators = typescript.getDecorators(node);
+    const decorators = getDecorators(node);
     if (decorators === void 0)
         return;
     for (const d of decorators) {
-        if (!typescript.isCallExpression(d.expression))
+        if (!isCallExpression(d.expression))
             return;
         const exp = d.expression.expression;
-        if (typescript.isIdentifier(exp)) {
+        if (isIdentifier(exp)) {
             const name = exp.text;
             if (KNOWN_DECORATORS.includes(name)) {
                 return {
@@ -227,7 +229,7 @@ function isKindOfSame(name1, name2) {
     return name1.replace(/-/g, '') === name2.replace(/-/g, '');
 }
 function findResource(node, expectedResourceName, filePair, isViewPair, code) {
-    if (!typescript.isClassDeclaration(node))
+    if (!isClassDeclaration(node))
         return;
     if (!node.name)
         return;
@@ -250,7 +252,7 @@ function findResource(node, expectedResourceName, filePair, isViewPair, code) {
         if (isImplicitResource &&
             foundType.type === 'customElement' &&
             foundType.expression.arguments.length === 1 &&
-            typescript.isStringLiteral(foundType.expression.arguments[0])) {
+            isStringLiteral(foundType.expression.arguments[0])) {
             const customName = foundType.expression.arguments[0];
             return {
                 className,

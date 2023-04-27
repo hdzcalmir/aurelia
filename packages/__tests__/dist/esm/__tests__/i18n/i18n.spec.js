@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { I18nService } from '@aurelia/i18n';
+import { I18nService, Signals } from '@aurelia/i18n';
 import { EventAggregator } from '@aurelia/kernel';
 import { nowrap } from '@aurelia/runtime';
 import { assert, MockSignaler, createFixture } from '@aurelia/testing';
@@ -99,11 +99,11 @@ describe('i18n/i18n.spec.ts', function () {
         eaSpy.clearCallRecords();
         mockSignaler.calls.splice(0);
         await sut.setLocale('de');
-        eaSpy.methodCalledOnceWith('publish', ["i18n:locale:changed" /* Signals.I18N_EA_CHANNEL */, { newLocale: 'de', oldLocale: 'en' }]);
+        eaSpy.methodCalledOnceWith('publish', [Signals.I18N_EA_CHANNEL, { newLocale: 'de', oldLocale: 'en' }]);
         const dispatchCall = mockSignaler.calls.find((call) => call[0] === 'dispatchSignal');
         assert.notEqual(dispatchCall, undefined);
         const [, args] = dispatchCall;
-        assert.deepEqual(args, "aurelia-translation-signal" /* Signals.I18N_SIGNAL */);
+        assert.deepEqual(args, Signals.I18N_SIGNAL);
         assert.equal(sut.getLocale(), 'de');
     });
     describe('createNumberFormat', function () {

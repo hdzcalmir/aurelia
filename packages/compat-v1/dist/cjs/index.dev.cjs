@@ -84,10 +84,15 @@ function __decorate(decorators, target, key, desc) {
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
 
-const createLookup = () => Object.create(null);
-const isFunction = (v) => typeof v === 'function';
-const isString = (v) => typeof v === 'string';
+/** @internal */ const createLookup = () => Object.create(null);
+// eslint-disable-next-line @typescript-eslint/ban-types
+/** @internal */ const isFunction = (v) => typeof v === 'function';
+/** @internal */ const isString = (v) => typeof v === 'string';
+// /** @internal */ export const rethrow = (err: unknown) => { throw err; };
+// /** @internal */ export const areEqual = Object.is;
+/** @internal */
 const def = Reflect.defineProperty;
+/** @internal */
 const defineHiddenProp = (obj, key, value) => {
     def(obj, key, {
         enumerable: false,
@@ -97,6 +102,7 @@ const defineHiddenProp = (obj, key, value) => {
     });
     return value;
 };
+/** @internal */
 const ensureExpression = (parser, srcOrExpr, expressionType) => {
     if (isString(srcOrExpr)) {
         return parser.parse(srcOrExpr, expressionType);
@@ -105,9 +111,12 @@ const ensureExpression = (parser, srcOrExpr, expressionType) => {
 };
 
 const registeredSymbol$1 = Symbol('.call');
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 const callSyntax = {
     register(container) {
+        /* istanbul ignore next */
         if (!container[registeredSymbol$1]) {
+            /* istanbul ignore next */
             container[registeredSymbol$1] = true;
             container.register(exports.CallBindingCommand, exports.CallBindingRenderer);
         }
@@ -122,12 +131,12 @@ class CallBindingInstruction {
     }
 }
 exports.CallBindingCommand = class CallBindingCommand {
-    get type() { return 0; }
+    get type() { return 0 /* CommandType.None */; }
     build(info, exprParser) {
         const target = info.bindable === null
             ? kernel.camelCase(info.attr.target)
             : info.bindable.property;
-        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, (16 | 8)), target);
+        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, (16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */)), target);
     }
 };
 exports.CallBindingCommand = __decorate([
@@ -135,7 +144,7 @@ exports.CallBindingCommand = __decorate([
 ], exports.CallBindingCommand);
 exports.CallBindingRenderer = class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        const expr = ensureExpression(exprParser, instruction.from, 16 | 8);
+        const expr = ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
 };
@@ -154,6 +163,8 @@ class CallBinding {
         this.target = target;
         this.targetProperty = targetProperty;
         this.isBound = false;
+        // see Listener binding for explanation
+        /** @internal */
         this.boundFn = false;
         this.l = locator;
         this.targetObserver = observerLocator.getAccessor(target, targetProperty);
@@ -192,9 +203,12 @@ runtimeHtml.mixingBindingLimited(CallBinding, () => 'callSource');
 runtimeHtml.mixinAstEvaluator(true)(CallBinding);
 
 const registeredSymbol = Symbol('.delegate');
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 const delegateSyntax = {
     register(container) {
+        /* istanbul ignore next */
         if (!container[registeredSymbol]) {
+            /* istanbul ignore next */
             container[registeredSymbol] = true;
             container.register(IEventDelegator, exports.DelegateBindingCommand, exports.ListenerBindingRenderer);
         }
@@ -202,33 +216,36 @@ const delegateSyntax = {
 };
 const instructionType = 'dl';
 exports.DelegateBindingCommand = class DelegateBindingCommand {
-    get type() { return 1; }
+    get type() { return 1 /* CommandType.IgnoreAttr */; }
     build(info, exprParser) {
-        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, 8), info.attr.target, false);
+        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, 8 /* ExpressionType.IsFunction */), info.attr.target, false);
     }
 };
 exports.DelegateBindingCommand = __decorate([
     runtimeHtml.bindingCommand('delegate')
 ], exports.DelegateBindingCommand);
-exports.ListenerBindingRenderer = class ListenerBindingRenderer {
-    static get inject() { return [IEventDelegator]; }
+exports.ListenerBindingRenderer = 
+/** @internal */
+class ListenerBindingRenderer {
+    /** @internal */ static get inject() { return [IEventDelegator]; }
     constructor(eventDelegator) {
         this._eventDelegator = eventDelegator;
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        const expr = ensureExpression(exprParser, instruction.from, 8);
+        const expr = ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
     }
 };
 exports.ListenerBindingRenderer = __decorate([
     runtimeHtml.renderer(instructionType)
+    /** @internal */
 ], exports.ListenerBindingRenderer);
 class DelegateBindingInstruction {
     constructor(from, to, preventDefault) {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
-        this.type = "hb";
+        this.type = "hb" /* InstructionType.listenerBinding */;
     }
 }
 class DelegateListenerOptions {
@@ -236,6 +253,9 @@ class DelegateListenerOptions {
         this.prevent = prevent;
     }
 }
+/**
+ * Listener binding. Handle event binding between view and view model
+ */
 class DelegateListenerBinding {
     constructor(locator, ast, target, targetEvent, eventDelegator, options) {
         this.ast = ast;
@@ -244,6 +264,12 @@ class DelegateListenerBinding {
         this.eventDelegator = eventDelegator;
         this.isBound = false;
         this.handler = null;
+        /**
+         * Indicates if this binding evaluates an ast and get a function, that function should be bound
+         * to the instance it is on
+         *
+         * @internal
+         */
         this.boundFn = true;
         this.l = locator;
         this._options = options;
@@ -355,6 +381,9 @@ class ListenerTracker {
         }
     }
 }
+/**
+ * Enable dispose() pattern for `delegate` & `capture` commands
+ */
 class DelegateSubscription {
     constructor(_tracker, _lookup, _eventName, callback) {
         this._tracker = _tracker;
@@ -368,13 +397,14 @@ class DelegateSubscription {
         this._lookup[this._eventName] = void 0;
     }
 }
-const IEventDelegator = kernel.DI.createInterface('IEventDelegator', x => x.cachedCallback((handler) => {
+const IEventDelegator = /*@__PURE__*/ kernel.DI.createInterface('IEventDelegator', x => x.cachedCallback((handler) => {
     const instance = handler.invoke(EventDelegator);
     handler.register(runtimeHtml.AppTask.deactivating(() => instance.dispose()));
     return instance;
 }));
 class EventDelegator {
     constructor() {
+        /** @internal */
         this._trackerMaps = createLookup();
     }
     addEventListener(publisher, target, eventName, listener, options) {
@@ -397,6 +427,7 @@ class EventDelegator {
     }
 }
 
+/* eslint-disable no-console */
 let defined = false;
 const defineBindingMethods = () => {
     if (defined)
@@ -414,14 +445,26 @@ const defineBindingMethods = () => {
         [DelegateListenerBinding, 'Delegate Listener binding']
     ].forEach(([b, name]) => {
         Object.defineProperty(b.prototype, 'sourceExpression', {
-            configurable: true, enumerable: false, writable: true, get() {
-                console.warn(`@deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${runtime.Unparser.unparse(this.ast)}"`);
+            configurable: true,
+            enumerable: false,
+            get() {
+                console.warn(getMessage(name, this.ast));
                 return this.ast;
+            },
+            set(v) {
+                console.warn(getMessage(name, this.ast));
+                Reflect.set(this, 'ast', v);
             }
         });
     });
+    const getMessage = (name, ast) => console.warn(`@deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${runtime.Unparser.unparse(ast)}"`);
 };
 
+/**
+ * A registration that will enable the default form submission behavior of form without a valid action.
+ *
+ * The default behavior of <form> without action attribute is normally not desirable for SPA applications.
+ */
 const PreventFormActionlessSubmit = runtimeHtml.AppTask.creating(runtimeHtml.IEventTarget, appRoot => {
     appRoot.addEventListener('submit', (e) => {
         const target = e.target;
@@ -437,7 +480,16 @@ let addedMetadata = false;
 const prototype = runtimeHtml.AuCompose.prototype;
 const ignore = Symbol();
 const originalAttaching = prototype.attaching;
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 const originalPropertyChanged = prototype.propertyChanged;
+/**
+ * Ensure `<au-compose/>` works with v1 syntaxes:
+ * - Prop: viewModel -> component:
+ * - template syntax: view-model.bind -> component.bind
+ *
+ * - Prop: view -> template
+ * - template syntax: view.bind -> template.bind
+ */
 function enableComposeCompat() {
     if (compatEnabled) {
         return;
@@ -449,6 +501,10 @@ function enableComposeCompat() {
         const viewModelBindable = def.bindables.viewModel = runtimeHtml.BindableDefinition.create('viewModel', runtimeHtml.AuCompose);
         const viewBindable = def.bindables.view = runtimeHtml.BindableDefinition.create('view', runtimeHtml.AuCompose);
         const bindableInfo = runtimeHtml.BindablesInfo.from(def, false);
+        // when <au-compose/> is used some where before the enable compat call is invoked
+        // BindableInfo of AuCompose definition has already been cached
+        // and thus will not be updated with view/viewmodel information
+        // so need to add it there too
         if (!('view' in bindableInfo.attrs)) {
             bindableInfo.attrs.view = bindableInfo.bindables.view = viewBindable;
             bindableInfo.attrs['view-model'] = bindableInfo.bindables.viewModel = viewModelBindable;
@@ -472,10 +528,12 @@ function enableComposeCompat() {
         return originalAttaching.apply(this, rest);
     });
     defineHiddenProp(prototype, 'propertyChanged', function (name) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this[ignore]) {
             return;
         }
         switch (name) {
+            // already handled via the change handler calls
             case 'viewModel':
             case 'view': return;
         }
@@ -500,7 +558,9 @@ function disableComposeCompat() {
         }
     }
     compatEnabled = false;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     delete prototype.viewModelChanged;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     delete prototype.viewChanged;
     defineHiddenProp(prototype, 'attaching', originalAttaching);
     defineHiddenProp(prototype, 'propertyChanged', originalPropertyChanged);
@@ -543,7 +603,7 @@ class BindingEngine {
         const scope = runtime.Scope.create(bindingContext, {}, true);
         return {
             subscribe: callback => {
-                const observer = new runtimeHtml.ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 16), callback);
+                const observer = new runtimeHtml.ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 16 /* ExpressionType.IsProperty */), callback);
                 observer.bind();
                 return {
                     dispose: () => observer.unbind()
@@ -552,8 +612,14 @@ class BindingEngine {
         };
     }
 }
+/** @internal */
 BindingEngine.inject = [runtime.IExpressionParser, runtime.IObserverLocator];
 
+/**
+ * Register all services/functionalities necessary for a v1 app to work with Aurelia v2.
+ *
+ * Ideally should only be used for migration as there maybe be perf penalties to application doing it this way.
+ */
 const compatRegistration = {
     register(container) {
         defineAstMethods();

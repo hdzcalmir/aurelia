@@ -112,7 +112,6 @@ export declare class $RecognizedRoute {
     constructor(route: RecognizedRoute<RouteConfig | Promise<RouteConfig>>, residue: string | null);
     toString(): string;
 }
-export declare const INavigationModel: import("@aurelia/kernel").InterfaceSymbol<INavigationModel>;
 export interface INavigationModel {
     /**
      * Collection of routes.

@@ -1,5 +1,5 @@
 import { Scope, AccessScopeExpression, ForOfStatement, BindingIdentifier, BindingContext } from '@aurelia/runtime';
-import { Repeat, Controller, CustomElementDefinition, PropertyBindingRenderer, TextBindingRenderer, TextBindingInstruction, INodeObserverLocatorRegistration, IRendering, } from '@aurelia/runtime-html';
+import { Repeat, Controller, CustomElementDefinition, PropertyBindingRenderer, TextBindingRenderer, TextBindingInstruction, NodeObserverLocator, IRendering, } from '@aurelia/runtime-html';
 import { eachCartesianJoin, assert, PLATFORM, createContainer, } from '@aurelia/testing';
 describe(`3-runtime-html/repeater.unit.spec.ts`, function () {
     function runActivateLifecycle(sut, scope) {
@@ -420,7 +420,7 @@ describe(`3-runtime-html/repeater.unit.spec.ts`, function () {
                 { op: 'push', items: ['m', 'n', 'o', 'p', 'q', 'r'] }
             ] }
     ];
-    const container = createContainer().register(INodeObserverLocatorRegistration, PropertyBindingRenderer, TextBindingRenderer);
+    const container = createContainer().register(NodeObserverLocator, PropertyBindingRenderer, TextBindingRenderer);
     const createStartLocation = () => PLATFORM.document.createComment('au-start');
     const createEndLocation = () => PLATFORM.document.createComment('au-end');
     const marker = PLATFORM.document.createElement('au-m');

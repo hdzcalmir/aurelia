@@ -4,7 +4,7 @@ import { RouterConfiguration, IRouter } from '@aurelia/router-lite';
 import { TestContext } from '@aurelia/testing';
 import { IHIAConfig, IHookInvocationAggregator } from './hook-invocation-tracker.js';
 import { TestRouterConfiguration } from './configuration.js';
-export const IActivityTracker = DI.createInterface('IActivityTracker', x => x.singleton(ActivityTracker));
+export const IActivityTracker = /*@__PURE__*/ DI.createInterface('IActivityTracker', x => x.singleton(ActivityTracker));
 export class ActivityTracker {
     constructor() {
         this.activeVMs = [];

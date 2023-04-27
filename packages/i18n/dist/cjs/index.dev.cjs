@@ -37,12 +37,12 @@ function __param(paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 }
 
-exports.Signals = void 0;
-(function (Signals) {
-    Signals["I18N_EA_CHANNEL"] = "i18n:locale:changed";
-    Signals["I18N_SIGNAL"] = "aurelia-translation-signal";
-    Signals["RT_SIGNAL"] = "aurelia-relativetime-signal";
-})(exports.Signals || (exports.Signals = {}));
+const Signals = {
+    I18N_EA_CHANNEL: 'i18n:locale:changed',
+    I18N_SIGNAL: 'aurelia-translation-signal',
+    RT_SIGNAL: 'aurelia-relativetime-signal'
+};
+/** @internal */
 var ValueConverters;
 (function (ValueConverters) {
     ValueConverters["translationValueConverterName"] = "t";
@@ -60,16 +60,19 @@ function createIntlFormatValueConverterExpression(name, binding) {
 
 exports.DateFormatBindingBehavior = class DateFormatBindingBehavior {
     bind(_scope, binding) {
-        createIntlFormatValueConverterExpression("df", binding);
+        createIntlFormatValueConverterExpression("df" /* ValueConverters.dateFormatValueConverterName */, binding);
     }
 };
 exports.DateFormatBindingBehavior = __decorate([
-    runtimeHtml.bindingBehavior("df")
+    runtimeHtml.bindingBehavior("df" /* ValueConverters.dateFormatValueConverterName */)
 ], exports.DateFormatBindingBehavior);
 
-const I18nInitOptions = kernel.DI.createInterface('I18nInitOptions');
+const I18nInitOptions = /*@__PURE__*/ kernel.DI.createInterface('I18nInitOptions');
 
-const I18nWrapper = kernel.DI.createInterface('I18nextWrapper');
+const I18nWrapper = /*@__PURE__*/ kernel.DI.createInterface('I18nextWrapper');
+/**
+ * A wrapper class over i18next to facilitate the easy testing and DI.
+ */
 class I18nextWrapper {
     constructor() {
         this.i18next = i18next__default;
@@ -91,6 +94,7 @@ class I18nKeyEvaluationResult {
         this.value = (void 0);
         const re = /\[([a-z\-, ]*)\]/ig;
         this.attributes = [];
+        // check if a attribute was specified in the key
         const matches = re.exec(keyExpr);
         if (matches) {
             keyExpr = keyExpr.replace(matches[0], '');
@@ -99,7 +103,10 @@ class I18nKeyEvaluationResult {
         this.key = keyExpr;
     }
 }
-const I18N = kernel.DI.createInterface('I18N');
+const I18N = /*@__PURE__*/ kernel.DI.createInterface('I18N');
+/**
+ * Translation service class.
+ */
 exports.I18nService = class I18nService {
     constructor(i18nextWrapper, options, ea, signaler) {
         this.ea = ea;
@@ -116,6 +123,7 @@ exports.I18nService = class I18nService {
             const key = result.key;
             const translation = this.tr(key, options);
             if (this.options.skipTranslationOnMissingKey && translation === key) {
+                // TODO change this once the logging infra is there.
                 console.warn(`Couldn't find translation for key: ${key}`);
             }
             else {
@@ -135,9 +143,9 @@ exports.I18nService = class I18nService {
         const oldLocale = this.getLocale();
         const locales = { oldLocale, newLocale };
         await this.i18next.changeLanguage(newLocale);
-        this.ea.publish("i18n:locale:changed", locales);
+        this.ea.publish(Signals.I18N_EA_CHANNEL, locales);
         this._localeSubscribers.forEach(sub => sub.handleLocaleChange(locales));
-        this._signaler.dispatchSignal("aurelia-translation-signal");
+        this._signaler.dispatchSignal(Signals.I18N_SIGNAL);
     }
     createNumberFormat(options, locales) {
         return Intl.NumberFormat(locales || this.getLocale(), options);
@@ -152,15 +160,21 @@ exports.I18nService = class I18nService {
         return this.createDateTimeFormat(options, locales).format(input);
     }
     uf(numberLike, locale) {
+        // Unfortunately the Intl specs does not specify a way to get the thousand and decimal separators for a given locale.
+        // Only straightforward way would be to include the CLDR data and query for the separators, which certainly is a overkill.
         const comparer = this.nf(10000 / 3, undefined, locale);
         let thousandSeparator = comparer[1];
         const decimalSeparator = comparer[5];
         if (thousandSeparator === '.') {
             thousandSeparator = '\\.';
         }
+        // remove all thousand separators
         const result = numberLike.replace(new RegExp(thousandSeparator, 'g'), '')
+            // remove non-numeric signs except -> , .
             .replace(/[^\d.,-]/g, '')
+            // replace original decimalSeparator with english one
             .replace(decimalSeparator, '.');
+        // return real number
         return Number(result);
     }
     createRelativeTimeFormat(options, locales) {
@@ -170,32 +184,32 @@ exports.I18nService = class I18nService {
         let difference = input.getTime() - this.now();
         const epsilon = this.options.rtEpsilon * (difference > 0 ? 1 : 0);
         const formatter = this.createRelativeTimeFormat(options, locales);
-        let value = difference / 31536000000;
+        let value = difference / 31536000000 /* TimeSpan.Year */;
         if (Math.abs(value + epsilon) >= 1) {
             return formatter.format(Math.round(value), 'year');
         }
-        value = difference / 2592000000;
+        value = difference / 2592000000 /* TimeSpan.Month */;
         if (Math.abs(value + epsilon) >= 1) {
             return formatter.format(Math.round(value), 'month');
         }
-        value = difference / 604800000;
+        value = difference / 604800000 /* TimeSpan.Week */;
         if (Math.abs(value + epsilon) >= 1) {
             return formatter.format(Math.round(value), 'week');
         }
-        value = difference / 86400000;
+        value = difference / 86400000 /* TimeSpan.Day */;
         if (Math.abs(value + epsilon) >= 1) {
             return formatter.format(Math.round(value), 'day');
         }
-        value = difference / 3600000;
+        value = difference / 3600000 /* TimeSpan.Hour */;
         if (Math.abs(value + epsilon) >= 1) {
             return formatter.format(Math.round(value), 'hour');
         }
-        value = difference / 60000;
+        value = difference / 60000 /* TimeSpan.Minute */;
         if (Math.abs(value + epsilon) >= 1) {
             return formatter.format(Math.round(value), 'minute');
         }
-        difference = Math.abs(difference) < 1000 ? 1000 : difference;
-        value = difference / 1000;
+        difference = Math.abs(difference) < 1000 /* TimeSpan.Second */ ? 1000 /* TimeSpan.Second */ : difference;
+        value = difference / 1000 /* TimeSpan.Second */;
         return formatter.format(Math.round(value), 'second');
     }
     subscribeLocaleChange(subscriber) {
@@ -204,6 +218,7 @@ exports.I18nService = class I18nService {
     now() {
         return new Date().getTime();
     }
+    /** @internal */
     async _initializeI18next(options) {
         const defaultOptions = {
             lng: 'en',
@@ -233,12 +248,14 @@ exports.I18nService = __decorate([
 exports.DateFormatValueConverter = class DateFormatValueConverter {
     constructor(i18n) {
         this.i18n = i18n;
-        this.signals = ["aurelia-translation-signal"];
+        this.signals = [Signals.I18N_SIGNAL];
     }
     toView(value, options, locale) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if ((!value && value !== 0) || (typeof value === 'string' && value.trim() === '')) {
             return value;
         }
+        // convert '0' to 01/01/1970 or ISO string to Date and return the original value if invalid date is constructed
         if (typeof value === 'string') {
             const numValue = Number(value);
             const tempDate = new Date(Number.isInteger(numValue) ? numValue : value);
@@ -251,23 +268,23 @@ exports.DateFormatValueConverter = class DateFormatValueConverter {
     }
 };
 exports.DateFormatValueConverter = __decorate([
-    runtimeHtml.valueConverter("df"),
+    runtimeHtml.valueConverter("df" /* ValueConverters.dateFormatValueConverterName */),
     __param(0, I18N)
 ], exports.DateFormatValueConverter);
 
 exports.NumberFormatBindingBehavior = class NumberFormatBindingBehavior {
     bind(_scope, binding) {
-        createIntlFormatValueConverterExpression("nf", binding);
+        createIntlFormatValueConverterExpression("nf" /* ValueConverters.numberFormatValueConverterName */, binding);
     }
 };
 exports.NumberFormatBindingBehavior = __decorate([
-    runtimeHtml.bindingBehavior("nf")
+    runtimeHtml.bindingBehavior("nf" /* ValueConverters.numberFormatValueConverterName */)
 ], exports.NumberFormatBindingBehavior);
 
 exports.NumberFormatValueConverter = class NumberFormatValueConverter {
     constructor(i18n) {
         this.i18n = i18n;
-        this.signals = ["aurelia-translation-signal"];
+        this.signals = [Signals.I18N_SIGNAL];
     }
     toView(value, options, locale) {
         if (typeof value !== 'number') {
@@ -277,23 +294,23 @@ exports.NumberFormatValueConverter = class NumberFormatValueConverter {
     }
 };
 exports.NumberFormatValueConverter = __decorate([
-    runtimeHtml.valueConverter("nf"),
+    runtimeHtml.valueConverter("nf" /* ValueConverters.numberFormatValueConverterName */),
     __param(0, I18N)
 ], exports.NumberFormatValueConverter);
 
 exports.RelativeTimeBindingBehavior = class RelativeTimeBindingBehavior {
     bind(_scope, binding) {
-        createIntlFormatValueConverterExpression("rt", binding);
+        createIntlFormatValueConverterExpression("rt" /* ValueConverters.relativeTimeValueConverterName */, binding);
     }
 };
 exports.RelativeTimeBindingBehavior = __decorate([
-    runtimeHtml.bindingBehavior("rt")
+    runtimeHtml.bindingBehavior("rt" /* ValueConverters.relativeTimeValueConverterName */)
 ], exports.RelativeTimeBindingBehavior);
 
 exports.RelativeTimeValueConverter = class RelativeTimeValueConverter {
     constructor(i18n) {
         this.i18n = i18n;
-        this.signals = ["aurelia-translation-signal", "aurelia-relativetime-signal"];
+        this.signals = [Signals.I18N_SIGNAL, Signals.RT_SIGNAL];
     }
     toView(value, options, locale) {
         if (!(value instanceof Date)) {
@@ -303,7 +320,7 @@ exports.RelativeTimeValueConverter = class RelativeTimeValueConverter {
     }
 };
 exports.RelativeTimeValueConverter = __decorate([
-    runtimeHtml.valueConverter("rt"),
+    runtimeHtml.valueConverter("rt" /* ValueConverters.relativeTimeValueConverterName */),
     __param(0, I18N)
 ], exports.RelativeTimeValueConverter);
 
@@ -311,13 +328,13 @@ exports.TranslationBindingBehavior = class TranslationBindingBehavior {
     bind(_scope, binding) {
         const expression = binding.ast.expression;
         if (!(expression instanceof runtime.ValueConverterExpression)) {
-            const vcExpression = new runtime.ValueConverterExpression(expression, "t", binding.ast.args);
+            const vcExpression = new runtime.ValueConverterExpression(expression, "t" /* ValueConverters.translationValueConverterName */, binding.ast.args);
             binding.ast.expression = vcExpression;
         }
     }
 };
 exports.TranslationBindingBehavior = __decorate([
-    runtimeHtml.bindingBehavior("t")
+    runtimeHtml.bindingBehavior("t" /* ValueConverters.translationValueConverterName */)
 ], exports.TranslationBindingBehavior);
 
 const contentAttributes = ['textContent', 'innerHTML', 'prepend', 'append'];
@@ -330,9 +347,13 @@ const taskQueueOpts = {
 class TranslationBinding {
     constructor(controller, locator, observerLocator, platform, target) {
         this.isBound = false;
+        /** @internal */
         this._contentAttributes = contentAttributes;
+        /** @internal */
         this._task = null;
         this.parameter = null;
+        // see Listener binding for explanation
+        /** @internal */
         this.boundFn = false;
         this.l = locator;
         this._controller = controller;
@@ -347,16 +368,17 @@ class TranslationBinding {
     static create({ parser, observerLocator, context, controller, target, instruction, platform, isParameterContext, }) {
         const binding = this._getBinding({ observerLocator, context, controller, target, platform });
         const expr = typeof instruction.from === 'string'
-            ? parser.parse(instruction.from, 16)
+            ? parser.parse(instruction.from, 16 /* ExpressionType.IsProperty */)
             : instruction.from;
         if (isParameterContext) {
             binding.useParameter(expr);
         }
         else {
-            const interpolation = expr instanceof runtime.CustomExpression ? parser.parse(expr.value, 1) : undefined;
+            const interpolation = expr instanceof runtime.CustomExpression ? parser.parse(expr.value, 1 /* ExpressionType.Interpolation */) : undefined;
             binding.ast = interpolation || expr;
         }
     }
+    /** @internal */
     static _getBinding({ observerLocator, context, controller, target, platform, }) {
         let binding = controller.bindings && controller.bindings.find((b) => b instanceof TranslationBinding && b.target === target);
         if (!binding) {
@@ -369,6 +391,7 @@ class TranslationBinding {
         if (this.isBound) {
             return;
         }
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!this.ast) {
             throw new Error('key expression is missing');
         }
@@ -404,6 +427,9 @@ class TranslationBinding {
         this.updateTranslations();
     }
     handleLocaleChange() {
+        // todo:
+        // no flag passed, so if a locale is updated during binding of a component
+        // and the author wants to signal that locale change fromBind, then it's a bug
         this.updateTranslations();
     }
     useParameter(expr) {
@@ -430,7 +456,7 @@ class TranslationBinding {
                     const accessor = controller?.viewModel
                         ? this.oL.getAccessor(controller.viewModel, attribute)
                         : this.oL.getAccessor(this.target, attribute);
-                    const shouldQueueUpdate = this._controller.state !== 1 && (accessor.type & 4) > 0;
+                    const shouldQueueUpdate = this._controller.state !== 1 /* State.activating */ && (accessor.type & 4 /* AccessorType.Layout */) > 0;
                     if (shouldQueueUpdate) {
                         accessorUpdateTasks.push(new AccessorUpdateTask(accessor, value, this.target, attribute));
                     }
@@ -443,7 +469,7 @@ class TranslationBinding {
         }
         let shouldQueueContent = false;
         if (Object.keys(content).length > 0) {
-            shouldQueueContent = this._controller.state !== 1;
+            shouldQueueContent = this._controller.state !== 1 /* State.activating */;
             if (!shouldQueueContent) {
                 this._updateContent(content);
             }
@@ -461,6 +487,7 @@ class TranslationBinding {
         }
         task?.cancel();
     }
+    /** @internal */
     _preprocessAttributes(attributes) {
         if (attributes.length === 0) {
             attributes = this.target.tagName === 'IMG' ? ['src'] : ['textContent'];
@@ -473,27 +500,36 @@ class TranslationBinding {
         }
         return attributes;
     }
+    /** @internal */
     _isContentAttribute(attribute) {
         return this._contentAttributes.includes(attribute);
     }
+    /** @internal */
     _updateContent(content) {
         const children = kernel.toArray(this.target.childNodes);
         const fallBackContents = [];
         const marker = 'au-i18n';
+        // extract the original content, not manipulated by au-i18n
         for (const child of children) {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!Reflect.get(child, marker)) {
                 fallBackContents.push(child);
             }
         }
         const template = this._prepareTemplate(content, marker, fallBackContents);
+        // difficult to use the set property approach in this case, as most of the properties of Node is readonly
+        // const observer = this.oL.getAccessor(this.target, '??');
+        // observer.setValue(??);
         this.target.innerHTML = '';
         for (const child of kernel.toArray(template.content.childNodes)) {
             this.target.appendChild(child);
         }
     }
+    /** @internal */
     _prepareTemplate(content, marker, fallBackContents) {
         const template = this._platform.document.createElement('template');
         this._addContentToTemplate(template, content.prepend, marker);
+        // build content: prioritize [html], then textContent, and falls back to original content
         if (!this._addContentToTemplate(template, content.innerHTML ?? content.textContent, marker)) {
             for (const fallbackContent of fallBackContents) {
                 template.content.append(fallbackContent);
@@ -502,6 +538,7 @@ class TranslationBinding {
         this._addContentToTemplate(template, content.append, marker);
         return template;
     }
+    /** @internal */
     _addContentToTemplate(template, content, marker) {
         if (content !== void 0 && content !== null) {
             const parser = this._platform.document.createElement('div');
@@ -514,11 +551,12 @@ class TranslationBinding {
         }
         return false;
     }
+    /** @internal */
     _ensureKeyExpression() {
         const expr = this._keyExpression ?? (this._keyExpression = '');
         const exprType = typeof expr;
         if (exprType !== 'string') {
-            throw new Error(`Expected the i18n key to be a string, but got ${expr} of type ${exprType}`);
+            throw new Error(`Expected the i18n key to be a string, but got ${expr} of type ${exprType}`); // TODO use reporter/logger
         }
     }
 }
@@ -542,11 +580,15 @@ class ParameterBinding {
         this.ast = ast;
         this.updater = updater;
         this.isBound = false;
+        // see Listener binding for explanation
+        /** @internal */
         this.boundFn = false;
         this.oL = owner.oL;
         this.l = owner.l;
     }
     handleChange(_newValue, _previousValue) {
+        // todo(test): add an integration/e2e for this
+        //             setup: put this inside an if and switch on/off that if
         if (!this.isBound) {
             return;
         }
@@ -577,6 +619,7 @@ runtime.connectable(ParameterBinding);
 runtimeHtml.mixinAstEvaluator(true)(ParameterBinding);
 
 const TranslationParametersInstructionType = 'tpt';
+// `.bind` part is needed here only for vCurrent compliance
 const attribute = 't-params.bind';
 exports.TranslationParametersAttributePattern = class TranslationParametersAttributePattern {
     [attribute](rawName, rawValue, _parts) {
@@ -591,12 +634,12 @@ class TranslationParametersBindingInstruction {
         this.from = from;
         this.to = to;
         this.type = TranslationParametersInstructionType;
-        this.mode = 2;
+        this.mode = 2 /* BindingMode.toView */;
     }
 }
 exports.TranslationParametersBindingCommand = class TranslationParametersBindingCommand {
     constructor() {
-        this.type = 0;
+        this.type = 0 /* CommandType.None */;
     }
     get name() { return attribute; }
     build(info, exprParser, attrMapper) {
@@ -604,12 +647,14 @@ exports.TranslationParametersBindingCommand = class TranslationParametersBinding
         let target = attr.target;
         if (info.bindable == null) {
             target = attrMapper.map(info.node, target)
+                // if the transformer doesn't know how to map it
+                // use the default behavior, which is camel-casing
                 ?? kernel.camelCase(target);
         }
         else {
             target = info.bindable.property;
         }
-        return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, 16), target);
+        return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
     }
 };
 exports.TranslationParametersBindingCommand = __decorate([
@@ -636,6 +681,7 @@ exports.TranslationParametersBindingRenderer = __decorate([
 const TranslationInstructionType = 'tt';
 class TranslationAttributePattern {
     static registerAlias(alias) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         this.prototype[alias] = function (rawName, rawValue, parts) {
             return new runtimeHtml.AttrSyntax(rawName, rawValue, '', alias);
         };
@@ -646,18 +692,20 @@ class TranslationBindingInstruction {
         this.from = from;
         this.to = to;
         this.type = TranslationInstructionType;
-        this.mode = 2;
+        this.mode = 2 /* BindingMode.toView */;
     }
 }
 class TranslationBindingCommand {
     constructor() {
-        this.type = 0;
+        this.type = 0 /* CommandType.None */;
     }
     get name() { return 't'; }
     build(info, parser, attrMapper) {
         let target;
         if (info.bindable == null) {
             target = attrMapper.map(info.node, info.attr.target)
+                // if the mapper doesn't know how to map it
+                // use the default behavior, which is camel-casing
                 ?? kernel.camelCase(info.attr.target);
         }
         else {
@@ -696,24 +744,26 @@ class TranslationBindBindingInstruction {
         this.from = from;
         this.to = to;
         this.type = TranslationBindInstructionType;
-        this.mode = 2;
+        this.mode = 2 /* BindingMode.toView */;
     }
 }
 class TranslationBindBindingCommand {
     constructor() {
-        this.type = 0;
+        this.type = 0 /* CommandType.None */;
     }
     get name() { return 't-bind'; }
     build(info, exprParser, attrMapper) {
         let target;
         if (info.bindable == null) {
             target = attrMapper.map(info.node, info.attr.target)
+                // if the mapper doesn't know how to map it
+                // use the default behavior, which is camel-casing
                 ?? kernel.camelCase(info.attr.target);
         }
         else {
             target = info.bindable.property;
         }
-        return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, 16), target);
+        return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
     }
 }
 exports.TranslationBindBindingRenderer = class TranslationBindBindingRenderer {
@@ -736,14 +786,14 @@ exports.TranslationBindBindingRenderer = __decorate([
 exports.TranslationValueConverter = class TranslationValueConverter {
     constructor(i18n) {
         this.i18n = i18n;
-        this.signals = ["aurelia-translation-signal"];
+        this.signals = [Signals.I18N_SIGNAL];
     }
     toView(value, options) {
         return this.i18n.tr(value, options);
     }
 };
 exports.TranslationValueConverter = __decorate([
-    runtimeHtml.valueConverter("t"),
+    runtimeHtml.valueConverter("t" /* ValueConverters.translationValueConverterName */),
     __param(0, I18N)
 ], exports.TranslationValueConverter);
 
@@ -817,6 +867,7 @@ exports.I18N = I18N;
 exports.I18nConfiguration = I18nConfiguration;
 exports.I18nInitOptions = I18nInitOptions;
 exports.I18nKeyEvaluationResult = I18nKeyEvaluationResult;
+exports.Signals = Signals;
 exports.TranslationAttributePattern = TranslationAttributePattern;
 exports.TranslationBindAttributePattern = TranslationBindAttributePattern;
 exports.TranslationBindBindingCommand = TranslationBindBindingCommand;

@@ -34,27 +34,60 @@ var ValidateEventKind;
     ValidateEventKind["validate"] = "validate";
     ValidateEventKind["reset"] = "reset";
 })(ValidateEventKind || (ValidateEventKind = {}));
+/**
+ * The result of a call to the validation controller's validate method.
+ */
 class ControllerValidateResult {
+    /**
+     * @param {boolean} valid - `true` if the validation passed, else `false`.
+     * @param {ValidationResult[]} results - The validation result of every rule that was evaluated.
+     * @param {ValidateInstruction} [instruction] - The instruction passed to the controller's validate method.
+     */
     constructor(valid, results, instruction) {
         this.valid = valid;
         this.results = results;
         this.instruction = instruction;
     }
 }
+/**
+ * Describes the validation result and target elements pair.
+ * Used to notify the subscribers.
+ */
 class ValidationResultTarget {
     constructor(result, targets) {
         this.result = result;
         this.targets = targets;
     }
 }
+/**
+ * Describes the contract of the validation event.
+ * Used to notify the subscribers.
+ */
 class ValidationEvent {
+    /**
+     * @param {ValidateEventKind} kind - 'validate' or 'reset'.
+     * @param {ValidationResultTarget[]} addedResults - new errors added.
+     * @param {ValidationResultTarget[]} removedResults - old errors removed.
+     * @memberof ValidationEvent
+     */
     constructor(kind, addedResults, removedResults) {
         this.kind = kind;
         this.addedResults = addedResults;
         this.removedResults = removedResults;
     }
 }
+/**
+ * Describes a binding information to the validation controller.
+ * This is provided by the `validate` binding behavior during binding registration.
+ */
 class BindingInfo {
+    /**
+     * @param {Element} target - The HTMLElement associated with the binding.
+     * @param {Scope} scope - The binding scope.
+     * @param {PropertyRule[]} [rules] - Rules bound to the binding behavior.
+     * @param {(PropertyInfo | undefined)} [propertyInfo=void 0] - Information describing the associated property for the binding.
+     * @memberof BindingInfo
+     */
     constructor(target, scope, rules, propertyInfo = void 0) {
         this.target = target;
         this.scope = scope;
@@ -63,7 +96,9 @@ class BindingInfo {
     }
 }
 class PropertyInfo {
-    constructor(object, propertyName) {
+    constructor(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    object, propertyName) {
         this.object = object;
         this.propertyName = propertyName;
     }
@@ -77,34 +112,36 @@ function getPropertyInfo(binding, info) {
     let expression = binding.ast.expression;
     let toCachePropertyName = true;
     let propertyName = '';
-    while (expression !== void 0 && expression?.$kind !== 1) {
+    while (expression !== void 0 && expression?.$kind !== 1 /* ExpressionKind.AccessScope */) {
         let memberName;
         switch (expression.$kind) {
-            case 18:
-            case 17:
+            case 18 /* ExpressionKind.BindingBehavior */:
+            case 17 /* ExpressionKind.ValueConverter */:
                 expression = expression.expression;
                 continue;
-            case 10:
+            case 10 /* ExpressionKind.AccessMember */:
                 memberName = expression.name;
                 break;
-            case 11: {
+            case 11 /* ExpressionKind.AccessKeyed */: {
                 const keyExpr = expression.key;
                 if (toCachePropertyName) {
-                    toCachePropertyName = keyExpr.$kind === 4;
+                    toCachePropertyName = keyExpr.$kind === 4 /* ExpressionKind.PrimitiveLiteral */;
                 }
+                // eslint-disable-next-line
                 memberName = `[${astEvaluate(keyExpr, scope, binding, null).toString()}]`;
                 break;
             }
             default:
-                throw new Error(`Unknown expression of type ${expression.constructor.name}`);
+                throw new Error(`Unknown expression of type ${expression.constructor.name}`); // TODO: use reporter/logger
         }
         const separator = propertyName.startsWith('[') ? '' : '.';
         propertyName = propertyName.length === 0 ? memberName : `${memberName}${separator}${propertyName}`;
         expression = expression.object;
     }
     if (expression === void 0) {
-        throw new Error(`Unable to parse binding expression: ${binding.ast.expression}`);
+        throw new Error(`Unable to parse binding expression: ${binding.ast.expression}`); // TODO: use reporter/logger
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let object;
     if (propertyName.length === 0) {
         propertyName = expression.name;
@@ -122,7 +159,7 @@ function getPropertyInfo(binding, info) {
     }
     return propertyInfo;
 }
-const IValidationController = DI.createInterface('IValidationController');
+const IValidationController = /*@__PURE__*/ DI.createInterface('IValidationController');
 let ValidationController = class ValidationController {
     constructor(validator, parser, platform, locator) {
         this.validator = validator;
@@ -133,6 +170,12 @@ let ValidationController = class ValidationController {
         this.subscribers = new Set();
         this.results = [];
         this.validating = false;
+        /**
+         * Elements related to validation results that have been rendered.
+         *
+         * @private
+         * @type {Map<ValidationResult, Element[]>}
+         */
         this.elements = new WeakMap();
         this.objects = new Map();
     }
@@ -141,7 +184,7 @@ let ValidationController = class ValidationController {
     }
     removeObject(object) {
         this.objects.delete(object);
-        this.processResultDelta("reset", this.results.filter(result => result.object === object), []);
+        this.processResultDelta("reset" /* ValidateEventKind.reset */, this.results.filter(result => result.object === object), []);
     }
     addError(message, object, propertyName) {
         let resolvedPropertyName;
@@ -149,12 +192,12 @@ let ValidationController = class ValidationController {
             [resolvedPropertyName] = parsePropertyName(propertyName, this.parser);
         }
         const result = new ValidationResult(false, message, resolvedPropertyName, object, undefined, undefined, true);
-        this.processResultDelta("validate", [], [result]);
+        this.processResultDelta("validate" /* ValidateEventKind.validate */, [], [result]);
         return result;
     }
     removeError(result) {
         if (this.results.includes(result)) {
-            this.processResultDelta("reset", [result], []);
+            this.processResultDelta("reset" /* ValidateEventKind.reset */, [result], []);
         }
     }
     addSubscriber(subscriber) {
@@ -177,9 +220,11 @@ let ValidationController = class ValidationController {
             instructions = [new ValidateInstruction(obj, instruction.propertyName, instruction.rules ?? this.objects.get(obj), objectTag, instruction.propertyTag)];
         }
         else {
+            // validate all objects and bindings.
             instructions = [
                 ...Array.from(this.objects.entries())
                     .map(([object, rules]) => new ValidateInstruction(object, void 0, rules, objectTag)),
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 ...(!objectTag ? Array.from(this.bindings.entries()) : [])
                     .reduce((acc, [binding, info]) => {
                     const propertyInfo = getPropertyInfo(binding, info);
@@ -200,7 +245,7 @@ let ValidationController = class ValidationController {
                 }, []);
                 const predicate = this.getInstructionPredicate(instruction);
                 const oldResults = this.results.filter(predicate);
-                this.processResultDelta("validate", oldResults, newResults);
+                this.processResultDelta("validate" /* ValidateEventKind.validate */, oldResults, newResults);
                 return new ControllerValidateResult(newResults.find(r => !r.valid) === void 0, newResults, instruction);
             }
             finally {
@@ -212,7 +257,7 @@ let ValidationController = class ValidationController {
     reset(instruction) {
         const predicate = this.getInstructionPredicate(instruction);
         const oldResults = this.results.filter(predicate);
-        this.processResultDelta("reset", oldResults, []);
+        this.processResultDelta("reset" /* ValidateEventKind.reset */, oldResults, []);
     }
     async validateBinding(binding) {
         if (!binding.isBound) {
@@ -266,6 +311,9 @@ let ValidationController = class ValidationController {
         }
         await Promise.all(promises);
     }
+    /**
+     * Interprets the instruction and returns a predicate that will identify relevant results in the list of rendered validation results.
+     */
     getInstructionPredicate(instruction) {
         if (instruction === void 0) {
             return () => true;
@@ -279,6 +327,9 @@ let ValidationController = class ValidationController {
                 || rules.includes(x.propertyRule)
                 || rules.some((r) => x.propertyRule === void 0 || r.$rules.flat().every(($r) => x.propertyRule.$rules.flat().includes($r))));
     }
+    /**
+     * Gets the elements associated with an object and propertyName (if any).
+     */
     getAssociatedElements({ object, propertyName }) {
         const elements = [];
         for (const [binding, info] of this.bindings.entries()) {
@@ -291,24 +342,31 @@ let ValidationController = class ValidationController {
     }
     processResultDelta(kind, oldResults, newResults) {
         const eventData = new ValidationEvent(kind, [], []);
+        // create a shallow copy of newResults so we can mutate it without causing side-effects.
         newResults = newResults.slice(0);
         const elements = this.elements;
         for (const oldResult of oldResults) {
             const removalTargets = elements.get(oldResult);
             elements.delete(oldResult);
             eventData.removedResults.push(new ValidationResultTarget(oldResult, removalTargets));
+            // determine if there's a corresponding new result for the old result we are removing.
             const newResultIndex = newResults.findIndex(x => x.rule === oldResult.rule && x.object === oldResult.object && x.propertyName === oldResult.propertyName);
             if (newResultIndex === -1) {
+                // no corresponding new result... simple remove.
                 this.results.splice(this.results.indexOf(oldResult), 1);
             }
             else {
+                // there is a corresponding new result...
                 const newResult = newResults.splice(newResultIndex, 1)[0];
                 const newTargets = this.getAssociatedElements(newResult);
                 elements.set(newResult, newTargets);
                 eventData.addedResults.push(new ValidationResultTarget(newResult, newTargets));
+                // do an in-place replacement of the old result with the new result.
+                // this ensures any repeats bound to this.results will not thrash.
                 this.results.splice(this.results.indexOf(oldResult), 1, newResult);
             }
         }
+        // add the remaining new results to the event data.
         for (const result of newResults) {
             const newTargets = this.getAssociatedElements(result);
             eventData.addedResults.push(new ValidationResultTarget(result, newTargets));
@@ -338,11 +396,14 @@ class ValidationControllerFactory {
     }
 }
 
+/**
+ * Normalizes https://developer.mozilla.org/en-US/docs/Web/API/Node/compareDocumentPosition into values usable for Array.prototype.sort.
+ */
 function compareDocumentPositionFlat(a, b) {
-    switch (a.compareDocumentPosition(b) & 2) {
-        case 0: return 0;
-        case 2: return 1;
-        default: return -1;
+    switch (a.compareDocumentPosition(b) & 2 /* DOCUMENT_POSITION_PRECEDING */) {
+        case 0: return 0; // same element
+        case 2: return 1; // preceding element
+        default: return -1; // assume following element otherwise
     }
 }
 
@@ -407,6 +468,24 @@ ValidationContainerCustomElement = __decorate([
     __param(1, optional(IValidationController))
 ], ValidationContainerCustomElement);
 
+/**
+ * A validation errors subscriber in form of a custom attribute.
+ *
+ * It registers itself as a subscriber to the validation controller available for the scope.
+ * The target controller can be bound via the `@bindable controller`; when omitted it takes the controller currently registered in the container.
+ *
+ * The set of errors related to the host element or the children of it , are exposed via the `@bindable errors`.
+ *
+ * @example
+ * ```html
+ * <div id="div1" validation-errors.bind="nameErrors">
+ *   <input id="target1" type="text" value.two-way="person.name & validate">
+ *   <span class="error" repeat.for="errorInfo of nameErrors">
+ *     ${errorInfo.result.message}
+ *   </span>
+ * </div>
+ * ```
+ */
 let ValidationErrorsCustomAttribute = class ValidationErrorsCustomAttribute {
     constructor(host, scopedController) {
         this.host = host;
@@ -450,7 +529,7 @@ __decorate([
     bindable
 ], ValidationErrorsCustomAttribute.prototype, "controller", void 0);
 __decorate([
-    bindable({ primary: true, mode: 6 })
+    bindable({ primary: true, mode: 6 /* BindingMode.twoWay */ })
 ], ValidationErrorsCustomAttribute.prototype, "errors", void 0);
 ValidationErrorsCustomAttribute = __decorate([
     customAttribute('validation-errors'),
@@ -458,16 +537,37 @@ ValidationErrorsCustomAttribute = __decorate([
     __param(1, optional(IValidationController))
 ], ValidationErrorsCustomAttribute);
 
+/**
+ * Validation triggers.
+ */
 var ValidationTrigger;
 (function (ValidationTrigger) {
+    /**
+     * Manual validation.  Use the controller's `validate()` and  `reset()` methods to validate all bindings.
+     */
     ValidationTrigger["manual"] = "manual";
+    /**
+     * Validate the binding when the binding's target element fires a DOM 'blur' event.
+     */
     ValidationTrigger["blur"] = "blur";
+    /**
+     * Validate the binding when the binding's target element fires a DOM 'focusout' event.
+     */
     ValidationTrigger["focusout"] = "focusout";
+    /**
+     * Validate the binding when it updates the model due to a change in the source property (usually triggered by some change in view)
+     */
     ValidationTrigger["change"] = "change";
+    /**
+     * Validate the binding when the binding's target element fires a DOM 'blur' event and when it updates the model due to a change in the view.
+     */
     ValidationTrigger["changeOrBlur"] = "changeOrBlur";
+    /**
+     * Validate the binding when the binding's target element fires a DOM 'focusout' event and when it updates the model due to a change in the view.
+     */
     ValidationTrigger["changeOrFocusout"] = "changeOrFocusout";
 })(ValidationTrigger || (ValidationTrigger = {}));
-const IDefaultTrigger = DI.createInterface('IDefaultTrigger');
+const IDefaultTrigger = /*@__PURE__*/ DI.createInterface('IDefaultTrigger');
 const validationConnectorMap = new WeakMap();
 const validationTargetSubscriberMap = new WeakMap();
 let ValidateBindingBehavior = class ValidateBindingBehavior {
@@ -488,16 +588,23 @@ let ValidateBindingBehavior = class ValidateBindingBehavior {
             validationTargetSubscriberMap.set(binding, targetSubscriber = new WithValidationTargetSubscriber(connector, binding, binding.get(IFlushQueue)));
         }
         connector.start(scope);
+        // target subscriber will notify connector to validate
+        // only need to connect the target subscriber to the binding via .useTargetSubscriber
         binding.useTargetSubscriber(targetSubscriber);
     }
     unbind(scope, binding) {
         validationConnectorMap.get(binding)?.stop();
+        // targetSubscriber is automatically unsubscribed by the binding
+        // there's no need to do anything
     }
 };
 ValidateBindingBehavior.inject = [IPlatform, IObserverLocator];
 ValidateBindingBehavior = __decorate([
     bindingBehavior('validate')
 ], ValidateBindingBehavior);
+/**
+ * Binding behavior. Indicates the bound property should be validated.
+ */
 class ValidatitionConnector {
     constructor(platform, observerLocator, defaultTrigger, propertyBinding, locator) {
         this.isChangeTrigger = false;
@@ -518,6 +625,7 @@ class ValidatitionConnector {
             this.scopedController = locator.get(IValidationController);
         }
     }
+    /** @internal */
     _onUpdateSource() {
         this.isDirty = true;
         const event = this.triggerEvent;
@@ -566,6 +674,7 @@ class ValidatitionConnector {
             return;
         this.validatedOnce = event.addedResults.find((r) => r.result.propertyName === propertyName) !== void 0;
     }
+    /** @internal */
     _processBindingExpressionArgs() {
         const scope = this.scope;
         let rules;
@@ -594,13 +703,18 @@ class ValidatitionConnector {
         }
         return new ValidateArgumentsDelta(this._ensureController(controller), this._ensureTrigger(trigger), rules);
     }
+    // todo(sayan): we should not be spying on a private method to do assertion
+    //              if it's not observable from a high level, then we should tweak the tests
+    //              or make assumption, rather than breaking encapsulation
     validateBinding() {
+        // Queue the new one before canceling the old one, to prevent early yield
         const task = this.task;
         this.task = this._platform.domReadQueue.queueTask(() => this.controller.validateBinding(this.propertyBinding));
         if (task !== this.task) {
             task?.cancel();
         }
     }
+    /** @internal */
     _processDelta(delta) {
         const trigger = delta.trigger ?? this.trigger;
         const controller = delta.controller ?? this.controller;
@@ -629,29 +743,33 @@ class ValidatitionConnector {
             controller.addSubscriber(this);
         }
     }
+    /** @internal */
     _ensureTrigger(trigger) {
         if (trigger === (void 0) || trigger === null) {
             trigger = this.defaultTrigger;
         }
         else if (!Object.values(ValidationTrigger).includes(trigger)) {
-            throw new Error(`${trigger} is not a supported validation trigger`);
+            throw new Error(`${trigger} is not a supported validation trigger`); // TODO: use reporter
         }
         return trigger;
     }
+    /** @internal */
     _ensureController(controller) {
         if (controller === (void 0) || controller === null) {
             controller = this.scopedController;
         }
         else if (!(controller instanceof ValidationController)) {
-            throw new Error(`${controller} is not of type ValidationController`);
+            throw new Error(`${controller} is not of type ValidationController`); // TODO: use reporter
         }
         return controller;
     }
+    /** @internal */
     _ensureRules(rules) {
         if (Array.isArray(rules) && rules.every((item) => item instanceof PropertyRule)) {
             return rules;
         }
     }
+    /** @internal */
     _getTarget() {
         const target = this.propertyBinding.target;
         if (target instanceof this._platform.Node) {
@@ -660,11 +778,12 @@ class ValidatitionConnector {
         else {
             const controller = target?.$controller;
             if (controller === void 0) {
-                throw new Error('Invalid binding target');
+                throw new Error('Invalid binding target'); // TODO: use reporter
             }
             return controller.host;
         }
     }
+    /** @internal */
     _getTriggerEvent(trigger) {
         let triggerEvent = null;
         switch (trigger) {
@@ -679,10 +798,12 @@ class ValidatitionConnector {
         }
         return triggerEvent;
     }
+    /** @internal */
     _setBindingInfo(rules) {
         return this.bindingInfo = new BindingInfo(this.target, this.scope, rules);
     }
 }
+/** @internal */
 ValidatitionConnector.inject = [IPlatform, IObserverLocator, IDefaultTrigger];
 connectable()(ValidatitionConnector);
 mixinAstEvaluator(true)(ValidatitionConnector);
@@ -734,9 +855,10 @@ function createConfiguration(optionsProvider) {
             optionsProvider(options);
             container.registerFactory(IValidationController, new options.ValidationControllerFactoryType());
             container.register(ValidationConfiguration.customize((opt) => {
+                // copy the customization iff the key exists in validation configuration
                 for (const optKey of Object.keys(opt)) {
                     if (optKey in options) {
-                        opt[optKey] = options[optKey];
+                        opt[optKey] = options[optKey]; // TS cannot infer that the value of the same key is being copied from A to B, and rejects the assignment due to type broadening
                     }
                 }
             }), Registration.instance(IDefaultTrigger, options.DefaultTrigger), ValidateBindingBehavior);
@@ -744,7 +866,7 @@ function createConfiguration(optionsProvider) {
                 container.register(ValidationErrorsCustomAttribute);
             }
             const template = options.SubscriberCustomElementTemplate;
-            if (template) {
+            if (template) { // we need the boolean coercion here to ignore null, undefined, and ''
                 container.register(CustomElement.define({ ...defaultContainerDefinition, template }, ValidationContainerCustomElement));
             }
             return container;
@@ -758,7 +880,7 @@ const ValidationHtmlConfiguration = createConfiguration(noop);
 
 const resultIdAttribute = 'validation-result-id';
 const resultContainerAttribute = 'validation-result-container';
-const IValidationResultPresenterService = DI.createInterface('IValidationResultPresenterService', (x) => x.transient(ValidationResultPresenterService));
+const IValidationResultPresenterService = /*@__PURE__*/ DI.createInterface('IValidationResultPresenterService', (x) => x.transient(ValidationResultPresenterService));
 let ValidationResultPresenterService = class ValidationResultPresenterService {
     constructor(platform) {
         this.platform = platform;

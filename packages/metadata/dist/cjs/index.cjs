@@ -4,19 +4,19 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-function t(t) {
-    return "object" === typeof t && null !== t || "function" === typeof t;
+function isObject(t) {
+    return typeof t === "object" && t !== null || typeof t === "function";
 }
 
-function e(t) {
-    return null === t || void 0 === t;
+function isNullOrUndefined(t) {
+    return t === null || t === void 0;
 }
 
-let n = new WeakMap;
+let t = new WeakMap;
 
-const r = (t, e, n, r, o) => new TypeError(`${t}(${e.map(String).join(",")}) - Expected '${n}' to be of type ${o}, but got: ${Object.prototype.toString.call(r)} (${String(r)})`);
+const $typeError = (t, e, a, r, n) => new TypeError(`${t}(${e.map(String).join(",")}) - Expected '${a}' to be of type ${n}, but got: ${Object.prototype.toString.call(r)} (${String(r)})`);
 
-function o(t) {
+function toPropertyKeyOrUndefined(t) {
     switch (typeof t) {
       case "undefined":
       case "string":
@@ -28,7 +28,7 @@ function o(t) {
     }
 }
 
-function a(t) {
+function toPropertyKey(t) {
     switch (typeof t) {
       case "string":
       case "symbol":
@@ -39,7 +39,7 @@ function a(t) {
     }
 }
 
-function c(t) {
+function ensurePropertyKeyOrUndefined(t) {
     switch (typeof t) {
       case "undefined":
       case "string":
@@ -51,249 +51,317 @@ function c(t) {
     }
 }
 
-function i(t, e, r) {
-    let o = n.get(t);
-    if (void 0 === o) {
-        if (!r) return;
+function GetOrCreateMetadataMap(e, a, r) {
+    let n = t.get(e);
+    if (n === void 0) {
+        if (!r) {
+            return void 0;
+        }
+        n = new Map;
+        t.set(e, n);
+    }
+    let o = n.get(a);
+    if (o === void 0) {
+        if (!r) {
+            return void 0;
+        }
         o = new Map;
-        n.set(t, o);
-    }
-    let a = o.get(e);
-    if (void 0 === a) {
-        if (!r) return;
-        a = new Map;
-        o.set(e, a);
-    }
-    return a;
-}
-
-function u(t, e, n) {
-    const r = i(e, n, false);
-    if (void 0 === r) return false;
-    return r.has(t);
-}
-
-function f(t, e, n) {
-    if (u(t, e, n)) return true;
-    const r = T(e);
-    if (null !== r) return f(t, r, n);
-    return false;
-}
-
-function s(t, e, n) {
-    const r = i(e, n, false);
-    if (void 0 === r) return;
-    return r.get(t);
-}
-
-function d(t, e, n) {
-    if (u(t, e, n)) return s(t, e, n);
-    const r = T(e);
-    if (null !== r) return d(t, r, n);
-    return;
-}
-
-function l(t, e, n, r) {
-    const o = i(n, r, true);
-    o.set(t, e);
-}
-
-function w(t, e) {
-    const n = [];
-    const r = i(t, e, false);
-    if (void 0 === r) return n;
-    const o = r.keys();
-    let a = 0;
-    for (const t of o) {
-        n[a] = t;
-        ++a;
-    }
-    return n;
-}
-
-function g(t, e) {
-    const n = w(t, e);
-    const r = T(t);
-    if (null === r) return n;
-    const o = g(r, e);
-    const a = n.length;
-    if (0 === a) return o;
-    const c = o.length;
-    if (0 === c) return n;
-    const i = new Set;
-    const u = [];
-    let f = 0;
-    let s;
-    for (let t = 0; t < a; ++t) {
-        s = n[t];
-        if (!i.has(s)) {
-            i.add(s);
-            u[f] = s;
-            ++f;
-        }
-    }
-    for (let t = 0; t < c; ++t) {
-        s = o[t];
-        if (!i.has(s)) {
-            i.add(s);
-            u[f] = s;
-            ++f;
-        }
-    }
-    return u;
-}
-
-function M(t, e, n) {
-    const r = i(t, n, false);
-    if (void 0 === r) return false;
-    return r.delete(e);
-}
-
-function h(e, n) {
-    function o(o, a) {
-        if (!t(o)) throw r("@metadata", [ e, n, o, a ], "target", o, "Object or Function");
-        l(e, n, o, c(a));
+        n.set(a, o);
     }
     return o;
 }
 
-function y(n, o, c, i) {
-    if (void 0 !== c) {
-        if (!Array.isArray(n)) throw r("Metadata.decorate", [ n, o, c, i ], "decorators", n, "Array");
-        if (!t(o)) throw r("Metadata.decorate", [ n, o, c, i ], "target", o, "Object or Function");
-        if (!t(i) && !e(i)) throw r("Metadata.decorate", [ n, o, c, i ], "attributes", i, "Object, Function, null, or undefined");
-        if (null === i) i = void 0;
-        c = a(c);
-        return b(n, o, c, i);
+function OrdinaryHasOwnMetadata(t, e, a) {
+    const r = GetOrCreateMetadataMap(e, a, false);
+    if (r === void 0) {
+        return false;
+    }
+    return r.has(t);
+}
+
+function OrdinaryHasMetadata(t, e, a) {
+    if (OrdinaryHasOwnMetadata(t, e, a)) {
+        return true;
+    }
+    const n = r(e);
+    if (n !== null) {
+        return OrdinaryHasMetadata(t, n, a);
+    }
+    return false;
+}
+
+function OrdinaryGetOwnMetadata(t, e, a) {
+    const r = GetOrCreateMetadataMap(e, a, false);
+    if (r === void 0) {
+        return void 0;
+    }
+    return r.get(t);
+}
+
+function OrdinaryGetMetadata(t, e, a) {
+    if (OrdinaryHasOwnMetadata(t, e, a)) {
+        return OrdinaryGetOwnMetadata(t, e, a);
+    }
+    const n = r(e);
+    if (n !== null) {
+        return OrdinaryGetMetadata(t, n, a);
+    }
+    return void 0;
+}
+
+function OrdinaryDefineOwnMetadata(t, e, a, r) {
+    const n = GetOrCreateMetadataMap(a, r, true);
+    n.set(t, e);
+}
+
+function OrdinaryOwnMetadataKeys(t, e) {
+    const a = [];
+    const r = GetOrCreateMetadataMap(t, e, false);
+    if (r === void 0) {
+        return a;
+    }
+    const n = r.keys();
+    let o = 0;
+    for (const t of n) {
+        a[o] = t;
+        ++o;
+    }
+    return a;
+}
+
+function OrdinaryMetadataKeys(t, e) {
+    const a = OrdinaryOwnMetadataKeys(t, e);
+    const n = r(t);
+    if (n === null) {
+        return a;
+    }
+    const o = OrdinaryMetadataKeys(n, e);
+    const i = a.length;
+    if (i === 0) {
+        return o;
+    }
+    const d = o.length;
+    if (d === 0) {
+        return a;
+    }
+    const c = new Set;
+    const s = [];
+    let f = 0;
+    let u;
+    for (let t = 0; t < i; ++t) {
+        u = a[t];
+        if (!c.has(u)) {
+            c.add(u);
+            s[f] = u;
+            ++f;
+        }
+    }
+    for (let t = 0; t < d; ++t) {
+        u = o[t];
+        if (!c.has(u)) {
+            c.add(u);
+            s[f] = u;
+            ++f;
+        }
+    }
+    return s;
+}
+
+function OrdinaryDeleteMetadata(t, e, a) {
+    const r = GetOrCreateMetadataMap(t, a, false);
+    if (r === void 0) {
+        return false;
+    }
+    return r.delete(e);
+}
+
+function metadata(t, e) {
+    function decorator(a, r) {
+        if (!isObject(a)) {
+            throw $typeError("@metadata", [ t, e, a, r ], "target", a, "Object or Function");
+        }
+        OrdinaryDefineOwnMetadata(t, e, a, ensurePropertyKeyOrUndefined(r));
+    }
+    return decorator;
+}
+
+function decorate(t, e, a, r) {
+    if (a !== void 0) {
+        if (!Array.isArray(t)) {
+            throw $typeError("Metadata.decorate", [ t, e, a, r ], "decorators", t, "Array");
+        }
+        if (!isObject(e)) {
+            throw $typeError("Metadata.decorate", [ t, e, a, r ], "target", e, "Object or Function");
+        }
+        if (!isObject(r) && !isNullOrUndefined(r)) {
+            throw $typeError("Metadata.decorate", [ t, e, a, r ], "attributes", r, "Object, Function, null, or undefined");
+        }
+        if (r === null) {
+            r = void 0;
+        }
+        a = toPropertyKey(a);
+        return DecorateProperty(t, e, a, r);
     } else {
-        if (!Array.isArray(n)) throw r("Metadata.decorate", [ n, o, c, i ], "decorators", n, "Array");
-        if ("function" !== typeof o) throw r("Metadata.decorate", [ n, o, c, i ], "target", o, "Function");
-        return O(n, o);
+        if (!Array.isArray(t)) {
+            throw $typeError("Metadata.decorate", [ t, e, a, r ], "decorators", t, "Array");
+        }
+        if (typeof e !== "function") {
+            throw $typeError("Metadata.decorate", [ t, e, a, r ], "target", e, "Function");
+        }
+        return DecorateConstructor(t, e);
     }
 }
 
-function O(t, n) {
-    for (let o = t.length - 1; o >= 0; --o) {
-        const a = t[o];
-        const c = a(n);
-        if (!e(c)) {
-            if ("function" !== typeof c) throw r("DecorateConstructor", [ t, n ], "decorated", c, "Function, null, or undefined");
-            n = c;
+function DecorateConstructor(t, e) {
+    for (let a = t.length - 1; a >= 0; --a) {
+        const r = t[a];
+        const n = r(e);
+        if (!isNullOrUndefined(n)) {
+            if (typeof n !== "function") {
+                throw $typeError("DecorateConstructor", [ t, e ], "decorated", n, "Function, null, or undefined");
+            }
+            e = n;
         }
     }
-    return n;
+    return e;
 }
 
-function b(n, o, a, c) {
-    for (let i = n.length - 1; i >= 0; --i) {
-        const u = n[i];
-        const f = u(o, a, c);
-        if (!e(f)) {
-            if (!t(f)) throw r("DecorateProperty", [ n, o, a, c ], "decorated", f, "Object, Function, null, or undefined");
-            c = f;
+function DecorateProperty(t, e, a, r) {
+    for (let n = t.length - 1; n >= 0; --n) {
+        const o = t[n];
+        const i = o(e, a, r);
+        if (!isNullOrUndefined(i)) {
+            if (!isObject(i)) {
+                throw $typeError("DecorateProperty", [ t, e, a, r ], "decorated", i, "Object, Function, null, or undefined");
+            }
+            r = i;
         }
     }
-    return c;
+    return r;
 }
 
-function p(e, n, a, c) {
-    if (!t(a)) throw r("Metadata.define", [ e, n, a, c ], "target", a, "Object or Function");
-    return l(e, n, a, o(c));
+function $define(t, e, a, r) {
+    if (!isObject(a)) {
+        throw $typeError("Metadata.define", [ t, e, a, r ], "target", a, "Object or Function");
+    }
+    return OrdinaryDefineOwnMetadata(t, e, a, toPropertyKeyOrUndefined(r));
 }
 
-function j(e, n, a) {
-    if (!t(n)) throw r("Metadata.has", [ e, n, a ], "target", n, "Object or Function");
-    return f(e, n, o(a));
+function $has(t, e, a) {
+    if (!isObject(e)) {
+        throw $typeError("Metadata.has", [ t, e, a ], "target", e, "Object or Function");
+    }
+    return OrdinaryHasMetadata(t, e, toPropertyKeyOrUndefined(a));
 }
 
-function $(e, n, a) {
-    if (!t(n)) throw r("Metadata.hasOwn", [ e, n, a ], "target", n, "Object or Function");
-    return u(e, n, o(a));
+function $hasOwn(t, e, a) {
+    if (!isObject(e)) {
+        throw $typeError("Metadata.hasOwn", [ t, e, a ], "target", e, "Object or Function");
+    }
+    return OrdinaryHasOwnMetadata(t, e, toPropertyKeyOrUndefined(a));
 }
 
-function F(e, n, a) {
-    if (!t(n)) throw r("Metadata.get", [ e, n, a ], "target", n, "Object or Function");
-    return d(e, n, o(a));
+function $get(t, e, a) {
+    if (!isObject(e)) {
+        throw $typeError("Metadata.get", [ t, e, a ], "target", e, "Object or Function");
+    }
+    return OrdinaryGetMetadata(t, e, toPropertyKeyOrUndefined(a));
 }
 
-function v(e, n, a) {
-    if (!t(n)) throw r("Metadata.getOwn", [ e, n, a ], "target", n, "Object or Function");
-    return s(e, n, o(a));
+function $getOwn(t, e, a) {
+    if (!isObject(e)) {
+        throw $typeError("Metadata.getOwn", [ t, e, a ], "target", e, "Object or Function");
+    }
+    return OrdinaryGetOwnMetadata(t, e, toPropertyKeyOrUndefined(a));
 }
 
-function K(e, n) {
-    if (!t(e)) throw r("Metadata.getKeys", [ e, n ], "target", e, "Object or Function");
-    return g(e, o(n));
+function $getKeys(t, e) {
+    if (!isObject(t)) {
+        throw $typeError("Metadata.getKeys", [ t, e ], "target", t, "Object or Function");
+    }
+    return OrdinaryMetadataKeys(t, toPropertyKeyOrUndefined(e));
 }
 
-function m(e, n) {
-    if (!t(e)) throw r("Metadata.getOwnKeys", [ e, n ], "target", e, "Object or Function");
-    return w(e, o(n));
+function $getOwnKeys(t, e) {
+    if (!isObject(t)) {
+        throw $typeError("Metadata.getOwnKeys", [ t, e ], "target", t, "Object or Function");
+    }
+    return OrdinaryOwnMetadataKeys(t, toPropertyKeyOrUndefined(e));
 }
 
-function x(e, n, a) {
-    if (!t(n)) throw r("Metadata.delete", [ e, n, a ], "target", n, "Object or Function");
-    return M(n, e, o(a));
+function $delete(t, e, a) {
+    if (!isObject(e)) {
+        throw $typeError("Metadata.delete", [ t, e, a ], "target", e, "Object or Function");
+    }
+    return OrdinaryDeleteMetadata(e, t, toPropertyKeyOrUndefined(a));
 }
 
-const A = {
-    define: p,
-    has: j,
-    hasOwn: $,
-    get: F,
-    getOwn: v,
-    getKeys: K,
-    getOwnKeys: m,
-    delete: x
+const e = {
+    define: $define,
+    has: $has,
+    hasOwn: $hasOwn,
+    get: $get,
+    getOwn: $getOwn,
+    getKeys: $getKeys,
+    getOwnKeys: $getOwnKeys,
+    delete: $delete
 };
 
-const R = (t, e, n, r, o) => {
+const def = (t, e, a, r, n) => {
     if (!Reflect.defineProperty(t, e, {
         writable: r,
         enumerable: false,
-        configurable: o,
-        value: n
-    })) throw D(`AUR1000:${e}`);
+        configurable: n,
+        value: a
+    })) {
+        throw createError(`AUR1000:${e}`);
+    }
 };
 
-const E = "[[$au]]";
+const a = "[[$au]]";
 
-const S = t => E in t;
+const hasInternalSlot = t => a in t;
 
-const U = (t, e, r) => [ [ E, n ], [ "metadata", h ], [ "decorate", y ], [ "defineMetadata", p ], [ "hasMetadata", j ], [ "hasOwnMetadata", $ ], [ "getMetadata", F ], [ "getOwnMetadata", v ], [ "getMetadataKeys", K ], [ "getOwnMetadataKeys", m ], [ "deleteMetadata", x ] ].forEach((([n, o]) => R(t, n, o, e, r)));
+const $applyMetadataPolyfill = (e, r, n) => [ [ a, t ], [ "metadata", metadata ], [ "decorate", decorate ], [ "defineMetadata", $define ], [ "hasMetadata", $has ], [ "hasOwnMetadata", $hasOwn ], [ "getMetadata", $get ], [ "getOwnMetadata", $getOwn ], [ "getMetadataKeys", $getKeys ], [ "getOwnMetadataKeys", $getOwnKeys ], [ "deleteMetadata", $delete ] ].forEach((([t, a]) => def(e, t, a, r, n)));
 
-const k = (t, e = true, r = false, o = true, a = true) => {
-    if (S(t)) {
-        if (t[E] === n) return;
-        if (t[E] instanceof WeakMap) {
-            n = t[E];
+const applyMetadataPolyfill = (e, r = true, n = false, o = true, i = true) => {
+    if (hasInternalSlot(e)) {
+        if (e[a] === t) {
             return;
         }
-        throw D(`AUR1001`);
+        if (e[a] instanceof WeakMap) {
+            t = e[a];
+            return;
+        }
+        throw createError(`AUR1001`);
     }
-    const c = "metadata decorate defineMetadata hasMetadata hasOwnMetadata getMetadata getOwnMetadata getMetadataKeys getOwnMetadataKeys deleteMetadata".split(" ").filter((t => t in Reflect));
-    if (c.length > 0) {
-        if (e) {
-            const t = c.map((function(t) {
+    const d = "metadata decorate defineMetadata hasMetadata hasOwnMetadata getMetadata getOwnMetadata getMetadataKeys getOwnMetadataKeys deleteMetadata".split(" ").filter((t => t in Reflect));
+    if (d.length > 0) {
+        if (r) {
+            const t = d.map((function(t) {
                 const e = `${Reflect[t].toString().slice(0, 100)}...`;
                 return `${t}:\n${e}`;
             })).join("\n\n");
-            throw D(`AUR1002:${t}`);
-        } else if (r) U(t, o, a);
-    } else U(t, o, a);
+            throw createError(`AUR1002:${t}`);
+        } else if (n) {
+            $applyMetadataPolyfill(e, o, i);
+        }
+    } else {
+        $applyMetadataPolyfill(e, o, i);
+    }
 };
 
-const D = t => new Error(t);
+const createError = t => new Error(t);
 
-const T = Object.getPrototypeOf;
+const r = Object.getPrototypeOf;
 
-exports.Metadata = A;
+exports.Metadata = e;
 
-exports.applyMetadataPolyfill = k;
+exports.applyMetadataPolyfill = applyMetadataPolyfill;
 
-exports.isNullOrUndefined = e;
+exports.isNullOrUndefined = isNullOrUndefined;
 
-exports.isObject = t;
+exports.isObject = isObject;
 
-exports.metadata = h;
+exports.metadata = metadata;
 //# sourceMappingURL=index.cjs.map

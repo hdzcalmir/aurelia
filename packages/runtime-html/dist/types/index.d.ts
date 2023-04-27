@@ -1,6 +1,5 @@
 export { bindable, Bindable, BindableDefinition, type PartialBindableDefinition, coercer, } from './bindable';
 export { BindableObserver, } from './observation/bindable-observer';
-export { DebounceBindingBehaviorRegistration, OneTimeBindingBehaviorRegistration, ToViewBindingBehaviorRegistration, FromViewBindingBehaviorRegistration, SignalBindingBehaviorRegistration, ThrottleBindingBehaviorRegistration, TwoWayBindingBehaviorRegistration, } from './configuration';
 export { bindingBehavior, BindingBehavior, BindingBehaviorDefinition, type PartialBindingBehaviorDefinition, type BindingBehaviorKind, type BindingBehaviorDecorator, type BindingBehaviorType, } from './resources/binding-behavior';
 export { BindingModeBehavior, OneTimeBindingBehavior, ToViewBindingBehavior, FromViewBindingBehavior, TwoWayBindingBehavior, } from './resources/binding-behaviors/binding-mode';
 export { DebounceBindingBehavior, } from './resources/binding-behaviors/debounce';
@@ -47,7 +46,7 @@ export { capture, containerless, customElement, CustomElement, type CustomElemen
 export { AuCompose, type IDynamicComponentActivate, } from './resources/custom-elements/au-compose';
 export { ValueConverter, ValueConverterDefinition, type PartialValueConverterDefinition, type ValueConverterKind, type ValueConverterDecorator, type ValueConverterType, valueConverter, } from './resources/value-converter';
 export { ISanitizer, SanitizeValueConverter, } from './resources/value-converters/sanitize';
-export { ITemplateCompilerRegistration, INodeObserverLocatorRegistration, DefaultComponents, RefAttributePatternRegistration, DotSeparatedAttributePatternRegistration, DefaultBindingSyntax, AtPrefixedTriggerAttributePatternRegistration, ColonPrefixedBindAttributePatternRegistration, ShortHandBindingSyntax, SVGAnalyzerRegistration, DefaultBindingCommandRegistration, ForBindingCommandRegistration, RefBindingCommandRegistration, FromViewBindingCommandRegistration, OneTimeBindingCommandRegistration, ToViewBindingCommandRegistration, TwoWayBindingCommandRegistration, TriggerBindingCommandRegistration, CaptureBindingCommandRegistration, AttrBindingCommandRegistration, ClassBindingCommandRegistration, StyleBindingCommandRegistration, DefaultBindingLanguage, SanitizeValueConverterRegistration, IfRegistration, ElseRegistration, RepeatRegistration, WithRegistration, SelfBindingBehaviorRegistration, UpdateTriggerBindingBehaviorRegistration, DefaultResources, DefaultRenderers, StandardConfiguration } from './configuration';
+export { DefaultComponents, DefaultBindingSyntax, ShortHandBindingSyntax, DefaultBindingLanguage, DefaultResources, DefaultRenderers, StandardConfiguration, } from './configuration';
 export { ITemplateElementFactory } from './compiler/template-element-factory';
 export { BindablesInfo, TemplateCompiler, ITemplateCompilerHooks, TemplateCompilerHooks, templateCompilerHooks, } from './compiler/template-compiler';
 export { allResources, } from './utilities-di';

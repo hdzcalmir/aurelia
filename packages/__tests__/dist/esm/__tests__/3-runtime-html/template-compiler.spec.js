@@ -22,7 +22,6 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         let ctx;
         let sut;
         let container;
-        // eslint-disable-next-line mocha/no-hooks
         beforeEach(function () {
             ctx = TestContext.create();
             container = ctx.container;

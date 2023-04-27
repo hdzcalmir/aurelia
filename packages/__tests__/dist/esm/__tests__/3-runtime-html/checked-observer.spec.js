@@ -244,7 +244,6 @@ describe('3-runtime-html/checked-observer.spec.ts', function () {
     }
     const eventDefaults = { bubbles: true };
     describe('[UNIT]', function () {
-        // eslint-disable-next-line mocha/no-hooks
         before(function () {
             enableArrayObservation();
         });
