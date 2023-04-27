@@ -414,7 +414,6 @@ const allResources = (key) => {
             ? requestor.getAll(key, false).concat(requestor.root.getAll(key, false))
             : requestor.root.getAll(key, false);
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return Resolver;
 };
 /** @internal */
@@ -642,476 +641,75 @@ class ThrottleBindingBehavior {
 ThrottleBindingBehavior.inject = [kernel.IPlatform];
 bindingBehavior('throttle')(ThrottleBindingBehavior);
 
-const IPlatform = kernel.IPlatform;
-
-function customAttribute(nameOrDef) {
-    return function (target) {
-        return defineAttribute(nameOrDef, target);
-    };
-}
-function templateController(nameOrDef) {
-    return function (target) {
-        return defineAttribute(isString(nameOrDef)
-            ? { isTemplateController: true, name: nameOrDef }
-            : { isTemplateController: true, ...nameOrDef }, target);
-    };
-}
-class CustomAttributeDefinition {
-    // a simple marker to distinguish between Custom Element definition & Custom attribute definition
-    get type() { return 2 /* DefinitionType.Attribute */; }
-    constructor(Type, name, aliases, key, defaultBindingMode, isTemplateController, bindables, noMultiBindings, watches, dependencies) {
-        this.Type = Type;
-        this.name = name;
-        this.aliases = aliases;
-        this.key = key;
-        this.defaultBindingMode = defaultBindingMode;
-        this.isTemplateController = isTemplateController;
-        this.bindables = bindables;
-        this.noMultiBindings = noMultiBindings;
-        this.watches = watches;
-        this.dependencies = dependencies;
-    }
-    static create(nameOrDef, Type) {
-        let name;
-        let def;
-        if (isString(nameOrDef)) {
-            name = nameOrDef;
-            def = { name };
-        }
-        else {
-            name = nameOrDef.name;
-            def = nameOrDef;
-        }
-        return new CustomAttributeDefinition(Type, kernel.firstDefined(getAttributeAnnotation(Type, 'name'), name), kernel.mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), kernel.firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, 2 /* BindingMode.toView */), kernel.firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(Type, ...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), kernel.firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies));
+const IAppTask = /*@__PURE__*/ createInterface('IAppTask');
+class $AppTask {
+    constructor(slot, key, cb) {
+        /** @internal */
+        this.c = (void 0);
+        this.slot = slot;
+        this.k = key;
+        this.cb = cb;
     }
     register(container) {
-        const { Type, key, aliases } = this;
-        transientRegistration(key, Type).register(container);
-        aliasRegistration(key, Type).register(container);
-        registerAliases(aliases, CustomAttribute, key, container);
+        return this.c = container.register(instanceRegistration(IAppTask, this));
+    }
+    run() {
+        const key = this.k;
+        const cb = this.cb;
+        return (key === null
+            ? cb()
+            : cb(this.c.get(key)));
     }
 }
-/** @internal */
-const caBaseName = getResourceKeyFor('custom-attribute');
-/** @internal */
-const getAttributeKeyFrom = (name) => `${caBaseName}:${name}`;
-const getAttributeAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
-/** @internal */
-const isAttributeType = (value) => {
-    return isFunction(value) && hasOwnMetadata(caBaseName, value);
-};
-/** @internal */
-const findAttributeControllerFor = (node, name) => {
-    return (getRef(node, getAttributeKeyFrom(name)) ?? void 0);
-};
-/** @internal */
-const defineAttribute = (nameOrDef, Type) => {
-    const definition = CustomAttributeDefinition.create(nameOrDef, Type);
-    defineMetadata(caBaseName, definition, definition.Type);
-    defineMetadata(caBaseName, definition, definition);
-    appendResourceKey(Type, caBaseName);
-    return definition.Type;
-};
-/** @internal */
-// eslint-disable-next-line @typescript-eslint/ban-types
-const getAttributeDefinition = (Type) => {
-    const def = getOwnMetadata(caBaseName, Type);
-    if (def === void 0) {
-        throw createError(`No definition found for type ${Type.name}`);
-    }
-    return def;
-};
-const CustomAttribute = objectFreeze({
-    name: caBaseName,
-    keyFrom: getAttributeKeyFrom,
-    isType: isAttributeType,
-    for: findAttributeControllerFor,
-    define: defineAttribute,
-    getDefinition: getAttributeDefinition,
-    annotate(Type, prop, value) {
-        defineMetadata(getAnnotationKeyFor(prop), value, Type);
-    },
-    getAnnotation: getAttributeAnnotation,
-});
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-function watch(expressionOrPropertyAccessFn, changeHandlerOrCallback) {
-    if (expressionOrPropertyAccessFn == null) {
-        throw createError(`AUR0772: Invalid watch config. Expected an expression or a fn`);
-    }
-    return function decorator(target, key, descriptor) {
-        const isClassDecorator = key == null;
-        const Type = isClassDecorator ? target : target.constructor;
-        const watchDef = new WatchDefinition(expressionOrPropertyAccessFn, isClassDecorator ? changeHandlerOrCallback : descriptor.value);
-        // basic validation
-        if (isClassDecorator) {
-            if (!isFunction(changeHandlerOrCallback)
-                && (changeHandlerOrCallback == null || !(changeHandlerOrCallback in Type.prototype))) {
-                throw createError(`AUR0773: Invalid change handler config. Method "${safeString(changeHandlerOrCallback)}" not found in class ${Type.name}`);
-            }
-        }
-        else if (!isFunction(descriptor?.value)) {
-            throw createError(`AUR0774: decorated target ${safeString(key)} is not a class method.`);
-        }
-        Watch.add(Type, watchDef);
-        // if the code looks like this:
-        // @watch(...)
-        // @customAttribute(...)
-        // class Abc {}
-        //
-        // then @watch is called after @customAttribute
-        // which means the attribute definition won't have the watch definition
-        //
-        // temporarily works around this order sensitivity by manually add the watch def
-        // manual
-        if (isAttributeType(Type)) {
-            getAttributeDefinition(Type).watches.push(watchDef);
-        }
-        if (isElementType(Type)) {
-            getElementDefinition(Type).watches.push(watchDef);
-        }
-    };
-}
-class WatchDefinition {
-    constructor(expression, callback) {
-        this.expression = expression;
-        this.callback = callback;
-    }
-}
-const noDefinitions = kernel.emptyArray;
-const watchBaseName = getAnnotationKeyFor('watch');
-const Watch = objectFreeze({
-    name: watchBaseName,
-    add(Type, definition) {
-        let watchDefinitions = getOwnMetadata(watchBaseName, Type);
-        if (watchDefinitions == null) {
-            defineMetadata(watchBaseName, watchDefinitions = [], Type);
-        }
-        watchDefinitions.push(definition);
-    },
-    getAnnotation(Type) {
-        return getOwnMetadata(watchBaseName, Type) ?? noDefinitions;
-    },
-});
-
-function customElement(nameOrDef) {
-    return function (target) {
-        return defineElement(nameOrDef, target);
-    };
-}
-function useShadowDOM(targetOrOptions) {
-    if (targetOrOptions === void 0) {
-        return function ($target) {
-            annotateElementMetadata($target, 'shadowOptions', { mode: 'open' });
-        };
-    }
-    if (!isFunction(targetOrOptions)) {
-        return function ($target) {
-            annotateElementMetadata($target, 'shadowOptions', targetOrOptions);
-        };
-    }
-    annotateElementMetadata(targetOrOptions, 'shadowOptions', { mode: 'open' });
-}
-function containerless(target) {
-    if (target === void 0) {
-        return function ($target) {
-            markContainerless($target);
-        };
-    }
-    markContainerless(target);
-}
-/** Manipulates the `containerless` property of the custom element definition for the type, when present else it annotates the type. */
-function markContainerless(target) {
-    const def = getOwnMetadata(elementBaseName, target);
-    if (def === void 0) {
-        annotateElementMetadata(target, 'containerless', true);
-        return;
-    }
-    def.containerless = true;
-}
-function strict(target) {
-    if (target === void 0) {
-        return function ($target) {
-            annotateElementMetadata($target, 'isStrictBinding', true);
-        };
-    }
-    annotateElementMetadata(target, 'isStrictBinding', true);
-}
-const definitionLookup = new WeakMap();
-class CustomElementDefinition {
-    get type() { return 1 /* DefinitionType.Element */; }
-    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, isStrictBinding, shadowOptions, 
+const AppTask = objectFreeze({
     /**
-     * Indicates whether the custom element has <slot/> in its template
+     * Returns a task that will run just before the root component is created by DI
      */
-    hasSlots, enhance, watches, processContent) {
-        this.Type = Type;
-        this.name = name;
-        this.aliases = aliases;
-        this.key = key;
-        this.cache = cache;
-        this.capture = capture;
-        this.template = template;
-        this.instructions = instructions;
-        this.dependencies = dependencies;
-        this.injectable = injectable;
-        this.needsCompile = needsCompile;
-        this.surrogates = surrogates;
-        this.bindables = bindables;
-        this.containerless = containerless;
-        this.isStrictBinding = isStrictBinding;
-        this.shadowOptions = shadowOptions;
-        this.hasSlots = hasSlots;
-        this.enhance = enhance;
-        this.watches = watches;
-        this.processContent = processContent;
-    }
-    static create(nameOrDef, Type = null) {
-        if (Type === null) {
-            const def = nameOrDef;
-            if (isString(def)) {
-                throw createError(`AUR0761: Cannot create a custom element definition with only a name and no type: ${nameOrDef}`);
-            }
-            const name = kernel.fromDefinitionOrDefault('name', def, generateElementName);
-            if (isFunction(def.Type)) {
-                // This needs to be a clone (it will usually be the compiler calling this signature)
-                // TODO: we need to make sure it's documented that passing in the type via the definition (while passing in null
-                // as the "Type" parameter) effectively skips type analysis, so it should only be used this way for cloning purposes.
-                Type = def.Type;
-            }
-            else {
-                Type = generateElementType(kernel.pascalCase(name));
-            }
-            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromDefinitionOrDefault('capture', def, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), kernel.fromDefinitionOrDefault('containerless', def, returnFalse), kernel.fromDefinitionOrDefault('isStrictBinding', def, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
-        }
-        // If a type is passed in, we ignore the Type property on the definition if it exists.
-        // TODO: document this behavior
-        if (isString(nameOrDef)) {
-            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('isStrictBinding', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
-        }
-        // This is the typical default behavior, e.g. from regular CustomElement.define invocations or from @customElement deco
-        // The ViewValueConverter also uses this signature and passes in a definition where everything except for the 'hooks'
-        // property needs to be copied. So we have that exception for 'hooks', but we may need to revisit that default behavior
-        // if this turns out to be too opinionated.
-        const name = kernel.fromDefinitionOrDefault('name', nameOrDef, generateElementName);
-        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('isStrictBinding', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
-    }
-    static getOrCreate(partialDefinition) {
-        if (partialDefinition instanceof CustomElementDefinition) {
-            return partialDefinition;
-        }
-        if (definitionLookup.has(partialDefinition)) {
-            return definitionLookup.get(partialDefinition);
-        }
-        const definition = CustomElementDefinition.create(partialDefinition);
-        definitionLookup.set(partialDefinition, definition);
-        // Make sure the full definition can be retrieved from dynamically created classes as well
-        defineMetadata(elementBaseName, definition, definition.Type);
-        return definition;
-    }
-    register(container) {
-        const { Type, key, aliases } = this;
-        if (!container.has(key, false)) {
-            transientRegistration(key, Type).register(container);
-            aliasRegistration(key, Type).register(container);
-            registerAliases(aliases, CustomElement, key, container);
-        }
-    }
-}
-const defaultForOpts = {
-    name: undefined,
-    searchParents: false,
-    optional: false,
-};
-const returnZero = () => 0;
-const returnNull = () => null;
-const returnFalse = () => false;
-const returnTrue = () => true;
-const returnEmptyArray = () => kernel.emptyArray;
-/** @internal */
-const elementBaseName = getResourceKeyFor('custom-element');
-/** @internal */
-const getElementKeyFrom = (name) => `${elementBaseName}:${name}`;
-/** @internal */
-const generateElementName = (() => {
-    let id = 0;
-    return () => `unnamed-${++id}`;
-})();
-const annotateElementMetadata = (Type, prop, value) => {
-    defineMetadata(getAnnotationKeyFor(prop), value, Type);
-};
-/** @internal */
-const defineElement = (nameOrDef, Type) => {
-    const definition = CustomElementDefinition.create(nameOrDef, Type);
-    defineMetadata(elementBaseName, definition, definition.Type);
-    defineMetadata(elementBaseName, definition, definition);
-    appendResourceKey(definition.Type, elementBaseName);
-    return definition.Type;
-};
-/** @internal */
-const isElementType = (value) => {
-    return isFunction(value) && hasOwnMetadata(elementBaseName, value);
-};
-/** @internal */
-const findElementControllerFor = (node, opts = defaultForOpts) => {
-    if (opts.name === void 0 && opts.searchParents !== true) {
-        const controller = getRef(node, elementBaseName);
-        if (controller === null) {
-            if (opts.optional === true) {
-                return null;
-            }
-            throw createError(`AUR0762: The provided node is not a custom element or containerless host.`);
-        }
-        return controller;
-    }
-    if (opts.name !== void 0) {
-        if (opts.searchParents !== true) {
-            const controller = getRef(node, elementBaseName);
-            if (controller === null) {
-                throw createError(`AUR0763: The provided node is not a custom element or containerless host.`);
-            }
-            if (controller.is(opts.name)) {
-                return controller;
-            }
-            return (void 0);
-        }
-        let cur = node;
-        let foundAController = false;
-        while (cur !== null) {
-            const controller = getRef(cur, elementBaseName);
-            if (controller !== null) {
-                foundAController = true;
-                if (controller.is(opts.name)) {
-                    return controller;
-                }
-            }
-            cur = getEffectiveParentNode(cur);
-        }
-        if (foundAController) {
-            return (void 0);
-        }
-        throw createError(`AUR0764: The provided node does does not appear to be part of an Aurelia app DOM tree, or it was added to the DOM in a way that Aurelia cannot properly resolve its position in the component tree.`);
-    }
-    let cur = node;
-    while (cur !== null) {
-        const controller = getRef(cur, elementBaseName);
-        if (controller !== null) {
-            return controller;
-        }
-        cur = getEffectiveParentNode(cur);
-    }
-    throw createError(`AUR0765: The provided node does does not appear to be part of an Aurelia app DOM tree, or it was added to the DOM in a way that Aurelia cannot properly resolve its position in the component tree.`);
-};
-const getElementAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
-/** @internal */
-// eslint-disable-next-line @typescript-eslint/ban-types
-const getElementDefinition = (Type) => {
-    const def = getOwnMetadata(elementBaseName, Type);
-    if (def === void 0) {
-        throw createError(`AUR0760: No definition found for type ${Type.name}`);
-    }
-    return def;
-};
-/** @internal */
-const createElementInjectable = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const $injectable = function (target, property, index) {
-        const annotationParamtypes = kernel.DI.getOrCreateAnnotationParamTypes(target);
-        annotationParamtypes[index] = $injectable;
-        return target;
-    };
-    $injectable.register = function (_container) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        return {
-            resolve(container, requestor) {
-                if (requestor.has($injectable, true)) {
-                    return requestor.get($injectable);
-                }
-                else {
-                    return null;
-                }
-            },
-        };
-    };
-    return $injectable;
-};
-/** @internal */
-const generateElementType = (function () {
-    const nameDescriptor = {
-        value: '',
-        writable: false,
-        enumerable: false,
-        configurable: true,
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const defaultProto = {};
-    return function (name, proto = defaultProto) {
-        // Anonymous class ensures that minification cannot cause unintended side-effects, and keeps the class
-        // looking similarly from the outside (when inspected via debugger, etc).
-        const Type = class {
-        };
-        // Define the name property so that Type.name can be used by end users / plugin authors if they really need to,
-        // even when minified.
-        nameDescriptor.value = name;
-        Reflect.defineProperty(Type, 'name', nameDescriptor);
-        // Assign anything from the prototype that was passed in
-        if (proto !== defaultProto) {
-            objectAssign(Type.prototype, proto);
-        }
-        return Type;
-    };
-})();
-const CustomElement = objectFreeze({
-    name: elementBaseName,
-    keyFrom: getElementKeyFrom,
-    isType: isElementType,
-    for: findElementControllerFor,
-    define: defineElement,
-    getDefinition: getElementDefinition,
-    annotate: annotateElementMetadata,
-    getAnnotation: getElementAnnotation,
-    generateName: generateElementName,
-    createInjectable: createElementInjectable,
-    generateType: generateElementType,
+    creating: createAppTaskSlotHook('creating'),
+    /**
+     * Returns a task that will run after instantiating the root controller,
+     * but before compiling its view (thus means before instantiating the child elements inside it)
+     *
+     * good chance for a router to do some initial work, or initial routing related in general
+     */
+    hydrating: createAppTaskSlotHook('hydrating'),
+    /**
+     * Return a task that will run after the hydration of the root controller,
+     * but before hydrating the child element inside
+     *
+     * good chance for a router to do some initial work, or initial routing related in general
+     */
+    hydrated: createAppTaskSlotHook('hydrated'),
+    /**
+     * Return a task that will run right before the root component is activated.
+     * In this phase, scope hierarchy is formed, and bindings are getting bound
+     */
+    activating: createAppTaskSlotHook('activating'),
+    /**
+     * Return a task that will run right after the root component is activated - the app is now running
+     */
+    activated: createAppTaskSlotHook('activated'),
+    /**
+     * Return a task that will runs right before the root component is deactivated.
+     * In this phase, scope hierarchy is unlinked, and bindings are getting unbound
+     */
+    deactivating: createAppTaskSlotHook('deactivating'),
+    /**
+     * Return a task that will run right after the root component is deactivated
+     */
+    deactivated: createAppTaskSlotHook('deactivated'),
 });
-const pcHookMetadataProperty = getAnnotationKeyFor('processContent');
-function processContent(hook) {
-    return hook === void 0
-        ? function (target, propertyKey, _descriptor) {
-            defineMetadata(pcHookMetadataProperty, ensureHook(target, propertyKey), target);
+function createAppTaskSlotHook(slotName) {
+    function appTaskFactory(keyOrCallback, callback) {
+        if (isFunction(callback)) {
+            return new $AppTask(slotName, keyOrCallback, callback);
         }
-        : function (target) {
-            hook = ensureHook(target, hook);
-            const def = getOwnMetadata(elementBaseName, target);
-            if (def !== void 0) {
-                def.processContent = hook;
-            }
-            else {
-                defineMetadata(pcHookMetadataProperty, hook, target);
-            }
-            return target;
-        };
-}
-function ensureHook(target, hook) {
-    if (isString(hook)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-explicit-any
-        hook = target[hook];
+        return new $AppTask(slotName, null, keyOrCallback);
     }
-    if (!isFunction(hook)) {
-        throw createError(`AUR0766: Invalid @processContent hook. Expected the hook to be a function (when defined in a class, it needs to be a static function) but got a ${typeof hook}.`);
-    }
-    return hook;
+    return appTaskFactory;
 }
-function capture(targetOrFilter) {
-    return function ($target) {
-        const value = isFunction(targetOrFilter) ? targetOrFilter : true;
-        annotateElementMetadata($target, 'capture', value);
-        // also do this to make order of the decorator irrelevant
-        if (isElementType($target)) {
-            getElementDefinition($target).capture = value;
-        }
-    };
-}
+
+const IPlatform = kernel.IPlatform;
 
 /** @internal */
 const auLocationStart = 'au-start';
@@ -1448,73 +1046,479 @@ class FragmentNodeSequence {
 const IWindow = /*@__PURE__*/ createInterface('IWindow', x => x.callback(handler => handler.get(IPlatform).window));
 const ILocation = /*@__PURE__*/ createInterface('ILocation', x => x.callback(handler => handler.get(IWindow).location));
 const IHistory = /*@__PURE__*/ createInterface('IHistory', x => x.callback(handler => handler.get(IWindow).history));
+/** @internal */
+const registerHostNode = (container, platform, host) => {
+    registerResolver(container, platform.HTMLElement, registerResolver(container, platform.Element, registerResolver(container, INode, new kernel.InstanceProvider('ElementResolver', host))));
+    return container;
+};
 
-const IAppTask = /*@__PURE__*/ createInterface('IAppTask');
-class $AppTask {
-    constructor(slot, key, cb) {
-        /** @internal */
-        this.c = (void 0);
-        this.slot = slot;
-        this.k = key;
-        this.cb = cb;
+function customAttribute(nameOrDef) {
+    return function (target) {
+        return defineAttribute(nameOrDef, target);
+    };
+}
+function templateController(nameOrDef) {
+    return function (target) {
+        return defineAttribute(isString(nameOrDef)
+            ? { isTemplateController: true, name: nameOrDef }
+            : { isTemplateController: true, ...nameOrDef }, target);
+    };
+}
+class CustomAttributeDefinition {
+    // a simple marker to distinguish between Custom Element definition & Custom attribute definition
+    get type() { return 2 /* DefinitionType.Attribute */; }
+    constructor(Type, name, aliases, key, defaultBindingMode, isTemplateController, bindables, noMultiBindings, watches, dependencies) {
+        this.Type = Type;
+        this.name = name;
+        this.aliases = aliases;
+        this.key = key;
+        this.defaultBindingMode = defaultBindingMode;
+        this.isTemplateController = isTemplateController;
+        this.bindables = bindables;
+        this.noMultiBindings = noMultiBindings;
+        this.watches = watches;
+        this.dependencies = dependencies;
+    }
+    static create(nameOrDef, Type) {
+        let name;
+        let def;
+        if (isString(nameOrDef)) {
+            name = nameOrDef;
+            def = { name };
+        }
+        else {
+            name = nameOrDef.name;
+            def = nameOrDef;
+        }
+        return new CustomAttributeDefinition(Type, kernel.firstDefined(getAttributeAnnotation(Type, 'name'), name), kernel.mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), kernel.firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, 2 /* BindingMode.toView */), kernel.firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(Type, ...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), kernel.firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies));
     }
     register(container) {
-        return this.c = container.register(instanceRegistration(IAppTask, this));
-    }
-    run() {
-        const key = this.k;
-        const cb = this.cb;
-        return (key === null
-            ? cb()
-            : cb(this.c.get(key)));
+        const { Type, key, aliases } = this;
+        transientRegistration(key, Type).register(container);
+        aliasRegistration(key, Type).register(container);
+        registerAliases(aliases, CustomAttribute, key, container);
     }
 }
-const AppTask = objectFreeze({
-    /**
-     * Returns a task that will run just before the root component is created by DI
-     */
-    creating: createAppTaskSlotHook('creating'),
-    /**
-     * Returns a task that will run after instantiating the root controller,
-     * but before compiling its view (thus means before instantiating the child elements inside it)
-     *
-     * good chance for a router to do some initial work, or initial routing related in general
-     */
-    hydrating: createAppTaskSlotHook('hydrating'),
-    /**
-     * Return a task that will run after the hydration of the root controller,
-     * but before hydrating the child element inside
-     *
-     * good chance for a router to do some initial work, or initial routing related in general
-     */
-    hydrated: createAppTaskSlotHook('hydrated'),
-    /**
-     * Return a task that will run right before the root component is activated.
-     * In this phase, scope hierarchy is formed, and bindings are getting bound
-     */
-    activating: createAppTaskSlotHook('activating'),
-    /**
-     * Return a task that will run right after the root component is activated - the app is now running
-     */
-    activated: createAppTaskSlotHook('activated'),
-    /**
-     * Return a task that will runs right before the root component is deactivated.
-     * In this phase, scope hierarchy is unlinked, and bindings are getting unbound
-     */
-    deactivating: createAppTaskSlotHook('deactivating'),
-    /**
-     * Return a task that will run right after the root component is deactivated
-     */
-    deactivated: createAppTaskSlotHook('deactivated'),
-});
-function createAppTaskSlotHook(slotName) {
-    function appTaskFactory(keyOrCallback, callback) {
-        if (isFunction(callback)) {
-            return new $AppTask(slotName, keyOrCallback, callback);
-        }
-        return new $AppTask(slotName, null, keyOrCallback);
+/** @internal */
+const caBaseName = getResourceKeyFor('custom-attribute');
+/** @internal */
+const getAttributeKeyFrom = (name) => `${caBaseName}:${name}`;
+const getAttributeAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+/** @internal */
+const isAttributeType = (value) => {
+    return isFunction(value) && hasOwnMetadata(caBaseName, value);
+};
+/** @internal */
+const findAttributeControllerFor = (node, name) => {
+    return (getRef(node, getAttributeKeyFrom(name)) ?? void 0);
+};
+/** @internal */
+const defineAttribute = (nameOrDef, Type) => {
+    const definition = CustomAttributeDefinition.create(nameOrDef, Type);
+    defineMetadata(caBaseName, definition, definition.Type);
+    defineMetadata(caBaseName, definition, definition);
+    appendResourceKey(Type, caBaseName);
+    return definition.Type;
+};
+/** @internal */
+// eslint-disable-next-line @typescript-eslint/ban-types
+const getAttributeDefinition = (Type) => {
+    const def = getOwnMetadata(caBaseName, Type);
+    if (def === void 0) {
+        throw createError(`No definition found for type ${Type.name}`);
     }
-    return appTaskFactory;
+    return def;
+};
+const CustomAttribute = objectFreeze({
+    name: caBaseName,
+    keyFrom: getAttributeKeyFrom,
+    isType: isAttributeType,
+    for: findAttributeControllerFor,
+    define: defineAttribute,
+    getDefinition: getAttributeDefinition,
+    annotate(Type, prop, value) {
+        defineMetadata(getAnnotationKeyFor(prop), value, Type);
+    },
+    getAnnotation: getAttributeAnnotation,
+});
+
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+function watch(expressionOrPropertyAccessFn, changeHandlerOrCallback) {
+    if (expressionOrPropertyAccessFn == null) {
+        throw createError(`AUR0772: Invalid watch config. Expected an expression or a fn`);
+    }
+    return function decorator(target, key, descriptor) {
+        const isClassDecorator = key == null;
+        const Type = isClassDecorator ? target : target.constructor;
+        const watchDef = new WatchDefinition(expressionOrPropertyAccessFn, isClassDecorator ? changeHandlerOrCallback : descriptor.value);
+        // basic validation
+        if (isClassDecorator) {
+            if (!isFunction(changeHandlerOrCallback)
+                && (changeHandlerOrCallback == null || !(changeHandlerOrCallback in Type.prototype))) {
+                throw createError(`AUR0773: Invalid change handler config. Method "${safeString(changeHandlerOrCallback)}" not found in class ${Type.name}`);
+            }
+        }
+        else if (!isFunction(descriptor?.value)) {
+            throw createError(`AUR0774: decorated target ${safeString(key)} is not a class method.`);
+        }
+        Watch.add(Type, watchDef);
+        // if the code looks like this:
+        // @watch(...)
+        // @customAttribute(...)
+        // class Abc {}
+        //
+        // then @watch is called after @customAttribute
+        // which means the attribute definition won't have the watch definition
+        //
+        // temporarily works around this order sensitivity by manually add the watch def
+        // manual
+        if (isAttributeType(Type)) {
+            getAttributeDefinition(Type).watches.push(watchDef);
+        }
+        if (isElementType(Type)) {
+            getElementDefinition(Type).watches.push(watchDef);
+        }
+    };
+}
+class WatchDefinition {
+    constructor(expression, callback) {
+        this.expression = expression;
+        this.callback = callback;
+    }
+}
+const noDefinitions = kernel.emptyArray;
+const watchBaseName = getAnnotationKeyFor('watch');
+const Watch = objectFreeze({
+    name: watchBaseName,
+    add(Type, definition) {
+        let watchDefinitions = getOwnMetadata(watchBaseName, Type);
+        if (watchDefinitions == null) {
+            defineMetadata(watchBaseName, watchDefinitions = [], Type);
+        }
+        watchDefinitions.push(definition);
+    },
+    getAnnotation(Type) {
+        return getOwnMetadata(watchBaseName, Type) ?? noDefinitions;
+    },
+});
+
+function customElement(nameOrDef) {
+    return function (target) {
+        return defineElement(nameOrDef, target);
+    };
+}
+function useShadowDOM(targetOrOptions) {
+    if (targetOrOptions === void 0) {
+        return function ($target) {
+            annotateElementMetadata($target, 'shadowOptions', { mode: 'open' });
+        };
+    }
+    if (!isFunction(targetOrOptions)) {
+        return function ($target) {
+            annotateElementMetadata($target, 'shadowOptions', targetOrOptions);
+        };
+    }
+    annotateElementMetadata(targetOrOptions, 'shadowOptions', { mode: 'open' });
+}
+function containerless(target) {
+    if (target === void 0) {
+        return function ($target) {
+            markContainerless($target);
+        };
+    }
+    markContainerless(target);
+}
+/** Manipulates the `containerless` property of the custom element definition for the type, when present else it annotates the type. */
+function markContainerless(target) {
+    const def = getOwnMetadata(elementBaseName, target);
+    if (def === void 0) {
+        annotateElementMetadata(target, 'containerless', true);
+        return;
+    }
+    def.containerless = true;
+}
+function strict(target) {
+    if (target === void 0) {
+        return function ($target) {
+            annotateElementMetadata($target, 'isStrictBinding', true);
+        };
+    }
+    annotateElementMetadata(target, 'isStrictBinding', true);
+}
+const definitionLookup = new WeakMap();
+class CustomElementDefinition {
+    get type() { return 1 /* DefinitionType.Element */; }
+    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, isStrictBinding, shadowOptions, 
+    /**
+     * Indicates whether the custom element has <slot/> in its template
+     */
+    hasSlots, enhance, watches, processContent) {
+        this.Type = Type;
+        this.name = name;
+        this.aliases = aliases;
+        this.key = key;
+        this.cache = cache;
+        this.capture = capture;
+        this.template = template;
+        this.instructions = instructions;
+        this.dependencies = dependencies;
+        this.injectable = injectable;
+        this.needsCompile = needsCompile;
+        this.surrogates = surrogates;
+        this.bindables = bindables;
+        this.containerless = containerless;
+        this.isStrictBinding = isStrictBinding;
+        this.shadowOptions = shadowOptions;
+        this.hasSlots = hasSlots;
+        this.enhance = enhance;
+        this.watches = watches;
+        this.processContent = processContent;
+    }
+    static create(nameOrDef, Type = null) {
+        if (Type === null) {
+            const def = nameOrDef;
+            if (isString(def)) {
+                throw createError(`AUR0761: Cannot create a custom element definition with only a name and no type: ${nameOrDef}`);
+            }
+            const name = kernel.fromDefinitionOrDefault('name', def, generateElementName);
+            if (isFunction(def.Type)) {
+                // This needs to be a clone (it will usually be the compiler calling this signature)
+                // TODO: we need to make sure it's documented that passing in the type via the definition (while passing in null
+                // as the "Type" parameter) effectively skips type analysis, so it should only be used this way for cloning purposes.
+                Type = def.Type;
+            }
+            else {
+                Type = generateElementType(kernel.pascalCase(name));
+            }
+            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromDefinitionOrDefault('capture', def, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), kernel.fromDefinitionOrDefault('containerless', def, returnFalse), kernel.fromDefinitionOrDefault('isStrictBinding', def, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+        }
+        // If a type is passed in, we ignore the Type property on the definition if it exists.
+        // TODO: document this behavior
+        if (isString(nameOrDef)) {
+            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('isStrictBinding', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+        }
+        // This is the typical default behavior, e.g. from regular CustomElement.define invocations or from @customElement deco
+        // The ViewValueConverter also uses this signature and passes in a definition where everything except for the 'hooks'
+        // property needs to be copied. So we have that exception for 'hooks', but we may need to revisit that default behavior
+        // if this turns out to be too opinionated.
+        const name = kernel.fromDefinitionOrDefault('name', nameOrDef, generateElementName);
+        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('isStrictBinding', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
+    }
+    static getOrCreate(partialDefinition) {
+        if (partialDefinition instanceof CustomElementDefinition) {
+            return partialDefinition;
+        }
+        if (definitionLookup.has(partialDefinition)) {
+            return definitionLookup.get(partialDefinition);
+        }
+        const definition = CustomElementDefinition.create(partialDefinition);
+        definitionLookup.set(partialDefinition, definition);
+        // Make sure the full definition can be retrieved from dynamically created classes as well
+        defineMetadata(elementBaseName, definition, definition.Type);
+        return definition;
+    }
+    register(container) {
+        const { Type, key, aliases } = this;
+        if (!container.has(key, false)) {
+            transientRegistration(key, Type).register(container);
+            aliasRegistration(key, Type).register(container);
+            registerAliases(aliases, CustomElement, key, container);
+        }
+    }
+}
+const defaultForOpts = {
+    name: undefined,
+    searchParents: false,
+    optional: false,
+};
+const returnZero = () => 0;
+const returnNull = () => null;
+const returnFalse = () => false;
+const returnTrue = () => true;
+const returnEmptyArray = () => kernel.emptyArray;
+/** @internal */
+const elementBaseName = /*@__PURE__*/ getResourceKeyFor('custom-element');
+/** @internal */
+const getElementKeyFrom = (name) => `${elementBaseName}:${name}`;
+/** @internal */
+const generateElementName = /*@__PURE__*/ (() => {
+    let id = 0;
+    return () => `unnamed-${++id}`;
+})();
+const annotateElementMetadata = (Type, prop, value) => {
+    defineMetadata(getAnnotationKeyFor(prop), value, Type);
+};
+/** @internal */
+const defineElement = (nameOrDef, Type) => {
+    const definition = CustomElementDefinition.create(nameOrDef, Type);
+    defineMetadata(elementBaseName, definition, definition.Type);
+    defineMetadata(elementBaseName, definition, definition);
+    appendResourceKey(definition.Type, elementBaseName);
+    return definition.Type;
+};
+/** @internal */
+const isElementType = (value) => {
+    return isFunction(value) && hasOwnMetadata(elementBaseName, value);
+};
+/** @internal */
+const findElementControllerFor = (node, opts = defaultForOpts) => {
+    if (opts.name === void 0 && opts.searchParents !== true) {
+        const controller = getRef(node, elementBaseName);
+        if (controller === null) {
+            if (opts.optional === true) {
+                return null;
+            }
+            throw createError(`AUR0762: The provided node is not a custom element or containerless host.`);
+        }
+        return controller;
+    }
+    if (opts.name !== void 0) {
+        if (opts.searchParents !== true) {
+            const controller = getRef(node, elementBaseName);
+            if (controller === null) {
+                throw createError(`AUR0763: The provided node is not a custom element or containerless host.`);
+            }
+            if (controller.is(opts.name)) {
+                return controller;
+            }
+            return (void 0);
+        }
+        let cur = node;
+        let foundAController = false;
+        while (cur !== null) {
+            const controller = getRef(cur, elementBaseName);
+            if (controller !== null) {
+                foundAController = true;
+                if (controller.is(opts.name)) {
+                    return controller;
+                }
+            }
+            cur = getEffectiveParentNode(cur);
+        }
+        if (foundAController) {
+            return (void 0);
+        }
+        throw createError(`AUR0764: The provided node does does not appear to be part of an Aurelia app DOM tree, or it was added to the DOM in a way that Aurelia cannot properly resolve its position in the component tree.`);
+    }
+    let cur = node;
+    while (cur !== null) {
+        const controller = getRef(cur, elementBaseName);
+        if (controller !== null) {
+            return controller;
+        }
+        cur = getEffectiveParentNode(cur);
+    }
+    throw createError(`AUR0765: The provided node does does not appear to be part of an Aurelia app DOM tree, or it was added to the DOM in a way that Aurelia cannot properly resolve its position in the component tree.`);
+};
+const getElementAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+/** @internal */
+// eslint-disable-next-line @typescript-eslint/ban-types
+const getElementDefinition = (Type) => {
+    const def = getOwnMetadata(elementBaseName, Type);
+    if (def === void 0) {
+        throw createError(`AUR0760: No definition found for type ${Type.name}`);
+    }
+    return def;
+};
+/** @internal */
+const createElementInjectable = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const $injectable = function (target, property, index) {
+        const annotationParamtypes = kernel.DI.getOrCreateAnnotationParamTypes(target);
+        annotationParamtypes[index] = $injectable;
+        return target;
+    };
+    $injectable.register = function (_container) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        return {
+            resolve(container, requestor) {
+                if (requestor.has($injectable, true)) {
+                    return requestor.get($injectable);
+                }
+                else {
+                    return null;
+                }
+            },
+        };
+    };
+    return $injectable;
+};
+/** @internal */
+const generateElementType = /*@__PURE__*/ (function () {
+    const nameDescriptor = {
+        value: '',
+        writable: false,
+        enumerable: false,
+        configurable: true,
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const defaultProto = {};
+    return function (name, proto = defaultProto) {
+        // Anonymous class ensures that minification cannot cause unintended side-effects, and keeps the class
+        // looking similarly from the outside (when inspected via debugger, etc).
+        const Type = class {
+        };
+        // Define the name property so that Type.name can be used by end users / plugin authors if they really need to,
+        // even when minified.
+        nameDescriptor.value = name;
+        Reflect.defineProperty(Type, 'name', nameDescriptor);
+        // Assign anything from the prototype that was passed in
+        if (proto !== defaultProto) {
+            objectAssign(Type.prototype, proto);
+        }
+        return Type;
+    };
+})();
+const CustomElement = objectFreeze({
+    name: elementBaseName,
+    keyFrom: getElementKeyFrom,
+    isType: isElementType,
+    for: findElementControllerFor,
+    define: defineElement,
+    getDefinition: getElementDefinition,
+    annotate: annotateElementMetadata,
+    getAnnotation: getElementAnnotation,
+    generateName: generateElementName,
+    createInjectable: createElementInjectable,
+    generateType: generateElementType,
+});
+const pcHookMetadataProperty = /*@__PURE__*/ getAnnotationKeyFor('processContent');
+function processContent(hook) {
+    return hook === void 0
+        ? function (target, propertyKey, _descriptor) {
+            defineMetadata(pcHookMetadataProperty, ensureHook(target, propertyKey), target);
+        }
+        : function (target) {
+            hook = ensureHook(target, hook);
+            const def = getOwnMetadata(elementBaseName, target);
+            if (def !== void 0) {
+                def.processContent = hook;
+            }
+            else {
+                defineMetadata(pcHookMetadataProperty, hook, target);
+            }
+            return target;
+        };
+}
+function ensureHook(target, hook) {
+    if (isString(hook)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-explicit-any
+        hook = target[hook];
+    }
+    if (!isFunction(hook)) {
+        throw createError(`AUR0766: Invalid @processContent hook. Expected the hook to be a function (when defined in a class, it needs to be a static function) but got a ${typeof hook}.`);
+    }
+    return hook;
+}
+function capture(targetOrFilter) {
+    return function ($target) {
+        const value = isFunction(targetOrFilter) ? targetOrFilter : true;
+        annotateElementMetadata($target, 'capture', value);
+        // also do this to make order of the decorator irrelevant
+        if (isElementType($target)) {
+            getElementDefinition($target).capture = value;
+        }
+    };
 }
 
 const addListener = (target, name, handler, options) => {
@@ -4187,12 +4191,7 @@ const locationProviderName = 'IRenderLocation';
 const slotInfoProviderName = 'ISlotsInfo';
 function createElementContainer(p, renderingCtrl, host, instruction, location, auSlotsInfo) {
     const ctn = renderingCtrl.container.createChild();
-    // todo:
-    // both node provider and location provider may not be allowed to throw
-    // if there's no value associated, unlike InstanceProvider
-    // reason being some custom element can have `containerless` attribute on them
-    // causing the host to disappear, and replace by a location instead
-    registerResolver(ctn, p.HTMLElement, registerResolver(ctn, p.Element, registerResolver(ctn, INode, new kernel.InstanceProvider('ElementResolver', host))));
+    registerHostNode(ctn, p, host);
     registerResolver(ctn, IController, new kernel.InstanceProvider(controllerProviderName, renderingCtrl));
     registerResolver(ctn, IInstruction, new kernel.InstanceProvider(instructionProviderName, instruction));
     registerResolver(ctn, IRenderLocation, location == null
@@ -4227,7 +4226,7 @@ class ViewFactoryProvider {
 }
 function invokeAttribute(p, definition, renderingCtrl, host, instruction, viewFactory, location, auSlotsInfo) {
     const ctn = renderingCtrl.container.createChild();
-    registerResolver(ctn, p.HTMLElement, registerResolver(ctn, p.Element, registerResolver(ctn, INode, new kernel.InstanceProvider('ElementResolver', host))));
+    registerHostNode(ctn, p, host);
     renderingCtrl = renderingCtrl instanceof Controller
         ? renderingCtrl
         : renderingCtrl.ctrl;
@@ -5544,12 +5543,11 @@ class AppRoot {
         this.config = config;
         this.platform = platform;
         this.container = container;
-        this.controller = (void 0);
         /** @internal */
         this._hydratePromise = void 0;
         this.host = config.host;
         rootProvider.prepare(this);
-        registerResolver(container, platform.HTMLElement, registerResolver(container, platform.Element, registerResolver(container, INode, new kernel.InstanceProvider('ElementResolver', config.host))));
+        registerHostNode(container, platform, config.host);
         this._hydratePromise = kernel.onResolve(this._runAppTasks('creating'), () => {
             const component = config.component;
             const childCtn = container.createChild();
@@ -5636,10 +5634,11 @@ class Aurelia {
         this._startPromise = void 0;
         /** @internal */
         this._stopPromise = void 0;
-        if (container.has(IAurelia, true)) {
+        if (container.has(IAurelia, true) || container.has(Aurelia, true)) {
             throw createError(`AUR0768: An instance of Aurelia is already registered with the container or an ancestor of it.`);
         }
         registerResolver(container, IAurelia, new kernel.InstanceProvider('IAurelia', this));
+        registerResolver(container, Aurelia, new kernel.InstanceProvider('Aurelia', this));
         registerResolver(container, IAppRoot, this._rootProvider = new kernel.InstanceProvider('IAppRoot'));
     }
     register(...params) {
@@ -5660,7 +5659,7 @@ class Aurelia {
         const comp = config.component;
         let bc;
         if (isFunction(comp)) {
-            registerResolver(ctn, p.HTMLElement, registerResolver(ctn, p.Element, registerResolver(ctn, INode, new kernel.InstanceProvider('ElementResolver', host))));
+            registerHostNode(ctn, p, host);
             bc = ctn.invoke(comp);
         }
         else {
@@ -10090,7 +10089,7 @@ class AuCompose {
         }
         const p = this._platform;
         const isLocation = isRenderLocation(host);
-        registerResolver(container, p.Element, registerResolver(container, INode, new kernel.InstanceProvider('ElementResolver', isLocation ? null : host)));
+        registerHostNode(container, p, isLocation ? null : host);
         registerResolver(container, IRenderLocation, new kernel.InstanceProvider('IRenderLocation', isLocation ? host : null));
         const instance = container.invoke(comp);
         registerResolver(container, comp, new kernel.InstanceProvider('au-compose.component', instance));

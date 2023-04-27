@@ -52,18 +52,18 @@ class LocalizedValidationControllerFactory extends o.ValidationControllerFactory
 }
 
 exports.LocalizedValidationMessageProvider = class LocalizedValidationMessageProvider extends i.ValidationMessageProvider {
-    constructor(e, r, t, a, i) {
-        super(a, i, []);
-        this.i18n = r;
-        const o = e.DefaultNamespace;
-        const s = e.DefaultKeyPrefix;
-        if (o !== void 0 || s !== void 0) {
-            this.keyPrefix = o !== void 0 ? `${o}:` : "";
-            this.keyPrefix = s !== void 0 ? `${this.keyPrefix}${s}.` : this.keyPrefix;
+    constructor(r, t, a, i, o) {
+        super(i, o, []);
+        this.i18n = t;
+        const s = r.DefaultNamespace;
+        const c = r.DefaultKeyPrefix;
+        if (s !== void 0 || c !== void 0) {
+            this.keyPrefix = s !== void 0 ? `${s}:` : "";
+            this.keyPrefix = c !== void 0 ? `${this.keyPrefix}${c}.` : this.keyPrefix;
         }
-        t.subscribe("i18n:locale:changed", (() => {
+        a.subscribe(e.Signals.I18N_EA_CHANNEL, (() => {
             this.registeredMessages = new WeakMap;
-            t.publish(n);
+            a.publish(n);
         }));
     }
     getMessage(e) {

@@ -1,7 +1,7 @@
 import { preprocess } from '@aurelia/plugin-conventions';
 import { createFilter } from '@rollup/pluginutils';
-import { resolve, dirname } from 'node:path';
-import { promises } from 'node:fs';
+import { resolve, dirname } from 'path';
+import { promises } from 'fs';
 
 function au(options = {}) {
     const { include = 'src/**/*.{ts,js,html}', exclude, pre = true, useDev, } = options;

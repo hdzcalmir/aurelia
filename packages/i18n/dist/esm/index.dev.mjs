@@ -29,12 +29,12 @@ function __param(paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 }
 
-var Signals;
-(function (Signals) {
-    Signals["I18N_EA_CHANNEL"] = "i18n:locale:changed";
-    Signals["I18N_SIGNAL"] = "aurelia-translation-signal";
-    Signals["RT_SIGNAL"] = "aurelia-relativetime-signal";
-})(Signals || (Signals = {}));
+const Signals = {
+    I18N_EA_CHANNEL: 'i18n:locale:changed',
+    I18N_SIGNAL: 'aurelia-translation-signal',
+    RT_SIGNAL: 'aurelia-relativetime-signal'
+};
+/** @internal */
 var ValueConverters;
 (function (ValueConverters) {
     ValueConverters["translationValueConverterName"] = "t";
@@ -135,9 +135,9 @@ let I18nService = class I18nService {
         const oldLocale = this.getLocale();
         const locales = { oldLocale, newLocale };
         await this.i18next.changeLanguage(newLocale);
-        this.ea.publish("i18n:locale:changed" /* Signals.I18N_EA_CHANNEL */, locales);
+        this.ea.publish(Signals.I18N_EA_CHANNEL, locales);
         this._localeSubscribers.forEach(sub => sub.handleLocaleChange(locales));
-        this._signaler.dispatchSignal("aurelia-translation-signal" /* Signals.I18N_SIGNAL */);
+        this._signaler.dispatchSignal(Signals.I18N_SIGNAL);
     }
     createNumberFormat(options, locales) {
         return Intl.NumberFormat(locales || this.getLocale(), options);
@@ -240,7 +240,7 @@ I18nService = __decorate([
 let DateFormatValueConverter = class DateFormatValueConverter {
     constructor(i18n) {
         this.i18n = i18n;
-        this.signals = ["aurelia-translation-signal" /* Signals.I18N_SIGNAL */];
+        this.signals = [Signals.I18N_SIGNAL];
     }
     toView(value, options, locale) {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -276,7 +276,7 @@ NumberFormatBindingBehavior = __decorate([
 let NumberFormatValueConverter = class NumberFormatValueConverter {
     constructor(i18n) {
         this.i18n = i18n;
-        this.signals = ["aurelia-translation-signal" /* Signals.I18N_SIGNAL */];
+        this.signals = [Signals.I18N_SIGNAL];
     }
     toView(value, options, locale) {
         if (typeof value !== 'number') {
@@ -302,7 +302,7 @@ RelativeTimeBindingBehavior = __decorate([
 let RelativeTimeValueConverter = class RelativeTimeValueConverter {
     constructor(i18n) {
         this.i18n = i18n;
-        this.signals = ["aurelia-translation-signal" /* Signals.I18N_SIGNAL */, "aurelia-relativetime-signal" /* Signals.RT_SIGNAL */];
+        this.signals = [Signals.I18N_SIGNAL, Signals.RT_SIGNAL];
     }
     toView(value, options, locale) {
         if (!(value instanceof Date)) {
@@ -778,7 +778,7 @@ TranslationBindBindingRenderer = __decorate([
 let TranslationValueConverter = class TranslationValueConverter {
     constructor(i18n) {
         this.i18n = i18n;
-        this.signals = ["aurelia-translation-signal" /* Signals.I18N_SIGNAL */];
+        this.signals = [Signals.I18N_SIGNAL];
     }
     toView(value, options) {
         return this.i18n.tr(value, options);

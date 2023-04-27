@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { I18N, I18nConfiguration } from '@aurelia/i18n';
+import { I18N, I18nConfiguration, Signals } from '@aurelia/i18n';
 import { ISignaler } from '@aurelia/runtime';
 import { Aurelia, bindable, customElement, IPlatform } from '@aurelia/runtime-html';
 import { assert, PLATFORM, TestContext } from '@aurelia/testing';
@@ -1563,7 +1563,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             ], App);
             await runTest(async function ({ platform, host, container }) {
                 await platform.taskQueue.queueTask(delta => {
-                    container.get(ISignaler).dispatchSignal("aurelia-relativetime-signal" /* Signals.RT_SIGNAL */);
+                    container.get(ISignaler).dispatchSignal(Signals.RT_SIGNAL);
                     platform.domWriteQueue.flush();
                     assertTextContent(host, 'span', `${Math.round((delta + offset) / 1000)} seconds ago`);
                 }, { delay: 1000 }).result;
@@ -1689,7 +1689,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             ], App);
             await runTest(async function ({ host, platform, container }) {
                 await platform.taskQueue.queueTask(delta => {
-                    container.get(ISignaler).dispatchSignal("aurelia-relativetime-signal" /* Signals.RT_SIGNAL */);
+                    container.get(ISignaler).dispatchSignal(Signals.RT_SIGNAL);
                     platform.domWriteQueue.flush();
                     assertTextContent(host, 'span', `${Math.round((delta + offset) / 1000)} seconds ago`);
                 }, { delay: 1000 }).result;

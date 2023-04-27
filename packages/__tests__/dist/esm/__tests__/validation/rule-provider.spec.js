@@ -1,4 +1,4 @@
-/* eslint-disable no-constant-condition, mocha/no-hooks, mocha/no-sibling-hooks */
+/* eslint-disable no-constant-condition, mocha/no-sibling-hooks */
 import { Metadata } from '@aurelia/metadata';
 import { DI, ISink, Protocol, Registration } from '@aurelia/kernel';
 import { Interpolation, PrimitiveLiteralExpression, IExpressionParser, Scope, astEvaluate } from '@aurelia/runtime';

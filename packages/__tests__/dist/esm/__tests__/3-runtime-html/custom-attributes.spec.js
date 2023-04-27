@@ -10,7 +10,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { alias, bindable, customAttribute, INode, CustomAttribute } from '@aurelia/runtime-html';
+import { resolve } from '@aurelia/kernel';
+import { alias, bindable, customAttribute, INode, CustomAttribute, IAurelia } from '@aurelia/runtime-html';
 import { assert, eachCartesianJoin, createFixture } from '@aurelia/testing';
 describe('3-runtime-html/custom-attributes.spec.ts', function () {
     // custom elements
@@ -711,6 +712,27 @@ describe('3-runtime-html/custom-attributes.spec.ts', function () {
                 assert.strictEqual(options.appHost.textContent, 'NaN');
                 await options.tearDown();
             });
+        });
+    });
+    describe('resolve', function () {
+        afterEach(function () {
+            assert.throws(() => resolve(class Abc {
+            }));
+        });
+        it('works with resolve and inheritance', function () {
+            class Base {
+                constructor() {
+                    this.au = resolve(IAurelia);
+                }
+            }
+            let Attr = class Attr extends Base {
+            };
+            Attr = __decorate([
+                customAttribute('attr')
+            ], Attr);
+            const { au, component } = createFixture('<div attr attr.ref="attr">', class App {
+            }, [Attr]);
+            assert.strictEqual(au, component.attr.au);
         });
     });
 });

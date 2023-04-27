@@ -4,6 +4,32 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var metadata = require('@aurelia/metadata');
 
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+function __param(paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+}
+
 /** @internal */ const safeString = String;
 /** @internal */ const getOwnMetadata = metadata.Metadata.getOwn;
 /** @internal */ const hasOwnMetadata = metadata.Metadata.hasOwn;
@@ -506,11 +532,12 @@ function fromDefinitionOrDefault(name, def, getDefault) {
     return value;
 }
 
-/* eslint-disable @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-this-alias */
 const InstrinsicTypeNames = new Set('Array ArrayBuffer Boolean DataView Date Error EvalError Float32Array Float64Array Function Int8Array Int16Array Int32Array Map Number Object Promise RangeError ReferenceError RegExp Set SharedArrayBuffer String SyntaxError TypeError Uint8Array Uint8ClampedArray Uint16Array Uint32Array URIError WeakMap WeakSet'.split(' '));
 // const factoryKey = 'di:factory';
 // const factoryAnnotationKey = Protocol.annotation.keyFor(factoryKey);
 let containerId = 0;
+let currentContainer = null;
 /** @internal */
 class Container {
     get depth() {
@@ -678,22 +705,30 @@ class Container {
         if (key.resolve !== void 0) {
             return key;
         }
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let current = this;
+        const previousContainer = currentContainer;
+        let current = currentContainer = this;
         let resolver;
         let handler;
-        while (current != null) {
-            resolver = current._resolvers.get(key);
-            if (resolver == null) {
-                if (current.parent == null) {
-                    handler = (isRegisterInRequester(key)) ? this : current;
-                    return autoRegister ? this._jitRegister(key, handler) : null;
+        try {
+            while (current != null) {
+                resolver = current._resolvers.get(key);
+                if (resolver == null) {
+                    if (current.parent == null) {
+                        handler = (isRegisterInRequester(key)) ? this : current;
+                        if (autoRegister) {
+                            return this._jitRegister(key, handler);
+                        }
+                        return null;
+                    }
+                    current = current.parent;
                 }
-                current = current.parent;
+                else {
+                    return resolver;
+                }
             }
-            else {
-                return resolver;
-            }
+        }
+        finally {
+            currentContainer = previousContainer;
         }
         return null;
     }
@@ -709,49 +744,55 @@ class Container {
         if (key.$isResolver) {
             return key.resolve(this, this);
         }
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let current = this;
+        const previousContainer = currentContainer;
+        let current = currentContainer = this;
         let resolver;
         let handler;
-        while (current != null) {
-            resolver = current._resolvers.get(key);
-            if (resolver == null) {
-                if (current.parent == null) {
-                    handler = (isRegisterInRequester(key)) ? this : current;
-                    resolver = this._jitRegister(key, handler);
+        try {
+            while (current != null) {
+                resolver = current._resolvers.get(key);
+                if (resolver == null) {
+                    if (current.parent == null) {
+                        handler = (isRegisterInRequester(key)) ? this : current;
+                        resolver = this._jitRegister(key, handler);
+                        return resolver.resolve(current, this);
+                    }
+                    current = current.parent;
+                }
+                else {
                     return resolver.resolve(current, this);
                 }
-                current = current.parent;
             }
-            else {
-                return resolver.resolve(current, this);
-            }
+        }
+        finally {
+            currentContainer = previousContainer;
         }
         throw cantResolveKeyError(key);
     }
     getAll(key, searchAncestors = false) {
         validateKey(key);
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const requestor = this;
+        const previousContainer = currentContainer;
+        const requestor = currentContainer = this;
         let current = requestor;
         let resolver;
-        if (searchAncestors) {
-            let resolutions = emptyArray;
-            while (current != null) {
-                resolver = current._resolvers.get(key);
-                if (resolver != null) {
-                    resolutions = resolutions.concat(buildAllResponse(resolver, current, requestor));
+        let resolutions = emptyArray;
+        try {
+            if (searchAncestors) {
+                while (current != null) {
+                    resolver = current._resolvers.get(key);
+                    if (resolver != null) {
+                        resolutions = resolutions.concat(buildAllResponse(resolver, current, requestor));
+                    }
+                    current = current.parent;
                 }
-                current = current.parent;
+                return resolutions;
             }
-            return resolutions;
-        }
-        else {
             while (current != null) {
                 resolver = current._resolvers.get(key);
                 if (resolver == null) {
                     current = current.parent;
                     if (current == null) {
+                        currentContainer = previousContainer;
                         return emptyArray;
                     }
                 }
@@ -760,17 +801,24 @@ class Container {
                 }
             }
         }
+        finally {
+            currentContainer = previousContainer;
+        }
         return emptyArray;
     }
     invoke(Type, dynamicDependencies) {
-        if (isNativeFunction(Type)) {
-            throw createNativeInvocationError(Type);
+        const previousContainer = currentContainer;
+        currentContainer = this;
+        try {
+            if (isNativeFunction(Type)) {
+                throw createNativeInvocationError(Type);
+            }
+            return dynamicDependencies === void 0
+                ? new Type(...getDependencies(Type).map(containerGetKey, this))
+                : new Type(...getDependencies(Type).map(containerGetKey, this), ...dynamicDependencies);
         }
-        if (dynamicDependencies === void 0) {
-            return new Type(...getDependencies(Type).map(containerGetKey, this));
-        }
-        else {
-            return new Type(...getDependencies(Type).map(containerGetKey, this), ...dynamicDependencies);
+        finally {
+            currentContainer = previousContainer;
         }
     }
     getFactory(Type) {
@@ -873,7 +921,7 @@ class Container {
             }
             return registrationResolver;
         }
-        else if (hasResources(keyAsValue)) {
+        if (hasResources(keyAsValue)) {
             const defs = getAllResources(keyAsValue);
             if (defs.length === 1) {
                 // Fast path for the very common case
@@ -891,15 +939,47 @@ class Container {
             }
             throw invalidResolverFromRegisterError();
         }
-        else if (keyAsValue.$isInterface) {
+        if (keyAsValue.$isInterface) {
             throw jitInterfaceError(keyAsValue.friendlyName);
         }
-        else {
-            const resolver = this.config.defaultResolver(keyAsValue, handler);
-            handler._resolvers.set(keyAsValue, resolver);
-            return resolver;
+        const resolver = this.config.defaultResolver(keyAsValue, handler);
+        handler._resolvers.set(keyAsValue, resolver);
+        return resolver;
+    }
+}
+/** @internal */
+class Factory {
+    constructor(Type, dependencies) {
+        this.Type = Type;
+        this.dependencies = dependencies;
+        this.transformers = null;
+    }
+    construct(container, dynamicDependencies) {
+        const previousContainer = currentContainer;
+        currentContainer = container;
+        let instance;
+        try {
+            if (dynamicDependencies === void 0) {
+                instance = new this.Type(...this.dependencies.map(containerGetKey, container));
+            }
+            else {
+                instance = new this.Type(...this.dependencies.map(containerGetKey, container), ...dynamicDependencies);
+            }
+            if (this.transformers == null) {
+                return instance;
+            }
+            return this.transformers.reduce(transformInstance, instance);
+        }
+        finally {
+            currentContainer = previousContainer;
         }
     }
+    registerTransformer(transformer) {
+        (this.transformers ?? (this.transformers = [])).push(transformer);
+    }
+}
+function transformInstance(inst, transform) {
+    return transform(inst);
 }
 function validateKey(key) {
     if (key === null || key === void 0) {
@@ -908,12 +988,25 @@ function validateKey(key) {
         }
     }
 }
+function containerGetKey(d) {
+    return this.get(d);
+}
+function resolve(...keys) {
+    if (currentContainer == null) {
+        throw createInvalidResolveCallError();
+    }
+    return keys.length === 1
+        ? currentContainer.get(keys[0])
+        : keys.map(containerGetKey, currentContainer);
+}
+/* eslint-enable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment, prefer-const */
 const buildAllResponse = (resolver, handler, requestor) => {
     if (resolver instanceof Resolver && resolver._strategy === 4 /* ResolverStrategy.array */) {
         const state = resolver._state;
-        let i = state.length;
-        const results = new Array(i);
-        while (i--) {
+        const ii = state.length;
+        const results = Array(ii);
+        let i = 0;
+        for (; i < ii; ++i) {
             results[i] = state[i].resolve(handler, requestor);
         }
         return results;
@@ -951,6 +1044,8 @@ const jitInterfaceError = (name) => createError(`AUR0012: Attempted to jitRegist
     ;
 const createNativeInvocationError = (Type) => createError(`AUR0015: ${Type.name} is a native function and therefore cannot be safely constructed by DI. If this is intentional, please use a callback or cachedCallback resolver.`)
     ;
+const createInvalidResolveCallError = () => createError(`AUR0016: There is not a currently active container. Are you trying to "new Class(...)" that has a resolve(...) call?`)
+    ;
 
 /** @internal */
 const instanceRegistration = (key, value) => new Resolver(key, 0 /* ResolverStrategy.instance */, value);
@@ -982,7 +1077,6 @@ const cacheCallbackResult = (fun) => {
     };
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 metadata.applyMetadataPolyfill(Reflect, false, false);
 class ResolverBuilder {
     constructor(
@@ -1337,20 +1431,17 @@ function singleton(targetOrOptions) {
         return decorateSingleton($target, targetOrOptions);
     };
 }
-const createAllResolver = (getter) => {
-    return (key, searchAncestors) => {
-        searchAncestors = !!searchAncestors;
-        const resolver = function (target, property, descriptor) {
-            inject(resolver)(target, property, descriptor);
-        };
-        resolver.$isResolver = true;
-        resolver.resolve = function (handler, requestor) {
-            return getter(key, handler, requestor, searchAncestors);
-        };
-        return resolver;
-    };
+/**
+ * Create a resolver that will resolve all values of a key from resolving container
+ */
+const all = (key, searchAncestors = false) => {
+    function resolver(target, property, descriptor) {
+        inject(resolver)(target, property, descriptor);
+    }
+    resolver.$isResolver = true;
+    resolver.resolve = (handler, requestor) => requestor.getAll(key, searchAncestors);
+    return resolver;
 };
-const all = /*@__PURE__*/ createAllResolver((key, handler, requestor, searchAncestors) => requestor.getAll(key, searchAncestors));
 /**
  * Lazily inject a dependency depending on whether the [[`Key`]] is present at the time of function call.
  *
@@ -1451,6 +1542,9 @@ ignore.resolve = () => undefined;
 const factory = /*@__PURE__*/ createResolver((key, handler, requestor) => {
     return (...args) => handler.getFactory(key).construct(requestor, args);
 });
+/**
+ * Create a resolver that will resolve a new instance of a key, and register the newly created instance with the requestor container
+ */
 const newInstanceForScope = /*@__PURE__*/ createResolver((key, handler, requestor) => {
     const instance = createNewInstance(key, handler, requestor);
     const instanceProvider = new InstanceProvider(safeString(key), instance);
@@ -1461,6 +1555,9 @@ const newInstanceForScope = /*@__PURE__*/ createResolver((key, handler, requesto
     requestor.registerResolver(key, instanceProvider, true);
     return instance;
 });
+/**
+ * Create a resolver that will resolve a new instance of a key
+ */
 const newInstanceOf = /*@__PURE__*/ createResolver((key, handler, requestor) => createNewInstance(key, handler, requestor));
 const createNewInstance = (key, handler, requestor) => {
     return handler.getFactory(key).construct(requestor);
@@ -1527,36 +1624,6 @@ const nullFactoryError = (key) => createError(`AUR0004: Resolver for ${safeStrin
     ;
 const invalidResolverStrategyError = (strategy) => createError(`AUR0005: Invalid resolver strategy specified: ${strategy}.`)
     ;
-function containerGetKey(d) {
-    return this.get(d);
-}
-function transformInstance(inst, transform) {
-    return transform(inst);
-}
-/** @internal */
-class Factory {
-    constructor(Type, dependencies) {
-        this.Type = Type;
-        this.dependencies = dependencies;
-        this.transformers = null;
-    }
-    construct(container, dynamicDependencies) {
-        let instance;
-        if (dynamicDependencies === void 0) {
-            instance = new this.Type(...this.dependencies.map(containerGetKey, container));
-        }
-        else {
-            instance = new this.Type(...this.dependencies.map(containerGetKey, container), ...dynamicDependencies);
-        }
-        if (this.transformers == null) {
-            return instance;
-        }
-        return this.transformers.reduce(transformInstance, instance);
-    }
-    registerTransformer(transformer) {
-        (this.transformers ?? (this.transformers = [])).push(transformer);
-    }
-}
 /**
  * An implementation of IRegistry that delegates registration to a
  * separately registered class. The ParameterizedRegistry facilitates the
@@ -1712,32 +1779,6 @@ const emptyObject = Object.freeze({});
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 function noop() { }
 const IPlatform = /*@__PURE__*/ createInterface('IPlatform');
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-}
 
 exports.LogLevel = void 0;
 (function (LogLevel) {
@@ -2408,6 +2449,7 @@ exports.noop = noop;
 exports.onResolve = onResolve;
 exports.optional = optional;
 exports.pascalCase = pascalCase;
+exports.resolve = resolve;
 exports.resolveAll = resolveAll;
 exports.singleton = singleton;
 exports.sink = sink;

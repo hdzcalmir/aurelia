@@ -27,7 +27,6 @@ export class SynchronizingCollectionSubscriber {
 }
 describe(`2-runtime/array-observer.spec.ts`, function () {
     let sut;
-    // eslint-disable-next-line mocha/no-hooks
     before(function () {
         disableArrayObservation();
         enableArrayObservation();

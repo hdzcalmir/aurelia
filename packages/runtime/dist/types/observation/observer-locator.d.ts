@@ -1,3 +1,4 @@
+import { ComputedGetterFn } from './computed-observer';
 import { IDirtyChecker } from './dirty-checker';
 import { PropertyAccessor } from './property-accessor';
 import type { Collection, IAccessor, ICollectionObserver, IObserver, AccessorOrObserver, CollectionKind, CollectionObserver } from '../observation';
@@ -28,6 +29,7 @@ export declare class ObserverLocator {
     constructor(dirtyChecker: IDirtyChecker, nodeObserverLocator: INodeObserverLocator);
     addAdapter(adapter: IObjectObservationAdapter): void;
     getObserver(obj: unknown, key: PropertyKey): IObserver;
+    getObserver<T, R>(obj: T, key: ComputedGetterFn<T, R>): IObserver<R>;
     getAccessor(obj: object, key: PropertyKey): AccessorOrObserver;
     getArrayObserver(observedArray: unknown[]): ICollectionObserver<CollectionKind.array>;
     getMapObserver(observedMap: Map<unknown, unknown>): ICollectionObserver<CollectionKind.map>;
@@ -36,5 +38,5 @@ export declare class ObserverLocator {
 }
 export type RepeatableCollection = Collection | null | undefined | number;
 export declare const getCollectionObserver: (collection: RepeatableCollection) => CollectionObserver | undefined;
-export declare const getObserverLookup: <T extends IObserver>(instance: object) => Record<PropertyKey, T>;
+export declare const getObserverLookup: <T extends IObserver<unknown>>(instance: object) => Record<PropertyKey, T>;
 //# sourceMappingURL=observer-locator.d.ts.map

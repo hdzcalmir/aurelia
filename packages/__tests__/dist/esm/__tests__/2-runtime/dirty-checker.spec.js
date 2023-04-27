@@ -1,7 +1,6 @@
 import { DirtyCheckSettings, IDirtyChecker, } from '@aurelia/runtime';
 import { assert, TestContext } from '@aurelia/testing';
 describe('2-runtime/dirty-checker.spec.ts', function () {
-    // eslint-disable-next-line mocha/no-hooks
     afterEach(function () {
         DirtyCheckSettings.resetToDefault();
     });

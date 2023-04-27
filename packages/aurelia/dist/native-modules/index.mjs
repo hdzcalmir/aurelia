@@ -1,6 +1,6 @@
 import { DI as e, Registration as r } from "../kernel/dist/native-modules/index.mjs";
 
-export { ColorOptions, ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, singleton, toArray, transient } from "../kernel/dist/native-modules/index.mjs";
+export { ColorOptions, ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, resolve, singleton, toArray, transient } from "../kernel/dist/native-modules/index.mjs";
 
 import { Aurelia as t, CustomElement as o, IPlatform as a, StandardConfiguration as n } from "../runtime-html/dist/native-modules/index.mjs";
 

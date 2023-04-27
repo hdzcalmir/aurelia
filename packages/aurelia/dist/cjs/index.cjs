@@ -104,6 +104,8 @@ exports.optional = e.optional;
 
 exports.pascalCase = e.pascalCase;
 
+exports.resolve = e.resolve;
+
 exports.singleton = e.singleton;
 
 exports.toArray = e.toArray;

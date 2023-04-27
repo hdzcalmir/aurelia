@@ -2,15 +2,15 @@ import { AccessorType, IObserver } from '../observation';
 import type { ISubscriber, ICollectionSubscriber, ISubscriberCollection, IConnectable } from '../observation';
 import type { IConnectableBinding } from '../binding/connectable';
 import type { IObserverLocator } from './observer-locator';
-export interface ComputedObserver extends IConnectableBinding, ISubscriberCollection {
+export type ComputedGetterFn<T = any, R = any> = (this: T, obj: T, observer: IConnectable) => R;
+export interface ComputedObserver<T extends object> extends IConnectableBinding, ISubscriberCollection {
 }
-export declare class ComputedObserver implements IObserver, IConnectableBinding, ISubscriber, ICollectionSubscriber, ISubscriberCollection {
-    static create(obj: object, key: PropertyKey, descriptor: PropertyDescriptor, observerLocator: IObserverLocator, useProxy: boolean): ComputedObserver;
+export declare class ComputedObserver<T extends object> implements IObserver, IConnectableBinding, ISubscriber, ICollectionSubscriber, ISubscriberCollection {
     type: AccessorType;
     /**
      * The getter this observer is wrapping
      */
-    readonly $get: (watcher: IConnectable) => unknown;
+    readonly $get: ComputedGetterFn<T>;
     /**
      * The setter this observer is wrapping
      */
@@ -19,8 +19,8 @@ export declare class ComputedObserver implements IObserver, IConnectableBinding,
      * A semi-private property used by connectable mixin
      */
     readonly oL: IObserverLocator;
-    constructor(obj: object, get: (watcher: IConnectable) => unknown, set: undefined | ((v: unknown) => void), useProxy: boolean, observerLocator: IObserverLocator);
-    getValue(): unknown;
+    constructor(obj: T, get: ComputedGetterFn<T>, set: undefined | ((v: unknown) => void), observerLocator: IObserverLocator, useProxy: boolean);
+    getValue(): any;
     setValue(v: unknown): void;
     handleChange(): void;
     handleCollectionChange(): void;

@@ -4,8 +4,8 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var pluginConventions = require('@aurelia/plugin-conventions');
 var pluginutils = require('@rollup/pluginutils');
-var node_path = require('node:path');
-var node_fs = require('node:fs');
+var path = require('path');
+var fs = require('fs');
 
 function au(options = {}) {
     const { include = 'src/**/*.{ts,js,html}', exclude, pre = true, useDev, } = options;
@@ -41,7 +41,7 @@ function au(options = {}) {
                 const name = pkg === 'aurelia' ? pkg : `@aurelia/${pkg}`;
                 try {
                     const packageLocation = require.resolve(name);
-                    aliases[name] = node_path.resolve(packageLocation, `../../esm/index.dev.mjs`);
+                    aliases[name] = path.resolve(packageLocation, `../../esm/index.dev.mjs`);
                 }
                 catch (_a) { }
                 return aliases;
@@ -74,7 +74,7 @@ function au(options = {}) {
             if (!isVirtualTsFileFromHtml(id)) {
                 return null;
             }
-            id = node_path.resolve(node_path.dirname(importer !== null && importer !== void 0 ? importer : ''), this.meta.watchMode ? id.replace(/^\//, './') : id);
+            id = path.resolve(path.dirname(importer !== null && importer !== void 0 ? importer : ''), this.meta.watchMode ? id.replace(/^\//, './') : id);
             return id;
         },
         async load(id) {
@@ -82,7 +82,7 @@ function au(options = {}) {
                 return null;
             }
             const htmlId = id.replace('.$au.ts', '.html');
-            const code = await node_fs.promises.readFile(htmlId, { encoding: 'utf-8' });
+            const code = await fs.promises.readFile(htmlId, { encoding: 'utf-8' });
             const result = pluginConventions.preprocess({
                 path: htmlId,
                 contents: code,

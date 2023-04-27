@@ -1,4 +1,4 @@
-/* eslint-disable mocha/no-hooks,mocha/no-sibling-hooks */
+/* eslint-disable mocha/no-sibling-hooks */
 import { IExpressionParser, Interpolation, PrimitiveLiteralExpression, UnaryExpression, BinaryExpression, ConditionalExpression, ValueConverterExpression, BindingBehaviorExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, AccessThisExpression, ForOfStatement, ArrayLiteralExpression, ObjectLiteralExpression, CallFunctionExpression, CallScopeExpression, CallMemberExpression, TemplateExpression, TaggedTemplateExpression, AssignExpression, } from '@aurelia/runtime';
 import { TestContext, assert } from '@aurelia/testing';
 import { Deserializer, Serializer } from '@aurelia/validation';

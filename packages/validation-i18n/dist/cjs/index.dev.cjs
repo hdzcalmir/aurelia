@@ -56,9 +56,9 @@ class LocalizedValidationControllerFactory extends validationHtml.ValidationCont
     }
 }
 exports.LocalizedValidationMessageProvider = class LocalizedValidationMessageProvider extends validation.ValidationMessageProvider {
-    constructor(keyConfiguration, i18n, ea, parser, logger) {
+    constructor(keyConfiguration, i18n$1, ea, parser, logger) {
         super(parser, logger, []);
-        this.i18n = i18n;
+        this.i18n = i18n$1;
         const namespace = keyConfiguration.DefaultNamespace;
         const prefix = keyConfiguration.DefaultKeyPrefix;
         if (namespace !== void 0 || prefix !== void 0) {
@@ -66,7 +66,7 @@ exports.LocalizedValidationMessageProvider = class LocalizedValidationMessagePro
             this.keyPrefix = prefix !== void 0 ? `${this.keyPrefix}${prefix}.` : this.keyPrefix;
         }
         // as this is registered singleton, disposing the subscription does not make much sense.
-        ea.subscribe("i18n:locale:changed" /* Signals.I18N_EA_CHANNEL */, () => {
+        ea.subscribe(i18n.Signals.I18N_EA_CHANNEL, () => {
             this.registeredMessages = new WeakMap();
             ea.publish(I18N_VALIDATION_EA_CHANNEL);
         });

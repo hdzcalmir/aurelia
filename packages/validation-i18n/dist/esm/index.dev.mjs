@@ -1,4 +1,4 @@
-import { I18N } from '@aurelia/i18n';
+import { Signals, I18N } from '@aurelia/i18n';
 import { DI, IServiceLocator, IEventAggregator, ILogger, Registration, noop } from '@aurelia/kernel';
 import { IExpressionParser } from '@aurelia/runtime';
 import { IPlatform } from '@aurelia/runtime-html';
@@ -62,7 +62,7 @@ let LocalizedValidationMessageProvider = class LocalizedValidationMessageProvide
             this.keyPrefix = prefix !== void 0 ? `${this.keyPrefix}${prefix}.` : this.keyPrefix;
         }
         // as this is registered singleton, disposing the subscription does not make much sense.
-        ea.subscribe("i18n:locale:changed" /* Signals.I18N_EA_CHANNEL */, () => {
+        ea.subscribe(Signals.I18N_EA_CHANNEL, () => {
             this.registeredMessages = new WeakMap();
             ea.publish(I18N_VALIDATION_EA_CHANNEL);
         });

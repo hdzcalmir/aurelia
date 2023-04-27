@@ -6,7 +6,7 @@
     "node": ">=14.15.0",
     "npm": ">=6.14.8"
   },
-  "version": "2.0.1-dev.202304181031",
+  "version": "2.1.0-dev.202304270200",
   "scripts": {
     "dev": "vite dev",
     "test:e2e": "cross-env APP_PORT=9004 concurrently \"npm run dev\" \"playwright test\" --kill-others --success first",
@@ -16,20 +16,20 @@
     "test:watch": "npm run test:e2e:watch"
   },
   "dependencies": {
-    "@aurelia/i18n": "2.0.1-dev.202304181031",
-    "@aurelia/kernel": "2.0.1-dev.202304181031",
-    "@aurelia/metadata": "2.0.1-dev.202304181031",
-    "@aurelia/platform": "2.0.1-dev.202304181031",
-    "@aurelia/platform-browser": "2.0.1-dev.202304181031",
-    "@aurelia/runtime": "2.0.1-dev.202304181031",
-    "@aurelia/runtime-html": "2.0.1-dev.202304181031",
-    "@aurelia/validation": "2.0.1-dev.202304181031",
+    "@aurelia/i18n": "2.1.0-dev.202304270200",
+    "@aurelia/kernel": "2.1.0-dev.202304270200",
+    "@aurelia/metadata": "2.1.0-dev.202304270200",
+    "@aurelia/platform": "2.1.0-dev.202304270200",
+    "@aurelia/platform-browser": "2.1.0-dev.202304270200",
+    "@aurelia/runtime": "2.1.0-dev.202304270200",
+    "@aurelia/runtime-html": "2.1.0-dev.202304270200",
+    "@aurelia/validation": "2.1.0-dev.202304270200",
     "i18next": "^17.0.0",
     "i18next-fetch-backend": "^2.2.0",
     "i18next-intervalplural-postprocessor": "^1.0.0"
   },
   "devDependencies": {
-    "@aurelia/vite-plugin": "2.0.1-dev.202304181031",
+    "@aurelia/vite-plugin": "2.1.0-dev.202304270200",
     "@playwright/test": "1.27.1",
     "@types/mocha": "10.0.0",
     "@types/node": "^14.18.14",

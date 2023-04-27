@@ -4856,40 +4856,24 @@ const ProxyObservable = Object.freeze({
 });
 
 class ComputedObserver {
-    static create(obj, key, descriptor, observerLocator, useProxy) {
-        const getter = descriptor.get;
-        const setter = descriptor.set;
-        const observer = new ComputedObserver(obj, getter, setter, useProxy, observerLocator);
-        def(obj, key, {
-            enumerable: descriptor.enumerable,
-            configurable: true,
-            get: objectAssign((( /* Computed Observer */) => observer.getValue()), { getObserver: () => observer }),
-            set: (/* Computed Observer */ v) => {
-                observer.setValue(v);
-            },
-        });
-        return observer;
-    }
-    constructor(obj, get, set, useProxy, observerLocator) {
+    constructor(obj, get, set, observerLocator, useProxy) {
         this.type = 1 /* AccessorType.Observer */;
         /** @internal */
         this._value = void 0;
-        /** @internal */
-        this._oldValue = void 0;
         // todo: maybe use a counter allow recursive call to a certain level
         /** @internal */
         this._isRunning = false;
         /** @internal */
         this._isDirty = false;
         this._obj = obj;
+        this._wrapped = useProxy ? wrap(obj) : obj;
         this.$get = get;
         this.$set = set;
-        this._useProxy = useProxy;
         this.oL = observerLocator;
     }
     getValue() {
         if (this.subs.count === 0) {
-            return this.$get.call(this._obj, this);
+            return this.$get.call(this._obj, this._obj, this);
         }
         if (this._isDirty) {
             this.compute();
@@ -4947,10 +4931,7 @@ class ComputedObserver {
         const newValue = this.compute();
         this._isDirty = false;
         if (!areEqual(newValue, oldValue)) {
-            this._oldValue = oldValue;
-            oV$1 = this._oldValue;
-            this._oldValue = this._value;
-            this.subs.notify(this._value, oV$1);
+            this.subs.notify(this._value, oldValue);
         }
     }
     compute() {
@@ -4958,7 +4939,7 @@ class ComputedObserver {
         this.obs.version++;
         try {
             enterConnectable(this);
-            return this._value = unwrap(this.$get.call(this._useProxy ? wrap(this._obj) : this._obj, this));
+            return this._value = unwrap(this.$get.call(this._wrapped, this._wrapped, this));
         }
         finally {
             this.obs.clear();
@@ -4969,9 +4950,6 @@ class ComputedObserver {
 }
 connectable(ComputedObserver);
 subscriberCollection(ComputedObserver);
-// a reusable variable for `.flush()` methods of observers
-// so that there doesn't need to create an env record for every call
-let oV$1 = void 0;
 
 const IDirtyChecker = createInterface('IDirtyChecker', x => x.singleton(DirtyChecker));
 const DirtyCheckSettings = {
@@ -5241,8 +5219,8 @@ subscriberCollection(SetterNotifier);
 let oV = void 0;
 
 const propertyAccessor = new PropertyAccessor();
-const IObserverLocator = createInterface('IObserverLocator', x => x.singleton(ObserverLocator));
-const INodeObserverLocator = createInterface('INodeObserverLocator', x => x.cachedCallback(handler => {
+const IObserverLocator = /*@__PURE__*/ createInterface('IObserverLocator', x => x.singleton(ObserverLocator));
+const INodeObserverLocator = /*@__PURE__*/ createInterface('INodeObserverLocator', x => x.cachedCallback(handler => {
     {
         handler.getAll(kernel.ILogger).forEach(logger => {
             logger.error('Using default INodeObserverLocator implementation. Will not be able to observe nodes (HTML etc...).');
@@ -5272,10 +5250,13 @@ class ObserverLocator {
     }
     getObserver(obj, key) {
         if (obj == null) {
-            throw nullObjectError(key);
+            throw nullObjectError(safeString(key));
         }
         if (!isObject(obj)) {
-            return new PrimitiveObserver(obj, key);
+            return new PrimitiveObserver(obj, isFunction(key) ? '' : key);
+        }
+        if (isFunction(key)) {
+            return new ComputedObserver(obj, key, void 0, this, true);
         }
         const lookup = getObserverLookup(obj);
         let observer = lookup[key];
@@ -5352,13 +5333,26 @@ class ObserverLocator {
             }
             return obs == null
                 ? pd.configurable
-                    ? ComputedObserver.create(obj, key, pd, this, /* AOT: not true for IE11 */ true)
+                    ? this._createComputedObserver(obj, key, pd, true)
                     : this._dirtyChecker.createProperty(obj, key)
                 : obs;
         }
         // Ordinary get/set observation (the common use case)
         // TODO: think about how to handle a data property that does not sit on the instance (should we do anything different?)
         return new SetterObserver(obj, key);
+    }
+    /** @internal */
+    _createComputedObserver(obj, key, pd, useProxy) {
+        const observer = new ComputedObserver(obj, pd.get, pd.set, this, !!useProxy);
+        def(obj, key, {
+            enumerable: pd.enumerable,
+            configurable: true,
+            get: objectAssign((( /* Computed Observer */) => observer.getValue()), { getObserver: () => observer }),
+            set: (/* Computed Observer */ v) => {
+                observer.setValue(v);
+            },
+        });
+        return observer;
     }
     /** @internal */
     _getAdapterObserver(obj, key, pd) {
@@ -5402,24 +5396,45 @@ const getObserverLookup = (instance) => {
 const nullObjectError = (key) => createError(`AUR0199: trying to observe property ${safeString(key)} on null/undefined`)
     ;
 
-const IObservation = createInterface('IObservation', x => x.singleton(Observation));
+const IObservation = /*@__PURE__*/ createInterface('IObservation', x => x.singleton(Observation));
 class Observation {
     static get inject() { return [IObserverLocator]; }
     constructor(oL) {
         this.oL = oL;
+        /** @internal */
+        this._defaultWatchOptions = { immediate: true };
     }
-    /**
-     * Run an effect function an track the dependencies inside it,
-     * to re-run whenever a dependency has changed
-     */
     run(fn) {
-        const effect = new Effect(this.oL, fn);
+        const effect = new RunEffect(this.oL, fn);
         // todo: batch effect run after it's in
         effect.run();
         return effect;
     }
+    watch(obj, getter, callback, options = this._defaultWatchOptions) {
+        // eslint-disable-next-line no-undef-init
+        let $oldValue = undefined;
+        let stopped = false;
+        const observer = this.oL.getObserver(obj, getter);
+        const handler = {
+            handleChange: (newValue, oldValue) => callback(newValue, $oldValue = oldValue),
+        };
+        const run = () => {
+            if (stopped)
+                return;
+            callback(observer.getValue(), $oldValue);
+        };
+        const stop = () => {
+            stopped = true;
+            observer.unsubscribe(handler);
+        };
+        observer.subscribe(handler);
+        if (options.immediate) {
+            run();
+        }
+        return { run, stop };
+    }
 }
-class Effect {
+class RunEffect {
     constructor(oL, fn) {
         this.oL = oL;
         this.fn = fn;
@@ -5478,7 +5493,7 @@ class Effect {
         this.obs.clearAll();
     }
 }
-connectable(Effect);
+connectable(RunEffect);
 
 function getObserversLookup(obj) {
     if (obj.$observers === void 0) {

@@ -74,6 +74,7 @@ exports.lazy = kernel.lazy;
 exports.noop = kernel.noop;
 exports.optional = kernel.optional;
 exports.pascalCase = kernel.pascalCase;
+exports.resolve = kernel.resolve;
 exports.singleton = kernel.singleton;
 exports.toArray = kernel.toArray;
 exports.transient = kernel.transient;

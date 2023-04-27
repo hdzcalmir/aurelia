@@ -10,12 +10,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-// import { Metadata } from '@aurelia/metadata';
-import { all, DI, Registration } from '@aurelia/kernel';
+import { all, DI, resolve, newInstanceOf, Registration } from '@aurelia/kernel';
 import { assert } from '@aurelia/testing';
 describe('1-kernel/di.getAll.spec.ts', function () {
     let container;
-    // eslint-disable-next-line mocha/no-hooks
     beforeEach(function () {
         container = DI.createContainer();
     });
@@ -110,6 +108,28 @@ describe('1-kernel/di.getAll.spec.ts', function () {
                         assert.deepStrictEqual(container.get(Foo).patterns(), parentExpectation, `Deps in [parent] should have been ${JSON.stringify(regInChild ? childExpectation : parentExpectation)}`);
                     });
                 }
+    });
+    describe('resolve()', function () {
+        it('works with .getAll()', function () {
+            let id = 0;
+            const II = DI.createInterface();
+            class Model {
+                constructor() {
+                    this.id = ++id;
+                }
+            }
+            container.register(Registration.transient(II, class I1 {
+                constructor() {
+                    this.a = resolve(Model);
+                }
+            }), Registration.transient(II, class I2 {
+                constructor() {
+                    this.a = resolve(newInstanceOf(Model));
+                }
+            }));
+            const iis = container.getAll(II);
+            assert.deepStrictEqual(iis.map(a => a.a.id), [1, 2]);
+        });
     });
 });
 //# sourceMappingURL=di.getAll.spec.js.map
