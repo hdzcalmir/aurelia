@@ -22,7 +22,7 @@ export interface IRateLimitOptions {
   signals: string[];
 }
 
-export const ICoercionConfiguration = DI.createInterface<ICoercionConfiguration>('ICoercionConfiguration');
+export const ICoercionConfiguration = /*@__PURE__*/DI.createInterface<ICoercionConfiguration>('ICoercionConfiguration');
 export interface ICoercionConfiguration {
   /** When set to `true`, enables the automatic type-coercion for bindables globally. */
   enableCoercion: boolean;
@@ -178,7 +178,7 @@ export interface IAccessor<TValue = unknown> {
 /**
  * An interface describing a standard contract of an observer in Aurelia binding & observation system
  */
-export interface IObserver extends IAccessor, ISubscribable {
+export interface IObserver<TValue = unknown> extends IAccessor<TValue>, ISubscribable {
   doNotCache?: boolean;
 }
 

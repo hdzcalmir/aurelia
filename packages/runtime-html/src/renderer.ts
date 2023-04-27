@@ -30,7 +30,7 @@ import { RefBinding } from './binding/ref-binding';
 import { ListenerBinding, ListenerBindingOptions } from './binding/listener-binding';
 import { CustomElement, CustomElementDefinition, findElementControllerFor } from './resources/custom-element';
 import { CustomAttribute, CustomAttributeDefinition, findAttributeControllerFor } from './resources/custom-attribute';
-import { convertToRenderLocation, IRenderLocation, INode, setRef, ICssModulesMapping } from './dom';
+import { convertToRenderLocation, IRenderLocation, INode, setRef, ICssModulesMapping, registerHostNode } from './dom';
 import { Controller, ICustomElementController, ICustomElementViewModel, IController, ICustomAttributeViewModel, IHydrationContext, ViewModelKind } from './templating/controller';
 import { IPlatform } from './platform';
 import { IViewFactory } from './templating/view';
@@ -72,7 +72,7 @@ export type InstructionTypeName = string;
 export interface IInstruction {
   readonly type: InstructionTypeName;
 }
-export const IInstruction = createInterface<IInstruction>('Instruction');
+export const IInstruction = /*@__PURE__*/createInterface<IInstruction>('Instruction');
 
 export function isInstruction(value: unknown): value is IInstruction {
   const type = (value as { type?: string }).type;
@@ -307,7 +307,7 @@ export class SpreadElementPropBindingInstruction {
   ) {}
 }
 
-export const ITemplateCompiler = createInterface<ITemplateCompiler>('ITemplateCompiler');
+export const ITemplateCompiler = /*@__PURE__*/createInterface<ITemplateCompiler>('ITemplateCompiler');
 export interface ITemplateCompiler {
   /**
    * Indicates whether this compiler should compile template in debug mode
@@ -372,7 +372,7 @@ export interface IRenderer<
   ): void;
 }
 
-export const IRenderer = createInterface<IRenderer>('IRenderer');
+export const IRenderer = /*@__PURE__*/createInterface<IRenderer>('IRenderer');
 
 type DecoratableInstructionRenderer<TType extends string, TProto, TClass> = Class<TProto & Partial<IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>>, TClass> & Partial<IRegistry>;
 type DecoratedInstructionRenderer<TType extends string, TProto, TClass> =  Class<TProto & IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>, TClass> & IRegistry;
@@ -1202,20 +1202,7 @@ function createElementContainer(
 ): IContainer {
   const ctn = renderingCtrl.container.createChild();
 
-  // todo:
-  // both node provider and location provider may not be allowed to throw
-  // if there's no value associated, unlike InstanceProvider
-  // reason being some custom element can have `containerless` attribute on them
-  // causing the host to disappear, and replace by a location instead
-  registerResolver(
-    ctn,
-    p.HTMLElement,
-    registerResolver(
-      ctn,
-      p.Element,
-      registerResolver(ctn, INode, new InstanceProvider('ElementResolver', host))
-    )
-  );
+  registerHostNode(ctn, p, host);
   registerResolver(ctn, IController, new InstanceProvider(controllerProviderName, renderingCtrl));
   registerResolver(ctn, IInstruction, new InstanceProvider(instructionProviderName, instruction));
   registerResolver(ctn, IRenderLocation, location == null
@@ -1275,15 +1262,7 @@ function invokeAttribute(
   auSlotsInfo?: IAuSlotsInfo,
 ): { vm: ICustomAttributeViewModel; ctn: IContainer } {
   const ctn = renderingCtrl.container.createChild();
-  registerResolver(
-    ctn,
-    p.HTMLElement,
-    registerResolver(
-      ctn,
-      p.Element,
-      registerResolver(ctn, INode, new InstanceProvider('ElementResolver', host))
-    )
-  );
+  registerHostNode(ctn, p, host);
   renderingCtrl = renderingCtrl instanceof Controller
     ? renderingCtrl
     : (renderingCtrl as unknown as SpreadBinding).ctrl;
