@@ -276,21 +276,21 @@ describe('3-runtime-html/custom-attributes.spec.ts', function () {
             assert.strictEqual(fooVm.propChangedCallCount, 1);
             await tearDown();
         });
-        it('does not invoke chane handler when starts with commands', async function () {
+        it('does not invoke change handler when starts with commands', async function () {
             const { fooVm, tearDown } = setupChangeHandlerTest('<div foo.bind="prop"></foo>');
             assert.strictEqual(fooVm.propChangedCallCount, 0);
             fooVm.prop = '5';
             assert.strictEqual(fooVm.propChangedCallCount, 1);
             await tearDown();
         });
-        it('does not invoke chane handler when starts with interpolation', async function () {
+        it('does not invoke change handler when starts with interpolation', async function () {
             const { fooVm, tearDown } = setupChangeHandlerTest(`<div foo="\${prop}"></foo>`);
             assert.strictEqual(fooVm.propChangedCallCount, 0);
             fooVm.prop = '5';
             assert.strictEqual(fooVm.propChangedCallCount, 1);
             await tearDown();
         });
-        it('does not invoke chane handler when starts with two way binding', async function () {
+        it('does not invoke change handler when starts with two way binding', async function () {
             const { fooVm, tearDown } = setupChangeHandlerTest(`<div foo.two-way="prop"></foo>`);
             assert.strictEqual(fooVm.propChangedCallCount, 0, '#1 should have had 0 calls at start');
             fooVm.prop = '5';
@@ -470,7 +470,7 @@ describe('3-runtime-html/custom-attributes.spec.ts', function () {
             };
         }
     });
-    describe('05. with setter/getter', function () {
+    describe('05. with setter', function () {
         /**
          * Specs:
          * - with setter coercing to string for "prop" property
@@ -733,6 +733,97 @@ describe('3-runtime-html/custom-attributes.spec.ts', function () {
             const { au, component } = createFixture('<div attr attr.ref="attr">', class App {
             }, [Attr]);
             assert.strictEqual(au, component.attr.au);
+        });
+    });
+    describe('getter/[setter] bindable', function () {
+        it('works in basic scenario', function () {
+            const { assertText } = createFixture(`<div my-attr="hi">`, class App {
+            }, [CustomAttribute.define({ name: 'my-attr', bindables: ['message'] }, class {
+                    constructor() {
+                        this._m = 'hey';
+                        this.host = resolve(INode);
+                    }
+                    get message() {
+                        return this._m;
+                    }
+                    set message(v) {
+                        this._m = v;
+                    }
+                    attached() {
+                        this.host.textContent = this._m;
+                    }
+                })]);
+            assertText('hi');
+        });
+        it('works with readonly bindable + [from-view]', function () {
+            const { assertText } = createFixture('<div my-attr.from-view="message">${message}', class App {
+                constructor() {
+                    this.message = '';
+                }
+            }, [CustomAttribute.define({ name: 'my-attr', bindables: ['_m', 'message'] }, class {
+                    constructor() {
+                        this._m = '2';
+                    }
+                    get message() {
+                        return this._m;
+                    }
+                    binding() {
+                        this._m = '2+';
+                    }
+                })]);
+            assertText('2+');
+        });
+        it('works with coercer bindable', function () {
+            let setCount = 0;
+            const values = [];
+            let MyAttr = class MyAttr {
+                constructor() {
+                    this._m = '';
+                }
+                get message() {
+                    return this._m;
+                }
+                set message(v) {
+                    this._m = v;
+                }
+            };
+            __decorate([
+                bindable({ set: v => {
+                        setCount++;
+                        v = Number(v);
+                        values.push(v);
+                        return v;
+                    } }),
+                __metadata("design:type", String),
+                __metadata("design:paramtypes", [String])
+            ], MyAttr.prototype, "message", null);
+            MyAttr = __decorate([
+                customAttribute('my-attr')
+            ], MyAttr);
+            const { component } = createFixture(`<div my-attr.bind="value">`, { value: '1' }, [MyAttr]);
+            assert.strictEqual(setCount, 1);
+            assert.deepStrictEqual(values, [1]);
+            component.value = '2';
+            assert.strictEqual(setCount, 2);
+            assert.deepStrictEqual(values, [1, 2]);
+        });
+        it('works with array based computed bindable', function () {
+            const MyAttr = CustomAttribute.define({
+                name: 'my-attr',
+                bindables: ['message']
+            }, class {
+                constructor() {
+                    this._m = [{ v: 'hello' }, { v: 'world' }];
+                }
+                get message() {
+                    return this._m.map(v => v.v).join(' ');
+                }
+            });
+            const { component } = createFixture('<div my-attr.ref=attr my-attr.from-view="value">', class App {
+            }, [MyAttr]);
+            assert.strictEqual(component.value, 'hello world');
+            component.attr._m[1].v = 'world+';
+            assert.strictEqual(component.value, 'hello world+');
         });
     });
 });

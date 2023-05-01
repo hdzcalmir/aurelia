@@ -339,18 +339,17 @@ describe('3-runtime-html/switch.spec.ts', function () {
         }
         for (const config of configFactories) {
             const MyEcho = createComponentType('my-echo', `Echoed '\${message}'`, ['message']);
-            const enumTemplate = `
-    <template>
-      <template switch.bind="status">
-        <case-host case="received"   ce-id="1">Order received.</case-host>
-        <case-host case="dispatched" ce-id="2">On the way.</case-host>
-        <case-host case="processing" ce-id="3">Processing your order.</case-host>
-        <case-host case="delivered"  ce-id="4">Delivered.</case-host>
-      </template>
-    </template>`;
             yield new TestData('works for simple switch-case', {
                 initialStatus: "processing" /* Status.processing */,
-                template: enumTemplate,
+                template: `
+          <template>
+            <template switch.bind="status">
+              <case-host case="received"   ce-id="1">Order received.</case-host>
+              <case-host case="dispatched" ce-id="2">On the way.</case-host>
+              <case-host case="processing" ce-id="3">Processing your order.</case-host>
+              <case-host case="delivered"  ce-id="4">Delivered.</case-host>
+            </template>
+          </template>`,
             }, config(), wrap('Processing your order.'), [1, 2, 3, ...getActivationSequenceFor('case-host-3')], getDeactivationSequenceFor('case-host-3'));
             yield new TestData('reacts to switch value change + deferred view-instantiation assertion', {
                 initialStatus: "dispatched" /* Status.dispatched */,

@@ -1,6 +1,6 @@
-import { Protocol, getPrototypeChain, firstDefined, kebabCase, noop, DI, Registration, mergeArrays, IPlatform as IPlatform$1, emptyArray, InstanceProvider, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, IContainer, optional, ILogger, resolveAll, onResolve, all, camelCase, emptyObject, IServiceLocator, transient, toArray } from '@aurelia/kernel';
+import { Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, firstDefined, mergeArrays, IPlatform as IPlatform$1, emptyArray, InstanceProvider, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, IContainer, optional, ILogger, resolveAll, onResolve, all, camelCase, emptyObject, IServiceLocator, transient, toArray } from '@aurelia/kernel';
 import { Metadata, isObject } from '@aurelia/metadata';
-import { subscriberCollection, ISignaler, astEvaluate, connectable, ConnectableSwitcher, ProxyObservable, astBind, astUnbind, astAssign, IExpressionParser, IObserverLocator, Scope, ICoercionConfiguration, AccessScopeExpression, PropertyAccessor, INodeObserverLocator, getObserverLookup, SetterObserver, IDirtyChecker, createIndexMap, applyMutationsToIndices, getCollectionObserver as getCollectionObserver$1, synchronizeIndices, BindingContext, PrimitiveLiteralExpression } from '@aurelia/runtime';
+import { ISignaler, astEvaluate, connectable, ConnectableSwitcher, ProxyObservable, subscriberCollection, astBind, astUnbind, astAssign, IExpressionParser, IObserverLocator, ICoercionConfiguration, Scope, AccessScopeExpression, PropertyAccessor, INodeObserverLocator, getObserverLookup, SetterObserver, IDirtyChecker, createIndexMap, applyMutationsToIndices, getCollectionObserver as getCollectionObserver$1, synchronizeIndices, BindingContext, PrimitiveLiteralExpression } from '@aurelia/runtime';
 import { BrowserPlatform } from '@aurelia/platform-browser';
 import { TaskAbortError } from '@aurelia/platform';
 
@@ -50,7 +50,7 @@ const O = Object;
 /** @internal */ const objectAssign = O.assign;
 /** @internal */ const getOwnPropertyNames = O.getOwnPropertyNames;
 /** @internal */ const objectKeys = O.keys;
-const IsDataAttribute = createLookup();
+const IsDataAttribute = /*@__PURE__*/ createLookup();
 /** @internal */ const isDataAttribute = (obj, key, svgAnalyzer) => {
     if (IsDataAttribute[key] === true) {
         return true;
@@ -129,7 +129,7 @@ function bindable(configOrTarget, prop) {
 function isBindableAnnotation(key) {
     return key.startsWith(baseName);
 }
-const baseName = getAnnotationKeyFor('bindable');
+const baseName = /*@__PURE__*/ getAnnotationKeyFor('bindable');
 const Bindable = objectFreeze({
     name: baseName,
     keyFrom: (name) => `${baseName}:${name}`,
@@ -155,50 +155,6 @@ const Bindable = objectFreeze({
         }
         bindableLists.forEach(addList);
         return bindables;
-    },
-    for(Type) {
-        let def;
-        const builder = {
-            add(configOrProp) {
-                let prop;
-                let config;
-                if (isString(configOrProp)) {
-                    prop = configOrProp;
-                    config = { property: prop };
-                }
-                else {
-                    prop = configOrProp.property;
-                    config = configOrProp;
-                }
-                def = BindableDefinition.create(prop, Type, config);
-                if (!hasOwnMetadata(baseName, Type, prop)) {
-                    appendAnnotationKey(Type, Bindable.keyFrom(prop));
-                }
-                defineMetadata(baseName, def, Type, prop);
-                return builder;
-            },
-            mode(mode) {
-                def.mode = mode;
-                return builder;
-            },
-            callback(callback) {
-                def.callback = callback;
-                return builder;
-            },
-            attribute(attribute) {
-                def.attribute = attribute;
-                return builder;
-            },
-            primary() {
-                def.primary = true;
-                return builder;
-            },
-            set(setInterpreter) {
-                def.set = setInterpreter;
-                return builder;
-            }
-        };
-        return builder;
     },
     getAll(Type) {
         const propStart = baseName.length + 1;
@@ -231,7 +187,7 @@ class BindableDefinition {
         this.set = set;
     }
     static create(prop, target, def = {}) {
-        return new BindableDefinition(firstDefined(def.attribute, kebabCase(prop)), firstDefined(def.callback, `${prop}Changed`), firstDefined(def.mode, 2 /* BindingMode.toView */), firstDefined(def.primary, false), firstDefined(def.property, prop), firstDefined(def.set, getInterceptor(prop, target, def)));
+        return new BindableDefinition(def.attribute ?? kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? 2 /* BindingMode.toView */, def.primary ?? false, def.property ?? prop, def.set ?? getInterceptor(prop, target, def));
     }
 }
 /* eslint-enable @typescript-eslint/no-unused-vars,spaced-comment */
@@ -239,7 +195,7 @@ function coercer(target, property, _descriptor) {
     Coercer.define(target, property);
 }
 const Coercer = {
-    key: getAnnotationKeyFor('coercer'),
+    key: /*@__PURE__*/ getAnnotationKeyFor('coercer'),
     define(target, property) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
         defineMetadata(Coercer.key, target[property].bind(target), target);
@@ -284,114 +240,28 @@ function createCoercer(coercer, nullable) {
     };
 }
 
-class BindableObserver {
-    get type() { return 1 /* AccessorType.Observer */; }
-    constructor(obj, key, cbName, set, 
-    // todo: a future feature where the observer is not instantiated via a controller
-    // this observer can become more static, as in immediately available when used
-    // in the form of a decorator
-    $controller, _coercionConfig) {
-        this.set = set;
-        this.$controller = $controller;
-        this._coercionConfig = _coercionConfig;
-        /** @internal */
-        this._value = void 0;
-        /** @internal */
-        this._oldValue = void 0;
-        const cb = obj[cbName];
-        const cbAll = obj.propertyChanged;
-        const hasCb = this._hasCb = isFunction(cb);
-        const hasCbAll = this._hasCbAll = isFunction(cbAll);
-        const hasSetter = this._hasSetter = set !== noop;
-        let val;
-        this._obj = obj;
-        this._key = key;
-        this._cbAll = hasCbAll ? cbAll : noop;
-        this.cb = hasCb ? cb : noop;
-        // when user declare @bindable({ set })
-        // it's expected to work from the start,
-        // regardless where the assignment comes from: either direct view model assignment or from binding during render
-        // so if either getter/setter config is present, alter the accessor straight await
-        if (this.cb === void 0 && !hasCbAll && !hasSetter) {
-            this._observing = false;
-        }
-        else {
-            this._observing = true;
-            val = obj[key];
-            this._value = hasSetter && val !== void 0 ? set(val, this._coercionConfig) : val;
-            this._createGetterSetter();
-        }
-    }
-    getValue() {
-        return this._value;
-    }
-    setValue(newValue) {
-        if (this._hasSetter) {
-            newValue = this.set(newValue, this._coercionConfig);
-        }
-        const currentValue = this._value;
-        if (this._observing) {
-            if (areEqual(newValue, currentValue)) {
-                return;
-            }
-            this._value = newValue;
-            this._oldValue = currentValue;
-            // todo: controller (if any) state should determine the invocation instead
-            if ( /* either not instantiated via a controller */this.$controller == null
-                /* or the controller instantiating this is bound */ || this.$controller.isBound) {
-                if (this._hasCb) {
-                    this.cb.call(this._obj, newValue, currentValue);
-                }
-                if (this._hasCbAll) {
-                    this._cbAll.call(this._obj, this._key, newValue, currentValue);
-                }
-            }
-            this.subs.notify(this._value, this._oldValue);
-        }
-        else {
-            // See SetterObserver.setValue for explanation
-            this._obj[this._key] = newValue;
-        }
-    }
-    subscribe(subscriber) {
-        if (!this._observing === false) {
-            this._observing = true;
-            this._value = this._hasSetter
-                ? this.set(this._obj[this._key], this._coercionConfig)
-                : this._obj[this._key];
-            this._createGetterSetter();
-        }
-        this.subs.add(subscriber);
-    }
-    /** @internal */
-    _createGetterSetter() {
-        Reflect.defineProperty(this._obj, this._key, {
-            enumerable: true,
-            configurable: true,
-            get: ( /* Bindable Observer */) => this._value,
-            set: (/* Bindable Observer */ value) => {
-                this.setValue(value);
-            }
-        });
-    }
-}
-subscriberCollection(BindableObserver);
-
-const resource = function (key) {
+const resource = (key) => {
     function Resolver(target, property, descriptor) {
         DI.inject(Resolver)(target, property, descriptor);
     }
     Resolver.$isResolver = true;
-    Resolver.resolve = function (handler, requestor) {
-        if ( /* is root? */requestor.root === requestor) {
-            return requestor.get(key);
-        }
-        return requestor.has(key, false)
-            ? requestor.get(key)
-            : requestor.root.get(key);
-    };
+    Resolver.resolve = (handler, requestor) => requestor.has(key, false)
+        ? requestor.get(key)
+        : requestor.root.get(key);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return Resolver;
+};
+const optionalResource = (key) => {
+    return objectAssign(function Resolver(target, property, descriptor) {
+        DI.inject(Resolver)(target, property, descriptor);
+    }, {
+        $isResolver: true,
+        resolve: (handler, requestor) => requestor.has(key, false)
+            ? requestor.get(key)
+            : requestor.root.has(key, false)
+                ? requestor.root.get(key)
+                : void 0,
+    });
 };
 /**
  * A resolver builder for resolving all registrations of a key
@@ -4388,6 +4258,7 @@ var MountTarget;
     MountTarget[MountTarget["location"] = 3] = "location";
 })(MountTarget || (MountTarget = {}));
 const optionalCeFind = { optional: true };
+const optionalCoercionConfigResolver = optionalResource(ICoercionConfiguration);
 const controllerLookup = new WeakMap();
 class Controller {
     get lifecycleHooks() {
@@ -4495,6 +4366,9 @@ class Controller {
         }
         this.location = location;
         this._rendering = container.root.get(IRendering);
+        this.coercion = vmKind === 2 /* ViewModelKind.synthetic */
+            ? void 0
+            : container.get(optionalCoercionConfigResolver);
     }
     static getCached(viewModel) {
         return controllerLookup.get(viewModel);
@@ -5354,32 +5228,32 @@ class Controller {
         }
     }
 }
-function getLookup(instance) {
-    let lookup = instance.$observers;
-    if (lookup === void 0) {
-        Reflect.defineProperty(instance, '$observers', {
-            enumerable: false,
-            value: lookup = {},
-        });
-    }
-    return lookup;
-}
 function createObservers(controller, definition, instance) {
     const bindables = definition.bindables;
     const observableNames = getOwnPropertyNames(bindables);
     const length = observableNames.length;
+    const locator = controller.container.get(IObserverLocator);
     if (length > 0) {
-        let name;
-        let bindable;
-        let i = 0;
-        const observers = getLookup(instance);
-        const container = controller.container;
-        const coercionConfiguration = container.has(ICoercionConfiguration, true) ? container.get(ICoercionConfiguration) : null;
-        for (; i < length; ++i) {
-            name = observableNames[i];
-            if (observers[name] === void 0) {
-                bindable = bindables[name];
-                observers[name] = new BindableObserver(instance, name, bindable.callback, bindable.set, controller, coercionConfiguration);
+        for (let i = 0; i < length; ++i) {
+            const name = observableNames[i];
+            const bindable = bindables[name];
+            const handler = bindable.callback;
+            const obs = locator.getObserver(instance, name);
+            if (bindable.set !== noop) {
+                if (obs.useCoercer?.(bindable.set, controller.coercion) !== true) {
+                    throw createError(`AURxxxx: observer for property ${safeString(name)} does not support coercion.`);
+                }
+            }
+            if (instance[handler] != null || instance.propertyChanged != null) {
+                const callback = (newValue, oldValue) => {
+                    if (controller.isBound) {
+                        instance[handler]?.(newValue, oldValue);
+                        instance.propertyChanged?.(name, newValue, oldValue);
+                    }
+                };
+                if (obs.useCallback?.(callback) !== true) {
+                    throw createError(`AURxxxx: observer for property ${safeString(name)} does not support change handler.`);
+                }
             }
         }
     }
@@ -11544,14 +11418,11 @@ class TemplateCompiler {
                 throw createError(`AUR0709: Local templates needs to be defined directly under root.`);
             }
             const name = processTemplateName(localTemplate, localTemplateNames);
-            const LocalTemplateType = class LocalTemplate {
-            };
             const content = localTemplate.content;
             const bindableEls = toArray(content.querySelectorAll('bindable'));
-            const bindableInstructions = Bindable.for(LocalTemplateType);
             const properties = new Set();
             const attributes = new Set();
-            for (const bindableEl of bindableEls) {
+            const bindables = bindableEls.reduce((allBindables, bindableEl) => {
                 if (bindableEl.parentNode !== content) {
                     throw createError(`AUR0710: Bindable properties of local templates needs to be defined directly under root.`);
                 }
@@ -11571,19 +11442,19 @@ class TemplateCompiler {
                     }
                     properties.add(property);
                 }
-                bindableInstructions.add({
-                    property,
-                    attribute: attribute ?? void 0,
-                    mode: getBindingMode(bindableEl),
-                });
-                const ignoredAttributes = bindableEl.getAttributeNames().filter((attrName) => !allowedLocalTemplateBindableAttributes.includes(attrName));
+                const ignoredAttributes = toArray(bindableEl.attributes).filter((attr) => !allowedLocalTemplateBindableAttributes.includes(attr.name));
                 if (ignoredAttributes.length > 0) {
-                    context._logger.warn(`The attribute(s) ${ignoredAttributes.join(', ')} will be ignored for ${bindableEl.outerHTML}. Only ${allowedLocalTemplateBindableAttributes.join(', ')} are processed.`);
+                    context._logger.warn(`The attribute(s) ${ignoredAttributes.map(attr => attr.name).join(', ')} will be ignored for ${bindableEl.outerHTML}. Only ${allowedLocalTemplateBindableAttributes.join(', ')} are processed.`);
                 }
-                content.removeChild(bindableEl);
+                bindableEl.remove();
+                allBindables[property] = { attribute: attribute ?? void 0, mode: getBindingMode(bindableEl) };
+                return allBindables;
+            }, {});
+            class LocalTemplateType {
             }
+            def(LocalTemplateType, 'name', { value: name });
             localElTypes.push(LocalTemplateType);
-            context._addDep(defineElement({ name, template: localTemplate }, LocalTemplateType));
+            context._addDep(defineElement({ name, template: localTemplate, bindables }, LocalTemplateType));
             root.removeChild(localTemplate);
         }
         // if we have a template like this
@@ -11596,10 +11467,9 @@ class TemplateCompiler {
         //
         // eagerly registering depdendencies inside the loop above
         // will make `<le-1/>` miss `<le-2/>` as its dependency
-        let i = 0;
-        const ii = localElTypes.length;
-        for (; ii > i; ++i) {
-            getElementDefinition(localElTypes[i]).dependencies.push(...context.def.dependencies ?? emptyArray, ...context.deps ?? emptyArray);
+        const allDeps = [...context.def.dependencies ?? emptyArray, ...localElTypes];
+        for (const Type of localElTypes) {
+            getElementDefinition(Type).dependencies.push(allDeps.filter(d => d !== Type));
         }
     }
     /** @internal */
@@ -11954,7 +11824,7 @@ const getBindingMode = (bindable) => {
  */
 const ITemplateCompilerHooks = /*@__PURE__*/ createInterface('ITemplateCompilerHooks');
 const typeToHooksDefCache = new WeakMap();
-const hooksBaseName = getResourceKeyFor('compiler-hooks');
+const hooksBaseName = /*@__PURE__*/ getResourceKeyFor('compiler-hooks');
 const TemplateCompilerHooks = objectFreeze({
     name: hooksBaseName,
     define(Type) {
@@ -12375,5 +12245,5 @@ class ChildrenLifecycleHooks {
 }
 let mixed = false;
 
-export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindableObserver, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, CommandType, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DefinitionType, DotSeparatedAttributePattern, Else, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HooksDefinition, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, ILifecycleHooks, ILocation, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, ViewModelKind, Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, strict, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
+export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, CommandType, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DefinitionType, DotSeparatedAttributePattern, Else, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HooksDefinition, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, ILifecycleHooks, ILocation, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, ViewModelKind, Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, strict, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
 //# sourceMappingURL=index.dev.mjs.map

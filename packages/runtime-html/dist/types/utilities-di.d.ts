@@ -1,5 +1,6 @@
-import { type IResolver, type Key, type Constructable, type IContainer, type IResourceKind, type ResourceDefinition, type IAllResolver } from '@aurelia/kernel';
+import { type IResolver, type Key, type Constructable, type IContainer, type IResourceKind, type ResourceDefinition, type IAllResolver, IOptionalResolver } from '@aurelia/kernel';
 export declare const resource: <T extends Key>(key: T) => IResolver<T> & ((...args: unknown[]) => any);
+export declare const optionalResource: <T extends Key>(key: T) => IOptionalResolver<T>;
 /**
  * A resolver builder for resolving all registrations of a key
  * with resource semantic (leaf + root + ignore middle layer container)

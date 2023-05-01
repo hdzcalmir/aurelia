@@ -24,7 +24,7 @@ export interface ICoercionConfiguration {
     /** When set to `true`, coerces the `null` and `undefined` values to the target types. This is ineffective when `disableCoercion` is set to `true.` */
     coerceNullish: boolean;
 }
-export type InterceptorFunc<TInput = unknown, TOutput = unknown> = (value: TInput, coercionConfig: ICoercionConfiguration | null) => TOutput;
+export type InterceptorFunc<TInput = unknown, TOutput = unknown> = (value: TInput, coercionConfig?: ICoercionConfiguration) => TOutput;
 export interface IConnectable {
     observe(obj: object, key: PropertyKey): void;
     observeCollection(obj: Collection): void;
@@ -123,6 +123,8 @@ export interface IAccessor<TValue = unknown> {
  */
 export interface IObserver<TValue = unknown> extends IAccessor<TValue>, ISubscribable {
     doNotCache?: boolean;
+    useCallback?(callback: (newValue: TValue, oldValue: TValue) => void): boolean;
+    useCoercer?(coercer: InterceptorFunc, coercionConfig?: ICoercionConfiguration): boolean;
 }
 export type AccessorOrObserver = (IAccessor | IObserver) & {
     doNotCache?: boolean;

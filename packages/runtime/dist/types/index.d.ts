@@ -7,7 +7,7 @@ export { MapObserver, enableMapObservation, disableMapObservation, } from './obs
 export { SetObserver, enableSetObservation, disableSetObservation } from './observation/set-observer';
 export { BindingContext, Scope, } from './observation/scope';
 export { CollectionLengthObserver, CollectionSizeObserver, } from './observation/collection-length-observer';
-export { ComputedObserver, } from './observation/computed-observer';
+export { ComputedObserver, type ComputedGetterFn, } from './observation/computed-observer';
 export { IDirtyChecker, DirtyCheckProperty, DirtyCheckSettings, } from './observation/dirty-checker';
 export { type IEffect, IObservation, Observation, type EffectRunFunc, } from './observation/observation';
 export { type IObservableDefinition, observable, } from './observation/observable';

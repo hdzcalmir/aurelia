@@ -1,5 +1,4 @@
 export { bindable, Bindable, BindableDefinition, type PartialBindableDefinition, coercer, } from './bindable';
-export { BindableObserver, } from './observation/bindable-observer';
 export { bindingBehavior, BindingBehavior, BindingBehaviorDefinition, type PartialBindingBehaviorDefinition, type BindingBehaviorKind, type BindingBehaviorDecorator, type BindingBehaviorType, } from './resources/binding-behavior';
 export { BindingModeBehavior, OneTimeBindingBehavior, ToViewBindingBehavior, FromViewBindingBehavior, TwoWayBindingBehavior, } from './resources/binding-behaviors/binding-mode';
 export { DebounceBindingBehavior, } from './resources/binding-behaviors/debounce';

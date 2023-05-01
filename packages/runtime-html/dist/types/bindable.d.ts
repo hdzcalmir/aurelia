@@ -20,9 +20,6 @@ export type PartialBindableDefinition = {
      */
     nullable?: boolean;
 };
-type PartialBindableDefinitionPropertyRequired = PartialBindableDefinition & {
-    property: string;
-};
 type PartialBindableDefinitionPropertyOmitted = Omit<PartialBindableDefinition, 'property'>;
 /**
  * Decorator: Specifies custom behavior for a bindable property.
@@ -43,34 +40,10 @@ export declare function bindable(prop: string): (target: Constructable) => void;
  * @param prop - The property name
  */
 export declare function bindable(target: {}, prop: string): void;
-type BFluent = {
-    add(config: PartialBindableDefinitionPropertyRequired): BFluent;
-    add(property: string): BFluent & B12345;
-};
-type B1<T = {}> = {
-    mode(mode: BindingMode): BFluent & T;
-};
-type B2<T = {}> = {
-    callback(callback: string): BFluent & T;
-};
-type B3<T = {}> = {
-    attribute(attribute: string): BFluent & T;
-};
-type B4<T = {}> = {
-    primary(): BFluent & T;
-};
-type B5<T = {}> = {
-    set(setterFn: InterceptorFunc): BFluent & T;
-};
-type B45 = B5 & B4<B5>;
-type B345 = B45 & B3<B45>;
-type B2345 = B345 & B2<B345>;
-type B12345 = B2345 & B1<B2345>;
 export declare const Bindable: Readonly<{
     name: string;
     keyFrom: (name: string) => string;
     from(type: Constructable, ...bindableLists: readonly (BindableDefinition | Record<string, PartialBindableDefinition> | readonly string[] | undefined)[]): Record<string, BindableDefinition>;
-    for(Type: Constructable): BFluent;
     getAll(Type: Constructable): readonly BindableDefinition[];
 }>;
 export declare class BindableDefinition {

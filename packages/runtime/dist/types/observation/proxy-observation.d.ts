@@ -1,4 +1,8 @@
 export declare const rawKey = "__raw__";
+export declare function wrap<T>(v: T): T;
+export declare function getProxy<T extends object>(obj: T): T;
+export declare function getRaw<T extends object>(obj: T): T;
+export declare function unwrap<T>(v: T): T;
 export declare const ProxyObservable: Readonly<{
     getProxy: typeof getProxy;
     getRaw: typeof getRaw;

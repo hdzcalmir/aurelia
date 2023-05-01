@@ -4460,21 +4460,17 @@ function canWrap(obj) {
     }
 }
 const rawKey = '__raw__';
-/** @internal */
 function wrap(v) {
     return canWrap(v) ? getProxy(v) : v;
 }
-/** @internal */
 function getProxy(obj) {
     // deepscan-disable-next-line
     return proxyMap.get(obj) ?? createProxy(obj);
 }
-/** @internal */
 function getRaw(obj) {
     // todo: get in a weakmap if null/undef
     return obj[rawKey] ?? obj;
 }
-/** @internal */
 function unwrap(v) {
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     return canWrap(v) && v[rawKey] || v;
@@ -4865,11 +4861,21 @@ class ComputedObserver {
         this._isRunning = false;
         /** @internal */
         this._isDirty = false;
+        /** @internal */
+        this._callback = void 0;
+        /** @internal */
+        this._coercer = void 0;
+        /** @internal */
+        this._coercionConfig = void 0;
         this._obj = obj;
         this._wrapped = useProxy ? wrap(obj) : obj;
         this.$get = get;
         this.$set = set;
         this.oL = observerLocator;
+    }
+    init(value) {
+        this._value = value;
+        this._isDirty = false;
     }
     getValue() {
         if (this.subs.count === 0) {
@@ -4884,7 +4890,10 @@ class ComputedObserver {
     // deepscan-disable-next-line
     setValue(v) {
         if (isFunction(this.$set)) {
-            if (v !== this._value) {
+            if (this._coercer !== void 0) {
+                v = this._coercer.call(null, v, this._coercionConfig);
+            }
+            if (!areEqual(v, this._value)) {
                 // setting running true as a form of batching
                 this._isRunning = true;
                 this.$set.call(this._obj, v);
@@ -4895,6 +4904,15 @@ class ComputedObserver {
         else {
             throw createError(`AUR0221: Property is readonly`);
         }
+    }
+    useCoercer(coercer, coercionConfig) {
+        this._coercer = coercer;
+        this._coercionConfig = coercionConfig;
+        return true;
+    }
+    useCallback(callback) {
+        this._callback = callback;
+        return true;
     }
     handleChange() {
         this._isDirty = true;
@@ -4931,6 +4949,9 @@ class ComputedObserver {
         const newValue = this.compute();
         this._isDirty = false;
         if (!areEqual(newValue, oldValue)) {
+            // todo: probably should set is running here too
+            // to prevent depth first notification
+            this._callback?.(newValue, oldValue);
             this.subs.notify(this._value, oldValue);
         }
     }
@@ -5119,6 +5140,12 @@ class SetterObserver {
         this._value = void 0;
         /** @internal */
         this._observing = false;
+        /** @internal */
+        this._callback = void 0;
+        /** @internal */
+        this._coercer = void 0;
+        /** @internal */
+        this._coercionConfig = void 0;
         this._obj = obj;
         this._key = key;
     }
@@ -5126,12 +5153,16 @@ class SetterObserver {
         return this._value;
     }
     setValue(newValue) {
+        if (this._coercer !== void 0) {
+            newValue = this._coercer.call(void 0, newValue, this._coercionConfig);
+        }
         if (this._observing) {
             if (areEqual(newValue, this._value)) {
                 return;
             }
             oV = this._value;
             this._value = newValue;
+            this._callback?.(newValue, oV);
             this.subs.notify(newValue, oV);
         }
         else {
@@ -5141,8 +5172,20 @@ class SetterObserver {
             // is unmodified and we need to explicitly set the property value.
             // This will happen in one-time, to-view and two-way bindings during bind, meaning that the bind will not actually update the target value.
             // This wasn't visible in vCurrent due to connect-queue always doing a delayed update, so in many cases it didn't matter whether bind updated the target or not.
-            this._obj[this._key] = newValue;
+            this._value = this._obj[this._key] = newValue;
+            this._callback?.(newValue, oV);
         }
+    }
+    useCallback(callback) {
+        this._callback = callback;
+        this.start();
+        return true;
+    }
+    useCoercer(coercer, coercionConfig) {
+        this._coercer = coercer;
+        this._coercionConfig = coercionConfig;
+        this.start();
+        return true;
     }
     subscribe(subscriber) {
         if (this._observing === false) {
@@ -5157,7 +5200,7 @@ class SetterObserver {
             def(this._obj, this._key, {
                 enumerable: true,
                 configurable: true,
-                get: ( /* Setter Observer */) => this.getValue(),
+                get: objectAssign(( /* Setter Observer */) => this.getValue(), { getObserver: () => this }),
                 set: (/* Setter Observer */ value) => {
                     this.setValue(value);
                 },
@@ -5179,41 +5222,7 @@ class SetterObserver {
         return this;
     }
 }
-class SetterNotifier {
-    constructor(obj, callbackKey, set, initialValue) {
-        this.type = 1 /* AccessorType.Observer */;
-        /** @internal */
-        this._value = void 0;
-        /** @internal */
-        this._oldValue = void 0;
-        this._obj = obj;
-        this._setter = set;
-        this._hasSetter = isFunction(set);
-        const callback = obj[callbackKey];
-        this.cb = isFunction(callback) ? callback : void 0;
-        this._value = initialValue;
-    }
-    getValue() {
-        return this._value;
-    }
-    setValue(value) {
-        if (this._hasSetter) {
-            value = this._setter(value, null);
-        }
-        if (!areEqual(value, this._value)) {
-            this._oldValue = this._value;
-            this._value = value;
-            this.cb?.call(this._obj, this._value, this._oldValue);
-            // this._value might have been updated during the callback
-            // we only want to notify subscribers with the latest values
-            oV = this._oldValue;
-            this._oldValue = this._value;
-            this.subs.notify(this._value, oV);
-        }
-    }
-}
 subscriberCollection(SetterObserver);
-subscriberCollection(SetterNotifier);
 // a reusable variable for `.flush()` methods of observers
 // so that there doesn't need to create an env record for every call
 let oV = void 0;
@@ -5588,6 +5597,40 @@ function getNotifier(obj, key, callbackKey, initialValue, set) {
     }
     return notifier;
 }
+class SetterNotifier {
+    constructor(obj, callbackKey, set, initialValue) {
+        this.type = 1 /* AccessorType.Observer */;
+        /** @internal */
+        this._value = void 0;
+        /** @internal */
+        this._oldValue = void 0;
+        this._obj = obj;
+        this._setter = set;
+        this._hasSetter = isFunction(set);
+        const callback = obj[callbackKey];
+        this.cb = isFunction(callback) ? callback : void 0;
+        this._value = initialValue;
+    }
+    getValue() {
+        return this._value;
+    }
+    setValue(value) {
+        if (this._hasSetter) {
+            value = this._setter(value);
+        }
+        if (!areEqual(value, this._value)) {
+            this._oldValue = this._value;
+            this._value = value;
+            this.cb?.call(this._obj, this._value, this._oldValue);
+            // this._value might have been updated during the callback
+            // we only want to notify subscribers with the latest values
+            value = this._oldValue;
+            this._oldValue = this._value;
+            this.subs.notify(this._value, value);
+        }
+    }
+}
+subscriberCollection(SetterNotifier);
 /*
           | typescript       | babel
 ----------|------------------|-------------------------

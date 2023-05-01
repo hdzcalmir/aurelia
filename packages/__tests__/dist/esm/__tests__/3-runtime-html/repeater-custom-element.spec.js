@@ -27,10 +27,22 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
         })
             .start();
         const component = au.root.controller.viewModel;
-        await testFunction({ app: component, container, ctx, host, platform: container.get(IPlatform) });
-        await au.stop();
-        assert.strictEqual(host.textContent, '', `host.textContent`);
-        ctx.doc.body.removeChild(host);
+        try {
+            await testFunction({ app: component, container, ctx, host, platform: container.get(IPlatform) });
+        }
+        catch (ex) {
+            ctx.doc.body.removeChild(host);
+            throw ex;
+        }
+        finally {
+            await au.stop();
+        }
+        try {
+            assert.strictEqual(host.textContent, '', `host.textContent`);
+        }
+        finally {
+            ctx.doc.body.removeChild(host);
+        }
     }
     const $it = createSpecFunction(testRepeatForCustomElement);
     // repeater with custom element
