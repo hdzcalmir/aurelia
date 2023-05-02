@@ -848,9 +848,8 @@ class InstructionComponent {
             return null;
         }
         const r = t.createChild();
-        const o = this.isType() ? r.get(this.type) : r.get(i.CustomElement.keyFrom(this.name));
+        const o = this.isType() ? r.get(this.type) : r.get(routerComponentResolver(this.name));
         if (o == null) {
-            console.warn("Failed to create instance when trying to resolve component", this.name, this.type, "=>", o);
             throw new Error(`Failed to create instance when trying to resolve component '${this.name}'!`);
         }
         const h = i.Controller.$el(r, o, s, null);
@@ -866,6 +865,23 @@ class InstructionComponent {
         }
         return this.name;
     }
+}
+
+function routerComponentResolver(t) {
+    const e = i.CustomElement.keyFrom(t);
+    return {
+        $isResolver: true,
+        resolve(i, s) {
+            if (s.has(e, false)) {
+                return s.get(e);
+            }
+            if (s.root.has(e, false)) {
+                return s.root.get(e);
+            }
+            console.warn(`Detected resource traversal behavior. A custom element "${t}" is neither` + ` registered locally nor globally. This is not a supported behavior and will be removed in a future release`);
+            return s.get(e);
+        }
+    };
 }
 
 function arrayRemove(t, i) {

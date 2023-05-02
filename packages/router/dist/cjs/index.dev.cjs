@@ -1261,7 +1261,7 @@ class InstructionComponent {
         const container = parentContainer.createChild();
         const instance = this.isType()
             ? container.get(this.type)
-            : container.get(runtimeHtml.CustomElement.keyFrom(this.name));
+            : container.get(routerComponentResolver(this.name));
         // TODO: Implement non-traversing lookup (below) based on router configuration
         // let instance;
         // if (this.isType()) {
@@ -1273,7 +1273,10 @@ class InstructionComponent {
         //   }
         // }
         if (instance == null) {
-            console.warn('Failed to create instance when trying to resolve component', this.name, this.type, '=>', instance);
+            {
+                // eslint-disable-next-line no-console
+                console.warn('Failed to create instance when trying to resolve component', this.name, this.type, '=>', instance);
+            }
             throw new Error(`Failed to create instance when trying to resolve component '${this.name}'!`);
         }
         const controller = runtimeHtml.Controller.$el(container, instance, parentElement, null);
@@ -1290,6 +1293,24 @@ class InstructionComponent {
         }
         return this.name;
     }
+}
+function routerComponentResolver(name) {
+    const key = runtimeHtml.CustomElement.keyFrom(name);
+    return {
+        $isResolver: true,
+        resolve(_, requestor) {
+            if (requestor.has(key, false)) {
+                return requestor.get(key);
+            }
+            if (requestor.root.has(key, false)) {
+                return requestor.root.get(key);
+            }
+            // eslint-disable-next-line no-console
+            console.warn(`Detected resource traversal behavior. A custom element "${name}" is neither`
+                + ` registered locally nor globally. This is not a supported behavior and will be removed in a future release`);
+            return requestor.get(key);
+        }
+    };
 }
 
 /**
