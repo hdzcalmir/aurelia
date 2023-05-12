@@ -4,32 +4,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var metadata = require('@aurelia/metadata');
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-}
-
 /** @internal */ const safeString = String;
 /** @internal */ const getOwnMetadata = metadata.Metadata.getOwn;
 /** @internal */ const hasOwnMetadata = metadata.Metadata.hasOwn;
@@ -805,7 +779,6 @@ class Container {
                 if (resolver == null) {
                     current = current.parent;
                     if (current == null) {
-                        currentContainer = previousContainer;
                         return emptyArray;
                     }
                 }
@@ -1012,7 +985,6 @@ function resolve(...keys) {
         ? currentContainer.get(keys[0])
         : keys.map(containerGetKey, currentContainer);
 }
-/* eslint-enable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment, prefer-const */
 const buildAllResponse = (resolver, handler, requestor) => {
     if (resolver instanceof Resolver && resolver._strategy === 4 /* ResolverStrategy.array */) {
         const state = resolver._state;
@@ -1090,6 +1062,7 @@ const cacheCallbackResult = (fun) => {
     };
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 metadata.applyMetadataPolyfill(Reflect, false, false);
 class ResolverBuilder {
     constructor(
@@ -1792,6 +1765,32 @@ const emptyObject = Object.freeze({});
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 function noop() { }
 const IPlatform = /*@__PURE__*/ createInterface('IPlatform');
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+function __param(paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+}
 
 exports.LogLevel = void 0;
 (function (LogLevel) {

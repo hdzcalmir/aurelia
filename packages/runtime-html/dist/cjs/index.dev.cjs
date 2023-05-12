@@ -1431,6 +1431,7 @@ const mixinNodeObserverUseConfig = (target) => {
         }
     });
 };
+/** @internal */
 const mixinNoopSubscribable = (target) => {
     defineHiddenProp(target.prototype, 'subscribe', kernel.noop);
     defineHiddenProp(target.prototype, 'unsubscribe', kernel.noop);
@@ -1441,71 +1442,55 @@ class ClassAttributeAccessor {
     constructor(obj) {
         this.obj = obj;
         this.type = 2 /* AccessorType.Node */ | 4 /* AccessorType.Layout */;
-        this.value = '';
         /** @internal */
-        this._oldValue = '';
+        this._value = '';
         /** @internal */
         this._nameIndex = {};
         /** @internal */
         this._version = 0;
-        /** @internal */
-        this._hasChanges = false;
     }
     getValue() {
-        // is it safe to assume the observer has the latest value?
-        // todo: ability to turn on/off cache based on type
-        return this.value;
+        return this._value;
     }
     setValue(newValue) {
-        this.value = newValue;
-        this._hasChanges = newValue !== this._oldValue;
-        this._flushChanges();
-    }
-    /** @internal */
-    _flushChanges() {
-        if (this._hasChanges) {
-            this._hasChanges = false;
-            const currentValue = this.value;
-            const nameIndex = this._nameIndex;
-            const classesToAdd = getClassesToAdd(currentValue);
-            let version = this._version;
-            this._oldValue = currentValue;
-            // Get strings split on a space not including empties
-            if (classesToAdd.length > 0) {
-                this._addClassesAndUpdateIndex(classesToAdd);
-            }
-            this._version += 1;
-            // First call to setValue?  We're done.
-            if (version === 0) {
-                return;
-            }
-            // Remove classes from previous version.
-            version -= 1;
-            for (const name in nameIndex) {
-                if (!hasOwnProperty.call(nameIndex, name) || nameIndex[name] !== version) {
-                    continue;
-                }
-                // TODO: this has the side-effect that classes already present which are added again,
-                // will be removed if they're not present in the next update.
-                // Better would be do have some configurability for this behavior, allowing the user to
-                // decide whether initial classes always need to be kept, always removed, or something in between
-                this.obj.classList.remove(name);
-            }
+        if (newValue !== this._value) {
+            this._value = newValue;
+            this._flushChanges();
         }
     }
     /** @internal */
-    _addClassesAndUpdateIndex(classes) {
-        const node = this.obj;
-        const ii = classes.length;
+    _flushChanges() {
+        const nameIndex = this._nameIndex;
+        const version = ++this._version;
+        const classList = this.obj.classList;
+        const classesToAdd = getClassesToAdd(this._value);
+        const ii = classesToAdd.length;
         let i = 0;
-        let className;
-        for (; i < ii; i++) {
-            className = classes[i];
-            if (className.length === 0) {
+        let name;
+        // Get strings split on a space not including empties
+        if (ii > 0) {
+            for (; i < ii; i++) {
+                name = classesToAdd[i];
+                if (name.length === 0) {
+                    continue;
+                }
+                nameIndex[name] = this._version;
+                classList.add(name);
+            }
+        }
+        // First call to setValue?  We're done.
+        if (version === 1) {
+            return;
+        }
+        for (name in nameIndex) {
+            if (nameIndex[name] === version) {
                 continue;
             }
-            this._nameIndex[className] = this._version;
-            node.classList.add(className);
+            // TODO: this has the side-effect that classes already present which are added again,
+            // will be removed if they're not present in the next update.
+            // Better would be do have some configurability for this behavior, allowing the user to
+            // decide whether initial classes always need to be kept, always removed, or something in between
+            classList.remove(name);
         }
     }
 }
@@ -11936,6 +11921,7 @@ customAttribute('show')(Show);
  */
 const DefaultComponents = [
     TemplateCompiler,
+    runtime.DirtyChecker,
     NodeObserverLocator,
 ];
 /**
@@ -11959,10 +11945,9 @@ const ShortHandBindingSyntax = [
 ];
 /**
  * Default HTML-specific (but environment-agnostic) binding commands:
- * - Property observation: `.bind`, `.one-time`, `.from-view`, `.to-view`, `.two-way`
- * - Function call: `.call`
+ * - Property observation: `.bind`, `.one-time`, `.from-view`, `.to-view`, `.two-way
  * - Collection observation: `.for`
- * - Event listeners: `.trigger`, `.delegate`, `.capture`
+ * - Event listeners: `.trigger`, `.capture`
  */
 const DefaultBindingLanguage = [
     exports.DefaultBindingCommand,

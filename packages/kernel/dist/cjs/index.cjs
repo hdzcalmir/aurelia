@@ -6,18 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 
 var t = require("@aurelia/metadata");
 
-function __decorate(t, e, r, n) {
-    var s = arguments.length, o = s < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, r) : n, i;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") o = Reflect.decorate(t, e, r, n); else for (var c = t.length - 1; c >= 0; c--) if (i = t[c]) o = (s < 3 ? i(o) : s > 3 ? i(e, r, o) : i(e, r)) || o;
-    return s > 3 && o && Object.defineProperty(e, r, o), o;
-}
-
-function __param(t, e) {
-    return function(r, n) {
-        e(r, n, t);
-    };
-}
-
 const e = String;
 
 const r = t.Metadata.getOwn;
@@ -627,7 +615,6 @@ class Container {
                 if (o == null) {
                     s = s.parent;
                     if (s == null) {
-                        x = r;
                         return F;
                     }
                 } else {
@@ -1350,6 +1337,18 @@ const U = Object.freeze({});
 function noop() {}
 
 const P = /*@__PURE__*/ createInterface("IPlatform");
+
+function __decorate(t, e, r, n) {
+    var s = arguments.length, o = s < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, r) : n, i;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") o = Reflect.decorate(t, e, r, n); else for (var c = t.length - 1; c >= 0; c--) if (i = t[c]) o = (s < 3 ? i(o) : s > 3 ? i(e, r, o) : i(e, r)) || o;
+    return s > 3 && o && Object.defineProperty(e, r, o), o;
+}
+
+function __param(t, e) {
+    return function(r, n) {
+        e(r, n, t);
+    };
+}
 
 exports.LogLevel = void 0;
 

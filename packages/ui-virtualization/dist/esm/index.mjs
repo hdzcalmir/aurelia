@@ -1,70 +1,76 @@
-import { DI as t, IContainer as e, Registration as s } from "@aurelia/kernel";
+import { DI as t, resolve as s, Registration as e } from "@aurelia/kernel";
 
-import { BindingBehaviorExpression as r, ValueConverterExpression as i, Scope as n, BindingContext as o, astEvaluate as l, getCollectionObserver as c } from "@aurelia/runtime";
+import { BindingBehaviorExpression as i, ValueConverterExpression as r, Scope as n, BindingContext as o, astEvaluate as l, getCollectionObserver as h } from "@aurelia/runtime";
 
-import { customAttribute as h, IRenderLocation as a, IInstruction as u, IController as f, IViewFactory as d, IPlatform as g } from "@aurelia/runtime-html";
+import { customAttribute as c, IRenderLocation as a, IInstruction as u, IController as f, IViewFactory as d, IPlatform as p } from "@aurelia/runtime-html";
 
-const p = /*@__PURE__*/ t.createInterface("IDomRenderer");
+const m = /*@__PURE__*/ t.createInterface("IDomRenderer");
 
-const m = /*@__PURE__*/ t.createInterface("IScrollerObsererLocator");
+const g = /*@__PURE__*/ t.createInterface("IScrollerObsererLocator");
 
 const w = /*@__PURE__*/ t.createInterface("ICollectionStrategyLocator");
 
 function unwrapExpression(t) {
-    let e = false;
-    while (t instanceof r) {
-        t = t.expression;
-    }
+    let s = false;
     while (t instanceof i) {
         t = t.expression;
-        e = true;
     }
-    return e ? t : null;
+    while (t instanceof r) {
+        t = t.expression;
+        s = true;
+    }
+    return s ? t : null;
 }
 
 const getScrollerElement = t => {
-    let e = t.parentNode;
-    while (e !== null && e !== document.body) {
-        if (hasOverflowScroll(e)) {
-            return e;
+    let s = t.parentNode;
+    while (s !== null && s !== document.body) {
+        if (hasOverflowScroll(s)) {
+            return s;
         }
-        e = e.parentNode;
+        s = s.parentNode;
     }
     throw new Error("Unable to find a scroller");
 };
 
 const hasOverflowScroll = t => {
-    const e = window.getComputedStyle(t);
-    return e && (e.overflowY === "scroll" || e.overflow === "scroll" || e.overflowY === "auto" || e.overflow === "auto");
+    const s = window.getComputedStyle(t);
+    return s && (s.overflowY === "scroll" || s.overflow === "scroll" || s.overflowY === "auto" || s.overflow === "auto");
 };
 
-const getStyleValues = (t, ...e) => {
-    const s = window.getComputedStyle(t);
-    let r = 0;
+const getStyleValues = (t, ...s) => {
+    const e = window.getComputedStyle(t);
     let i = 0;
-    for (let t = 0, n = e.length; n > t; ++t) {
-        i = parseFloat(s[e[t]]);
-        r += isNaN(i) ? 0 : i;
+    let r = 0;
+    for (let t = 0, n = s.length; n > t; ++t) {
+        r = parseFloat(e[s[t]]);
+        i += isNaN(r) ? 0 : r;
     }
-    return r;
+    return i;
 };
 
 const calcOuterHeight = t => {
-    let e = t.getBoundingClientRect().height;
-    e += getStyleValues(t, "marginTop", "marginBottom");
-    return e;
+    let s = t.getBoundingClientRect().height;
+    s += getStyleValues(t, "marginTop", "marginBottom");
+    return s;
 };
 
-const getDistanceToScroller = (t, e) => {
-    const s = t.offsetParent;
-    const r = t.offsetTop;
-    if (s === null || s === e) {
-        return r;
+const calcScrollerViewportHeight = t => {
+    let s = t.getBoundingClientRect().height;
+    s -= getStyleValues(t, "borderTopWidth", "borderBottomWidth", "paddingTop", "paddingBottom");
+    return s;
+};
+
+const getDistanceToScroller = (t, s) => {
+    const e = t.offsetParent;
+    const i = t.offsetTop;
+    if (e === null || e === s) {
+        return i;
     }
-    if (s.contains(e)) {
-        return r - e.offsetTop;
+    if (e.contains(s)) {
+        return i - s.offsetTop;
     }
-    return r + getDistanceToScroller(s, e);
+    return i + getDistanceToScroller(e, s);
 };
 
 const C = {
@@ -75,164 +81,178 @@ const C = {
 };
 
 class VirtualRepeat {
-    static get inject() {
-        return [ a, u, f, d, e, g ];
-    }
-    constructor(t, e, s, r, i, n) {
-        this.location = t;
-        this.instruction = e;
-        this.parent = s;
-        this.f = r;
-        this.c = i;
+    constructor() {
         this.items = void 0;
         this.views = [];
         this.task = null;
         this.i = C;
+        this.u = true;
         this.itemHeight = 0;
         this.minViewsRequired = 0;
         this.dom = null;
         this.scrollerObserver = null;
-        const o = e.props[0];
-        const l = o.forOf;
-        const c = this.iterable = unwrapExpression(l.iterable) ?? l.iterable;
-        const h = this.u = l.iterable !== c;
-        this.C = new CollectionObservationMediator(this, h ? "handleInnerCollectionChange" : "handleCollectionChange");
-        this.local = l.declaration.name;
-        this.taskQueue = n.domWriteQueue;
+        this.location = s(a);
+        this.instruction = s(u);
+        this.parent = s(f);
+        this.f = s(d);
+        this.C = s(w);
+        this.O = s(m);
+        this.scrollerObserverLocator = s(g);
+        const t = this.instruction.props[0];
+        const e = t.forOf;
+        const i = this.iterable = unwrapExpression(e.iterable) ?? e.iterable;
+        const r = this.$ = e.iterable !== i;
+        this.T = new CollectionObservationMediator(this, (() => r ? this.I() : this.L()));
+        this.local = e.declaration.name;
+        this.taskQueue = s(p).domWriteQueue;
     }
     attaching() {
-        const t = this.c;
-        const e = t.get(w);
-        const s = this.collectionStrategy = e.getStrategy(this.items);
-        const r = s.count();
-        if (r === 0) {
-            return;
-        }
-        const i = this.dom = t.get(p).render(this.location);
-        const n = this.O();
-        (this.scrollerObserver = t.get(m).getObserver(i.scroller)).subscribe(this);
-        this.$(n);
-        this.itemsChanged(this.items);
+        this.dom = this.O.render(this.location);
+        (this.scrollerObserver = this.scrollerObserverLocator.getObserver(this.dom.scroller)).subscribe(this);
+        this.T.start(this.items);
+        this.collectionStrategy = this.C.getStrategy(this.items);
+        this.B(this.items, this.collectionStrategy);
     }
     detaching() {
         this.task?.cancel();
-        this.L();
+        this.R();
         this.dom.dispose();
         this.scrollerObserver.unsubscribe(this);
+        this.T.stop();
         this.dom = this.scrollerObserver = this.task = null;
     }
-    $(t) {
-        const e = calcOuterHeight(t.nodes.firstChild);
-        const s = this.scrollerObserver.getValue();
-        const r = this.T(s, this.collectionStrategy.count(), e);
-        if (r.signals & 1) {
-            this.L();
+    V() {
+        if (!(this.collectionStrategy.count > 0)) {
+            throw new Error("AURxxxx: Invalid calculation state. Virtual repeater has no items.");
         }
-        if ((r.signals & 2) === 0) {
-            return;
+        const t = this._();
+        const s = calcOuterHeight(t.nodes.firstChild);
+        const e = this.scrollerObserver.getValue();
+        const i = this.M(e, this.collectionStrategy.count, s);
+        if (i.signals & 1) {
+            this.R();
+            return i;
         }
-        this.itemHeight = e;
-        this.minViewsRequired = r.minViews;
+        if ((i.signals & 2) === 0) {
+            this.R();
+            return i;
+        }
+        this.itemHeight = s;
+        this.minViewsRequired = i.minViews;
+        this.u = false;
+        return i;
     }
-    T(t, e, s) {
-        if (e === 0) {
+    M(t, s, e) {
+        if (s === 0) {
             return Calculation.reset;
         }
-        if (s === 0) {
+        if (e === 0) {
             return Calculation.none;
         }
-        const r = Math.floor(t.height / s);
-        return Calculation.from(2, r);
+        const i = Math.ceil(calcScrollerViewportHeight(t.scroller) / e);
+        return Calculation.from(2, i);
     }
-    L() {
+    R() {
+        this.u = true;
         this.minViewsRequired = 0;
         this.itemHeight = 0;
+        this.dom.update(0, 0);
     }
-    itemsChanged(t) {
+    B(t, s) {
         const e = this.$controller;
-        const s = this.collectionStrategy = this.c.get(w).getStrategy(t);
-        const r = s.count();
-        const i = this.views;
-        const l = this.minViewsRequired * 2;
-        let c = 0;
-        let h = i.length;
-        let a = null;
-        if (r === 0) {
-            for (c = 0; h > c; ++c) {
-                a = i[c];
-                void a.deactivate(e, e);
-                a.nodes.remove();
+        const i = s.count;
+        const r = this.views;
+        let l = 0;
+        let h = r.length;
+        let c = null;
+        if (i === 0) {
+            for (l = 0; h > l; ++l) {
+                c = r[l];
+                void c.deactivate(c, e);
             }
-            i.length = 0;
-            this.L();
+            r.length = 0;
+            this.R();
             return;
         }
-        if (h > l) {
-            while (h > l) {
-                a = i[h - 1];
-                void a.deactivate(e, e);
-                a.nodes.remove();
+        if (this.u) {
+            const t = this.V();
+            if (t.signals === 1 || (t.signals & 2) === 0) {
+                return;
+            }
+        } else {
+            if (this.itemHeight === 0) {
+                return;
+            }
+        }
+        const a = this.minViewsRequired * 2;
+        const u = Math.min(a, i);
+        if (h > a) {
+            while (h > a) {
+                c = r[h - 1];
+                void c.deactivate(c, e);
                 --h;
             }
-            i.length = h;
+            r.length = h;
         }
-        if (h > r) {
-            while (h > r) {
-                a = i[h - 1];
-                void a.deactivate(e, e);
-                a.nodes.remove();
+        if (h > i) {
+            while (h > i) {
+                c = r[h - 1];
+                void c.deactivate(c, e);
                 --h;
             }
-            i.length = r;
+            r.length = i;
         }
-        h = i.length;
-        const u = Math.min(l, r);
-        for (c = h; c < u; c++) {
-            i.push(this.f.create());
+        h = r.length;
+        for (l = h; l < u; l++) {
+            r.push(this.f.create());
         }
         const f = this.itemHeight;
         const d = this.local;
-        const {firstIndex: g, topCount: p, botCount: m} = this.measureBuffer(this.scrollerObserver.getValue(), i.length, r, f);
-        let C = 0;
+        const {firstIndex: p, topCount: m, botCount: g} = this.measureBuffer(this.scrollerObserver.getValue(), r.length, i, f);
+        let w = 0;
+        let C;
         let b;
         let v;
-        let D;
-        for (c = 0; u > c; ++c) {
-            C = g + c;
-            b = s.item(C);
-            a = i[c];
-            v = i[c - 1];
-            if (a.isActive) {
-                D = a.scope;
-                D.bindingContext[d] = b;
-                D.overrideContext.$index = C;
-                D.overrideContext.$length = r;
+        for (l = 0; u > l; ++l) {
+            w = p + l;
+            C = s.item(w);
+            c = r[l];
+            b = r[l - 1];
+            if (c.isActive) {
+                v = c.scope;
+                v.bindingContext[d] = C;
+                v.overrideContext.$index = w;
+                v.overrideContext.$length = i;
             } else {
-                a.nodes.insertBefore(v.nodes.firstChild.nextSibling);
-                D = n.fromParent(e.scope, new o(d, s.item(C)));
-                D.overrideContext.$index = C;
-                D.overrideContext.$length = r;
-                enhanceOverrideContext(D.overrideContext);
-                void a.activate(e, e, D);
+                c.nodes.insertBefore(b.nodes.firstChild.nextSibling);
+                v = n.fromParent(e.scope, new o(d, s.item(w)));
+                v.overrideContext.$index = w;
+                v.overrideContext.$length = i;
+                enhanceOverrideContext(v.overrideContext);
+                void c.activate(e, e, v);
             }
         }
-        this.C.start(t);
-        this.dom.update(p * f, m * f);
+        this.dom.update(m * f, g * f);
     }
-    calcRealScrollTop(t) {
-        const e = t.scrollTop;
-        const s = getDistanceToScroller(this.dom.top, t.scroller);
-        const r = Math.max(0, e === 0 ? 0 : e - s);
-        return r;
+    itemsChanged(t) {
+        this.T.start(t);
+        this.collectionStrategy = this.C.getStrategy(t);
+        this.A();
     }
-    measureBuffer(t, e, s, r) {
-        const i = this.calcRealScrollTop(t);
-        let n = i === 0 ? 0 : Math.floor(i / r);
-        if (n + e >= s) {
-            n = Math.max(0, s - e);
+    G(t) {
+        const s = t.scrollTop;
+        const e = getDistanceToScroller(this.dom.top, t.scroller);
+        const i = Math.max(0, s === 0 ? 0 : s - e);
+        return i;
+    }
+    measureBuffer(t, s, e, i) {
+        const r = this.G(t);
+        let n = r === 0 ? 0 : Math.floor(r / i);
+        if (n + s >= e) {
+            n = Math.max(0, e - s);
         }
         const o = n;
-        const l = Math.max(0, s - o - e);
+        const l = Math.max(0, e - o - s);
         return {
             firstIndex: n,
             topCount: o,
@@ -240,72 +260,72 @@ class VirtualRepeat {
         };
     }
     handleScrollerChange(t) {
-        const e = this.task;
+        const s = this.task;
         this.task = this.taskQueue.queueTask((() => {
             this.task = null;
-            this.handleScroll(t);
+            if (this.views.length > 0 && this.itemHeight > 0) {
+                this.V();
+                this.handleScroll(t);
+            }
         }));
-        e?.cancel();
+        s?.cancel();
     }
     handleScroll(t) {
-        if (this.itemHeight === 0) {
-            return;
-        }
-        const e = this.i;
-        const s = this.local;
-        const r = this.itemHeight;
-        const i = this.dom;
+        const s = this.i;
+        const e = this.local;
+        const i = this.itemHeight;
+        const r = this.dom;
         const n = this.views;
         const o = this.collectionStrategy;
         const l = n.length;
-        const c = o.count();
-        const h = n[0].scope.overrideContext.$index;
-        const {firstIndex: a, topCount: u, botCount: f} = this.measureBuffer(t, l, c, r);
-        const d = t.scrollTop > e.scrollTop;
-        const g = d ? a >= h + l : a + l <= h;
+        const h = o.count;
+        const c = n[0].scope.overrideContext.$index;
+        const {firstIndex: a, topCount: u, botCount: f} = this.measureBuffer(t, l, h, i);
+        const d = t.scrollTop > s.scrollTop;
+        const p = d ? a >= c + l : a + l <= c;
         this.i = t;
-        if (a === h) {
+        if (a === c) {
             return;
         }
-        let p = null;
         let m = null;
+        let g = null;
         let w = 0;
         let C = 0;
         let b = 0;
         let v = 0;
-        if (g) {
+        if (p) {
             for (v = 0; l > v; ++v) {
                 w = a + v;
-                m = n[v].scope;
-                m.bindingContext[s] = o.item(w);
-                m.overrideContext.$index = w;
-                m.overrideContext.$length = c;
+                g = n[v].scope;
+                g.bindingContext[e] = o.item(w);
+                g.overrideContext.$index = w;
+                g.overrideContext.$length = h;
             }
         } else if (d) {
-            C = a - h;
+            C = a - c;
             while (C > 0) {
-                p = n.shift();
+                m = n.shift();
                 w = n[n.length - 1].scope.overrideContext["$index"] + 1;
-                n.push(p);
-                m = p.scope;
-                m.bindingContext[s] = o.item(w);
-                m.overrideContext.$index = w;
-                m.overrideContext.$length = c;
-                p.nodes.insertBefore(i.bottom);
+                n.push(m);
+                g = m.scope;
+                g.bindingContext[e] = o.item(w);
+                g.overrideContext.$index = w;
+                g.overrideContext.$length = h;
+                m.nodes.insertBefore(r.bottom);
                 ++b;
                 --C;
             }
         } else {
-            C = h - a;
+            C = c - a;
             while (C > 0) {
-                w = h - (b + 1);
-                p = n.pop();
-                m = p.scope;
-                m.bindingContext[s] = o.item(w);
-                m.overrideContext.$index = w;
-                m.overrideContext.$length = c;
-                p.nodes.insertBefore(n[0].nodes.firstChild);
-                n.unshift(p);
+                w = c - (b + 1);
+                m = n.pop();
+                g = m.scope;
+                g.bindingContext[e] = o.item(w);
+                g.overrideContext.$index = w;
+                g.overrideContext.$length = h;
+                m.nodes.insertBefore(n[0].nodes.firstChild);
+                n.unshift(m);
                 ++b;
                 --C;
             }
@@ -315,7 +335,7 @@ class VirtualRepeat {
         } else {
             if (o.isNearTop(n[0].scope.overrideContext["$index"])) ;
         }
-        i.update(u * r, f * r);
+        r.update(u * i, f * i);
     }
     getDistances() {
         return this.dom?.distances ?? [ 0, 0 ];
@@ -323,30 +343,40 @@ class VirtualRepeat {
     getViews() {
         return this.views.slice(0);
     }
-    handleCollectionChange(t, e) {
-        this.itemsChanged(this.items);
+    L() {
+        this.A();
     }
-    handleInnerCollectionChange() {
+    I() {
         const t = l(this.iterable, this.parent.scope, {
             strict: true
         }, null);
-        const e = this.items;
+        const s = this.items;
         this.items = t;
-        if (t === e) {
-            this.itemsChanged(t);
+        if (t === s) {
+            this.A();
         }
     }
-    O() {
+    A() {
+        const t = this.task;
+        this.task = this.taskQueue.queueTask((() => {
+            this.task = null;
+            this.B(this.items, this.collectionStrategy);
+        }));
+        t?.cancel();
+    }
+    _() {
         const t = this.getOrCreateFirstView();
-        const e = this.$controller;
-        const s = this.collectionStrategy;
-        const r = e.scope;
-        const i = n.fromParent(r, new o(this.local, s.first()));
-        i.overrideContext.$index = 0;
-        i.overrideContext.$length = s.count();
-        enhanceOverrideContext(i.overrideContext);
-        t.nodes.insertBefore(this.dom.bottom);
-        void t.activate(e, e, i);
+        if (!t.isActive) {
+            const s = this.$controller;
+            const e = this.collectionStrategy;
+            const i = s.scope;
+            const r = n.fromParent(i, new o(this.local, e.first()));
+            r.overrideContext.$index = 0;
+            r.overrideContext.$length = e.count;
+            enhanceOverrideContext(r.overrideContext);
+            t.nodes.insertBefore(this.dom.bottom);
+            void t.activate(t, s, r);
+        }
         return t;
     }
     getOrCreateFirstView() {
@@ -354,13 +384,13 @@ class VirtualRepeat {
         if (t.length > 0) {
             return t[0];
         }
-        const e = this.f.create();
-        t.push(e);
-        return e;
+        const s = this.f.create();
+        t.push(s);
+        return s;
     }
 }
 
-h({
+c({
     isTemplateController: true,
     name: "virtual-repeat",
     bindables: {
@@ -375,24 +405,21 @@ h({
 })(VirtualRepeat);
 
 class CollectionObservationMediator {
-    constructor(t, e) {
+    constructor(t, s) {
         this.repeat = t;
-        this.key = e;
-    }
-    handleCollectionChange(t, e) {
-        this.repeat[this.key](t, e);
+        this.handleCollectionChange = s;
     }
     start(t) {
-        if (this.I === t) {
+        if (this.N === t) {
             return;
         }
         this.stop();
         if (t != null) {
-            c(this.I = t)?.subscribe(this);
+            h(this.N = t)?.subscribe(this);
         }
     }
     stop() {
-        c(this.I)?.unsubscribe(this);
+        h(this.N)?.unsubscribe(this);
     }
 }
 
@@ -405,12 +432,12 @@ var b;
 })(b || (b = {}));
 
 class Calculation {
-    static from(t, e) {
-        return new Calculation(t, e);
+    static from(t, s) {
+        return new Calculation(t, s);
     }
-    constructor(t, e) {
+    constructor(t, s) {
         this.signals = t;
-        this.minViews = e;
+        this.minViews = s;
     }
 }
 
@@ -421,11 +448,11 @@ Calculation.none = new Calculation(0, 0);
 const v = new WeakSet;
 
 function enhanceOverrideContext(t) {
-    const e = t;
-    if (v.has(e)) {
+    const s = t;
+    if (v.has(s)) {
         return;
     }
-    Object.defineProperties(e, {
+    Object.defineProperties(s, {
         $first: createGetterDescriptor($first),
         $last: createGetterDescriptor($last),
         $middle: createGetterDescriptor($middle),
@@ -464,7 +491,7 @@ function $middle() {
 
 class CollectionStrategyLocator {
     static register(t) {
-        return s.singleton(w, this).register(t);
+        return e.singleton(w, this).register(t);
     }
     getStrategy(t) {
         if (t == null) {
@@ -481,23 +508,23 @@ class ArrayCollectionStrategy {
     constructor(t) {
         this.val = t;
     }
-    count() {
+    get count() {
         return this.val.length;
     }
     first() {
-        return this.val.length > 0 ? this.val[0] : null;
+        return this.count > 0 ? this.val[0] : null;
     }
     last() {
-        return this.val.length > 0 ? this.val[this.val.length - 1] : null;
+        return this.count > 0 ? this.val[this.count - 1] : null;
     }
     item(t) {
         return this.val[t] ?? null;
     }
-    range(t, e) {
-        const s = this.val;
-        const r = s.length;
-        if (r > t && e > t) {
-            return s.slice(t, e);
+    range(t, s) {
+        const e = this.val;
+        const i = this.count;
+        if (i > t && s > t) {
+            return e.slice(t, s);
         }
         return [];
     }
@@ -510,11 +537,9 @@ class ArrayCollectionStrategy {
 }
 
 class NullCollectionStrategy {
-    get val() {
-        return null;
-    }
-    count() {
-        return 0;
+    constructor() {
+        this.val = null;
+        this.count = 0;
     }
     isNearTop() {
         return false;
@@ -538,29 +563,29 @@ class NullCollectionStrategy {
 
 class ScrollerObserverLocator {
     static get inject() {
-        return [ g ];
+        return [ p ];
     }
     static register(t) {
-        return s.singleton(m, this).register(t);
+        return e.singleton(g, this).register(t);
     }
     constructor(t) {
         this.cache = new WeakMap;
         this.p = t;
     }
     getObserver(t) {
-        const e = this.cache;
-        let s = e.get(t);
-        if (!e.has(t)) {
-            e.set(t, s = new ScrollerObserver(this.p, t));
+        const s = this.cache;
+        let e = s.get(t);
+        if (!s.has(t)) {
+            s.set(t, e = new ScrollerObserver(this.p, t));
         }
-        return s;
+        return e;
     }
 }
 
 class ScrollerObserver {
-    constructor(t, e) {
+    constructor(t, s) {
         this.p = t;
-        this.scroller = e;
+        this.scroller = s;
         this.subs = new Set;
         this.geo = null;
     }
@@ -569,10 +594,10 @@ class ScrollerObserver {
         const t = getResizeObserverClass(this.p);
         if (typeof t === "function") {
             (this.sizeObs = new t((t => {
-                const e = this.geo;
-                const s = new ElementGeometry(t[0].contentRect);
-                if (!s.equals(e)) {
-                    this.geo = s;
+                const s = this.geo;
+                const e = new ElementGeometry(t[0].contentRect);
+                if (!e.equals(s)) {
+                    this.geo = e;
                     this.notify();
                 }
             }))).observe(this.scroller);
@@ -591,8 +616,8 @@ class ScrollerObserver {
     }
     getValue() {
         const t = this.scroller;
-        const e = t.getBoundingClientRect();
-        return new ScrollerInfo(t, t.scrollTop, e.width, e.height);
+        const s = t.getBoundingClientRect();
+        return new ScrollerInfo(t, t.scrollTop, s.width, s.height);
     }
     handleEvent(t) {
         this.notify();
@@ -604,11 +629,11 @@ class ScrollerObserver {
         this.subs.add(t);
     }
     unsubscribe(t) {
-        const e = this.subs;
-        if (e.has(t) && e.size === 1) {
+        const s = this.subs;
+        if (s.has(t) && s.size === 1) {
             this.stop();
         }
-        e.delete(t);
+        s.delete(t);
     }
 }
 
@@ -632,11 +657,11 @@ class ElementGeometry {
 }
 
 class ScrollerInfo {
-    constructor(t, e, s, r) {
+    constructor(t, s, e, i) {
         this.scroller = t;
-        this.scrollTop = e;
-        this.width = s;
-        this.height = r;
+        this.scrollTop = s;
+        this.width = e;
+        this.height = i;
     }
 }
 
@@ -644,46 +669,46 @@ const getResizeObserverClass = t => t.window.ResizeObserver;
 
 class DefaultDomRenderer {
     static get inject() {
-        return [ g ];
+        return [ p ];
     }
     static register(t) {
-        return s.singleton(p, this).register(t);
+        return e.singleton(m, this).register(t);
     }
     constructor(t) {
         this.p = t;
     }
     render(t) {
-        const e = this.p.document;
-        const s = t.parentNode;
-        if (s === null) {
+        const s = this.p.document;
+        const e = t.parentNode;
+        if (e === null) {
             throw new Error("Invalid render target");
         }
-        let r;
-        switch (s.tagName) {
+        let i;
+        switch (e.tagName) {
           case "TBODY":
           case "THEAD":
           case "TFOOT":
           case "TABLE":
-            r = insertBefore(e, "tr", t);
-            return new TableDom(s.closest("table"), t, r[0], r[1]);
+            i = insertBefore(s, "tr", t);
+            return new TableDom(e.closest("table"), t, i[0], i[1]);
 
           case "UL":
           case "OL":
-            r = insertBefore(e, "div", t);
-            return new ListDom(s, t, r[0], r[1]);
+            i = insertBefore(s, "div", t);
+            return new ListDom(e, t, i[0], i[1]);
 
           default:
-            r = insertBefore(e, "div", t);
-            return new DefaultDom(t, r[0], r[1]);
+            i = insertBefore(s, "div", t);
+            return new DefaultDom(t, i[0], i[1]);
         }
     }
 }
 
 class DefaultDom {
-    constructor(t, e, s) {
+    constructor(t, s, e) {
         this.anchor = t;
-        this.top = e;
-        this.bottom = s;
+        this.top = s;
+        this.bottom = e;
         this.tH = 0;
         this.bH = 0;
     }
@@ -693,9 +718,9 @@ class DefaultDom {
     get distances() {
         return [ this.tH, this.bH ];
     }
-    update(t, e) {
+    update(t, s) {
         this.top.style.height = `${this.tH = t}px`;
-        this.bottom.style.height = `${this.bH = e}px`;
+        this.bottom.style.height = `${this.bH = s}px`;
     }
     dispose() {
         this.top.remove();
@@ -704,8 +729,8 @@ class DefaultDom {
 }
 
 class ListDom extends DefaultDom {
-    constructor(t, e, s, r) {
-        super(e, s, r);
+    constructor(t, s, e, i) {
+        super(s, e, i);
         this.list = t;
     }
     get scroller() {
@@ -714,8 +739,8 @@ class ListDom extends DefaultDom {
 }
 
 class TableDom extends DefaultDom {
-    constructor(t, e, s, r) {
-        super(e, s, r);
+    constructor(t, s, e, i) {
+        super(s, e, i);
         this.table = t;
     }
     get scroller() {
@@ -723,9 +748,9 @@ class TableDom extends DefaultDom {
     }
 }
 
-function insertBefore(t, e, s) {
-    const r = s.parentNode;
-    return [ r.insertBefore(t.createElement(e), s), r.insertBefore(t.createElement(e), s) ];
+function insertBefore(t, s, e) {
+    const i = e.parentNode;
+    return [ i.insertBefore(t.createElement(s), e), i.insertBefore(t.createElement(s), e) ];
 }
 
 const D = {
@@ -734,5 +759,5 @@ const D = {
     }
 };
 
-export { CollectionStrategyLocator, DefaultDomRenderer, D as DefaultVirtualRepeatConfiguration, w as ICollectionStrategyLocator, p as IDomRenderer, m as IScrollerObsererLocator, ScrollerObserver, ScrollerObserverLocator, VirtualRepeat };
+export { CollectionStrategyLocator, DefaultDomRenderer, D as DefaultVirtualizationConfiguration, w as ICollectionStrategyLocator, m as IDomRenderer, g as IScrollerObsererLocator, ScrollerObserver, ScrollerObserverLocator, VirtualRepeat };
 //# sourceMappingURL=index.mjs.map

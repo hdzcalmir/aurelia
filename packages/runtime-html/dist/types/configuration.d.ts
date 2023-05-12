@@ -1,4 +1,5 @@
 import { IContainer } from '@aurelia/kernel';
+import { DirtyChecker, ICoercionConfiguration } from '@aurelia/runtime';
 import { AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, SpreadAttributePattern, DotSeparatedAttributePattern, RefAttributePattern } from './resources/attribute-pattern';
 import { ForBindingCommand, OneTimeBindingCommand, TriggerBindingCommand } from './resources/binding-command';
 import { TemplateCompiler } from './compiler/template-compiler';
@@ -20,14 +21,13 @@ import { AuCompose } from './resources/custom-elements/au-compose';
 import { AuSlot } from './resources/custom-elements/au-slot';
 import { SanitizeValueConverter } from './resources/value-converters/sanitize';
 import { NodeObserverLocator } from './observation/observer-locator';
-import { ICoercionConfiguration } from '@aurelia/runtime';
 /**
  * Default HTML-specific (but environment-agnostic) implementations for the following interfaces:
  * - `ITemplateCompiler`
  * - `ITargetAccessorLocator`
  * - `ITargetObserverLocator`
  */
-export declare const DefaultComponents: (typeof NodeObserverLocator | typeof TemplateCompiler)[];
+export declare const DefaultComponents: (typeof NodeObserverLocator | typeof TemplateCompiler | typeof DirtyChecker)[];
 /**
  * Default binding syntax for the following attribute name patterns:
  * - `ref`
@@ -42,10 +42,9 @@ export declare const DefaultBindingSyntax: (typeof DotSeparatedAttributePattern 
 export declare const ShortHandBindingSyntax: (typeof ColonPrefixedBindAttributePattern | typeof AtPrefixedTriggerAttributePattern)[];
 /**
  * Default HTML-specific (but environment-agnostic) binding commands:
- * - Property observation: `.bind`, `.one-time`, `.from-view`, `.to-view`, `.two-way`
- * - Function call: `.call`
+ * - Property observation: `.bind`, `.one-time`, `.from-view`, `.to-view`, `.two-way
  * - Collection observation: `.for`
- * - Event listeners: `.trigger`, `.delegate`, `.capture`
+ * - Event listeners: `.trigger`, `.capture`
  */
 export declare const DefaultBindingLanguage: (typeof OneTimeBindingCommand | typeof ForBindingCommand | typeof TriggerBindingCommand)[];
 /**

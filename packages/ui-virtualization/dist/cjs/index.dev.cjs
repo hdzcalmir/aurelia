@@ -63,6 +63,11 @@ const calcOuterHeight = (element) => {
     height += getStyleValues(element, 'marginTop', 'marginBottom');
     return height;
 };
+const calcScrollerViewportHeight = (element) => {
+    let height = element.getBoundingClientRect().height;
+    height -= getStyleValues(element, 'borderTopWidth', 'borderBottomWidth', 'paddingTop', 'paddingBottom');
+    return height;
+};
 /**
  * A naive utility to calculate distance of a child element to one of its ancestor, typically used for scroller/buffer combo
  * Calculation is done based on offsetTop, with formula:
@@ -97,53 +102,42 @@ const noScrollInfo = {
     width: 0
 };
 class VirtualRepeat {
-    /** @internal */
-    static get inject() {
-        return [runtimeHtml.IRenderLocation, runtimeHtml.IInstruction, runtimeHtml.IController, runtimeHtml.IViewFactory, kernel.IContainer, runtimeHtml.IPlatform];
-    }
-    constructor(location, instruction, parent, 
-    /** @internal */ _factory, 
-    /** @internal */ _container, platform) {
-        this.location = location;
-        this.instruction = instruction;
-        this.parent = parent;
-        this._factory = _factory;
-        this._container = _container;
+    constructor() {
         // bindable
         this.items = void 0;
         /** @internal */ this.views = [];
         /** @internal */ this.task = null;
         /** @internal */ this._currScrollerInfo = noScrollInfo;
+        /** @internal */ this._needInitCalculation = true;
         this.itemHeight = 0;
         this.minViewsRequired = 0;
         this.dom = null;
         this.scrollerObserver = null;
-        const iteratorInstruction = instruction.props[0];
+        this.location = kernel.resolve(runtimeHtml.IRenderLocation);
+        this.instruction = kernel.resolve(runtimeHtml.IInstruction);
+        this.parent = kernel.resolve(runtimeHtml.IController);
+        /** @internal */ this._factory = kernel.resolve(runtimeHtml.IViewFactory);
+        /** @internal */ this._strategyLocator = kernel.resolve(ICollectionStrategyLocator);
+        /** @internal */ this._domRenderer = kernel.resolve(IDomRenderer);
+        /** @internal */ this.scrollerObserverLocator = kernel.resolve(IScrollerObsererLocator);
+        const iteratorInstruction = this.instruction.props[0];
         const forOf = iteratorInstruction.forOf;
         const iterable = this.iterable = unwrapExpression(forOf.iterable) ?? forOf.iterable;
         const hasWrapExpression = this._hasWrapExpression = forOf.iterable !== iterable;
-        this._obsMediator = new CollectionObservationMediator(this, hasWrapExpression ? 'handleInnerCollectionChange' : 'handleCollectionChange');
+        this._obsMediator = new CollectionObservationMediator(this, () => hasWrapExpression ? this._handleInnerCollectionChange() : this._handleCollectionChange());
         this.local = forOf.declaration.name;
-        this.taskQueue = platform.domWriteQueue;
+        this.taskQueue = kernel.resolve(runtimeHtml.IPlatform).domWriteQueue;
     }
     /**
      * @internal
      */
     attaching() {
-        const container = this._container;
-        const collectionStrategyLocator = container.get(ICollectionStrategyLocator);
-        const collectionStrategy = this.collectionStrategy = collectionStrategyLocator.getStrategy(this.items);
-        const itemCount = collectionStrategy.count();
-        if (itemCount === 0) {
-            // just wait?
-            return;
-        }
-        const repeatDom = this.dom = container.get(IDomRenderer).render(this.location);
-        const firstView = this._createAndActivateFirstView();
-        (this.scrollerObserver = container.get(IScrollerObsererLocator).getObserver(repeatDom.scroller))
-            .subscribe(this);
-        this._initCalculation(firstView);
-        this.itemsChanged(this.items);
+        this.dom = this._domRenderer.render(this.location);
+        (this.scrollerObserver = this.scrollerObserverLocator.getObserver(this.dom.scroller)).subscribe(this);
+        // todo: merge the obs mediator into collection strategy
+        this._obsMediator.start(this.items);
+        this.collectionStrategy = this._strategyLocator.getStrategy(this.items);
+        this._handleItemsChanged(this.items, this.collectionStrategy);
     }
     /**
      * @internal
@@ -153,6 +147,7 @@ class VirtualRepeat {
         this._resetCalculation();
         this.dom.dispose();
         this.scrollerObserver.unsubscribe(this);
+        this._obsMediator.stop();
         this.dom
             = this.scrollerObserver
                 = this.task
@@ -161,20 +156,28 @@ class VirtualRepeat {
     /**
      * @internal
      */
-    _initCalculation(firstView) {
+    _initCalculation() {
+        if (!(this.collectionStrategy.count > 0)) {
+            throw new Error('AURxxxx: Invalid calculation state. Virtual repeater has no items.');
+        }
+        const firstView = this._createAndActivateFirstView();
         const itemHeight = calcOuterHeight(firstView.nodes.firstChild);
         const scrollerInfo = this.scrollerObserver.getValue();
-        const calculation = this._calculate(scrollerInfo, this.collectionStrategy.count(), itemHeight);
+        const calculation = this._calculate(scrollerInfo, this.collectionStrategy.count, itemHeight);
         if (calculation.signals & 1 /* SizingSignals.reset */) {
             this._resetCalculation();
+            return calculation;
         }
         if ((calculation.signals & 2 /* SizingSignals.has_sizing */) === 0) {
+            this._resetCalculation();
             // when sizing calculation fails
             // dirty check?
-            return;
+            return calculation;
         }
         this.itemHeight = itemHeight;
         this.minViewsRequired = calculation.minViews;
+        this._needInitCalculation = false;
+        return calculation;
     }
     /**
      * @internal
@@ -186,23 +189,23 @@ class VirtualRepeat {
         if (itemHeight === 0) {
             return Calculation.none;
         }
-        const minViewsRequired = Math.floor(scrollerInfo.height / itemHeight);
+        const minViewsRequired = Math.ceil(calcScrollerViewportHeight(scrollerInfo.scroller) / itemHeight);
         return Calculation.from(2 /* SizingSignals.has_sizing */, minViewsRequired);
     }
     /**
      * @internal
      */
     _resetCalculation() {
+        this._needInitCalculation = true;
         this.minViewsRequired = 0;
         this.itemHeight = 0;
+        this.dom.update(0, 0);
     }
     /** @internal */
-    itemsChanged(items) {
-        const controller = this.$controller;
-        const collectionStrategy = this.collectionStrategy = this._container.get(ICollectionStrategyLocator).getStrategy(items);
-        const itemCount = collectionStrategy.count();
+    _handleItemsChanged(items, collectionStrategy) {
+        const repeatController = this.$controller;
+        const itemCount = collectionStrategy.count;
         const views = this.views;
-        const maxViewsRequired = this.minViewsRequired * 2;
         let i = 0;
         let currViewCount = views.length;
         let view = null;
@@ -210,18 +213,33 @@ class VirtualRepeat {
             // todo: no async supported
             for (i = 0; currViewCount > i; ++i) {
                 view = views[i];
-                void view.deactivate(controller, controller);
-                view.nodes.remove();
+                void view.deactivate(view, repeatController);
             }
             views.length = 0;
             this._resetCalculation();
             return;
         }
+        if (this._needInitCalculation) {
+            const calculation = this._initCalculation();
+            if (calculation.signals === 1 /* SizingSignals.reset */ || (calculation.signals & 2 /* SizingSignals.has_sizing */) === 0) {
+                return;
+            }
+            // item height cannot be 0 if signals is has-sizing
+        }
+        else {
+            // this is probably not needed, since !_needInitCalculation means itemHeight > 0
+            if (this.itemHeight === 0) {
+                return;
+            }
+        }
+        // only ensure there's enough views
+        // don't activate yet
+        const maxViewsRequired = this.minViewsRequired * 2;
+        const realViewCount = Math.min(maxViewsRequired, itemCount);
         if (currViewCount > maxViewsRequired) {
             while (currViewCount > maxViewsRequired) {
                 view = views[currViewCount - 1];
-                void view.deactivate(controller, controller);
-                view.nodes.remove();
+                void view.deactivate(view, repeatController);
                 --currViewCount;
             }
             views.length = currViewCount;
@@ -230,16 +248,12 @@ class VirtualRepeat {
             // remove views from bottom to top
             while (currViewCount > itemCount) {
                 view = views[currViewCount - 1];
-                void view.deactivate(controller, controller);
-                view.nodes.remove();
+                void view.deactivate(view, repeatController);
                 --currViewCount;
             }
             views.length = itemCount;
         }
         currViewCount = views.length;
-        // only ensure there's enough views
-        // don't activate yet
-        const realViewCount = Math.min(maxViewsRequired, itemCount);
         for (i = currViewCount; i < realViewCount; i++) {
             views.push(this._factory.create());
         }
@@ -263,15 +277,20 @@ class VirtualRepeat {
             }
             else {
                 view.nodes.insertBefore(prevView.nodes.firstChild.nextSibling);
-                scope = runtime.Scope.fromParent(controller.scope, new runtime.BindingContext(local, collectionStrategy.item(idx)));
+                scope = runtime.Scope.fromParent(repeatController.scope, new runtime.BindingContext(local, collectionStrategy.item(idx)));
                 scope.overrideContext.$index = idx;
                 scope.overrideContext.$length = itemCount;
                 enhanceOverrideContext(scope.overrideContext);
-                void view.activate(controller, controller, scope);
+                void view.activate(repeatController, repeatController, scope);
             }
         }
-        this._obsMediator.start(items);
         this.dom.update(topCount * itemHeight, botCount * itemHeight);
+    }
+    /** @internal */
+    itemsChanged(items) {
+        this._obsMediator.start(items);
+        this.collectionStrategy = this._strategyLocator.getStrategy(items);
+        this._queueHandleItemsChanged();
     }
     /**
      * The value returned by HTMLElement.prototype.scrollTop isn't always reliable.
@@ -281,7 +300,7 @@ class VirtualRepeat {
      *
      * @internal
      */
-    calcRealScrollTop(scrollerInfo) {
+    _calcRealScrollTop(scrollerInfo) {
         const scroller_scroll_top = scrollerInfo.scrollTop;
         const top_buffer_distance = getDistanceToScroller(this.dom.top, scrollerInfo.scroller);
         const real_scroll_top = Math.max(0, scroller_scroll_top === 0
@@ -291,7 +310,7 @@ class VirtualRepeat {
     }
     /** @internal */
     measureBuffer(scrollerInfo, viewCount, collectionSize, itemHeight) {
-        const real_scroll_top = this.calcRealScrollTop(scrollerInfo);
+        const real_scroll_top = this._calcRealScrollTop(scrollerInfo);
         let first_index_after_scroll_adjustment = real_scroll_top === 0
             ? 0
             : Math.floor(real_scroll_top / itemHeight);
@@ -313,15 +332,15 @@ class VirtualRepeat {
         const task = this.task;
         this.task = this.taskQueue.queueTask(() => {
             this.task = null;
-            this.handleScroll(scrollerInfo);
+            if (this.views.length > 0 && this.itemHeight > 0) {
+                this._initCalculation();
+                this.handleScroll(scrollerInfo);
+            }
         });
         task?.cancel();
     }
     /** @internal */
     handleScroll(scrollerInfo) {
-        if (this.itemHeight === 0) {
-            return;
-        }
         const prevScrollerInfo = this._currScrollerInfo;
         const local = this.local;
         const itemHeight = this.itemHeight;
@@ -329,7 +348,7 @@ class VirtualRepeat {
         const views = this.views;
         const collectionStrategy = this.collectionStrategy;
         const viewCount = views.length;
-        const collectionSize = collectionStrategy.count();
+        const collectionSize = collectionStrategy.count;
         const prevFirstIndex = views[0].scope.overrideContext.$index;
         const { firstIndex: currFirstIndex, topCount: topCount1, botCount: botCount1 } = this.measureBuffer(scrollerInfo, viewCount, collectionSize, itemHeight);
         // const isScrolling = $isScrolling(prevScrollerInfo, scrollerInfo);
@@ -406,61 +425,46 @@ class VirtualRepeat {
      *
      * @internal
      */
-    handleCollectionChange(_collection, _indexmap) {
-        this.itemsChanged(this.items);
-        // const [start, end] = this.range;
-        // const itemHeight = this.itemHeight;
-        // const collectionSize = this.collectionStrategy.count();
-        // let topBuffer = start;
-        // let botBuffer = Math.max(
-        //   0,
-        //   collectionSize - end
-        // )
-        // if (this.collectionStrategy.count() > 0) {
-        //   const deletion = indexMap.deletedIndices;
-        //   const hasDeletion = deletion.length > 0;
-        //   if (hasDeletion) {
-        //     const deletionIndex = deletion[0];
-        //     const deletionCount = deletion.length;
-        //     if (deletionIndex > end) {
-        //       botBuffer = Math.max(0, (collectionSize - botBuffer) - deletionCount);
-        //     } else if (deletionIndex < start && (deletionIndex + (deletionCount - 1)) < start) {
-        //       topBuffer = Math.max(0, topBuffer - (deletionCount - 1));
-        //     } else {
-        //       if (deletionIndex + deletionCount >= collectionSize) {
-        //       }
-        //     }
-        //   } else {
-        //   }
-        // }
-        // this.dom.update(topBuffer * itemHeight, botBuffer * itemHeight);
+    _handleCollectionChange() {
+        this._queueHandleItemsChanged();
     }
     /**
      * @internal
      */
-    handleInnerCollectionChange() {
+    _handleInnerCollectionChange() {
         const newItems = runtime.astEvaluate(this.iterable, this.parent.scope, { strict: true }, null);
         const oldItems = this.items;
         this.items = newItems;
         if (newItems === oldItems) {
-            this.itemsChanged(newItems);
+            this._queueHandleItemsChanged();
         }
+    }
+    /** @internal */
+    _queueHandleItemsChanged() {
+        const task = this.task;
+        this.task = this.taskQueue.queueTask(() => {
+            this.task = null;
+            this._handleItemsChanged(this.items, this.collectionStrategy);
+        });
+        task?.cancel();
     }
     /**
      * @internal
      */
     _createAndActivateFirstView() {
         const firstView = this.getOrCreateFirstView();
-        const repeatController = this.$controller;
-        const collectionStrategy = this.collectionStrategy;
-        const parentScope = repeatController.scope;
-        const itemScope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext(this.local, collectionStrategy.first()));
-        itemScope.overrideContext.$index = 0;
-        itemScope.overrideContext.$length = collectionStrategy.count();
-        enhanceOverrideContext(itemScope.overrideContext);
-        firstView.nodes.insertBefore(this.dom.bottom);
-        // todo: maybe state upfront that async lifecycle aren't supported with virtual-repeat
-        void firstView.activate(repeatController, repeatController, itemScope);
+        if (!firstView.isActive) {
+            const repeatController = this.$controller;
+            const collectionStrategy = this.collectionStrategy;
+            const parentScope = repeatController.scope;
+            const itemScope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext(this.local, collectionStrategy.first()));
+            itemScope.overrideContext.$index = 0;
+            itemScope.overrideContext.$length = collectionStrategy.count;
+            enhanceOverrideContext(itemScope.overrideContext);
+            firstView.nodes.insertBefore(this.dom.bottom);
+            // todo: maybe state upfront that async lifecycle aren't supported with virtual-repeat
+            void firstView.activate(firstView, repeatController, itemScope);
+        }
         return firstView;
     }
     /**
@@ -486,12 +490,9 @@ runtimeHtml.customAttribute({
     }
 })(VirtualRepeat);
 class CollectionObservationMediator {
-    constructor(repeat, key) {
+    constructor(repeat, handleCollectionChange) {
         this.repeat = repeat;
-        this.key = key;
-    }
-    handleCollectionChange(collection, indexMap) {
-        this.repeat[this.key](collection, indexMap);
+        this.handleCollectionChange = handleCollectionChange;
     }
     start(c) {
         if (this._collection === c) {
@@ -577,21 +578,21 @@ class ArrayCollectionStrategy {
     constructor(val) {
         this.val = val;
     }
-    count() {
+    get count() {
         return this.val.length;
     }
     first() {
-        return this.val.length > 0 ? this.val[0] : null;
+        return this.count > 0 ? this.val[0] : null;
     }
     last() {
-        return this.val.length > 0 ? this.val[this.val.length - 1] : null;
+        return this.count > 0 ? this.val[this.count - 1] : null;
     }
     item(index) {
         return this.val[index] ?? null;
     }
     range(start, end) {
         const val = this.val;
-        const len = val.length;
+        const len = this.count;
         if (len > start && end > start) {
             return val.slice(start, end);
         }
@@ -607,11 +608,9 @@ class ArrayCollectionStrategy {
     }
 }
 class NullCollectionStrategy {
-    get val() {
-        return null;
-    }
-    count() {
-        return 0;
+    constructor() {
+        this.val = null;
+        this.count = 0;
     }
     isNearTop() {
         return false;
@@ -823,7 +822,7 @@ function insertBefore(doc, el, target) {
     ];
 }
 
-const DefaultVirtualRepeatConfiguration = {
+const DefaultVirtualizationConfiguration = {
     register(container) {
         return container.register(ScrollerObserverLocator, CollectionStrategyLocator, DefaultDomRenderer, VirtualRepeat);
     }
@@ -831,7 +830,7 @@ const DefaultVirtualRepeatConfiguration = {
 
 exports.CollectionStrategyLocator = CollectionStrategyLocator;
 exports.DefaultDomRenderer = DefaultDomRenderer;
-exports.DefaultVirtualRepeatConfiguration = DefaultVirtualRepeatConfiguration;
+exports.DefaultVirtualizationConfiguration = DefaultVirtualizationConfiguration;
 exports.ICollectionStrategyLocator = ICollectionStrategyLocator;
 exports.IDomRenderer = IDomRenderer;
 exports.IScrollerObsererLocator = IScrollerObsererLocator;

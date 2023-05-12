@@ -18,7 +18,7 @@ export declare const hasOverflowScroll: (element: Element) => boolean;
  */
 export declare const getStyleValues: (element: Element, ...styles: (keyof CSSStyleDeclaration)[]) => number;
 export declare const calcOuterHeight: (element: Element) => number;
-export declare const calcScrollHeight: (element: Element) => number;
+export declare const calcScrollerViewportHeight: (element: Element) => number;
 export declare const insertBeforeNode: (view: ISyntheticView, bottomBuffer: Element) => void;
 /**
  * A naive utility to calculate distance of a child element to one of its ancestor, typically used for scroller/buffer combo

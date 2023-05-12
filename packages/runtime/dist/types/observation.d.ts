@@ -104,11 +104,7 @@ export declare const enum AccessorType {
     None = 0,
     Observer = 1,
     Node = 2,
-    Layout = 4,
-    Primtive = 8,
-    Array = 18,
-    Set = 34,
-    Map = 66
+    Layout = 4
 }
 /**
  * Basic interface to normalize getting/setting a value of any property on any object

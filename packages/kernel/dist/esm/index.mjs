@@ -1,17 +1,5 @@
 import { Metadata as t, isObject as e, applyMetadataPolyfill as n } from "@aurelia/metadata";
 
-function __decorate(t, e, n, r) {
-    var s = arguments.length, i = s < 3 ? e : r === null ? r = Object.getOwnPropertyDescriptor(e, n) : r, o;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") i = Reflect.decorate(t, e, n, r); else for (var l = t.length - 1; l >= 0; l--) if (o = t[l]) i = (s < 3 ? o(i) : s > 3 ? o(e, n, i) : o(e, n)) || i;
-    return s > 3 && i && Object.defineProperty(e, n, i), i;
-}
-
-function __param(t, e) {
-    return function(n, r) {
-        e(n, r, t);
-    };
-}
-
 const r = String;
 
 const s = t.getOwn;
@@ -621,7 +609,6 @@ class Container {
                 if (i == null) {
                     s = s.parent;
                     if (s == null) {
-                        $ = n;
                         return S;
                     }
                 } else {
@@ -1344,6 +1331,18 @@ const K = Object.freeze({});
 function noop() {}
 
 const N = /*@__PURE__*/ createInterface("IPlatform");
+
+function __decorate(t, e, n, r) {
+    var s = arguments.length, i = s < 3 ? e : r === null ? r = Object.getOwnPropertyDescriptor(e, n) : r, o;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") i = Reflect.decorate(t, e, n, r); else for (var l = t.length - 1; l >= 0; l--) if (o = t[l]) i = (s < 3 ? o(i) : s > 3 ? o(e, n, i) : o(e, n)) || i;
+    return s > 3 && i && Object.defineProperty(e, n, i), i;
+}
+
+function __param(t, e) {
+    return function(n, r) {
+        e(n, r, t);
+    };
+}
 
 var G;
 

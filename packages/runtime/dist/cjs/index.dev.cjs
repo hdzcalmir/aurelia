@@ -1383,13 +1383,6 @@ exports.AccessorType = void 0;
     // todo: https://gist.github.com/paulirish/5d52fb081b3570c81e3a
     // todo: https://csstriggers.com/
     AccessorType[AccessorType["Layout"] = 4] = "Layout";
-    // by default, everything is an object
-    // eg: a property is accessed on an object
-    // unless explicitly not so
-    AccessorType[AccessorType["Primtive"] = 8] = "Primtive";
-    AccessorType[AccessorType["Array"] = 18] = "Array";
-    AccessorType[AccessorType["Set"] = 34] = "Set";
-    AccessorType[AccessorType["Map"] = 66] = "Map";
 })(exports.AccessorType || (exports.AccessorType = {}));
 function copyIndexMap(existing, deletedIndices, deletedItems) {
     const { length } = existing;
@@ -1518,7 +1511,12 @@ function addValueBatch(subs, newValue, oldValue) {
 function subscriberCollection(target) {
     return target == null ? subscriberCollectionDeco : subscriberCollectionDeco(target);
 }
+const decoratedTarget = new WeakSet();
 function subscriberCollectionDeco(target) {
+    if (decoratedTarget.has(target)) {
+        return;
+    }
+    decoratedTarget.add(target);
     const proto = target.prototype;
     // not configurable, as in devtool, the getter could be invoked on the prototype,
     // and become permanently broken
@@ -1527,175 +1525,6 @@ function subscriberCollectionDeco(target) {
     ensureProto(proto, 'unsubscribe', removeSubscriber);
 }
 /* eslint-enable @typescript-eslint/ban-types */
-// export class SubscriberRecord<T extends IAnySubscriber> implements ISubscriberRecord<T> {
-//   /**
-//    * subscriber flags: bits indicating the existence status of the subscribers of this record
-//    */
-//   private sf: SubFlags = SubFlags.None;
-//   private s0?: T;
-//   private s1?: T;
-//   private s2?: T;
-//   /**
-//    * subscriber rest: When there's more than 3 subscribers, use an array to store the subscriber references
-//    */
-//   private sr?: T[];
-//   public count: number = 0;
-//   public add(subscriber: T): boolean {
-//     if (this.has(subscriber)) {
-//       return false;
-//     }
-//     const subscriberFlags = this.sf;
-//     if ((subscriberFlags & SubFlags.Sub0) === 0) {
-//       this.s0 = subscriber;
-//       this.sf |= SubFlags.Sub0;
-//     } else if ((subscriberFlags & SubFlags.Sub1) === 0) {
-//       this.s1 = subscriber;
-//       this.sf |= SubFlags.Sub1;
-//     } else if ((subscriberFlags & SubFlags.Sub2) === 0) {
-//       this.s2 = subscriber;
-//       this.sf |= SubFlags.Sub2;
-//     } else if ((subscriberFlags & SubFlags.SubRest) === 0) {
-//       this.sr = [subscriber];
-//       this.sf |= SubFlags.SubRest;
-//     } else {
-//       this.sr!.push(subscriber); // Non-null is implied by else branch of (subscriberFlags & SF.SubscribersRest) === 0
-//     }
-//     ++this.count;
-//     return true;
-//   }
-//   public has(subscriber: T): boolean {
-//     // Flags here is just a perf tweak
-//     // Compared to not using flags, it's a moderate speed-up when this collection does not have the subscriber;
-//     // and minor slow-down when it does, and the former is more common than the latter.
-//     const subscriberFlags = this.sf;
-//     if ((subscriberFlags & SubFlags.Sub0) > 0 && this.s0 === subscriber) {
-//       return true;
-//     }
-//     if ((subscriberFlags & SubFlags.Sub1) > 0 && this.s1 === subscriber) {
-//       return true;
-//     }
-//     if ((subscriberFlags & SubFlags.Sub2) > 0 && this.s2 === subscriber) {
-//       return true;
-//     }
-//     if ((subscriberFlags & SubFlags.SubRest) > 0) {
-//       const subscribers = this.sr!; // Non-null is implied by (subscriberFlags & SF.SubscribersRest) > 0
-//       const ii = subscribers.length;
-//       let i = 0;
-//       for (; i < ii; ++i) {
-//         if (subscribers[i] === subscriber) {
-//           return true;
-//         }
-//       }
-//     }
-//     return false;
-//   }
-//   public any(): boolean {
-//     return this.sf !== SubFlags.None;
-//   }
-//   public remove(subscriber: T): boolean {
-//     const subscriberFlags = this.sf;
-//     if ((subscriberFlags & SubFlags.Sub0) > 0 && this.s0 === subscriber) {
-//       this.s0 = void 0;
-//       this.sf = (this.sf | SubFlags.Sub0) ^ SubFlags.Sub0;
-//       --this.count;
-//       return true;
-//     } else if ((subscriberFlags & SubFlags.Sub1) > 0 && this.s1 === subscriber) {
-//       this.s1 = void 0;
-//       this.sf = (this.sf | SubFlags.Sub1) ^ SubFlags.Sub1;
-//       --this.count;
-//       return true;
-//     } else if ((subscriberFlags & SubFlags.Sub2) > 0 && this.s2 === subscriber) {
-//       this.s2 = void 0;
-//       this.sf = (this.sf | SubFlags.Sub2) ^ SubFlags.Sub2;
-//       --this.count;
-//       return true;
-//     } else if ((subscriberFlags & SubFlags.SubRest) > 0) {
-//       const subscribers = this.sr!; // Non-null is implied by (subscriberFlags & SF.SubscribersRest) > 0
-//       const ii = subscribers.length;
-//       let i = 0;
-//       for (; i < ii; ++i) {
-//         if (subscribers[i] === subscriber) {
-//           subscribers.splice(i, 1);
-//           if (ii === 1) {
-//             this.sf = (this.sf | SubFlags.SubRest) ^ SubFlags.SubRest;
-//           }
-//           --this.count;
-//           return true;
-//         }
-//       }
-//     }
-//     return false;
-//   }
-//   public notify(val: unknown, oldVal: unknown): void {
-//     if (batching) {
-//       addValueBatch(this, val, oldVal);
-//       return;
-//     }
-//     /**
-//      * Note: change handlers may have the side-effect of adding/removing subscribers to this collection during this
-//      * callSubscribers invocation, so we're caching them all before invoking any.
-//      * Subscribers added during this invocation are not invoked (and they shouldn't be).
-//      * Subscribers removed during this invocation will still be invoked (and they also shouldn't be,
-//      * however this is accounted for via $isBound and similar flags on the subscriber objects)
-//      */
-//     const sub0 = this.s0 as ISubscriber;
-//     const sub1 = this.s1 as ISubscriber;
-//     const sub2 = this.s2 as ISubscriber;
-//     let subs = this.sr as ISubscriber[];
-//     if (subs !== void 0) {
-//       subs = subs.slice();
-//     }
-//     if (sub0 !== void 0) {
-//       sub0.handleChange(val, oldVal);
-//     }
-//     if (sub1 !== void 0) {
-//       sub1.handleChange(val, oldVal);
-//     }
-//     if (sub2 !== void 0) {
-//       sub2.handleChange(val, oldVal);
-//     }
-//     if (subs !== void 0) {
-//       const ii = subs.length;
-//       let sub: ISubscriber | undefined;
-//       let i = 0;
-//       for (; i < ii; ++i) {
-//         sub = subs[i];
-//         if (sub !== void 0) {
-//           sub.handleChange(val, oldVal);
-//         }
-//       }
-//     }
-//   }
-//   public notifyCollection(collection: Collection, indexMap: IndexMap): void {
-//     const sub0 = this.s0 as ICollectionSubscriber;
-//     const sub1 = this.s1 as ICollectionSubscriber;
-//     const sub2 = this.s2 as ICollectionSubscriber;
-//     let subs = this.sr as ICollectionSubscriber[];
-//     if (subs !== void 0) {
-//       subs = subs.slice();
-//     }
-//     if (sub0 !== void 0) {
-//       sub0.handleCollectionChange(collection, indexMap);
-//     }
-//     if (sub1 !== void 0) {
-//       sub1.handleCollectionChange(collection, indexMap);
-//     }
-//     if (sub2 !== void 0) {
-//       sub2.handleCollectionChange(collection, indexMap);
-//     }
-//     if (subs !== void 0) {
-//       const ii = subs.length;
-//       let sub: ICollectionSubscriber | undefined;
-//       let i = 0;
-//       for (; i < ii; ++i) {
-//         sub = subs[i];
-//         if (sub !== void 0) {
-//           sub.handleCollectionChange(collection, indexMap);
-//         }
-//       }
-//     }
-//   }
-// }
 class SubscriberRecord {
     constructor() {
         this.count = 0;
@@ -1758,22 +1587,11 @@ function addSubscriber(subscriber) {
 function removeSubscriber(subscriber) {
     return this.subs.remove(subscriber);
 }
-// /**
-//  * Subscriber flags to indicate subcription on a record
-//  */
-// const enum SubFlags {
-//   None      = 0,
-//   Sub0      = 0b0001,
-//   Sub1      = 0b0010,
-//   Sub2      = 0b0100,
-//   SubRest   = 0b1000,
-//   Any       = 0b1111,
-// }
 
 class CollectionLengthObserver {
     constructor(owner) {
         this.owner = owner;
-        this.type = 18 /* AccessorType.Array */;
+        this.type = 1 /* AccessorType.Observer */;
         this._value = (this._obj = owner.collection).length;
     }
     getValue() {
@@ -1808,8 +1626,8 @@ class CollectionLengthObserver {
 class CollectionSizeObserver {
     constructor(owner) {
         this.owner = owner;
+        this.type = 1 /* AccessorType.Observer */;
         this._value = (this._obj = owner.collection).size;
-        this.type = isMap(this._obj) ? 66 /* AccessorType.Map */ : 34 /* AccessorType.Set */;
     }
     getValue() {
         return this._obj.size;
@@ -2223,7 +2041,7 @@ function disableArrayObservation() {
 }
 class ArrayObserver {
     constructor(array) {
-        this.type = 18 /* AccessorType.Array */;
+        this.type = 1 /* AccessorType.Observer */;
         if (!enableArrayObservationCalled) {
             enableArrayObservationCalled = true;
             enableArrayObservation();
@@ -2488,7 +2306,7 @@ function disableSetObservation() {
 }
 class SetObserver {
     constructor(observedSet) {
-        this.type = 34 /* AccessorType.Set */;
+        this.type = 1 /* AccessorType.Observer */;
         if (!enableSetObservationCalled) {
             enableSetObservationCalled = true;
             enableSetObservation();
@@ -2652,7 +2470,7 @@ function disableMapObservation() {
 }
 class MapObserver {
     constructor(map) {
-        this.type = 66 /* AccessorType.Map */;
+        this.type = 1 /* AccessorType.Observer */;
         if (!enableMapObservationCalled) {
             enableMapObservationCalled = true;
             enableMapObservation();
@@ -4972,7 +4790,10 @@ class ComputedObserver {
 connectable(ComputedObserver);
 subscriberCollection(ComputedObserver);
 
-const IDirtyChecker = createInterface('IDirtyChecker', x => x.singleton(DirtyChecker));
+const IDirtyChecker = /*@__PURE__*/ createInterface('IDirtyChecker', x => x.callback(() => {
+        throw createError('AURxxxx: There is no registration for IDirtyChecker interface. If you want to use your own dirty checker, make sure you register it.');
+    })
+    );
 const DirtyCheckSettings = {
     /**
      * Default: `6`
@@ -5005,14 +4826,16 @@ const DirtyCheckSettings = {
         this.throw = false;
     }
 };
-const queueTaskOpts = {
-    persistent: true,
-};
 class DirtyChecker {
+    static register(c) {
+        c.register(kernel.Registration.singleton(IDirtyChecker, this), kernel.Registration.aliasTo(this, IDirtyChecker));
+    }
     constructor(p) {
         this.p = p;
         this.tracked = [];
+        /** @internal */
         this._task = null;
+        /** @internal */
         this._elapsedFrames = 0;
         this.check = () => {
             if (DirtyCheckSettings.disabled) {
@@ -5033,6 +4856,7 @@ class DirtyChecker {
                 }
             }
         };
+        subscriberCollection(DirtyCheckProperty);
     }
     createProperty(obj, key) {
         if (DirtyCheckSettings.throw) {
@@ -5043,7 +4867,7 @@ class DirtyChecker {
     addProperty(property) {
         this.tracked.push(property);
         if (this.tracked.length === 1) {
-            this._task = this.p.taskQueue.queueTask(this.check, queueTaskOpts);
+            this._task = this.p.taskQueue.queueTask(this.check, { persistent: true });
         }
     }
     removeProperty(property) {
@@ -5096,7 +4920,6 @@ class DirtyCheckProperty {
         }
     }
 }
-subscriberCollection(DirtyCheckProperty);
 
 class PrimitiveObserver {
     get doNotCache() { return true; }
@@ -5514,6 +5337,10 @@ function getObserversLookup(obj) {
 const noValue = {};
 // impl, wont be seen
 function observable(targetOrConfig, key, descriptor) {
+    if (!SetterNotifier.mixed) {
+        SetterNotifier.mixed = true;
+        subscriberCollection(SetterNotifier);
+    }
     // either this check, or arguments.length === 3
     // or could be both, so can throw against user error for better DX
     if (key == null) {
@@ -5630,7 +5457,7 @@ class SetterNotifier {
         }
     }
 }
-subscriberCollection(SetterNotifier);
+SetterNotifier.mixed = false;
 /*
           | typescript       | babel
 ----------|------------------|-------------------------
@@ -5739,6 +5566,7 @@ exports.DestructuringAssignmentRestExpression = DestructuringAssignmentRestExpre
 exports.DestructuringAssignmentSingleExpression = DestructuringAssignmentSingleExpression;
 exports.DirtyCheckProperty = DirtyCheckProperty;
 exports.DirtyCheckSettings = DirtyCheckSettings;
+exports.DirtyChecker = DirtyChecker;
 exports.ForOfStatement = ForOfStatement;
 exports.ICoercionConfiguration = ICoercionConfiguration;
 exports.IDirtyChecker = IDirtyChecker;

@@ -15,6 +15,7 @@ export declare function observable(): PropertyDecorator;
 export interface SetterNotifier extends IAccessor, ISubscriberCollection {
 }
 export declare class SetterNotifier implements IAccessor {
+    static mixed: boolean;
     readonly type: AccessorType;
     constructor(obj: object, callbackKey: PropertyKey, set: InterceptorFunc | undefined, initialValue: unknown);
     getValue(): unknown;
