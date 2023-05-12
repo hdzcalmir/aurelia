@@ -29,11 +29,11 @@
     "i18next-intervalplural-postprocessor": "^1.0.0"
   },
   "devDependencies": {
-    "@aurelia/vite-plugin": "2.1.0-dev.202305021031",
-    "@playwright/test": "1.27.1",
+    "@aurelia/vite-plugin": "2.0.0-beta.5",
+    "@playwright/test": "1.33.0",
     "@types/mocha": "10.0.0",
     "@types/node": "^14.18.14",
-    "playwright": "^1.21.1",
+    "playwright": "^1.33.0",
     "typescript": "5.0.2"
   }
 }
