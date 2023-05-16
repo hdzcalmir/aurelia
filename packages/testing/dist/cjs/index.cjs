@@ -4486,7 +4486,31 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
     const flush = e => {
         o.platform.domWriteQueue.flush(e);
     };
-    const w = new class Results {
+    const stop = (e = false) => {
+        let t;
+        try {
+            t = p.stop(e);
+        } finally {
+            if (e) {
+                if (++$ > 1) {
+                    console.log("(!) Fixture has already been torn down");
+                } else {
+                    const $dispose = () => {
+                        f.remove();
+                        p.dispose();
+                    };
+                    if (t instanceof Promise) {
+                        t = t.then($dispose);
+                    } else {
+                        $dispose();
+                    }
+                }
+            }
+        }
+        return t;
+    };
+    let w;
+    const k = new class Results {
         constructor() {
             this.startPromise = x;
             this.ctx = o;
@@ -4499,6 +4523,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             this.observerLocator = c;
             this.logger = l.get(t.ILogger);
             this.hJsx = hJsx.bind(o.doc);
+            this.stop = stop;
             this.getBy = getBy;
             this.getAllBy = getAllBy;
             this.queryBy = queryBy;
@@ -4515,22 +4540,13 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             this.flush = flush;
         }
         start() {
-            return p.app({
+            return (w ?? (w = p.app({
                 host: d,
                 component: y
-            }).start();
+            }))).start();
         }
         tearDown() {
-            if (++$ === 2) {
-                console.log("(!) Fixture has already been torn down");
-                return;
-            }
-            const dispose = () => {
-                f.remove();
-                p.dispose();
-            };
-            const e = p.stop();
-            if (e instanceof Promise) return e.then(dispose); else return dispose();
+            return stop(true);
         }
         get torn() {
             return $ > 0;
@@ -4542,8 +4558,8 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             return Promise.resolve(this);
         }
     };
-    ke.publish("fixture:created", w);
-    return w;
+    ke.publish("fixture:created", k);
+    return k;
 }
 
 class FixtureBuilder {

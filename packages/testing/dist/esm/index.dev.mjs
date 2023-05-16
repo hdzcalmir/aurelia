@@ -7815,13 +7815,15 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         el.dispatchEvent(new ctx.CustomEvent(event, init));
     }
     ['click', 'change', 'input', 'scroll'].forEach(event => {
-        Object.defineProperty(trigger, event, { configurable: true, writable: true, value: (selector, init) => {
+        Object.defineProperty(trigger, event, {
+            configurable: true, writable: true, value: (selector, init) => {
                 const el = queryBy(selector);
                 if (el === null) {
                     throw new Error(`No element found for selector "${selector}" to fire event "${event}"`);
                 }
                 el.dispatchEvent(new ctx.CustomEvent(event, init));
-            } });
+            }
+        });
     });
     function type(selector, value) {
         const el = typeof selector === 'string' ? queryBy(selector) : selector;
@@ -7842,6 +7844,33 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
     const flush = (time) => {
         ctx.platform.domWriteQueue.flush(time);
     };
+    const stop = (dispose = false) => {
+        let ret;
+        try {
+            ret = au.stop(dispose);
+        }
+        finally {
+            if (dispose) {
+                if (++tornCount > 1) {
+                    console.log('(!) Fixture has already been torn down');
+                }
+                else {
+                    const $dispose = () => {
+                        root.remove();
+                        au.dispose();
+                    };
+                    if (ret instanceof Promise) {
+                        ret = ret.then($dispose);
+                    }
+                    else {
+                        $dispose();
+                    }
+                }
+            }
+        }
+        return ret;
+    };
+    let app;
     const fixture = new class Results {
         constructor() {
             this.startPromise = startPromise;
@@ -7855,6 +7884,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             this.observerLocator = observerLocator;
             this.logger = container.get(ILogger);
             this.hJsx = hJsx.bind(ctx.doc);
+            this.stop = stop;
             this.getBy = getBy;
             this.getAllBy = getAllBy;
             this.queryBy = queryBy;
@@ -7871,22 +7901,10 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             this.flush = flush;
         }
         start() {
-            return au.app({ host: host, component }).start();
+            return (app ?? (app = au.app({ host: host, component }))).start();
         }
         tearDown() {
-            if (++tornCount === 2) {
-                console.log('(!) Fixture has already been torn down');
-                return;
-            }
-            const dispose = () => {
-                root.remove();
-                au.dispose();
-            };
-            const ret = au.stop();
-            if (ret instanceof Promise)
-                return ret.then(dispose);
-            else
-                return dispose();
+            return stop(true);
         }
         get torn() {
             return tornCount > 0;

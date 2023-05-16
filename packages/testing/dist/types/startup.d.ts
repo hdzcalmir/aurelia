@@ -45,7 +45,11 @@ export interface IFixture<T> {
     readonly logger: ILogger;
     readonly torn: boolean;
     start(): void | Promise<void>;
+    /**
+     * @deprecated use `stop(true)` instead
+     */
     tearDown(): void | Promise<void>;
+    stop(dispose?: boolean): void | Promise<void>;
     readonly started: Promise<IFixture<T>>;
     /**
      * Returns the first element that is a descendant of node that matches selectors, and throw if there is more than one, or none found

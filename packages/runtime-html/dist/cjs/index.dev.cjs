@@ -4324,6 +4324,8 @@ class Controller {
         this.isStrictBinding = false;
         this.scope = null;
         this.isBound = false;
+        /** @internal */
+        this._isBindingDone = false;
         // If a host from another custom element was passed in, then this will be the controller for that custom element (could be `au-viewport` for example).
         // In that case, this controller will create a new host node (with the definition's name) and use that as the target host for the nodes instead.
         // That host node is separately mounted to the host controller's original host node.
@@ -4488,6 +4490,7 @@ class Controller {
         }
         createObservers(this, definition, instance);
         if (this._hooks.hasDefine) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking define() hook`);
             }
@@ -4523,6 +4526,7 @@ class Controller {
             this._lifecycleHooks.hydrating.forEach(callHydratingHook, this);
         }
         if (this._hooks.hasHydrating) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking hydrating() hook`);
             }
@@ -4562,6 +4566,7 @@ class Controller {
             this._lifecycleHooks.hydrated.forEach(callHydratedHook, this);
         }
         if (this._hooks.hasHydrated) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking hydrated() hook`);
             }
@@ -4579,6 +4584,7 @@ class Controller {
             this._lifecycleHooks.created.forEach(callCreatedHook, this);
         }
         if (this._hooks.hasCreated) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking created() hook`);
             }
@@ -4599,6 +4605,7 @@ class Controller {
             this._lifecycleHooks.created.forEach(callCreatedHook, this);
         }
         if (this._hooks.hasCreated) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking created() hook`);
             }
@@ -4667,12 +4674,14 @@ class Controller {
         this._enterActivating();
         let ret;
         if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.binding != null) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.binding()`);
             }
             ret = kernel.resolveAll(...this._lifecycleHooks.binding.map(callBindingHook, this));
         }
         if (this._hooks.hasBinding) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`binding()`);
             }
@@ -4681,16 +4690,25 @@ class Controller {
         if (isPromise(ret)) {
             this._ensurePromise();
             ret.then(() => {
-                this.bind();
+                this._isBindingDone = true;
+                if (this.state !== 1 /* State.activating */) {
+                    // because controller can be deactivated, during a long running promise in the binding phase
+                    this._leaveActivating();
+                }
+                else {
+                    this.bind();
+                }
             }).catch((err) => {
                 this._reject(err);
             });
             return this.$promise;
         }
+        this._isBindingDone = true;
         this.bind();
         return this.$promise;
     }
     bind() {
+        /* istanbul ignore next */
         if (this.debug) {
             this.logger.trace(`bind()`);
         }
@@ -4718,12 +4736,14 @@ class Controller {
             }
         }
         if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.bound != null) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.bound()`);
             }
             ret = kernel.resolveAll(...this._lifecycleHooks.bound.map(callBoundHook, this));
         }
         if (this._hooks.hasBound) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`bound()`);
             }
@@ -4733,7 +4753,13 @@ class Controller {
             this._ensurePromise();
             ret.then(() => {
                 this.isBound = true;
-                this._attach();
+                // because controller can be deactivated, during a long running promise in the bound phase
+                if (this.state !== 1 /* State.activating */) {
+                    this._leaveActivating();
+                }
+                else {
+                    this._attach();
+                }
             }).catch((err) => {
                 this._reject(err);
             });
@@ -4762,6 +4788,7 @@ class Controller {
     }
     /** @internal */
     _attach() {
+        /* istanbul ignore next */
         if (this.debug) {
             this.logger.trace(`attach()`);
         }
@@ -4796,12 +4823,14 @@ class Controller {
         let i = 0;
         let ret = void 0;
         if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.attaching != null) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.attaching()`);
             }
             ret = kernel.resolveAll(...this._lifecycleHooks.attaching.map(callAttachingHook, this));
         }
         if (this._hooks.hasAttaching) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`attaching()`);
             }
@@ -4827,10 +4856,18 @@ class Controller {
         this._leaveActivating();
     }
     deactivate(initiator, _parent) {
+        let prevActivation = void 0;
         switch ((this.state & ~16 /* State.released */)) {
             case 2 /* State.activated */:
-                // We're fully activated, so proceed with normal deactivation.
                 this.state = 4 /* State.deactivating */;
+                break;
+            case 1 /* State.activating */:
+                this.state = 4 /* State.deactivating */;
+                // we are about to deactivate, the error from activation can be ignored
+                prevActivation = this.$promise?.catch(err => {
+                        this.logger.warn('The activation error will be ignored, as the controller is already scheduled for deactivation. The activation was rejected with: %s', err);
+                    }
+                    );
                 break;
             case 0 /* State.none */:
             case 8 /* State.deactivated */:
@@ -4864,49 +4901,53 @@ class Controller {
                 void this.children[i].deactivate(initiator, this);
             }
         }
-        if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.detaching != null) {
-            if (this.debug) {
-                this.logger.trace(`lifecycleHooks.detaching()`);
+        return kernel.onResolve(prevActivation, () => {
+            if (this.isBound) {
+                if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.detaching != null) {
+                    if (this.debug) {
+                        this.logger.trace(`lifecycleHooks.detaching()`);
+                    }
+                    ret = kernel.resolveAll(...this._lifecycleHooks.detaching.map(callDetachingHook, this));
+                }
+                if (this._hooks.hasDetaching) {
+                    if (this.debug) {
+                        this.logger.trace(`detaching()`);
+                    }
+                    ret = kernel.resolveAll(ret, this._vm.detaching(this.$initiator, this.parent));
+                }
             }
-            ret = kernel.resolveAll(...this._lifecycleHooks.detaching.map(callDetachingHook, this));
-        }
-        if (this._hooks.hasDetaching) {
-            if (this.debug) {
-                this.logger.trace(`detaching()`);
+            if (isPromise(ret)) {
+                this._ensurePromise();
+                initiator._enterDetaching();
+                ret.then(() => {
+                    initiator._leaveDetaching();
+                }).catch((err) => {
+                    initiator._reject(err);
+                });
             }
-            ret = kernel.resolveAll(ret, this._vm.detaching(this.$initiator, this.parent));
-        }
-        if (isPromise(ret)) {
-            this._ensurePromise();
-            initiator._enterDetaching();
-            ret.then(() => {
-                initiator._leaveDetaching();
-            }).catch((err) => {
-                initiator._reject(err);
-            });
-        }
-        // Note: if a 3rd party plugin happens to do any async stuff in a template controller before calling deactivate on its view,
-        // then the linking will become out of order.
-        // For framework components, this shouldn't cause issues.
-        // We can only prevent that by linking up after awaiting the detaching promise, which would add an extra tick + a fair bit of
-        // overhead on this hot path, so it's (for now) a deliberate choice to not account for such situation.
-        // Just leaving the note here so that we know to look here if a weird detaching-related timing issue is ever reported.
-        if (initiator.head === null) {
-            initiator.head = this;
-        }
-        else {
-            initiator.tail.next = this;
-        }
-        initiator.tail = this;
-        if (initiator !== this) {
-            // Only detaching is called + the linked list is built when any controller that is not the initiator, is deactivated.
-            // The rest is handled by the initiator.
-            // This means that descendant controllers have to make sure to await the initiator's promise before doing any subsequent
-            // controller api calls, or race conditions might occur.
-            return;
-        }
-        this._leaveDetaching();
-        return this.$promise;
+            // Note: if a 3rd party plugin happens to do any async stuff in a template controller before calling deactivate on its view,
+            // then the linking will become out of order.
+            // For framework components, this shouldn't cause issues.
+            // We can only prevent that by linking up after awaiting the detaching promise, which would add an extra tick + a fair bit of
+            // overhead on this hot path, so it's (for now) a deliberate choice to not account for such situation.
+            // Just leaving the note here so that we know to look here if a weird detaching-related timing issue is ever reported.
+            if (initiator.head === null) {
+                initiator.head = this;
+            }
+            else {
+                initiator.tail.next = this;
+            }
+            initiator.tail = this;
+            if (initiator !== this) {
+                // Only detaching is called + the linked list is built when any controller that is not the initiator, is deactivated.
+                // The rest is handled by the initiator.
+                // This means that descendant controllers have to make sure to await the initiator's promise before doing any subsequent
+                // controller api calls, or race conditions might occur.
+                return;
+            }
+            this._leaveDetaching();
+            return this.$promise;
+        });
     }
     removeNodes() {
         switch (this.vmKind) {
@@ -4929,6 +4970,7 @@ class Controller {
         }
     }
     unbind() {
+        /* istanbul ignore next */
         if (this.debug) {
             this.logger.trace(`unbind()`);
         }
@@ -5003,11 +5045,21 @@ class Controller {
     }
     /** @internal */
     _leaveActivating() {
+        if (this.state !== 1 /* State.activating */) {
+            --this._activatingStack;
+            // skip doing rest of the work if the controller is deactivated.
+            this._resolve();
+            if (this.$initiator !== this) {
+                this.parent._leaveActivating();
+            }
+            return;
+        }
         if (--this._activatingStack === 0) {
             if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.attached != null) {
                 _retPromise = kernel.resolveAll(...this._lifecycleHooks.attached.map(callAttachedHook, this));
             }
             if (this._hooks.hasAttached) {
+                /* istanbul ignore next */
                 if (this.debug) {
                     this.logger.trace(`attached()`);
                 }
@@ -5045,6 +5097,7 @@ class Controller {
     _leaveDetaching() {
         if (--this._detachingStack === 0) {
             // Note: this controller is the initiator (detach is only ever called on the initiator)
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`detach()`);
             }
@@ -5054,19 +5107,22 @@ class Controller {
             let ret;
             while (cur !== null) {
                 if (cur !== this) {
+                    /* istanbul ignore next */
                     if (cur.debug) {
                         cur.logger.trace(`detach()`);
                     }
                     cur.removeNodes();
                 }
-                if (cur.vmKind !== 2 /* ViewModelKind.synthetic */ && cur._lifecycleHooks.unbinding != null) {
-                    ret = kernel.resolveAll(...cur._lifecycleHooks.unbinding.map(callUnbindingHook, this));
-                }
-                if (cur._hooks.hasUnbinding) {
-                    if (cur.debug) {
-                        cur.logger.trace('unbinding()');
+                if (cur._isBindingDone) {
+                    if (cur.vmKind !== 2 /* ViewModelKind.synthetic */ && cur._lifecycleHooks.unbinding != null) {
+                        ret = kernel.resolveAll(...cur._lifecycleHooks.unbinding.map(callUnbindingHook, cur));
                     }
-                    ret = kernel.resolveAll(ret, cur.viewModel.unbinding(cur.$initiator, cur.parent));
+                    if (cur._hooks.hasUnbinding) {
+                        if (cur.debug) {
+                            cur.logger.trace('unbinding()');
+                        }
+                        ret = kernel.resolveAll(ret, cur.viewModel.unbinding(cur.$initiator, cur.parent));
+                    }
                 }
                 if (isPromise(ret)) {
                     this._ensurePromise();
@@ -5090,6 +5146,7 @@ class Controller {
     /** @internal */
     _leaveUnbinding() {
         if (--this._unbindingStack === 0) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`unbind()`);
             }
@@ -5097,6 +5154,7 @@ class Controller {
             let next = null;
             while (cur !== null) {
                 if (cur !== this) {
+                    cur._isBindingDone = false;
                     cur.isBound = false;
                     cur.unbind();
                 }
@@ -5105,6 +5163,7 @@ class Controller {
                 cur = next;
             }
             this.head = this.tail = null;
+            this._isBindingDone = false;
             this.isBound = false;
             this.unbind();
         }
@@ -5172,6 +5231,7 @@ class Controller {
         this.state |= 16 /* State.released */;
     }
     dispose() {
+        /* istanbul ignore next */
         if (this.debug) {
             this.logger.trace(`dispose()`);
         }
