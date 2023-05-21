@@ -1,5 +1,5 @@
 import { Task, TaskAbortError, TaskStatus } from '@aurelia/platform';
-import { ILogger, onResolve, resolveAll } from '@aurelia/kernel';
+import { ILogger, onResolve, onResolveAll, resolve } from '@aurelia/kernel';
 import { Scope } from '@aurelia/runtime';
 import { bindable } from '../../bindable';
 import { INode, IRenderLocation } from '../../dom';
@@ -36,16 +36,10 @@ export class PromiseTemplateController implements ICustomAttributeViewModel {
   private postSettledTask: Task<void | Promise<void>> | null = null;
   private postSettlePromise!: Promise<void>;
 
-  /** @internal */ private readonly logger: ILogger;
-
-  public constructor(
-  /** @internal */ @IViewFactory private readonly _factory: IViewFactory,
-  /** @internal */ @IRenderLocation private readonly _location: IRenderLocation,
-  /** @internal */ @IPlatform private readonly _platform: IPlatform,
-    @ILogger logger: ILogger,
-  ) {
-    this.logger = logger.scopeTo('promise.resolve');
-  }
+  /** @internal */ private readonly _factory = resolve(IViewFactory);
+  /** @internal */ private readonly _location = resolve(IRenderLocation);
+  /** @internal */ private readonly _platform = resolve(IPlatform);
+  /** @internal */ private readonly logger = resolve(ILogger).scopeTo('promise.resolve');
 
   public link(
     _controller: IHydratableController,
@@ -89,11 +83,11 @@ export class PromiseTemplateController implements ICustomAttributeViewModel {
     const $swap = () => {
       // Note that the whole thing is not wrapped in a q.queueTask intentionally.
       // Because that would block the app till the actual promise is resolved, which is not the goal anyway.
-      void resolveAll(
+      void onResolveAll(
         // At first deactivate the fulfilled and rejected views, as well as activate the pending view.
         // The order of these 3 should not necessarily be sequential (i.e. order-irrelevant).
         preSettlePromise = (this.preSettledTask = q.queueTask(() => {
-          return resolveAll(
+          return onResolveAll(
             fulfilled?.deactivate(initiator),
             rejected?.deactivate(initiator),
             pending?.activate(initiator, s)
@@ -107,7 +101,7 @@ export class PromiseTemplateController implements ICustomAttributeViewModel {
               }
               const fulfill = () => {
                 // Deactivation of pending view and the activation of the fulfilled view should not necessarily be sequential.
-                this.postSettlePromise = (this.postSettledTask = q.queueTask(() => resolveAll(
+                this.postSettlePromise = (this.postSettledTask = q.queueTask(() => onResolveAll(
                   pending?.deactivate(initiator),
                   rejected?.deactivate(initiator),
                   fulfilled?.activate(initiator, s, data),
@@ -126,7 +120,7 @@ export class PromiseTemplateController implements ICustomAttributeViewModel {
               }
               const reject = () => {
                 // Deactivation of pending view and the activation of the rejected view should also not necessarily be sequential.
-                this.postSettlePromise = (this.postSettledTask = q.queueTask(() => resolveAll(
+                this.postSettlePromise = (this.postSettledTask = q.queueTask(() => onResolveAll(
                   pending?.deactivate(initiator),
                   fulfilled?.deactivate(initiator),
                   rejected?.activate(initiator, s, err),
@@ -171,10 +165,8 @@ export class PendingTemplateController implements ICustomAttributeViewModel {
 
   public view: ISyntheticView | undefined = void 0;
 
-  public constructor(
-    /** @internal */ @IViewFactory private readonly _factory: IViewFactory,
-    /** @internal */ @IRenderLocation private readonly _location: IRenderLocation,
-  ) { }
+  /** @internal */ private readonly _factory = resolve(IViewFactory);
+  /** @internal */ private readonly _location = resolve(IRenderLocation);
 
   public link(
     controller: IHydratableController,
@@ -218,10 +210,8 @@ export class FulfilledTemplateController implements ICustomAttributeViewModel {
 
   public view: ISyntheticView | undefined = void 0;
 
-  public constructor(
-    /** @internal */ @IViewFactory private readonly _factory: IViewFactory,
-    /** @internal */ @IRenderLocation private readonly _location: IRenderLocation,
-  ) { }
+  /** @internal */ private readonly _factory = resolve(IViewFactory);
+  /** @internal */ private readonly _location = resolve(IRenderLocation);
 
   public link(
     controller: IHydratableController,
@@ -266,10 +256,8 @@ export class RejectedTemplateController implements ICustomAttributeViewModel {
 
   public view: ISyntheticView | undefined = void 0;
 
-  public constructor(
-    @IViewFactory private readonly _factory: IViewFactory,
-    @IRenderLocation private readonly _location: IRenderLocation,
-  ) { }
+  /** @internal */ private readonly _factory = resolve(IViewFactory);
+  /** @internal */ private readonly _location = resolve(IRenderLocation);
 
   public link(
     controller: IHydratableController,

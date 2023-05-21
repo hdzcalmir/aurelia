@@ -36,13 +36,12 @@ import { IPlatform } from './platform';
 import { IViewFactory } from './templating/view';
 import { IRendering } from './templating/rendering';
 import type { AttrSyntax } from './resources/attribute-pattern';
-import { createError, defineProp, objectKeys, isString } from './utilities';
+import { createError, objectKeys, isString, def } from './utilities';
 import { createInterface, registerResolver, singletonRegistration } from './utilities-di';
 import { IAuSlotProjections, IAuSlotsInfo, AuSlotsInfo } from './templating/controller.projection';
 
 import type { IHydratableController } from './templating/controller';
 import type { PartialCustomElementDefinition } from './resources/custom-element';
-import { createText, insertBefore } from './utilities-dom';
 
 export const enum InstructionType {
   hydrateElement = 'ra',
@@ -384,7 +383,7 @@ export function renderer<TType extends string>(targetType: TType): InstructionRe
     target.register = function (container: IContainer): void {
       singletonRegistration(IRenderer, this).register(container);
     };
-    defineProp(target.prototype, 'target', {
+    def(target.prototype, 'target', {
       configurable: true,
       get: function () { return targetType; }
     });
@@ -862,7 +861,7 @@ export class TextBindingRenderer implements IRenderer {
       platform.domWriteQueue,
       platform,
       ensureExpression(exprParser, instruction.from, ExpressionType.IsProperty),
-      insertBefore(target.parentNode!, createText(platform, ''), target),
+      target as Text,
       instruction.strict,
     ));
   }

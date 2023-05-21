@@ -1,8 +1,8 @@
 import {
   ILogger,
-  LogLevel,
   onResolve,
-  resolveAll,
+  onResolveAll,
+  resolve,
   Writable,
 } from '@aurelia/kernel';
 import {
@@ -40,10 +40,8 @@ export class Switch implements ICustomAttributeViewModel {
    */
   public readonly promise: Promise<void> | void = void 0;
 
-  public constructor(
-    @IViewFactory private readonly _factory: IViewFactory,
-    @IRenderLocation private readonly _location: IRenderLocation,
-  ) { }
+  /** @internal */ private readonly _factory = resolve(IViewFactory);
+  /** @internal */ private readonly _location = resolve(IRenderLocation);
 
   public link(
     _controller: IHydratableController,
@@ -179,7 +177,7 @@ export class Switch implements ICustomAttributeViewModel {
       return cases[0].activate(initiator, scope);
     }
 
-    return resolveAll(...cases.map(($case) => $case.activate(initiator, scope)));
+    return onResolveAll(...cases.map(($case) => $case.activate(initiator, scope)));
   }
 
   /** @internal */
@@ -199,7 +197,7 @@ export class Switch implements ICustomAttributeViewModel {
     }
 
     return onResolve(
-      resolveAll(...cases.reduce((acc: (void | Promise<void>)[], $case) => {
+      onResolveAll(...cases.reduce((acc: (void | Promise<void>)[], $case) => {
         if (!newActiveCases.includes($case)) {
           acc.push($case.deactivate(initiator));
         }
@@ -237,8 +235,6 @@ export class Switch implements ICustomAttributeViewModel {
 let caseId = 0;
 @templateController('case')
 export class Case implements ICustomAttributeViewModel {
-  /** @internal */ protected static inject = [IViewFactory, IObserverLocator, IRenderLocation, ILogger];
-
   /** @internal */ public readonly id: number = ++caseId;
   public readonly $controller!: ICustomAttributeController<this>; // This is set by the controller after this instance is constructed
 
@@ -258,19 +254,12 @@ export class Case implements ICustomAttributeViewModel {
 
   public view: ISyntheticView | undefined = void 0;
   private $switch!: Switch;
-  /** @internal */ private readonly _debug: boolean;
-  /** @internal */ private readonly _logger: ILogger;
   /** @internal */ private _observer: ICollectionObserver<CollectionKind.array> | undefined;
 
-  public constructor(
-    /** @internal */ private readonly _factory: IViewFactory,
-    /** @internal */ private readonly _locator: IObserverLocator,
-    /** @internal */ private readonly _location: IRenderLocation,
-    logger: ILogger,
-  ) {
-    this._debug = logger.config.level <= LogLevel.debug;
-    this._logger = logger.scopeTo(`${this.constructor.name}-#${this.id}`);
-  }
+  /** @internal */ private readonly _factory = resolve(IViewFactory);
+  /** @internal */ private readonly _locator = resolve(IObserverLocator);
+  /** @internal */ private readonly _location = resolve(IRenderLocation);
+  /** @internal */ private readonly _logger = resolve(ILogger).scopeTo(`${this.constructor.name}-#${this.id}`);
 
   public link(
     controller: IHydratableController,
