@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { kebabCase, camelCase, } from '@aurelia/kernel';
 import { ForOfStatement, Interpolation, parseExpression, AccessScopeExpression, BindingIdentifier, PrimitiveLiteralExpression, IExpressionParser, } from '@aurelia/runtime';
-import { bindable, BindableDefinition, customAttribute, CustomAttribute, customElement, CustomElement, IAttributeParser, HydrateAttributeInstruction, AttrSyntax, If, attributePattern, PropertyBindingInstruction, InterpolationInstruction, } from '@aurelia/runtime-html';
+import { bindable, BindableDefinition, customAttribute, CustomAttribute, customElement, CustomElement, IAttributeParser, HydrateAttributeInstruction, AttrSyntax, If, attributePattern, PropertyBindingInstruction, InterpolationInstruction, DefaultBindingSyntax, } from '@aurelia/runtime-html';
 import { assert, eachCartesianJoinFactory, TestContext, verifyBindingInstructionsEqual, } from '@aurelia/testing';
 export function createAttribute(name, value) {
     const attr = document.createAttribute(name);
@@ -50,8 +50,8 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             });
             describe('with nested <template> without template controller', function () {
                 it('does not compile <template> without template controller', function () {
-                    const definition = compileWith(`<template><template>\${prop}</template></template>`, []);
-                    assert.deepStrictEqual(definition.instructions, [], `definition.instructions`);
+                    const { instructions } = compileWith(`<template><template>\${prop}</template></template>`, []);
+                    assert.deepStrictEqual(instructions, [], `definition.instructions`);
                 });
             });
             describe('with custom element', function () {
@@ -214,6 +214,19 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     });
                     verifyInstructions(rootInstructions[0].props, expectedElInstructions);
                 });
+                it('enables binding commands to override custom attribute', function () {
+                    const { template, instructions } = compileWith(`<el foo.trigger="1">`, [DefaultBindingSyntax, CustomAttribute.define('foo', class {
+                        })]);
+                    assertTemplateHtml(template, '<au-m></au-m><el></el>');
+                    verifyInstructions(instructions[0], [
+                        { toVerify: ['type', 'from', 'to', 'capture'],
+                            type: "hb" /* TT.listenerBinding */,
+                            from: new PrimitiveLiteralExpression(1),
+                            to: 'foo',
+                            capture: false
+                        },
+                    ]);
+                });
                 describe('with template controller', function () {
                     it('compiles', function () {
                         let Prop = class Prop {
@@ -225,7 +238,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                             })
                         ], Prop);
                         const { template, instructions } = compileWith(`<template><el prop.bind="p"></el></template>`, [Prop]);
-                        assert.strictEqual(template.outerHTML, '<template><!--au-start--><!--au-end--><au-m class="au"></au-m></template>', `(template as HTMLTemplateElement).outerHTML`);
+                        assert.strictEqual(template.outerHTML, '<template><au-m></au-m><!--au-start--><!--au-end--></template>', `(template as HTMLTemplateElement).outerHTML`);
                         const [hydratePropAttrInstruction] = instructions[0];
                         assert.strictEqual(hydratePropAttrInstruction.def.template.outerHTML, '<template><el></el></template>', `(hydratePropAttrInstruction.def.template as HTMLTemplateElement).outerHTML`);
                     });
@@ -239,7 +252,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                             })
                         ], Prop);
                         const { template, instructions } = compileWith(`<template><el name.bind="name" title.bind="title" prop.bind="p"></el></template>`, [Prop]);
-                        assert.strictEqual(template.outerHTML, '<template><!--au-start--><!--au-end--><au-m class="au"></au-m></template>', `(template as HTMLTemplateElement).outerHTML`);
+                        assert.strictEqual(template.outerHTML, '<template><au-m></au-m><!--au-start--><!--au-end--></template>', `(template as HTMLTemplateElement).outerHTML`);
                         const [hydratePropAttrInstruction] = instructions[0];
                         verifyInstructions(hydratePropAttrInstruction.props, [
                             {
@@ -312,8 +325,9 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 });
                 describe('<let/> element', function () {
                     it('compiles', function () {
-                        const { instructions } = compileWith(`<template><let></let></template>`);
+                        const { template, instructions } = compileWith(`<template><let></let></template>`);
                         assert.strictEqual(instructions.length, 1, `instructions.length`);
+                        assert.strictEqual(template.outerHTML, '<template><au-m></au-m><let></let></template>');
                     });
                     it('does not generate instructions when there is no bindings', function () {
                         const { instructions } = compileWith(`<template><let></let></template>`);
@@ -358,6 +372,24 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                                 { toVerify: ['type', 'toBindingContext'], type: "rd" /* TT.hydrateLetElement */, toBindingContext: true }
                             ]);
                         });
+                    });
+                });
+                describe('with containerless', function () {
+                    it('compiles [containerless] attribute', function () {
+                        const { template } = compileWith('<el containerless>', [CustomElement.define({ name: 'el' })]);
+                        assertTemplateHtml(template, '<au-m></au-m><!--au-start--><!--au-end-->');
+                    });
+                    it('compiles [containerless] after an interpolation', function () {
+                        const { template } = compileWith('${message}<el containerless>', [CustomElement.define({ name: 'el' })]);
+                        assertTemplateHtml(template, '<au-m></au-m> <au-m></au-m><!--au-start--><!--au-end-->');
+                    });
+                    it('compiles [containerless] before an interpolation', function () {
+                        const { template } = compileWith('<el containerless></el>${message}', [CustomElement.define({ name: 'el' })]);
+                        assertTemplateHtml(template, '<au-m></au-m><!--au-start--><!--au-end--><au-m></au-m> ');
+                    });
+                    it('compiles [containerless] next to each other', function () {
+                        const { template } = compileWith('<el containerless></el><el containerless></el>', [CustomElement.define({ name: 'el' })]);
+                        assertTemplateHtml(template, '<au-m></au-m><!--au-start--><!--au-end-->'.repeat(2));
                     });
                 });
             });
@@ -627,7 +659,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     ...defaultCustomElementDefinitionProperties,
                     name: stringOrUnnamed(target),
                     key: `au:resource:custom-element:${stringOrUnnamed(target)}`,
-                    template: ctx.createElementFromMarkup(`<template><!--au-start--><!--au-end--><au-m class="au"></au-m></template>`),
+                    template: ctx.createElementFromMarkup(`<template><au-m></au-m><!--au-start--><!--au-end--></template>`),
                     instructions: [[childInstr]],
                     needsCompile: false,
                     enhance: false,
@@ -642,7 +674,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             };
             const output = {
                 ...defaultCustomElementDefinitionProperties,
-                template: ctx.createElementFromMarkup(`<template><div><!--au-start--><!--au-end--><au-m class="au"></au-m></div></template>`),
+                template: ctx.createElementFromMarkup(`<template><div><au-m></au-m><!--au-start--><!--au-end--></div></template>`),
                 instructions: [[instruction]],
                 needsCompile: false,
                 enhance: false,
@@ -659,7 +691,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 instructions = [];
             }
             else {
-                compiledMarkup = `<${tagName}><!--au-start--><!--au-end--><au-m class="au"></au-m></${tagName}>`;
+                compiledMarkup = `<${tagName}><au-m></au-m><!--au-start--><!--au-end--></${tagName}>`;
                 instructions = [[childInstr]];
             }
             const instruction = {
@@ -685,7 +717,9 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             };
             const output = {
                 ...defaultCustomElementDefinitionProperties,
-                template: ctx.createElementFromMarkup(finalize ? `<template><div><!--au-start--><!--au-end--><au-m class="au"></au-m></div></template>` : `<!--au-start--><!--au-end--><au-m class="au"></au-m>`),
+                template: finalize
+                    ? ctx.createElementFromMarkup(`<template><div><au-m></au-m><!--au-start--><!--au-end--></div></template>`)
+                    : `<au-m></au-m><!--au-start--><!--au-end-->`,
                 instructions: [[instruction]],
                 needsCompile: false,
                 enhance: false,
@@ -737,13 +771,16 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             })
                 .map(a => `${a[0]}="${a[1]}"`)
                 .join(' ');
-        const outputMarkup = ctx.createElementFromMarkup(`<${def.name} ${outputAttributeMarkup}>${(childOutput?.template.outerHTML) || ''}</${def.name}>`);
-        outputMarkup.classList.add('au');
+        // const outputMarkup = ctx.createElementFromMarkup(
+        //   `<au-m></au-m><${def.name} ${outputAttributeMarkup}>${(childOutput?.template.outerHTML) || ''}</${def.name}>`
+        // );
+        // outputMarkup.classList.add('au');
+        const outputMarkup = `<au-m></au-m><${def.name} ${outputAttributeMarkup}>${(childOutput?.template.outerHTML) || ''}</${def.name}>`;
         const output = {
             ...defaultCustomElementDefinitionProperties,
             name: 'unnamed',
             key: 'au:resource:custom-element:unnamed',
-            template: finalize ? ctx.createElementFromMarkup(`<template><div>${outputMarkup.outerHTML}</div></template>`) : outputMarkup,
+            template: finalize ? ctx.createElementFromMarkup(`<template><div>${outputMarkup}</div></template>`) : outputMarkup,
             instructions: [[instruction, ...siblingInstructions], ...nestedElInstructions],
             needsCompile: false,
             enhance: false,
@@ -770,13 +807,14 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         // old behavior: keep attribute on the output template as is
         // const outputMarkup = ctx.createElementFromMarkup(`<div ${resName}="${attributeMarkup}">${(childOutput && childOutput.template.outerHTML) || ''}</div>`);
         // new behavior: if it's custom attribute, remove
-        const outputMarkup = ctx.createElementFromMarkup(`<div>${(childOutput?.template.outerHTML) || ''}</div>`);
-        outputMarkup.classList.add('au');
+        // const outputMarkup = ctx.createElementFromMarkup(`<div>${(childOutput?.template.outerHTML) || ''}</div>`);
+        // outputMarkup.classList.add('au');
+        const outputMarkup = `<au-m></au-m><div>${(childOutput?.template.outerHTML) || ''}</div>`;
         const output = {
             ...defaultCustomElementDefinitionProperties,
             name: 'unnamed',
             key: 'au:resource:custom-element:unnamed',
-            template: finalize ? ctx.createElementFromMarkup(`<template><div>${outputMarkup.outerHTML}</div></template>`) : outputMarkup,
+            template: finalize ? ctx.createElementFromMarkup(`<template><div>${outputMarkup}</div></template>`) : outputMarkup,
             instructions: [[instruction, ...siblingInstructions], ...nestedElInstructions],
             needsCompile: false,
             enhance: false,
@@ -891,7 +929,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         };
                         const expected = {
                             ...defaultCustomElementDefinitionProperties,
-                            template: ctx.createElementFromMarkup(`<template><${el} plain data-attr="value" class="abc au" ${debugMode ? `${n1}="${v1}" ` : ''}></${el}></template>`),
+                            template: ctx.createElementFromMarkup(`<template><au-m></au-m><${el} plain data-attr="value" class="abc" ${debugMode ? `${n1}="${v1}" ` : ''}></${el}></template>`),
                             instructions: [[i1]],
                             surrogates: [],
                             needsCompile: false,
@@ -913,7 +951,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         };
                         const expected = {
                             ...defaultCustomElementDefinitionProperties,
-                            template: ctx.createElementFromMarkup(`<template><${el} plain data-attr="value" ${debugMode ? `${n1}="${v1}" ` : ''}class="au"></${el}></template>`),
+                            template: ctx.createElementFromMarkup(`<template><au-m></au-m><${el} plain data-attr="value" ${debugMode ? `${n1}="${v1}" ` : ''}></${el}></template>`),
                             instructions: [[i1]],
                             surrogates: [],
                             needsCompile: false,
@@ -939,7 +977,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     };
                     const expected = {
                         ...defaultCustomElementDefinitionProperties,
-                        template: ctx.createElementFromMarkup(`<template><span plain data-attr="value" class="${debugMode ? `abc-\${value} ` : ''}au"></span></template>`),
+                        template: ctx.createElementFromMarkup(`<template><au-m></au-m><span plain data-attr="value"${debugMode ? ` class="abc-\${value}"` : ''}></span></template>`),
                         instructions: [[
                                 {
                                     "type": "rf" /* InstructionType.interpolation */,
@@ -1032,10 +1070,10 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         const expected = {
                             ...defaultCustomElementDefinitionProperties,
                             // old behavior:
-                            // template: ctx.createElementFromMarkup(`<template><div ${name}="${value}" class="au"></div></template>`),
+                            // template: ctx.createElementFromMarkup(`<template><au-m></au-m><div ${name}="${value}"></div></template>`),
                             // new behavior
                             // todo: ability to configure whether attr should be removed
-                            template: ctx.createElementFromMarkup(`<template><div class="au"></div></template>`),
+                            template: ctx.createElementFromMarkup(`<template><au-m></au-m><div></div></template>`),
                             instructions: [[instruction]],
                             surrogates: [],
                             needsCompile: false,
@@ -1280,6 +1318,23 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             });
             const Baz = CustomAttribute.define({ name: 'baz', isTemplateController: true }, class Baz {
             });
+            for (const [otherAttrPosition, appTemplate] of [
+                ['before', '<div a.bind="b" foo bar>'],
+                ['middle', '<div foo a.bind="b" bar>'],
+                ['after', '<div foo bar a.bind="b">']
+            ]) {
+                it(`compiles 2 template controller on an elements with another attribute in ${otherAttrPosition}`, function () {
+                    const { createProp, result: { template, instructions } } = compileWith(appTemplate, Foo, Bar);
+                    const [[{ res: fooDef, def: { template: fooTemplate, instructions: fooInnerInstructions } }]] = instructions;
+                    const [[{ res: barDef, def: { template: barTemplate, instructions: barInnerInstructions } }]] = fooInnerInstructions;
+                    assertTemplateHtml(template, '<au-m></au-m><!--au-start--><!--au-end-->');
+                    assert.strictEqual(fooDef.Type, Foo);
+                    assertTemplateHtml(fooTemplate, '<au-m></au-m><!--au-start--><!--au-end-->');
+                    assert.strictEqual(barDef.Type, Bar);
+                    assertTemplateHtml(barTemplate, '<au-m></au-m><div></div>');
+                    verifyBindingInstructionsEqual(barInnerInstructions[0], [createProp({ from: 'b', to: 'a' })]);
+                });
+            }
             eachCartesianJoinFactory([
                 [
                     () => {
@@ -1323,9 +1378,13 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 it(`[Resolve res: ${resolveRes}] ${input.template}`, function () {
                     const { sut, container } = createFixture(ctx);
                     sut.resolveResources = resolveRes;
-                    const getOuterHtml = (node) => /au-m/i.test(node.nodeName)
-                        ? `<!--au-start--><!--au-end-->${node.outerHTML}`
-                        : node.outerHTML;
+                    const getOuterHtml = (node) => {
+                        return typeof node === 'string'
+                            ? node
+                            : /au-m/i.test(node.nodeName)
+                                ? `<!--au-start--><!--au-end-->${node.outerHTML}`
+                                : node.outerHTML;
+                    };
                     const output = {
                         ...defaultCustomElementDefinitionProperties,
                         template: ctx.createElementFromMarkup(`<template><div>${getOuterHtml(output1.template)}${getOuterHtml(output2.template)}${getOuterHtml(output3.template)}</div></template>`),
@@ -1351,6 +1410,24 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     }
                 });
             });
+            function compileWith(markup, ...extraResources) {
+                const ctx = TestContext.create();
+                const container = ctx.container;
+                const sut = ctx.templateCompiler;
+                container.register(...extraResources);
+                const templateDefinition = {
+                    template: markup,
+                    instructions: [],
+                    surrogates: [],
+                    shadowOptions: { mode: 'open' }
+                };
+                const parser = container.get(IExpressionParser);
+                return {
+                    result: sut.compile(templateDefinition, container, null),
+                    parser,
+                    createProp: ({ from, to, mode = 2 /* BindingMode.toView */ }) => new PropertyBindingInstruction(parser.parse(from, 16 /* ExpressionType.IsProperty */), to, mode)
+                };
+            }
         });
         describe('TemplateCompiler - combinations -- attributes on custom elements', function () {
             eachCartesianJoinFactory([
@@ -1694,6 +1771,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             this.bindables = bindables;
             this.primary = primary;
         }
+    }
+    function assertTemplateHtml(template, expected) {
+        assert.strictEqual(typeof template === 'string'
+            ? template
+            : template.innerHTML, expected);
     }
 });
 //# sourceMappingURL=template-compiler.spec.js.map

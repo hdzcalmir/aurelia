@@ -2,12 +2,12 @@ import { ITemplateCompiler } from '../renderer';
 import { BindableDefinition } from '../bindable';
 import { AttrSyntax } from '../resources/attribute-pattern';
 import { CustomElementDefinition } from '../resources/custom-element';
-import type { IContainer, IResolver, Constructable } from '@aurelia/kernel';
+import type { IContainer, Constructable } from '@aurelia/kernel';
 import type { CustomAttributeDefinition } from '../resources/custom-attribute';
 import type { PartialCustomElementDefinition } from '../resources/custom-element';
 import type { ICompliationInstruction, IInstruction } from '../renderer';
 export declare class TemplateCompiler implements ITemplateCompiler {
-    static register(container: IContainer): IResolver<ITemplateCompiler>;
+    static register(container: IContainer): void;
     debug: boolean;
     resolveResources: boolean;
     compile(partialDefinition: PartialCustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;

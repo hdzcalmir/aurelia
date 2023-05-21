@@ -12,7 +12,7 @@ const singletonRegistration = kernel.Registration.singleton;
 /** @internal */
 const instanceRegistration = kernel.Registration.instance;
 /** @internal */
-const callbackRegistration = kernel.Registration.callback;
+kernel.Registration.callback;
 
 /**
  * The dialog service for composing view & view model into a dialog
@@ -245,33 +245,31 @@ function createDialogCloseError(output) {
  * A default implementation for the dialog service allowing for the creation of dialogs.
  */
 class DialogService {
-    get controllers() {
-        return this.dlgs.slice(0);
-    }
-    get top() {
-        const dlgs = this.dlgs;
-        return dlgs.length > 0 ? dlgs[dlgs.length - 1] : null;
-    }
-    // tslint:disable-next-line:member-ordering
-    static get inject() { return [kernel.IContainer, runtimeHtml.IPlatform, IDialogGlobalSettings]; }
-    constructor(_ctn, p, _defaultSettings) {
-        this._ctn = _ctn;
-        this.p = p;
-        this._defaultSettings = _defaultSettings;
+    constructor() {
         /**
          * The current dialog controllers
          *
          * @internal
          */
         this.dlgs = [];
+        /** @internal */ this._ctn = kernel.resolve(kernel.IContainer);
+        /** @internal */ this.p = kernel.resolve(runtimeHtml.IPlatform);
+        /** @internal */ this._defaultSettings = kernel.resolve(IDialogGlobalSettings);
     }
     static register(container) {
-        container.register(singletonRegistration(IDialogService, this), runtimeHtml.AppTask.deactivating(IDialogService, dialogService => kernel.onResolve(dialogService.closeAll(), (openDialogController) => {
+        container.register(singletonRegistration(this, this), kernel.Registration.aliasTo(this, IDialogService), runtimeHtml.AppTask.deactivating(IDialogService, dialogService => kernel.onResolve(dialogService.closeAll(), (openDialogController) => {
             if (openDialogController.length > 0) {
                 // todo: what to do?
                 throw createError(`AUR0901: There are still ${openDialogController.length} open dialog(s).`);
             }
         })));
+    }
+    get controllers() {
+        return this.dlgs.slice(0);
+    }
+    get top() {
+        const dlgs = this.dlgs;
+        return dlgs.length > 0 ? dlgs[dlgs.length - 1] : null;
     }
     /**
      * Opens a new dialog.
@@ -296,10 +294,7 @@ class DialogService {
             const container = $settings.container ?? this._ctn.createChild();
             resolve(kernel.onResolve($settings.load(), loadedSettings => {
                 const dialogController = container.invoke(DialogController);
-                container.register(instanceRegistration(IDialogController, dialogController));
-                container.register(callbackRegistration(DialogController, () => {
-                    throw createError(`AUR0902: Invalid injection of DialogController. Use IDialogController instead.`);
-                }));
+                container.register(instanceRegistration(IDialogController, dialogController), instanceRegistration(DialogController, dialogController));
                 return kernel.onResolve(dialogController.activate(loadedSettings), openResult => {
                     if (!openResult.wasCancelled) {
                         if (this.dlgs.push(dialogController) === 1) {
@@ -374,7 +369,7 @@ class DialogSettings {
         const loaded = this;
         const cmp = this.component;
         const template = this.template;
-        const maybePromise = kernel.resolveAll(...[
+        const maybePromise = kernel.onResolveAll(...[
             cmp == null
                 ? void 0
                 : kernel.onResolve(cmp(), loadedCmp => { loaded.component = loadedCmp; }),
@@ -433,14 +428,14 @@ class DefaultDialogGlobalSettings {
 }
 const baseWrapperCss = 'position:absolute;width:100%;height:100%;top:0;left:0;';
 class DefaultDialogDomRenderer {
-    constructor(p) {
-        this.p = p;
+    constructor() {
+        this.p = kernel.resolve(runtimeHtml.IPlatform);
         this.wrapperCss = `${baseWrapperCss} display:flex;`;
         this.overlayCss = baseWrapperCss;
         this.hostCss = 'position:relative;margin:auto;';
     }
     static register(container) {
-        singletonRegistration(IDialogDomRenderer, this).register(container);
+        container.register(singletonRegistration(IDialogDomRenderer, this));
     }
     render(dialogHost) {
         const doc = this.p.document;
@@ -455,8 +450,6 @@ class DefaultDialogDomRenderer {
         return new DefaultDialogDom(wrapper, overlay, host);
     }
 }
-/** @internal */
-DefaultDialogDomRenderer.inject = [runtimeHtml.IPlatform];
 class DefaultDialogDom {
     constructor(wrapper, overlay, contentHost) {
         this.wrapper = wrapper;

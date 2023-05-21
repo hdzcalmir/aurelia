@@ -1,31 +1,5 @@
 import { Metadata, isObject, applyMetadataPolyfill } from '@aurelia/metadata';
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-}
-
 /** @internal */ const safeString = String;
 /** @internal */ const getOwnMetadata = Metadata.getOwn;
 /** @internal */ const hasOwnMetadata = Metadata.hasOwn;
@@ -279,6 +253,19 @@ const firstDefined = (...values) => {
     }
     throw createError(`No default value found`);
 };
+/**
+ * Get the prototypes of a class hierarchy. Es6 classes have their parent class as prototype
+ * so this will return a list of constructors
+ *
+ * @example
+ * ```ts
+ * class A {}
+ * class B extends A {}
+ *
+ * assert.deepStrictEqual(getPrototypeChain(A), [A])
+ * assert.deepStrictEqual(getPrototypeChain(B), [B, A])
+ * ```
+ */
 const getPrototypeChain = /*@__PURE__*/ (function () {
     const functionPrototype = Function.prototype;
     const getPrototypeOf = Object.getPrototypeOf;
@@ -368,7 +355,7 @@ const onResolve = (maybePromise, resolveCallback) => {
  *
  * If none of the values is a promise, nothing is returned, to indicate that things can stay synchronous.
  */
-const resolveAll = (...maybePromises) => {
+const onResolveAll = (...maybePromises) => {
     let maybePromise = void 0;
     let firstPromise = void 0;
     let promises = void 0;
@@ -788,7 +775,6 @@ class Container {
                 if (resolver == null) {
                     current = current.parent;
                     if (current == null) {
-                        currentContainer = previousContainer;
                         return emptyArray;
                     }
                 }
@@ -816,6 +802,9 @@ class Container {
         finally {
             currentContainer = previousContainer;
         }
+    }
+    hasFactory(key) {
+        return this._factories.has(key);
     }
     getFactory(Type) {
         let factory = this._factories.get(Type);
@@ -995,7 +984,6 @@ function resolve(...keys) {
         ? currentContainer.get(keys[0])
         : keys.map(containerGetKey, currentContainer);
 }
-/* eslint-enable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment, prefer-const */
 const buildAllResponse = (resolver, handler, requestor) => {
     if (resolver instanceof Resolver && resolver._strategy === 4 /* ResolverStrategy.array */) {
         const state = resolver._state;
@@ -1073,6 +1061,7 @@ const cacheCallbackResult = (fun) => {
     };
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 applyMetadataPolyfill(Reflect, false, false);
 class ResolverBuilder {
     constructor(
@@ -1556,6 +1545,23 @@ const newInstanceForScope = /*@__PURE__*/ createResolver((key, handler, requesto
  */
 const newInstanceOf = /*@__PURE__*/ createResolver((key, handler, requestor) => createNewInstance(key, handler, requestor));
 const createNewInstance = (key, handler, requestor) => {
+    // 1. if there's a factory registration for the key
+    if (handler.hasFactory(key)) {
+        return handler.getFactory(key).construct(requestor);
+    }
+    // 2. if key is an interface
+    if (isInterface(key)) {
+        const hasDefault = isFunction(key.register);
+        const resolver = handler.getResolver(key, hasDefault);
+        const factory = resolver?.getFactory?.(handler);
+        // 2.1 and has factory
+        if (factory != null) {
+            return factory.construct(requestor);
+        }
+        // 2.2 cannot instantiate a dummy interface
+        throw cannotInstantiateInterfaceError(key);
+    }
+    // 3. jit factory, in case of newInstanceOf(SomeClass)
     return handler.getFactory(key).construct(requestor);
 };
 
@@ -1762,6 +1768,9 @@ class InstanceProvider {
         this._instance = null;
     }
 }
+const isInterface = (key) => isFunction(key) && key.$isInterface === true;
+const cannotInstantiateInterfaceError = (key) => createError(`AURxxxx: Failed to instantiate ${key}, there's no registration and no default implementation.`)
+    ;
 const noInstanceError = (name) => {
     {
         return createError(`AUR0013: Cannot call resolve ${name} before calling prepare or after calling dispose.`);
@@ -1775,6 +1784,32 @@ const emptyObject = Object.freeze({});
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 function noop() { }
 const IPlatform = /*@__PURE__*/ createInterface('IPlatform');
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+function __param(paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+}
 
 var LogLevel;
 (function (LogLevel) {
@@ -2399,5 +2434,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ColorOptions, ConsoleSink, ContainerConfiguration, DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, DefaultResolver, EventAggregator, IContainer, IEventAggregator, ILogConfig, ILogEventFactory, ILogger, IModuleLoader, IPlatform, IServiceLocator, ISink, InstanceProvider, LogConfig, LogLevel, LoggerConfiguration, ModuleItem, Protocol, Registration, all, bound, camelCase, emptyArray, emptyObject, factory, firstDefined, format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, getPrototypeChain, ignore, inject, isArrayIndex, isNativeFunction, kebabCase, lazy, mergeArrays, newInstanceForScope, newInstanceOf, noop, onResolve, optional, pascalCase, resolve, resolveAll, singleton, sink, toArray, transient };
+export { AnalyzedModule, ColorOptions, ConsoleSink, ContainerConfiguration, DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, DefaultResolver, EventAggregator, IContainer, IEventAggregator, ILogConfig, ILogEventFactory, ILogger, IModuleLoader, IPlatform, IServiceLocator, ISink, InstanceProvider, LogConfig, LogLevel, LoggerConfiguration, ModuleItem, Protocol, Registration, all, bound, camelCase, emptyArray, emptyObject, factory, firstDefined, format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, getPrototypeChain, ignore, inject, isArrayIndex, isNativeFunction, kebabCase, lazy, mergeArrays, newInstanceForScope, newInstanceOf, noop, onResolve, onResolveAll, optional, pascalCase, resolve, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.dev.mjs.map

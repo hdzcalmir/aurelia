@@ -1,6 +1,6 @@
-import { Protocol, getPrototypeChain, firstDefined, kebabCase, noop, DI, Registration, mergeArrays, IPlatform as IPlatform$1, emptyArray, InstanceProvider, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, IContainer, optional, ILogger, resolveAll, onResolve, all, camelCase, emptyObject, IServiceLocator, transient, toArray } from '@aurelia/kernel';
+import { Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, firstDefined, mergeArrays, resolve, IPlatform as IPlatform$1, emptyArray, InstanceProvider, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, IContainer, optional, ILogger, onResolveAll, onResolve, all, camelCase, IServiceLocator, emptyObject, transient, toArray } from '@aurelia/kernel';
 import { Metadata, isObject } from '@aurelia/metadata';
-import { subscriberCollection, ISignaler, astEvaluate, connectable, ConnectableSwitcher, ProxyObservable, astBind, astUnbind, astAssign, IExpressionParser, IObserverLocator, Scope, ICoercionConfiguration, AccessScopeExpression, PropertyAccessor, INodeObserverLocator, getObserverLookup, SetterObserver, IDirtyChecker, createIndexMap, applyMutationsToIndices, getCollectionObserver as getCollectionObserver$1, synchronizeIndices, BindingContext, PrimitiveLiteralExpression } from '@aurelia/runtime';
+import { ISignaler, astEvaluate, connectable, ConnectableSwitcher, ProxyObservable, subscriberCollection, astBind, astUnbind, astAssign, IExpressionParser, IObserverLocator, ICoercionConfiguration, Scope, AccessScopeExpression, PropertyAccessor, IDirtyChecker, INodeObserverLocator, getObserverLookup, SetterObserver, createIndexMap, applyMutationsToIndices, getCollectionObserver as getCollectionObserver$1, synchronizeIndices, BindingContext, PrimitiveLiteralExpression, DirtyChecker } from '@aurelia/runtime';
 import { BrowserPlatform } from '@aurelia/platform-browser';
 import { TaskAbortError } from '@aurelia/platform';
 
@@ -26,10 +26,6 @@ function __decorate(decorators, target, key, desc) {
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
 
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-}
-
 /** @internal */ const getOwnMetadata = Metadata.getOwn;
 /** @internal */ const hasOwnMetadata = Metadata.hasOwn;
 /** @internal */ const defineMetadata = Metadata.define;
@@ -50,7 +46,7 @@ const O = Object;
 /** @internal */ const objectAssign = O.assign;
 /** @internal */ const getOwnPropertyNames = O.getOwnPropertyNames;
 /** @internal */ const objectKeys = O.keys;
-const IsDataAttribute = createLookup();
+const IsDataAttribute = /*@__PURE__*/ createLookup();
 /** @internal */ const isDataAttribute = (obj, key, svgAnalyzer) => {
     if (IsDataAttribute[key] === true) {
         return true;
@@ -71,7 +67,6 @@ const IsDataAttribute = createLookup();
 // eslint-disable-next-line @typescript-eslint/ban-types
 /** @internal */ const isFunction = (v) => typeof v === 'function';
 /** @internal */ const isString = (v) => typeof v === 'string';
-/** @internal */ const defineProp = O.defineProperty;
 /** @internal */ const rethrow = (err) => { throw err; };
 /** @internal */ const areEqual = O.is;
 /** @internal */
@@ -129,7 +124,7 @@ function bindable(configOrTarget, prop) {
 function isBindableAnnotation(key) {
     return key.startsWith(baseName);
 }
-const baseName = getAnnotationKeyFor('bindable');
+const baseName = /*@__PURE__*/ getAnnotationKeyFor('bindable');
 const Bindable = objectFreeze({
     name: baseName,
     keyFrom: (name) => `${baseName}:${name}`,
@@ -155,50 +150,6 @@ const Bindable = objectFreeze({
         }
         bindableLists.forEach(addList);
         return bindables;
-    },
-    for(Type) {
-        let def;
-        const builder = {
-            add(configOrProp) {
-                let prop;
-                let config;
-                if (isString(configOrProp)) {
-                    prop = configOrProp;
-                    config = { property: prop };
-                }
-                else {
-                    prop = configOrProp.property;
-                    config = configOrProp;
-                }
-                def = BindableDefinition.create(prop, Type, config);
-                if (!hasOwnMetadata(baseName, Type, prop)) {
-                    appendAnnotationKey(Type, Bindable.keyFrom(prop));
-                }
-                defineMetadata(baseName, def, Type, prop);
-                return builder;
-            },
-            mode(mode) {
-                def.mode = mode;
-                return builder;
-            },
-            callback(callback) {
-                def.callback = callback;
-                return builder;
-            },
-            attribute(attribute) {
-                def.attribute = attribute;
-                return builder;
-            },
-            primary() {
-                def.primary = true;
-                return builder;
-            },
-            set(setInterpreter) {
-                def.set = setInterpreter;
-                return builder;
-            }
-        };
-        return builder;
     },
     getAll(Type) {
         const propStart = baseName.length + 1;
@@ -231,7 +182,7 @@ class BindableDefinition {
         this.set = set;
     }
     static create(prop, target, def = {}) {
-        return new BindableDefinition(firstDefined(def.attribute, kebabCase(prop)), firstDefined(def.callback, `${prop}Changed`), firstDefined(def.mode, 2 /* BindingMode.toView */), firstDefined(def.primary, false), firstDefined(def.property, prop), firstDefined(def.set, getInterceptor(prop, target, def)));
+        return new BindableDefinition(def.attribute ?? kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? 2 /* BindingMode.toView */, def.primary ?? false, def.property ?? prop, def.set ?? getInterceptor(prop, target, def));
     }
 }
 /* eslint-enable @typescript-eslint/no-unused-vars,spaced-comment */
@@ -239,7 +190,7 @@ function coercer(target, property, _descriptor) {
     Coercer.define(target, property);
 }
 const Coercer = {
-    key: getAnnotationKeyFor('coercer'),
+    key: /*@__PURE__*/ getAnnotationKeyFor('coercer'),
     define(target, property) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
         defineMetadata(Coercer.key, target[property].bind(target), target);
@@ -284,114 +235,28 @@ function createCoercer(coercer, nullable) {
     };
 }
 
-class BindableObserver {
-    get type() { return 1 /* AccessorType.Observer */; }
-    constructor(obj, key, cbName, set, 
-    // todo: a future feature where the observer is not instantiated via a controller
-    // this observer can become more static, as in immediately available when used
-    // in the form of a decorator
-    $controller, _coercionConfig) {
-        this.set = set;
-        this.$controller = $controller;
-        this._coercionConfig = _coercionConfig;
-        /** @internal */
-        this._value = void 0;
-        /** @internal */
-        this._oldValue = void 0;
-        const cb = obj[cbName];
-        const cbAll = obj.propertyChanged;
-        const hasCb = this._hasCb = isFunction(cb);
-        const hasCbAll = this._hasCbAll = isFunction(cbAll);
-        const hasSetter = this._hasSetter = set !== noop;
-        let val;
-        this._obj = obj;
-        this._key = key;
-        this._cbAll = hasCbAll ? cbAll : noop;
-        this.cb = hasCb ? cb : noop;
-        // when user declare @bindable({ set })
-        // it's expected to work from the start,
-        // regardless where the assignment comes from: either direct view model assignment or from binding during render
-        // so if either getter/setter config is present, alter the accessor straight await
-        if (this.cb === void 0 && !hasCbAll && !hasSetter) {
-            this._observing = false;
-        }
-        else {
-            this._observing = true;
-            val = obj[key];
-            this._value = hasSetter && val !== void 0 ? set(val, this._coercionConfig) : val;
-            this._createGetterSetter();
-        }
-    }
-    getValue() {
-        return this._value;
-    }
-    setValue(newValue) {
-        if (this._hasSetter) {
-            newValue = this.set(newValue, this._coercionConfig);
-        }
-        const currentValue = this._value;
-        if (this._observing) {
-            if (areEqual(newValue, currentValue)) {
-                return;
-            }
-            this._value = newValue;
-            this._oldValue = currentValue;
-            // todo: controller (if any) state should determine the invocation instead
-            if ( /* either not instantiated via a controller */this.$controller == null
-                /* or the controller instantiating this is bound */ || this.$controller.isBound) {
-                if (this._hasCb) {
-                    this.cb.call(this._obj, newValue, currentValue);
-                }
-                if (this._hasCbAll) {
-                    this._cbAll.call(this._obj, this._key, newValue, currentValue);
-                }
-            }
-            this.subs.notify(this._value, this._oldValue);
-        }
-        else {
-            // See SetterObserver.setValue for explanation
-            this._obj[this._key] = newValue;
-        }
-    }
-    subscribe(subscriber) {
-        if (!this._observing === false) {
-            this._observing = true;
-            this._value = this._hasSetter
-                ? this.set(this._obj[this._key], this._coercionConfig)
-                : this._obj[this._key];
-            this._createGetterSetter();
-        }
-        this.subs.add(subscriber);
-    }
-    /** @internal */
-    _createGetterSetter() {
-        Reflect.defineProperty(this._obj, this._key, {
-            enumerable: true,
-            configurable: true,
-            get: ( /* Bindable Observer */) => this._value,
-            set: (/* Bindable Observer */ value) => {
-                this.setValue(value);
-            }
-        });
-    }
-}
-subscriberCollection(BindableObserver);
-
-const resource = function (key) {
+const resource = (key) => {
     function Resolver(target, property, descriptor) {
         DI.inject(Resolver)(target, property, descriptor);
     }
     Resolver.$isResolver = true;
-    Resolver.resolve = function (handler, requestor) {
-        if ( /* is root? */requestor.root === requestor) {
-            return requestor.get(key);
-        }
-        return requestor.has(key, false)
-            ? requestor.get(key)
-            : requestor.root.get(key);
-    };
+    Resolver.resolve = (handler, requestor) => requestor.has(key, false)
+        ? requestor.get(key)
+        : requestor.root.get(key);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return Resolver;
+};
+const optionalResource = (key) => {
+    return objectAssign(function Resolver(target, property, descriptor) {
+        DI.inject(Resolver)(target, property, descriptor);
+    }, {
+        $isResolver: true,
+        resolve: (handler, requestor) => requestor.has(key, false)
+            ? requestor.get(key)
+            : requestor.root.has(key, false)
+                ? requestor.root.get(key)
+                : void 0,
+    });
 };
 /**
  * A resolver builder for resolving all registrations of a key
@@ -476,7 +341,7 @@ class BindingBehaviorDefinition {
         registerAliases(aliases, BindingBehavior, key, container);
     }
 }
-const bbBaseName = getResourceKeyFor('binding-behavior');
+const bbBaseName = /*@__PURE__*/ getResourceKeyFor('binding-behavior');
 const getBehaviorAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
 const BindingBehavior = objectFreeze({
     name: bbBaseName,
@@ -537,8 +402,9 @@ bindingBehavior('twoWay')(TwoWayBindingBehavior);
 const bindingHandlerMap$1 = new WeakMap();
 const defaultDelay$1 = 200;
 class DebounceBindingBehavior {
-    constructor(platform) {
-        this._platform = platform;
+    constructor() {
+        /** @internal */
+        this._platform = resolve(IPlatform$1);
     }
     bind(scope, binding, delay, signals) {
         const opts = {
@@ -565,15 +431,14 @@ class DebounceBindingBehavior {
         bindingHandlerMap$1.delete(binding);
     }
 }
-/** @internal */
-DebounceBindingBehavior.inject = [IPlatform$1];
 bindingBehavior('debounce')(DebounceBindingBehavior);
 
 class SignalBindingBehavior {
-    constructor(signaler) {
+    constructor() {
         /** @internal */
         this._lookup = new Map();
-        this._signaler = signaler;
+        /** @internal */
+        this._signaler = resolve(ISignaler);
     }
     bind(scope, binding, ...names) {
         if (!('handleChange' in binding)) {
@@ -597,16 +462,13 @@ class SignalBindingBehavior {
         }
     }
 }
-/** @internal */
-SignalBindingBehavior.inject = [ISignaler];
 bindingBehavior('signal')(SignalBindingBehavior);
 
 const bindingHandlerMap = new WeakMap();
 const defaultDelay = 200;
 class ThrottleBindingBehavior {
-    constructor(platform) {
-        this._now = platform.performanceNow;
-        this._taskQueue = platform.taskQueue;
+    constructor() {
+        ({ performanceNow: this._now, taskQueue: this._taskQueue } = resolve(IPlatform$1));
     }
     bind(scope, binding, delay, signals) {
         const opts = {
@@ -633,8 +495,6 @@ class ThrottleBindingBehavior {
         bindingHandlerMap.delete(binding);
     }
 }
-/** @internal */
-ThrottleBindingBehavior.inject = [IPlatform$1];
 bindingBehavior('throttle')(ThrottleBindingBehavior);
 
 const IAppTask = /*@__PURE__*/ createInterface('IAppTask');
@@ -742,8 +602,6 @@ const insertManyBefore = (parent, target, newChildNodes) => {
     }
 };
 /** @internal */
-const getPreviousSibling = (node) => node.previousSibling;
-/** @internal */
 const appendToTemplate = (parent, child) => {
     return parent.content.appendChild(child);
 };
@@ -757,21 +615,44 @@ const appendManyToTemplate = (parent, children) => {
     }
 };
 /** @internal */
-const markerToLocation = (el) => {
-    const previousSibling = el.previousSibling;
+const markerToTarget = (el) => {
+    const nextSibling = el.nextSibling;
+    let locationStart;
     let locationEnd;
-    if (previousSibling?.nodeType === /* Comment */ 8 && previousSibling.textContent === 'au-end') {
-        locationEnd = previousSibling;
-        if ((locationEnd.$start = locationEnd.previousSibling) == null) {
-            throw markerMalformedError();
-        }
-        el.parentNode?.removeChild(el);
-        return locationEnd;
-    }
-    else {
+    if (nextSibling == null) {
         throw markerMalformedError();
     }
+    if (nextSibling.nodeType === /* Comment */ 8) {
+        if (nextSibling.textContent === 'au-start') {
+            locationStart = nextSibling;
+            if ((locationEnd = locationStart.nextSibling) == null) {
+                throw markerMalformedError();
+            }
+            el.remove();
+            locationEnd.$start = locationStart;
+            return locationEnd;
+        }
+        else {
+            throw markerMalformedError();
+        }
+    }
+    el.remove();
+    return nextSibling;
 };
+// export const markerToLocation = (el: Element) => {
+//   const previousSibling = el.previousSibling;
+//   let locationEnd: IRenderLocation;
+//   if (previousSibling?.nodeType === /* Comment */8 && previousSibling.textContent === 'au-end') {
+//     locationEnd = previousSibling as IRenderLocation;
+//     if ((locationEnd.$start = locationEnd.previousSibling! as IRenderLocation) == null) {
+//       throw markerMalformedError();
+//     }
+//     el.parentNode?.removeChild(el);
+//     return locationEnd;
+//   } else {
+//     throw markerMalformedError();
+//   }
+// };
 /** @internal */
 const createMutationObserver = (node, callback) => new node.ownerDocument.defaultView.MutationObserver(callback);
 const markerMalformedError = () => createError(`AURxxxx: marker is malformed.`)
@@ -894,27 +775,20 @@ class FragmentNodeSequence {
         this._isLinked = false;
         /** @internal */
         this.ref = null;
-        this.f = fragment;
-        const targetNodeList = fragment.querySelectorAll('.au');
+        const targetNodeList = (this.f = fragment).querySelectorAll('au-m');
         let i = 0;
         let ii = targetNodeList.length;
-        let target;
+        // let target: Element;
         // eslint-disable-next-line
         let targets = this.t = Array(ii);
         while (ii > i) {
             // eagerly convert all markers to RenderLocations (otherwise the renderer
             // will do it anyway) and store them in the target list (since the comments
             // can't be queried)
-            target = targetNodeList[i];
-            if (target.nodeName === 'AU-M') {
-                // note the renderer will still call this method, but it will just return the
-                // location if it sees it's already a location
-                targets[i] = markerToLocation(target);
-            }
-            else {
-                // also store non-markers for consistent ordering
-                targets[i] = target;
-            }
+            //
+            // note the renderer will still call this method, but it will just return the
+            // location if it sees it's already a location
+            targets[i] = markerToTarget(targetNodeList[i]);
             ++i;
         }
         const childNodeList = fragment.childNodes;
@@ -1447,7 +1321,6 @@ const generateElementType = /*@__PURE__*/ (function () {
         enumerable: false,
         configurable: true,
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const defaultProto = {};
     return function (name, proto = defaultProto) {
         // Anonymous class ensures that minification cannot cause unintended side-effects, and keeps the class
@@ -1457,7 +1330,7 @@ const generateElementType = /*@__PURE__*/ (function () {
         // Define the name property so that Type.name can be used by end users / plugin authors if they really need to,
         // even when minified.
         nameDescriptor.value = name;
-        Reflect.defineProperty(Type, 'name', nameDescriptor);
+        def(Type, 'name', nameDescriptor);
         // Assign anything from the prototype that was passed in
         if (proto !== defaultProto) {
             objectAssign(Type.prototype, proto);
@@ -1557,6 +1430,7 @@ const mixinNodeObserverUseConfig = (target) => {
         }
     });
 };
+/** @internal */
 const mixinNoopSubscribable = (target) => {
     defineHiddenProp(target.prototype, 'subscribe', noop);
     defineHiddenProp(target.prototype, 'unsubscribe', noop);
@@ -1567,71 +1441,55 @@ class ClassAttributeAccessor {
     constructor(obj) {
         this.obj = obj;
         this.type = 2 /* AccessorType.Node */ | 4 /* AccessorType.Layout */;
-        this.value = '';
         /** @internal */
-        this._oldValue = '';
+        this._value = '';
         /** @internal */
         this._nameIndex = {};
         /** @internal */
         this._version = 0;
-        /** @internal */
-        this._hasChanges = false;
     }
     getValue() {
-        // is it safe to assume the observer has the latest value?
-        // todo: ability to turn on/off cache based on type
-        return this.value;
+        return this._value;
     }
     setValue(newValue) {
-        this.value = newValue;
-        this._hasChanges = newValue !== this._oldValue;
-        this._flushChanges();
-    }
-    /** @internal */
-    _flushChanges() {
-        if (this._hasChanges) {
-            this._hasChanges = false;
-            const currentValue = this.value;
-            const nameIndex = this._nameIndex;
-            const classesToAdd = getClassesToAdd(currentValue);
-            let version = this._version;
-            this._oldValue = currentValue;
-            // Get strings split on a space not including empties
-            if (classesToAdd.length > 0) {
-                this._addClassesAndUpdateIndex(classesToAdd);
-            }
-            this._version += 1;
-            // First call to setValue?  We're done.
-            if (version === 0) {
-                return;
-            }
-            // Remove classes from previous version.
-            version -= 1;
-            for (const name in nameIndex) {
-                if (!hasOwnProperty.call(nameIndex, name) || nameIndex[name] !== version) {
-                    continue;
-                }
-                // TODO: this has the side-effect that classes already present which are added again,
-                // will be removed if they're not present in the next update.
-                // Better would be do have some configurability for this behavior, allowing the user to
-                // decide whether initial classes always need to be kept, always removed, or something in between
-                this.obj.classList.remove(name);
-            }
+        if (newValue !== this._value) {
+            this._value = newValue;
+            this._flushChanges();
         }
     }
     /** @internal */
-    _addClassesAndUpdateIndex(classes) {
-        const node = this.obj;
-        const ii = classes.length;
+    _flushChanges() {
+        const nameIndex = this._nameIndex;
+        const version = ++this._version;
+        const classList = this.obj.classList;
+        const classesToAdd = getClassesToAdd(this._value);
+        const ii = classesToAdd.length;
         let i = 0;
-        let className;
-        for (; i < ii; i++) {
-            className = classes[i];
-            if (className.length === 0) {
+        let name;
+        // Get strings split on a space not including empties
+        if (ii > 0) {
+            for (; i < ii; i++) {
+                name = classesToAdd[i];
+                if (name.length === 0) {
+                    continue;
+                }
+                nameIndex[name] = this._version;
+                classList.add(name);
+            }
+        }
+        // First call to setValue?  We're done.
+        if (version === 1) {
+            return;
+        }
+        for (name in nameIndex) {
+            if (nameIndex[name] === version) {
                 continue;
             }
-            this._nameIndex[className] = this._version;
-            node.classList.add(className);
+            // TODO: this has the side-effect that classes already present which are added again,
+            // will be removed if they're not present in the next update.
+            // Better would be do have some configurability for this behavior, allowing the user to
+            // decide whether initial classes always need to be kept, always removed, or something in between
+            classList.remove(name);
         }
     }
 }
@@ -2783,6 +2641,8 @@ class ContentBinding {
         this._task = null;
         /** @internal */
         this._value = '';
+        /** @internal */
+        this._needsRemoveNode = false;
         // see Listener binding for explanation
         /** @internal */
         this.boundFn = false;
@@ -2793,19 +2653,18 @@ class ContentBinding {
     }
     updateTarget(value) {
         const target = this.target;
-        const NodeCtor = this.p.Node;
         const oldValue = this._value;
         this._value = value;
-        if (oldValue instanceof NodeCtor) {
+        if (this._needsRemoveNode) {
             oldValue.parentNode?.removeChild(oldValue);
+            this._needsRemoveNode = false;
         }
-        if (value instanceof NodeCtor) {
-            target.textContent = '';
+        if (value instanceof this.p.Node) {
             target.parentNode?.insertBefore(value, target);
+            value = '';
+            this._needsRemoveNode = true;
         }
-        else {
-            target.textContent = safeString(value);
-        }
+        target.textContent = safeString(value);
     }
     handleChange() {
         if (!this.isBound) {
@@ -2872,6 +2731,9 @@ class ContentBinding {
         }
         this.isBound = false;
         astUnbind(this.ast, this._scope, this);
+        if (this._needsRemoveNode) {
+            this._value.parentNode?.removeChild(this._value);
+        }
         // TODO: should existing value (either connected node, or a string)
         // be removed when this binding is unbound?
         // this.updateTarget('');
@@ -3269,17 +3131,6 @@ class AuSlotsInfo {
 }
 const IAuSlotWatcher = /*@__PURE__*/ createInterface('IAuSlotWatcher');
 class AuSlotWatcherBinding {
-    static create(controller, name, callbackName, slotName, query) {
-        const obj = controller.viewModel;
-        const slotWatcher = new AuSlotWatcherBinding(obj, callbackName, slotName, query);
-        def(obj, name, {
-            enumerable: true,
-            configurable: true,
-            get: objectAssign(( /* SlotWatcherBinding */) => slotWatcher.getValue(), { getObserver: () => slotWatcher }),
-            set: ( /* SlotWatcherBinding */) => { }
-        });
-        return slotWatcher;
-    }
     constructor(obj, callback, slotName, query) {
         /** @internal */
         this._slots = new Set();
@@ -3337,15 +3188,21 @@ class AuSlotWatcherBinding {
     }
 }
 class SlottedLifecycleHooks {
-    constructor(def) {
-        this.def = def;
+    constructor(_def) {
+        this._def = _def;
     }
     register(c) {
         instanceRegistration(ILifecycleHooks, this).register(c);
     }
     hydrating(vm, controller) {
-        const def = this.def;
-        const watcher = AuSlotWatcherBinding.create(controller, def.name, def.callback ?? `${safeString(def.name)}Changed`, def.slotName ?? 'default', def.query ?? '*');
+        const $def = this._def;
+        const watcher = new AuSlotWatcherBinding(vm, $def.callback ?? `${safeString($def.name)}Changed`, $def.slotName ?? 'default', $def.query ?? '*');
+        def(vm, $def.name, {
+            enumerable: true,
+            configurable: true,
+            get: objectAssign(( /* SlotWatcherBinding */) => watcher.getValue(), { getObserver: () => watcher }),
+            set: ( /* SlotWatcherBinding */) => { }
+        });
         instanceRegistration(IAuSlotWatcher, watcher).register(controller.container);
         controller.addBinding(watcher);
     }
@@ -3617,7 +3474,7 @@ function renderer(targetType) {
         target.register = function (container) {
             singletonRegistration(IRenderer, this).register(container);
         };
-        defineProp(target.prototype, 'target', {
+        def(target.prototype, 'target', {
             configurable: true,
             get: function () { return targetType; }
         });
@@ -3951,7 +3808,7 @@ let TextBindingRenderer =
 /** @internal */
 class TextBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, platform, ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */), insertBefore(target.parentNode, createText(platform, ''), target), instruction.strict));
+        renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, platform, ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */), target, instruction.strict));
     }
 };
 TextBindingRenderer = __decorate([
@@ -4261,13 +4118,13 @@ class Rendering {
             return all;
         }, createLookup()));
     }
-    constructor(container) {
+    constructor() {
         /** @internal */
         this._compilationCache = new WeakMap();
         /** @internal */
         this._fragmentCache = new WeakMap();
-        const ctn = container.root;
-        this._platform = (this._ctn = ctn).get(IPlatform);
+        const ctn = this._ctn = resolve(IContainer).root;
+        this._platform = ctn.get(IPlatform);
         this._exprParser = ctn.get(IExpressionParser);
         this._observerLocator = ctn.get(IObserverLocator);
         this._empty = new FragmentNodeSequence(this._platform, this._platform.document.createDocumentFragment());
@@ -4376,8 +4233,6 @@ class Rendering {
         }
     }
 }
-/** @internal */
-Rendering.inject = [IContainer];
 
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 var MountTarget;
@@ -4388,6 +4243,7 @@ var MountTarget;
     MountTarget[MountTarget["location"] = 3] = "location";
 })(MountTarget || (MountTarget = {}));
 const optionalCeFind = { optional: true };
+const optionalCoercionConfigResolver = optionalResource(ICoercionConfiguration);
 const controllerLookup = new WeakMap();
 class Controller {
     get lifecycleHooks() {
@@ -4418,15 +4274,12 @@ class Controller {
                     : `${this.parent.name}[view:${this.viewFactory.name}]`;
         }
     }
-    get hooks() {
-        return this._hooks;
-    }
     get viewModel() {
         return this._vm;
     }
     set viewModel(v) {
         this._vm = v;
-        this._hooks = v == null || this.vmKind === 2 /* ViewModelKind.synthetic */ ? HooksDefinition.none : new HooksDefinition(v);
+        this._vmHooks = v == null || this.vmKind === 2 /* ViewModelKind.synthetic */ ? HooksDefinition.none : new HooksDefinition(v);
     }
     constructor(container, vmKind, definition, 
     /**
@@ -4464,6 +4317,8 @@ class Controller {
         this.isStrictBinding = false;
         this.scope = null;
         this.isBound = false;
+        /** @internal */
+        this._isBindingDone = false;
         // If a host from another custom element was passed in, then this will be the controller for that custom element (could be `au-viewport` for example).
         // In that case, this controller will create a new host node (with the definition's name) and use that as the target host for the nodes instead.
         // That host node is separately mounted to the host controller's original host node.
@@ -4488,13 +4343,16 @@ class Controller {
         /** @internal */
         this._unbindingStack = 0;
         this._vm = viewModel;
-        this._hooks = vmKind === 2 /* ViewModelKind.synthetic */ ? HooksDefinition.none : new HooksDefinition(viewModel);
+        this._vmHooks = vmKind === 2 /* ViewModelKind.synthetic */ ? HooksDefinition.none : new HooksDefinition(viewModel);
         {
             this.logger = null;
             this.debug = false;
         }
         this.location = location;
         this._rendering = container.root.get(IRendering);
+        this.coercion = vmKind === 2 /* ViewModelKind.synthetic */
+            ? void 0
+            : container.get(optionalCoercionConfigResolver);
     }
     static getCached(viewModel) {
         return controllerLookup.get(viewModel);
@@ -4624,7 +4482,8 @@ class Controller {
             createWatchers(this, container, definition, instance);
         }
         createObservers(this, definition, instance);
-        if (this._hooks.hasDefine) {
+        if (this._vmHooks._define) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking define() hook`);
             }
@@ -4659,7 +4518,8 @@ class Controller {
         if (this._lifecycleHooks.hydrating != null) {
             this._lifecycleHooks.hydrating.forEach(callHydratingHook, this);
         }
-        if (this._hooks.hasHydrating) {
+        if (this._vmHooks._hydrating) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking hydrating() hook`);
             }
@@ -4698,7 +4558,8 @@ class Controller {
         if (this._lifecycleHooks.hydrated !== void 0) {
             this._lifecycleHooks.hydrated.forEach(callHydratedHook, this);
         }
-        if (this._hooks.hasHydrated) {
+        if (this._vmHooks._hydrated) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking hydrated() hook`);
             }
@@ -4715,7 +4576,8 @@ class Controller {
         if (this._lifecycleHooks.created !== void 0) {
             this._lifecycleHooks.created.forEach(callCreatedHook, this);
         }
-        if (this._hooks.hasCreated) {
+        if (this._vmHooks._created) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking created() hook`);
             }
@@ -4735,7 +4597,8 @@ class Controller {
         if (this._lifecycleHooks.created !== void 0) {
             this._lifecycleHooks.created.forEach(callCreatedHook, this);
         }
-        if (this._hooks.hasCreated) {
+        if (this._vmHooks._created) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`invoking created() hook`);
             }
@@ -4804,48 +4667,47 @@ class Controller {
         this._enterActivating();
         let ret;
         if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.binding != null) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.binding()`);
             }
-            ret = resolveAll(...this._lifecycleHooks.binding.map(callBindingHook, this));
+            ret = onResolveAll(...this._lifecycleHooks.binding.map(callBindingHook, this));
         }
-        if (this._hooks.hasBinding) {
+        if (this._vmHooks._binding) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`binding()`);
             }
-            ret = resolveAll(ret, this._vm.binding(this.$initiator, this.parent));
+            ret = onResolveAll(ret, this._vm.binding(this.$initiator, this.parent));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
             ret.then(() => {
-                this.bind();
+                this._isBindingDone = true;
+                if (this.state !== 1 /* State.activating */) {
+                    // because controller can be deactivated, during a long running promise in the binding phase
+                    this._leaveActivating();
+                }
+                else {
+                    this.bind();
+                }
             }).catch((err) => {
                 this._reject(err);
             });
             return this.$promise;
         }
+        this._isBindingDone = true;
         this.bind();
         return this.$promise;
     }
     bind() {
+        /* istanbul ignore next */
         if (this.debug) {
             this.logger.trace(`bind()`);
         }
         let i = 0;
         let ii = 0;
-        // let ii = this._childrenObs.length;
         let ret;
-        // timing: after binding, before bound
-        // reason: needs to start observing before all the bindings finish their bind phase,
-        //         so that changes in one binding can be reflected into the other, regardless the index of the binding
-        //
-        // todo: is this timing appropriate?
-        // if (ii > 0) {
-        //   while (ii > i) {
-        //     this._childrenObs[i].start();
-        //     ++i;
-        //   }
-        // }
         if (this.bindings !== null) {
             i = 0;
             ii = this.bindings.length;
@@ -4855,22 +4717,30 @@ class Controller {
             }
         }
         if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.bound != null) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.bound()`);
             }
-            ret = resolveAll(...this._lifecycleHooks.bound.map(callBoundHook, this));
+            ret = onResolveAll(...this._lifecycleHooks.bound.map(callBoundHook, this));
         }
-        if (this._hooks.hasBound) {
+        if (this._vmHooks._bound) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`bound()`);
             }
-            ret = resolveAll(ret, this._vm.bound(this.$initiator, this.parent));
+            ret = onResolveAll(ret, this._vm.bound(this.$initiator, this.parent));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
             ret.then(() => {
                 this.isBound = true;
-                this._attach();
+                // because controller can be deactivated, during a long running promise in the bound phase
+                if (this.state !== 1 /* State.activating */) {
+                    this._leaveActivating();
+                }
+                else {
+                    this._attach();
+                }
             }).catch((err) => {
                 this._reject(err);
             });
@@ -4899,6 +4769,7 @@ class Controller {
     }
     /** @internal */
     _attach() {
+        /* istanbul ignore next */
         if (this.debug) {
             this.logger.trace(`attach()`);
         }
@@ -4933,16 +4804,18 @@ class Controller {
         let i = 0;
         let ret = void 0;
         if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.attaching != null) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`lifecycleHooks.attaching()`);
             }
-            ret = resolveAll(...this._lifecycleHooks.attaching.map(callAttachingHook, this));
+            ret = onResolveAll(...this._lifecycleHooks.attaching.map(callAttachingHook, this));
         }
-        if (this._hooks.hasAttaching) {
+        if (this._vmHooks._attaching) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`attaching()`);
             }
-            ret = resolveAll(ret, this._vm.attaching(this.$initiator, this.parent));
+            ret = onResolveAll(ret, this._vm.attaching(this.$initiator, this.parent));
         }
         if (isPromise(ret)) {
             this._ensurePromise();
@@ -4964,10 +4837,18 @@ class Controller {
         this._leaveActivating();
     }
     deactivate(initiator, _parent) {
+        let prevActivation = void 0;
         switch ((this.state & ~16 /* State.released */)) {
             case 2 /* State.activated */:
-                // We're fully activated, so proceed with normal deactivation.
                 this.state = 4 /* State.deactivating */;
+                break;
+            case 1 /* State.activating */:
+                this.state = 4 /* State.deactivating */;
+                // we are about to deactivate, the error from activation can be ignored
+                prevActivation = this.$promise?.catch(err => {
+                        this.logger.warn('The activation error will be ignored, as the controller is already scheduled for deactivation. The activation was rejected with: %s', err);
+                    }
+                    );
                 break;
             case 0 /* State.none */:
             case 8 /* State.deactivated */:
@@ -4978,6 +4859,7 @@ class Controller {
             default:
                 throw createError(`AUR0505: ${this.name} unexpected state: ${stringifyState(this.state)}.`);
         }
+        /* istanbul-ignore-next */
         if (this.debug) {
             this.logger.trace(`deactivate()`);
         }
@@ -4987,63 +4869,59 @@ class Controller {
         }
         let i = 0;
         let ret;
-        // timing: before deactiving
-        // reason: avoid queueing a callback from the mutation observer, caused by the changes of nodes by repeat/if etc...
-        // todo: is this appropriate timing?
-        // if (this._childrenObs.length) {
-        //   for (; i < this._childrenObs.length; ++i) {
-        //     this._childrenObs[i].stop();
-        //   }
-        // }
         if (this.children !== null) {
             for (i = 0; i < this.children.length; ++i) {
                 // Child promise results are tracked by enter/leave combo's
                 void this.children[i].deactivate(initiator, this);
             }
         }
-        if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.detaching != null) {
-            if (this.debug) {
-                this.logger.trace(`lifecycleHooks.detaching()`);
+        return onResolve(prevActivation, () => {
+            if (this.isBound) {
+                if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.detaching != null) {
+                    if (this.debug) {
+                        this.logger.trace(`lifecycleHooks.detaching()`);
+                    }
+                    ret = onResolveAll(...this._lifecycleHooks.detaching.map(callDetachingHook, this));
+                }
+                if (this._vmHooks._detaching) {
+                    if (this.debug) {
+                        this.logger.trace(`detaching()`);
+                    }
+                    ret = onResolveAll(ret, this._vm.detaching(this.$initiator, this.parent));
+                }
             }
-            ret = resolveAll(...this._lifecycleHooks.detaching.map(callDetachingHook, this));
-        }
-        if (this._hooks.hasDetaching) {
-            if (this.debug) {
-                this.logger.trace(`detaching()`);
+            if (isPromise(ret)) {
+                this._ensurePromise();
+                initiator._enterDetaching();
+                ret.then(() => {
+                    initiator._leaveDetaching();
+                }).catch((err) => {
+                    initiator._reject(err);
+                });
             }
-            ret = resolveAll(ret, this._vm.detaching(this.$initiator, this.parent));
-        }
-        if (isPromise(ret)) {
-            this._ensurePromise();
-            initiator._enterDetaching();
-            ret.then(() => {
-                initiator._leaveDetaching();
-            }).catch((err) => {
-                initiator._reject(err);
-            });
-        }
-        // Note: if a 3rd party plugin happens to do any async stuff in a template controller before calling deactivate on its view,
-        // then the linking will become out of order.
-        // For framework components, this shouldn't cause issues.
-        // We can only prevent that by linking up after awaiting the detaching promise, which would add an extra tick + a fair bit of
-        // overhead on this hot path, so it's (for now) a deliberate choice to not account for such situation.
-        // Just leaving the note here so that we know to look here if a weird detaching-related timing issue is ever reported.
-        if (initiator.head === null) {
-            initiator.head = this;
-        }
-        else {
-            initiator.tail.next = this;
-        }
-        initiator.tail = this;
-        if (initiator !== this) {
-            // Only detaching is called + the linked list is built when any controller that is not the initiator, is deactivated.
-            // The rest is handled by the initiator.
-            // This means that descendant controllers have to make sure to await the initiator's promise before doing any subsequent
-            // controller api calls, or race conditions might occur.
-            return;
-        }
-        this._leaveDetaching();
-        return this.$promise;
+            // Note: if a 3rd party plugin happens to do any async stuff in a template controller before calling deactivate on its view,
+            // then the linking will become out of order.
+            // For framework components, this shouldn't cause issues.
+            // We can only prevent that by linking up after awaiting the detaching promise, which would add an extra tick + a fair bit of
+            // overhead on this hot path, so it's (for now) a deliberate choice to not account for such situation.
+            // Just leaving the note here so that we know to look here if a weird detaching-related timing issue is ever reported.
+            if (initiator.head === null) {
+                initiator.head = this;
+            }
+            else {
+                initiator.tail.next = this;
+            }
+            initiator.tail = this;
+            if (initiator !== this) {
+                // Only detaching is called + the linked list is built when any controller that is not the initiator, is deactivated.
+                // The rest is handled by the initiator.
+                // This means that descendant controllers have to make sure to await the initiator's promise before doing any subsequent
+                // controller api calls, or race conditions might occur.
+                return;
+            }
+            this._leaveDetaching();
+            return this.$promise;
+        });
     }
     removeNodes() {
         switch (this.vmKind) {
@@ -5066,6 +4944,7 @@ class Controller {
         }
     }
     unbind() {
+        /* istanbul ignore next */
         if (this.debug) {
             this.logger.trace(`unbind()`);
         }
@@ -5140,15 +5019,25 @@ class Controller {
     }
     /** @internal */
     _leaveActivating() {
+        if (this.state !== 1 /* State.activating */) {
+            --this._activatingStack;
+            // skip doing rest of the work if the controller is deactivated.
+            this._resolve();
+            if (this.$initiator !== this) {
+                this.parent._leaveActivating();
+            }
+            return;
+        }
         if (--this._activatingStack === 0) {
             if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.attached != null) {
-                _retPromise = resolveAll(...this._lifecycleHooks.attached.map(callAttachedHook, this));
+                _retPromise = onResolveAll(...this._lifecycleHooks.attached.map(callAttachedHook, this));
             }
-            if (this._hooks.hasAttached) {
+            if (this._vmHooks._attached) {
+                /* istanbul ignore next */
                 if (this.debug) {
                     this.logger.trace(`attached()`);
                 }
-                _retPromise = resolveAll(_retPromise, this._vm.attached(this.$initiator));
+                _retPromise = onResolveAll(_retPromise, this._vm.attached(this.$initiator));
             }
             if (isPromise(_retPromise)) {
                 this._ensurePromise();
@@ -5182,6 +5071,7 @@ class Controller {
     _leaveDetaching() {
         if (--this._detachingStack === 0) {
             // Note: this controller is the initiator (detach is only ever called on the initiator)
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`detach()`);
             }
@@ -5191,19 +5081,22 @@ class Controller {
             let ret;
             while (cur !== null) {
                 if (cur !== this) {
+                    /* istanbul ignore next */
                     if (cur.debug) {
                         cur.logger.trace(`detach()`);
                     }
                     cur.removeNodes();
                 }
-                if (cur.vmKind !== 2 /* ViewModelKind.synthetic */ && cur._lifecycleHooks.unbinding != null) {
-                    ret = resolveAll(...cur._lifecycleHooks.unbinding.map(callUnbindingHook, this));
-                }
-                if (cur._hooks.hasUnbinding) {
-                    if (cur.debug) {
-                        cur.logger.trace('unbinding()');
+                if (cur._isBindingDone) {
+                    if (cur.vmKind !== 2 /* ViewModelKind.synthetic */ && cur._lifecycleHooks.unbinding != null) {
+                        ret = onResolveAll(...cur._lifecycleHooks.unbinding.map(callUnbindingHook, cur));
                     }
-                    ret = resolveAll(ret, cur.viewModel.unbinding(cur.$initiator, cur.parent));
+                    if (cur._vmHooks._unbinding) {
+                        if (cur.debug) {
+                            cur.logger.trace('unbinding()');
+                        }
+                        ret = onResolveAll(ret, cur.viewModel.unbinding(cur.$initiator, cur.parent));
+                    }
                 }
                 if (isPromise(ret)) {
                     this._ensurePromise();
@@ -5227,6 +5120,7 @@ class Controller {
     /** @internal */
     _leaveUnbinding() {
         if (--this._unbindingStack === 0) {
+            /* istanbul ignore next */
             if (this.debug) {
                 this.logger.trace(`unbind()`);
             }
@@ -5234,6 +5128,7 @@ class Controller {
             let next = null;
             while (cur !== null) {
                 if (cur !== this) {
+                    cur._isBindingDone = false;
                     cur.isBound = false;
                     cur.unbind();
                 }
@@ -5242,6 +5137,7 @@ class Controller {
                 cur = next;
             }
             this.head = this.tail = null;
+            this._isBindingDone = false;
             this.isBound = false;
             this.unbind();
         }
@@ -5309,6 +5205,7 @@ class Controller {
         this.state |= 16 /* State.released */;
     }
     dispose() {
+        /* istanbul ignore next */
         if (this.debug) {
             this.logger.trace(`dispose()`);
         }
@@ -5316,7 +5213,7 @@ class Controller {
             return;
         }
         this.state |= 32 /* State.disposed */;
-        if (this._hooks.hasDispose) {
+        if (this._vmHooks._dispose) {
             this._vm.dispose();
         }
         if (this.children !== null) {
@@ -5341,7 +5238,7 @@ class Controller {
         if (visitor(this) === true) {
             return true;
         }
-        if (this._hooks.hasAccept && this._vm.accept(visitor) === true) {
+        if (this._vmHooks._accept && this._vm.accept(visitor) === true) {
             return true;
         }
         if (this.children !== null) {
@@ -5354,32 +5251,32 @@ class Controller {
         }
     }
 }
-function getLookup(instance) {
-    let lookup = instance.$observers;
-    if (lookup === void 0) {
-        Reflect.defineProperty(instance, '$observers', {
-            enumerable: false,
-            value: lookup = {},
-        });
-    }
-    return lookup;
-}
 function createObservers(controller, definition, instance) {
     const bindables = definition.bindables;
     const observableNames = getOwnPropertyNames(bindables);
     const length = observableNames.length;
+    const locator = controller.container.get(IObserverLocator);
     if (length > 0) {
-        let name;
-        let bindable;
-        let i = 0;
-        const observers = getLookup(instance);
-        const container = controller.container;
-        const coercionConfiguration = container.has(ICoercionConfiguration, true) ? container.get(ICoercionConfiguration) : null;
-        for (; i < length; ++i) {
-            name = observableNames[i];
-            if (observers[name] === void 0) {
-                bindable = bindables[name];
-                observers[name] = new BindableObserver(instance, name, bindable.callback, bindable.set, controller, coercionConfiguration);
+        for (let i = 0; i < length; ++i) {
+            const name = observableNames[i];
+            const bindable = bindables[name];
+            const handler = bindable.callback;
+            const obs = locator.getObserver(instance, name);
+            if (bindable.set !== noop) {
+                if (obs.useCoercer?.(bindable.set, controller.coercion) !== true) {
+                    throw createError(`AURxxxx: observer for property ${safeString(name)} does not support coercion.`);
+                }
+            }
+            if (instance[handler] != null || instance.propertyChanged != null) {
+                const callback = (newValue, oldValue) => {
+                    if (controller.isBound) {
+                        instance[handler]?.(newValue, oldValue);
+                        instance.propertyChanged?.(name, newValue, oldValue);
+                    }
+                };
+                if (obs.useCallback?.(callback) !== true) {
+                    throw createError(`AURxxxx: observer for property ${safeString(name)} does not support change handler.`);
+                }
             }
         }
     }
@@ -5433,18 +5330,18 @@ function isCustomElementViewModel(value) {
 }
 class HooksDefinition {
     constructor(target) {
-        this.hasDefine = 'define' in target;
-        this.hasHydrating = 'hydrating' in target;
-        this.hasHydrated = 'hydrated' in target;
-        this.hasCreated = 'created' in target;
-        this.hasBinding = 'binding' in target;
-        this.hasBound = 'bound' in target;
-        this.hasAttaching = 'attaching' in target;
-        this.hasAttached = 'attached' in target;
-        this.hasDetaching = 'detaching' in target;
-        this.hasUnbinding = 'unbinding' in target;
-        this.hasDispose = 'dispose' in target;
-        this.hasAccept = 'accept' in target;
+        this._define = 'define' in target;
+        this._hydrating = 'hydrating' in target;
+        this._hydrated = 'hydrated' in target;
+        this._created = 'created' in target;
+        this._binding = 'binding' in target;
+        this._bound = 'bound' in target;
+        this._attaching = 'attaching' in target;
+        this._attached = 'attached' in target;
+        this._detaching = 'detaching' in target;
+        this._unbinding = 'unbinding' in target;
+        this._dispose = 'dispose' in target;
+        this._accept = 'accept' in target;
     }
 }
 HooksDefinition.none = new HooksDefinition({});
@@ -5584,7 +5481,7 @@ class AppRoot {
     }
     /** @internal */
     _runAppTasks(slot) {
-        return resolveAll(...this.container.getAll(IAppTask).reduce((results, task) => {
+        return onResolveAll(...this.container.getAll(IAppTask).reduce((results, task) => {
             if (task.slot === slot) {
                 results.push(task.run());
             }
@@ -6267,7 +6164,7 @@ class BindingCommandDefinition {
         registerAliases(aliases, BindingCommand, key, container);
     }
 }
-const cmdBaseName = getResourceKeyFor('binding-command');
+const cmdBaseName = /*@__PURE__*/ getResourceKeyFor('binding-command');
 const getCommandKeyFrom = (name) => `${cmdBaseName}:${name}`;
 const getCommandAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
 const BindingCommand = objectFreeze({
@@ -6675,12 +6572,11 @@ SVGAnalyzer.inject = [IPlatform];
 
 const IAttrMapper = /*@__PURE__*/ createInterface('IAttrMapper', x => x.singleton(AttrMapper));
 class AttrMapper {
-    /** @internal */ static get inject() { return [ISVGAnalyzer]; }
-    constructor(svg) {
-        this.svg = svg;
+    constructor() {
         /** @internal */ this.fns = [];
         /** @internal */ this._tagAttrMap = createLookup();
         /** @internal */ this._globalAttrMap = createLookup();
+        this.svg = resolve(ISVGAnalyzer);
         this.useMapping({
             LABEL: { for: 'htmlFor' },
             IMG: { usemap: 'useMap' },
@@ -7398,11 +7294,7 @@ const nsAttributes = objectAssign(createLookup(), {
 const elementPropertyAccessor = new PropertyAccessor();
 elementPropertyAccessor.type = 2 /* AccessorType.Node */ | 4 /* AccessorType.Layout */;
 class NodeObserverLocator {
-    constructor(locator, platform, dirtyChecker, svgAnalyzer) {
-        this.locator = locator;
-        this.platform = platform;
-        this.dirtyChecker = dirtyChecker;
-        this.svgAnalyzer = svgAnalyzer;
+    constructor() {
         /**
          * Indicates whether the node observer will be allowed to use dirty checking for a property it doesn't know how to observe
          */
@@ -7415,6 +7307,14 @@ class NodeObserverLocator {
         this._overrides = createLookup();
         /** @internal */
         this._globalOverrides = createLookup();
+        /** @internal */
+        this._locator = resolve(IServiceLocator);
+        /** @internal */
+        this._platform = resolve(IPlatform);
+        /** @internal */
+        this._dirtyChecker = resolve(IDirtyChecker);
+        /** @internal */
+        this.svg = resolve(ISVGAnalyzer);
         // todo: atm, platform is required to be resolved too eagerly for the `.handles()` check
         // also a lot of tests assume default availability of observation
         // those 2 assumptions make it not the right time to extract the following line into a
@@ -7458,7 +7358,7 @@ class NodeObserverLocator {
     }
     // deepscan-disable-next-line
     handles(obj, _key) {
-        return obj instanceof this.platform.Node;
+        return obj instanceof this._platform.Node;
     }
     useConfig(nodeNameOrConfig, key, eventsConfig) {
         const lookup = this._events;
@@ -7536,7 +7436,7 @@ class NodeObserverLocator {
                 if (nsProps !== undefined) {
                     return AttributeNSAccessor.forNs(nsProps[1]);
                 }
-                if (isDataAttribute(obj, key, this.svgAnalyzer)) {
+                if (isDataAttribute(obj, key, this.svg)) {
                     return attrAccessor;
                 }
                 return elementPropertyAccessor;
@@ -7576,7 +7476,7 @@ class NodeObserverLocator {
         const eventsConfig = this._events[el.tagName]?.[key] ?? this._globalEvents[key];
         let observer;
         if (eventsConfig != null) {
-            observer = new (eventsConfig.type ?? ValueAttributeObserver)(el, key, eventsConfig, requestor, this.locator);
+            observer = new (eventsConfig.type ?? ValueAttributeObserver)(el, key, eventsConfig, requestor, this._locator);
             if (!observer.doNotCache) {
                 getObserverLookup(el)[key] = observer;
             }
@@ -7606,14 +7506,14 @@ class NodeObserverLocator {
             //       for now it's a noop observer
             return AttributeNSAccessor.forNs(nsProps[1]);
         }
-        if (isDataAttribute(el, key, this.svgAnalyzer)) {
+        if (isDataAttribute(el, key, this.svg)) {
             // todo: invalid accessor returned for a get observer call
             //       for now it's a noop observer
             return attrAccessor;
         }
         if (key in el.constructor.prototype) {
             if (this.allowDirtyCheck) {
-                return this.dirtyChecker.createProperty(el, key);
+                return this._dirtyChecker.createProperty(el, key);
             }
             // consider:
             // - maybe add a adapter API to handle unknown obj/key combo
@@ -7908,14 +7808,14 @@ class SelfBindingBehavior {
 bindingBehavior('self')(SelfBindingBehavior);
 
 class UpdateTriggerBindingBehavior {
-    constructor(observerLocator, nodeObserverLocator) {
-        if (!(nodeObserverLocator instanceof NodeObserverLocator)) {
-            throw createError('AURxxxx: updateTrigger binding behavior only works with the default implementation of Aurelia HTML observation. Implement your own node observation + updateTrigger');
-        }
-        this._observerLocator = observerLocator;
-        this._nodeObserverLocator = nodeObserverLocator;
+    constructor() {
+        /** @internal */ this._observerLocator = resolve(IObserverLocator);
+        /** @internal */ this._nodeObserverLocator = resolve(INodeObserverLocator);
     }
     bind(_scope, binding, ...events) {
+        if (!(this._nodeObserverLocator instanceof NodeObserverLocator)) {
+            throw createError('AURxxxx: updateTrigger binding behavior only works with the default implementation of Aurelia HTML observation. Implement your own node observation + updateTrigger');
+        }
         if (events.length === 0) {
             throw createError(`AUR0802: The updateTrigger binding behavior requires at least one event name argument: eg <input value.bind="firstName & updateTrigger:'blur'">`);
         }
@@ -7936,11 +7836,10 @@ class UpdateTriggerBindingBehavior {
         binding.useTargetObserver(targetObserver);
     }
 }
-/** @internal */ UpdateTriggerBindingBehavior.inject = [IObserverLocator, INodeObserverLocator];
 bindingBehavior('updateTrigger')(UpdateTriggerBindingBehavior);
 
 class If {
-    constructor(ifFactory, location) {
+    constructor() {
         this.elseFactory = void 0;
         this.elseView = void 0;
         this.ifView = void 0;
@@ -7953,8 +7852,8 @@ class If {
         this.pending = void 0;
         /** @internal */ this._wantsDeactivate = false;
         /** @internal */ this._swapId = 0;
-        this._ifFactory = ifFactory;
-        this._location = location;
+        /** @internal */ this._ifFactory = resolve(IViewFactory);
+        /** @internal */ this._location = resolve(IRenderLocation);
     }
     attaching(initiator, _parent) {
         let view;
@@ -7982,10 +7881,13 @@ class If {
                     ? this.elseView
                     : this.elseFactory?.create());
             }
+            // if the value is falsy
+            // and there's no [else], `view` will be null
             if (view == null) {
                 return;
             }
-            // todo: else view should set else location
+            // todo: location should be based on either the [if]/[else] attribute
+            //       instead of always of the [if]
             view.setLocation(this._location);
             // Promise return values from user VM hooks are awaited by the initiator
             this.pending = onResolve(view.activate(initiator, ctrl, ctrl.scope), () => {
@@ -8046,11 +7948,13 @@ class If {
                     ? this.elseView
                     : this.elseFactory?.create());
             }
+            // if the value is falsy
+            // and there's no [else], `view` will be null
             if (view == null) {
                 return;
             }
             // todo: location should be based on either the [if]/[else] attribute
-            //       instead of always the if
+            //       instead of always of the [if]
             view.setLocation(this._location);
             return onResolve(view.activate(view, ctrl, ctrl.scope), () => {
                 if (isCurrent()) {
@@ -8073,7 +7977,6 @@ class If {
         }
     }
 }
-/** @internal */ If.inject = [IViewFactory, IRenderLocation];
 __decorate([
     bindable
 ], If.prototype, "value", void 0);
@@ -8084,8 +7987,8 @@ __decorate([
 ], If.prototype, "cache", void 0);
 templateController('if')(If);
 class Else {
-    constructor(factory) {
-        this._factory = factory;
+    constructor() {
+        /** @internal */ this._factory = resolve(IViewFactory);
     }
     link(controller, _childController, _target, _instruction) {
         const children = controller.children;
@@ -8101,7 +8004,6 @@ class Else {
         }
     }
 }
-/** @internal */ Else.inject = [IViewFactory];
 templateController({ name: 'else' })(Else);
 
 function dispose(disposable) {
@@ -8780,8 +8682,8 @@ const ensureUnique = (item, index) => {
 };
 
 class With {
-    constructor(factory, location) {
-        this.view = factory.create().setLocation(location);
+    constructor() {
+        this.view = resolve(IViewFactory).create().setLocation(resolve(IRenderLocation));
     }
     valueChanged(newValue, _oldValue) {
         const $controller = this.$controller;
@@ -8813,16 +8715,13 @@ class With {
         }
     }
 }
-/** @internal */ With.inject = [IViewFactory, IRenderLocation];
 __decorate([
     bindable
 ], With.prototype, "value", void 0);
 templateController('with')(With);
 
 let Switch = class Switch {
-    constructor(_factory, _location) {
-        this._factory = _factory;
-        this._location = _location;
+    constructor() {
         /** @internal */
         this.cases = [];
         this.activeCases = [];
@@ -8831,6 +8730,8 @@ let Switch = class Switch {
          * This needs to be removed after the scheduler is ready to handle/queue the floating promises.
          */
         this.promise = void 0;
+        /** @internal */ this._factory = resolve(IViewFactory);
+        /** @internal */ this._location = resolve(IRenderLocation);
     }
     link(_controller, _childController, _target, _instruction) {
         this.view = this._factory.create(this.$controller).setLocation(this._location);
@@ -8947,7 +8848,7 @@ let Switch = class Switch {
         if (length === 1) {
             return cases[0].activate(initiator, scope);
         }
-        return resolveAll(...cases.map(($case) => $case.activate(initiator, scope)));
+        return onResolveAll(...cases.map(($case) => $case.activate(initiator, scope)));
     }
     /** @internal */
     _clearActiveCases(initiator, newActiveCases = []) {
@@ -8964,7 +8865,7 @@ let Switch = class Switch {
             }
             return;
         }
-        return onResolve(resolveAll(...cases.reduce((acc, $case) => {
+        return onResolve(onResolveAll(...cases.reduce((acc, $case) => {
             if (!newActiveCases.includes($case)) {
                 acc.push($case.deactivate(initiator));
             }
@@ -8995,24 +8896,18 @@ __decorate([
     bindable
 ], Switch.prototype, "value", void 0);
 Switch = __decorate([
-    templateController('switch'),
-    __param(0, IViewFactory),
-    __param(1, IRenderLocation)
+    templateController('switch')
 ], Switch);
 let caseId = 0;
 let Case = class Case {
-    constructor(
-    /** @internal */ _factory, 
-    /** @internal */ _locator, 
-    /** @internal */ _location, logger) {
-        this._factory = _factory;
-        this._locator = _locator;
-        this._location = _location;
+    constructor() {
         /** @internal */ this.id = ++caseId;
         this.fallThrough = false;
         this.view = void 0;
-        this._debug = logger.config.level <= 1 /* LogLevel.debug */;
-        this._logger = logger.scopeTo(`${this.constructor.name}-#${this.id}`);
+        /** @internal */ this._factory = resolve(IViewFactory);
+        /** @internal */ this._locator = resolve(IObserverLocator);
+        /** @internal */ this._location = resolve(IRenderLocation);
+        /** @internal */ this._logger = resolve(ILogger).scopeTo(`${this.constructor.name}-#${this.id}`);
     }
     link(controller, _childController, _target, _instruction) {
         const switchController = controller.parent;
@@ -9090,7 +8985,6 @@ let Case = class Case {
         return this.view?.accept(visitor);
     }
 };
-/** @internal */ Case.inject = [IViewFactory, IObserverLocator, IRenderLocation, ILogger];
 __decorate([
     bindable
 ], Case.prototype, "value", void 0);
@@ -9123,13 +9017,13 @@ DefaultCase = __decorate([
 ], DefaultCase);
 
 let PromiseTemplateController = class PromiseTemplateController {
-    constructor(_factory, _location, _platform, logger) {
-        this._factory = _factory;
-        this._location = _location;
-        this._platform = _platform;
+    constructor() {
         this.preSettledTask = null;
         this.postSettledTask = null;
-        this.logger = logger.scopeTo('promise.resolve');
+        /** @internal */ this._factory = resolve(IViewFactory);
+        /** @internal */ this._location = resolve(IRenderLocation);
+        /** @internal */ this._platform = resolve(IPlatform);
+        /** @internal */ this.logger = resolve(ILogger).scopeTo('promise.resolve');
     }
     link(_controller, _childController, _target, _instruction) {
         this.view = this._factory.create(this.$controller).setLocation(this._location);
@@ -9162,11 +9056,11 @@ let PromiseTemplateController = class PromiseTemplateController {
         const $swap = () => {
             // Note that the whole thing is not wrapped in a q.queueTask intentionally.
             // Because that would block the app till the actual promise is resolved, which is not the goal anyway.
-            void resolveAll(
+            void onResolveAll(
             // At first deactivate the fulfilled and rejected views, as well as activate the pending view.
             // The order of these 3 should not necessarily be sequential (i.e. order-irrelevant).
             preSettlePromise = (this.preSettledTask = q.queueTask(() => {
-                return resolveAll(fulfilled?.deactivate(initiator), rejected?.deactivate(initiator), pending?.activate(initiator, s));
+                return onResolveAll(fulfilled?.deactivate(initiator), rejected?.deactivate(initiator), pending?.activate(initiator, s));
             }, defaultQueuingOptions)).result.catch((err) => { if (!(err instanceof TaskAbortError))
                 throw err; }), value
                 .then((data) => {
@@ -9175,7 +9069,7 @@ let PromiseTemplateController = class PromiseTemplateController {
                 }
                 const fulfill = () => {
                     // Deactivation of pending view and the activation of the fulfilled view should not necessarily be sequential.
-                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => resolveAll(pending?.deactivate(initiator), rejected?.deactivate(initiator), fulfilled?.activate(initiator, s, data)), defaultQueuingOptions)).result;
+                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => onResolveAll(pending?.deactivate(initiator), rejected?.deactivate(initiator), fulfilled?.activate(initiator, s, data)), defaultQueuingOptions)).result;
                 };
                 if (this.preSettledTask.status === 1 /* TaskStatus.running */) {
                     void preSettlePromise.then(fulfill);
@@ -9190,7 +9084,7 @@ let PromiseTemplateController = class PromiseTemplateController {
                 }
                 const reject = () => {
                     // Deactivation of pending view and the activation of the rejected view should also not necessarily be sequential.
-                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => resolveAll(pending?.deactivate(initiator), fulfilled?.deactivate(initiator), rejected?.activate(initiator, s, err)), defaultQueuingOptions)).result;
+                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => onResolveAll(pending?.deactivate(initiator), fulfilled?.deactivate(initiator), rejected?.activate(initiator, s, err)), defaultQueuingOptions)).result;
                 };
                 if (this.preSettledTask.status === 1 /* TaskStatus.running */) {
                     void preSettlePromise.then(reject);
@@ -9224,17 +9118,13 @@ __decorate([
     bindable
 ], PromiseTemplateController.prototype, "value", void 0);
 PromiseTemplateController = __decorate([
-    templateController('promise'),
-    __param(0, IViewFactory),
-    __param(1, IRenderLocation),
-    __param(2, IPlatform),
-    __param(3, ILogger)
+    templateController('promise')
 ], PromiseTemplateController);
 let PendingTemplateController = class PendingTemplateController {
-    constructor(_factory, _location) {
-        this._factory = _factory;
-        this._location = _location;
+    constructor() {
         this.view = void 0;
+        /** @internal */ this._factory = resolve(IViewFactory);
+        /** @internal */ this._location = resolve(IRenderLocation);
     }
     link(controller, _childController, _target, _instruction) {
         getPromiseController(controller).pending = this;
@@ -9268,15 +9158,13 @@ __decorate([
     bindable({ mode: 2 /* BindingMode.toView */ })
 ], PendingTemplateController.prototype, "value", void 0);
 PendingTemplateController = __decorate([
-    templateController('pending'),
-    __param(0, IViewFactory),
-    __param(1, IRenderLocation)
+    templateController('pending')
 ], PendingTemplateController);
 let FulfilledTemplateController = class FulfilledTemplateController {
-    constructor(_factory, _location) {
-        this._factory = _factory;
-        this._location = _location;
+    constructor() {
         this.view = void 0;
+        /** @internal */ this._factory = resolve(IViewFactory);
+        /** @internal */ this._location = resolve(IRenderLocation);
     }
     link(controller, _childController, _target, _instruction) {
         getPromiseController(controller).fulfilled = this;
@@ -9311,15 +9199,13 @@ __decorate([
     bindable({ mode: 4 /* BindingMode.fromView */ })
 ], FulfilledTemplateController.prototype, "value", void 0);
 FulfilledTemplateController = __decorate([
-    templateController('then'),
-    __param(0, IViewFactory),
-    __param(1, IRenderLocation)
+    templateController('then')
 ], FulfilledTemplateController);
 let RejectedTemplateController = class RejectedTemplateController {
-    constructor(_factory, _location) {
-        this._factory = _factory;
-        this._location = _location;
+    constructor() {
         this.view = void 0;
+        /** @internal */ this._factory = resolve(IViewFactory);
+        /** @internal */ this._location = resolve(IRenderLocation);
     }
     link(controller, _childController, _target, _instruction) {
         getPromiseController(controller).rejected = this;
@@ -9354,9 +9240,7 @@ __decorate([
     bindable({ mode: 4 /* BindingMode.fromView */ })
 ], RejectedTemplateController.prototype, "value", void 0);
 RejectedTemplateController = __decorate([
-    templateController('catch'),
-    __param(0, IViewFactory),
-    __param(1, IRenderLocation)
+    templateController('catch')
 ], RejectedTemplateController);
 function getPromiseController(controller) {
     const promiseController = controller.parent;
@@ -9395,15 +9279,17 @@ RejectedAttributePattern = __decorate([
  * Focus attribute for element focus binding
  */
 class Focus {
-    constructor(element, platform) {
+    constructor() {
         /**
          * Indicates whether `apply` should be called when `attached` callback is invoked
          *
          * @internal
          */
         this._needsApply = false;
-        this._element = element;
-        this._platform = platform;
+        /** @internal */
+        this._element = resolve(INode);
+        /** @internal */
+        this._platform = resolve(IPlatform);
     }
     binding() {
         this.valueChanged();
@@ -9499,9 +9385,12 @@ __decorate([
 customAttribute('focus')(Focus);
 
 class Portal {
-    constructor(factory, originalLoc, p) {
+    constructor() {
         this.position = 'beforeend';
         this.strict = false;
+        const factory = resolve(IViewFactory);
+        const originalLoc = resolve(IRenderLocation);
+        const p = resolve(IPlatform);
         this._platform = p;
         // to make the shape of this object consistent.
         // todo: is this necessary
@@ -9673,7 +9562,6 @@ class Portal {
         }
     }
 }
-Portal.inject = [IViewFactory, IRenderLocation, IPlatform];
 __decorate([
     bindable({ primary: true })
 ], Portal.prototype, "target", void 0);
@@ -9704,8 +9592,7 @@ __decorate([
 templateController('portal')(Portal);
 
 let AuSlot = class AuSlot {
-    /** @internal */ static get inject() { return [IRenderLocation, IInstruction, IHydrationContext, IRendering]; }
-    constructor(location, instruction, hdrContext, rendering) {
+    constructor() {
         /** @internal */ this._parentScope = null;
         /** @internal */ this._outerScope = null;
         /** @internal */ this._attached = false;
@@ -9721,11 +9608,15 @@ let AuSlot = class AuSlot {
         this._subs = new Set();
         /** @internal */
         this._observer = null;
-        let factory;
-        let container;
+        const location = resolve(IRenderLocation);
+        const instruction = resolve(IInstruction);
+        const hdrContext = resolve(IHydrationContext);
+        const rendering = resolve(IRendering);
         const slotInfo = instruction.auSlot;
         const projection = hdrContext.instruction?.projections?.[slotInfo.name];
         const contextController = hdrContext.controller;
+        let factory;
+        let container;
         this.name = slotInfo.name;
         if (projection == null) {
             factory = rendering.getViewFactory(slotInfo.fallback, contextController.container);
@@ -9885,30 +9776,7 @@ var DefinitionType;
 // <au-component template.bind="<string>" model.bind="" />
 //
 class AuCompose {
-    /** @internal */
-    static get inject() {
-        return [IContainer, IController, INode, IRenderLocation, IPlatform, IInstruction, transient(CompositionContextFactory)];
-    }
-    get pending() {
-        return this._pending;
-    }
-    get composition() {
-        return this._composition;
-    }
-    constructor(
-    /** @internal */ _container, 
-    /** @internal */ parent, 
-    /** @internal */ host, 
-    /** @internal */ _location, 
-    /** @internal */ _platform, 
-    // todo: use this to retrieve au-slot instruction
-    //        for later enhancement related to <au-slot/> + compose
-    instruction, contextFactory) {
-        this._container = _container;
-        this.parent = parent;
-        this.host = host;
-        this._location = _location;
-        this._platform = _platform;
+    constructor() {
         /**
          * Control scoping behavior of the view created by the au-compose.
          * This only affects template-only composition. Does not have effects on custom element composition.
@@ -9919,9 +9787,20 @@ class AuCompose {
         this.scopeBehavior = 'auto';
         /** @internal */
         this._composition = void 0;
-        this._rendering = _container.get(IRendering);
-        this._instruction = instruction;
-        this._contextFactory = contextFactory;
+        /** @internal */ this._container = resolve(IContainer);
+        /** @internal */ this.parent = resolve(IController);
+        /** @internal */ this.host = resolve(INode);
+        /** @internal */ this._location = resolve(IRenderLocation);
+        /** @internal */ this._platform = resolve(IPlatform);
+        /** @internal */ this._rendering = resolve(IRendering);
+        /** @internal */ this._instruction = resolve(IInstruction);
+        /** @internal */ this._contextFactory = resolve(transient(CompositionContextFactory));
+    }
+    get pending() {
+        return this._pending;
+    }
+    get composition() {
+        return this._composition;
     }
     attaching(initiator, _parent) {
         return this._pending = onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, void 0), initiator), (context) => {
@@ -10209,9 +10088,9 @@ const ISanitizer = /*@__PURE__*/ createInterface('ISanitizer', x => x.singleton(
 /**
  * Simple html sanitization converter to preserve whitelisted elements and attributes on a bound property containing html.
  */
-let SanitizeValueConverter = class SanitizeValueConverter {
-    constructor(_sanitizer) {
-        this._sanitizer = _sanitizer;
+class SanitizeValueConverter {
+    constructor() {
+        /** @internal */ this._sanitizer = resolve(ISanitizer);
     }
     /**
      * Process the provided markup that flows to the view.
@@ -10224,17 +10103,16 @@ let SanitizeValueConverter = class SanitizeValueConverter {
         }
         return this._sanitizer.sanitize(untrustedMarkup);
     }
-};
-SanitizeValueConverter = __decorate([
-    __param(0, ISanitizer)
-], SanitizeValueConverter);
+}
 valueConverter('sanitize')(SanitizeValueConverter);
 
 const ITemplateElementFactory = /*@__PURE__*/ createInterface('ITemplateElementFactory', x => x.singleton(TemplateElementFactory));
 const markupCache = {};
 class TemplateElementFactory {
-    constructor(p) {
-        this.p = p;
+    constructor() {
+        /** @internal */
+        this.p = resolve(IPlatform);
+        /** @internal */
         this._template = createTemplate(this.p);
     }
     createTemplate(input) {
@@ -10272,8 +10150,6 @@ class TemplateElementFactory {
         return input.cloneNode(true);
     }
 }
-/** @internal */
-TemplateElementFactory.inject = [IPlatform];
 const createTemplate = (p) => p.document.createElement('template');
 
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
@@ -10283,7 +10159,7 @@ class TemplateCompiler {
         this.resolveResources = true;
     }
     static register(container) {
-        return singletonRegistration(ITemplateCompiler, this).register(container);
+        container.register(singletonRegistration(this, this), aliasRegistration(this, ITemplateCompiler));
     }
     compile(partialDefinition, container, compilationInstruction) {
         const definition = CustomElementDefinition.getOrCreate(partialDefinition);
@@ -10716,7 +10592,7 @@ class TemplateCompiler {
         // probably no need to replace
         // as the let itself can be used as is
         // though still need to mark el as target to ensure the instruction is matched with a target
-        return this._markAsTarget(el).nextSibling;
+        return this._markAsTarget(el, context).nextSibling;
     }
     /** @internal */
     // eslint-disable-next-line
@@ -10815,6 +10691,7 @@ class TemplateCompiler {
         let processContentResult = true;
         let hasContainerless = false;
         let canCapture = false;
+        let needsMarker = false;
         if (elName === 'slot') {
             if (context.root.def.shadowOptions == null) {
                 throw createError(`AUR0717: detect a usage of "<slot>" element without specifying shadow DOM options in element: ${context.root.def.name}`);
@@ -10828,12 +10705,6 @@ class TemplateCompiler {
             // might have changed during the process
             attrs = el.attributes;
             ii = attrs.length;
-        }
-        if (context.root.def.enhance && el.classList.contains('au')) {
-            throw createError(`AUR0705: `
-                    + 'Trying to enhance with a template that was probably compiled before. '
-                    + 'This is likely going to cause issues. '
-                    + 'Consider enhancing only untouched elements or first remove all "au" classes.');
         }
         // 1. walk and compile through all attributes
         //    for each of them, put in appropriate group.
@@ -11038,6 +10909,7 @@ class TemplateCompiler {
                 const template = context.t();
                 const fallbackContentContext = context._createChild();
                 let node = el.firstChild;
+                let count = 0;
                 while (node !== null) {
                     // a special case:
                     // <au-slot> doesn't have its own template
@@ -11045,15 +10917,21 @@ class TemplateCompiler {
                     // doing so during compilation via removing the node,
                     // instead of considering it as part of the fallback view
                     if (node.nodeType === 1 && node.hasAttribute(AU_SLOT)) {
+                        {
+                            // eslint-disable-next-line no-console
+                            console.warn(`[DEV:aurelia] detected [au-slot] attribute on a child node`, `of an <au-slot> element: "<${node.nodeName} au-slot>".`, `This element will be ignored and removed`);
+                        }
                         el.removeChild(node);
                     }
                     else {
                         appendToTemplate(template, node);
-                        // template.content.appendChild(node);
+                        count++;
                     }
                     node = el.firstChild;
                 }
-                this._compileNode(template.content, fallbackContentContext);
+                if (count > 0) {
+                    this._compileNode(template.content, fallbackContentContext);
+                }
                 elementInstruction.auSlot = {
                     name: slotName,
                     fallback: CustomElementDefinition.create({
@@ -11065,7 +10943,7 @@ class TemplateCompiler {
                 };
                 // todo: shouldn't have to eagerly replace everything like this
                 // this is a leftover refactoring work from the old binder
-                el = this._replaceByMarker(el, context);
+                // el = this._replaceByMarker(el, context);
             }
         }
         // 3. merge and sort all instructions into a single list
@@ -11075,7 +10953,8 @@ class TemplateCompiler {
             || attrInstructions != null) {
             instructions = emptyArray.concat(elementInstruction ?? emptyArray, attrInstructions ?? emptyArray, plainAttrInstructions ?? emptyArray);
             // 3.1 mark as template for later hydration
-            this._markAsTarget(el);
+            // this._markAsTarget(el, context);
+            needsMarker = true;
         }
         // 4. compiling child nodes
         let shouldCompileContent;
@@ -11087,7 +10966,11 @@ class TemplateCompiler {
             let template;
             if (isMarker(el)) {
                 template = context.t();
-                appendManyToTemplate(template, [context._comment(auStartComment), context._comment(auEndComment), this._markAsTarget(context.h(MARKER_NODE_NAME))]);
+                appendManyToTemplate(template, [
+                    context.h(MARKER_NODE_NAME),
+                    context._comment(auStartComment),
+                    context._comment(auEndComment),
+                ]);
             }
             else {
                 // assumption: el.parentNode is not null
@@ -11214,8 +11097,13 @@ class TemplateCompiler {
                 }
                 elementInstruction.projections = projections;
             }
-            if (isCustomElement && (hasContainerless || elDef.containerless)) {
-                this._replaceByMarker(el, context);
+            if (needsMarker) {
+                if (isCustomElement && (hasContainerless || elDef.containerless)) {
+                    this._replaceByMarker(el, context);
+                }
+                else {
+                    this._markAsTarget(el, context);
+                }
             }
             shouldCompileContent = !isCustomElement || !elDef.containerless && !hasContainerless && processContentResult !== false;
             if (shouldCompileContent) {
@@ -11258,8 +11146,13 @@ class TemplateCompiler {
                 // is not really the parent of the most inner one
                 // but it's only for the purpose of creating a marker,
                 // so it's just an optimization hack
-                marker = this._markAsTarget(context.h(MARKER_NODE_NAME));
-                appendManyToTemplate(template, [context._comment(auStartComment), context._comment(auEndComment), marker]);
+                // marker = this._markAsTarget(context.h(MARKER_NODE_NAME));
+                marker = context.h(MARKER_NODE_NAME);
+                appendManyToTemplate(template, [
+                    marker,
+                    context._comment(auStartComment),
+                    context._comment(auEndComment),
+                ]);
                 tcInstruction.def = CustomElementDefinition.create({
                     name: generateElementName(),
                     template,
@@ -11395,10 +11288,13 @@ class TemplateCompiler {
                 }
                 elementInstruction.projections = projections;
             }
-            // todo: shouldn't have to eagerly replace with a marker like this
-            //       this should be the job of the renderer
-            if (isCustomElement && (hasContainerless || elDef.containerless)) {
-                this._replaceByMarker(el, context);
+            if (needsMarker) {
+                if (isCustomElement && (hasContainerless || elDef.containerless)) {
+                    this._replaceByMarker(el, context);
+                }
+                else {
+                    this._markAsTarget(el, context);
+                }
             }
             shouldCompileContent = !isCustomElement || !elDef.containerless && !hasContainerless && processContentResult !== false;
             if (shouldCompileContent && el.childNodes.length > 0) {
@@ -11432,11 +11328,11 @@ class TemplateCompiler {
             for (i = 0, ii = expressions.length; ii > i; ++i) {
                 // foreach expression part, turn into a marker
                 insertManyBefore(parent, node, [
-                    context._comment(auStartComment),
-                    context._comment(auEndComment),
-                    this._markAsTarget(context.h(MARKER_NODE_NAME)),
+                    context.h(MARKER_NODE_NAME),
+                    // empty text node will not be cloned when doing fragment.cloneNode()
+                    // so give it an empty space instead
+                    context._text(' '),
                 ]);
-                // insertBefore(parent, this._markAsTarget(context.h(auMarkerName)), current);
                 // foreach normal part, turn into a standard text node
                 if ((part = parts[i + 1])) {
                     insertBefore(parent, context._text(part), node);
@@ -11544,14 +11440,11 @@ class TemplateCompiler {
                 throw createError(`AUR0709: Local templates needs to be defined directly under root.`);
             }
             const name = processTemplateName(localTemplate, localTemplateNames);
-            const LocalTemplateType = class LocalTemplate {
-            };
             const content = localTemplate.content;
             const bindableEls = toArray(content.querySelectorAll('bindable'));
-            const bindableInstructions = Bindable.for(LocalTemplateType);
             const properties = new Set();
             const attributes = new Set();
-            for (const bindableEl of bindableEls) {
+            const bindables = bindableEls.reduce((allBindables, bindableEl) => {
                 if (bindableEl.parentNode !== content) {
                     throw createError(`AUR0710: Bindable properties of local templates needs to be defined directly under root.`);
                 }
@@ -11571,19 +11464,19 @@ class TemplateCompiler {
                     }
                     properties.add(property);
                 }
-                bindableInstructions.add({
-                    property,
-                    attribute: attribute ?? void 0,
-                    mode: getBindingMode(bindableEl),
-                });
-                const ignoredAttributes = bindableEl.getAttributeNames().filter((attrName) => !allowedLocalTemplateBindableAttributes.includes(attrName));
+                const ignoredAttributes = toArray(bindableEl.attributes).filter((attr) => !allowedLocalTemplateBindableAttributes.includes(attr.name));
                 if (ignoredAttributes.length > 0) {
-                    context._logger.warn(`The attribute(s) ${ignoredAttributes.join(', ')} will be ignored for ${bindableEl.outerHTML}. Only ${allowedLocalTemplateBindableAttributes.join(', ')} are processed.`);
+                    context._logger.warn(`The attribute(s) ${ignoredAttributes.map(attr => attr.name).join(', ')} will be ignored for ${bindableEl.outerHTML}. Only ${allowedLocalTemplateBindableAttributes.join(', ')} are processed.`);
                 }
-                content.removeChild(bindableEl);
+                bindableEl.remove();
+                allBindables[property] = { attribute: attribute ?? void 0, mode: getBindingMode(bindableEl) };
+                return allBindables;
+            }, {});
+            class LocalTemplateType {
             }
+            def(LocalTemplateType, 'name', { value: name });
             localElTypes.push(LocalTemplateType);
-            context._addDep(defineElement({ name, template: localTemplate }, LocalTemplateType));
+            context._addDep(defineElement({ name, template: localTemplate, bindables }, LocalTemplateType));
             root.removeChild(localTemplate);
         }
         // if we have a template like this
@@ -11596,10 +11489,9 @@ class TemplateCompiler {
         //
         // eagerly registering depdendencies inside the loop above
         // will make `<le-1/>` miss `<le-2/>` as its dependency
-        let i = 0;
-        const ii = localElTypes.length;
-        for (; ii > i; ++i) {
-            getElementDefinition(localElTypes[i]).dependencies.push(...context.def.dependencies ?? emptyArray, ...context.deps ?? emptyArray);
+        const allDeps = [...context.def.dependencies ?? emptyArray, ...localElTypes];
+        for (const Type of localElTypes) {
+            getElementDefinition(Type).dependencies.push(allDeps.filter(d => d !== Type));
         }
     }
     /** @internal */
@@ -11668,21 +11560,14 @@ class TemplateCompiler {
         }
     }
     /**
-     * @internal
-     */
-    _isMarker(el) {
-        return el.nodeName === MARKER_NODE_NAME
-            && isComment($prevSibling = getPreviousSibling(el)) && $prevSibling.textContent === auEndComment
-            && isComment($prevSibling = getPreviousSibling($prevSibling)) && $prevSibling.textContent === auStartComment;
-    }
-    /**
      * Mark an element as target with a special css class
      * and return it
      *
      * @internal
      */
-    _markAsTarget(el) {
-        el.classList.add('au');
+    _markAsTarget(el, context) {
+        insertBefore(el.parentNode, context.h(MARKER_NODE_NAME), el);
+        // el.classList.add('au');
         return el;
     }
     /**
@@ -11696,22 +11581,27 @@ class TemplateCompiler {
         }
         // todo: assumption made: parentNode won't be null
         const parent = node.parentNode;
-        const marker = this._markAsTarget(context.h(MARKER_NODE_NAME));
+        // const marker = this._markAsTarget(context.h(MARKER_NODE_NAME));
+        const marker = context.h(MARKER_NODE_NAME);
         // insertBefore(parent, marker, node);
-        insertManyBefore(parent, node, [context._comment(auStartComment), context._comment(auEndComment), marker]);
+        insertManyBefore(parent, node, [
+            marker,
+            context._comment(auStartComment),
+            context._comment(auEndComment),
+        ]);
         parent.removeChild(node);
         return marker;
     }
 }
-let $prevSibling;
+// let nextSibling: Node | null;
 const MARKER_NODE_NAME = 'AU-M';
 const TEMPLATE_NODE_NAME = 'TEMPLATE';
 const auStartComment = 'au-start';
 const auEndComment = 'au-end';
-const isMarker = (el) => el.nodeName === MARKER_NODE_NAME
-    && isComment($prevSibling = getPreviousSibling(el)) && $prevSibling.textContent === auEndComment
-    && isComment($prevSibling = getPreviousSibling($prevSibling)) && $prevSibling.textContent === auStartComment;
-const isComment = (el) => el?.nodeType === 8;
+const isMarker = (el) => el.nodeName === MARKER_NODE_NAME;
+// && isComment(nextSibling = el.nextSibling) && nextSibling.textContent === auStartComment
+// && isComment(nextSibling = el.nextSibling) && nextSibling.textContent === auEndComment;
+// const isComment = (el: Node | null): el is Comment => el?.nodeType === 8;
 // this class is intended to be an implementation encapsulating the information at the root level of a template
 // this works at the time this is created because everything inside a template should be retrieved
 // from the root itself.
@@ -11954,7 +11844,7 @@ const getBindingMode = (bindable) => {
  */
 const ITemplateCompilerHooks = /*@__PURE__*/ createInterface('ITemplateCompilerHooks');
 const typeToHooksDefCache = new WeakMap();
-const hooksBaseName = getResourceKeyFor('compiler-hooks');
+const hooksBaseName = /*@__PURE__*/ getResourceKeyFor('compiler-hooks');
 const TemplateCompilerHooks = objectFreeze({
     name: hooksBaseName,
     define(Type) {
@@ -11994,10 +11884,10 @@ const templateCompilerHooks = (target) => {
 const DEFAULT_SLOT_NAME = 'default';
 const AU_SLOT = 'au-slot';
 
-let Show = class Show {
-    constructor(el, p, instr) {
-        this.el = el;
-        this.p = p;
+class Show {
+    constructor() {
+        this.el = resolve(INode);
+        this.p = resolve(IPlatform);
         /** @internal */ this._isActive = false;
         /** @internal */ this._task = null;
         this.$val = '';
@@ -12025,6 +11915,7 @@ let Show = class Show {
                 }
             }
         };
+        const instr = resolve(IInstruction);
         // if this is declared as a 'hide' attribute, then this.base will be false, inverting everything.
         this._isToggled = this._base = instr.alias !== 'hide';
     }
@@ -12042,15 +11933,10 @@ let Show = class Show {
             this._task = this.p.domWriteQueue.queueTask(this.update);
         }
     }
-};
+}
 __decorate([
     bindable
 ], Show.prototype, "value", void 0);
-Show = __decorate([
-    __param(0, INode),
-    __param(1, IPlatform),
-    __param(2, IInstruction)
-], Show);
 alias('hide')(Show);
 customAttribute('show')(Show);
 
@@ -12062,6 +11948,7 @@ customAttribute('show')(Show);
  */
 const DefaultComponents = [
     TemplateCompiler,
+    DirtyChecker,
     NodeObserverLocator,
 ];
 /**
@@ -12085,10 +11972,9 @@ const ShortHandBindingSyntax = [
 ];
 /**
  * Default HTML-specific (but environment-agnostic) binding commands:
- * - Property observation: `.bind`, `.one-time`, `.from-view`, `.to-view`, `.two-way`
- * - Function call: `.call`
+ * - Property observation: `.bind`, `.one-time`, `.from-view`, `.to-view`, `.two-way
  * - Collection observation: `.for`
- * - Event listeners: `.trigger`, `.delegate`, `.capture`
+ * - Event listeners: `.trigger`, `.capture`
  */
 const DefaultBindingLanguage = [
     DefaultBindingCommand,
@@ -12265,17 +12151,7 @@ function children(configOrTarget, prop) {
  * A binding for observing & notifying the children of a custom element.
  */
 class ChildrenBinding {
-    static create(controller, obj, key, cbName, query = defaultChildQuery, filter = defaultChildFilter, map = defaultChildMap, options = childObserverOptions) {
-        const observer = new ChildrenBinding(controller, obj, cbName, query, filter, map, options);
-        def(obj, key, {
-            enumerable: true,
-            configurable: true,
-            get: objectAssign(( /* ChildrenBinding */) => observer.getValue(), { getObserver: () => observer }),
-            set: ( /* ChildrenBinding */) => { return; },
-        });
-        return observer;
-    }
-    constructor(controller, obj, cbName, query = defaultChildQuery, filter = defaultChildFilter, map = defaultChildMap, options = childObserverOptions) {
+    constructor(controller, obj, callback, query = defaultChildQuery, filter = defaultChildFilter, map = defaultChildMap, options = childObserverOptions) {
         /** @internal */
         this._children = (void 0);
         /** @internal */
@@ -12286,7 +12162,8 @@ class ChildrenBinding {
         this._map = defaultChildMap;
         this.isBound = false;
         this._controller = controller;
-        this._callback = (this.obj = obj)[cbName];
+        this.obj = obj;
+        this._callback = callback;
         this._query = query;
         this._filter = filter;
         this._map = map;
@@ -12362,18 +12239,30 @@ const filterChildren = (controller, query, filter, map
     return children;
 };
 class ChildrenLifecycleHooks {
-    constructor(def) {
-        this.def = def;
+    constructor(_def) {
+        this._def = _def;
     }
     register(c) {
         instanceRegistration(ILifecycleHooks, this).register(c);
     }
     hydrating(vm, controller) {
-        const def = this.def;
-        controller.addBinding(ChildrenBinding.create(controller, controller.viewModel, def.name, def.callback ?? `${safeString(def.name)}Changed`, def.query ?? defaultChildQuery, def.filter ?? defaultChildFilter, def.map ?? defaultChildMap, def.options ?? childObserverOptions));
+        const $def = this._def;
+        const childrenObserver = new ChildrenBinding(controller, vm, vm[$def.callback ?? `${safeString($def.name)}Changed`], $def.query ?? defaultChildQuery, $def.filter ?? defaultChildFilter, $def.map ?? defaultChildMap, $def.options ?? childObserverOptions);
+        def(vm, $def.name, {
+            enumerable: true,
+            configurable: true,
+            get: objectAssign(( /* ChildrenBinding */) => childrenObserver.getValue(), { getObserver: () => childrenObserver }),
+            set: ( /* ChildrenBinding */) => {
+                {
+                    // eslint-disable-next-line no-console
+                    console.warn(`[DEV:aurelia] property ${safeString($def.name)} decorated with @children is readonly`);
+                }
+            },
+        });
+        controller.addBinding(childrenObserver);
     }
 }
 let mixed = false;
 
-export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindableObserver, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, CommandType, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DefinitionType, DotSeparatedAttributePattern, Else, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HooksDefinition, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, ILifecycleHooks, ILocation, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, ViewModelKind, Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, strict, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
+export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, CommandType, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DefinitionType, DotSeparatedAttributePattern, Else, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, ILifecycleHooks, ILocation, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, ViewModelKind, Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, strict, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
 //# sourceMappingURL=index.dev.mjs.map

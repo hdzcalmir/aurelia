@@ -11,8 +11,6 @@ export declare const ISanitizer: import("@aurelia/kernel").InterfaceSymbol<ISani
  * Simple html sanitization converter to preserve whitelisted elements and attributes on a bound property containing html.
  */
 export declare class SanitizeValueConverter {
-    constructor(
-    /** @internal */ _sanitizer: ISanitizer);
     /**
      * Process the provided markup that flows to the view.
      *

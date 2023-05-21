@@ -2411,6 +2411,10 @@ function verifyBindingInstructionsEqual(actual, expected, errors, path) {
         errors = [];
     }
     if (!(expected instanceof Object) || !(actual instanceof Object)) {
+        if (actual?.nodeType > 0 && typeof expected === 'string' || typeof actual === 'string' && expected?.nodeType > 0) {
+            actual = typeof actual === 'string' ? actual : actual.outerHTML;
+            expected = typeof expected === 'string' ? expected : expected.outerHTML;
+        }
         if (actual !== expected) {
             // Special treatment for generated names (TODO: we *can* predict the values and we might want to at some point,
             // because this exception is essentially a loophole that will eventually somehow cause a bug to slip through)
@@ -7815,13 +7819,15 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         el.dispatchEvent(new ctx.CustomEvent(event, init));
     }
     ['click', 'change', 'input', 'scroll'].forEach(event => {
-        Object.defineProperty(trigger, event, { configurable: true, writable: true, value: (selector, init) => {
+        Object.defineProperty(trigger, event, {
+            configurable: true, writable: true, value: (selector, init) => {
                 const el = queryBy(selector);
                 if (el === null) {
                     throw new Error(`No element found for selector "${selector}" to fire event "${event}"`);
                 }
                 el.dispatchEvent(new ctx.CustomEvent(event, init));
-            } });
+            }
+        });
     });
     function type(selector, value) {
         const el = typeof selector === 'string' ? queryBy(selector) : selector;
@@ -7842,6 +7848,33 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
     const flush = (time) => {
         ctx.platform.domWriteQueue.flush(time);
     };
+    const stop = (dispose = false) => {
+        let ret;
+        try {
+            ret = au.stop(dispose);
+        }
+        finally {
+            if (dispose) {
+                if (++tornCount > 1) {
+                    console.log('(!) Fixture has already been torn down');
+                }
+                else {
+                    const $dispose = () => {
+                        root.remove();
+                        au.dispose();
+                    };
+                    if (ret instanceof Promise) {
+                        ret = ret.then($dispose);
+                    }
+                    else {
+                        $dispose();
+                    }
+                }
+            }
+        }
+        return ret;
+    };
+    let app;
     const fixture = new class Results {
         constructor() {
             this.startPromise = startPromise;
@@ -7855,6 +7888,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             this.observerLocator = observerLocator;
             this.logger = container.get(ILogger);
             this.hJsx = hJsx.bind(ctx.doc);
+            this.stop = stop;
             this.getBy = getBy;
             this.getAllBy = getAllBy;
             this.queryBy = queryBy;
@@ -7871,22 +7905,10 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             this.flush = flush;
         }
         start() {
-            return au.app({ host: host, component }).start();
+            return (app ?? (app = au.app({ host: host, component }))).start();
         }
         tearDown() {
-            if (++tornCount === 2) {
-                console.log('(!) Fixture has already been torn down');
-                return;
-            }
-            const dispose = () => {
-                root.remove();
-                au.dispose();
-            };
-            const ret = au.stop();
-            if (ret instanceof Promise)
-                return ret.then(dispose);
-            else
-                return dispose();
+            return stop(true);
         }
         get torn() {
             return tornCount > 0;

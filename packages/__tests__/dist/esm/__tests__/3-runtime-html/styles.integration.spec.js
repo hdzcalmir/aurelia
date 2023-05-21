@@ -78,7 +78,7 @@ I am green if I am selected and red if I am not
                         this.isSelected = true;
                     }
                 })]);
-            assertClass('p:nth-child(1)', 'au', 'a_', 'strike');
+            assertClass('p:nth-child(1)', 'a_', 'strike');
         });
     });
 });

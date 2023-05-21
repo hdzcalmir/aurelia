@@ -52,7 +52,7 @@ export interface ICollectionStrategy<T extends Collection = Collection> {
     /**
      * Count the number of the items in the repeatable value `items`
      */
-    count(): number;
+    readonly count: number;
     first(): unknown;
     last(): unknown;
     item(index: number): unknown;

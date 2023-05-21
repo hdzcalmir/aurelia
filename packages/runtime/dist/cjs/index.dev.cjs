@@ -1383,13 +1383,6 @@ exports.AccessorType = void 0;
     // todo: https://gist.github.com/paulirish/5d52fb081b3570c81e3a
     // todo: https://csstriggers.com/
     AccessorType[AccessorType["Layout"] = 4] = "Layout";
-    // by default, everything is an object
-    // eg: a property is accessed on an object
-    // unless explicitly not so
-    AccessorType[AccessorType["Primtive"] = 8] = "Primtive";
-    AccessorType[AccessorType["Array"] = 18] = "Array";
-    AccessorType[AccessorType["Set"] = 34] = "Set";
-    AccessorType[AccessorType["Map"] = 66] = "Map";
 })(exports.AccessorType || (exports.AccessorType = {}));
 function copyIndexMap(existing, deletedIndices, deletedItems) {
     const { length } = existing;
@@ -1518,7 +1511,12 @@ function addValueBatch(subs, newValue, oldValue) {
 function subscriberCollection(target) {
     return target == null ? subscriberCollectionDeco : subscriberCollectionDeco(target);
 }
+const decoratedTarget = new WeakSet();
 function subscriberCollectionDeco(target) {
+    if (decoratedTarget.has(target)) {
+        return;
+    }
+    decoratedTarget.add(target);
     const proto = target.prototype;
     // not configurable, as in devtool, the getter could be invoked on the prototype,
     // and become permanently broken
@@ -1527,175 +1525,6 @@ function subscriberCollectionDeco(target) {
     ensureProto(proto, 'unsubscribe', removeSubscriber);
 }
 /* eslint-enable @typescript-eslint/ban-types */
-// export class SubscriberRecord<T extends IAnySubscriber> implements ISubscriberRecord<T> {
-//   /**
-//    * subscriber flags: bits indicating the existence status of the subscribers of this record
-//    */
-//   private sf: SubFlags = SubFlags.None;
-//   private s0?: T;
-//   private s1?: T;
-//   private s2?: T;
-//   /**
-//    * subscriber rest: When there's more than 3 subscribers, use an array to store the subscriber references
-//    */
-//   private sr?: T[];
-//   public count: number = 0;
-//   public add(subscriber: T): boolean {
-//     if (this.has(subscriber)) {
-//       return false;
-//     }
-//     const subscriberFlags = this.sf;
-//     if ((subscriberFlags & SubFlags.Sub0) === 0) {
-//       this.s0 = subscriber;
-//       this.sf |= SubFlags.Sub0;
-//     } else if ((subscriberFlags & SubFlags.Sub1) === 0) {
-//       this.s1 = subscriber;
-//       this.sf |= SubFlags.Sub1;
-//     } else if ((subscriberFlags & SubFlags.Sub2) === 0) {
-//       this.s2 = subscriber;
-//       this.sf |= SubFlags.Sub2;
-//     } else if ((subscriberFlags & SubFlags.SubRest) === 0) {
-//       this.sr = [subscriber];
-//       this.sf |= SubFlags.SubRest;
-//     } else {
-//       this.sr!.push(subscriber); // Non-null is implied by else branch of (subscriberFlags & SF.SubscribersRest) === 0
-//     }
-//     ++this.count;
-//     return true;
-//   }
-//   public has(subscriber: T): boolean {
-//     // Flags here is just a perf tweak
-//     // Compared to not using flags, it's a moderate speed-up when this collection does not have the subscriber;
-//     // and minor slow-down when it does, and the former is more common than the latter.
-//     const subscriberFlags = this.sf;
-//     if ((subscriberFlags & SubFlags.Sub0) > 0 && this.s0 === subscriber) {
-//       return true;
-//     }
-//     if ((subscriberFlags & SubFlags.Sub1) > 0 && this.s1 === subscriber) {
-//       return true;
-//     }
-//     if ((subscriberFlags & SubFlags.Sub2) > 0 && this.s2 === subscriber) {
-//       return true;
-//     }
-//     if ((subscriberFlags & SubFlags.SubRest) > 0) {
-//       const subscribers = this.sr!; // Non-null is implied by (subscriberFlags & SF.SubscribersRest) > 0
-//       const ii = subscribers.length;
-//       let i = 0;
-//       for (; i < ii; ++i) {
-//         if (subscribers[i] === subscriber) {
-//           return true;
-//         }
-//       }
-//     }
-//     return false;
-//   }
-//   public any(): boolean {
-//     return this.sf !== SubFlags.None;
-//   }
-//   public remove(subscriber: T): boolean {
-//     const subscriberFlags = this.sf;
-//     if ((subscriberFlags & SubFlags.Sub0) > 0 && this.s0 === subscriber) {
-//       this.s0 = void 0;
-//       this.sf = (this.sf | SubFlags.Sub0) ^ SubFlags.Sub0;
-//       --this.count;
-//       return true;
-//     } else if ((subscriberFlags & SubFlags.Sub1) > 0 && this.s1 === subscriber) {
-//       this.s1 = void 0;
-//       this.sf = (this.sf | SubFlags.Sub1) ^ SubFlags.Sub1;
-//       --this.count;
-//       return true;
-//     } else if ((subscriberFlags & SubFlags.Sub2) > 0 && this.s2 === subscriber) {
-//       this.s2 = void 0;
-//       this.sf = (this.sf | SubFlags.Sub2) ^ SubFlags.Sub2;
-//       --this.count;
-//       return true;
-//     } else if ((subscriberFlags & SubFlags.SubRest) > 0) {
-//       const subscribers = this.sr!; // Non-null is implied by (subscriberFlags & SF.SubscribersRest) > 0
-//       const ii = subscribers.length;
-//       let i = 0;
-//       for (; i < ii; ++i) {
-//         if (subscribers[i] === subscriber) {
-//           subscribers.splice(i, 1);
-//           if (ii === 1) {
-//             this.sf = (this.sf | SubFlags.SubRest) ^ SubFlags.SubRest;
-//           }
-//           --this.count;
-//           return true;
-//         }
-//       }
-//     }
-//     return false;
-//   }
-//   public notify(val: unknown, oldVal: unknown): void {
-//     if (batching) {
-//       addValueBatch(this, val, oldVal);
-//       return;
-//     }
-//     /**
-//      * Note: change handlers may have the side-effect of adding/removing subscribers to this collection during this
-//      * callSubscribers invocation, so we're caching them all before invoking any.
-//      * Subscribers added during this invocation are not invoked (and they shouldn't be).
-//      * Subscribers removed during this invocation will still be invoked (and they also shouldn't be,
-//      * however this is accounted for via $isBound and similar flags on the subscriber objects)
-//      */
-//     const sub0 = this.s0 as ISubscriber;
-//     const sub1 = this.s1 as ISubscriber;
-//     const sub2 = this.s2 as ISubscriber;
-//     let subs = this.sr as ISubscriber[];
-//     if (subs !== void 0) {
-//       subs = subs.slice();
-//     }
-//     if (sub0 !== void 0) {
-//       sub0.handleChange(val, oldVal);
-//     }
-//     if (sub1 !== void 0) {
-//       sub1.handleChange(val, oldVal);
-//     }
-//     if (sub2 !== void 0) {
-//       sub2.handleChange(val, oldVal);
-//     }
-//     if (subs !== void 0) {
-//       const ii = subs.length;
-//       let sub: ISubscriber | undefined;
-//       let i = 0;
-//       for (; i < ii; ++i) {
-//         sub = subs[i];
-//         if (sub !== void 0) {
-//           sub.handleChange(val, oldVal);
-//         }
-//       }
-//     }
-//   }
-//   public notifyCollection(collection: Collection, indexMap: IndexMap): void {
-//     const sub0 = this.s0 as ICollectionSubscriber;
-//     const sub1 = this.s1 as ICollectionSubscriber;
-//     const sub2 = this.s2 as ICollectionSubscriber;
-//     let subs = this.sr as ICollectionSubscriber[];
-//     if (subs !== void 0) {
-//       subs = subs.slice();
-//     }
-//     if (sub0 !== void 0) {
-//       sub0.handleCollectionChange(collection, indexMap);
-//     }
-//     if (sub1 !== void 0) {
-//       sub1.handleCollectionChange(collection, indexMap);
-//     }
-//     if (sub2 !== void 0) {
-//       sub2.handleCollectionChange(collection, indexMap);
-//     }
-//     if (subs !== void 0) {
-//       const ii = subs.length;
-//       let sub: ICollectionSubscriber | undefined;
-//       let i = 0;
-//       for (; i < ii; ++i) {
-//         sub = subs[i];
-//         if (sub !== void 0) {
-//           sub.handleCollectionChange(collection, indexMap);
-//         }
-//       }
-//     }
-//   }
-// }
 class SubscriberRecord {
     constructor() {
         this.count = 0;
@@ -1758,22 +1587,11 @@ function addSubscriber(subscriber) {
 function removeSubscriber(subscriber) {
     return this.subs.remove(subscriber);
 }
-// /**
-//  * Subscriber flags to indicate subcription on a record
-//  */
-// const enum SubFlags {
-//   None      = 0,
-//   Sub0      = 0b0001,
-//   Sub1      = 0b0010,
-//   Sub2      = 0b0100,
-//   SubRest   = 0b1000,
-//   Any       = 0b1111,
-// }
 
 class CollectionLengthObserver {
     constructor(owner) {
         this.owner = owner;
-        this.type = 18 /* AccessorType.Array */;
+        this.type = 1 /* AccessorType.Observer */;
         this._value = (this._obj = owner.collection).length;
     }
     getValue() {
@@ -1808,8 +1626,8 @@ class CollectionLengthObserver {
 class CollectionSizeObserver {
     constructor(owner) {
         this.owner = owner;
+        this.type = 1 /* AccessorType.Observer */;
         this._value = (this._obj = owner.collection).size;
-        this.type = isMap(this._obj) ? 66 /* AccessorType.Map */ : 34 /* AccessorType.Set */;
     }
     getValue() {
         return this._obj.size;
@@ -2223,7 +2041,7 @@ function disableArrayObservation() {
 }
 class ArrayObserver {
     constructor(array) {
-        this.type = 18 /* AccessorType.Array */;
+        this.type = 1 /* AccessorType.Observer */;
         if (!enableArrayObservationCalled) {
             enableArrayObservationCalled = true;
             enableArrayObservation();
@@ -2488,7 +2306,7 @@ function disableSetObservation() {
 }
 class SetObserver {
     constructor(observedSet) {
-        this.type = 34 /* AccessorType.Set */;
+        this.type = 1 /* AccessorType.Observer */;
         if (!enableSetObservationCalled) {
             enableSetObservationCalled = true;
             enableSetObservation();
@@ -2652,7 +2470,7 @@ function disableMapObservation() {
 }
 class MapObserver {
     constructor(map) {
-        this.type = 66 /* AccessorType.Map */;
+        this.type = 1 /* AccessorType.Observer */;
         if (!enableMapObservationCalled) {
             enableMapObservationCalled = true;
             enableMapObservation();
@@ -4460,21 +4278,17 @@ function canWrap(obj) {
     }
 }
 const rawKey = '__raw__';
-/** @internal */
 function wrap(v) {
     return canWrap(v) ? getProxy(v) : v;
 }
-/** @internal */
 function getProxy(obj) {
     // deepscan-disable-next-line
     return proxyMap.get(obj) ?? createProxy(obj);
 }
-/** @internal */
 function getRaw(obj) {
     // todo: get in a weakmap if null/undef
     return obj[rawKey] ?? obj;
 }
-/** @internal */
 function unwrap(v) {
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     return canWrap(v) && v[rawKey] || v;
@@ -4865,11 +4679,21 @@ class ComputedObserver {
         this._isRunning = false;
         /** @internal */
         this._isDirty = false;
+        /** @internal */
+        this._callback = void 0;
+        /** @internal */
+        this._coercer = void 0;
+        /** @internal */
+        this._coercionConfig = void 0;
         this._obj = obj;
         this._wrapped = useProxy ? wrap(obj) : obj;
         this.$get = get;
         this.$set = set;
         this.oL = observerLocator;
+    }
+    init(value) {
+        this._value = value;
+        this._isDirty = false;
     }
     getValue() {
         if (this.subs.count === 0) {
@@ -4884,7 +4708,10 @@ class ComputedObserver {
     // deepscan-disable-next-line
     setValue(v) {
         if (isFunction(this.$set)) {
-            if (v !== this._value) {
+            if (this._coercer !== void 0) {
+                v = this._coercer.call(null, v, this._coercionConfig);
+            }
+            if (!areEqual(v, this._value)) {
                 // setting running true as a form of batching
                 this._isRunning = true;
                 this.$set.call(this._obj, v);
@@ -4895,6 +4722,15 @@ class ComputedObserver {
         else {
             throw createError(`AUR0221: Property is readonly`);
         }
+    }
+    useCoercer(coercer, coercionConfig) {
+        this._coercer = coercer;
+        this._coercionConfig = coercionConfig;
+        return true;
+    }
+    useCallback(callback) {
+        this._callback = callback;
+        return true;
     }
     handleChange() {
         this._isDirty = true;
@@ -4931,6 +4767,9 @@ class ComputedObserver {
         const newValue = this.compute();
         this._isDirty = false;
         if (!areEqual(newValue, oldValue)) {
+            // todo: probably should set is running here too
+            // to prevent depth first notification
+            this._callback?.(newValue, oldValue);
             this.subs.notify(this._value, oldValue);
         }
     }
@@ -4951,7 +4790,10 @@ class ComputedObserver {
 connectable(ComputedObserver);
 subscriberCollection(ComputedObserver);
 
-const IDirtyChecker = createInterface('IDirtyChecker', x => x.singleton(DirtyChecker));
+const IDirtyChecker = /*@__PURE__*/ createInterface('IDirtyChecker', x => x.callback(() => {
+        throw createError('AURxxxx: There is no registration for IDirtyChecker interface. If you want to use your own dirty checker, make sure you register it.');
+    })
+    );
 const DirtyCheckSettings = {
     /**
      * Default: `6`
@@ -4984,14 +4826,16 @@ const DirtyCheckSettings = {
         this.throw = false;
     }
 };
-const queueTaskOpts = {
-    persistent: true,
-};
 class DirtyChecker {
+    static register(c) {
+        c.register(kernel.Registration.singleton(this, this), kernel.Registration.aliasTo(this, IDirtyChecker));
+    }
     constructor(p) {
         this.p = p;
         this.tracked = [];
+        /** @internal */
         this._task = null;
+        /** @internal */
         this._elapsedFrames = 0;
         this.check = () => {
             if (DirtyCheckSettings.disabled) {
@@ -5012,6 +4856,7 @@ class DirtyChecker {
                 }
             }
         };
+        subscriberCollection(DirtyCheckProperty);
     }
     createProperty(obj, key) {
         if (DirtyCheckSettings.throw) {
@@ -5022,7 +4867,7 @@ class DirtyChecker {
     addProperty(property) {
         this.tracked.push(property);
         if (this.tracked.length === 1) {
-            this._task = this.p.taskQueue.queueTask(this.check, queueTaskOpts);
+            this._task = this.p.taskQueue.queueTask(this.check, { persistent: true });
         }
     }
     removeProperty(property) {
@@ -5075,7 +4920,6 @@ class DirtyCheckProperty {
         }
     }
 }
-subscriberCollection(DirtyCheckProperty);
 
 class PrimitiveObserver {
     get doNotCache() { return true; }
@@ -5119,6 +4963,12 @@ class SetterObserver {
         this._value = void 0;
         /** @internal */
         this._observing = false;
+        /** @internal */
+        this._callback = void 0;
+        /** @internal */
+        this._coercer = void 0;
+        /** @internal */
+        this._coercionConfig = void 0;
         this._obj = obj;
         this._key = key;
     }
@@ -5126,12 +4976,16 @@ class SetterObserver {
         return this._value;
     }
     setValue(newValue) {
+        if (this._coercer !== void 0) {
+            newValue = this._coercer.call(void 0, newValue, this._coercionConfig);
+        }
         if (this._observing) {
             if (areEqual(newValue, this._value)) {
                 return;
             }
             oV = this._value;
             this._value = newValue;
+            this._callback?.(newValue, oV);
             this.subs.notify(newValue, oV);
         }
         else {
@@ -5141,8 +4995,20 @@ class SetterObserver {
             // is unmodified and we need to explicitly set the property value.
             // This will happen in one-time, to-view and two-way bindings during bind, meaning that the bind will not actually update the target value.
             // This wasn't visible in vCurrent due to connect-queue always doing a delayed update, so in many cases it didn't matter whether bind updated the target or not.
-            this._obj[this._key] = newValue;
+            this._value = this._obj[this._key] = newValue;
+            this._callback?.(newValue, oV);
         }
+    }
+    useCallback(callback) {
+        this._callback = callback;
+        this.start();
+        return true;
+    }
+    useCoercer(coercer, coercionConfig) {
+        this._coercer = coercer;
+        this._coercionConfig = coercionConfig;
+        this.start();
+        return true;
     }
     subscribe(subscriber) {
         if (this._observing === false) {
@@ -5157,7 +5023,7 @@ class SetterObserver {
             def(this._obj, this._key, {
                 enumerable: true,
                 configurable: true,
-                get: ( /* Setter Observer */) => this.getValue(),
+                get: objectAssign(( /* Setter Observer */) => this.getValue(), { getObserver: () => this }),
                 set: (/* Setter Observer */ value) => {
                     this.setValue(value);
                 },
@@ -5179,41 +5045,7 @@ class SetterObserver {
         return this;
     }
 }
-class SetterNotifier {
-    constructor(obj, callbackKey, set, initialValue) {
-        this.type = 1 /* AccessorType.Observer */;
-        /** @internal */
-        this._value = void 0;
-        /** @internal */
-        this._oldValue = void 0;
-        this._obj = obj;
-        this._setter = set;
-        this._hasSetter = isFunction(set);
-        const callback = obj[callbackKey];
-        this.cb = isFunction(callback) ? callback : void 0;
-        this._value = initialValue;
-    }
-    getValue() {
-        return this._value;
-    }
-    setValue(value) {
-        if (this._hasSetter) {
-            value = this._setter(value, null);
-        }
-        if (!areEqual(value, this._value)) {
-            this._oldValue = this._value;
-            this._value = value;
-            this.cb?.call(this._obj, this._value, this._oldValue);
-            // this._value might have been updated during the callback
-            // we only want to notify subscribers with the latest values
-            oV = this._oldValue;
-            this._oldValue = this._value;
-            this.subs.notify(this._value, oV);
-        }
-    }
-}
 subscriberCollection(SetterObserver);
-subscriberCollection(SetterNotifier);
 // a reusable variable for `.flush()` methods of observers
 // so that there doesn't need to create an env record for every call
 let oV = void 0;
@@ -5505,6 +5337,10 @@ function getObserversLookup(obj) {
 const noValue = {};
 // impl, wont be seen
 function observable(targetOrConfig, key, descriptor) {
+    if (!SetterNotifier.mixed) {
+        SetterNotifier.mixed = true;
+        subscriberCollection(SetterNotifier);
+    }
     // either this check, or arguments.length === 3
     // or could be both, so can throw against user error for better DX
     if (key == null) {
@@ -5588,6 +5424,40 @@ function getNotifier(obj, key, callbackKey, initialValue, set) {
     }
     return notifier;
 }
+class SetterNotifier {
+    constructor(obj, callbackKey, set, initialValue) {
+        this.type = 1 /* AccessorType.Observer */;
+        /** @internal */
+        this._value = void 0;
+        /** @internal */
+        this._oldValue = void 0;
+        this._obj = obj;
+        this._setter = set;
+        this._hasSetter = isFunction(set);
+        const callback = obj[callbackKey];
+        this.cb = isFunction(callback) ? callback : void 0;
+        this._value = initialValue;
+    }
+    getValue() {
+        return this._value;
+    }
+    setValue(value) {
+        if (this._hasSetter) {
+            value = this._setter(value);
+        }
+        if (!areEqual(value, this._value)) {
+            this._oldValue = this._value;
+            this._value = value;
+            this.cb?.call(this._obj, this._value, this._oldValue);
+            // this._value might have been updated during the callback
+            // we only want to notify subscribers with the latest values
+            value = this._oldValue;
+            this._oldValue = this._value;
+            this.subs.notify(this._value, value);
+        }
+    }
+}
+SetterNotifier.mixed = false;
 /*
           | typescript       | babel
 ----------|------------------|-------------------------
@@ -5696,6 +5566,7 @@ exports.DestructuringAssignmentRestExpression = DestructuringAssignmentRestExpre
 exports.DestructuringAssignmentSingleExpression = DestructuringAssignmentSingleExpression;
 exports.DirtyCheckProperty = DirtyCheckProperty;
 exports.DirtyCheckSettings = DirtyCheckSettings;
+exports.DirtyChecker = DirtyChecker;
 exports.ForOfStatement = ForOfStatement;
 exports.ICoercionConfiguration = ICoercionConfiguration;
 exports.IDirtyChecker = IDirtyChecker;

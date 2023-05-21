@@ -842,14 +842,13 @@ class InstructionComponent {
             return null;
         }
         const s = t.createChild();
-        const o = this.isType() ? s.get(this.type) : s.get(r.keyFrom(this.name));
-        if (o == null) {
-            console.warn("Failed to create instance when trying to resolve component", this.name, this.type, "=>", o);
+        const r = this.isType() ? s.get(this.type) : s.get(routerComponentResolver(this.name));
+        if (r == null) {
             throw new Error(`Failed to create instance when trying to resolve component '${this.name}'!`);
         }
-        const u = h.$el(s, o, e, null);
-        u.parent = i;
-        return o;
+        const o = h.$el(s, r, e, null);
+        o.parent = i;
+        return r;
     }
     same(t, i = false) {
         return i ? this.type === t.type : this.name === t.name;
@@ -860,6 +859,23 @@ class InstructionComponent {
         }
         return this.name;
     }
+}
+
+function routerComponentResolver(t) {
+    const i = r.keyFrom(t);
+    return {
+        $isResolver: true,
+        resolve(e, n) {
+            if (n.has(i, false)) {
+                return n.get(i);
+            }
+            if (n.root.has(i, false)) {
+                return n.root.get(i);
+            }
+            console.warn(`Detected resource traversal behavior. A custom element "${t}" is neither` + ` registered locally nor globally. This is not a supported behavior and will be removed in a future release`);
+            return n.get(i);
+        }
+    };
 }
 
 function arrayRemove(t, i) {

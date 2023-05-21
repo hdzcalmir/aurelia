@@ -291,7 +291,7 @@ describe('3-runtime-html/process-content.spec.ts', function () {
                 processContent: processContentWithCe(true),
             }, class MyElement {
             })
-        ], { 'my-element': '<div><span-ce class="au"><span>foo</span></span-ce><strong-ce class="au"><strong>bar</strong></strong-ce></div>' });
+        ], { 'my-element': '<div><span-ce><span>foo</span></span-ce><strong-ce><strong>bar</strong></strong-ce></div>' });
         function processContentWithNewBinding(compile) {
             return function (node, _p) {
                 const el = node;
@@ -362,7 +362,7 @@ describe('3-runtime-html/process-content.spec.ts', function () {
                 processContent: processContentWithCe(true),
             }, class MyElement {
             })
-        ], { 'my-element': `<div><span-ce class="au"><span>foo</span></span-ce><strong-ce class="au"><strong>bar</strong></strong-ce></div>` }, noop, true);
+        ], { 'my-element': `<div><span-ce><span>foo</span></span-ce><strong-ce><strong>bar</strong></strong-ce></div>` }, noop, true);
         /**
          * MDN template example: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template#Examples
          * Note that this is also possible without `processContent` hook, by adding the named template directly to the CE's own defined template.

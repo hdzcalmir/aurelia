@@ -9,7 +9,7 @@ export interface IRendering extends Rendering {
 }
 export declare class Rendering {
     get renderers(): Record<string, IRenderer>;
-    constructor(container: IContainer);
+    constructor();
     compile(definition: PartialCustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;
     getViewFactory(definition: PartialCustomElementDefinition, container: IContainer): IViewFactory;
     createNodes(definition: CustomElementDefinition): INodeSequence;

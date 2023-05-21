@@ -72,9 +72,6 @@ export function $setup(platform) {
             try {
                 const shouldThrow = this.test?.isFailed();
                 if (shouldThrow) {
-                    assert.areTaskQueuesEmpty();
-                }
-                else {
                     try {
                         assert.areTaskQueuesEmpty();
                     }
@@ -83,6 +80,9 @@ export function $setup(platform) {
                         console.log(ex);
                         ensureTaskQueuesEmpty();
                     }
+                }
+                else {
+                    assert.areTaskQueuesEmpty();
                 }
             }
             catch (ex) {

@@ -1,4 +1,4 @@
-import { AccessorType, IObserver } from '../observation';
+import { AccessorType, ICoercionConfiguration, IObserver, InterceptorFunc } from '../observation';
 import type { ISubscriber, ICollectionSubscriber, ISubscriberCollection, IConnectable } from '../observation';
 import type { IConnectableBinding } from '../binding/connectable';
 import type { IObserverLocator } from './observer-locator';
@@ -20,8 +20,11 @@ export declare class ComputedObserver<T extends object> implements IObserver, IC
      */
     readonly oL: IObserverLocator;
     constructor(obj: T, get: ComputedGetterFn<T>, set: undefined | ((v: unknown) => void), observerLocator: IObserverLocator, useProxy: boolean);
+    init(value: unknown): void;
     getValue(): any;
     setValue(v: unknown): void;
+    useCoercer(coercer: InterceptorFunc, coercionConfig?: ICoercionConfiguration | undefined): boolean;
+    useCallback(callback: (newValue: unknown, oldValue: unknown) => void): boolean;
     handleChange(): void;
     handleCollectionChange(): void;
     subscribe(subscriber: ISubscriber): void;

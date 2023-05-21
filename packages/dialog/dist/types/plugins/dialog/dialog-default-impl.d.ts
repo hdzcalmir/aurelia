@@ -1,4 +1,3 @@
-import { IPlatform } from '@aurelia/runtime-html';
 import { IDialogDomRenderer, IDialogDom, IDialogGlobalSettings } from './dialog-interfaces';
 import { IContainer } from '@aurelia/kernel';
 export declare class DefaultDialogGlobalSettings implements IDialogGlobalSettings {
@@ -9,7 +8,6 @@ export declare class DefaultDialogGlobalSettings implements IDialogGlobalSetting
 }
 export declare class DefaultDialogDomRenderer implements IDialogDomRenderer {
     private readonly p;
-    constructor(p: IPlatform);
     static register(container: IContainer): void;
     private readonly wrapperCss;
     private readonly overlayCss;

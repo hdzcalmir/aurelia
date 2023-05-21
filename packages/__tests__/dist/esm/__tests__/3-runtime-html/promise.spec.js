@@ -334,11 +334,11 @@ describe('3-runtime-html/promise.spec.ts', function () {
         function wrap(content, type, debugMode = false) {
             switch (type) {
                 case 'p':
-                    return `<${phost} ${debugMode ? `p.bind="promise" ` : ''}class="au">${content}</${phost}>`;
+                    return `<${phost}${debugMode ? ` p.bind="promise"` : ''}>${content}</${phost}>`;
                 case 'f':
-                    return `<${fhost} ${debugMode ? `data.bind="data" ` : ''}class="au">${content}</${fhost}>`;
+                    return `<${fhost}${debugMode ? ` data.bind="data"` : ''}>${content}</${fhost}>`;
                 case 'r':
-                    return `<${rhost} ${debugMode ? `err.bind="err" ` : ''}class="au">${content}</${rhost}>`;
+                    return `<${rhost}${debugMode ? ` err.bind="err"` : ''}>${content}</${rhost}>`;
             }
         }
         const configFactories = [
@@ -798,7 +798,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                             await p.domWriteQueue.yield();
                             // on the next tick wait the queued task
                             await p.domWriteQueue.yield();
-                            assert.html.innerEqual(ctx.host, '<fulfilled-host1 class="au">resolved</fulfilled-host1>');
+                            assert.html.innerEqual(ctx.host, '<fulfilled-host1>resolved</fulfilled-host1>');
                             ctx.assertCallSet([...getDeactivationSequenceFor(phost), ...getActivationSequenceFor('fulfilled-host1')]);
                         });
                     }
@@ -818,7 +818,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                             await p.domWriteQueue.yield();
                             // on the next tick wait the queued task
                             await p.domWriteQueue.yield();
-                            assert.html.innerEqual(ctx.host, '<rejected-host1 class="au">rejected</rejected-host1>');
+                            assert.html.innerEqual(ctx.host, '<rejected-host1>rejected</rejected-host1>');
                             ctx.assertCallSet([...getDeactivationSequenceFor(phost), ...getActivationSequenceFor('rejected-host1')]);
                         });
                     }
@@ -846,7 +846,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                 <rejected-host ${rattribute}="err" err.bind="err"></rejected-host>
               </template>
             </template>`
-                    }, config(), '<rejected-host class="au">rejected with foo-bar1</rejected-host>', getActivationSequenceFor(rhost), getDeactivationSequenceFor(rhost));
+                    }, config(), '<rejected-host>rejected with foo-bar1</rejected-host>', getActivationSequenceFor(rhost), getDeactivationSequenceFor(rhost));
                     yield new TestData('works in nested template - rejected>fulfilled', () => Promise.reject({ json() { return Promise.resolve(42); } }), {
                         delayPromise, template: `
             <template>
@@ -951,7 +951,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                             ctx.assertCallSet([...getDeactivationSequenceFor(phost), ...getActivationSequenceFor($resolve ? fhost : rhost)]);
                         });
                         {
-                            const staticPart = '<my-el class="au">Fizz Bazz</my-el>';
+                            const staticPart = '<my-el>Fizz Bazz</my-el>';
                             let resolve;
                             let reject;
                             yield new TestData(`enables showing rest of the content although the promise is no settled - ${$resolve ? 'fulfilled' : 'rejected'}`, Object.assign(new Promise((rs, rj) => { resolve = rs; reject = rj; }), { id: 0 }), {
@@ -1066,7 +1066,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
             </template>
           </template>`,
                             registrations,
-                        }, config(), '<rej-host class="au">rejected with 42</rej-host><rej-host class="au">rejected with forty-two</rej-host>', getActivationSequenceFor(['rej-host-1', 'rej-host-2']), getDeactivationSequenceFor(['rej-host-1', 'rej-host-2']));
+                        }, config(), '<rej-host>rejected with 42</rej-host><rej-host>rejected with forty-two</rej-host>', getActivationSequenceFor(['rej-host-1', 'rej-host-2']), getDeactivationSequenceFor(['rej-host-1', 'rej-host-2']));
                         yield new TestData(`[catch] > [repeat.for] works`, null, {
                             delayPromise, template: `
           <template>
@@ -1078,7 +1078,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
             </template>
           </template>`,
                             registrations,
-                        }, config(), '<rej-host class="au">rejected with 42</rej-host><rej-host class="au">rejected with forty-two</rej-host>', getActivationSequenceFor(['rej-host-1', 'rej-host-2']), getDeactivationSequenceFor(['rej-host-1', 'rej-host-2']));
+                        }, config(), '<rej-host>rejected with 42</rej-host><rej-host>rejected with forty-two</rej-host>', getActivationSequenceFor(['rej-host-1', 'rej-host-2']), getDeactivationSequenceFor(['rej-host-1', 'rej-host-2']));
                     }
                     yield new TestData(`[if,${pattribute}], [else,${pattribute}] works`, null, {
                         delayPromise, template: `
@@ -1264,7 +1264,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
               <rejected-host ${rattribute}="err" err.bind="err"></rejected-host>
             </template>
           </template>`,
-                    }, config(), '<fulfilled-host class="au">resolved with unknown</fulfilled-host>', getActivationSequenceFor(`${fhost}-2`), getDeactivationSequenceFor(`${fhost}-1`), async (ctx) => {
+                    }, config(), '<fulfilled-host>resolved with unknown</fulfilled-host>', getActivationSequenceFor(`${fhost}-2`), getDeactivationSequenceFor(`${fhost}-1`), async (ctx) => {
                         ctx.clear();
                         const q = ctx.platform.domWriteQueue;
                         const app = ctx.app;
@@ -1274,7 +1274,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                         await (app.promise = Promise.resolve('processing'));
                         await q.yield();
                         await waitSwitch($switch);
-                        assert.html.innerEqual(ctx.host, '<fulfilled-host class="au">resolved with processing</fulfilled-host>');
+                        assert.html.innerEqual(ctx.host, '<fulfilled-host>resolved with processing</fulfilled-host>');
                         ctx.assertCallSet([...getDeactivationSequenceFor(`${fhost}-2`), ...getActivationSequenceFor(`${fhost}-1`)]);
                     });
                     yield new TestData(`[then,switch] works - #2`, Promise.resolve('foo'), {
@@ -1288,7 +1288,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
             </template>
             <rejected-host ${rattribute}="err" err.bind="err"></rejected-host>
           </template>`,
-                    }, config(), '<fulfilled-host class="au">resolved with processing</fulfilled-host>', getActivationSequenceFor(`${fhost}-1`), getDeactivationSequenceFor(`${fhost}-2`), async (ctx) => {
+                    }, config(), '<fulfilled-host>resolved with processing</fulfilled-host>', getActivationSequenceFor(`${fhost}-1`), getDeactivationSequenceFor(`${fhost}-2`), async (ctx) => {
                         ctx.clear();
                         const app = ctx.app;
                         const controller = app.$controller;
@@ -1296,7 +1296,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                         const $switch = tc['fulfilled'].view.children.find((c) => c.viewModel instanceof Switch).viewModel;
                         controller.scope.overrideContext.status = 'foo';
                         await waitSwitch($switch);
-                        assert.html.innerEqual(ctx.host, '<fulfilled-host class="au">resolved with unknown</fulfilled-host>');
+                        assert.html.innerEqual(ctx.host, '<fulfilled-host>resolved with unknown</fulfilled-host>');
                         ctx.assertCallSet([...getDeactivationSequenceFor(`${fhost}-1`), ...getActivationSequenceFor(`${fhost}-2`)]);
                     });
                     yield new TestData(`[catch,switch] works - #1`, () => Promise.reject(new Error('foo')), {
@@ -1311,7 +1311,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
               </template>
             </template>
           </template>`,
-                    }, config(), '<rejected-host class="au">rejected with unknown</rejected-host>', getActivationSequenceFor(`${rhost}-2`), getDeactivationSequenceFor(`${rhost}-1`), async (ctx) => {
+                    }, config(), '<rejected-host>rejected with unknown</rejected-host>', getActivationSequenceFor(`${rhost}-2`), getDeactivationSequenceFor(`${rhost}-1`), async (ctx) => {
                         ctx.clear();
                         const q = ctx.platform.domWriteQueue;
                         const app = ctx.app;
@@ -1326,7 +1326,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                         }
                         await q.yield();
                         await waitSwitch($switch);
-                        assert.html.innerEqual(ctx.host, '<rejected-host class="au">rejected with processing</rejected-host>');
+                        assert.html.innerEqual(ctx.host, '<rejected-host>rejected with processing</rejected-host>');
                         ctx.assertCallSet([...getDeactivationSequenceFor(`${rhost}-2`), ...getActivationSequenceFor(`${rhost}-1`)]);
                     });
                     yield new TestData(`[catch,switch] works - #2`, () => Promise.reject(new Error('foo')), {
@@ -1340,7 +1340,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
               <rejected-host default-case  err.bind="{message: 'unknown'}" ce-id="2"></rejected-host>
             </template>
           </template>`,
-                    }, config(), '<rejected-host class="au">rejected with processing</rejected-host>', getActivationSequenceFor(`${rhost}-1`), getDeactivationSequenceFor(`${rhost}-2`), async (ctx) => {
+                    }, config(), '<rejected-host>rejected with processing</rejected-host>', getActivationSequenceFor(`${rhost}-1`), getDeactivationSequenceFor(`${rhost}-2`), async (ctx) => {
                         ctx.clear();
                         const app = ctx.app;
                         const controller = app.$controller;
@@ -1348,7 +1348,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                         const $switch = tc['rejected'].view.children.find((c) => c.viewModel instanceof Switch).viewModel;
                         controller.scope.overrideContext.status = 'foo';
                         await waitSwitch($switch);
-                        assert.html.innerEqual(ctx.host, '<rejected-host class="au">rejected with unknown</rejected-host>');
+                        assert.html.innerEqual(ctx.host, '<rejected-host>rejected with unknown</rejected-host>');
                         ctx.assertCallSet([...getDeactivationSequenceFor(`${rhost}-1`), ...getActivationSequenceFor(`${rhost}-2`)]);
                     });
                     yield new TestData(`au-slot use-case`, () => Promise.reject(new Error('foo')), {
@@ -1369,7 +1369,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
               <au-slot name="rejected" catch></au-slot>
             </template>
           </template>`,
-                    }, config(), '<foo-bar class="au"> <div>f1</div> </foo-bar> <foo-bar class="au"> <div>r2</div> </foo-bar>', [], []);
+                    }, config(), '<foo-bar> <div>f1</div> </foo-bar> <foo-bar> <div>r2</div> </foo-bar>', [], []);
                 }
                 // #region timings
                 for (const $resolve of [true, false]) {

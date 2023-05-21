@@ -1185,7 +1185,7 @@ class ViewportAgent {
                     // their target viewports have the appropriate updates scheduled.
                     b1.push();
                     const ctx = next.context;
-                    void kernel.onResolve(ctx.resolved, () => kernel.onResolve(kernel.onResolve(kernel.resolveAll(...next.residue.splice(0).map(vi => createAndAppendNodes(this.logger, next, vi))), () => kernel.resolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
+                    void kernel.onResolve(ctx.resolved, () => kernel.onResolve(kernel.onResolve(kernel.onResolveAll(...next.residue.splice(0).map(vi => createAndAppendNodes(this.logger, next, vi))), () => kernel.onResolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
                         const vp = vpa.viewport;
                         const component = vp.default;
                         if (component === null)
@@ -1472,10 +1472,10 @@ class ViewportAgent {
             const ctx = next.context;
             return kernel.onResolve(ctx.resolved, () => {
                 const existingChildren = next.children.slice();
-                return kernel.onResolve(kernel.resolveAll(...next
+                return kernel.onResolve(kernel.onResolveAll(...next
                     .residue
                     .splice(0)
-                    .map(vi => createAndAppendNodes(this.logger, next, vi))), () => kernel.onResolve(kernel.resolveAll(...ctx
+                    .map(vi => createAndAppendNodes(this.logger, next, vi))), () => kernel.onResolve(kernel.onResolveAll(...ctx
                     .getAvailableViewportAgents()
                     .reduce((acc, vpa) => {
                     const vp = vpa.viewport;
@@ -1988,7 +1988,7 @@ function createAndAppendNodes(log, node, vi) {
                     node.clearChildren();
                 // falls through
                 case '.':
-                    return kernel.resolveAll(...vi.children.map(childVI => {
+                    return kernel.onResolveAll(...vi.children.map(childVI => {
                         return createAndAppendNodes(log, node, childVI);
                     }));
                 default: {
@@ -2825,7 +2825,7 @@ function updateNode(log, vit, ctx, node) {
         //   - look at the default value of those viewports
         //   - create instructions, and
         //   - add the compiled nodes from those to children of the node.
-        return kernel.onResolve(kernel.resolveAll(...vit.children.map(vi => createAndAppendNodes(log, node, vi))), () => kernel.resolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
+        return kernel.onResolve(kernel.onResolveAll(...vit.children.map(vi => createAndAppendNodes(log, node, vi))), () => kernel.onResolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
             const vp = vpa.viewport;
             const component = vp.default;
             if (component === null)
@@ -2835,7 +2835,7 @@ function updateNode(log, vit, ctx, node) {
         }, [])));
     }
     // Drill down until we're at the node whose context matches the provided navigation context
-    return kernel.resolveAll(...node.children.map(child => {
+    return kernel.onResolveAll(...node.children.map(child => {
         return updateNode(log, vit, ctx, child);
     }));
 }

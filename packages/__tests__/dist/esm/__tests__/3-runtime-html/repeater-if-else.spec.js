@@ -454,7 +454,7 @@ describe('3-runtime-html/repeater-if-else.spec.ts', function () {
         }
     ];
     eachCartesianJoin([behaviorsSpecs, ceTemplateSpecs, appTemplateSpecs, itemsSpecs, countSpecs, mutationSpecs], (behaviorsSpec, ceTemplateSpec, appTemplateSpec, itemsSpec, countSpec, mutationSpec) => {
-        it(`behaviorsSpec ${behaviorsSpec.t}, ceTemplateSpec ${ceTemplateSpec.t}, appTemplateSpec ${appTemplateSpec.t}, itemsSpec ${itemsSpec.t}, countSpec ${countSpec.t}, mutationSpec ${mutationSpec.t}`, async function () {
+        it(`behaviorsSpec ${behaviorsSpec.t}, ceTemplateSpec ${ceTemplateSpec.t}, appTemplateSpec ${appTemplateSpec.t}, itemsSpec ${itemsSpec.t}, countSpec ${countSpec.t}, mutationSpec ${mutationSpec.t}`, function () {
             var _a;
             const { behaviors } = behaviorsSpec;
             const { createCETemplate } = ceTemplateSpec;
@@ -486,20 +486,19 @@ describe('3-runtime-html/repeater-if-else.spec.ts', function () {
             });
             const host = ctx.createElement('div');
             const au = new Aurelia(container);
-            const task = au.register(TestConfiguration)
+            void au.register(TestConfiguration)
                 .app({ host, component: Component })
                 .start();
             const component = au.root.controller.viewModel;
-            await task;
             assert.strictEqual(trimFull(host.textContent), elseText.repeat(count), `trimFull(host.textContent) === elseText.repeat(count)`);
             execute(component, ctx.platform, host, count, ifText, elseText);
-            await au.stop();
+            void au.stop();
             assert.strictEqual(trimFull(host.textContent), '', `trimFull(host.textContent) === ''`);
             au.dispose();
         });
     });
-    it('GH #1119 - works when the repeter is wrapped in if.bind and using the same array with if.bind', async function () {
-        const { component, getAllBy } = await createFixture(`<div if.bind="!!items.length">
+    it('GH #1119 - works when the repeter is wrapped in if.bind and using the same array with if.bind', function () {
+        const { component, getAllBy } = createFixture(`<div if.bind="!!items.length">
             <p repeat.for="i of items">
               \${i} <button type="button" click.trigger="remove($index)">remove</button><br>
             </p>
@@ -514,7 +513,7 @@ describe('3-runtime-html/repeater-if-else.spec.ts', function () {
             remove(i) {
                 this.items.splice(i, 1);
             }
-        }).started;
+        });
         assert.strictEqual(getAllBy('p').length, 0);
         component.add();
         assert.strictEqual(getAllBy('p').length, 1);

@@ -52,6 +52,19 @@ export declare const toArray: <T = unknown>(input: ArrayLike<T>) => T[];
 export declare const bound: <T extends Function>(target: Object, key: string | symbol, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T>;
 export declare const mergeArrays: <T>(...arrays: (readonly T[] | undefined)[]) => T[];
 export declare const firstDefined: <T>(...values: readonly (T | undefined)[]) => T;
+/**
+ * Get the prototypes of a class hierarchy. Es6 classes have their parent class as prototype
+ * so this will return a list of constructors
+ *
+ * @example
+ * ```ts
+ * class A {}
+ * class B extends A {}
+ *
+ * assert.deepStrictEqual(getPrototypeChain(A), [A])
+ * assert.deepStrictEqual(getPrototypeChain(B), [B, A])
+ * ```
+ */
 export declare const getPrototypeChain: <T extends Constructable>(Type: T) => readonly [T, ...Constructable[]];
 export declare function toLookup<T1 extends {}>(obj1: T1): T1;
 export declare function toLookup<T1 extends {}, T2 extends {}>(obj1: T1, obj2: T2): Overwrite<T1, T2>;
@@ -82,6 +95,6 @@ export declare const onResolve: <TValue, TRet>(maybePromise: TValue, resolveCall
  *
  * If none of the values is a promise, nothing is returned, to indicate that things can stay synchronous.
  */
-export declare const resolveAll: (...maybePromises: (void | Promise<void>)[]) => void | Promise<void>;
+export declare const onResolveAll: (...maybePromises: (void | Promise<void>)[]) => void | Promise<void>;
 export {};
 //# sourceMappingURL=functions.d.ts.map

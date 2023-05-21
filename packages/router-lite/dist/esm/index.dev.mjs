@@ -1,5 +1,5 @@
 import { Metadata, isObject } from '@aurelia/metadata';
-import { DI, IEventAggregator, ILogger, Protocol, emptyArray, onResolve, resolveAll, emptyObject, Registration, IContainer, isArrayIndex, IModuleLoader, InstanceProvider, noop } from '@aurelia/kernel';
+import { DI, IEventAggregator, ILogger, Protocol, emptyArray, onResolve, onResolveAll, emptyObject, Registration, IContainer, isArrayIndex, IModuleLoader, InstanceProvider, noop } from '@aurelia/kernel';
 import { isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, customElement, bindable, customAttribute, INode, getRef, CustomAttribute, AppTask } from '@aurelia/runtime-html';
 import { RecognizedRoute, Endpoint, ConfigurableRoute, RESIDUE, RouteRecognizer } from '@aurelia/route-recognizer';
 
@@ -1181,7 +1181,7 @@ class ViewportAgent {
                     // their target viewports have the appropriate updates scheduled.
                     b1.push();
                     const ctx = next.context;
-                    void onResolve(ctx.resolved, () => onResolve(onResolve(resolveAll(...next.residue.splice(0).map(vi => createAndAppendNodes(this.logger, next, vi))), () => resolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
+                    void onResolve(ctx.resolved, () => onResolve(onResolve(onResolveAll(...next.residue.splice(0).map(vi => createAndAppendNodes(this.logger, next, vi))), () => onResolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
                         const vp = vpa.viewport;
                         const component = vp.default;
                         if (component === null)
@@ -1468,10 +1468,10 @@ class ViewportAgent {
             const ctx = next.context;
             return onResolve(ctx.resolved, () => {
                 const existingChildren = next.children.slice();
-                return onResolve(resolveAll(...next
+                return onResolve(onResolveAll(...next
                     .residue
                     .splice(0)
-                    .map(vi => createAndAppendNodes(this.logger, next, vi))), () => onResolve(resolveAll(...ctx
+                    .map(vi => createAndAppendNodes(this.logger, next, vi))), () => onResolve(onResolveAll(...ctx
                     .getAvailableViewportAgents()
                     .reduce((acc, vpa) => {
                     const vp = vpa.viewport;
@@ -1984,7 +1984,7 @@ function createAndAppendNodes(log, node, vi) {
                     node.clearChildren();
                 // falls through
                 case '.':
-                    return resolveAll(...vi.children.map(childVI => {
+                    return onResolveAll(...vi.children.map(childVI => {
                         return createAndAppendNodes(log, node, childVI);
                     }));
                 default: {
@@ -2821,7 +2821,7 @@ function updateNode(log, vit, ctx, node) {
         //   - look at the default value of those viewports
         //   - create instructions, and
         //   - add the compiled nodes from those to children of the node.
-        return onResolve(resolveAll(...vit.children.map(vi => createAndAppendNodes(log, node, vi))), () => resolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
+        return onResolve(onResolveAll(...vit.children.map(vi => createAndAppendNodes(log, node, vi))), () => onResolveAll(...ctx.getAvailableViewportAgents().reduce((acc, vpa) => {
             const vp = vpa.viewport;
             const component = vp.default;
             if (component === null)
@@ -2831,7 +2831,7 @@ function updateNode(log, vit, ctx, node) {
         }, [])));
     }
     // Drill down until we're at the node whose context matches the provided navigation context
-    return resolveAll(...node.children.map(child => {
+    return onResolveAll(...node.children.map(child => {
         return updateNode(log, vit, ctx, child);
     }));
 }

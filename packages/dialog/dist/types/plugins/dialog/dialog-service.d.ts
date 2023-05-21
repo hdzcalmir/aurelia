@@ -1,19 +1,13 @@
 import { IContainer } from '@aurelia/kernel';
-import { IPlatform } from '@aurelia/runtime-html';
-import { IDialogService, IDialogController, IDialogGlobalSettings } from './dialog-interfaces';
+import { IDialogService, IDialogController } from './dialog-interfaces';
 import type { DialogOpenPromise, IDialogSettings } from './dialog-interfaces';
 /**
  * A default implementation for the dialog service allowing for the creation of dialogs.
  */
 export declare class DialogService implements IDialogService {
-    private readonly _ctn;
-    private readonly p;
-    private readonly _defaultSettings;
+    static register(container: IContainer): void;
     get controllers(): IDialogController[];
     private get top();
-    protected static get inject(): import("@aurelia/kernel").InterfaceSymbol<IDialogGlobalSettings>[];
-    constructor(_ctn: IContainer, p: IPlatform, _defaultSettings: IDialogGlobalSettings);
-    static register(container: IContainer): void;
     /**
      * Opens a new dialog.
      *

@@ -68,7 +68,6 @@ describe('router/viewport-content.spec.ts', function () {
             const viewport = router.allEndpoints('Viewport')[0];
             const connectedCE = viewport.connectedCE;
             container.register(Global);
-            // Registration.aliasTo(CustomElement.keyFrom('global'), Global).register(container);
             const viewportContent = new ViewportContent(router, viewport, null, true, RoutingInstruction.create('global'), null, connectedCE);
             const component = viewportContent.toComponentInstance(connectedCE.container, connectedCE.controller, connectedCE.element);
             assert.strictEqual(component.constructor, Global, `component.constructor`);

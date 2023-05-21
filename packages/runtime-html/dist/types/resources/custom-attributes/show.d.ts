@@ -1,12 +1,9 @@
-import { INode } from '../../dom';
-import { IPlatform } from '../../platform';
 import type { ICustomAttributeViewModel } from '../../templating/controller';
-import type { HydrateAttributeInstruction } from '../../renderer';
 export declare class Show implements ICustomAttributeViewModel {
+    value: unknown;
     private readonly el;
     private readonly p;
-    value: unknown;
-    constructor(el: INode<HTMLElement>, p: IPlatform, instr: HydrateAttributeInstruction);
+    constructor();
     binding(): void;
     detaching(): void;
     valueChanged(): void;
