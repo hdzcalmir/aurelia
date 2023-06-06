@@ -1,11 +1,10 @@
-import { ISVGAnalyzer } from '../observation/svg-analyzer';
 export interface IAttrMapper extends AttrMapper {
 }
 export declare const IAttrMapper: import("@aurelia/kernel").InterfaceSymbol<IAttrMapper>;
 export type IsTwoWayPredicate = (element: Element, attribute: string) => boolean;
 export declare class AttrMapper {
     private readonly svg;
-    constructor(svg: ISVGAnalyzer);
+    constructor();
     /**
      * Allow application to teach Aurelia how to define how to map attributes to properties
      * based on element tagName

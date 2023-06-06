@@ -167,6 +167,7 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialCustomElementDefinition, Type?: CustomElementType<T> | null): CustomElementDefinition<T>;
     static getOrCreate(partialDefinition: PartialCustomElementDefinition): CustomElementDefinition;
     register(container: IContainer): void;
+    toString(): string;
 }
 export type InjectableToken<K = any> = (target: Injectable, property: string | symbol | undefined, index: number) => void;
 export declare const CustomElement: Readonly<CustomElementKind>;

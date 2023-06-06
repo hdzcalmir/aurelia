@@ -4786,7 +4786,7 @@ const Ke = {
 
 class DirtyChecker {
     static register(t) {
-        t.register(e.Registration.singleton(He, this), e.Registration.aliasTo(this, He));
+        t.register(e.Registration.singleton(this, this), e.Registration.aliasTo(this, He));
     }
     constructor(e) {
         this.p = e;

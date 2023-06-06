@@ -95,6 +95,6 @@ export declare const onResolve: <TValue, TRet>(maybePromise: TValue, resolveCall
  *
  * If none of the values is a promise, nothing is returned, to indicate that things can stay synchronous.
  */
-export declare const resolveAll: (...maybePromises: (void | Promise<void>)[]) => void | Promise<void>;
+export declare const onResolveAll: (...maybePromises: (void | Promise<void>)[]) => void | Promise<void>;
 export {};
 //# sourceMappingURL=functions.d.ts.map

@@ -1,13 +1,8 @@
-import { ILogger } from '@aurelia/kernel';
-import { IObserverLocator, Scope } from '@aurelia/runtime';
-import { IRenderLocation } from '../../dom';
-import { IViewFactory } from '../../templating/view';
+import { Scope } from '@aurelia/runtime';
 import type { ICustomAttributeController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, IHydratableController, ISyntheticView, ControllerVisitor } from '../../templating/controller';
 import type { INode } from '../../dom';
 import type { IInstruction } from '../../renderer';
 export declare class Switch implements ICustomAttributeViewModel {
-    private readonly _factory;
-    private readonly _location;
     readonly $controller: ICustomAttributeController<this>;
     private view;
     value: unknown;
@@ -17,7 +12,6 @@ export declare class Switch implements ICustomAttributeViewModel {
      * This needs to be removed after the scheduler is ready to handle/queue the floating promises.
      */
     readonly promise: Promise<void> | void;
-    constructor(_factory: IViewFactory, _location: IRenderLocation);
     link(_controller: IHydratableController, _childController: ICustomAttributeController, _target: INode, _instruction: IInstruction): void;
     attaching(initiator: IHydratedController, _parent: IHydratedParentController): void | Promise<void>;
     detaching(initiator: IHydratedController, _parent: IHydratedParentController): void | Promise<void>;
@@ -34,10 +28,6 @@ export declare class Case implements ICustomAttributeViewModel {
     fallThrough: boolean;
     view: ISyntheticView | undefined;
     private $switch;
-    constructor(
-    /** @internal */ _factory: IViewFactory, 
-    /** @internal */ _locator: IObserverLocator, 
-    /** @internal */ _location: IRenderLocation, logger: ILogger);
     link(controller: IHydratableController, _childController: ICustomAttributeController, _target: INode, _instruction: IInstruction): void;
     detaching(initiator: IHydratedController, _parent: IHydratedParentController): void | Promise<void>;
     isMatch(value: unknown): boolean;

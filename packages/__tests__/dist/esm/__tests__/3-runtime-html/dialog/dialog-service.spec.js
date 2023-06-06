@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { noop } from '@aurelia/kernel';
 import { INode, customElement, CustomElement, } from '@aurelia/runtime-html';
-import { IDialogService, IDialogGlobalSettings, DialogConfiguration, DialogDefaultConfiguration, DefaultDialogGlobalSettings, IDialogDom, IDialogController, DialogController, } from '@aurelia/dialog';
+import { IDialogService, IDialogGlobalSettings, DialogConfiguration, DialogDefaultConfiguration, DefaultDialogGlobalSettings, IDialogDom, IDialogController, DialogController, DialogService, } from '@aurelia/dialog';
 import { createFixture, assert, createSpy, } from '@aurelia/testing';
 describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
     describe('configuration', function () {
@@ -41,7 +41,7 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
         });
         it('reuses previous registration', async function () {
             let customized = false;
-            const { ctx, startPromise, tearDown } = createFixture('', class App {
+            const { ctx, startPromise } = createFixture('', class App {
             }, [
                 DialogDefaultConfiguration.customize(settings => {
                     customized = true;
@@ -55,7 +55,11 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
                 template: () => '<div>Hello world</div>'
             });
             assert.strictEqual(customized, true);
-            await tearDown();
+        });
+        it('allows injection of both IDialogService and DialogService', function () {
+            const { container } = createFixture('', class {
+            }, [DialogDefaultConfiguration]);
+            assert.strictEqual(container.get(IDialogService), container.get(DialogService));
         });
     });
     describe('on deactivation', function () {
@@ -112,24 +116,17 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
                 }
             },
             {
-                title: 'throws when @inject(DialogController) instead of IDialogController',
+                title: 'allows both @inject(DialogController) and @inject(IDialogController)',
                 afterStarted: async (_, dialogService) => {
-                    let error;
                     await dialogService.open({
                         component: () => { var _a; return _a = class {
-                                constructor(controller, dialogDom, node) {
-                                    assert.strictEqual(controller['dom'], dialogDom);
-                                    assert.strictEqual(dialogDom.contentHost, node);
+                                constructor(controller, controller2) {
+                                    assert.strictEqual(controller, controller2);
                                 }
                             },
-                            _a.inject = [DialogController],
+                            _a.inject = [DialogController, IDialogController],
                             _a; }
-                    }).catch(ex => {
-                        error = ex;
                     });
-                    assert.notStrictEqual(error, undefined);
-                    assert.includes(error.message, 'AUR0902');
-                    // assert.includes(error.message, 'Invalid injection of DialogController. Use IDialogController instead.');
                 }
             },
             {

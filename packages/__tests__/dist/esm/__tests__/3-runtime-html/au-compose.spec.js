@@ -411,7 +411,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             });
             await startPromise;
             assert.visibleTextEqual(appHost, 'Hello');
-            assert.html.innerEqual(appHost, '<au-compose class="au"><div>Hello</div></au-compose>');
+            assert.html.innerEqual(appHost, '<au-compose><div>Hello</div></au-compose>');
             assert.strictEqual(node, appHost.querySelector('au-compose'));
             await tearDown();
         });
@@ -613,7 +613,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
         it('works with [multiple successive updates] + [activate<Promise>]', async function () {
             const baseTimeout = 75;
             let timeout = baseTimeout;
-            const { appHost, component, startPromise, tearDown } = createFixture(`\${message}<au-compose component.bind="{ activate, value: i }" template.bind="view" view-model.ref="auCompose" containerless>`, class App {
+            const { appHost, component, startPromise, stop } = createFixture(`\${message}<au-compose component.bind="{ activate, value: i }" template.bind="view" view-model.ref="auCompose" containerless>`, class App {
                 constructor() {
                     this.i = 0;
                     this.message = 'hello world';
@@ -640,7 +640,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             await auCompose.pending;
             assert.strictEqual(appHost.textContent, `hello world38`);
             assert.html.innerEqual(appHost, 'hello world<div>38</div>');
-            await tearDown();
+            void stop();
             assert.strictEqual(appHost.textContent, '');
         });
     });
@@ -861,7 +861,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
                     return this.host.animate([{ color: 'blue' }, { color: 'green' }], { duration: 50 }).finished;
                 }
             });
-            const { component, startPromise, tearDown } = createFixture(`<au-compose repeat.for="vm of components" component.bind="vm">`, class App {
+            const { component, startPromise } = createFixture(`<au-compose repeat.for="vm of components" component.bind="vm">`, class App {
                 constructor() {
                     this.message = 'Aurelia';
                     this.components = [];
@@ -881,7 +881,6 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             await new Promise(r => setTimeout(r, 100));
             component.remove();
             await new Promise(r => setTimeout(r, 150));
-            await tearDown();
         });
     }
 });

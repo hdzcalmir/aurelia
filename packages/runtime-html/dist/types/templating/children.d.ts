@@ -35,10 +35,9 @@ export interface ChildrenBinding extends ISubscriberCollection {
  * A binding for observing & notifying the children of a custom element.
  */
 export declare class ChildrenBinding implements IBinding {
-    static create(controller: ICustomElementController, obj: ICustomElementViewModel, key: PropertyKey, cbName: PropertyKey, query?: (controller: ICustomElementController<ICustomElementViewModel>) => ArrayLike<INode>, filter?: (node: INode, controller?: ICustomElementController<ICustomElementViewModel> | null | undefined, viewModel?: any) => boolean, map?: (node: INode, controller?: ICustomElementController<ICustomElementViewModel> | null | undefined, viewModel?: any) => any, options?: MutationObserverInit): ChildrenBinding;
     isBound: boolean;
     readonly obj: ICustomElementViewModel;
-    private constructor();
+    constructor(controller: ICustomElementController, obj: ICustomElementViewModel, callback: undefined | (() => void), query?: (controller: ICustomElementController<ICustomElementViewModel>) => ArrayLike<INode>, filter?: (node: INode, controller?: ICustomElementController<ICustomElementViewModel> | null | undefined, viewModel?: any) => boolean, map?: (node: INode, controller?: ICustomElementController<ICustomElementViewModel> | null | undefined, viewModel?: any) => any, options?: MutationObserverInit);
     getValue(): unknown[];
     setValue(_value: unknown): void;
     bind(): void;

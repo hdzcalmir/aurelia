@@ -1,7 +1,5 @@
 import { IServiceLocator } from '@aurelia/kernel';
-import { IDirtyChecker, INodeObserverLocator, IObserverLocator } from '@aurelia/runtime';
-import { IPlatform } from '../platform';
-import { ISVGAnalyzer } from './svg-analyzer';
+import { INodeObserverLocator, IObserverLocator } from '@aurelia/runtime';
 import type { IContainer } from '@aurelia/kernel';
 import type { IAccessor, IObserver, ICollectionObserver, CollectionKind } from '@aurelia/runtime';
 import type { INode } from '../dom';
@@ -47,15 +45,11 @@ export interface INodeObserverConfig {
     readonly default?: unknown;
 }
 export declare class NodeObserverLocator implements INodeObserverLocator {
-    private readonly locator;
-    private readonly platform;
-    private readonly dirtyChecker;
-    private readonly svgAnalyzer;
     /**
      * Indicates whether the node observer will be allowed to use dirty checking for a property it doesn't know how to observe
      */
     allowDirtyCheck: boolean;
-    constructor(locator: IServiceLocator, platform: IPlatform, dirtyChecker: IDirtyChecker, svgAnalyzer: ISVGAnalyzer);
+    constructor();
     static register(container: IContainer): void;
     handles(obj: unknown, _key: PropertyKey): boolean;
     useConfig(config: Record<string, Record<string, INodeObserverConfig>>): void;

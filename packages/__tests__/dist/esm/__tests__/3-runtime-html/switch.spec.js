@@ -335,7 +335,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
     function* getTestData() {
         function wrap(content, isDefault = false) {
             const host = isDefault ? 'default-case-host' : 'case-host';
-            return `<${host} class="au">${content}</${host}>`;
+            return `<${host}>${content}</${host}>`;
         }
         for (const config of configFactories) {
             const MyEcho = createComponentType('my-echo', `Echoed '\${message}'`, ['message']);
@@ -570,7 +570,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
         </template>
       </template>`,
                 registrations: [MyEcho],
-            }, config(), `${wrap('Delivered.')} <span>foobar</span> <span>foo</span> <span>bar</span> <span>0</span><span>1</span><span>2</span> <my-echo class="au">Echoed 'awesome possum'</my-echo>`, [...getActivationSequenceFor('my-echo'), 1, 2, 3, 4, ...getActivationSequenceFor('case-host-4')], getDeactivationSequenceFor(['case-host-4', 'my-echo']));
+            }, config(), `${wrap('Delivered.')} <span>foobar</span> <span>foo</span> <span>bar</span> <span>0</span><span>1</span><span>2</span> <my-echo>Echoed 'awesome possum'</my-echo>`, [...getActivationSequenceFor('my-echo'), 1, 2, 3, 4, ...getActivationSequenceFor('case-host-4')], getDeactivationSequenceFor(['case-host-4', 'my-echo']));
             yield new TestData('works with value converter for switch expression', {
                 initialStatusNum: 4 /* StatusNum.delivered */,
                 template: `
@@ -799,7 +799,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
 
       <foo-bar status.bind="status"></foo-bar>
       `,
-            }, config(), `<foo-bar class="au"> <div> ${wrap('Delivered.')} </div> </foo-bar>`, null, getDeactivationSequenceFor('case-host-4'), (ctx) => {
+            }, config(), `<foo-bar> <div> ${wrap('Delivered.')} </div> </foo-bar>`, null, getDeactivationSequenceFor('case-host-4'), (ctx) => {
                 const fooBarController = ctx.controller.children[0];
                 const $switch = ctx.getSwitches(fooBarController)[0];
                 ctx.assertCalls([
@@ -824,11 +824,11 @@ describe('3-runtime-html/switch.spec.ts', function () {
         <span au-slot="s1">Projection</span>
       </foo-bar>
       `,
-            }, config(), '<foo-bar class="au"> <div> <span>Projection</span> </div> </foo-bar>', null, [], async (ctx) => {
+            }, config(), '<foo-bar> <div> <span>Projection</span> </div> </foo-bar>', null, [], async (ctx) => {
                 const fooBarController = ctx.controller.children[0];
                 const $switch = ctx.getSwitches(fooBarController)[0];
                 ctx.assertCalls([`Case-#${$switch['cases'][0].id}.isMatch()`]);
-                await ctx.assertChange($switch, () => { ctx.app.status = "delivered" /* Status.delivered */; }, '<foo-bar class="au"> <div> Delivered. </div> </foo-bar>', new Array(4).fill(0).map((_, i) => `Case-#${$switch['cases'][i].id}.isMatch()`));
+                await ctx.assertChange($switch, () => { ctx.app.status = "delivered" /* Status.delivered */; }, '<foo-bar> <div> Delivered. </div> </foo-bar>', new Array(4).fill(0).map((_, i) => `Case-#${$switch['cases'][i].id}.isMatch()`));
             });
             yield new TestData('works with case on CE', {
                 initialStatus: "received" /* Status.received */,
@@ -844,7 +844,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
                 registrations: [MyEcho]
             }, config(), wrap('Order received.'), [1, ...getActivationSequenceFor('case-host-1')], getDeactivationSequenceFor('my-echo'), async (ctx) => {
                 const $switch = ctx.getSwitches()[0];
-                await ctx.assertChange($switch, () => { ctx.app.status = "delivered" /* Status.delivered */; }, '<my-echo class="au">Echoed \'Delivered.\'</my-echo>', [1, 2, 3, 4, ...getDeactivationSequenceFor('case-host-1'), ...getActivationSequenceFor('my-echo')]);
+                await ctx.assertChange($switch, () => { ctx.app.status = "delivered" /* Status.delivered */; }, '<my-echo>Echoed \'Delivered.\'</my-echo>', [1, 2, 3, 4, ...getDeactivationSequenceFor('case-host-1'), ...getActivationSequenceFor('my-echo')]);
             });
             yield new TestData('slot integration - switch wrapped with au-slot', {
                 initialStatus: "received" /* Status.received */,
@@ -864,12 +864,12 @@ describe('3-runtime-html/switch.spec.ts', function () {
         </template>
       </foo-bar>
       `,
-            }, config(), `<foo-bar class="au"> ${wrap('Order received.')} </foo-bar>`, null, getDeactivationSequenceFor('case-host-4'), async (ctx) => {
+            }, config(), `<foo-bar> ${wrap('Order received.')} </foo-bar>`, null, getDeactivationSequenceFor('case-host-4'), async (ctx) => {
                 const fooBarController = ctx.controller.children[0];
                 const auSlot = fooBarController.children[0].viewModel;
                 const $switch = ctx.getSwitches(auSlot.view)[0];
                 ctx.assertCalls([`Case-#${$switch['cases'][0].id}.isMatch()`, ...getActivationSequenceFor('case-host-1')]);
-                await ctx.assertChange($switch, () => { ctx.app.status = "delivered" /* Status.delivered */; }, `<foo-bar class="au"> ${wrap('Delivered.')} </foo-bar>`, [...new Array(4).fill(0).map((_, i) => `Case-#${$switch['cases'][i].id}.isMatch()`), ...getDeactivationSequenceFor('case-host-1'), ...getActivationSequenceFor('case-host-4')]);
+                await ctx.assertChange($switch, () => { ctx.app.status = "delivered" /* Status.delivered */; }, `<foo-bar> ${wrap('Delivered.')} </foo-bar>`, [...new Array(4).fill(0).map((_, i) => `Case-#${$switch['cases'][i].id}.isMatch()`), ...getDeactivationSequenceFor('case-host-1'), ...getActivationSequenceFor('case-host-4')]);
             });
             yield new TestData('*[switch] native-html-element *[case] works', {
                 initialStatus: "received" /* Status.received */,
@@ -904,7 +904,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
             // </template>`,
             //   },
             //   config(),
-            //   `<foo-bar class="au"> ${wrap('On the way.')} foo bar </foo-bar>`,
+            //   `<foo-bar> ${wrap('On the way.')} foo bar </foo-bar>`,
             //   [1, ...getActivationSequenceFor('case-host-1')],
             //   getDeactivationSequenceFor('case-host-1')
             // );
@@ -929,7 +929,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
             // </template>`,
             //   },
             //   config(),
-            //   `<foo-bar class="au"> <fiz-baz class="au"> ${wrap('On the way.')} fiz baz </fiz-baz> foo bar </foo-bar>`,
+            //   `<foo-bar> <fiz-baz> ${wrap('On the way.')} fiz baz </fiz-baz> foo bar </foo-bar>`,
             //   [1, ...getActivationSequenceFor('case-host-1')],
             //   getDeactivationSequenceFor('case-host-1')
             // );

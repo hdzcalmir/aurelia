@@ -1064,7 +1064,7 @@ class ViewportAgent {
                     this.logger.trace(`canLoad(next:%s) - plan set to '%s', compiling residue`, s, this.$plan);
                     t.push();
                     const i = s.context;
-                    void e.onResolve(i.resolved, (() => e.onResolve(e.onResolve(e.resolveAll(...s.residue.splice(0).map((t => createAndAppendNodes(this.logger, s, t)))), (() => e.resolveAll(...i.getAvailableViewportAgents().reduce(((t, e) => {
+                    void e.onResolve(i.resolved, (() => e.onResolve(e.onResolve(e.onResolveAll(...s.residue.splice(0).map((t => createAndAppendNodes(this.logger, s, t)))), (() => e.onResolveAll(...i.getAvailableViewportAgents().reduce(((t, e) => {
                         const i = e.viewport;
                         const n = i.default;
                         if (n === null) return t;
@@ -1366,7 +1366,7 @@ class ViewportAgent {
             const t = i.context;
             return e.onResolve(t.resolved, (() => {
                 const s = i.children.slice();
-                return e.onResolve(e.resolveAll(...i.residue.splice(0).map((t => createAndAppendNodes(this.logger, i, t)))), (() => e.onResolve(e.resolveAll(...t.getAvailableViewportAgents().reduce(((t, e) => {
+                return e.onResolve(e.onResolveAll(...i.residue.splice(0).map((t => createAndAppendNodes(this.logger, i, t)))), (() => e.onResolve(e.onResolveAll(...t.getAvailableViewportAgents().reduce(((t, e) => {
                     const s = e.viewport;
                     const n = s.default;
                     if (n === null) return t;
@@ -1827,7 +1827,7 @@ function createAndAppendNodes(t, s, i) {
             s.clearChildren();
 
           case ".":
-            return e.resolveAll(...i.children.map((e => createAndAppendNodes(t, s, e))));
+            return e.onResolveAll(...i.children.map((e => createAndAppendNodes(t, s, e))));
 
           default:
             {
@@ -2530,7 +2530,7 @@ function updateNode(t, s, i, n) {
     }
     if (n.context === i) {
         n.clearChildren();
-        return e.onResolve(e.resolveAll(...s.children.map((e => createAndAppendNodes(t, n, e)))), (() => e.resolveAll(...i.getAvailableViewportAgents().reduce(((e, s) => {
+        return e.onResolve(e.onResolveAll(...s.children.map((e => createAndAppendNodes(t, n, e)))), (() => e.onResolveAll(...i.getAvailableViewportAgents().reduce(((e, s) => {
             const i = s.viewport;
             const r = i.default;
             if (r === null) return e;
@@ -2541,7 +2541,7 @@ function updateNode(t, s, i, n) {
             return e;
         }), []))));
     }
-    return e.resolveAll(...n.children.map((e => updateNode(t, s, i, e))));
+    return e.onResolveAll(...n.children.map((e => updateNode(t, s, i, e))));
 }
 
 const x = [ "?", "#", "/", "+", "(", ")", ".", "@", "!", "=", ",", "&", "'", "~", ";" ];

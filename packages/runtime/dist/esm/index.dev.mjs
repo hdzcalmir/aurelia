@@ -4824,7 +4824,7 @@ const DirtyCheckSettings = {
 };
 class DirtyChecker {
     static register(c) {
-        c.register(Registration.singleton(IDirtyChecker, this), Registration.aliasTo(this, IDirtyChecker));
+        c.register(Registration.singleton(this, this), Registration.aliasTo(this, IDirtyChecker));
     }
     constructor(p) {
         this.p = p;

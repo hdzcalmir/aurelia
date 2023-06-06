@@ -1,6 +1,7 @@
 import { assert, createContainer, createFixture, createObserverLocator, createScopeForTest, } from '@aurelia/testing';
 import { Interpolation, ConditionalExpression, AccessScopeExpression } from '@aurelia/runtime';
 import { CustomElement, InterpolationBinding, SVGAnalyzer, IPlatform, ValueConverter, } from '@aurelia/runtime-html';
+import { resolve } from '@aurelia/kernel';
 const testDateString = new Date('Sat Feb 02 2002 00:00:00 GMT+0000 (Coordinated Universal Time)').toString();
 const ThreeHoursAheadDateString = new Date('Sat Feb 02 2002 03:00:00 GMT+0000 (Coordinated Universal Time)').toString();
 const ThreeDaysDateString = new Date('Sat Feb 03 2002 00:00:00 GMT+0000 (Coordinated Universal Time)').toString();
@@ -575,18 +576,15 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
         assert.strictEqual(appHost.textContent, '');
     });
     it('[IF/Else] interpolates expression with value converter that returns HTML nodes in <template/>', async function () {
-        const { tearDown, appHost, component, startPromise } = createFixture(`<template if.bind="show">\${message | $:'if'}</template><template else>\${message | $:'else'}</template>`, class App {
+        const { stop, appHost, component } = createFixture(`<template if.bind="show">\${message | $:'if'}</template><template else>\${message | $:'else'}</template>`, class App {
             constructor() {
                 this.show = true;
                 this.message = 'foo';
             }
         }, [
             ValueConverter.define('$', class MoneyValueConverter {
-                static get inject() {
-                    return [IPlatform];
-                }
-                constructor(p) {
-                    this.p = p;
+                constructor() {
+                    this.p = resolve(IPlatform);
                 }
                 toView(val, prefix) {
                     return this.toNode(`<${prefix}>${prefix} ${val}</${prefix}>`);
@@ -598,13 +596,12 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
                 }
             })
         ]);
-        await startPromise;
         assert.strictEqual(appHost.textContent, 'if foo');
         assert.html.innerEqual(appHost, '<if>if foo</if>');
         component.show = false;
         assert.strictEqual(appHost.textContent, 'else foo');
         assert.html.innerEqual(appHost, '<else>else foo</else>');
-        await tearDown();
+        void stop();
         // when a <template else/> is removed, it doesn't leave any nodes in the appended target
         // so the app host text content is turned back to empty
         assert.strictEqual(appHost.textContent, '');

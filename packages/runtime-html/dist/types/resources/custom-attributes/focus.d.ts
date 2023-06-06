@@ -1,5 +1,3 @@
-import { INode } from '../../dom';
-import { IPlatform } from '../../platform';
 import type { ICustomAttributeController, ICustomAttributeViewModel } from '../../templating/controller';
 /**
  * Focus attribute for element focus binding
@@ -7,7 +5,6 @@ import type { ICustomAttributeController, ICustomAttributeViewModel } from '../.
 export declare class Focus implements ICustomAttributeViewModel {
     readonly $controller: ICustomAttributeController<this>;
     value: unknown;
-    constructor(element: INode<HTMLElement>, platform: IPlatform);
     binding(): void;
     /**
      * Invoked everytime the bound value changes.

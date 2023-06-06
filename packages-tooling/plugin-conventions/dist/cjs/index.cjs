@@ -457,7 +457,26 @@ function toBindingMode(mode) {
     }
 }
 
-function preprocessHtmlTemplate(unit, options, hasViewModel) {
+function resolveFilePath(unit, relativeOrAbsolutePath) {
+    if (relativeOrAbsolutePath.startsWith('.')) {
+        return path__namespace.resolve(unit.base || '', path__namespace.dirname(unit.path), relativeOrAbsolutePath);
+    }
+    else {
+        return path__namespace.resolve(unit.base || '', relativeOrAbsolutePath);
+    }
+}
+function fileExists(unit, relativeOrAbsolutePath) {
+    const p = resolveFilePath(unit, relativeOrAbsolutePath);
+    try {
+        const stats = fs__namespace.statSync(p);
+        return stats.isFile();
+    }
+    catch (e) {
+        return false;
+    }
+}
+
+function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileExists) {
     const name = resourceName(unit.path);
     const stripped = stripMetaData(unit.contents);
     const { html, deps, containerless, hasSlot, bindables, aliases, capture } = stripped;
@@ -481,7 +500,16 @@ function preprocessHtmlTemplate(unit, options, hasViewModel) {
     }
     deps.forEach((d, i) => {
         var _a;
-        const ext = path__namespace.extname(d);
+        let ext = path__namespace.extname(d);
+        if (!ext) {
+            if (_fileExists(unit, `${d}.ts`)) {
+                ext = '.ts';
+            }
+            else if (_fileExists(unit, `${d}.js`)) {
+                ext = '.js';
+            }
+            d = d + ext;
+        }
         if (!ext || ext === '.js' || ext === '.ts') {
             statements.push(`import * as d${i} from ${s(d)};\n`);
             viewDeps.push(`d${i}`);
@@ -607,55 +635,45 @@ function preprocess(unit, options, _fileExists = fileExists) {
     const ext = path__namespace.extname(unit.path);
     const basename = path__namespace.basename(unit.path, ext);
     const allOptions = preprocessOptions(options);
-    const base = unit.base || '';
     if (allOptions.enableConventions && allOptions.templateExtensions.includes(ext)) {
-        const possibleFilePair = allOptions.cssExtensions.map(e => path__namespace.join(base, unit.path.slice(0, -ext.length) + e));
-        const filePair = possibleFilePair.find(_fileExists);
+        const possibleFilePair = allOptions.cssExtensions.map(e => `${basename}${e}`);
+        const filePair = possibleFilePair.find(p => _fileExists(unit, `./${p}`));
         if (filePair) {
             if (allOptions.useProcessedFilePairFilename) {
                 unit.filePair = `${basename}.css`;
             }
             else {
-                unit.filePair = path__namespace.basename(filePair);
+                unit.filePair = filePair;
             }
         }
-        const hasViewModel = Boolean(allOptions.jsExtensions.map(e => path__namespace.join(base, unit.path.slice(0, -ext.length) + e)).find(_fileExists));
-        return preprocessHtmlTemplate(unit, allOptions, hasViewModel);
+        const hasViewModel = Boolean(allOptions.jsExtensions.map(e => `${basename}${e}`).find(p => _fileExists(unit, `./${p}`)));
+        return preprocessHtmlTemplate(unit, allOptions, hasViewModel, _fileExists);
     }
     else if (allOptions.jsExtensions.includes(ext)) {
-        const possibleFilePair = allOptions.templateExtensions.map(e => path__namespace.join(base, unit.path.slice(0, -ext.length) + e));
-        const filePair = possibleFilePair.find(_fileExists);
+        const possibleFilePair = allOptions.templateExtensions.map(e => `${basename}${e}`);
+        const filePair = possibleFilePair.find(p => _fileExists(unit, `./${p}`));
         if (filePair) {
             if (allOptions.useProcessedFilePairFilename) {
                 unit.filePair = `${basename}.html`;
             }
             else {
-                unit.filePair = path__namespace.basename(filePair);
+                unit.filePair = filePair;
             }
         }
         else {
-            const possibleViewPair = allOptions.templateExtensions.map(e => path__namespace.join(base, `${unit.path.slice(0, -ext.length)}-view${e}`));
-            const viewPair = possibleViewPair.find(_fileExists);
+            const possibleViewPair = allOptions.templateExtensions.map(e => `${basename}-view${e}`);
+            const viewPair = possibleViewPair.find(p => _fileExists(unit, `./${p}`));
             if (viewPair) {
                 unit.isViewPair = true;
                 if (allOptions.useProcessedFilePairFilename) {
                     unit.filePair = `${basename}-view.html`;
                 }
                 else {
-                    unit.filePair = path__namespace.basename(viewPair);
+                    unit.filePair = viewPair;
                 }
             }
         }
         return preprocessResource(unit, allOptions);
-    }
-}
-function fileExists(p) {
-    try {
-        const stats = fs__namespace.statSync(p);
-        return stats.isFile();
-    }
-    catch (e) {
-        return false;
     }
 }
 

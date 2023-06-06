@@ -1,6 +1,6 @@
 import { noop } from '@aurelia/kernel';
-import { ValueConverter, CustomElement, Aurelia, } from '@aurelia/runtime-html';
-import { assert, TestContext } from '@aurelia/testing';
+import { ValueConverter, } from '@aurelia/runtime-html';
+import { assert, createFixture } from '@aurelia/testing';
 describe(`3-runtime-html/repeat.contextual-props.spec.ts`, function () {
     // todo: enable tests that create new collection via value converter
     const simpleRepeatPropsTestCases = [
@@ -320,65 +320,52 @@ describe(`3-runtime-html/repeat.contextual-props.spec.ts`, function () {
             // eslint-disable-next-line mocha/no-exclusive-tests
             ? it.only(_title, fn)
             : it(_title, fn);
-        suit(title, async function () {
-            const ctx = TestContext.create();
-            let body;
+        suit(title, function () {
+            // const ctx = TestContext.create();
+            let au;
+            let component;
+            let ctx;
+            // let body: HTMLElement;
             let host;
             try {
-                const App = CustomElement.define({ name: `app`, template }, Root);
-                const au = new Aurelia(ctx.container);
-                body = ctx.doc.body;
-                host = body.appendChild(ctx.createElement(`app`));
-                ctx.container.register(IdentityValueConverter, CloneValueConverter);
-                let component;
-                try {
-                    au.app({ host, component: App });
-                    await au.start();
-                    component = au.root.controller.viewModel;
-                    assert.strictEqual(host.textContent, expectation(component.items, component), `#before mutation`);
+                // au.app({ host, component: App });
+                // await au.start();
+                ({ component, au, ctx, appHost: host } = createFixture(template, Root, [IdentityValueConverter, CloneValueConverter]));
+                assert.strictEqual(host.textContent, expectation(component.items, component), `#before mutation`);
+            }
+            catch (ex) {
+                if (testWillThrow) {
+                    // dont try to assert anything on throw
+                    // just bails
+                    try {
+                        void au.stop();
+                    }
+                    catch { /* and ignore all errors trying to stop */ }
+                    return;
                 }
-                catch (ex) {
-                    if (testWillThrow) {
-                        // dont try to assert anything on throw
-                        // just bails
-                        try {
-                            await au.stop();
-                        }
-                        catch { /* and ignore all errors trying to stop */ }
-                        return;
+                throw ex;
+            }
+            if (testWillThrow) {
+                throw new Error(`Expected test to throw, but did NOT`);
+            }
+            try {
+                mutate(component.items, component);
+                ctx.platform.domWriteQueue.flush();
+                assert.strictEqual(host.textContent, expectation(component.items, component), `#after mutation`);
+                void au.stop();
+            }
+            catch (ex) {
+                if (!mutationWillThrow) {
+                    try {
+                        void au.stop();
+                    }
+                    catch {
+                        /* and ignore all errors trying to stop */
+                    }
+                    finally {
+                        au.dispose();
                     }
                     throw ex;
-                }
-                if (testWillThrow) {
-                    throw new Error(`Expected test to throw, but did NOT`);
-                }
-                try {
-                    mutate(component.items, component);
-                    ctx.platform.domWriteQueue.flush();
-                    assert.strictEqual(host.textContent, expectation(component.items, component), `#after mutation`);
-                    await au.stop();
-                }
-                catch (ex) {
-                    if (!mutationWillThrow) {
-                        try {
-                            await au.stop();
-                        }
-                        catch {
-                            /* and ignore all errors trying to stop */
-                        }
-                        finally {
-                            au.dispose();
-                        }
-                        throw ex;
-                    }
-                }
-            }
-            finally {
-                if (host) {
-                    host.remove();
-                }
-                if (body) {
-                    body.focus();
                 }
             }
         });

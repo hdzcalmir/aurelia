@@ -54,7 +54,6 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
     get name(): string;
     private logger;
     private debug;
-    get hooks(): HooksDefinition;
     get viewModel(): BindingContext<C> | null;
     set viewModel(v: BindingContext<C> | null);
     coercion: ICoercionConfiguration | undefined;
@@ -139,22 +138,6 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
 }
 export declare function isCustomElementController<C extends ICustomElementViewModel = ICustomElementViewModel>(value: unknown): value is ICustomElementController<C>;
 export declare function isCustomElementViewModel(value: unknown): value is ICustomElementViewModel;
-export declare class HooksDefinition {
-    static readonly none: Readonly<HooksDefinition>;
-    readonly hasDefine: boolean;
-    readonly hasHydrating: boolean;
-    readonly hasHydrated: boolean;
-    readonly hasCreated: boolean;
-    readonly hasBinding: boolean;
-    readonly hasBound: boolean;
-    readonly hasAttaching: boolean;
-    readonly hasAttached: boolean;
-    readonly hasDetaching: boolean;
-    readonly hasUnbinding: boolean;
-    readonly hasDispose: boolean;
-    readonly hasAccept: boolean;
-    constructor(target: object);
-}
 export declare const enum ViewModelKind {
     customElement = 0,
     customAttribute = 1,

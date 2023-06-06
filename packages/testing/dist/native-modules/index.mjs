@@ -2310,6 +2310,10 @@ function verifyBindingInstructionsEqual(e, t, n, i) {
         n = [];
     }
     if (!(t instanceof Object) || !(e instanceof Object)) {
+        if (e?.nodeType > 0 && typeof t === "string" || typeof e === "string" && t?.nodeType > 0) {
+            e = typeof e === "string" ? e : e.outerHTML;
+            t = typeof t === "string" ? t : t.outerHTML;
+        }
         if (e !== t) {
             if (i.endsWith(".name")) {
                 if (String(t) === "unnamed" && String(e).startsWith("unnamed-")) {

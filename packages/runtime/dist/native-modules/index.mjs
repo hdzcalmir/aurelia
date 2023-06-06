@@ -4780,7 +4780,7 @@ const Ze = {
 
 class DirtyChecker {
     static register(e) {
-        e.register(i.singleton(Ye, this), i.aliasTo(this, Ye));
+        e.register(i.singleton(this, this), i.aliasTo(this, Ye));
     }
     constructor(e) {
         this.p = e;

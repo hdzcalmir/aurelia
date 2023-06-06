@@ -2,7 +2,7 @@ import { delegateSyntax } from '@aurelia/compat-v1';
 import { CustomAttribute, CustomElement, INode, Aurelia, } from '@aurelia/runtime-html';
 import { assert, TestContext, } from '@aurelia/testing';
 import { isFirefox, isNode } from '../util.js';
-describe('3-runtime-html/template-compiler.harmony.spec.ts', function () {
+describe('3-runtime-html/custom-elements.harmony.spec.ts', function () {
     var _a, _b;
     const testCases = [
         {
@@ -380,4 +380,4 @@ describe('3-runtime-html/template-compiler.harmony.spec.ts', function () {
         });
     });
 });
-//# sourceMappingURL=template-compiler.harmony.spec.js.map
+//# sourceMappingURL=custom-elements.harmony.spec.js.map

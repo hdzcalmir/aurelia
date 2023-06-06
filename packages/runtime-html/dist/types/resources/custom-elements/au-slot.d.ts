@@ -1,8 +1,4 @@
-import { IRenderLocation } from '../../dom';
-import { IHydrationContext } from '../../templating/controller';
-import { IRendering } from '../../templating/rendering';
 import type { ControllerVisitor, ICustomElementViewModel, IHydratedController, IHydratedParentController, ISyntheticView } from '../../templating/controller';
-import type { HydrateElementInstruction } from '../../renderer';
 import { type IAuSlot, type IAuSlotSubscriber } from '../../templating/controller.projection';
 export declare class AuSlot implements ICustomElementViewModel, IAuSlot {
     readonly view: ISyntheticView;
@@ -14,7 +10,7 @@ export declare class AuSlot implements ICustomElementViewModel, IAuSlot {
      * A callback that will be called when the content of this slot changed
      */
     slotchange: ((name: string, nodes: readonly Node[]) => void) | null;
-    constructor(location: IRenderLocation, instruction: HydrateElementInstruction, hdrContext: IHydrationContext, rendering: IRendering);
+    constructor();
     readonly name: string;
     get nodes(): ChildNode[];
     subscribe(subscriber: IAuSlotSubscriber): void;

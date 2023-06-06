@@ -1,6 +1,6 @@
 import { Metadata as t, isObject as e } from "../metadata/dist/native-modules/index.mjs";
 
-import { DI as i, IEventAggregator as s, ILogger as n, Protocol as r, emptyArray as o, onResolve as a, resolveAll as c, emptyObject as h, Registration as u, IContainer as l, isArrayIndex as f, IModuleLoader as d, InstanceProvider as p, noop as g } from "../kernel/dist/native-modules/index.mjs";
+import { DI as i, IEventAggregator as s, ILogger as n, Protocol as r, emptyArray as o, onResolve as a, onResolveAll as c, emptyObject as h, Registration as u, IContainer as l, isArrayIndex as f, IModuleLoader as d, InstanceProvider as p, noop as g } from "../kernel/dist/native-modules/index.mjs";
 
 import { isCustomElementViewModel as w, IHistory as v, ILocation as m, IWindow as x, CustomElement as $, Controller as y, IPlatform as E, CustomElementDefinition as R, IController as C, IAppRoot as b, isCustomElementController as S, customElement as k, bindable as N, customAttribute as T, INode as _, getRef as I, CustomAttribute as A, AppTask as P } from "../runtime-html/dist/native-modules/index.mjs";
 

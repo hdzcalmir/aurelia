@@ -14,7 +14,7 @@ export declare class AttributeBinding implements IBinding {
     targetProperty: string;
     mode: BindingMode;
     isBound: boolean;
-    target: Element;
+    target: HTMLElement;
     ast: IsBindingBehavior | ForOfStatement;
     constructor(controller: IBindingController, locator: IServiceLocator, observerLocator: IObserverLocator, taskQueue: TaskQueue, ast: IsBindingBehavior | ForOfStatement, target: INode, targetAttribute: string, targetProperty: string, mode: BindingMode);
     updateTarget(value: unknown): void;

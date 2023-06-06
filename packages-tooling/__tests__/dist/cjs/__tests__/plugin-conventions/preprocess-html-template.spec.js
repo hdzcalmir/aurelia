@@ -19,7 +19,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with file name not in kebab case', function () {
@@ -37,7 +37,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with css pair', function () {
@@ -56,7 +56,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with multiple css', function () {
@@ -76,7 +76,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('do not import css pair if a pair is imported', function () {
@@ -95,7 +95,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with dependencies', function () {
@@ -116,7 +116,27 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, () => false);
+        testing_1.assert.equal(result.code, expected);
+    });
+    it('processes template and fill up explicit .js/.ts extension', function () {
+        const html = '<import from="./hello-world" /><template><import from="foo"></template>';
+        const expected = `import { CustomElement } from '@aurelia/runtime-html';
+import * as d0 from "./hello-world.js";
+import * as d1 from "foo.ts";
+export const name = "foo-bar";
+export const template = "<template></template>";
+export default template;
+export const dependencies = [ d0, d1 ];
+let _e;
+export function register(container) {
+  if (!_e) {
+    _e = CustomElement.define({ name, template, dependencies });
+  }
+  container.register(_e);
+}
+`;
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, (u, p) => p === "./hello-world.js" || p === "foo.ts");
         testing_1.assert.equal(result.code, expected);
     });
     it('supports HTML-only dependency not in html format', function () {
@@ -137,7 +157,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with dependencies, ignore wrapping css module id in non-shadow mode', function () {
@@ -158,7 +178,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ stringModuleWrap: (id) => `text!${id}`, hmr: false, }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ stringModuleWrap: (id) => `text!${id}`, hmr: false, }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with css dependencies in shadowDOM mode', function () {
@@ -185,7 +205,7 @@ export function register(container) {
             defaultShadowOptions: { mode: 'open' },
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with multiple css dependencies in shadowDOM mode', function () {
@@ -212,7 +232,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             defaultShadowOptions: { mode: 'open' }
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with css dependencies in shadowDOM mode with string module wrap', function () {
@@ -239,7 +259,7 @@ export function register(container) {
             hmr: false,
             defaultShadowOptions: { mode: 'closed' },
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with css dependencies in shadowDOM mode with string module wrap and explicit shadow mode', function () {
@@ -266,7 +286,7 @@ export function register(container) {
             hmr: false,
             defaultShadowOptions: { mode: 'closed' },
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with css dependencies in per-file shadowDOM mode with string module wrap and explicit shadow mode', function () {
@@ -292,7 +312,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('does not turn off shadowDOM mode for one word element, leave it to runtime', function () {
@@ -319,7 +339,7 @@ export function register(container) {
             hmr: false,
             defaultShadowOptions: { mode: 'closed' },
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless and bindables', function () {
@@ -342,7 +362,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless and bindables on template', function () {
@@ -365,7 +385,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless, bindables, and aliases', function () {
@@ -389,7 +409,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless, bindables, and aliases (node)', function () {
@@ -413,7 +433,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless, bindables, and aliases (noth)', function () {
@@ -437,7 +457,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless, bindables, and aliases (empty node) (noth)', function () {
@@ -461,7 +481,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless, bindables, and aliases (empty attr) (noth)', function () {
@@ -485,7 +505,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless, bindables, and aliases (empty attr+node) (noth)', function () {
@@ -508,7 +528,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless, bindables, and aliases (empty node) MAINTAIN EXISTING ATTRIBUTES', function () {
@@ -532,7 +552,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with containerless, bindables, and aliases (empty node) MAINTAIN EXISTING ATTRIBUTE RAN TOGETHER', function () {
@@ -556,7 +576,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with css dependencies in cssModule mode', function () {
@@ -582,7 +602,7 @@ export function register(container) {
             useCSSModule: true,
             hmr: false,
             stringModuleWrap: (id) => `text!${id}`
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('emits capture with <capture> element', function () {
@@ -602,7 +622,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('emits capture [capture] attribute on <template>', function () {
@@ -622,7 +642,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar.html'), contents: html, filePair: 'foo-bar.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with multiple css dependencies in cssModule mode', function () {
@@ -648,7 +668,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             useCSSModule: true
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('rejects <slot> usage in non-ShadowDOM mode', function () {
@@ -656,7 +676,7 @@ export function register(container) {
         testing_1.assert.throws(() => {
             (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
                 hmr: false,
-            }));
+            }), false, () => false);
         });
     });
     it('does not reject <slot> usage in ShadowDOM mode', function () {
@@ -678,7 +698,7 @@ export function register(container) {
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
             defaultShadowOptions: { mode: 'open' }
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('does not reject <slot> usage in local ShadowDOM mode', function () {
@@ -699,7 +719,7 @@ export function register(container) {
 `;
         const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
             hmr: false,
-        }));
+        }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with index file', function () {
@@ -717,9 +737,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar', 'index.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
-            hmr: false,
-        }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar', 'index.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false, }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with index file and file path not in kebab case', function () {
@@ -737,9 +755,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar', 'index.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
-            hmr: false,
-        }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar', 'index.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false, }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
     it('processes template with css pair in index file', function () {
@@ -758,9 +774,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar', 'index.html'), contents: html, filePair: 'index.css' }, (0, plugin_conventions_1.preprocessOptions)({
-            hmr: false,
-        }));
+        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'foo-bar', 'index.html'), contents: html, filePair: 'index.css' }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false, }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
 });
