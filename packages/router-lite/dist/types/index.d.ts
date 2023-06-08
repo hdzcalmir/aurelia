@@ -1,6 +1,6 @@
 export { type IViewport, } from './resources/viewport';
 export { RouterConfiguration, RouterRegistration, DefaultComponents, DefaultResources, ViewportCustomElement, ViewportCustomElementRegistration, LoadCustomAttribute, LoadCustomAttributeRegistration, HrefCustomAttribute, HrefCustomAttributeRegistration, type IRouterConfigurationOptions, } from './configuration';
-export { type IRouteViewModel, ComponentAgent, } from './component-agent';
+export { type IRouteViewModel, } from './component-agent';
 export { type RouteableComponent, type NavigationInstruction, type IViewportInstruction, type Params, type ViewportInstruction, type ITypedNavigationInstruction, type ITypedNavigationInstruction_string, type ITypedNavigationInstruction_ViewportInstruction, type ITypedNavigationInstruction_CustomElementDefinition, type ITypedNavigationInstruction_Promise, type ITypedNavigationInstruction_IRouteViewModel, } from './instructions';
 export { ILocationManager, } from './location-manager';
 export { RouteConfig, Route, type RouteType, route, } from './route';

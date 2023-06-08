@@ -18,7 +18,10 @@ export declare class ConfigurableRoute<T> implements IConfigurableRoute<T> {
 export declare class Endpoint<T> {
     readonly route: ConfigurableRoute<T>;
     readonly params: readonly Parameter[];
+    private _residualEndpoint;
+    get residualEndpoint(): Endpoint<T> | null;
     constructor(route: ConfigurableRoute<T>, params: readonly Parameter[]);
+    equalsOrResidual(other: Endpoint<T> | null | undefined): boolean;
 }
 export declare class RecognizedRoute<T> {
     readonly endpoint: Endpoint<T>;

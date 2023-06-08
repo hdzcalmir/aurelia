@@ -27,9 +27,11 @@ export type RouteableComponent = RouteType | (() => RouteType) | Promise<IModule
 export type Params = {
     [key: string]: string | undefined;
 };
-export interface IViewportInstruction {
+export type IExtendedViewportInstruction = IViewportInstruction & {
     readonly open?: number;
     readonly close?: number;
+};
+export interface IViewportInstruction {
     /**
      * The component to load.
      *
@@ -62,33 +64,19 @@ export interface IViewportInstruction {
      */
     readonly recognizedRoute: $RecognizedRoute | null;
 }
-export declare class ViewportInstruction<TComponent extends ITypedNavigationInstruction_T = ITypedNavigationInstruction_Component> implements IViewportInstruction {
-    open: number;
-    close: number;
+export declare class ViewportInstruction<TComponent extends ITypedNavigationInstruction_T = ITypedNavigationInstruction_Component> implements IExtendedViewportInstruction {
+    readonly open: number;
+    readonly close: number;
     readonly recognizedRoute: $RecognizedRoute | null;
     readonly component: TComponent;
     readonly viewport: string | null;
     readonly params: Params | null;
     readonly children: ViewportInstruction[];
     private constructor();
-    static create(instruction: NavigationInstruction): ViewportInstruction;
+    static create(instruction: NavigationInstruction | IExtendedViewportInstruction): ViewportInstruction;
     contains(other: ViewportInstruction): boolean;
     equals(other: ViewportInstruction): boolean;
-    clone(): this;
     toUrlComponent(recursive?: boolean): string;
-    toString(): string;
-}
-export interface IRedirectInstruction {
-    readonly path: string;
-    readonly redirectTo: string;
-}
-export declare class RedirectInstruction implements IRedirectInstruction {
-    readonly path: string;
-    readonly redirectTo: string;
-    private constructor();
-    static create(instruction: IRedirectInstruction): RedirectInstruction;
-    equals(other: RedirectInstruction): boolean;
-    toUrlComponent(): string;
     toString(): string;
 }
 export declare class ViewportInstructionTree {
@@ -116,7 +104,7 @@ export interface ITypedNavigationInstruction<TInstruction extends NavigationInst
     readonly value: TInstruction;
     equals(other: ITypedNavigationInstruction_T): boolean;
     toUrlComponent(): string;
-    clone(): this;
+    _clone(): this;
 }
 export interface ITypedNavigationInstruction_string extends ITypedNavigationInstruction<string, NavigationInstructionType.string> {
 }
@@ -143,7 +131,6 @@ export declare class TypedNavigationInstruction<TInstruction extends NavigationI
     static create(instruction: Exclude<NavigationInstruction, IViewportInstruction>): Exclude<ITypedNavigationInstruction_T, ITypedNavigationInstruction_ViewportInstruction>;
     static create(instruction: NavigationInstruction): ITypedNavigationInstruction_T;
     equals(this: ITypedNavigationInstruction_T, other: ITypedNavigationInstruction_T): boolean;
-    clone(): this;
     toUrlComponent(this: ITypedNavigationInstruction_T): string;
     toString(this: ITypedNavigationInstruction_T): string;
 }

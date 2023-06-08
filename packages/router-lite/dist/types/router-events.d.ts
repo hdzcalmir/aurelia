@@ -1,4 +1,4 @@
-import { IEventAggregator, IDisposable, ILogger } from '@aurelia/kernel';
+import { IDisposable } from '@aurelia/kernel';
 import type { ViewportInstructionTree } from './instructions';
 export type RoutingTrigger = 'popstate' | 'hashchange' | 'api';
 export declare const AuNavId: "au-nav-id";
@@ -11,11 +11,6 @@ export declare const IRouterEvents: import("@aurelia/kernel").InterfaceSymbol<IR
 export interface IRouterEvents extends RouterEvents {
 }
 export declare class RouterEvents implements IRouterEvents {
-    private readonly ea;
-    private readonly logger;
-    private subscriptionSerial;
-    private readonly subscriptions;
-    constructor(ea: IEventAggregator, logger: ILogger);
     publish(event: RouterEvent): void;
     subscribe<T extends RouterEvent['name']>(event: T, callback: (message: NameToEvent[T]) => void): IDisposable;
 }

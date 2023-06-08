@@ -1,4 +1,4 @@
-import type { Params, RouteContextLike, RouteableComponent, ViewportInstruction, ViewportInstructionTree } from './instructions';
+import type { IViewportInstruction, Params, RouteContextLike, RouteableComponent, ViewportInstructionTree } from './instructions';
 import type { RouteNode } from './route-tree';
 import type { Transition } from './router';
 import type { IRouteContext } from './route-context';
@@ -38,6 +38,12 @@ export declare class RouterOptions {
      * The default value is `null`.
      */
     readonly activeClass: string | null;
+    /**
+     * When set to `true`, the router will try to restore previous route tree, when a routing instruction errs.
+     * Set this to `false`, if a stricter behavior is desired. However, in that case, you need to ensure the avoidance of errors.
+     * The default value is `true`.
+     */
+    readonly restorePreviousRouteTreeOnError: boolean;
     protected constructor(useUrlFragmentHash: boolean, useHref: boolean, 
     /**
      * The strategy to use for interacting with the browser's `history` object (if applicable).
@@ -66,7 +72,13 @@ export declare class RouterOptions {
      * If no value is provided while configuring router, no class will be added.
      * The default value is `null`.
      */
-    activeClass: string | null);
+    activeClass: string | null, 
+    /**
+     * When set to `true`, the router will try to restore previous route tree, when a routing instruction errs.
+     * Set this to `false`, if a stricter behavior is desired. However, in that case, you need to ensure the avoidance of errors.
+     * The default value is `true`.
+     */
+    restorePreviousRouteTreeOnError: boolean);
     static create(input: IRouterOptions): RouterOptions;
     toString(): string;
 }
@@ -104,9 +116,8 @@ export declare class NavigationOptions implements INavigationOptions {
     readonly transitionPlan: TransitionPlan | null;
     private constructor();
     static create(routerOptions: RouterOptions, input: INavigationOptions): NavigationOptions;
-    clone(): NavigationOptions;
 }
-export type FallbackFunction = (viewportInstruction: ViewportInstruction, routeNode: RouteNode, context: IRouteContext) => Routeable | null;
+export type FallbackFunction = (viewportInstruction: IViewportInstruction, routeNode: RouteNode, context: IRouteContext) => Routeable | null;
 /**
  * Either a `RouteableComponent` or a name/config that can be resolved to a one:
  * - `string`: a string representing the component name. Must be resolveable via DI from the context of the component relative to which the navigation occurs (specified in the `dependencies` array, `<import>`ed in the view, declared as an inline template, or registered globally)

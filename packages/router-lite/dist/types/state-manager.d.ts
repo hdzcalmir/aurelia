@@ -5,7 +5,7 @@ export interface IStateManager {
     restoreState(controller: ICustomElementController): void;
 }
 export declare class ScrollStateManager implements IStateManager {
-    private readonly cache;
+    private readonly _cache;
     saveState(controller: ICustomElementController): void;
     restoreState(controller: ICustomElementController): void;
 }

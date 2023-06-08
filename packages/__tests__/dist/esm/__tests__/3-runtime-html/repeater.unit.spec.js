@@ -423,8 +423,7 @@ describe(`3-runtime-html/repeater.unit.spec.ts`, function () {
     const container = createContainer().register(DirtyChecker, NodeObserverLocator, PropertyBindingRenderer, TextBindingRenderer);
     const createStartLocation = () => PLATFORM.document.createComment('au-start');
     const createEndLocation = () => PLATFORM.document.createComment('au-end');
-    const marker = PLATFORM.document.createElement('au-m');
-    marker.className = 'au';
+    const marker = PLATFORM.document.createComment('au*');
     const text = PLATFORM.document.createTextNode('');
     const textTemplate = PLATFORM.document.createElement('template');
     textTemplate.content.append(createStartLocation(), createEndLocation(), marker, text);

@@ -23,7 +23,7 @@ describe('router-lite/ast.spec.ts', function () {
             new ParameterExpression('$2=2', '$2', '2'),
         ]),
     ];
-    const noViewport = new ViewportExpression('', '');
+    const noViewport = new ViewportExpression('', null);
     const viewportSpecs = [
         noViewport,
         new ViewportExpression('@foo', 'foo'),
@@ -278,35 +278,35 @@ describe('router-lite/ast.spec.ts', function () {
         it(`throws on empty component name '${path}'`, function () {
             assert.throws(function () {
                 RouteExpression.parse(path, false);
-            }, regex(`Expected component name`));
+            }, /AUR3500.+component name/);
         });
     }
     for (const path of ['/a.', ...terminal.map(t => `/a.${t}`)]) {
         it(`throws on empty method name '${path}'`, function () {
             assert.throws(function () {
                 RouteExpression.parse(path, false);
-            }, regex(`Expected method name`));
+            }, /AUR3500.+method name/);
         });
     }
     for (const path of ['/a@', ...terminal.map(t => `/a@${t}`)]) {
         it(`throws on empty viewport name '${path}'`, function () {
             assert.throws(function () {
                 RouteExpression.parse(path, false);
-            }, regex(`Expected viewport name`));
+            }, /AUR3500.+viewport name/);
         });
     }
     for (const path of ['/a(', '/a.x(', ...terminal.flatMap(t => [`/a(${t}`, `/a.x(${t}`])]) {
         it(`throws on empty parameter key '${path}'`, function () {
             assert.throws(function () {
                 RouteExpression.parse(path, false);
-            }, regex(`Expected parameter key`));
+            }, /AUR3500.+parameter key/);
         });
     }
     for (const path of ['/a(1=', '/a.x(1=', ...terminal.flatMap(t => [`/a(1=${t}`, `/a.x(1=${t}`])]) {
         it(`throws on empty parameter value '${path}'`, function () {
             assert.throws(function () {
                 RouteExpression.parse(path, false);
-            }, regex(`Expected parameter value`));
+            }, /AUR3500.+parameter value/);
         });
     }
     for (const path of [
@@ -360,7 +360,7 @@ describe('router-lite/ast.spec.ts', function () {
         it(`throws on missing closing paren '${path}'`, function () {
             assert.throws(function () {
                 RouteExpression.parse(path, false);
-            }, regex(`Expected ')'`));
+            }, /AUR3500.+'\)'/);
         });
     }
     for (const path of [
@@ -400,11 +400,8 @@ describe('router-lite/ast.spec.ts', function () {
         it(`throws on unexpected '${path}'`, function () {
             assert.throws(function () {
                 RouteExpression.parse(path, false);
-            }, regex(`Unexpected '${path.slice(-1)}'`));
+            }, new RegExp(`AUR3501.+${path.slice(-1).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
         });
     }
 });
-function regex(str) {
-    return new RegExp(str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-}
 //# sourceMappingURL=ast.spec.js.map

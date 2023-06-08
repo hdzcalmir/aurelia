@@ -2834,6 +2834,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
                             assert.notEqual(endpoint, null);
                             assert.deepStrictEqual(endpoint.params, parameters);
                             const residueEndpoint = sut.getEndpoint(`${route}/*${RESIDUE}`);
+                            assert.strictEqual(endpoint.residualEndpoint, residueEndpoint);
                             if (residueAdded) {
                                 assert.notEqual(residueEndpoint, null);
                             }
@@ -2844,6 +2845,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
                         const params = { ...$params };
                         const configurableRoute = new ConfigurableRoute(match, false, null);
                         let parameters;
+                        let residueEndpoint = null;
                         if (match.endsWith(`/*${RESIDUE}`)) {
                             const $match = match.substring(0, match.length - (RESIDUE.length + 2));
                             parameters = [
@@ -2852,9 +2854,14 @@ describe('router-lite/route-recognizer.spec.ts', function () {
                             ];
                         }
                         else {
-                            parameters = routes.find(([route]) => route === match)[1];
+                            const route = routes.find(([route]) => route === match);
+                            parameters = route[1];
+                            if (route[2]) {
+                                residueEndpoint = new Endpoint(new ConfigurableRoute(`${route[0]}/*${RESIDUE}`, false, null), [...parameters, new Parameter(RESIDUE, true, true)]);
+                            }
                         }
                         const endpoint = new Endpoint(configurableRoute, parameters);
+                        endpoint.residualEndpoint = residueEndpoint;
                         const expected = new RecognizedRoute(endpoint, params);
                         // Act
                         const actual1 = sut.recognize(path);

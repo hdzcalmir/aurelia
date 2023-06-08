@@ -1,6 +1,6 @@
 import { Constructable, ResourceType, IContainer } from '@aurelia/kernel';
 import type { RouteNode } from './route-tree';
-import type { FallbackFunction, IChildRouteConfig, IRouteConfig, Routeable, TransitionPlan, TransitionPlanOrFunc } from './options';
+import type { FallbackFunction, IChildRouteConfig, IRouteConfig, Routeable, TransitionPlanOrFunc } from './options';
 export declare const noRoutes: readonly Routeable[];
 export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     readonly id: string;
@@ -16,7 +16,6 @@ export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     readonly nav: boolean;
     get path(): string[];
     private constructor();
-    getTransitionPlan(cur: RouteNode, next: RouteNode): TransitionPlan;
     register(container: IContainer): void;
 }
 export declare const Route: {
@@ -46,8 +45,6 @@ export declare function route(config: IRouteConfig): RouteDecorator;
  * Associate a static route configuration with this type.
  *
  * @param path - The path to match against.
- *
- * (TODO: improve the formatting, better examples, etc)
  *
  * ```
  * &#64;route('home')

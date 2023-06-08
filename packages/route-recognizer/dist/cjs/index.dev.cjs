@@ -17,9 +17,20 @@ class ConfigurableRoute {
     }
 }
 class Endpoint {
+    get residualEndpoint() { return this._residualEndpoint; }
+    /** @internal */
+    set residualEndpoint(endpoint) {
+        if (this._residualEndpoint !== null)
+            throw new Error('Residual endpoint is already set');
+        this._residualEndpoint = endpoint;
+    }
     constructor(route, params) {
         this.route = route;
         this.params = params;
+        this._residualEndpoint = null;
+    }
+    equalsOrResidual(other) {
+        return other != null && this === other || this._residualEndpoint === other;
     }
 }
 class RecognizedRoute {
@@ -273,20 +284,23 @@ class RouteRecognizer {
     }
     add(routeOrRoutes, addResidue = false) {
         let params;
+        let endpoint;
         if (routeOrRoutes instanceof Array) {
             for (const route of routeOrRoutes) {
-                params = this.$add(route, false).params;
+                endpoint = this.$add(route, false);
+                params = endpoint.params;
                 // add residue iff the last parameter is not a star segment.
                 if (!addResidue || (params[params.length - 1]?.isStar ?? false))
                     continue;
-                this.$add({ ...route, path: `${route.path}/*${RESIDUE}` }, true);
+                endpoint.residualEndpoint = this.$add({ ...route, path: `${route.path}/*${RESIDUE}` }, true);
             }
         }
         else {
-            params = this.$add(routeOrRoutes, false).params;
+            endpoint = this.$add(routeOrRoutes, false);
+            params = endpoint.params;
             // add residue iff the last parameter is not a star segment.
             if (addResidue && !(params[params.length - 1]?.isStar ?? false)) {
-                this.$add({ ...routeOrRoutes, path: `${routeOrRoutes.path}/*${RESIDUE}` }, true);
+                endpoint.residualEndpoint = this.$add({ ...routeOrRoutes, path: `${routeOrRoutes.path}/*${RESIDUE}` }, true);
             }
         }
         // Clear the cache whenever there are state changes, because the recognizeResults could be arbitrarily different as a result

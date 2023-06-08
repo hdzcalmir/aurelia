@@ -742,81 +742,6 @@ function createAppTaskSlotHook(slotName) {
 
 const IPlatform = IPlatform$1;
 
-/** @internal */
-const auLocationStart = 'au-start';
-/** @internal */
-const auLocationEnd = 'au-end';
-/** @internal */
-const createElement 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-= (p, name) => p.document.createElement(name);
-/** @internal */
-const createComment = (p, text) => p.document.createComment(text);
-/** @internal */
-const createLocation = (p) => {
-    const locationEnd = createComment(p, auLocationEnd);
-    locationEnd.$start = createComment(p, auLocationStart);
-    return locationEnd;
-};
-/** @internal */
-const createText = (p, text) => p.document.createTextNode(text);
-/** @internal */
-const insertBefore = (parent, newChildNode, target) => {
-    return parent.insertBefore(newChildNode, target);
-};
-/** @internal */
-const insertManyBefore = (parent, target, newChildNodes) => {
-    if (parent === null) {
-        return;
-    }
-    const ii = newChildNodes.length;
-    let i = 0;
-    while (ii > i) {
-        parent.insertBefore(newChildNodes[i], target);
-        ++i;
-    }
-};
-/** @internal */
-const appendToTemplate = (parent, child) => {
-    return parent.content.appendChild(child);
-};
-/** @internal */
-const appendManyToTemplate = (parent, children) => {
-    const ii = children.length;
-    let i = 0;
-    while (ii > i) {
-        parent.content.appendChild(children[i]);
-        ++i;
-    }
-};
-/** @internal */
-const markerToTarget = (el) => {
-    const nextSibling = el.nextSibling;
-    let locationStart;
-    let locationEnd;
-    if (nextSibling == null) {
-        throw createMappedError(9997 /* ErrorNames.marker_malformed */);
-    }
-    if (nextSibling.nodeType === /* Comment */ 8) {
-        if (nextSibling.textContent === 'au-start') {
-            locationStart = nextSibling;
-            if ((locationEnd = locationStart.nextSibling) == null) {
-                throw createMappedError(9997 /* ErrorNames.marker_malformed */);
-            }
-            el.remove();
-            locationEnd.$start = locationStart;
-            return locationEnd;
-        }
-        else {
-            throw createMappedError(9997 /* ErrorNames.marker_malformed */);
-        }
-    }
-    el.remove();
-    return nextSibling;
-};
-/** @internal */
-const createMutationObserver = (node, callback) => new node.ownerDocument.defaultView.MutationObserver(callback);
-
 class Refs {
 }
 function getRef(node, name) {
@@ -937,17 +862,19 @@ class FragmentNodeSequence {
         const targetNodeList = (this.f = fragment).querySelectorAll('au-m');
         let i = 0;
         let ii = targetNodeList.length;
-        // let target: Element;
         // eslint-disable-next-line
         let targets = this.t = Array(ii);
+        let target;
+        let marker;
         while (ii > i) {
-            // eagerly convert all markers to RenderLocations (otherwise the renderer
-            // will do it anyway) and store them in the target list (since the comments
-            // can't be queried)
-            //
-            // note the renderer will still call this method, but it will just return the
-            // location if it sees it's already a location
-            targets[i] = markerToTarget(targetNodeList[i]);
+            marker = targetNodeList[i];
+            target = marker.nextSibling;
+            marker.remove();
+            if (target.nodeType === 8) {
+                marker = target;
+                (target = target.nextSibling).$start = marker;
+            }
+            targets[i] = target;
             ++i;
         }
         const childNodeList = fragment.childNodes;
@@ -3574,9 +3501,8 @@ SetPropertyRenderer = __decorate([
 let CustomElementRenderer = 
 /** @internal */
 class CustomElementRenderer {
-    /** @internal */ static get inject() { return [IRendering]; }
-    constructor(rendering) {
-        this._rendering = rendering;
+    constructor() {
+        /** @internal */ this._rendering = resolve(IRendering);
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         /* eslint-disable prefer-const */
@@ -3645,9 +3571,8 @@ CustomElementRenderer = __decorate([
 let CustomAttributeRenderer = 
 /** @internal */
 class CustomAttributeRenderer {
-    /** @internal */ static get inject() { return [IRendering]; }
-    constructor(rendering) {
-        this._rendering = rendering;
+    constructor() {
+        /** @internal */ this._rendering = resolve(IRendering);
     }
     render(
     /**
@@ -3709,10 +3634,8 @@ CustomAttributeRenderer = __decorate([
 let TemplateControllerRenderer = 
 /** @internal */
 class TemplateControllerRenderer {
-    /** @internal */ static get inject() { return [IRendering, IPlatform]; }
-    constructor(rendering, platform) {
-        this._rendering = rendering;
-        this._platform = platform;
+    constructor() {
+        /** @internal */ this._rendering = resolve(IRendering);
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         /* eslint-disable prefer-const */
@@ -3738,7 +3661,7 @@ class TemplateControllerRenderer {
         const viewFactory = this._rendering.getViewFactory(instruction.def, ctxContainer);
         const renderLocation = convertToRenderLocation(target);
         const results = invokeAttribute(
-        /* platform         */ this._platform, 
+        /* platform         */ platform, 
         /* attr definition  */ def, 
         /* parentController */ renderingCtrl, 
         /* host             */ target, 
@@ -3957,12 +3880,9 @@ AttributeBindingRenderer = __decorate([
     /** @internal */
 ], AttributeBindingRenderer);
 let SpreadRenderer = class SpreadRenderer {
-    /** @internal */ static get inject() { return [ITemplateCompiler, IRendering]; }
-    constructor(
-    /** @internal */ _compiler, 
-    /** @internal */ _rendering) {
-        this._compiler = _compiler;
-        this._rendering = _rendering;
+    constructor() {
+        /** @internal */ this._compiler = resolve(ITemplateCompiler);
+        /** @internal */ this._rendering = resolve(IRendering);
     }
     render(renderingCtrl, target, _instruction, platform, exprParser, observerLocator) {
         const container = renderingCtrl.container;
@@ -4186,7 +4106,7 @@ class Rendering {
     }
     createNodes(definition) {
         if (definition.enhance === true) {
-            return new FragmentNodeSequence(this._platform, definition.template);
+            return new FragmentNodeSequence(this._platform, this._transformMarker(definition.template));
         }
         let fragment;
         let needsImportNode = false;
@@ -4219,6 +4139,7 @@ class Rendering {
                 fragment = tpl.content;
                 needsImportNode = true;
             }
+            this._transformMarker(fragment);
             cache.set(definition, fragment);
         }
         return fragment == null
@@ -4265,6 +4186,54 @@ class Rendering {
                 }
             }
         }
+    }
+    /** @internal */
+    _marker() {
+        return this._platform.document.createElement('au-m');
+    }
+    /** @internal */
+    _transformMarker(fragment) {
+        if (fragment == null) {
+            return null;
+        }
+        let parent = fragment;
+        let current = parent.firstChild;
+        let next = null;
+        while (current != null) {
+            if (current.nodeType === 8 && current.nodeValue === 'au*') {
+                next = current.nextSibling;
+                parent.removeChild(current);
+                parent.insertBefore(this._marker(), next);
+                if (next.nodeType === 8) {
+                    current = next.nextSibling;
+                    // todo: maybe validate?
+                }
+                else {
+                    current = next;
+                }
+            }
+            next = current?.firstChild;
+            if (next == null) {
+                next = current?.nextSibling;
+                if (next == null) {
+                    current = parent.nextSibling;
+                    parent = parent.parentNode;
+                    // needs to keep walking up all the way til a valid next node
+                    while (current == null && parent != null) {
+                        current = parent.nextSibling;
+                        parent = parent.parentNode;
+                    }
+                }
+                else {
+                    current = next;
+                }
+            }
+            else {
+                parent = current;
+                current = next;
+            }
+        }
+        return fragment;
     }
 }
 
@@ -6815,6 +6784,56 @@ class DataAttributeAccessor {
 }
 mixinNoopSubscribable(DataAttributeAccessor);
 const attrAccessor = new DataAttributeAccessor();
+
+/** @internal */
+const auLocationStart = 'au-start';
+/** @internal */
+const auLocationEnd = 'au-end';
+/** @internal */
+const createElement 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+= (p, name) => p.document.createElement(name);
+/** @internal */
+const createComment = (p, text) => p.document.createComment(text);
+/** @internal */
+const createLocation = (p) => {
+    const locationEnd = createComment(p, auLocationEnd);
+    locationEnd.$start = createComment(p, auLocationStart);
+    return locationEnd;
+};
+/** @internal */
+const createText = (p, text) => p.document.createTextNode(text);
+/** @internal */
+const insertBefore = (parent, newChildNode, target) => {
+    return parent.insertBefore(newChildNode, target);
+};
+/** @internal */
+const insertManyBefore = (parent, target, newChildNodes) => {
+    if (parent === null) {
+        return;
+    }
+    const ii = newChildNodes.length;
+    let i = 0;
+    while (ii > i) {
+        parent.insertBefore(newChildNodes[i], target);
+        ++i;
+    }
+};
+/** @internal */
+const appendToTemplate = (parent, child) => {
+    return parent.content.appendChild(child);
+};
+/** @internal */
+const appendManyToTemplate = (parent, children) => {
+    const ii = children.length;
+    let i = 0;
+    while (ii > i) {
+        parent.content.appendChild(children[i]);
+        ++i;
+    }
+};
+/** @internal */
+const createMutationObserver = (node, callback) => new node.ownerDocument.defaultView.MutationObserver(callback);
 
 const childObserverOptions$1 = {
     childList: true,
@@ -10994,7 +11013,8 @@ class TemplateCompiler {
             if (isMarker(el)) {
                 template = context.t();
                 appendManyToTemplate(template, [
-                    context.h(MARKER_NODE_NAME),
+                    // context.h(MARKER_NODE_NAME),
+                    context._marker(),
                     context._comment(auStartComment),
                     context._comment(auEndComment),
                 ]);
@@ -11174,7 +11194,8 @@ class TemplateCompiler {
                 // but it's only for the purpose of creating a marker,
                 // so it's just an optimization hack
                 // marker = this._markAsTarget(context.h(MARKER_NODE_NAME));
-                marker = context.h(MARKER_NODE_NAME);
+                // marker = context.h(MARKER_NODE_NAME);
+                marker = context._marker();
                 appendManyToTemplate(template, [
                     marker,
                     context._comment(auStartComment),
@@ -11355,7 +11376,8 @@ class TemplateCompiler {
             for (i = 0, ii = expressions.length; ii > i; ++i) {
                 // foreach expression part, turn into a marker
                 insertManyBefore(parent, node, [
-                    context.h(MARKER_NODE_NAME),
+                    // context.h(MARKER_NODE_NAME),
+                    context._marker(),
                     // empty text node will not be cloned when doing fragment.cloneNode()
                     // so give it an empty space instead
                     context._text(' '),
@@ -11594,7 +11616,7 @@ class TemplateCompiler {
      * @internal
      */
     _markAsTarget(el, context) {
-        insertBefore(el.parentNode, context.h(MARKER_NODE_NAME), el);
+        insertBefore(el.parentNode, context._comment('au*'), el);
         // el.classList.add('au');
         return el;
     }
@@ -11610,7 +11632,7 @@ class TemplateCompiler {
         // todo: assumption made: parentNode won't be null
         const parent = node.parentNode;
         // const marker = this._markAsTarget(context.h(MARKER_NODE_NAME));
-        const marker = context.h(MARKER_NODE_NAME);
+        const marker = context._marker();
         // insertBefore(parent, marker, node);
         insertManyBefore(parent, node, [
             marker,
@@ -11622,11 +11644,11 @@ class TemplateCompiler {
     }
 }
 // let nextSibling: Node | null;
-const MARKER_NODE_NAME = 'AU-M';
+// const MARKER_NODE_NAME = 'AU-M';
 const TEMPLATE_NODE_NAME = 'TEMPLATE';
 const auStartComment = 'au-start';
 const auEndComment = 'au-end';
-const isMarker = (el) => el.nodeName === MARKER_NODE_NAME;
+const isMarker = (el) => el.nodeValue === 'au*';
 // && isComment(nextSibling = el.nextSibling) && nextSibling.textContent === auStartComment
 // && isComment(nextSibling = el.nextSibling) && nextSibling.textContent === auEndComment;
 // const isComment = (el: Node | null): el is Comment => el?.nodeType === 8;
@@ -11670,6 +11692,9 @@ class CompilationContext {
     }
     _comment(text) {
         return createComment(this.p, text);
+    }
+    _marker() {
+        return this._comment('au*');
     }
     h(name) {
         const el = createElement(this.p, name);

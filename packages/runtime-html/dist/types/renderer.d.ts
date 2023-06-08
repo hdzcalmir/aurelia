@@ -6,7 +6,6 @@ import { CustomAttributeDefinition } from './resources/custom-attribute';
 import { INode } from './dom';
 import { IController } from './templating/controller';
 import { IPlatform } from './platform';
-import { IRendering } from './templating/rendering';
 import type { AttrSyntax } from './resources/attribute-pattern';
 import { IAuSlotProjections } from './templating/controller.projection';
 import type { IHydratableController } from './templating/controller';
@@ -303,12 +302,10 @@ export declare class SetPropertyRenderer implements IRenderer {
 }
 export declare class CustomElementRenderer implements IRenderer {
     target: InstructionType.hydrateElement;
-    constructor(rendering: IRendering);
     render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: HydrateElementInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class CustomAttributeRenderer implements IRenderer {
     target: InstructionType.hydrateAttribute;
-    constructor(rendering: IRendering);
     render(
     /**
      * The cotroller that is currently invoking this renderer
@@ -317,7 +314,6 @@ export declare class CustomAttributeRenderer implements IRenderer {
 }
 export declare class TemplateControllerRenderer implements IRenderer {
     target: InstructionType.hydrateTemplateController;
-    constructor(rendering: IRendering, platform: IPlatform);
     render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: HydrateTemplateController, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class LetElementRenderer implements IRenderer {
@@ -370,9 +366,6 @@ export declare class AttributeBindingRenderer implements IRenderer {
 }
 export declare class SpreadRenderer implements IRenderer {
     target: InstructionType.spreadBinding;
-    constructor(
-    /** @internal */ _compiler: ITemplateCompiler, 
-    /** @internal */ _rendering: IRendering);
     render(renderingCtrl: IHydratableController, target: HTMLElement, _instruction: SpreadBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export {};

@@ -13,21 +13,27 @@ export interface IRouteNode {
     queryParams?: Readonly<URLSearchParams>;
     fragment?: string | null;
     data?: Record<string, unknown>;
-    viewport?: string | null;
+    _viewport?: string | null;
     title?: string | ((node: RouteNode) => string | null) | null;
     component: CustomElementDefinition;
     children?: RouteNode[];
     residue?: ViewportInstruction[];
 }
+export interface RouteNodeMatchOptions {
+    /** Endpoints will be matched instead of instruction */
+    matchEndpoint: boolean;
+    /** Original instruction will be matched */
+    matchOriginalInstruction: boolean;
+}
 export declare class RouteNode implements IRouteNode {
     /**
      * The original configured path pattern that was matched.
      */
-    path: string;
+    readonly path: string;
     /**
      * If one or more redirects have occurred, then this is the final path match, in all other cases this is identical to `path`
      */
-    finalPath: string;
+    readonly finalPath: string;
     /**
      * The `RouteContext` associated with this route.
      *
@@ -38,20 +44,12 @@ export declare class RouteNode implements IRouteNode {
     readonly context: IRouteContext;
     /** Can only be `null` for the composition root */
     readonly instruction: ViewportInstruction<ITypedNavigationInstruction_ResolvedComponent> | null;
-    params: Params;
-    queryParams: Readonly<URLSearchParams>;
-    fragment: string | null;
-    data: Record<string, unknown>;
-    /**
-     * The viewport is always `null` for the root `RouteNode`.
-     *
-     * NOTE: It might make sense to have a `null` viewport mean other things as well (such as, don't load this component)
-     * but that is currently not a deliberately implemented feature and we might want to explicitly validate against it
-     * if we decide not to implement that.
-     */
-    viewport: string | null;
-    title: string | ((node: RouteNode) => string | null) | null;
-    component: CustomElementDefinition;
+    readonly params: Readonly<Params>;
+    readonly queryParams: Readonly<URLSearchParams>;
+    readonly fragment: string | null;
+    readonly data: Readonly<Record<string, unknown>>;
+    readonly title: string | ((node: RouteNode) => string | null) | null;
+    readonly component: CustomElementDefinition;
     readonly children: RouteNode[];
     /**
      * Not-yet-resolved viewport instructions.
@@ -63,15 +61,13 @@ export declare class RouteNode implements IRouteNode {
      */
     readonly residue: ViewportInstruction[];
     get root(): RouteNode;
+    get isInstructionsFinalized(): boolean;
     private constructor();
     static create(input: IRouteNode & {
         originalInstruction?: ViewportInstruction<ITypedNavigationInstruction_ResolvedComponent> | null;
     }): RouteNode;
-    contains(instructions: ViewportInstructionTree, preferEndpointMatch: boolean): boolean;
-    appendChild(child: RouteNode): void;
-    clearChildren(): void;
+    contains(instructions: ViewportInstructionTree, options: Partial<RouteNodeMatchOptions>): boolean;
     getTitle(separator: string): string | null;
-    getTitlePart(): string | null;
     computeAbsolutePath(): string;
     toString(): string;
 }
@@ -81,9 +77,7 @@ export declare class RouteTree {
     readonly fragment: string | null;
     root: RouteNode;
     constructor(options: NavigationOptions, queryParams: Readonly<URLSearchParams>, fragment: string | null, root: RouteNode);
-    contains(instructions: ViewportInstructionTree, preferEndpointMatch: boolean): boolean;
-    clone(): RouteTree;
-    finalizeInstructions(): ViewportInstructionTree;
+    contains(instructions: ViewportInstructionTree, options: Partial<RouteNodeMatchOptions>): boolean;
     toString(): string;
 }
 export declare function createAndAppendNodes(log: ILogger, node: RouteNode, vi: ViewportInstruction): void | Promise<void>;
