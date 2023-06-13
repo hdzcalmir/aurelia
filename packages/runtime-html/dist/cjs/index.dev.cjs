@@ -3934,13 +3934,13 @@ class SpreadBinding {
         return this.locator;
     }
     get definition() {
-        return this.ctrl.definition;
+        return this.$controller.definition;
     }
     get isStrictBinding() {
-        return this.ctrl.isStrictBinding;
+        return this.$controller.isStrictBinding;
     }
     get state() {
-        return this.ctrl.state;
+        return this.$controller.state;
     }
     constructor(
     /** @internal */ _innerBindings, 
@@ -3948,8 +3948,8 @@ class SpreadBinding {
         this._innerBindings = _innerBindings;
         this._hydrationContext = _hydrationContext;
         this.isBound = false;
-        this.ctrl = _hydrationContext.controller;
-        this.locator = this.ctrl.container;
+        this.$controller = _hydrationContext.controller;
+        this.locator = this.$controller.container;
     }
     get(key) {
         return this.locator.get(key);
@@ -3976,7 +3976,7 @@ class SpreadBinding {
         if (controller.vmKind !== 1 /* ViewModelKind.customAttribute */) {
             throw createMappedError(9998 /* ErrorNames.no_spread_template_controller */);
         }
-        this.ctrl.addChild(controller);
+        this.$controller.addChild(controller);
     }
 }
 // http://jsben.ch/7n5Kt
@@ -4035,12 +4035,12 @@ class ViewFactoryProvider {
         return f;
     }
 }
-function invokeAttribute(p, definition, renderingCtrl, host, instruction, viewFactory, location, auSlotsInfo) {
+function invokeAttribute(p, definition, $renderingCtrl, host, instruction, viewFactory, location, auSlotsInfo) {
+    const renderingCtrl = $renderingCtrl instanceof Controller
+        ? $renderingCtrl
+        : $renderingCtrl.$controller;
     const ctn = renderingCtrl.container.createChild();
     registerHostNode(ctn, p, host);
-    renderingCtrl = renderingCtrl instanceof Controller
-        ? renderingCtrl
-        : renderingCtrl.ctrl;
     registerResolver(ctn, IController, new kernel.InstanceProvider(controllerProviderName, renderingCtrl));
     registerResolver(ctn, IInstruction, new kernel.InstanceProvider(instructionProviderName, instruction));
     registerResolver(ctn, IRenderLocation, location == null

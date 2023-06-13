@@ -3416,20 +3416,20 @@ class SpreadBinding {
         return this.locator;
     }
     get definition() {
-        return this.ctrl.definition;
+        return this.$controller.definition;
     }
     get isStrictBinding() {
-        return this.ctrl.isStrictBinding;
+        return this.$controller.isStrictBinding;
     }
     get state() {
-        return this.ctrl.state;
+        return this.$controller.state;
     }
     constructor(t, e) {
         this.ct = t;
         this.ut = e;
         this.isBound = false;
-        this.ctrl = e.controller;
-        this.locator = this.ctrl.container;
+        this.$controller = e.controller;
+        this.locator = this.$controller.container;
     }
     get(t) {
         return this.locator.get(t);
@@ -3456,7 +3456,7 @@ class SpreadBinding {
         if (t.vmKind !== 1) {
             throw createMappedError(9998);
         }
-        this.ctrl.addChild(t);
+        this.$controller.addChild(t);
     }
 }
 
@@ -3516,17 +3516,17 @@ class ViewFactoryProvider {
 }
 
 function invokeAttribute(e, s, i, n, r, l, h, a) {
-    const c = i.container.createChild();
-    registerHostNode(c, e, n);
-    i = i instanceof Controller ? i : i.ctrl;
-    registerResolver(c, Jt, new t.InstanceProvider(Ot, i));
-    registerResolver(c, Mt, new t.InstanceProvider(Vt, r));
-    registerResolver(c, G, h == null ? Wt : new t.InstanceProvider(Nt, h));
-    registerResolver(c, Lt, l == null ? jt : new ViewFactoryProvider(l));
-    registerResolver(c, Pt, a == null ? zt : new t.InstanceProvider($t, a));
+    const c = i instanceof Controller ? i : i.$controller;
+    const u = c.container.createChild();
+    registerHostNode(u, e, n);
+    registerResolver(u, Jt, new t.InstanceProvider(Ot, c));
+    registerResolver(u, Mt, new t.InstanceProvider(Vt, r));
+    registerResolver(u, G, h == null ? Wt : new t.InstanceProvider(Nt, h));
+    registerResolver(u, Lt, l == null ? jt : new ViewFactoryProvider(l));
+    registerResolver(u, Pt, a == null ? zt : new t.InstanceProvider($t, a));
     return {
-        vm: c.invoke(s.Type),
-        ctn: c
+        vm: u.invoke(s.Type),
+        ctn: u
     };
 }
 

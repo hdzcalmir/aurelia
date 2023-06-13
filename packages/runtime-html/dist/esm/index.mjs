@@ -3410,20 +3410,20 @@ class SpreadBinding {
         return this.locator;
     }
     get definition() {
-        return this.ctrl.definition;
+        return this.$controller.definition;
     }
     get isStrictBinding() {
-        return this.ctrl.isStrictBinding;
+        return this.$controller.isStrictBinding;
     }
     get state() {
-        return this.ctrl.state;
+        return this.$controller.state;
     }
     constructor(t, e) {
         this.ct = t;
         this.ut = e;
         this.isBound = false;
-        this.ctrl = e.controller;
-        this.locator = this.ctrl.container;
+        this.$controller = e.controller;
+        this.locator = this.$controller.container;
     }
     get(t) {
         return this.locator.get(t);
@@ -3450,7 +3450,7 @@ class SpreadBinding {
         if (t.vmKind !== 1) {
             throw createMappedError(9998);
         }
-        this.ctrl.addChild(t);
+        this.$controller.addChild(t);
     }
 }
 
@@ -3510,17 +3510,17 @@ class ViewFactoryProvider {
 }
 
 function invokeAttribute(t, e, i, s, n, r, l, h) {
-    const a = i.container.createChild();
-    registerHostNode(a, t, s);
-    i = i instanceof Controller ? i : i.ctrl;
-    registerResolver(a, vi, new f(ei, i));
-    registerResolver(a, Me, new f(ii, n));
-    registerResolver(a, zt, l == null ? ri : new f(si, l));
-    registerResolver(a, Ie, r == null ? oi : new ViewFactoryProvider(r));
-    registerResolver(a, Ee, h == null ? li : new f(ni, h));
+    const a = i instanceof Controller ? i : i.$controller;
+    const c = a.container.createChild();
+    registerHostNode(c, t, s);
+    registerResolver(c, vi, new f(ei, a));
+    registerResolver(c, Me, new f(ii, n));
+    registerResolver(c, zt, l == null ? ri : new f(si, l));
+    registerResolver(c, Ie, r == null ? oi : new ViewFactoryProvider(r));
+    registerResolver(c, Ee, h == null ? li : new f(ni, h));
     return {
-        vm: a.invoke(e.Type),
-        ctn: a
+        vm: c.invoke(e.Type),
+        ctn: c
     };
 }
 

@@ -1193,10 +1193,10 @@ const createNewInstance = (t, e, r) => {
 
 class Resolver {
     constructor(t, e, r) {
+        this.resolving = false;
         this.k = t;
         this.R = e;
         this._state = r;
-        this.resolving = false;
     }
     get $isResolver() {
         return true;

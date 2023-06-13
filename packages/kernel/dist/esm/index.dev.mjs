@@ -1575,11 +1575,11 @@ const createNewInstance = (key, handler, requestor) => {
 };
 
 class Resolver {
-    constructor(_key, _strategy, _state) {
-        this._key = _key;
-        this._strategy = _strategy;
-        this._state = _state;
+    constructor(key, strategy, state) {
         this.resolving = false;
+        this._key = key;
+        this._strategy = strategy;
+        this._state = state;
     }
     get $isResolver() { return true; }
     register(container, key) {

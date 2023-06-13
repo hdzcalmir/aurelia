@@ -673,6 +673,139 @@ class ArrowFunction {
     }
 }
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${safeString(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
+    [101 /* ErrorNames.ast_behavior_not_found */]: `Ast eval error: binding behavior "{{0}}" could not be found. Did you forget to register it as a dependency?`,
+    [102 /* ErrorNames.ast_behavior_duplicated */]: `Ast eval error: binding behavior "{{0}}" already applied.`,
+    [103 /* ErrorNames.ast_converter_not_found */]: `Ast eval error: value converter "{{0}}" could not be found. Did you forget to register it as a dependency?`,
+    [105 /* ErrorNames.ast_$host_not_found */]: `Ast eval error: unable to find $host context. Did you forget [au-slot] attribute?`,
+    [106 /* ErrorNames.ast_no_assign_$host */]: `Ast eval error: invalid assignment. "$host" is a reserved keyword.`,
+    [107 /* ErrorNames.ast_not_a_function */]: `Ast eval error: expression is not a function.`,
+    [109 /* ErrorNames.ast_unknown_unary_operator */]: `Ast eval error: unknown unary operator: "{{0}}"`,
+    [108 /* ErrorNames.ast_unknown_binary_operator */]: `Ast eval error: unknown binary operator: "{{0}}"`,
+    [110 /* ErrorNames.ast_tagged_not_a_function */]: `Ast eval error: left-hand side of tagged template expression is not a function.`,
+    [111 /* ErrorNames.ast_name_is_not_a_function */]: `Ast eval error: expected "{{0}}" to be a function`,
+    [112 /* ErrorNames.ast_destruct_null */]: `Ast eval error: cannot use non-object value for destructuring assignment.`,
+    [151 /* ErrorNames.parse_invalid_start */]: `Expression error: invalid start: "{{0}}"`,
+    [152 /* ErrorNames.parse_no_spread */]: `Expression error: spread operator is not supported: "{{0}}"`,
+    [153 /* ErrorNames.parse_expected_identifier */]: `Expression error: expected identifier: "{{0}}"`,
+    [154 /* ErrorNames.parse_invalid_member_expr */]: `Expression error: invalid member expression: "{{0}}"`,
+    [155 /* ErrorNames.parse_unexpected_end */]: `Expression error: unexpected end of expression: "{{0}}"`,
+    [156 /* ErrorNames.parse_unconsumed_token */]: `Expression error: unconsumed token: "{{0}}" at position {{1}} of "{{2}}"`,
+    [157 /* ErrorNames.parse_invalid_empty */]: `Expression error: invalid empty expression. Empty expression is only valid in event bindings (trigger, delegate, capture etc...)`,
+    [158 /* ErrorNames.parse_left_hand_side_not_assignable */]: `Expression error: left hand side of expression is not assignable: "{{0}}"`,
+    [159 /* ErrorNames.parse_expected_converter_identifier */]: `Expression error: expected identifier to come after value converter operator: "{{0}}"`,
+    [160 /* ErrorNames.parse_expected_behavior_identifier */]: `Expression error: expected identifier to come after binding behavior operator: {{0}}`,
+    [161 /* ErrorNames.parse_unexpected_keyword_of */]: `Expression error: unexpected keyword "of": "{{0}}"`,
+    [163 /* ErrorNames.parse_invalid_identifier_in_forof */]: `Expression error: invalid BindingIdentifier at left hand side of "of": "{{0}}"`,
+    [164 /* ErrorNames.parse_invalid_identifier_object_literal_key */]: `Expression error: invalid or unsupported property definition in object literal: "{{0}}"`,
+    [165 /* ErrorNames.parse_unterminated_string */]: `Expression error: unterminated quote in string literal: "{{0}}"`,
+    [166 /* ErrorNames.parse_unterminated_template_string */]: `Expression error: unterminated template string: "{{0}}"`,
+    [167 /* ErrorNames.parse_missing_expected_token */]: `Expression error: missing expected token "{{0}}" in "{{1}}"`,
+    [168 /* ErrorNames.parse_unexpected_character */]: `Expression error: unexpected character: "{{0}}"`,
+    [170 /* ErrorNames.parse_unexpected_token_destructuring */]: `Expression error: unexpected "{{0}}" at position "{{1}}" for destructuring assignment in "{{2}}"`,
+    [171 /* ErrorNames.parse_unexpected_token_optional_chain */]: `Expression error: unexpected {{0}} at position "{{1}}" for optional chain in "{{2}}"`,
+    [172 /* ErrorNames.parse_invalid_tag_in_optional_chain */]: `Expression error: invalid tagged template on optional chain in "{{1}}"`,
+    [173 /* ErrorNames.parse_invalid_arrow_params */]: `Expression error: invalid arrow parameter list in "{{0}}"`,
+    [174 /* ErrorNames.parse_no_arrow_param_default_value */]: `Expression error: arrow function with default parameters is not supported: "{{0}}"`,
+    [175 /* ErrorNames.parse_no_arrow_param_destructuring */]: `Expression error: arrow function with destructuring parameters is not supported: "{{0}}"`,
+    [176 /* ErrorNames.parse_rest_must_be_last */]: `Expression error: rest parameter must be last formal parameter in arrow function: "{{0}}"`,
+    [178 /* ErrorNames.parse_no_arrow_fn_body */]: `Expression error: arrow function with function body is not supported: "{{0}}"`,
+    [179 /* ErrorNames.parse_unexpected_double_dot */]: `Expression error: unexpected token '.' at position "{{1}}" in "{{0}}"`,
+    [199 /* ErrorNames.observing_null_undefined */]: `Trying to observe property {{0}} on null/undefined`,
+    [203 /* ErrorNames.null_scope */]: `Trying to retrieve a property or build a scope from a null/undefined scope`,
+    [204 /* ErrorNames.create_scope_with_null_context */]: 'Trying to create a scope with null/undefined binding context',
+    [206 /* ErrorNames.switch_on_null_connectable */]: `Trying to switch to a null/undefined connectable`,
+    [207 /* ErrorNames.switch_active_connectable */]: `Trying to enter an active connectable`,
+    [208 /* ErrorNames.switch_off_null_connectable */]: `Trying to pop a null/undefined connectable`,
+    [209 /* ErrorNames.switch_off_inactive_connectable */]: `Trying to exit an inactive connectable`,
+    [210 /* ErrorNames.non_recognisable_collection_type */]: `Unrecognised collection type {{0:toString}}.`,
+    [220 /* ErrorNames.assign_readonly_size */]: `Map/Set "size" is a readonly property`,
+    [221 /* ErrorNames.assign_readonly_readonly_property_from_computed */]: `Trying to assign value to readonly property "{{0}}" through computed observer.`,
+    [224 /* ErrorNames.invalid_observable_decorator_usage */]: `Invalid @observable decorator usage, cannot determine property name`,
+    [225 /* ErrorNames.stopping_a_stopped_effect */]: `Trying to stop an effect that has already been stopped`,
+    [226 /* ErrorNames.effect_maximum_recursion_reached */]: `Maximum number of recursive effect run reached. Consider handle effect dependencies differently.`,
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
+        let matches = regex.exec(cooked);
+        while (matches != null) {
+            const method = matches[1]?.slice(1);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let value = details[i];
+            if (value != null) {
+                switch (method) {
+                    case 'nodeName':
+                        value = value.nodeName.toLowerCase();
+                        break;
+                    case 'name':
+                        value = value.name;
+                        break;
+                    case 'typeof':
+                        value = typeof value;
+                        break;
+                    case 'ctor':
+                        value = value.constructor.name;
+                        break;
+                    case 'controller':
+                        value = value.controller.name;
+                        break;
+                    case 'target@property':
+                        value = `${value.target}@${value.targetProperty}`;
+                        break;
+                    case 'toString':
+                        value = Object.prototype.toString.call(value);
+                        break;
+                    case 'join(!=)':
+                        value = value.join('!=');
+                        break;
+                    case 'bindingCommandHelp':
+                        value = getBindingCommandHelp(value);
+                        break;
+                    case 'element':
+                        value = value === '*' ? 'all elements' : `<${value} />`;
+                        break;
+                    default: {
+                        // property access
+                        if (method?.startsWith('.')) {
+                            value = safeString(value[method.slice(1)]);
+                        }
+                        else {
+                            value = safeString(value);
+                        }
+                    }
+                }
+            }
+            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
+            matches = regex.exec(cooked);
+        }
+    }
+    return cooked;
+};
+function getBindingCommandHelp(name) {
+    switch (name) {
+        case 'delegate':
+            return `\nThe ".delegate" binding command has been removed in v2.`
+                + ` Binding command ".trigger" should be used instead.`
+                + ` If you are migrating v1 application, install compat package`
+                + ` to add back the ".delegate" binding command for ease of migration.`;
+        case 'call':
+            return `\nThe ".call" binding command has been removed in v2.`
+                + ` If you want to pass a callback that preserves the context of the function call,`
+                + ` you can use lambda instead. Refer to lambda expression doc for more details.`;
+        default:
+            return '';
+    }
+}
+
 /**
  * A class for creating context in synthetic scope to keep the number of classes of context in scope small
  */
@@ -692,7 +825,7 @@ class Scope {
     }
     static getContext(scope, name, ancestor) {
         if (scope == null) {
-            throw nullScopeError();
+            throw createMappedError(203 /* ErrorNames.null_scope */);
         }
         let overrideContext = scope.overrideContext;
         let currentScope = scope;
@@ -732,25 +865,17 @@ class Scope {
     }
     static create(bc, oc, isBoundary) {
         if (bc == null) {
-            throw nullContextError();
+            throw createMappedError(204 /* ErrorNames.create_scope_with_null_context */);
         }
         return new Scope(null, bc, oc == null ? new OverrideContext() : oc, isBoundary ?? false);
     }
     static fromParent(ps, bc) {
         if (ps == null) {
-            throw nullScopeError();
+            throw createMappedError(203 /* ErrorNames.null_scope */);
         }
         return new Scope(ps, bc, new OverrideContext(), false);
     }
 }
-const nullScopeError = () => {
-    return createError(`AUR0203: scope is null/undefined.`)
-        ;
-};
-const nullContextError = () => {
-    return createError('AUR0204: binding context is null/undefined')
-        ;
-};
 class OverrideContext {
 }
 
@@ -776,7 +901,7 @@ function astEvaluate(ast, s, e, c) {
             }
             const evaluatedValue = obj[ast.name];
             if (evaluatedValue == null && ast.name === '$host') {
-                throw createError(`AUR0105: Unable to find $host context. Did you forget [au-slot] attribute?`);
+                throw createMappedError(105 /* ErrorNames.ast_$host_not_found */);
             }
             if (e?.strict) {
                 // return evaluatedValue;
@@ -822,7 +947,7 @@ function astEvaluate(ast, s, e, c) {
                 case '+':
                     return +astEvaluate(ast.expression, s, e, c);
                 default:
-                    throw createError(`AUR0109: Unknown unary operator: '${ast.operation}'`);
+                    throw createMappedError(109 /* ErrorNames.ast_unknown_unary_operator */, ast.operation);
             }
         case 7 /* ExpressionKind.CallScope */: {
             const args = ast.args.map(a => astEvaluate(a, s, e, c));
@@ -859,7 +984,7 @@ function astEvaluate(ast, s, e, c) {
             if (!e?.strictFnCall && func == null) {
                 return void 0;
             }
-            throw createError(`AUR0107: Expression is not a function.`);
+            throw createMappedError(107 /* ErrorNames.ast_not_a_function */);
         }
         case 16 /* ExpressionKind.ArrowFunction */: {
             const func = (...args) => {
@@ -926,7 +1051,7 @@ function astEvaluate(ast, s, e, c) {
             const results = ast.expressions.map(expr => astEvaluate(expr, s, e, c));
             const func = astEvaluate(ast.func, s, e, c);
             if (!isFunction(func)) {
-                throw createError(`AUR0110: Left-hand side of tagged template expression is not a function.`);
+                throw createMappedError(110 /* ErrorNames.ast_tagged_not_a_function */);
             }
             return func(ast.cooked, ...results);
         }
@@ -1004,7 +1129,7 @@ function astEvaluate(ast, s, e, c) {
                 case '>=':
                     return astEvaluate(left, s, e, c) >= astEvaluate(right, s, e, c);
                 default:
-                    throw createError(`AUR0108: Unknown binary operator: '${ast.operation}'`);
+                    throw createMappedError(108 /* ErrorNames.ast_unknown_binary_operator */, ast.operation);
             }
         }
         case 14 /* ExpressionKind.Conditional */:
@@ -1015,7 +1140,7 @@ function astEvaluate(ast, s, e, c) {
         case 17 /* ExpressionKind.ValueConverter */: {
             const vc = e?.getConverter?.(ast.name);
             if (vc == null) {
-                throw createError(`AUR0103: ValueConverter named '${ast.name}' could not be found. Did you forget to register it as a dependency?`);
+                throw createMappedError(103 /* ErrorNames.ast_converter_not_found */, ast.name);
             }
             if ('toView' in vc) {
                 return vc.toView(astEvaluate(ast.expression, s, e, c), ...ast.args.map(a => astEvaluate(a, s, e, c)));
@@ -1075,7 +1200,7 @@ function astAssign(ast, s, e, val) {
     switch (ast.$kind) {
         case 1 /* ExpressionKind.AccessScope */: {
             if (ast.name === '$host') {
-                throw createError(`AUR0106: Invalid assignment. $host is a reserved keyword.`);
+                throw createMappedError(106 /* ErrorNames.ast_no_assign_$host */);
             }
             const obj = getContext(s, ast.name, ast.ancestor);
             return obj[ast.name] = val;
@@ -1116,7 +1241,7 @@ function astAssign(ast, s, e, val) {
         case 17 /* ExpressionKind.ValueConverter */: {
             const vc = e?.getConverter?.(ast.name);
             if (vc == null) {
-                throw converterNotFoundError(ast.name);
+                throw createMappedError(103 /* ErrorNames.ast_converter_not_found */, ast.name);
             }
             if ('fromView' in vc) {
                 val = vc.fromView(val, ...ast.args.map(a => astEvaluate(a, s, e, null)));
@@ -1140,9 +1265,7 @@ function astAssign(ast, s, e, val) {
                     case 24 /* ExpressionKind.ArrayDestructuring */:
                     case 25 /* ExpressionKind.ObjectDestructuring */: {
                         if (typeof val !== 'object' || val === null) {
-                            {
-                                throw createError(`AUR0112: Cannot use non-object value for destructuring assignment.`);
-                            }
+                            throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
                         }
                         let source = astEvaluate(item.source, Scope.create(val), e, null);
                         if (source === void 0 && item.initializer) {
@@ -1161,9 +1284,7 @@ function astAssign(ast, s, e, val) {
                     return;
                 }
                 if (typeof val !== 'object') {
-                    {
-                        throw createError(`AUR0112: Cannot use non-object value for destructuring assignment.`);
-                    }
+                    throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
                 }
                 let source = astEvaluate(ast.source, Scope.create(val), e, null);
                 if (source === void 0 && ast.initializer) {
@@ -1176,17 +1297,13 @@ function astAssign(ast, s, e, val) {
                     return;
                 }
                 if (typeof val !== 'object') {
-                    {
-                        throw createError(`AUR0112: Cannot use non-object value for destructuring assignment.`);
-                    }
+                    throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
                 }
                 const indexOrProperties = ast.indexOrProperties;
                 let restValue;
                 if (isArrayIndex(indexOrProperties)) {
                     if (!Array.isArray(val)) {
-                        {
-                            throw createError(`AUR0112: Cannot use non-array value for array-destructuring assignment.`);
-                        }
+                        throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
                     }
                     restValue = val.slice(indexOrProperties);
                 }
@@ -1218,14 +1335,14 @@ function astBind(ast, s, b) {
             const key = ast.key;
             const behavior = b.getBehavior?.(name);
             if (behavior == null) {
-                throw behaviorNotFoundError(name);
+                throw createMappedError(101 /* ErrorNames.ast_behavior_not_found */, name);
             }
             if (b[key] === void 0) {
                 b[key] = behavior;
                 behavior.bind?.(s, b, ...ast.args.map(a => astEvaluate(a, s, b, null)));
             }
             else {
-                throw duplicateBehaviorAppliedError(name);
+                throw createMappedError(102 /* ErrorNames.ast_behavior_duplicated */, name);
             }
             astBind(ast.expression, s, b);
             return;
@@ -1234,7 +1351,7 @@ function astBind(ast, s, b) {
             const name = ast.name;
             const vc = b.getConverter?.(name);
             if (vc == null) {
-                throw converterNotFoundError(name);
+                throw createMappedError(103 /* ErrorNames.ast_converter_not_found */, name);
             }
             // note: the cast is expected. To connect, it just needs to be a IConnectable
             // though to work with signal, it needs to have `handleChange`
@@ -1298,13 +1415,6 @@ function astUnbind(ast, s, b) {
         }
     }
 }
-const behaviorNotFoundError = (name) => createError(`AUR0101: BindingBehavior '${name}' could not be found. Did you forget to register it as a dependency?`)
-    ;
-const duplicateBehaviorAppliedError = (name) => createError(`AUR0102: BindingBehavior '${name}' already applied.`)
-    ;
-const converterNotFoundError = (name) => {
-    return createError(`AUR0103: ValueConverter '${name}' could not be found. Did you forget to register it as a dependency?`);
-};
 const getFunction = (mustEvaluate, obj, name) => {
     const func = obj == null ? null : obj[name];
     if (isFunction(func)) {
@@ -1313,7 +1423,7 @@ const getFunction = (mustEvaluate, obj, name) => {
     if (!mustEvaluate && func == null) {
         return null;
     }
-    throw createError(`AUR0111: Expected '${name}' to be a function`);
+    throw createMappedError(111 /* ErrorNames.ast_name_is_not_a_function */, name);
 };
 /**
  * Determines if the value passed is a number or bigint for parsing purposes
@@ -1629,7 +1739,7 @@ class CollectionSizeObserver {
         return this._obj.size;
     }
     setValue() {
-        throw createError(`AUR02: Map/Set "size" is a readonly property`);
+        throw createMappedError(220 /* ErrorNames.assign_readonly_size */);
     }
     handleCollectionChange(_collection, _) {
         const oldValue = this._value;
@@ -2519,7 +2629,7 @@ function observeCollection$1(collection) {
         obs = getMapObserver(collection);
     }
     else {
-        throw createError(`AUR0210: Unrecognised collection type.`);
+        throw createMappedError(210 /* ErrorNames.non_recognisable_collection_type */, collection);
     }
     this.obs.add(obs);
 }
@@ -2527,10 +2637,10 @@ function subscribeTo(subscribable) {
     this.obs.add(subscribable);
 }
 function noopHandleChange() {
-    throw createError(`AUR2011: method "handleChange" not implemented`);
+    throw createMappedError(99 /* ErrorNames.method_not_implemented */, 'handleChange');
 }
 function noopHandleCollectionChange() {
-    throw createError(`AUR2011: method "handleCollectionChange" not implemented`);
+    throw createMappedError(99 /* ErrorNames.method_not_implemented */, 'handleCollectionChange');
 }
 class BindingObserverRecord {
     constructor(b) {
@@ -2838,7 +2948,7 @@ function parse(minPrecedence, expressionType) {
                 nextToken();
                 if (consumeOpt(50 /* Token.Arrow */)) {
                     if ($currentToken === 524296 /* Token.OpenBrace */) {
-                        throw functionBodyInArrowFN();
+                        throw functionBodyInArrowFn();
                     }
                     const _optional = $optional;
                     const _scopeDepth = $scopeDepth;
@@ -3448,7 +3558,7 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
         if (paramsState === 1 /* ArrowFnParams.Valid */) {
             nextToken();
             if ($currentToken === 524296 /* Token.OpenBrace */) {
-                throw functionBodyInArrowFN();
+                throw functionBodyInArrowFn();
             }
             const _optional = $optional;
             const _scopeDepth = $scopeDepth;
@@ -3862,137 +3972,39 @@ const consume = (token) => {
     }
 };
 // #region errors
-const invalidStartOfExpression = () => {
-    {
-        return createError(`AUR0151: Invalid start of expression: '${$input}'`);
-    }
-};
-const invalidSpreadOp = () => {
-    {
-        return createError(`AUR0152: Spread operator is not supported: '${$input}'`);
-    }
-};
-const expectedIdentifier = () => {
-    {
-        return createError(`AUR0153: Expected identifier: '${$input}'`);
-    }
-};
-const invalidMemberExpression = () => {
-    {
-        return createError(`AUR0154: Invalid member expression: '${$input}'`);
-    }
-};
-const unexpectedEndOfExpression = () => {
-    {
-        return createError(`AUR0155: Unexpected end of expression: '${$input}'`);
-    }
-};
-const unconsumedToken = () => {
-    {
-        return createError(`AUR0156: Unconsumed token: '${$tokenRaw()}' at position ${$index} of '${$input}'`);
-    }
-};
-const invalidEmptyExpression = () => {
-    {
-        return createError(`AUR0157: Invalid expression. Empty expression is only valid in event bindings (trigger, delegate, capture etc...)`);
-    }
-};
-const lhsNotAssignable = () => {
-    {
-        return createError(`AUR0158: Left hand side of expression is not assignable: '${$input}'`);
-    }
-};
-const expectedValueConverterIdentifier = () => {
-    {
-        return createError(`AUR0159: Expected identifier to come after ValueConverter operator: '${$input}'`);
-    }
-};
-const expectedBindingBehaviorIdentifier = () => {
-    {
-        return createError(`AUR0160: Expected identifier to come after BindingBehavior operator: '${$input}'`);
-    }
-};
-const unexpectedOfKeyword = () => {
-    {
-        return createError(`AUR0161: Unexpected keyword "of": '${$input}'`);
-    }
-};
-const invalidLHSBindingIdentifierInForOf = () => {
-    {
-        return createError(`AUR0163: Invalid BindingIdentifier at left hand side of "of": '${$input}'`);
-    }
-};
-const invalidPropDefInObjLiteral = () => {
-    {
-        return createError(`AUR0164: Invalid or unsupported property definition in object literal: '${$input}'`);
-    }
-};
-const unterminatedStringLiteral = () => {
-    {
-        return createError(`AUR0165: Unterminated quote in string literal: '${$input}'`);
-    }
-};
-const unterminatedTemplateLiteral = () => {
-    {
-        return createError(`AUR0166: Unterminated template string: '${$input}'`);
-    }
-};
-const missingExpectedToken = (token) => {
-    {
-        return createError(`AUR0167: Missing expected token '${TokenValues[token & 63 /* Token.Type */]}' in '${$input}' `);
-    }
-};
+const invalidStartOfExpression = () => createMappedError(151 /* ErrorNames.parse_invalid_start */, $input);
+const invalidSpreadOp = () => createMappedError(152 /* ErrorNames.parse_no_spread */, $input);
+const expectedIdentifier = () => createMappedError(153 /* ErrorNames.parse_expected_identifier */, $input);
+const invalidMemberExpression = () => createMappedError(154 /* ErrorNames.parse_invalid_member_expr */, $input);
+const unexpectedEndOfExpression = () => createMappedError(155 /* ErrorNames.parse_unexpected_end */, $input);
+const unconsumedToken = () => createMappedError(156 /* ErrorNames.parse_unconsumed_token */, $tokenRaw(), $index, $input);
+const invalidEmptyExpression = () => createMappedError(157 /* ErrorNames.parse_invalid_empty */);
+const lhsNotAssignable = () => createMappedError(158 /* ErrorNames.parse_left_hand_side_not_assignable */, $input);
+const expectedValueConverterIdentifier = () => createMappedError(159 /* ErrorNames.parse_expected_converter_identifier */, $input);
+const expectedBindingBehaviorIdentifier = () => createMappedError(160 /* ErrorNames.parse_expected_behavior_identifier */, $input);
+const unexpectedOfKeyword = () => createMappedError(161 /* ErrorNames.parse_unexpected_keyword_of */, $input);
+const invalidLHSBindingIdentifierInForOf = () => createMappedError(163 /* ErrorNames.parse_invalid_identifier_in_forof */, $input);
+const invalidPropDefInObjLiteral = () => createMappedError(164 /* ErrorNames.parse_invalid_identifier_object_literal_key */, $input);
+const unterminatedStringLiteral = () => createMappedError(165 /* ErrorNames.parse_unterminated_string */, $input);
+const unterminatedTemplateLiteral = () => createMappedError(166 /* ErrorNames.parse_unterminated_template_string */, $input);
+const missingExpectedToken = (token) => createMappedError(167 /* ErrorNames.parse_missing_expected_token */, TokenValues[token & 63 /* Token.Type */], $input)
+    ;
 const unexpectedCharacter = () => {
-    {
-        throw createError(`AUR0168: Unexpected character: '${$input}'`);
-    }
+    throw createMappedError(168 /* ErrorNames.parse_unexpected_character */, $input);
 };
 unexpectedCharacter.notMapped = true;
-const unexpectedTokenInDestructuring = () => {
-    {
-        return createError(`AUR0170: Unexpected '${$tokenRaw()}' at position ${$index - 1} for destructuring assignment in ${$input}`);
-    }
-};
-const unexpectedTokenInOptionalChain = () => {
-    {
-        return createError(`AUR0171: Unexpected '${$tokenRaw()}' at position ${$index - 1} for optional chain in ${$input}`);
-    }
-};
-const invalidTaggedTemplateOnOptionalChain = () => {
-    {
-        return createError(`AUR0172: Invalid tagged template on optional chain in ${$input}`);
-    }
-};
-const invalidArrowParameterList = () => {
-    {
-        return createError(`AUR0173: Invalid arrow parameter list in ${$input}`);
-    }
-};
-const defaultParamsInArrowFn = () => {
-    {
-        return createError(`AUR0174: Arrow function with default parameters is not supported: ${$input}`);
-    }
-};
-const destructuringParamsInArrowFn = () => {
-    {
-        return createError(`AUR0175: Arrow function with destructuring parameters is not supported: ${$input}`);
-    }
-};
-const restParamsMustBeLastParam = () => {
-    {
-        return createError(`AUR0176: Rest parameter must be last formal parameter in arrow function: ${$input}`);
-    }
-};
-const functionBodyInArrowFN = () => {
-    {
-        return createError(`AUR0178: Arrow function with function body is not supported: ${$input}`);
-    }
-};
-const unexpectedDoubleDot = () => {
-    {
-        return createError(`AUR0179: Unexpected token '.' at position ${$index - 1} in ${$input}`);
-    }
-};
+const unexpectedTokenInDestructuring = () => createMappedError(170 /* ErrorNames.parse_unexpected_token_destructuring */, $tokenRaw(), $index, $input)
+    ;
+const unexpectedTokenInOptionalChain = () => createMappedError(171 /* ErrorNames.parse_unexpected_token_optional_chain */, $tokenRaw(), $index - 1, $input)
+    ;
+const invalidTaggedTemplateOnOptionalChain = () => createMappedError(172 /* ErrorNames.parse_invalid_tag_in_optional_chain */, $input);
+const invalidArrowParameterList = () => createMappedError(173 /* ErrorNames.parse_invalid_arrow_params */, $input);
+const defaultParamsInArrowFn = () => createMappedError(174 /* ErrorNames.parse_no_arrow_param_default_value */, $input);
+const destructuringParamsInArrowFn = () => createMappedError(175 /* ErrorNames.parse_no_arrow_param_destructuring */, $input);
+const restParamsMustBeLastParam = () => createMappedError(176 /* ErrorNames.parse_rest_must_be_last */, $input);
+const functionBodyInArrowFn = () => createMappedError(178 /* ErrorNames.parse_no_arrow_fn_body */, $input);
+const unexpectedDoubleDot = () => createMappedError(179 /* ErrorNames.parse_unexpected_double_dot */, $index - 1, $input)
+    ;
 // #endregion
 /**
  * Array for mapping tokens to token values. The indices of the values
@@ -4210,7 +4222,7 @@ function currentConnectable() {
 }
 function enterConnectable(connectable) {
     if (connectable == null) {
-        throw createError(`AUR0206: Connectable cannot be null/undefined`);
+        throw createMappedError(206 /* ErrorNames.switch_on_null_connectable */);
     }
     if (_connectable == null) {
         _connectable = connectable;
@@ -4219,7 +4231,7 @@ function enterConnectable(connectable) {
         return;
     }
     if (_connectable === connectable) {
-        throw createError(`AUR0207: Trying to enter an active connectable`);
+        throw createMappedError(207 /* ErrorNames.switch_active_connectable */);
     }
     connectables.push(connectable);
     _connectable = connectable;
@@ -4227,10 +4239,10 @@ function enterConnectable(connectable) {
 }
 function exitConnectable(connectable) {
     if (connectable == null) {
-        throw createError(`AUR0208: Connectable cannot be null/undefined`);
+        throw createMappedError(208 /* ErrorNames.switch_off_null_connectable */);
     }
     if (_connectable !== connectable) {
-        throw createError(`AUR0209: Trying to exit an unactive connectable`);
+        throw createMappedError(209 /* ErrorNames.switch_off_inactive_connectable */);
     }
     connectables.pop();
     _connectable = connectables.length > 0 ? connectables[connectables.length - 1] : null;
@@ -4716,7 +4728,7 @@ class ComputedObserver {
             }
         }
         else {
-            throw createError(`AUR0221: Property is readonly`);
+            throw createMappedError(221 /* ErrorNames.assign_readonly_readonly_property_from_computed */);
         }
     }
     useCoercer(coercer, coercionConfig) {
@@ -5078,7 +5090,7 @@ class ObserverLocator {
     }
     getObserver(obj, key) {
         if (obj == null) {
-            throw nullObjectError(safeString(key));
+            throw createMappedError(199 /* ErrorNames.observing_null_undefined */, key);
         }
         if (!isObject(obj)) {
             return new PrimitiveObserver(obj, isFunction(key) ? '' : key);
@@ -5221,8 +5233,6 @@ const getObserverLookup = (instance) => {
     }
     return lookup;
 };
-const nullObjectError = (key) => createError(`AUR0199: trying to observe property ${safeString(key)} on null/undefined`)
-    ;
 
 const IObservation = /*@__PURE__*/ createInterface('IObservation', x => x.singleton(Observation));
 class Observation {
@@ -5283,7 +5293,7 @@ class RunEffect {
     }
     run() {
         if (this.stopped) {
-            throw createError(`AUR0225: Effect has already been stopped`);
+            throw createMappedError(225 /* ErrorNames.stopping_a_stopped_effect */);
         }
         if (this.running) {
             return;
@@ -5308,7 +5318,7 @@ class RunEffect {
         if (this.queued) {
             if (this.runCount > this.maxRunCount) {
                 this.runCount = 0;
-                throw createError(`AUR0226: Maximum number of recursive effect run reached. Consider handle effect dependencies differently.`);
+                throw createMappedError(226 /* ErrorNames.effect_maximum_recursion_reached */);
             }
             this.run();
         }
@@ -5369,7 +5379,7 @@ function observable(targetOrConfig, key, descriptor) {
             key = config.name;
         }
         if (key == null || key === '') {
-            throw createError(`AUR0224: Invalid usage, cannot determine property name for @observable`);
+            throw createMappedError(224 /* ErrorNames.invalid_observable_decorator_usage */);
         }
         // determine callback name based on config or convention.
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/strict-boolean-expressions
