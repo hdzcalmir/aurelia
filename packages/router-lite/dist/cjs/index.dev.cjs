@@ -2949,7 +2949,7 @@ class Router {
                 this._instructions = tr.finalInstructions = tr.routeTree._finalizeInstructions();
                 this._isNavigating = false;
                 // apply history state
-                const newUrl = tr.finalInstructions.toUrl(this.options.useUrlFragmentHash);
+                const newUrl = tr.finalInstructions.toUrl(true, this.options.useUrlFragmentHash);
                 switch (tr.options._getHistoryStrategy(this._instructions)) {
                     case 'none':
                         // do nothing
@@ -3792,7 +3792,7 @@ class ViewportInstructionTree {
         const $options = NavigationOptions.create(routerOptions, { ...options });
         let context = $options.context;
         if (!(context instanceof RouteContext) && rootCtx != null) {
-            context = RouteContext.resolve(rootCtx, context);
+            context = $options.context = RouteContext.resolve(rootCtx, context);
         }
         const hasContext = context != null;
         if (instructionOrInstructions instanceof Array) {
@@ -3839,15 +3839,35 @@ class ViewportInstructionTree {
         }
         return true;
     }
-    toUrl(useUrlFragmentHash = false) {
+    toUrl(isFinalInstruction, useUrlFragmentHash) {
         let pathname;
         let hash;
+        let parentPath = '';
+        if (!isFinalInstruction) {
+            const parentPaths = [];
+            let ctx = this.options.context;
+            if (ctx != null && !(ctx instanceof RouteContext))
+                throw new Error('Invalid operation; incompatible navigation context.');
+            while (ctx != null && !ctx.isRoot) {
+                const vpa = ctx.vpa;
+                const node = vpa._currState === 4096 /* State.currIsActive */ ? vpa._currNode : vpa._nextNode;
+                if (node == null)
+                    throw new Error('Invalid operation; nodes of the viewport agent are not set.');
+                parentPaths.splice(0, 0, node.instruction.toUrlComponent());
+                ctx = ctx.parent;
+            }
+            if (parentPaths[0] === '') {
+                parentPaths.splice(0, 1);
+            }
+            parentPath = parentPaths.join('/');
+        }
+        const currentPath = this.toPath();
         if (useUrlFragmentHash) {
             pathname = '';
-            hash = `#${this.toPath()}`;
+            hash = parentPath.length > 0 ? `#${parentPath}/${currentPath}` : `#${currentPath}`;
         }
         else {
-            pathname = this.toPath();
+            pathname = parentPath.length > 0 ? `${parentPath}/${currentPath}` : currentPath;
             const fragment = this.fragment;
             hash = fragment !== null && fragment.length > 0 ? `#${fragment}` : '';
         }
@@ -4919,7 +4939,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
             const instructions = this._instructions = router.createViewportInstructions(typeof params === 'object' && params !== null
                 ? { component, params }
                 : component, { context: ctx });
-            this._href = instructions.toUrl(useHash);
+            this._href = instructions.toUrl(false, useHash);
         }
         else {
             this._instructions = null;

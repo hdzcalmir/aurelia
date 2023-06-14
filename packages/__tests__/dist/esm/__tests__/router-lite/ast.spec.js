@@ -271,7 +271,7 @@ describe('router-lite/ast.spec.ts', function () {
         it(path, function () {
             const actual = RouteExpression.parse(path, false);
             assert.deepStrictEqual(actual, expected[0]);
-            assert.strictEqual(actual.toInstructionTree(NavigationOptions.create(RouterOptions.create({}), {})).toUrl(), expected[1]);
+            assert.strictEqual(actual.toInstructionTree(NavigationOptions.create(RouterOptions.create({}), {})).toUrl(false, false), expected[1]);
         });
     }
     for (const path of ['/', ...terminal.map(t => `/${t}`)]) {

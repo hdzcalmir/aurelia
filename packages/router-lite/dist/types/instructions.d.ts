@@ -88,7 +88,7 @@ export declare class ViewportInstructionTree {
     constructor(options: NavigationOptions, isAbsolute: boolean, children: ViewportInstruction[], queryParams: Readonly<URLSearchParams>, fragment: string | null);
     static create(instructionOrInstructions: NavigationInstruction | NavigationInstruction[], routerOptions: RouterOptions, options?: INavigationOptions, rootCtx?: IRouteContext | null): ViewportInstructionTree;
     equals(other: ViewportInstructionTree): boolean;
-    toUrl(useUrlFragmentHash?: boolean): string;
+    toUrl(isFinalInstruction: boolean, useUrlFragmentHash: boolean): string;
     toPath(): string;
     toString(): string;
 }

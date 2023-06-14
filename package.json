@@ -1,7 +1,7 @@
 {
   "name": "@aurelia/monorepo",
   "private": true,
-  "version": "2.1.0-dev.202306130710",
+  "version": "2.1.0-dev.202306142031",
   "packageManager": "npm@8.19.2",
   "workspaces": [
     "packages/__tests__",

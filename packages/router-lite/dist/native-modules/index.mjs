@@ -2327,7 +2327,7 @@ class Router {
                 this.ie = true;
                 this.ee = t.finalInstructions = t.routeTree.Wt();
                 this.se = false;
-                const e = t.finalInstructions.toUrl(this.options.useUrlFragmentHash);
+                const e = t.finalInstructions.toUrl(true, this.options.useUrlFragmentHash);
                 switch (t.options.P(this.ee)) {
                   case "none":
                     break;
@@ -3063,7 +3063,7 @@ class ViewportInstructionTree {
         });
         let r = n.context;
         if (!(r instanceof RouteContext) && i != null) {
-            r = RouteContext.resolve(i, r);
+            r = n.context = RouteContext.resolve(i, r);
         }
         const o = r != null;
         if (t instanceof Array) {
@@ -3109,20 +3109,38 @@ class ViewportInstructionTree {
         }
         return true;
     }
-    toUrl(t = false) {
-        let e;
+    toUrl(t, e) {
         let s;
-        if (t) {
-            e = "";
-            s = `#${this.toPath()}`;
-        } else {
-            e = this.toPath();
-            const t = this.fragment;
-            s = t !== null && t.length > 0 ? `#${t}` : "";
+        let i;
+        let n = "";
+        if (!t) {
+            const t = [];
+            let e = this.options.context;
+            if (e != null && !(e instanceof RouteContext)) throw new Error("Invalid operation; incompatible navigation context.");
+            while (e != null && !e.isRoot) {
+                const s = e.vpa;
+                const i = s.it === 4096 ? s.ut : s.lt;
+                if (i == null) throw new Error("Invalid operation; nodes of the viewport agent are not set.");
+                t.splice(0, 0, i.instruction.toUrlComponent());
+                e = e.parent;
+            }
+            if (t[0] === "") {
+                t.splice(0, 1);
+            }
+            n = t.join("/");
         }
-        let i = this.queryParams.toString();
-        i = i === "" ? "" : `?${i}`;
-        return `${e}${i}${s}`;
+        const r = this.toPath();
+        if (e) {
+            s = "";
+            i = n.length > 0 ? `#${n}/${r}` : `#${r}`;
+        } else {
+            s = n.length > 0 ? `${n}/${r}` : r;
+            const t = this.fragment;
+            i = t !== null && t.length > 0 ? `#${t}` : "";
+        }
+        let o = this.queryParams.toString();
+        o = o === "" ? "" : `?${o}`;
+        return `${s}${o}${i}`;
     }
     toPath() {
         return this.children.map((t => t.toUrlComponent())).join("+");
@@ -4004,7 +4022,7 @@ let ht = class LoadCustomAttribute {
             } : s, {
                 context: i
             });
-            this.vs = r.toUrl(e);
+            this.vs = r.toUrl(false, e);
         } else {
             this.ee = null;
             this.vs = null;
