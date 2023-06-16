@@ -711,7 +711,7 @@ describe('router-lite/resources/load.spec.ts', function () {
         const queue = container.get(IPlatform).domWriteQueue;
         await queue.yield();
         const anchors = Array.from(host.querySelectorAll('a'));
-        assert.deepStrictEqual(anchors.map(a => a.getAttribute('href')), ['#ce-one', '#ce-two', '#ce-two']);
+        assert.deepStrictEqual(anchors.map(a => a.getAttribute('href')), ['/#/ce-one', '/#/ce-two', '/#/ce-two']);
         anchors[1].click();
         await queue.yield();
         assert.html.textContent(host, 'ce2');

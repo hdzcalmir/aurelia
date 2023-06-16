@@ -14,23 +14,4 @@ export declare class ViewportAgent {
     static for(viewport: IViewport, ctx: IRouteContext): ViewportAgent;
     toString(): string;
 }
-export declare const enum State {
-    curr = 16256,
-    currIsEmpty = 8192,
-    currIsActive = 4096,
-    currCanUnload = 2048,
-    currCanUnloadDone = 1024,
-    currUnload = 512,
-    currUnloadDone = 256,
-    currDeactivate = 128,
-    next = 127,
-    nextIsEmpty = 64,
-    nextIsScheduled = 32,
-    nextCanLoad = 16,
-    nextCanLoadDone = 8,
-    nextLoad = 4,
-    nextLoadDone = 2,
-    nextActivate = 1,
-    bothAreEmpty = 8256
-}
 //# sourceMappingURL=viewport-agent.d.ts.map

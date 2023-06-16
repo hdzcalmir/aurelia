@@ -92,13 +92,6 @@ export declare class ViewportInstructionTree {
     toPath(): string;
     toString(): string;
 }
-export declare const enum NavigationInstructionType {
-    string = 0,
-    ViewportInstruction = 1,
-    CustomElementDefinition = 2,
-    Promise = 3,
-    IRouteViewModel = 4
-}
 export interface ITypedNavigationInstruction<TInstruction extends NavigationInstruction, TType extends NavigationInstructionType> {
     readonly type: TType;
     readonly value: TInstruction;

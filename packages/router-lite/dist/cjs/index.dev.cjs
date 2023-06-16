@@ -1892,26 +1892,7 @@ function ensureTransitionHasNotErrored(tr) {
     if (tr.error !== void 0 && !tr.erredWithUnknownRoute)
         throw tr.error;
 }
-var State;
-(function (State) {
-    State[State["curr"] = 16256] = "curr";
-    State[State["currIsEmpty"] = 8192] = "currIsEmpty";
-    State[State["currIsActive"] = 4096] = "currIsActive";
-    State[State["currCanUnload"] = 2048] = "currCanUnload";
-    State[State["currCanUnloadDone"] = 1024] = "currCanUnloadDone";
-    State[State["currUnload"] = 512] = "currUnload";
-    State[State["currUnloadDone"] = 256] = "currUnloadDone";
-    State[State["currDeactivate"] = 128] = "currDeactivate";
-    State[State["next"] = 127] = "next";
-    State[State["nextIsEmpty"] = 64] = "nextIsEmpty";
-    State[State["nextIsScheduled"] = 32] = "nextIsScheduled";
-    State[State["nextCanLoad"] = 16] = "nextCanLoad";
-    State[State["nextCanLoadDone"] = 8] = "nextCanLoadDone";
-    State[State["nextLoad"] = 4] = "nextLoad";
-    State[State["nextLoadDone"] = 2] = "nextLoadDone";
-    State[State["nextActivate"] = 1] = "nextActivate";
-    State[State["bothAreEmpty"] = 8256] = "bothAreEmpty";
-})(State || (State = {}));
+
 // Stringifying uses arrays and does not have a negligible cost, so cache the results to not let trace logging
 // in and of its own slow things down too much.
 const $stateCache = new Map();
@@ -3863,8 +3844,8 @@ class ViewportInstructionTree {
         }
         const currentPath = this.toPath();
         if (useUrlFragmentHash) {
-            pathname = '';
-            hash = parentPath.length > 0 ? `#${parentPath}/${currentPath}` : `#${currentPath}`;
+            pathname = '/';
+            hash = parentPath.length > 0 ? `#/${parentPath}/${currentPath}` : `#/${currentPath}`;
         }
         else {
             pathname = parentPath.length > 0 ? `${parentPath}/${currentPath}` : currentPath;
@@ -3883,14 +3864,7 @@ class ViewportInstructionTree {
         return `[${this.children.map(String).join(',')}]`;
     }
 }
-var NavigationInstructionType;
-(function (NavigationInstructionType) {
-    NavigationInstructionType[NavigationInstructionType["string"] = 0] = "string";
-    NavigationInstructionType[NavigationInstructionType["ViewportInstruction"] = 1] = "ViewportInstruction";
-    NavigationInstructionType[NavigationInstructionType["CustomElementDefinition"] = 2] = "CustomElementDefinition";
-    NavigationInstructionType[NavigationInstructionType["Promise"] = 3] = "Promise";
-    NavigationInstructionType[NavigationInstructionType["IRouteViewModel"] = 4] = "IRouteViewModel";
-})(NavigationInstructionType || (NavigationInstructionType = {}));
+
 class TypedNavigationInstruction {
     constructor(type, value) {
         this.type = type;
