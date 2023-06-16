@@ -4,6 +4,7 @@ import {
   emptyObject,
   IModule,
   isArrayIndex,
+  Writable,
 } from '@aurelia/kernel';
 import {
   ICustomElementViewModel,
@@ -21,6 +22,8 @@ import { expectType, isPartialViewportInstruction, shallowEquals } from './valid
 import { INavigationOptions, NavigationOptions, type RouterOptions } from './options';
 import { RouteExpression } from './route-expression';
 import { mergeURLSearchParams, tryStringify } from './util';
+import { Events, getMessage } from './events';
+import { State } from './viewport-agent';
 
 export const defaultViewportName = 'default';
 export type RouteContextLike = IRouteContext | ICustomElementViewModel | ICustomElementController | HTMLElement;
@@ -47,9 +50,9 @@ export type RouteableComponent = RouteType | (() => RouteType) | Promise<IModule
 
 export type Params = { [key: string]: string | undefined };
 
+export type IExtendedViewportInstruction = IViewportInstruction & { readonly open?: number; readonly close?: number };
+
 export interface IViewportInstruction {
-  readonly open?: number;
-  readonly close?: number;
   /**
    * The component to load.
    *
@@ -83,10 +86,10 @@ export interface IViewportInstruction {
   readonly recognizedRoute: $RecognizedRoute | null;
 }
 
-export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_T = ITypedNavigationInstruction_Component> implements IViewportInstruction {
+export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_T = ITypedNavigationInstruction_Component> implements IExtendedViewportInstruction {
   private constructor(
-    public open: number,
-    public close: number,
+    public readonly open: number,
+    public readonly close: number,
     public readonly recognizedRoute: $RecognizedRoute | null,
     public readonly component: TComponent,
     public readonly viewport: string | null,
@@ -94,7 +97,7 @@ export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_
     public readonly children: ViewportInstruction[],
   ) { }
 
-  public static create(instruction: NavigationInstruction): ViewportInstruction {
+  public static create(instruction: NavigationInstruction | IExtendedViewportInstruction): ViewportInstruction {
     if (instruction instanceof ViewportInstruction) return instruction as ViewportInstruction; // eslint is being really weird here
 
     if (isPartialViewportInstruction(instruction)) {
@@ -112,7 +115,7 @@ export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_
       );
     }
 
-    const typedInstruction = TypedNavigationInstruction.create(instruction);
+    const typedInstruction = TypedNavigationInstruction.create(instruction) as ITypedNavigationInstruction_Component;
     return new ViewportInstruction(0, 0, null, typedInstruction, null, null, []);
   }
 
@@ -123,11 +126,11 @@ export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_
       return false;
     }
 
-    // TODO(fkleuver): incorporate viewports when null / '' descrepancies are fixed,
-    // as well as params when inheritance is fully fixed
-    if (!this.component.equals(other.component)) {
-      return false;
-    }
+    if (!this.component.equals(other.component)) return false;
+    // if either of the viewports are not set then ignore
+    const vp = this.viewport ?? null;
+    const otherVp = other.viewport ?? null;
+    if (vp !== null && otherVp !== null && vp !== otherVp) return false;
 
     for (let i = 0, ii = otherChildren.length; i < ii; ++i) {
       if (!thisChildren[i].contains(otherChildren[i])) {
@@ -146,7 +149,6 @@ export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_
     }
 
     if (
-      // TODO(fkleuver): decide if we really need to include `context` in this comparison
       !this.component.equals(other.component) ||
       this.viewport !== other.viewport ||
       !shallowEquals(this.params, other.params)
@@ -163,12 +165,13 @@ export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_
     return true;
   }
 
-  public clone(): this {
+  /** @internal */
+  public _clone(): this {
     return new ViewportInstruction(
       this.open,
       this.close,
       this.recognizedRoute,
-      this.component.clone(),
+      this.component._clone(),
       this.viewport,
       this.params === null ? null : { ...this.params },
       [...this.children],
@@ -176,9 +179,25 @@ export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_
   }
 
   public toUrlComponent(recursive: boolean = true): string {
-    // TODO(fkleuver): use the context to determine create full tree
     const component = this.component.toUrlComponent();
-    const params = this.params === null || Object.keys(this.params).length === 0 ? '' : `(${stringifyParams(this.params)})`; /** TODO(sayan): review the path generation usage and correct this stringifyParams artefact. */
+    /**
+     * Note on the parenthesized parameters:
+     * We will land on this branch if and only if the component cannot be eagerly recognized (in the RouteContext#generateViewportInstruction) AND the parameters are also provided.
+     * When the routes are eagerly recognized, then there is no parameters left at this point and everything is already packed in the generated path as well as in the recognized route.
+     * Thus, in normal scenarios the users will never land here.
+     *
+     * Whenever, they are using a hand composed (string) path, then in that case there is no question of having parameters at this point, rather the given path is recognized in the createAndAppendNodes.
+     * It might be a rare edge case where users provide half the parameters in the string path and half as form of parameters; example: `load="route: r1/id1; params.bind: {id2}"`.
+     * We might not want to officially support such cases.
+     *
+     * However, as the route recognition is inherently lazy (think about child routes, whose routing configuration are not resolved till a child routing context is created, or
+     * the usage of instance level getRouteConfig), the component cannot be recognized fully eagerly. Thus, it is difficult at this point to correctly handle parameters as defined by the path templates defined for the component.
+     * This artifact is kept here for the purpose of fallback.
+     *
+     * We can think about a stricter mode where we throw error if any params remains unconsumed at this point.
+     * Or simply ignore the params while creating the URL. However, that does not feel right at all.
+     */
+    const params = this.params === null || Object.keys(this.params).length === 0 ? '' : `(${stringifyParams(this.params)})`;
     const vp = this.viewport;
     const viewport = component.length === 0 || vp === null || vp.length === 0 || vp === defaultViewportName ? '' : `@${vp}`;
     const thisPart = `${'('.repeat(this.open)}${component}${params}${viewport}${')'.repeat(this.close)}`;
@@ -192,6 +211,7 @@ export class ViewportInstruction<TComponent extends ITypedNavigationInstruction_
     return childPart;
   }
 
+  // Should not be adjust for DEV as it is also used of logging in production build.
   public toString(): string {
     const component = `c:${this.component}`;
     const viewport = this.viewport === null || this.viewport.length === 0 ? '' : `viewport:${this.viewport}`;
@@ -227,57 +247,6 @@ function stringifyParams(params: Params): string {
   return values.join(',');
 }
 
-export interface IRedirectInstruction {
-  readonly path: string;
-  readonly redirectTo: string;
-}
-
-export class RedirectInstruction implements IRedirectInstruction {
-  private constructor(
-    public readonly path: string,
-    public readonly redirectTo: string,
-  ) { }
-
-  public static create(instruction: IRedirectInstruction): RedirectInstruction {
-    if (instruction instanceof RedirectInstruction) {
-      return instruction;
-    }
-
-    return new RedirectInstruction(instruction.path, instruction.redirectTo);
-  }
-
-  public equals(other: RedirectInstruction): boolean {
-    return this.path === other.path && this.redirectTo === other.redirectTo;
-  }
-
-  public toUrlComponent(): string {
-    return this.path;
-  }
-
-  public toString(): string {
-    return `RI(path:'${this.path}',redirectTo:'${this.redirectTo}')`;
-  }
-}
-
-/**
- * Associate the object with an id so it can be stored in history as a serialized url segment.
- *
- * WARNING: As the implementation is right now, this is a memory leak disaster.
- * This is really a placeholder implementation at the moment and should NOT be used / advertised for production until a leak-free solution is made.
- */
-const getObjectId = (function () {
-  let lastId = 0;
-  const objectIdMap = new Map<object, number>();
-
-  return function (obj: object): number {
-    let id = objectIdMap.get(obj);
-    if (id === void 0) {
-      objectIdMap.set(obj, id = ++lastId);
-    }
-    return id;
-  };
-})();
-
 export class ViewportInstructionTree {
   public constructor(
     public readonly options: NavigationOptions,
@@ -297,7 +266,7 @@ export class ViewportInstructionTree {
 
     let context = $options.context as RouteContext;
     if (!(context instanceof RouteContext) && rootCtx != null) {
-      context = RouteContext.resolve(rootCtx, context);
+      context = ($options as Writable<NavigationOptions>).context = RouteContext.resolve(rootCtx, context);
     }
     const hasContext = context != null;
 
@@ -307,7 +276,7 @@ export class ViewportInstructionTree {
       const query = new URLSearchParams($options.queryParams ?? emptyObject);
       for (let i = 0; i < len; i++) {
         const instruction = instructionOrInstructions[i];
-        const eagerVi = hasContext ? context.generateViewportInstruction(instruction) : null;
+        const eagerVi = hasContext ? context._generateViewportInstruction(instruction) : null;
         if (eagerVi !== null) {
           children[i] = eagerVi.vi;
           mergeURLSearchParams(query, eagerVi.query, false);
@@ -323,7 +292,12 @@ export class ViewportInstructionTree {
       return expr.toInstructionTree($options);
     }
 
-    const eagerVi = hasContext ? context.generateViewportInstruction(instructionOrInstructions) : null;
+    const eagerVi = hasContext
+      ? context._generateViewportInstruction(isPartialViewportInstruction(instructionOrInstructions)
+        ? { ...instructionOrInstructions, params: instructionOrInstructions.params ?? emptyObject }
+        : { component: instructionOrInstructions, params: emptyObject }
+      )
+      : null;
     const query = new URLSearchParams($options.queryParams ?? emptyObject);
     return eagerVi !== null
       ? new ViewportInstructionTree(
@@ -358,14 +332,36 @@ export class ViewportInstructionTree {
     return true;
   }
 
-  public toUrl(useUrlFragmentHash: boolean = false): string {
+  public toUrl(isFinalInstruction: boolean, useUrlFragmentHash: boolean): string {
     let pathname: string;
     let hash: string;
+    let parentPath = '';
+
+    if (!isFinalInstruction) {
+      const parentPaths: string[] = [];
+      let ctx: IRouteContext | null = this.options.context as IRouteContext | null;
+      if (ctx != null && !(ctx instanceof RouteContext)) throw new Error('Invalid operation; incompatible navigation context.');
+
+      while (ctx != null && !ctx.isRoot) {
+        const vpa = ctx.vpa;
+        const node = vpa._currState === State.currIsActive ? vpa._currNode : vpa._nextNode;
+        if (node == null) throw new Error('Invalid operation; nodes of the viewport agent are not set.');
+
+        parentPaths.splice(0, 0, node.instruction!.toUrlComponent());
+        ctx = ctx.parent;
+      }
+      if (parentPaths[0] === '') {
+        parentPaths.splice(0, 1);
+      }
+      parentPath = parentPaths.join('/');
+    }
+
+    const currentPath = this.toPath();
     if (useUrlFragmentHash) {
-      pathname = '';
-      hash = `#${this.toPath()}`;
+      pathname = '/';
+      hash = parentPath.length > 0 ? `#/${parentPath}/${currentPath}` : `#/${currentPath}`;
     } else {
-      pathname = this.toPath();
+      pathname = parentPath.length > 0 ? `${parentPath}/${currentPath}` : currentPath;
       const fragment = this.fragment;
       hash = fragment !== null && fragment.length > 0 ? `#${fragment}` : '';
     }
@@ -380,11 +376,16 @@ export class ViewportInstructionTree {
     return this.children.map(x => x.toUrlComponent()).join('+');
   }
 
+  // Should not be adjust for DEV as it is also used of logging in production build.
   public toString(): string {
     return `[${this.children.map(String).join(',')}]`;
   }
 }
 
+_START_CONST_ENUM();
+/**
+ * @internal
+ */
 export const enum NavigationInstructionType {
   string,
   ViewportInstruction,
@@ -392,6 +393,8 @@ export const enum NavigationInstructionType {
   Promise,
   IRouteViewModel,
 }
+_END_CONST_ENUM();
+
 export interface ITypedNavigationInstruction<
   TInstruction extends NavigationInstruction,
   TType extends NavigationInstructionType
@@ -400,7 +403,7 @@ export interface ITypedNavigationInstruction<
   readonly value: TInstruction;
   equals(other: ITypedNavigationInstruction_T): boolean;
   toUrlComponent(): string;
-  clone(): this;
+  _clone(): this;
 }
 export interface ITypedNavigationInstruction_string extends ITypedNavigationInstruction<string, NavigationInstructionType.string> { }
 export interface ITypedNavigationInstruction_ViewportInstruction extends ITypedNavigationInstruction<ViewportInstruction, NavigationInstructionType.ViewportInstruction> { }
@@ -463,7 +466,7 @@ export class TypedNavigationInstruction<TInstruction extends NavigationInstructi
     if (isCustomElementViewModel(instruction)) return new TypedNavigationInstruction(NavigationInstructionType.IRouteViewModel, instruction);
     // We might have gotten a complete definition. In that case use it as-is.
     if (instruction instanceof CustomElementDefinition) return new TypedNavigationInstruction(NavigationInstructionType.CustomElementDefinition, instruction);
-    throw new Error(`Invalid component ${tryStringify(instruction)}: must be either a class, a custom element ViewModel, or a (partial) custom element definition`);
+    throw new Error(getMessage(Events.instrInvalid, tryStringify(instruction)));
   }
 
   public equals(this: ITypedNavigationInstruction_T, other: ITypedNavigationInstruction_T): boolean {
@@ -478,7 +481,8 @@ export class TypedNavigationInstruction<TInstruction extends NavigationInstructi
     }
   }
 
-  public clone(): this {
+  /** @internal */
+  public _clone(): this {
     return new TypedNavigationInstruction(
       this.type,
       this.value
@@ -491,7 +495,7 @@ export class TypedNavigationInstruction<TInstruction extends NavigationInstructi
         return this.value.name;
       case NavigationInstructionType.IRouteViewModel:
       case NavigationInstructionType.Promise:
-        return `au$obj${getObjectId(this.value)}`;
+        throw new Error(getMessage(Events.instrInvalidUrlComponentOperation, this.type));
       case NavigationInstructionType.ViewportInstruction:
         return this.value.toUrlComponent();
       case NavigationInstructionType.string:
@@ -499,6 +503,7 @@ export class TypedNavigationInstruction<TInstruction extends NavigationInstructi
     }
   }
 
+  // Should not be adjust for DEV as it is also used of logging in production build.
   public toString(this: ITypedNavigationInstruction_T): string {
     switch (this.type) {
       case NavigationInstructionType.CustomElementDefinition:
