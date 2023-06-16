@@ -46,7 +46,7 @@ export function register(container) {
             useProcessedFilePairFilename: true,
             hmr: false,
             enableConventions: true
-        }, (filePath) => filePath === path.join('src', 'foo-bar.less'));
+        }, (unit, filePath) => filePath === './foo-bar.less');
         testing_1.assert.equal(result.code, expected);
         testing_1.assert.equal(result.map.version, 3);
     });
@@ -79,6 +79,35 @@ export function register(container) {
         testing_1.assert.equal(result.code, expected);
         testing_1.assert.equal(result.map.version, 3);
     });
+    it('transforms html file with explicit file extension on dep', function () {
+        const html = '<import from="./hello-world.html" /><template><import from="./foo"><require from="./foo-bar.scss"></require></template>';
+        const expected = `import { CustomElement } from '@aurelia/runtime-html';
+import { shadowCSS } from '@aurelia/runtime-html';
+import * as d0 from "./hello-world.html";
+import * as d1 from "./foo.ts";
+import d2 from "!!raw-loader!./foo-bar.scss";
+export const name = "foo-bar";
+export const template = "<template></template>";
+export default template;
+export const dependencies = [ d0, d1, shadowCSS(d2) ];
+export const shadowOptions = { mode: 'open' };
+let _e;
+export function register(container) {
+  if (!_e) {
+    _e = CustomElement.define({ name, template, dependencies, shadowOptions });
+  }
+  container.register(_e);
+}
+`;
+        const result = (0, plugin_conventions_1.preprocess)({ path: path.join('src', 'foo-bar.html'), contents: html }, {
+            defaultShadowOptions: { mode: 'open' },
+            stringModuleWrap: (id) => `!!raw-loader!${id}`,
+            hmr: false,
+            enableConventions: true
+        }, (unit, filePath) => filePath === './foo.ts');
+        testing_1.assert.equal(result.code, expected);
+        testing_1.assert.equal(result.map.version, 3);
+    });
     it('does not touch js/ts file without html pair', function () {
         const js = `export class Foo {}\n`;
         const result = (0, plugin_conventions_1.preprocess)({ path: path.join('src', 'foo.js'), contents: js }, { hmr: false }, () => false);
@@ -87,7 +116,7 @@ export function register(container) {
     });
     it('does not touch js/ts file with html pair but wrong resource name', function () {
         const js = `export class Foo {}\n`;
-        const result = (0, plugin_conventions_1.preprocess)({ path: path.join('src', 'bar.js'), contents: js }, { hmr: false }, (filePath) => filePath === path.join('src', 'bar.html'));
+        const result = (0, plugin_conventions_1.preprocess)({ path: path.join('src', 'bar.js'), contents: js }, { hmr: false }, (unit, filePath) => filePath === './bar.html');
         testing_1.assert.equal(result.code, js);
         testing_1.assert.equal(result.map.version, 3);
     });
@@ -102,7 +131,7 @@ export class FooBar {}
             path: path.join('src', 'foo-bar.ts'),
             contents: js,
             base: 'base'
-        }, { hmr: false }, (filePath) => filePath === path.join('base', 'src', 'foo-bar.html'));
+        }, { hmr: false }, (unit, filePath) => filePath === './foo-bar.html');
         testing_1.assert.equal(result.code, expected);
         testing_1.assert.equal(result.map.version, 3);
     });
@@ -117,7 +146,7 @@ export class FooBar {}
             path: path.join('src', 'foo-bar', 'index.ts'),
             contents: js,
             base: 'base'
-        }, { hmr: false }, (filePath) => filePath === path.join('base', 'src', 'foo-bar', 'index.html'));
+        }, { hmr: false }, (unit, filePath) => filePath === './index.html');
         testing_1.assert.equal(result.code, expected);
         testing_1.assert.equal(result.map.version, 3);
     });
@@ -132,7 +161,7 @@ export class FooBar {}
             path: path.join('src', 'foo-bar.ts'),
             contents: js,
             base: 'base'
-        }, { hmr: false }, (filePath) => filePath === path.join('base', 'src', 'foo-bar-view.html'));
+        }, { hmr: false }, (unit, filePath) => filePath === './foo-bar-view.html');
         testing_1.assert.equal(result.code, expected);
         testing_1.assert.equal(result.map.version, 3);
     });
@@ -147,7 +176,7 @@ export class FooBar {}
             path: path.join('src', 'foo-bar', 'index.ts'),
             contents: js,
             base: 'base'
-        }, { hmr: false }, (filePath) => filePath === path.join('base', 'src', 'foo-bar', 'index-view.html'));
+        }, { hmr: false }, (unit, filePath) => filePath === './index-view.html');
         testing_1.assert.equal(result.code, expected);
         testing_1.assert.equal(result.map.version, 3);
     });
@@ -227,7 +256,7 @@ export class FooBar {}
         const result = (0, plugin_conventions_1.preprocess)({
             path: path.join('src', 'foo-bar.js'),
             contents: js
-        }, { hmr: false }, (filePath) => filePath === path.join('src', 'foo-bar.html'));
+        }, { hmr: false }, (unit, filePath) => filePath === './foo-bar.html');
         testing_1.assert.equal(result.code, expected);
         testing_1.assert.equal(result.map.version, 3);
     });
@@ -307,7 +336,7 @@ export class FooBar {}
         const result = (0, plugin_conventions_1.preprocess)({
             path: path.join('src', 'foo-bar.js'),
             contents: js
-        }, { hmr: false }, (filePath) => filePath === path.join('src', 'foo-bar.haml'));
+        }, { hmr: false }, (unit, filePath) => filePath === './foo-bar.haml');
         testing_1.assert.equal(result.code, expected);
         testing_1.assert.equal(result.map.version, 3);
     });

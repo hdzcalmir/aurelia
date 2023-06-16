@@ -4,7 +4,6 @@ const plugin_conventions_1 = require("@aurelia/plugin-conventions");
 const babel_jest_1 = require("@aurelia/babel-jest");
 const { _createTransformer } = babel_jest_1.default;
 const testing_1 = require("@aurelia/testing");
-const path = require("path");
 const config_1 = require("../jest-test-utils/config");
 function makePreprocess(_fileExists) {
     return function (unit, options) {
@@ -63,7 +62,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const t = _createTransformer({ defaultShadowOptions: { mode: 'open' }, hmr: false }, makePreprocess(p => p === path.join('src', 'foo-bar.less')), babelProcess);
+        const t = _createTransformer({ defaultShadowOptions: { mode: 'open' }, hmr: false }, makePreprocess((u, p) => p === './foo-bar.less'), babelProcess);
         const result = t.process(html, 'src/foo-bar.html', options);
         testing_1.assert.deepEqual(result, { code: expected });
     });
@@ -84,7 +83,7 @@ export function register(container) {
   container.register(_e);
 }
 `;
-        const t = _createTransformer({ useCSSModule: true, hmr: false }, makePreprocess(p => p === path.join('src', 'foo-bar.scss')), babelProcess);
+        const t = _createTransformer({ useCSSModule: true, hmr: false }, makePreprocess((u, p) => p === './foo-bar.scss'), babelProcess);
         const result = t.process(html, 'src/foo-bar.html', options);
         testing_1.assert.deepEqual(result, { code: expected });
     });
@@ -95,7 +94,7 @@ import * as __au2ViewDef from './foo-bar.html';
 @customElement(__au2ViewDef)
 export class FooBar {}
 `;
-        const t = _createTransformer({ hmr: false }, makePreprocess(p => p === path.join('src', 'foo-bar.html')), babelProcess);
+        const t = _createTransformer({ hmr: false }, makePreprocess((u, p) => p === './foo-bar.html'), babelProcess);
         const result = t.process(js, 'src/foo-bar.js', options);
         testing_1.assert.deepEqual(result, { code: expected });
     });

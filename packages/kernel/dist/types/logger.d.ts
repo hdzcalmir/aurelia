@@ -200,13 +200,12 @@ export declare class DefaultLogEvent implements ILogEvent {
 }
 export declare class DefaultLogEventFactory implements ILogEventFactory {
     readonly config: ILogConfig;
-    constructor(config: ILogConfig);
     createLogEvent(logger: ILogger, level: LogLevel, message: string, optionalParams: unknown[]): ILogEvent;
 }
 export declare class ConsoleSink implements ISink {
     static register(container: IContainer): void;
     readonly handleEvent: (event: ILogEvent) => void;
-    constructor(p: IPlatform);
+    constructor(p?: IPlatform);
 }
 export declare class DefaultLogger {
     /**
@@ -231,7 +230,7 @@ export declare class DefaultLogger {
     /**
      * The global logger configuration.
      */
-    config: ILogConfig, factory: ILogEventFactory, sinks: ISink[], 
+    config?: ILogConfig, factory?: ILogEventFactory, sinks?: readonly ISink[], 
     /**
      * The scopes that this logger was created for, if any.
      */

@@ -8,6 +8,7 @@ export interface ITemplateElementFactory extends TemplateElementFactory {
 }
 export declare const ITemplateElementFactory: import("@aurelia/kernel").InterfaceSymbol<ITemplateElementFactory>;
 export declare class TemplateElementFactory {
+    private t;
     createTemplate(markup: string): HTMLTemplateElement;
     createTemplate(node: Node): HTMLTemplateElement;
     createTemplate(input: string | Node): HTMLTemplateElement;

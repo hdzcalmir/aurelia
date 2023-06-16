@@ -9,18 +9,8 @@ describe('3-runtime-html/custom-elements.let.spec.ts', function () {
         'capture',
     ]) {
         it(`throws on non .bind/.to-view: "${command}"`, function () {
-            let ex;
-            try {
-                createFixture(`<let a.${command}="bc">`, class {
-                });
-            }
-            catch (e) {
-                ex = e;
-                // assert.includes(e.toString(), `Invalid command ${command} for <let>. Only to-view/bind supported.`);
-                assert.strictEqual(e.toString().includes(`Invalid command ${command} for <let>. Only to-view/bind supported.`)
-                    || e.toString().includes(`AUR0704:${command}`), true);
-            }
-            assert.instanceOf(ex, Error);
+            assert.throws(() => createFixture(`<let a.${command}="bc">`, class {
+            }), /AUR0704/);
         });
     }
     for (const command of ['bind']) {

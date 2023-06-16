@@ -1,14 +1,13 @@
-import { type IContainer, IModule } from '@aurelia/kernel';
+import { type IContainer } from '@aurelia/kernel';
 import { RecognizedRoute } from '@aurelia/route-recognizer';
-import { type CustomElementDefinition, ICustomElementController, PartialCustomElementDefinition } from '@aurelia/runtime-html';
-import { ComponentAgent, IRouteViewModel } from './component-agent';
-import { NavigationInstruction, Params, ViewportInstruction } from './instructions';
+import { type CustomElementDefinition, PartialCustomElementDefinition } from '@aurelia/runtime-html';
+import { IRouteViewModel } from './component-agent';
+import { IExtendedViewportInstruction, NavigationInstruction, Params, ViewportInstruction } from './instructions';
 import { IChildRouteConfig } from './options';
-import { IViewport } from './resources/viewport';
 import { RouteConfig, RouteType } from './route';
 import type { RouteNode } from './route-tree';
 import { IRouter } from './router';
-import { ViewportAgent, type ViewportRequest } from './viewport-agent';
+import { ViewportAgent } from './viewport-agent';
 export interface IRouteContext extends RouteContext {
 }
 export declare const IRouteContext: import("@aurelia/kernel").InterfaceSymbol<IRouteContext>;
@@ -16,11 +15,10 @@ type PathGenerationResult = {
     vi: ViewportInstruction;
     query: Params;
 };
-export type EagerInstruction = {
+type EagerInstruction = {
     component: string | RouteConfig | PartialCustomElementDefinition | IRouteViewModel | IChildRouteConfig | RouteType;
     params: Params;
 };
-export declare function isEagerInstruction(val: NavigationInstruction | EagerInstruction): val is EagerInstruction;
 /**
  * Holds the information of a component in the context of a specific container.
  *
@@ -35,7 +33,6 @@ export declare class RouteContext {
     readonly component: CustomElementDefinition;
     readonly config: RouteConfig;
     private readonly _router;
-    private readonly childViewportAgents;
     readonly root: IRouteContext;
     get isRoot(): boolean;
     /**
@@ -44,34 +41,20 @@ export declare class RouteContext {
     readonly path: readonly IRouteContext[];
     get depth(): number;
     /**
-     * The stringified path from the root RouteContext up to this one, consisting of the component names they're associated with, separated by slashes.
-     *
-     * Mainly for debugging/introspection purposes.
-     */
-    readonly friendlyPath: string;
-    /**
      * The (fully resolved) configured child routes of this context's `RouteConfig`
      */
     readonly childRoutes: (RouteConfig | Promise<RouteConfig>)[];
-    get resolved(): Promise<void> | null;
     get allResolved(): Promise<void> | null;
-    private prevNode;
     get node(): RouteNode;
-    set node(value: RouteNode);
     /**
      * The viewport hosting the component associated with this RouteContext.
      * The root RouteContext has no ViewportAgent and will throw when attempting to access this property.
      */
     get vpa(): ViewportAgent;
     readonly container: IContainer;
-    private readonly moduleLoader;
-    private readonly logger;
-    private readonly hostControllerProvider;
-    private _childRoutesConfigured;
     private readonly _navigationModel;
     get navigationModel(): INavigationModel | null;
     constructor(viewportAgent: ViewportAgent | null, parent: IRouteContext | null, component: CustomElementDefinition, config: RouteConfig, parentContainer: IContainer, _router: IRouter);
-    private _processConfig;
     /**
      * Create a new `RouteContext` and register it in the provided container.
      *
@@ -82,29 +65,15 @@ export declare class RouteContext {
     static setRoot(container: IContainer): void | Promise<void>;
     static resolve(root: IRouteContext, context: unknown): IRouteContext;
     dispose(): void;
-    resolveViewportAgent(req: ViewportRequest): ViewportAgent;
     getAvailableViewportAgents(): readonly ViewportAgent[];
     getFallbackViewportAgent(name: string): ViewportAgent | null;
-    /**
-     * Create a component based on the provided viewportInstruction.
-     *
-     * @param hostController - The `ICustomElementController` whose component (typically `au-viewport`) will host this component.
-     * @param routeNode - The routeNode that describes the component + state.
-     */
-    createComponentAgent(hostController: ICustomElementController, routeNode: RouteNode): ComponentAgent | Promise<ComponentAgent>;
-    registerViewport(viewport: IViewport): ViewportAgent;
-    unregisterViewport(viewport: IViewport): void;
     recognize(path: string, searchAncestor?: boolean): $RecognizedRoute | null;
-    private addRoute;
-    private $addRoute;
-    resolveLazy(promise: Promise<IModule>): Promise<CustomElementDefinition> | CustomElementDefinition;
-    generateViewportInstruction(instruction: {
+    _generateViewportInstruction(instruction: {
         component: string;
         params: Params;
     }): PathGenerationResult | null;
-    generateViewportInstruction(instruction: NavigationInstruction | EagerInstruction): PathGenerationResult | null;
+    _generateViewportInstruction(instruction: NavigationInstruction | EagerInstruction | IExtendedViewportInstruction): PathGenerationResult | null;
     toString(): string;
-    private printTree;
 }
 export declare class $RecognizedRoute {
     readonly route: RecognizedRoute<RouteConfig | Promise<RouteConfig>>;

@@ -15,9 +15,20 @@ class ConfigurableRoute {
 }
 
 class Endpoint {
+    get residualEndpoint() {
+        return this.t;
+    }
+    set residualEndpoint(t) {
+        if (this.t !== null) throw new Error("Residual endpoint is already set");
+        this.t = t;
+    }
     constructor(t, e) {
         this.route = t;
         this.params = e;
+        this.t = null;
+    }
+    equalsOrResidual(t) {
+        return t != null && this === t || this.t === t;
     }
 }
 
@@ -238,19 +249,22 @@ class RouteRecognizer {
     }
     add(e, s = false) {
         let n;
+        let i;
         if (e instanceof Array) {
-            for (const i of e) {
-                n = this.$add(i, false).params;
+            for (const r of e) {
+                i = this.$add(r, false);
+                n = i.params;
                 if (!s || (n[n.length - 1]?.isStar ?? false)) continue;
-                this.$add({
-                    ...i,
-                    path: `${i.path}/*${t}`
+                i.residualEndpoint = this.$add({
+                    ...r,
+                    path: `${r.path}/*${t}`
                 }, true);
             }
         } else {
-            n = this.$add(e, false).params;
+            i = this.$add(e, false);
+            n = i.params;
             if (s && !(n[n.length - 1]?.isStar ?? false)) {
-                this.$add({
+                i.residualEndpoint = this.$add({
                     ...e,
                     path: `${e.path}/*${t}`
                 }, true);

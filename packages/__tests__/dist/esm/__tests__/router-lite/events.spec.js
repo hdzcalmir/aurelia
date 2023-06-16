@@ -11,9 +11,9 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import { DI, noop } from '@aurelia/kernel';
-import { IRouter, IRouterEvents, route, RouterConfiguration, ViewportAgent } from '@aurelia/router-lite';
-import { AppTask, Aurelia, CustomElement, customElement } from '@aurelia/runtime-html';
-import { assert, TestContext } from '@aurelia/testing';
+import { IRouter, IRouterEvents, RouterConfiguration, route } from '@aurelia/router-lite';
+import { AppTask, Aurelia, customElement } from '@aurelia/runtime-html';
+import { TestContext, assert } from '@aurelia/testing';
 import { TestRouterConfiguration } from './_shared/configuration.js';
 describe('router-lite/events.spec.ts', function () {
     async function start({ appRoot, registrations = [] }) {
@@ -33,16 +33,16 @@ describe('router-lite/events.spec.ts', function () {
             this.log = [];
             this.subscriptions = [
                 events.subscribe('au:router:navigation-start', (event) => {
-                    this.log.push(`${event.name} - ${event.id} - '${event.instructions.toUrl()}'`);
+                    this.log.push(`${event.name} - ${event.id} - '${event.instructions.toUrl(false, false)}'`);
                 }),
                 events.subscribe('au:router:navigation-end', (event) => {
-                    this.log.push(`${event.name} - ${event.id} - '${event.instructions.toUrl()}'`);
+                    this.log.push(`${event.name} - ${event.id} - '${event.instructions.toUrl(false, false)}'`);
                 }),
                 events.subscribe('au:router:navigation-cancel', (event) => {
-                    this.log.push(`${event.name} - ${event.id} - '${event.instructions.toUrl()}' - ${String(event.reason)}`);
+                    this.log.push(`${event.name} - ${event.id} - '${event.instructions.toUrl(false, false)}' - ${String(event.reason)}`);
                 }),
                 events.subscribe('au:router:navigation-error', (event) => {
-                    this.log.push(`${event.name} - ${event.id} - '${event.instructions.toUrl()}' - ${String(event.error)}`);
+                    this.log.push(`${event.name} - ${event.id} - '${event.instructions.toUrl(false, false)}' - ${String(event.error)}`);
                 }),
             ];
         }
@@ -78,8 +78,8 @@ describe('router-lite/events.spec.ts', function () {
         Root = __decorate([
             route({
                 routes: [
-                    { path: ['', 'c1'], component: ChildOne },
-                    { path: 'c2', component: ChildTwo },
+                    { id: 'r1', path: ['', 'c1'], component: ChildOne },
+                    { id: 'r2', path: 'c2', component: ChildTwo },
                 ]
             }),
             customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
@@ -213,8 +213,8 @@ describe('router-lite/events.spec.ts', function () {
         Root = __decorate([
             route({
                 routes: [
-                    { path: ['', 'c1'], component: ChildOne },
-                    { path: 'c2', component: ChildTwo },
+                    { id: 'r1', path: ['', 'c1'], component: ChildOne },
+                    { id: 'r2', path: 'c2', component: ChildTwo },
                 ]
             }),
             customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
@@ -242,7 +242,7 @@ describe('router-lite/events.spec.ts', function () {
         ]);
         await au.stop(true);
     });
-    it('erred navigation', async function () {
+    it('erred navigation - without recovery', async function () {
         let ChildOne = class ChildOne {
         };
         ChildOne = __decorate([
@@ -261,8 +261,8 @@ describe('router-lite/events.spec.ts', function () {
         Root = __decorate([
             route({
                 routes: [
-                    { path: ['', 'c1'], component: ChildOne },
-                    { path: 'c2', component: ChildTwo },
+                    { id: 'r1', path: ['', 'c1'], component: ChildOne },
+                    { id: 'r2', path: 'c2', component: ChildTwo },
                 ]
             }),
             customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
@@ -285,14 +285,10 @@ describe('router-lite/events.spec.ts', function () {
         assert.deepStrictEqual(service.log, [
             'au:router:navigation-start - 2 - \'c2\'',
             'au:router:navigation-error - 2 - \'c2\' - Error: synthetic test error',
+            'au:router:navigation-cancel - 2 - \'c2\' - guardsResult is true',
+            'au:router:navigation-start - 3 - \'\'',
+            'au:router:navigation-end - 3 - \'\'',
         ]);
-        // workaround to clear error till the error recovery is properly implemented.
-        // TODO(Sayan): reactor later when error recovery is properly implemented.
-        const vpEl = host.querySelector('au-viewport');
-        const vpa = ViewportAgent.for(CustomElement.for(vpEl).viewModel, null);
-        const transition = vpa['currTransition'];
-        transition.guardsResult = true;
-        transition.error = void 0;
         await au.stop(true);
     });
 });

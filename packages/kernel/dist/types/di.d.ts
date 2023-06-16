@@ -364,10 +364,7 @@ export type INewInstanceResolver<T> = IResolver<T> & {
     (...args: unknown[]): any;
 };
 export declare class Resolver implements IResolver, IRegistration {
-    _key: Key;
-    _strategy: ResolverStrategy;
-    _state: any;
-    constructor(_key: Key, _strategy: ResolverStrategy, _state: any);
+    constructor(key: Key, strategy: ResolverStrategy, state: any);
     get $isResolver(): true;
     private resolving;
     register(container: IContainer, key?: Key): IResolver;

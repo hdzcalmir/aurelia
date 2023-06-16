@@ -468,9 +468,6 @@ describe('router-lite/config-tests.spec.ts', function () {
         verifyInvocationsEqual(activityTracker.activeVMs, ['root', 'a01']);
     });
     describe(`throw error when`, function () {
-        function getErrorMsg({ instruction, parent, parentPath, }) {
-            return `Neither the route '${instruction}' matched any configured route at '${parentPath}' nor a fallback is configured for the viewport 'default' - did you forget to add '${instruction}' to the routes list of the route decorator of '${parent}'?`;
-        }
         it(`load a configured child route with indirect path by name`, async function () {
             let A01 = class A01 extends SimpleActivityTrackingVMBase {
             };
@@ -493,11 +490,7 @@ describe('router-lite/config-tests.spec.ts', function () {
                 e = err;
             }
             assert.notStrictEqual(e, null);
-            assert.strictEqual(e.message, getErrorMsg({
-                instruction: 'a01',
-                parent: 'root',
-                parentPath: 'root',
-            }));
+            assert.match(e.message, /AUR3401/);
         });
     });
     it('routes can be configured using the getRouteConfig hook', async function () {

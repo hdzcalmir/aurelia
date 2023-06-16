@@ -8,7 +8,44 @@ import { Metadata, isObject, applyMetadataPolyfill } from '@aurelia/metadata';
 /** @internal */ const isFunction = (v) => typeof v === 'function';
 /** @internal */ const isString = (v) => typeof v === 'string';
 /** @internal */ const createObject = () => Object.create(null);
-/** @internal */ const createError = (message) => new Error(message);
+
+/* eslint-disable prefer-template */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${safeString(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [1 /* ErrorNames.no_registration_for_interface */]: `No registration for interface: '{{0}}'`,
+    [2 /* ErrorNames.none_resolver_found */]: `'{{0}}' was registered with "none" resolver, are you injecting the right key?`,
+    [3 /* ErrorNames.cyclic_dependency */]: `Cyclic dependency found: {{0}}`,
+    [4 /* ErrorNames.no_factory */]: `Resolver for {{0}} returned a null factory`,
+    [5 /* ErrorNames.invalid_resolver_strategy */]: `Invalid resolver strategy specified: {{0}}. Did you assign an invalid strategy value?`,
+    [6 /* ErrorNames.unable_auto_register */]: `Unable to autoregister dependency: {{0}}`,
+    [7 /* ErrorNames.resource_already_exists */]: `Resource key "{{0}}" already registered`,
+    [8 /* ErrorNames.unable_resolve_key */]: `Unable to resolve key: {{0}}`,
+    [9 /* ErrorNames.unable_jit_non_constructor */]: `Attempted to jitRegister something that is not a constructor: '{{0}}'. Did you forget to register this resource?`,
+    [10 /* ErrorNames.no_jit_intrinsic_type */]: `Attempted to jitRegister an intrinsic type: "{{0}}". Did you forget to add @inject(Key)`,
+    [11 /* ErrorNames.null_resolver_from_register */]: `Invalid resolver, null/undefined returned from the static register method.`,
+    [12 /* ErrorNames.no_jit_interface */]: `Attempted to jitRegister an interface: {{0}}`,
+    [13 /* ErrorNames.no_instance_provided */]: `Cannot call resolve '{{0}}' before calling prepare or after calling dispose.`,
+    [14 /* ErrorNames.null_undefined_key */]: `Key cannot be null or undefined. Are you trying to inject/register something that doesn't exist with DI?` +
+        `A common cause is circular dependency with bundler, did you accidentally introduce circular dependency into your module graph?`,
+    [15 /* ErrorNames.no_construct_native_fn */]: `'{{0}}' is a native function and cannot be safely constructed by DI. If this is intentional, please use a callback or cachedCallback resolver.`,
+    [16 /* ErrorNames.no_active_container_for_resolve */]: `There is not a currently active container to resolve "{{0}}". Are you trying to "new Class(...)" that has a resolve(...) call?`,
+    [17 /* ErrorNames.invalid_new_instance_on_interface */]: `Failed to instantiate '{{0}}' via @newInstanceOf/@newInstanceForScope, there's no registration and no default implementation.`,
+    [18 /* ErrorNames.event_aggregator_publish_invalid_event_name */]: `Invalid channel name or instance: '{{0}}'.`,
+    [19 /* ErrorNames.event_aggregator_subscribe_invalid_event_name */]: `Invalid channel name or type: {{0}}.`,
+    [20 /* ErrorNames.first_defined_no_value */]: `No defined value found when calling firstDefined()`,
+    [21 /* ErrorNames.invalid_module_transform_input */]: `Invalid module transform input: {{0}}. Expected Promise or Object.`
+    // [ErrorNames.module_loader_received_null]: `Module loader received null/undefined input. Expected Object.`,
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        cooked = cooked.replace(`{{${i}}}`, String(details[i]));
+    }
+    return cooked;
+};
 
 const isNumericLookup = {};
 /**
@@ -251,7 +288,7 @@ const firstDefined = (...values) => {
             return value;
         }
     }
-    throw createError(`No default value found`);
+    throw createMappedError(20 /* ErrorNames.first_defined_no_value */);
 };
 /**
  * Get the prototypes of a class hierarchy. Es6 classes have their parent class as prototype
@@ -555,7 +592,7 @@ class Container {
     }
     register(...params) {
         if (++this._registerDepth === 100) {
-            throw registrationError(params);
+            throw createMappedError(6 /* ErrorNames.unable_auto_register */, ...params);
         }
         let current;
         let keys;
@@ -622,7 +659,7 @@ class Container {
             resolvers.set(key, resolver);
             if (isResourceKey(key)) {
                 if (this.res[key] !== void 0) {
-                    throw resourceExistError(key);
+                    throw createMappedError(7 /* ErrorNames.resource_already_exists */, key);
                 }
                 this.res[key] = resolver;
             }
@@ -750,7 +787,7 @@ class Container {
         finally {
             currentContainer = previousContainer;
         }
-        throw cantResolveKeyError(key);
+        throw createMappedError(8 /* ErrorNames.unable_resolve_key */, key);
     }
     getAll(key, searchAncestors = false) {
         validateKey(key);
@@ -793,7 +830,7 @@ class Container {
         currentContainer = this;
         try {
             if (isNativeFunction(Type)) {
-                throw createNativeInvocationError(Type);
+                throw createMappedError(15 /* ErrorNames.no_construct_native_fn */, Type);
             }
             return dynamicDependencies === void 0
                 ? new Type(...getDependencies(Type).map(containerGetKey, this))
@@ -810,7 +847,7 @@ class Container {
         let factory = this._factories.get(Type);
         if (factory === void 0) {
             if (isNativeFunction(Type)) {
-                throw createNativeInvocationError(Type);
+                throw createMappedError(15 /* ErrorNames.no_construct_native_fn */, Type);
             }
             this._factories.set(Type, factory = new Factory(Type, getDependencies(Type)));
         }
@@ -890,10 +927,10 @@ class Container {
     /** @internal */
     _jitRegister(keyAsValue, handler) {
         if (!isFunction(keyAsValue)) {
-            throw jitRegisterNonFunctionError(keyAsValue);
+            throw createMappedError(9 /* ErrorNames.unable_jit_non_constructor */, keyAsValue);
         }
         if (InstrinsicTypeNames.has(keyAsValue.name)) {
-            throw jitInstrinsicTypeError(keyAsValue);
+            throw createMappedError(10 /* ErrorNames.no_jit_intrinsic_type */, keyAsValue);
         }
         if (isRegistry(keyAsValue)) {
             const registrationResolver = keyAsValue.register(handler, keyAsValue);
@@ -902,7 +939,7 @@ class Container {
                 if (newResolver != null) {
                     return newResolver;
                 }
-                throw invalidResolverFromRegisterError();
+                throw createMappedError(11 /* ErrorNames.null_resolver_from_register */, keyAsValue);
             }
             return registrationResolver;
         }
@@ -922,10 +959,10 @@ class Container {
             if (newResolver != null) {
                 return newResolver;
             }
-            throw invalidResolverFromRegisterError();
+            throw createMappedError(11 /* ErrorNames.null_resolver_from_register */, keyAsValue);
         }
         if (keyAsValue.$isInterface) {
-            throw jitInterfaceError(keyAsValue.friendlyName);
+            throw createMappedError(12 /* ErrorNames.no_jit_interface */, keyAsValue.friendlyName);
         }
         const resolver = this.config.defaultResolver(keyAsValue, handler);
         handler._resolvers.set(keyAsValue, resolver);
@@ -968,9 +1005,7 @@ function transformInstance(inst, transform) {
 }
 function validateKey(key) {
     if (key === null || key === void 0) {
-        {
-            throw createError(`AUR0014: key/value cannot be null or undefined. Are you trying to inject/register something that doesn't exist with DI?`);
-        }
+        throw createMappedError(14 /* ErrorNames.null_undefined_key */);
     }
 }
 function containerGetKey(d) {
@@ -978,7 +1013,7 @@ function containerGetKey(d) {
 }
 function resolve(...keys) {
     if (currentContainer == null) {
-        throw createInvalidResolveCallError();
+        throw createMappedError(16 /* ErrorNames.no_active_container_for_resolve */, ...keys);
     }
     return keys.length === 1
         ? currentContainer.get(keys[0])
@@ -1008,28 +1043,6 @@ const isSelfRegistry = (obj) => isRegistry(obj) && typeof obj.registerInRequesto
 const isRegisterInRequester = (obj) => isSelfRegistry(obj) && obj.registerInRequestor;
 const isClass = (obj) => obj.prototype !== void 0;
 const isResourceKey = (key) => isString(key) && key.indexOf(':') > 0;
-const registrationError = (deps) => 
-// TODO: change to reporter.error and add various possible causes in description.
-// Most likely cause is trying to register a plain object that does not have a
-// register method and is not a class constructor
-createError(`AUR0006: Unable to autoregister dependency: [${deps.map(safeString)}]`)
-    ;
-const resourceExistError = (key) => createError(`AUR0007: Resource key "${safeString(key)}" already registered`)
-    ;
-const cantResolveKeyError = (key) => createError(`AUR0008: Unable to resolve key: ${safeString(key)}`)
-    ;
-const jitRegisterNonFunctionError = (keyAsValue) => createError(`AUR0009: Attempted to jitRegister something that is not a constructor: '${safeString(keyAsValue)}'. Did you forget to register this resource?`)
-    ;
-const jitInstrinsicTypeError = (keyAsValue) => createError(`AUR0010: Attempted to jitRegister an intrinsic type: ${keyAsValue.name}. Did you forget to add @inject(Key)`)
-    ;
-const invalidResolverFromRegisterError = () => createError(`AUR0011: Invalid resolver returned from the static register method`)
-    ;
-const jitInterfaceError = (name) => createError(`AUR0012: Attempted to jitRegister an interface: ${name}`)
-    ;
-const createNativeInvocationError = (Type) => createError(`AUR0015: ${Type.name} is a native function and therefore cannot be safely constructed by DI. If this is intentional, please use a callback or cachedCallback resolver.`)
-    ;
-const createInvalidResolveCallError = () => createError(`AUR0016: There is not a currently active container. Are you trying to "new Class(...)" that has a resolve(...) call?`)
-    ;
 
 /** @internal */
 const instanceRegistration = (key, value) => new Resolver(key, 0 /* ResolverStrategy.instance */, value);
@@ -1110,13 +1123,11 @@ const cloneArrayWithPossibleProps = (source) => {
 };
 const DefaultResolver = {
     none(key) {
-        throw noResolverForKeyError(key);
+        throw createMappedError(2 /* ErrorNames.none_resolver_found */, key);
     },
     singleton: (key) => new Resolver(key, 1 /* ResolverStrategy.singleton */, key),
     transient: (key) => new Resolver(key, 2 /* ResolverStrategy.transient */, key),
 };
-const noResolverForKeyError = (key) => createError(`AUR0002: ${safeString(key)} not registered, did you forget to add @singleton()?`)
-    ;
 class ContainerConfiguration {
     constructor(inheritParentResources, defaultResolver) {
         this.inheritParentResources = inheritParentResources;
@@ -1229,7 +1240,7 @@ const createInterface = (configureOrName, configuror) => {
     const friendlyName = (isString(configureOrName) ? configureOrName : undefined) ?? '(anonymous)';
     const Interface = function (target, property, index) {
         if (target == null || new.target !== undefined) {
-            throw createNoRegistrationError(friendlyName);
+            throw createMappedError(1 /* ErrorNames.no_registration_for_interface */, friendlyName);
         }
         const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
         annotationParamtypes[index] = Interface;
@@ -1242,8 +1253,6 @@ const createInterface = (configureOrName, configuror) => {
     Interface.toString = () => `InterfaceSymbol<${friendlyName}>`;
     return Interface;
 };
-const createNoRegistrationError = (name) => createError(`AUR0001: No registration for interface: '${name}'`)
-    ;
 const DI = {
     createContainer,
     getDesignParamtypes,
@@ -1559,18 +1568,18 @@ const createNewInstance = (key, handler, requestor) => {
             return factory.construct(requestor);
         }
         // 2.2 cannot instantiate a dummy interface
-        throw cannotInstantiateInterfaceError(key);
+        throw createMappedError(17 /* ErrorNames.invalid_new_instance_on_interface */, key);
     }
     // 3. jit factory, in case of newInstanceOf(SomeClass)
     return handler.getFactory(key).construct(requestor);
 };
 
 class Resolver {
-    constructor(_key, _strategy, _state) {
-        this._key = _key;
-        this._strategy = _strategy;
-        this._state = _state;
+    constructor(key, strategy, state) {
         this.resolving = false;
+        this._key = key;
+        this._strategy = strategy;
+        this._state = state;
     }
     get $isResolver() { return true; }
     register(container, key) {
@@ -1582,7 +1591,7 @@ class Resolver {
                 return this._state;
             case 1 /* ResolverStrategy.singleton */: {
                 if (this.resolving) {
-                    throw cyclicDependencyError(this._state.name);
+                    throw createMappedError(3 /* ErrorNames.cyclic_dependency */, this._state.name);
                 }
                 this.resolving = true;
                 this._state = handler.getFactory(this._state).construct(requestor);
@@ -1594,7 +1603,7 @@ class Resolver {
                 // Always create transients from the requesting container
                 const factory = handler.getFactory(this._state);
                 if (factory === null) {
-                    throw nullFactoryError(this._key);
+                    throw createMappedError(4 /* ErrorNames.no_factory */, this._key);
                 }
                 return factory.construct(requestor);
             }
@@ -1605,7 +1614,7 @@ class Resolver {
             case 5 /* ResolverStrategy.alias */:
                 return requestor.get(this._state);
             default:
-                throw invalidResolverStrategyError(this._strategy);
+                throw createMappedError(5 /* ErrorNames.invalid_resolver_strategy */, this._strategy);
         }
     }
     getFactory(container) {
@@ -1620,12 +1629,6 @@ class Resolver {
         }
     }
 }
-const cyclicDependencyError = (name) => createError(`AUR0003: Cyclic dependency found: ${name}`)
-    ;
-const nullFactoryError = (key) => createError(`AUR0004: Resolver for ${safeString(key)} returned a null factory`)
-    ;
-const invalidResolverStrategyError = (strategy) => createError(`AUR0005: Invalid resolver strategy specified: ${strategy}.`)
-    ;
 /**
  * An implementation of IRegistry that delegates registration to a
  * separately registered class. The ParameterizedRegistry facilitates the
@@ -1760,7 +1763,7 @@ class InstanceProvider {
     get $isResolver() { return true; }
     resolve() {
         if (this._instance == null) {
-            throw noInstanceError(this._name);
+            throw createMappedError(13 /* ErrorNames.no_instance_provided */, this._name);
         }
         return this._instance;
     }
@@ -1769,13 +1772,6 @@ class InstanceProvider {
     }
 }
 const isInterface = (key) => isFunction(key) && key.$isInterface === true;
-const cannotInstantiateInterfaceError = (key) => createError(`AURxxxx: Failed to instantiate ${key}, there's no registration and no default implementation.`)
-    ;
-const noInstanceError = (name) => {
-    {
-        return createError(`AUR0013: Cannot call resolve ${name} before calling prepare or after calling dispose.`);
-    }
-};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const emptyArray = Object.freeze([]);
@@ -1805,10 +1801,6 @@ function __decorate(decorators, target, key, desc) {
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
 }
 
 var LogLevel;
@@ -1981,22 +1973,19 @@ class DefaultLogEvent {
         return `${getIsoString(timestamp, colorOptions)} [${getLogLevelString(severity, colorOptions)} ${getScopeString(scope, colorOptions)}] ${message}`;
     }
 }
-let DefaultLogEventFactory = class DefaultLogEventFactory {
-    constructor(config) {
-        this.config = config;
+class DefaultLogEventFactory {
+    constructor() {
+        this.config = resolve(ILogConfig);
     }
     createLogEvent(logger, level, message, optionalParams) {
         return new DefaultLogEvent(level, message, optionalParams, logger.scope, this.config.colorOptions, Date.now());
     }
-};
-DefaultLogEventFactory = __decorate([
-    __param(0, ILogConfig)
-], DefaultLogEventFactory);
-let ConsoleSink = class ConsoleSink {
+}
+class ConsoleSink {
     static register(container) {
         singletonRegistration(ISink, ConsoleSink).register(container);
     }
-    constructor(p) {
+    constructor(p = resolve(IPlatform)) {
         const $console = p.console;
         this.handleEvent = function emit(event) {
             const optionalParams = event.optionalParams;
@@ -2037,15 +2026,22 @@ let ConsoleSink = class ConsoleSink {
             }
         };
     }
-};
-ConsoleSink = __decorate([
-    __param(0, IPlatform)
-], ConsoleSink);
-let DefaultLogger = class DefaultLogger {
-    constructor(config, factory, sinks, scope = [], parent = null) {
+}
+class DefaultLogger {
+    /* eslint-disable default-param-last */
+    constructor(
+    /**
+     * The global logger configuration.
+     */
+    config = resolve(ILogConfig), factory = resolve(ILogEventFactory), sinks = resolve(all(ISink)), 
+    /**
+     * The scopes that this logger was created for, if any.
+     */
+    scope = resolve(optional(ILogScopes)) ?? [], parent = null) {
         this.scope = scope;
         /** @internal */
         this._scopedLoggers = createObject();
+        /* eslint-enable default-param-last */
         let traceSinks;
         let debugSinks;
         let infoSinks;
@@ -2157,7 +2153,7 @@ let DefaultLogger = class DefaultLogger {
         const scopedLoggers = this._scopedLoggers;
         let scopedLogger = scopedLoggers[name];
         if (scopedLogger === void 0) {
-            scopedLogger = scopedLoggers[name] = new DefaultLogger(this.config, this._factory, (void 0), this.scope.concat(name), this);
+            scopedLogger = scopedLoggers[name] = new DefaultLogger(this.config, this._factory, null, this.scope.concat(name), this);
         }
         return scopedLogger;
     }
@@ -2169,7 +2165,7 @@ let DefaultLogger = class DefaultLogger {
             sinks[i].handleEvent(event);
         }
     }
-};
+}
 __decorate([
     bound
 ], DefaultLogger.prototype, "trace", null);
@@ -2188,13 +2184,6 @@ __decorate([
 __decorate([
     bound
 ], DefaultLogger.prototype, "fatal", null);
-DefaultLogger = __decorate([
-    __param(0, ILogConfig),
-    __param(1, ILogEventFactory),
-    __param(2, all(ISink)),
-    __param(3, optional(ILogScopes)),
-    __param(4, ignore)
-], DefaultLogger);
 /**
  * A basic `ILogger` configuration that configures a single `console` sink based on provided options.
  *
@@ -2250,7 +2239,7 @@ class ModuleTransformer {
             return this._transformObject(objOrPromise);
         }
         else {
-            throw createError(`Invalid input: ${String(objOrPromise)}. Expected Promise or Object.`);
+            throw createMappedError(21 /* ErrorNames.invalid_module_transform_input */, objOrPromise);
         }
     }
     /** @internal */
@@ -2286,7 +2275,7 @@ class ModuleTransformer {
     /** @internal */
     _analyze(m) {
         if (m == null)
-            throw new Error(`Invalid input: ${String(m)}. Expected Object.`);
+            throw createMappedError(21 /* ErrorNames.invalid_module_transform_input */, m);
         if (typeof m !== 'object')
             return new AnalyzedModule(m, []);
         let value;
@@ -2377,7 +2366,7 @@ class EventAggregator {
     publish(channelOrInstance, message) {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!channelOrInstance) {
-            throw createError(`Invalid channel name or instance: ${channelOrInstance}.`);
+            throw createMappedError(18 /* ErrorNames.event_aggregator_publish_invalid_event_name */, channelOrInstance);
         }
         if (isString(channelOrInstance)) {
             let subscribers = this.eventLookup[channelOrInstance];
@@ -2400,7 +2389,7 @@ class EventAggregator {
     subscribe(channelOrType, callback) {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!channelOrType) {
-            throw createError(`Invalid channel name or type: ${channelOrType}.`);
+            throw createMappedError(19 /* ErrorNames.event_aggregator_subscribe_invalid_event_name */, channelOrType);
         }
         let handler;
         let subscribers;

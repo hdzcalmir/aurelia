@@ -73,6 +73,7 @@ export declare class CustomAttributeDefinition<T extends Constructable = Constru
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialCustomAttributeDefinition, Type: CustomAttributeType<T>): CustomAttributeDefinition<T>;
     register(container: IContainer): void;
+    toString(): string;
 }
 export declare const CustomAttribute: Readonly<CustomAttributeKind>;
 //# sourceMappingURL=custom-attribute.d.ts.map

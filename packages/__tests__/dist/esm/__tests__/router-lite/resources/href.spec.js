@@ -300,5 +300,33 @@ describe('router-lite/resources/href.spec.ts', function () {
         assert.html.textContent(host, 'ce3 ce3child');
         await au.stop(true);
     });
+    it('supports routing instruction with parenthesized parameters', async function () {
+        let C1 = class C1 {
+            loading(params, _next, _current) {
+                this.id1 = params.id1;
+                this.id2 = params.id2;
+            }
+        };
+        C1 = __decorate([
+            route('c1/:id1/:id2?'),
+            customElement({ name: 'c-1', template: 'c1 ${id1} ${id2}' })
+        ], C1);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({ routes: [{ id: 'c1', component: C1 }] }),
+            customElement({ name: 'ro-ot', template: '<a href="c1(id1=1)"></a> <a href="c1(id1=2,id2=3)"></a> <au-viewport></au-viewport>' })
+        ], Root);
+        const { au, container, host } = await start({ appRoot: Root });
+        const queue = container.get(IPlatform).domWriteQueue;
+        assert.html.textContent(host, '', 'init');
+        host.querySelector('a').click();
+        await queue.yield();
+        assert.html.textContent(host, 'c1 1', 'round#1');
+        host.querySelector('a:nth-of-type(2)').click();
+        await queue.yield();
+        assert.html.textContent(host, 'c1 2 3', 'round#2');
+        await au.stop(true);
+    });
 });
 //# sourceMappingURL=href.spec.js.map
