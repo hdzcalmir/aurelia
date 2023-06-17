@@ -2117,7 +2117,10 @@ class RouteNode {
     }
     /** @internal */
     _clone() {
-        const clone = new RouteNode(this.path, this.finalPath, this.context, this._originalInstruction, this.instruction, { ...this.params }, new URLSearchParams(this.queryParams), this.fragment, { ...this.data }, this._viewport, this.title, this.component, this.children.map(x => x._clone()), [...this.residue]);
+        const clone = new RouteNode(this.path, this.finalPath, this.context, this._originalInstruction, this.instruction, this.params, // as this is frozen, it's safe to share
+        this.queryParams, // as this is frozen, it's safe to share
+        this.fragment, this.data, // as this is frozen, it's safe to share
+        this._viewport, this.title, this.component, this.children.map(x => x._clone()), [...this.residue]);
         clone._version = this._version + 1;
         if (clone.context.node === this) {
             clone.context.node = clone;
@@ -2161,13 +2164,18 @@ class RouteTree {
     }
     /** @internal */
     _clone() {
-        const clone = new RouteTree(this.options._clone(), new URLSearchParams(this.queryParams), this.fragment, this.root._clone());
+        const clone = new RouteTree(this.options._clone(), this.queryParams, // as this is frozen, it's safe to share
+        this.fragment, this.root._clone());
         clone.root._setTree(this);
         return clone;
     }
     /** @internal */
     _finalizeInstructions() {
         return new ViewportInstructionTree(this.options, true, this.root.children.map(x => x._finalizeInstruction()), this.queryParams, this.fragment);
+    }
+    /** @internal */
+    _mergeQuery(other) {
+        this.queryParams = Object.freeze(mergeURLSearchParams(this.queryParams, other, true));
     }
     toString() {
         return this.root.toString();
@@ -2201,7 +2209,7 @@ function createAndAppendNodes(log, node, vi) {
                     if (vi.children.length === 0) {
                         const result = ctx._generateViewportInstruction(vi);
                         if (result !== null) {
-                            node._tree.queryParams = mergeURLSearchParams(node._tree.queryParams, result.query, true);
+                            node._tree._mergeQuery(result.query);
                             const newVi = result.vi;
                             newVi.children.push(...vi.children);
                             return appendNode(log, node, createConfiguredNode(log, node, newVi, newVi.recognizedRoute, vi));
@@ -2235,10 +2243,10 @@ function createAndAppendNodes(log, node, vi) {
                             open: vi.open,
                             close: vi.close,
                             viewport: vi.viewport,
-                            children: vi.children.slice(),
+                            children: vi.children,
                         });
                         if (eagerResult !== null) {
-                            node._tree.queryParams = mergeURLSearchParams(node._tree.queryParams, eagerResult.query, true);
+                            node._tree._mergeQuery(eagerResult.query);
                             return appendNode(log, node, createConfiguredNode(log, node, eagerResult.vi, eagerResult.vi.recognizedRoute, vi));
                         }
                         // fallback
@@ -2304,9 +2312,9 @@ function createAndAppendNodes(log, node, vi) {
                     open: vi.open,
                     close: vi.close,
                     viewport: vi.viewport,
-                    children: vi.children.slice(),
+                    children: vi.children,
                 });
-                node._tree.queryParams = mergeURLSearchParams(node._tree.queryParams, query, true);
+                node._tree._mergeQuery(query);
                 return appendNode(log, node, createConfiguredNode(log, node, newVi, newVi.recognizedRoute, vi));
             });
         }
@@ -2335,9 +2343,7 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
                         context: childCtx,
                         instruction: vi,
                         originalInstruction: originalVi,
-                        params: {
-                            ...rr.route.params,
-                        },
+                        params: rr.route.params,
                         queryParams: rt.queryParams,
                         fragment: rt.fragment,
                         data: $handler.data,
@@ -2559,27 +2565,23 @@ class Router {
         return routeTree;
     }
     get currentTr() {
-        let currentTr = this._currentTr;
-        if (currentTr === null) {
-            currentTr = this._currentTr = Transition._create({
-                id: 0,
-                prevInstructions: this._instructions,
-                instructions: this._instructions,
-                finalInstructions: this._instructions,
-                instructionsChanged: true,
-                trigger: 'api',
-                options: NavigationOptions.create(this.options, {}),
-                managedState: null,
-                previousRouteTree: this.routeTree._clone(),
-                routeTree: this.routeTree,
-                resolve: null,
-                reject: null,
-                promise: null,
-                guardsResult: true,
-                error: void 0,
-            });
-        }
-        return currentTr;
+        return this._currentTr ?? (this._currentTr = Transition._create({
+            id: 0,
+            prevInstructions: this._instructions,
+            instructions: this._instructions,
+            finalInstructions: this._instructions,
+            instructionsChanged: true,
+            trigger: 'api',
+            options: NavigationOptions.create(this.options, {}),
+            managedState: null,
+            previousRouteTree: this.routeTree._clone(),
+            routeTree: this.routeTree,
+            resolve: null,
+            reject: null,
+            promise: null,
+            guardsResult: true,
+            error: void 0,
+        }));
     }
     /** @internal */
     set currentTr(value) {
@@ -3647,7 +3649,7 @@ class ViewportInstruction {
         if (isPartialViewportInstruction(instruction)) {
             const component = TypedNavigationInstruction.create(instruction.component);
             const children = instruction.children?.map(ViewportInstruction.create) ?? [];
-            return new ViewportInstruction(instruction.open ?? 0, instruction.close ?? 0, instruction.recognizedRoute ?? null, component, instruction.viewport ?? null, instruction.params ?? null, children);
+            return new ViewportInstruction(instruction.open ?? 0, instruction.close ?? 0, instruction.recognizedRoute ?? null, component, instruction.viewport ?? null, Object.freeze(instruction.params ?? null), children);
         }
         const typedInstruction = TypedNavigationInstruction.create(instruction);
         return new ViewportInstruction(0, 0, null, typedInstruction, null, null, []);
@@ -3692,39 +3694,19 @@ class ViewportInstruction {
     }
     /** @internal */
     _clone() {
-        return new ViewportInstruction(this.open, this.close, this.recognizedRoute, this.component._clone(), this.viewport, this.params === null ? null : { ...this.params }, [...this.children]);
+        return new ViewportInstruction(this.open, this.close, this.recognizedRoute, this.component._clone(), this.viewport, this.params, [...this.children]);
     }
     toUrlComponent(recursive = true) {
         const component = this.component.toUrlComponent();
-        /**
-         * Note on the parenthesized parameters:
-         * We will land on this branch if and only if the component cannot be eagerly recognized (in the RouteContext#generateViewportInstruction) AND the parameters are also provided.
-         * When the routes are eagerly recognized, then there is no parameters left at this point and everything is already packed in the generated path as well as in the recognized route.
-         * Thus, in normal scenarios the users will never land here.
-         *
-         * Whenever, they are using a hand composed (string) path, then in that case there is no question of having parameters at this point, rather the given path is recognized in the createAndAppendNodes.
-         * It might be a rare edge case where users provide half the parameters in the string path and half as form of parameters; example: `load="route: r1/id1; params.bind: {id2}"`.
-         * We might not want to officially support such cases.
-         *
-         * However, as the route recognition is inherently lazy (think about child routes, whose routing configuration are not resolved till a child routing context is created, or
-         * the usage of instance level getRouteConfig), the component cannot be recognized fully eagerly. Thus, it is difficult at this point to correctly handle parameters as defined by the path templates defined for the component.
-         * This artifact is kept here for the purpose of fallback.
-         *
-         * We can think about a stricter mode where we throw error if any params remains unconsumed at this point.
-         * Or simply ignore the params while creating the URL. However, that does not feel right at all.
-         */
-        const params = this.params === null || Object.keys(this.params).length === 0 ? '' : `(${stringifyParams(this.params)})`;
         const vp = this.viewport;
         const viewport = component.length === 0 || vp === null || vp.length === 0 || vp === defaultViewportName ? '' : `@${vp}`;
-        const thisPart = `${'('.repeat(this.open)}${component}${params}${viewport}${')'.repeat(this.close)}`;
+        const thisPart = `${'('.repeat(this.open)}${component}${stringifyParams(this.params)}${viewport}${')'.repeat(this.close)}`;
         const childPart = recursive ? this.children.map(x => x.toUrlComponent()).join('+') : '';
-        if (thisPart.length > 0) {
-            if (childPart.length > 0) {
-                return [thisPart, childPart].join('/');
-            }
-            return thisPart;
-        }
-        return childPart;
+        return thisPart.length > 0
+            ? childPart.length > 0
+                ? `${thisPart}/${childPart}`
+                : thisPart
+            : childPart;
     }
     // Should not be adjust for DEV as it is also used of logging in production build.
     toString() {
@@ -3735,9 +3717,31 @@ class ViewportInstruction {
         return `VPI(${props})`;
     }
 }
+/**
+ * Note on the parenthesized parameters:
+ * We will land on this branch if and only if the component cannot be eagerly recognized (in the RouteContext#generateViewportInstruction) AND the parameters are also provided.
+ * When the routes are eagerly recognized, then there is no parameters left at this point and everything is already packed in the generated path as well as in the recognized route.
+ * Thus, in normal scenarios the users will never land here.
+ *
+ * Whenever, they are using a hand composed (string) path, then in that case there is no question of having parameters at this point, rather the given path is recognized in the createAndAppendNodes.
+ * It might be a rare edge case where users provide half the parameters in the string path and half as form of parameters; example: `load="route: r1/id1; params.bind: {id2}"`.
+ * We might not want to officially support such cases.
+ *
+ * However, as the route recognition is inherently lazy (think about child routes, whose routing configuration are not resolved till a child routing context is created, or
+ * the usage of instance level getRouteConfig), the component cannot be recognized fully eagerly. Thus, it is difficult at this point to correctly handle parameters as defined by the path templates defined for the component.
+ * This artifact is kept here for the purpose of fallback.
+ *
+ * We can think about a stricter mode where we throw error if any params remains unconsumed at this point.
+ * Or simply ignore the params while creating the URL. However, that does not feel right at all.
+ */
 function stringifyParams(params) {
+    if (params === null)
+        return '';
     const keys = Object.keys(params);
-    const values = Array(keys.length);
+    const numKeys = keys.length;
+    if (numKeys === 0)
+        return '';
+    const values = Array(numKeys);
     const indexKeys = [];
     const namedKeys = [];
     for (const key of keys) {
@@ -3748,7 +3752,7 @@ function stringifyParams(params) {
             namedKeys.push(key);
         }
     }
-    for (let i = 0; i < keys.length; ++i) {
+    for (let i = 0; i < numKeys; ++i) {
         const indexKeyIdx = indexKeys.indexOf(i);
         if (indexKeyIdx > -1) {
             values[i] = params[i];
@@ -3759,7 +3763,7 @@ function stringifyParams(params) {
             values[i] = `${namedKey}=${params[namedKey]}`;
         }
     }
-    return values.join(',');
+    return `(${values.join(',')})`;
 }
 class ViewportInstructionTree {
     constructor(options, isAbsolute, children, queryParams, fragment) {
@@ -3768,18 +3772,19 @@ class ViewportInstructionTree {
         this.children = children;
         this.queryParams = queryParams;
         this.fragment = fragment;
+        Object.freeze(queryParams);
     }
     static create(instructionOrInstructions, routerOptions, options, rootCtx) {
-        const $options = NavigationOptions.create(routerOptions, { ...options });
-        let context = $options.context;
+        options = options instanceof NavigationOptions ? options : NavigationOptions.create(routerOptions, options ?? kernel.emptyObject);
+        let context = options.context;
         if (!(context instanceof RouteContext) && rootCtx != null) {
-            context = $options.context = RouteContext.resolve(rootCtx, context);
+            context = options.context = RouteContext.resolve(rootCtx, context);
         }
         const hasContext = context != null;
         if (instructionOrInstructions instanceof Array) {
             const len = instructionOrInstructions.length;
             const children = new Array(len);
-            const query = new URLSearchParams($options.queryParams ?? kernel.emptyObject);
+            const query = new URLSearchParams(options.queryParams ?? kernel.emptyObject);
             for (let i = 0; i < len; i++) {
                 const instruction = instructionOrInstructions[i];
                 const eagerVi = hasContext ? context._generateViewportInstruction(instruction) : null;
@@ -3791,21 +3796,21 @@ class ViewportInstructionTree {
                     children[i] = ViewportInstruction.create(instruction);
                 }
             }
-            return new ViewportInstructionTree($options, false, children, query, $options.fragment);
+            return new ViewportInstructionTree(options, false, children, query, options.fragment);
         }
         if (typeof instructionOrInstructions === 'string') {
             const expr = RouteExpression.parse(instructionOrInstructions, routerOptions.useUrlFragmentHash);
-            return expr.toInstructionTree($options);
+            return expr.toInstructionTree(options);
         }
         const eagerVi = hasContext
             ? context._generateViewportInstruction(isPartialViewportInstruction(instructionOrInstructions)
                 ? { ...instructionOrInstructions, params: instructionOrInstructions.params ?? kernel.emptyObject }
                 : { component: instructionOrInstructions, params: kernel.emptyObject })
             : null;
-        const query = new URLSearchParams($options.queryParams ?? kernel.emptyObject);
+        const query = new URLSearchParams(options.queryParams ?? kernel.emptyObject);
         return eagerVi !== null
-            ? new ViewportInstructionTree($options, false, [eagerVi.vi], mergeURLSearchParams(query, eagerVi.query, false), $options.fragment)
-            : new ViewportInstructionTree($options, false, [ViewportInstruction.create(instructionOrInstructions)], query, $options.fragment);
+            ? new ViewportInstructionTree(options, false, [eagerVi.vi], mergeURLSearchParams(query, eagerVi.query, false), options.fragment)
+            : new ViewportInstructionTree(options, false, [ViewportInstruction.create(instructionOrInstructions)], query, options.fragment);
     }
     equals(other) {
         const thisChildren = this.children;
@@ -3948,7 +3953,6 @@ class TypedNavigationInstruction {
     }
 }
 
-// type IHooksFn<T, Fn extends (...args: any[]) => unknown> = (vm: T, ...args: Parameters<Fn>) => ReturnType<Fn>;
 /**
  * A component agent handles an instance of a routed view-model (a component).
  * It deals with invoking the hooks (`canLoad`, `loading`, `canUnload`, `unloading`),

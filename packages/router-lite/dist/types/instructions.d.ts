@@ -70,7 +70,7 @@ export declare class ViewportInstruction<TComponent extends ITypedNavigationInst
     readonly recognizedRoute: $RecognizedRoute | null;
     readonly component: TComponent;
     readonly viewport: string | null;
-    readonly params: Params | null;
+    readonly params: Readonly<Params> | null;
     readonly children: ViewportInstruction[];
     private constructor();
     static create(instruction: NavigationInstruction | IExtendedViewportInstruction): ViewportInstruction;
@@ -86,7 +86,7 @@ export declare class ViewportInstructionTree {
     readonly queryParams: Readonly<URLSearchParams>;
     readonly fragment: string | null;
     constructor(options: NavigationOptions, isAbsolute: boolean, children: ViewportInstruction[], queryParams: Readonly<URLSearchParams>, fragment: string | null);
-    static create(instructionOrInstructions: NavigationInstruction | NavigationInstruction[], routerOptions: RouterOptions, options?: INavigationOptions, rootCtx?: IRouteContext | null): ViewportInstructionTree;
+    static create(instructionOrInstructions: NavigationInstruction | NavigationInstruction[], routerOptions: RouterOptions, options?: INavigationOptions | NavigationOptions, rootCtx?: IRouteContext | null): ViewportInstructionTree;
     equals(other: ViewportInstructionTree): boolean;
     toUrl(isFinalInstruction: boolean, useUrlFragmentHash: boolean): string;
     toPath(): string;
