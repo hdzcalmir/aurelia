@@ -2,9 +2,9 @@ import { DI as t, resolve as s, Registration as e } from "@aurelia/kernel";
 
 import { BindingBehaviorExpression as i, ValueConverterExpression as r, Scope as n, BindingContext as o, astEvaluate as l, getCollectionObserver as h } from "@aurelia/runtime";
 
-import { customAttribute as c, IRenderLocation as a, IInstruction as u, IController as f, IViewFactory as d, IPlatform as p } from "@aurelia/runtime-html";
+import { customAttribute as c, IRenderLocation as a, IInstruction as u, IController as f, IViewFactory as d, IPlatform as m } from "@aurelia/runtime-html";
 
-const m = /*@__PURE__*/ t.createInterface("IDomRenderer");
+const p = /*@__PURE__*/ t.createInterface("IDomRenderer");
 
 const g = /*@__PURE__*/ t.createInterface("IScrollerObsererLocator");
 
@@ -96,7 +96,7 @@ class VirtualRepeat {
         this.parent = s(f);
         this.f = s(d);
         this.C = s(w);
-        this.O = s(m);
+        this.O = s(p);
         this.scrollerObserverLocator = s(g);
         const t = this.instruction.props[0];
         const e = t.forOf;
@@ -104,7 +104,7 @@ class VirtualRepeat {
         const r = this.$ = e.iterable !== i;
         this.T = new CollectionObservationMediator(this, (() => r ? this.I() : this.L()));
         this.local = e.declaration.name;
-        this.taskQueue = s(p).domWriteQueue;
+        this.taskQueue = s(m).domWriteQueue;
     }
     attaching() {
         this.dom = this.O.render(this.location);
@@ -208,13 +208,13 @@ class VirtualRepeat {
         }
         const f = this.itemHeight;
         const d = this.local;
-        const {firstIndex: p, topCount: m, botCount: g} = this.measureBuffer(this.scrollerObserver.getValue(), r.length, i, f);
+        const {firstIndex: m, topCount: p, botCount: g} = this.measureBuffer(this.scrollerObserver.getValue(), r.length, i, f);
         let w = 0;
         let C;
         let b;
         let v;
         for (l = 0; u > l; ++l) {
-            w = p + l;
+            w = m + l;
             C = s.item(w);
             c = r[l];
             b = r[l - 1];
@@ -232,7 +232,7 @@ class VirtualRepeat {
                 void c.activate(e, e, v);
             }
         }
-        this.dom.update(m * f, g * f);
+        this.dom.update(p * f, g * f);
     }
     itemsChanged(t) {
         this.T.start(t);
@@ -282,18 +282,18 @@ class VirtualRepeat {
         const c = n[0].scope.overrideContext.$index;
         const {firstIndex: a, topCount: u, botCount: f} = this.measureBuffer(t, l, h, i);
         const d = t.scrollTop > s.scrollTop;
-        const p = d ? a >= c + l : a + l <= c;
+        const m = d ? a >= c + l : a + l <= c;
         this.i = t;
         if (a === c) {
             return;
         }
-        let m = null;
+        let p = null;
         let g = null;
         let w = 0;
         let C = 0;
         let b = 0;
         let v = 0;
-        if (p) {
+        if (m) {
             for (v = 0; l > v; ++v) {
                 w = a + v;
                 g = n[v].scope;
@@ -304,14 +304,14 @@ class VirtualRepeat {
         } else if (d) {
             C = a - c;
             while (C > 0) {
-                m = n.shift();
+                p = n.shift();
                 w = n[n.length - 1].scope.overrideContext["$index"] + 1;
-                n.push(m);
-                g = m.scope;
+                n.push(p);
+                g = p.scope;
                 g.bindingContext[e] = o.item(w);
                 g.overrideContext.$index = w;
                 g.overrideContext.$length = h;
-                m.nodes.insertBefore(r.bottom);
+                p.nodes.insertBefore(r.bottom);
                 ++b;
                 --C;
             }
@@ -319,13 +319,13 @@ class VirtualRepeat {
             C = c - a;
             while (C > 0) {
                 w = c - (b + 1);
-                m = n.pop();
-                g = m.scope;
+                p = n.pop();
+                g = p.scope;
                 g.bindingContext[e] = o.item(w);
                 g.overrideContext.$index = w;
                 g.overrideContext.$length = h;
-                m.nodes.insertBefore(n[0].nodes.firstChild);
-                n.unshift(m);
+                p.nodes.insertBefore(n[0].nodes.firstChild);
+                n.unshift(p);
                 ++b;
                 --C;
             }
@@ -395,10 +395,10 @@ c({
     name: "virtual-repeat",
     bindables: {
         local: {
-            property: "local"
+            name: "local"
         },
         items: {
-            property: "items",
+            name: "items",
             primary: true
         }
     }
@@ -563,7 +563,7 @@ class NullCollectionStrategy {
 
 class ScrollerObserverLocator {
     static get inject() {
-        return [ p ];
+        return [ m ];
     }
     static register(t) {
         return e.singleton(g, this).register(t);
@@ -669,10 +669,10 @@ const getResizeObserverClass = t => t.window.ResizeObserver;
 
 class DefaultDomRenderer {
     static get inject() {
-        return [ p ];
+        return [ m ];
     }
     static register(t) {
-        return e.singleton(m, this).register(t);
+        return e.singleton(p, this).register(t);
     }
     constructor(t) {
         this.p = t;
@@ -759,5 +759,5 @@ const D = {
     }
 };
 
-export { CollectionStrategyLocator, DefaultDomRenderer, D as DefaultVirtualizationConfiguration, w as ICollectionStrategyLocator, m as IDomRenderer, g as IScrollerObsererLocator, ScrollerObserver, ScrollerObserverLocator, VirtualRepeat };
+export { CollectionStrategyLocator, DefaultDomRenderer, D as DefaultVirtualizationConfiguration, w as ICollectionStrategyLocator, p as IDomRenderer, g as IScrollerObsererLocator, ScrollerObserver, ScrollerObserverLocator, VirtualRepeat };
 //# sourceMappingURL=index.mjs.map

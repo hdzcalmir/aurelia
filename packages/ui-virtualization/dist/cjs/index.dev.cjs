@@ -485,8 +485,8 @@ runtimeHtml.customAttribute({
     isTemplateController: true,
     name: 'virtual-repeat',
     bindables: {
-        local: { property: 'local' },
-        items: { property: 'items', primary: true }
+        local: { name: 'local' },
+        items: { name: 'items', primary: true }
     }
 })(VirtualRepeat);
 class CollectionObservationMediator {

@@ -599,7 +599,7 @@ let Y = class TranslationParametersBindingCommand {
         if (t.bindable == null) {
             r = e.map(t.node, r) ?? i(r);
         } else {
-            r = t.bindable.property;
+            r = t.bindable.name;
         }
         return new TranslationParametersBindingInstruction(n.parse(s.rawValue, 16), r);
     }
@@ -655,7 +655,7 @@ class TranslationBindingCommand {
         if (t.bindable == null) {
             s = e.map(t.node, t.attr.target) ?? i(t.attr.target);
         } else {
-            s = t.bindable.property;
+            s = t.bindable.name;
         }
         return new TranslationBindingInstruction(new v(t.attr.rawValue), s);
     }
@@ -709,7 +709,7 @@ class TranslationBindBindingCommand {
         if (t.bindable == null) {
             s = e.map(t.node, t.attr.target) ?? i(t.attr.target);
         } else {
-            s = t.bindable.property;
+            s = t.bindable.name;
         }
         return new TranslationBindBindingInstruction(n.parse(t.attr.rawValue, 16), s);
     }

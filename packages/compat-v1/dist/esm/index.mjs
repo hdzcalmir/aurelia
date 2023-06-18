@@ -94,7 +94,7 @@ let ht = class CallBindingCommand {
         return 0;
     }
     build(t, e) {
-        const i = t.bindable === null ? it(t.attr.target) : t.bindable.property;
+        const i = t.bindable === null ? it(t.attr.target) : t.bindable.name;
         return new CallBindingInstruction(e.parse(t.attr.rawValue, 16 | 8), i);
     }
 };

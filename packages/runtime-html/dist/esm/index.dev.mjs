@@ -95,7 +95,7 @@ function bindable(configOrTarget, prop) {
             // Invocation with or w/o opts:
             // - @bindable()
             // - @bindable({...opts})
-            config.property = $prop;
+            config.name = $prop;
         }
         defineMetadata(baseName, BindableDefinition.create($prop, $target, config), $target.constructor, $prop);
         appendAnnotationKey($target.constructor, Bindable.keyFrom($prop));
@@ -142,7 +142,7 @@ const Bindable = objectFreeze({
                 maybeList.forEach(addName);
             }
             else if (maybeList instanceof BindableDefinition) {
-                bindables[maybeList.property] = maybeList;
+                bindables[maybeList.name] = maybeList;
             }
             else if (maybeList !== void 0) {
                 objectKeys(maybeList).forEach(name => addDescription(name, maybeList[name]));
@@ -173,16 +173,16 @@ const Bindable = objectFreeze({
     },
 });
 class BindableDefinition {
-    constructor(attribute, callback, mode, primary, property, set) {
+    constructor(attribute, callback, mode, primary, name, set) {
         this.attribute = attribute;
         this.callback = callback;
         this.mode = mode;
         this.primary = primary;
-        this.property = property;
+        this.name = name;
         this.set = set;
     }
     static create(prop, target, def = {}) {
-        return new BindableDefinition(def.attribute ?? kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? 2 /* BindingMode.toView */, def.primary ?? false, def.property ?? prop, def.set ?? getInterceptor(prop, target, def));
+        return new BindableDefinition(def.attribute ?? kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? 2 /* BindingMode.toView */, def.primary ?? false, def.name ?? prop, def.set ?? getInterceptor(prop, target, def));
     }
 }
 /* eslint-enable @typescript-eslint/no-unused-vars,spaced-comment */
@@ -6203,7 +6203,7 @@ let OneTimeBindingCommand = class OneTimeBindingCommand {
             if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = camelCase(target);
             }
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, 1 /* BindingMode.oneTime */);
     }
@@ -6229,7 +6229,7 @@ let ToViewBindingCommand = class ToViewBindingCommand {
             if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = camelCase(target);
             }
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, 2 /* BindingMode.toView */);
     }
@@ -6255,7 +6255,7 @@ let FromViewBindingCommand = class FromViewBindingCommand {
             if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = camelCase(target);
             }
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, 4 /* BindingMode.fromView */);
     }
@@ -6281,7 +6281,7 @@ let TwoWayBindingCommand = class TwoWayBindingCommand {
             if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = camelCase(target);
             }
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, 6 /* BindingMode.twoWay */);
     }
@@ -6317,7 +6317,7 @@ let DefaultBindingCommand = class DefaultBindingCommand {
                     ? 2 /* BindingMode.toView */
                     : defaultMode
                 : bindable.mode;
-            target = bindable.property;
+            target = bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, mode);
     }
@@ -6334,7 +6334,7 @@ let ForBindingCommand = class ForBindingCommand {
     build(info, exprParser) {
         const target = info.bindable === null
             ? camelCase(info.attr.target)
-            : info.bindable.property;
+            : info.bindable.name;
         const forOf = exprParser.parse(info.attr.rawValue, 2 /* ExpressionType.IsIterator */);
         let props = emptyArray;
         if (forOf.semiIdx > -1) {
@@ -10319,8 +10319,8 @@ class TemplateCompiler {
                         expr = exprParser.parse(attrValue, 1 /* ExpressionType.Interpolation */);
                         attrBindableInstructions = [
                             expr === null
-                                ? new SetPropertyInstruction(attrValue, primaryBindable.property)
-                                : new InterpolationInstruction(expr, primaryBindable.property)
+                                ? new SetPropertyInstruction(attrValue, primaryBindable.name)
+                                : new InterpolationInstruction(expr, primaryBindable.name)
                         ];
                     }
                     else {
@@ -10353,8 +10353,8 @@ class TemplateCompiler {
                     if (bindable !== void 0) {
                         expr = exprParser.parse(attrValue, 1 /* ExpressionType.Interpolation */);
                         instructions.push(new SpreadElementPropBindingInstruction(expr == null
-                            ? new SetPropertyInstruction(attrValue, bindable.property)
-                            : new InterpolationInstruction(expr, bindable.property)));
+                            ? new SetPropertyInstruction(attrValue, bindable.name)
+                            : new InterpolationInstruction(expr, bindable.name)));
                         continue;
                     }
                 }
@@ -10486,8 +10486,8 @@ class TemplateCompiler {
                         expr = exprParser.parse(realAttrValue, 1 /* ExpressionType.Interpolation */);
                         attrBindableInstructions = [
                             expr === null
-                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.property)
-                                : new InterpolationInstruction(expr, primaryBindable.property)
+                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.name)
+                                : new InterpolationInstruction(expr, primaryBindable.name)
                         ];
                     }
                     else {
@@ -10843,8 +10843,8 @@ class TemplateCompiler {
                         expr = exprParser.parse(realAttrValue, 1 /* ExpressionType.Interpolation */);
                         attrBindableInstructions = [
                             expr === null
-                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.property)
-                                : new InterpolationInstruction(expr, primaryBindable.property)
+                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.name)
+                                : new InterpolationInstruction(expr, primaryBindable.name)
                         ];
                     }
                     else {
@@ -10886,8 +10886,8 @@ class TemplateCompiler {
                     if (bindable !== void 0) {
                         expr = exprParser.parse(realAttrValue, 1 /* ExpressionType.Interpolation */);
                         (elBindableInstructions ?? (elBindableInstructions = [])).push(expr == null
-                            ? new SetPropertyInstruction(realAttrValue, bindable.property)
-                            : new InterpolationInstruction(expr, bindable.property));
+                            ? new SetPropertyInstruction(realAttrValue, bindable.name)
+                            : new InterpolationInstruction(expr, bindable.name));
                         removeAttr();
                         continue;
                     }
@@ -11450,8 +11450,8 @@ class TemplateCompiler {
                 if (command === null) {
                     expr = context._exprParser.parse(attrValue, 1 /* ExpressionType.Interpolation */);
                     instructions.push(expr === null
-                        ? new SetPropertyInstruction(attrValue, bindable.property)
-                        : new InterpolationInstruction(expr, bindable.property));
+                        ? new SetPropertyInstruction(attrValue, bindable.name)
+                        : new InterpolationInstruction(expr, bindable.name));
                 }
                 else {
                     commandBuildInfo.node = node;
@@ -11498,7 +11498,7 @@ class TemplateCompiler {
                 if (bindableEl.parentNode !== content) {
                     throw createMappedError(710 /* ErrorNames.compiler_local_el_bindable_not_under_root */, name);
                 }
-                const property = bindableEl.getAttribute("property" /* LocalTemplateBindableAttributes.property */);
+                const property = bindableEl.getAttribute("name" /* LocalTemplateBindableAttributes.name */);
                 if (property === null) {
                     throw createMappedError(711 /* ErrorNames.compiler_local_el_bindable_name_missing */, bindableEl, name);
                 }
@@ -11847,7 +11847,7 @@ class BindablesInfo {
 }
 
 const allowedLocalTemplateBindableAttributes = objectFreeze([
-    "property" /* LocalTemplateBindableAttributes.property */,
+    "name" /* LocalTemplateBindableAttributes.name */,
     "attribute" /* LocalTemplateBindableAttributes.attribute */,
     "mode" /* LocalTemplateBindableAttributes.mode */
 ]);

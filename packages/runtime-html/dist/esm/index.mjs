@@ -99,7 +99,7 @@ function bindable(t, e) {
     let i;
     function decorator(t, e) {
         if (arguments.length > 1) {
-            i.property = e;
+            i.name = e;
         }
         ot(Bt, BindableDefinition.create(e, t, i), t.constructor, e);
         ft(t.constructor, St.keyFrom(e));
@@ -138,7 +138,7 @@ const St = bt({
             if (s(t)) {
                 t.forEach(addName);
             } else if (t instanceof BindableDefinition) {
-                i[t.property] = t;
+                i[t.name] = t;
             } else if (t !== void 0) {
                 yt(t).forEach((e => addDescription(e, t[e])));
             }
@@ -174,11 +174,11 @@ class BindableDefinition {
         this.callback = e;
         this.mode = i;
         this.primary = s;
-        this.property = n;
+        this.name = n;
         this.set = r;
     }
     static create(t, e, s = {}) {
-        return new BindableDefinition(s.attribute ?? i(t), s.callback ?? `${t}Changed`, s.mode ?? 2, s.primary ?? false, s.property ?? t, s.set ?? getInterceptor(t, e, s));
+        return new BindableDefinition(s.attribute ?? i(t), s.callback ?? `${t}Changed`, s.mode ?? 2, s.primary ?? false, s.name ?? t, s.set ?? getInterceptor(t, e, s));
     }
 }
 
@@ -5432,7 +5432,7 @@ let Hi = class OneTimeBindingCommand {
             if (r === "" && t.def.type === 1) {
                 r = k(n);
             }
-            n = t.bindable.property;
+            n = t.bindable.name;
         }
         return new PropertyBindingInstruction(e.parse(r, 16), n, 1);
     }
@@ -5454,7 +5454,7 @@ let Oi = class ToViewBindingCommand {
             if (r === "" && t.def.type === 1) {
                 r = k(n);
             }
-            n = t.bindable.property;
+            n = t.bindable.name;
         }
         return new PropertyBindingInstruction(e.parse(r, 16), n, 2);
     }
@@ -5476,7 +5476,7 @@ let Vi = class FromViewBindingCommand {
             if (r === "" && t.def.type === 1) {
                 r = k(n);
             }
-            n = t.bindable.property;
+            n = t.bindable.name;
         }
         return new PropertyBindingInstruction(e.parse(r, 16), n, 4);
     }
@@ -5498,7 +5498,7 @@ let Ni = class TwoWayBindingCommand {
             if (r === "" && t.def.type === 1) {
                 r = k(n);
             }
-            n = t.bindable.property;
+            n = t.bindable.name;
         }
         return new PropertyBindingInstruction(e.parse(r, 16), n, 6);
     }
@@ -5526,7 +5526,7 @@ let $i = class DefaultBindingCommand {
             }
             r = t.def.defaultBindingMode;
             l = n.mode === 8 || n.mode == null ? r == null || r === 8 ? 2 : r : n.mode;
-            h = n.property;
+            h = n.name;
         }
         return new PropertyBindingInstruction(e.parse(a, 16), h, l);
     }
@@ -5545,7 +5545,7 @@ let Wi = class ForBindingCommand {
         this.Pe = t;
     }
     build(t, e) {
-        const i = t.bindable === null ? k(t.attr.target) : t.bindable.property;
+        const i = t.bindable === null ? k(t.attr.target) : t.bindable.name;
         const s = e.parse(t.attr.rawValue, 2);
         let n = u;
         if (s.semiIdx > -1) {
@@ -8962,7 +8962,7 @@ class TemplateCompiler {
                     b = p.primary;
                     if (x === null) {
                         w = a.parse(A, 1);
-                        g = [ w === null ? new SetPropertyInstruction(A, b.property) : new InterpolationInstruction(w, b.property) ];
+                        g = [ w === null ? new SetPropertyInstruction(A, b.name) : new InterpolationInstruction(w, b.name) ];
                     } else {
                         Vs.node = s;
                         Vs.attr = f;
@@ -8981,7 +8981,7 @@ class TemplateCompiler {
                     v = p.attrs[C];
                     if (v !== void 0) {
                         w = a.parse(A, 1);
-                        r.push(new SpreadElementPropBindingInstruction(w == null ? new SetPropertyInstruction(A, v.property) : new InterpolationInstruction(w, v.property)));
+                        r.push(new SpreadElementPropBindingInstruction(w == null ? new SetPropertyInstruction(A, v.name) : new InterpolationInstruction(w, v.name)));
                         continue;
                     }
                 }
@@ -9079,7 +9079,7 @@ class TemplateCompiler {
                     p = g.primary;
                     if (v === null) {
                         b = n.parse(y, 1);
-                        m = [ b === null ? new SetPropertyInstruction(y, p.property) : new InterpolationInstruction(b, p.property) ];
+                        m = [ b === null ? new SetPropertyInstruction(y, p.name) : new InterpolationInstruction(b, p.name) ];
                     } else {
                         Vs.node = t;
                         Vs.attr = u;
@@ -9302,7 +9302,7 @@ class TemplateCompiler {
                     N = V.primary;
                     if (O === null) {
                         F = v.parse(W, 1);
-                        D = [ F === null ? new SetPropertyInstruction(W, N.property) : new InterpolationInstruction(F, N.property) ];
+                        D = [ F === null ? new SetPropertyInstruction(W, N.name) : new InterpolationInstruction(F, N.name) ];
                     } else {
                         Vs.node = t;
                         Vs.attr = _;
@@ -9325,7 +9325,7 @@ class TemplateCompiler {
                     P = V.attrs[$];
                     if (P !== void 0) {
                         F = v.parse(W, 1);
-                        (T ?? (T = [])).push(F == null ? new SetPropertyInstruction(W, P.property) : new InterpolationInstruction(F, P.property));
+                        (T ?? (T = [])).push(F == null ? new SetPropertyInstruction(W, P.name) : new InterpolationInstruction(F, P.name));
                         b();
                         continue;
                     }
@@ -9670,7 +9670,7 @@ class TemplateCompiler {
                 }
                 if (m === null) {
                     f = s.ep.parse(a, 1);
-                    l.push(f === null ? new SetPropertyInstruction(a, g.property) : new InterpolationInstruction(f, g.property));
+                    l.push(f === null ? new SetPropertyInstruction(a, g.name) : new InterpolationInstruction(f, g.name));
                 } else {
                     Vs.node = t;
                     Vs.attr = d;
@@ -9713,7 +9713,7 @@ class TemplateCompiler {
                 if (e.parentNode !== r) {
                     throw createMappedError(710, n);
                 }
-                const i = e.getAttribute("property");
+                const i = e.getAttribute("name");
                 if (i === null) {
                     throw createMappedError(711, e, n);
                 }
@@ -10003,7 +10003,7 @@ class BindablesInfo {
     }
 }
 
-const js = bt([ "property", "attribute", "mode" ]);
+const js = bt([ "name", "attribute", "mode" ]);
 
 const zs = "as-custom-element";
 

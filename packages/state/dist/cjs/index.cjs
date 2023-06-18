@@ -400,7 +400,7 @@ exports.StateBindingCommand = class StateBindingCommand {
             if (h === "" && s.def.type === 1) {
                 h = t.camelCase(r);
             }
-            r = s.bindable.property;
+            r = s.bindable.name;
         }
         return new StateBindingInstruction(h, r);
     }

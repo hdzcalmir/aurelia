@@ -9,7 +9,7 @@ export type PartialBindableDefinition = {
     mode?: BindingMode;
     callback?: string;
     attribute?: string;
-    property?: string;
+    name?: string;
     primary?: boolean;
     set?: InterceptorFunc;
     type?: PropertyType;
@@ -20,7 +20,7 @@ export type PartialBindableDefinition = {
      */
     nullable?: boolean;
 };
-type PartialBindableDefinitionPropertyOmitted = Omit<PartialBindableDefinition, 'property'>;
+type PartialBindableDefinitionPropertyOmitted = Omit<PartialBindableDefinition, 'name'>;
 /**
  * Decorator: Specifies custom behavior for a bindable property.
  *
@@ -51,7 +51,7 @@ export declare class BindableDefinition {
     readonly callback: string;
     readonly mode: BindingMode;
     readonly primary: boolean;
-    readonly property: string;
+    readonly name: string;
     readonly set: InterceptorFunc;
     private constructor();
     static create(prop: string, target: Constructable<unknown>, def?: PartialBindableDefinition): BindableDefinition;

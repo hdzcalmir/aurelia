@@ -51,8 +51,8 @@ class ElementInfo {
             for (prop in bindables) {
                 bindable = bindables[prop];
                 // explicitly provided property name has priority over the implicit property name
-                if (bindable.property !== void 0) {
-                    prop = bindable.property;
+                if (bindable.name !== void 0) {
+                    prop = bindable.name;
                 }
                 // explicitly provided attribute name has priority over the derived implicit attribute name
                 if (bindable.attribute !== void 0) {
@@ -125,8 +125,8 @@ class AttrInfo {
             for (prop in bindables) {
                 bindable = bindables[prop];
                 // explicitly provided property name has priority over the implicit property name
-                if (bindable.property !== void 0) {
-                    prop = bindable.property;
+                if (bindable.name !== void 0) {
+                    prop = bindable.name;
                 }
                 if (bindable.mode !== void 0 && bindable.mode !== 8 /* BindingMode.default */) {
                     mode = bindable.mode;
@@ -254,7 +254,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
                     const bi = new BindableInfo(prop, mode);
                     const attr = kebabCase(attributeName !== void 0 ? `${attributeName}${i + 1}` : prop);
                     ei.bindables[attr] = bi;
-                    bindables += `<bindable property='${prop}'${bindingMode !== void 0 ? ` mode="${bindingMode}"` : ''}${attributeName !== void 0 ? ` attribute="${attr}"` : ''}></bindable>`;
+                    bindables += `<bindable name='${prop}'${bindingMode !== void 0 ? ` mode="${bindingMode}"` : ''}${attributeName !== void 0 ? ` attribute="${attr}"` : ''}></bindable>`;
                     templateBody += ` \${${prop}}`;
                     const content = `${value}${i + 1}`;
                     attrExpr += ` ${attr}="${content}"`;
@@ -322,7 +322,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
         it('throws error if bindable is not under root', function () {
             const template = `<template as-custom-element="foo-bar">
         <div>
-          <bindable property="prop"></bindable>
+          <bindable name="prop"></bindable>
         </div>
       </template>
       <div></div>`;
@@ -339,8 +339,8 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
         });
         it('throws error if duplicate bindable properties are found', function () {
             const template = `<template as-custom-element="foo-bar">
-        <bindable property="prop" attribute="bar"></bindable>
-        <bindable property="prop" attribute="baz"></bindable>
+        <bindable name="prop" attribute="bar"></bindable>
+        <bindable name="prop" attribute="baz"></bindable>
       </template>
       <div></div>`;
             const { container, sut } = createFixture();
@@ -348,8 +348,8 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
         });
         it('throws error if duplicate bindable attributes are found', function () {
             const template = `<template as-custom-element="foo-bar">
-        <bindable property="prop1" attribute="bar"></bindable>
-        <bindable property="prop2" attribute="bar"></bindable>
+        <bindable name="prop1" attribute="bar"></bindable>
+        <bindable name="prop2" attribute="bar"></bindable>
       </template>
       <div></div>`;
             const { container, sut } = createFixture();
@@ -358,7 +358,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
         for (const attr of ['if.bind="true"', 'if.bind="false"', 'else', 'repeat.for="item of items"', 'with.bind="{a:1}"', 'switch.bind="cond"', 'case="case1"']) {
             it(`throws error if local-template surrogate has template controller - ${attr}`, function () {
                 const template = `<template as-custom-element="foo-bar" ${attr}>
-        <bindable property="prop1" attribute="bar"></bindable>
+        <bindable name="prop1" attribute="bar"></bindable>
       </template>
       <foo-bar></foo-bar>`;
                 const { ctx, container } = createFixture();
@@ -369,7 +369,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
         }
         it('warns if bindable element has more attributes other than the allowed', function () {
             const template = `<template as-custom-element="foo-bar">
-        <bindable property="prop" unknown-attr who-cares="no one"></bindable>
+        <bindable name="prop" unknown-attr who-cares="no one"></bindable>
       </template>
       <div></div>`;
             const { container, sut } = createFixture();
@@ -380,13 +380,13 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
                 assert.strictEqual(eventLog.log.length, 1, `eventLog.log.length`);
                 const event = eventLog.log[0];
                 assert.strictEqual(event.severity, 3 /* LogLevel.warn */);
-                assert.includes(event.toString(), 'The attribute(s) unknown-attr, who-cares will be ignored for <bindable property="prop" unknown-attr="" who-cares="no one"></bindable>. Only property, attribute, mode are processed.');
+                assert.includes(event.toString(), 'The attribute(s) unknown-attr, who-cares will be ignored for <bindable name="prop" unknown-attr="" who-cares="no one"></bindable>. Only property, attribute, mode are processed.');
             }
         });
     });
     it('works with if', async function () {
         const template = `<template as-custom-element="foo-bar">
-      <bindable property='prop'></bindable>
+      <bindable name='prop'></bindable>
       \${prop}
      </template>
      <foo-bar prop="awesome possum" if.bind="true"></foo-bar>
@@ -406,7 +406,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
     });
     it('works with for', async function () {
         const template = `<template as-custom-element="foo-bar">
-      <bindable property='prop'></bindable>
+      <bindable name='prop'></bindable>
       \${prop}
      </template>
      <foo-bar repeat.for="i of 5" prop.bind="i"></foo-bar>`;
@@ -431,7 +431,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
             __metadata("design:type", String)
         ], LevelOne.prototype, "prop", void 0);
         LevelOne = __decorate([
-            customElement({ name: 'level-one', template: `<template as-custom-element="foo-bar"><bindable property='prop'></bindable>Level One \${prop}</template><foo-bar prop.bind="prop"></foo-bar>` })
+            customElement({ name: 'level-one', template: `<template as-custom-element="foo-bar"><bindable name='prop'></bindable>Level One \${prop}</template><foo-bar prop.bind="prop"></foo-bar>` })
         ], LevelOne);
         let LevelTwo = class LevelTwo {
         };
@@ -443,7 +443,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
             customElement({
                 name: 'level-two', template: `
       <template as-custom-element="foo-bar">
-        <bindable property='prop'></bindable>
+        <bindable name='prop'></bindable>
         Level Two \${prop}
         <level-one prop="inter-dimensional portal"></level-one>
       </template>
@@ -569,7 +569,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
       <my-ce></my-ce>
       <my-le repeat.for="prop of 5" if.bind="prop % 2 === 0" prop.bind></my-le>
       <template as-custom-element="my-le">
-        <bindable property="prop"></bindable>
+        <bindable name="prop"></bindable>
         \${prop}
         <my-ce></my-ce>
       </template>
@@ -595,7 +595,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
         my-app-content
         <my-le prop.bind></my-le>
         <template as-custom-element="my-le">
-          <bindable property="prop"></bindable>
+          <bindable name="prop"></bindable>
           my-le-content
           <my-app if.bind="prop"></my-app>
         </template>`;

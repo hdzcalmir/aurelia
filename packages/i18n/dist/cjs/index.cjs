@@ -611,7 +611,7 @@ exports.TranslationParametersBindingCommand = class TranslationParametersBinding
         if (e.bindable == null) {
             i = s.map(e.node, i) ?? t.camelCase(i);
         } else {
-            i = e.bindable.property;
+            i = e.bindable.name;
         }
         return new TranslationParametersBindingInstruction(n.parse(r.rawValue, 16), i);
     }
@@ -667,7 +667,7 @@ class TranslationBindingCommand {
         if (e.bindable == null) {
             i = r.map(e.node, e.attr.target) ?? t.camelCase(e.attr.target);
         } else {
-            i = e.bindable.property;
+            i = e.bindable.name;
         }
         return new TranslationBindingInstruction(new n.CustomExpression(e.attr.rawValue), i);
     }
@@ -721,7 +721,7 @@ class TranslationBindBindingCommand {
         if (e.bindable == null) {
             r = s.map(e.node, e.attr.target) ?? t.camelCase(e.attr.target);
         } else {
-            r = e.bindable.property;
+            r = e.bindable.name;
         }
         return new TranslationBindBindingInstruction(n.parse(e.attr.rawValue, 16), r);
     }

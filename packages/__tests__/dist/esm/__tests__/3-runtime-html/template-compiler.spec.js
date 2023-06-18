@@ -457,8 +457,8 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 for (prop in bindables) {
                     bindable = bindables[prop];
                     // explicitly provided property name has priority over the implicit property name
-                    if (bindable.property !== void 0) {
-                        prop = bindable.property;
+                    if (bindable.name !== void 0) {
+                        prop = bindable.name;
                     }
                     // explicitly provided attribute name has priority over the derived implicit attribute name
                     if (bindable.attribute !== void 0) {
@@ -531,8 +531,8 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 for (prop in bindables) {
                     bindable = bindables[prop];
                     // explicitly provided property name has priority over the implicit property name
-                    if (bindable.property !== void 0) {
-                        prop = bindable.property;
+                    if (bindable.name !== void 0) {
+                        prop = bindable.name;
                     }
                     if (bindable.mode !== void 0 && bindable.mode !== 8 /* BindingMode.default */) {
                         mode = bindable.mode;
@@ -841,7 +841,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         if (!!bindableDescription) {
             if (!!cmd && validCommands.includes(cmd)) {
                 const type = "rg" /* TT.propertyBinding */;
-                const to = bindableDescription.property;
+                const to = bindableDescription.name;
                 const from = parseExpression(attributeValue);
                 return { type, to, mode, from };
             }
@@ -849,12 +849,12 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 const from = parseExpression(attributeValue, 1 /* ExpressionType.Interpolation */);
                 if (!!from) {
                     const type = "rf" /* TT.interpolation */;
-                    const to = bindableDescription.property;
+                    const to = bindableDescription.name;
                     return { type, to, from };
                 }
                 else {
                     const type = "re" /* TT.setProperty */;
-                    const to = bindableDescription.property;
+                    const to = bindableDescription.name;
                     const value = attributeValue;
                     return { type, to, value };
                 }
@@ -1016,13 +1016,13 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     (_ctx) => [undefined, undefined, 'value'],
                     (_ctx) => [{}, undefined, 'value'],
                     (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', property: 'bazBaz', mode: 1 /* BindingMode.oneTime */ }), 1 /* BindingMode.oneTime */, 'bazBaz'],
+                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: 1 /* BindingMode.oneTime */ }), 1 /* BindingMode.oneTime */, 'bazBaz'],
                     (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', property: 'bazBaz', mode: 4 /* BindingMode.fromView */ }), 4 /* BindingMode.fromView */, 'bazBaz'],
+                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: 4 /* BindingMode.fromView */ }), 4 /* BindingMode.fromView */, 'bazBaz'],
                     (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', property: 'bazBaz', mode: 6 /* BindingMode.twoWay */ }), 6 /* BindingMode.twoWay */, 'bazBaz'],
+                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: 6 /* BindingMode.twoWay */ }), 6 /* BindingMode.twoWay */, 'bazBaz'],
                     (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', property: 'bazBaz', mode: 8 /* BindingMode.default */ }), 8 /* BindingMode.default */, 'bazBaz']
+                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: 8 /* BindingMode.default */ }), 8 /* BindingMode.default */, 'bazBaz']
                 ],
                 [
                     (_ctx) => ['foo', '', class Foo1 {
@@ -1105,15 +1105,15 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 ],
                 [
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: kebabCase(pdProp), mode: 8 /* BindingMode.default */ }) }),
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 8 /* BindingMode.default */ }) }),
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: kebabCase(pdProp), mode: 1 /* BindingMode.oneTime */ }) }),
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 1 /* BindingMode.oneTime */ }) }),
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: kebabCase(pdProp), mode: 2 /* BindingMode.toView */ }) }),
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 2 /* BindingMode.toView */ }) }),
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: kebabCase(pdProp), mode: 4 /* BindingMode.fromView */ }) }),
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 4 /* BindingMode.fromView */ }) }),
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: kebabCase(pdProp), mode: 6 /* BindingMode.twoWay */ }) })
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 6 /* BindingMode.twoWay */ }) })
                 ],
                 [
                     (_ctx) => [``, `''`],
@@ -1448,15 +1448,15 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 ],
                 [
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: pdAttr, mode: 8 /* BindingMode.default */ }) }),
+                        }, { name: pdProp, attribute: pdAttr, mode: 8 /* BindingMode.default */ }) }),
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: pdAttr, mode: 1 /* BindingMode.oneTime */ }) }),
+                        }, { name: pdProp, attribute: pdAttr, mode: 1 /* BindingMode.oneTime */ }) }),
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: pdAttr, mode: 2 /* BindingMode.toView */ }) }),
+                        }, { name: pdProp, attribute: pdAttr, mode: 2 /* BindingMode.toView */ }) }),
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: pdAttr, mode: 4 /* BindingMode.fromView */ }) }),
+                        }, { name: pdProp, attribute: pdAttr, mode: 4 /* BindingMode.fromView */ }) }),
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { property: pdProp, attribute: pdAttr, mode: 6 /* BindingMode.twoWay */ }) })
+                        }, { name: pdProp, attribute: pdAttr, mode: 6 /* BindingMode.twoWay */ }) })
                 ],
                 [
                     (_ctx) => [``, `''`],
