@@ -646,7 +646,7 @@ exports.ValidationMessageProvider = class ValidationMessageProvider {
     }
     parseMessage(e) {
         const t = this.parser.parse(e, 1);
-        if (t?.$kind === 23) {
+        if (t?.$kind === 25) {
             for (const s of t.expressions) {
                 const t = s.name;
                 if ($.has(t)) {

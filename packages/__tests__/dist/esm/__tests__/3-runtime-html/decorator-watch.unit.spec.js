@@ -100,7 +100,7 @@ describe('3-runtime-html/decorator-watch.unit.spec.ts', function () {
             const expr = new class AccessWrapExpression {
                 constructor(ast = new AccessMemberExpression(new AccessScopeExpression('a'), 'prop')) {
                     this.ast = ast;
-                    this.$kind = 28 /* ExpressionKind.Custom */;
+                    this.$kind = 30 /* ExpressionKind.Custom */;
                 }
                 evaluate(...args) {
                     evaluateCallCount++;

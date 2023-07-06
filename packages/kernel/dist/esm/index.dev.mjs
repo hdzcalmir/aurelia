@@ -1574,6 +1574,7 @@ const createNewInstance = (key, handler, requestor) => {
     return handler.getFactory(key).construct(requestor);
 };
 
+/** @internal */
 class Resolver {
     constructor(key, strategy, state) {
         this.resolving = false;

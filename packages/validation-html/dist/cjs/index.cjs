@@ -79,23 +79,23 @@ function getPropertyInfo(t, e) {
     let o = t.ast.expression;
     let n = true;
     let a = "";
-    while (o !== void 0 && o?.$kind !== 1) {
+    while (o !== void 0 && o?.$kind !== 2) {
         let e;
         switch (o.$kind) {
-          case 18:
-          case 17:
+          case 20:
+          case 19:
             o = o.expression;
             continue;
 
-          case 10:
+          case 12:
             e = o.name;
             break;
 
-          case 11:
+          case 13:
             {
                 const i = o.key;
                 if (n) {
-                    n = i.$kind === 4;
+                    n = i.$kind === 5;
                 }
                 e = `[${s.astEvaluate(i, r, t, null).toString()}]`;
                 break;

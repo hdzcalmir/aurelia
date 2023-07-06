@@ -742,7 +742,7 @@ let ValidationMessageProvider = class ValidationMessageProvider {
     }
     parseMessage(message) {
         const parsed = this.parser.parse(message, 1 /* ExpressionType.Interpolation */);
-        if (parsed?.$kind === 23 /* ExpressionKind.Interpolation */) {
+        if (parsed?.$kind === 25 /* ExpressionKind.Interpolation */) {
             for (const expr of parsed.expressions) {
                 const name = expr.name;
                 if (contextualProperties.has(name)) {

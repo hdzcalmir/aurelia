@@ -363,14 +363,6 @@ export type INewInstanceResolver<T> = IResolver<T> & {
     __newInstance: undefined;
     (...args: unknown[]): any;
 };
-export declare class Resolver implements IResolver, IRegistration {
-    constructor(key: Key, strategy: ResolverStrategy, state: any);
-    get $isResolver(): true;
-    private resolving;
-    register(container: IContainer, key?: Key): IResolver;
-    resolve(handler: IContainer, requestor: IContainer): any;
-    getFactory(container: IContainer): IFactory | null;
-}
 /**
  * An implementation of IRegistry that delegates registration to a
  * separately registered class. The ParameterizedRegistry facilitates the

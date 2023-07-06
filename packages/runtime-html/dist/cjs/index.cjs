@@ -1889,7 +1889,7 @@ class ExpressionWatcher {
         const e = this.j;
         const i = this.obj;
         const n = this.v;
-        const r = e.$kind === 1 && this.obs.count === 1;
+        const r = e.$kind === 2 && this.obs.count === 1;
         if (!r) {
             this.obs.version++;
             t = s.astEvaluate(e, this.scope, this, this);
@@ -6967,7 +6967,7 @@ function dispose(t) {
     t.dispose();
 }
 
-const Pe = [ 18, 17 ];
+const Pe = [ 20, 19 ];
 
 class Repeat {
     constructor(t, e, s, i, n) {
@@ -7022,7 +7022,7 @@ class Repeat {
         }
         this.As();
         const a = l.declaration;
-        if (!(this.ys = a.$kind === 24 || a.$kind === 25)) {
+        if (!(this.ys = a.$kind === 26 || a.$kind === 27)) {
             this.local = s.astEvaluate(a, this.$controller.scope, r, null);
         }
     }

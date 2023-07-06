@@ -8070,7 +8070,7 @@ class MockPropertySubscriber {
 class MockTracingExpression {
     constructor(inner) {
         this.inner = inner;
-        this.$kind = 28 /* ExpressionKind.Custom */;
+        this.$kind = 30 /* ExpressionKind.Custom */;
         this.hasBind = true;
         this.hasUnbind = true;
         this.calls = [];

@@ -2153,7 +2153,7 @@ class ExpressionWatcher {
         const expr = this._expression;
         const obj = this.obj;
         const oldValue = this._value;
-        const canOptimize = expr.$kind === 1 /* ExpressionKind.AccessScope */ && this.obs.count === 1;
+        const canOptimize = expr.$kind === 2 /* ExpressionKind.AccessScope */ && this.obs.count === 1;
         if (!canOptimize) {
             this.obs.version++;
             value = runtime.astEvaluate(expr, this.scope, this, this);
@@ -8065,8 +8065,8 @@ function dispose(disposable) {
     disposable.dispose();
 }
 const wrappedExprs = [
-    18 /* ExpressionKind.BindingBehavior */,
-    17 /* ExpressionKind.ValueConverter */,
+    20 /* ExpressionKind.BindingBehavior */,
+    19 /* ExpressionKind.ValueConverter */,
 ];
 class Repeat {
     constructor(instruction, parser, location, parent, factory) {
@@ -8124,7 +8124,7 @@ class Repeat {
         }
         this._refreshCollectionObserver();
         const dec = forOf.declaration;
-        if (!(this._hasDestructuredLocal = dec.$kind === 24 /* ExpressionKind.ArrayDestructuring */ || dec.$kind === 25 /* ExpressionKind.ObjectDestructuring */)) {
+        if (!(this._hasDestructuredLocal = dec.$kind === 26 /* ExpressionKind.ArrayDestructuring */ || dec.$kind === 27 /* ExpressionKind.ObjectDestructuring */)) {
             this.local = runtime.astEvaluate(dec, this.$controller.scope, binding, null);
         }
     }

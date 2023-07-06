@@ -982,13 +982,13 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                                 {
                                     "type": "rf" /* InstructionType.interpolation */,
                                     "from": {
-                                        '$kind': 23 /* ExpressionKind.Interpolation */,
+                                        '$kind': 25 /* ExpressionKind.Interpolation */,
                                         "parts": ["abc-", ""],
                                         "expressions": [
-                                            { "$kind": 1 /* ExpressionKind.AccessScope */, "name": "value", "ancestor": 0 }
+                                            { "$kind": 2 /* ExpressionKind.AccessScope */, "name": "value", "ancestor": 0 }
                                         ],
                                         "isMulti": false,
-                                        "firstExpression": { "$kind": 1 /* ExpressionKind.AccessScope */, "name": "value", "ancestor": 0 }
+                                        "firstExpression": { "$kind": 2 /* ExpressionKind.AccessScope */, "name": "value", "ancestor": 0 }
                                     },
                                     "to": "class"
                                 }
