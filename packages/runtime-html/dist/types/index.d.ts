@@ -14,7 +14,8 @@ export { BindingMode, type IBindingController, } from './binding/interfaces-bind
 export { IFlushQueue, FlushQueue, type IFlushable, BindingTargetSubscriber, mixinAstEvaluator, mixingBindingLimited, mixinUseScope, } from './binding/binding-utils';
 export { ListenerBinding, ListenerBindingOptions, } from './binding/listener-binding';
 export { AttributeBinding, } from './binding/attribute';
-export { InterpolationBinding, InterpolationPartBinding, ContentBinding, } from './binding/interpolation-binding';
+export { InterpolationBinding, InterpolationPartBinding, } from './binding/interpolation-binding';
+export { ContentBinding, } from './binding/content-binding';
 export { LetBinding, } from './binding/let-binding';
 export { PropertyBinding, } from './binding/property-binding';
 export { RefBinding, } from './binding/ref-binding';

@@ -1,7 +1,7 @@
 import { Constructable } from '@aurelia/kernel';
 import { IHydratedController } from '../../templating/controller';
 /**
- * An optional interface describing the dialog activate convention.
+ * An optional interface describing the dynamic composition activate convention.
  */
 export interface IDynamicComponentActivate<T> {
     /**
@@ -10,7 +10,7 @@ export interface IDynamicComponentActivate<T> {
      */
     activate?(model?: T): unknown | Promise<unknown>;
 }
-type ChangeSource = keyof Pick<AuCompose, 'template' | 'component' | 'model' | 'scopeBehavior'>;
+type ChangeSource = keyof Pick<AuCompose, 'template' | 'component' | 'model' | 'scopeBehavior' | 'composing' | 'composition'>;
 export declare class AuCompose {
     template?: string | Promise<string>;
     component?: Constructable | object | Promise<Constructable | object>;
@@ -23,7 +23,7 @@ export declare class AuCompose {
      * scoped = do not inherit parent scope
      */
     scopeBehavior: 'auto' | 'scoped';
-    get pending(): Promise<void> | void;
+    get composing(): Promise<void> | void;
     get composition(): ICompositionController | undefined;
     attaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void>;
     detaching(initiator: IHydratedController): void | Promise<void>;

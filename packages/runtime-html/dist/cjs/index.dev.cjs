@@ -390,7 +390,8 @@ const errorsMap = {
     [802 /* ErrorNames.update_trigger_behavior_no_triggers */]: `"& updateTrigger" invalid usage. This binding behavior requires at least one event name argument: eg <input value.bind="firstName & updateTrigger:'blur'">`,
     [803 /* ErrorNames.update_trigger_invalid_usage */]: `"& updateTrigger" invalid usage. This binding behavior can only be applied to two-way/ from-view bindings.`,
     [805 /* ErrorNames.au_compose_invalid_scope_behavior */]: `Invalid scope behavior "{{0}}" on <au-compose />. Only "scoped" or "auto" allowed.`,
-    [806 /* ErrorNames.au_compose_containerless */]: `Containerless custom element {{0:name}} is not supported by <au-compose />`,
+    // originally not supported
+    // [ErrorNames.au_compose_containerless]: `Containerless custom element {{0:name}} is not supported by <au-compose />`,
     [807 /* ErrorNames.au_compose_invalid_run */]: `Composition has already been activated/deactivated. Id: {{0:controller}}`,
     [808 /* ErrorNames.au_compose_duplicate_deactivate */]: `Composition has already been deactivated.`,
     [810 /* ErrorNames.else_without_if */]: `Invalid [else] usage, it should follow an [if]`,
@@ -2415,7 +2416,7 @@ mixingBindingLimited(AttributeBinding, () => 'updateTarget');
 runtime.connectable(AttributeBinding);
 mixinAstEvaluator(true)(AttributeBinding);
 
-const queueTaskOptions = {
+const queueTaskOptions$1 = {
     reusable: false,
     preempt: true,
 };
@@ -2476,7 +2477,7 @@ class InterpolationBinding {
             this._task = this._taskQueue.queueTask(() => {
                 this._task = null;
                 targetObserver.setValue(result, this.target, this.targetProperty);
-            }, queueTaskOptions);
+            }, queueTaskOptions$1);
             task?.cancel();
             task = null;
         }
@@ -2487,6 +2488,7 @@ class InterpolationBinding {
     bind(_scope) {
         if (this.isBound) {
             if (this._scope === _scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -2503,6 +2505,7 @@ class InterpolationBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -2541,6 +2544,7 @@ class InterpolationPartBinding {
     }
     handleChange() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.obs.version++;
@@ -2559,11 +2563,12 @@ class InterpolationPartBinding {
         }
     }
     handleCollectionChange() {
-        this.handleChange();
+        this.updateTarget();
     }
     bind(_scope) {
         if (this.isBound) {
             if (this._scope === _scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -2578,6 +2583,7 @@ class InterpolationPartBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -2590,6 +2596,11 @@ mixinUseScope(InterpolationPartBinding);
 mixingBindingLimited(InterpolationPartBinding, () => 'updateTarget');
 runtime.connectable(InterpolationPartBinding);
 mixinAstEvaluator(true)(InterpolationPartBinding);
+
+const queueTaskOptions = {
+    reusable: false,
+    preempt: true,
+};
 /**
  * A binding for handling the element content interpolation
  */
@@ -3202,6 +3213,108 @@ function slotted(queryOrDef, slotName) {
     return decorator;
 }
 let mixed$1 = false;
+
+/**
+ * The public methods of this binding emulates the necessary of an IHydratableController,
+ * which mainly is the addBinding method since a spread binding
+ * is a surrogate of other bindings created from the captured attrs
+ */
+class SpreadBinding {
+    /**
+     * Create a list of SpreadBinding by searching for captured attributes in HydrationContexts
+     * from a container
+     */
+    static create(hydrationContext, target, 
+    /**
+     * To be supplied to the compilation of spread' attrs
+     * Sometimes in dynamic compilation scenario, this could be used to influence
+     * what attributes can be compiled into (i.e bindable vs normal)
+     */
+    targetDef, rendering, compiler, platform, exprParser, observerLocator) {
+        const bindings = [];
+        const renderers = rendering.renderers;
+        const getHydrationContext = (ancestor) => {
+            let currentLevel = ancestor;
+            let currentContext = hydrationContext;
+            while (currentContext != null && currentLevel > 0) {
+                currentContext = currentContext.parent;
+                --currentLevel;
+            }
+            if (currentContext == null) {
+                throw createMappedError(9999 /* ErrorNames.no_spread_scope_context_found */);
+            }
+            return currentContext;
+        };
+        const renderSpreadInstruction = (ancestor) => {
+            const context = getHydrationContext(ancestor);
+            const spreadBinding = new SpreadBinding(context);
+            const instructions = compiler.compileSpread(context.controller.definition, context.instruction?.captures ?? kernel.emptyArray, context.controller.container, target, targetDef);
+            let inst;
+            for (inst of instructions) {
+                switch (inst.type) {
+                    case "hs" /* InstructionType.spreadBinding */:
+                        renderSpreadInstruction(ancestor + 1);
+                        break;
+                    case "hp" /* InstructionType.spreadElementProp */:
+                        renderers[inst.instructions.type].render(spreadBinding, findElementControllerFor(target), inst.instructions, platform, exprParser, observerLocator);
+                        break;
+                    default:
+                        renderers[inst.type].render(spreadBinding, target, inst, platform, exprParser, observerLocator);
+                }
+            }
+            bindings.push(spreadBinding);
+        };
+        renderSpreadInstruction(0);
+        return bindings;
+    }
+    get container() {
+        return this.locator;
+    }
+    get definition() {
+        return this.$controller.definition;
+    }
+    get isStrictBinding() {
+        return this.$controller.isStrictBinding;
+    }
+    get state() {
+        return this.$controller.state;
+    }
+    constructor(
+    /** @internal */ _hydrationContext) {
+        this._hydrationContext = _hydrationContext;
+        this.isBound = false;
+        /** @internal */ this._innerBindings = [];
+        this.$controller = _hydrationContext.controller;
+        this.locator = this.$controller.container;
+    }
+    get(key) {
+        return this.locator.get(key);
+    }
+    bind(_scope) {
+        if (this.isBound) {
+            return;
+        }
+        this.isBound = true;
+        const innerScope = this.scope = this._hydrationContext.controller.scope.parent ?? void 0;
+        if (innerScope == null) {
+            throw createMappedError(9999 /* ErrorNames.no_spread_scope_context_found */);
+        }
+        this._innerBindings.forEach(b => b.bind(innerScope));
+    }
+    unbind() {
+        this._innerBindings.forEach(b => b.unbind());
+        this.isBound = false;
+    }
+    addBinding(binding) {
+        this._innerBindings.push(binding);
+    }
+    addChild(controller) {
+        if (controller.vmKind !== 1 /* ViewModelKind.customAttribute */) {
+            throw createMappedError(9998 /* ErrorNames.no_spread_template_controller */);
+        }
+        this.$controller.addChild(controller);
+    }
+}
 
 exports.InstructionType = void 0;
 (function (InstructionType) {
@@ -3889,96 +4002,14 @@ exports.SpreadRenderer = class SpreadRenderer {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
     }
     render(renderingCtrl, target, _instruction, platform, exprParser, observerLocator) {
-        const container = renderingCtrl.container;
-        const hydrationContext = container.get(IHydrationContext);
-        const renderers = this._rendering.renderers;
-        const getHydrationContext = (ancestor) => {
-            let currentLevel = ancestor;
-            let currentContext = hydrationContext;
-            while (currentContext != null && currentLevel > 0) {
-                currentContext = currentContext.parent;
-                --currentLevel;
-            }
-            if (currentContext == null) {
-                throw createMappedError(9999 /* ErrorNames.no_spread_scope_context_found */);
-            }
-            return currentContext;
-        };
-        const renderSpreadInstruction = (ancestor) => {
-            const context = getHydrationContext(ancestor);
-            const spreadBinding = createSurrogateBinding(context);
-            const instructions = this._compiler.compileSpread(context.controller.definition, context.instruction?.captures ?? kernel.emptyArray, context.controller.container, target);
-            let inst;
-            for (inst of instructions) {
-                switch (inst.type) {
-                    case "hs" /* InstructionType.spreadBinding */:
-                        renderSpreadInstruction(ancestor + 1);
-                        break;
-                    case "hp" /* InstructionType.spreadElementProp */:
-                        renderers[inst.instructions.type].render(spreadBinding, findElementControllerFor(target), inst.instructions, platform, exprParser, observerLocator);
-                        break;
-                    default:
-                        renderers[inst.type].render(spreadBinding, target, inst, platform, exprParser, observerLocator);
-                }
-            }
-            renderingCtrl.addBinding(spreadBinding);
-        };
-        renderSpreadInstruction(0);
+        SpreadBinding
+            .create(renderingCtrl.container.get(IHydrationContext), target, void 0, this._rendering, this._compiler, platform, exprParser, observerLocator)
+            .forEach(b => renderingCtrl.addBinding(b));
     }
 };
 exports.SpreadRenderer = __decorate([
     renderer("hs" /* InstructionType.spreadBinding */)
 ], exports.SpreadRenderer);
-class SpreadBinding {
-    get container() {
-        return this.locator;
-    }
-    get definition() {
-        return this.$controller.definition;
-    }
-    get isStrictBinding() {
-        return this.$controller.isStrictBinding;
-    }
-    get state() {
-        return this.$controller.state;
-    }
-    constructor(
-    /** @internal */ _innerBindings, 
-    /** @internal */ _hydrationContext) {
-        this._innerBindings = _innerBindings;
-        this._hydrationContext = _hydrationContext;
-        this.isBound = false;
-        this.$controller = _hydrationContext.controller;
-        this.locator = this.$controller.container;
-    }
-    get(key) {
-        return this.locator.get(key);
-    }
-    bind(_scope) {
-        if (this.isBound) {
-            return;
-        }
-        this.isBound = true;
-        const innerScope = this.scope = this._hydrationContext.controller.scope.parent ?? void 0;
-        if (innerScope == null) {
-            throw createMappedError(9999 /* ErrorNames.no_spread_scope_context_found */);
-        }
-        this._innerBindings.forEach(b => b.bind(innerScope));
-    }
-    unbind() {
-        this._innerBindings.forEach(b => b.unbind());
-        this.isBound = false;
-    }
-    addBinding(binding) {
-        this._innerBindings.push(binding);
-    }
-    addChild(controller) {
-        if (controller.vmKind !== 1 /* ViewModelKind.customAttribute */) {
-            throw createMappedError(9998 /* ErrorNames.no_spread_template_controller */);
-        }
-        this.$controller.addChild(controller);
-    }
-}
 // http://jsben.ch/7n5Kt
 function addClasses(classList, className) {
     const len = className.length;
@@ -3995,7 +4026,8 @@ function addClasses(classList, className) {
         }
     }
 }
-const createSurrogateBinding = (context) => new SpreadBinding([], context);
+// const createSurrogateBinding = (context: IHydrationContext<object>) =>
+//   new SpreadBinding([], context) as SpreadBinding & IHydratableController;
 const controllerProviderName = 'IController';
 const instructionProviderName = 'IInstruction';
 const locationProviderName = 'IRenderLocation';
@@ -5395,6 +5427,7 @@ function stringifyState(state) {
 }
 const IController = /*@__PURE__*/ createInterface('IController');
 const IHydrationContext = /*@__PURE__*/ createInterface('IHydrationContext');
+/** @internal */
 class HydrationContext {
     constructor(controller, instruction, parent) {
         this.instruction = instruction;
@@ -9843,61 +9876,67 @@ class AuCompose {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
         /** @internal */ this._instruction = kernel.resolve(IInstruction);
         /** @internal */ this._contextFactory = kernel.resolve(kernel.transient(CompositionContextFactory));
+        /** @internal */ this._compiler = kernel.resolve(ITemplateCompiler);
+        /** @internal */ this._hydrationContext = kernel.resolve(IHydrationContext);
+        /** @internal */ this._exprParser = kernel.resolve(runtime.IExpressionParser);
+        /** @internal */ this._observerLocator = kernel.resolve(runtime.IObserverLocator);
     }
-    get pending() {
-        return this._pending;
+    get composing() {
+        return this._composing;
     }
     get composition() {
         return this._composition;
     }
     attaching(initiator, _parent) {
-        return this._pending = kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, void 0), initiator), (context) => {
-            if (this._contextFactory.isCurrent(context)) {
-                this._pending = void 0;
+        return this._composing = kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, void 0), initiator), (context) => {
+            if (this._contextFactory._isCurrent(context)) {
+                this._composing = void 0;
             }
         });
     }
     detaching(initiator) {
         const cmpstn = this._composition;
-        const pending = this._pending;
+        const pending = this._composing;
         this._contextFactory.invalidate();
-        this._composition = this._pending = void 0;
+        this._composition = this._composing = void 0;
         return kernel.onResolve(pending, () => cmpstn?.deactivate(initiator));
     }
     /** @internal */
     propertyChanged(name) {
+        if (name === 'composing' || name === 'composition')
+            return;
         if (name === 'model' && this._composition != null) {
             // eslint-disable-next-line
             this._composition.update(this.model);
             return;
         }
-        this._pending = kernel.onResolve(this._pending, () => kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, name), void 0), (context) => {
-            if (this._contextFactory.isCurrent(context)) {
-                this._pending = void 0;
+        this._composing = kernel.onResolve(this._composing, () => kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, name), void 0), (context) => {
+            if (this._contextFactory._isCurrent(context)) {
+                this._composing = void 0;
             }
         }));
     }
     /** @internal */
     queue(change, initiator) {
         const factory = this._contextFactory;
-        const compositionCtrl = this._composition;
+        const prevCompositionCtrl = this._composition;
         // todo: handle consequitive changes that create multiple queues
         return kernel.onResolve(factory.create(change), context => {
             // Don't compose [stale] template/component
             // by always ensuring that the composition context is the latest one
-            if (factory.isCurrent(context)) {
+            if (factory._isCurrent(context)) {
                 return kernel.onResolve(this.compose(context), (result) => {
                     // Don't activate [stale] controller
                     // by always ensuring that the composition context is the latest one
-                    if (factory.isCurrent(context)) {
+                    if (factory._isCurrent(context)) {
                         return kernel.onResolve(result.activate(initiator), () => {
                             // Don't conclude the [stale] composition
                             // by always ensuring that the composition context is the latest one
-                            if (factory.isCurrent(context)) {
+                            if (factory._isCurrent(context)) {
                                 // after activation, if the composition context is still the most recent one
                                 // then the job is done
                                 this._composition = result;
-                                return kernel.onResolve(compositionCtrl?.deactivate(initiator), () => context);
+                                return kernel.onResolve(prevCompositionCtrl?.deactivate(initiator), () => context);
                             }
                             else {
                                 // the stale controller should be deactivated
@@ -9920,8 +9959,6 @@ class AuCompose {
     /** @internal */
     compose(context) {
         let comp;
-        let compositionHost;
-        let removeCompositionHost;
         // todo: when both component and template are empty
         //       should it throw or try it best to proceed?
         //       current: proceed
@@ -9929,24 +9966,14 @@ class AuCompose {
         const { _container: container, host, $controller, _location: loc } = this;
         const vmDef = this.getDef(component);
         const childCtn = container.createChild();
-        const parentNode = loc == null ? host.parentNode : loc.parentNode;
+        let compositionHost;
         if (vmDef !== null) {
-            if (vmDef.containerless) {
-                throw createMappedError(806 /* ErrorNames.au_compose_containerless */, vmDef);
-            }
+            compositionHost = this._platform.document.createElement(vmDef.name);
             if (loc == null) {
-                compositionHost = host;
-                removeCompositionHost = () => {
-                    // This is a normal composition, the content template is removed by deactivation process
-                    // but the host remains
-                };
+                host.appendChild(compositionHost);
             }
             else {
-                // todo: should the host be appended later, during the activation phase instead?
-                compositionHost = parentNode.insertBefore(this._platform.document.createElement(vmDef.name), loc);
-                removeCompositionHost = () => {
-                    compositionHost.remove();
-                };
+                loc.parentNode.insertBefore(compositionHost, loc);
             }
             comp = this._getComp(childCtn, component, compositionHost);
         }
@@ -9959,7 +9986,44 @@ class AuCompose {
         const compose = () => {
             // custom element based composition
             if (vmDef !== null) {
-                const controller = Controller.$el(childCtn, comp, compositionHost, { projections: this._instruction.projections }, vmDef);
+                const composeCapturedAttrs = this._instruction.captures ?? kernel.emptyArray;
+                const capture = vmDef.capture;
+                const [capturedBindingAttrs, transferedToHostBindingAttrs] = composeCapturedAttrs
+                    .reduce((attrGroups, attr) => {
+                    const shouldCapture = !(attr.target in vmDef.bindables)
+                        && (capture === true
+                            || isFunction(capture) && !!capture(attr.target));
+                    attrGroups[shouldCapture ? 0 : 1].push(attr);
+                    return attrGroups;
+                }, [[], []]);
+                const location = vmDef.containerless ? convertToRenderLocation(compositionHost) : null;
+                const controller = Controller.$el(childCtn, comp, compositionHost, {
+                    projections: this._instruction.projections,
+                    captures: capturedBindingAttrs
+                }, vmDef, location);
+                const transferHydrationContext = new HydrationContext($controller, { projections: null, captures: transferedToHostBindingAttrs }, this._hydrationContext.parent);
+                const removeCompositionHost = () => {
+                    if (location == null) {
+                        compositionHost.remove();
+                    }
+                    else {
+                        let curr = location.$start.nextSibling;
+                        let next = null;
+                        while (curr !== null && curr !== location) {
+                            next = curr.nextSibling;
+                            curr.remove();
+                            curr = next;
+                        }
+                        location.$start?.remove();
+                        location.remove();
+                    }
+                };
+                const bindings = SpreadBinding.create(transferHydrationContext, compositionHost, vmDef, this._rendering, this._compiler, this._platform, this._exprParser, this._observerLocator);
+                // Theoretically these bindings aren't bindings of the composed custom element
+                // Though they are meant to be activated (bound)/ deactivated (unbound) together
+                // with the custom element controller, so it's practically ok to let the composed
+                // custom element manage these bindings
+                bindings.forEach(b => controller.addBinding(b));
                 return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, $controller.scope.parent), 
                 // todo: call deactivate on the component component
                 (deactachInitiator) => kernel.onResolve(controller.deactivate(deactachInitiator ?? controller, $controller), removeCompositionHost), 
@@ -9968,6 +10032,14 @@ class AuCompose {
                 (model) => comp.activate?.(model), context);
             }
             else {
+                {
+                    const captures = this._instruction.captures ?? [];
+                    if (captures.length > 0) {
+                        // eslint-disable-next-line no-console
+                        console.warn(`[au-compose]: Ignored bindings ${captures.map(({ rawName, rawValue }) => `${rawName}="${rawValue}"`).join(", ")}`
+                            + ' in composition without a custom element definition as component.');
+                    }
+                }
                 const targetDef = CustomElementDefinition.create({
                     name: CustomElement.generateName(),
                     template: template,
@@ -10047,14 +10119,27 @@ __decorate([
         }
     })
 ], AuCompose.prototype, "scopeBehavior", void 0);
-customElement('au-compose')(AuCompose);
+__decorate([
+    bindable({
+        mode: 4 /* BindingMode.fromView */
+    })
+], AuCompose.prototype, "composing", null);
+__decorate([
+    bindable({
+        mode: 4 /* BindingMode.fromView */
+    })
+], AuCompose.prototype, "composition", null);
+customElement({
+    name: 'au-compose',
+    capture: true,
+})(AuCompose);
 class EmptyComponent {
 }
 class CompositionContextFactory {
     constructor() {
         this.id = 0;
     }
-    isCurrent(context) {
+    _isCurrent(context) {
         return context.id === this.id;
     }
     create(changes) {
@@ -10253,10 +10338,10 @@ class TemplateCompiler {
             needsCompile: false,
         });
     }
-    compileSpread(definition, attrSyntaxs, container, el) {
-        const context = new CompilationContext(definition, container, emptyCompilationInstructions, null, null, void 0);
+    compileSpread(requestor, attrSyntaxs, container, target, targetDef) {
+        const context = new CompilationContext(requestor, container, emptyCompilationInstructions, null, null, void 0);
         const instructions = [];
-        const elDef = context._findElement(el.nodeName.toLowerCase());
+        const elDef = targetDef ?? context._findElement(target.nodeName.toLowerCase());
         const isCustomElement = elDef !== null;
         const exprParser = context._exprParser;
         const ii = attrSyntaxs.length;
@@ -10285,7 +10370,7 @@ class TemplateCompiler {
                 // active.class="..."
                 // background.style="..."
                 // my-attr.attr="..."
-                commandBuildInfo.node = el;
+                commandBuildInfo.node = target;
                 commandBuildInfo.attr = attrSyntax;
                 commandBuildInfo.bindable = null;
                 commandBuildInfo.def = null;
@@ -10312,7 +10397,7 @@ class TemplateCompiler {
                     && bindingCommand === null
                     && hasInlineBindings(attrValue);
                 if (isMultiBindings) {
-                    attrBindableInstructions = this._compileMultiBindings(el, attrValue, attrDef, context);
+                    attrBindableInstructions = this._compileMultiBindings(target, attrValue, attrDef, context);
                 }
                 else {
                     primaryBindable = bindablesInfo.primary;
@@ -10331,7 +10416,7 @@ class TemplateCompiler {
                         // custom attribute with binding command:
                         // my-attr.bind="..."
                         // my-attr.two-way="..."
-                        commandBuildInfo.node = el;
+                        commandBuildInfo.node = target;
                         commandBuildInfo.attr = attrSyntax;
                         commandBuildInfo.bindable = primaryBindable;
                         commandBuildInfo.def = attrDef;
@@ -10368,7 +10453,7 @@ class TemplateCompiler {
                     // e.g: colspan -> colSpan
                     //      innerhtml -> innerHTML
                     //      minlength -> minLength etc...
-                    context._attrMapper.map(el, attrTarget) ?? kernel.camelCase(attrTarget)));
+                    context._attrMapper.map(target, attrTarget) ?? kernel.camelCase(attrTarget)));
                 }
                 else {
                     switch (attrTarget) {
@@ -10392,7 +10477,7 @@ class TemplateCompiler {
                     bindablesInfo = BindablesInfo.from(elDef, false);
                     bindable = bindablesInfo.attrs[attrTarget];
                     if (bindable !== void 0) {
-                        commandBuildInfo.node = el;
+                        commandBuildInfo.node = target;
                         commandBuildInfo.attr = attrSyntax;
                         commandBuildInfo.bindable = bindable;
                         commandBuildInfo.def = elDef;
@@ -10400,7 +10485,7 @@ class TemplateCompiler {
                         continue;
                     }
                 }
-                commandBuildInfo.node = el;
+                commandBuildInfo.node = target;
                 commandBuildInfo.attr = attrSyntax;
                 commandBuildInfo.bindable = null;
                 commandBuildInfo.def = null;

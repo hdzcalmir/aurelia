@@ -1,4 +1,5 @@
 import { AccessGlobalExpression, IExpressionParser } from '@aurelia/runtime';
+import { BindingBehavior, ValueConverter } from '@aurelia/runtime-html';
 import { assert, createFixture, TestContext } from '@aurelia/testing';
 const globalNames = [
     'Infinity',
@@ -171,6 +172,31 @@ describe('2-runtime/global-context.spec.ts', function () {
             assertText('finite');
             void stop(true);
             ensureGlobalsAreUntouched(ctx.wnd.globalThis);
+        });
+        it('allows import value converter', function () {
+            const { assertText } = createFixture('${a | import}', class {
+                constructor() {
+                    this.a = 1;
+                }
+            }, [
+                ValueConverter.define('import', class {
+                    constructor() {
+                        this.toView = (a) => a;
+                    }
+                })
+            ]);
+            assertText('1');
+        });
+        it('allows import binding behavior', function () {
+            const { assertText } = createFixture('${a & import}', class {
+                constructor() {
+                    this.a = 1;
+                }
+            }, [
+                BindingBehavior.define('import', class {
+                })
+            ]);
+            assertText('1');
         });
     });
 });
