@@ -1,6 +1,6 @@
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { IContainer, inject } from '@aurelia/kernel';
-import { BindingMode, Aurelia, AuSlotsInfo, bindable, customElement, CustomElement, IAuSlotsInfo, IPlatform } from '@aurelia/runtime-html';
+import { BindingMode, Aurelia, AuSlotsInfo, bindable, customElement, CustomElement, IAuSlotsInfo, IPlatform, ValueConverter } from '@aurelia/runtime-html';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, createFixture, hJsx, TestContext } from '@aurelia/testing';
 import { createSpecFunction, TestExecutionContext, TestFunction } from '../util.js';
@@ -663,7 +663,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             MyElement,
           ],
           { 'my-element': [
-            `<h4>Meta</h4> <h4>Surname</h4> <h4>Given name</h4> <div>index: 0 undefined</div> <div>Doe</div> <div>John</div> <div>index: 1 undefined</div> <div>Mustermann</div> <div>Max</div>`,
+            `<h4>Meta</h4> <h4>Surname</h4> <h4>Given name</h4> <div>index: 0 </div> <div>Doe</div> <div>John</div> <div>index: 1 </div> <div>Mustermann</div> <div>Max</div>`,
             new AuSlotsInfo(['header', 'content'])
           ]},
         );
@@ -1829,7 +1829,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         `<my-element><div au-slot>\${$host.value}</div>`,
         [createMyElement('<input value.bind="message"/><au-slot expose.bind="{ value: message }">')],
         {
-          'my-element': ['<input><div>undefined</div>', undefined]
+          'my-element': ['<input><div></div>', undefined]
         },
         function ({ host, platform }) {
           const input = host.querySelector('input');
@@ -1845,7 +1845,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         `<my-element>`,
         [createMyElement(`<input value.bind="message"/><au-slot expose.bind="{ value: message }">\${message}</au-slot>`)],
         {
-          'my-element': ['<input>undefined', undefined]
+          'my-element': ['<input>', undefined]
         },
         function ({ host, platform }) {
           const input = host.querySelector('input');
@@ -2139,5 +2139,41 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
 
     assert.instanceOf(parent, Parent);
     assert.strictEqual(parent.id, 1);
+  });
+
+  it('provides right resources for slotted view', function () {
+    const { assertText } = createFixture(
+      '<el></el>',
+      {  },
+      [
+        CustomElement.define({
+          name: 'el',
+          template: '<el-with-slot>${"hey" | upper}</el-with-slot>',
+          dependencies: [
+            CustomElement.define({ name: 'el-with-slot', template: '<au-slot>' }, class ElWithSlot {}),
+            ValueConverter.define('upper', class { toView = v => v.toUpperCase(); }),
+          ]
+        }, class El {}),
+      ]
+    );
+    assertText('HEY');
+  });
+
+  it('provides right resources for passed through <au-slot>', function () {
+    const { assertText } = createFixture(
+      '<el></el>',
+      {  },
+      [
+        CustomElement.define({
+          name: 'el',
+          template: '<el-with-slot><au-slot>${"hey" | upper}</au-slot></el-with-slot>',
+          dependencies: [
+            CustomElement.define({ name: 'el-with-slot', template: '<au-slot>' }, class ElWithSlot {}),
+            ValueConverter.define('upper', class { toView = v => v.toUpperCase(); }),
+          ]
+        }, class El {}),
+      ]
+    );
+    assertText('HEY');
   });
 });

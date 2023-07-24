@@ -423,7 +423,7 @@ function getRefTarget(refHost: INode, refTargetName: string): object {
       return findElementControllerFor(refHost)!;
     case 'view':
       throw createMappedError(ErrorNames.not_supported_view_ref_api);
-    case 'view-model':
+    case 'component':
       // this means it supports returning undefined
       return findElementControllerFor(refHost)!.viewModel;
     default: {
@@ -834,7 +834,6 @@ export class TextBindingRenderer implements IRenderer {
       platform,
       ensureExpression(exprParser, instruction.from, ExpressionType.IsProperty),
       target as Text,
-      instruction.strict,
     ));
   }
 }

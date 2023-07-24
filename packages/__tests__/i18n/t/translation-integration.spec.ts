@@ -815,7 +815,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
     }
     {
       @customElement({
-        name: 'app', template: `<custom-message view-model.ref="cm" t="[message]itemWithCount" t-params.bind="{count}">`
+        name: 'app', template: `<custom-message component.ref="cm" t="[message]itemWithCount" t-params.bind="{count}">`
       })
       class App { public count: number = 0; public cm: CustomMessage; }
       $it('should support params', function ({ app, host, en, ctx }: I18nIntegrationTestContext<App>) {
@@ -959,7 +959,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
       @customElement(baseDef)
       class App { private readonly dt: string | number | Date = input; }
       $it(`${name} STRICT`, function ({ host }: I18nIntegrationTestContext<App>) {
-        assertTextContent(host, 'span', `${output}`);
+        assertTextContent(host, 'span', `${output ?? ''}`);
       }, { component: App });
 
       @customElement({ ...baseDef, isStrictBinding: false })
@@ -1010,7 +1010,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
       @customElement(baseDef)
       class App { private readonly dt: string | number | Date = input; }
       $it(`${name} STRICT`, function ({ host }: I18nIntegrationTestContext<App>) {
-        assertTextContent(host, 'span', `${output}`);
+        assertTextContent(host, 'span', `${output ?? ''}`);
       }, { component: App });
 
       @customElement({ ...baseDef, isStrictBinding: false })
@@ -1057,7 +1057,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
       class App { private readonly num: string | boolean | Date = value; }
 
       $it(`returns the value itself if the value is not a number STRICT binding, for example: ${value}`, function ({ host }: I18nIntegrationTestContext<App>) {
-        assertTextContent(host, 'span', `${value}`);
+        assertTextContent(host, 'span', `${value ?? ''}`);
       }, { component: App });
 
       @customElement(def)
@@ -1118,7 +1118,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
       @customElement(strictDef)
       class App { private readonly num: string | boolean | Date = value; }
       $it(`returns the value itself if the value is not a number STRICT binding, for example: ${value}`, function ({ host }: I18nIntegrationTestContext<App>) {
-        assertTextContent(host, 'span', `${value}`);
+        assertTextContent(host, 'span', `${value ?? ''}`);
       }, { component: App });
 
       @customElement(def)
@@ -1186,7 +1186,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
       @customElement(strictDef)
       class App { private readonly dt: string | number | boolean = value; }
       $it(`returns the value itself if the value is not a number STRICT, for example: ${value}`, function ({ host }: I18nIntegrationTestContext<App>) {
-        assertTextContent(host, 'span', `${value}`);
+        assertTextContent(host, 'span', `${value ?? ''}`);
       }, { component: App });
 
       @customElement(def)
@@ -1301,7 +1301,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
       @customElement(strictDef)
       class App { private readonly dt: string | number | boolean = value; }
       $it(`returns the value itself if the value is not a number STRICT binding, for example: ${value}`, function ({ host }: I18nIntegrationTestContext<App>) {
-        assertTextContent(host, 'span', `${value}`);
+        assertTextContent(host, 'span', `${value ?? ''}`);
       }, { component: App });
 
       @customElement(def)
