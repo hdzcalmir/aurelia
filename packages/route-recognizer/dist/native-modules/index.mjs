@@ -35,7 +35,12 @@ class Endpoint {
 class RecognizedRoute {
     constructor(t, e) {
         this.endpoint = t;
-        this.params = e;
+        const s = Object.create(null);
+        for (const t in e) {
+            const n = e[t];
+            s[t] = n != null ? decodeURIComponent(n) : n;
+        }
+        this.params = Object.freeze(s);
     }
 }
 

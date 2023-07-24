@@ -220,9 +220,7 @@ let DelegateBindingCommand = class DelegateBindingCommand {
 DelegateBindingCommand = __decorate([
     bindingCommand('delegate')
 ], DelegateBindingCommand);
-let ListenerBindingRenderer = 
-/** @internal */
-class ListenerBindingRenderer {
+let ListenerBindingRenderer = class ListenerBindingRenderer {
     /** @internal */ static get inject() { return [IEventDelegator]; }
     constructor(eventDelegator) {
         this._eventDelegator = eventDelegator;

@@ -16,106 +16,138 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
                 }, interpolation: `$\{value}`, it: 'Renders expected text'
             },
             {
-                expected: '', expectedStrictMode: 'undefined', app: class {
+                expected: '',
+                expectedStrictMode: '',
+                app: class {
                     constructor() {
                         this.value = undefined;
                     }
-                }, interpolation: `$\{value}`, it: 'Undefined value renders nothing'
+                },
+                interpolation: `$\{value}`,
+                it: 'Undefined value renders nothing',
             },
             {
-                expected: 5, expectedStrictMode: 'NaN', app: class {
+                expected: NaN,
+                expectedStrictMode: 'NaN',
+                app: class {
                     constructor() {
                         this.value1 = undefined;
                         this.value = 5;
                     }
-                }, interpolation: `$\{value1 + value}`, it: 'Two values one undefined sum correctly'
+                },
+                interpolation: `$\{value1 + value}`,
+                it: 'Two values one undefined sum correctly',
             },
             {
-                expected: -5, expectedStrictMode: 'NaN', app: class {
+                expected: NaN,
+                expectedStrictMode: 'NaN',
+                expectedValueAfterChange: '-4',
+                app: class {
                     constructor() {
                         this.value = undefined;
                         this.value1 = 5;
                     }
-                }, interpolation: `$\{value - value1}`, it: 'Two values one undefined minus correctly'
+                },
+                interpolation: `$\{value - value1}`,
+                it: 'Two values one undefined minus correctly',
             },
             {
-                expected: '', expectedStrictMode: 'null', app: class {
+                expected: '',
+                expectedStrictMode: '',
+                app: class {
                     constructor() {
                         this.isStrictMode = true;
                         this.value = null;
                     }
-                }, interpolation: `$\{value}`, it: 'Null value renders nothing'
+                },
+                interpolation: `$\{value}`,
+                it: 'Null value renders nothing',
             },
             {
-                expected: 5, expectedStrictMode: '5', app: class {
+                expected: 5,
+                expectedStrictMode: '5',
+                app: class {
                     constructor() {
                         this.value1 = null;
                         this.value = 5;
                     }
-                }, interpolation: `$\{value1 + value}`, it: 'Two values one Null sum correctly'
+                },
+                interpolation: `$\{value1 + value}`,
+                it: 'Two values one Null sum correctly',
             },
             {
-                expected: -5, expectedStrictMode: '-5', app: class {
+                expected: -5,
+                expectedStrictMode: '-5',
+                app: class {
                     constructor() {
                         this.value = null;
                         this.value1 = 5;
                     }
-                }, interpolation: `$\{value - value1}`, it: 'Two values one Null minus correctly'
+                },
+                interpolation: `$\{value - value1}`,
+                it: 'Two values one Null minus correctly',
             },
             {
-                expected: 'Infinity', expectedStrictMode: 'NaN', expectedValueAfterChange: 5, app: class {
+                expected: 'NaN',
+                expectedStrictMode: 'NaN',
+                expectedValueAfterChange: 5,
+                app: class {
                     constructor() {
                         this.value = undefined;
                         this.value1 = 5;
                     }
-                }, interpolation: `$\{value1/value}`, it: 'Number divided by undefined is Infinity'
+                },
+                interpolation: `$\{value1/value}`,
+                it: 'Number divided by undefined is Infinity',
             },
             {
-                expected: 1, expectedStrictMode: 1, expectedValueAfterChange: 0.8333333333333334, app: class {
+                expected: 1,
+                expectedStrictMode: 1,
+                expectedValueAfterChange: 0.8333333333333334,
+                app: class {
                     constructor() {
                         this.value = 5;
                         this.value1 = 5;
                     }
-                }, interpolation: `$\{value1/value}`, it: 'Number divided by number works as planned'
+                },
+                interpolation: `$\{value1/value}`,
+                it: 'Number divided by number works as planned',
             },
             {
-                expected: 1, expectedStrictMode: 1, app: class {
-                    constructor() {
-                        this.Math = Math;
-                        this.value = 1.2;
-                        this.value1 = 5;
-                    }
-                }, interpolation: `$\{Math.round(value)}`, it: 'Global Aliasing works'
-            },
-            {
-                expected: 2, expectedStrictMode: 2, app: class {
-                    constructor() {
-                        this.Math = Math;
-                        this.value = 1.5;
-                        this.value1 = 5;
-                    }
-                }, interpolation: `$\{Math.round(value)}`, it: 'Global Aliasing works #2'
-            },
-            {
-                expected: 'true', expectedValueAfterChange: 'false', changeFnc: (val) => !val, app: class {
+                expected: 'true',
+                expectedValueAfterChange: 'false',
+                changeFnc: (val) => !val,
+                app: class {
                     constructor() {
                         this.value = true;
                     }
-                }, interpolation: `$\{value}`, it: 'Boolean prints true'
+                },
+                interpolation: `$\{value}`,
+                it: 'Boolean prints true',
             },
             {
-                expected: 'false', expectedValueAfterChange: 'true', changeFnc: (val) => !val, app: class {
+                expected: 'false',
+                expectedValueAfterChange: 'true',
+                changeFnc: (val) => !val,
+                app: class {
                     constructor() {
                         this.value = false;
                     }
-                }, interpolation: `$\{value}`, it: 'Boolean prints false'
+                },
+                interpolation: `$\{value}`,
+                it: 'Boolean prints false'
             },
             {
-                expected: 'false', expectedValueAfterChange: 'false', changeFnc: (val) => !val, app: class {
+                expected: 'false',
+                expectedValueAfterChange: 'false',
+                changeFnc: (val) => !val,
+                app: class {
                     constructor() {
                         this.value = false;
                     }
-                }, interpolation: `$\{value && false}`, it: 'Boolean prints false with && no matter what'
+                },
+                interpolation: `$\{value && false}`,
+                it: 'Boolean prints false with && no matter what',
             },
             {
                 expected: 'test',
@@ -140,9 +172,9 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
                 interpolation: `$\{value}`, it: 'Date works and setDate triggers change properly'
             },
             {
-                expected: testDateString,
+                expected: `undefined${testDateString}`,
                 expectedStrictMode: `undefined${testDateString}`,
-                expectedValueAfterChange: ThreeDaysDateString,
+                expectedValueAfterChange: `undefined${ThreeDaysDateString}`,
                 changeFnc: (_val) => {
                     return new Date(ThreeDaysDateString);
                 }, app: class {
@@ -150,12 +182,12 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
                         this.value = new Date('Sat Feb 02 2002 00:00:00 GMT+0000 (Coordinated Universal Time)');
                     }
                 },
-                interpolation: `$\{undefined + value}`, it: 'Date works with undefined expression and setDate triggers change properly'
+                interpolation: `$\{undefined + value}`, it: 'Date works with undefined expression and setDate triggers change properly',
             },
             {
-                expected: testDateString,
+                expected: `null${testDateString}`,
                 expectedStrictMode: `null${testDateString}`,
-                expectedValueAfterChange: ThreeDaysDateString,
+                expectedValueAfterChange: `null${ThreeDaysDateString}`,
                 changeFnc: (_val) => {
                     return new Date(ThreeDaysDateString);
                 }, app: class {
@@ -163,7 +195,7 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
                         this.value = new Date('Sat Feb 02 2002 00:00:00 GMT+0000 (Coordinated Universal Time)');
                     }
                 },
-                interpolation: `$\{null + value}`, it: 'Date works with null expression and setDate triggers change properly'
+                interpolation: `$\{null + value}`, it: 'Date works with null expression and setDate triggers change properly',
             },
             {
                 expected: testDateString,
@@ -477,13 +509,13 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
                 this.id = undefined;
             }
         }));
-        assertText('hey undefined');
+        assertText('hey ');
         component.id = '1';
         flush();
         assertText('hey 1');
         component.id = null;
         flush();
-        assertText('hey null');
+        assertText('hey ');
     });
     it('observes and updates when bound with array', async function () {
         const { tearDown, appHost, ctx, startPromise } = createFixture(`<label repeat.for="product of products">

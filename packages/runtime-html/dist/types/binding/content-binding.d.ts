@@ -14,10 +14,10 @@ export declare class ContentBinding implements IBinding, ICollectionSubscriber {
     private readonly p;
     readonly ast: IsExpression;
     readonly target: Text;
-    readonly strict: boolean;
     isBound: boolean;
     readonly mode: BindingMode;
-    constructor(controller: IBindingController, locator: IServiceLocator, observerLocator: IObserverLocator, taskQueue: TaskQueue, p: IPlatform, ast: IsExpression, target: Text, strict: boolean);
+    strict: boolean;
+    constructor(controller: IBindingController, locator: IServiceLocator, observerLocator: IObserverLocator, taskQueue: TaskQueue, p: IPlatform, ast: IsExpression, target: Text);
     updateTarget(value: unknown): void;
     handleChange(): void;
     handleCollectionChange(): void;

@@ -935,7 +935,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             };
             App = __decorate([
                 customElement({
-                    name: 'app', template: `<custom-message view-model.ref="cm" t="[message]itemWithCount" t-params.bind="{count}">`
+                    name: 'app', template: `<custom-message component.ref="cm" t="[message]itemWithCount" t-params.bind="{count}">`
                 })
             ], App);
             $it('should support params', function ({ app, host, en, ctx }) {
@@ -1115,7 +1115,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
                 customElement(baseDef)
             ], App);
             $it(`${name} STRICT`, function ({ host }) {
-                assertTextContent(host, 'span', `${output}`);
+                assertTextContent(host, 'span', `${output ?? ''}`);
             }, { component: App });
             let App1 = class App1 {
                 constructor() {
@@ -1186,7 +1186,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
                 customElement(baseDef)
             ], App);
             $it(`${name} STRICT`, function ({ host }) {
-                assertTextContent(host, 'span', `${output}`);
+                assertTextContent(host, 'span', `${output ?? ''}`);
             }, { component: App });
             let App1 = class App1 {
                 constructor() {
@@ -1257,7 +1257,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
                 customElement(strictDef)
             ], App);
             $it(`returns the value itself if the value is not a number STRICT binding, for example: ${value}`, function ({ host }) {
-                assertTextContent(host, 'span', `${value}`);
+                assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App });
             let App1 = class App1 {
                 constructor() {
@@ -1347,7 +1347,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
                 customElement(strictDef)
             ], App);
             $it(`returns the value itself if the value is not a number STRICT binding, for example: ${value}`, function ({ host }) {
-                assertTextContent(host, 'span', `${value}`);
+                assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App });
             let App1 = class App1 {
                 constructor() {
@@ -1457,7 +1457,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
                 customElement(strictDef)
             ], App);
             $it(`returns the value itself if the value is not a number STRICT, for example: ${value}`, function ({ host }) {
-                assertTextContent(host, 'span', `${value}`);
+                assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App });
             let App1 = class App1 {
                 constructor() {
@@ -1583,7 +1583,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
                 customElement(strictDef)
             ], App);
             $it(`returns the value itself if the value is not a number STRICT binding, for example: ${value}`, function ({ host }) {
-                assertTextContent(host, 'span', `${value}`);
+                assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App });
             let App1 = class App1 {
                 constructor() {

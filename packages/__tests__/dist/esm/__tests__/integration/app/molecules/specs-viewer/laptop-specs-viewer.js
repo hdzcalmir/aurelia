@@ -26,7 +26,7 @@ export class Laptop extends Thing {
         this.screen = screen;
     }
 }
-let LaptopSpecsViewer = class LaptopSpecsViewer {
+export let LaptopSpecsViewer = class LaptopSpecsViewer {
     binding() {
         const { storage: { size, unit, type } } = this.model;
         this.storage = `${size}${unit} ${type}`;
@@ -39,5 +39,4 @@ __decorate([
 LaptopSpecsViewer = __decorate([
     customElement({ name: 'laptop-specs-viewer', template })
 ], LaptopSpecsViewer);
-export { LaptopSpecsViewer };
 //# sourceMappingURL=laptop-specs-viewer.js.map

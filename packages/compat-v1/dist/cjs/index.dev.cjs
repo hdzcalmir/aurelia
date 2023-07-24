@@ -224,9 +224,7 @@ exports.DelegateBindingCommand = class DelegateBindingCommand {
 exports.DelegateBindingCommand = __decorate([
     runtimeHtml.bindingCommand('delegate')
 ], exports.DelegateBindingCommand);
-exports.ListenerBindingRenderer = 
-/** @internal */
-class ListenerBindingRenderer {
+exports.ListenerBindingRenderer = class ListenerBindingRenderer {
     /** @internal */ static get inject() { return [IEventDelegator]; }
     constructor(eventDelegator) {
         this._eventDelegator = eventDelegator;

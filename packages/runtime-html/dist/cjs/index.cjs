@@ -2287,17 +2287,17 @@ const It = {
 };
 
 class ContentBinding {
-    constructor(t, e, s, i, n, r, l, h) {
+    constructor(t, e, s, i, n, r, l) {
         this.p = n;
         this.ast = r;
         this.target = l;
-        this.strict = h;
         this.isBound = false;
         this.mode = 2;
         this.U = null;
         this.v = "";
         this.Y = false;
         this.boundFn = false;
+        this.strict = true;
         this.l = e;
         this.G = t;
         this.oL = s;
@@ -2316,7 +2316,7 @@ class ContentBinding {
             t = "";
             this.Y = true;
         }
-        e.textContent = g(t);
+        e.textContent = g(t ?? "");
     }
     handleChange() {
         if (!this.isBound) {
@@ -3188,7 +3188,7 @@ function getRefTarget(t, e) {
       case "view":
         throw createMappedError(750);
 
-      case "view-model":
+      case "component":
         return findElementControllerFor(t).viewModel;
 
       default:
@@ -3400,7 +3400,7 @@ exports.IteratorBindingRenderer = __decorate([ renderer("rk") ], exports.Iterato
 
 exports.TextBindingRenderer = class TextBindingRenderer {
     render(t, e, s, i, n, r) {
-        t.addBinding(new ContentBinding(t, t.container, r, i.domWriteQueue, i, ensureExpression(n, s.from, 16), e, s.strict));
+        t.addBinding(new ContentBinding(t, t.container, r, i.domWriteQueue, i, ensureExpression(n, s.from, 16), e));
     }
 };
 
@@ -3987,7 +3987,7 @@ class Controller {
         if (this.isStrictBinding) ;
         this.$initiator = e;
         this.Mt();
-        let n;
+        let n = void 0;
         if (this.vmKind !== 2 && this.yt.binding != null) {
             n = t.onResolveAll(...this.yt.binding.map(callBindingHook, this));
         }
@@ -4015,7 +4015,7 @@ class Controller {
     bind() {
         let e = 0;
         let s = 0;
-        let i;
+        let i = void 0;
         if (this.bindings !== null) {
             e = 0;
             s = this.bindings.length;
@@ -4318,7 +4318,7 @@ class Controller {
             this.Kt();
             this.removeNodes();
             let e = this.$initiator.head;
-            let s;
+            let s = void 0;
             while (e !== null) {
                 if (e !== this) {
                     if (e.debug) {
@@ -5323,7 +5323,11 @@ exports.RefAttributePattern = class RefAttributePattern {
         return new AttrSyntax(t, e, "element", "ref");
     }
     "PART.ref"(t, e, s) {
-        return new AttrSyntax(t, e, s[0], "ref");
+        let i = s[0];
+        if (i === "view-model") {
+            i = "component";
+        }
+        return new AttrSyntax(t, e, i, "ref");
     }
 };
 
@@ -8441,7 +8445,9 @@ exports.AuSlot = class AuSlot {
             a = n.getViewFactory(r.fallback, h.container);
             this.ti = false;
         } else {
-            c = i.parent.controller.container.createChild();
+            c = i.parent.controller.container.createChild({
+                inheritParentResources: true
+            });
             registerResolver(c, h.definition.Type, new t.InstanceProvider(void 0, h.viewModel));
             a = n.getViewFactory(l, c);
             this.ti = true;
@@ -8657,43 +8663,43 @@ class AuCompose {
     compose(e) {
         let i;
         const {fi: n, di: r, pi: l} = e.change;
-        const {c: h, host: a, $controller: c, l: u} = this;
-        const f = this.getDef(r);
-        const d = h.createChild();
-        let p;
-        if (f !== null) {
-            p = this.p.document.createElement(f.name);
+        const {c: h, host: a, $controller: c, l: u, li: f} = this;
+        const d = this.getDef(r);
+        const p = h.createChild();
+        let m;
+        if (d !== null) {
+            m = this.p.document.createElement(d.name);
             if (u == null) {
-                a.appendChild(p);
+                a.appendChild(m);
             } else {
-                u.parentNode.insertBefore(p, u);
+                u.parentNode.insertBefore(m, u);
             }
-            i = this.mi(d, r, p);
+            i = this.mi(p, r, m);
         } else {
-            p = u == null ? a : u;
-            i = this.mi(d, r, p);
+            m = u == null ? a : u;
+            i = this.mi(p, r, m);
         }
         const compose = () => {
-            if (f !== null) {
-                const s = this.li.captures ?? t.emptyArray;
-                const n = f.capture;
+            if (d !== null) {
+                const s = f.captures ?? t.emptyArray;
+                const n = d.capture;
                 const [r, l] = s.reduce(((t, e) => {
-                    const s = !(e.target in f.bindables) && (n === true || isFunction(n) && !!n(e.target));
+                    const s = !(e.target in d.bindables) && (n === true || isFunction(n) && !!n(e.target));
                     t[s ? 0 : 1].push(e);
                     return t;
                 }), [ [], [] ]);
-                const h = f.containerless ? convertToRenderLocation(p) : null;
-                const a = Controller.$el(d, i, p, {
-                    projections: this.li.projections,
+                const h = d.containerless ? convertToRenderLocation(m) : null;
+                const a = Controller.$el(p, i, m, {
+                    projections: f.projections,
                     captures: r
-                }, f, h);
+                }, d, h);
                 const u = new HydrationContext(c, {
                     projections: null,
                     captures: l
                 }, this.ht.parent);
                 const removeCompositionHost = () => {
                     if (h == null) {
-                        p.remove();
+                        m.remove();
                     } else {
                         let t = h.$start.nextSibling;
                         let e = null;
@@ -8706,21 +8712,21 @@ class AuCompose {
                         h.remove();
                     }
                 };
-                const m = SpreadBinding.create(u, p, f, this.r, this.ut, this.p, this.ep, this.oL);
-                m.forEach((t => a.addBinding(t)));
+                const x = SpreadBinding.create(u, m, d, this.r, this.ut, this.p, this.ep, this.oL);
+                x.forEach((t => a.addBinding(t)));
                 return new CompositionController(a, (t => a.activate(t ?? a, c, c.scope.parent)), (e => t.onResolve(a.deactivate(e ?? a, c), removeCompositionHost)), (t => i.activate?.(t)), e);
             } else {
                 const t = CustomElementDefinition.create({
                     name: at.generateName(),
                     template: n
                 });
-                const r = this.r.getViewFactory(t, d);
+                const r = this.r.getViewFactory(t, p);
                 const l = Controller.$view(r, c);
                 const h = this.scopeBehavior === "auto" ? s.Scope.fromParent(this.parent.scope, i) : s.Scope.create(i);
-                if (isRenderLocation(p)) {
-                    l.setLocation(p);
+                if (isRenderLocation(m)) {
+                    l.setLocation(m);
                 } else {
-                    l.setHost(p);
+                    l.setHost(m);
                 }
                 return new CompositionController(l, (t => l.activate(t ?? l, c, h)), (t => l.deactivate(t ?? l, c)), (t => i.activate?.(t)), e);
             }

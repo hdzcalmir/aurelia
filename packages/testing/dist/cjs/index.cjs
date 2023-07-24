@@ -4491,7 +4491,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         o.platform.domWriteQueue.flush(e);
     };
     const stop = (e = false) => {
-        let t;
+        let t = void 0;
         try {
             t = p.stop(e);
         } finally {

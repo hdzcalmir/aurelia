@@ -1303,10 +1303,9 @@ class SegmentGroupExpression {
  */
 class SegmentExpression {
     get kind() { return 4 /* ExpressionKind.Segment */; }
-    static get Empty() { return new SegmentExpression(ComponentExpression.Empty, ActionExpression.Empty, ViewportExpression.Empty, true); }
-    constructor(component, action, viewport, scoped) {
+    static get Empty() { return new SegmentExpression(ComponentExpression.Empty, ViewportExpression.Empty, true); }
+    constructor(component, viewport, scoped) {
         this.component = component;
-        this.action = action;
         this.viewport = viewport;
         this.scoped = scoped;
     }
@@ -1314,11 +1313,10 @@ class SegmentExpression {
     static _parse(state) {
         state._record();
         const component = ComponentExpression._parse(state);
-        const action = ActionExpression._parse(state);
         const viewport = ViewportExpression._parse(state);
         const scoped = !state._consumeOptional('!');
         state._discard();
-        return new SegmentExpression(component, action, viewport, scoped);
+        return new SegmentExpression(component, viewport, scoped);
     }
     /** @internal */
     _toInstructions(open, close) {
@@ -1378,39 +1376,13 @@ class ComponentExpression {
                 }
             }
         }
-        const name = decodeURIComponent(state._playback());
+        const name = state._playback();
         if (name.length === 0) {
             state._expect('component name');
         }
         const parameterList = ParameterListExpression._parse(state);
         state._discard();
         return new ComponentExpression(name, parameterList);
-    }
-}
-class ActionExpression {
-    get kind() { return 6 /* ExpressionKind.Action */; }
-    static get Empty() { return new ActionExpression('', ParameterListExpression.Empty); }
-    constructor(name, parameterList) {
-        this.name = name;
-        this.parameterList = parameterList;
-    }
-    /** @internal */
-    static _parse(state) {
-        state._record();
-        let name = '';
-        if (state._consumeOptional('.')) {
-            state._record();
-            while (!state._done && !state._startsWith(...terminal)) {
-                state._advance();
-            }
-            name = decodeURIComponent(state._playback());
-            if (name.length === 0) {
-                state._expect('method name');
-            }
-        }
-        const parameterList = ParameterListExpression._parse(state);
-        state._discard();
-        return new ActionExpression(name, parameterList);
     }
 }
 class ViewportExpression {
@@ -1482,7 +1454,7 @@ class ParameterExpression {
         while (!state._done && !state._startsWith(...terminal)) {
             state._advance();
         }
-        let key = decodeURIComponent(state._playback());
+        let key = state._playback();
         if (key.length === 0) {
             state._expect('parameter key');
         }
@@ -1512,7 +1484,6 @@ const AST = Object.freeze({
     SegmentGroupExpression,
     SegmentExpression,
     ComponentExpression,
-    ActionExpression,
     ViewportExpression,
     ParameterListExpression,
     ParameterExpression,
@@ -4619,7 +4590,7 @@ class RouteContext {
                     : param.isOptional
                         ? `:${key}?`
                         : `:${key}`;
-                path = path.replace(pattern, value);
+                path = path.replace(pattern, encodeURIComponent(value));
             }
             const consumedKeys = Object.keys(consumed);
             const query = Object.fromEntries(Object.entries(params).filter(([key]) => !consumedKeys.includes(key)));
@@ -5170,5 +5141,5 @@ class ScrollStateManager {
     }
 }
 
-export { AST, ActionExpression, AuNavId, ComponentExpression, CompositeSegmentExpression, DefaultComponents, DefaultResources, ExpressionKind, HrefCustomAttribute, HrefCustomAttributeRegistration, ILocationManager, IRouteContext, IRouter, IRouterEvents, IRouterOptions, IStateManager, LoadCustomAttribute, LoadCustomAttributeRegistration, LocationChangeEvent, NavigationCancelEvent, NavigationEndEvent, NavigationErrorEvent, NavigationOptions, NavigationStartEvent, ParameterExpression, ParameterListExpression, Route, RouteConfig, RouteContext, RouteExpression, RouteNode, RouteTree, Router, RouterConfiguration, RouterOptions, RouterRegistration, ScopedSegmentExpression, SegmentExpression, SegmentGroupExpression, Transition, ViewportAgent, ViewportCustomElement, ViewportCustomElementRegistration, ViewportExpression, fragmentUrlParser, isManagedState, pathUrlParser, route, toManagedState };
+export { AST, AuNavId, ComponentExpression, CompositeSegmentExpression, DefaultComponents, DefaultResources, ExpressionKind, HrefCustomAttribute, HrefCustomAttributeRegistration, ILocationManager, IRouteContext, IRouter, IRouterEvents, IRouterOptions, IStateManager, LoadCustomAttribute, LoadCustomAttributeRegistration, LocationChangeEvent, NavigationCancelEvent, NavigationEndEvent, NavigationErrorEvent, NavigationOptions, NavigationStartEvent, ParameterExpression, ParameterListExpression, Route, RouteConfig, RouteContext, RouteExpression, RouteNode, RouteTree, Router, RouterConfiguration, RouterOptions, RouterRegistration, ScopedSegmentExpression, SegmentExpression, SegmentGroupExpression, Transition, ViewportAgent, ViewportCustomElement, ViewportCustomElementRegistration, ViewportExpression, fragmentUrlParser, isManagedState, pathUrlParser, route, toManagedState };
 //# sourceMappingURL=index.dev.mjs.map

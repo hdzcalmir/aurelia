@@ -7853,7 +7853,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         ctx.platform.domWriteQueue.flush(time);
     };
     const stop = (dispose = false) => {
-        let ret;
+        let ret = void 0;
         try {
             ret = au.stop(dispose);
         }

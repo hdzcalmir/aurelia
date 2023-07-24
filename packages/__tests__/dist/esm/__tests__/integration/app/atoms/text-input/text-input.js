@@ -22,7 +22,7 @@ import template from './text-input.html';
  *   - binding behavior
  *     - `update-trigger`
  */
-let TextInput = class TextInput {
+export let TextInput = class TextInput {
     constructor() {
         this.trigger = undefined;
     }
@@ -38,5 +38,4 @@ __decorate([
 TextInput = __decorate([
     customElement({ name: 'text-input', template })
 ], TextInput);
-export { TextInput };
 //# sourceMappingURL=text-input.js.map

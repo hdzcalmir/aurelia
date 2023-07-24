@@ -16,7 +16,7 @@ import { customElement } from '@aurelia/runtime-html';
  *      - `attr`
  *      - `self`
  */
-let RandomGenerator = class RandomGenerator {
+export let RandomGenerator = class RandomGenerator {
     constructor() {
         this.generate();
     }
@@ -31,5 +31,4 @@ RandomGenerator = __decorate([
     customElement({ name: 'random-generator', template }),
     __metadata("design:paramtypes", [])
 ], RandomGenerator);
-export { RandomGenerator };
 //# sourceMappingURL=random-generator.js.map

@@ -68,7 +68,7 @@ export class HIAConfig {
     }
 }
 export const IHookInvocationAggregator = /*@__PURE__*/ DI.createInterface('IHookInvocationAggregator', x => x.singleton(HookInvocationAggregator));
-let HookInvocationAggregator = class HookInvocationAggregator {
+export let HookInvocationAggregator = class HookInvocationAggregator {
     constructor(platform, config) {
         this.platform = platform;
         this.config = config;
@@ -133,5 +133,4 @@ HookInvocationAggregator = __decorate([
     __param(1, IHIAConfig),
     __metadata("design:paramtypes", [Object, Object])
 ], HookInvocationAggregator);
-export { HookInvocationAggregator };
 //# sourceMappingURL=hook-invocation-tracker.js.map

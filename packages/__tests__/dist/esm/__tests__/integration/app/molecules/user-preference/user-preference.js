@@ -25,7 +25,7 @@ export class TestArray extends Array {
  *     - `computed-observer`
  *     - `dirty-checker`
  */
-let User = class User {
+export let User = class User {
     constructor(firstName, lastName, age, role, organization, city, country) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -69,8 +69,7 @@ User = __decorate([
     trace(callCollection),
     __metadata("design:paramtypes", [String, String, Number, String, String, String, String])
 ], User);
-export { User };
-let UserPreference = class UserPreference {
+export let UserPreference = class UserPreference {
 };
 __decorate([
     bindable,
@@ -79,5 +78,4 @@ __decorate([
 UserPreference = __decorate([
     customElement({ name: 'user-preference', template })
 ], UserPreference);
-export { UserPreference };
 //# sourceMappingURL=user-preference.js.map

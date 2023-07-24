@@ -141,7 +141,7 @@ describe('3-runtime-html/decorator-watch.expression.spec.ts', function () {
                 watch(get, (v, o, a) => a.log()),
                 customElement({ name: 'post' })
             ], Post);
-            const { ctx, component, tearDown } = createFixture('<post view-model.ref="post">', class App {
+            const { ctx, component, tearDown } = createFixture('<post component.ref="post">', class App {
             }, [Post]);
             const post = component.post;
             created(post, ctx, 1);
@@ -168,7 +168,7 @@ describe('3-runtime-html/decorator-watch.expression.spec.ts', function () {
                 customElement({ name: 'post' }),
                 watch(get, (v, o, a) => a.log())
             ], Post);
-            const { ctx, component, tearDown } = createFixture('<post view-model.ref="post">', class App {
+            const { ctx, component, tearDown } = createFixture('<post component.ref="post">', class App {
             }, [Post]);
             const post = component.post;
             created(post, ctx, 1);

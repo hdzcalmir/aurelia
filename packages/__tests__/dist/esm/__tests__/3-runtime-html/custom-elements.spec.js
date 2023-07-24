@@ -165,14 +165,14 @@ describe('3-runtime-html/custom-elements.spec.ts', function () {
             El = __decorate([
                 customElement('el')
             ], El);
-            const { au, component } = createFixture('<el view-model.ref="el">', class App {
+            const { au, component } = createFixture('<el component.ref="el">', class App {
             }, [El]);
             assert.strictEqual(au, component.el.au);
         });
     });
     describe('getter bindable', function () {
         it('works in basic scenario', function () {
-            const { assertText, flush, trigger } = createFixture(`<my-el view-model.ref=el message="hello world">`, class App {
+            const { assertText, flush, trigger } = createFixture(`<my-el component.ref=el message="hello world">`, class App {
             }, [CustomElement.define({
                     name: 'my-el',
                     template: '<button click.trigger="_m = 1"></button>${message}',
@@ -194,7 +194,7 @@ describe('3-runtime-html/custom-elements.spec.ts', function () {
             assertText('1');
         });
         it('works with readonly bindable', function () {
-            const { assertText, flush, trigger } = createFixture(`<my-el view-model.ref=el message.from-view="message">`, class App {
+            const { assertText, flush, trigger } = createFixture(`<my-el component.ref=el message.from-view="message">`, class App {
                 constructor() {
                     this.message = 'hello-world';
                 }
@@ -250,7 +250,7 @@ describe('3-runtime-html/custom-elements.spec.ts', function () {
             assert.deepStrictEqual(values, [1, 2]);
         });
         it('works with array based computed bindable', function () {
-            const { component, assertText, flush, trigger } = createFixture(`<my-el view-model.ref=el message.from-view="message">`, class App {
+            const { component, assertText, flush, trigger } = createFixture(`<my-el component.ref=el message.from-view="message">`, class App {
                 constructor() {
                     this.message = '';
                 }

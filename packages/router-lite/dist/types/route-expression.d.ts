@@ -114,12 +114,11 @@ export declare class SegmentGroupExpression {
  */
 export declare class SegmentExpression {
     readonly component: ComponentExpression;
-    readonly action: ActionExpression;
     readonly viewport: ViewportExpression;
     readonly scoped: boolean;
     get kind(): ExpressionKind.Segment;
     static get Empty(): SegmentExpression;
-    constructor(component: ComponentExpression, action: ActionExpression, viewport: ViewportExpression, scoped: boolean);
+    constructor(component: ComponentExpression, viewport: ViewportExpression, scoped: boolean);
 }
 export declare class ComponentExpression {
     readonly name: string;
@@ -142,13 +141,6 @@ export declare class ComponentExpression {
      * If this is a dynamic segment (parameter or star), this is the name of the parameter (the name without the `:` or `*`)
      */
     readonly parameterName: string;
-    constructor(name: string, parameterList: ParameterListExpression);
-}
-export declare class ActionExpression {
-    readonly name: string;
-    readonly parameterList: ParameterListExpression;
-    get kind(): ExpressionKind.Action;
-    static get Empty(): ActionExpression;
     constructor(name: string, parameterList: ParameterListExpression);
 }
 export declare class ViewportExpression {
@@ -177,7 +169,6 @@ export declare const AST: Readonly<{
     SegmentGroupExpression: typeof SegmentGroupExpression;
     SegmentExpression: typeof SegmentExpression;
     ComponentExpression: typeof ComponentExpression;
-    ActionExpression: typeof ActionExpression;
     ViewportExpression: typeof ViewportExpression;
     ParameterListExpression: typeof ParameterListExpression;
     ParameterExpression: typeof ParameterExpression;
