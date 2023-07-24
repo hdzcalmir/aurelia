@@ -4,6 +4,7 @@ import { IRouteViewModel } from './component-agent';
 import { RouteType } from './route';
 import { type $RecognizedRoute, IRouteContext } from './route-context';
 import { INavigationOptions, NavigationOptions, type RouterOptions } from './options';
+import { IUrlParser } from './url-parser';
 export declare const defaultViewportName = "default";
 export type RouteContextLike = IRouteContext | ICustomElementViewModel | ICustomElementController | HTMLElement;
 /**
@@ -12,7 +13,7 @@ export type RouteContextLike = IRouteContext | ICustomElementViewModel | ICustom
  * - `IViewportInstruction`: a viewport instruction object.
  * - `RouteableComponent`: see `RouteableComponent`.
  *
- * NOTE: differs from `Routeable` only in having `IViewportIntruction` instead of `IChildRouteConfig`
+ * NOTE: differs from `Routeable` only in having `IViewportInstruction` instead of `IChildRouteConfig`
  * (which in turn are quite similar, but do have a few minor but important differences that make them non-interchangeable)
  */
 export type NavigationInstruction = string | IViewportInstruction | RouteableComponent;
@@ -70,7 +71,7 @@ export declare class ViewportInstruction<TComponent extends ITypedNavigationInst
     readonly recognizedRoute: $RecognizedRoute | null;
     readonly component: TComponent;
     readonly viewport: string | null;
-    readonly params: Params | null;
+    readonly params: Readonly<Params> | null;
     readonly children: ViewportInstruction[];
     private constructor();
     static create(instruction: NavigationInstruction | IExtendedViewportInstruction): ViewportInstruction;
@@ -86,9 +87,9 @@ export declare class ViewportInstructionTree {
     readonly queryParams: Readonly<URLSearchParams>;
     readonly fragment: string | null;
     constructor(options: NavigationOptions, isAbsolute: boolean, children: ViewportInstruction[], queryParams: Readonly<URLSearchParams>, fragment: string | null);
-    static create(instructionOrInstructions: NavigationInstruction | NavigationInstruction[], routerOptions: RouterOptions, options?: INavigationOptions, rootCtx?: IRouteContext | null): ViewportInstructionTree;
+    static create(instructionOrInstructions: NavigationInstruction | NavigationInstruction[], routerOptions: RouterOptions, options?: INavigationOptions | NavigationOptions, rootCtx?: IRouteContext | null): ViewportInstructionTree;
     equals(other: ViewportInstructionTree): boolean;
-    toUrl(isFinalInstruction: boolean, useUrlFragmentHash: boolean): string;
+    toUrl(isFinalInstruction: boolean, parser: IUrlParser): string;
     toPath(): string;
     toString(): string;
 }

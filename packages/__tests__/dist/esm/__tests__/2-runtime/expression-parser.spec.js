@@ -24,8 +24,8 @@ const $str = PrimitiveLiteralExpression.$empty;
 const $tpl = TemplateExpression.$empty;
 const $arr = ArrayLiteralExpression.$empty;
 const $obj = ObjectLiteralExpression.$empty;
-const $this = AccessThisExpression.$this;
-const $parent = AccessThisExpression.$parent;
+const $this = new AccessThisExpression(0);
+const $parent = new AccessThisExpression(1);
 const $a = new AccessScopeExpression('a');
 const $b = new AccessScopeExpression('b');
 const $c = new AccessScopeExpression('c');
@@ -1100,31 +1100,31 @@ describe('2-runtime/expression-parser.spec.ts', function () {
             case 0 /* ExpressionKind.AccessThis */:
                 expr.ancestor += count;
                 break;
-            case 1 /* ExpressionKind.AccessScope */:
+            case 2 /* ExpressionKind.AccessScope */:
                 // eslint-disable-next-line no-useless-escape
                 if (expr.ancestor > 0 || input.search(new RegExp(`\\$this[?]?\\.[a-zA-Z\$\.]*${expr.name.replaceAll('$', '\\$')}`)) > -1) {
                     expr.ancestor += count;
                 }
                 break;
-            case 2 /* ExpressionKind.ArrayLiteral */:
+            case 3 /* ExpressionKind.ArrayLiteral */:
                 for (const el of expr.elements) {
                     adjustAncestor(count, el, input);
                 }
                 break;
-            case 3 /* ExpressionKind.ObjectLiteral */:
+            case 4 /* ExpressionKind.ObjectLiteral */:
                 for (const val of expr.values) {
                     adjustAncestor(count, val, input);
                 }
                 break;
-            case 5 /* ExpressionKind.Template */:
+            case 6 /* ExpressionKind.Template */:
                 for (const ex of expr.expressions) {
                     adjustAncestor(count, ex, input);
                 }
                 break;
-            case 6 /* ExpressionKind.Unary */:
+            case 7 /* ExpressionKind.Unary */:
                 adjustAncestor(count, expr.expression, input);
                 break;
-            case 7 /* ExpressionKind.CallScope */:
+            case 8 /* ExpressionKind.CallScope */:
                 // eslint-disable-next-line no-useless-escape
                 if (expr.ancestor > 0 || input.search(new RegExp(`\\$this[?]?\\.[a-zA-Z\$\.]*${expr.name.replaceAll('$', '\\$')}`)) > -1) {
                     expr.ancestor += count;
@@ -1133,45 +1133,45 @@ describe('2-runtime/expression-parser.spec.ts', function () {
                     adjustAncestor(count, arg, input);
                 }
                 break;
-            case 8 /* ExpressionKind.CallMember */:
+            case 9 /* ExpressionKind.CallMember */:
                 adjustAncestor(count, expr.object, input);
                 for (const arg of expr.args) {
                     adjustAncestor(count, arg, input);
                 }
                 break;
-            case 9 /* ExpressionKind.CallFunction */:
+            case 10 /* ExpressionKind.CallFunction */:
                 adjustAncestor(count, expr.func, input);
                 for (const arg of expr.args) {
                     adjustAncestor(count, arg, input);
                 }
                 break;
-            case 10 /* ExpressionKind.AccessMember */:
+            case 12 /* ExpressionKind.AccessMember */:
                 adjustAncestor(count, expr.object, input);
                 break;
-            case 11 /* ExpressionKind.AccessKeyed */:
+            case 13 /* ExpressionKind.AccessKeyed */:
                 adjustAncestor(count, expr.object, input);
                 adjustAncestor(count, expr.key, input);
                 break;
-            case 12 /* ExpressionKind.TaggedTemplate */:
+            case 14 /* ExpressionKind.TaggedTemplate */:
                 adjustAncestor(count, expr.func, input);
                 // for (const ex of expr.expressions) {
                 //   adjustAncestor(count, ex, input);
                 // }
                 break;
-            case 13 /* ExpressionKind.Binary */:
+            case 15 /* ExpressionKind.Binary */:
                 adjustAncestor(count, expr.left, input);
                 adjustAncestor(count, expr.right, input);
                 break;
-            case 14 /* ExpressionKind.Conditional */:
+            case 16 /* ExpressionKind.Conditional */:
                 adjustAncestor(count, expr.yes, input);
                 adjustAncestor(count, expr.no, input);
                 adjustAncestor(count, expr.condition, input);
                 break;
-            case 15 /* ExpressionKind.Assign */:
+            case 17 /* ExpressionKind.Assign */:
                 adjustAncestor(count, expr.target, input);
                 adjustAncestor(count, expr.value, input);
                 break;
-            case 16 /* ExpressionKind.ArrowFunction */:
+            case 18 /* ExpressionKind.ArrowFunction */:
                 adjustAncestor(count, expr.body, input);
                 break;
         }
@@ -1237,7 +1237,7 @@ describe('2-runtime/expression-parser.spec.ts', function () {
         const AME = AccessMemberExpression;
         const PLE = PrimitiveLiteralExpression;
         const AKE = AccessKeyedExpression;
-        const aknd = 24 /* ExpressionKind.ArrayDestructuring */;
+        const aknd = 26 /* ExpressionKind.ArrayDestructuring */;
         const bi_a = new BindingIdentifier('a');
         const SimpleForDeclarations = [
             [`a`, bi_a],
@@ -1271,6 +1271,7 @@ describe('2-runtime/expression-parser.spec.ts', function () {
             [`[key,value]`, new DAE(aknd, [dase(0, 'key'), dase(1, 'value')], void 0, void 0)],
             [`[a,,b]`, new DAE(aknd, [dase(0, 'a'), dase(2, 'b')], void 0, void 0)],
         ];
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const ForOfStatements = [
             ...SimpleForDeclarations.map(([decInput, decExpr]) => [
                 ...SimpleIsBindingBehaviorList.map(([forInput, forExpr]) => [`${decInput} of ${forInput}`, new ForOfStatement(decExpr, forExpr, -1)])
@@ -1299,6 +1300,7 @@ describe('2-runtime/expression-parser.spec.ts', function () {
                 assert.deepStrictEqual(parseExpression(input, 2 /* ExpressionType.IsIterator */), expected);
             });
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for (const [input, expected] of SimpleForDeclarations.map(([decInput, decExpr]) => []).reduce((a, c) => a.concat(c))) {
             it(input, function () {
                 assert.deepStrictEqual(parseExpression(input, 2 /* ExpressionType.IsIterator */), expected);
@@ -1569,6 +1571,11 @@ describe('2-runtime/expression-parser.spec.ts', function () {
         for (const [input] of SimpleIsBindingBehaviorList.filter(([, e]) => !e.ancestor)) {
             it(`throw 'Unexpected keyword "of"' on "${input} of"`, function () {
                 verifyResultOrError(`${input} of`, null, 'AUR0161');
+            });
+        }
+        for (const input of [`import`, `import()`, `import('foo')`, `import(foo)`, `import.foo`, `import.meta.url`]) {
+            it(`throw 'Unexpected keyword "import"' on "${input} of"`, function () {
+                verifyResultOrError(input, null, 'AUR0162');
             });
         }
         // missing => (need to verify when __DEV__ is enabled in test env)

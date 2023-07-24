@@ -248,7 +248,7 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
                 __metadata("design:paramtypes", []),
                 __metadata("design:returntype", void 0)
             ], App.prototype, "log", null);
-            const { component, startPromise, tearDown } = createFixture('<child view-model.ref="child" prop.bind=prop>', App, [Child]);
+            const { component, startPromise, tearDown } = createFixture('<child component.ref="child" prop.bind=prop>', App, [Child]);
             await startPromise;
             assert.strictEqual(appBindingCallCount, 1);
             assert.strictEqual(appBoundCallCount, 1);

@@ -12,7 +12,7 @@ import { attributePattern, AttrSyntax } from '@aurelia/runtime-html';
  * <div some-attr.attr="someAttrValue"></div>
  * ````
  */
-let AttrAttributePattern = class AttrAttributePattern {
+export let AttrAttributePattern = class AttrAttributePattern {
     'attr.PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[1], 'attr');
     }
@@ -23,7 +23,6 @@ let AttrAttributePattern = class AttrAttributePattern {
 AttrAttributePattern = __decorate([
     attributePattern({ pattern: 'attr.PART', symbols: '.' }, { pattern: 'PART.attr', symbols: '.' })
 ], AttrAttributePattern);
-export { AttrAttributePattern };
 /**
  * Style syntax pattern recognizer, helps Aurelia understand template:
  * ```html
@@ -37,7 +36,7 @@ export { AttrAttributePattern };
  * <div style.--custom-prop-css="cssProp"></div>
  * ```
  */
-let StyleAttributePattern = class StyleAttributePattern {
+export let StyleAttributePattern = class StyleAttributePattern {
     'style.PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[1], 'style');
     }
@@ -48,7 +47,6 @@ let StyleAttributePattern = class StyleAttributePattern {
 StyleAttributePattern = __decorate([
     attributePattern({ pattern: 'style.PART', symbols: '.' }, { pattern: 'PART.style', symbols: '.' })
 ], StyleAttributePattern);
-export { StyleAttributePattern };
 /**
  * Class syntax pattern recognizer, helps Aurelia understand template:
  * ```html
@@ -58,7 +56,7 @@ export { StyleAttributePattern };
  * <div class.✔="checked"></div>
  * ```
  */
-let ClassAttributePattern = class ClassAttributePattern {
+export let ClassAttributePattern = class ClassAttributePattern {
     'class.PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[1], 'class');
     }
@@ -69,5 +67,4 @@ let ClassAttributePattern = class ClassAttributePattern {
 ClassAttributePattern = __decorate([
     attributePattern({ pattern: 'class.PART', symbols: '.' }, { pattern: 'PART.class', symbols: '.' })
 ], ClassAttributePattern);
-export { ClassAttributePattern };
 //# sourceMappingURL=attribute-pattern.js.map

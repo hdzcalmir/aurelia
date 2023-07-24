@@ -25,13 +25,12 @@ export function createSpecFunction(wrap) {
     };
     return $it;
 }
-let ToNumberValueConverter = class ToNumberValueConverter {
+export let ToNumberValueConverter = class ToNumberValueConverter {
     fromView(value) { return Number(value) || void 0; }
 };
 ToNumberValueConverter = __decorate([
     valueConverter('toNumber')
 ], ToNumberValueConverter);
-export { ToNumberValueConverter };
 export class TickLogger {
     constructor() {
         this.ticks = 0;

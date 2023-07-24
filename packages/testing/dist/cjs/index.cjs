@@ -4491,7 +4491,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         o.platform.domWriteQueue.flush(e);
     };
     const stop = (e = false) => {
-        let t;
+        let t = void 0;
         try {
             t = p.stop(e);
         } finally {
@@ -4716,7 +4716,7 @@ class MockPropertySubscriber {
 class MockTracingExpression {
     constructor(e) {
         this.inner = e;
-        this.$kind = 28;
+        this.$kind = 30;
         this.hasBind = true;
         this.hasUnbind = true;
         this.calls = [];

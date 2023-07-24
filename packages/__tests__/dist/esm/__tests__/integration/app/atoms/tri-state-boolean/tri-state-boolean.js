@@ -14,7 +14,7 @@ import template from './tri-state-boolean.html';
  * - `@aurelia/runtime-html`
  *   - `checked-observer` for boolean
  */
-let TriStateBoolean = class TriStateBoolean {
+export let TriStateBoolean = class TriStateBoolean {
 };
 __decorate([
     bindable,
@@ -35,5 +35,4 @@ __decorate([
 TriStateBoolean = __decorate([
     customElement({ name: 'tri-state-boolean', template })
 ], TriStateBoolean);
-export { TriStateBoolean };
 //# sourceMappingURL=tri-state-boolean.js.map

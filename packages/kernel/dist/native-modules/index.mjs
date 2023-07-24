@@ -423,15 +423,16 @@ class Container {
             this.root = this;
             this.u = new Map;
             this.h = new Map;
-            this.res = createObject();
+            this.res = {};
         } else {
             this.root = t.root;
             this.u = new Map;
             this.h = t.h;
+            this.res = {};
             if (e.inheritParentResources) {
-                this.res = Object.assign(createObject(), t.res, this.root.res);
-            } else {
-                this.res = createObject();
+                for (const e in t.res) {
+                    this.registerResolver(e, t.res[e]);
+                }
             }
         }
         this.u.set(A, D);
@@ -556,7 +557,7 @@ class Container {
         return null;
     }
     has(t, e = false) {
-        return this.u.has(t) ? true : e && this.parent != null ? this.parent.has(t, true) : false;
+        return this.u.has(t) || isResourceKey(t) && t in this.res ? true : e && this.parent != null ? this.parent.has(t, true) : false;
     }
     get(t) {
         validateKey(t);

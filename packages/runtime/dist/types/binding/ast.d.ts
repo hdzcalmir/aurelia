@@ -6,40 +6,42 @@ import type { IVisitor } from './ast.visitor';
 export { astVisit, IVisitor, Unparser } from './ast.visitor';
 export declare const enum ExpressionKind {
     AccessThis = 0,
-    AccessScope = 1,
-    ArrayLiteral = 2,
-    ObjectLiteral = 3,
-    PrimitiveLiteral = 4,
-    Template = 5,
-    Unary = 6,
-    CallScope = 7,
-    CallMember = 8,
-    CallFunction = 9,
-    AccessMember = 10,
-    AccessKeyed = 11,
-    TaggedTemplate = 12,
-    Binary = 13,
-    Conditional = 14,
-    Assign = 15,
-    ArrowFunction = 16,
-    ValueConverter = 17,
-    BindingBehavior = 18,
-    ArrayBindingPattern = 19,
-    ObjectBindingPattern = 20,
-    BindingIdentifier = 21,
-    ForOfStatement = 22,
-    Interpolation = 23,
-    ArrayDestructuring = 24,
-    ObjectDestructuring = 25,
-    DestructuringAssignmentLeaf = 26,
-    DestructuringAssignmentRestLeaf = 27,
-    Custom = 28
+    AccessGlobal = 1,
+    AccessScope = 2,
+    ArrayLiteral = 3,
+    ObjectLiteral = 4,
+    PrimitiveLiteral = 5,
+    Template = 6,
+    Unary = 7,
+    CallScope = 8,
+    CallMember = 9,
+    CallFunction = 10,
+    CallGlobal = 11,
+    AccessMember = 12,
+    AccessKeyed = 13,
+    TaggedTemplate = 14,
+    Binary = 15,
+    Conditional = 16,
+    Assign = 17,
+    ArrowFunction = 18,
+    ValueConverter = 19,
+    BindingBehavior = 20,
+    ArrayBindingPattern = 21,
+    ObjectBindingPattern = 22,
+    BindingIdentifier = 23,
+    ForOfStatement = 24,
+    Interpolation = 25,
+    ArrayDestructuring = 26,
+    ObjectDestructuring = 27,
+    DestructuringAssignmentLeaf = 28,
+    DestructuringAssignmentRestLeaf = 29,
+    Custom = 30
 }
 export type UnaryOperator = 'void' | 'typeof' | '!' | '-' | '+';
 export type BinaryOperator = '??' | '&&' | '||' | '==' | '===' | '!=' | '!==' | 'instanceof' | 'in' | '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=';
-export type IsPrimary = AccessThisExpression | AccessScopeExpression | ArrayLiteralExpression | ObjectLiteralExpression | PrimitiveLiteralExpression | TemplateExpression;
+export type IsPrimary = AccessThisExpression | AccessScopeExpression | AccessGlobalExpression | ArrayLiteralExpression | ObjectLiteralExpression | PrimitiveLiteralExpression | TemplateExpression;
 export type IsLiteral = ArrayLiteralExpression | ObjectLiteralExpression | PrimitiveLiteralExpression | TemplateExpression;
-export type IsLeftHandSide = IsPrimary | CallFunctionExpression | CallMemberExpression | CallScopeExpression | AccessMemberExpression | AccessKeyedExpression | TaggedTemplateExpression;
+export type IsLeftHandSide = IsPrimary | CallGlobalExpression | CallFunctionExpression | CallMemberExpression | CallScopeExpression | AccessMemberExpression | AccessKeyedExpression | TaggedTemplateExpression;
 export type IsUnary = IsLeftHandSide | UnaryExpression;
 export type IsBinary = IsUnary | BinaryExpression;
 export type IsConditional = IsBinary | ConditionalExpression;
@@ -102,10 +104,13 @@ export declare class ConditionalExpression {
     readonly $kind = ExpressionKind.Conditional;
     constructor(condition: IsBinary, yes: IsAssign, no: IsAssign);
 }
+export declare class AccessGlobalExpression {
+    readonly name: string;
+    readonly $kind: ExpressionKind.AccessGlobal;
+    constructor(name: string);
+}
 export declare class AccessThisExpression {
     readonly ancestor: number;
-    static readonly $this: AccessThisExpression;
-    static readonly $parent: AccessThisExpression;
     readonly $kind: ExpressionKind.AccessThis;
     constructor(ancestor?: number);
 }
@@ -120,6 +125,7 @@ export declare class AccessMemberExpression {
     readonly name: string;
     readonly optional: boolean;
     readonly $kind: ExpressionKind.AccessMember;
+    readonly accessGlobal: boolean;
     constructor(object: IsLeftHandSide, name: string, optional?: boolean);
 }
 export declare class AccessKeyedExpression {
@@ -127,6 +133,7 @@ export declare class AccessKeyedExpression {
     readonly key: IsAssign;
     readonly optional: boolean;
     readonly $kind = ExpressionKind.AccessKeyed;
+    readonly accessGlobal: boolean;
     constructor(object: IsLeftHandSide, key: IsAssign, optional?: boolean);
 }
 export declare class CallScopeExpression {
@@ -152,6 +159,12 @@ export declare class CallFunctionExpression {
     readonly optional: boolean;
     readonly $kind = ExpressionKind.CallFunction;
     constructor(func: IsLeftHandSide, args: readonly IsAssign[], optional?: boolean);
+}
+export declare class CallGlobalExpression {
+    readonly name: string;
+    readonly args: readonly IsAssign[];
+    readonly $kind = ExpressionKind.CallGlobal;
+    constructor(name: string, args: readonly IsAssign[]);
 }
 export declare class BinaryExpression {
     readonly operation: BinaryOperator;

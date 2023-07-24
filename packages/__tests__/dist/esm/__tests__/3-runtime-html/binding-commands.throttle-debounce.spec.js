@@ -205,7 +205,7 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
             App = __decorate([
                 customElement({
                     name: 'app',
-                    template: `<au-receiver view-model.ref="receiver" value.bind="value & debounce:25"></au-receiver>`,
+                    template: `<au-receiver component.ref="receiver" value.bind="value & debounce:25"></au-receiver>`,
                     dependencies: [Receiver],
                 })
             ], App);
@@ -255,7 +255,7 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
             App = __decorate([
                 customElement({
                     name: 'app',
-                    template: `<au-receiver view-model.ref="receiver" value.bind="value & debounce:25"></au-receiver>`,
+                    template: `<au-receiver component.ref="receiver" value.bind="value & debounce:25"></au-receiver>`,
                     dependencies: [Receiver],
                 })
             ], App);
@@ -464,7 +464,7 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
                     this.value = '0';
                 }
             }
-            const { component } = createFixture(`<au-receiver view-model.ref="receiver" value.bind="value & throttle:25"></au-receiver>`, App, [Receiver]);
+            const { component } = createFixture(`<au-receiver component.ref="receiver" value.bind="value & throttle:25"></au-receiver>`, App, [Receiver]);
             const receiver = component.receiver;
             component.value = '1';
             assert.strictEqual(receiver.value, '1');

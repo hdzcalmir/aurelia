@@ -1,5 +1,6 @@
 import { ViewportInstructionTree } from './instructions';
 import { type NavigationOptions } from './options';
+import { ParsedUrl } from './url-parser';
 export declare const enum ExpressionKind {
     Route = 0,
     CompositeSegment = 1,
@@ -14,17 +15,14 @@ export declare const enum ExpressionKind {
 }
 export type RouteExpressionOrHigher = CompositeSegmentExpressionOrHigher | RouteExpression;
 export declare class RouteExpression {
-    readonly raw: string;
     readonly isAbsolute: boolean;
     readonly root: CompositeSegmentExpressionOrHigher;
     readonly queryParams: Readonly<URLSearchParams>;
     readonly fragment: string | null;
-    readonly fragmentIsRoute: boolean;
     get kind(): ExpressionKind.Route;
-    constructor(raw: string, isAbsolute: boolean, root: CompositeSegmentExpressionOrHigher, queryParams: Readonly<URLSearchParams>, fragment: string | null, fragmentIsRoute: boolean);
-    static parse(path: string, fragmentIsRoute: boolean): RouteExpression;
+    constructor(isAbsolute: boolean, root: CompositeSegmentExpressionOrHigher, queryParams: Readonly<URLSearchParams>, fragment: string | null);
+    static parse(value: ParsedUrl): RouteExpression;
     toInstructionTree(options: NavigationOptions): ViewportInstructionTree;
-    toString(): string;
 }
 export type CompositeSegmentExpressionOrHigher = ScopedSegmentExpressionOrHigher | CompositeSegmentExpression;
 export type CompositeSegmentExpressionOrLower = RouteExpression | CompositeSegmentExpression;
@@ -50,11 +48,9 @@ export type CompositeSegmentExpressionOrLower = RouteExpression | CompositeSegme
  * - b = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
  */
 export declare class CompositeSegmentExpression {
-    readonly raw: string;
     readonly siblings: readonly ScopedSegmentExpressionOrHigher[];
     get kind(): ExpressionKind.CompositeSegment;
-    constructor(raw: string, siblings: readonly ScopedSegmentExpressionOrHigher[]);
-    toString(): string;
+    constructor(siblings: readonly ScopedSegmentExpressionOrHigher[]);
 }
 export type ScopedSegmentExpressionOrHigher = SegmentGroupExpressionOrHigher | ScopedSegmentExpression;
 export type ScopedSegmentExpressionOrLower = CompositeSegmentExpressionOrLower | ScopedSegmentExpression;
@@ -72,12 +68,10 @@ export type ScopedSegmentExpressionOrLower = CompositeSegmentExpressionOrLower |
  * - b = `ScopedSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression`)
  */
 export declare class ScopedSegmentExpression {
-    readonly raw: string;
     readonly left: SegmentGroupExpressionOrHigher;
     readonly right: ScopedSegmentExpressionOrHigher;
     get kind(): ExpressionKind.ScopedSegment;
-    constructor(raw: string, left: SegmentGroupExpressionOrHigher, right: ScopedSegmentExpressionOrHigher);
-    toString(): string;
+    constructor(left: SegmentGroupExpressionOrHigher, right: ScopedSegmentExpressionOrHigher);
 }
 export type SegmentGroupExpressionOrHigher = SegmentExpression | SegmentGroupExpression;
 export type SegmentGroupExpressionOrLower = ScopedSegmentExpressionOrLower | SegmentGroupExpression;
@@ -111,32 +105,26 @@ export type SegmentGroupExpressionOrLower = ScopedSegmentExpressionOrLower | Seg
  * - a = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
  */
 export declare class SegmentGroupExpression {
-    readonly raw: string;
     readonly expression: CompositeSegmentExpressionOrHigher;
     get kind(): ExpressionKind.SegmentGroup;
-    constructor(raw: string, expression: CompositeSegmentExpressionOrHigher);
-    toString(): string;
+    constructor(expression: CompositeSegmentExpressionOrHigher);
 }
 /**
  * A (non-composite) segment specifying a single component and (optional) viewport / action.
  */
 export declare class SegmentExpression {
-    readonly raw: string;
     readonly component: ComponentExpression;
-    readonly action: ActionExpression;
     readonly viewport: ViewportExpression;
     readonly scoped: boolean;
     get kind(): ExpressionKind.Segment;
-    static get EMPTY(): SegmentExpression;
-    constructor(raw: string, component: ComponentExpression, action: ActionExpression, viewport: ViewportExpression, scoped: boolean);
-    toString(): string;
+    static get Empty(): SegmentExpression;
+    constructor(component: ComponentExpression, viewport: ViewportExpression, scoped: boolean);
 }
 export declare class ComponentExpression {
-    readonly raw: string;
     readonly name: string;
     readonly parameterList: ParameterListExpression;
     get kind(): ExpressionKind.Component;
-    static get EMPTY(): ComponentExpression;
+    static get Empty(): ComponentExpression;
     /**
      * A single segment matching parameter, e.g. `:foo` (will match `a` but not `a/b`)
      */
@@ -153,42 +141,26 @@ export declare class ComponentExpression {
      * If this is a dynamic segment (parameter or star), this is the name of the parameter (the name without the `:` or `*`)
      */
     readonly parameterName: string;
-    constructor(raw: string, name: string, parameterList: ParameterListExpression);
-    toString(): string;
-}
-export declare class ActionExpression {
-    readonly raw: string;
-    readonly name: string;
-    readonly parameterList: ParameterListExpression;
-    get kind(): ExpressionKind.Action;
-    static get EMPTY(): ActionExpression;
-    constructor(raw: string, name: string, parameterList: ParameterListExpression);
-    toString(): string;
+    constructor(name: string, parameterList: ParameterListExpression);
 }
 export declare class ViewportExpression {
-    readonly raw: string;
     readonly name: string | null;
     get kind(): ExpressionKind.Viewport;
-    static get EMPTY(): ViewportExpression;
-    constructor(raw: string, name: string | null);
-    toString(): string;
+    static get Empty(): ViewportExpression;
+    constructor(name: string | null);
 }
 export declare class ParameterListExpression {
-    readonly raw: string;
     readonly expressions: readonly ParameterExpression[];
     get kind(): ExpressionKind.ParameterList;
-    static get EMPTY(): ParameterListExpression;
-    constructor(raw: string, expressions: readonly ParameterExpression[]);
-    toString(): string;
+    static get Empty(): ParameterListExpression;
+    constructor(expressions: readonly ParameterExpression[]);
 }
 export declare class ParameterExpression {
-    readonly raw: string;
     readonly key: string;
     readonly value: string;
     get kind(): ExpressionKind.Parameter;
-    static get EMPTY(): ParameterExpression;
-    constructor(raw: string, key: string, value: string);
-    toString(): string;
+    static get Empty(): ParameterExpression;
+    constructor(key: string, value: string);
 }
 export declare const AST: Readonly<{
     RouteExpression: typeof RouteExpression;
@@ -197,7 +169,6 @@ export declare const AST: Readonly<{
     SegmentGroupExpression: typeof SegmentGroupExpression;
     SegmentExpression: typeof SegmentExpression;
     ComponentExpression: typeof ComponentExpression;
-    ActionExpression: typeof ActionExpression;
     ViewportExpression: typeof ViewportExpression;
     ParameterListExpression: typeof ParameterListExpression;
     ParameterExpression: typeof ParameterExpression;

@@ -271,7 +271,15 @@ export interface ITemplateCompiler {
      * @param container - the container containing information for the compilation
      * @param host - the host element where the attributes are spreaded on
      */
-    compileSpread(requestor: PartialCustomElementDefinition, attrSyntaxes: AttrSyntax[], container: IContainer, host: Element): IInstruction[];
+    compileSpread(requestor: PartialCustomElementDefinition, attrSyntaxes: AttrSyntax[], container: IContainer, target: Element, 
+    /**
+     * An associated custom element definition for the target host element
+     * Sometimes spread compilation may occur without the container having all necessary information
+     * about the targeted element that is receiving the spread
+     *
+     * Caller of this method may want to provide this information dynamically instead
+     */
+    targetDef?: CustomElementDefinition): IInstruction[];
 }
 export interface ICompliationInstruction {
     /**
@@ -365,7 +373,7 @@ export declare class AttributeBindingRenderer implements IRenderer {
     render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: AttributeBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare class SpreadRenderer implements IRenderer {
-    target: InstructionType.spreadBinding;
+    readonly target: InstructionType.spreadBinding;
     render(renderingCtrl: IHydratableController, target: HTMLElement, _instruction: SpreadBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export {};

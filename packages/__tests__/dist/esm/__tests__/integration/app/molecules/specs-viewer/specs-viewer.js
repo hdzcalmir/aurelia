@@ -12,7 +12,7 @@ import { Thing, ThingViewer } from './thing-viewer.js';
 import { Camera, CameraSpecsViewer } from './camera-specs-viewer.js';
 import { Laptop, LaptopSpecsViewer } from './laptop-specs-viewer.js';
 import template from './specs-viewer.html';
-let SpecsViewer = class SpecsViewer {
+export let SpecsViewer = class SpecsViewer {
     binding() {
         const toVm = (thing) => {
             switch (true) {
@@ -32,8 +32,7 @@ __decorate([
 SpecsViewer = __decorate([
     customElement({ name: 'specs-viewer', template })
 ], SpecsViewer);
-export { SpecsViewer };
-let ViewerValueConverter = class ViewerValueConverter {
+export let ViewerValueConverter = class ViewerValueConverter {
     toView(thing) {
         switch (true) {
             case thing instanceof Camera: return CameraSpecsViewer;
@@ -46,5 +45,4 @@ let ViewerValueConverter = class ViewerValueConverter {
 ViewerValueConverter = __decorate([
     valueConverter('viewer')
 ], ViewerValueConverter);
-export { ViewerValueConverter };
 //# sourceMappingURL=specs-viewer.js.map

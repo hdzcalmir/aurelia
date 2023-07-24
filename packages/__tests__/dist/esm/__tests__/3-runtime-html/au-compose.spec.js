@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { CustomElement, customElement, INode, IRenderLocation, } from '@aurelia/runtime-html';
+import { CustomElement, customElement, INode, IRenderLocation, bindable, } from '@aurelia/runtime-html';
 import { assert, createFixture, } from '@aurelia/testing';
 describe('3-runtime-html/au-compose.spec.ts', function () {
     describe('view', function () {
@@ -30,8 +30,6 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             await startPromise;
             assert.strictEqual(appHost.textContent, 'hello world');
             component.message = 'hello';
-            const auComponentVm = CustomElement.for(appHost.querySelector('au-compose')).viewModel;
-            assert.strictEqual(auComponentVm.template, '<div>hello</div>');
             assert.strictEqual(appHost.textContent, 'hello');
             ctx.platform.domWriteQueue.flush();
             assert.strictEqual(appHost.textContent, 'hello');
@@ -55,7 +53,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.strictEqual(appHost.textContent, '');
         });
         it('understands non-inherit scope config', async function () {
-            const { ctx, component, appHost, startPromise, tearDown } = createFixture('<au-compose template.bind="view" scope-behavior="scoped">', class App {
+            const { ctx, component, appHost, startPromise, tearDown } = createFixture('<au-compose template.bind="view" scope-behavior="scoped" composition.bind="composition">', class App {
                 constructor() {
                     this.message = 'hello world';
                     this.view = `<div>\${message}</div>`;
@@ -67,8 +65,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.strictEqual(appHost.textContent, '');
             ctx.platform.domWriteQueue.flush();
             assert.strictEqual(appHost.textContent, '');
-            const auComponentVm = CustomElement.for(appHost.querySelector('au-compose')).viewModel;
-            auComponentVm.composition.controller.scope.bindingContext['message'] = 'hello';
+            component.composition.controller.scope.bindingContext['message'] = 'hello';
             assert.strictEqual(appHost.textContent, '');
             ctx.platform.domWriteQueue.flush();
             assert.strictEqual(appHost.textContent, 'hello');
@@ -76,7 +73,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.strictEqual(appHost.textContent, '');
         });
         it('understands view promise', async function () {
-            const { ctx, component, appHost, startPromise, tearDown } = createFixture('<au-compose template.bind="getView()" scope-behavior="scoped">', class App {
+            const { ctx, component, appHost, startPromise, tearDown } = createFixture('<au-compose template.bind="getView()" scope-behavior="scoped" composition.bind="composition">', class App {
                 constructor() {
                     this.message = 'hello world';
                     this.view = `<div>\${message}</div>`;
@@ -91,8 +88,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.strictEqual(appHost.textContent, '');
             ctx.platform.domWriteQueue.flush();
             assert.strictEqual(appHost.textContent, '');
-            const auComponentVm = CustomElement.for(appHost.querySelector('au-compose')).viewModel;
-            auComponentVm.composition.controller.scope.bindingContext['message'] = 'hello';
+            component.composition.controller.scope.bindingContext['message'] = 'hello';
             assert.strictEqual(appHost.textContent, '');
             ctx.platform.domWriteQueue.flush();
             assert.strictEqual(appHost.textContent, 'hello');
@@ -523,33 +519,6 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.html.innerEqual(appHost, '<parent><div>Hello world from Parent</div></parent>');
             await tearDown();
         });
-        it('-> composes containerless custom element', async function () {
-            let El = class El {
-            };
-            El = __decorate([
-                customElement({
-                    name: 'el',
-                    template: '<div>Hello world from El</div>',
-                    containerless: true,
-                })
-            ], El);
-            const { appHost, start } = createFixture(`<au-compose component.bind="El" model.bind="{ index: 0 }" containerless>`, class App {
-                constructor() {
-                    this.El = El;
-                }
-            }, [], false);
-            let ex;
-            try {
-                await start();
-            }
-            catch (e) {
-                ex = e;
-            }
-            assert.instanceOf(ex, Error);
-            // assert.includes(String(ex), 'Containerless custom element is not supported by <au-compose/>');
-            assert.includes(String(ex), 'AUR0806');
-            appHost.remove();
-        });
         it('switches POJO -> custom element -> POJO', async function () {
             let Child = class Child {
             };
@@ -613,7 +582,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
         it('works with [multiple successive updates] + [activate<Promise>]', async function () {
             const baseTimeout = 75;
             let timeout = baseTimeout;
-            const { appHost, component, startPromise, stop } = createFixture(`\${message}<au-compose component.bind="{ activate, value: i }" template.bind="view" view-model.ref="auCompose" containerless>`, class App {
+            const { appHost, component, startPromise, stop } = createFixture(`\${message}<au-compose component.bind="{ activate, value: i }" template.bind="view" composing.bind="pendingPromise" containerless>`, class App {
                 constructor() {
                     this.i = 0;
                     this.message = 'hello world';
@@ -636,8 +605,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
                 timeout--;
                 assert.strictEqual(appHost.textContent, 'hello world0');
             }
-            const auCompose = component.auCompose;
-            await auCompose.pending;
+            await component.pendingPromise;
             assert.strictEqual(appHost.textContent, `hello world38`);
             assert.html.innerEqual(appHost, 'hello world<div>38</div>');
             void stop();
@@ -677,7 +645,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
                 return new Promise(r => setTimeout(r, Math.random() * timeout--));
             }
         });
-        const { appHost, component, startPromise, tearDown } = createFixture(`\${message}<au-compose component.bind="vm" model.bind="message" view-model.ref="auCompose" containerless>`, class App {
+        const { appHost, component, startPromise, tearDown } = createFixture(`\${message}<au-compose component.bind="vm" model.bind="message" composing.bind="pendingPromise" containerless>`, class App {
             constructor() {
                 this.i = 0;
                 this.message = 'hello world';
@@ -692,8 +660,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
         assert.strictEqual(appHost.textContent, `hello worldhello world 1`);
         // in the interim before a composition is completely disposed, on the fly host created will be in the doc
         assert.html.innerEqual(appHost, 'hello world<el1><div>hello world 1</div></el1><el2></el2>');
-        const auCompose = component.auCompose;
-        await auCompose.pending;
+        await component.pendingPromise;
         assert.strictEqual(appHost.textContent, `hello worldhello world 2`);
         assert.html.innerEqual(appHost, 'hello world<el2><p>hello world 2</p></el2>');
         await tearDown();
@@ -756,7 +723,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
                 lifecyclesCalls.push('2.unbinding');
             }
         });
-        const { appHost, component, startPromise, tearDown } = createFixture(`\${message}<au-compose component.bind="vm" model.bind="message" view-model.ref="auCompose" containerless>`, class App {
+        const { appHost, component, startPromise, tearDown } = createFixture(`\${message}<au-compose component.bind="vm" model.bind="message" composing.bind="pendingPromise" containerless>`, class App {
             constructor() {
                 this.i = 0;
                 this.message = 'hello world';
@@ -812,8 +779,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             '1.unbinding',
             // 1.3 ends
         ]);
-        const auCompose = component.auCompose;
-        await auCompose.pending;
+        await component.pendingPromise;
         await tearDown();
         assert.strictEqual(appHost.textContent, '');
     });
@@ -883,5 +849,223 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             await new Promise(r => setTimeout(r, 150));
         });
     }
+    describe('containerless', function () {
+        it('composes containerless', function () {
+            const { appHost, component } = createFixture('<au-compose component.bind="comp">', class {
+                constructor() {
+                    this.comp = CustomElement.define({
+                        name: 'my-button',
+                        template: '<button>click me',
+                        containerless: true,
+                    });
+                }
+            });
+            assert.strictEqual(appHost.innerHTML, '<au-compose><!--au-start--><button>click me</button><!--au-end--></au-compose>');
+            component.comp = {};
+            assert.strictEqual(appHost.innerHTML, '<au-compose></au-compose>');
+        });
+        it('composes containerless inside a containerless <au-compose>', function () {
+            const { appHost, component } = createFixture('<au-compose component.bind="comp" containerless>', class {
+                constructor() {
+                    this.comp = CustomElement.define({
+                        name: 'my-button',
+                        template: '<button>click me',
+                        containerless: true,
+                    });
+                }
+            });
+            assert.strictEqual(appHost.innerHTML, '<!--au-start--><!--au-start--><button>click me</button><!--au-end--><!--au-end-->');
+            component.comp = {};
+            assert.strictEqual(appHost.innerHTML, '<!--au-start--><!--au-end-->');
+        });
+    });
+    describe('pass through props', function () {
+        it('passes through ref binding', function () {
+            let El = class El {
+            };
+            El = __decorate([
+                customElement('el')
+            ], El);
+            const { component } = createFixture('<au-compose component.bind="comp" component.ref="el">', class {
+                constructor() {
+                    this.comp = El;
+                }
+            });
+            assert.instanceOf(component.el, El);
+        });
+        it('passes through attribute as bindable', function () {
+            let El = class El {
+            };
+            __decorate([
+                bindable(),
+                __metadata("design:type", Object)
+            ], El.prototype, "message", void 0);
+            El = __decorate([
+                customElement({
+                    name: 'el',
+                    template: '${message}'
+                })
+            ], El);
+            const { assertText, assertHtml } = createFixture('<au-compose component.bind="comp" message.bind="msg">', class {
+                constructor() {
+                    this.comp = El;
+                    this.msg = 'hello world';
+                }
+            });
+            assertText('hello world');
+            assertHtml('<au-compose><el>hello world</el></au-compose>');
+        });
+        it('passes through combination of normal and bindable attrs', function () {
+            let El = class El {
+            };
+            __decorate([
+                bindable(),
+                __metadata("design:type", Object)
+            ], El.prototype, "message", void 0);
+            El = __decorate([
+                customElement({
+                    name: 'el',
+                    template: '${message}'
+                })
+            ], El);
+            const { assertText, assertHtml } = createFixture('<au-compose component.bind="comp" id.bind="1" message.bind="msg" class="el">', class {
+                constructor() {
+                    this.comp = El;
+                    this.msg = 'hello world';
+                }
+            });
+            assertText('hello world');
+            // .bind on id.bind causes the value to be set during .bind
+            // which is after class attr, which is during rendering (composition)
+            assertHtml('<au-compose><el class="el" id="1">hello world</el></au-compose>');
+        });
+        it('switches & cleans up after switching custom element view model', function () {
+            let el1MessageCount = 0;
+            let El1 = class El1 {
+                messageChanged() {
+                    el1MessageCount++;
+                }
+            };
+            __decorate([
+                bindable(),
+                __metadata("design:type", Object)
+            ], El1.prototype, "message", void 0);
+            El1 = __decorate([
+                customElement({
+                    name: 'el-1',
+                    template: '${message}'
+                })
+            ], El1);
+            let El2 = class El2 {
+            };
+            __decorate([
+                bindable(),
+                __metadata("design:type", Object)
+            ], El2.prototype, "message", void 0);
+            __decorate([
+                bindable,
+                __metadata("design:type", Object)
+            ], El2.prototype, "id", void 0);
+            El2 = __decorate([
+                customElement({
+                    name: 'el-2',
+                    template: '${id} hey there ${message}'
+                })
+            ], El2);
+            const { component, assertText, assertHtml } = createFixture('<au-compose component.bind="comp" id.bind="1" message.bind="msg" class="el">', class {
+                constructor() {
+                    this.comp = El1;
+                    this.msg = 'hello world';
+                }
+            });
+            assertText('hello world');
+            assert.strictEqual(el1MessageCount, 0);
+            component.comp = El2;
+            assertText('1 hey there hello world');
+            assertHtml('<au-compose><el-2 class="el">1 hey there hello world</el-2></au-compose>');
+            // all bindings to old vm were unbound
+            assert.strictEqual(el1MessageCount, 0);
+        });
+        it('passes attributes into ...$attrs', function () {
+            let MyInput = class MyInput {
+            };
+            MyInput = __decorate([
+                customElement({
+                    name: 'my-input',
+                    capture: true,
+                    template: '<input ...$attrs />'
+                })
+            ], MyInput);
+            const { assertValue } = createFixture('<au-compose component.bind="comp" value.bind="message" />', class {
+                constructor() {
+                    this.comp = MyInput;
+                    this.message = 'hello world';
+                }
+            }, [MyInput]);
+            assertValue('input', 'hello world');
+        });
+        it('passes ...$attrs on <au-compose>', function () {
+            let MyInput = class MyInput {
+            };
+            MyInput = __decorate([
+                customElement({
+                    name: 'my-input',
+                    capture: true,
+                    template: '<input ...$attrs />'
+                })
+            ], MyInput);
+            let Field = class Field {
+                constructor() {
+                    this.comp = MyInput;
+                }
+            };
+            Field = __decorate([
+                customElement({
+                    name: 'field',
+                    capture: true,
+                    template: '<au-compose component.bind="comp" ...$attrs >'
+                })
+            ], Field);
+            const { assertValue, component, type } = createFixture('<field value.bind="message" />', class {
+                constructor() {
+                    this.message = 'hello world';
+                }
+            }, [Field]);
+            assertValue('input', 'hello world');
+            type('input', 'hey');
+            assert.strictEqual(component.message, 'hey');
+        });
+        it('transfers through ...$attrs', function () {
+            let MyInput = class MyInput {
+            };
+            MyInput = __decorate([
+                customElement({
+                    name: 'my-input',
+                    capture: true,
+                    template: '<input ...$attrs />'
+                })
+            ], MyInput);
+            let Field = class Field {
+            };
+            Field = __decorate([
+                customElement({
+                    name: 'field',
+                    capture: true,
+                    template: '<my-input ...$attrs />',
+                    dependencies: [MyInput]
+                })
+            ], Field);
+            const { assertAttr, assertValue, component, type } = createFixture('<au-compose component.bind="comp" value.bind="message" id="i1" >', class {
+                constructor() {
+                    this.comp = Field;
+                    this.message = 'hello world';
+                }
+            }, [Field]);
+            assertValue('input', 'hello world');
+            assertAttr('input', 'id', 'i1');
+            type('input', 'hey');
+            assert.strictEqual(component.message, 'hey');
+        });
+    });
 });
 //# sourceMappingURL=au-compose.spec.js.map

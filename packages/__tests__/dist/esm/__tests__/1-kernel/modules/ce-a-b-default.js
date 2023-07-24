@@ -5,18 +5,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { customElement } from '@aurelia/runtime-html';
-let A = class A {
+export let A = class A {
 };
 A = __decorate([
     customElement({ name: 'a' })
 ], A);
-export { A };
-let B = class B {
+export let B = class B {
 };
 B = __decorate([
     customElement({ name: 'b' })
 ], B);
-export { B };
 let default_1 = class {
 };
 default_1 = __decorate([

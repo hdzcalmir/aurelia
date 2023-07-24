@@ -99,7 +99,7 @@ function bindable(configOrTarget, prop) {
             // Invocation with or w/o opts:
             // - @bindable()
             // - @bindable({...opts})
-            config.property = $prop;
+            config.name = $prop;
         }
         defineMetadata(baseName, BindableDefinition.create($prop, $target, config), $target.constructor, $prop);
         appendAnnotationKey($target.constructor, Bindable.keyFrom($prop));
@@ -146,7 +146,7 @@ const Bindable = objectFreeze({
                 maybeList.forEach(addName);
             }
             else if (maybeList instanceof BindableDefinition) {
-                bindables[maybeList.property] = maybeList;
+                bindables[maybeList.name] = maybeList;
             }
             else if (maybeList !== void 0) {
                 objectKeys(maybeList).forEach(name => addDescription(name, maybeList[name]));
@@ -177,16 +177,16 @@ const Bindable = objectFreeze({
     },
 });
 class BindableDefinition {
-    constructor(attribute, callback, mode, primary, property, set) {
+    constructor(attribute, callback, mode, primary, name, set) {
         this.attribute = attribute;
         this.callback = callback;
         this.mode = mode;
         this.primary = primary;
-        this.property = property;
+        this.name = name;
         this.set = set;
     }
     static create(prop, target, def = {}) {
-        return new BindableDefinition(def.attribute ?? kernel.kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? 2 /* BindingMode.toView */, def.primary ?? false, def.property ?? prop, def.set ?? getInterceptor(prop, target, def));
+        return new BindableDefinition(def.attribute ?? kernel.kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? 2 /* BindingMode.toView */, def.primary ?? false, def.name ?? prop, def.set ?? getInterceptor(prop, target, def));
     }
 }
 /* eslint-enable @typescript-eslint/no-unused-vars,spaced-comment */
@@ -390,7 +390,8 @@ const errorsMap = {
     [802 /* ErrorNames.update_trigger_behavior_no_triggers */]: `"& updateTrigger" invalid usage. This binding behavior requires at least one event name argument: eg <input value.bind="firstName & updateTrigger:'blur'">`,
     [803 /* ErrorNames.update_trigger_invalid_usage */]: `"& updateTrigger" invalid usage. This binding behavior can only be applied to two-way/ from-view bindings.`,
     [805 /* ErrorNames.au_compose_invalid_scope_behavior */]: `Invalid scope behavior "{{0}}" on <au-compose />. Only "scoped" or "auto" allowed.`,
-    [806 /* ErrorNames.au_compose_containerless */]: `Containerless custom element {{0:name}} is not supported by <au-compose />`,
+    // originally not supported
+    // [ErrorNames.au_compose_containerless]: `Containerless custom element {{0:name}} is not supported by <au-compose />`,
     [807 /* ErrorNames.au_compose_invalid_run */]: `Composition has already been activated/deactivated. Id: {{0:controller}}`,
     [808 /* ErrorNames.au_compose_duplicate_deactivate */]: `Composition has already been deactivated.`,
     [810 /* ErrorNames.else_without_if */]: `Invalid [else] usage, it should follow an [if]`,
@@ -2153,7 +2154,7 @@ class ExpressionWatcher {
         const expr = this._expression;
         const obj = this.obj;
         const oldValue = this._value;
-        const canOptimize = expr.$kind === 1 /* ExpressionKind.AccessScope */ && this.obs.count === 1;
+        const canOptimize = expr.$kind === 2 /* ExpressionKind.AccessScope */ && this.obs.count === 1;
         if (!canOptimize) {
             this.obs.version++;
             value = runtime.astEvaluate(expr, this.scope, this, this);
@@ -2354,6 +2355,7 @@ class AttributeBinding {
     }
     handleChange() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         let task;
@@ -2386,6 +2388,7 @@ class AttributeBinding {
     bind(_scope) {
         if (this.isBound) {
             if (this._scope === _scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -2399,6 +2402,7 @@ class AttributeBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -2415,7 +2419,7 @@ mixingBindingLimited(AttributeBinding, () => 'updateTarget');
 runtime.connectable(AttributeBinding);
 mixinAstEvaluator(true)(AttributeBinding);
 
-const queueTaskOptions = {
+const queueTaskOptions$1 = {
     reusable: false,
     preempt: true,
 };
@@ -2476,7 +2480,7 @@ class InterpolationBinding {
             this._task = this._taskQueue.queueTask(() => {
                 this._task = null;
                 targetObserver.setValue(result, this.target, this.targetProperty);
-            }, queueTaskOptions);
+            }, queueTaskOptions$1);
             task?.cancel();
             task = null;
         }
@@ -2487,6 +2491,7 @@ class InterpolationBinding {
     bind(_scope) {
         if (this.isBound) {
             if (this._scope === _scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -2503,6 +2508,7 @@ class InterpolationBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -2541,6 +2547,7 @@ class InterpolationPartBinding {
     }
     handleChange() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.obs.version++;
@@ -2559,11 +2566,12 @@ class InterpolationPartBinding {
         }
     }
     handleCollectionChange() {
-        this.handleChange();
+        this.updateTarget();
     }
     bind(_scope) {
         if (this.isBound) {
             if (this._scope === _scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -2578,6 +2586,7 @@ class InterpolationPartBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -2590,15 +2599,19 @@ mixinUseScope(InterpolationPartBinding);
 mixingBindingLimited(InterpolationPartBinding, () => 'updateTarget');
 runtime.connectable(InterpolationPartBinding);
 mixinAstEvaluator(true)(InterpolationPartBinding);
+
+const queueTaskOptions = {
+    reusable: false,
+    preempt: true,
+};
 /**
  * A binding for handling the element content interpolation
  */
 class ContentBinding {
-    constructor(controller, locator, observerLocator, taskQueue, p, ast, target, strict) {
+    constructor(controller, locator, observerLocator, taskQueue, p, ast, target) {
         this.p = p;
         this.ast = ast;
         this.target = target;
-        this.strict = strict;
         this.isBound = false;
         // at runtime, mode may be overriden by binding behavior
         // but it wouldn't matter here, just start with something for later check
@@ -2612,6 +2625,7 @@ class ContentBinding {
         // see Listener binding for explanation
         /** @internal */
         this.boundFn = false;
+        this.strict = true;
         this.l = locator;
         this._controller = controller;
         this.oL = observerLocator;
@@ -2630,10 +2644,12 @@ class ContentBinding {
             value = '';
             this._needsRemoveNode = true;
         }
-        target.textContent = safeString(value);
+        // console.log({ value, type: typeof value });
+        target.textContent = safeString(value ?? '');
     }
     handleChange() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.obs.version++;
@@ -2659,6 +2675,7 @@ class ContentBinding {
     }
     handleCollectionChange() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.obs.version++;
@@ -2678,6 +2695,7 @@ class ContentBinding {
     bind(_scope) {
         if (this.isBound) {
             if (this._scope === _scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -2693,6 +2711,7 @@ class ContentBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -2744,6 +2763,7 @@ class LetBinding {
     }
     handleChange() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.obs.version++;
@@ -2757,6 +2777,7 @@ class LetBinding {
     bind(_scope) {
         if (this.isBound) {
             if (this._scope === _scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -2770,6 +2791,7 @@ class LetBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -2814,6 +2836,7 @@ class PropertyBinding {
     }
     handleChange() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.obs.version++;
@@ -2843,6 +2866,7 @@ class PropertyBinding {
     bind(scope) {
         if (this.isBound) {
             if (this._scope === scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -2875,6 +2899,7 @@ class PropertyBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -2930,6 +2955,7 @@ class RefBinding {
     bind(_scope) {
         if (this.isBound) {
             if (this._scope === _scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -2942,6 +2968,7 @@ class RefBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -2999,6 +3026,7 @@ class ListenerBinding {
     handleEvent(event) {
         if (this.self) {
             if (this.target !== event.composedPath()[0]) {
+                /* istanbul-ignore-next */
                 return;
             }
         }
@@ -3007,6 +3035,7 @@ class ListenerBinding {
     bind(scope) {
         if (this.isBound) {
             if (this._scope === scope) {
+                /* istanbul-ignore-next */
                 return;
             }
             this.unbind();
@@ -3018,6 +3047,7 @@ class ListenerBinding {
     }
     unbind() {
         if (!this.isBound) {
+            /* istanbul-ignore-next */
             return;
         }
         this.isBound = false;
@@ -3202,6 +3232,109 @@ function slotted(queryOrDef, slotName) {
     return decorator;
 }
 let mixed$1 = false;
+
+/**
+ * The public methods of this binding emulates the necessary of an IHydratableController,
+ * which mainly is the addBinding method since a spread binding
+ * is a surrogate of other bindings created from the captured attrs
+ */
+class SpreadBinding {
+    /**
+     * Create a list of SpreadBinding by searching for captured attributes in HydrationContexts
+     * from a container
+     */
+    static create(hydrationContext, target, 
+    /**
+     * To be supplied to the compilation of spread' attrs
+     * Sometimes in dynamic compilation scenario, this could be used to influence
+     * what attributes can be compiled into (i.e bindable vs normal)
+     */
+    targetDef, rendering, compiler, platform, exprParser, observerLocator) {
+        const bindings = [];
+        const renderers = rendering.renderers;
+        const getHydrationContext = (ancestor) => {
+            let currentLevel = ancestor;
+            let currentContext = hydrationContext;
+            while (currentContext != null && currentLevel > 0) {
+                currentContext = currentContext.parent;
+                --currentLevel;
+            }
+            if (currentContext == null) {
+                throw createMappedError(9999 /* ErrorNames.no_spread_scope_context_found */);
+            }
+            return currentContext;
+        };
+        const renderSpreadInstruction = (ancestor) => {
+            const context = getHydrationContext(ancestor);
+            const spreadBinding = new SpreadBinding(context);
+            const instructions = compiler.compileSpread(context.controller.definition, context.instruction?.captures ?? kernel.emptyArray, context.controller.container, target, targetDef);
+            let inst;
+            for (inst of instructions) {
+                switch (inst.type) {
+                    case "hs" /* InstructionType.spreadBinding */:
+                        renderSpreadInstruction(ancestor + 1);
+                        break;
+                    case "hp" /* InstructionType.spreadElementProp */:
+                        renderers[inst.instructions.type].render(spreadBinding, findElementControllerFor(target), inst.instructions, platform, exprParser, observerLocator);
+                        break;
+                    default:
+                        renderers[inst.type].render(spreadBinding, target, inst, platform, exprParser, observerLocator);
+                }
+            }
+            bindings.push(spreadBinding);
+        };
+        renderSpreadInstruction(0);
+        return bindings;
+    }
+    get container() {
+        return this.locator;
+    }
+    get definition() {
+        return this.$controller.definition;
+    }
+    get isStrictBinding() {
+        return this.$controller.isStrictBinding;
+    }
+    get state() {
+        return this.$controller.state;
+    }
+    constructor(
+    /** @internal */ _hydrationContext) {
+        this._hydrationContext = _hydrationContext;
+        this.isBound = false;
+        /** @internal */ this._innerBindings = [];
+        this.$controller = _hydrationContext.controller;
+        this.locator = this.$controller.container;
+    }
+    get(key) {
+        return this.locator.get(key);
+    }
+    bind(_scope) {
+        if (this.isBound) {
+            /* istanbul-ignore-next */
+            return;
+        }
+        this.isBound = true;
+        const innerScope = this.scope = this._hydrationContext.controller.scope.parent ?? void 0;
+        if (innerScope == null) {
+            throw createMappedError(9999 /* ErrorNames.no_spread_scope_context_found */);
+        }
+        this._innerBindings.forEach(b => b.bind(innerScope));
+    }
+    unbind() {
+        this._innerBindings.forEach(b => b.unbind());
+        this.isBound = false;
+    }
+    addBinding(binding) {
+        this._innerBindings.push(binding);
+    }
+    addChild(controller) {
+        if (controller.vmKind !== 1 /* ViewModelKind.customAttribute */) {
+            throw createMappedError(9998 /* ErrorNames.no_spread_template_controller */);
+        }
+        this.$controller.addChild(controller);
+    }
+}
 
 exports.InstructionType = void 0;
 (function (InstructionType) {
@@ -3469,7 +3602,7 @@ function getRefTarget(refHost, refTargetName) {
             return findElementControllerFor(refHost);
         case 'view':
             throw createMappedError(750 /* ErrorNames.not_supported_view_ref_api */);
-        case 'view-model':
+        case 'component':
             // this means it supports returning undefined
             return findElementControllerFor(refHost).viewModel;
         default: {
@@ -3485,9 +3618,7 @@ function getRefTarget(refHost, refTargetName) {
         }
     }
 }
-exports.SetPropertyRenderer = 
-/** @internal */
-class SetPropertyRenderer {
+exports.SetPropertyRenderer = class SetPropertyRenderer {
     render(renderingCtrl, target, instruction) {
         const obj = getTarget(target);
         if (obj.$observers?.[instruction.to] !== void 0) {
@@ -3502,9 +3633,7 @@ exports.SetPropertyRenderer = __decorate([
     renderer("re" /* InstructionType.setProperty */)
     /** @internal */
 ], exports.SetPropertyRenderer);
-exports.CustomElementRenderer = 
-/** @internal */
-class CustomElementRenderer {
+exports.CustomElementRenderer = class CustomElementRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
     }
@@ -3572,9 +3701,7 @@ exports.CustomElementRenderer = __decorate([
     renderer("ra" /* InstructionType.hydrateElement */)
     /** @internal */
 ], exports.CustomElementRenderer);
-exports.CustomAttributeRenderer = 
-/** @internal */
-class CustomAttributeRenderer {
+exports.CustomAttributeRenderer = class CustomAttributeRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
     }
@@ -3635,9 +3762,7 @@ exports.CustomAttributeRenderer = __decorate([
     renderer("rb" /* InstructionType.hydrateAttribute */)
     /** @internal */
 ], exports.CustomAttributeRenderer);
-exports.TemplateControllerRenderer = 
-/** @internal */
-class TemplateControllerRenderer {
+exports.TemplateControllerRenderer = class TemplateControllerRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
     }
@@ -3697,9 +3822,7 @@ exports.TemplateControllerRenderer = __decorate([
     renderer("rc" /* InstructionType.hydrateTemplateController */)
     /** @internal */
 ], exports.TemplateControllerRenderer);
-exports.LetElementRenderer = 
-/** @internal */
-class LetElementRenderer {
+exports.LetElementRenderer = class LetElementRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         target.remove();
         const childInstructions = instruction.instructions;
@@ -3721,9 +3844,7 @@ exports.LetElementRenderer = __decorate([
     renderer("rd" /* InstructionType.hydrateLetElement */)
     /** @internal */
 ], exports.LetElementRenderer);
-exports.RefBindingRenderer = 
-/** @internal */
-class RefBindingRenderer {
+exports.RefBindingRenderer = class RefBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new RefBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */), getRefTarget(target, instruction.to)));
     }
@@ -3732,9 +3853,7 @@ exports.RefBindingRenderer = __decorate([
     renderer("rj" /* InstructionType.refBinding */)
     /** @internal */
 ], exports.RefBindingRenderer);
-exports.InterpolationBindingRenderer = 
-/** @internal */
-class InterpolationBindingRenderer {
+exports.InterpolationBindingRenderer = class InterpolationBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 1 /* ExpressionType.Interpolation */), getTarget(target), instruction.to, 2 /* BindingMode.toView */));
     }
@@ -3743,9 +3862,7 @@ exports.InterpolationBindingRenderer = __decorate([
     renderer("rf" /* InstructionType.interpolation */)
     /** @internal */
 ], exports.InterpolationBindingRenderer);
-exports.PropertyBindingRenderer = 
-/** @internal */
-class PropertyBindingRenderer {
+exports.PropertyBindingRenderer = class PropertyBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */), getTarget(target), instruction.to, instruction.mode));
     }
@@ -3754,9 +3871,7 @@ exports.PropertyBindingRenderer = __decorate([
     renderer("rg" /* InstructionType.propertyBinding */)
     /** @internal */
 ], exports.PropertyBindingRenderer);
-exports.IteratorBindingRenderer = 
-/** @internal */
-class IteratorBindingRenderer {
+exports.IteratorBindingRenderer = class IteratorBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.forOf, 2 /* ExpressionType.IsIterator */), getTarget(target), instruction.to, 2 /* BindingMode.toView */));
     }
@@ -3765,20 +3880,16 @@ exports.IteratorBindingRenderer = __decorate([
     renderer("rk" /* InstructionType.iteratorBinding */)
     /** @internal */
 ], exports.IteratorBindingRenderer);
-exports.TextBindingRenderer = 
-/** @internal */
-class TextBindingRenderer {
+exports.TextBindingRenderer = class TextBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, platform, ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */), target, instruction.strict));
+        renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, platform, ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */), target));
     }
 };
 exports.TextBindingRenderer = __decorate([
     renderer("ha" /* InstructionType.textBinding */)
     /** @internal */
 ], exports.TextBindingRenderer);
-exports.ListenerBindingRenderer = 
-/** @internal */
-class ListenerBindingRenderer {
+exports.ListenerBindingRenderer = class ListenerBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */), target, instruction.to, new ListenerBindingOptions(instruction.preventDefault, instruction.capture)));
     }
@@ -3787,9 +3898,7 @@ exports.ListenerBindingRenderer = __decorate([
     renderer("hb" /* InstructionType.listenerBinding */)
     /** @internal */
 ], exports.ListenerBindingRenderer);
-exports.SetAttributeRenderer = 
-/** @internal */
-class SetAttributeRenderer {
+exports.SetAttributeRenderer = class SetAttributeRenderer {
     render(_, target, instruction) {
         target.setAttribute(instruction.to, instruction.value);
     }
@@ -3838,9 +3947,7 @@ const ambiguousStyles = [
     'bottom',
     'left',
 ];
-exports.StylePropertyBindingRenderer = 
-/** @internal */
-class StylePropertyBindingRenderer {
+exports.StylePropertyBindingRenderer = class StylePropertyBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         {
             /* istanbul ignore next */
@@ -3866,9 +3973,7 @@ class DevStylePropertyBinding extends PropertyBinding {
         return super.updateTarget(value);
     }
 }
-exports.AttributeBindingRenderer = 
-/** @internal */
-class AttributeBindingRenderer {
+exports.AttributeBindingRenderer = class AttributeBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const container = renderingCtrl.container;
         const classMapping = container.has(ICssModulesMapping, false)
@@ -3889,96 +3994,14 @@ exports.SpreadRenderer = class SpreadRenderer {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
     }
     render(renderingCtrl, target, _instruction, platform, exprParser, observerLocator) {
-        const container = renderingCtrl.container;
-        const hydrationContext = container.get(IHydrationContext);
-        const renderers = this._rendering.renderers;
-        const getHydrationContext = (ancestor) => {
-            let currentLevel = ancestor;
-            let currentContext = hydrationContext;
-            while (currentContext != null && currentLevel > 0) {
-                currentContext = currentContext.parent;
-                --currentLevel;
-            }
-            if (currentContext == null) {
-                throw createMappedError(9999 /* ErrorNames.no_spread_scope_context_found */);
-            }
-            return currentContext;
-        };
-        const renderSpreadInstruction = (ancestor) => {
-            const context = getHydrationContext(ancestor);
-            const spreadBinding = createSurrogateBinding(context);
-            const instructions = this._compiler.compileSpread(context.controller.definition, context.instruction?.captures ?? kernel.emptyArray, context.controller.container, target);
-            let inst;
-            for (inst of instructions) {
-                switch (inst.type) {
-                    case "hs" /* InstructionType.spreadBinding */:
-                        renderSpreadInstruction(ancestor + 1);
-                        break;
-                    case "hp" /* InstructionType.spreadElementProp */:
-                        renderers[inst.instructions.type].render(spreadBinding, findElementControllerFor(target), inst.instructions, platform, exprParser, observerLocator);
-                        break;
-                    default:
-                        renderers[inst.type].render(spreadBinding, target, inst, platform, exprParser, observerLocator);
-                }
-            }
-            renderingCtrl.addBinding(spreadBinding);
-        };
-        renderSpreadInstruction(0);
+        SpreadBinding
+            .create(renderingCtrl.container.get(IHydrationContext), target, void 0, this._rendering, this._compiler, platform, exprParser, observerLocator)
+            .forEach(b => renderingCtrl.addBinding(b));
     }
 };
 exports.SpreadRenderer = __decorate([
     renderer("hs" /* InstructionType.spreadBinding */)
 ], exports.SpreadRenderer);
-class SpreadBinding {
-    get container() {
-        return this.locator;
-    }
-    get definition() {
-        return this.$controller.definition;
-    }
-    get isStrictBinding() {
-        return this.$controller.isStrictBinding;
-    }
-    get state() {
-        return this.$controller.state;
-    }
-    constructor(
-    /** @internal */ _innerBindings, 
-    /** @internal */ _hydrationContext) {
-        this._innerBindings = _innerBindings;
-        this._hydrationContext = _hydrationContext;
-        this.isBound = false;
-        this.$controller = _hydrationContext.controller;
-        this.locator = this.$controller.container;
-    }
-    get(key) {
-        return this.locator.get(key);
-    }
-    bind(_scope) {
-        if (this.isBound) {
-            return;
-        }
-        this.isBound = true;
-        const innerScope = this.scope = this._hydrationContext.controller.scope.parent ?? void 0;
-        if (innerScope == null) {
-            throw createMappedError(9999 /* ErrorNames.no_spread_scope_context_found */);
-        }
-        this._innerBindings.forEach(b => b.bind(innerScope));
-    }
-    unbind() {
-        this._innerBindings.forEach(b => b.unbind());
-        this.isBound = false;
-    }
-    addBinding(binding) {
-        this._innerBindings.push(binding);
-    }
-    addChild(controller) {
-        if (controller.vmKind !== 1 /* ViewModelKind.customAttribute */) {
-            throw createMappedError(9998 /* ErrorNames.no_spread_template_controller */);
-        }
-        this.$controller.addChild(controller);
-    }
-}
 // http://jsben.ch/7n5Kt
 function addClasses(classList, className) {
     const len = className.length;
@@ -3995,7 +4018,8 @@ function addClasses(classList, className) {
         }
     }
 }
-const createSurrogateBinding = (context) => new SpreadBinding([], context);
+// const createSurrogateBinding = (context: IHydrationContext<object>) =>
+//   new SpreadBinding([], context) as SpreadBinding & IHydratableController;
 const controllerProviderName = 'IController';
 const instructionProviderName = 'IInstruction';
 const locationProviderName = 'IRenderLocation';
@@ -4672,7 +4696,7 @@ class Controller {
         this.$initiator = initiator;
         // opposing leave is called in attach() (which will trigger attached())
         this._enterActivating();
-        let ret;
+        let ret = void 0;
         if (this.vmKind !== 2 /* ViewModelKind.synthetic */ && this._lifecycleHooks.binding != null) {
             /* istanbul ignore next */
             if (this.debug) {
@@ -4714,7 +4738,7 @@ class Controller {
         }
         let i = 0;
         let ii = 0;
-        let ret;
+        let ret = void 0;
         if (this.bindings !== null) {
             i = 0;
             ii = this.bindings.length;
@@ -5085,7 +5109,7 @@ class Controller {
             this._enterUnbinding();
             this.removeNodes();
             let cur = this.$initiator.head;
-            let ret;
+            let ret = void 0;
             while (cur !== null) {
                 if (cur !== this) {
                     /* istanbul ignore next */
@@ -5395,6 +5419,7 @@ function stringifyState(state) {
 }
 const IController = /*@__PURE__*/ createInterface('IController');
 const IHydrationContext = /*@__PURE__*/ createInterface('IHydrationContext');
+/** @internal */
 class HydrationContext {
     constructor(controller, instruction, parent) {
         this.instruction = instruction;
@@ -6095,7 +6120,16 @@ exports.RefAttributePattern = class RefAttributePattern {
         return new AttrSyntax(rawName, rawValue, 'element', 'ref');
     }
     'PART.ref'(rawName, rawValue, parts) {
-        return new AttrSyntax(rawName, rawValue, parts[0], 'ref');
+        let target = parts[0];
+        if (target === 'view-model') {
+            target = 'component';
+            {
+                // eslint-disable-next-line no-console
+                console.warn(`[aurelia] Detected view-model.ref usage: "${rawName}=${rawValue}".`
+                    + ` This is deprecated and component.ref should be used instead`);
+            }
+        }
+        return new AttrSyntax(rawName, rawValue, target, 'ref');
     }
 };
 exports.RefAttributePattern = __decorate([
@@ -6207,7 +6241,7 @@ exports.OneTimeBindingCommand = class OneTimeBindingCommand {
             if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = kernel.camelCase(target);
             }
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, 1 /* BindingMode.oneTime */);
     }
@@ -6233,7 +6267,7 @@ exports.ToViewBindingCommand = class ToViewBindingCommand {
             if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = kernel.camelCase(target);
             }
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, 2 /* BindingMode.toView */);
     }
@@ -6259,7 +6293,7 @@ exports.FromViewBindingCommand = class FromViewBindingCommand {
             if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = kernel.camelCase(target);
             }
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, 4 /* BindingMode.fromView */);
     }
@@ -6285,7 +6319,7 @@ exports.TwoWayBindingCommand = class TwoWayBindingCommand {
             if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = kernel.camelCase(target);
             }
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, 6 /* BindingMode.twoWay */);
     }
@@ -6321,7 +6355,7 @@ exports.DefaultBindingCommand = class DefaultBindingCommand {
                     ? 2 /* BindingMode.toView */
                     : defaultMode
                 : bindable.mode;
-            target = bindable.property;
+            target = bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, 16 /* ExpressionType.IsProperty */), target, mode);
     }
@@ -6338,7 +6372,7 @@ exports.ForBindingCommand = class ForBindingCommand {
     build(info, exprParser) {
         const target = info.bindable === null
             ? kernel.camelCase(info.attr.target)
-            : info.bindable.property;
+            : info.bindable.name;
         const forOf = exprParser.parse(info.attr.rawValue, 2 /* ExpressionType.IsIterator */);
         let props = kernel.emptyArray;
         if (forOf.semiIdx > -1) {
@@ -8065,8 +8099,8 @@ function dispose(disposable) {
     disposable.dispose();
 }
 const wrappedExprs = [
-    18 /* ExpressionKind.BindingBehavior */,
-    17 /* ExpressionKind.ValueConverter */,
+    20 /* ExpressionKind.BindingBehavior */,
+    19 /* ExpressionKind.ValueConverter */,
 ];
 class Repeat {
     constructor(instruction, parser, location, parent, factory) {
@@ -8124,7 +8158,7 @@ class Repeat {
         }
         this._refreshCollectionObserver();
         const dec = forOf.declaration;
-        if (!(this._hasDestructuredLocal = dec.$kind === 24 /* ExpressionKind.ArrayDestructuring */ || dec.$kind === 25 /* ExpressionKind.ObjectDestructuring */)) {
+        if (!(this._hasDestructuredLocal = dec.$kind === 26 /* ExpressionKind.ArrayDestructuring */ || dec.$kind === 27 /* ExpressionKind.ObjectDestructuring */)) {
             this.local = runtime.astEvaluate(dec, this.$controller.scope, binding, null);
         }
     }
@@ -9671,7 +9705,7 @@ exports.AuSlot = class AuSlot {
             this._hasProjection = false;
         }
         else {
-            container = hdrContext.parent.controller.container.createChild();
+            container = hdrContext.parent.controller.container.createChild({ inheritParentResources: true });
             registerResolver(container, contextController.definition.Type, new kernel.InstanceProvider(void 0, contextController.viewModel));
             factory = rendering.getViewFactory(projection, container);
             this._hasProjection = true;
@@ -9843,61 +9877,67 @@ class AuCompose {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
         /** @internal */ this._instruction = kernel.resolve(IInstruction);
         /** @internal */ this._contextFactory = kernel.resolve(kernel.transient(CompositionContextFactory));
+        /** @internal */ this._compiler = kernel.resolve(ITemplateCompiler);
+        /** @internal */ this._hydrationContext = kernel.resolve(IHydrationContext);
+        /** @internal */ this._exprParser = kernel.resolve(runtime.IExpressionParser);
+        /** @internal */ this._observerLocator = kernel.resolve(runtime.IObserverLocator);
     }
-    get pending() {
-        return this._pending;
+    get composing() {
+        return this._composing;
     }
     get composition() {
         return this._composition;
     }
     attaching(initiator, _parent) {
-        return this._pending = kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, void 0), initiator), (context) => {
-            if (this._contextFactory.isCurrent(context)) {
-                this._pending = void 0;
+        return this._composing = kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, void 0), initiator), (context) => {
+            if (this._contextFactory._isCurrent(context)) {
+                this._composing = void 0;
             }
         });
     }
     detaching(initiator) {
         const cmpstn = this._composition;
-        const pending = this._pending;
+        const pending = this._composing;
         this._contextFactory.invalidate();
-        this._composition = this._pending = void 0;
+        this._composition = this._composing = void 0;
         return kernel.onResolve(pending, () => cmpstn?.deactivate(initiator));
     }
     /** @internal */
     propertyChanged(name) {
+        if (name === 'composing' || name === 'composition')
+            return;
         if (name === 'model' && this._composition != null) {
             // eslint-disable-next-line
             this._composition.update(this.model);
             return;
         }
-        this._pending = kernel.onResolve(this._pending, () => kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, name), void 0), (context) => {
-            if (this._contextFactory.isCurrent(context)) {
-                this._pending = void 0;
+        this._composing = kernel.onResolve(this._composing, () => kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, name), void 0), (context) => {
+            if (this._contextFactory._isCurrent(context)) {
+                this._composing = void 0;
             }
         }));
     }
     /** @internal */
     queue(change, initiator) {
         const factory = this._contextFactory;
-        const compositionCtrl = this._composition;
+        const prevCompositionCtrl = this._composition;
         // todo: handle consequitive changes that create multiple queues
         return kernel.onResolve(factory.create(change), context => {
             // Don't compose [stale] template/component
             // by always ensuring that the composition context is the latest one
-            if (factory.isCurrent(context)) {
+            if (factory._isCurrent(context)) {
                 return kernel.onResolve(this.compose(context), (result) => {
                     // Don't activate [stale] controller
                     // by always ensuring that the composition context is the latest one
-                    if (factory.isCurrent(context)) {
+                    if (factory._isCurrent(context)) {
                         return kernel.onResolve(result.activate(initiator), () => {
                             // Don't conclude the [stale] composition
                             // by always ensuring that the composition context is the latest one
-                            if (factory.isCurrent(context)) {
+                            if (factory._isCurrent(context)) {
                                 // after activation, if the composition context is still the most recent one
                                 // then the job is done
                                 this._composition = result;
-                                return kernel.onResolve(compositionCtrl?.deactivate(initiator), () => context);
+                                return kernel.onResolve(prevCompositionCtrl?.deactivate(initiator), () => context);
                             }
                             else {
                                 // the stale controller should be deactivated
@@ -9920,33 +9960,21 @@ class AuCompose {
     /** @internal */
     compose(context) {
         let comp;
-        let compositionHost;
-        let removeCompositionHost;
         // todo: when both component and template are empty
         //       should it throw or try it best to proceed?
         //       current: proceed
         const { _template: template, _component: component, _model: model } = context.change;
-        const { _container: container, host, $controller, _location: loc } = this;
+        const { _container: container, host, $controller, _location: loc, _instruction } = this;
         const vmDef = this.getDef(component);
         const childCtn = container.createChild();
-        const parentNode = loc == null ? host.parentNode : loc.parentNode;
+        let compositionHost;
         if (vmDef !== null) {
-            if (vmDef.containerless) {
-                throw createMappedError(806 /* ErrorNames.au_compose_containerless */, vmDef);
-            }
+            compositionHost = this._platform.document.createElement(vmDef.name);
             if (loc == null) {
-                compositionHost = host;
-                removeCompositionHost = () => {
-                    // This is a normal composition, the content template is removed by deactivation process
-                    // but the host remains
-                };
+                host.appendChild(compositionHost);
             }
             else {
-                // todo: should the host be appended later, during the activation phase instead?
-                compositionHost = parentNode.insertBefore(this._platform.document.createElement(vmDef.name), loc);
-                removeCompositionHost = () => {
-                    compositionHost.remove();
-                };
+                loc.parentNode.insertBefore(compositionHost, loc);
             }
             comp = this._getComp(childCtn, component, compositionHost);
         }
@@ -9959,7 +9987,44 @@ class AuCompose {
         const compose = () => {
             // custom element based composition
             if (vmDef !== null) {
-                const controller = Controller.$el(childCtn, comp, compositionHost, { projections: this._instruction.projections }, vmDef);
+                const composeCapturedAttrs = _instruction.captures ?? kernel.emptyArray;
+                const capture = vmDef.capture;
+                const [capturedBindingAttrs, transferedToHostBindingAttrs] = composeCapturedAttrs
+                    .reduce((attrGroups, attr) => {
+                    const shouldCapture = !(attr.target in vmDef.bindables)
+                        && (capture === true
+                            || isFunction(capture) && !!capture(attr.target));
+                    attrGroups[shouldCapture ? 0 : 1].push(attr);
+                    return attrGroups;
+                }, [[], []]);
+                const location = vmDef.containerless ? convertToRenderLocation(compositionHost) : null;
+                const controller = Controller.$el(childCtn, comp, compositionHost, {
+                    projections: _instruction.projections,
+                    captures: capturedBindingAttrs
+                }, vmDef, location);
+                const transferHydrationContext = new HydrationContext($controller, { projections: null, captures: transferedToHostBindingAttrs }, this._hydrationContext.parent);
+                const removeCompositionHost = () => {
+                    if (location == null) {
+                        compositionHost.remove();
+                    }
+                    else {
+                        let curr = location.$start.nextSibling;
+                        let next = null;
+                        while (curr !== null && curr !== location) {
+                            next = curr.nextSibling;
+                            curr.remove();
+                            curr = next;
+                        }
+                        location.$start?.remove();
+                        location.remove();
+                    }
+                };
+                const bindings = SpreadBinding.create(transferHydrationContext, compositionHost, vmDef, this._rendering, this._compiler, this._platform, this._exprParser, this._observerLocator);
+                // Theoretically these bindings aren't bindings of the composed custom element
+                // Though they are meant to be activated (bound)/ deactivated (unbound) together
+                // with the custom element controller, so it's practically ok to let the composed
+                // custom element manage these bindings
+                bindings.forEach(b => controller.addBinding(b));
                 return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, $controller.scope.parent), 
                 // todo: call deactivate on the component component
                 (deactachInitiator) => kernel.onResolve(controller.deactivate(deactachInitiator ?? controller, $controller), removeCompositionHost), 
@@ -9968,6 +10033,14 @@ class AuCompose {
                 (model) => comp.activate?.(model), context);
             }
             else {
+                {
+                    const captures = this._instruction.captures ?? [];
+                    if (captures.length > 0) {
+                        // eslint-disable-next-line no-console
+                        console.warn(`[au-compose]: Ignored bindings ${captures.map(({ rawName, rawValue }) => `${rawName}="${rawValue}"`).join(", ")}`
+                            + ' in composition without a custom element definition as component.');
+                    }
+                }
                 const targetDef = CustomElementDefinition.create({
                     name: CustomElement.generateName(),
                     template: template,
@@ -10047,14 +10120,27 @@ __decorate([
         }
     })
 ], AuCompose.prototype, "scopeBehavior", void 0);
-customElement('au-compose')(AuCompose);
+__decorate([
+    bindable({
+        mode: 4 /* BindingMode.fromView */
+    })
+], AuCompose.prototype, "composing", null);
+__decorate([
+    bindable({
+        mode: 4 /* BindingMode.fromView */
+    })
+], AuCompose.prototype, "composition", null);
+customElement({
+    name: 'au-compose',
+    capture: true,
+})(AuCompose);
 class EmptyComponent {
 }
 class CompositionContextFactory {
     constructor() {
         this.id = 0;
     }
-    isCurrent(context) {
+    _isCurrent(context) {
         return context.id === this.id;
     }
     create(changes) {
@@ -10253,10 +10339,10 @@ class TemplateCompiler {
             needsCompile: false,
         });
     }
-    compileSpread(definition, attrSyntaxs, container, el) {
-        const context = new CompilationContext(definition, container, emptyCompilationInstructions, null, null, void 0);
+    compileSpread(requestor, attrSyntaxs, container, target, targetDef) {
+        const context = new CompilationContext(requestor, container, emptyCompilationInstructions, null, null, void 0);
         const instructions = [];
-        const elDef = context._findElement(el.nodeName.toLowerCase());
+        const elDef = targetDef ?? context._findElement(target.nodeName.toLowerCase());
         const isCustomElement = elDef !== null;
         const exprParser = context._exprParser;
         const ii = attrSyntaxs.length;
@@ -10285,7 +10371,7 @@ class TemplateCompiler {
                 // active.class="..."
                 // background.style="..."
                 // my-attr.attr="..."
-                commandBuildInfo.node = el;
+                commandBuildInfo.node = target;
                 commandBuildInfo.attr = attrSyntax;
                 commandBuildInfo.bindable = null;
                 commandBuildInfo.def = null;
@@ -10312,7 +10398,7 @@ class TemplateCompiler {
                     && bindingCommand === null
                     && hasInlineBindings(attrValue);
                 if (isMultiBindings) {
-                    attrBindableInstructions = this._compileMultiBindings(el, attrValue, attrDef, context);
+                    attrBindableInstructions = this._compileMultiBindings(target, attrValue, attrDef, context);
                 }
                 else {
                     primaryBindable = bindablesInfo.primary;
@@ -10323,15 +10409,15 @@ class TemplateCompiler {
                         expr = exprParser.parse(attrValue, 1 /* ExpressionType.Interpolation */);
                         attrBindableInstructions = [
                             expr === null
-                                ? new SetPropertyInstruction(attrValue, primaryBindable.property)
-                                : new InterpolationInstruction(expr, primaryBindable.property)
+                                ? new SetPropertyInstruction(attrValue, primaryBindable.name)
+                                : new InterpolationInstruction(expr, primaryBindable.name)
                         ];
                     }
                     else {
                         // custom attribute with binding command:
                         // my-attr.bind="..."
                         // my-attr.two-way="..."
-                        commandBuildInfo.node = el;
+                        commandBuildInfo.node = target;
                         commandBuildInfo.attr = attrSyntax;
                         commandBuildInfo.bindable = primaryBindable;
                         commandBuildInfo.def = attrDef;
@@ -10357,8 +10443,8 @@ class TemplateCompiler {
                     if (bindable !== void 0) {
                         expr = exprParser.parse(attrValue, 1 /* ExpressionType.Interpolation */);
                         instructions.push(new SpreadElementPropBindingInstruction(expr == null
-                            ? new SetPropertyInstruction(attrValue, bindable.property)
-                            : new InterpolationInstruction(expr, bindable.property)));
+                            ? new SetPropertyInstruction(attrValue, bindable.name)
+                            : new InterpolationInstruction(expr, bindable.name)));
                         continue;
                     }
                 }
@@ -10368,7 +10454,7 @@ class TemplateCompiler {
                     // e.g: colspan -> colSpan
                     //      innerhtml -> innerHTML
                     //      minlength -> minLength etc...
-                    context._attrMapper.map(el, attrTarget) ?? kernel.camelCase(attrTarget)));
+                    context._attrMapper.map(target, attrTarget) ?? kernel.camelCase(attrTarget)));
                 }
                 else {
                     switch (attrTarget) {
@@ -10392,7 +10478,7 @@ class TemplateCompiler {
                     bindablesInfo = BindablesInfo.from(elDef, false);
                     bindable = bindablesInfo.attrs[attrTarget];
                     if (bindable !== void 0) {
-                        commandBuildInfo.node = el;
+                        commandBuildInfo.node = target;
                         commandBuildInfo.attr = attrSyntax;
                         commandBuildInfo.bindable = bindable;
                         commandBuildInfo.def = elDef;
@@ -10400,7 +10486,7 @@ class TemplateCompiler {
                         continue;
                     }
                 }
-                commandBuildInfo.node = el;
+                commandBuildInfo.node = target;
                 commandBuildInfo.attr = attrSyntax;
                 commandBuildInfo.bindable = null;
                 commandBuildInfo.def = null;
@@ -10490,8 +10576,8 @@ class TemplateCompiler {
                         expr = exprParser.parse(realAttrValue, 1 /* ExpressionType.Interpolation */);
                         attrBindableInstructions = [
                             expr === null
-                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.property)
-                                : new InterpolationInstruction(expr, primaryBindable.property)
+                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.name)
+                                : new InterpolationInstruction(expr, primaryBindable.name)
                         ];
                     }
                     else {
@@ -10847,8 +10933,8 @@ class TemplateCompiler {
                         expr = exprParser.parse(realAttrValue, 1 /* ExpressionType.Interpolation */);
                         attrBindableInstructions = [
                             expr === null
-                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.property)
-                                : new InterpolationInstruction(expr, primaryBindable.property)
+                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.name)
+                                : new InterpolationInstruction(expr, primaryBindable.name)
                         ];
                     }
                     else {
@@ -10890,8 +10976,8 @@ class TemplateCompiler {
                     if (bindable !== void 0) {
                         expr = exprParser.parse(realAttrValue, 1 /* ExpressionType.Interpolation */);
                         (elBindableInstructions ?? (elBindableInstructions = [])).push(expr == null
-                            ? new SetPropertyInstruction(realAttrValue, bindable.property)
-                            : new InterpolationInstruction(expr, bindable.property));
+                            ? new SetPropertyInstruction(realAttrValue, bindable.name)
+                            : new InterpolationInstruction(expr, bindable.name));
                         removeAttr();
                         continue;
                     }
@@ -11454,8 +11540,8 @@ class TemplateCompiler {
                 if (command === null) {
                     expr = context._exprParser.parse(attrValue, 1 /* ExpressionType.Interpolation */);
                     instructions.push(expr === null
-                        ? new SetPropertyInstruction(attrValue, bindable.property)
-                        : new InterpolationInstruction(expr, bindable.property));
+                        ? new SetPropertyInstruction(attrValue, bindable.name)
+                        : new InterpolationInstruction(expr, bindable.name));
                 }
                 else {
                     commandBuildInfo.node = node;
@@ -11502,7 +11588,7 @@ class TemplateCompiler {
                 if (bindableEl.parentNode !== content) {
                     throw createMappedError(710 /* ErrorNames.compiler_local_el_bindable_not_under_root */, name);
                 }
-                const property = bindableEl.getAttribute("property" /* LocalTemplateBindableAttributes.property */);
+                const property = bindableEl.getAttribute("name" /* LocalTemplateBindableAttributes.name */);
                 if (property === null) {
                     throw createMappedError(711 /* ErrorNames.compiler_local_el_bindable_name_missing */, bindableEl, name);
                 }
@@ -11851,7 +11937,7 @@ class BindablesInfo {
 }
 
 const allowedLocalTemplateBindableAttributes = objectFreeze([
-    "property" /* LocalTemplateBindableAttributes.property */,
+    "name" /* LocalTemplateBindableAttributes.name */,
     "attribute" /* LocalTemplateBindableAttributes.attribute */,
     "mode" /* LocalTemplateBindableAttributes.mode */
 ]);

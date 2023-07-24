@@ -43,7 +43,7 @@ describe('3-runtime-html/di-resolutions.spec.ts', function () {
                 __metadata("design:paramtypes", [Model])
             ], List);
             // act
-            const { component, startPromise, tearDown } = createFixture(`<list view-model.ref="list1"></list><list view-model.ref="list2"></list>`, class App {
+            const { component, startPromise, tearDown } = createFixture(`<list component.ref="list1"></list><list component.ref="list2"></list>`, class App {
             }, [List]);
             await startPromise;
             const listEl1 = component.list1.$controller.host;
@@ -104,7 +104,7 @@ describe('3-runtime-html/di-resolutions.spec.ts', function () {
                 __metadata("design:paramtypes", [Object])
             ], Listbox);
             // act
-            const { component, startPromise, tearDown } = createFixture(`<list-box view-model.ref="listbox">`, class App {
+            const { component, startPromise, tearDown } = createFixture(`<list-box component.ref="listbox">`, class App {
             }, [Listbox]);
             await startPromise;
             // assert

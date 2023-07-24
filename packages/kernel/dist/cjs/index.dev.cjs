@@ -579,17 +579,20 @@ class Container {
             this.root = this;
             this._resolvers = new Map();
             this._factories = new Map();
-            this.res = createObject();
+            this.res = {};
         }
         else {
             this.root = parent.root;
             this._resolvers = new Map();
             this._factories = parent._factories;
+            this.res = {};
             if (config.inheritParentResources) {
-                this.res = Object.assign(createObject(), parent.res, this.root.res);
-            }
-            else {
-                this.res = createObject();
+                // todo: when the simplify resource system work is commenced
+                //       this resource inheritance can just be a Object.create() call
+                //       with parent resources as the prototype of the child resources
+                for (const key in parent.res) {
+                    this.registerResolver(key, parent.res[key]);
+                }
             }
         }
         this._resolvers.set(IContainer, containerResolver);
@@ -757,7 +760,7 @@ class Container {
         return null;
     }
     has(key, searchAncestors = false) {
-        return this._resolvers.has(key)
+        return this._resolvers.has(key) || isResourceKey(key) && key in this.res
             ? true
             : searchAncestors && this.parent != null
                 ? this.parent.has(key, true)
@@ -1578,6 +1581,7 @@ const createNewInstance = (key, handler, requestor) => {
     return handler.getFactory(key).construct(requestor);
 };
 
+/** @internal */
 class Resolver {
     constructor(key, strategy, state) {
         this.resolving = false;

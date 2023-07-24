@@ -1362,7 +1362,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
             <div au-slot="rejected">r2</div>
           </foo-bar>
           <template as-custom-element="foo-bar">
-            <bindable property="p"></bindable>
+            <bindable name="p"></bindable>
             <template ${pattribute}="p">
               <au-slot name="pending" pending></au-slot>
               <au-slot then></au-slot>
@@ -1807,8 +1807,8 @@ describe('3-runtime-html/promise.spec.ts', function () {
               \${data} \${err.message}`,
                         appType: App1,
                     }, null, $resolve
-                        ? `<div> <div>42 42</div> </div> 42 undefined`
-                        : `<div> <div>'foo-bar' 'foo-bar'</div> </div> undefined foo-bar`, [], [], (ctx) => {
+                        ? `<div> <div>42 42</div> </div> 42`
+                        : `<div> <div>'foo-bar' 'foo-bar'</div> </div> foo-bar`, [], [], (ctx) => {
                         const app = ctx.app;
                         const s = app.$controller.scope;
                         const bc = s.bindingContext;

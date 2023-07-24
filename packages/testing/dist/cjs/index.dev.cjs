@@ -7853,7 +7853,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         ctx.platform.domWriteQueue.flush(time);
     };
     const stop = (dispose = false) => {
-        let ret;
+        let ret = void 0;
         try {
             ret = au.stop(dispose);
         }
@@ -8070,7 +8070,7 @@ class MockPropertySubscriber {
 class MockTracingExpression {
     constructor(inner) {
         this.inner = inner;
-        this.$kind = 28 /* ExpressionKind.Custom */;
+        this.$kind = 30 /* ExpressionKind.Custom */;
         this.hasBind = true;
         this.hasUnbind = true;
         this.calls = [];

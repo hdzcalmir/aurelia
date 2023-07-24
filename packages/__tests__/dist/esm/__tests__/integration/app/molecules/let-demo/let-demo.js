@@ -16,7 +16,7 @@ import template from './let-demo.html';
  *        - `UnaryExpression`
  *        - `ValueConverterExpression`
  */
-let LetDemo = class LetDemo {
+export let LetDemo = class LetDemo {
     constructor() {
         this.a = false;
         this.b = false;
@@ -27,8 +27,7 @@ let LetDemo = class LetDemo {
 LetDemo = __decorate([
     customElement({ name: 'let-demo', template })
 ], LetDemo);
-export { LetDemo };
-let SqrtValueConverter = class SqrtValueConverter {
+export let SqrtValueConverter = class SqrtValueConverter {
     toView(value) {
         return Math.sqrt(value);
     }
@@ -36,5 +35,4 @@ let SqrtValueConverter = class SqrtValueConverter {
 SqrtValueConverter = __decorate([
     valueConverter({ name: 'sqrt' })
 ], SqrtValueConverter);
-export { SqrtValueConverter };
 //# sourceMappingURL=let-demo.js.map

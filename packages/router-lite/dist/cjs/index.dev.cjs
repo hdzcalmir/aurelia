@@ -549,119 +549,6 @@ function shallowEquals(a, b) {
     return true;
 }
 
-function valueOrFuncToValue(instructions, valueOrFunc) {
-    if (typeof valueOrFunc === 'function') {
-        return valueOrFunc(instructions);
-    }
-    return valueOrFunc;
-}
-const IRouterOptions = /*@__PURE__*/ kernel.DI.createInterface('RouterOptions');
-class RouterOptions {
-    constructor(useUrlFragmentHash, useHref, 
-    /**
-     * The strategy to use for interacting with the browser's `history` object (if applicable).
-     *
-     * - `none`: do not interact with the `history` object at all.
-     * - `replace`: replace the current state in history
-     * - `push`: push a new state onto the history (default)
-     * - A function that returns one of the 3 above values based on the navigation.
-     *
-     * Default: `push`
-     */
-    historyStrategy, 
-    /**
-     * An optional handler to build the title.
-     * When configured, the work of building the title string is completely handed over to this function.
-     * If this function returns `null`, the title is not updated.
-     */
-    buildTitle, 
-    /**
-     * When set to `false`, the navigation model won't be generated.
-     * The default value is `true`.
-     */
-    useNavigationModel, 
-    /**
-     * The class that is added to the element by the `load` custom attribute, if the associated instruction is active.
-     * If no value is provided while configuring router, no class will be added.
-     * The default value is `null`.
-     */
-    activeClass, 
-    /**
-     * When set to `true`, the router will try to restore previous route tree, when a routing instruction errs.
-     * Set this to `false`, if a stricter behavior is desired. However, in that case, you need to ensure the avoidance of errors.
-     * The default value is `true`.
-     */
-    restorePreviousRouteTreeOnError) {
-        this.useUrlFragmentHash = useUrlFragmentHash;
-        this.useHref = useHref;
-        this.historyStrategy = historyStrategy;
-        this.buildTitle = buildTitle;
-        this.useNavigationModel = useNavigationModel;
-        this.activeClass = activeClass;
-        this.restorePreviousRouteTreeOnError = restorePreviousRouteTreeOnError;
-    }
-    static create(input) {
-        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null, input.useNavigationModel ?? true, input.activeClass ?? null, input.restorePreviousRouteTreeOnError ?? true);
-    }
-    toString() {
-        return `RO(${[
-            ['historyStrategy', 'history'],
-        ].map(([key, name]) => {
-            const value = this[key];
-            return `${name}:${typeof value === 'function' ? value : `'${value}'`}`;
-        }).join(',')})`;
-    }
-}
-class NavigationOptions {
-    constructor(
-    /**
-     * Same as `RouterOptions#historyStrategy`.
-     */
-    historyStrategy, title, titleSeparator, 
-    /**
-     * Specify a context to use for relative navigation.
-     *
-     * - `null` (or empty): navigate relative to the root (absolute navigation)
-     * - `IRouteContext`: navigate relative to specifically this RouteContext (advanced users).
-     * - `HTMLElement`: navigate relative to the routeable component (page) that directly or indirectly contains this element.
-     * - `ICustomElementViewModel` (the `this` object when working from inside a view model): navigate relative to this component (if it was loaded as a route), or the routeable component (page) directly or indirectly containing it.
-     * - `ICustomElementController`: same as `ICustomElementViewModel`, but using the controller object instead of the view model object (advanced users).
-     */
-    context, 
-    /**
-     * Specify an object to be serialized to a query string, and then set to the query string of the new URL.
-     */
-    queryParams, 
-    /**
-     * Specify the hash fragment for the new URL.
-     */
-    fragment, 
-    /**
-     * Specify any kind of state to be stored together with the history entry for this navigation.
-     */
-    state, transitionPlan) {
-        this.historyStrategy = historyStrategy;
-        this.title = title;
-        this.titleSeparator = titleSeparator;
-        this.context = context;
-        this.queryParams = queryParams;
-        this.fragment = fragment;
-        this.state = state;
-        this.transitionPlan = transitionPlan;
-    }
-    static create(routerOptions, input) {
-        return new NavigationOptions(input.historyStrategy ?? routerOptions.historyStrategy, input.title ?? null, input.titleSeparator ?? ' | ', input.context ?? null, input.queryParams ?? null, input.fragment ?? '', input.state ?? null, input.transitionPlan ?? null);
-    }
-    /** @internal */
-    _clone() {
-        return new NavigationOptions(this.historyStrategy, this.title, this.titleSeparator, this.context, { ...this.queryParams }, this.fragment, this.state === null ? null : { ...this.state }, this.transitionPlan);
-    }
-    /** @internal */
-    _getHistoryStrategy(instructions) {
-        return valueOrFuncToValue(instructions, this.historyStrategy);
-    }
-}
-
 const AuNavId = 'au-nav-id';
 class Subscription {
     constructor(
@@ -1121,6 +1008,490 @@ function createNavigationInstruction(routeable) {
         ? createNavigationInstruction(routeable.component)
         : TypedNavigationInstruction.create(routeable);
 }
+
+// The commented-out terminal symbols below are for reference / potential future need (should there be use cases to loosen up the syntax)
+// These are the currently used terminal symbols.
+// We're deliberately having every "special" (including the not-in-use '&', ''', '~', ';') as a terminal symbol,
+// so as to make the syntax maximally restrictive for consistency and to minimize the risk of us having to introduce breaking changes in the future.
+const terminal = ['?', '#', '/', '+', '(', ')', '.', '@', '!', '=', ',', '&', '\'', '~', ';'];
+/** @internal */
+class ParserState {
+    get _done() {
+        return this._rest.length === 0;
+    }
+    constructor(_input) {
+        this._input = _input;
+        this._buffers = [];
+        this._bufferIndex = 0;
+        this._index = 0;
+        this._rest = _input;
+    }
+    _startsWith(...values) {
+        const rest = this._rest;
+        return values.some(function (value) {
+            return rest.startsWith(value);
+        });
+    }
+    _consumeOptional(str) {
+        if (this._startsWith(str)) {
+            this._rest = this._rest.slice(str.length);
+            this._index += str.length;
+            this._append(str);
+            return true;
+        }
+        return false;
+    }
+    _consume(str) {
+        if (!this._consumeOptional(str)) {
+            this._expect(`'${str}'`);
+        }
+    }
+    _expect(msg) {
+        throw new Error(getMessage(3500 /* Events.exprUnexpectedSegment */, msg, this._index, this._input, this._rest, this._rest));
+    }
+    _ensureDone() {
+        if (!this._done) {
+            throw new Error(getMessage(3501 /* Events.exprNotDone */, this._rest, this._index, this._input));
+        }
+    }
+    _advance() {
+        const char = this._rest[0];
+        this._rest = this._rest.slice(1);
+        ++this._index;
+        this._append(char);
+    }
+    _record() {
+        this._buffers[this._bufferIndex++] = '';
+    }
+    _playback() {
+        const bufferIndex = --this._bufferIndex;
+        const buffers = this._buffers;
+        const buffer = buffers[bufferIndex];
+        buffers[bufferIndex] = '';
+        return buffer;
+    }
+    _discard() {
+        this._buffers[--this._bufferIndex] = '';
+    }
+    _append(str) {
+        const bufferIndex = this._bufferIndex;
+        const buffers = this._buffers;
+        for (let i = 0; i < bufferIndex; ++i) {
+            buffers[i] += str;
+        }
+    }
+}
+exports.ExpressionKind = void 0;
+(function (ExpressionKind) {
+    ExpressionKind[ExpressionKind["Route"] = 0] = "Route";
+    ExpressionKind[ExpressionKind["CompositeSegment"] = 1] = "CompositeSegment";
+    ExpressionKind[ExpressionKind["ScopedSegment"] = 2] = "ScopedSegment";
+    ExpressionKind[ExpressionKind["SegmentGroup"] = 3] = "SegmentGroup";
+    ExpressionKind[ExpressionKind["Segment"] = 4] = "Segment";
+    ExpressionKind[ExpressionKind["Component"] = 5] = "Component";
+    ExpressionKind[ExpressionKind["Action"] = 6] = "Action";
+    ExpressionKind[ExpressionKind["Viewport"] = 7] = "Viewport";
+    ExpressionKind[ExpressionKind["ParameterList"] = 8] = "ParameterList";
+    ExpressionKind[ExpressionKind["Parameter"] = 9] = "Parameter";
+})(exports.ExpressionKind || (exports.ExpressionKind = {}));
+const cache = new Map();
+class RouteExpression {
+    get kind() { return 0 /* ExpressionKind.Route */; }
+    constructor(isAbsolute, root, queryParams, fragment) {
+        this.isAbsolute = isAbsolute;
+        this.root = root;
+        this.queryParams = queryParams;
+        this.fragment = fragment;
+    }
+    static parse(value) {
+        const key = value.toString();
+        let result = cache.get(key);
+        if (result === void 0) {
+            cache.set(key, result = RouteExpression._$parse(value));
+        }
+        return result;
+    }
+    /** @internal */
+    static _$parse(value) {
+        const path = value.path;
+        if (path === '') {
+            return new RouteExpression(false, SegmentExpression.Empty, value.query, value.fragment);
+        }
+        /*
+         * Now parse the actual route
+         *
+         * Notes:
+         * A NT-Name as per DOM level 2: https://www.w3.org/TR/1998/REC-xml-19980210#NT-Name
+         *  [4]  NameChar ::= Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender
+         *  [5]  Name     ::= (Letter | '_' | ':') (NameChar)*
+         *
+         * As per https://url.spec.whatwg.org/#url-code-points - URL code points (from the ASCII range) are:
+         * a-zA-Z0-9!$&'()*+,-./:;=?@_~
+         * The other valid option is a % followed by two ASCII hex digits
+         * Anything else is invalid.
+         */
+        const state = new ParserState(path);
+        state._record();
+        const isAbsolute = state._consumeOptional('/');
+        const root = CompositeSegmentExpression._parse(state);
+        state._ensureDone();
+        state._discard();
+        return new RouteExpression(isAbsolute, root, value.query, value.fragment);
+    }
+    toInstructionTree(options) {
+        return new ViewportInstructionTree(options, this.isAbsolute, this.root._toInstructions(0, 0), mergeURLSearchParams(this.queryParams, options.queryParams, true), this.fragment ?? options.fragment);
+    }
+}
+/**
+ * A single 'traditional' (slash-separated) segment consisting of one or more sibling segments.
+ *
+ * ### Variations:
+ *
+ * 1: `a+b`
+ * - siblings: [`a`, `b`]
+ * - append: `false`
+ *
+ * 2: `+a`
+ * - siblings: [`a`]
+ * - append: `true`
+ *
+ * 3: `+a+a`
+ * - siblings: [`a`, `b`]
+ * - append: `true`
+ *
+ * Where
+ * - a = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
+ * - b = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
+ */
+class CompositeSegmentExpression {
+    get kind() { return 1 /* ExpressionKind.CompositeSegment */; }
+    constructor(siblings) {
+        this.siblings = siblings;
+    }
+    /** @internal */
+    static _parse(state) {
+        state._record();
+        // If a segment starts with '+', e.g. '/+a' / '/+a@vp' / '/a/+b' / '/+a+b' etc, then its siblings
+        // are considered to be "append"
+        const append = state._consumeOptional('+');
+        const siblings = [];
+        do {
+            siblings.push(ScopedSegmentExpression._parse(state));
+        } while (state._consumeOptional('+'));
+        if (!append && siblings.length === 1) {
+            state._discard();
+            return siblings[0];
+        }
+        state._discard();
+        return new CompositeSegmentExpression(siblings);
+    }
+    /** @internal */
+    _toInstructions(open, close) {
+        switch (this.siblings.length) {
+            case 0:
+                return [];
+            case 1:
+                return this.siblings[0]._toInstructions(open, close);
+            case 2:
+                return [
+                    ...this.siblings[0]._toInstructions(open, 0),
+                    ...this.siblings[1]._toInstructions(0, close),
+                ];
+            default:
+                return [
+                    ...this.siblings[0]._toInstructions(open, 0),
+                    ...this.siblings.slice(1, -1).flatMap(function (x) {
+                        return x._toInstructions(0, 0);
+                    }),
+                    ...this.siblings[this.siblings.length - 1]._toInstructions(0, close),
+                ];
+        }
+    }
+}
+/**
+ * The (single) left-hand side and the (one or more) right-hand side of a slash-separated segment.
+ *
+ * Variations:
+ *
+ * 1: `a/b`
+ * - left: `a`
+ * - right: `b`
+ *
+ * Where
+ * - a = `SegmentGroupExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression`)
+ * - b = `ScopedSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression`)
+ */
+class ScopedSegmentExpression {
+    get kind() { return 2 /* ExpressionKind.ScopedSegment */; }
+    constructor(left, right) {
+        this.left = left;
+        this.right = right;
+    }
+    /** @internal */
+    static _parse(state) {
+        state._record();
+        const left = SegmentGroupExpression._parse(state);
+        if (state._consumeOptional('/')) {
+            const right = ScopedSegmentExpression._parse(state);
+            state._discard();
+            return new ScopedSegmentExpression(left, right);
+        }
+        state._discard();
+        return left;
+    }
+    /** @internal */
+    _toInstructions(open, close) {
+        const leftInstructions = this.left._toInstructions(open, 0);
+        const rightInstructions = this.right._toInstructions(0, close);
+        let cur = leftInstructions[leftInstructions.length - 1];
+        while (cur.children.length > 0) {
+            cur = cur.children[cur.children.length - 1];
+        }
+        cur.children.push(...rightInstructions);
+        return leftInstructions;
+    }
+}
+/**
+ * Any kind of segment wrapped in parentheses, increasing its precedence.
+ * Specifically, the parentheses are needed to deeply specify scoped siblings.
+ * The precedence is intentionally similar to the familiar mathematical `/` and `+` operators.
+ *
+ * For example, consider this viewport structure:
+ * - viewport-a
+ * - - viewport-a1
+ * - - viewport-a2
+ * - viewport-b
+ * - - viewport-b1
+ *
+ * This can only be deeply specified by using the grouping operator: `a/(a1+a2)+b/b1`
+ *
+ * Because `a/a1+a2+b/b1` would be interpreted differently:
+ * - viewport-a
+ * - - viewport-a1
+ * - viewport-a2
+ * - viewport-b
+ * - - viewport-b1
+ *
+ * ### Variations:
+ *
+ * 1: `(a)`
+ * - expression: `a`
+ *
+ * Where
+ * - a = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
+ */
+class SegmentGroupExpression {
+    get kind() { return 3 /* ExpressionKind.SegmentGroup */; }
+    constructor(expression) {
+        this.expression = expression;
+    }
+    /** @internal */
+    static _parse(state) {
+        state._record();
+        if (state._consumeOptional('(')) {
+            const expression = CompositeSegmentExpression._parse(state);
+            state._consume(')');
+            state._discard();
+            return new SegmentGroupExpression(expression);
+        }
+        state._discard();
+        return SegmentExpression._parse(state);
+    }
+    /** @internal */
+    _toInstructions(open, close) {
+        return this.expression._toInstructions(open + 1, close + 1);
+    }
+}
+/**
+ * A (non-composite) segment specifying a single component and (optional) viewport / action.
+ */
+class SegmentExpression {
+    get kind() { return 4 /* ExpressionKind.Segment */; }
+    static get Empty() { return new SegmentExpression(ComponentExpression.Empty, ViewportExpression.Empty, true); }
+    constructor(component, viewport, scoped) {
+        this.component = component;
+        this.viewport = viewport;
+        this.scoped = scoped;
+    }
+    /** @internal */
+    static _parse(state) {
+        state._record();
+        const component = ComponentExpression._parse(state);
+        const viewport = ViewportExpression._parse(state);
+        const scoped = !state._consumeOptional('!');
+        state._discard();
+        return new SegmentExpression(component, viewport, scoped);
+    }
+    /** @internal */
+    _toInstructions(open, close) {
+        return [
+            ViewportInstruction.create({
+                component: this.component.name,
+                params: this.component.parameterList._toObject(),
+                viewport: this.viewport.name,
+                open,
+                close,
+            }),
+        ];
+    }
+}
+class ComponentExpression {
+    get kind() { return 5 /* ExpressionKind.Component */; }
+    static get Empty() { return new ComponentExpression('', ParameterListExpression.Empty); }
+    constructor(name, parameterList) {
+        this.name = name;
+        this.parameterList = parameterList;
+        switch (name.charAt(0)) {
+            case ':':
+                this.isParameter = true;
+                this.isStar = false;
+                this.isDynamic = true;
+                this.parameterName = name.slice(1);
+                break;
+            case '*':
+                this.isParameter = false;
+                this.isStar = true;
+                this.isDynamic = true;
+                this.parameterName = name.slice(1);
+                break;
+            default:
+                this.isParameter = false;
+                this.isStar = false;
+                this.isDynamic = false;
+                this.parameterName = name;
+                break;
+        }
+    }
+    /** @internal */
+    static _parse(state) {
+        state._record();
+        state._record();
+        if (!state._done) {
+            if (state._startsWith('./')) {
+                state._advance();
+            }
+            else if (state._startsWith('../')) {
+                state._advance();
+                state._advance();
+            }
+            else {
+                while (!state._done && !state._startsWith(...terminal)) {
+                    state._advance();
+                }
+            }
+        }
+        const name = state._playback();
+        if (name.length === 0) {
+            state._expect('component name');
+        }
+        const parameterList = ParameterListExpression._parse(state);
+        state._discard();
+        return new ComponentExpression(name, parameterList);
+    }
+}
+class ViewportExpression {
+    get kind() { return 7 /* ExpressionKind.Viewport */; }
+    static get Empty() { return new ViewportExpression(''); }
+    constructor(name) {
+        this.name = name;
+    }
+    /** @internal */
+    static _parse(state) {
+        state._record();
+        let name = null;
+        if (state._consumeOptional('@')) {
+            state._record();
+            while (!state._done && !state._startsWith(...terminal)) {
+                state._advance();
+            }
+            name = decodeURIComponent(state._playback());
+            if (name.length === 0) {
+                state._expect('viewport name');
+            }
+        }
+        state._discard();
+        return new ViewportExpression(name);
+    }
+}
+class ParameterListExpression {
+    get kind() { return 8 /* ExpressionKind.ParameterList */; }
+    static get Empty() { return new ParameterListExpression([]); }
+    constructor(expressions) {
+        this.expressions = expressions;
+    }
+    /** @internal */
+    static _parse(state) {
+        state._record();
+        const expressions = [];
+        if (state._consumeOptional('(')) {
+            do {
+                expressions.push(ParameterExpression._parse(state, expressions.length));
+                if (!state._consumeOptional(',')) {
+                    break;
+                }
+            } while (!state._done && !state._startsWith(')'));
+            state._consume(')');
+        }
+        state._discard();
+        return new ParameterListExpression(expressions);
+    }
+    /** @internal */
+    _toObject() {
+        const params = {};
+        for (const expr of this.expressions) {
+            params[expr.key] = expr.value;
+        }
+        return params;
+    }
+}
+class ParameterExpression {
+    get kind() { return 9 /* ExpressionKind.Parameter */; }
+    static get Empty() { return new ParameterExpression('', ''); }
+    constructor(key, value) {
+        this.key = key;
+        this.value = value;
+    }
+    /** @internal */
+    static _parse(state, index) {
+        state._record();
+        state._record();
+        while (!state._done && !state._startsWith(...terminal)) {
+            state._advance();
+        }
+        let key = state._playback();
+        if (key.length === 0) {
+            state._expect('parameter key');
+        }
+        let value;
+        if (state._consumeOptional('=')) {
+            state._record();
+            while (!state._done && !state._startsWith(...terminal)) {
+                state._advance();
+            }
+            value = decodeURIComponent(state._playback());
+            if (value.length === 0) {
+                state._expect('parameter value');
+            }
+        }
+        else {
+            value = key;
+            key = index.toString();
+        }
+        state._discard();
+        return new ParameterExpression(key, value);
+    }
+}
+const AST = Object.freeze({
+    RouteExpression,
+    CompositeSegmentExpression,
+    ScopedSegmentExpression,
+    SegmentGroupExpression,
+    SegmentExpression,
+    ComponentExpression,
+    ViewportExpression,
+    ParameterListExpression,
+    ParameterExpression,
+});
 
 // No-fallthrough disabled due to large numbers of false positives
 class ViewportRequest {
@@ -2117,7 +2488,10 @@ class RouteNode {
     }
     /** @internal */
     _clone() {
-        const clone = new RouteNode(this.path, this.finalPath, this.context, this._originalInstruction, this.instruction, { ...this.params }, new URLSearchParams(this.queryParams), this.fragment, { ...this.data }, this._viewport, this.title, this.component, this.children.map(x => x._clone()), [...this.residue]);
+        const clone = new RouteNode(this.path, this.finalPath, this.context, this._originalInstruction, this.instruction, this.params, // as this is frozen, it's safe to share
+        this.queryParams, // as this is frozen, it's safe to share
+        this.fragment, this.data, // as this is frozen, it's safe to share
+        this._viewport, this.title, this.component, this.children.map(x => x._clone()), [...this.residue]);
         clone._version = this._version + 1;
         if (clone.context.node === this) {
             clone.context.node = clone;
@@ -2161,13 +2535,18 @@ class RouteTree {
     }
     /** @internal */
     _clone() {
-        const clone = new RouteTree(this.options._clone(), new URLSearchParams(this.queryParams), this.fragment, this.root._clone());
+        const clone = new RouteTree(this.options._clone(), this.queryParams, // as this is frozen, it's safe to share
+        this.fragment, this.root._clone());
         clone.root._setTree(this);
         return clone;
     }
     /** @internal */
     _finalizeInstructions() {
         return new ViewportInstructionTree(this.options, true, this.root.children.map(x => x._finalizeInstruction()), this.queryParams, this.fragment);
+    }
+    /** @internal */
+    _mergeQuery(other) {
+        this.queryParams = Object.freeze(mergeURLSearchParams(this.queryParams, other, true));
     }
     toString() {
         return this.root.toString();
@@ -2201,7 +2580,7 @@ function createAndAppendNodes(log, node, vi) {
                     if (vi.children.length === 0) {
                         const result = ctx._generateViewportInstruction(vi);
                         if (result !== null) {
-                            node._tree.queryParams = mergeURLSearchParams(node._tree.queryParams, result.query, true);
+                            node._tree._mergeQuery(result.query);
                             const newVi = result.vi;
                             newVi.children.push(...vi.children);
                             return appendNode(log, node, createConfiguredNode(log, node, newVi, newVi.recognizedRoute, vi));
@@ -2235,10 +2614,10 @@ function createAndAppendNodes(log, node, vi) {
                             open: vi.open,
                             close: vi.close,
                             viewport: vi.viewport,
-                            children: vi.children.slice(),
+                            children: vi.children,
                         });
                         if (eagerResult !== null) {
-                            node._tree.queryParams = mergeURLSearchParams(node._tree.queryParams, eagerResult.query, true);
+                            node._tree._mergeQuery(eagerResult.query);
                             return appendNode(log, node, createConfiguredNode(log, node, eagerResult.vi, eagerResult.vi.recognizedRoute, vi));
                         }
                         // fallback
@@ -2304,9 +2683,9 @@ function createAndAppendNodes(log, node, vi) {
                     open: vi.open,
                     close: vi.close,
                     viewport: vi.viewport,
-                    children: vi.children.slice(),
+                    children: vi.children,
                 });
-                node._tree.queryParams = mergeURLSearchParams(node._tree.queryParams, query, true);
+                node._tree._mergeQuery(query);
                 return appendNode(log, node, createConfiguredNode(log, node, newVi, newVi.recognizedRoute, vi));
             });
         }
@@ -2335,9 +2714,7 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
                         context: childCtx,
                         instruction: vi,
                         originalInstruction: originalVi,
-                        params: {
-                            ...rr.route.params,
-                        },
+                        params: rr.route.params,
                         queryParams: rt.queryParams,
                         fragment: rt.fragment,
                         data: $handler.data,
@@ -2354,8 +2731,8 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
             });
         }
         // Migrate parameters to the redirect
-        const origPath = RouteExpression.parse(route.path, false);
-        const redirPath = RouteExpression.parse($handler.redirectTo, false);
+        const origPath = RouteExpression.parse(pathUrlParser.parse(route.path));
+        const redirPath = RouteExpression.parse(pathUrlParser.parse($handler.redirectTo));
         let origCur;
         let redirCur;
         const newSegs = [];
@@ -2427,7 +2804,7 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
                     newSegs.push(rr.route.params[redirSeg.component.parameterName]);
                 }
                 else {
-                    newSegs.push(redirSeg.raw);
+                    newSegs.push(redirSeg.component.name);
                 }
             }
         }
@@ -2559,27 +2936,23 @@ class Router {
         return routeTree;
     }
     get currentTr() {
-        let currentTr = this._currentTr;
-        if (currentTr === null) {
-            currentTr = this._currentTr = Transition._create({
-                id: 0,
-                prevInstructions: this._instructions,
-                instructions: this._instructions,
-                finalInstructions: this._instructions,
-                instructionsChanged: true,
-                trigger: 'api',
-                options: NavigationOptions.create(this.options, {}),
-                managedState: null,
-                previousRouteTree: this.routeTree._clone(),
-                routeTree: this.routeTree,
-                resolve: null,
-                reject: null,
-                promise: null,
-                guardsResult: true,
-                error: void 0,
-            });
-        }
-        return currentTr;
+        return this._currentTr ?? (this._currentTr = Transition._create({
+            id: 0,
+            prevInstructions: this._instructions,
+            instructions: this._instructions,
+            finalInstructions: this._instructions,
+            instructionsChanged: true,
+            trigger: 'api',
+            options: NavigationOptions.create(this.options, {}),
+            managedState: null,
+            previousRouteTree: this.routeTree._clone(),
+            routeTree: this.routeTree,
+            resolve: null,
+            reject: null,
+            promise: null,
+            guardsResult: true,
+            error: void 0,
+        }));
     }
     /** @internal */
     set currentTr(value) {
@@ -2930,7 +3303,7 @@ class Router {
                 this._instructions = tr.finalInstructions = tr.routeTree._finalizeInstructions();
                 this._isNavigating = false;
                 // apply history state
-                const newUrl = tr.finalInstructions.toUrl(true, this.options.useUrlFragmentHash);
+                const newUrl = tr.finalInstructions.toUrl(true, this.options._urlParser);
                 switch (tr.options._getHistoryStrategy(this._instructions)) {
                     case 'none':
                         // do nothing
@@ -3055,580 +3428,199 @@ function updateNode(log, vit, ctx, node) {
     }));
 }
 
-// The commented-out terminal symbols below are for reference / potential future need (should there be use cases to loosen up the syntax)
-// These are the currently used terminal symbols.
-// We're deliberately having every "special" (including the not-in-use '&', ''', '~', ';') as a terminal symbol,
-// so as to make the syntax maximally restrictive for consistency and to minimize the risk of us having to introduce breaking changes in the future.
-const terminal = ['?', '#', '/', '+', '(', ')', '.', '@', '!', '=', ',', '&', '\'', '~', ';'];
-/** @internal */
-class ParserState {
-    get _done() {
-        return this._rest.length === 0;
+class ParsedUrl {
+    constructor(path, query, fragment) {
+        this.path = path;
+        this.query = query;
+        this.fragment = fragment;
+        this.id = `${path}?${query?.toString() ?? ''}#${fragment ?? ''}`;
     }
-    constructor(_input) {
-        this._input = _input;
-        this._buffers = [];
-        this._bufferIndex = 0;
-        this._index = 0;
-        this._rest = _input;
+    toString() {
+        return this.id;
     }
-    _startsWith(...values) {
-        const rest = this._rest;
-        return values.some(function (value) {
-            return rest.startsWith(value);
-        });
-    }
-    _consumeOptional(str) {
-        if (this._startsWith(str)) {
-            this._rest = this._rest.slice(str.length);
-            this._index += str.length;
-            this._append(str);
-            return true;
+    /** @internal */
+    static _create(value) {
+        /**
+         * Look for the fragment first and strip it away.
+         * Next, look for the query string and strip it away.
+         * The remaining value is the path.
+         */
+        let fragment = null;
+        const fragmentStart = value.indexOf('#');
+        if (fragmentStart >= 0) {
+            const rawFragment = value.slice(fragmentStart + 1);
+            fragment = decodeURIComponent(rawFragment);
+            value = value.slice(0, fragmentStart);
         }
-        return false;
-    }
-    _consume(str) {
-        if (!this._consumeOptional(str)) {
-            this._expect(`'${str}'`);
+        let queryParams = null;
+        const queryStart = value.indexOf('?');
+        if (queryStart >= 0) {
+            const queryString = value.slice(queryStart + 1);
+            value = value.slice(0, queryStart);
+            queryParams = Object.freeze(new URLSearchParams(queryString));
         }
-    }
-    _expect(msg) {
-        throw new Error(getMessage(3500 /* Events.exprUnexpectedSegment */, msg, this._index, this._input, this._rest, this._rest));
-    }
-    _ensureDone() {
-        if (!this._done) {
-            throw new Error(getMessage(3501 /* Events.exprNotDone */, this._rest, this._index, this._input));
-        }
-    }
-    _advance() {
-        const char = this._rest[0];
-        this._rest = this._rest.slice(1);
-        ++this._index;
-        this._append(char);
-    }
-    _record() {
-        this._buffers[this._bufferIndex++] = '';
-    }
-    _playback() {
-        const bufferIndex = --this._bufferIndex;
-        const buffers = this._buffers;
-        const buffer = buffers[bufferIndex];
-        buffers[bufferIndex] = '';
-        return buffer;
-    }
-    _discard() {
-        this._buffers[--this._bufferIndex] = '';
-    }
-    _append(str) {
-        const bufferIndex = this._bufferIndex;
-        const buffers = this._buffers;
-        for (let i = 0; i < bufferIndex; ++i) {
-            buffers[i] += str;
-        }
+        return new ParsedUrl(value, queryParams != null ? queryParams : emptyQuery, fragment);
     }
 }
-exports.ExpressionKind = void 0;
-(function (ExpressionKind) {
-    ExpressionKind[ExpressionKind["Route"] = 0] = "Route";
-    ExpressionKind[ExpressionKind["CompositeSegment"] = 1] = "CompositeSegment";
-    ExpressionKind[ExpressionKind["ScopedSegment"] = 2] = "ScopedSegment";
-    ExpressionKind[ExpressionKind["SegmentGroup"] = 3] = "SegmentGroup";
-    ExpressionKind[ExpressionKind["Segment"] = 4] = "Segment";
-    ExpressionKind[ExpressionKind["Component"] = 5] = "Component";
-    ExpressionKind[ExpressionKind["Action"] = 6] = "Action";
-    ExpressionKind[ExpressionKind["Viewport"] = 7] = "Viewport";
-    ExpressionKind[ExpressionKind["ParameterList"] = 8] = "ParameterList";
-    ExpressionKind[ExpressionKind["Parameter"] = 9] = "Parameter";
-})(exports.ExpressionKind || (exports.ExpressionKind = {}));
-const fragmentRouteExpressionCache = new Map();
-const routeExpressionCache = new Map();
-class RouteExpression {
-    get kind() { return 0 /* ExpressionKind.Route */; }
-    constructor(raw, isAbsolute, root, queryParams, fragment, fragmentIsRoute) {
-        this.raw = raw;
-        this.isAbsolute = isAbsolute;
-        this.root = root;
+function stringify(pathOrParsedUrl, query, fragment) {
+    // normalize the input
+    let path;
+    if (typeof pathOrParsedUrl === 'string') {
+        path = pathOrParsedUrl;
+    }
+    else {
+        path = pathOrParsedUrl.path;
+        query = pathOrParsedUrl.query;
+        fragment = pathOrParsedUrl.fragment;
+    }
+    query ?? (query = emptyQuery);
+    // compose the path, query and fragment to compose the serialized URL
+    let queryString = query.toString();
+    queryString = queryString === '' ? '' : `?${queryString}`;
+    const hash = fragment != null && fragment.length > 0 ? `#${encodeURIComponent(fragment)}` : '';
+    return `${path}${queryString}${hash}`;
+}
+const pathUrlParser = Object.freeze({
+    parse(value) {
+        return ParsedUrl._create(value);
+    },
+    stringify(pathOrParsedUrl, query, fragment) {
+        return stringify(pathOrParsedUrl, query, fragment);
+    }
+});
+const fragmentUrlParser = Object.freeze({
+    parse(value) {
+        /**
+         * Look for the fragment; if found then take it and discard the rest.
+         * Otherwise, the entire value is the fragment.
+         * Next, look for the query string and strip it away.
+         * Construct the serialized URL, with the fragment as path, the query and null fragment.
+         */
+        const start = value.indexOf('#');
+        if (start >= 0) {
+            const rawFragment = value.slice(start + 1);
+            value = decodeURIComponent(rawFragment);
+        }
+        return ParsedUrl._create(value);
+    },
+    stringify(pathOrParsedUrl, query, fragment) {
+        return `/#/${stringify(pathOrParsedUrl, query, fragment)}`;
+    }
+});
+
+function valueOrFuncToValue(instructions, valueOrFunc) {
+    if (typeof valueOrFunc === 'function') {
+        return valueOrFunc(instructions);
+    }
+    return valueOrFunc;
+}
+const IRouterOptions = /*@__PURE__*/ kernel.DI.createInterface('RouterOptions');
+class RouterOptions {
+    constructor(useUrlFragmentHash, useHref, 
+    /**
+     * The strategy to use for interacting with the browser's `history` object (if applicable).
+     *
+     * - `none`: do not interact with the `history` object at all.
+     * - `replace`: replace the current state in history
+     * - `push`: push a new state onto the history (default)
+     * - A function that returns one of the 3 above values based on the navigation.
+     *
+     * Default: `push`
+     */
+    historyStrategy, 
+    /**
+     * An optional handler to build the title.
+     * When configured, the work of building the title string is completely handed over to this function.
+     * If this function returns `null`, the title is not updated.
+     */
+    buildTitle, 
+    /**
+     * When set to `false`, the navigation model won't be generated.
+     * The default value is `true`.
+     */
+    useNavigationModel, 
+    /**
+     * The class that is added to the element by the `load` custom attribute, if the associated instruction is active.
+     * If no value is provided while configuring router, no class will be added.
+     * The default value is `null`.
+     */
+    activeClass, 
+    /**
+     * When set to `true`, the router will try to restore previous route tree, when a routing instruction errs.
+     * Set this to `false`, if a stricter behavior is desired. However, in that case, you need to ensure the avoidance of errors.
+     * The default value is `true`.
+     */
+    restorePreviousRouteTreeOnError) {
+        this.useUrlFragmentHash = useUrlFragmentHash;
+        this.useHref = useHref;
+        this.historyStrategy = historyStrategy;
+        this.buildTitle = buildTitle;
+        this.useNavigationModel = useNavigationModel;
+        this.activeClass = activeClass;
+        this.restorePreviousRouteTreeOnError = restorePreviousRouteTreeOnError;
+        this._urlParser = useUrlFragmentHash ? fragmentUrlParser : pathUrlParser;
+    }
+    static create(input) {
+        return new RouterOptions(input.useUrlFragmentHash ?? false, input.useHref ?? true, input.historyStrategy ?? 'push', input.buildTitle ?? null, input.useNavigationModel ?? true, input.activeClass ?? null, input.restorePreviousRouteTreeOnError ?? true);
+    }
+    toString() {
+        return `RO(${[
+            ['historyStrategy', 'history'],
+        ].map(([key, name]) => {
+            const value = this[key];
+            return `${name}:${typeof value === 'function' ? value : `'${value}'`}`;
+        }).join(',')})`;
+    }
+}
+class NavigationOptions {
+    constructor(
+    /**
+     * Same as `RouterOptions#historyStrategy`.
+     */
+    historyStrategy, title, titleSeparator, 
+    /**
+     * Specify a context to use for relative navigation.
+     *
+     * - `null` (or empty): navigate relative to the root (absolute navigation)
+     * - `IRouteContext`: navigate relative to specifically this RouteContext (advanced users).
+     * - `HTMLElement`: navigate relative to the routeable component (page) that directly or indirectly contains this element.
+     * - `ICustomElementViewModel` (the `this` object when working from inside a view model): navigate relative to this component (if it was loaded as a route), or the routeable component (page) directly or indirectly containing it.
+     * - `ICustomElementController`: same as `ICustomElementViewModel`, but using the controller object instead of the view model object (advanced users).
+     */
+    context, 
+    /**
+     * Specify an object to be serialized to a query string, and then set to the query string of the new URL.
+     */
+    queryParams, 
+    /**
+     * Specify the hash fragment for the new URL.
+     */
+    fragment, 
+    /**
+     * Specify any kind of state to be stored together with the history entry for this navigation.
+     */
+    state, transitionPlan) {
+        this.historyStrategy = historyStrategy;
+        this.title = title;
+        this.titleSeparator = titleSeparator;
+        this.context = context;
         this.queryParams = queryParams;
         this.fragment = fragment;
-        this.fragmentIsRoute = fragmentIsRoute;
+        this.state = state;
+        this.transitionPlan = transitionPlan;
     }
-    static parse(path, fragmentIsRoute) {
-        const cache = fragmentIsRoute ? fragmentRouteExpressionCache : routeExpressionCache;
-        let result = cache.get(path);
-        if (result === void 0) {
-            cache.set(path, result = RouteExpression._$parse(path, fragmentIsRoute));
-        }
-        return result;
+    static create(routerOptions, input) {
+        return new NavigationOptions(input.historyStrategy ?? routerOptions.historyStrategy, input.title ?? null, input.titleSeparator ?? ' | ', input.context ?? null, input.queryParams ?? null, input.fragment ?? '', input.state ?? null, input.transitionPlan ?? null);
     }
     /** @internal */
-    static _$parse(path, fragmentIsRoute) {
-        // First strip off the fragment (and if fragment should be used as route, set it as the path)
-        let fragment = null;
-        const fragmentStart = path.indexOf('#');
-        if (fragmentStart >= 0) {
-            const rawFragment = path.slice(fragmentStart + 1);
-            fragment = decodeURIComponent(rawFragment);
-            if (fragmentIsRoute) {
-                path = fragment;
-            }
-            else {
-                path = path.slice(0, fragmentStart);
-            }
-        }
-        // Strip off and parse the query string using built-in URLSearchParams.
-        let queryParams = null;
-        const queryStart = path.indexOf('?');
-        if (queryStart >= 0) {
-            const queryString = path.slice(queryStart + 1);
-            path = path.slice(0, queryStart);
-            queryParams = new URLSearchParams(queryString);
-        }
-        if (path === '') {
-            return new RouteExpression('', false, SegmentExpression.EMPTY, queryParams != null ? Object.freeze(queryParams) : emptyQuery, fragment, fragmentIsRoute);
-        }
-        /*
-         * Now parse the actual route
-         *
-         * Notes:
-         * A NT-Name as per DOM level 2: https://www.w3.org/TR/1998/REC-xml-19980210#NT-Name
-         *  [4]  NameChar ::= Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender
-         *  [5]  Name     ::= (Letter | '_' | ':') (NameChar)*
-         *
-         * As per https://url.spec.whatwg.org/#url-code-points - URL code points (from the ASCII range) are:
-         * a-zA-Z0-9!$&'()*+,-./:;=?@_~
-         * The other valid option is a % followed by two ASCII hex digits
-         * Anything else is invalid.
-         */
-        const state = new ParserState(path);
-        state._record();
-        const isAbsolute = state._consumeOptional('/');
-        const root = CompositeSegmentExpression._parse(state);
-        state._ensureDone();
-        const raw = state._playback();
-        return new RouteExpression(raw, isAbsolute, root, queryParams != null ? Object.freeze(queryParams) : emptyQuery, fragment, fragmentIsRoute);
+    _clone() {
+        return new NavigationOptions(this.historyStrategy, this.title, this.titleSeparator, this.context, { ...this.queryParams }, this.fragment, this.state === null ? null : { ...this.state }, this.transitionPlan);
     }
-    toInstructionTree(options) {
-        return new ViewportInstructionTree(options, this.isAbsolute, this.root._toInstructions(0, 0), mergeURLSearchParams(this.queryParams, options.queryParams, true), this.fragment ?? options.fragment);
-    }
-    toString() {
-        return this.raw;
+    /** @internal */
+    _getHistoryStrategy(instructions) {
+        return valueOrFuncToValue(instructions, this.historyStrategy);
     }
 }
-/**
- * A single 'traditional' (slash-separated) segment consisting of one or more sibling segments.
- *
- * ### Variations:
- *
- * 1: `a+b`
- * - siblings: [`a`, `b`]
- * - append: `false`
- *
- * 2: `+a`
- * - siblings: [`a`]
- * - append: `true`
- *
- * 3: `+a+a`
- * - siblings: [`a`, `b`]
- * - append: `true`
- *
- * Where
- * - a = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
- * - b = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
- */
-class CompositeSegmentExpression {
-    get kind() { return 1 /* ExpressionKind.CompositeSegment */; }
-    constructor(raw, siblings) {
-        this.raw = raw;
-        this.siblings = siblings;
-    }
-    /** @internal */
-    static _parse(state) {
-        state._record();
-        // If a segment starts with '+', e.g. '/+a' / '/+a@vp' / '/a/+b' / '/+a+b' etc, then its siblings
-        // are considered to be "append"
-        const append = state._consumeOptional('+');
-        const siblings = [];
-        do {
-            siblings.push(ScopedSegmentExpression._parse(state));
-        } while (state._consumeOptional('+'));
-        if (!append && siblings.length === 1) {
-            state._discard();
-            return siblings[0];
-        }
-        const raw = state._playback();
-        return new CompositeSegmentExpression(raw, siblings);
-    }
-    /** @internal */
-    _toInstructions(open, close) {
-        switch (this.siblings.length) {
-            case 0:
-                return [];
-            case 1:
-                return this.siblings[0]._toInstructions(open, close);
-            case 2:
-                return [
-                    ...this.siblings[0]._toInstructions(open, 0),
-                    ...this.siblings[1]._toInstructions(0, close),
-                ];
-            default:
-                return [
-                    ...this.siblings[0]._toInstructions(open, 0),
-                    ...this.siblings.slice(1, -1).flatMap(function (x) {
-                        return x._toInstructions(0, 0);
-                    }),
-                    ...this.siblings[this.siblings.length - 1]._toInstructions(0, close),
-                ];
-        }
-    }
-    toString() {
-        return this.raw;
-    }
-}
-/**
- * The (single) left-hand side and the (one or more) right-hand side of a slash-separated segment.
- *
- * Variations:
- *
- * 1: `a/b`
- * - left: `a`
- * - right: `b`
- *
- * Where
- * - a = `SegmentGroupExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression`)
- * - b = `ScopedSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression`)
- */
-class ScopedSegmentExpression {
-    get kind() { return 2 /* ExpressionKind.ScopedSegment */; }
-    constructor(raw, left, right) {
-        this.raw = raw;
-        this.left = left;
-        this.right = right;
-    }
-    /** @internal */
-    static _parse(state) {
-        state._record();
-        const left = SegmentGroupExpression._parse(state);
-        if (state._consumeOptional('/')) {
-            const right = ScopedSegmentExpression._parse(state);
-            const raw = state._playback();
-            return new ScopedSegmentExpression(raw, left, right);
-        }
-        state._discard();
-        return left;
-    }
-    /** @internal */
-    _toInstructions(open, close) {
-        const leftInstructions = this.left._toInstructions(open, 0);
-        const rightInstructions = this.right._toInstructions(0, close);
-        let cur = leftInstructions[leftInstructions.length - 1];
-        while (cur.children.length > 0) {
-            cur = cur.children[cur.children.length - 1];
-        }
-        cur.children.push(...rightInstructions);
-        return leftInstructions;
-    }
-    toString() {
-        return this.raw;
-    }
-}
-/**
- * Any kind of segment wrapped in parentheses, increasing its precedence.
- * Specifically, the parentheses are needed to deeply specify scoped siblings.
- * The precedence is intentionally similar to the familiar mathematical `/` and `+` operators.
- *
- * For example, consider this viewport structure:
- * - viewport-a
- * - - viewport-a1
- * - - viewport-a2
- * - viewport-b
- * - - viewport-b1
- *
- * This can only be deeply specified by using the grouping operator: `a/(a1+a2)+b/b1`
- *
- * Because `a/a1+a2+b/b1` would be interpreted differently:
- * - viewport-a
- * - - viewport-a1
- * - viewport-a2
- * - viewport-b
- * - - viewport-b1
- *
- * ### Variations:
- *
- * 1: `(a)`
- * - expression: `a`
- *
- * Where
- * - a = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
- */
-class SegmentGroupExpression {
-    get kind() { return 3 /* ExpressionKind.SegmentGroup */; }
-    constructor(raw, expression) {
-        this.raw = raw;
-        this.expression = expression;
-    }
-    /** @internal */
-    static _parse(state) {
-        state._record();
-        if (state._consumeOptional('(')) {
-            const expression = CompositeSegmentExpression._parse(state);
-            state._consume(')');
-            const raw = state._playback();
-            return new SegmentGroupExpression(raw, expression);
-        }
-        state._discard();
-        return SegmentExpression._parse(state);
-    }
-    /** @internal */
-    _toInstructions(open, close) {
-        return this.expression._toInstructions(open + 1, close + 1);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-/**
- * A (non-composite) segment specifying a single component and (optional) viewport / action.
- */
-class SegmentExpression {
-    get kind() { return 4 /* ExpressionKind.Segment */; }
-    static get EMPTY() { return new SegmentExpression('', ComponentExpression.EMPTY, ActionExpression.EMPTY, ViewportExpression.EMPTY, true); }
-    constructor(raw, component, action, viewport, scoped) {
-        this.raw = raw;
-        this.component = component;
-        this.action = action;
-        this.viewport = viewport;
-        this.scoped = scoped;
-    }
-    /** @internal */
-    static _parse(state) {
-        state._record();
-        const component = ComponentExpression._parse(state);
-        const action = ActionExpression._parse(state);
-        const viewport = ViewportExpression._parse(state);
-        const scoped = !state._consumeOptional('!');
-        const raw = state._playback();
-        return new SegmentExpression(raw, component, action, viewport, scoped);
-    }
-    /** @internal */
-    _toInstructions(open, close) {
-        return [
-            ViewportInstruction.create({
-                component: this.component.name,
-                params: this.component.parameterList._toObject(),
-                viewport: this.viewport.name,
-                open,
-                close,
-            }),
-        ];
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ComponentExpression {
-    get kind() { return 5 /* ExpressionKind.Component */; }
-    static get EMPTY() { return new ComponentExpression('', '', ParameterListExpression.EMPTY); }
-    constructor(raw, name, parameterList) {
-        this.raw = raw;
-        this.name = name;
-        this.parameterList = parameterList;
-        switch (name.charAt(0)) {
-            case ':':
-                this.isParameter = true;
-                this.isStar = false;
-                this.isDynamic = true;
-                this.parameterName = name.slice(1);
-                break;
-            case '*':
-                this.isParameter = false;
-                this.isStar = true;
-                this.isDynamic = true;
-                this.parameterName = name.slice(1);
-                break;
-            default:
-                this.isParameter = false;
-                this.isStar = false;
-                this.isDynamic = false;
-                this.parameterName = name;
-                break;
-        }
-    }
-    /** @internal */
-    static _parse(state) {
-        state._record();
-        state._record();
-        if (!state._done) {
-            if (state._startsWith('./')) {
-                state._advance();
-            }
-            else if (state._startsWith('../')) {
-                state._advance();
-                state._advance();
-            }
-            else {
-                while (!state._done && !state._startsWith(...terminal)) {
-                    state._advance();
-                }
-            }
-        }
-        const name = decodeURIComponent(state._playback());
-        if (name.length === 0) {
-            state._expect('component name');
-        }
-        const parameterList = ParameterListExpression._parse(state);
-        const raw = state._playback();
-        return new ComponentExpression(raw, name, parameterList);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ActionExpression {
-    get kind() { return 6 /* ExpressionKind.Action */; }
-    static get EMPTY() { return new ActionExpression('', '', ParameterListExpression.EMPTY); }
-    constructor(raw, name, parameterList) {
-        this.raw = raw;
-        this.name = name;
-        this.parameterList = parameterList;
-    }
-    /** @internal */
-    static _parse(state) {
-        state._record();
-        let name = '';
-        if (state._consumeOptional('.')) {
-            state._record();
-            while (!state._done && !state._startsWith(...terminal)) {
-                state._advance();
-            }
-            name = decodeURIComponent(state._playback());
-            if (name.length === 0) {
-                state._expect('method name');
-            }
-        }
-        const parameterList = ParameterListExpression._parse(state);
-        const raw = state._playback();
-        return new ActionExpression(raw, name, parameterList);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ViewportExpression {
-    get kind() { return 7 /* ExpressionKind.Viewport */; }
-    static get EMPTY() { return new ViewportExpression('', ''); }
-    constructor(raw, name) {
-        this.raw = raw;
-        this.name = name;
-    }
-    /** @internal */
-    static _parse(state) {
-        state._record();
-        let name = null;
-        if (state._consumeOptional('@')) {
-            state._record();
-            while (!state._done && !state._startsWith(...terminal)) {
-                state._advance();
-            }
-            name = decodeURIComponent(state._playback());
-            if (name.length === 0) {
-                state._expect('viewport name');
-            }
-        }
-        const raw = state._playback();
-        return new ViewportExpression(raw, name);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ParameterListExpression {
-    get kind() { return 8 /* ExpressionKind.ParameterList */; }
-    static get EMPTY() { return new ParameterListExpression('', []); }
-    constructor(raw, expressions) {
-        this.raw = raw;
-        this.expressions = expressions;
-    }
-    /** @internal */
-    static _parse(state) {
-        state._record();
-        const expressions = [];
-        if (state._consumeOptional('(')) {
-            do {
-                expressions.push(ParameterExpression._parse(state, expressions.length));
-                if (!state._consumeOptional(',')) {
-                    break;
-                }
-            } while (!state._done && !state._startsWith(')'));
-            state._consume(')');
-        }
-        const raw = state._playback();
-        return new ParameterListExpression(raw, expressions);
-    }
-    /** @internal */
-    _toObject() {
-        const params = {};
-        for (const expr of this.expressions) {
-            params[expr.key] = expr.value;
-        }
-        return params;
-    }
-    toString() {
-        return this.raw;
-    }
-}
-class ParameterExpression {
-    get kind() { return 9 /* ExpressionKind.Parameter */; }
-    static get EMPTY() { return new ParameterExpression('', '', ''); }
-    constructor(raw, key, value) {
-        this.raw = raw;
-        this.key = key;
-        this.value = value;
-    }
-    /** @internal */
-    static _parse(state, index) {
-        state._record();
-        state._record();
-        while (!state._done && !state._startsWith(...terminal)) {
-            state._advance();
-        }
-        let key = decodeURIComponent(state._playback());
-        if (key.length === 0) {
-            state._expect('parameter key');
-        }
-        let value;
-        if (state._consumeOptional('=')) {
-            state._record();
-            while (!state._done && !state._startsWith(...terminal)) {
-                state._advance();
-            }
-            value = decodeURIComponent(state._playback());
-            if (value.length === 0) {
-                state._expect('parameter value');
-            }
-        }
-        else {
-            value = key;
-            key = index.toString();
-        }
-        const raw = state._playback();
-        return new ParameterExpression(raw, key, value);
-    }
-    toString() {
-        return this.raw;
-    }
-}
-const AST = Object.freeze({
-    RouteExpression,
-    CompositeSegmentExpression,
-    ScopedSegmentExpression,
-    SegmentGroupExpression,
-    SegmentExpression,
-    ComponentExpression,
-    ActionExpression,
-    ViewportExpression,
-    ParameterListExpression,
-    ParameterExpression,
-});
 
 const defaultViewportName = 'default';
 class ViewportInstruction {
@@ -3647,7 +3639,7 @@ class ViewportInstruction {
         if (isPartialViewportInstruction(instruction)) {
             const component = TypedNavigationInstruction.create(instruction.component);
             const children = instruction.children?.map(ViewportInstruction.create) ?? [];
-            return new ViewportInstruction(instruction.open ?? 0, instruction.close ?? 0, instruction.recognizedRoute ?? null, component, instruction.viewport ?? null, instruction.params ?? null, children);
+            return new ViewportInstruction(instruction.open ?? 0, instruction.close ?? 0, instruction.recognizedRoute ?? null, component, instruction.viewport ?? null, Object.freeze(instruction.params ?? null), children);
         }
         const typedInstruction = TypedNavigationInstruction.create(instruction);
         return new ViewportInstruction(0, 0, null, typedInstruction, null, null, []);
@@ -3692,39 +3684,19 @@ class ViewportInstruction {
     }
     /** @internal */
     _clone() {
-        return new ViewportInstruction(this.open, this.close, this.recognizedRoute, this.component._clone(), this.viewport, this.params === null ? null : { ...this.params }, [...this.children]);
+        return new ViewportInstruction(this.open, this.close, this.recognizedRoute, this.component._clone(), this.viewport, this.params, [...this.children]);
     }
     toUrlComponent(recursive = true) {
         const component = this.component.toUrlComponent();
-        /**
-         * Note on the parenthesized parameters:
-         * We will land on this branch if and only if the component cannot be eagerly recognized (in the RouteContext#generateViewportInstruction) AND the parameters are also provided.
-         * When the routes are eagerly recognized, then there is no parameters left at this point and everything is already packed in the generated path as well as in the recognized route.
-         * Thus, in normal scenarios the users will never land here.
-         *
-         * Whenever, they are using a hand composed (string) path, then in that case there is no question of having parameters at this point, rather the given path is recognized in the createAndAppendNodes.
-         * It might be a rare edge case where users provide half the parameters in the string path and half as form of parameters; example: `load="route: r1/id1; params.bind: {id2}"`.
-         * We might not want to officially support such cases.
-         *
-         * However, as the route recognition is inherently lazy (think about child routes, whose routing configuration are not resolved till a child routing context is created, or
-         * the usage of instance level getRouteConfig), the component cannot be recognized fully eagerly. Thus, it is difficult at this point to correctly handle parameters as defined by the path templates defined for the component.
-         * This artifact is kept here for the purpose of fallback.
-         *
-         * We can think about a stricter mode where we throw error if any params remains unconsumed at this point.
-         * Or simply ignore the params while creating the URL. However, that does not feel right at all.
-         */
-        const params = this.params === null || Object.keys(this.params).length === 0 ? '' : `(${stringifyParams(this.params)})`;
         const vp = this.viewport;
         const viewport = component.length === 0 || vp === null || vp.length === 0 || vp === defaultViewportName ? '' : `@${vp}`;
-        const thisPart = `${'('.repeat(this.open)}${component}${params}${viewport}${')'.repeat(this.close)}`;
+        const thisPart = `${'('.repeat(this.open)}${component}${stringifyParams(this.params)}${viewport}${')'.repeat(this.close)}`;
         const childPart = recursive ? this.children.map(x => x.toUrlComponent()).join('+') : '';
-        if (thisPart.length > 0) {
-            if (childPart.length > 0) {
-                return [thisPart, childPart].join('/');
-            }
-            return thisPart;
-        }
-        return childPart;
+        return thisPart.length > 0
+            ? childPart.length > 0
+                ? `${thisPart}/${childPart}`
+                : thisPart
+            : childPart;
     }
     // Should not be adjust for DEV as it is also used of logging in production build.
     toString() {
@@ -3735,9 +3707,31 @@ class ViewportInstruction {
         return `VPI(${props})`;
     }
 }
+/**
+ * Note on the parenthesized parameters:
+ * We will land on this branch if and only if the component cannot be eagerly recognized (in the RouteContext#generateViewportInstruction) AND the parameters are also provided.
+ * When the routes are eagerly recognized, then there is no parameters left at this point and everything is already packed in the generated path as well as in the recognized route.
+ * Thus, in normal scenarios the users will never land here.
+ *
+ * Whenever, they are using a hand composed (string) path, then in that case there is no question of having parameters at this point, rather the given path is recognized in the createAndAppendNodes.
+ * It might be a rare edge case where users provide half the parameters in the string path and half as form of parameters; example: `load="route: r1/id1; params.bind: {id2}"`.
+ * We might not want to officially support such cases.
+ *
+ * However, as the route recognition is inherently lazy (think about child routes, whose routing configuration are not resolved till a child routing context is created, or
+ * the usage of instance level getRouteConfig), the component cannot be recognized fully eagerly. Thus, it is difficult at this point to correctly handle parameters as defined by the path templates defined for the component.
+ * This artifact is kept here for the purpose of fallback.
+ *
+ * We can think about a stricter mode where we throw error if any params remains unconsumed at this point.
+ * Or simply ignore the params while creating the URL. However, that does not feel right at all.
+ */
 function stringifyParams(params) {
+    if (params === null)
+        return '';
     const keys = Object.keys(params);
-    const values = Array(keys.length);
+    const numKeys = keys.length;
+    if (numKeys === 0)
+        return '';
+    const values = Array(numKeys);
     const indexKeys = [];
     const namedKeys = [];
     for (const key of keys) {
@@ -3748,7 +3742,7 @@ function stringifyParams(params) {
             namedKeys.push(key);
         }
     }
-    for (let i = 0; i < keys.length; ++i) {
+    for (let i = 0; i < numKeys; ++i) {
         const indexKeyIdx = indexKeys.indexOf(i);
         if (indexKeyIdx > -1) {
             values[i] = params[i];
@@ -3759,7 +3753,7 @@ function stringifyParams(params) {
             values[i] = `${namedKey}=${params[namedKey]}`;
         }
     }
-    return values.join(',');
+    return `(${values.join(',')})`;
 }
 class ViewportInstructionTree {
     constructor(options, isAbsolute, children, queryParams, fragment) {
@@ -3768,18 +3762,19 @@ class ViewportInstructionTree {
         this.children = children;
         this.queryParams = queryParams;
         this.fragment = fragment;
+        Object.freeze(queryParams);
     }
     static create(instructionOrInstructions, routerOptions, options, rootCtx) {
-        const $options = NavigationOptions.create(routerOptions, { ...options });
-        let context = $options.context;
+        options = options instanceof NavigationOptions ? options : NavigationOptions.create(routerOptions, options ?? kernel.emptyObject);
+        let context = options.context;
         if (!(context instanceof RouteContext) && rootCtx != null) {
-            context = $options.context = RouteContext.resolve(rootCtx, context);
+            context = options.context = RouteContext.resolve(rootCtx, context);
         }
         const hasContext = context != null;
         if (instructionOrInstructions instanceof Array) {
             const len = instructionOrInstructions.length;
             const children = new Array(len);
-            const query = new URLSearchParams($options.queryParams ?? kernel.emptyObject);
+            const query = new URLSearchParams(options.queryParams ?? kernel.emptyObject);
             for (let i = 0; i < len; i++) {
                 const instruction = instructionOrInstructions[i];
                 const eagerVi = hasContext ? context._generateViewportInstruction(instruction) : null;
@@ -3791,21 +3786,21 @@ class ViewportInstructionTree {
                     children[i] = ViewportInstruction.create(instruction);
                 }
             }
-            return new ViewportInstructionTree($options, false, children, query, $options.fragment);
+            return new ViewportInstructionTree(options, false, children, query, options.fragment);
         }
         if (typeof instructionOrInstructions === 'string') {
-            const expr = RouteExpression.parse(instructionOrInstructions, routerOptions.useUrlFragmentHash);
-            return expr.toInstructionTree($options);
+            const expr = RouteExpression.parse(routerOptions._urlParser.parse(instructionOrInstructions));
+            return expr.toInstructionTree(options);
         }
         const eagerVi = hasContext
             ? context._generateViewportInstruction(isPartialViewportInstruction(instructionOrInstructions)
                 ? { ...instructionOrInstructions, params: instructionOrInstructions.params ?? kernel.emptyObject }
                 : { component: instructionOrInstructions, params: kernel.emptyObject })
             : null;
-        const query = new URLSearchParams($options.queryParams ?? kernel.emptyObject);
+        const query = new URLSearchParams(options.queryParams ?? kernel.emptyObject);
         return eagerVi !== null
-            ? new ViewportInstructionTree($options, false, [eagerVi.vi], mergeURLSearchParams(query, eagerVi.query, false), $options.fragment)
-            : new ViewportInstructionTree($options, false, [ViewportInstruction.create(instructionOrInstructions)], query, $options.fragment);
+            ? new ViewportInstructionTree(options, false, [eagerVi.vi], mergeURLSearchParams(query, eagerVi.query, false), options.fragment)
+            : new ViewportInstructionTree(options, false, [ViewportInstruction.create(instructionOrInstructions)], query, options.fragment);
     }
     equals(other) {
         const thisChildren = this.children;
@@ -3820,9 +3815,7 @@ class ViewportInstructionTree {
         }
         return true;
     }
-    toUrl(isFinalInstruction, useUrlFragmentHash) {
-        let pathname;
-        let hash;
+    toUrl(isFinalInstruction, parser) {
         let parentPath = '';
         if (!isFinalInstruction) {
             const parentPaths = [];
@@ -3843,18 +3836,7 @@ class ViewportInstructionTree {
             parentPath = parentPaths.join('/');
         }
         const currentPath = this.toPath();
-        if (useUrlFragmentHash) {
-            pathname = '/';
-            hash = parentPath.length > 0 ? `#/${parentPath}/${currentPath}` : `#/${currentPath}`;
-        }
-        else {
-            pathname = parentPath.length > 0 ? `${parentPath}/${currentPath}` : currentPath;
-            const fragment = this.fragment;
-            hash = fragment !== null && fragment.length > 0 ? `#${fragment}` : '';
-        }
-        let search = this.queryParams.toString();
-        search = search === '' ? '' : `?${search}`;
-        return `${pathname}${search}${hash}`;
+        return parser.stringify(parentPath.length > 0 ? `${parentPath}/${currentPath}` : currentPath, this.queryParams, this.fragment);
     }
     toPath() {
         return this.children.map(x => x.toUrlComponent()).join('+');
@@ -3948,7 +3930,6 @@ class TypedNavigationInstruction {
     }
 }
 
-// type IHooksFn<T, Fn extends (...args: any[]) => unknown> = (vm: T, ...args: Parameters<Fn>) => ReturnType<Fn>;
 /**
  * A component agent handles an instance of a routed view-model (a component).
  * It deals with invoking the hooks (`canLoad`, `loading`, `canUnload`, `unloading`),
@@ -4613,7 +4594,7 @@ class RouteContext {
                     : param.isOptional
                         ? `:${key}?`
                         : `:${key}`;
-                path = path.replace(pattern, value);
+                path = path.replace(pattern, encodeURIComponent(value));
             }
             const consumedKeys = Object.keys(consumed);
             const query = Object.fromEntries(Object.entries(params).filter(([key]) => !consumedKeys.includes(key)));
@@ -4898,7 +4879,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
     }
     valueChanged() {
         const router = this._router;
-        const useHash = router.options.useUrlFragmentHash;
+        const options = router.options;
         const component = this.route;
         // this allows binding context to null for navigation from root; unbound vs explicit null binding
         let ctx = this.context;
@@ -4913,7 +4894,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
             const instructions = this._instructions = router.createViewportInstructions(typeof params === 'object' && params !== null
                 ? { component, params }
                 : component, { context: ctx });
-            this._href = instructions.toUrl(false, useHash);
+            this._href = instructions.toUrl(false, options._urlParser);
         }
         else {
             this._instructions = null;
@@ -4928,7 +4909,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
                 this._el.removeAttribute(this.attribute);
             }
             else {
-                const value = useHash ? this._href : this._locationMgr.addBaseHref(this._href);
+                const value = options.useUrlFragmentHash ? this._href : this._locationMgr.addBaseHref(this._href);
                 this._el.setAttribute(this.attribute, value);
             }
         }
@@ -5165,7 +5146,6 @@ class ScrollStateManager {
 }
 
 exports.AST = AST;
-exports.ActionExpression = ActionExpression;
 exports.AuNavId = AuNavId;
 exports.ComponentExpression = ComponentExpression;
 exports.CompositeSegmentExpression = CompositeSegmentExpression;
@@ -5204,7 +5184,9 @@ exports.Transition = Transition;
 exports.ViewportAgent = ViewportAgent;
 exports.ViewportCustomElementRegistration = ViewportCustomElementRegistration;
 exports.ViewportExpression = ViewportExpression;
+exports.fragmentUrlParser = fragmentUrlParser;
 exports.isManagedState = isManagedState;
+exports.pathUrlParser = pathUrlParser;
 exports.route = route;
 exports.toManagedState = toManagedState;
 //# sourceMappingURL=index.dev.cjs.map

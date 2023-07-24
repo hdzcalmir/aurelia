@@ -644,7 +644,7 @@ let TranslationParametersBindingCommand = class TranslationParametersBindingComm
                 ?? camelCase(target);
         }
         else {
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
     }
@@ -701,7 +701,7 @@ class TranslationBindingCommand {
                 ?? camelCase(info.attr.target);
         }
         else {
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new TranslationBindingInstruction(new CustomExpression(info.attr.rawValue), target);
     }
@@ -753,7 +753,7 @@ class TranslationBindBindingCommand {
                 ?? camelCase(info.attr.target);
         }
         else {
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
     }

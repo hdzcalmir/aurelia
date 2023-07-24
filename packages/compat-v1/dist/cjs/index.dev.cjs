@@ -135,7 +135,7 @@ exports.CallBindingCommand = class CallBindingCommand {
     build(info, exprParser) {
         const target = info.bindable === null
             ? kernel.camelCase(info.attr.target)
-            : info.bindable.property;
+            : info.bindable.name;
         return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, (16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */)), target);
     }
 };
@@ -224,9 +224,7 @@ exports.DelegateBindingCommand = class DelegateBindingCommand {
 exports.DelegateBindingCommand = __decorate([
     runtimeHtml.bindingCommand('delegate')
 ], exports.DelegateBindingCommand);
-exports.ListenerBindingRenderer = 
-/** @internal */
-class ListenerBindingRenderer {
+exports.ListenerBindingRenderer = class ListenerBindingRenderer {
     /** @internal */ static get inject() { return [IEventDelegator]; }
     constructor(eventDelegator) {
         this._eventDelegator = eventDelegator;

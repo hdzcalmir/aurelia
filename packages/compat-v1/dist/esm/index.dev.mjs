@@ -131,7 +131,7 @@ let CallBindingCommand = class CallBindingCommand {
     build(info, exprParser) {
         const target = info.bindable === null
             ? camelCase(info.attr.target)
-            : info.bindable.property;
+            : info.bindable.name;
         return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, (16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */)), target);
     }
 };
@@ -220,9 +220,7 @@ let DelegateBindingCommand = class DelegateBindingCommand {
 DelegateBindingCommand = __decorate([
     bindingCommand('delegate')
 ], DelegateBindingCommand);
-let ListenerBindingRenderer = 
-/** @internal */
-class ListenerBindingRenderer {
+let ListenerBindingRenderer = class ListenerBindingRenderer {
     /** @internal */ static get inject() { return [IEventDelegator]; }
     constructor(eventDelegator) {
         this._eventDelegator = eventDelegator;

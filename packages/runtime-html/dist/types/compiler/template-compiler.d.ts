@@ -11,7 +11,7 @@ export declare class TemplateCompiler implements ITemplateCompiler {
     debug: boolean;
     resolveResources: boolean;
     compile(partialDefinition: PartialCustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;
-    compileSpread(definition: CustomElementDefinition, attrSyntaxs: AttrSyntax[], container: IContainer, el: Element): IInstruction[];
+    compileSpread(requestor: CustomElementDefinition, attrSyntaxs: AttrSyntax[], container: IContainer, target: Element, targetDef?: CustomElementDefinition): IInstruction[];
 }
 export declare class BindablesInfo<T extends 0 | 1 = 0> {
     readonly attrs: Record<string, BindableDefinition>;

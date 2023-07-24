@@ -24,7 +24,7 @@ describe('3-runtime-html/au-slot.slotted.spec.ts', function () {
                     template: '<au-slot>'
                 })
             ], El);
-            const { component: { el } } = createFixture('<el view-model.ref=el><div></div>', class App {
+            const { component: { el } } = createFixture('<el component.ref=el><div></div>', class App {
             }, [El,]);
             assert.strictEqual(el.divs.length, 1);
         });
@@ -167,7 +167,7 @@ describe('3-runtime-html/au-slot.slotted.spec.ts', function () {
                     template: '<au-slot>'
                 })
             ], El);
-            const { component: { el: { divs, divs2 } } } = createFixture('<el view-model.ref="el"><div>', class App {
+            const { component: { el: { divs, divs2 } } } = createFixture('<el component.ref="el"><div>', class App {
             }, [El,]);
             assert.strictEqual(divs.length, 1);
             assert.strictEqual(divs2.length, 1);

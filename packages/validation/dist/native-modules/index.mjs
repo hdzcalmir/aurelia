@@ -628,7 +628,7 @@ let Y = class ValidationMessageProvider {
     }
     parseMessage(e) {
         const t = this.parser.parse(e, 1);
-        if (t?.$kind === 23) {
+        if (t?.$kind === 25) {
             for (const i of t.expressions) {
                 const t = i.name;
                 if (V.has(t)) {

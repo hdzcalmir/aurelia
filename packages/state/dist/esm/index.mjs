@@ -394,7 +394,7 @@ let E = class StateBindingCommand {
             if (r === "" && t.def.type === 1) {
                 r = h(n);
             }
-            n = t.bindable.property;
+            n = t.bindable.name;
         }
         return new StateBindingInstruction(r, n);
     }

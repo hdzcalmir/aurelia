@@ -652,7 +652,7 @@ exports.TranslationParametersBindingCommand = class TranslationParametersBinding
                 ?? kernel.camelCase(target);
         }
         else {
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
     }
@@ -709,7 +709,7 @@ class TranslationBindingCommand {
                 ?? kernel.camelCase(info.attr.target);
         }
         else {
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new TranslationBindingInstruction(new runtime.CustomExpression(info.attr.rawValue), target);
     }
@@ -761,7 +761,7 @@ class TranslationBindBindingCommand {
                 ?? kernel.camelCase(info.attr.target);
         }
         else {
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
     }

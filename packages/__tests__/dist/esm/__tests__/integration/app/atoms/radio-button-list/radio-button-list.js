@@ -17,7 +17,7 @@ import template from './radio-button-list.html';
  *   - `checked-observer` (`checked` bind)
  *   - `setter-observer` (`model` bind)
  */
-let RadioButtonList = class RadioButtonList {
+export let RadioButtonList = class RadioButtonList {
     constructor() {
         this.group = 'choices';
     }
@@ -89,5 +89,4 @@ __decorate([
 RadioButtonList = __decorate([
     customElement({ name: 'radio-button-list', template })
 ], RadioButtonList);
-export { RadioButtonList };
 //# sourceMappingURL=radio-button-list.js.map

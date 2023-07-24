@@ -1,5 +1,5 @@
 import { TransitionViewport } from './transition-viewport.js';
-class Component {
+export class Component {
     constructor(transition, viewport) {
         this.viewport = viewport;
         if (transition instanceof Component) {
@@ -44,5 +44,4 @@ class Component {
     }
 }
 Component.Empty = new Component('', '');
-export { Component };
 //# sourceMappingURL=component.js.map

@@ -440,7 +440,7 @@ let StateBindingCommand = class StateBindingCommand {
             if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
                 value = camelCase(target);
             }
-            target = info.bindable.property;
+            target = info.bindable.name;
         }
         return new StateBindingInstruction(value, target);
     }

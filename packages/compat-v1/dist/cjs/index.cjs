@@ -100,7 +100,7 @@ exports.CallBindingCommand = class CallBindingCommand {
         return 0;
     }
     build(t, e) {
-        const s = t.bindable === null ? i.camelCase(t.attr.target) : t.bindable.property;
+        const s = t.bindable === null ? i.camelCase(t.attr.target) : t.bindable.name;
         return new CallBindingInstruction(e.parse(t.attr.rawValue, 16 | 8), s);
     }
 };

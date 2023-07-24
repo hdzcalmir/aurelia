@@ -5,30 +5,26 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { valueConverter, bindingBehavior, customElement, customAttribute } from '@aurelia/runtime-html';
-let CE = class CE {
+export let CE = class CE {
 };
 CE = __decorate([
     customElement({ name: 'ce' })
 ], CE);
-export { CE };
-let CA = class CA {
+export let CA = class CA {
 };
 CA = __decorate([
     customAttribute({ name: 'ca' })
 ], CA);
-export { CA };
-let VC = class VC {
+export let VC = class VC {
 };
 VC = __decorate([
     valueConverter({ name: 'vc' })
 ], VC);
-export { VC };
-let BB = class BB {
+export let BB = class BB {
 };
 BB = __decorate([
     bindingBehavior({ name: 'bb' })
 ], BB);
-export { BB };
 export class X {
 }
 export const $null = null;

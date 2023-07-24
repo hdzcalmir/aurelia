@@ -22,7 +22,7 @@ describe('3-runtime-html/lifecycle-hooks.resolve.spec.ts', function () {
         class Hooks {
             attaching() { }
         }
-        const { au, component, startPromise, tearDown } = createFixture(`<el view-model.ref="el">`, class App {
+        const { au, component, startPromise, tearDown } = createFixture(`<el component.ref="el">`, class App {
         }, [
             CustomElement.define({
                 name: 'el',
@@ -41,7 +41,7 @@ describe('3-runtime-html/lifecycle-hooks.resolve.spec.ts', function () {
         class Hooks {
             attaching() { }
         }
-        const { au, component, startPromise, tearDown } = createFixture(`<el view-model.ref="el">`, class App {
+        const { au, component, startPromise, tearDown } = createFixture(`<el component.ref="el">`, class App {
         }, [
             CustomElement.define({
                 name: 'el',
@@ -79,11 +79,11 @@ describe('3-runtime-html/lifecycle-hooks.resolve.spec.ts', function () {
                     // empty
                 }
             }
-            const { au, component } = await createFixture(`<el view-model.ref="el">`, class App {
+            const { au, component } = await createFixture(`<el component.ref="el">`, class App {
             }, [
                 CustomElement.define({
                     name: 'el',
-                    template: '<el-child view-model.ref="elChild">',
+                    template: '<el-child component.ref="elChild">',
                     dependencies: [
                         LifecycleHooks.define({}, Hooks),
                         LifecycleHooks.define({}, Hooks2),
@@ -139,11 +139,11 @@ describe('3-runtime-html/lifecycle-hooks.resolve.spec.ts', function () {
             DifferentHooks2 = __decorate([
                 lifecycleHooks()
             ], DifferentHooks2);
-            const { au, component } = await createFixture(`<el view-model.ref="el">`, class App {
+            const { au, component } = await createFixture(`<el component.ref="el">`, class App {
             }, [
                 CustomElement.define({
                     name: 'el',
-                    template: '<el-child view-model.ref="elChild">',
+                    template: '<el-child component.ref="elChild">',
                     dependencies: [
                         Hooks,
                         Hooks2,

@@ -116,20 +116,20 @@ function getPropertyInfo(binding, info) {
     let expression = binding.ast.expression;
     let toCachePropertyName = true;
     let propertyName = '';
-    while (expression !== void 0 && expression?.$kind !== 1 /* ExpressionKind.AccessScope */) {
+    while (expression !== void 0 && expression?.$kind !== 2 /* ExpressionKind.AccessScope */) {
         let memberName;
         switch (expression.$kind) {
-            case 18 /* ExpressionKind.BindingBehavior */:
-            case 17 /* ExpressionKind.ValueConverter */:
+            case 20 /* ExpressionKind.BindingBehavior */:
+            case 19 /* ExpressionKind.ValueConverter */:
                 expression = expression.expression;
                 continue;
-            case 10 /* ExpressionKind.AccessMember */:
+            case 12 /* ExpressionKind.AccessMember */:
                 memberName = expression.name;
                 break;
-            case 11 /* ExpressionKind.AccessKeyed */: {
+            case 13 /* ExpressionKind.AccessKeyed */: {
                 const keyExpr = expression.key;
                 if (toCachePropertyName) {
-                    toCachePropertyName = keyExpr.$kind === 4 /* ExpressionKind.PrimitiveLiteral */;
+                    toCachePropertyName = keyExpr.$kind === 5 /* ExpressionKind.PrimitiveLiteral */;
                 }
                 // eslint-disable-next-line
                 memberName = `[${runtime.astEvaluate(keyExpr, scope, binding, null).toString()}]`;

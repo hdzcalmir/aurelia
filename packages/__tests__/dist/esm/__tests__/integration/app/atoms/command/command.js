@@ -14,7 +14,7 @@ import template from './command.html';
  * - `@aurelia/runtime`
  *   - `call-binding`
  */
-let Command = class Command {
+export let Command = class Command {
 };
 __decorate([
     bindable,
@@ -27,5 +27,4 @@ __decorate([
 Command = __decorate([
     customElement({ name: 'command', template })
 ], Command);
-export { Command };
 //# sourceMappingURL=command.js.map
