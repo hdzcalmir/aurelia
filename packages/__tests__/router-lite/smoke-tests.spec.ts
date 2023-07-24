@@ -3441,7 +3441,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
       await vmb.redirectToPath();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar | fragment:');
+      assert.html.textContent(host, 'view-a foo: | query: foo=bar | fragment:');
       assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\?foo=bar$/);
 
       await au.stop(true);
@@ -3453,7 +3453,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
       await vmb.redirectWithQueryObj();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar | fragment:');
+      assert.html.textContent(host, 'view-a foo: | query: foo=bar | fragment:');
       assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\?foo=bar$/);
 
       await au.stop(true);
@@ -3465,7 +3465,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
       await vmb.redirectWithMultivaluedQuery();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: foo=fizz&foo=bar | fragment:');
+      assert.html.textContent(host, 'view-a foo: | query: foo=fizz&foo=bar | fragment:');
       assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\?foo=fizz&foo=bar$/);
 
       await au.stop(true);
@@ -3489,7 +3489,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
       await vmb.redirectWithClassAndQueryObj();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: foo=bar | fragment:');
+      assert.html.textContent(host, 'view-a foo: | query: foo=bar | fragment:');
       assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\?foo=bar$/);
 
       await au.stop(true);
@@ -3525,7 +3525,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
       await vmb.redirectSiblingViewport();
 
-      assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment: view-a foo: undefined | query: foo=bar | fragment:');
+      assert.html.textContent(host, 'view-a foo: 42 | query: foo=bar | fragment: view-a foo: | query: foo=bar | fragment:');
       assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42\+a\?foo=bar$/);
 
       await au.stop(true);
@@ -3537,7 +3537,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
       await vmb.redirectFragment();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: | fragment: foobar');
+      assert.html.textContent(host, 'view-a foo: | query: | fragment: foobar');
       assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a#foobar$/);
 
       await au.stop(true);
@@ -3549,7 +3549,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
       await vmb.redirectFragmentInNavOpt();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: | fragment: foobar');
+      assert.html.textContent(host, 'view-a foo: | query: | fragment: foobar');
       assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a#foobar$/);
 
       await au.stop(true);
@@ -3561,7 +3561,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
       await vmb.redirectFragmentInPathAndNavOpt();
 
-      assert.html.textContent(host, 'view-a foo: undefined | query: | fragment: foobar');
+      assert.html.textContent(host, 'view-a foo: | query: | fragment: foobar');
       assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a#foobar$/);
 
       await au.stop(true);
@@ -3597,7 +3597,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
       await vmb.redirectFragmentSiblingViewport();
 
-      assert.html.textContent(host, 'view-a foo: 42 | query: | fragment: foobar view-a foo: undefined | query: | fragment: foobar');
+      assert.html.textContent(host, 'view-a foo: 42 | query: | fragment: foobar view-a foo: | query: | fragment: foobar');
       assert.match((container.get(ILocation) as unknown as MockBrowserHistoryLocation).path, /a\/42\+a#foobar$/);
 
       await au.stop(true);
@@ -3654,6 +3654,152 @@ describe('router-lite/smoke-tests.spec.ts', function () {
       await au.stop(true);
     });
   }
+
+  it('querystring is added to the fragment when hash-based routing is used', async function () {
+    @customElement({ name: 'c-1', template: `c1 params: \${id} query: \${query} fragment: \${fragment}` })
+    class C1 implements IRouteViewModel {
+
+      private id: string;
+      private query: string;
+      private fragment: string;
+
+      public loading(params: Params, node: RouteNode): void | Promise<void> {
+        this.id = params.id;
+        this.query = node.queryParams.toString();
+        this.fragment = node.fragment;
+      }
+    }
+
+    @route({ routes: [{ id: 'c1', path: 'c1/:id', component: C1 }] })
+    @customElement({ name: 'app', template: '<a load="route: c1; params.bind: {id: 42, foo: \'bar\'}"></a><au-viewport></au-viewport>' })
+    class App { }
+
+    const { host, container } = await start({ appRoot: App, useHash: true });
+
+    const anchor = host.querySelector('a');
+    assert.match(anchor.href, /#\/c1\/42\?foo=bar$/);
+
+    anchor.click();
+    await container.get(IPlatform).taskQueue.yield();
+
+    assert.html.textContent(host, 'c1 params: 42 query: foo=bar fragment:');
+    const path = (container.get(ILocation) as unknown as MockBrowserHistoryLocation).path;
+    assert.match(path, /#\/c1\/42\?foo=bar$/);
+
+    // assert the different parts of the url
+    const url = new URL(path);
+    assert.match(url.pathname, /\/$/);
+    assert.strictEqual(url.search, '');
+    assert.strictEqual(url.hash, '#/c1/42?foo=bar');
+  });
+
+  it('querystring, added to the fragment, can be parsed correctly, when hash-based routing is used', async function () {
+    @customElement({ name: 'c-1', template: `c1 params: \${id} query: \${query} fragment: \${fragment}` })
+    class C1 implements IRouteViewModel {
+
+      private id: string;
+      private query: string;
+      private fragment: string;
+
+      public loading(params: Params, node: RouteNode): void | Promise<void> {
+        this.id = params.id;
+        this.query = node.queryParams.toString();
+        this.fragment = node.fragment;
+      }
+    }
+
+    @route({ routes: [{ id: 'c1', path: 'c1/:id', component: C1 }] })
+    @customElement({ name: 'app', template: '<a href="#/c1/42?foo=bar"></a><au-viewport></au-viewport>' })
+    class App { }
+
+    const { host, container } = await start({ appRoot: App, useHash: true });
+
+    host.querySelector('a').click();
+    await container.get(IPlatform).taskQueue.yield();
+
+    assert.html.textContent(host, 'c1 params: 42 query: foo=bar fragment:');
+    const path = (container.get(ILocation) as unknown as MockBrowserHistoryLocation).path;
+    assert.match(path, /#\/c1\/42\?foo=bar$/);
+
+    // assert the different parts of the url
+    const url = new URL(path);
+    assert.match(url.pathname, /\/$/);
+    assert.strictEqual(url.search, '');
+    assert.strictEqual(url.hash, '#/c1/42?foo=bar');
+  });
+
+  it('querystring, added to the fragment, can be parsed correctly, when hash-based routing is used - with fragment (nested fragment JFF)', async function () {
+    @customElement({ name: 'c-1', template: `c1 params: \${id} query: \${query} fragment: \${fragment}` })
+    class C1 implements IRouteViewModel {
+
+      private id: string;
+      private query: string;
+      private fragment: string;
+
+      public loading(params: Params, node: RouteNode): void | Promise<void> {
+        this.id = params.id;
+        this.query = node.queryParams.toString();
+        this.fragment = node.fragment;
+      }
+    }
+
+    @route({ routes: [{ id: 'c1', path: 'c1/:id', component: C1 }] })
+    @customElement({ name: 'app', template: '<a href="#/c1/42?foo=bar#for-whatever-reason"></a><au-viewport></au-viewport>' })
+    class App { }
+
+    const { host, container } = await start({ appRoot: App, useHash: true });
+
+    host.querySelector('a').click();
+    await container.get(IPlatform).taskQueue.yield();
+
+    assert.html.textContent(host, 'c1 params: 42 query: foo=bar fragment: for-whatever-reason');
+    const path = (container.get(ILocation) as unknown as MockBrowserHistoryLocation).path;
+    assert.match(path, /#\/c1\/42\?foo=bar#for-whatever-reason$/);
+
+    // assert the different parts of the url
+    const url = new URL(path);
+    assert.match(url.pathname, /\/$/);
+    assert.strictEqual(url.search, '');
+    assert.strictEqual(url.hash, '#/c1/42?foo=bar#for-whatever-reason');
+  });
+
+  it('fragment is added to fragment (nested fragment JFF) when using hash-based routing', async function () {
+    @customElement({ name: 'c-1', template: `c1 params: \${id} query: \${query} fragment: \${fragment}` })
+    class C1 implements IRouteViewModel {
+
+      private id: string;
+      private query: string;
+      private fragment: string;
+
+      public loading(params: Params, node: RouteNode): void | Promise<void> {
+        this.id = params.id;
+        this.query = node.queryParams.toString();
+        this.fragment = node.fragment;
+      }
+    }
+
+    @route({ routes: [{ id: 'c1', path: 'c1/:id', component: C1 }] })
+    @customElement({ name: 'app', template: '<au-viewport></au-viewport>' })
+    class App { }
+
+    const { host, container } = await start({ appRoot: App, useHash: true });
+
+    await container.get(IRouter)
+      .load(
+        { component: 'c1', params: { id: '42' } },
+        { queryParams: { foo: 'bar' }, fragment: 'for-whatever-reason' }
+      );
+    assert.html.textContent(host, 'c1 params: 42 query: foo=bar fragment: for-whatever-reason');
+    const path = (container.get(ILocation) as unknown as MockBrowserHistoryLocation).path;
+    assert.match(path, /#\/c1\/42\?foo=bar#for-whatever-reason$/);
+
+    // assert the different parts of the url
+    const url = new URL(path);
+    assert.match(url.pathname, /\/$/);
+    assert.strictEqual(url.search, '');
+    assert.strictEqual(url.hash, '#/c1/42?foo=bar#for-whatever-reason');
+  });
+
   // TODO(sayan): add more tests for title involving children and sibling routes
 
   it('root/child/grandchild/great-grandchild', async function () {
@@ -3695,7 +3841,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
   });
   // #endregion
 
-  // TODO(sayan): add tests here for the location URL building in relation for sibling, parent/children relationship and viewport name
+  // TODO(sayan): add tests here for the location URL building in relation for viewport name
 
   describe('navigation model', function () {
 
@@ -4350,35 +4496,35 @@ describe('router-lite/smoke-tests.spec.ts', function () {
       await queue.yield();
       type NavBar = InstanceType<typeof navBarCe>;
       const rootNavbar = CustomElement.for<NavBar>(host.querySelector('nav-bar')).viewModel;
-      rootNavbar.assert([{ href: '', text: 'null', active: true }, { href: 'p1', text: 'P1', active: true }, { href: 'p2', text: 'P2', active: false }], 'start root');
+      rootNavbar.assert([{ href: '', text: '', active: true }, { href: 'p1', text: 'P1', active: true }, { href: 'p2', text: 'P2', active: false }], 'start root');
       let childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p1>nav-bar')).viewModel;
-      childNavBar.assert([{ href: '', text: 'null', active: true }, { href: 'c11', text: 'C11', active: true }, { href: 'c12', text: 'C12', active: false }], 'start child navbar');
+      childNavBar.assert([{ href: '', text: '', active: true }, { href: 'c11', text: 'C11', active: true }, { href: 'c12', text: 'C12', active: false }], 'start child navbar');
 
       // Round#1
       await router.load('p2');
       await queue.yield();
-      rootNavbar.assert([{ href: '', text: 'null', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: true }], 'round#1 root');
+      rootNavbar.assert([{ href: '', text: '', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: true }], 'round#1 root');
       childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p2>nav-bar')).viewModel;
-      childNavBar.assert([{ href: '', text: 'null', active: true }, { href: 'c21', text: 'C21', active: false }, { href: 'c22', text: 'C22', active: true }], 'round#1 child navbar');
+      childNavBar.assert([{ href: '', text: '', active: true }, { href: 'c21', text: 'C21', active: false }, { href: 'c22', text: 'C22', active: true }], 'round#1 child navbar');
 
       // Round#2
       await router.load('p1/c12');
       await queue.yield();
-      rootNavbar.assert([{ href: '', text: 'null', active: false }, { href: 'p1', text: 'P1', active: true }, { href: 'p2', text: 'P2', active: false }], 'round#2 root');
+      rootNavbar.assert([{ href: '', text: '', active: false }, { href: 'p1', text: 'P1', active: true }, { href: 'p2', text: 'P2', active: false }], 'round#2 root');
       childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p1>nav-bar')).viewModel;
-      childNavBar.assert([{ href: '', text: 'null', active: false }, { href: 'c11', text: 'C11', active: false }, { href: 'c12', text: 'C12', active: true }], 'round#2 navbar');
+      childNavBar.assert([{ href: '', text: '', active: false }, { href: 'c11', text: 'C11', active: false }, { href: 'c12', text: 'C12', active: true }], 'round#2 navbar');
 
       // Round#3
       await router.load('p2/c21');
       await queue.yield();
-      rootNavbar.assert([{ href: '', text: 'null', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: true }], 'round#3 root');
+      rootNavbar.assert([{ href: '', text: '', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: true }], 'round#3 root');
       childNavBar = CustomElement.for<NavBar>(host.querySelector('ce-p2>nav-bar')).viewModel;
-      childNavBar.assert([{ href: '', text: 'null', active: false }, { href: 'c21', text: 'C21', active: true }, { href: 'c22', text: 'C22', active: false }], 'round#3 navbar');
+      childNavBar.assert([{ href: '', text: '', active: false }, { href: 'c21', text: 'C21', active: true }, { href: 'c22', text: 'C22', active: false }], 'round#3 navbar');
 
       // Round#4 - nav:false, but routeable
       await router.load('p3');
       await queue.yield();
-      rootNavbar.assert([{ href: '', text: 'null', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
+      rootNavbar.assert([{ href: '', text: '', active: false }, { href: 'p1', text: 'P1', active: false }, { href: 'p2', text: 'P2', active: false }], 'round#4 root');
       assert.notEqual(host.querySelector('ce-p3'), null);
 
       await au.stop(true);
@@ -4881,7 +5027,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
       BaseRouteViewModel.assertAndClear('bar', [{ id: '1' }, new URLSearchParams({ c: '4' })], 'params3');
 
       assert.strictEqual(await router.load({ component: 'foo', params: { id: '1', b: 'awesome/possum' } }), true);
-      assert.match(location.path, /foo\/1\/awesome\/possum$/);
+      assert.match(location.path, /foo\/1\/awesome%2Fpossum$/);
       BaseRouteViewModel.assertAndClear('foo', [{ id: '1', b: 'awesome/possum' }, new URLSearchParams()], 'params4');
 
       try {
@@ -6646,6 +6792,71 @@ describe('router-lite/smoke-tests.spec.ts', function () {
 
     await router.load('p1/p1/p1/c2');
     assert.html.textContent(host, 'p1 p1 p1 c2', 'round#2');
+
+    await au.stop(true);
+  });
+
+  it('handles slash in router parameter value', async function () {
+    @customElement({ name: 'c-1', template: 'c1 ${id}' })
+    class CeOne {
+      private id: string;
+      public loading(params: Params, _next: RouteNode, _current: RouteNode): void | Promise<void> {
+        this.id = params.id;
+      }
+    }
+
+    @route({
+      routes: [
+        { id: 'c1', path: 'c1/:id', component: CeOne },
+      ]
+    })
+    @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+    class Root { }
+
+    const { container, host, au } = await start({ appRoot: Root });
+    const router = container.get(IRouter);
+    const location = container.get(ILocation) as unknown as MockBrowserHistoryLocation;
+
+    assert.html.textContent(host, '');
+
+    await router.load('c1/abc%2Fdef');
+    assert.html.textContent(host, 'c1 abc/def');
+    assert.match(location.path, /c1\/abc%2Fdef$/);
+
+    await router.load({ component: 'c1', params: { id: '123/456' } });
+    assert.html.textContent(host, 'c1 123/456');
+    assert.match(location.path, /c1\/123%2F456$/);
+
+    await au.stop(true);
+  });
+
+  it('handles slash in router parameter name', async function () {
+    @customElement({ name: 'c-1', template: 'c1 ${id}' })
+    class CeOne {
+      private id: string;
+      public loading(params: Params, _next: RouteNode, _current: RouteNode): void | Promise<void> {
+        this.id = params['foo%2Fbar'];
+      }
+    }
+
+    @route({
+      routes: [
+        { id: 'c1', path: 'c1/:foo%2Fbar', component: CeOne },
+      ]
+    })
+    @customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+    class Root { }
+
+    const { container, host, au } = await start({ appRoot: Root });
+    const router = container.get(IRouter);
+
+    assert.html.textContent(host, '');
+
+    await router.load('c1(foo%2Fbar=fizzbuzz)');
+    assert.html.textContent(host, 'c1 fizzbuzz');
+
+    await router.load({ component: 'c1', params: { 'foo%2Fbar': 'awesome possum' } });
+    assert.html.textContent(host, 'c1 awesome possum');
 
     await au.stop(true);
   });

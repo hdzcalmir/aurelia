@@ -48,6 +48,7 @@ import {
 } from './viewport-agent';
 import { resolveCustomElementDefinition, resolveRouteConfiguration, RouteConfig, RouteType } from './route';
 import { Events, getMessage } from './events';
+import { pathUrlParser } from './url-parser';
 
 export interface IRouteNode {
   path: string;
@@ -178,7 +179,7 @@ export class RouteNode implements IRouteNode {
           if (i + j < ii
             && (
               (instructionEndpoint?.equalsOrResidual(childEndpoint) ?? false)
-               || (instruction?.contains(instructionChild) ?? false)
+              || (instruction?.contains(instructionChild) ?? false)
             )
           ) {
             if (j + 1 === jj) {
@@ -257,10 +258,10 @@ export class RouteNode implements IRouteNode {
       this.context,
       this._originalInstruction,
       this.instruction,
-      { ...this.params },
-      new URLSearchParams(this.queryParams),
+      this.params,      // as this is frozen, it's safe to share
+      this.queryParams, // as this is frozen, it's safe to share
       this.fragment,
-      { ...this.data },
+      this.data,        // as this is frozen, it's safe to share
       this._viewport,
       this.title,
       this.component,
@@ -321,7 +322,7 @@ export class RouteTree {
   public _clone(): RouteTree {
     const clone = new RouteTree(
       this.options._clone(),
-      new URLSearchParams(this.queryParams),
+      this.queryParams, // as this is frozen, it's safe to share
       this.fragment,
       this.root._clone(),
     );
@@ -338,6 +339,11 @@ export class RouteTree {
       this.queryParams,
       this.fragment,
     );
+  }
+
+  /** @internal */
+  public _mergeQuery(other: Params): void {
+    (this as Writable<RouteTree>).queryParams = Object.freeze(mergeURLSearchParams(this.queryParams, other, true));
   }
 
   public toString(): string {
@@ -378,7 +384,7 @@ export function createAndAppendNodes(
           if (vi.children.length === 0) {
             const result = ctx._generateViewportInstruction(vi);
             if (result !== null) {
-              (node._tree as Writable<RouteTree>).queryParams = mergeURLSearchParams(node._tree.queryParams, result.query, true);
+              node._tree._mergeQuery(result.query);
               const newVi = result.vi;
               (newVi.children as NavigationInstruction[]).push(...vi.children);
               return appendNode(
@@ -423,10 +429,10 @@ export function createAndAppendNodes(
               open: vi.open,
               close: vi.close,
               viewport: vi.viewport,
-              children: vi.children.slice(),
+              children: vi.children,
             });
             if (eagerResult !== null) {
-              (node._tree as Writable<RouteTree>).queryParams = mergeURLSearchParams(node._tree.queryParams, eagerResult.query, true);
+              node._tree._mergeQuery(eagerResult.query);
               return appendNode(log, node, createConfiguredNode(
                 log,
                 node,
@@ -503,9 +509,9 @@ export function createAndAppendNodes(
             open: vi.open,
             close: vi.close,
             viewport: vi.viewport,
-            children: vi.children.slice(),
+            children: vi.children,
           })!;
-          (node._tree as Writable<RouteTree>).queryParams = mergeURLSearchParams(node._tree.queryParams, query, true);
+          node._tree._mergeQuery(query);
           return appendNode(log, node, createConfiguredNode(
             log,
             node,
@@ -559,9 +565,7 @@ function createConfiguredNode(
                 context: childCtx,
                 instruction: vi,
                 originalInstruction: originalVi,
-                params: {
-                  ...rr.route.params,
-                },
+                params: rr.route.params,
                 queryParams: rt.queryParams,
                 fragment: rt.fragment,
                 data: $handler.data,
@@ -583,8 +587,8 @@ function createConfiguredNode(
     }
 
     // Migrate parameters to the redirect
-    const origPath = RouteExpression.parse(route.path, false);
-    const redirPath = RouteExpression.parse($handler.redirectTo, false);
+    const origPath = RouteExpression.parse(pathUrlParser.parse(route.path));
+    const redirPath = RouteExpression.parse(pathUrlParser.parse($handler.redirectTo));
     let origCur: ScopedSegmentExpression | SegmentExpression;
     let redirCur: ScopedSegmentExpression | SegmentExpression;
     const newSegs: string[] = [];
@@ -651,7 +655,7 @@ function createConfiguredNode(
         if (redirSeg.component.isDynamic && (origSeg?.component.isDynamic ?? false)) {
           newSegs.push(rr.route.params[redirSeg.component.parameterName] as string);
         } else {
-          newSegs.push(redirSeg.raw);
+          newSegs.push(redirSeg.component.name);
         }
       }
     }

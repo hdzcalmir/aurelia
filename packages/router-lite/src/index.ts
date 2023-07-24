@@ -60,7 +60,6 @@ export {
   SegmentGroupExpression,
   SegmentExpression,
   ComponentExpression,
-  ActionExpression,
   ViewportExpression,
   ParameterListExpression,
   ParameterExpression,
@@ -111,3 +110,9 @@ export {
 export {
   ViewportAgent,
 } from './viewport-agent';
+
+export {
+  IUrlParser,
+  pathUrlParser,
+  fragmentUrlParser,
+} from './url-parser';

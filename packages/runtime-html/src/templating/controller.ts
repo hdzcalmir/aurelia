@@ -247,7 +247,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
     registerResolver(ctn, IHydrationContext, new InstanceProvider(
       'IHydrationContext',
       new HydrationContext(
-        controller,
+        controller as ICustomElementController,
         hydrationInst,
         hydrationContext,
       )
@@ -578,7 +578,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
     // opposing leave is called in attach() (which will trigger attached())
     this._enterActivating();
 
-    let ret: void | Promise<void>;
+    let ret: void | Promise<void> = void 0;
     if (this.vmKind !== ViewModelKind.synthetic && this._lifecycleHooks!.binding != null) {
       /* istanbul ignore next */
       if (__DEV__ && this.debug) { this.logger!.trace(`lifecycleHooks.binding()`); }
@@ -620,7 +620,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
 
     let i = 0;
     let ii = 0;
-    let ret: void | Promise<void>;
+    let ret: void | Promise<void> = void 0;
 
     if (this.bindings !== null) {
       i = 0;
@@ -1035,7 +1035,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
       this.removeNodes();
 
       let cur = this.$initiator.head as Controller | null;
-      let ret: void | Promise<void>;
+      let ret: void | Promise<void> = void 0;
 
       while (cur !== null) {
         if (cur !== this) {
@@ -1707,10 +1707,11 @@ export interface IHydrationContext<T extends ICustomElementViewModel = ICustomEl
   readonly parent: IHydrationContext | undefined;
 }
 
-class HydrationContext<T extends ICustomElementViewModel> implements IHydrationContext<T> {
+/** @internal */
+export class HydrationContext<T extends ICustomElementViewModel> implements IHydrationContext<T> {
   public readonly controller: ICustomElementController<T>;
   public constructor(
-    controller: Controller,
+    controller: ICustomElementController,
     public readonly instruction: IControllerElementHydrationInstruction | null,
     public readonly parent: IHydrationContext | undefined,
   ) {
