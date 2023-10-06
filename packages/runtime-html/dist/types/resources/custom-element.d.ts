@@ -22,7 +22,6 @@ export type PartialCustomElementDefinition = PartialResourceDefinition<{
     readonly surrogates?: readonly IInstruction[];
     readonly bindables?: Record<string, PartialBindableDefinition> | readonly string[];
     readonly containerless?: boolean;
-    readonly isStrictBinding?: boolean;
     readonly shadowOptions?: {
         mode: 'open' | 'closed';
     } | null;
@@ -126,14 +125,6 @@ export declare function containerless(target: Constructable): void;
  * Decorator: Indicates that the custom element should be rendered without its element container.
  */
 export declare function containerless(): (target: Constructable) => void;
-/**
- * Decorator: Indicates that the custom element should be rendered with the strict binding option. undefined/null -> 0 or '' based on type
- */
-export declare function strict(target: Constructable): void;
-/**
- * Decorator: Indicates that the custom element should be rendered with the strict binding option. undefined/null -> 0 or '' based on type
- */
-export declare function strict(): (target: Constructable) => void;
 export declare class CustomElementDefinition<C extends Constructable = Constructable> implements ResourceDefinition<C, ICustomElementViewModel, PartialCustomElementDefinition> {
     readonly Type: CustomElementType<C>;
     readonly name: string;
@@ -149,7 +140,6 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     readonly surrogates: readonly IInstruction[];
     readonly bindables: Record<string, BindableDefinition>;
     readonly containerless: boolean;
-    readonly isStrictBinding: boolean;
     readonly shadowOptions: {
         mode: 'open' | 'closed';
     } | null;

@@ -7748,9 +7748,19 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         }
         return elements.length === 0 ? null : elements[0];
     }
+    function strictQueryBy(selector, queryErrorSuffixMessage = '') {
+        const elements = host.querySelectorAll(selector);
+        if (elements.length > 1) {
+            throw new Error(`There is more than 1 element with selector "${selector}": ${elements.length} found${queryErrorSuffixMessage ? ` ${queryErrorSuffixMessage}` : ''}`);
+        }
+        if (elements.length === 0) {
+            throw new Error(`There is no element with selector "${selector}" found${queryErrorSuffixMessage ? ` ${queryErrorSuffixMessage}` : ''}`);
+        }
+        return elements[0];
+    }
     function assertText(selector, text) {
         if (arguments.length === 2) {
-            const el = queryBy(selector);
+            const el = strictQueryBy(selector);
             if (el === null) {
                 throw new Error(`No element found for selector "${selector}" to compare text content with "${text}"`);
             }
@@ -7773,10 +7783,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
     }
     function assertHtml(selectorOrHtml, html = selectorOrHtml, { compact } = { compact: false }) {
         if (arguments.length > 1) {
-            const el = queryBy(selectorOrHtml);
-            if (el === null) {
-                throw new Error(`No element found for selector "${selectorOrHtml}" to compare innerHTML against "${html}"`);
-            }
+            const el = strictQueryBy(selectorOrHtml, `to compare innerHTML against "${html}`);
             assert.strictEqual(getInnerHtml(el, compact), html);
         }
         else {
@@ -7784,53 +7791,43 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         }
     }
     function assertClass(selector, ...classes) {
-        const el = queryBy(selector);
-        if (el === null) {
-            throw new Error(`No element found for selector "${selector}" to assert className contains "${classes}"`);
-        }
+        const el = strictQueryBy(selector, `to assert className contains "${classes}"`);
         classes.forEach(c => assert.contains(el.classList, c));
     }
     function assertAttr(selector, name, value) {
-        const el = queryBy(selector);
-        if (el === null) {
-            throw new Error(`No element found for selector "${selector}" to compare attribute "${name}" against "${value}"`);
-        }
+        const el = strictQueryBy(selector, `to compare attribute "${name}" against "${value}"`);
         assert.strictEqual(el.getAttribute(name), value);
     }
     function assertAttrNS(selector, namespace, name, value) {
-        const el = queryBy(selector);
-        if (el === null) {
-            throw new Error(`No element found for selector "${selector}" to compare attribute "${name}" against "${value}"`);
-        }
+        const el = strictQueryBy(selector, `to compare attribute "${name}" against "${value}"`);
         assert.strictEqual(el.getAttributeNS(namespace, name), value);
     }
-    function assertValue(selector, value) {
-        const el = queryBy(selector);
-        if (el === null) {
-            throw new Error(`No element found for selector "${selector}" to compare value against "${value}"`);
+    function assertStyles(selector, styles) {
+        const el = strictQueryBy(selector, `to compare style attribute against ${JSON.stringify(styles ?? {})}`);
+        const elStyles = {};
+        for (const rule in styles) {
+            elStyles[rule] = el.style[rule];
         }
+        assert.deepStrictEqual(elStyles, styles);
+    }
+    function assertValue(selector, value) {
+        const el = strictQueryBy(selector, `to compare value against "${value}"`);
         assert.strictEqual(el.value, value);
     }
     function trigger(selector, event, init) {
-        const el = queryBy(selector);
-        if (el === null) {
-            throw new Error(`No element found for selector "${selector}" to fire event "${event}"`);
-        }
+        const el = strictQueryBy(selector, `to fire event "${event}"`);
         el.dispatchEvent(new ctx.CustomEvent(event, init));
     }
     ['click', 'change', 'input', 'scroll'].forEach(event => {
         Object.defineProperty(trigger, event, {
             configurable: true, writable: true, value: (selector, init) => {
-                const el = queryBy(selector);
-                if (el === null) {
-                    throw new Error(`No element found for selector "${selector}" to fire event "${event}"`);
-                }
+                const el = strictQueryBy(selector, `to fire event "${event}"`);
                 el.dispatchEvent(new ctx.CustomEvent(event, init));
             }
         });
     });
     function type(selector, value) {
-        const el = typeof selector === 'string' ? queryBy(selector) : selector;
+        const el = typeof selector === 'string' ? strictQueryBy(selector, `to emulate input for "${value}"`) : selector;
         if (el === null || !/input|textarea/i.test(el.nodeName)) {
             throw new Error(`No <input>/<textarea> element found for selector "${selector}" to emulate input for "${value}"`);
         }
@@ -7838,10 +7835,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         el.dispatchEvent(new platform.window.Event('input'));
     }
     const scrollBy = (selector, init) => {
-        const el = queryBy(selector);
-        if (el === null) {
-            throw new Error(`No element found for selector "${selector}" to scroll by "${JSON.stringify(init)}"`);
-        }
+        const el = strictQueryBy(selector, `to scroll by "${JSON.stringify(init)}"`);
         el.scrollBy(typeof init === 'number' ? { top: init } : init);
         el.dispatchEvent(new platform.window.Event('scroll'));
     };
@@ -7897,6 +7891,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             this.assertClass = assertClass;
             this.assertAttr = assertAttr;
             this.assertAttrNS = assertAttrNS;
+            this.assertStyles = assertStyles;
             this.assertValue = assertValue;
             this.createEvent = (name, init) => new platform.CustomEvent(name, init);
             this.trigger = trigger;

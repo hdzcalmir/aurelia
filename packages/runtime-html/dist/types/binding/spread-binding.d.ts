@@ -28,7 +28,6 @@ export declare class SpreadBinding implements IBinding, IHasController {
     readonly $controller: ICustomElementController;
     get container(): IServiceLocator;
     get definition(): CustomElementDefinition | CustomElementDefinition;
-    get isStrictBinding(): boolean;
     get state(): import("../templating/controller").State;
     constructor(
     /** @internal */ _hydrationContext: IHydrationContext<object>);

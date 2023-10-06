@@ -1201,18 +1201,10 @@ function markContainerless(target) {
     }
     def.containerless = true;
 }
-function strict(target) {
-    if (target === void 0) {
-        return function ($target) {
-            annotateElementMetadata($target, 'isStrictBinding', true);
-        };
-    }
-    annotateElementMetadata(target, 'isStrictBinding', true);
-}
 const definitionLookup = new WeakMap();
 class CustomElementDefinition {
     get type() { return 1 /* DefinitionType.Element */; }
-    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, isStrictBinding, shadowOptions, 
+    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, shadowOptions, 
     /**
      * Indicates whether the custom element has <slot/> in its template
      */
@@ -1231,7 +1223,6 @@ class CustomElementDefinition {
         this.surrogates = surrogates;
         this.bindables = bindables;
         this.containerless = containerless;
-        this.isStrictBinding = isStrictBinding;
         this.shadowOptions = shadowOptions;
         this.hasSlots = hasSlots;
         this.enhance = enhance;
@@ -1254,19 +1245,19 @@ class CustomElementDefinition {
             else {
                 Type = generateElementType(kernel.pascalCase(name));
             }
-            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromDefinitionOrDefault('capture', def, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), kernel.fromDefinitionOrDefault('containerless', def, returnFalse), kernel.fromDefinitionOrDefault('isStrictBinding', def, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromDefinitionOrDefault('capture', def, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), kernel.fromDefinitionOrDefault('containerless', def, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // If a type is passed in, we ignore the Type property on the definition if it exists.
         // TODO: document this behavior
         if (isString(nameOrDef)) {
-            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('isStrictBinding', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // This is the typical default behavior, e.g. from regular CustomElement.define invocations or from @customElement deco
         // The ViewValueConverter also uses this signature and passes in a definition where everything except for the 'hooks'
         // property needs to be copied. So we have that exception for 'hooks', but we may need to revisit that default behavior
         // if this turns out to be too opinionated.
         const name = kernel.fromDefinitionOrDefault('name', nameOrDef, generateElementName);
-        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('isStrictBinding', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
+        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
     }
     static getOrCreate(partialDefinition) {
         if (partialDefinition instanceof CustomElementDefinition) {
@@ -3292,9 +3283,6 @@ class SpreadBinding {
     get definition() {
         return this.$controller.definition;
     }
-    get isStrictBinding() {
-        return this.$controller.isStrictBinding;
-    }
     get state() {
         return this.$controller.state;
     }
@@ -3492,16 +3480,8 @@ class LetBindingInstruction {
     }
 }
 class TextBindingInstruction {
-    constructor(from, 
-    /**
-     * Indicates whether the value of the expression "from"
-     * should be evaluated in strict mode.
-     *
-     * In none strict mode, "undefined" and "null" are coerced into empty string
-     */
-    strict) {
+    constructor(from) {
         this.from = from;
-        this.strict = strict;
         this.type = "ha" /* InstructionType.textBinding */;
     }
 }
@@ -4345,7 +4325,6 @@ class Controller {
         this.bindings = null;
         this.children = null;
         this.hasLockedScope = false;
-        this.isStrictBinding = false;
         this.scope = null;
         this.isBound = false;
         /** @internal */
@@ -4557,9 +4536,8 @@ class Controller {
             this._vm.hydrating(this);
         }
         const compiledDef = this._compiledDef = this._rendering.compile(this.definition, this.container, hydrationInst);
-        const { shadowOptions, isStrictBinding, hasSlots, containerless } = compiledDef;
+        const { shadowOptions, hasSlots, containerless } = compiledDef;
         let location = this.location;
-        this.isStrictBinding = isStrictBinding;
         if ((this.hostController = findElementControllerFor(this.host, optionalCeFind)) !== null) {
             this.host = this.container.root.get(IPlatform).document.createElement(this.definition.name);
             if (containerless && location == null) {
@@ -4639,7 +4617,6 @@ class Controller {
     /** @internal */
     _hydrateSynthetic() {
         this._compiledDef = this._rendering.compile(this.viewFactory.def, this.container, null);
-        this.isStrictBinding = this._compiledDef.isStrictBinding;
         this._rendering.render(
         /* controller */ this, 
         /* targets    */ (this.nodes = this._rendering.createNodes(this._compiledDef)).findTargets(), 
@@ -4692,7 +4669,6 @@ class Controller {
                 }
                 break;
         }
-        if (this.isStrictBinding) ;
         this.$initiator = initiator;
         // opposing leave is called in attach() (which will trigger attached())
         this._enterActivating();
@@ -11229,7 +11205,6 @@ class TemplateCompiler {
                         template,
                         instructions: projectionCompilationContext.rows,
                         needsCompile: false,
-                        isStrictBinding: context.root.def.isStrictBinding,
                     });
                 }
                 elementInstruction.projections = projections;
@@ -11265,7 +11240,6 @@ class TemplateCompiler {
                 template: mostInnerTemplate,
                 instructions: childContext.rows,
                 needsCompile: false,
-                isStrictBinding: context.root.def.isStrictBinding,
             });
             // 4.1.2.
             //  Start processing other Template controllers by walking the TC list (list 1) RIGHT -> LEFT
@@ -11296,7 +11270,6 @@ class TemplateCompiler {
                     template,
                     needsCompile: false,
                     instructions: [[tcInstructions[i + 1]]],
-                    isStrictBinding: context.root.def.isStrictBinding,
                 });
             }
             // the most outer template controller should be
@@ -11421,7 +11394,6 @@ class TemplateCompiler {
                         template,
                         instructions: projectionCompilationContext.rows,
                         needsCompile: false,
-                        isStrictBinding: context.root.def.isStrictBinding,
                     });
                 }
                 elementInstruction.projections = projections;
@@ -11477,7 +11449,7 @@ class TemplateCompiler {
                     insertBefore(parent, context._text(part), node);
                 }
                 // and the corresponding instruction
-                context.rows.push([new TextBindingInstruction(expressions[i], context.root.def.isStrictBinding)]);
+                context.rows.push([new TextBindingInstruction(expressions[i])]);
             }
             parent.removeChild(node);
         }
@@ -12564,7 +12536,6 @@ exports.setEffectiveParentNode = setEffectiveParentNode;
 exports.setRef = setRef;
 exports.shadowCSS = shadowCSS;
 exports.slotted = slotted;
-exports.strict = strict;
 exports.templateCompilerHooks = templateCompilerHooks;
 exports.templateController = templateController;
 exports.useShadowDOM = useShadowDOM;

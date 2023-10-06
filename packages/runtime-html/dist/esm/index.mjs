@@ -967,22 +967,13 @@ function markContainerless(t) {
     e.containerless = true;
 }
 
-function strict(t) {
-    if (t === void 0) {
-        return function(t) {
-            annotateElementMetadata(t, "isStrictBinding", true);
-        };
-    }
-    annotateElementMetadata(t, "isStrictBinding", true);
-}
-
 const ie = new WeakMap;
 
 class CustomElementDefinition {
     get type() {
         return 1;
     }
-    constructor(t, e, i, s, n, r, l, h, a, c, u, f, d, m, g, p, v, b, x, w) {
+    constructor(t, e, i, s, n, r, l, h, a, c, u, f, d, m, g, p, v, b, x) {
         this.Type = t;
         this.name = e;
         this.aliases = i;
@@ -997,12 +988,11 @@ class CustomElementDefinition {
         this.surrogates = f;
         this.bindables = d;
         this.containerless = m;
-        this.isStrictBinding = g;
-        this.shadowOptions = p;
-        this.hasSlots = v;
-        this.enhance = b;
-        this.watches = x;
-        this.processContent = w;
+        this.shadowOptions = g;
+        this.hasSlots = p;
+        this.enhance = v;
+        this.watches = b;
+        this.processContent = x;
     }
     static create(t, e = null) {
         if (e === null) {
@@ -1016,13 +1006,13 @@ class CustomElementDefinition {
             } else {
                 e = oe(m(s));
             }
-            return new CustomElementDefinition(e, s, h(i.aliases), d("key", i, (() => getElementKeyFrom(s))), d("cache", i, returnZero), d("capture", i, returnFalse), d("template", i, returnNull), h(i.instructions), h(i.dependencies), d("injectable", i, returnNull), d("needsCompile", i, returnTrue), h(i.surrogates), St.from(e, i.bindables), d("containerless", i, returnFalse), d("isStrictBinding", i, returnFalse), d("shadowOptions", i, returnNull), d("hasSlots", i, returnFalse), d("enhance", i, returnFalse), d("watches", i, returnEmptyArray), g("processContent", e, returnNull));
+            return new CustomElementDefinition(e, s, h(i.aliases), d("key", i, (() => getElementKeyFrom(s))), d("cache", i, returnZero), d("capture", i, returnFalse), d("template", i, returnNull), h(i.instructions), h(i.dependencies), d("injectable", i, returnNull), d("needsCompile", i, returnTrue), h(i.surrogates), St.from(e, i.bindables), d("containerless", i, returnFalse), d("shadowOptions", i, returnNull), d("hasSlots", i, returnFalse), d("enhance", i, returnFalse), d("watches", i, returnEmptyArray), g("processContent", e, returnNull));
         }
         if (isString(t)) {
-            return new CustomElementDefinition(e, t, h(getElementAnnotation(e, "aliases"), e.aliases), getElementKeyFrom(t), g("cache", e, returnZero), g("capture", e, returnFalse), g("template", e, returnNull), h(getElementAnnotation(e, "instructions"), e.instructions), h(getElementAnnotation(e, "dependencies"), e.dependencies), g("injectable", e, returnNull), g("needsCompile", e, returnTrue), h(getElementAnnotation(e, "surrogates"), e.surrogates), St.from(e, ...St.getAll(e), getElementAnnotation(e, "bindables"), e.bindables), g("containerless", e, returnFalse), g("isStrictBinding", e, returnFalse), g("shadowOptions", e, returnNull), g("hasSlots", e, returnFalse), g("enhance", e, returnFalse), h(ee.getAnnotation(e), e.watches), g("processContent", e, returnNull));
+            return new CustomElementDefinition(e, t, h(getElementAnnotation(e, "aliases"), e.aliases), getElementKeyFrom(t), g("cache", e, returnZero), g("capture", e, returnFalse), g("template", e, returnNull), h(getElementAnnotation(e, "instructions"), e.instructions), h(getElementAnnotation(e, "dependencies"), e.dependencies), g("injectable", e, returnNull), g("needsCompile", e, returnTrue), h(getElementAnnotation(e, "surrogates"), e.surrogates), St.from(e, ...St.getAll(e), getElementAnnotation(e, "bindables"), e.bindables), g("containerless", e, returnFalse), g("shadowOptions", e, returnNull), g("hasSlots", e, returnFalse), g("enhance", e, returnFalse), h(ee.getAnnotation(e), e.watches), g("processContent", e, returnNull));
         }
         const i = d("name", t, re);
-        return new CustomElementDefinition(e, i, h(getElementAnnotation(e, "aliases"), t.aliases, e.aliases), getElementKeyFrom(i), p("cache", t, e, returnZero), p("capture", t, e, returnFalse), p("template", t, e, returnNull), h(getElementAnnotation(e, "instructions"), t.instructions, e.instructions), h(getElementAnnotation(e, "dependencies"), t.dependencies, e.dependencies), p("injectable", t, e, returnNull), p("needsCompile", t, e, returnTrue), h(getElementAnnotation(e, "surrogates"), t.surrogates, e.surrogates), St.from(e, ...St.getAll(e), getElementAnnotation(e, "bindables"), e.bindables, t.bindables), p("containerless", t, e, returnFalse), p("isStrictBinding", t, e, returnFalse), p("shadowOptions", t, e, returnNull), p("hasSlots", t, e, returnFalse), p("enhance", t, e, returnFalse), h(t.watches, ee.getAnnotation(e), e.watches), p("processContent", t, e, returnNull));
+        return new CustomElementDefinition(e, i, h(getElementAnnotation(e, "aliases"), t.aliases, e.aliases), getElementKeyFrom(i), p("cache", t, e, returnZero), p("capture", t, e, returnFalse), p("template", t, e, returnNull), h(getElementAnnotation(e, "instructions"), t.instructions, e.instructions), h(getElementAnnotation(e, "dependencies"), t.dependencies, e.dependencies), p("injectable", t, e, returnNull), p("needsCompile", t, e, returnTrue), h(getElementAnnotation(e, "surrogates"), t.surrogates, e.surrogates), St.from(e, ...St.getAll(e), getElementAnnotation(e, "bindables"), e.bindables, t.bindables), p("containerless", t, e, returnFalse), p("shadowOptions", t, e, returnNull), p("hasSlots", t, e, returnFalse), p("enhance", t, e, returnFalse), h(t.watches, ee.getAnnotation(e), e.watches), p("processContent", t, e, returnNull));
     }
     static getOrCreate(t) {
         if (t instanceof CustomElementDefinition) {
@@ -2895,9 +2885,6 @@ class SpreadBinding {
     get definition() {
         return this.$controller.definition;
     }
-    get isStrictBinding() {
-        return this.$controller.isStrictBinding;
-    }
     get state() {
         return this.$controller.state;
     }
@@ -3069,9 +3056,8 @@ class LetBindingInstruction {
 }
 
 class TextBindingInstruction {
-    constructor(t, e) {
+    constructor(t) {
         this.from = t;
-        this.strict = e;
         this.type = "ha";
     }
 }
@@ -3772,7 +3758,6 @@ class Controller {
         this.bindings = null;
         this.children = null;
         this.hasLockedScope = false;
-        this.isStrictBinding = false;
         this.scope = null;
         this.isBound = false;
         this.At = false;
@@ -3876,27 +3861,26 @@ class Controller {
             this.kt.hydrating(this);
         }
         const e = this.Lt = this.r.compile(this.definition, this.container, t);
-        const {shadowOptions: i, isStrictBinding: s, hasSlots: n, containerless: r} = e;
-        let l = this.location;
-        this.isStrictBinding = s;
+        const {shadowOptions: i, hasSlots: s, containerless: n} = e;
+        let r = this.location;
         if ((this.hostController = findElementControllerFor(this.host, ui)) !== null) {
             this.host = this.container.root.get($t).document.createElement(this.definition.name);
-            if (r && l == null) {
-                l = this.location = convertToRenderLocation(this.host);
+            if (n && r == null) {
+                r = this.location = convertToRenderLocation(this.host);
             }
         }
         setRef(this.host, ne, this);
         setRef(this.host, this.definition.key, this);
-        if (i !== null || n) {
-            if (l != null) {
+        if (i !== null || s) {
+            if (r != null) {
                 throw createMappedError(501);
             }
             setRef(this.shadowRoot = this.host.attachShadow(i ?? gi), ne, this);
             setRef(this.shadowRoot, this.definition.key, this);
             this.mountTarget = 2;
-        } else if (l != null) {
-            setRef(l, ne, this);
-            setRef(l, this.definition.key, this);
+        } else if (r != null) {
+            setRef(r, ne, this);
+            setRef(r, this.definition.key, this);
             this.mountTarget = 3;
         } else {
             this.mountTarget = 1;
@@ -3937,7 +3921,6 @@ class Controller {
     }
     It() {
         this.Lt = this.r.compile(this.viewFactory.def, this.container, null);
-        this.isStrictBinding = this.Lt.isStrictBinding;
         this.r.render(this, (this.nodes = this.r.createNodes(this.Lt)).findTargets(), this.Lt, void 0);
     }
     activate(t, e, i) {
@@ -3978,7 +3961,6 @@ class Controller {
             }
             break;
         }
-        if (this.isStrictBinding) ;
         this.$initiator = t;
         this.qt();
         let s = void 0;
@@ -9524,8 +9506,7 @@ class TemplateCompiler {
                         name: re(),
                         template: s,
                         instructions: x.rows,
-                        needsCompile: false,
-                        isStrictBinding: e.root.def.isStrictBinding
+                        needsCompile: false
                     });
                 }
                 H.projections = m;
@@ -9552,8 +9533,7 @@ class TemplateCompiler {
                 name: re(),
                 template: r,
                 instructions: l.rows,
-                needsCompile: false,
-                isStrictBinding: e.root.def.isStrictBinding
+                needsCompile: false
             });
             while (C-- > 0) {
                 q = M[C];
@@ -9564,8 +9544,7 @@ class TemplateCompiler {
                     name: re(),
                     template: s,
                     needsCompile: false,
-                    instructions: [ [ M[C + 1] ] ],
-                    isStrictBinding: e.root.def.isStrictBinding
+                    instructions: [ [ M[C + 1] ] ]
                 });
             }
             e.rows.push([ q ]);
@@ -9632,8 +9611,7 @@ class TemplateCompiler {
                         name: re(),
                         template: p,
                         instructions: v.rows,
-                        needsCompile: false,
-                        isStrictBinding: e.root.def.isStrictBinding
+                        needsCompile: false
                     });
                 }
                 H.projections = h;
@@ -9674,7 +9652,7 @@ class TemplateCompiler {
                 if (c = r[h + 1]) {
                     insertBefore(i, e.Ms(c), t);
                 }
-                e.rows.push([ new TextBindingInstruction(l[h], e.root.def.isStrictBinding) ]);
+                e.rows.push([ new TextBindingInstruction(l[h]) ]);
             }
             i.removeChild(t);
         }
@@ -10361,5 +10339,5 @@ class ChildrenLifecycleHooks {
 
 let an = false;
 
-export { AdoptedStyleSheetsStyles, AppRoot, Nt as AppTask, Di as AtPrefixedTriggerAttributePattern, AttrBindingBehavior, Gi as AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, ti as AttributeBindingRenderer, AttributeNSAccessor, Ii as AttributePattern, AuCompose, Es as AuSlot, AuSlotsInfo, Aurelia, St as Bindable, BindableDefinition, BindablesInfo, Dt as BindingBehavior, BindingBehaviorDefinition, Hi as BindingCommand, BindingCommandDefinition, ts as BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, Ui as CaptureBindingCommand, ks as Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, Qi as ClassBindingCommand, Li as ColonPrefixedBindAttributePattern, qi as CommandType, ComputedWatcher, ContentBinding, Controller, Zt as CustomAttribute, CustomAttributeDefinition, Ne as CustomAttributeRenderer, le as CustomElement, CustomElementDefinition, Ve as CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, Wi as DefaultBindingCommand, sn as DefaultBindingLanguage, tn as DefaultBindingSyntax, Cs as DefaultCase, Js as DefaultComponents, rn as DefaultRenderers, nn as DefaultResources, Ps as DefinitionType, Ei as DotSeparatedAttributePattern, Else, ExpressionWatcher, FlushQueue, Focus, ji as ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, Ni as FromViewBindingCommand, Ss as FulfilledTemplateController, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, Ci as IAppRoot, Vt as IAppTask, Ji as IAttrMapper, _i as IAttributeParser, Si as IAttributePattern, Le as IAuSlotWatcher, Pe as IAuSlotsInfo, Ai as IAurelia, bi as IController, jt as IEventTarget, pe as IFlushQueue, Kt as IHistory, xi as IHydrationContext, qe as IInstruction, ke as ILifecycleHooks, Qt as ILocation, Wt as INode, $t as IPlatform, zt as IRenderLocation, He as IRenderer, ai as IRendering, Zi as ISVGAnalyzer, Ls as ISanitizer, ue as IShadowDOMGlobalStyles, ce as IShadowDOMStyles, Bi as ISyntaxInterpreter, Fe as ITemplateCompiler, Gs as ITemplateCompilerHooks, Ds as ITemplateElementFactory, Ee as IViewFactory, Xt as IWindow, If, Me as InstructionType, InterpolationBinding, ze as InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, Ge as IteratorBindingRenderer, LetBinding, LetBindingInstruction, We as LetElementRenderer, Be as LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, Qe as ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, Oi as OneTimeBindingCommand, Bs as PendingTemplateController, Portal, As as PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, Ue as PropertyBindingRenderer, Pi as RefAttributePattern, RefBinding, RefBindingInstruction, je as RefBindingRenderer, _s as RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, Ke as SetAttributeRenderer, SetClassAttributeInstruction, Ye as SetClassAttributeRenderer, SetPropertyInstruction, Oe as SetPropertyRenderer, SetStyleAttributeInstruction, Ze as SetStyleAttributeRenderer, ShadowDOMRegistry, en as ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, ei as SpreadRenderer, on as StandardConfiguration, vi as State, StyleAttributeAccessor, Xi as StyleBindingCommand, fe as StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, Je as StylePropertyBindingRenderer, ws as Switch, TemplateCompiler, Ks as TemplateCompilerHooks, $e as TemplateControllerRenderer, TextBindingInstruction, Xe as TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, Vi as ToViewBindingCommand, zi as TriggerBindingCommand, TwoWayBindingBehavior, $i as TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, me as ValueConverter, ValueConverterDefinition, ViewFactory, pi as ViewModelKind, ee as Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, strict, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
+export { AdoptedStyleSheetsStyles, AppRoot, Nt as AppTask, Di as AtPrefixedTriggerAttributePattern, AttrBindingBehavior, Gi as AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, ti as AttributeBindingRenderer, AttributeNSAccessor, Ii as AttributePattern, AuCompose, Es as AuSlot, AuSlotsInfo, Aurelia, St as Bindable, BindableDefinition, BindablesInfo, Dt as BindingBehavior, BindingBehaviorDefinition, Hi as BindingCommand, BindingCommandDefinition, ts as BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, Ui as CaptureBindingCommand, ks as Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, Qi as ClassBindingCommand, Li as ColonPrefixedBindAttributePattern, qi as CommandType, ComputedWatcher, ContentBinding, Controller, Zt as CustomAttribute, CustomAttributeDefinition, Ne as CustomAttributeRenderer, le as CustomElement, CustomElementDefinition, Ve as CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, Wi as DefaultBindingCommand, sn as DefaultBindingLanguage, tn as DefaultBindingSyntax, Cs as DefaultCase, Js as DefaultComponents, rn as DefaultRenderers, nn as DefaultResources, Ps as DefinitionType, Ei as DotSeparatedAttributePattern, Else, ExpressionWatcher, FlushQueue, Focus, ji as ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, Ni as FromViewBindingCommand, Ss as FulfilledTemplateController, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, Ci as IAppRoot, Vt as IAppTask, Ji as IAttrMapper, _i as IAttributeParser, Si as IAttributePattern, Le as IAuSlotWatcher, Pe as IAuSlotsInfo, Ai as IAurelia, bi as IController, jt as IEventTarget, pe as IFlushQueue, Kt as IHistory, xi as IHydrationContext, qe as IInstruction, ke as ILifecycleHooks, Qt as ILocation, Wt as INode, $t as IPlatform, zt as IRenderLocation, He as IRenderer, ai as IRendering, Zi as ISVGAnalyzer, Ls as ISanitizer, ue as IShadowDOMGlobalStyles, ce as IShadowDOMStyles, Bi as ISyntaxInterpreter, Fe as ITemplateCompiler, Gs as ITemplateCompilerHooks, Ds as ITemplateElementFactory, Ee as IViewFactory, Xt as IWindow, If, Me as InstructionType, InterpolationBinding, ze as InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, Ge as IteratorBindingRenderer, LetBinding, LetBindingInstruction, We as LetElementRenderer, Be as LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, Qe as ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, Oi as OneTimeBindingCommand, Bs as PendingTemplateController, Portal, As as PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, Ue as PropertyBindingRenderer, Pi as RefAttributePattern, RefBinding, RefBindingInstruction, je as RefBindingRenderer, _s as RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, Ke as SetAttributeRenderer, SetClassAttributeInstruction, Ye as SetClassAttributeRenderer, SetPropertyInstruction, Oe as SetPropertyRenderer, SetStyleAttributeInstruction, Ze as SetStyleAttributeRenderer, ShadowDOMRegistry, en as ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, ei as SpreadRenderer, on as StandardConfiguration, vi as State, StyleAttributeAccessor, Xi as StyleBindingCommand, fe as StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, Je as StylePropertyBindingRenderer, ws as Switch, TemplateCompiler, Ks as TemplateCompilerHooks, $e as TemplateControllerRenderer, TextBindingInstruction, Xe as TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, Vi as ToViewBindingCommand, zi as TriggerBindingCommand, TwoWayBindingBehavior, $i as TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, me as ValueConverter, ValueConverterDefinition, ViewFactory, pi as ViewModelKind, ee as Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
 //# sourceMappingURL=index.mjs.map

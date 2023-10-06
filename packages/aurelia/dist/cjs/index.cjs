@@ -208,8 +208,6 @@ exports.shadowCSS = r.shadowCSS;
 
 exports.slotted = r.slotted;
 
-exports.strict = r.strict;
-
 exports.templateCompilerHooks = r.templateCompilerHooks;
 
 exports.templateController = r.templateController;

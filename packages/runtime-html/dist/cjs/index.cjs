@@ -973,22 +973,13 @@ function markContainerless(t) {
     e.containerless = true;
 }
 
-function strict(t) {
-    if (t === void 0) {
-        return function(t) {
-            annotateElementMetadata(t, "isStrictBinding", true);
-        };
-    }
-    annotateElementMetadata(t, "isStrictBinding", true);
-}
-
 const nt = new WeakMap;
 
 class CustomElementDefinition {
     get type() {
         return 1;
     }
-    constructor(t, e, s, i, n, r, l, h, a, c, u, f, d, p, m, x, g, v, b, w) {
+    constructor(t, e, s, i, n, r, l, h, a, c, u, f, d, p, m, x, g, v, b) {
         this.Type = t;
         this.name = e;
         this.aliases = s;
@@ -1003,12 +994,11 @@ class CustomElementDefinition {
         this.surrogates = f;
         this.bindables = d;
         this.containerless = p;
-        this.isStrictBinding = m;
-        this.shadowOptions = x;
-        this.hasSlots = g;
-        this.enhance = v;
-        this.watches = b;
-        this.processContent = w;
+        this.shadowOptions = m;
+        this.hasSlots = x;
+        this.enhance = g;
+        this.watches = v;
+        this.processContent = b;
     }
     static create(e, s = null) {
         if (s === null) {
@@ -1022,13 +1012,13 @@ class CustomElementDefinition {
             } else {
                 s = ht(t.pascalCase(n));
             }
-            return new CustomElementDefinition(s, n, t.mergeArrays(i.aliases), t.fromDefinitionOrDefault("key", i, (() => getElementKeyFrom(n))), t.fromDefinitionOrDefault("cache", i, returnZero), t.fromDefinitionOrDefault("capture", i, returnFalse), t.fromDefinitionOrDefault("template", i, returnNull), t.mergeArrays(i.instructions), t.mergeArrays(i.dependencies), t.fromDefinitionOrDefault("injectable", i, returnNull), t.fromDefinitionOrDefault("needsCompile", i, returnTrue), t.mergeArrays(i.surrogates), R.from(s, i.bindables), t.fromDefinitionOrDefault("containerless", i, returnFalse), t.fromDefinitionOrDefault("isStrictBinding", i, returnFalse), t.fromDefinitionOrDefault("shadowOptions", i, returnNull), t.fromDefinitionOrDefault("hasSlots", i, returnFalse), t.fromDefinitionOrDefault("enhance", i, returnFalse), t.fromDefinitionOrDefault("watches", i, returnEmptyArray), t.fromAnnotationOrTypeOrDefault("processContent", s, returnNull));
+            return new CustomElementDefinition(s, n, t.mergeArrays(i.aliases), t.fromDefinitionOrDefault("key", i, (() => getElementKeyFrom(n))), t.fromDefinitionOrDefault("cache", i, returnZero), t.fromDefinitionOrDefault("capture", i, returnFalse), t.fromDefinitionOrDefault("template", i, returnNull), t.mergeArrays(i.instructions), t.mergeArrays(i.dependencies), t.fromDefinitionOrDefault("injectable", i, returnNull), t.fromDefinitionOrDefault("needsCompile", i, returnTrue), t.mergeArrays(i.surrogates), R.from(s, i.bindables), t.fromDefinitionOrDefault("containerless", i, returnFalse), t.fromDefinitionOrDefault("shadowOptions", i, returnNull), t.fromDefinitionOrDefault("hasSlots", i, returnFalse), t.fromDefinitionOrDefault("enhance", i, returnFalse), t.fromDefinitionOrDefault("watches", i, returnEmptyArray), t.fromAnnotationOrTypeOrDefault("processContent", s, returnNull));
         }
         if (isString(e)) {
-            return new CustomElementDefinition(s, e, t.mergeArrays(getElementAnnotation(s, "aliases"), s.aliases), getElementKeyFrom(e), t.fromAnnotationOrTypeOrDefault("cache", s, returnZero), t.fromAnnotationOrTypeOrDefault("capture", s, returnFalse), t.fromAnnotationOrTypeOrDefault("template", s, returnNull), t.mergeArrays(getElementAnnotation(s, "instructions"), s.instructions), t.mergeArrays(getElementAnnotation(s, "dependencies"), s.dependencies), t.fromAnnotationOrTypeOrDefault("injectable", s, returnNull), t.fromAnnotationOrTypeOrDefault("needsCompile", s, returnTrue), t.mergeArrays(getElementAnnotation(s, "surrogates"), s.surrogates), R.from(s, ...R.getAll(s), getElementAnnotation(s, "bindables"), s.bindables), t.fromAnnotationOrTypeOrDefault("containerless", s, returnFalse), t.fromAnnotationOrTypeOrDefault("isStrictBinding", s, returnFalse), t.fromAnnotationOrTypeOrDefault("shadowOptions", s, returnNull), t.fromAnnotationOrTypeOrDefault("hasSlots", s, returnFalse), t.fromAnnotationOrTypeOrDefault("enhance", s, returnFalse), t.mergeArrays(it.getAnnotation(s), s.watches), t.fromAnnotationOrTypeOrDefault("processContent", s, returnNull));
+            return new CustomElementDefinition(s, e, t.mergeArrays(getElementAnnotation(s, "aliases"), s.aliases), getElementKeyFrom(e), t.fromAnnotationOrTypeOrDefault("cache", s, returnZero), t.fromAnnotationOrTypeOrDefault("capture", s, returnFalse), t.fromAnnotationOrTypeOrDefault("template", s, returnNull), t.mergeArrays(getElementAnnotation(s, "instructions"), s.instructions), t.mergeArrays(getElementAnnotation(s, "dependencies"), s.dependencies), t.fromAnnotationOrTypeOrDefault("injectable", s, returnNull), t.fromAnnotationOrTypeOrDefault("needsCompile", s, returnTrue), t.mergeArrays(getElementAnnotation(s, "surrogates"), s.surrogates), R.from(s, ...R.getAll(s), getElementAnnotation(s, "bindables"), s.bindables), t.fromAnnotationOrTypeOrDefault("containerless", s, returnFalse), t.fromAnnotationOrTypeOrDefault("shadowOptions", s, returnNull), t.fromAnnotationOrTypeOrDefault("hasSlots", s, returnFalse), t.fromAnnotationOrTypeOrDefault("enhance", s, returnFalse), t.mergeArrays(it.getAnnotation(s), s.watches), t.fromAnnotationOrTypeOrDefault("processContent", s, returnNull));
         }
         const i = t.fromDefinitionOrDefault("name", e, lt);
-        return new CustomElementDefinition(s, i, t.mergeArrays(getElementAnnotation(s, "aliases"), e.aliases, s.aliases), getElementKeyFrom(i), t.fromAnnotationOrDefinitionOrTypeOrDefault("cache", e, s, returnZero), t.fromAnnotationOrDefinitionOrTypeOrDefault("capture", e, s, returnFalse), t.fromAnnotationOrDefinitionOrTypeOrDefault("template", e, s, returnNull), t.mergeArrays(getElementAnnotation(s, "instructions"), e.instructions, s.instructions), t.mergeArrays(getElementAnnotation(s, "dependencies"), e.dependencies, s.dependencies), t.fromAnnotationOrDefinitionOrTypeOrDefault("injectable", e, s, returnNull), t.fromAnnotationOrDefinitionOrTypeOrDefault("needsCompile", e, s, returnTrue), t.mergeArrays(getElementAnnotation(s, "surrogates"), e.surrogates, s.surrogates), R.from(s, ...R.getAll(s), getElementAnnotation(s, "bindables"), s.bindables, e.bindables), t.fromAnnotationOrDefinitionOrTypeOrDefault("containerless", e, s, returnFalse), t.fromAnnotationOrDefinitionOrTypeOrDefault("isStrictBinding", e, s, returnFalse), t.fromAnnotationOrDefinitionOrTypeOrDefault("shadowOptions", e, s, returnNull), t.fromAnnotationOrDefinitionOrTypeOrDefault("hasSlots", e, s, returnFalse), t.fromAnnotationOrDefinitionOrTypeOrDefault("enhance", e, s, returnFalse), t.mergeArrays(e.watches, it.getAnnotation(s), s.watches), t.fromAnnotationOrDefinitionOrTypeOrDefault("processContent", e, s, returnNull));
+        return new CustomElementDefinition(s, i, t.mergeArrays(getElementAnnotation(s, "aliases"), e.aliases, s.aliases), getElementKeyFrom(i), t.fromAnnotationOrDefinitionOrTypeOrDefault("cache", e, s, returnZero), t.fromAnnotationOrDefinitionOrTypeOrDefault("capture", e, s, returnFalse), t.fromAnnotationOrDefinitionOrTypeOrDefault("template", e, s, returnNull), t.mergeArrays(getElementAnnotation(s, "instructions"), e.instructions, s.instructions), t.mergeArrays(getElementAnnotation(s, "dependencies"), e.dependencies, s.dependencies), t.fromAnnotationOrDefinitionOrTypeOrDefault("injectable", e, s, returnNull), t.fromAnnotationOrDefinitionOrTypeOrDefault("needsCompile", e, s, returnTrue), t.mergeArrays(getElementAnnotation(s, "surrogates"), e.surrogates, s.surrogates), R.from(s, ...R.getAll(s), getElementAnnotation(s, "bindables"), s.bindables, e.bindables), t.fromAnnotationOrDefinitionOrTypeOrDefault("containerless", e, s, returnFalse), t.fromAnnotationOrDefinitionOrTypeOrDefault("shadowOptions", e, s, returnNull), t.fromAnnotationOrDefinitionOrTypeOrDefault("hasSlots", e, s, returnFalse), t.fromAnnotationOrDefinitionOrTypeOrDefault("enhance", e, s, returnFalse), t.mergeArrays(e.watches, it.getAnnotation(s), s.watches), t.fromAnnotationOrDefinitionOrTypeOrDefault("processContent", e, s, returnNull));
     }
     static getOrCreate(t) {
         if (t instanceof CustomElementDefinition) {
@@ -2901,9 +2891,6 @@ class SpreadBinding {
     get definition() {
         return this.$controller.definition;
     }
-    get isStrictBinding() {
-        return this.$controller.isStrictBinding;
-    }
     get state() {
         return this.$controller.state;
     }
@@ -3075,9 +3062,8 @@ class LetBindingInstruction {
 }
 
 class TextBindingInstruction {
-    constructor(t, e) {
+    constructor(t) {
         this.from = t;
-        this.strict = e;
         this.type = "ha";
     }
 }
@@ -3778,7 +3764,6 @@ class Controller {
         this.bindings = null;
         this.children = null;
         this.hasLockedScope = false;
-        this.isStrictBinding = false;
         this.scope = null;
         this.isBound = false;
         this.At = false;
@@ -3882,27 +3867,26 @@ class Controller {
             this.kt.hydrating(this);
         }
         const e = this.Pt = this.r.compile(this.definition, this.container, t);
-        const {shadowOptions: s, isStrictBinding: i, hasSlots: n, containerless: r} = e;
-        let l = this.location;
-        this.isStrictBinding = i;
+        const {shadowOptions: s, hasSlots: i, containerless: n} = e;
+        let r = this.location;
         if ((this.hostController = findElementControllerFor(this.host, Qt)) !== null) {
             this.host = this.container.root.get(W).document.createElement(this.definition.name);
-            if (r && l == null) {
-                l = this.location = convertToRenderLocation(this.host);
+            if (n && r == null) {
+                r = this.location = convertToRenderLocation(this.host);
             }
         }
         setRef(this.host, ot, this);
         setRef(this.host, this.definition.key, this);
-        if (s !== null || n) {
-            if (l != null) {
+        if (s !== null || i) {
+            if (r != null) {
                 throw createMappedError(501);
             }
             setRef(this.shadowRoot = this.host.attachShadow(s ?? Jt), ot, this);
             setRef(this.shadowRoot, this.definition.key, this);
             this.mountTarget = 2;
-        } else if (l != null) {
-            setRef(l, ot, this);
-            setRef(l, this.definition.key, this);
+        } else if (r != null) {
+            setRef(r, ot, this);
+            setRef(r, this.definition.key, this);
             this.mountTarget = 3;
         } else {
             this.mountTarget = 1;
@@ -3943,7 +3927,6 @@ class Controller {
     }
     It() {
         this.Pt = this.r.compile(this.viewFactory.def, this.container, null);
-        this.isStrictBinding = this.Pt.isStrictBinding;
         this.r.render(this, (this.nodes = this.r.createNodes(this.Pt)).findTargets(), this.Pt, void 0);
     }
     activate(e, s, i) {
@@ -3984,7 +3967,6 @@ class Controller {
             }
             break;
         }
-        if (this.isStrictBinding) ;
         this.$initiator = e;
         this.Mt();
         let n = void 0;
@@ -9530,8 +9512,7 @@ class TemplateCompiler {
                         name: lt(),
                         template: t,
                         instructions: k.rows,
-                        needsCompile: false,
-                        isStrictBinding: s.root.def.isStrictBinding
+                        needsCompile: false
                     });
                 }
                 M.projections = p;
@@ -9558,8 +9539,7 @@ class TemplateCompiler {
                 name: lt(),
                 template: r,
                 instructions: l.rows,
-                needsCompile: false,
-                isStrictBinding: s.root.def.isStrictBinding
+                needsCompile: false
             });
             while (y-- > 0) {
                 q = P[y];
@@ -9570,8 +9550,7 @@ class TemplateCompiler {
                     name: lt(),
                     template: t,
                     needsCompile: false,
-                    instructions: [ [ P[y + 1] ] ],
-                    isStrictBinding: s.root.def.isStrictBinding
+                    instructions: [ [ P[y + 1] ] ]
                 });
             }
             s.rows.push([ q ]);
@@ -9638,8 +9617,7 @@ class TemplateCompiler {
                         name: lt(),
                         template: x,
                         instructions: g.rows,
-                        needsCompile: false,
-                        isStrictBinding: s.root.def.isStrictBinding
+                        needsCompile: false
                     });
                 }
                 M.projections = h;
@@ -9680,7 +9658,7 @@ class TemplateCompiler {
                 if (c = r[h + 1]) {
                     insertBefore(s, e.Di(c), t);
                 }
-                e.rows.push([ new TextBindingInstruction(l[h], e.root.def.isStrictBinding) ]);
+                e.rows.push([ new TextBindingInstruction(l[h]) ]);
             }
             s.removeChild(t);
         }
@@ -10700,8 +10678,6 @@ exports.setRef = setRef;
 exports.shadowCSS = shadowCSS;
 
 exports.slotted = slotted;
-
-exports.strict = strict;
 
 exports.templateCompilerHooks = templateCompilerHooks;
 

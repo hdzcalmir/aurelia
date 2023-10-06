@@ -1197,18 +1197,10 @@ function markContainerless(target) {
     }
     def.containerless = true;
 }
-function strict(target) {
-    if (target === void 0) {
-        return function ($target) {
-            annotateElementMetadata($target, 'isStrictBinding', true);
-        };
-    }
-    annotateElementMetadata(target, 'isStrictBinding', true);
-}
 const definitionLookup = new WeakMap();
 class CustomElementDefinition {
     get type() { return 1 /* DefinitionType.Element */; }
-    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, isStrictBinding, shadowOptions, 
+    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, shadowOptions, 
     /**
      * Indicates whether the custom element has <slot/> in its template
      */
@@ -1227,7 +1219,6 @@ class CustomElementDefinition {
         this.surrogates = surrogates;
         this.bindables = bindables;
         this.containerless = containerless;
-        this.isStrictBinding = isStrictBinding;
         this.shadowOptions = shadowOptions;
         this.hasSlots = hasSlots;
         this.enhance = enhance;
@@ -1250,19 +1241,19 @@ class CustomElementDefinition {
             else {
                 Type = generateElementType(pascalCase(name));
             }
-            return new CustomElementDefinition(Type, name, mergeArrays(def.aliases), fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), fromDefinitionOrDefault('cache', def, returnZero), fromDefinitionOrDefault('capture', def, returnFalse), fromDefinitionOrDefault('template', def, returnNull), mergeArrays(def.instructions), mergeArrays(def.dependencies), fromDefinitionOrDefault('injectable', def, returnNull), fromDefinitionOrDefault('needsCompile', def, returnTrue), mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), fromDefinitionOrDefault('containerless', def, returnFalse), fromDefinitionOrDefault('isStrictBinding', def, returnFalse), fromDefinitionOrDefault('shadowOptions', def, returnNull), fromDefinitionOrDefault('hasSlots', def, returnFalse), fromDefinitionOrDefault('enhance', def, returnFalse), fromDefinitionOrDefault('watches', def, returnEmptyArray), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, name, mergeArrays(def.aliases), fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), fromDefinitionOrDefault('cache', def, returnZero), fromDefinitionOrDefault('capture', def, returnFalse), fromDefinitionOrDefault('template', def, returnNull), mergeArrays(def.instructions), mergeArrays(def.dependencies), fromDefinitionOrDefault('injectable', def, returnNull), fromDefinitionOrDefault('needsCompile', def, returnTrue), mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), fromDefinitionOrDefault('containerless', def, returnFalse), fromDefinitionOrDefault('shadowOptions', def, returnNull), fromDefinitionOrDefault('hasSlots', def, returnFalse), fromDefinitionOrDefault('enhance', def, returnFalse), fromDefinitionOrDefault('watches', def, returnEmptyArray), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // If a type is passed in, we ignore the Type property on the definition if it exists.
         // TODO: document this behavior
         if (isString(nameOrDef)) {
-            return new CustomElementDefinition(Type, nameOrDef, mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), fromAnnotationOrTypeOrDefault('cache', Type, returnZero), fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), fromAnnotationOrTypeOrDefault('template', Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), fromAnnotationOrTypeOrDefault('isStrictBinding', Type, returnFalse), fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), mergeArrays(Watch.getAnnotation(Type), Type.watches), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, nameOrDef, mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), fromAnnotationOrTypeOrDefault('cache', Type, returnZero), fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), fromAnnotationOrTypeOrDefault('template', Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), mergeArrays(Watch.getAnnotation(Type), Type.watches), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // This is the typical default behavior, e.g. from regular CustomElement.define invocations or from @customElement deco
         // The ViewValueConverter also uses this signature and passes in a definition where everything except for the 'hooks'
         // property needs to be copied. So we have that exception for 'hooks', but we may need to revisit that default behavior
         // if this turns out to be too opinionated.
         const name = fromDefinitionOrDefault('name', nameOrDef, generateElementName);
-        return new CustomElementDefinition(Type, name, mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('isStrictBinding', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
+        return new CustomElementDefinition(Type, name, mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
     }
     static getOrCreate(partialDefinition) {
         if (partialDefinition instanceof CustomElementDefinition) {
@@ -3288,9 +3279,6 @@ class SpreadBinding {
     get definition() {
         return this.$controller.definition;
     }
-    get isStrictBinding() {
-        return this.$controller.isStrictBinding;
-    }
     get state() {
         return this.$controller.state;
     }
@@ -3488,16 +3476,8 @@ class LetBindingInstruction {
     }
 }
 class TextBindingInstruction {
-    constructor(from, 
-    /**
-     * Indicates whether the value of the expression "from"
-     * should be evaluated in strict mode.
-     *
-     * In none strict mode, "undefined" and "null" are coerced into empty string
-     */
-    strict) {
+    constructor(from) {
         this.from = from;
-        this.strict = strict;
         this.type = "ha" /* InstructionType.textBinding */;
     }
 }
@@ -4341,7 +4321,6 @@ class Controller {
         this.bindings = null;
         this.children = null;
         this.hasLockedScope = false;
-        this.isStrictBinding = false;
         this.scope = null;
         this.isBound = false;
         /** @internal */
@@ -4553,9 +4532,8 @@ class Controller {
             this._vm.hydrating(this);
         }
         const compiledDef = this._compiledDef = this._rendering.compile(this.definition, this.container, hydrationInst);
-        const { shadowOptions, isStrictBinding, hasSlots, containerless } = compiledDef;
+        const { shadowOptions, hasSlots, containerless } = compiledDef;
         let location = this.location;
-        this.isStrictBinding = isStrictBinding;
         if ((this.hostController = findElementControllerFor(this.host, optionalCeFind)) !== null) {
             this.host = this.container.root.get(IPlatform).document.createElement(this.definition.name);
             if (containerless && location == null) {
@@ -4635,7 +4613,6 @@ class Controller {
     /** @internal */
     _hydrateSynthetic() {
         this._compiledDef = this._rendering.compile(this.viewFactory.def, this.container, null);
-        this.isStrictBinding = this._compiledDef.isStrictBinding;
         this._rendering.render(
         /* controller */ this, 
         /* targets    */ (this.nodes = this._rendering.createNodes(this._compiledDef)).findTargets(), 
@@ -4688,7 +4665,6 @@ class Controller {
                 }
                 break;
         }
-        if (this.isStrictBinding) ;
         this.$initiator = initiator;
         // opposing leave is called in attach() (which will trigger attached())
         this._enterActivating();
@@ -11225,7 +11201,6 @@ class TemplateCompiler {
                         template,
                         instructions: projectionCompilationContext.rows,
                         needsCompile: false,
-                        isStrictBinding: context.root.def.isStrictBinding,
                     });
                 }
                 elementInstruction.projections = projections;
@@ -11261,7 +11236,6 @@ class TemplateCompiler {
                 template: mostInnerTemplate,
                 instructions: childContext.rows,
                 needsCompile: false,
-                isStrictBinding: context.root.def.isStrictBinding,
             });
             // 4.1.2.
             //  Start processing other Template controllers by walking the TC list (list 1) RIGHT -> LEFT
@@ -11292,7 +11266,6 @@ class TemplateCompiler {
                     template,
                     needsCompile: false,
                     instructions: [[tcInstructions[i + 1]]],
-                    isStrictBinding: context.root.def.isStrictBinding,
                 });
             }
             // the most outer template controller should be
@@ -11417,7 +11390,6 @@ class TemplateCompiler {
                         template,
                         instructions: projectionCompilationContext.rows,
                         needsCompile: false,
-                        isStrictBinding: context.root.def.isStrictBinding,
                     });
                 }
                 elementInstruction.projections = projections;
@@ -11473,7 +11445,7 @@ class TemplateCompiler {
                     insertBefore(parent, context._text(part), node);
                 }
                 // and the corresponding instruction
-                context.rows.push([new TextBindingInstruction(expressions[i], context.root.def.isStrictBinding)]);
+                context.rows.push([new TextBindingInstruction(expressions[i])]);
             }
             parent.removeChild(node);
         }
@@ -12393,5 +12365,5 @@ class ChildrenLifecycleHooks {
 }
 let mixed = false;
 
-export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, CommandType, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DefinitionType, DotSeparatedAttributePattern, Else, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, ILifecycleHooks, ILocation, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, ViewModelKind, Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, strict, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
+export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, CommandType, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DefinitionType, DotSeparatedAttributePattern, Else, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, ILifecycleHooks, ILocation, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, ViewModelKind, Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
 //# sourceMappingURL=index.dev.mjs.map

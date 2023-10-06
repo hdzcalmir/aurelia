@@ -172,22 +172,8 @@ export declare class LetBindingInstruction {
 }
 export declare class TextBindingInstruction {
     from: string | IsBindingBehavior;
-    /**
-     * Indicates whether the value of the expression "from"
-     * should be evaluated in strict mode.
-     *
-     * In none strict mode, "undefined" and "null" are coerced into empty string
-     */
-    strict: boolean;
     readonly type = InstructionType.textBinding;
-    constructor(from: string | IsBindingBehavior, 
-    /**
-     * Indicates whether the value of the expression "from"
-     * should be evaluated in strict mode.
-     *
-     * In none strict mode, "undefined" and "null" are coerced into empty string
-     */
-    strict: boolean);
+    constructor(from: string | IsBindingBehavior);
 }
 export declare class ListenerBindingInstruction {
     from: string | IsBindingBehavior;

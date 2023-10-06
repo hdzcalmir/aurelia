@@ -1934,21 +1934,19 @@ class RouteNode {
         const {[U]: e, ...s} = t.params ?? {};
         return new RouteNode(t.path, t.finalPath, t.context, t.originalInstruction ?? t.instruction, t.instruction, Object.freeze(s), t.queryParams ?? Y, t.fragment ?? null, Object.freeze(t.data ?? h), t.re ?? null, t.title ?? null, t.component, t.children ?? [], t.residue ?? []);
     }
-    contains(t, e) {
+    contains(t, e = false) {
         if (this.context === t.options.context) {
-            const s = e.matchEndpoint ?? false;
-            const i = e.matchOriginalInstruction ?? false;
-            const n = this.children;
-            const r = t.children;
-            for (let t = 0, e = n.length; t < e; ++t) {
-                for (let o = 0, c = r.length; o < c; ++o) {
-                    const a = r[o];
-                    const u = s ? a.recognizedRoute?.route.endpoint : null;
-                    const h = n[t + o] ?? null;
-                    const l = h !== null ? !i && h.isInstructionsFinalized ? h.instruction : h.ne : null;
-                    const f = l?.recognizedRoute?.route.endpoint;
-                    if (t + o < e && ((u?.equalsOrResidual(f) ?? false) || (l?.contains(a) ?? false))) {
-                        if (o + 1 === c) {
+            const s = this.children;
+            const i = t.children;
+            for (let t = 0, n = s.length; t < n; ++t) {
+                for (let r = 0, o = i.length; r < o; ++r) {
+                    const c = i[r];
+                    const a = e ? c.recognizedRoute?.route.endpoint : null;
+                    const u = s[t + r] ?? null;
+                    const h = u !== null ? u.isInstructionsFinalized ? u.instruction : u.ne : null;
+                    const l = h?.recognizedRoute?.route.endpoint;
+                    if (t + r < n && ((a?.equalsOrResidual(l) ?? false) || (h?.contains(c) ?? false))) {
+                        if (r + 1 === o) {
                             return true;
                         }
                     } else {
@@ -2037,7 +2035,7 @@ class RouteTree {
         this.fragment = s;
         this.root = i;
     }
-    contains(t, e) {
+    contains(t, e = false) {
         return this.root.contains(t, e);
     }
     Z() {
@@ -2486,9 +2484,7 @@ class Router {
             context: s,
             historyStrategy: this.options.historyStrategy
         });
-        return this.routeTree.contains(i, {
-            matchEndpoint: false
-        });
+        return this.routeTree.contains(i, false);
     }
     getRouteContext(t, e, s, i, n, r, o) {
         return a(o instanceof RouteConfig ? o : resolveRouteConfiguration(typeof s?.getRouteConfig === "function" ? s : e.Type, false, n, null, r), (s => {
@@ -3732,7 +3728,7 @@ class NavigationModel {
     cs(t) {
         const e = this.routes;
         if (!(t instanceof Promise)) {
-            if (t.nav ?? false) {
+            if ((t.nav ?? false) && t.redirectTo === null) {
                 e.push(NavigationRoute.J(t));
             }
             return;
@@ -3741,7 +3737,7 @@ class NavigationModel {
         e.push(void 0);
         let i = void 0;
         i = this.gs = a(this.gs, (() => a(t, (t => {
-            if (t.nav) {
+            if (t.nav && t.redirectTo === null) {
                 e[s] = NavigationRoute.J(t);
             } else {
                 e.splice(s, 1);
@@ -3754,16 +3750,15 @@ class NavigationModel {
 }
 
 class NavigationRoute {
-    constructor(t, e, s, i, n) {
+    constructor(t, e, s, i) {
         this.id = t;
         this.path = e;
-        this.redirectTo = s;
-        this.title = i;
-        this.data = n;
+        this.title = s;
+        this.data = i;
         this.ws = null;
     }
     static J(t) {
-        return new NavigationRoute(t.id, ensureArrayOfStrings(t.path ?? c), t.redirectTo, t.title, t.data);
+        return new NavigationRoute(t.id, ensureArrayOfStrings(t.path ?? c), t.title, t.data);
     }
     get isActive() {
         return this._t;
@@ -3783,10 +3778,7 @@ class NavigationRoute {
                 }) ], Y, null);
             }));
         }
-        this._t = s.some((e => t.routeTree.contains(e, {
-            matchEndpoint: true,
-            matchOriginalInstruction: this.redirectTo !== null
-        })));
+        this._t = s.some((e => t.routeTree.contains(e, true)));
     }
 }
 

@@ -106,6 +106,11 @@ export interface IFixture<T> {
      */
     assertAttrNS(selector: string, namespace: string, name: string, value: string): void;
     /**
+     * Assert the style values of an element matching the given record (kebab-case properties as in the style attributes),
+     * rather than the camelCase as in the property of `element.style`
+     */
+    assertStyles(selector: string, styles: Partial<CSSStyleDeclaration>): void;
+    /**
      * Assert the value of an element matching the given selector inside the application host equals to a given value.
      *
      * Will throw if there' more than one elements with matching selector

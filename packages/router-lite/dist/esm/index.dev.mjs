@@ -2403,10 +2403,8 @@ class RouteNode {
         /*    children */ input.children ?? [], 
         /*     residue */ input.residue ?? []);
     }
-    contains(instructions, options) {
+    contains(instructions, matchEndpoint = false) {
         if (this.context === instructions.options.context) {
-            const matchEndpoint = options.matchEndpoint ?? false;
-            const matchOriginalInstruction = options.matchOriginalInstruction ?? false;
             const nodeChildren = this.children;
             const instructionChildren = instructions.children;
             for (let i = 0, ii = nodeChildren.length; i < ii; ++i) {
@@ -2415,7 +2413,7 @@ class RouteNode {
                     const instructionEndpoint = matchEndpoint ? instructionChild.recognizedRoute?.route.endpoint : null;
                     const nodeChild = nodeChildren[i + j] ?? null;
                     const instruction = nodeChild !== null
-                        ? !matchOriginalInstruction && nodeChild.isInstructionsFinalized ? nodeChild.instruction : nodeChild._originalInstruction
+                        ? nodeChild.isInstructionsFinalized ? nodeChild.instruction : nodeChild._originalInstruction
                         : null;
                     const childEndpoint = instruction?.recognizedRoute?.route.endpoint;
                     if (i + j < ii
@@ -2432,7 +2430,7 @@ class RouteNode {
             }
         }
         return this.children.some(function (x) {
-            return x.contains(instructions, options);
+            return x.contains(instructions, matchEndpoint);
         });
     }
     /** @internal */
@@ -2526,8 +2524,8 @@ class RouteTree {
         this.fragment = fragment;
         this.root = root;
     }
-    contains(instructions, options) {
-        return this.root.contains(instructions, options);
+    contains(instructions, matchEndpoint = false) {
+        return this.root.contains(instructions, matchEndpoint);
     }
     /** @internal */
     _clone() {
@@ -3037,7 +3035,7 @@ class Router {
             ? instructionOrInstructions
             : this.createViewportInstructions(instructionOrInstructions, { context: ctx, historyStrategy: this.options.historyStrategy });
         trace(this._logger, 3251 /* Events.rtrIsActive */, instructions, ctx);
-        return this.routeTree.contains(instructions, { matchEndpoint: false });
+        return this.routeTree.contains(instructions, false);
     }
     /**
      * Retrieve the RouteContext, which contains statically configured routes combined with the customElement metadata associated with a type.
@@ -4647,7 +4645,7 @@ class NavigationModel {
     _addRoute(route) {
         const routes = this.routes;
         if (!(route instanceof Promise)) {
-            if (route.nav ?? false) {
+            if ((route.nav ?? false) && route.redirectTo === null) {
                 routes.push(NavigationRoute._create(route));
             }
             return;
@@ -4656,7 +4654,7 @@ class NavigationModel {
         routes.push((void 0)); // reserve the slot
         let promise = void 0;
         promise = this._promise = onResolve(this._promise, () => onResolve(route, rdConfig => {
-            if (rdConfig.nav) {
+            if (rdConfig.nav && rdConfig.redirectTo === null) {
                 routes[index] = NavigationRoute._create(rdConfig);
             }
             else {
@@ -4670,17 +4668,16 @@ class NavigationModel {
 }
 // Usage of classical interface pattern is intentional.
 class NavigationRoute {
-    constructor(id, path, redirectTo, title, data) {
+    constructor(id, path, title, data) {
         this.id = id;
         this.path = path;
-        this.redirectTo = redirectTo;
         this.title = title;
         this.data = data;
         this._trees = null;
     }
     /** @internal */
     static _create(rdConfig) {
-        return new NavigationRoute(rdConfig.id, ensureArrayOfStrings(rdConfig.path ?? emptyArray), rdConfig.redirectTo, rdConfig.title, rdConfig.data);
+        return new NavigationRoute(rdConfig.id, ensureArrayOfStrings(rdConfig.path ?? emptyArray), rdConfig.title, rdConfig.data);
     }
     get isActive() {
         return this._isActive;
@@ -4702,7 +4699,7 @@ class NavigationRoute {
                 ], emptyQuery, null);
             });
         }
-        this._isActive = trees.some(vit => router.routeTree.contains(vit, { matchEndpoint: true, matchOriginalInstruction: this.redirectTo !== null }));
+        this._isActive = trees.some(vit => router.routeTree.contains(vit, true));
     }
 }
 

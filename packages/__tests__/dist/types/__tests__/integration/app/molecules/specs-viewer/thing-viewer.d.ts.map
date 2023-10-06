@@ -1,1 +1,0 @@
-{"version":3,"file":"thing-viewer.d.ts","sourceRoot":"","sources":["../../../../../../../integration/app/molecules/specs-viewer/thing-viewer.ts"],"names":[],"mappings":"AAGA,qBAAa,KAAK;IAEP,WAAW,EAAE,MAAM;IACnB,IAAI,EAAE,MAAM;gBADZ,WAAW,EAAE,MAAM,EACnB,IAAI,EAAE,MAAM;CAEtB;AAED,qBACa,WAAW;IACL,KAAK,EAAE,KAAK,CAAC;CAC/B"}
