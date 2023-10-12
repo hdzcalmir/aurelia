@@ -771,12 +771,6 @@ function normalizeQuery(query) {
 }
 
 const noRoutes = emptyArray;
-function defaultReentryBehavior(current, next) {
-    if (!shallowEquals(current.params, next.params)) {
-        return 'replace';
-    }
-    return 'none';
-}
 // Every kind of route configurations are normalized to this `RouteConfig` class.
 class RouteConfig {
     get path() {
@@ -856,8 +850,13 @@ class RouteConfig {
         config.nav ?? this.nav);
     }
     /** @internal */
-    _getTransitionPlan(cur, next) {
-        const plan = this.transitionPlan ?? defaultReentryBehavior;
+    _getTransitionPlan(cur, next, overridingTransitionPlan) {
+        const hasSameParameters = shallowEquals(cur.params, next.params);
+        if (hasSameParameters)
+            return 'none';
+        if (overridingTransitionPlan != null)
+            return overridingTransitionPlan;
+        const plan = this.transitionPlan ?? 'replace';
         return typeof plan === 'function' ? plan(cur, next) : plan;
     }
     /** @internal */
@@ -2110,7 +2109,7 @@ class ViewportAgent {
         }
         else {
             // Component is the same, so determine plan based on config and/or convention
-            this._$plan = options.transitionPlan ?? next.context.config._getTransitionPlan(cur, next);
+            this._$plan = next.context.config._getTransitionPlan(cur, next, options.transitionPlan);
         }
         trace(this._logger, 3344 /* Events.vpaScheduleUpdate */, this);
     }
@@ -2355,7 +2354,7 @@ class RouteNode {
      *
      * @internal
      */
-    _viewport, title, component, children, 
+    _viewport, title, component, 
     /**
      * Not-yet-resolved viewport instructions.
      *
@@ -2377,11 +2376,11 @@ class RouteNode {
         this._viewport = _viewport;
         this.title = title;
         this.component = component;
-        this.children = children;
         this.residue = residue;
         /** @internal */ this._version = 1;
         /** @internal */
         this._isInstructionsFinalized = false;
+        this.children = [];
         this._originalInstruction ?? (this._originalInstruction = instruction);
     }
     static create(input) {
@@ -2400,7 +2399,6 @@ class RouteNode {
         /*    viewport */ input._viewport ?? null, 
         /*       title */ input.title ?? null, 
         /*   component */ input.component, 
-        /*    children */ input.children ?? [], 
         /*     residue */ input.residue ?? []);
     }
     contains(instructions, matchEndpoint = false) {
@@ -2485,7 +2483,12 @@ class RouteNode {
         const clone = new RouteNode(this.path, this.finalPath, this.context, this._originalInstruction, this.instruction, this.params, // as this is frozen, it's safe to share
         this.queryParams, // as this is frozen, it's safe to share
         this.fragment, this.data, // as this is frozen, it's safe to share
-        this._viewport, this.title, this.component, this.children.map(x => x._clone()), [...this.residue]);
+        this._viewport, this.title, this.component, [...this.residue]);
+        const children = this.children;
+        const len = children.length;
+        for (let i = 0; i < len; ++i) {
+            clone.children.push(children[i]._clone());
+        }
         clone._version = this._version + 1;
         if (clone.context.node === this) {
             clone.context.node = clone;
@@ -4776,11 +4779,6 @@ let ViewportCustomElement = class ViewportCustomElement {
                 case 'string':
                     if (value !== '') {
                         propStrings.push(`${prop}:'${value}'`);
-                    }
-                    break;
-                case 'boolean':
-                    if (value) {
-                        propStrings.push(`${prop}:${value}`);
                     }
                     break;
                 default: {

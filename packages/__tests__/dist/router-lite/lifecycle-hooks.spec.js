@@ -185,6 +185,56 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     function createHookTimingConfiguration(option = {}) {
         return { canLoad: 1, loading: 1, canUnload: 1, unloading: 1, ...option };
     }
+    let AsyncBaseViewModelWithAllHooks = class AsyncBaseViewModelWithAllHooks {
+        get ceName() {
+            return this._ceName ?? (this._ceName = CustomElement.getDefinition(this.constructor).name);
+        }
+        constructor(logger, ticks) {
+            this.logger = logger;
+            this.ticks = ticks;
+            this._ceName = null;
+            this.logger = logger.scopeTo(this.constructor.name);
+        }
+        binding(_initiator, _parent) {
+            return log('binding', this.ceName, this.ticks, this.logger);
+        }
+        bound(_initiator, _parent) {
+            return log('bound', this.ceName, this.ticks, this.logger);
+        }
+        attaching(_initiator, _parent) {
+            return log('attaching', this.ceName, this.ticks, this.logger);
+        }
+        attached(_initiator) {
+            return log('attached', this.ceName, this.ticks, this.logger);
+        }
+        detaching(_initiator, _parent) {
+            return log('detaching', this.ceName, this.ticks, this.logger);
+        }
+        unbinding(_initiator, _parent) {
+            return log('unbinding', this.ceName, this.ticks, this.logger);
+        }
+        dispose() {
+            this.logger.trace(`dispose - ${this.ceName}`);
+        }
+        async canLoad(_params, _next, _current) {
+            await log('canLoad', this.ceName, this.ticks, this.logger);
+            return true;
+        }
+        async loading(_params, _next, _current) {
+            await log('loading', this.ceName, this.ticks, this.logger);
+        }
+        async canUnload(_rn, _current) {
+            await log('canUnload', this.ceName, this.ticks, this.logger);
+            return true;
+        }
+        async unloading(_rn, _current) {
+            await log('unloading', this.ceName, this.ticks, this.logger);
+        }
+    };
+    AsyncBaseViewModelWithAllHooks = __decorate([
+        __param(0, ILogger),
+        __metadata("design:paramtypes", [Object, Number])
+    ], AsyncBaseViewModelWithAllHooks);
     // the simplified textbook example of authorization hook
     it('single global (auth) hook', async function () {
         const IAuthenticationService = DI.createInterface('IAuthenticationService', x => x.singleton(AuthenticationService));
@@ -1629,58 +1679,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         }
     }
     function* getSiblingHookTestData() {
-        let AsyncBaseViewModel = class AsyncBaseViewModel {
-            get ceName() {
-                return this._ceName ?? (this._ceName = CustomElement.getDefinition(this.constructor).name);
-            }
-            constructor(logger, ticks) {
-                this.logger = logger;
-                this.ticks = ticks;
-                this._ceName = null;
-                this.logger = logger.scopeTo(this.constructor.name);
-            }
-            binding(_initiator, _parent) {
-                return log('binding', this.ceName, this.ticks, this.logger);
-            }
-            bound(_initiator, _parent) {
-                return log('bound', this.ceName, this.ticks, this.logger);
-            }
-            attaching(_initiator, _parent) {
-                return log('attaching', this.ceName, this.ticks, this.logger);
-            }
-            attached(_initiator) {
-                return log('attached', this.ceName, this.ticks, this.logger);
-            }
-            detaching(_initiator, _parent) {
-                return log('detaching', this.ceName, this.ticks, this.logger);
-            }
-            unbinding(_initiator, _parent) {
-                return log('unbinding', this.ceName, this.ticks, this.logger);
-            }
-            dispose() {
-                this.logger.trace(`dispose - ${this.ceName}`);
-            }
-            async canLoad(_params, _next, _current) {
-                await log('canLoad', this.ceName, this.ticks, this.logger);
-                return true;
-            }
-            async loading(_params, _next, _current) {
-                await log('loading', this.ceName, this.ticks, this.logger);
-            }
-            async canUnload(_rn, _current) {
-                await log('canUnload', this.ceName, this.ticks, this.logger);
-                return true;
-            }
-            async unloading(_rn, _current) {
-                await log('unloading', this.ceName, this.ticks, this.logger);
-            }
-        };
-        AsyncBaseViewModel = __decorate([
-            __param(0, ILogger),
-            __metadata("design:paramtypes", [Object, Number])
-        ], AsyncBaseViewModel);
         function createRoot(ticks) {
-            let Base = class Base extends AsyncBaseViewModel {
+            let Base = class Base extends AsyncBaseViewModelWithAllHooks {
                 constructor(logger) {
                     super(logger, ticks);
                 }
@@ -5587,6 +5587,156 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
             data.assertStopLog(eventLog);
         });
     }
+    it('multi-level hierarchical configuration -> navigation to sibling route from child -> parent is not replaced (transitionPlan: replace)', async function () {
+        const ticks = 0;
+        let L121 = class L121 extends AsyncBaseViewModelWithAllHooks {
+            constructor(logger) {
+                super(logger, ticks);
+            }
+        };
+        L121 = __decorate([
+            customElement({ name: 'l-121', template: `l-121 <a load="../l122/1"></a><a load="../l122/2"></a>` }),
+            __param(0, ILogger),
+            __metadata("design:paramtypes", [Object])
+        ], L121);
+        let L122 = class L122 extends AsyncBaseViewModelWithAllHooks {
+            constructor(logger) {
+                super(logger, ticks);
+            }
+            async canLoad(params, _next, _current) {
+                await super.canLoad(params, _next, _current);
+                this.id = params.id;
+                return true;
+            }
+        };
+        L122 = __decorate([
+            customElement({ name: 'l-122', template: `l-122 \${id} <a load="../../l1"></a>` }),
+            __param(0, ILogger),
+            __metadata("design:paramtypes", [Object])
+        ], L122);
+        let L1 = class L1 extends AsyncBaseViewModelWithAllHooks {
+            constructor(logger) {
+                super(logger, ticks);
+            }
+        };
+        L1 = __decorate([
+            route({
+                routes: [
+                    { path: '', component: L121 },
+                    { path: 'l122/:id', component: L122 },
+                ]
+            }),
+            customElement({ name: 'l-1', template: `<au-viewport></au-viewport>` }),
+            __param(0, ILogger),
+            __metadata("design:paramtypes", [Object])
+        ], L1);
+        let Root = class Root extends AsyncBaseViewModelWithAllHooks {
+            constructor(logger) {
+                super(logger, ticks);
+            }
+        };
+        Root = __decorate([
+            route({
+                routes: [
+                    { id: 'l1', path: ['', 'l1'], component: L1 },
+                ],
+                transitionPlan: 'replace',
+            }),
+            customElement({ name: 'ro-ot', template: '<au-viewport name="root"></au-viewport>' }),
+            __param(0, ILogger),
+            __metadata("design:paramtypes", [Object])
+        ], Root);
+        const { au, host, container } = await createFixture(Root, Registration.instance(IKnownScopes, [Root.name, L1.name, L121.name, L122.name]));
+        const router = container.get(IRouter);
+        const eventLog = EventLog.getInstance(container);
+        assert.html.textContent(host, 'l-121');
+        const anchors = Array.from(host.querySelectorAll('a'));
+        const hrefs = anchors.map(a => a.href);
+        assert.match(hrefs[0], /l122\/1$/);
+        assert.match(hrefs[1], /l122\/2$/);
+        // phase1
+        eventLog.clear();
+        anchors[0].click();
+        await router.currentTr.promise;
+        eventLog.assertLog([
+            /L121\] canUnload - start l-121/,
+            /L121\] canUnload - end l-121/,
+            /L122\] canLoad - start l-122/,
+            /L122\] canLoad - end l-122/,
+            /L121\] unloading - start l-121/,
+            /L121\] unloading - end l-121/,
+            /L122\] loading - start l-122/,
+            /L122\] loading - end l-122/,
+            /L121\] detaching - start l-121/,
+            /L121\] detaching - end l-121/,
+            /L121\] unbinding - start l-121/,
+            /L121\] unbinding - end l-121/,
+            /L121\] dispose - l-121/,
+            /L122\] binding - start l-122/,
+            /L122\] binding - end l-122/,
+            /L122\] bound - start l-122/,
+            /L122\] bound - end l-122/,
+            /L122\] attaching - start l-122/,
+            /L122\] attaching - end l-122/,
+            /L122\] attached - start l-122/,
+            /L122\] attached - end l-122/,
+        ], 'phase1');
+        // phase2 - go-back
+        eventLog.clear();
+        host.querySelector('a').click();
+        await router.currentTr.promise;
+        eventLog.assertLog([
+            /L122\] canUnload - start l-122/,
+            /L122\] canUnload - end l-122/,
+            /L121\] canLoad - start l-121/,
+            /L121\] canLoad - end l-121/,
+            /L122\] unloading - start l-122/,
+            /L122\] unloading - end l-122/,
+            /L121\] loading - start l-121/,
+            /L121\] loading - end l-121/,
+            /L122\] detaching - start l-122/,
+            /L122\] detaching - end l-122/,
+            /L122\] unbinding - start l-122/,
+            /L122\] unbinding - end l-122/,
+            /L122\] dispose - l-122/,
+            /L121\] binding - start l-121/,
+            /L121\] binding - end l-121/,
+            /L121\] bound - start l-121/,
+            /L121\] bound - end l-121/,
+            /L121\] attaching - start l-121/,
+            /L121\] attaching - end l-121/,
+            /L121\] attached - start l-121/,
+            /L121\] attached - end l-121/,
+        ], 'phase2');
+        // phase3
+        eventLog.clear();
+        host.querySelector('a:nth-of-type(2)').click();
+        await router.currentTr.promise;
+        eventLog.assertLog([
+            /L121\] canUnload - start l-121/,
+            /L121\] canUnload - end l-121/,
+            /L122\] canLoad - start l-122/,
+            /L122\] canLoad - end l-122/,
+            /L121\] unloading - start l-121/,
+            /L121\] unloading - end l-121/,
+            /L122\] loading - start l-122/,
+            /L122\] loading - end l-122/,
+            /L121\] detaching - start l-121/,
+            /L121\] detaching - end l-121/,
+            /L121\] unbinding - start l-121/,
+            /L121\] unbinding - end l-121/,
+            /L121\] dispose - l-121/,
+            /L122\] binding - start l-122/,
+            /L122\] binding - end l-122/,
+            /L122\] bound - start l-122/,
+            /L122\] bound - end l-122/,
+            /L122\] attaching - start l-122/,
+            /L122\] attaching - end l-122/,
+            /L122\] attached - start l-122/,
+            /L122\] attached - end l-122/,
+        ], 'phase3');
+        await au.stop(true);
+    });
     // #endregion
     it('navigate away -> false from canUnload -> navigate away with same path', async function () {
         let ChildOne = class ChildOne {

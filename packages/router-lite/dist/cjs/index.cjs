@@ -533,13 +533,6 @@ function normalizeQuery(t) {
 
 const a = e.emptyArray;
 
-function defaultReentryBehavior(t, e) {
-    if (!shallowEquals(t.params, e.params)) {
-        return "replace";
-    }
-    return "none";
-}
-
 class RouteConfig {
     get path() {
         const t = this.G;
@@ -599,9 +592,12 @@ class RouteConfig {
         const s = ensureArrayOfStrings(t.path ?? this.path);
         return new RouteConfig(ensureString(t.id ?? this.id ?? s), s, t.title ?? this.title, t.redirectTo ?? this.redirectTo, t.caseSensitive ?? this.caseSensitive, t.transitionPlan ?? this.transitionPlan ?? e?.transitionPlan ?? null, t.viewport ?? this.viewport, t.data ?? this.data, t.routes ?? this.routes, t.fallback ?? this.fallback ?? e?.fallback ?? null, this.component, t.nav ?? this.nav);
     }
-    X(t, e) {
-        const s = this.transitionPlan ?? defaultReentryBehavior;
-        return typeof s === "function" ? s(t, e) : s;
+    X(t, e, s) {
+        const i = shallowEquals(t.params, e.params);
+        if (i) return "none";
+        if (s != null) return s;
+        const n = this.transitionPlan ?? "replace";
+        return typeof n === "function" ? n(t, e) : n;
     }
     Y(t, s, i) {
         if (this.W) throw new Error(getMessage(3550));
@@ -1247,8 +1243,8 @@ class ViewportAgent {
             }
         }
     }
-    Bt(t) {
-        if (!this.zt()) {
+    zt(t) {
+        if (!this.Bt()) {
             return false;
         }
         const e = this.viewport;
@@ -1263,7 +1259,7 @@ class ViewportAgent {
         }
         return true;
     }
-    zt() {
+    Bt() {
         if (!this._t) {
             return false;
         }
@@ -1706,7 +1702,7 @@ class ViewportAgent {
         if (s === null || s.component !== e.component) {
             this.$t = "replace";
         } else {
-            this.$t = t.transitionPlan ?? e.context.config.X(s, e);
+            this.$t = e.context.config.X(s, e, t.transitionPlan);
         }
     }
     te() {
@@ -1917,7 +1913,7 @@ class RouteNode {
     get isInstructionsFinalized() {
         return this.ie;
     }
-    constructor(t, e, s, i, n, r, o, c, a, u, h, l, f, p) {
+    constructor(t, e, s, i, n, r, o, c, a, u, h, l, f) {
         this.path = t;
         this.finalPath = e;
         this.context = s;
@@ -1930,15 +1926,15 @@ class RouteNode {
         this.re = u;
         this.title = h;
         this.component = l;
-        this.children = f;
-        this.residue = p;
+        this.residue = f;
         this.oe = 1;
         this.ie = false;
+        this.children = [];
         this.ne ?? (this.ne = n);
     }
     static create(t) {
         const {[i.RESIDUE]: s, ...n} = t.params ?? {};
-        return new RouteNode(t.path, t.finalPath, t.context, t.originalInstruction ?? t.instruction, t.instruction, Object.freeze(n), t.queryParams ?? g, t.fragment ?? null, Object.freeze(t.data ?? e.emptyObject), t.re ?? null, t.title ?? null, t.component, t.children ?? [], t.residue ?? []);
+        return new RouteNode(t.path, t.finalPath, t.context, t.originalInstruction ?? t.instruction, t.instruction, Object.freeze(n), t.queryParams ?? g, t.fragment ?? null, Object.freeze(t.data ?? e.emptyObject), t.re ?? null, t.title ?? null, t.component, t.residue ?? []);
     }
     contains(t, e = false) {
         if (this.context === t.options.context) {
@@ -2002,7 +1998,12 @@ class RouteNode {
         return this.instruction = e;
     }
     Z() {
-        const t = new RouteNode(this.path, this.finalPath, this.context, this.ne, this.instruction, this.params, this.queryParams, this.fragment, this.data, this.re, this.title, this.component, this.children.map((t => t.Z())), [ ...this.residue ]);
+        const t = new RouteNode(this.path, this.finalPath, this.context, this.ne, this.instruction, this.params, this.queryParams, this.fragment, this.data, this.re, this.title, this.component, [ ...this.residue ]);
+        const e = this.children;
+        const s = e.length;
+        for (let i = 0; i < s; ++i) {
+            t.children.push(e[i].Z());
+        }
         t.oe = this.oe + 1;
         if (t.context.node === this) {
             t.context.node = t;
@@ -3169,8 +3170,8 @@ class ComponentAgent {
         this.U = n.container.get(e.ILogger).scopeTo(`ComponentAgent<${n.Ot}>`);
         const o = s.lifecycleHooks;
         this.Le = (o.canLoad ?? []).map((t => t.instance));
-        this.Be = (o.loading ?? []).map((t => t.instance));
-        this.ze = (o.canUnload ?? []).map((t => t.instance));
+        this.ze = (o.loading ?? []).map((t => t.instance));
+        this.Be = (o.canUnload ?? []).map((t => t.instance));
         this.De = (o.unloading ?? []).map((t => t.instance));
         this.qe = "canLoad" in t;
         this.He = "loading" in t;
@@ -3195,7 +3196,7 @@ class ComponentAgent {
     Dt(t, e, s) {
         s._();
         let i = Promise.resolve();
-        for (const n of this.ze) {
+        for (const n of this.Be) {
             s._();
             i = i.then((() => new Promise((i => {
                 if (t.guardsResult !== true) {
@@ -3289,7 +3290,7 @@ class ComponentAgent {
     }
     Wt(t, e, s) {
         s._();
-        for (const i of this.Be) {
+        for (const i of this.ze) {
             t.Qt((() => {
                 s._();
                 return i.loading(this.Me, e.params, e, this.Zt);
@@ -3487,15 +3488,15 @@ class RouteContext {
         this.container.dispose();
     }
     de(t) {
-        const e = this.Ze.find((e => e.Bt(t)));
+        const e = this.Ze.find((e => e.zt(t)));
         if (e === void 0) throw new Error(getMessage(3174, t, this.ls()));
         return e;
     }
     getAvailableViewportAgents() {
-        return this.Ze.filter((t => t.zt()));
+        return this.Ze.filter((t => t.Bt()));
     }
     getFallbackViewportAgent(t) {
-        return this.Ze.find((e => e.zt() && e.viewport.name === t && e.viewport.fallback !== "")) ?? null;
+        return this.Ze.find((e => e.Bt() && e.viewport.name === t && e.viewport.fallback !== "")) ?? null;
     }
     Ft(t, i) {
         this.ss.prepare(t);
@@ -3832,12 +3833,6 @@ exports.ViewportCustomElement = class ViewportCustomElement {
               case "string":
                 if (s !== "") {
                     t.push(`${e}:'${s}'`);
-                }
-                break;
-
-              case "boolean":
-                if (s) {
-                    t.push(`${e}:${s}`);
                 }
                 break;
 

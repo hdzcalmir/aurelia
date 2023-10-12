@@ -44,7 +44,6 @@ export declare class RouteNode implements IRouteNode {
     readonly data: Readonly<Record<string, unknown>>;
     readonly title: string | ((node: RouteNode) => string | null) | null;
     readonly component: CustomElementDefinition;
-    readonly children: RouteNode[];
     /**
      * Not-yet-resolved viewport instructions.
      *
@@ -56,6 +55,7 @@ export declare class RouteNode implements IRouteNode {
     readonly residue: ViewportInstruction[];
     get root(): RouteNode;
     get isInstructionsFinalized(): boolean;
+    readonly children: RouteNode[];
     private constructor();
     static create(input: IRouteNode & {
         originalInstruction?: ViewportInstruction<ITypedNavigationInstruction_ResolvedComponent> | null;
