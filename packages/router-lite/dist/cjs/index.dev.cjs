@@ -2214,9 +2214,13 @@ class ViewportAgent {
                         case 128 /* State.currDeactivate */:
                             switch (this._$plan) {
                                 case 'none':
+                                    trace(logger, 3347 /* Events.vpaEndTransitionActiveCurrLifecycle */, this);
+                                    this._currState = 4096 /* State.currIsActive */;
+                                    break;
                                 case 'invoke-lifecycles':
                                     trace(logger, 3347 /* Events.vpaEndTransitionActiveCurrLifecycle */, this);
                                     this._currState = 4096 /* State.currIsActive */;
+                                    this._curCA._routeNode = this._nextNode;
                                     break;
                                 case 'replace':
                                     trace(logger, 3348 /* Events.vpaEndTransitionActiveCurrReplace */, this);

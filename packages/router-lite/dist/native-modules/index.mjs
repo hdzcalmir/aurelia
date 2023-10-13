@@ -1797,8 +1797,12 @@ class ViewportAgent {
                   case 128:
                     switch (this.$t) {
                       case "none":
+                        this.St = 4096;
+                        break;
+
                       case "invoke-lifecycles":
                         this.St = 4096;
+                        this.Nt.Zt = this.It;
                         break;
 
                       case "replace":

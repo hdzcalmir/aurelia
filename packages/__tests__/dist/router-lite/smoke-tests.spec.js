@@ -5013,6 +5013,10 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             host.querySelector('a:nth-of-type(2)').click();
             await queue.yield();
             assert.html.textContent(host, 'ce1 2 2', 'round#2');
+            // no change
+            host.querySelector('a:nth-of-type(2)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 2 2', 'round#3');
             await au.stop(true);
         });
         it('replace - inherited - sibling', async function () {
@@ -5073,22 +5077,242 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             host.querySelector('a:nth-of-type(2)').click();
             await queue.yield();
             assert.html.textContent(host, 'ce1 2 2 ce2 2 2', 'round#2');
+            // no change
+            host.querySelector('a:nth-of-type(2)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 2 2 ce2 2 2', 'round#3');
             await au.stop(true);
         });
-        it('transitionPlan function #1', async function () {
-            var CeOne_3, Root_1;
+        it('invoke-lifecycles - inherited', async function () {
+            var CeOne_3;
             let CeOne = CeOne_3 = class CeOne {
                 constructor() {
                     this.id1 = ++CeOne_3.id1;
                 }
-                canLoad() {
+                loading() {
                     this.id2 = ++CeOne_3.id2;
-                    return true;
                 }
             };
             CeOne.id1 = 0;
             CeOne.id2 = 0;
             CeOne = CeOne_3 = __decorate([
+                customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2}' })
+            ], CeOne);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    transitionPlan: 'invoke-lifecycles',
+                    routes: [
+                        {
+                            id: 'ce1',
+                            path: ['ce1', 'ce1/:id'],
+                            component: CeOne,
+                        },
+                    ]
+                }),
+                customElement({ name: 'ro-ot', template: '<a load="ce1"></a><a load="ce1/1"></a><au-viewport></au-viewport>' })
+            ], Root);
+            const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
+            const queue = container.get(IPlatform).domWriteQueue;
+            host.querySelector('a').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 1', 'round#1');
+            host.querySelector('a:nth-of-type(2)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 2', 'round#2');
+            host.querySelector('a').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 3', 'round#3');
+            host.querySelector('a:nth-of-type(2)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 4', 'round#4');
+            await au.stop(true);
+        });
+        it('invoke-lifecycles - inherited - sibling', async function () {
+            var CeOne_4, CeTwo_2;
+            let CeOne = CeOne_4 = class CeOne {
+                constructor() {
+                    this.id1 = ++CeOne_4.id1;
+                }
+                loading() {
+                    this.id2 = ++CeOne_4.id2;
+                }
+            };
+            CeOne.id1 = 0;
+            CeOne.id2 = 0;
+            CeOne = CeOne_4 = __decorate([
+                customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2}' })
+            ], CeOne);
+            let CeTwo = CeTwo_2 = class CeTwo {
+                constructor() {
+                    this.id1 = ++CeTwo_2.id1;
+                }
+                loading() {
+                    this.id2 = ++CeTwo_2.id2;
+                }
+            };
+            CeTwo.id1 = 0;
+            CeTwo.id2 = 0;
+            CeTwo = CeTwo_2 = __decorate([
+                customElement({ name: 'ce-two', template: 'ce2 ${id1} ${id2}' })
+            ], CeTwo);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    transitionPlan: 'invoke-lifecycles',
+                    routes: [
+                        {
+                            id: 'ce1',
+                            path: ['ce1', 'ce1/:id'],
+                            component: CeOne,
+                        },
+                        {
+                            id: 'ce2',
+                            path: ['ce2', 'ce2/:id'],
+                            component: CeTwo,
+                        },
+                    ]
+                }),
+                customElement({ name: 'ro-ot', template: '<a load="ce1@$1+ce2@$2"></a><a load="ce1/2@$1+ce2/1@$2"></a><a load="ce1/2@$2+ce2/1@$1"></a><a load="ce1/3@$2+ce2/1@$1"></a><au-viewport name="$1"></au-viewport> <au-viewport name="$2"></au-viewport>' })
+            ], Root);
+            const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
+            const queue = container.get(IPlatform).domWriteQueue;
+            host.querySelector('a').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 1 ce2 1 1', 'round#1');
+            host.querySelector('a:nth-of-type(2)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 2 ce2 1 2', 'round#2');
+            host.querySelector('a:nth-of-type(3)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 2 3 ce1 2 3', 'round#3');
+            host.querySelector('a').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 3 4 ce2 3 4', 'round#4');
+            host.querySelector('a:nth-of-type(2)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 3 5 ce2 3 5', 'round#5');
+            host.querySelector('a:nth-of-type(3)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 4 6 ce1 4 6', 'round#6');
+            // no change
+            host.querySelector('a:nth-of-type(3)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 4 6 ce1 4 6', 'round#7');
+            // change only one vp
+            host.querySelector('a:nth-of-type(4)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce2 4 6 ce1 4 7', 'round#8');
+            await au.stop(true);
+        });
+        it('children can override the transitionPlan configured for parent', async function () {
+            var CeOne_5, CeTwo_3, ParentOne_1, ParentTwo_1;
+            let CeOne = CeOne_5 = class CeOne {
+                constructor() {
+                    this.id1 = ++CeOne_5.id1;
+                }
+                loading() {
+                    this.id2 = ++CeOne_5.id2;
+                }
+            };
+            CeOne.id1 = 0;
+            CeOne.id2 = 0;
+            CeOne = CeOne_5 = __decorate([
+                route({ path: 'c1/:id', transitionPlan: 'replace' }),
+                customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2}' })
+            ], CeOne);
+            let CeTwo = CeTwo_3 = class CeTwo {
+                constructor() {
+                    this.id1 = ++CeTwo_3.id1;
+                }
+                loading() {
+                    this.id2 = ++CeTwo_3.id2;
+                }
+            };
+            CeTwo.id1 = 0;
+            CeTwo.id2 = 0;
+            CeTwo = CeTwo_3 = __decorate([
+                route({ path: 'c2/:id', transitionPlan: 'invoke-lifecycles' }),
+                customElement({ name: 'ce-two', template: 'ce2 ${id1} ${id2}' })
+            ], CeTwo);
+            let ParentOne = ParentOne_1 = class ParentOne {
+                constructor() {
+                    this.id1 = ++ParentOne_1.id1;
+                }
+                loading() {
+                    this.id2 = ++ParentOne_1.id2;
+                }
+            };
+            ParentOne.id1 = 0;
+            ParentOne.id2 = 0;
+            ParentOne = ParentOne_1 = __decorate([
+                route({ path: 'p1/:id', routes: [CeTwo], transitionPlan: 'replace' }),
+                customElement({ name: 'p-one', template: 'p1 ${id1} ${id2} <au-viewport></au-viewport>' })
+            ], ParentOne);
+            let ParentTwo = ParentTwo_1 = class ParentTwo {
+                constructor() {
+                    this.id1 = ++ParentTwo_1.id1;
+                }
+                loading() {
+                    this.id2 = ++ParentTwo_1.id2;
+                }
+            };
+            ParentTwo.id1 = 0;
+            ParentTwo.id2 = 0;
+            ParentTwo = ParentTwo_1 = __decorate([
+                route({ path: 'p2/:id', routes: [CeOne], transitionPlan: 'invoke-lifecycles' }),
+                customElement({ name: 'p-two', template: 'p2 ${id1} ${id2} <au-viewport></au-viewport>' })
+            ], ParentTwo);
+            let Root = class Root {
+            };
+            Root = __decorate([
+                route({
+                    routes: [ParentOne, ParentTwo]
+                }),
+                customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
+            ], Root);
+            const { au, container, host } = await start({ appRoot: Root });
+            const router = container.get(IRouter);
+            const queue = container.get(IPlatform).domWriteQueue;
+            await router.load('p1/1/c2/1');
+            await queue.yield();
+            assert.html.textContent(host, 'p1 1 1 ce2 1 1', 'round#1');
+            await router.load('p1/1/c2/2');
+            await queue.yield();
+            assert.html.textContent(host, 'p1 1 1 ce2 1 2', 'round#2');
+            await router.load('p1/2/c2/2');
+            await queue.yield();
+            assert.html.textContent(host, 'p1 2 2 ce2 2 3', 'round#3'); // as the parent is replaced, so is the child
+            await router.load('p2/1/c1/1');
+            await queue.yield();
+            assert.html.textContent(host, 'p2 1 1 ce1 1 1', 'round#4');
+            await router.load('p2/1/c1/2');
+            await queue.yield();
+            assert.html.textContent(host, 'p2 1 1 ce1 2 2', 'round#5');
+            await router.load('p2/2/c1/2');
+            await queue.yield();
+            assert.html.textContent(host, 'p2 1 2 ce1 2 2', 'round#6'); // as the parent is not replaced, the child is also not replaced, as there is no change in the parameters
+            await router.load('p2/3/c1/3');
+            await queue.yield();
+            assert.html.textContent(host, 'p2 1 3 ce1 3 3', 'round#7');
+            await au.stop(true);
+        });
+        it('transitionPlan function #1', async function () {
+            var CeOne_6, Root_1;
+            let CeOne = CeOne_6 = class CeOne {
+                constructor() {
+                    this.id1 = ++CeOne_6.id1;
+                }
+                canLoad() {
+                    this.id2 = ++CeOne_6.id2;
+                    return true;
+                }
+            };
+            CeOne.id1 = 0;
+            CeOne.id2 = 0;
+            CeOne = CeOne_6 = __decorate([
                 customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2}' })
             ], CeOne);
             let Root = Root_1 = class Root {
@@ -5122,33 +5346,33 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await au.stop(true);
         });
         it('transitionPlan function #2 - sibling', async function () {
-            var CeTwo_2, CeOne_4;
-            let CeTwo = CeTwo_2 = class CeTwo {
+            var CeTwo_4, CeOne_7;
+            let CeTwo = CeTwo_4 = class CeTwo {
                 constructor() {
-                    this.id1 = ++CeTwo_2.id1;
+                    this.id1 = ++CeTwo_4.id1;
                 }
                 canLoad() {
-                    this.id2 = ++CeTwo_2.id2;
+                    this.id2 = ++CeTwo_4.id2;
                     return true;
                 }
             };
             CeTwo.id1 = 0;
             CeTwo.id2 = 0;
-            CeTwo = CeTwo_2 = __decorate([
+            CeTwo = CeTwo_4 = __decorate([
                 customElement({ name: 'ce-two', template: 'ce2 ${id1} ${id2}' })
             ], CeTwo);
-            let CeOne = CeOne_4 = class CeOne {
+            let CeOne = CeOne_7 = class CeOne {
                 constructor() {
-                    this.id1 = ++CeOne_4.id1;
+                    this.id1 = ++CeOne_7.id1;
                 }
                 canLoad() {
-                    this.id2 = ++CeOne_4.id2;
+                    this.id2 = ++CeOne_7.id2;
                     return true;
                 }
             };
             CeOne.id1 = 0;
             CeOne.id2 = 0;
-            CeOne = CeOne_4 = __decorate([
+            CeOne = CeOne_7 = __decorate([
                 customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2}' })
             ], CeOne);
             let Root = class Root {
@@ -5187,33 +5411,33 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await au.stop(true);
         });
         it('transitionPlan function #3 - parent-child - parent:replace,child:invoke-lifecycles', async function () {
-            var CeTwo_3, CeOne_5;
-            let CeTwo = CeTwo_3 = class CeTwo {
+            var CeTwo_5, CeOne_8;
+            let CeTwo = CeTwo_5 = class CeTwo {
                 constructor() {
-                    this.id1 = ++CeTwo_3.id1;
+                    this.id1 = ++CeTwo_5.id1;
                 }
                 canLoad() {
-                    this.id2 = ++CeTwo_3.id2;
+                    this.id2 = ++CeTwo_5.id2;
                     return true;
                 }
             };
             CeTwo.id1 = 0;
             CeTwo.id2 = 0;
-            CeTwo = CeTwo_3 = __decorate([
+            CeTwo = CeTwo_5 = __decorate([
                 customElement({ name: 'ce-two', template: 'ce2 ${id1} ${id2}' })
             ], CeTwo);
-            let CeOne = CeOne_5 = class CeOne {
+            let CeOne = CeOne_8 = class CeOne {
                 constructor() {
-                    this.id1 = ++CeOne_5.id1;
+                    this.id1 = ++CeOne_8.id1;
                 }
                 canLoad() {
-                    this.id2 = ++CeOne_5.id2;
+                    this.id2 = ++CeOne_8.id2;
                     return true;
                 }
             };
             CeOne.id1 = 0;
             CeOne.id2 = 0;
-            CeOne = CeOne_5 = __decorate([
+            CeOne = CeOne_8 = __decorate([
                 route({
                     routes: [
                         {
@@ -5256,33 +5480,33 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await au.stop(true);
         });
         it('transitionPlan function #3 - parent-child - parent:invoke-lifecycles,child:replace', async function () {
-            var CeTwo_4, CeOne_6;
-            let CeTwo = CeTwo_4 = class CeTwo {
+            var CeTwo_6, CeOne_9;
+            let CeTwo = CeTwo_6 = class CeTwo {
                 constructor() {
-                    this.id1 = ++CeTwo_4.id1;
+                    this.id1 = ++CeTwo_6.id1;
                 }
                 canLoad() {
-                    this.id2 = ++CeTwo_4.id2;
+                    this.id2 = ++CeTwo_6.id2;
                     return true;
                 }
             };
             CeTwo.id1 = 0;
             CeTwo.id2 = 0;
-            CeTwo = CeTwo_4 = __decorate([
+            CeTwo = CeTwo_6 = __decorate([
                 customElement({ name: 'ce-two', template: 'ce2 ${id1} ${id2}' })
             ], CeTwo);
-            let CeOne = CeOne_6 = class CeOne {
+            let CeOne = CeOne_9 = class CeOne {
                 constructor() {
-                    this.id1 = ++CeOne_6.id1;
+                    this.id1 = ++CeOne_9.id1;
                 }
                 canLoad() {
-                    this.id2 = ++CeOne_6.id2;
+                    this.id2 = ++CeOne_9.id2;
                     return true;
                 }
             };
             CeOne.id1 = 0;
             CeOne.id2 = 0;
-            CeOne = CeOne_6 = __decorate([
+            CeOne = CeOne_9 = __decorate([
                 route({
                     routes: [
                         {
@@ -5325,35 +5549,35 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await au.stop(true);
         });
         it('transitionPlan can be overridden per instruction basis', async function () {
-            var CeTwo_5, CeOne_7;
-            let CeTwo = CeTwo_5 = class CeTwo {
+            var CeTwo_7, CeOne_10;
+            let CeTwo = CeTwo_7 = class CeTwo {
                 constructor() {
-                    this.id1 = ++CeTwo_5.id1;
+                    this.id1 = ++CeTwo_7.id1;
                 }
                 canLoad(params) {
                     this.id = params.id;
-                    this.id2 = ++CeTwo_5.id2;
+                    this.id2 = ++CeTwo_7.id2;
                     return true;
                 }
             };
             CeTwo.id1 = 0;
             CeTwo.id2 = 0;
-            CeTwo = CeTwo_5 = __decorate([
+            CeTwo = CeTwo_7 = __decorate([
                 customElement({ name: 'ce-two', template: 'ce2 ${id1} ${id2} ${id}' })
             ], CeTwo);
-            let CeOne = CeOne_7 = class CeOne {
+            let CeOne = CeOne_10 = class CeOne {
                 constructor() {
-                    this.id1 = ++CeOne_7.id1;
+                    this.id1 = ++CeOne_10.id1;
                 }
                 canLoad(params) {
                     this.id = params.id;
-                    this.id2 = ++CeOne_7.id2;
+                    this.id2 = ++CeOne_10.id2;
                     return true;
                 }
             };
             CeOne.id1 = 0;
             CeOne.id2 = 0;
-            CeOne = CeOne_7 = __decorate([
+            CeOne = CeOne_10 = __decorate([
                 customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2} ${id}' })
             ], CeOne);
             let Root = class Root {
