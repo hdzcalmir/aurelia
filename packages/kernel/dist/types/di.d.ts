@@ -43,6 +43,7 @@ export interface IRegistry {
 export interface IContainer extends IServiceLocator, IDisposable {
     readonly id: number;
     readonly root: IContainer;
+    readonly parent: IContainer | null;
     register(...params: any[]): IContainer;
     registerResolver<K extends Key, T = K>(key: K, resolver: IResolver<T>, isDisposable?: boolean): IResolver<T>;
     registerTransformer<K extends Key, T = K>(key: K, transformer: Transformer<T>): boolean;

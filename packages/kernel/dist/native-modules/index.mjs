@@ -411,23 +411,26 @@ let C = null;
 
 class Container {
     get depth() {
-        return this.parent === null ? 0 : this.parent.depth + 1;
+        return this.t === null ? 0 : this.t.depth + 1;
+    }
+    get parent() {
+        return this.t;
     }
     constructor(t, e) {
-        this.parent = t;
+        this.t = t;
         this.config = e;
         this.id = ++b;
-        this.t = 0;
-        this.i = new Map;
+        this.i = 0;
+        this.u = new Map;
         if (t === null) {
             this.root = this;
-            this.u = new Map;
             this.h = new Map;
+            this.R = new Map;
             this.res = {};
         } else {
             this.root = t.root;
-            this.u = new Map;
-            this.h = t.h;
+            this.h = new Map;
+            this.R = t.R;
             this.res = {};
             if (e.inheritParentResources) {
                 for (const e in t.res) {
@@ -435,10 +438,10 @@ class Container {
                 }
             }
         }
-        this.u.set(A, D);
+        this.h.set(A, D);
     }
     register(...t) {
-        if (++this.t === 100) {
+        if (++this.i === 100) {
             throw createMappedError(6, ...t);
         }
         let n;
@@ -486,12 +489,12 @@ class Container {
                 }
             }
         }
-        --this.t;
+        --this.i;
         return this;
     }
     registerResolver(t, e, n = false) {
         validateKey(t);
-        const r = this.u;
+        const r = this.h;
         const s = r.get(t);
         if (s == null) {
             r.set(t, e);
@@ -501,13 +504,13 @@ class Container {
                 }
                 this.res[t] = e;
             }
-        } else if (s instanceof Resolver && s.R === 4) {
+        } else if (s instanceof Resolver && s.C === 4) {
             s._state.push(e);
         } else {
             r.set(t, new Resolver(t, 4, [ s, e ]));
         }
         if (n) {
-            this.i.set(t, e);
+            this.u.set(t, e);
         }
         return e;
     }
@@ -537,16 +540,16 @@ class Container {
         let i;
         try {
             while (r != null) {
-                s = r.u.get(t);
+                s = r.h.get(t);
                 if (s == null) {
-                    if (r.parent == null) {
+                    if (r.t == null) {
                         i = isRegisterInRequester(t) ? this : r;
                         if (e) {
-                            return this.C(t, i);
+                            return this.L(t, i);
                         }
                         return null;
                     }
-                    r = r.parent;
+                    r = r.t;
                 } else {
                     return s;
                 }
@@ -557,7 +560,7 @@ class Container {
         return null;
     }
     has(t, e = false) {
-        return this.u.has(t) || isResourceKey(t) && t in this.res ? true : e && this.parent != null ? this.parent.has(t, true) : false;
+        return this.h.has(t) || isResourceKey(t) && t in this.res ? true : e && this.t != null ? this.t.has(t, true) : false;
     }
     get(t) {
         validateKey(t);
@@ -570,14 +573,14 @@ class Container {
         let s;
         try {
             while (n != null) {
-                r = n.u.get(t);
+                r = n.h.get(t);
                 if (r == null) {
-                    if (n.parent == null) {
+                    if (n.t == null) {
                         s = isRegisterInRequester(t) ? this : n;
-                        r = this.C(t, s);
+                        r = this.L(t, s);
                         return r.resolve(n, this);
                     }
-                    n = n.parent;
+                    n = n.t;
                 } else {
                     return r.resolve(n, this);
                 }
@@ -597,18 +600,18 @@ class Container {
         try {
             if (e) {
                 while (s != null) {
-                    i = s.u.get(t);
+                    i = s.h.get(t);
                     if (i != null) {
                         o = o.concat(buildAllResponse(i, s, r));
                     }
-                    s = s.parent;
+                    s = s.t;
                 }
                 return o;
             }
             while (s != null) {
-                i = s.u.get(t);
+                i = s.h.get(t);
                 if (i == null) {
-                    s = s.parent;
+                    s = s.t;
                     if (s == null) {
                         return S;
                     }
@@ -634,20 +637,20 @@ class Container {
         }
     }
     hasFactory(t) {
-        return this.h.has(t);
+        return this.R.has(t);
     }
     getFactory(t) {
-        let e = this.h.get(t);
+        let e = this.R.get(t);
         if (e === void 0) {
             if (d(t)) {
                 throw createMappedError(15, t);
             }
-            this.h.set(t, e = new Factory(t, getDependencies(t)));
+            this.R.set(t, e = new Factory(t, getDependencies(t)));
         }
         return e;
     }
     registerFactory(t, e) {
-        this.h.set(t, e);
+        this.R.set(t, e);
     }
     createChild(t) {
         if (t === void 0 && this.config.inheritParentResources) {
@@ -662,8 +665,8 @@ class Container {
         return new Container(this, ContainerConfiguration.from(t ?? this.config));
     }
     disposeResolvers() {
-        const t = this.u;
-        const e = this.i;
+        const t = this.h;
+        const e = this.u;
         let n;
         let r;
         for ([r, n] of e.entries()) {
@@ -710,12 +713,12 @@ class Container {
         return r.resolve(this, this) ?? null;
     }
     dispose() {
-        if (this.i.size > 0) {
+        if (this.u.size > 0) {
             this.disposeResolvers();
         }
-        this.u.clear();
+        this.h.clear();
     }
-    C(t, e) {
+    L(t, e) {
         if (!isFunction(t)) {
             throw createMappedError(9, t);
         }
@@ -725,7 +728,7 @@ class Container {
         if (isRegistry(t)) {
             const n = t.register(e, t);
             if (!(n instanceof Object) || n.resolve == null) {
-                const n = e.u.get(t);
+                const n = e.h.get(t);
                 if (n != null) {
                     return n;
                 }
@@ -743,7 +746,7 @@ class Container {
                     n[r].register(e);
                 }
             }
-            const r = e.u.get(t);
+            const r = e.h.get(t);
             if (r != null) {
                 return r;
             }
@@ -753,7 +756,7 @@ class Container {
             throw createMappedError(12, t.friendlyName);
         }
         const n = this.config.defaultResolver(t, e);
-        e.u.set(t, n);
+        e.h.set(t, n);
         return n;
     }
 }
@@ -809,7 +812,7 @@ function resolve(...t) {
 }
 
 const buildAllResponse = (t, e, n) => {
-    if (t instanceof Resolver && t.R === 4) {
+    if (t instanceof Resolver && t.C === 4) {
         const r = t._state;
         const s = r.length;
         const i = Array(s);
@@ -876,24 +879,24 @@ class ResolverBuilder {
         this.k = e;
     }
     instance(t) {
-        return this.L(0, t);
+        return this.O(0, t);
     }
     singleton(t) {
-        return this.L(1, t);
+        return this.O(1, t);
     }
     transient(t) {
-        return this.L(2, t);
+        return this.O(2, t);
     }
     callback(t) {
-        return this.L(3, t);
+        return this.O(3, t);
     }
     cachedCallback(t) {
-        return this.L(3, cacheCallbackResult(t));
+        return this.O(3, cacheCallbackResult(t));
     }
     aliasTo(t) {
-        return this.L(5, t);
+        return this.O(5, t);
     }
-    L(t, e) {
+    O(t, e) {
         const {c: n, k: r} = this;
         this.c = this.k = void 0;
         return n.registerResolver(r, new Resolver(r, t, e));
@@ -1190,7 +1193,7 @@ class Resolver {
     constructor(t, e, n) {
         this.resolving = false;
         this.k = t;
-        this.R = e;
+        this.C = e;
         this._state = n;
     }
     get $isResolver() {
@@ -1200,7 +1203,7 @@ class Resolver {
         return t.registerResolver(e || this.k, this);
     }
     resolve(t, e) {
-        switch (this.R) {
+        switch (this.C) {
           case 0:
             return this._state;
 
@@ -1211,7 +1214,7 @@ class Resolver {
                 }
                 this.resolving = true;
                 this._state = t.getFactory(this._state).construct(e);
-                this.R = 0;
+                this.C = 0;
                 this.resolving = false;
                 return this._state;
             }
@@ -1235,11 +1238,11 @@ class Resolver {
             return e.get(this._state);
 
           default:
-            throw createMappedError(5, this.R);
+            throw createMappedError(5, this.C);
         }
     }
     getFactory(t) {
-        switch (this.R) {
+        switch (this.C) {
           case 1:
           case 2:
             return t.getFactory(this._state);
@@ -1280,29 +1283,29 @@ const K = {
 
 class InstanceProvider {
     get friendlyName() {
-        return this.O;
+        return this.$;
     }
     constructor(t, e) {
-        this.$ = null;
-        this.O = t;
+        this.A = null;
+        this.$ = t;
         if (e !== void 0) {
-            this.$ = e;
+            this.A = e;
         }
     }
     prepare(t) {
-        this.$ = t;
+        this.A = t;
     }
     get $isResolver() {
         return true;
     }
     resolve() {
-        if (this.$ == null) {
-            throw createMappedError(13, this.O);
+        if (this.A == null) {
+            throw createMappedError(13, this.$);
         }
-        return this.$;
+        return this.A;
     }
     dispose() {
-        this.$ = null;
+        this.A = null;
     }
 }
 
@@ -1534,7 +1537,7 @@ class ConsoleSink {
 class DefaultLogger {
     constructor(t = resolve(z), e = resolve(U), n = resolve(all(Q)), r = resolve(M(H)) ?? [], s = null) {
         this.scope = r;
-        this.A = createObject();
+        this.j = createObject();
         let i;
         let o;
         let l;
@@ -1547,12 +1550,12 @@ class DefaultLogger {
         if (s === null) {
             this.root = this;
             this.parent = this;
-            i = this.j = [];
-            o = this.I = [];
-            l = this.F = [];
-            c = this.M = [];
-            u = this.T = [];
-            a = this._ = [];
+            i = this.I = [];
+            o = this.F = [];
+            l = this.M = [];
+            c = this.T = [];
+            u = this._ = [];
+            a = this.P = [];
             for (const t of n) {
                 const e = V.getHandles(t);
                 if (e?.includes(0) ?? true) {
@@ -1577,53 +1580,53 @@ class DefaultLogger {
         } else {
             this.root = s.root;
             this.parent = s;
-            i = this.j = s.j;
-            o = this.I = s.I;
-            l = this.F = s.F;
-            c = this.M = s.M;
-            u = this.T = s.T;
-            a = this._ = s._;
+            i = this.I = s.I;
+            o = this.F = s.F;
+            l = this.M = s.M;
+            c = this.T = s.T;
+            u = this._ = s._;
+            a = this.P = s.P;
         }
     }
     trace(t, ...e) {
         if (this.config.level <= 0) {
-            this.P(this.j, 0, t, e);
+            this.K(this.I, 0, t, e);
         }
     }
     debug(t, ...e) {
         if (this.config.level <= 1) {
-            this.P(this.I, 1, t, e);
+            this.K(this.F, 1, t, e);
         }
     }
     info(t, ...e) {
         if (this.config.level <= 2) {
-            this.P(this.F, 2, t, e);
+            this.K(this.M, 2, t, e);
         }
     }
     warn(t, ...e) {
         if (this.config.level <= 3) {
-            this.P(this.M, 3, t, e);
+            this.K(this.T, 3, t, e);
         }
     }
     error(t, ...e) {
         if (this.config.level <= 4) {
-            this.P(this.T, 4, t, e);
+            this.K(this._, 4, t, e);
         }
     }
     fatal(t, ...e) {
         if (this.config.level <= 5) {
-            this.P(this._, 5, t, e);
+            this.K(this.P, 5, t, e);
         }
     }
     scopeTo(t) {
-        const e = this.A;
+        const e = this.j;
         let n = e[t];
         if (n === void 0) {
             n = e[t] = new DefaultLogger(this.config, this.f, null, this.scope.concat(t), this);
         }
         return n;
     }
-    P(t, e, n, r) {
+    K(t, e, n, r) {
         const s = isFunction(n) ? n() : n;
         const i = this.f.createLogEvent(this, e, s, r);
         for (let e = 0, n = t.length; e < n; ++e) {
@@ -1668,44 +1671,44 @@ const noTransform = t => t;
 
 class ModuleTransformer {
     constructor(t) {
-        this.K = new Map;
         this.G = new Map;
-        this.N = t;
+        this.N = new Map;
+        this.W = t;
     }
     transform(t) {
         if (t instanceof Promise) {
-            return this.W(t);
-        } else if (typeof t === "object" && t !== null) {
             return this.B(t);
+        } else if (typeof t === "object" && t !== null) {
+            return this.U(t);
         } else {
             throw createMappedError(21, t);
         }
-    }
-    W(t) {
-        if (this.K.has(t)) {
-            return this.K.get(t);
-        }
-        const e = t.then((t => this.B(t)));
-        this.K.set(t, e);
-        void e.then((e => {
-            this.K.set(t, e);
-        }));
-        return e;
     }
     B(t) {
         if (this.G.has(t)) {
             return this.G.get(t);
         }
-        const e = this.N(this.U(t));
+        const e = t.then((t => this.U(t)));
         this.G.set(t, e);
+        void e.then((e => {
+            this.G.set(t, e);
+        }));
+        return e;
+    }
+    U(t) {
+        if (this.N.has(t)) {
+            return this.N.get(t);
+        }
+        const e = this.W(this.H(t));
+        this.N.set(t, e);
         if (e instanceof Promise) {
             void e.then((e => {
-                this.G.set(t, e);
+                this.N.set(t, e);
             }));
         }
         return e;
     }
-    U(t) {
+    H(t) {
         if (t == null) throw createMappedError(21, t);
         if (typeof t !== "object") return new AnalyzedModule(t, []);
         let e;
