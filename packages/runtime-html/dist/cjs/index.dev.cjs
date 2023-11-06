@@ -7920,49 +7920,8 @@ class If {
         /** @internal */ this._ifFactory = kernel.resolve(IViewFactory);
         /** @internal */ this._location = kernel.resolve(IRenderLocation);
     }
-    attaching(initiator, _parent) {
-        let view;
-        const ctrl = this.$controller;
-        const swapId = this._swapId++;
-        /**
-         * returns true when
-         * 1. entering deactivation of the [if] itself
-         * 2. new swap has started since this change
-         */
-        const isCurrent = () => !this._wantsDeactivate && this._swapId === swapId + 1;
-        return kernel.onResolve(this.pending, () => {
-            if (!isCurrent()) {
-                return;
-            }
-            this.pending = void 0;
-            if (this.value) {
-                view = (this.view = this.ifView = this.cache && this.ifView != null
-                    ? this.ifView
-                    : this._ifFactory.create());
-            }
-            else {
-                // truthy -> falsy
-                view = (this.view = this.elseView = this.cache && this.elseView != null
-                    ? this.elseView
-                    : this.elseFactory?.create());
-            }
-            // if the value is falsy
-            // and there's no [else], `view` will be null
-            if (view == null) {
-                return;
-            }
-            // todo: location should be based on either the [if]/[else] attribute
-            //       instead of always of the [if]
-            view.setLocation(this._location);
-            // Promise return values from user VM hooks are awaited by the initiator
-            this.pending = kernel.onResolve(view.activate(initiator, ctrl, ctrl.scope), () => {
-                if (isCurrent()) {
-                    this.pending = void 0;
-                }
-            });
-            // old
-            // void (this.view = this.updateView(this.value, f))?.activate(initiator, this.ctrl, f, this.ctrl.scope);
-        });
+    attaching(_initiator, _parent) {
+        return this._swap(this.value);
     }
     detaching(initiator, _parent) {
         this._wantsDeactivate = true;
@@ -7974,19 +7933,14 @@ class If {
         });
     }
     valueChanged(newValue, oldValue) {
-        if (!this.$controller.isActive) {
+        if (!this.$controller.isActive)
             return;
-        }
-        // change scenarios:
-        // truthy -> truthy (do nothing)
-        // falsy -> falsy (do nothing)
-        // truthy -> falsy (no cache = destroy)
-        // falsy -> truthy (no view = create)
         newValue = !!newValue;
         oldValue = !!oldValue;
-        if (newValue === oldValue) {
-            return;
-        }
+        if (newValue !== oldValue)
+            return this._swap(newValue);
+    }
+    _swap(value) {
         const currView = this.view;
         const ctrl = this.$controller;
         const swapId = this._swapId++;
@@ -8002,7 +7956,7 @@ class If {
                 return;
             }
             // falsy -> truthy
-            if (newValue) {
+            if (value) {
                 view = (this.view = this.ifView = this.cache && this.ifView != null
                     ? this.ifView
                     : this._ifFactory.create());
