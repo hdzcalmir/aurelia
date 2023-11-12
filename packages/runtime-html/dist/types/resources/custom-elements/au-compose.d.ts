@@ -8,7 +8,7 @@ export interface IDynamicComponentActivate<T> {
      * Implement this hook if you want to perform custom logic just before the component is is composed.
      * The returned value is not used.
      */
-    activate?(model?: T): unknown | Promise<unknown>;
+    activate?(model?: T): unknown;
 }
 type ChangeSource = keyof Pick<AuCompose, 'template' | 'component' | 'model' | 'scopeBehavior' | 'composing' | 'composition'>;
 export declare class AuCompose {
@@ -38,9 +38,9 @@ export interface ICompositionController {
 declare class LoadedChangeInfo {
     readonly _template: string | undefined;
     readonly _component: Constructable | object | undefined;
-    readonly _model: unknown | undefined;
+    readonly _model: unknown;
     readonly _src: ChangeSource | undefined;
-    constructor(_template: string | undefined, _component: Constructable | object | undefined, _model: unknown | undefined, _src: ChangeSource | undefined);
+    constructor(_template: string | undefined, _component: Constructable | object | undefined, _model: unknown, _src: ChangeSource | undefined);
 }
 declare class CompositionContext {
     readonly id: number;

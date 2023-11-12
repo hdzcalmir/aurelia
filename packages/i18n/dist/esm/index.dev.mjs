@@ -1,4 +1,4 @@
-import { DI, IEventAggregator, toArray, camelCase, Registration } from '@aurelia/kernel';
+import { DI, IEventAggregator, camelCase, toArray, Registration } from '@aurelia/kernel';
 import { bindingBehavior, valueConverter, mixinAstEvaluator, mixingBindingLimited, CustomElement, attributePattern, bindingCommand, renderer, AttrSyntax, AttributePattern, BindingCommand, AppTask } from '@aurelia/runtime-html';
 import { ValueConverterExpression, nowrap, ISignaler, connectable, CustomExpression, Interpolation, astEvaluate, astUnbind, astBind } from '@aurelia/runtime';
 import i18next from 'i18next';
@@ -446,7 +446,7 @@ class TranslationBinding {
                 else {
                     const controller = CustomElement.for(this.target, forOpts);
                     const accessor = controller?.viewModel
-                        ? this.oL.getAccessor(controller.viewModel, attribute)
+                        ? this.oL.getAccessor(controller.viewModel, camelCase(attribute))
                         : this.oL.getAccessor(this.target, attribute);
                     const shouldQueueUpdate = this._controller.state !== 1 /* State.activating */ && (accessor.type & 4 /* AccessorType.Layout */) > 0;
                     if (shouldQueueUpdate) {

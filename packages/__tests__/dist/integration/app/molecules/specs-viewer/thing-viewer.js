@@ -15,7 +15,7 @@ export class Thing {
         this.make = make;
     }
 }
-export let ThingViewer = class ThingViewer {
+let ThingViewer = class ThingViewer {
 };
 __decorate([
     bindable,
@@ -24,4 +24,5 @@ __decorate([
 ThingViewer = __decorate([
     customElement({ name: "thing-viewer", template })
 ], ThingViewer);
+export { ThingViewer };
 //# sourceMappingURL=thing-viewer.js.map

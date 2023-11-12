@@ -48,7 +48,7 @@ export declare class Route {
     /**
      * Title string or function to be used when setting title for the route.
      */
-    readonly title: any | null;
+    readonly title: any;
     /**
      * The reload behavior of the components in the route, as in how they behave
      * when the route is loaded again.
@@ -92,7 +92,7 @@ export declare class Route {
     /**
      * Title string or function to be used when setting title for the route.
      */
-    title: any | null, 
+    title: any, 
     /**
      * The reload behavior of the components in the route, as in how they behave
      * when the route is loaded again.

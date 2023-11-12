@@ -17,7 +17,7 @@ import template from './checkbox-list.html';
  *   - `checked-observer` (`checked` bind)
  *   - `setter-observer` (`model` bind)
  */
-export let CheckboxList = class CheckboxList {
+let CheckboxList = class CheckboxList {
 };
 __decorate([
     bindable,
@@ -42,4 +42,5 @@ __decorate([
 CheckboxList = __decorate([
     customElement({ name: 'checkbox-list', template })
 ], CheckboxList);
+export { CheckboxList };
 //# sourceMappingURL=checkbox-list.js.map

@@ -13,7 +13,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { inject } from '@aurelia/kernel';
 import { Aurelia, AuSlotsInfo, bindable, customElement, CustomElement, IAuSlotsInfo, IPlatform, ValueConverter } from '@aurelia/runtime-html';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, createFixture, hJsx, TestContext } from '@aurelia/testing';
 import { createSpecFunction } from '../util.js';
 describe('3-runtime-html/au-slot.spec.tsx', function () {
@@ -1416,7 +1415,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
               ><mdc-tab id="mdc-\${id}" click.trigger="increase()">\${count}</mdc-tab>`
                 }, (_a = class Mdc {
                         constructor() {
-                            this.id = Mdc.id++;
+                            this.id = _a.id++;
                             this.count = 0;
                         }
                         increase() {
@@ -1448,7 +1447,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             ><mdc-tab au-slot repeat.for="i of 3" id="mdc-\${id}-\${i}" click.trigger="increase()">\${count + i}</mdc-tab>`
                 }, (_b = class Mdc {
                         constructor() {
-                            this.id = Mdc.id++;
+                            this.id = _b.id++;
                             this.count = 0;
                         }
                         increase() {
@@ -1499,7 +1498,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                     template: `<div ref="container" id="div-\${id}"> ref.id=\${container.id} <au-slot></au-slot></div>`
                 }, (_c = class MyComponent {
                         constructor() {
-                            this.id = MyComponent.count++;
+                            this.id = _c.count++;
                         }
                     },
                     _c.count = 0,

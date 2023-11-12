@@ -8633,7 +8633,7 @@ class AuCompose {
             }
             i = this.xi(p, r, m);
         } else {
-            m = u == null ? a : u;
+            m = u ?? a;
             i = this.xi(p, r, m);
         }
         const compose = () => {

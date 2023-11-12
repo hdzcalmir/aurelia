@@ -454,7 +454,7 @@ class TranslationBinding {
                 else {
                     const controller = runtimeHtml.CustomElement.for(this.target, forOpts);
                     const accessor = controller?.viewModel
-                        ? this.oL.getAccessor(controller.viewModel, attribute)
+                        ? this.oL.getAccessor(controller.viewModel, kernel.camelCase(attribute))
                         : this.oL.getAccessor(this.target, attribute);
                     const shouldQueueUpdate = this._controller.state !== 1 /* State.activating */ && (accessor.type & 4 /* AccessorType.Layout */) > 0;
                     if (shouldQueueUpdate) {

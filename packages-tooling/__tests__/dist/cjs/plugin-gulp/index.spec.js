@@ -51,9 +51,10 @@ describe('plugin-gulp', function () {
         }));
         t.on('error', done);
         t.on('end', () => {
+            var _a;
             testing_1.assert.equal(files.length, 1);
             testing_1.assert.equal(files[0].relative, 'test/foo.css'.replace('/', slash));
-            testing_1.assert.equal(files[0].contents.toString(), css);
+            testing_1.assert.equal((_a = files[0].contents) === null || _a === void 0 ? void 0 : _a.toString(), css);
             testing_1.assert.equal(files[0].sourceMap, undefined);
             done();
         });
@@ -76,9 +77,10 @@ describe('plugin-gulp', function () {
         }));
         t.on('error', done);
         t.on('end', () => {
+            var _a;
             testing_1.assert.equal(files.length, 1);
             testing_1.assert.equal(files[0].relative, 'src/foo-bar.html.js'.replace('/', slash));
-            testing_1.assert.equal(files[0].contents.toString(), expected);
+            testing_1.assert.equal((_a = files[0].contents) === null || _a === void 0 ? void 0 : _a.toString(), expected);
             testing_1.assert.equal(files[0].sourceMap, undefined);
             done();
         });
@@ -104,9 +106,10 @@ describe('plugin-gulp', function () {
         }));
         t.on('error', done);
         t.on('end', () => {
+            var _a;
             testing_1.assert.equal(files.length, 1);
             testing_1.assert.equal(files[0].relative, 'src/foo-bar.html.js'.replace('/', slash));
-            testing_1.assert.equal(files[0].contents.toString(), expected);
+            testing_1.assert.equal((_a = files[0].contents) === null || _a === void 0 ? void 0 : _a.toString(), expected);
             testing_1.assert.equal(files[0].sourceMap.version, 3);
             done();
         });
@@ -130,9 +133,10 @@ describe('plugin-gulp', function () {
         }));
         t.on('error', done);
         t.on('end', () => {
+            var _a;
             testing_1.assert.equal(files.length, 1);
             testing_1.assert.equal(files[0].relative, 'src/foo-bar.html.js'.replace('/', slash));
-            testing_1.assert.equal(files[0].contents.toString(), expected);
+            testing_1.assert.equal((_a = files[0].contents) === null || _a === void 0 ? void 0 : _a.toString(), expected);
             testing_1.assert.equal(files[0].sourceMap.version, 3);
             done();
         });
@@ -160,9 +164,10 @@ describe('plugin-gulp', function () {
         }));
         t.on('error', done);
         t.on('end', () => {
+            var _a;
             testing_1.assert.equal(files.length, 1);
             testing_1.assert.equal(files[0].relative, 'src/foo-bar.html.js'.replace('/', slash));
-            testing_1.assert.equal(files[0].contents.toString(), expected);
+            testing_1.assert.equal((_a = files[0].contents) === null || _a === void 0 ? void 0 : _a.toString(), expected);
             testing_1.assert.equal(files[0].sourceMap.version, 3);
             done();
         });
@@ -186,9 +191,10 @@ describe('plugin-gulp', function () {
         }));
         t.on('error', done);
         t.on('end', () => {
+            var _a;
             testing_1.assert.equal(files.length, 1);
             testing_1.assert.equal(files[0].relative, 'src/foo-bar.js'.replace('/', slash));
-            testing_1.assert.equal(files[0].contents.toString(), expected);
+            testing_1.assert.equal((_a = files[0].contents) === null || _a === void 0 ? void 0 : _a.toString(), expected);
             testing_1.assert.equal(files[0].sourceMap, undefined);
             done();
         });
@@ -211,9 +217,10 @@ describe('plugin-gulp', function () {
         }));
         t.on('error', done);
         t.on('end', () => {
+            var _a;
             testing_1.assert.equal(files.length, 1);
             testing_1.assert.equal(files[0].relative, 'src/foo-bar.ts'.replace('/', slash));
-            testing_1.assert.equal(files[0].contents.toString(), expected);
+            testing_1.assert.equal((_a = files[0].contents) === null || _a === void 0 ? void 0 : _a.toString(), expected);
             testing_1.assert.equal(files[0].sourceMap, undefined);
             done();
         });

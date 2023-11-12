@@ -10,7 +10,7 @@ export interface IObservation {
      * Run a getter based on the given object as its first parameter and track the dependencies via this getter,
      * to call the callback whenever the value has changed
      */
-    watch<T, R>(obj: T, getter: (obj: T, watcher: IConnectable) => R, callback: (value: R, oldValue: R | undefined) => unknown | void, options?: IWatchOptions): IEffect;
+    watch<T, R>(obj: T, getter: (obj: T, watcher: IConnectable) => R, callback: (value: R, oldValue: R | undefined) => unknown, options?: IWatchOptions): IEffect;
 }
 export declare const IObservation: import("@aurelia/kernel").InterfaceSymbol<IObservation>;
 export interface IWatchOptions {
@@ -24,7 +24,7 @@ export declare class Observation implements IObservation {
     static get inject(): import("@aurelia/kernel").InterfaceSymbol<IObserverLocator>[];
     constructor(oL: IObserverLocator);
     run(fn: EffectRunFunc): IEffect;
-    watch<T, R>(obj: T, getter: (obj: T, watcher: IConnectable) => R, callback: (value: R, oldValue: R | undefined) => unknown | void, options?: IWatchOptions): IEffect;
+    watch<T, R>(obj: T, getter: (obj: T, watcher: IConnectable) => R, callback: (value: R, oldValue: R | undefined) => unknown, options?: IWatchOptions): IEffect;
 }
 export type EffectRunFunc = (this: IConnectable, runner: IConnectable) => void;
 export interface IEffect {

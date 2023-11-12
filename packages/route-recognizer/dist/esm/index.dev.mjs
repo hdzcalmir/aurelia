@@ -137,7 +137,6 @@ class Candidate {
                     params[name] = chars[i];
                 }
                 else {
-                    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                     params[name] += chars[i];
                 }
             }

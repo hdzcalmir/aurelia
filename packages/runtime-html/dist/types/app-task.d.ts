@@ -65,6 +65,6 @@ export declare const AppTask: Readonly<{
         <T_1 extends Key = Key>(key: T_1, callback: AppTaskCallback<T_1>): IRegistry;
     };
 }>;
-export type AppTaskCallbackNoArg = () => unknown | Promise<unknown>;
-export type AppTaskCallback<T> = (arg: Resolved<T>) => unknown | Promise<unknown>;
+export type AppTaskCallbackNoArg = () => unknown;
+export type AppTaskCallback<T> = (arg: Resolved<T>) => unknown;
 //# sourceMappingURL=app-task.d.ts.map

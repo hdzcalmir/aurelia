@@ -83,7 +83,7 @@ describe('3-runtime-html/custom-elements.harmony.spec.ts', function () {
             }
         },
         ...Array.from({ length: 10 }, (_, idx) => {
-            var _a;
+            var _c;
             return {
                 title: `surrogate on recursive c-e, level ${idx}`,
                 template: `<c-e lvl.bind="${idx}">`,
@@ -100,7 +100,7 @@ describe('3-runtime-html/custom-elements.harmony.spec.ts', function () {
                   <c-e if.bind="lvl < ${idx}" lvl.bind="lvl + 1" ></c-e>
                 </template>`,
                         bindables: ['lvl']
-                    }, (_a = class Ce {
+                    }, (_c = class Ce {
                             constructor(el) {
                                 this.el = el;
                             }
@@ -108,8 +108,8 @@ describe('3-runtime-html/custom-elements.harmony.spec.ts', function () {
                                 this.el.setAttribute('lvl', `lvl-${this.lvl}`);
                             }
                         },
-                        _a.inject = [INode],
-                        _a))
+                        _c.inject = [INode],
+                        _c))
                 ],
                 assertFn: (ctx, host) => {
                     // it should work

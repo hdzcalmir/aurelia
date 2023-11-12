@@ -8627,7 +8627,7 @@ class AuCompose {
             }
             e = this.ps(d, s, m);
         } else {
-            m = a == null ? l : a;
+            m = a ?? l;
             e = this.ps(d, s, m);
         }
         const compose = () => {

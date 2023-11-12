@@ -5300,7 +5300,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await au.stop(true);
         });
         it('transitionPlan function #1', async function () {
-            var CeOne_6, Root_1;
+            var CeOne_6;
             let CeOne = CeOne_6 = class CeOne {
                 constructor() {
                     this.id1 = ++CeOne_6.id1;
@@ -5315,12 +5315,12 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             CeOne = CeOne_6 = __decorate([
                 customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2}' })
             ], CeOne);
-            let Root = Root_1 = class Root {
+            let Root = class Root {
             };
-            Root = Root_1 = __decorate([
+            Root = __decorate([
                 route({
                     transitionPlan(current, next) {
-                        return next.component.Type === Root_1 ? 'replace' : 'invoke-lifecycles';
+                        return next.component.Type === Root ? 'replace' : 'invoke-lifecycles';
                     },
                     routes: [
                         {

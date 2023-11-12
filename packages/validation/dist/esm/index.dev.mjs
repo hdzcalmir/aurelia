@@ -267,6 +267,7 @@ EqualsRule = __decorate([
     })
 ], EqualsRule);
 
+var ValidationMessageProvider_1;
 /* @internal */
 const ICustomMessages = /*@__PURE__*/ DI.createInterface('ICustomMessages');
 class RuleProperty {
@@ -706,11 +707,11 @@ const contextualProperties = new Set([
     'config',
     'getDisplayName'
 ]);
-let ValidationMessageProvider = class ValidationMessageProvider {
+let ValidationMessageProvider = ValidationMessageProvider_1 = class ValidationMessageProvider {
     constructor(parser, logger, customMessages) {
         this.parser = parser;
         this.registeredMessages = new WeakMap();
-        this.logger = logger.scopeTo(ValidationMessageProvider.name);
+        this.logger = logger.scopeTo(ValidationMessageProvider_1.name);
         for (const { rule, aliases } of customMessages) {
             ValidationRuleAliasMessage.setDefaultMessage(rule, { aliases });
         }
@@ -769,7 +770,7 @@ let ValidationMessageProvider = class ValidationMessageProvider {
         return words.charAt(0).toUpperCase() + words.slice(1);
     }
 };
-ValidationMessageProvider = __decorate([
+ValidationMessageProvider = ValidationMessageProvider_1 = __decorate([
     __param(0, IExpressionParser),
     __param(1, ILogger),
     __param(2, ICustomMessages)
@@ -1105,9 +1106,11 @@ function deserializePrimitive(value) {
     }
 }
 
+var ValidationDeserializer_1;
 class ValidationSerializer {
     static serialize(object) {
         if (object == null || typeof object.accept !== 'function') {
+            // todo(Sayan): if it's an object here, it'll be turned into [object Object]
             return `${object}`;
         }
         const visitor = new ValidationSerializer();
@@ -1158,14 +1161,14 @@ class ValidationSerializer {
         return `[${ruleset.map((rules) => `[${rules.map((rule) => rule.accept(this)).join(',')}]`).join(',')}]`;
     }
 }
-let ValidationDeserializer = class ValidationDeserializer {
+let ValidationDeserializer = ValidationDeserializer_1 = class ValidationDeserializer {
     static register(container) {
         this.container = container;
     }
     static deserialize(json, validationRules) {
         const messageProvider = this.container.get(IValidationMessageProvider);
         const parser = this.container.get(IExpressionParser);
-        const deserializer = new ValidationDeserializer(this.container, messageProvider, parser);
+        const deserializer = new ValidationDeserializer_1(this.container, messageProvider, parser);
         const raw = JSON.parse(json);
         return deserializer.hydrate(raw, validationRules);
     }
@@ -1254,7 +1257,7 @@ let ValidationDeserializer = class ValidationDeserializer {
         return ruleset.map(($rule) => this.hydrate($rule, validationRules));
     }
 };
-ValidationDeserializer = __decorate([
+ValidationDeserializer = ValidationDeserializer_1 = __decorate([
     __param(0, IServiceLocator),
     __param(1, IValidationMessageProvider),
     __param(2, IExpressionParser)

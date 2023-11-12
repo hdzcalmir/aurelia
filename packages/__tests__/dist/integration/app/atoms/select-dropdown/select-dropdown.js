@@ -15,7 +15,7 @@ import template from './select-dropdown.html';
  *   - Observation
  *     - `select-value-observer`
  */
-export let SelectDropdown = class SelectDropdown {
+let SelectDropdown = class SelectDropdown {
 };
 __decorate([
     bindable,
@@ -72,4 +72,5 @@ __decorate([
 SelectDropdown = __decorate([
     customElement({ name: 'select-dropdown', template })
 ], SelectDropdown);
+export { SelectDropdown };
 //# sourceMappingURL=select-dropdown.js.map

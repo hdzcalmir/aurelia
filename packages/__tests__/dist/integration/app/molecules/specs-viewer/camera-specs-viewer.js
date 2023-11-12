@@ -25,7 +25,7 @@ export class Camera extends Thing {
         this.fNumberRange = fNumberRange;
     }
 }
-export let CameraSpecsViewer = class CameraSpecsViewer {
+let CameraSpecsViewer = class CameraSpecsViewer {
     binding(..._args) {
         const { focalLengthRange: [fln, flx], fNumberRange: [fnn, fnx] } = this.model;
         this.focalLength = `${fln}-${flx}`;
@@ -39,4 +39,5 @@ __decorate([
 CameraSpecsViewer = __decorate([
     customElement({ name: 'camera-specs-viewer', template })
 ], CameraSpecsViewer);
+export { CameraSpecsViewer };
 //# sourceMappingURL=camera-specs-viewer.js.map

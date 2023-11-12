@@ -1768,7 +1768,6 @@ function formatSetIterInner(ctx, recurseTimes, entries, state) {
     }
     ctx.indentationLvl -= 2;
     if (state === kWeak) {
-        // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
         output.sort();
     }
     const remaining = entries.length - maxLength;
@@ -1800,7 +1799,6 @@ function formatMapIterInner(ctx, recurseTimes, entries, state) {
     }
     ctx.indentationLvl -= 2;
     if (state === kWeak) {
-        // eslint-disable-next-line @typescript-eslint/require-array-sort-compare
         output.sort();
     }
     if (remaining > 0) {

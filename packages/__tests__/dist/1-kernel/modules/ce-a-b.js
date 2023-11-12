@@ -5,14 +5,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { customElement } from '@aurelia/runtime-html';
-export let A = class A {
+let A = class A {
 };
 A = __decorate([
     customElement({ name: 'a' })
 ], A);
-export let B = class B {
+export { A };
+let B = class B {
 };
 B = __decorate([
     customElement({ name: 'b' })
 ], B);
+export { B };
 //# sourceMappingURL=ce-a-b.js.map

@@ -22,6 +22,15 @@ describe('i18n/t/translation-integration.spec.ts', function () {
     CustomMessage = __decorate([
         customElement({ name: 'custom-message', template: `<div>\${message}</div>` })
     ], CustomMessage);
+    let CeWithCamelCaseBindable = class CeWithCamelCaseBindable {
+    };
+    __decorate([
+        bindable,
+        __metadata("design:type", String)
+    ], CeWithCamelCaseBindable.prototype, "someMessage", void 0);
+    CeWithCamelCaseBindable = __decorate([
+        customElement({ name: 'camel-ce', template: `<div>\${someMessage}</div>` })
+    ], CeWithCamelCaseBindable);
     let FooBar = class FooBar {
     };
     __decorate([
@@ -115,7 +124,7 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         let error = null;
         try {
             await au
-                .register(CustomMessage, FooBar)
+                .register(CustomMessage, CeWithCamelCaseBindable, FooBar)
                 .app({ host, component })
                 .start();
             await i18n.setLocale('en');
@@ -954,6 +963,52 @@ describe('i18n/t/translation-integration.spec.ts', function () {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
                 assertTextContent(host, 'custom-message div', de.simple.text);
+            }, { component: App });
+        }
+        {
+            let App = class App {
+            };
+            App = __decorate([
+                customElement({
+                    name: 'app', template: `<camel-ce some-message="ignored" t="[some-message]simple.text"></camel-ce>`
+                })
+            ], App);
+            $it('can bind to custom elements attributes with camelCased bindable', function ({ host, en }) {
+                assertTextContent(host, 'camel-ce div', en.simple.text);
+            }, { component: App });
+        }
+        {
+            let App = class App {
+                constructor() {
+                    this.count = 0;
+                }
+            };
+            App = __decorate([
+                customElement({
+                    name: 'app', template: `<camel-ce component.ref="cm" t="[some-message]itemWithCount" t-params.bind="{count}">`
+                })
+            ], App);
+            $it('should support params', function ({ app, host, en, ctx }) {
+                assertTextContent(host, 'camel-ce div', en.itemWithCount_plural.replace('{{count}}', '0'));
+                app.count = 10;
+                assert.strictEqual(app.cm.someMessage, en.itemWithCount_plural.replace('{{count}}', '10'), '<camel-ce/> message prop should have been updated immediately');
+                assertTextContent(host, 'camel-ce div', en.itemWithCount_plural.replace('{{count}}', '0'));
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, 'camel-ce div', en.itemWithCount_plural.replace('{{count}}', '10'));
+            }, { component: App });
+        }
+        {
+            let App = class App {
+            };
+            App = __decorate([
+                customElement({
+                    name: 'app', template: `<camel-ce some-message="ignored" t="[some-message]simple.text"></camel-ce>`
+                })
+            ], App);
+            $it('should support locale changes with camelCased bindable', async function ({ host, de, i18n, platform }) {
+                await i18n.setLocale('de');
+                platform.domWriteQueue.flush();
+                assertTextContent(host, 'camel-ce div', de.simple.text);
             }, { component: App });
         }
     });

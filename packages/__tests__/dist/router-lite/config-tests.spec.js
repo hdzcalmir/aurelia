@@ -63,7 +63,7 @@ export function* interleave(...generators) {
         }
     }
 }
-export let SimpleActivityTrackingVMBase = class SimpleActivityTrackingVMBase {
+let SimpleActivityTrackingVMBase = class SimpleActivityTrackingVMBase {
     constructor(tracker) {
         this.tracker = tracker;
     }
@@ -78,6 +78,7 @@ SimpleActivityTrackingVMBase = __decorate([
     __param(0, IActivityTracker),
     __metadata("design:paramtypes", [Object])
 ], SimpleActivityTrackingVMBase);
+export { SimpleActivityTrackingVMBase };
 describe('router-lite/config-tests.spec.ts', function () {
     describe('monomorphic timings', function () {
         const componentSpecs = [

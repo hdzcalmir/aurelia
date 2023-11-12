@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import { Store } from './store';
-export interface ConnectToSettings<T, R = T | any> {
+export interface ConnectToSettings<T, R = T> {
     onChanged?: string;
     selector: ((store: Store<T>) => Observable<R>) | MultipleSelector<T, R>;
     /**
@@ -13,7 +13,7 @@ export interface ConnectToSettings<T, R = T | any> {
      */
     teardown?: string;
 }
-export interface MultipleSelector<T, R = T | any> {
+export interface MultipleSelector<T, R = T> {
     [key: string]: ((store: Store<T>) => Observable<R>);
 }
 export declare function connectTo<T, R = any>(settings?: ((store: Store<T>) => Observable<R>) | ConnectToSettings<T, R>): (target: any) => void;

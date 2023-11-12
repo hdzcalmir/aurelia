@@ -12,7 +12,6 @@ import { Aurelia, bindable, CustomElement, customElement, INode, IPlatform, proc
 import { assert, TestContext } from '@aurelia/testing';
 import { createSpecFunction } from '../util.js';
 describe('3-runtime-html/process-content.spec.ts', function () {
-    var Tabs_1;
     class TestExecutionContext {
         constructor(ctx, container, host, app, error) {
             this.ctx = ctx;
@@ -72,7 +71,6 @@ describe('3-runtime-html/process-content.spec.ts', function () {
     }
     function* getTestData() {
         var _a;
-        var MyElement_1, MyElement_2;
         {
             class MyElement {
                 static processContent(_node, _p) {
@@ -107,14 +105,14 @@ describe('3-runtime-html/process-content.spec.ts', function () {
             });
         }
         {
-            let MyElement = MyElement_1 = class MyElement {
+            let MyElement = class MyElement {
                 static processContent(_node, _p) {
                     this.hookInvoked = true;
                 }
             };
             MyElement.hookInvoked = false;
-            MyElement = MyElement_1 = __decorate([
-                processContent(MyElement_1.processContent),
+            MyElement = __decorate([
+                processContent(MyElement.processContent),
                 customElement({
                     name: 'my-element',
                     template: `<div><au-slot></au-slot></div>`,
@@ -125,18 +123,18 @@ describe('3-runtime-html/process-content.spec.ts', function () {
             });
         }
         {
-            let MyElement = MyElement_2 = class MyElement {
+            let MyElement = class MyElement {
                 static processContent(_node, _p) {
                     this.hookInvoked = true;
                 }
             };
             MyElement.hookInvoked = false;
-            MyElement = MyElement_2 = __decorate([
+            MyElement = __decorate([
                 customElement({
                     name: 'my-element',
                     template: `<div><au-slot></au-slot></div>`,
                 }),
-                processContent(MyElement_2.processContent)
+                processContent(MyElement.processContent)
             ], MyElement);
             yield new TestData('processContent hook can be configured using class-level decorator - function - order 2', `<my-element normal="foo" bold="bar"></my-element>`, [MyElement], {}, () => {
                 assert.strictEqual(MyElement.hookInvoked, true);
@@ -417,7 +415,7 @@ describe('3-runtime-html/process-content.spec.ts', function () {
     }
     // A semi-real-life example
     {
-        let Tabs = Tabs_1 = class Tabs {
+        let Tabs = class Tabs {
             showTab(tabId) {
                 this.activeTabId = tabId;
             }
@@ -451,11 +449,11 @@ describe('3-runtime-html/process-content.spec.ts', function () {
             bindable,
             __metadata("design:type", String)
         ], Tabs.prototype, "activeTabId", void 0);
-        Tabs = Tabs_1 = __decorate([
+        Tabs = __decorate([
             customElement({
                 name: 'tabs',
                 template: '<div class="header"><au-slot name="header"></au-slot></div><div class="content"><au-slot name="content"></au-slot></div>',
-                processContent: Tabs_1.processTabs
+                processContent: Tabs.processTabs
             })
         ], Tabs);
         $it('semi-real-life example with tabs', async function (ctx) {

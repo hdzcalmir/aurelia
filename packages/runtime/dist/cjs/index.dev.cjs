@@ -806,7 +806,6 @@ const getMessageByCode = (name, ...details) => {
                     }
                 }
             }
-            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
             cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
             matches = regex.exec(cooked);
         }
@@ -2828,7 +2827,6 @@ exports.ExpressionType = void 0;
     ExpressionType[ExpressionType["IsProperty"] = 16] = "IsProperty";
     ExpressionType[ExpressionType["IsCustom"] = 32] = "IsCustom";
 })(exports.ExpressionType || (exports.ExpressionType = {}));
-/* eslint-enable @typescript-eslint/indent */
 let $input = '';
 let $index = 0;
 let $length = 0;
@@ -3571,7 +3569,6 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
                 paramsState = 2 /* ArrowFnParams.Invalid */;
                 break;
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         switch ($currentToken) {
             case 6291471 /* Token.Comma */:
                 nextToken();
@@ -3908,6 +3905,7 @@ function scanIdentifier() {
     while (IdParts[nextChar()])
         ;
     const token = KeywordLookup[$tokenValue = $tokenRaw()];
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     return token === undefined ? 4096 /* Token.Identifier */ : token;
 }
 function scanNumber(isFloat) {

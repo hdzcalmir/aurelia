@@ -18,7 +18,7 @@ import template from './read-only-text.html';
  *   - `setter-observer`
  *   - `element-property-accessor`
  */
-export let ReadOnlyText = class ReadOnlyText {
+let ReadOnlyText = class ReadOnlyText {
 };
 __decorate([
     bindable,
@@ -27,4 +27,5 @@ __decorate([
 ReadOnlyText = __decorate([
     customElement({ name: 'read-only-text', template })
 ], ReadOnlyText);
+export { ReadOnlyText };
 //# sourceMappingURL=read-only-text.js.map

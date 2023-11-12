@@ -48,7 +48,7 @@ describe("3-runtime-html/repeat.keyed.set.spec.ts", function () {
                     }, Component);
                     const mutations = [];
                     const obs = new ctx.wnd.MutationObserver(_mutations => mutations.splice(0, mutations.length, ..._mutations));
-                    const component = new App();
+                    const component = new App(new Set());
                     au.app({ host, component });
                     async function mutate(cb) {
                         obs.observe(host, { childList: true });

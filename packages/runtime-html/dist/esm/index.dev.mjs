@@ -462,7 +462,6 @@ const getMessageByCode = (name, ...details) => {
                     }
                 }
             }
-            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
             cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
             matches = regex.exec(cooked);
         }
@@ -1102,7 +1101,6 @@ const CustomAttribute = objectFreeze({
     getAnnotation: getAttributeAnnotation,
 });
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 function watch(expressionOrPropertyAccessFn, changeHandlerOrCallback) {
     if (expressionOrPropertyAccessFn == null) {
         throw createMappedError(772 /* ErrorNames.watch_null_config */);
@@ -9905,9 +9903,7 @@ class AuCompose {
             comp = this._getComp(childCtn, component, compositionHost);
         }
         else {
-            compositionHost = loc == null
-                ? host
-                : loc;
+            compositionHost = loc ?? host;
             comp = this._getComp(childCtn, component, compositionHost);
         }
         const compose = () => {

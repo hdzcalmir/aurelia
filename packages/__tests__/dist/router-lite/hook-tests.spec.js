@@ -636,7 +636,6 @@ describe('router-lite/hook-tests.spec.ts', function () {
                 });
                 // the siblings tests has been migrated to lifecycle-hooks.spec.ts
                 describe('parent-child', function () {
-                    var PcA12_1, PcA11_1;
                     let PcA01 = class PcA01 extends TestVM {
                         constructor(mgr, p) { super(mgr, p, hookSpec); }
                     };
@@ -655,14 +654,14 @@ describe('router-lite/hook-tests.spec.ts', function () {
                         __param(1, IPlatform),
                         __metadata("design:paramtypes", [Object, Object])
                     ], PcA02);
-                    let PcA12 = PcA12_1 = class PcA12 extends TestVM {
+                    let PcA12 = class PcA12 extends TestVM {
                         constructor(mgr, p) { super(mgr, p, hookSpec); }
                     };
-                    PcA12 = PcA12_1 = __decorate([
+                    PcA12 = __decorate([
                         route({
                             routes: [
                                 { path: 'a02', component: PcA02 },
-                                { path: 'a12', component: PcA12_1 },
+                                { path: 'a12', component: PcA12 },
                             ]
                         }),
                         customElement({ name: 'a12', template: vp(1) }),
@@ -670,16 +669,16 @@ describe('router-lite/hook-tests.spec.ts', function () {
                         __param(1, IPlatform),
                         __metadata("design:paramtypes", [Object, Object])
                     ], PcA12);
-                    let PcA11 = PcA11_1 = class PcA11 extends TestVM {
+                    let PcA11 = class PcA11 extends TestVM {
                         constructor(mgr, p) { super(mgr, p, hookSpec); }
                     };
-                    PcA11 = PcA11_1 = __decorate([
+                    PcA11 = __decorate([
                         route({
                             routes: [
                                 { path: 'a01', component: PcA01 },
                                 { path: 'a02', component: PcA02 },
                                 { path: 'a12', component: PcA12 },
-                                { path: 'a11', component: PcA11_1 },
+                                { path: 'a11', component: PcA11 },
                             ]
                         }),
                         customElement({ name: 'a11', template: vp(1) }),

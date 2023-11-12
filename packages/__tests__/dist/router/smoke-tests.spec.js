@@ -48,48 +48,47 @@ function assertIsActive(router, instruction, options, expected, assertId) {
 }
 describe('router/smoke-tests.spec.ts', function () {
     describe('without any configuration, deps registered globally', function () {
-        var A01_1, A02_1, Root1_1, A11_1, A12_1, Root2_1, A21_1, A22_1;
-        let A01 = A01_1 = class A01 {
+        let A01 = class A01 {
         };
-        A01 = A01_1 = __decorate([
-            customElement({ name: name(A01_1), template: `${name(A01_1)}${vp(0)}` })
+        A01 = __decorate([
+            customElement({ name: name(A01), template: `${name(A01)}${vp(0)}` })
         ], A01);
-        let A02 = A02_1 = class A02 {
+        let A02 = class A02 {
         };
-        A02 = A02_1 = __decorate([
-            customElement({ name: name(A02_1), template: `${name(A02_1)}${vp(0)}` })
+        A02 = __decorate([
+            customElement({ name: name(A02), template: `${name(A02)}${vp(0)}` })
         ], A02);
         const A0 = [A01, A02];
-        let Root1 = Root1_1 = class Root1 {
+        let Root1 = class Root1 {
         };
-        Root1 = Root1_1 = __decorate([
-            customElement({ name: name(Root1_1), template: `${name(Root1_1)}${vp(1)}` })
+        Root1 = __decorate([
+            customElement({ name: name(Root1), template: `${name(Root1)}${vp(1)}` })
         ], Root1);
-        let A11 = A11_1 = class A11 {
+        let A11 = class A11 {
         };
-        A11 = A11_1 = __decorate([
-            customElement({ name: name(A11_1), template: `${name(A11_1)}${vp(1)}` })
+        A11 = __decorate([
+            customElement({ name: name(A11), template: `${name(A11)}${vp(1)}` })
         ], A11);
-        let A12 = A12_1 = class A12 {
+        let A12 = class A12 {
         };
-        A12 = A12_1 = __decorate([
-            customElement({ name: name(A12_1), template: `${name(A12_1)}${vp(1)}` })
+        A12 = __decorate([
+            customElement({ name: name(A12), template: `${name(A12)}${vp(1)}` })
         ], A12);
         const A1 = [A11, A12];
-        let Root2 = Root2_1 = class Root2 {
+        let Root2 = class Root2 {
         };
-        Root2 = Root2_1 = __decorate([
-            customElement({ name: name(Root2_1), template: `${name(Root2_1)}${vp(2)}` })
+        Root2 = __decorate([
+            customElement({ name: name(Root2), template: `${name(Root2)}${vp(2)}` })
         ], Root2);
-        let A21 = A21_1 = class A21 {
+        let A21 = class A21 {
         };
-        A21 = A21_1 = __decorate([
-            customElement({ name: name(A21_1), template: `${name(A21_1)}${vp(2)}` })
+        A21 = __decorate([
+            customElement({ name: name(A21), template: `${name(A21)}${vp(2)}` })
         ], A21);
-        let A22 = A22_1 = class A22 {
+        let A22 = class A22 {
         };
-        A22 = A22_1 = __decorate([
-            customElement({ name: name(A22_1), template: `${name(A22_1)}${vp(2)}` })
+        A22 = __decorate([
+            customElement({ name: name(A22), template: `${name(A22)}${vp(2)}` })
         ], A22);
         const A2 = [A21, A22];
         const A = [...A0, ...A1, ...A2];

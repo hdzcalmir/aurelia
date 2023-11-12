@@ -843,7 +843,9 @@ class RouterOptions {
 }
 
 /**
- * @internal - Shouldn't be used directly
+ * Shouldn't be used directly
+ *
+ * @internal
  */
 var ParametersType;
 (function (ParametersType) {
@@ -1893,7 +1895,8 @@ class Route {
     /**
      * Title string or function to be used when setting title for the route.
      */
-    // TODO(alpha): Specify type!
+    // TODO(jurgen): Specify type!
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     title, 
     /**
      * The reload behavior of the components in the route, as in how they behave
@@ -1935,7 +1938,7 @@ class Route {
      * Get the `Route` configured with the specified type or null if there's nothing configured.
      */
     static getConfiguration(Type) {
-        const config = Metadata.getOwn(Route.resourceKey, Type) ?? {};
+        const config = (Metadata.getOwn(Route.resourceKey, Type) ?? {});
         if (Array.isArray(Type.parameters)) {
             config.parameters = Type.parameters;
         }
