@@ -289,6 +289,7 @@ const c = Object.freeze({
     },
     unset(s, r) {
         const i = t.Metadata.getOwn(e.Protocol.annotation.name, s);
+        if (!Array.isArray(i)) return;
         for (const n of i.slice(0)) {
             if (n.startsWith(c.name) && (r === void 0 || n.endsWith(r))) {
                 t.Metadata.delete(e.Protocol.annotation.keyFor(n), s);
@@ -563,7 +564,7 @@ exports.ValidationRules = class ValidationRules {
 
 exports.ValidationRules = __decorate([ __param(0, e.IServiceLocator), __param(1, s.IExpressionParser), __param(2, a), __param(3, n) ], exports.ValidationRules);
 
-const p = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
+const p = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
 
 const d = /^\(?[$_\w\d]+\)?\s*=>\s*[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)$/;
 

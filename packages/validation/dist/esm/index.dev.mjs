@@ -301,6 +301,8 @@ const validationRulesRegistrar = Object.freeze({
     },
     unset(target, tag) {
         const keys = Metadata.getOwn(Protocol.annotation.name, target);
+        if (!Array.isArray(keys))
+            return;
         for (const key of keys.slice(0)) {
             if (key.startsWith(validationRulesRegistrar.name) && (tag === void 0 || key.endsWith(tag))) {
                 Metadata.delete(Protocol.annotation.keyFor(key), target);
@@ -650,7 +652,7 @@ ValidationRules = __decorate([
     __param(3, IValidationExpressionHydrator)
 ], ValidationRules);
 // eslint-disable-next-line no-useless-escape
-const classicAccessorPattern = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
+const classicAccessorPattern = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
 const arrowAccessorPattern = /^\(?[$_\w\d]+\)?\s*=>\s*[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)$/;
 const rootObjectSymbol = '$root';
 function parsePropertyName(property, parser) {

@@ -271,6 +271,7 @@ const b = Object.freeze({
     },
     unset(e, i) {
         const s = o.getOwn(t.annotation.name, e);
+        if (!Array.isArray(s)) return;
         for (const r of s.slice(0)) {
             if (r.startsWith(b.name) && (i === void 0 || r.endsWith(i))) {
                 o.delete(t.annotation.keyFor(r), e);
@@ -324,7 +325,7 @@ class PropertyRule {
     async validate(e, t, i) {
         if (i === void 0) {
             i = l.create({
-                [Y]: e
+                [A]: e
             });
         }
         const s = this.property.expression;
@@ -545,11 +546,11 @@ let T = class ValidationRules {
 
 T = __decorate([ __param(0, s), __param(1, d), __param(2, p), __param(3, $) ], T);
 
-const M = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
+const M = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
 
 const N = /^\(?[$_\w\d]+\)?\s*=>\s*[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)$/;
 
-const Y = "$root";
+const A = "$root";
 
 function parsePropertyName(e, t) {
     switch (typeof e) {
@@ -570,7 +571,7 @@ function parsePropertyName(e, t) {
       default:
         throw new Error(`Unable to parse accessor function:\n${e}`);
     }
-    return [ e, t.parse(`${Y}.${e}`, 16) ];
+    return [ e, t.parse(`${A}.${e}`, 16) ];
 }
 
 class ValidationResult {
@@ -591,7 +592,7 @@ class ValidationResult {
 
 ValidationResult.nextId = 0;
 
-const A = new Set([ "displayName", "propertyName", "value", "object", "config", "getDisplayName" ]);
+const Y = new Set([ "displayName", "propertyName", "value", "object", "config", "getDisplayName" ]);
 
 let S = E = class ValidationMessageProvider {
     constructor(e, t, i) {
@@ -633,7 +634,7 @@ let S = E = class ValidationMessageProvider {
         if (t?.$kind === 25) {
             for (const i of t.expressions) {
                 const t = i.name;
-                if (A.has(t)) {
+                if (Y.has(t)) {
                     this.logger.warn(`Did you mean to use "$${t}" instead of "${t}" in this validation message template: "${e}"?`);
                 }
                 if (i.$kind === 0 || i.ancestor > 0) {
@@ -1399,7 +1400,7 @@ class StandardValidator {
         const s = e.propertyTag;
         const r = e.rules ?? b.get(t, e.objectTag) ?? [];
         const n = l.create({
-            [Y]: t
+            [A]: t
         });
         if (i !== void 0) {
             return await (r.find((e => e.property.name === i))?.validate(t, s, n)) ?? [];
@@ -1434,5 +1435,5 @@ function createConfiguration(e) {
 
 const L = createConfiguration(a);
 
-export { v as BaseValidationRule, Deserializer, x as EqualsRule, z as ICustomMessages, $ as IValidationExpressionHydrator, p as IValidationMessageProvider, _ as IValidationRules, O as IValidator, w as LengthRule, ModelBasedRule, I as ModelValidationExpressionHydrator, PropertyRule, R as RangeRule, y as RegexRule, g as RequiredRule, RuleProperty, Serializer, P as SizeRule, StandardValidator, ValidateInstruction, L as ValidationConfiguration, D as ValidationDeserializer, S as ValidationMessageProvider, ValidationResult, f as ValidationRuleAliasMessage, T as ValidationRules, ValidationSerializer, deserializePrimitive, getDefaultValidationConfiguration, parsePropertyName, Y as rootObjectSymbol, serializePrimitive, serializePrimitives, validationRule, b as validationRulesRegistrar };
+export { v as BaseValidationRule, Deserializer, x as EqualsRule, z as ICustomMessages, $ as IValidationExpressionHydrator, p as IValidationMessageProvider, _ as IValidationRules, O as IValidator, w as LengthRule, ModelBasedRule, I as ModelValidationExpressionHydrator, PropertyRule, R as RangeRule, y as RegexRule, g as RequiredRule, RuleProperty, Serializer, P as SizeRule, StandardValidator, ValidateInstruction, L as ValidationConfiguration, D as ValidationDeserializer, S as ValidationMessageProvider, ValidationResult, f as ValidationRuleAliasMessage, T as ValidationRules, ValidationSerializer, deserializePrimitive, getDefaultValidationConfiguration, parsePropertyName, A as rootObjectSymbol, serializePrimitive, serializePrimitives, validationRule, b as validationRulesRegistrar };
 
