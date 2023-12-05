@@ -1,28 +1,30 @@
-import { ArrayObserver, copyIndexMap, disableArrayObservation, enableArrayObservation, applyMutationsToIndices, synchronizeIndices, batch, } from '@aurelia/runtime';
+import { ArrayObserver, copyIndexMap, disableArrayObservation, enableArrayObservation, batch, } from '@aurelia/runtime';
 import { assert, CollectionChangeSet, eachCartesianJoin, SpySubscriber, } from '@aurelia/testing';
+const compareNumber = (a, b) => a - b;
 export class SynchronizingCollectionSubscriber {
     constructor(oldArr, newArr) {
         this.oldArr = oldArr;
         this.newArr = newArr;
     }
     handleCollectionChange(collection, indexMap) {
-        indexMap = applyMutationsToIndices(indexMap);
         const newArr = this.newArr;
         const oldArr = this.oldArr;
-        const deleted = indexMap.deletedIndices;
-        const deletedLen = deleted.length;
-        let j = 0;
-        for (let i = 0; i < deletedLen; ++i) {
-            j = deleted[i] - i;
-            oldArr.splice(j, 1);
+        const oldArrCopy = oldArr.slice();
+        const deleted = indexMap.deletedIndices.sort(compareNumber);
+        for (let i = 0; i < deleted.length; ++i) {
+            oldArr.splice(deleted[i] - i, 1);
         }
-        const mapLen = indexMap.length;
-        for (let i = 0; i < mapLen; ++i) {
+        for (let i = 0; i < indexMap.length; ++i) {
             if (indexMap[i] === -2) {
                 oldArr.splice(i, 0, newArr[i]);
             }
         }
-        synchronizeIndices(oldArr, indexMap);
+        for (let i = 0; i < indexMap.length; ++i) {
+            const source = indexMap[i];
+            if (source !== -2) {
+                oldArr[i] = oldArrCopy[source];
+            }
+        }
     }
 }
 describe(`2-runtime/array-observer.spec.ts`, function () {
@@ -787,6 +789,44 @@ describe(`2-runtime/array-observer.spec.ts`, function () {
                     arr.sort(desc);
                 });
             });
+            describe('combined splice+sort operations', function () {
+                it('swap outer items + delete inner item', function () {
+                    verifyChanges([S(1), S(2), S(3)], arr => {
+                        arr.reverse();
+                        arr.splice(1, 1);
+                    });
+                });
+                it('delete inner item + swap outer items', function () {
+                    verifyChanges([S(1), S(2), S(3)], arr => {
+                        arr.splice(1, 1);
+                        arr.reverse();
+                    });
+                });
+                it('swap outer items + replace inner item', function () {
+                    verifyChanges([S(1), S(3), S(4)], arr => {
+                        arr.reverse();
+                        arr.splice(1, 1, S(2));
+                    });
+                });
+                it('replace inner item + swap outer items', function () {
+                    verifyChanges([S(1), S(3), S(4)], arr => {
+                        arr.splice(1, 1, S(2));
+                        arr.reverse();
+                    });
+                });
+                it('swap outer items + add inner item', function () {
+                    verifyChanges([S(1), S(3), S(4)], arr => {
+                        arr.reverse();
+                        arr.splice(1, 0, S(2));
+                    });
+                });
+                it('add inner item + swap outer items', function () {
+                    verifyChanges([S(1), S(3), S(4)], arr => {
+                        arr.splice(1, 0, S(2));
+                        arr.reverse();
+                    });
+                });
+            });
         });
         describe('array w/ 4 item', function () {
             it('2x push', function () {
@@ -1004,6 +1044,12 @@ describe(`2-runtime/array-observer.spec.ts`, function () {
                     arr.sort(desc);
                 });
             });
+            it('splice the middle item with three new items and sort desc ---', function () {
+                verifyChanges([S(1), S(2)], arr => {
+                    arr.splice(1, 1, S(3), S(4));
+                    arr.reverse();
+                });
+            });
             it('push + reverse', function () {
                 verifyChanges([S(1), S(2), S(3), S(4)], arr => {
                     arr.push(S(5));
@@ -1046,6 +1092,32 @@ describe(`2-runtime/array-observer.spec.ts`, function () {
                     arr.sort(desc);
                     arr.sort(asc);
                     arr.sort(desc);
+                });
+            });
+            describe('combined splice+sort operations', function () {
+                it('swap outer items + delete inner items', function () {
+                    verifyChanges([S(1), S(2), S(3), S(4)], arr => {
+                        arr.reverse();
+                        arr.splice(1, 2);
+                    });
+                });
+                it('delete inner items + swap outer items', function () {
+                    verifyChanges([S(1), S(2), S(3), S(4)], arr => {
+                        arr.splice(1, 2);
+                        arr.reverse();
+                    });
+                });
+                it('swap outer items + replace inner items', function () {
+                    verifyChanges([S(1), S(4), S(5), S(6)], arr => {
+                        arr.reverse();
+                        arr.splice(1, 2, S(2), S(3));
+                    });
+                });
+                it('replace inner items + swap outer items', function () {
+                    verifyChanges([S(1), S(4), S(5), S(6)], arr => {
+                        arr.splice(1, 2, S(2), S(3));
+                        arr.reverse();
+                    });
                 });
             });
         });

@@ -1592,6 +1592,8 @@ function batch(e) {
 function addCollectionBatch(e, t, r) {
     if (!b.has(e)) {
         b.set(e, [ 2, t, r ]);
+    } else {
+        b.get(e)[2] = r;
     }
 }
 
@@ -1807,7 +1809,7 @@ function quickSort(e, t, r, n, i) {
     let h, f, p;
     let d, b, w;
     let v, x;
-    let E, y, C, A;
+    let E, C, y, A;
     let m, O, k, S;
     while (true) {
         if (n - r <= 10) {
@@ -1856,23 +1858,23 @@ function quickSort(e, t, r, n, i) {
         e[n - 1] = l;
         t[n - 1] = p;
         E = u;
-        y = f;
-        C = r + 1;
+        C = f;
+        y = r + 1;
         A = n - 1;
-        e[o] = e[C];
-        t[o] = t[C];
-        e[C] = E;
-        t[C] = y;
-        e: for (a = C + 1; a < A; a++) {
+        e[o] = e[y];
+        t[o] = t[y];
+        e[y] = E;
+        t[y] = C;
+        e: for (a = y + 1; a < A; a++) {
             m = e[a];
             O = t[a];
             k = i(m, E);
             if (k < 0) {
-                e[a] = e[C];
-                t[a] = t[C];
-                e[C] = m;
-                t[C] = O;
-                C++;
+                e[a] = e[y];
+                t[a] = t[y];
+                e[y] = m;
+                t[y] = O;
+                y++;
             } else if (k > 0) {
                 do {
                     A--;
@@ -1889,42 +1891,42 @@ function quickSort(e, t, r, n, i) {
                 if (k < 0) {
                     m = e[a];
                     O = t[a];
-                    e[a] = e[C];
-                    t[a] = t[C];
-                    e[C] = m;
-                    t[C] = O;
-                    C++;
+                    e[a] = e[y];
+                    t[a] = t[y];
+                    e[y] = m;
+                    t[y] = O;
+                    y++;
                 }
             }
         }
-        if (n - A < C - r) {
+        if (n - A < y - r) {
             quickSort(e, t, A, n, i);
-            n = C;
+            n = y;
         } else {
-            quickSort(e, t, r, C, i);
+            quickSort(e, t, r, y, i);
             r = A;
         }
     }
 }
 
-const y = Array.prototype;
+const C = Array.prototype;
 
-const C = y.push;
+const y = C.push;
 
-const A = y.unshift;
+const A = C.unshift;
 
-const m = y.pop;
+const m = C.pop;
 
-const O = y.shift;
+const O = C.shift;
 
-const k = y.splice;
+const k = C.splice;
 
-const S = y.reverse;
+const S = C.reverse;
 
-const T = y.sort;
+const T = C.sort;
 
 const P = {
-    push: C,
+    push: y,
     unshift: A,
     pop: m,
     shift: O,
@@ -1935,11 +1937,11 @@ const P = {
 
 const I = [ "push", "unshift", "pop", "shift", "splice", "reverse", "sort" ];
 
-const M = {
+const L = {
     push: function(...e) {
         const t = E.get(this);
         if (t === void 0) {
-            return C.apply(this, e);
+            return y.apply(this, e);
         }
         const r = this.length;
         const n = e.length;
@@ -2097,7 +2099,7 @@ const M = {
                 break;
             }
         }
-        if (i) {
+        if (i || w) {
             t.notify();
         }
         return this;
@@ -2105,7 +2107,7 @@ const M = {
 };
 
 for (const e of I) {
-    i(M[e], "observing", {
+    i(L[e], "observing", {
         value: true,
         writable: false,
         configurable: false,
@@ -2113,7 +2115,7 @@ for (const e of I) {
     });
 }
 
-let L = false;
+let M = false;
 
 const R = "__au_arr_on__";
 
@@ -2121,8 +2123,8 @@ function enableArrayObservation() {
     if (!(l(R, Array) ?? false)) {
         h(R, true, Array);
         for (const e of I) {
-            if (y[e].observing !== true) {
-                defineHiddenProp(y, e, M[e]);
+            if (C[e].observing !== true) {
+                defineHiddenProp(C, e, L[e]);
             }
         }
     }
@@ -2130,8 +2132,8 @@ function enableArrayObservation() {
 
 function disableArrayObservation() {
     for (const e of I) {
-        if (y[e].observing === true) {
-            defineHiddenProp(y, e, P[e]);
+        if (C[e].observing === true) {
+            defineHiddenProp(C, e, P[e]);
         }
     }
 }
@@ -2139,8 +2141,8 @@ function disableArrayObservation() {
 class ArrayObserver {
     constructor(e) {
         this.type = 1;
-        if (!L) {
-            L = true;
+        if (!M) {
+            M = true;
             enableArrayObservation();
         }
         this.indexObservers = {};
@@ -2228,45 +2230,6 @@ function getArrayObserver(e) {
         t = new ArrayObserver(e);
     }
     return t;
-}
-
-const compareNumber = (e, t) => e - t;
-
-function applyMutationsToIndices(e) {
-    let t = 0;
-    let r = 0;
-    let n = 0;
-    const i = cloneIndexMap(e);
-    if (i.deletedIndices.length > 1) {
-        i.deletedIndices.sort(compareNumber);
-    }
-    const o = i.length;
-    for (;n < o; ++n) {
-        while (i.deletedIndices[r] <= n - t) {
-            ++r;
-            --t;
-        }
-        if (i[n] === -2) {
-            ++t;
-        } else {
-            i[n] += t;
-        }
-    }
-    return i;
-}
-
-function synchronizeIndices(e, t) {
-    const r = e.slice();
-    const n = t.length;
-    let i = 0;
-    let o = 0;
-    while (i < n) {
-        o = t[i];
-        if (o !== -2) {
-            e[i] = r[o];
-        }
-        ++i;
-    }
 }
 
 const _ = Symbol.for("__au_set_obs__");
@@ -2769,8 +2732,8 @@ class ExpressionParser {
         xe = $charCodeAt(0);
         ge = true;
         Ee = false;
-        ye = true;
-        Ce = -1;
+        Ce = true;
+        ye = -1;
         return parse(61, t === void 0 ? 16 : t);
     }
 }
@@ -2853,9 +2816,9 @@ let ge = true;
 
 let Ee = false;
 
-let ye = true;
+let Ce = true;
 
-let Ce = -1;
+let ye = -1;
 
 const Ae = String.fromCharCode;
 
@@ -2876,8 +2839,8 @@ function parseExpression(e, t) {
     xe = $charCodeAt(0);
     ge = true;
     Ee = false;
-    ye = true;
-    Ce = -1;
+    Ce = true;
+    ye = -1;
     return parse(61, t === void 0 ? 16 : t);
 }
 
@@ -2896,7 +2859,7 @@ function parse(e, t) {
     }
     ge = 513 > e;
     Ee = false;
-    ye = 514 > e;
+    Ce = 514 > e;
     let r = false;
     let n = void 0;
     let i = 0;
@@ -2910,7 +2873,7 @@ function parse(e, t) {
           case 12294:
             i = de;
             ge = false;
-            ye = false;
+            Ce = false;
             do {
                 nextToken();
                 ++i;
@@ -2950,9 +2913,9 @@ function parse(e, t) {
                 const e = ve;
                 if (t & 2) {
                     n = new BindingIdentifier(e);
-                } else if (ye && me.includes(e)) {
+                } else if (Ce && me.includes(e)) {
                     n = new AccessGlobalExpression(e);
-                } else if (ye && e === "import") {
+                } else if (Ce && e === "import") {
                     throw unexpectedImportKeyword();
                 } else {
                     n = new AccessScopeExpression(e, i);
@@ -3223,7 +3186,7 @@ function parse(e, t) {
             if (fe === pe) {
                 throw unconsumedToken();
             }
-            Ce = fe - 1;
+            ye = fe - 1;
             return n;
         }
         if ($tokenRaw() === "of") {
@@ -3571,7 +3534,7 @@ function parseForOfStatement(e) {
     nextToken();
     const t = e;
     const r = parse(61, 4);
-    return new ForOfStatement(t, r, Ce);
+    return new ForOfStatement(t, r, ye);
 }
 
 function parseObjectLiteralExpression(e) {
@@ -4056,9 +4019,9 @@ Ie[123] = returnToken(524296);
 
 Ie[125] = returnToken(7340045);
 
-let Me = null;
+let Le = null;
 
-const Le = [];
+const Me = [];
 
 let Re = false;
 
@@ -4071,24 +4034,24 @@ function resumeConnecting() {
 }
 
 function currentConnectable() {
-    return Me;
+    return Le;
 }
 
 function enterConnectable(e) {
     if (e == null) {
         throw createMappedError(206);
     }
-    if (Me == null) {
-        Me = e;
-        Le[0] = Me;
+    if (Le == null) {
+        Le = e;
+        Me[0] = Le;
         Re = true;
         return;
     }
-    if (Me === e) {
+    if (Le === e) {
         throw createMappedError(207);
     }
-    Le.push(e);
-    Me = e;
+    Me.push(e);
+    Le = e;
     Re = true;
 }
 
@@ -4096,17 +4059,17 @@ function exitConnectable(e) {
     if (e == null) {
         throw createMappedError(208);
     }
-    if (Me !== e) {
+    if (Le !== e) {
         throw createMappedError(209);
     }
-    Le.pop();
-    Me = Le.length > 0 ? Le[Le.length - 1] : null;
-    Re = Me != null;
+    Me.pop();
+    Le = Me.length > 0 ? Me[Me.length - 1] : null;
+    Re = Le != null;
 }
 
 const _e = Object.freeze({
     get current() {
-        return Me;
+        return Le;
     },
     get connecting() {
         return Re;
@@ -4191,12 +4154,12 @@ const Ue = {
         if (t === Ne) {
             return e;
         }
-        if (!Re || doNotCollect(e, t) || Me == null) {
+        if (!Re || doNotCollect(e, t) || Le == null) {
             return $e(e, t, r);
         }
         switch (t) {
           case "length":
-            Me.observe(e, "length");
+            Le.observe(e, "length");
             return e.length;
 
           case "map":
@@ -4275,7 +4238,7 @@ const Ue = {
           case "entries":
             return wrappedEntries;
         }
-        Me.observe(e, t);
+        Le.observe(e, t);
         return wrap($e(e, t, r));
     },
     ownKeys(e) {
@@ -4287,74 +4250,74 @@ const Ue = {
 function wrappedArrayMap(e, t) {
     const r = getRaw(this);
     const n = r.map(((r, n) => unwrap(e.call(t, wrap(r), n, this))));
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return wrap(n);
 }
 
 function wrappedArrayEvery(e, t) {
     const r = getRaw(this);
     const n = r.every(((r, n) => e.call(t, wrap(r), n, this)));
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return n;
 }
 
 function wrappedArrayFilter(e, t) {
     const r = getRaw(this);
     const n = r.filter(((r, n) => unwrap(e.call(t, wrap(r), n, this))));
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return wrap(n);
 }
 
 function wrappedArrayIncludes(e) {
     const t = getRaw(this);
     const r = t.includes(unwrap(e));
-    observeCollection(Me, t);
+    observeCollection(Le, t);
     return r;
 }
 
 function wrappedArrayIndexOf(e) {
     const t = getRaw(this);
     const r = t.indexOf(unwrap(e));
-    observeCollection(Me, t);
+    observeCollection(Le, t);
     return r;
 }
 
 function wrappedArrayLastIndexOf(e) {
     const t = getRaw(this);
     const r = t.lastIndexOf(unwrap(e));
-    observeCollection(Me, t);
+    observeCollection(Le, t);
     return r;
 }
 
 function wrappedArrayFindIndex(e, t) {
     const r = getRaw(this);
     const n = r.findIndex(((r, n) => unwrap(e.call(t, wrap(r), n, this))));
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return n;
 }
 
 function wrappedArrayFind(e, t) {
     const r = getRaw(this);
     const n = r.find(((t, r) => e(wrap(t), r, this)), t);
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return wrap(n);
 }
 
 function wrappedArrayFlat() {
     const e = getRaw(this);
-    observeCollection(Me, e);
+    observeCollection(Le, e);
     return wrap(e.flat());
 }
 
 function wrappedArrayFlatMap(e, t) {
     const r = getRaw(this);
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return getProxy(r.flatMap(((r, n) => wrap(e.call(t, wrap(r), n, this)))));
 }
 
 function wrappedArrayJoin(e) {
     const t = getRaw(this);
-    observeCollection(Me, t);
+    observeCollection(Le, t);
     return t.join(e);
 }
 
@@ -4381,41 +4344,41 @@ function wrappedArraySplice(...e) {
 function wrappedArrayReverse(...e) {
     const t = getRaw(this);
     const r = t.reverse();
-    observeCollection(Me, t);
+    observeCollection(Le, t);
     return wrap(r);
 }
 
 function wrappedArraySome(e, t) {
     const r = getRaw(this);
     const n = r.some(((r, n) => unwrap(e.call(t, wrap(r), n, this))));
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return n;
 }
 
 function wrappedArraySort(e) {
     const t = getRaw(this);
     const r = t.sort(e);
-    observeCollection(Me, t);
+    observeCollection(Le, t);
     return wrap(r);
 }
 
 function wrappedArraySlice(e, t) {
     const r = getRaw(this);
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return getProxy(r.slice(e, t));
 }
 
 function wrappedReduce(e, t) {
     const r = getRaw(this);
     const n = r.reduce(((t, r, n) => e(t, wrap(r), n, this)), t);
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return wrap(n);
 }
 
 function wrappedReduceRight(e, t) {
     const r = getRaw(this);
     const n = r.reduceRight(((t, r, n) => e(t, wrap(r), n, this)), t);
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return wrap(n);
 }
 
@@ -4481,7 +4444,7 @@ const He = {
 
 function wrappedForEach(e, t) {
     const r = getRaw(this);
-    observeCollection(Me, r);
+    observeCollection(Le, r);
     return r.forEach(((r, n) => {
         e.call(t, wrap(r), wrap(n), this);
     }));
@@ -4489,13 +4452,13 @@ function wrappedForEach(e, t) {
 
 function wrappedHas(e) {
     const t = getRaw(this);
-    observeCollection(Me, t);
+    observeCollection(Le, t);
     return t.has(unwrap(e));
 }
 
 function wrappedGet(e) {
     const t = getRaw(this);
-    observeCollection(Me, t);
+    observeCollection(Le, t);
     return wrap(t.get(unwrap(e)));
 }
 
@@ -4517,7 +4480,7 @@ function wrappedDelete(e) {
 
 function wrappedKeys() {
     const e = getRaw(this);
-    observeCollection(Me, e);
+    observeCollection(Le, e);
     const t = e.keys();
     return {
         next() {
@@ -4540,7 +4503,7 @@ function wrappedKeys() {
 
 function wrappedValues() {
     const e = getRaw(this);
-    observeCollection(Me, e);
+    observeCollection(Le, e);
     const t = e.values();
     return {
         next() {
@@ -4563,7 +4526,7 @@ function wrappedValues() {
 
 function wrappedEntries() {
     const e = getRaw(this);
-    observeCollection(Me, e);
+    observeCollection(Le, e);
     const t = e.entries();
     return {
         next() {
@@ -4937,12 +4900,12 @@ class DefaultNodeObserverLocator {
 
 class ObserverLocator {
     constructor(e, t) {
-        this.M = [];
+        this.L = [];
         this.I = e;
-        this.L = t;
+        this.M = t;
     }
     addAdapter(e) {
-        this.M.push(e);
+        this.L.push(e);
     }
     getObserver(e, t) {
         if (e == null) {
@@ -4969,8 +4932,8 @@ class ObserverLocator {
         if (r !== void 0) {
             return r;
         }
-        if (this.L.handles(e, t, this)) {
-            return this.L.getAccessor(e, t, this);
+        if (this.M.handles(e, t, this)) {
+            return this.M.getAccessor(e, t, this);
         }
         return qe;
     }
@@ -4984,8 +4947,8 @@ class ObserverLocator {
         return getSetObserver(e);
     }
     createObserver(t, r) {
-        if (this.L.handles(t, r, this)) {
-            return this.L.getObserver(t, r, this);
+        if (this.M.handles(t, r, this)) {
+            return this.M.getObserver(t, r, this);
         }
         switch (r) {
           case "length":
@@ -5044,8 +5007,8 @@ class ObserverLocator {
         return o;
     }
     R(e, t, r) {
-        if (this.M.length > 0) {
-            for (const n of this.M) {
+        if (this.L.length > 0) {
+            for (const n of this.L) {
                 const i = n.getObserver(e, t, r, this);
                 if (i != null) {
                     return i;
@@ -5453,8 +5416,6 @@ exports.Unparser = Unparser;
 
 exports.ValueConverterExpression = ValueConverterExpression;
 
-exports.applyMutationsToIndices = applyMutationsToIndices;
-
 exports.astAssign = astAssign;
 
 exports.astBind = astBind;
@@ -5500,6 +5461,4 @@ exports.observable = observable;
 exports.parseExpression = parseExpression;
 
 exports.subscriberCollection = subscriberCollection;
-
-exports.synchronizeIndices = synchronizeIndices;
 //# sourceMappingURL=index.cjs.map

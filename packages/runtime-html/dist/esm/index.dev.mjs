@@ -1,6 +1,6 @@
 import { Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, firstDefined, mergeArrays, resolve, IPlatform as IPlatform$1, emptyArray, InstanceProvider, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, IContainer, optional, ILogger, onResolveAll, onResolve, all, camelCase, IServiceLocator, emptyObject, transient, toArray } from '@aurelia/kernel';
 import { Metadata, isObject } from '@aurelia/metadata';
-import { ISignaler, astEvaluate, connectable, ConnectableSwitcher, ProxyObservable, astBind, astUnbind, astAssign, subscriberCollection, IExpressionParser, IObserverLocator, ICoercionConfiguration, Scope, AccessScopeExpression, PropertyAccessor, IDirtyChecker, INodeObserverLocator, getObserverLookup, SetterObserver, createIndexMap, applyMutationsToIndices, getCollectionObserver as getCollectionObserver$1, synchronizeIndices, BindingContext, PrimitiveLiteralExpression, DirtyChecker } from '@aurelia/runtime';
+import { ISignaler, astEvaluate, connectable, ConnectableSwitcher, ProxyObservable, astBind, astUnbind, astAssign, subscriberCollection, IExpressionParser, IObserverLocator, ICoercionConfiguration, Scope, AccessScopeExpression, PropertyAccessor, IDirtyChecker, INodeObserverLocator, getObserverLookup, SetterObserver, createIndexMap, getCollectionObserver as getCollectionObserver$1, BindingContext, PrimitiveLiteralExpression, DirtyChecker } from '@aurelia/runtime';
 import { BrowserPlatform } from '@aurelia/platform-browser';
 import { TaskAbortError } from '@aurelia/platform';
 
@@ -8029,6 +8029,7 @@ const wrappedExprs = [
 class Repeat {
     constructor(instruction, parser, location, parent, factory) {
         this.views = [];
+        this._oldViews = [];
         this.key = null;
         /** @internal */ this._keyMap = new Map();
         /** @internal */ this._scopeMap = new Map();
@@ -8127,6 +8128,7 @@ class Repeat {
     /** @internal */
     _applyIndexMap(collection, indexMap) {
         const oldViews = this.views;
+        this._oldViews = oldViews.slice();
         const oldLen = oldViews.length;
         const key = this.key;
         const hasKey = key !== null;
@@ -8292,12 +8294,11 @@ class Repeat {
             }
         }
         else {
-            const $indexMap = applyMutationsToIndices(indexMap);
             // first detach+unbind+(remove from array) the deleted view indices
-            if ($indexMap.deletedIndices.length > 0) {
-                const ret = onResolve(this._deactivateAndRemoveViewsByKey($indexMap), () => {
+            if (indexMap.deletedIndices.length > 0) {
+                const ret = onResolve(this._deactivateAndRemoveViewsByKey(indexMap), () => {
                     // TODO(fkleuver): add logic to the controller that ensures correct handling of race conditions and add a variety of `if` integration tests
-                    return this._createAndActivateAndSortViewsByKey(oldLen, $indexMap);
+                    return this._createAndActivateAndSortViewsByKey(oldLen, indexMap);
                 });
                 if (isPromise(ret)) {
                     ret.catch(rethrow);
@@ -8306,7 +8307,7 @@ class Repeat {
             else {
                 // TODO(fkleuver): add logic to the controller that ensures correct handling of race conditions and add integration tests
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this._createAndActivateAndSortViewsByKey(oldLen, $indexMap);
+                this._createAndActivateAndSortViewsByKey(oldLen, indexMap);
             }
         }
     }
@@ -8401,7 +8402,7 @@ class Repeat {
         let ret;
         let view;
         const { $controller, views } = this;
-        const deleted = indexMap.deletedIndices;
+        const deleted = indexMap.deletedIndices.slice().sort(compareNumber);
         const deletedLen = deleted.length;
         let i = 0;
         for (; deletedLen > i; ++i) {
@@ -8413,10 +8414,8 @@ class Repeat {
             }
         }
         i = 0;
-        let j = 0;
         for (; deletedLen > i; ++i) {
-            j = deleted[i] - i;
-            views.splice(j, 1);
+            views.splice(deleted[i] - i, 1);
         }
         if (promises !== void 0) {
             return promises.length === 1
@@ -8431,7 +8430,7 @@ class Repeat {
         let view;
         let viewScope;
         let i = 0;
-        const { $controller, _factory, local, _normalizedItems, _location, views, _hasDestructuredLocal, _forOfBinding, _scopeMap, forOf } = this;
+        const { $controller, _factory, local, _normalizedItems, _location, views, _hasDestructuredLocal, _forOfBinding, _scopeMap, _oldViews, forOf } = this;
         const mapLen = indexMap.length;
         for (; mapLen > i; ++i) {
             if (indexMap[i] === -2) {
@@ -8444,7 +8443,13 @@ class Repeat {
         }
         const parentScope = $controller.scope;
         const newLen = indexMap.length;
-        synchronizeIndices(views, indexMap);
+        let source = 0;
+        i = 0;
+        for (; i < indexMap.length; ++i) {
+            if ((source = indexMap[i]) !== -2) {
+                views[i] = _oldViews[source];
+            }
+        }
         // this algorithm retrieves the indices of the longest increasing subsequence of items in the repeater
         // the items on those indices are not moved; this minimizes the number of DOM operations that need to be performed
         const seq = longestIncreasingSubsequence(indexMap);
@@ -8684,6 +8689,7 @@ const ensureUnique = (item, index) => {
             return item;
     }
 };
+const compareNumber = (a, b) => a - b;
 
 class With {
     constructor() {

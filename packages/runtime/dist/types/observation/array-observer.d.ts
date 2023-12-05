@@ -34,17 +34,4 @@ export declare class ArrayIndexObserver implements IArrayIndexObserver {
     unsubscribe(subscriber: ISubscriber): void;
 }
 export declare function getArrayObserver(array: unknown[]): ArrayObserver;
-/**
- * Applies offsets to the non-negative indices in the IndexMap
- * based on added and deleted items relative to those indices.
- *
- * e.g. turn `[-2, 0, 1]` into `[-2, 1, 2]`, allowing the values at the indices to be
- * used for sorting/reordering items if needed
- */
-export declare function applyMutationsToIndices(indexMap: IndexMap): IndexMap;
-/**
- * After `applyMutationsToIndices`, this function can be used to reorder items in a derived
- * array (e.g.  the items in the `views` in the repeater are derived from the `items` property)
- */
-export declare function synchronizeIndices<T>(items: T[], indexMap: IndexMap): void;
 //# sourceMappingURL=array-observer.d.ts.map

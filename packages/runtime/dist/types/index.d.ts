@@ -2,7 +2,7 @@ export { ExpressionKind, CallFunctionExpression, CustomExpression, BindingBehavi
 export { astAssign, astBind, astEvaluate, astUnbind, } from './binding/ast.eval';
 export { type IConnectableBinding, connectable, BindingObserverRecord, } from './binding/connectable';
 export { IExpressionParser, ExpressionType, parseExpression, } from './binding/expression-parser';
-export { ArrayObserver, ArrayIndexObserver, enableArrayObservation, disableArrayObservation, applyMutationsToIndices, synchronizeIndices, type IArrayIndexObserver, } from './observation/array-observer';
+export { ArrayObserver, ArrayIndexObserver, enableArrayObservation, disableArrayObservation, type IArrayIndexObserver, } from './observation/array-observer';
 export { MapObserver, enableMapObservation, disableMapObservation, } from './observation/map-observer';
 export { SetObserver, enableSetObservation, disableSetObservation } from './observation/set-observer';
 export { BindingContext, Scope, } from './observation/scope';

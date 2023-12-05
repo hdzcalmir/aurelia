@@ -6,6 +6,7 @@ import type { ISyntheticView, ICustomAttributeController, IHydratableController,
 type Items<C extends Collection = unknown[]> = C | undefined;
 export declare class Repeat<C extends Collection = unknown[]> implements ICustomAttributeViewModel {
     views: ISyntheticView[];
+    private _oldViews;
     forOf: ForOfStatement;
     local: string;
     readonly $controller: ICustomAttributeController<this>;
