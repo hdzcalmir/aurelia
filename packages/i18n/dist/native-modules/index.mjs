@@ -1,8 +1,8 @@
-import { DI as t, IEventAggregator as n, camelCase as e, toArray as i, Registration as s } from "../kernel/dist/native-modules/index.mjs";
+import { DI as t, IEventAggregator as n, camelCase as e, toArray as i, Registration as s } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { bindingBehavior as r, valueConverter as o, mixinAstEvaluator as a, mixingBindingLimited as c, CustomElement as l, attributePattern as h, bindingCommand as u, renderer as f, AttrSyntax as d, AttributePattern as m, BindingCommand as p, AppTask as g } from "../runtime-html/dist/native-modules/index.mjs";
+import { bindingBehavior as r, valueConverter as o, mixinAstEvaluator as a, mixingBindingLimited as c, CustomElement as l, attributePattern as h, bindingCommand as u, renderer as f, AttrSyntax as d, AttributePattern as m, BindingCommand as p, AppTask as g } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-import { ValueConverterExpression as _, nowrap as b, ISignaler as T, connectable as B, CustomExpression as v, Interpolation as w, astEvaluate as I, astUnbind as C, astBind as x } from "../runtime/dist/native-modules/index.mjs";
+import { ValueConverterExpression as _, nowrap as b, ISignaler as T, connectable as B, CustomExpression as v, Interpolation as w, astEvaluate as I, astUnbind as C, astBind as x } from "../../../runtime/dist/native-modules/index.mjs";
 
 import y from "i18next";
 

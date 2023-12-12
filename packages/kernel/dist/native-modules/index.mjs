@@ -1,4 +1,4 @@
-import { Metadata as t, isObject as e, applyMetadataPolyfill as n } from "../metadata/dist/native-modules/index.mjs";
+import { Metadata as t, isObject as e, applyMetadataPolyfill as n } from "../../../metadata/dist/native-modules/index.mjs";
 
 const r = String;
 

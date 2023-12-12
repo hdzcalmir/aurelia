@@ -1,3 +1,4 @@
+import { IOptionalPreprocessOptions } from '@aurelia/plugin-conventions';
 import { FilterPattern } from '@rollup/pluginutils';
 export default function au(options?: {
     include?: FilterPattern;
@@ -7,5 +8,5 @@ export default function au(options?: {
      * Indiciates whether the plugin should alias aurelia packages to the dev bundle.
      */
     useDev?: boolean;
-}): import("vite").Plugin[];
+} & IOptionalPreprocessOptions): import("vite").Plugin[];
 //# sourceMappingURL=index.d.ts.map

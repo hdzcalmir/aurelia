@@ -52,6 +52,10 @@ export interface IFixture<T> {
     stop(dispose?: boolean): void | Promise<void>;
     readonly started: Promise<IFixture<T>>;
     /**
+     * Print to console and return the innerHTML of the current application
+     */
+    printHtml(): string;
+    /**
      * Returns the first element that is a descendant of node that matches selectors, and throw if there is more than one, or none found
      */
     getBy<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K];
@@ -79,6 +83,16 @@ export interface IFixture<T> {
      * Will throw if there' more than one elements with matching selector
      */
     assertText(selector: string, text: string): void;
+    /**
+     * Assert the text content of the current application host equals to a given string
+     */
+    assertTextContain(text: string): void;
+    /**
+     * Assert the text content of an element matching the given selector inside the application host equals to a given string.
+     *
+     * Will throw if there' more than one elements with matching selector
+     */
+    assertTextContain(selector: string, text: string): void;
     /**
      * Assert the inner html of the current application host equals to the given html string
      */

@@ -4,7 +4,7 @@ import { resolve, dirname } from 'path';
 import { promises } from 'fs';
 
 function au(options = {}) {
-    const { include = 'src/**/*.{ts,js,html}', exclude, pre = true, useDev, } = options;
+    const { include = 'src/**/*.{ts,js,html}', exclude, pre = true, useDev, ...additionalOptions } = options;
     const filter = createFilter(include, exclude);
     const isVirtualTsFileFromHtml = (id) => id.endsWith('.$au.ts');
     const devPlugin = {
@@ -62,7 +62,8 @@ function au(options = {}) {
                     return this.meta.watchMode
                         ? s
                         : s.replace(/\.html$/, '.$au.ts');
-                }
+                },
+                ...additionalOptions
             });
             return result;
         },

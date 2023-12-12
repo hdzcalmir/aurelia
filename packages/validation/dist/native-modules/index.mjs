@@ -1,12 +1,12 @@
-import { DI as e, Protocol as t, toArray as i, IServiceLocator as s, ILogger as r, Registration as n, noop as a } from "../kernel/dist/native-modules/index.mjs";
+import { DI as e, Protocol as t, toArray as i, IServiceLocator as s, ILogger as r, Registration as n, noop as a } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { Metadata as o } from "../metadata/dist/native-modules/index.mjs";
+import { Metadata as o } from "../../../metadata/dist/native-modules/index.mjs";
 
-import * as u from "../runtime/dist/native-modules/index.mjs";
+import * as u from "../../../runtime/dist/native-modules/index.mjs";
 
-import { Scope as l, astEvaluate as c, PrimitiveLiteralExpression as h, IExpressionParser as d } from "../runtime/dist/native-modules/index.mjs";
+import { Scope as l, astEvaluate as c, PrimitiveLiteralExpression as h, IExpressionParser as d } from "../../../runtime/dist/native-modules/index.mjs";
 
-import { mixinAstEvaluator as m } from "../runtime-html/dist/native-modules/index.mjs";
+import { mixinAstEvaluator as m } from "../../../runtime-html/dist/native-modules/index.mjs";
 
 const $ = /*@__PURE__*/ e.createInterface("IValidationExpressionHydrator");
 

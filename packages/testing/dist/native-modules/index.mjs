@@ -1,14 +1,14 @@
-import { ensureEmpty as e, reportTaskQueue as t } from "../platform/dist/native-modules/index.mjs";
+import { ensureEmpty as e, reportTaskQueue as t } from "../../../platform/dist/native-modules/index.mjs";
 
-import { noop as n, isArrayIndex as i, DI as r, Registration as a, kebabCase as s, emptyArray as o, EventAggregator as l, ILogger as u } from "../kernel/dist/native-modules/index.mjs";
+import { noop as n, isArrayIndex as i, DI as r, Registration as a, kebabCase as s, emptyArray as o, EventAggregator as l, ILogger as u } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { IObserverLocator as c, astEvaluate as f, astAssign as d, astBind as p, astUnbind as m, IDirtyChecker as g, INodeObserverLocator as b, Scope as v } from "../runtime/dist/native-modules/index.mjs";
+import { IObserverLocator as c, astEvaluate as f, astAssign as d, astBind as p, astUnbind as m, IDirtyChecker as g, INodeObserverLocator as b, Scope as v } from "../../../runtime/dist/native-modules/index.mjs";
 
-import { StandardConfiguration as y, IPlatform as x, ITemplateCompiler as $, CustomElement as w, CustomAttribute as k, Aurelia as E, valueConverter as S, bindable as C, customElement as O } from "../runtime-html/dist/native-modules/index.mjs";
+import { StandardConfiguration as y, IPlatform as x, ITemplateCompiler as $, CustomElement as w, CustomAttribute as k, Aurelia as E, valueConverter as S, bindable as C, customElement as O } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-import { BrowserPlatform as q } from "../platform-browser/dist/native-modules/index.mjs";
+import { BrowserPlatform as q } from "../../../platform-browser/dist/native-modules/index.mjs";
 
-import { Metadata as j } from "../metadata/dist/native-modules/index.mjs";
+import { Metadata as j } from "../../../metadata/dist/native-modules/index.mjs";
 
 const {getPrototypeOf: A, getOwnPropertyDescriptor: T, getOwnPropertyDescriptors: F, getOwnPropertyNames: I, getOwnPropertySymbols: M, defineProperty: R, defineProperties: P} = Object;
 
@@ -4405,6 +4405,17 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
             Qe.strictEqual(getVisibleText(c), e);
         }
     }
+    function assertTextContain(e, t) {
+        if (arguments.length === 2) {
+            const n = strictQueryBy(e);
+            if (n === null) {
+                throw new Error(`No element found for selector "${e}" to compare text content with "${t}"`);
+            }
+            Qe.includes(getVisibleText(n), t);
+        } else {
+            Qe.includes(getVisibleText(c), e);
+        }
+    }
     function getInnerHtml(e, t) {
         let n = e.innerHTML;
         if (t) {
@@ -4520,6 +4531,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
             this.getAllBy = getAllBy;
             this.queryBy = queryBy;
             this.assertText = assertText;
+            this.assertTextContain = assertTextContain;
             this.assertHtml = assertHtml;
             this.assertClass = assertClass;
             this.assertAttr = assertAttr;
@@ -4549,6 +4561,11 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
                 return Promise.resolve(v).then((() => this));
             }
             return Promise.resolve(this);
+        }
+        printHtml() {
+            const e = c.innerHTML;
+            console.log(e);
+            return e;
         }
     };
     Je.publish("fixture:created", $);

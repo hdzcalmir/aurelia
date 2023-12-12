@@ -3101,6 +3101,60 @@ class ViewFactory {
 }
 ViewFactory.maxCacheSize = 0xFFFF;
 
+/** @internal */
+const auLocationStart = 'au-start';
+/** @internal */
+const auLocationEnd = 'au-end';
+/** @internal */
+const createElement 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+= (p, name) => p.document.createElement(name);
+/** @internal */
+const createComment = (p, text) => p.document.createComment(text);
+/** @internal */
+const createLocation = (p) => {
+    const locationEnd = createComment(p, auLocationEnd);
+    locationEnd.$start = createComment(p, auLocationStart);
+    return locationEnd;
+};
+/** @internal */
+const createText = (p, text) => p.document.createTextNode(text);
+/** @internal */
+const insertBefore = (parent, newChildNode, target) => {
+    return parent.insertBefore(newChildNode, target);
+};
+/** @internal */
+const insertManyBefore = (parent, target, newChildNodes) => {
+    if (parent === null) {
+        return;
+    }
+    const ii = newChildNodes.length;
+    let i = 0;
+    while (ii > i) {
+        parent.insertBefore(newChildNodes[i], target);
+        ++i;
+    }
+};
+/** @internal */
+const appendToTemplate = (parent, child) => {
+    return parent.content.appendChild(child);
+};
+/** @internal */
+const appendManyToTemplate = (parent, children) => {
+    const ii = children.length;
+    let i = 0;
+    while (ii > i) {
+        parent.content.appendChild(children[i]);
+        ++i;
+    }
+};
+/** @internal */
+const createMutationObserver = (node, callback) => new node.ownerDocument.defaultView.MutationObserver(callback);
+/** @internal */
+const isElement = (node) => node.nodeType === 1;
+/** @internal */
+const isTextNode = (node) => node.nodeType === 3;
+
 /**
  * Describing the projection information statically available for a custom element
  */
@@ -3152,7 +3206,7 @@ class AuSlotWatcherBinding {
         let node;
         for ($slot of this._slots) {
             for (node of $slot === slot ? nodes : $slot.nodes) {
-                if (this._query === '*' || (node.nodeType === 1 && node.matches(this._query))) {
+                if (this._query === '*' || (isElement(node) && node.matches(this._query))) {
                     $nodes[$nodes.length] = node;
                 }
             }
@@ -6793,56 +6847,6 @@ class DataAttributeAccessor {
 mixinNoopSubscribable(DataAttributeAccessor);
 const attrAccessor = new DataAttributeAccessor();
 
-/** @internal */
-const auLocationStart = 'au-start';
-/** @internal */
-const auLocationEnd = 'au-end';
-/** @internal */
-const createElement 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-= (p, name) => p.document.createElement(name);
-/** @internal */
-const createComment = (p, text) => p.document.createComment(text);
-/** @internal */
-const createLocation = (p) => {
-    const locationEnd = createComment(p, auLocationEnd);
-    locationEnd.$start = createComment(p, auLocationStart);
-    return locationEnd;
-};
-/** @internal */
-const createText = (p, text) => p.document.createTextNode(text);
-/** @internal */
-const insertBefore = (parent, newChildNode, target) => {
-    return parent.insertBefore(newChildNode, target);
-};
-/** @internal */
-const insertManyBefore = (parent, target, newChildNodes) => {
-    if (parent === null) {
-        return;
-    }
-    const ii = newChildNodes.length;
-    let i = 0;
-    while (ii > i) {
-        parent.insertBefore(newChildNodes[i], target);
-        ++i;
-    }
-};
-/** @internal */
-const appendToTemplate = (parent, child) => {
-    return parent.content.appendChild(child);
-};
-/** @internal */
-const appendManyToTemplate = (parent, children) => {
-    const ii = children.length;
-    let i = 0;
-    while (ii > i) {
-        parent.content.appendChild(children[i]);
-        ++i;
-    }
-};
-/** @internal */
-const createMutationObserver = (node, callback) => new node.ownerDocument.defaultView.MutationObserver(callback);
-
 const childObserverOptions$1 = {
     childList: true,
     subtree: true,
@@ -7487,6 +7491,15 @@ class NodeObserverLocator {
             case 'size':
             case 'pattern':
             case 'title':
+            case 'popovertarget':
+            case 'popovertargetaction':
+                /* istanbul-ignore-next */
+                {
+                    if ((key === 'popovertarget' || key === 'popovertargetaction') && obj.nodeName !== 'INPUT' && obj.nodeName !== 'BUTTON') {
+                        // eslint-disable-next-line no-console
+                        console.warn(`[aurelia] Popover API are only valid on <input> or <button>. Detected ${key} on <${obj.nodeName.toLowerCase()}>`);
+                    }
+                }
                 // assigning null/undefined to size on input is an error
                 // though it may be fine on other elements.
                 // todo: make an effort to distinguish properties based on element name
@@ -10980,7 +10993,7 @@ class TemplateCompiler {
                     // so anything attempting to project into it is discarded
                     // doing so during compilation via removing the node,
                     // instead of considering it as part of the fallback view
-                    if (node.nodeType === 1 && node.hasAttribute(AU_SLOT)) {
+                    if (isElement(node) && node.hasAttribute(AU_SLOT)) {
                         {
                             // eslint-disable-next-line no-console
                             console.warn(`[DEV:aurelia] detected [au-slot] attribute on a child node`, `of an <au-slot> element: "<${node.nodeName} au-slot>".`, `This element will be ignored and removed`);
@@ -11054,6 +11067,7 @@ class TemplateCompiler {
             const childContext = context._createChild(instructions == null ? [] : [instructions]);
             let childEl;
             let targetSlot;
+            let hasAuSlot = false;
             let projections;
             let slotTemplateRecord;
             let slotTemplates;
@@ -11085,29 +11099,22 @@ class TemplateCompiler {
             let isEmptyTextNode = false;
             if (processContentResult !== false) {
                 while (child !== null) {
-                    targetSlot = child.nodeType === 1 ? child.getAttribute(AU_SLOT) : null;
-                    if (targetSlot !== null) {
-                        child.removeAttribute(AU_SLOT);
-                    }
-                    if (isCustomElement) {
-                        childEl = child.nextSibling;
-                        if (!isShadowDom) {
-                            // ignore all whitespace
-                            isEmptyTextNode = child.nodeType === 3 && child.textContent.trim() === '';
-                            if (!isEmptyTextNode) {
-                                ((_a = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_b = targetSlot || DEFAULT_SLOT_NAME] ?? (_a[_b] = [])).push(child);
-                            }
-                            el.removeChild(child);
-                        }
-                        child = childEl;
-                    }
-                    else {
-                        if (targetSlot !== null) {
-                            targetSlot = targetSlot || DEFAULT_SLOT_NAME;
+                    targetSlot = isElement(child) ? child.getAttribute(AU_SLOT) : null;
+                    hasAuSlot = targetSlot !== null || isCustomElement && !isShadowDom;
+                    childEl = child.nextSibling;
+                    if (hasAuSlot) {
+                        if (!isCustomElement) {
                             throw createMappedError(706 /* ErrorNames.compiler_au_slot_on_non_element */, targetSlot, elName);
                         }
-                        child = child.nextSibling;
+                        child.removeAttribute?.(AU_SLOT);
+                        // ignore all whitespace
+                        isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
+                        if (!isEmptyTextNode) {
+                            ((_a = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_b = targetSlot || DEFAULT_SLOT_NAME] ?? (_a[_b] = [])).push(child);
+                        }
+                        el.removeChild(child);
                     }
+                    child = childEl;
                 }
             }
             if (slotTemplateRecord != null) {
@@ -11249,6 +11256,7 @@ class TemplateCompiler {
             let child = el.firstChild;
             let childEl;
             let targetSlot;
+            let hasAuSlot = false;
             let projections = null;
             let slotTemplateRecord;
             let slotTemplates;
@@ -11278,29 +11286,22 @@ class TemplateCompiler {
             //  </my-el>
             if (processContentResult !== false) {
                 while (child !== null) {
-                    targetSlot = child.nodeType === 1 ? child.getAttribute(AU_SLOT) : null;
-                    if (targetSlot !== null) {
-                        child.removeAttribute(AU_SLOT);
-                    }
-                    if (isCustomElement) {
-                        childEl = child.nextSibling;
-                        if (!isShadowDom) {
-                            // ignore all whitespace
-                            isEmptyTextNode = child.nodeType === 3 && child.textContent.trim() === '';
-                            if (!isEmptyTextNode) {
-                                ((_c = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_d = targetSlot || DEFAULT_SLOT_NAME] ?? (_c[_d] = [])).push(child);
-                            }
-                            el.removeChild(child);
-                        }
-                        child = childEl;
-                    }
-                    else {
-                        if (targetSlot !== null) {
-                            targetSlot = targetSlot || DEFAULT_SLOT_NAME;
+                    targetSlot = isElement(child) ? child.getAttribute(AU_SLOT) : null;
+                    hasAuSlot = targetSlot !== null || isCustomElement && !isShadowDom;
+                    childEl = child.nextSibling;
+                    if (hasAuSlot) {
+                        if (!isCustomElement) {
                             throw createMappedError(706 /* ErrorNames.compiler_au_slot_on_non_element */, targetSlot, elName);
                         }
-                        child = child.nextSibling;
+                        child.removeAttribute?.(AU_SLOT);
+                        // ignore all whitespace
+                        isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
+                        if (!isEmptyTextNode) {
+                            ((_c = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_d = targetSlot || DEFAULT_SLOT_NAME] ?? (_c[_d] = [])).push(child);
+                        }
+                        el.removeChild(child);
                     }
+                    child = childEl;
                 }
             }
             if (slotTemplateRecord != null) {
@@ -12194,7 +12195,7 @@ function children(configOrTarget, prop) {
         // Direct call:
         // - @children('div')(Foo)
         config = {
-            filter: (node) => node.nodeType === 1 && node.matches(configOrTarget),
+            filter: (node) => isElement(node) && node.matches(configOrTarget),
             map: el => el
         };
         return decorator;

@@ -7768,6 +7768,18 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             assert.strictEqual(getVisibleText(host), selector);
         }
     }
+    function assertTextContain(selector, text) {
+        if (arguments.length === 2) {
+            const el = strictQueryBy(selector);
+            if (el === null) {
+                throw new Error(`No element found for selector "${selector}" to compare text content with "${text}"`);
+            }
+            assert.includes(getVisibleText(el), text);
+        }
+        else {
+            assert.includes(getVisibleText(host), selector);
+        }
+    }
     function getInnerHtml(el, compact) {
         let actual = el.innerHTML;
         if (compact) {
@@ -7885,6 +7897,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             this.getAllBy = getAllBy;
             this.queryBy = queryBy;
             this.assertText = assertText;
+            this.assertTextContain = assertTextContain;
             this.assertHtml = assertHtml;
             this.assertClass = assertClass;
             this.assertAttr = assertAttr;
@@ -7914,6 +7927,11 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
                 return Promise.resolve(startPromise).then(() => this);
             }
             return Promise.resolve(this);
+        }
+        printHtml() {
+            const html = host.innerHTML;
+            console.log(html);
+            return html;
         }
     }();
     fixtureHooks.publish('fixture:created', fixture);

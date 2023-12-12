@@ -4411,6 +4411,17 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             ve.strictEqual(getVisibleText(d), e);
         }
     }
+    function assertTextContain(e, t) {
+        if (arguments.length === 2) {
+            const n = strictQueryBy(e);
+            if (n === null) {
+                throw new Error(`No element found for selector "${e}" to compare text content with "${t}"`);
+            }
+            ve.includes(getVisibleText(n), t);
+        } else {
+            ve.includes(getVisibleText(d), e);
+        }
+    }
     function getInnerHtml(e, t) {
         let n = e.innerHTML;
         if (t) {
@@ -4526,6 +4537,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             this.getAllBy = getAllBy;
             this.queryBy = queryBy;
             this.assertText = assertText;
+            this.assertTextContain = assertTextContain;
             this.assertHtml = assertHtml;
             this.assertClass = assertClass;
             this.assertAttr = assertAttr;
@@ -4555,6 +4567,11 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
                 return Promise.resolve(x).then((() => this));
             }
             return Promise.resolve(this);
+        }
+        printHtml() {
+            const e = d.innerHTML;
+            console.log(e);
+            return e;
         }
     };
     ke.publish("fixture:created", k);

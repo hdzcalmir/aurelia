@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { customElement, slotted } from '@aurelia/runtime-html';
+import { CustomElement, customElement, slotted } from '@aurelia/runtime-html';
 import { assert, createFixture } from '@aurelia/testing';
 describe('3-runtime-html/au-slot.slotted.spec.ts', function () {
     describe('intitial rendering', function () {
@@ -589,6 +589,38 @@ describe('3-runtime-html/au-slot.slotted.spec.ts', function () {
             flush(); // for text update
             assert.deepStrictEqual(calls, [['default', 2], ['default', 1]]);
         });
+    });
+    describe('with shadow dom', function () {
+        it('works with shadow dom on', function () {
+            const { assertTextContain } = createFixture(`<modal-basic>
+          <div au-slot=test>from \${$host.msg}</div>
+        `, class {
+            }, [CustomElement.define({
+                    name: 'modal-basic',
+                    shadowOptions: { mode: 'open' },
+                    template: '<slot></slot><au-slot name="test"></au-slot>'
+                }, class {
+                    constructor() {
+                        this.msg = 'modal';
+                    }
+                })]);
+            assertTextContain('from modal');
+        });
+    });
+    it('does not interfere with direct text child in shadow dom', function () {
+        const { assertTextContain } = createFixture(`<modal-basic>
+        hi <div au-slot=test>from \${$host.msg}</div>
+      `, class {
+        }, [CustomElement.define({
+                name: 'modal-basic',
+                shadowOptions: { mode: 'open' },
+                template: '<slot></slot><au-slot name="test"></au-slot>'
+            }, class {
+                constructor() {
+                    this.msg = 'modal';
+                }
+            })]);
+        assertTextContain('from modal');
     });
 });
 //# sourceMappingURL=au-slot.slotted.spec.js.map

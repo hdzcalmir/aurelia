@@ -1,10 +1,10 @@
-import { DI as t, IServiceLocator as i, optional as e, IContainer as s, Registration as n, noop as r } from "../kernel/dist/native-modules/index.mjs";
+import { DI as t, IServiceLocator as i, optional as e, IContainer as s, Registration as n, noop as r } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { parsePropertyName as o, ValidationResult as a, ValidateInstruction as l, PropertyRule as h, IValidator as c, getDefaultValidationConfiguration as u, ValidationConfiguration as d } from "../validation/dist/native-modules/index.mjs";
+import { parsePropertyName as o, ValidationResult as a, ValidateInstruction as l, PropertyRule as h, IValidator as c, getDefaultValidationConfiguration as u, ValidationConfiguration as d } from "../../../validation/dist/native-modules/index.mjs";
 
-import { IPlatform as f, bindable as g, INode as v, customAttribute as p, bindingBehavior as m, mixinAstEvaluator as w, PropertyBinding as b, IFlushQueue as _, BindingTargetSubscriber as V, CustomElement as C } from "../runtime-html/dist/native-modules/index.mjs";
+import { IPlatform as f, bindable as g, INode as v, customAttribute as p, bindingBehavior as m, mixinAstEvaluator as w, PropertyBinding as b, IFlushQueue as _, BindingTargetSubscriber as V, CustomElement as C } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-import { astEvaluate as y, IExpressionParser as E, connectable as R, IObserverLocator as B } from "../runtime/dist/native-modules/index.mjs";
+import { astEvaluate as y, IExpressionParser as E, connectable as R, IObserverLocator as B } from "../../../runtime/dist/native-modules/index.mjs";
 
 function __decorate(t, i, e, s) {
     var n = arguments.length, r = n < 3 ? i : s === null ? s = Object.getOwnPropertyDescriptor(i, e) : s, o;

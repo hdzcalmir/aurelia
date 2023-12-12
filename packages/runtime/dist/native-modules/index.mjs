@@ -1,6 +1,6 @@
-import { DI as e, Protocol as t, emptyArray as r, isArrayIndex as n, Registration as i, IPlatform as a } from "../kernel/dist/native-modules/index.mjs";
+import { DI as e, Protocol as t, emptyArray as r, isArrayIndex as n, Registration as i, IPlatform as a } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { Metadata as o } from "../metadata/dist/native-modules/index.mjs";
+import { Metadata as o } from "../../../metadata/dist/native-modules/index.mjs";
 
 const c = Object;
 
