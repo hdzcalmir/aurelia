@@ -354,17 +354,19 @@ class DefaultDialogDomRenderer {
     static register(t) {
         t.register(s(l, this));
     }
-    render(t) {
-        const e = this.p.document;
-        const h = (t, o) => {
-            const s = e.createElement(t);
-            s.style.cssText = o;
+    render(t, e) {
+        const o = this.p.document;
+        const h = (t, e) => {
+            const s = o.createElement(t);
+            s.style.cssText = e;
             return s;
         };
-        const o = t.appendChild(h("au-dialog-container", this.wrapperCss));
-        const s = o.appendChild(h("au-dialog-overlay", this.overlayCss));
-        const i = o.appendChild(h("div", this.hostCss));
-        return new DefaultDialogDom(o, s, i);
+        const {startingZIndex: s} = e;
+        const i = `${this.wrapperCss};${s == null ? "" : `z-index:${s}`}`;
+        const r = t.appendChild(h("au-dialog-container", i));
+        const n = r.appendChild(h("au-dialog-overlay", this.overlayCss));
+        const l = r.appendChild(h("div", this.hostCss));
+        return new DefaultDialogDom(r, n, l);
     }
 }
 

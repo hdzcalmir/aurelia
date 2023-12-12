@@ -433,14 +433,16 @@ class DefaultDialogDomRenderer {
     static register(container) {
         container.register(singletonRegistration(IDialogDomRenderer, this));
     }
-    render(dialogHost) {
+    render(dialogHost, settings) {
         const doc = this.p.document;
         const h = (name, css) => {
             const el = doc.createElement(name);
             el.style.cssText = css;
             return el;
         };
-        const wrapper = dialogHost.appendChild(h('au-dialog-container', this.wrapperCss));
+        const { startingZIndex } = settings;
+        const wrapperCss = `${this.wrapperCss};${startingZIndex == null ? '' : `z-index:${startingZIndex}`}`;
+        const wrapper = dialogHost.appendChild(h('au-dialog-container', wrapperCss));
         const overlay = wrapper.appendChild(h('au-dialog-overlay', this.overlayCss));
         const host = wrapper.appendChild(h('div', this.hostCss));
         return new DefaultDialogDom(wrapper, overlay, host);

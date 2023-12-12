@@ -1,6 +1,6 @@
 import { IContainer } from './di';
 import { Constructable } from './interfaces';
-export type ResourceType<TUserType extends Constructable = Constructable, TResInstance extends {} = {}, TResType extends {} = {}, TUserInstance extends InstanceType<TUserType> = InstanceType<TUserType>> = (new (...args: unknown[]) => TResInstance & TUserInstance) & {
+export type ResourceType<TUserType extends Constructable = Constructable, TResInstance extends {} = {}, TResType extends {} = {}, TUserInstance extends InstanceType<TUserType> = InstanceType<TUserType>> = (new (...args: any[]) => TResInstance & TUserInstance) & {
     readonly aliases?: readonly string[];
 } & TResType & TUserType;
 export type ResourceDefinition<TUserType extends Constructable = Constructable, TResInstance extends {} = {}, TDef extends {} = {}, TResType extends {} = {}, TUserInstance extends InstanceType<TUserType> = InstanceType<TUserType>> = {

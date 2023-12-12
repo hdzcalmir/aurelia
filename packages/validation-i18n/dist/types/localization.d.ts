@@ -21,7 +21,7 @@ export declare class LocalizedValidationMessageProvider extends ValidationMessag
     private readonly i18n;
     private readonly keyPrefix?;
     constructor(keyConfiguration: I18nKeyConfiguration, i18n: I18N, ea: EventAggregator, parser: IExpressionParser, logger: ILogger);
-    getMessage(rule: IValidationRule): Interpolation | PrimitiveLiteralExpression;
+    getMessage(rule: IValidationRule): PrimitiveLiteralExpression | Interpolation;
     getDisplayName(propertyName: string | number | undefined, displayName?: string | null | (() => string)): string | undefined;
     private getKey;
 }

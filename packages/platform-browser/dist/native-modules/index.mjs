@@ -1,4 +1,4 @@
-import { Platform as t, TaskQueue as s } from "../platform/dist/native-modules/index.mjs";
+import { Platform as t, TaskQueue as s } from "../../../platform/dist/native-modules/index.mjs";
 
 const i = new Map;
 

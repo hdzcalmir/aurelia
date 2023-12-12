@@ -38,7 +38,7 @@ export declare class InstructionParameters {
     static contains(parametersToSearch: Parameters, parametersToFind: Parameters): boolean;
     parameters(context: IRouterConfiguration | IRouter | IContainer): IComponentParameter[];
     set(parameters?: ComponentParameters | null): void;
-    get(context: IRouterConfiguration | IRouter | IContainer, name?: string): IComponentParameter[] | unknown | unknown[];
+    get(context: IRouterConfiguration | IRouter | IContainer, name?: string): unknown;
     addParameters(parameters: Parameters): void;
     toSpecifiedParameters(context: IRouterConfiguration | IRouter | IContainer, specifications: string[] | null | undefined): Record<string, unknown>;
     toSortedParameters(context: IRouterConfiguration | IRouter | IContainer, specifications?: string[] | null | undefined): IComponentParameter[];

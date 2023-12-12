@@ -40,7 +40,6 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
     bindings: IBinding[] | null;
     children: Controller[] | null;
     hasLockedScope: boolean;
-    isStrictBinding: boolean;
     scope: Scope | null;
     isBound: boolean;
     hostController: Controller | null;
@@ -253,7 +252,6 @@ export interface ISyntheticView extends IHydratableController {
     readonly vmKind: ViewModelKind.synthetic;
     readonly definition: null;
     readonly viewModel: null;
-    readonly isStrictBinding: boolean;
     /**
      * The physical DOM nodes that will be appended during the attach operation.
      */
@@ -366,7 +364,6 @@ export interface IContextualCustomElementController<C extends IViewModel = IView
  * It has the same properties as `IContextualCustomElementController`, except the context is now compiled (hence 'compiled'), as well as the nodes, and projector.
  */
 export interface ICompiledCustomElementController<C extends IViewModel = IViewModel> extends IContextualCustomElementController<C> {
-    readonly isStrictBinding: boolean;
     /**
      * The ShadowRoot, if this custom element uses ShadowDOM.
      */

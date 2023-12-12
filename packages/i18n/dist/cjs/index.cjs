@@ -408,49 +408,49 @@ class TranslationBinding {
         this.parameter = new ParameterBinding(this, t, (() => this.updateTranslations()));
     }
     updateTranslations() {
-        const t = this.i18n.evaluate(this.A, this.parameter?.value);
-        const n = Object.create(null);
-        const s = [];
-        const r = this.T;
+        const n = this.i18n.evaluate(this.A, this.parameter?.value);
+        const s = Object.create(null);
+        const r = [];
+        const i = this.T;
         this.I.clear();
-        for (const r of t) {
-            const t = r.value;
-            const i = this.R(r.attributes);
-            for (const r of i) {
-                if (this.N(r)) {
-                    n[r] = t;
+        for (const i of n) {
+            const n = i.value;
+            const o = this.R(i.attributes);
+            for (const i of o) {
+                if (this.N(i)) {
+                    s[i] = n;
                 } else {
-                    const n = e.CustomElement.for(this.target, f);
-                    const i = n?.viewModel ? this.oL.getAccessor(n.viewModel, r) : this.oL.getAccessor(this.target, r);
-                    const o = this.B.state !== 1 && (i.type & 4) > 0;
-                    if (o) {
-                        s.push(new AccessorUpdateTask(i, t, this.target, r));
+                    const s = e.CustomElement.for(this.target, f);
+                    const o = s?.viewModel ? this.oL.getAccessor(s.viewModel, t.camelCase(i)) : this.oL.getAccessor(this.target, i);
+                    const a = this.B.state !== 1 && (o.type & 4) > 0;
+                    if (a) {
+                        r.push(new AccessorUpdateTask(o, n, this.target, i));
                     } else {
-                        i.setValue(t, this.target, r);
+                        o.setValue(n, this.target, i);
                     }
-                    this.I.add(i);
+                    this.I.add(o);
                 }
             }
         }
-        let i = false;
-        if (Object.keys(n).length > 0) {
-            i = this.B.state !== 1;
-            if (!i) {
-                this.V(n);
+        let o = false;
+        if (Object.keys(s).length > 0) {
+            o = this.B.state !== 1;
+            if (!o) {
+                this.V(s);
             }
         }
-        if (s.length > 0 || i) {
+        if (r.length > 0 || o) {
             this.T = this.C.queueTask((() => {
                 this.T = null;
-                for (const t of s) {
+                for (const t of r) {
                     t.run();
                 }
-                if (i) {
-                    this.V(n);
+                if (o) {
+                    this.V(s);
                 }
             }), d);
         }
-        r?.cancel();
+        i?.cancel();
     }
     R(t) {
         if (t.length === 0) {

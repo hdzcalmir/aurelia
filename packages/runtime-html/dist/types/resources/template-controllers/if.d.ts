@@ -14,9 +14,10 @@ export declare class If implements ICustomAttributeViewModel {
      */
     cache: boolean;
     private pending;
-    attaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void>;
+    attaching(_initiator: IHydratedController, _parent: IHydratedController): void | Promise<void>;
     detaching(initiator: IHydratedController, _parent: IHydratedParentController): void | Promise<void>;
     valueChanged(newValue: unknown, oldValue: unknown): void | Promise<void>;
+    private _swap;
     dispose(): void;
     accept(visitor: ControllerVisitor): void | true;
 }

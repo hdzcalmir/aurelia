@@ -19,12 +19,6 @@ export interface IRouteNode {
     children?: RouteNode[];
     residue?: ViewportInstruction[];
 }
-export interface RouteNodeMatchOptions {
-    /** Endpoints will be matched instead of instruction */
-    matchEndpoint: boolean;
-    /** Original instruction will be matched */
-    matchOriginalInstruction: boolean;
-}
 export declare class RouteNode implements IRouteNode {
     /**
      * The original configured path pattern that was matched.
@@ -50,7 +44,6 @@ export declare class RouteNode implements IRouteNode {
     readonly data: Readonly<Record<string, unknown>>;
     readonly title: string | ((node: RouteNode) => string | null) | null;
     readonly component: CustomElementDefinition;
-    readonly children: RouteNode[];
     /**
      * Not-yet-resolved viewport instructions.
      *
@@ -62,11 +55,12 @@ export declare class RouteNode implements IRouteNode {
     readonly residue: ViewportInstruction[];
     get root(): RouteNode;
     get isInstructionsFinalized(): boolean;
+    readonly children: RouteNode[];
     private constructor();
     static create(input: IRouteNode & {
         originalInstruction?: ViewportInstruction<ITypedNavigationInstruction_ResolvedComponent> | null;
     }): RouteNode;
-    contains(instructions: ViewportInstructionTree, options: Partial<RouteNodeMatchOptions>): boolean;
+    contains(instructions: ViewportInstructionTree, matchEndpoint?: boolean): boolean;
     getTitle(separator: string): string | null;
     computeAbsolutePath(): string;
     toString(): string;
@@ -77,7 +71,7 @@ export declare class RouteTree {
     readonly fragment: string | null;
     root: RouteNode;
     constructor(options: NavigationOptions, queryParams: Readonly<URLSearchParams>, fragment: string | null, root: RouteNode);
-    contains(instructions: ViewportInstructionTree, options: Partial<RouteNodeMatchOptions>): boolean;
+    contains(instructions: ViewportInstructionTree, matchEndpoint?: boolean): boolean;
     toString(): string;
 }
 export declare function createAndAppendNodes(log: ILogger, node: RouteNode, vi: ViewportInstruction): void | Promise<void>;

@@ -82,7 +82,7 @@ export declare class Runner {
      * the run as well as cancel it
      *
      */
-    static step(value: unknown | Promise<unknown>): Step | undefined;
+    static step(value: unknown): Step | undefined;
     /**
      * Cancels the remaining steps for a step or promise returned by Runner.run
      *
@@ -90,7 +90,7 @@ export declare class Runner {
      * to retrieve it from the promise
      *
      */
-    static cancel(value: unknown | Promise<unknown>): void;
+    static cancel(value: unknown): void;
     private static add;
     private static connect;
     static roots: any;

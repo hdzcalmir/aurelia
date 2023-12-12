@@ -51,12 +51,13 @@ function __param(paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 }
 
-let DevServer = class DevServer {
+var DevServer_1;
+let DevServer = DevServer_1 = class DevServer {
     constructor(container) {
         this.container = container;
     }
     static create(container = DI.createContainer()) {
-        return new DevServer(container);
+        return new DevServer_1(container);
     }
     async run(option) {
         // wireup
@@ -69,7 +70,7 @@ let DevServer = class DevServer {
         await server.start();
     }
 };
-DevServer = __decorate([
+DevServer = DevServer_1 = __decorate([
     __param(0, IContainer)
 ], DevServer);
 

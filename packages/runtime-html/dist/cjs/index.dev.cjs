@@ -466,7 +466,6 @@ const getMessageByCode = (name, ...details) => {
                     }
                 }
             }
-            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
             cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
             matches = regex.exec(cooked);
         }
@@ -1106,7 +1105,6 @@ const CustomAttribute = objectFreeze({
     getAnnotation: getAttributeAnnotation,
 });
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 function watch(expressionOrPropertyAccessFn, changeHandlerOrCallback) {
     if (expressionOrPropertyAccessFn == null) {
         throw createMappedError(772 /* ErrorNames.watch_null_config */);
@@ -1201,18 +1199,10 @@ function markContainerless(target) {
     }
     def.containerless = true;
 }
-function strict(target) {
-    if (target === void 0) {
-        return function ($target) {
-            annotateElementMetadata($target, 'isStrictBinding', true);
-        };
-    }
-    annotateElementMetadata(target, 'isStrictBinding', true);
-}
 const definitionLookup = new WeakMap();
 class CustomElementDefinition {
     get type() { return 1 /* DefinitionType.Element */; }
-    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, isStrictBinding, shadowOptions, 
+    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, shadowOptions, 
     /**
      * Indicates whether the custom element has <slot/> in its template
      */
@@ -1231,7 +1221,6 @@ class CustomElementDefinition {
         this.surrogates = surrogates;
         this.bindables = bindables;
         this.containerless = containerless;
-        this.isStrictBinding = isStrictBinding;
         this.shadowOptions = shadowOptions;
         this.hasSlots = hasSlots;
         this.enhance = enhance;
@@ -1254,19 +1243,19 @@ class CustomElementDefinition {
             else {
                 Type = generateElementType(kernel.pascalCase(name));
             }
-            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromDefinitionOrDefault('capture', def, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), kernel.fromDefinitionOrDefault('containerless', def, returnFalse), kernel.fromDefinitionOrDefault('isStrictBinding', def, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromDefinitionOrDefault('capture', def, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), kernel.fromDefinitionOrDefault('containerless', def, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // If a type is passed in, we ignore the Type property on the definition if it exists.
         // TODO: document this behavior
         if (isString(nameOrDef)) {
-            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('isStrictBinding', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // This is the typical default behavior, e.g. from regular CustomElement.define invocations or from @customElement deco
         // The ViewValueConverter also uses this signature and passes in a definition where everything except for the 'hooks'
         // property needs to be copied. So we have that exception for 'hooks', but we may need to revisit that default behavior
         // if this turns out to be too opinionated.
         const name = kernel.fromDefinitionOrDefault('name', nameOrDef, generateElementName);
-        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('isStrictBinding', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
+        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
     }
     static getOrCreate(partialDefinition) {
         if (partialDefinition instanceof CustomElementDefinition) {
@@ -3116,6 +3105,60 @@ class ViewFactory {
 }
 ViewFactory.maxCacheSize = 0xFFFF;
 
+/** @internal */
+const auLocationStart = 'au-start';
+/** @internal */
+const auLocationEnd = 'au-end';
+/** @internal */
+const createElement 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+= (p, name) => p.document.createElement(name);
+/** @internal */
+const createComment = (p, text) => p.document.createComment(text);
+/** @internal */
+const createLocation = (p) => {
+    const locationEnd = createComment(p, auLocationEnd);
+    locationEnd.$start = createComment(p, auLocationStart);
+    return locationEnd;
+};
+/** @internal */
+const createText = (p, text) => p.document.createTextNode(text);
+/** @internal */
+const insertBefore = (parent, newChildNode, target) => {
+    return parent.insertBefore(newChildNode, target);
+};
+/** @internal */
+const insertManyBefore = (parent, target, newChildNodes) => {
+    if (parent === null) {
+        return;
+    }
+    const ii = newChildNodes.length;
+    let i = 0;
+    while (ii > i) {
+        parent.insertBefore(newChildNodes[i], target);
+        ++i;
+    }
+};
+/** @internal */
+const appendToTemplate = (parent, child) => {
+    return parent.content.appendChild(child);
+};
+/** @internal */
+const appendManyToTemplate = (parent, children) => {
+    const ii = children.length;
+    let i = 0;
+    while (ii > i) {
+        parent.content.appendChild(children[i]);
+        ++i;
+    }
+};
+/** @internal */
+const createMutationObserver = (node, callback) => new node.ownerDocument.defaultView.MutationObserver(callback);
+/** @internal */
+const isElement = (node) => node.nodeType === 1;
+/** @internal */
+const isTextNode = (node) => node.nodeType === 3;
+
 /**
  * Describing the projection information statically available for a custom element
  */
@@ -3167,7 +3210,7 @@ class AuSlotWatcherBinding {
         let node;
         for ($slot of this._slots) {
             for (node of $slot === slot ? nodes : $slot.nodes) {
-                if (this._query === '*' || (node.nodeType === 1 && node.matches(this._query))) {
+                if (this._query === '*' || (isElement(node) && node.matches(this._query))) {
                     $nodes[$nodes.length] = node;
                 }
             }
@@ -3291,9 +3334,6 @@ class SpreadBinding {
     }
     get definition() {
         return this.$controller.definition;
-    }
-    get isStrictBinding() {
-        return this.$controller.isStrictBinding;
     }
     get state() {
         return this.$controller.state;
@@ -3492,16 +3532,8 @@ class LetBindingInstruction {
     }
 }
 class TextBindingInstruction {
-    constructor(from, 
-    /**
-     * Indicates whether the value of the expression "from"
-     * should be evaluated in strict mode.
-     *
-     * In none strict mode, "undefined" and "null" are coerced into empty string
-     */
-    strict) {
+    constructor(from) {
         this.from = from;
-        this.strict = strict;
         this.type = "ha" /* InstructionType.textBinding */;
     }
 }
@@ -4345,7 +4377,6 @@ class Controller {
         this.bindings = null;
         this.children = null;
         this.hasLockedScope = false;
-        this.isStrictBinding = false;
         this.scope = null;
         this.isBound = false;
         /** @internal */
@@ -4557,9 +4588,8 @@ class Controller {
             this._vm.hydrating(this);
         }
         const compiledDef = this._compiledDef = this._rendering.compile(this.definition, this.container, hydrationInst);
-        const { shadowOptions, isStrictBinding, hasSlots, containerless } = compiledDef;
+        const { shadowOptions, hasSlots, containerless } = compiledDef;
         let location = this.location;
-        this.isStrictBinding = isStrictBinding;
         if ((this.hostController = findElementControllerFor(this.host, optionalCeFind)) !== null) {
             this.host = this.container.root.get(IPlatform).document.createElement(this.definition.name);
             if (containerless && location == null) {
@@ -4639,7 +4669,6 @@ class Controller {
     /** @internal */
     _hydrateSynthetic() {
         this._compiledDef = this._rendering.compile(this.viewFactory.def, this.container, null);
-        this.isStrictBinding = this._compiledDef.isStrictBinding;
         this._rendering.render(
         /* controller */ this, 
         /* targets    */ (this.nodes = this._rendering.createNodes(this._compiledDef)).findTargets(), 
@@ -4692,7 +4721,6 @@ class Controller {
                 }
                 break;
         }
-        if (this.isStrictBinding) ;
         this.$initiator = initiator;
         // opposing leave is called in attach() (which will trigger attached())
         this._enterActivating();
@@ -6823,56 +6851,6 @@ class DataAttributeAccessor {
 mixinNoopSubscribable(DataAttributeAccessor);
 const attrAccessor = new DataAttributeAccessor();
 
-/** @internal */
-const auLocationStart = 'au-start';
-/** @internal */
-const auLocationEnd = 'au-end';
-/** @internal */
-const createElement 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-= (p, name) => p.document.createElement(name);
-/** @internal */
-const createComment = (p, text) => p.document.createComment(text);
-/** @internal */
-const createLocation = (p) => {
-    const locationEnd = createComment(p, auLocationEnd);
-    locationEnd.$start = createComment(p, auLocationStart);
-    return locationEnd;
-};
-/** @internal */
-const createText = (p, text) => p.document.createTextNode(text);
-/** @internal */
-const insertBefore = (parent, newChildNode, target) => {
-    return parent.insertBefore(newChildNode, target);
-};
-/** @internal */
-const insertManyBefore = (parent, target, newChildNodes) => {
-    if (parent === null) {
-        return;
-    }
-    const ii = newChildNodes.length;
-    let i = 0;
-    while (ii > i) {
-        parent.insertBefore(newChildNodes[i], target);
-        ++i;
-    }
-};
-/** @internal */
-const appendToTemplate = (parent, child) => {
-    return parent.content.appendChild(child);
-};
-/** @internal */
-const appendManyToTemplate = (parent, children) => {
-    const ii = children.length;
-    let i = 0;
-    while (ii > i) {
-        parent.content.appendChild(children[i]);
-        ++i;
-    }
-};
-/** @internal */
-const createMutationObserver = (node, callback) => new node.ownerDocument.defaultView.MutationObserver(callback);
-
 const childObserverOptions$1 = {
     childList: true,
     subtree: true,
@@ -7517,6 +7495,15 @@ class NodeObserverLocator {
             case 'size':
             case 'pattern':
             case 'title':
+            case 'popovertarget':
+            case 'popovertargetaction':
+                /* istanbul-ignore-next */
+                {
+                    if ((key === 'popovertarget' || key === 'popovertargetaction') && obj.nodeName !== 'INPUT' && obj.nodeName !== 'BUTTON') {
+                        // eslint-disable-next-line no-console
+                        console.warn(`[aurelia] Popover API are only valid on <input> or <button>. Detected ${key} on <${obj.nodeName.toLowerCase()}>`);
+                    }
+                }
                 // assigning null/undefined to size on input is an error
                 // though it may be fine on other elements.
                 // todo: make an effort to distinguish properties based on element name
@@ -7944,49 +7931,8 @@ class If {
         /** @internal */ this._ifFactory = kernel.resolve(IViewFactory);
         /** @internal */ this._location = kernel.resolve(IRenderLocation);
     }
-    attaching(initiator, _parent) {
-        let view;
-        const ctrl = this.$controller;
-        const swapId = this._swapId++;
-        /**
-         * returns true when
-         * 1. entering deactivation of the [if] itself
-         * 2. new swap has started since this change
-         */
-        const isCurrent = () => !this._wantsDeactivate && this._swapId === swapId + 1;
-        return kernel.onResolve(this.pending, () => {
-            if (!isCurrent()) {
-                return;
-            }
-            this.pending = void 0;
-            if (this.value) {
-                view = (this.view = this.ifView = this.cache && this.ifView != null
-                    ? this.ifView
-                    : this._ifFactory.create());
-            }
-            else {
-                // truthy -> falsy
-                view = (this.view = this.elseView = this.cache && this.elseView != null
-                    ? this.elseView
-                    : this.elseFactory?.create());
-            }
-            // if the value is falsy
-            // and there's no [else], `view` will be null
-            if (view == null) {
-                return;
-            }
-            // todo: location should be based on either the [if]/[else] attribute
-            //       instead of always of the [if]
-            view.setLocation(this._location);
-            // Promise return values from user VM hooks are awaited by the initiator
-            this.pending = kernel.onResolve(view.activate(initiator, ctrl, ctrl.scope), () => {
-                if (isCurrent()) {
-                    this.pending = void 0;
-                }
-            });
-            // old
-            // void (this.view = this.updateView(this.value, f))?.activate(initiator, this.ctrl, f, this.ctrl.scope);
-        });
+    attaching(_initiator, _parent) {
+        return this._swap(this.value);
     }
     detaching(initiator, _parent) {
         this._wantsDeactivate = true;
@@ -7998,19 +7944,14 @@ class If {
         });
     }
     valueChanged(newValue, oldValue) {
-        if (!this.$controller.isActive) {
+        if (!this.$controller.isActive)
             return;
-        }
-        // change scenarios:
-        // truthy -> truthy (do nothing)
-        // falsy -> falsy (do nothing)
-        // truthy -> falsy (no cache = destroy)
-        // falsy -> truthy (no view = create)
         newValue = !!newValue;
         oldValue = !!oldValue;
-        if (newValue === oldValue) {
-            return;
-        }
+        if (newValue !== oldValue)
+            return this._swap(newValue);
+    }
+    _swap(value) {
         const currView = this.view;
         const ctrl = this.$controller;
         const swapId = this._swapId++;
@@ -8026,7 +7967,7 @@ class If {
                 return;
             }
             // falsy -> truthy
-            if (newValue) {
+            if (value) {
                 view = (this.view = this.ifView = this.cache && this.ifView != null
                     ? this.ifView
                     : this._ifFactory.create());
@@ -8105,6 +8046,7 @@ const wrappedExprs = [
 class Repeat {
     constructor(instruction, parser, location, parent, factory) {
         this.views = [];
+        this._oldViews = [];
         this.key = null;
         /** @internal */ this._keyMap = new Map();
         /** @internal */ this._scopeMap = new Map();
@@ -8203,6 +8145,7 @@ class Repeat {
     /** @internal */
     _applyIndexMap(collection, indexMap) {
         const oldViews = this.views;
+        this._oldViews = oldViews.slice();
         const oldLen = oldViews.length;
         const key = this.key;
         const hasKey = key !== null;
@@ -8368,12 +8311,11 @@ class Repeat {
             }
         }
         else {
-            const $indexMap = runtime.applyMutationsToIndices(indexMap);
             // first detach+unbind+(remove from array) the deleted view indices
-            if ($indexMap.deletedIndices.length > 0) {
-                const ret = kernel.onResolve(this._deactivateAndRemoveViewsByKey($indexMap), () => {
+            if (indexMap.deletedIndices.length > 0) {
+                const ret = kernel.onResolve(this._deactivateAndRemoveViewsByKey(indexMap), () => {
                     // TODO(fkleuver): add logic to the controller that ensures correct handling of race conditions and add a variety of `if` integration tests
-                    return this._createAndActivateAndSortViewsByKey(oldLen, $indexMap);
+                    return this._createAndActivateAndSortViewsByKey(oldLen, indexMap);
                 });
                 if (isPromise(ret)) {
                     ret.catch(rethrow);
@@ -8382,7 +8324,7 @@ class Repeat {
             else {
                 // TODO(fkleuver): add logic to the controller that ensures correct handling of race conditions and add integration tests
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this._createAndActivateAndSortViewsByKey(oldLen, $indexMap);
+                this._createAndActivateAndSortViewsByKey(oldLen, indexMap);
             }
         }
     }
@@ -8477,7 +8419,7 @@ class Repeat {
         let ret;
         let view;
         const { $controller, views } = this;
-        const deleted = indexMap.deletedIndices;
+        const deleted = indexMap.deletedIndices.slice().sort(compareNumber);
         const deletedLen = deleted.length;
         let i = 0;
         for (; deletedLen > i; ++i) {
@@ -8489,10 +8431,8 @@ class Repeat {
             }
         }
         i = 0;
-        let j = 0;
         for (; deletedLen > i; ++i) {
-            j = deleted[i] - i;
-            views.splice(j, 1);
+            views.splice(deleted[i] - i, 1);
         }
         if (promises !== void 0) {
             return promises.length === 1
@@ -8507,7 +8447,7 @@ class Repeat {
         let view;
         let viewScope;
         let i = 0;
-        const { $controller, _factory, local, _normalizedItems, _location, views, _hasDestructuredLocal, _forOfBinding, _scopeMap, forOf } = this;
+        const { $controller, _factory, local, _normalizedItems, _location, views, _hasDestructuredLocal, _forOfBinding, _scopeMap, _oldViews, forOf } = this;
         const mapLen = indexMap.length;
         for (; mapLen > i; ++i) {
             if (indexMap[i] === -2) {
@@ -8520,7 +8460,13 @@ class Repeat {
         }
         const parentScope = $controller.scope;
         const newLen = indexMap.length;
-        runtime.synchronizeIndices(views, indexMap);
+        let source = 0;
+        i = 0;
+        for (; i < indexMap.length; ++i) {
+            if ((source = indexMap[i]) !== -2) {
+                views[i] = _oldViews[source];
+            }
+        }
         // this algorithm retrieves the indices of the longest increasing subsequence of items in the repeater
         // the items on those indices are not moved; this minimizes the number of DOM operations that need to be performed
         const seq = longestIncreasingSubsequence(indexMap);
@@ -8760,6 +8706,7 @@ const ensureUnique = (item, index) => {
             return item;
     }
 };
+const compareNumber = (a, b) => a - b;
 
 class With {
     constructor() {
@@ -9979,9 +9926,7 @@ class AuCompose {
             comp = this._getComp(childCtn, component, compositionHost);
         }
         else {
-            compositionHost = loc == null
-                ? host
-                : loc;
+            compositionHost = loc ?? host;
             comp = this._getComp(childCtn, component, compositionHost);
         }
         const compose = () => {
@@ -11052,7 +10997,7 @@ class TemplateCompiler {
                     // so anything attempting to project into it is discarded
                     // doing so during compilation via removing the node,
                     // instead of considering it as part of the fallback view
-                    if (node.nodeType === 1 && node.hasAttribute(AU_SLOT)) {
+                    if (isElement(node) && node.hasAttribute(AU_SLOT)) {
                         {
                             // eslint-disable-next-line no-console
                             console.warn(`[DEV:aurelia] detected [au-slot] attribute on a child node`, `of an <au-slot> element: "<${node.nodeName} au-slot>".`, `This element will be ignored and removed`);
@@ -11126,6 +11071,7 @@ class TemplateCompiler {
             const childContext = context._createChild(instructions == null ? [] : [instructions]);
             let childEl;
             let targetSlot;
+            let hasAuSlot = false;
             let projections;
             let slotTemplateRecord;
             let slotTemplates;
@@ -11157,29 +11103,22 @@ class TemplateCompiler {
             let isEmptyTextNode = false;
             if (processContentResult !== false) {
                 while (child !== null) {
-                    targetSlot = child.nodeType === 1 ? child.getAttribute(AU_SLOT) : null;
-                    if (targetSlot !== null) {
-                        child.removeAttribute(AU_SLOT);
-                    }
-                    if (isCustomElement) {
-                        childEl = child.nextSibling;
-                        if (!isShadowDom) {
-                            // ignore all whitespace
-                            isEmptyTextNode = child.nodeType === 3 && child.textContent.trim() === '';
-                            if (!isEmptyTextNode) {
-                                ((_a = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_b = targetSlot || DEFAULT_SLOT_NAME] ?? (_a[_b] = [])).push(child);
-                            }
-                            el.removeChild(child);
-                        }
-                        child = childEl;
-                    }
-                    else {
-                        if (targetSlot !== null) {
-                            targetSlot = targetSlot || DEFAULT_SLOT_NAME;
+                    targetSlot = isElement(child) ? child.getAttribute(AU_SLOT) : null;
+                    hasAuSlot = targetSlot !== null || isCustomElement && !isShadowDom;
+                    childEl = child.nextSibling;
+                    if (hasAuSlot) {
+                        if (!isCustomElement) {
                             throw createMappedError(706 /* ErrorNames.compiler_au_slot_on_non_element */, targetSlot, elName);
                         }
-                        child = child.nextSibling;
+                        child.removeAttribute?.(AU_SLOT);
+                        // ignore all whitespace
+                        isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
+                        if (!isEmptyTextNode) {
+                            ((_a = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_b = targetSlot || DEFAULT_SLOT_NAME] ?? (_a[_b] = [])).push(child);
+                        }
+                        el.removeChild(child);
                     }
+                    child = childEl;
                 }
             }
             if (slotTemplateRecord != null) {
@@ -11229,7 +11168,6 @@ class TemplateCompiler {
                         template,
                         instructions: projectionCompilationContext.rows,
                         needsCompile: false,
-                        isStrictBinding: context.root.def.isStrictBinding,
                     });
                 }
                 elementInstruction.projections = projections;
@@ -11265,7 +11203,6 @@ class TemplateCompiler {
                 template: mostInnerTemplate,
                 instructions: childContext.rows,
                 needsCompile: false,
-                isStrictBinding: context.root.def.isStrictBinding,
             });
             // 4.1.2.
             //  Start processing other Template controllers by walking the TC list (list 1) RIGHT -> LEFT
@@ -11296,7 +11233,6 @@ class TemplateCompiler {
                     template,
                     needsCompile: false,
                     instructions: [[tcInstructions[i + 1]]],
-                    isStrictBinding: context.root.def.isStrictBinding,
                 });
             }
             // the most outer template controller should be
@@ -11324,6 +11260,7 @@ class TemplateCompiler {
             let child = el.firstChild;
             let childEl;
             let targetSlot;
+            let hasAuSlot = false;
             let projections = null;
             let slotTemplateRecord;
             let slotTemplates;
@@ -11353,29 +11290,22 @@ class TemplateCompiler {
             //  </my-el>
             if (processContentResult !== false) {
                 while (child !== null) {
-                    targetSlot = child.nodeType === 1 ? child.getAttribute(AU_SLOT) : null;
-                    if (targetSlot !== null) {
-                        child.removeAttribute(AU_SLOT);
-                    }
-                    if (isCustomElement) {
-                        childEl = child.nextSibling;
-                        if (!isShadowDom) {
-                            // ignore all whitespace
-                            isEmptyTextNode = child.nodeType === 3 && child.textContent.trim() === '';
-                            if (!isEmptyTextNode) {
-                                ((_c = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_d = targetSlot || DEFAULT_SLOT_NAME] ?? (_c[_d] = [])).push(child);
-                            }
-                            el.removeChild(child);
-                        }
-                        child = childEl;
-                    }
-                    else {
-                        if (targetSlot !== null) {
-                            targetSlot = targetSlot || DEFAULT_SLOT_NAME;
+                    targetSlot = isElement(child) ? child.getAttribute(AU_SLOT) : null;
+                    hasAuSlot = targetSlot !== null || isCustomElement && !isShadowDom;
+                    childEl = child.nextSibling;
+                    if (hasAuSlot) {
+                        if (!isCustomElement) {
                             throw createMappedError(706 /* ErrorNames.compiler_au_slot_on_non_element */, targetSlot, elName);
                         }
-                        child = child.nextSibling;
+                        child.removeAttribute?.(AU_SLOT);
+                        // ignore all whitespace
+                        isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
+                        if (!isEmptyTextNode) {
+                            ((_c = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_d = targetSlot || DEFAULT_SLOT_NAME] ?? (_c[_d] = [])).push(child);
+                        }
+                        el.removeChild(child);
                     }
+                    child = childEl;
                 }
             }
             if (slotTemplateRecord != null) {
@@ -11421,7 +11351,6 @@ class TemplateCompiler {
                         template,
                         instructions: projectionCompilationContext.rows,
                         needsCompile: false,
-                        isStrictBinding: context.root.def.isStrictBinding,
                     });
                 }
                 elementInstruction.projections = projections;
@@ -11477,7 +11406,7 @@ class TemplateCompiler {
                     insertBefore(parent, context._text(part), node);
                 }
                 // and the corresponding instruction
-                context.rows.push([new TextBindingInstruction(expressions[i], context.root.def.isStrictBinding)]);
+                context.rows.push([new TextBindingInstruction(expressions[i])]);
             }
             parent.removeChild(node);
         }
@@ -12270,7 +12199,7 @@ function children(configOrTarget, prop) {
         // Direct call:
         // - @children('div')(Foo)
         config = {
-            filter: (node) => node.nodeType === 1 && node.matches(configOrTarget),
+            filter: (node) => isElement(node) && node.matches(configOrTarget),
             map: el => el
         };
         return decorator;
@@ -12564,7 +12493,6 @@ exports.setEffectiveParentNode = setEffectiveParentNode;
 exports.setRef = setRef;
 exports.shadowCSS = shadowCSS;
 exports.slotted = slotted;
-exports.strict = strict;
 exports.templateCompilerHooks = templateCompilerHooks;
 exports.templateController = templateController;
 exports.useShadowDOM = useShadowDOM;

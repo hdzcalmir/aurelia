@@ -1,6 +1,6 @@
-import { DI as t, Registration as e, IContainer as i, onResolve as o, InstanceProvider as s, resolve as r, onResolveAll as n, noop as l } from "../kernel/dist/native-modules/index.mjs";
+import { DI as t, Registration as e, IContainer as i, onResolve as o, InstanceProvider as s, resolve as n, onResolveAll as r, noop as l } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { IPlatform as a, IEventTarget as c, INode as u, Controller as g, CustomElementDefinition as D, CustomElement as f, AppTask as m } from "../runtime-html/dist/native-modules/index.mjs";
+import { IPlatform as a, IEventTarget as c, INode as u, Controller as g, CustomElementDefinition as D, CustomElement as f, AppTask as m } from "../../../runtime-html/dist/native-modules/index.mjs";
 
 const d = t.createInterface;
 
@@ -69,10 +69,10 @@ class DialogController {
     }
     activate(t) {
         const e = this.ctn.createChild();
-        const {model: i, template: s, rejectOnCancel: r} = t;
-        const n = e.get(E);
+        const {model: i, template: s, rejectOnCancel: n} = t;
+        const r = e.get(E);
         const l = t.host ?? this.p.document.body;
-        const a = this.dom = n.render(l, t);
+        const a = this.dom = r.render(l, t);
         const m = e.has(c, true) ? e.get(c) : null;
         const d = a.contentHost;
         this.settings = t;
@@ -85,10 +85,10 @@ class DialogController {
                 $dialog: this
             });
             o(s.canActivate?.(i) ?? true);
-        })).then((n => {
-            if (n !== true) {
+        })).then((r => {
+            if (r !== true) {
                 a.dispose();
-                if (r) {
+                if (n) {
                     throw createDialogCancelError(null, "Dialog activation rejected");
                 }
                 return DialogOpenResult.create(true, this);
@@ -114,10 +114,10 @@ class DialogController {
             return this.u;
         }
         let i = true;
-        const {controller: s, dom: r, cmp: n, settings: {mouseEvent: l, rejectOnCancel: a}} = this;
+        const {controller: s, dom: n, cmp: r, settings: {mouseEvent: l, rejectOnCancel: a}} = this;
         const c = DialogCloseResult.create(t, e);
         const u = new Promise((u => {
-            u(o(n.canDeactivate?.(c) ?? true, (u => {
+            u(o(r.canDeactivate?.(c) ?? true, (u => {
                 if (u !== true) {
                     i = false;
                     this.u = void 0;
@@ -126,9 +126,9 @@ class DialogController {
                     }
                     return DialogCloseResult.create("abort");
                 }
-                return o(n.deactivate?.(c), (() => o(s.deactivate(s, null), (() => {
-                    r.dispose();
-                    r.overlay.removeEventListener(l ?? "click", this);
+                return o(r.deactivate?.(c), (() => o(s.deactivate(s, null), (() => {
+                    n.dispose();
+                    n.overlay.removeEventListener(l ?? "click", this);
                     if (!a && t !== "error") {
                         this.t(c);
                     } else {
@@ -170,8 +170,8 @@ class DialogController {
         if (typeof o === "object") {
             return o;
         }
-        const r = this.p;
-        t.registerResolver(r.HTMLElement, t.registerResolver(r.Element, t.registerResolver(u, new s("ElementResolver", i))));
+        const n = this.p;
+        t.registerResolver(n.HTMLElement, t.registerResolver(n.Element, t.registerResolver(u, new s("ElementResolver", i))));
         return t.invoke(o);
     }
     getDefinition(t) {
@@ -199,9 +199,9 @@ function createDialogCloseError(t) {
 class DialogService {
     constructor() {
         this.dlgs = [];
-        this.h = r(i);
-        this.p = r(a);
-        this.C = r(b);
+        this.h = n(i);
+        this.p = n(a);
+        this.C = n(b);
     }
     static register(t) {
         t.register(p(this, this), e.aliasTo(this, v), m.deactivating(v, (t => o(t.closeAll(), (t => {
@@ -282,7 +282,7 @@ class DialogSettings {
         const t = this;
         const e = this.component;
         const i = this.template;
-        const s = n(...[ e == null ? void 0 : o(e(), (e => {
+        const s = r(...[ e == null ? void 0 : o(e(), (e => {
             t.component = e;
         })), isFunction(i) ? o(i(), (e => {
             t.template = e;
@@ -340,7 +340,7 @@ const O = "position:absolute;width:100%;height:100%;top:0;left:0;";
 
 class DefaultDialogDomRenderer {
     constructor() {
-        this.p = r(a);
+        this.p = n(a);
         this.wrapperCss = `${O} display:flex;`;
         this.overlayCss = O;
         this.hostCss = "position:relative;margin:auto;";
@@ -348,17 +348,19 @@ class DefaultDialogDomRenderer {
     static register(t) {
         t.register(p(E, this));
     }
-    render(t) {
-        const e = this.p.document;
-        const h = (t, i) => {
-            const o = e.createElement(t);
-            o.style.cssText = i;
+    render(t, e) {
+        const i = this.p.document;
+        const h = (t, e) => {
+            const o = i.createElement(t);
+            o.style.cssText = e;
             return o;
         };
-        const i = t.appendChild(h("au-dialog-container", this.wrapperCss));
-        const o = i.appendChild(h("au-dialog-overlay", this.overlayCss));
-        const s = i.appendChild(h("div", this.hostCss));
-        return new DefaultDialogDom(i, o, s);
+        const {startingZIndex: o} = e;
+        const s = `${this.wrapperCss};${o == null ? "" : `z-index:${o}`}`;
+        const n = t.appendChild(h("au-dialog-container", s));
+        const r = n.appendChild(h("au-dialog-overlay", this.overlayCss));
+        const l = n.appendChild(h("div", this.hostCss));
+        return new DefaultDialogDom(n, r, l);
     }
 }
 

@@ -64,9 +64,9 @@ const I = uncurryThis(Boolean.prototype.valueOf);
 
 const M = uncurryThis(Number.prototype.valueOf);
 
-const N = uncurryThis(Symbol.prototype.valueOf);
+const R = uncurryThis(Symbol.prototype.valueOf);
 
-const R = uncurryThis(String.prototype.valueOf);
+const P = uncurryThis(String.prototype.valueOf);
 
 function isNumber(e) {
     return typeof e === "number";
@@ -224,7 +224,7 @@ function getEnumerables(e, t) {
     return t.filter((t => w(e, t)));
 }
 
-const P = g({
+const N = g({
     bold(e) {
         return `[1m${e}[22m`;
     },
@@ -293,7 +293,7 @@ function join(e, t) {
     return n;
 }
 
-const U = g([ "\\u0000", "\\u0001", "\\u0002", "\\u0003", "\\u0004", "\\u0005", "\\u0006", "\\u0007", "\\b", "\\t", "\\n", "\\u000b", "\\f", "\\r", "\\u000e", "\\u000f", "\\u0010", "\\u0011", "\\u0012", "\\u0013", "\\u0014", "\\u0015", "\\u0016", "\\u0017", "\\u0018", "\\u0019", "\\u001a", "\\u001b", "\\u001c", "\\u001d", "\\u001e", "\\u001f", "", "", "", "", "", "", "", "\\'", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "\\\\" ]);
+const Q = g([ "\\u0000", "\\u0001", "\\u0002", "\\u0003", "\\u0004", "\\u0005", "\\u0006", "\\u0007", "\\b", "\\t", "\\n", "\\u000b", "\\f", "\\r", "\\u000e", "\\u000f", "\\u0010", "\\u0011", "\\u0012", "\\u0013", "\\u0014", "\\u0015", "\\u0016", "\\u0017", "\\u0018", "\\u0019", "\\u001a", "\\u001b", "\\u001c", "\\u001d", "\\u001e", "\\u001f", "", "", "", "", "", "", "", "\\'", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "\\\\" ]);
 
 function addQuotes(e, t) {
     if (t === -1) {
@@ -305,7 +305,7 @@ function addQuotes(e, t) {
     return `'${e}'`;
 }
 
-const escapeFn = e => U[e.charCodeAt(0)];
+const escapeFn = e => Q[e.charCodeAt(0)];
 
 function escapeAndQuoteString(e) {
     let t = L;
@@ -334,9 +334,9 @@ function escapeAndQuoteString(e) {
         const t = e.charCodeAt(s);
         if (t === i || t === 92 || t < 32) {
             if (a === s) {
-                r += U[t];
+                r += Q[t];
             } else {
-                r += `${e.slice(a, s)}${U[t]}`;
+                r += `${e.slice(a, s)}${Q[t]}`;
             }
             a = s + 1;
         }
@@ -351,7 +351,7 @@ function escapeString(e) {
     return e.replace(z, escapeFn);
 }
 
-const H = function() {
+const U = function() {
     const e = {};
     return function(t) {
         let n = e[t];
@@ -444,14 +444,14 @@ function createSpy(e, n, i) {
     return a;
 }
 
-var W;
+var H;
 
 (function(e) {
     e[e["noIterator"] = 0] = "noIterator";
     e[e["isArray"] = 1] = "isArray";
     e[e["isSet"] = 2] = "isSet";
     e[e["isMap"] = 3] = "isMap";
-})(W || (W = {}));
+})(H || (H = {}));
 
 function areSimilarRegExps(e, t) {
     return e.source === t.source && e.flags === t.flags;
@@ -515,12 +515,12 @@ function isEqualBoxedPrimitive(e, t) {
         return isNumberObject(t) && m(M(e), M(t));
     }
     if (isStringObject(e)) {
-        return isStringObject(t) && R(e) === R(t);
+        return isStringObject(t) && P(e) === P(t);
     }
     if (isBooleanObject(e)) {
         return isBooleanObject(t) && I(e) === I(t);
     }
-    return isSymbolObject(t) && N(e) === N(t);
+    return isSymbolObject(t) && R(e) === R(t);
 }
 
 function innerDeepEqual(e, t, n, i) {
@@ -993,7 +993,7 @@ function createContainer(...e) {
     return t.DI.createContainer().register(exports.PLATFORMRegistration, ...e);
 }
 
-let Q;
+let W;
 
 let J;
 
@@ -1006,10 +1006,10 @@ function isStackOverflowError(e) {
             overflowStack();
         } catch (e) {
             J = e.message;
-            Q = e.name;
+            W = e.name;
         }
     }
-    return e.name === Q && e.message === J;
+    return e.name === W && e.message === J;
 }
 
 const K = g({
@@ -1091,7 +1091,7 @@ const Z = Symbol.for("customInspect");
 function stylizeWithColor(e, t) {
     const n = Y[t];
     if (isString(n)) {
-        return P[n](e);
+        return N[n](e);
     } else {
         return e;
     }
@@ -1116,7 +1116,7 @@ class AssertionError extends Error {
                 e = X.notStrictEqualObject;
             }
             if (n.length > 30) {
-                n[26] = P.blue("...");
+                n[26] = N.blue("...");
                 while (n.length > 27) {
                     n.pop();
                 }
@@ -1240,7 +1240,7 @@ function createErrDiff(e, t, n) {
     if (g === 0) {
         const e = l.split("\n");
         if (e.length > 30) {
-            e[26] = P.blue("...");
+            e[26] = N.blue("...");
             while (e.length > 27) {
                 e.pop();
             }
@@ -1248,7 +1248,7 @@ function createErrDiff(e, t, n) {
         return `${X.notIdentical}\n\n${join(e, "\n")}\n`;
     }
     if (f > 3) {
-        s = `\n${P.blue("...")}${s}`;
+        s = `\n${N.blue("...")}${s}`;
         o = true;
     }
     if (i !== "") {
@@ -1256,14 +1256,14 @@ function createErrDiff(e, t, n) {
         i = "";
     }
     let b = 0;
-    const v = `${X[n]}\n${P.green("+ actual")} ${P.red("- expected")}`;
-    const y = ` ${P.blue("...")} Lines skipped`;
+    const v = `${X[n]}\n${N.green("+ actual")} ${N.red("- expected")}`;
+    const y = ` ${N.blue("...")} Lines skipped`;
     for (f = 0; f < g; f++) {
         const e = f - a;
         if (u.length < f + 1) {
             if (e > 1 && f > 2) {
                 if (e > 4) {
-                    r += `\n${P.blue("...")}`;
+                    r += `\n${N.blue("...")}`;
                     o = true;
                 } else if (e > 3) {
                     r += `\n  ${c[f - 2]}`;
@@ -1273,12 +1273,12 @@ function createErrDiff(e, t, n) {
                 b++;
             }
             a = f;
-            i += `\n${P.red("-")} ${c[f]}`;
+            i += `\n${N.red("-")} ${c[f]}`;
             b++;
         } else if (c.length < f + 1) {
             if (e > 1 && f > 2) {
                 if (e > 4) {
-                    r += `\n${P.blue("...")}`;
+                    r += `\n${N.blue("...")}`;
                     o = true;
                 } else if (e > 3) {
                     r += `\n  ${u[f - 2]}`;
@@ -1288,7 +1288,7 @@ function createErrDiff(e, t, n) {
                 b++;
             }
             a = f;
-            r += `\n${P.green("+")} ${u[f]}`;
+            r += `\n${N.green("+")} ${u[f]}`;
             b++;
         } else {
             const t = c[f];
@@ -1301,7 +1301,7 @@ function createErrDiff(e, t, n) {
             if (s) {
                 if (e > 1 && f > 2) {
                     if (e > 4) {
-                        r += `\n${P.blue("...")}`;
+                        r += `\n${N.blue("...")}`;
                         o = true;
                     } else if (e > 3) {
                         r += `\n  ${u[f - 2]}`;
@@ -1311,8 +1311,8 @@ function createErrDiff(e, t, n) {
                     b++;
                 }
                 a = f;
-                r += `\n${P.green("+")} ${n}`;
-                i += `\n${P.red("-")} ${t}`;
+                r += `\n${N.green("+")} ${n}`;
+                i += `\n${N.red("-")} ${t}`;
                 b += 2;
             } else {
                 r += i;
@@ -1324,7 +1324,7 @@ function createErrDiff(e, t, n) {
             }
         }
         if (b > 1e3 && f < g - 2) {
-            return `${v}${y}\n${r}\n${P.blue("...")}${i}\n${P.blue("...")}`;
+            return `${v}${y}\n${r}\n${N.blue("...")}${i}\n${N.blue("...")}`;
         }
     }
     return `${v}${o ? y : ""}\n${r}${i}${s}${d}`;
@@ -2065,14 +2065,14 @@ function formatRaw(e, t, n, i) {
                 o = `[Number: ${de(M(t), e)}]`;
                 n = "number";
             } else if (isStringObject(t)) {
-                o = `[String: ${de(R(t), e)}]`;
+                o = `[String: ${de(P(t), e)}]`;
                 n = "string";
                 r = r.slice(t.length);
             } else if (isBooleanObject(t)) {
                 o = `[Boolean: ${de(I(t), e)}]`;
                 n = "boolean";
             } else {
-                o = `[Symbol: ${de(N(t), e)}]`;
+                o = `[Symbol: ${de(R(t), e)}]`;
                 n = "symbol";
             }
             if (r.length === 0) {
@@ -4390,15 +4390,36 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         }
         return t.length === 0 ? null : t[0];
     }
+    function strictQueryBy(e, t = "") {
+        const n = d.querySelectorAll(e);
+        if (n.length > 1) {
+            throw new Error(`There is more than 1 element with selector "${e}": ${n.length} found${t ? ` ${t}` : ""}`);
+        }
+        if (n.length === 0) {
+            throw new Error(`There is no element with selector "${e}" found${t ? ` ${t}` : ""}`);
+        }
+        return n[0];
+    }
     function assertText(e, t) {
         if (arguments.length === 2) {
-            const n = queryBy(e);
+            const n = strictQueryBy(e);
             if (n === null) {
                 throw new Error(`No element found for selector "${e}" to compare text content with "${t}"`);
             }
             ve.strictEqual(getVisibleText(n), t);
         } else {
             ve.strictEqual(getVisibleText(d), e);
+        }
+    }
+    function assertTextContain(e, t) {
+        if (arguments.length === 2) {
+            const n = strictQueryBy(e);
+            if (n === null) {
+                throw new Error(`No element found for selector "${e}" to compare text content with "${t}"`);
+            }
+            ve.includes(getVisibleText(n), t);
+        } else {
+            ve.includes(getVisibleText(d), e);
         }
     }
     function getInnerHtml(e, t) {
@@ -4412,48 +4433,38 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         compact: false
     }) {
         if (arguments.length > 1) {
-            const i = queryBy(e);
-            if (i === null) {
-                throw new Error(`No element found for selector "${e}" to compare innerHTML against "${t}"`);
-            }
+            const i = strictQueryBy(e, `to compare innerHTML against "${t}`);
             ve.strictEqual(getInnerHtml(i, n), t);
         } else {
             ve.strictEqual(getInnerHtml(d, n), e);
         }
     }
     function assertClass(e, ...t) {
-        const n = queryBy(e);
-        if (n === null) {
-            throw new Error(`No element found for selector "${e}" to assert className contains "${t}"`);
-        }
+        const n = strictQueryBy(e, `to assert className contains "${t}"`);
         t.forEach((e => ve.contains(n.classList, e)));
     }
     function assertAttr(e, t, n) {
-        const i = queryBy(e);
-        if (i === null) {
-            throw new Error(`No element found for selector "${e}" to compare attribute "${t}" against "${n}"`);
-        }
+        const i = strictQueryBy(e, `to compare attribute "${t}" against "${n}"`);
         ve.strictEqual(i.getAttribute(t), n);
     }
     function assertAttrNS(e, t, n, i) {
-        const r = queryBy(e);
-        if (r === null) {
-            throw new Error(`No element found for selector "${e}" to compare attribute "${n}" against "${i}"`);
-        }
+        const r = strictQueryBy(e, `to compare attribute "${n}" against "${i}"`);
         ve.strictEqual(r.getAttributeNS(t, n), i);
     }
-    function assertValue(e, t) {
-        const n = queryBy(e);
-        if (n === null) {
-            throw new Error(`No element found for selector "${e}" to compare value against "${t}"`);
+    function assertStyles(e, t) {
+        const n = strictQueryBy(e, `to compare style attribute against ${JSON.stringify(t ?? {})}`);
+        const i = {};
+        for (const e in t) {
+            i[e] = n.style[e];
         }
+        ve.deepStrictEqual(i, t);
+    }
+    function assertValue(e, t) {
+        const n = strictQueryBy(e, `to compare value against "${t}"`);
         ve.strictEqual(n.value, t);
     }
     function trigger(e, t, n) {
-        const i = queryBy(e);
-        if (i === null) {
-            throw new Error(`No element found for selector "${e}" to fire event "${t}"`);
-        }
+        const i = strictQueryBy(e, `to fire event "${t}"`);
         i.dispatchEvent(new o.CustomEvent(t, n));
     }
     [ "click", "change", "input", "scroll" ].forEach((e => {
@@ -4461,16 +4472,13 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             configurable: true,
             writable: true,
             value: (t, n) => {
-                const i = queryBy(t);
-                if (i === null) {
-                    throw new Error(`No element found for selector "${t}" to fire event "${e}"`);
-                }
+                const i = strictQueryBy(t, `to fire event "${e}"`);
                 i.dispatchEvent(new o.CustomEvent(e, n));
             }
         });
     }));
     function type(e, t) {
-        const n = typeof e === "string" ? queryBy(e) : e;
+        const n = typeof e === "string" ? strictQueryBy(e, `to emulate input for "${t}"`) : e;
         if (n === null || !/input|textarea/i.test(n.nodeName)) {
             throw new Error(`No <input>/<textarea> element found for selector "${e}" to emulate input for "${t}"`);
         }
@@ -4478,10 +4486,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         n.dispatchEvent(new u.window.Event("input"));
     }
     const scrollBy = (e, t) => {
-        const n = queryBy(e);
-        if (n === null) {
-            throw new Error(`No element found for selector "${e}" to scroll by "${JSON.stringify(t)}"`);
-        }
+        const n = strictQueryBy(e, `to scroll by "${JSON.stringify(t)}"`);
         n.scrollBy(typeof t === "number" ? {
             top: t
         } : t);
@@ -4532,10 +4537,12 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             this.getAllBy = getAllBy;
             this.queryBy = queryBy;
             this.assertText = assertText;
+            this.assertTextContain = assertTextContain;
             this.assertHtml = assertHtml;
             this.assertClass = assertClass;
             this.assertAttr = assertAttr;
             this.assertAttrNS = assertAttrNS;
+            this.assertStyles = assertStyles;
             this.assertValue = assertValue;
             this.createEvent = (e, t) => new u.CustomEvent(e, t);
             this.trigger = trigger;
@@ -4560,6 +4567,11 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
                 return Promise.resolve(x).then((() => this));
             }
             return Promise.resolve(this);
+        }
+        printHtml() {
+            const e = d.innerHTML;
+            console.log(e);
+            return e;
         }
     };
     ke.publish("fixture:created", k);
@@ -5442,7 +5454,7 @@ exports.stringify = stringify;
 
 exports.trace = trace;
 
-exports.trimFull = H;
+exports.trimFull = U;
 
 exports.verifyBindingInstructionsEqual = verifyBindingInstructionsEqual;
 

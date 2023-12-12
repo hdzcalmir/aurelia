@@ -802,7 +802,6 @@ const getMessageByCode = (name, ...details) => {
                     }
                 }
             }
-            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
             cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
             matches = regex.exec(cooked);
         }
@@ -1634,6 +1633,9 @@ function addCollectionBatch(subs, collection, indexMap) {
     if (!currBatch.has(subs)) {
         currBatch.set(subs, [2, collection, indexMap]);
     }
+    else {
+        currBatch.get(subs)[2] = indexMap;
+    }
 }
 function addValueBatch(subs, newValue, oldValue) {
     const batchRecord = currBatch.get(subs);
@@ -2148,7 +2150,7 @@ const observe$3 = {
                 break;
             }
         }
-        if (shouldNotify) {
+        if (shouldNotify || batching) {
             o.notify();
         }
         return this;
@@ -2273,60 +2275,6 @@ function getArrayObserver(array) {
         observer = new ArrayObserver(array);
     }
     return observer;
-}
-/**
- * A compare function to pass to `Array.prototype.sort` for sorting numbers.
- * This is needed for numeric sort, since the default sorts them as strings.
- */
-const compareNumber = (a, b) => a - b;
-/**
- * Applies offsets to the non-negative indices in the IndexMap
- * based on added and deleted items relative to those indices.
- *
- * e.g. turn `[-2, 0, 1]` into `[-2, 1, 2]`, allowing the values at the indices to be
- * used for sorting/reordering items if needed
- */
-function applyMutationsToIndices(indexMap) {
-    let offset = 0;
-    let j = 0;
-    let i = 0;
-    const $indexMap = cloneIndexMap(indexMap);
-    // during a batch, items could be deleted in a non-linear order with multiple splices
-    if ($indexMap.deletedIndices.length > 1) {
-        // TODO: also synchronize deletedItems when we need them
-        $indexMap.deletedIndices.sort(compareNumber);
-    }
-    const len = $indexMap.length;
-    for (; i < len; ++i) {
-        while ($indexMap.deletedIndices[j] <= i - offset) {
-            ++j;
-            --offset;
-        }
-        if ($indexMap[i] === -2) {
-            ++offset;
-        }
-        else {
-            $indexMap[i] += offset;
-        }
-    }
-    return $indexMap;
-}
-/**
- * After `applyMutationsToIndices`, this function can be used to reorder items in a derived
- * array (e.g.  the items in the `views` in the repeater are derived from the `items` property)
- */
-function synchronizeIndices(items, indexMap) {
-    const copy = items.slice();
-    const len = indexMap.length;
-    let to = 0;
-    let from = 0;
-    while (to < len) {
-        from = indexMap[to];
-        if (from !== -2) {
-            items[to] = copy[from];
-        }
-        ++to;
-    }
 }
 
 // multiple applications of Aurelia wouldn't have different observers for the same Set object
@@ -2824,7 +2772,6 @@ var ExpressionType;
     ExpressionType[ExpressionType["IsProperty"] = 16] = "IsProperty";
     ExpressionType[ExpressionType["IsCustom"] = 32] = "IsCustom";
 })(ExpressionType || (ExpressionType = {}));
-/* eslint-enable @typescript-eslint/indent */
 let $input = '';
 let $index = 0;
 let $length = 0;
@@ -3567,7 +3514,6 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
                 paramsState = 2 /* ArrowFnParams.Invalid */;
                 break;
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         switch ($currentToken) {
             case 6291471 /* Token.Comma */:
                 nextToken();
@@ -3904,6 +3850,7 @@ function scanIdentifier() {
     while (IdParts[nextChar()])
         ;
     const token = KeywordLookup[$tokenValue = $tokenRaw()];
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     return token === undefined ? 4096 /* Token.Identifier */ : token;
 }
 function scanNumber(isFloat) {
@@ -5592,5 +5539,5 @@ class Signaler {
     }
 }
 
-export { AccessGlobalExpression, AccessKeyedExpression, AccessMemberExpression, AccessScopeExpression, AccessThisExpression, AccessorType, ArrayBindingPattern, ArrayIndexObserver, ArrayLiteralExpression, ArrayObserver, ArrowFunction, AssignExpression, BinaryExpression, BindingBehaviorExpression, BindingContext, BindingIdentifier, BindingObserverRecord, CallFunctionExpression, CallMemberExpression, CallScopeExpression, CollectionKind, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, ConditionalExpression, ConnectableSwitcher, CustomExpression, DestructuringAssignmentExpression, DestructuringAssignmentRestExpression, DestructuringAssignmentSingleExpression, DirtyCheckProperty, DirtyCheckSettings, DirtyChecker, ExpressionKind, ExpressionType, ForOfStatement, ICoercionConfiguration, IDirtyChecker, IExpressionParser, INodeObserverLocator, IObservation, IObserverLocator, ISignaler, Interpolation, MapObserver, ObjectBindingPattern, ObjectLiteralExpression, Observation, ObserverLocator, PrimitiveLiteralExpression, PrimitiveObserver, PropertyAccessor, ProxyObservable, Scope, SetObserver, SetterObserver, SubscriberRecord, TaggedTemplateExpression, TemplateExpression, UnaryExpression, Unparser, ValueConverterExpression, applyMutationsToIndices, astAssign, astBind, astEvaluate, astUnbind, astVisit, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, disableArrayObservation, disableMapObservation, disableSetObservation, enableArrayObservation, enableMapObservation, enableSetObservation, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, observable, parseExpression, subscriberCollection, synchronizeIndices };
+export { AccessGlobalExpression, AccessKeyedExpression, AccessMemberExpression, AccessScopeExpression, AccessThisExpression, AccessorType, ArrayBindingPattern, ArrayIndexObserver, ArrayLiteralExpression, ArrayObserver, ArrowFunction, AssignExpression, BinaryExpression, BindingBehaviorExpression, BindingContext, BindingIdentifier, BindingObserverRecord, CallFunctionExpression, CallMemberExpression, CallScopeExpression, CollectionKind, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, ConditionalExpression, ConnectableSwitcher, CustomExpression, DestructuringAssignmentExpression, DestructuringAssignmentRestExpression, DestructuringAssignmentSingleExpression, DirtyCheckProperty, DirtyCheckSettings, DirtyChecker, ExpressionKind, ExpressionType, ForOfStatement, ICoercionConfiguration, IDirtyChecker, IExpressionParser, INodeObserverLocator, IObservation, IObserverLocator, ISignaler, Interpolation, MapObserver, ObjectBindingPattern, ObjectLiteralExpression, Observation, ObserverLocator, PrimitiveLiteralExpression, PrimitiveObserver, PropertyAccessor, ProxyObservable, Scope, SetObserver, SetterObserver, SubscriberRecord, TaggedTemplateExpression, TemplateExpression, UnaryExpression, Unparser, ValueConverterExpression, astAssign, astBind, astEvaluate, astUnbind, astVisit, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, disableArrayObservation, disableMapObservation, disableSetObservation, enableArrayObservation, enableMapObservation, enableSetObservation, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, observable, parseExpression, subscriberCollection };
 //# sourceMappingURL=index.dev.mjs.map

@@ -775,12 +775,6 @@ function normalizeQuery(query) {
 }
 
 const noRoutes = kernel.emptyArray;
-function defaultReentryBehavior(current, next) {
-    if (!shallowEquals(current.params, next.params)) {
-        return 'replace';
-    }
-    return 'none';
-}
 // Every kind of route configurations are normalized to this `RouteConfig` class.
 class RouteConfig {
     get path() {
@@ -860,8 +854,13 @@ class RouteConfig {
         config.nav ?? this.nav);
     }
     /** @internal */
-    _getTransitionPlan(cur, next) {
-        const plan = this.transitionPlan ?? defaultReentryBehavior;
+    _getTransitionPlan(cur, next, overridingTransitionPlan) {
+        const hasSameParameters = shallowEquals(cur.params, next.params);
+        if (hasSameParameters)
+            return 'none';
+        if (overridingTransitionPlan != null)
+            return overridingTransitionPlan;
+        const plan = this.transitionPlan ?? 'replace';
         return typeof plan === 'function' ? plan(cur, next) : plan;
     }
     /** @internal */
@@ -2114,7 +2113,7 @@ class ViewportAgent {
         }
         else {
             // Component is the same, so determine plan based on config and/or convention
-            this._$plan = options.transitionPlan ?? next.context.config._getTransitionPlan(cur, next);
+            this._$plan = next.context.config._getTransitionPlan(cur, next, options.transitionPlan);
         }
         trace(this._logger, 3344 /* Events.vpaScheduleUpdate */, this);
     }
@@ -2215,9 +2214,13 @@ class ViewportAgent {
                         case 128 /* State.currDeactivate */:
                             switch (this._$plan) {
                                 case 'none':
+                                    trace(logger, 3347 /* Events.vpaEndTransitionActiveCurrLifecycle */, this);
+                                    this._currState = 4096 /* State.currIsActive */;
+                                    break;
                                 case 'invoke-lifecycles':
                                     trace(logger, 3347 /* Events.vpaEndTransitionActiveCurrLifecycle */, this);
                                     this._currState = 4096 /* State.currIsActive */;
+                                    this._curCA._routeNode = this._nextNode;
                                     break;
                                 case 'replace':
                                     trace(logger, 3348 /* Events.vpaEndTransitionActiveCurrReplace */, this);
@@ -2359,7 +2362,7 @@ class RouteNode {
      *
      * @internal
      */
-    _viewport, title, component, children, 
+    _viewport, title, component, 
     /**
      * Not-yet-resolved viewport instructions.
      *
@@ -2381,11 +2384,11 @@ class RouteNode {
         this._viewport = _viewport;
         this.title = title;
         this.component = component;
-        this.children = children;
         this.residue = residue;
         /** @internal */ this._version = 1;
         /** @internal */
         this._isInstructionsFinalized = false;
+        this.children = [];
         this._originalInstruction ?? (this._originalInstruction = instruction);
     }
     static create(input) {
@@ -2404,13 +2407,10 @@ class RouteNode {
         /*    viewport */ input._viewport ?? null, 
         /*       title */ input.title ?? null, 
         /*   component */ input.component, 
-        /*    children */ input.children ?? [], 
         /*     residue */ input.residue ?? []);
     }
-    contains(instructions, options) {
+    contains(instructions, matchEndpoint = false) {
         if (this.context === instructions.options.context) {
-            const matchEndpoint = options.matchEndpoint ?? false;
-            const matchOriginalInstruction = options.matchOriginalInstruction ?? false;
             const nodeChildren = this.children;
             const instructionChildren = instructions.children;
             for (let i = 0, ii = nodeChildren.length; i < ii; ++i) {
@@ -2419,7 +2419,7 @@ class RouteNode {
                     const instructionEndpoint = matchEndpoint ? instructionChild.recognizedRoute?.route.endpoint : null;
                     const nodeChild = nodeChildren[i + j] ?? null;
                     const instruction = nodeChild !== null
-                        ? !matchOriginalInstruction && nodeChild.isInstructionsFinalized ? nodeChild.instruction : nodeChild._originalInstruction
+                        ? nodeChild.isInstructionsFinalized ? nodeChild.instruction : nodeChild._originalInstruction
                         : null;
                     const childEndpoint = instruction?.recognizedRoute?.route.endpoint;
                     if (i + j < ii
@@ -2436,7 +2436,7 @@ class RouteNode {
             }
         }
         return this.children.some(function (x) {
-            return x.contains(instructions, options);
+            return x.contains(instructions, matchEndpoint);
         });
     }
     /** @internal */
@@ -2491,7 +2491,12 @@ class RouteNode {
         const clone = new RouteNode(this.path, this.finalPath, this.context, this._originalInstruction, this.instruction, this.params, // as this is frozen, it's safe to share
         this.queryParams, // as this is frozen, it's safe to share
         this.fragment, this.data, // as this is frozen, it's safe to share
-        this._viewport, this.title, this.component, this.children.map(x => x._clone()), [...this.residue]);
+        this._viewport, this.title, this.component, [...this.residue]);
+        const children = this.children;
+        const len = children.length;
+        for (let i = 0; i < len; ++i) {
+            clone.children.push(children[i]._clone());
+        }
         clone._version = this._version + 1;
         if (clone.context.node === this) {
             clone.context.node = clone;
@@ -2530,8 +2535,8 @@ class RouteTree {
         this.fragment = fragment;
         this.root = root;
     }
-    contains(instructions, options) {
-        return this.root.contains(instructions, options);
+    contains(instructions, matchEndpoint = false) {
+        return this.root.contains(instructions, matchEndpoint);
     }
     /** @internal */
     _clone() {
@@ -3041,7 +3046,7 @@ class Router {
             ? instructionOrInstructions
             : this.createViewportInstructions(instructionOrInstructions, { context: ctx, historyStrategy: this.options.historyStrategy });
         trace(this._logger, 3251 /* Events.rtrIsActive */, instructions, ctx);
-        return this.routeTree.contains(instructions, { matchEndpoint: false });
+        return this.routeTree.contains(instructions, false);
     }
     /**
      * Retrieve the RouteContext, which contains statically configured routes combined with the customElement metadata associated with a type.
@@ -4651,7 +4656,7 @@ class NavigationModel {
     _addRoute(route) {
         const routes = this.routes;
         if (!(route instanceof Promise)) {
-            if (route.nav ?? false) {
+            if ((route.nav ?? false) && route.redirectTo === null) {
                 routes.push(NavigationRoute._create(route));
             }
             return;
@@ -4660,7 +4665,7 @@ class NavigationModel {
         routes.push((void 0)); // reserve the slot
         let promise = void 0;
         promise = this._promise = kernel.onResolve(this._promise, () => kernel.onResolve(route, rdConfig => {
-            if (rdConfig.nav) {
+            if (rdConfig.nav && rdConfig.redirectTo === null) {
                 routes[index] = NavigationRoute._create(rdConfig);
             }
             else {
@@ -4674,17 +4679,16 @@ class NavigationModel {
 }
 // Usage of classical interface pattern is intentional.
 class NavigationRoute {
-    constructor(id, path, redirectTo, title, data) {
+    constructor(id, path, title, data) {
         this.id = id;
         this.path = path;
-        this.redirectTo = redirectTo;
         this.title = title;
         this.data = data;
         this._trees = null;
     }
     /** @internal */
     static _create(rdConfig) {
-        return new NavigationRoute(rdConfig.id, ensureArrayOfStrings(rdConfig.path ?? kernel.emptyArray), rdConfig.redirectTo, rdConfig.title, rdConfig.data);
+        return new NavigationRoute(rdConfig.id, ensureArrayOfStrings(rdConfig.path ?? kernel.emptyArray), rdConfig.title, rdConfig.data);
     }
     get isActive() {
         return this._isActive;
@@ -4706,7 +4710,7 @@ class NavigationRoute {
                 ], emptyQuery, null);
             });
         }
-        this._isActive = trees.some(vit => router.routeTree.contains(vit, { matchEndpoint: true, matchOriginalInstruction: this.redirectTo !== null }));
+        this._isActive = trees.some(vit => router.routeTree.contains(vit, true));
     }
 }
 
@@ -4783,11 +4787,6 @@ exports.ViewportCustomElement = class ViewportCustomElement {
                 case 'string':
                     if (value !== '') {
                         propStrings.push(`${prop}:'${value}'`);
-                    }
-                    break;
-                case 'boolean':
-                    if (value) {
-                        propStrings.push(`${prop}:${value}`);
                     }
                     break;
                 default: {

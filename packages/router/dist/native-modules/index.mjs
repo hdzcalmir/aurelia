@@ -1,10 +1,10 @@
-import { Protocol as t, IEventAggregator as i, IContainer as e, DI as n, Registration as s } from "../kernel/dist/native-modules/index.mjs";
+import { Protocol as t, IEventAggregator as i, IContainer as e, DI as n, Registration as s } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { CustomElement as r, isCustomElementViewModel as o, Controller as h, IPlatform as u, IWindow as a, IHistory as l, ILocation as c, IAppRoot as f, CustomAttribute as d, customElement as p, bindable as g, INode as v, IInstruction as m, IController as w, customAttribute as R, AppTask as y } from "../runtime-html/dist/native-modules/index.mjs";
+import { CustomElement as r, isCustomElementViewModel as o, Controller as h, IPlatform as u, IWindow as a, IHistory as l, ILocation as c, IAppRoot as f, CustomAttribute as d, customElement as p, bindable as g, INode as v, IInstruction as m, IController as w, customAttribute as R, AppTask as y } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-import { Metadata as I } from "../metadata/dist/native-modules/index.mjs";
+import { Metadata as I } from "../../../metadata/dist/native-modules/index.mjs";
 
-import { RouteRecognizer as E, ConfigurableRoute as C, RecognizedRoute as S, Endpoint as N } from "../route-recognizer/dist/native-modules/index.mjs";
+import { RouteRecognizer as E, ConfigurableRoute as C, RecognizedRoute as S, Endpoint as N } from "../../../route-recognizer/dist/native-modules/index.mjs";
 
 class Endpoint$1 {
     constructor(t, i, e, n = {}) {

@@ -475,7 +475,7 @@ const defaultSelector = (store) => store.state;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function connectTo(settings) {
     const _settings = {
-        selector: typeof settings === 'function' ? settings : defaultSelector,
+        selector: (typeof settings === 'function' ? settings : defaultSelector),
         ...settings
     };
     function getSource(store, selector) {

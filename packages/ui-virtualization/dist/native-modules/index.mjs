@@ -1,8 +1,8 @@
-import { DI as t, resolve as s, Registration as e } from "../kernel/dist/native-modules/index.mjs";
+import { DI as t, resolve as s, Registration as e } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { BindingBehaviorExpression as i, ValueConverterExpression as r, Scope as n, BindingContext as o, astEvaluate as l, getCollectionObserver as h } from "../runtime/dist/native-modules/index.mjs";
+import { BindingBehaviorExpression as i, ValueConverterExpression as r, Scope as n, BindingContext as o, astEvaluate as l, getCollectionObserver as h } from "../../../runtime/dist/native-modules/index.mjs";
 
-import { customAttribute as c, IRenderLocation as a, IInstruction as u, IController as f, IViewFactory as d, IPlatform as m } from "../runtime-html/dist/native-modules/index.mjs";
+import { customAttribute as c, IRenderLocation as a, IInstruction as u, IController as f, IViewFactory as d, IPlatform as m } from "../../../runtime-html/dist/native-modules/index.mjs";
 
 const p = /*@__PURE__*/ t.createInterface("IDomRenderer");
 

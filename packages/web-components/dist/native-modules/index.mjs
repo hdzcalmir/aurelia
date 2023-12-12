@@ -1,6 +1,6 @@
-import { DI as t, IContainer as s, InstanceProvider as e } from "../kernel/dist/native-modules/index.mjs";
+import { DI as t, IContainer as s, InstanceProvider as e } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { CustomElementDefinition as n, CustomElement as i, IPlatform as o, IRendering as l, INode as c, Controller as r, setRef as u } from "../runtime-html/dist/native-modules/index.mjs";
+import { CustomElementDefinition as n, CustomElement as i, IPlatform as o, IRendering as l, INode as c, Controller as r, setRef as u } from "../../../runtime-html/dist/native-modules/index.mjs";
 
 const a = /*@__PURE__*/ t.createInterface((t => t.singleton(WcCustomElementRegistry)));
 

@@ -1,0 +1,1 @@
+{"version":3,"file":"ast.optional.spec.js","sourceRoot":"","sources":["../../src/2-runtime/ast.optional.spec.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,aAAa,EAAE,MAAM,kBAAkB,CAAC;AAEzD,QAAQ,CAAC,gCAAgC,EAAE;IACzC,EAAE,CAAC,iCAAiC,EAAE;QACpC,MAAM,CAAC,YAAY,CAAC,GAAG,EAAE,CAAC,aAAa,CAAC,aAAa,CAAC,CAAC,CAAC;IAC1D,CAAC,CAAC,CAAC;AACL,CAAC,CAAC,CAAC"}

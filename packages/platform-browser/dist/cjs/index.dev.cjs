@@ -24,7 +24,6 @@ class BrowserPlatform extends platform.Platform {
         this.flushDomWrite = this.flushDomWrite.bind(this);
         this.domReadQueue = new platform.TaskQueue(this, this.requestDomRead.bind(this), this.cancelDomRead.bind(this));
         this.domWriteQueue = new platform.TaskQueue(this, this.requestDomWrite.bind(this), this.cancelDomWrite.bind(this));
-        /* eslint-enable @typescript-eslint/no-unnecessary-type-assertion */
     }
     static getOrCreate(g, overrides = {}) {
         let platform = lookup.get(g);

@@ -1,8 +1,8 @@
-import { DI as t, IEventAggregator as n, toArray as e, camelCase as i, Registration as s } from "../kernel/dist/native-modules/index.mjs";
+import { DI as t, IEventAggregator as n, camelCase as e, toArray as i, Registration as s } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { bindingBehavior as r, valueConverter as o, mixinAstEvaluator as a, mixingBindingLimited as c, CustomElement as l, attributePattern as h, bindingCommand as u, renderer as f, AttrSyntax as d, AttributePattern as m, BindingCommand as p, AppTask as g } from "../runtime-html/dist/native-modules/index.mjs";
+import { bindingBehavior as r, valueConverter as o, mixinAstEvaluator as a, mixingBindingLimited as c, CustomElement as l, attributePattern as h, bindingCommand as u, renderer as f, AttrSyntax as d, AttributePattern as m, BindingCommand as p, AppTask as g } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-import { ValueConverterExpression as _, nowrap as b, ISignaler as T, connectable as B, CustomExpression as v, Interpolation as w, astEvaluate as I, astUnbind as C, astBind as x } from "../runtime/dist/native-modules/index.mjs";
+import { ValueConverterExpression as _, nowrap as b, ISignaler as T, connectable as B, CustomExpression as v, Interpolation as w, astEvaluate as I, astUnbind as C, astBind as x } from "../../../runtime/dist/native-modules/index.mjs";
 
 import y from "i18next";
 
@@ -398,47 +398,47 @@ class TranslationBinding {
     updateTranslations() {
         const t = this.i18n.evaluate(this.A, this.parameter?.value);
         const n = Object.create(null);
-        const e = [];
-        const i = this.T;
+        const i = [];
+        const s = this.T;
         this.I.clear();
-        for (const i of t) {
-            const t = i.value;
-            const s = this.R(i.attributes);
-            for (const i of s) {
-                if (this.N(i)) {
-                    n[i] = t;
+        for (const s of t) {
+            const t = s.value;
+            const r = this.R(s.attributes);
+            for (const s of r) {
+                if (this.N(s)) {
+                    n[s] = t;
                 } else {
                     const n = l.for(this.target, H);
-                    const s = n?.viewModel ? this.oL.getAccessor(n.viewModel, i) : this.oL.getAccessor(this.target, i);
-                    const r = this.B.state !== 1 && (s.type & 4) > 0;
-                    if (r) {
-                        e.push(new AccessorUpdateTask(s, t, this.target, i));
+                    const r = n?.viewModel ? this.oL.getAccessor(n.viewModel, e(s)) : this.oL.getAccessor(this.target, s);
+                    const o = this.B.state !== 1 && (r.type & 4) > 0;
+                    if (o) {
+                        i.push(new AccessorUpdateTask(r, t, this.target, s));
                     } else {
-                        s.setValue(t, this.target, i);
+                        r.setValue(t, this.target, s);
                     }
-                    this.I.add(s);
+                    this.I.add(r);
                 }
             }
         }
-        let s = false;
+        let r = false;
         if (Object.keys(n).length > 0) {
-            s = this.B.state !== 1;
-            if (!s) {
+            r = this.B.state !== 1;
+            if (!r) {
                 this.V(n);
             }
         }
-        if (e.length > 0 || s) {
+        if (i.length > 0 || r) {
             this.T = this.C.queueTask((() => {
                 this.T = null;
-                for (const t of e) {
+                for (const t of i) {
                     t.run();
                 }
-                if (s) {
+                if (r) {
                     this.V(n);
                 }
             }), W);
         }
-        i?.cancel();
+        s?.cancel();
     }
     R(t) {
         if (t.length === 0) {
@@ -456,17 +456,17 @@ class TranslationBinding {
         return this._.includes(t);
     }
     V(t) {
-        const n = e(this.target.childNodes);
-        const i = [];
+        const n = i(this.target.childNodes);
+        const e = [];
         const s = "au-i18n";
         for (const t of n) {
             if (!Reflect.get(t, s)) {
-                i.push(t);
+                e.push(t);
             }
         }
-        const r = this.F(t, s, i);
+        const r = this.F(t, s, e);
         this.target.innerHTML = "";
-        for (const t of e(r.content.childNodes)) {
+        for (const t of i(r.content.childNodes)) {
             this.target.appendChild(t);
         }
     }
@@ -481,12 +481,12 @@ class TranslationBinding {
         this.O(i, t.append, n);
         return i;
     }
-    O(t, n, i) {
+    O(t, n, e) {
         if (n !== void 0 && n !== null) {
             const s = this.p.document.createElement("div");
             s.innerHTML = n;
-            for (const n of e(s.childNodes)) {
-                Reflect.set(n, i, true);
+            for (const n of i(s.childNodes)) {
+                Reflect.set(n, e, true);
                 t.content.append(n);
             }
             return true;
@@ -593,11 +593,11 @@ let Y = class TranslationParametersBindingCommand {
     get name() {
         return G;
     }
-    build(t, n, e) {
+    build(t, n, i) {
         const s = t.attr;
         let r = s.target;
         if (t.bindable == null) {
-            r = e.map(t.node, r) ?? i(r);
+            r = i.map(t.node, r) ?? e(r);
         } else {
             r = t.bindable.name;
         }
@@ -650,10 +650,10 @@ class TranslationBindingCommand {
     get name() {
         return "t";
     }
-    build(t, n, e) {
+    build(t, n, i) {
         let s;
         if (t.bindable == null) {
-            s = e.map(t.node, t.attr.target) ?? i(t.attr.target);
+            s = i.map(t.node, t.attr.target) ?? e(t.attr.target);
         } else {
             s = t.bindable.name;
         }
@@ -704,10 +704,10 @@ class TranslationBindBindingCommand {
     get name() {
         return "t-bind";
     }
-    build(t, n, e) {
+    build(t, n, i) {
         let s;
         if (t.bindable == null) {
-            s = e.map(t.node, t.attr.target) ?? i(t.attr.target);
+            s = i.map(t.node, t.attr.target) ?? e(t.attr.target);
         } else {
             s = t.bindable.name;
         }

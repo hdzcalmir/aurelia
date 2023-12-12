@@ -1,4 +1,4 @@
-import { IDialogDomRenderer, IDialogDom, IDialogGlobalSettings } from './dialog-interfaces';
+import { IDialogDomRenderer, IDialogDom, IDialogGlobalSettings, IDialogLoadedSettings } from './dialog-interfaces';
 import { IContainer } from '@aurelia/kernel';
 export declare class DefaultDialogGlobalSettings implements IDialogGlobalSettings {
     static register(container: IContainer): void;
@@ -12,7 +12,7 @@ export declare class DefaultDialogDomRenderer implements IDialogDomRenderer {
     private readonly wrapperCss;
     private readonly overlayCss;
     private readonly hostCss;
-    render(dialogHost: HTMLElement): IDialogDom;
+    render(dialogHost: HTMLElement, settings: IDialogLoadedSettings): IDialogDom;
 }
 export declare class DefaultDialogDom implements IDialogDom {
     readonly wrapper: HTMLElement;

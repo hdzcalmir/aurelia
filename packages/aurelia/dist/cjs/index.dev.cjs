@@ -126,7 +126,6 @@ exports.registerAliases = runtimeHtml.registerAliases;
 exports.renderer = runtimeHtml.renderer;
 exports.shadowCSS = runtimeHtml.shadowCSS;
 exports.slotted = runtimeHtml.slotted;
-exports.strict = runtimeHtml.strict;
 exports.templateCompilerHooks = runtimeHtml.templateCompilerHooks;
 exports.templateController = runtimeHtml.templateController;
 exports.useShadowDOM = runtimeHtml.useShadowDOM;

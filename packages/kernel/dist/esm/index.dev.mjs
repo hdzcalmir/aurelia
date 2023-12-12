@@ -561,33 +561,36 @@ let currentContainer = null;
 /** @internal */
 class Container {
     get depth() {
-        return this.parent === null ? 0 : this.parent.depth + 1;
+        return this._parent === null ? 0 : this._parent.depth + 1;
     }
-    constructor(parent, config) {
-        this.parent = parent;
+    get parent() {
+        return this._parent;
+    }
+    constructor(_parent, config) {
+        this._parent = _parent;
         this.config = config;
         this.id = ++containerId;
         /** @internal */
         this._registerDepth = 0;
         /** @internal */
         this._disposableResolvers = new Map();
-        if (parent === null) {
+        if (_parent === null) {
             this.root = this;
             this._resolvers = new Map();
             this._factories = new Map();
             this.res = {};
         }
         else {
-            this.root = parent.root;
+            this.root = _parent.root;
             this._resolvers = new Map();
-            this._factories = parent._factories;
+            this._factories = _parent._factories;
             this.res = {};
             if (config.inheritParentResources) {
                 // todo: when the simplify resource system work is commenced
                 //       this resource inheritance can just be a Object.create() call
                 //       with parent resources as the prototype of the child resources
-                for (const key in parent.res) {
-                    this.registerResolver(key, parent.res[key]);
+                for (const key in _parent.res) {
+                    this.registerResolver(key, _parent.res[key]);
                 }
             }
         }
@@ -736,14 +739,14 @@ class Container {
             while (current != null) {
                 resolver = current._resolvers.get(key);
                 if (resolver == null) {
-                    if (current.parent == null) {
+                    if (current._parent == null) {
                         handler = (isRegisterInRequester(key)) ? this : current;
                         if (autoRegister) {
                             return this._jitRegister(key, handler);
                         }
                         return null;
                     }
-                    current = current.parent;
+                    current = current._parent;
                 }
                 else {
                     return resolver;
@@ -758,8 +761,8 @@ class Container {
     has(key, searchAncestors = false) {
         return this._resolvers.has(key) || isResourceKey(key) && key in this.res
             ? true
-            : searchAncestors && this.parent != null
-                ? this.parent.has(key, true)
+            : searchAncestors && this._parent != null
+                ? this._parent.has(key, true)
                 : false;
     }
     get(key) {
@@ -775,12 +778,12 @@ class Container {
             while (current != null) {
                 resolver = current._resolvers.get(key);
                 if (resolver == null) {
-                    if (current.parent == null) {
+                    if (current._parent == null) {
                         handler = (isRegisterInRequester(key)) ? this : current;
                         resolver = this._jitRegister(key, handler);
                         return resolver.resolve(current, this);
                     }
-                    current = current.parent;
+                    current = current._parent;
                 }
                 else {
                     return resolver.resolve(current, this);
@@ -806,14 +809,14 @@ class Container {
                     if (resolver != null) {
                         resolutions = resolutions.concat(buildAllResponse(resolver, current, requestor));
                     }
-                    current = current.parent;
+                    current = current._parent;
                 }
                 return resolutions;
             }
             while (current != null) {
                 resolver = current._resolvers.get(key);
                 if (resolver == null) {
-                    current = current.parent;
+                    current = current._parent;
                     if (current == null) {
                         return emptyArray;
                     }

@@ -37,7 +37,7 @@ export declare class ViewportScope extends Endpoint {
     options: IViewportScopeOptions;
     instruction: RoutingInstruction | null;
     available: boolean;
-    sourceItem: unknown | null;
+    sourceItem: unknown;
     sourceItemIndex: number;
     private remove;
     private add;
@@ -57,7 +57,7 @@ export declare class ViewportScope extends Endpoint {
     acceptSegment(segment: string): boolean;
     binding(): void;
     unbinding(): void;
-    getAvailableSourceItem(): unknown | null;
+    getAvailableSourceItem(): unknown;
     addSourceItem(): unknown;
     removeSourceItem(): void;
     getRoutes(): Route[];

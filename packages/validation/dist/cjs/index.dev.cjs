@@ -284,6 +284,7 @@ exports.EqualsRule = __decorate([
     })
 ], exports.EqualsRule);
 
+var ValidationMessageProvider_1;
 /* @internal */
 const ICustomMessages = /*@__PURE__*/ kernel.DI.createInterface('ICustomMessages');
 class RuleProperty {
@@ -317,6 +318,8 @@ const validationRulesRegistrar = Object.freeze({
     },
     unset(target, tag) {
         const keys = metadata.Metadata.getOwn(kernel.Protocol.annotation.name, target);
+        if (!Array.isArray(keys))
+            return;
         for (const key of keys.slice(0)) {
             if (key.startsWith(validationRulesRegistrar.name) && (tag === void 0 || key.endsWith(tag))) {
                 metadata.Metadata.delete(kernel.Protocol.annotation.keyFor(key), target);
@@ -666,7 +669,7 @@ exports.ValidationRules = __decorate([
     __param(3, IValidationExpressionHydrator)
 ], exports.ValidationRules);
 // eslint-disable-next-line no-useless-escape
-const classicAccessorPattern = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
+const classicAccessorPattern = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
 const arrowAccessorPattern = /^\(?[$_\w\d]+\)?\s*=>\s*[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)$/;
 const rootObjectSymbol = '$root';
 function parsePropertyName(property, parser) {
@@ -723,11 +726,11 @@ const contextualProperties = new Set([
     'config',
     'getDisplayName'
 ]);
-exports.ValidationMessageProvider = class ValidationMessageProvider {
+exports.ValidationMessageProvider = ValidationMessageProvider_1 = class ValidationMessageProvider {
     constructor(parser, logger, customMessages) {
         this.parser = parser;
         this.registeredMessages = new WeakMap();
-        this.logger = logger.scopeTo(ValidationMessageProvider.name);
+        this.logger = logger.scopeTo(ValidationMessageProvider_1.name);
         for (const { rule, aliases } of customMessages) {
             ValidationRuleAliasMessage.setDefaultMessage(rule, { aliases });
         }
@@ -786,7 +789,7 @@ exports.ValidationMessageProvider = class ValidationMessageProvider {
         return words.charAt(0).toUpperCase() + words.slice(1);
     }
 };
-exports.ValidationMessageProvider = __decorate([
+exports.ValidationMessageProvider = ValidationMessageProvider_1 = __decorate([
     __param(0, AST.IExpressionParser),
     __param(1, kernel.ILogger),
     __param(2, ICustomMessages)
@@ -1122,9 +1125,11 @@ function deserializePrimitive(value) {
     }
 }
 
+var ValidationDeserializer_1;
 class ValidationSerializer {
     static serialize(object) {
         if (object == null || typeof object.accept !== 'function') {
+            // todo(Sayan): if it's an object here, it'll be turned into [object Object]
             return `${object}`;
         }
         const visitor = new ValidationSerializer();
@@ -1175,14 +1180,14 @@ class ValidationSerializer {
         return `[${ruleset.map((rules) => `[${rules.map((rule) => rule.accept(this)).join(',')}]`).join(',')}]`;
     }
 }
-exports.ValidationDeserializer = class ValidationDeserializer {
+exports.ValidationDeserializer = ValidationDeserializer_1 = class ValidationDeserializer {
     static register(container) {
         this.container = container;
     }
     static deserialize(json, validationRules) {
         const messageProvider = this.container.get(IValidationMessageProvider);
         const parser = this.container.get(AST.IExpressionParser);
-        const deserializer = new ValidationDeserializer(this.container, messageProvider, parser);
+        const deserializer = new ValidationDeserializer_1(this.container, messageProvider, parser);
         const raw = JSON.parse(json);
         return deserializer.hydrate(raw, validationRules);
     }
@@ -1271,7 +1276,7 @@ exports.ValidationDeserializer = class ValidationDeserializer {
         return ruleset.map(($rule) => this.hydrate($rule, validationRules));
     }
 };
-exports.ValidationDeserializer = __decorate([
+exports.ValidationDeserializer = ValidationDeserializer_1 = __decorate([
     __param(0, kernel.IServiceLocator),
     __param(1, IValidationMessageProvider),
     __param(2, AST.IExpressionParser)
