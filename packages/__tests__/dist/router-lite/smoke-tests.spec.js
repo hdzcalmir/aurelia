@@ -41,11 +41,9 @@ async function createFixture(Component, deps, level = 5 /* LogLevel.fatal */) {
     container.register(TestRouterConfiguration.for(level));
     container.register(RouterConfiguration);
     container.register(...deps);
-    const component = container.get(Component);
-    const router = container.get(IRouter);
     const au = new Aurelia(container);
     const host = ctx.createElement('div');
-    au.app({ component, host });
+    au.app({ component: Component, host });
     await au.start();
     assertComponentsVisible(host, [Component]);
     const logConfig = container.get(ILogConfig);
@@ -53,10 +51,10 @@ async function createFixture(Component, deps, level = 5 /* LogLevel.fatal */) {
         ctx,
         au,
         host,
-        component,
+        component: au.root.controller.viewModel,
         platform,
         container,
-        router,
+        router: container.get(IRouter),
         startTracing() {
             logConfig.level = 0 /* LogLevel.trace */;
         },
@@ -201,6 +199,23 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         }),
         customElement({ name: 'root2', template: `root2${vp(2)}` })
     ], Root2);
+    it('injecting Router and IRouter should yield the same instance', async function () {
+        let App = class App {
+            constructor(router1, router2) {
+                this.router1 = router1;
+                this.router2 = router2;
+            }
+        };
+        App = __decorate([
+            customElement({ name: 'app', template: 'app' }),
+            __param(0, inject(Router)),
+            __param(1, IRouter),
+            __metadata("design:paramtypes", [Router, Object])
+        ], App);
+        const { component, tearDown } = await createFixture(App, []);
+        assert.strictEqual(component.router1, component.router2, 'router mismatch');
+        await tearDown();
+    });
     // Start with a broad sample of non-generated tests that are easy to debug and mess around with.
     it(`root1 can load a01 as a string and can determine if it's active`, async function () {
         const { router, host, tearDown } = await createFixture(Root1, Z);

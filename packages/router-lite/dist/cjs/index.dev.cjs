@@ -324,6 +324,8 @@ function mergeURLSearchParams(source, other, clone) {
     if (other == null)
         return query;
     for (const [key, value] of Object.entries(other)) {
+        if (value == null)
+            continue;
         query.append(key, value);
     }
     return query;
@@ -5064,7 +5066,7 @@ function configure(container, options) {
         const url = new URL(window.document.baseURI);
         url.pathname = normalizePath(basePath ?? url.pathname);
         return url;
-    }), kernel.Registration.instance(IRouterOptions, routerOptions), kernel.Registration.instance(RouterOptions, routerOptions), runtimeHtml.AppTask.hydrated(kernel.IContainer, RouteContext.setRoot), runtimeHtml.AppTask.activated(IRouter, router => router.start(true)), runtimeHtml.AppTask.deactivated(IRouter, router => {
+    }), kernel.Registration.instance(IRouterOptions, routerOptions), kernel.Registration.instance(RouterOptions, routerOptions), runtimeHtml.AppTask.creating(IRouter, _ => { }), runtimeHtml.AppTask.hydrated(kernel.IContainer, RouteContext.setRoot), runtimeHtml.AppTask.activated(IRouter, router => router.start(true)), runtimeHtml.AppTask.deactivated(IRouter, router => {
         router.stop();
     }), ...DefaultComponents, ...DefaultResources);
 }

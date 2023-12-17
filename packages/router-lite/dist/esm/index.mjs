@@ -110,6 +110,7 @@ function mergeURLSearchParams(t, e, s) {
     const i = s ? new URLSearchParams(t) : t;
     if (e == null) return i;
     for (const [t, s] of Object.entries(e)) {
+        if (s == null) continue;
         i.append(t, s);
     }
     return i;
@@ -4076,7 +4077,7 @@ function configure(t, s) {
         const r = new URL(n.document.baseURI);
         r.pathname = normalizePath(i ?? r.pathname);
         return r;
-    })), f.instance(st, n), f.instance(RouterOptions, n), O.hydrated(l, RouteContext.setRoot), O.activated(Z, (t => t.start(true))), O.deactivated(Z, (t => {
+    })), f.instance(st, n), f.instance(RouterOptions, n), O.creating(Z, (t => {})), O.hydrated(l, RouteContext.setRoot), O.activated(Z, (t => t.start(true))), O.deactivated(Z, (t => {
         t.stop();
     })), ...lt, ...gt);
 }
