@@ -520,7 +520,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // #region 1-depth dynamic routes
         {
             routes: [
-                [':1', [new Parameter('1', false, false)]],
+                [':1', [new Parameter('1', false, false, null)]],
             ],
             tests: [
                 ['', null, null],
@@ -533,7 +533,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         {
             routes: [
                 ['', []],
-                [':1', [new Parameter('1', false, false)]],
+                [':1', [new Parameter('1', false, false, null)]],
             ],
             tests: [
                 ['', '', null],
@@ -545,7 +545,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1', [new Parameter('1', false, false)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['a', []],
             ],
             tests: [
@@ -558,7 +558,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1', [new Parameter('1', false, false)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['a', []],
                 ['aa', []],
             ],
@@ -573,7 +573,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1', [new Parameter('1', false, false)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['a', []],
                 ['aaa', []],
             ],
@@ -588,7 +588,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1', [new Parameter('1', false, false)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['aa', []],
                 ['aaa', []],
             ],
@@ -603,7 +603,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1', [new Parameter('1', false, false)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['a', []],
                 ['aa', []],
                 ['aaa', []],
@@ -622,7 +622,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/s
         {
             routes: [
-                [':1/a', [new Parameter('1', false, false)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -639,7 +639,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1/a', [new Parameter('1', false, false)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -659,7 +659,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // s/d
         {
             routes: [
-                ['a/:2', [new Parameter('2', false, false)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -676,7 +676,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['a/:2', [new Parameter('2', false, false)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -696,8 +696,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/s + s/d
         {
             routes: [
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -713,8 +713,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -732,8 +732,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -751,8 +751,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
                 ['aa/a', []],
@@ -773,8 +773,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/s
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -792,9 +792,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/s
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -814,8 +814,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/s*2
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -835,9 +835,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/s*2
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -859,8 +859,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d + s/s
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -878,9 +878,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d*2 + s/s
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -899,8 +899,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d + s/s*2
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -920,9 +920,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d*2 + s/s*2
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -943,9 +943,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d + s/s
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -963,10 +963,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d + s/s
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -985,10 +985,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d*2 + s/s
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1007,11 +1007,11 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d*2 + s/s
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1032,9 +1032,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d + s/s*2 #1
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -1054,10 +1054,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d + s/s*2 #1
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -1078,10 +1078,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d*2 + s/s*2 #1
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -1102,11 +1102,11 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d*2 + s/s*2 #1
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -1129,9 +1129,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d + s/s*2 #2
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -1151,10 +1151,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d + s/s*2 #2
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -1175,10 +1175,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d*2 + s/s*2 #2
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -1200,11 +1200,11 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d*2 + s/s*2 #2
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -1228,9 +1228,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d + s/s*3
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
                 ['aa/a', []],
@@ -1252,10 +1252,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d + s/s*3
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
                 ['aa/a', []],
@@ -1278,10 +1278,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d*2 + s/s*3
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
                 ['aa/a', []],
@@ -1304,11 +1304,11 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d*2 + s/s*3
         {
             routes: [
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
                 ['aa/a', []],
@@ -1333,7 +1333,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // #endregion
         {
             routes: [
-                [':1?', [new Parameter('1', true, false)]],
+                [':1?', [new Parameter('1', true, false, null)]],
             ],
             tests: [
                 ['', ':1?', { 1: void 0 }],
@@ -1347,7 +1347,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/s
         {
             routes: [
-                [':1?/a', [new Parameter('1', true, false)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1364,7 +1364,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1?/a', [new Parameter('1', true, false)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -1384,7 +1384,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // s/d
         {
             routes: [
-                ['a/:2?', [new Parameter('2', true, false)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1401,7 +1401,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['a/:2?', [new Parameter('2', true, false)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -1421,8 +1421,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/s + s/d
         {
             routes: [
-                [':1?/a', [new Parameter('1', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1438,8 +1438,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1?/a', [new Parameter('1', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -1457,8 +1457,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1?/a', [new Parameter('1', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -1476,8 +1476,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                [':1?/a', [new Parameter('1', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
                 ['aa/a', []],
@@ -1498,8 +1498,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/s
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                [':1?/a', [new Parameter('1', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1517,9 +1517,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/s
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                [':1?/a', [new Parameter('1', true, false)]],
-                [':1?/aa', [new Parameter('1', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                [':1?/aa', [new Parameter('1', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1539,8 +1539,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/s*2
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                [':1?/a', [new Parameter('1', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -1560,9 +1560,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/s*2
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                [':1?/a', [new Parameter('1', true, false)]],
-                [':1?/aa', [new Parameter('1', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                [':1?/aa', [new Parameter('1', true, false, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -1584,8 +1584,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d + s/s
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1603,9 +1603,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d*2 + s/s
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
-                ['aa/:2?', [new Parameter('2', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
+                ['aa/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1624,8 +1624,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d + s/s*2
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -1645,9 +1645,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d*2 + s/s*2
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
-                ['aa/:2?', [new Parameter('2', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
+                ['aa/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -1668,9 +1668,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d + s/s
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                [':1?/a', [new Parameter('1', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1688,10 +1688,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d + s/s
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                [':1?/a', [new Parameter('1', true, false)]],
-                [':1?/aa', [new Parameter('1', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                [':1?/aa', [new Parameter('1', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1710,10 +1710,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d*2 + s/s
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                [':1?/a', [new Parameter('1', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
-                ['aa/:2?', [new Parameter('2', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
+                ['aa/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1732,11 +1732,11 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d*2 + s/s
         {
             routes: [
-                [':1?/:2?', [new Parameter('1', true, false), new Parameter('2', true, false)]],
-                [':1?/a', [new Parameter('1', true, false)]],
-                [':1?/aa', [new Parameter('1', true, false)]],
-                ['a/:2?', [new Parameter('2', true, false)]],
-                ['aa/:2?', [new Parameter('2', true, false)]],
+                [':1?/:2?', [new Parameter('1', true, false, null), new Parameter('2', true, false, null)]],
+                [':1?/a', [new Parameter('1', true, false, null)]],
+                [':1?/aa', [new Parameter('1', true, false, null)]],
+                ['a/:2?', [new Parameter('2', true, false, null)]],
+                ['aa/:2?', [new Parameter('2', true, false, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -1758,7 +1758,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // #region 1-depth star routes
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
+                ['*1', [new Parameter('1', true, true, null)]],
             ],
             tests: [
                 ['', null, null],
@@ -1774,7 +1774,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         {
             routes: [
                 ['', []],
-                ['*1', [new Parameter('1', true, true)]],
+                ['*1', [new Parameter('1', true, true, null)]],
             ],
             tests: [
                 ['', '', null],
@@ -1789,7 +1789,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
+                ['*1', [new Parameter('1', true, true, null)]],
                 ['a', []],
             ],
             tests: [
@@ -1805,7 +1805,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
+                ['*1', [new Parameter('1', true, true, null)]],
                 ['a', []],
                 ['aa', []],
             ],
@@ -1823,7 +1823,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
+                ['*1', [new Parameter('1', true, true, null)]],
                 ['a', []],
                 ['aaa', []],
             ],
@@ -1842,7 +1842,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
+                ['*1', [new Parameter('1', true, true, null)]],
                 ['aa', []],
                 ['aaa', []],
             ],
@@ -1861,7 +1861,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
+                ['*1', [new Parameter('1', true, true, null)]],
                 ['a', []],
                 ['aa', []],
                 ['aaa', []],
@@ -1883,8 +1883,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // #region 1-depth star + dynamic routes
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
-                [':1', [new Parameter('1', false, false)]],
+                ['*1', [new Parameter('1', true, true, null)]],
+                [':1', [new Parameter('1', false, false, null)]],
             ],
             tests: [
                 ['', null, null],
@@ -1899,8 +1899,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
-                [':1', [new Parameter('1', false, false)]],
+                ['*1', [new Parameter('1', true, true, null)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['a', []],
             ],
             tests: [
@@ -1916,8 +1916,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
-                [':1', [new Parameter('1', false, false)]],
+                ['*1', [new Parameter('1', true, true, null)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['a', []],
                 ['aa', []],
             ],
@@ -1935,8 +1935,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
-                [':1', [new Parameter('1', false, false)]],
+                ['*1', [new Parameter('1', true, true, null)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['a', []],
                 ['aaa', []],
             ],
@@ -1955,8 +1955,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
-                [':1', [new Parameter('1', false, false)]],
+                ['*1', [new Parameter('1', true, true, null)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['aa', []],
                 ['aaa', []],
             ],
@@ -1975,8 +1975,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1', [new Parameter('1', true, true)]],
-                [':1', [new Parameter('1', false, false)]],
+                ['*1', [new Parameter('1', true, true, null)]],
+                [':1', [new Parameter('1', false, false, null)]],
                 ['a', []],
                 ['aa', []],
                 ['aaa', []],
@@ -1999,7 +1999,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/s
         {
             routes: [
-                ['*1/a', [new Parameter('1', true, true)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
             ],
             tests: [
                 ['', null, null],
@@ -2018,7 +2018,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1/a', [new Parameter('1', true, true)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2038,7 +2038,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1/a', [new Parameter('1', true, true)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -2061,7 +2061,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // s/d
         {
             routes: [
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
             ],
             tests: [
                 ['', null, null],
@@ -2078,7 +2078,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2098,7 +2098,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -2121,8 +2121,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/s + s/d
         {
             routes: [
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
             ],
             tests: [
                 ['', null, null],
@@ -2142,8 +2142,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2164,8 +2164,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -2188,8 +2188,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -2212,8 +2212,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         },
         {
             routes: [
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
                 ['a/aa', []],
                 ['aa/a', []],
@@ -2239,7 +2239,7 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
             ],
             tests: [
                 ['', null, null],
@@ -2261,8 +2261,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['*1/a', [new Parameter('1', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
             ],
             tests: [
                 ['', null, null],
@@ -2284,8 +2284,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/s
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['*1/a', [new Parameter('1', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2308,9 +2308,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/s
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['*1/aa', [new Parameter('1', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['*1/aa', [new Parameter('1', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2337,8 +2337,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/s*2
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['*1/a', [new Parameter('1', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -2362,9 +2362,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/s*2
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['*1/aa', [new Parameter('1', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['*1/aa', [new Parameter('1', true, true, null)]],
                 ['a/a', []],
                 ['aa/a', []],
             ],
@@ -2392,8 +2392,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d + s/s
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2416,9 +2416,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d*2 + s/s
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
-                ['aa/*2', [new Parameter('2', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
+                ['aa/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2445,8 +2445,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d + s/s*2
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -2470,9 +2470,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + s/d*2 + s/s*2
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
-                ['aa/*2', [new Parameter('2', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
+                ['aa/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
                 ['a/aa', []],
             ],
@@ -2500,9 +2500,9 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d + s/s
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2527,10 +2527,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d + s/s
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['*1/aa', [new Parameter('1', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['*1/aa', [new Parameter('1', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2558,10 +2558,10 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s + s/d*2 + s/s
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
-                ['aa/*2', [new Parameter('2', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
+                ['aa/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2592,11 +2592,11 @@ describe('router-lite/route-recognizer.spec.ts', function () {
         // d/d + d/s*2 + s/d*2 + s/s
         {
             routes: [
-                ['*1/*2', [new Parameter('1', true, true), new Parameter('2', true, true)]],
-                ['*1/a', [new Parameter('1', true, true)]],
-                ['*1/aa', [new Parameter('1', true, true)]],
-                ['a/*2', [new Parameter('2', true, true)]],
-                ['aa/*2', [new Parameter('2', true, true)]],
+                ['*1/*2', [new Parameter('1', true, true, null), new Parameter('2', true, true, null)]],
+                ['*1/a', [new Parameter('1', true, true, null)]],
+                ['*1/aa', [new Parameter('1', true, true, null)]],
+                ['a/*2', [new Parameter('2', true, true, null)]],
+                ['aa/*2', [new Parameter('2', true, true, null)]],
                 ['a/a', []],
             ],
             tests: [
@@ -2636,59 +2636,59 @@ describe('router-lite/route-recognizer.spec.ts', function () {
                 ['a/a', []],
                 ['a/a/a', []],
                 ['a/a/aa', []],
-                ['a/a/:3', [new Parameter('3', false, false)]],
-                ['a/a/:3?/a', [new Parameter('3', true, false)]],
-                ['a/a/:3?/aa', [new Parameter('3', true, false)]],
+                ['a/a/:3', [new Parameter('3', false, false, null)]],
+                ['a/a/:3?/a', [new Parameter('3', true, false, null)]],
+                ['a/a/:3?/aa', [new Parameter('3', true, false, null)]],
                 ['a/aa', []],
                 ['a/aa/a', []],
                 ['a/aa/aa', []],
-                ['a/aa/:3', [new Parameter('3', false, false)]],
-                ['a/aa/:3?/a', [new Parameter('3', true, false)]],
-                ['a/aa/:3?/aa', [new Parameter('3', true, false)]],
-                ['a/:2', [new Parameter('2', false, false)]],
-                ['a/:2/a', [new Parameter('2', false, false)]],
-                ['a/:2/aa', [new Parameter('2', false, false)]],
-                ['a/:2/:3', [new Parameter('2', false, false), new Parameter('3', false, false)]],
-                ['a/:2/:3?/a', [new Parameter('2', false, false), new Parameter('3', true, false)]],
-                ['a/:2/:3?/aa', [new Parameter('2', false, false), new Parameter('3', true, false)]],
+                ['a/aa/:3', [new Parameter('3', false, false, null)]],
+                ['a/aa/:3?/a', [new Parameter('3', true, false, null)]],
+                ['a/aa/:3?/aa', [new Parameter('3', true, false, null)]],
+                ['a/:2', [new Parameter('2', false, false, null)]],
+                ['a/:2/a', [new Parameter('2', false, false, null)]],
+                ['a/:2/aa', [new Parameter('2', false, false, null)]],
+                ['a/:2/:3', [new Parameter('2', false, false, null), new Parameter('3', false, false, null)]],
+                ['a/:2/:3?/a', [new Parameter('2', false, false, null), new Parameter('3', true, false, null)]],
+                ['a/:2/:3?/aa', [new Parameter('2', false, false, null), new Parameter('3', true, false, null)]],
                 ['aa', []],
                 ['aa/a', []],
                 ['aa/a/a', []],
                 ['aa/a/aa', []],
-                ['aa/a/:3', [new Parameter('3', false, false)]],
-                ['aa/a/:3?/a', [new Parameter('3', true, false)]],
-                ['aa/a/:3?/aa', [new Parameter('3', true, false)]],
+                ['aa/a/:3', [new Parameter('3', false, false, null)]],
+                ['aa/a/:3?/a', [new Parameter('3', true, false, null)]],
+                ['aa/a/:3?/aa', [new Parameter('3', true, false, null)]],
                 ['aa/aa', []],
                 ['aa/aa/a', []],
                 ['aa/aa/aa', []],
-                ['aa/aa/:3', [new Parameter('3', false, false)]],
-                ['aa/aa/:3?/a', [new Parameter('3', true, false)]],
-                ['aa/aa/:3?/aa', [new Parameter('3', true, false)]],
-                ['aa/:2', [new Parameter('2', false, false)]],
-                ['aa/:2/a', [new Parameter('2', false, false)]],
-                ['aa/:2/aa', [new Parameter('2', false, false)]],
-                ['aa/:2/:3', [new Parameter('2', false, false), new Parameter('3', false, false)]],
-                ['aa/:2/:3?/a', [new Parameter('2', false, false), new Parameter('3', true, false)]],
-                ['aa/:2/:3?/aa', [new Parameter('2', false, false), new Parameter('3', true, false)]],
-                [':1', [new Parameter('1', false, false)]],
-                [':1/a', [new Parameter('1', false, false)]],
-                [':1/a/a', [new Parameter('1', false, false)]],
-                [':1/a/aa', [new Parameter('1', false, false)]],
-                [':1/a/:3', [new Parameter('1', false, false), new Parameter('3', false, false)]],
-                [':1/a/:3?/a', [new Parameter('1', false, false), new Parameter('3', true, false)]],
-                [':1/a/:3?/aa', [new Parameter('1', false, false), new Parameter('3', true, false)]],
-                [':1/aa', [new Parameter('1', false, false)]],
-                [':1/aa/a', [new Parameter('1', false, false)]],
-                [':1/aa/aa', [new Parameter('1', false, false)]],
-                [':1/aa/:3', [new Parameter('1', false, false), new Parameter('3', false, false)]],
-                [':1/aa/:3?/a', [new Parameter('1', false, false), new Parameter('3', true, false)]],
-                [':1/aa/:3?/aa', [new Parameter('1', false, false), new Parameter('3', true, false)]],
-                [':1/:2', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/:2/a', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/:2/aa', [new Parameter('1', false, false), new Parameter('2', false, false)]],
-                [':1/:2/:3', [new Parameter('1', false, false), new Parameter('2', false, false), new Parameter('3', false, false)]],
-                [':1/:2/:3?/a', [new Parameter('1', false, false), new Parameter('2', false, false), new Parameter('3', true, false)]],
-                [':1/:2/:3?/aa', [new Parameter('1', false, false), new Parameter('2', false, false), new Parameter('3', true, false)]],
+                ['aa/aa/:3', [new Parameter('3', false, false, null)]],
+                ['aa/aa/:3?/a', [new Parameter('3', true, false, null)]],
+                ['aa/aa/:3?/aa', [new Parameter('3', true, false, null)]],
+                ['aa/:2', [new Parameter('2', false, false, null)]],
+                ['aa/:2/a', [new Parameter('2', false, false, null)]],
+                ['aa/:2/aa', [new Parameter('2', false, false, null)]],
+                ['aa/:2/:3', [new Parameter('2', false, false, null), new Parameter('3', false, false, null)]],
+                ['aa/:2/:3?/a', [new Parameter('2', false, false, null), new Parameter('3', true, false, null)]],
+                ['aa/:2/:3?/aa', [new Parameter('2', false, false, null), new Parameter('3', true, false, null)]],
+                [':1', [new Parameter('1', false, false, null)]],
+                [':1/a', [new Parameter('1', false, false, null)]],
+                [':1/a/a', [new Parameter('1', false, false, null)]],
+                [':1/a/aa', [new Parameter('1', false, false, null)]],
+                [':1/a/:3', [new Parameter('1', false, false, null), new Parameter('3', false, false, null)]],
+                [':1/a/:3?/a', [new Parameter('1', false, false, null), new Parameter('3', true, false, null)]],
+                [':1/a/:3?/aa', [new Parameter('1', false, false, null), new Parameter('3', true, false, null)]],
+                [':1/aa', [new Parameter('1', false, false, null)]],
+                [':1/aa/a', [new Parameter('1', false, false, null)]],
+                [':1/aa/aa', [new Parameter('1', false, false, null)]],
+                [':1/aa/:3', [new Parameter('1', false, false, null), new Parameter('3', false, false, null)]],
+                [':1/aa/:3?/a', [new Parameter('1', false, false, null), new Parameter('3', true, false, null)]],
+                [':1/aa/:3?/aa', [new Parameter('1', false, false, null), new Parameter('3', true, false, null)]],
+                [':1/:2', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/:2/a', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/:2/aa', [new Parameter('1', false, false, null), new Parameter('2', false, false, null)]],
+                [':1/:2/:3', [new Parameter('1', false, false, null), new Parameter('2', false, false, null), new Parameter('3', false, false, null)]],
+                [':1/:2/:3?/a', [new Parameter('1', false, false, null), new Parameter('2', false, false, null), new Parameter('3', true, false, null)]],
+                [':1/:2/:3?/aa', [new Parameter('1', false, false, null), new Parameter('2', false, false, null), new Parameter('3', true, false, null)]],
             ],
             tests: [
                 ['a', 'a', null],
@@ -2751,6 +2751,81 @@ describe('router-lite/route-recognizer.spec.ts', function () {
             ],
         },
         // #endregion
+        // #region constrained routes
+        {
+            routes: [
+                ['a/:id{{^\\d+$}}', [new Parameter('id', false, false, /^\d+$/)]],
+                ['b/:tab{{^(foo|bar)$}}', [new Parameter('tab', false, false, /^(foo|bar)$/)]],
+                ['c/:id{{^\\d+$}}?', [new Parameter('id', true, false, /^\d+$/)]],
+                ['d/:id{{^\\d+$}}/:tab{{^(foo|bar)$}}?', [new Parameter('id', false, false, /^\d+$/), new Parameter('tab', true, false, /^(foo|bar)$/)]],
+                ['e/:id{{^\\d+$}}?/:tab{{^(foo|bar)$}}?', [new Parameter('id', true, false, /^\d+$/), new Parameter('tab', true, false, /^(foo|bar)$/)]],
+                [':id{{^\\d+$}}/f', [new Parameter('id', false, false, /^\d+$/)]],
+                ['g/:id{{^\\d+$}}/h', [new Parameter('id', false, false, /^\d+$/)]],
+                ['i/:tab{{foo|bar}}', [new Parameter('tab', false, false, /foo|bar/)]],
+                ['j/:tab{{^(foo|bar)}}', [new Parameter('tab', false, false, /^(foo|bar)/)]],
+                ['k/:tab{{(foo|bar)$}}', [new Parameter('tab', false, false, /(foo|bar)$/)]],
+            ],
+            tests: [
+                ['a', null, null],
+                ['a/42', 'a/:id{{^\\d+$}}', { id: '42' }],
+                ['a/foo', null, null],
+                ['a/f42', null, null],
+                ['a/42f', null, null],
+                ['b/foo', 'b/:tab{{^(foo|bar)$}}', { tab: 'foo' }],
+                ['b/bar', 'b/:tab{{^(foo|bar)$}}', { tab: 'bar' }],
+                ['b/fizz', null, null],
+                ['b/foobar', null, null],
+                ['b/barfoo', null, null],
+                ['b/foof', null, null],
+                ['b/ffoo', null, null],
+                ['b/barf', null, null],
+                ['b/fbar', null, null],
+                ['c/42', 'c/:id{{^\\d+$}}?', { id: '42' }],
+                ['c', 'c/:id{{^\\d+$}}?', { id: void 0 }],
+                ['c/foo', null, null],
+                ['d', null, null],
+                ['d/42', 'd/:id{{^\\d+$}}/:tab{{^(foo|bar)$}}?', { id: '42', tab: void 0 }],
+                ['d/42/foo', 'd/:id{{^\\d+$}}/:tab{{^(foo|bar)$}}?', { id: '42', tab: 'foo' }],
+                ['d/42/bar', 'd/:id{{^\\d+$}}/:tab{{^(foo|bar)$}}?', { id: '42', tab: 'bar' }],
+                ['d/foo/42', null, null],
+                ['d/bar/42', null, null],
+                ['e', 'e/:id{{^\\d+$}}?/:tab{{^(foo|bar)$}}?', { id: void 0, tab: void 0 }],
+                ['e/42', 'e/:id{{^\\d+$}}?/:tab{{^(foo|bar)$}}?', { id: '42', tab: void 0 }],
+                ['e/42/foo', 'e/:id{{^\\d+$}}?/:tab{{^(foo|bar)$}}?', { id: '42', tab: 'foo' }],
+                ['e/42/bar', 'e/:id{{^\\d+$}}?/:tab{{^(foo|bar)$}}?', { id: '42', tab: 'bar' }],
+                ['e/foo/42', null, null],
+                ['e/bar/42', null, null],
+                ['f', null, null],
+                ['42/f', ':id{{^\\d+$}}/f', { id: '42' }],
+                ['foo/f', null, null],
+                ['f42/f', null, null],
+                ['42f/f', null, null],
+                ['g', null, null],
+                ['g/42/h', 'g/:id{{^\\d+$}}/h', { id: '42' }],
+                ['g/foo/h', null, null],
+                ['g/f42/h', null, null],
+                ['g/42f/h', null, null],
+                ['i/foo', 'i/:tab{{foo|bar}}', { tab: 'foo' }],
+                ['i/bar', 'i/:tab{{foo|bar}}', { tab: 'bar' }],
+                ['i/fizz', null, null],
+                ['i/foobar', 'i/:tab{{foo|bar}}', { tab: 'foobar' }],
+                ['i/barfoo', 'i/:tab{{foo|bar}}', { tab: 'barfoo' }],
+                ['i/foof', 'i/:tab{{foo|bar}}', { tab: 'foof' }],
+                ['i/ffoo', 'i/:tab{{foo|bar}}', { tab: 'ffoo' }],
+                ['i/barf', 'i/:tab{{foo|bar}}', { tab: 'barf' }],
+                ['i/fbar', 'i/:tab{{foo|bar}}', { tab: 'fbar' }],
+                ['k/foo', 'k/:tab{{(foo|bar)$}}', { tab: 'foo' }],
+                ['k/bar', 'k/:tab{{(foo|bar)$}}', { tab: 'bar' }],
+                ['k/fizz', null, null],
+                ['k/foobar', 'k/:tab{{(foo|bar)$}}', { tab: 'foobar' }],
+                ['k/barfoo', 'k/:tab{{(foo|bar)$}}', { tab: 'barfoo' }],
+                ['k/foof', null, null],
+                ['k/ffoo', 'k/:tab{{(foo|bar)$}}', { tab: 'ffoo' }],
+                ['k/barf', null, null],
+                ['k/fbar', 'k/:tab{{(foo|bar)$}}', { tab: 'fbar' }],
+            ]
+        }
+        // #endregion
     ];
     for (const hasLeadingSlash of [true, false]) {
         for (const hasTrailingSlash of [true, false]) {
@@ -2807,8 +2882,8 @@ describe('router-lite/route-recognizer.spec.ts', function () {
                 const $routes = [
                     ['', [], true],
                     ['a', [], true],
-                    ['b/:1', [new Parameter('1', false, false)], true],
-                    ['b/:1/*2', [new Parameter('1', false, false), new Parameter('2', true, true)], false],
+                    ['b/:1', [new Parameter('1', false, false, null)], true],
+                    ['b/:1/*2', [new Parameter('1', false, false, null), new Parameter('2', true, true, null)], false],
                 ];
                 const tests = [
                     ['b/1', 'b/:1', { 1: '1' }],
@@ -2850,14 +2925,14 @@ describe('router-lite/route-recognizer.spec.ts', function () {
                             const $match = match.substring(0, match.length - (RESIDUE.length + 2));
                             parameters = [
                                 ...routes.find(([route]) => route === $match)[1],
-                                new Parameter(RESIDUE, true, true),
+                                new Parameter(RESIDUE, true, true, null),
                             ];
                         }
                         else {
                             const route = routes.find(([route]) => route === match);
                             parameters = route[1];
                             if (route[2]) {
-                                residueEndpoint = new Endpoint(new ConfigurableRoute(`${route[0]}/*${RESIDUE}`, false, null), [...parameters, new Parameter(RESIDUE, true, true)]);
+                                residueEndpoint = new Endpoint(new ConfigurableRoute(`${route[0]}/*${RESIDUE}`, false, null), [...parameters, new Parameter(RESIDUE, true, true, null)]);
                             }
                         }
                         const endpoint = new Endpoint(configurableRoute, parameters);

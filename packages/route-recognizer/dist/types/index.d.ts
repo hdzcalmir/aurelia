@@ -7,7 +7,9 @@ export declare class Parameter {
     readonly name: string;
     readonly isOptional: boolean;
     readonly isStar: boolean;
-    constructor(name: string, isOptional: boolean, isStar: boolean);
+    readonly pattern: RegExp | null;
+    constructor(name: string, isOptional: boolean, isStar: boolean, pattern: RegExp | null);
+    satisfiesPattern(value: string): boolean;
 }
 export declare class ConfigurableRoute<T> implements IConfigurableRoute<T> {
     readonly path: string;
