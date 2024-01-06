@@ -312,11 +312,11 @@ const u = [ "textContent", "innerHTML", "prepend", "append" ];
 
 const p = new Map([ [ "text", "textContent" ], [ "html", "innerHTML" ] ]);
 
-const f = {
+const d = {
     optional: true
 };
 
-const d = {
+const f = {
     reusable: false,
     preempt: true
 };
@@ -366,13 +366,13 @@ class TranslationBinding {
         if (this.isBound) {
             return;
         }
-        if (!this.ast) {
+        const e = this.ast;
+        if (!e) {
             throw new Error("key expression is missing");
         }
         this.s = t;
-        this.M = this.ast instanceof n.Interpolation;
-        this.A = n.astEvaluate(this.ast, t, this, this);
-        this.L();
+        this.M = n.astEvaluate(e, t, this, this);
+        this.A();
         this.parameter?.bind(t);
         this.updateTranslations();
         this.isBound = true;
@@ -393,9 +393,9 @@ class TranslationBinding {
     }
     handleChange(t, e) {
         this.obs.version++;
-        this.A = this.M ? n.astEvaluate(this.ast, this.s, this, this) : t;
+        this.M = n.astEvaluate(this.ast, this.s, this, this);
         this.obs.clear();
-        this.L();
+        this.A();
         this.updateTranslations();
     }
     handleLocaleChange() {
@@ -408,19 +408,19 @@ class TranslationBinding {
         this.parameter = new ParameterBinding(this, t, (() => this.updateTranslations()));
     }
     updateTranslations() {
-        const n = this.i18n.evaluate(this.A, this.parameter?.value);
+        const n = this.i18n.evaluate(this.M, this.parameter?.value);
         const s = Object.create(null);
         const r = [];
         const i = this.T;
         this.I.clear();
         for (const i of n) {
             const n = i.value;
-            const o = this.R(i.attributes);
+            const o = this.L(i.attributes);
             for (const i of o) {
-                if (this.N(i)) {
+                if (this.R(i)) {
                     s[i] = n;
                 } else {
-                    const s = e.CustomElement.for(this.target, f);
+                    const s = e.CustomElement.for(this.target, d);
                     const o = s?.viewModel ? this.oL.getAccessor(s.viewModel, t.camelCase(i)) : this.oL.getAccessor(this.target, i);
                     const a = this.B.state !== 1 && (o.type & 4) > 0;
                     if (a) {
@@ -436,7 +436,7 @@ class TranslationBinding {
         if (Object.keys(s).length > 0) {
             o = this.B.state !== 1;
             if (!o) {
-                this.V(s);
+                this.N(s);
             }
         }
         if (r.length > 0 || o) {
@@ -446,13 +446,13 @@ class TranslationBinding {
                     t.run();
                 }
                 if (o) {
-                    this.V(s);
+                    this.N(s);
                 }
-            }), d);
+            }), f);
         }
         i?.cancel();
     }
-    R(t) {
+    L(t) {
         if (t.length === 0) {
             t = this.target.tagName === "IMG" ? [ "src" ] : [ "textContent" ];
         }
@@ -464,10 +464,10 @@ class TranslationBinding {
         }
         return t;
     }
-    N(t) {
+    R(t) {
         return this._.includes(t);
     }
-    V(e) {
+    N(e) {
         const n = t.toArray(this.target.childNodes);
         const s = [];
         const r = "au-i18n";
@@ -476,24 +476,24 @@ class TranslationBinding {
                 s.push(t);
             }
         }
-        const i = this.F(e, r, s);
+        const i = this.V(e, r, s);
         this.target.innerHTML = "";
         for (const e of t.toArray(i.content.childNodes)) {
             this.target.appendChild(e);
         }
     }
-    F(t, e, n) {
+    V(t, e, n) {
         const s = this.p.document.createElement("template");
-        this.O(s, t.prepend, e);
-        if (!this.O(s, t.innerHTML ?? t.textContent, e)) {
+        this.F(s, t.prepend, e);
+        if (!this.F(s, t.innerHTML ?? t.textContent, e)) {
             for (const t of n) {
                 s.content.append(t);
             }
         }
-        this.O(s, t.append, e);
+        this.F(s, t.append, e);
         return s;
     }
-    O(e, n, s) {
+    F(e, n, s) {
         if (n !== void 0 && n !== null) {
             const r = this.p.document.createElement("div");
             r.innerHTML = n;
@@ -505,8 +505,8 @@ class TranslationBinding {
         }
         return false;
     }
-    L() {
-        const t = this.A ?? (this.A = "");
+    A() {
+        const t = this.M ?? (this.M = "");
         const e = typeof t;
         if (e !== "string") {
             throw new Error(`Expected the i18n key to be a string, but got ${t} of type ${e}`);

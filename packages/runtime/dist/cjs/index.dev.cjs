@@ -2712,8 +2712,8 @@ class ExpressionParser {
                 return found;
             default: {
                 if (expression.length === 0) {
-                    // only allow function to be empty
-                    if ((expressionType & (8 /* ExpressionType.IsFunction */ | 16 /* ExpressionType.IsProperty */)) > 0) {
+                    // this is an intermediate code before converting the ExpressionType enum to a string literal type as part of the issue #1736
+                    if (expressionType === 8 /* ExpressionType.IsFunction */ || expressionType === 16 /* ExpressionType.IsProperty */) {
                         return PrimitiveLiteralExpression.$empty;
                     }
                     throw invalidEmptyExpression();

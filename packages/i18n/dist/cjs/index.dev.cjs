@@ -391,13 +391,13 @@ class TranslationBinding {
         if (this.isBound) {
             return;
         }
+        const ast = this.ast;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!this.ast) {
+        if (!ast) {
             throw new Error('key expression is missing');
         }
         this._scope = _scope;
-        this._isInterpolation = this.ast instanceof runtime.Interpolation;
-        this._keyExpression = runtime.astEvaluate(this.ast, _scope, this, this);
+        this._keyExpression = runtime.astEvaluate(ast, _scope, this, this);
         this._ensureKeyExpression();
         this.parameter?.bind(_scope);
         this.updateTranslations();
@@ -417,11 +417,9 @@ class TranslationBinding {
         this._scope = (void 0);
         this.obs.clearAll();
     }
-    handleChange(newValue, _previousValue) {
+    handleChange(_newValue, _previousValue) {
         this.obs.version++;
-        this._keyExpression = this._isInterpolation
-            ? runtime.astEvaluate(this.ast, this._scope, this, this)
-            : newValue;
+        this._keyExpression = runtime.astEvaluate(this.ast, this._scope, this, this);
         this.obs.clear();
         this._ensureKeyExpression();
         this.updateTranslations();

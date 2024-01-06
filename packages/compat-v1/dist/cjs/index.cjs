@@ -101,7 +101,7 @@ exports.CallBindingCommand = class CallBindingCommand {
     }
     build(t, e) {
         const s = t.bindable === null ? i.camelCase(t.attr.target) : t.bindable.name;
-        return new CallBindingInstruction(e.parse(t.attr.rawValue, 16 | 8), s);
+        return new CallBindingInstruction(e.parse(t.attr.rawValue, 8), s);
     }
 };
 
@@ -109,7 +109,7 @@ exports.CallBindingCommand = __decorate([ e.bindingCommand("call") ], exports.Ca
 
 exports.CallBindingRenderer = class CallBindingRenderer {
     render(t, e, i, s, n, r) {
-        const o = ensureExpression(n, i.from, 16 | 8);
+        const o = ensureExpression(n, i.from, 8);
         t.addBinding(new CallBinding(t.container, r, o, getTarget(e), i.to));
     }
 };

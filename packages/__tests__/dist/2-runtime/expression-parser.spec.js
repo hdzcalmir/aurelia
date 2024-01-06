@@ -385,7 +385,7 @@ describe('2-runtime/expression-parser.spec.ts', function () {
     for (const [exprType, name] of [
         [undefined, 'undefined'],
         [16 /* ExpressionType.IsProperty */, 'IsProperty'],
-        [16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */, 'call command'],
+        [8 /* ExpressionType.IsFunction */, 'call command'],
     ]) {
         describe(name, function () {
             describe('parse AccessThisList', function () {

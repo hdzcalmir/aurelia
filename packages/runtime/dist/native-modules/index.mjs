@@ -2702,7 +2702,7 @@ class ExpressionParser {
           default:
             {
                 if (e.length === 0) {
-                    if ((t & (8 | 16)) > 0) {
+                    if (t === 8 || t === 16) {
                         return PrimitiveLiteralExpression.$empty;
                     }
                     throw invalidEmptyExpression();

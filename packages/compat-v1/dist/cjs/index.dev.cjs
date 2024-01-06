@@ -136,7 +136,7 @@ exports.CallBindingCommand = class CallBindingCommand {
         const target = info.bindable === null
             ? kernel.camelCase(info.attr.target)
             : info.bindable.name;
-        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, (16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */)), target);
+        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, 8 /* ExpressionType.IsFunction */), target);
     }
 };
 exports.CallBindingCommand = __decorate([
@@ -144,7 +144,7 @@ exports.CallBindingCommand = __decorate([
 ], exports.CallBindingCommand);
 exports.CallBindingRenderer = class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        const expr = ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */);
+        const expr = ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
 };

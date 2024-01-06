@@ -31,7 +31,7 @@ export declare class TranslationBinding implements IConnectableBinding {
     static create({ parser, observerLocator, context, controller, target, instruction, platform, isParameterContext, }: TranslationBindingCreationContext): void;
     bind(_scope: Scope): void;
     unbind(): void;
-    handleChange(newValue: string | i18next.TOptions, _previousValue: string | i18next.TOptions): void;
+    handleChange(_newValue: string | i18next.TOptions, _previousValue: string | i18next.TOptions): void;
     handleLocaleChange(): void;
     useParameter(expr: IsExpression): void;
     updateTranslations(): void;

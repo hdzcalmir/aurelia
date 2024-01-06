@@ -132,7 +132,7 @@ let CallBindingCommand = class CallBindingCommand {
         const target = info.bindable === null
             ? camelCase(info.attr.target)
             : info.bindable.name;
-        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, (16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */)), target);
+        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, 8 /* ExpressionType.IsFunction */), target);
     }
 };
 CallBindingCommand = __decorate([
@@ -140,7 +140,7 @@ CallBindingCommand = __decorate([
 ], CallBindingCommand);
 let CallBindingRenderer = class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        const expr = ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */);
+        const expr = ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
 };

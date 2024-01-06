@@ -1,6 +1,6 @@
 import { DI, IEventAggregator, camelCase, toArray, Registration } from '../../../kernel/dist/native-modules/index.mjs';
 import { bindingBehavior, valueConverter, mixinAstEvaluator, mixingBindingLimited, CustomElement, attributePattern, bindingCommand, renderer, AttrSyntax, AttributePattern, BindingCommand, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
-import { ValueConverterExpression, nowrap, ISignaler, connectable, CustomExpression, Interpolation, astEvaluate, astUnbind, astBind } from '../../../runtime/dist/native-modules/index.mjs';
+import { ValueConverterExpression, nowrap, ISignaler, connectable, CustomExpression, astEvaluate, astUnbind, astBind } from '../../../runtime/dist/native-modules/index.mjs';
 import i18next from 'i18next';
 
 /******************************************************************************
@@ -383,13 +383,13 @@ class TranslationBinding {
         if (this.isBound) {
             return;
         }
+        const ast = this.ast;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!this.ast) {
+        if (!ast) {
             throw new Error('key expression is missing');
         }
         this._scope = _scope;
-        this._isInterpolation = this.ast instanceof Interpolation;
-        this._keyExpression = astEvaluate(this.ast, _scope, this, this);
+        this._keyExpression = astEvaluate(ast, _scope, this, this);
         this._ensureKeyExpression();
         this.parameter?.bind(_scope);
         this.updateTranslations();
@@ -409,11 +409,9 @@ class TranslationBinding {
         this._scope = (void 0);
         this.obs.clearAll();
     }
-    handleChange(newValue, _previousValue) {
+    handleChange(_newValue, _previousValue) {
         this.obs.version++;
-        this._keyExpression = this._isInterpolation
-            ? astEvaluate(this.ast, this._scope, this, this)
-            : newValue;
+        this._keyExpression = astEvaluate(this.ast, this._scope, this, this);
         this.obs.clear();
         this._ensureKeyExpression();
         this.updateTranslations();
