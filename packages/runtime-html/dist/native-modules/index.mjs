@@ -8869,7 +8869,7 @@ class TemplateElementFactory {
                 const i = this.ds;
                 i.innerHTML = t;
                 const s = i.content.firstElementChild;
-                if (s == null || s.nodeName !== "TEMPLATE" || s.nextElementSibling != null) {
+                if (needsWrapping(s)) {
                     this.ds = this.t();
                     e = i;
                 } else {
@@ -8887,6 +8887,27 @@ class TemplateElementFactory {
         }
         t.parentNode?.removeChild(t);
         return t.cloneNode(true);
+        function needsWrapping(t) {
+            if (t == null) return true;
+            if (t.nodeName !== "TEMPLATE") return true;
+            const e = t.nextElementSibling;
+            if (e != null) return true;
+            const i = t.previousSibling;
+            if (i != null) {
+                switch (i.nodeType) {
+                  case 3:
+                    return i.textContent.trim().length > 0;
+                }
+            }
+            const s = t.nextSibling;
+            if (s != null) {
+                switch (s.nodeType) {
+                  case 3:
+                    return s.textContent.trim().length > 0;
+                }
+            }
+            return false;
+        }
     }
 }
 

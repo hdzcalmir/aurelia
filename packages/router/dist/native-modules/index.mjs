@@ -5036,7 +5036,11 @@ class Router {
         const o = (t.query?.length ?? 0) > 0 ? "?" + t.query : "";
         const h = (t.fragment?.length ?? 0) > 0 ? "#" + t.fragment : "";
         t.path = r + s + o + h;
-        const u = [ RoutingInstruction.create(RoutingInstruction.clear(this)) ];
+        const u = [];
+        const a = i.length === 1 ? i[0].route : null;
+        if (!(a != null && (typeof a === "string" && a === "" || a.matching === ""))) {
+            u.push(RoutingInstruction.create(RoutingInstruction.clear(this)));
+        }
         u.push(...RoutingInstruction.clone(i, this.statefulHistory));
         t.fullStateInstruction = u;
         if ((t.title ?? null) === null) {

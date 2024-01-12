@@ -7837,7 +7837,12 @@ class Router {
         // if (instruction.path === void 0 || instruction.path.length === 0 || instruction.path === '/') {
         navigation.path = basePath + state + query + fragment;
         // }
-        const fullViewportStates = [RoutingInstruction.create(RoutingInstruction.clear(this))];
+        const fullViewportStates = [];
+        // Handle default / root page, because "-" + "" = "-" (so just a "clear")
+        const targetRoute = instructions.length === 1 ? instructions[0].route : null;
+        if (!(targetRoute != null && ((typeof targetRoute === 'string' && targetRoute === '') || (targetRoute.matching === '')))) {
+            fullViewportStates.push(RoutingInstruction.create(RoutingInstruction.clear(this)));
+        }
         fullViewportStates.push(...RoutingInstruction.clone(instructions, this.statefulHistory));
         navigation.fullStateInstruction = fullViewportStates;
         if ((navigation.title ?? null) === null) {
