@@ -105,6 +105,7 @@ const ensureExpression = (parser, srcOrExpr, expressionType) => {
     }
     return srcOrExpr;
 };
+/** @internal */ const etIsFunction = 'IsFunction';
 
 const registeredSymbol$1 = Symbol('.call');
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
@@ -127,12 +128,12 @@ class CallBindingInstruction {
     }
 }
 let CallBindingCommand = class CallBindingCommand {
-    get type() { return 0 /* CommandType.None */; }
+    get type() { return 'None'; }
     build(info, exprParser) {
         const target = info.bindable === null
             ? camelCase(info.attr.target)
             : info.bindable.name;
-        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, 8 /* ExpressionType.IsFunction */), target);
+        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), target);
     }
 };
 CallBindingCommand = __decorate([
@@ -140,7 +141,7 @@ CallBindingCommand = __decorate([
 ], CallBindingCommand);
 let CallBindingRenderer = class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        const expr = ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */);
+        const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
 };
@@ -212,9 +213,9 @@ const delegateSyntax = {
 };
 const instructionType = 'dl';
 let DelegateBindingCommand = class DelegateBindingCommand {
-    get type() { return 1 /* CommandType.IgnoreAttr */; }
+    get type() { return 'IgnoreAttr'; }
     build(info, exprParser) {
-        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, 8 /* ExpressionType.IsFunction */), info.attr.target, false);
+        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false);
     }
 };
 DelegateBindingCommand = __decorate([
@@ -226,7 +227,7 @@ let ListenerBindingRenderer = class ListenerBindingRenderer {
         this._eventDelegator = eventDelegator;
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        const expr = ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */);
+        const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
     }
 };
@@ -597,7 +598,7 @@ class BindingEngine {
         const scope = Scope.create(bindingContext, {}, true);
         return {
             subscribe: callback => {
-                const observer = new ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 16 /* ExpressionType.IsProperty */), callback);
+                const observer = new ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 'IsProperty'), callback);
                 observer.bind();
                 return {
                     dispose: () => observer.unbind()

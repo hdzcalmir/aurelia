@@ -10,15 +10,15 @@ const C = e.instance;
 
 e.callback;
 
-const v = /*@__PURE__*/ d("IDialogService");
+const w = /*@__PURE__*/ d("IDialogService");
 
-const w = /*@__PURE__*/ d("IDialogController");
+const v = /*@__PURE__*/ d("IDialogController");
 
 const E = /*@__PURE__*/ d("IDialogDomRenderer");
 
 const R = /*@__PURE__*/ d("IDialogDom");
 
-const b = /*@__PURE__*/ d("IDialogGlobalSettings");
+const y = /*@__PURE__*/ d("IDialogGlobalSettings");
 
 class DialogOpenResult {
     constructor(t, e) {
@@ -39,15 +39,6 @@ class DialogCloseResult {
         return new DialogCloseResult(t, e);
     }
 }
-
-var y;
-
-(function(t) {
-    t["Ok"] = "ok";
-    t["Error"] = "error";
-    t["Cancel"] = "cancel";
-    t["Abort"] = "abort";
-})(y || (y = {}));
 
 const createError = t => new Error(t);
 
@@ -201,10 +192,10 @@ class DialogService {
         this.dlgs = [];
         this.h = n(i);
         this.p = n(a);
-        this.C = n(b);
+        this.C = n(y);
     }
     static register(t) {
-        t.register(p(this, this), e.aliasTo(this, v), m.deactivating(v, (t => o(t.closeAll(), (t => {
+        t.register(p(this, this), e.aliasTo(this, w), m.deactivating(w, (t => o(t.closeAll(), (t => {
             if (t.length > 0) {
                 throw createError(`AUR0901:${t.length}`);
             }
@@ -223,7 +214,7 @@ class DialogService {
             const s = i.container ?? this.h.createChild();
             e(o(i.load(), (t => {
                 const e = s.invoke(DialogController);
-                s.register(C(w, e), C(DialogController, e));
+                s.register(C(v, e), C(DialogController, e));
                 return o(e.activate(t), (t => {
                     if (!t.wasCancelled) {
                         if (this.dlgs.push(e) === 1) {
@@ -332,7 +323,7 @@ class DefaultDialogGlobalSettings {
         this.rejectOnCancel = false;
     }
     static register(t) {
-        p(b, this).register(t);
+        p(y, this).register(t);
     }
 }
 
@@ -378,7 +369,7 @@ class DefaultDialogDom {
 function createDialogConfiguration(t, e) {
     return {
         settingsProvider: t,
-        register: i => i.register(...e, m.creating((() => t(i.get(b))))),
+        register: i => i.register(...e, m.creating((() => t(i.get(y))))),
         customize(t, i) {
             return createDialogConfiguration(t, i ?? e);
         }
@@ -389,11 +380,11 @@ const S = /*@__PURE__*/ createDialogConfiguration((() => {
     throw createError(`AUR0904`);
 }), [ class NoopDialogGlobalSettings {
     static register(t) {
-        t.register(p(b, this));
+        t.register(p(y, this));
     }
 } ]);
 
-const P = /*@__PURE__*/ createDialogConfiguration(l, [ DialogService, DefaultDialogGlobalSettings, DefaultDialogDomRenderer ]);
+const b = /*@__PURE__*/ createDialogConfiguration(l, [ DialogService, DefaultDialogGlobalSettings, DefaultDialogDomRenderer ]);
 
-export { DefaultDialogDom, DefaultDialogDomRenderer, DefaultDialogGlobalSettings, DialogCloseResult, S as DialogConfiguration, DialogController, y as DialogDeactivationStatuses, P as DialogDefaultConfiguration, DialogOpenResult, DialogService, w as IDialogController, R as IDialogDom, E as IDialogDomRenderer, b as IDialogGlobalSettings, v as IDialogService };
+export { DefaultDialogDom, DefaultDialogDomRenderer, DefaultDialogGlobalSettings, DialogCloseResult, S as DialogConfiguration, DialogController, b as DialogDefaultConfiguration, DialogOpenResult, DialogService, v as IDialogController, R as IDialogDom, E as IDialogDomRenderer, y as IDialogGlobalSettings, w as IDialogService };
 //# sourceMappingURL=index.mjs.map

@@ -1432,7 +1432,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                             // Therefore, the expected logs are constructed dynamically to ensure certain level of confidence.
                             const tc = app.$controller.children.find((c) => c.viewModel instanceof PromiseTemplateController).viewModel;
                             const task = tc['preSettledTask'];
-                            const logs = task.status === 1 /* TaskStatus.running */ || task.status === 2 /* TaskStatus.completed */
+                            const logs = task.status === 'running' || task.status === 'completed'
                                 ? [...getActivationSequenceFor(phost), ...getDeactivationSequenceFor(phost)]
                                 : [];
                             try {

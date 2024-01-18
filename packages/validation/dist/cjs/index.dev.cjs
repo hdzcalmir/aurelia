@@ -669,7 +669,7 @@ exports.ValidationRules = __decorate([
     __param(3, IValidationExpressionHydrator)
 ], exports.ValidationRules);
 // eslint-disable-next-line no-useless-escape
-const classicAccessorPattern = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
+const classicAccessorPattern = /^(?:function)?\s*\(?[$_\w\d]+\)?\s*(?:=>)?\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
 const arrowAccessorPattern = /^\(?[$_\w\d]+\)?\s*=>\s*[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)$/;
 const rootObjectSymbol = '$root';
 function parsePropertyName(property, parser) {
@@ -688,7 +688,7 @@ function parsePropertyName(property, parser) {
         default:
             throw new Error(`Unable to parse accessor function:\n${property}`); // TODO: use reporter
     }
-    return [property, parser.parse(`${rootObjectSymbol}.${property}`, 16 /* ExpressionType.IsProperty */)];
+    return [property, parser.parse(`${rootObjectSymbol}.${property}`, 'IsProperty')];
 }
 /**
  * The result of validating an individual validation rule.
@@ -761,14 +761,14 @@ exports.ValidationMessageProvider = ValidationMessageProvider_1 = class Validati
         return parsedMessage;
     }
     parseMessage(message) {
-        const parsed = this.parser.parse(message, 1 /* ExpressionType.Interpolation */);
-        if (parsed?.$kind === 25 /* ExpressionKind.Interpolation */) {
+        const parsed = this.parser.parse(message, 'Interpolation');
+        if (parsed?.$kind === 'Interpolation') {
             for (const expr of parsed.expressions) {
                 const name = expr.name;
                 if (contextualProperties.has(name)) {
                     this.logger.warn(`Did you mean to use "$${name}" instead of "${name}" in this validation message template: "${message}"?`);
                 }
-                if (expr.$kind === 0 /* ExpressionKind.AccessThis */ || expr.ancestor > 0) {
+                if (expr.$kind === 'AccessThis' || expr.ancestor > 0) {
                     throw new Error('$parent is not permitted in validation message expressions.'); // TODO: use reporter
                 }
             }
@@ -1344,7 +1344,7 @@ exports.ModelValidationExpressionHydrator = class ModelValidationExpressionHydra
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (when) {
             if (typeof when === 'string') {
-                const parsed = this.parser.parse(when, 0 /* ExpressionType.None */);
+                const parsed = this.parser.parse(when, 'None');
                 rule.canExecute = (object) => {
                     return AST.astEvaluate(parsed, AST.Scope.create({ $object: object }), this, null);
                 };

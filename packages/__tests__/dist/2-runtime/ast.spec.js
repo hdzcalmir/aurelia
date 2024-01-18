@@ -1357,14 +1357,14 @@ describe('2-runtime/ast.spec.ts', function () {
         describe('DestructuringAssignmentExpression', function () {
             it('{a} = {a: 1, b:2}', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'a'), new AccessMemberExpression($this, 'a'), void 0)
                 ], void 0, void 0), Scope.create(bc), null, { a: 1, b: 2 });
                 assert.deepStrictEqual(bc, { a: 1 });
             });
             it('{a, b} = {a: 1, b:2}', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'a'), new AccessMemberExpression($this, 'a'), void 0),
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'b'), new AccessMemberExpression($this, 'b'), void 0),
                 ], void 0, void 0), Scope.create(bc), null, { a: 1, b: 2 });
@@ -1372,21 +1372,21 @@ describe('2-runtime/ast.spec.ts', function () {
             });
             it('{...rest} = {a: 1, b:2}', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentRestExpression(new AccessMemberExpression($this, 'rest'), []),
                 ], void 0, void 0), Scope.create(bc), null, { a: 1, b: 2 });
                 assert.deepStrictEqual(bc.rest, { a: 1, b: 2 });
             });
             it('[a] = [1, 2]', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'a'), new AccessKeyedExpression($this, new PrimitiveLiteralExpression(0)), void 0),
                 ], void 0, void 0), Scope.create(bc), null, [1, 2]);
                 assert.deepStrictEqual(bc, { a: 1 });
             });
             it('[a, b] = [1, 2]', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'a'), new AccessKeyedExpression($this, new PrimitiveLiteralExpression(0)), void 0),
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'b'), new AccessKeyedExpression($this, new PrimitiveLiteralExpression(1)), void 0),
                 ], void 0, void 0), Scope.create(bc), null, [1, 2]);
@@ -1394,16 +1394,16 @@ describe('2-runtime/ast.spec.ts', function () {
             });
             it('[...rest] = [1, 2]', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentRestExpression(new AccessMemberExpression($this, 'rest'), 0),
                 ], void 0, void 0), Scope.create(bc), null, [1, 2]);
                 assert.deepStrictEqual(bc, { rest: [1, 2] });
             });
             it('{prop1, prop2:{prop21}} = {prop1: "foo", prop2: {prop21: 123}}', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'prop1'), new AccessMemberExpression($this, 'prop1'), void 0),
-                    new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                    new DestructuringAssignmentExpression('ObjectDestructuring', [
                         new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'prop21'), new AccessMemberExpression($this, 'prop21'), void 0),
                     ], new AccessMemberExpression($this, 'prop2'), void 0),
                 ], void 0, void 0), Scope.create(bc), null, { prop1: 'foo', prop2: { prop21: 123 } });
@@ -1411,10 +1411,10 @@ describe('2-runtime/ast.spec.ts', function () {
             });
             it('{prop1, prop2:{prop21:{prop212:newProp212}, prop22}} = {prop1: "foo", prop2: {prop21: {prop211: 123, prop212: 456}, prop22: "bar" }}', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'prop1'), new AccessMemberExpression($this, 'prop1'), void 0),
-                    new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
-                        new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                    new DestructuringAssignmentExpression('ObjectDestructuring', [
+                        new DestructuringAssignmentExpression('ObjectDestructuring', [
                             new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'newProp212'), new AccessMemberExpression($this, 'prop212'), void 0),
                         ], new AccessMemberExpression($this, 'prop21'), void 0),
                         new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'prop22'), new AccessMemberExpression($this, 'prop22'), void 0),
@@ -1424,10 +1424,10 @@ describe('2-runtime/ast.spec.ts', function () {
             });
             it('{prop1,coll:[,{p2:item2p2}]} = {prop1:"foo",coll:[{p1:1,p2:2},{p1:3,p2:4}]}', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'prop1'), new AccessMemberExpression($this, 'prop1'), void 0),
-                    new DestructuringAssignmentExpression(26 /* ExpressionKind.ArrayDestructuring */, [
-                        new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                    new DestructuringAssignmentExpression('ArrayDestructuring', [
+                        new DestructuringAssignmentExpression('ObjectDestructuring', [
                             new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'item2p2'), new AccessMemberExpression($this, 'p2'), void 0)
                         ], new AccessKeyedExpression($this, new PrimitiveLiteralExpression(1)), void 0)
                     ], new AccessMemberExpression($this, 'coll'), void 0),
@@ -1436,11 +1436,11 @@ describe('2-runtime/ast.spec.ts', function () {
             });
             it('{prop1,coll:[,{p:[item21]}]} = {prop1:"foo",coll:[{p:[1,2]},{p:[3,4]}]}', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'prop1'), new AccessMemberExpression($this, 'prop1'), void 0),
-                    new DestructuringAssignmentExpression(26 /* ExpressionKind.ArrayDestructuring */, [
-                        new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
-                            new DestructuringAssignmentExpression(26 /* ExpressionKind.ArrayDestructuring */, [
+                    new DestructuringAssignmentExpression('ArrayDestructuring', [
+                        new DestructuringAssignmentExpression('ObjectDestructuring', [
+                            new DestructuringAssignmentExpression('ArrayDestructuring', [
                                 new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'item21'), new AccessKeyedExpression($this, new PrimitiveLiteralExpression(0)), void 0),
                             ], new AccessMemberExpression($this, 'p'), void 0),
                         ], new AccessKeyedExpression($this, new PrimitiveLiteralExpression(1)), void 0)
@@ -1450,11 +1450,11 @@ describe('2-runtime/ast.spec.ts', function () {
             });
             it('[k, {prop1, prop2:{prop21}}] = ["key",{prop1: "foo", prop2: {prop21: 123}}]', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(26 /* ExpressionKind.ArrayDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ArrayDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'k'), new AccessKeyedExpression($this, new PrimitiveLiteralExpression(0)), void 0),
-                    new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                    new DestructuringAssignmentExpression('ObjectDestructuring', [
                         new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'prop1'), new AccessMemberExpression($this, 'prop1'), void 0),
-                        new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                        new DestructuringAssignmentExpression('ObjectDestructuring', [
                             new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'prop21'), new AccessMemberExpression($this, 'prop21'), void 0),
                         ], new AccessMemberExpression($this, 'prop2'), void 0),
                     ], new AccessKeyedExpression($this, new PrimitiveLiteralExpression(1)), void 0)
@@ -1463,9 +1463,9 @@ describe('2-runtime/ast.spec.ts', function () {
             });
             it('[k, [,item2]] = ["key",[1,2]]', function () {
                 const bc = {};
-                astAssign(new DestructuringAssignmentExpression(26 /* ExpressionKind.ArrayDestructuring */, [
+                astAssign(new DestructuringAssignmentExpression('ArrayDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'k'), new AccessKeyedExpression($this, new PrimitiveLiteralExpression(0)), void 0),
-                    new DestructuringAssignmentExpression(26 /* ExpressionKind.ArrayDestructuring */, [
+                    new DestructuringAssignmentExpression('ArrayDestructuring', [
                         new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'item2'), new AccessKeyedExpression($this, new PrimitiveLiteralExpression(1)), void 0)
                     ], new AccessKeyedExpression($this, new PrimitiveLiteralExpression(1)), void 0)
                 ], void 0, void 0), Scope.create(bc), null, ['key', [1, 2]]);
@@ -1473,9 +1473,9 @@ describe('2-runtime/ast.spec.ts', function () {
             });
             it('{a,b:{c}={c:42}} = {a:42}', function () {
                 const bc = {};
-                const expr = new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                const expr = new DestructuringAssignmentExpression('ObjectDestructuring', [
                     new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'a'), new AccessMemberExpression($this, 'a'), void 0),
-                    new DestructuringAssignmentExpression(27 /* ExpressionKind.ObjectDestructuring */, [
+                    new DestructuringAssignmentExpression('ObjectDestructuring', [
                         new DestructuringAssignmentSingleExpression(new AccessMemberExpression($this, 'c'), new AccessMemberExpression($this, 'c'), void 0)
                     ], new AccessMemberExpression($this, 'b'), new ObjectLiteralExpression(['c'], [new PrimitiveLiteralExpression(42)]))
                 ], void 0, void 0);

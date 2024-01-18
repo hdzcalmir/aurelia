@@ -19,7 +19,7 @@ describe('3-runtime-html/binding-commands.spec.ts', function () {
         let WootCommand = class WootCommand {
             constructor(oneTimeCmd) {
                 this.oneTimeCmd = oneTimeCmd;
-                this.type = 0 /* CommandType.None */;
+                this.type = 'None';
                 this.name = 'woot1';
             }
             build(info, parser, mapper) {
@@ -35,7 +35,7 @@ describe('3-runtime-html/binding-commands.spec.ts', function () {
         let WootCommand2 = class WootCommand2 {
             constructor(oneTimeCmd) {
                 this.oneTimeCmd = oneTimeCmd;
-                this.type = 0 /* CommandType.None */;
+                this.type = 'None';
                 this.name = 'woot2';
             }
             build(info, parser, mapper) {

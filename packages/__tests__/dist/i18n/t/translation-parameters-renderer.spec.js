@@ -65,7 +65,7 @@ describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
             const controller = { container, bindings: [], addBinding(binding) { controller.bindings.push(binding); } };
             const callBindingInstruction = {
                 type: "rg" /* InstructionType.propertyBinding */,
-                from: expressionParser.parse('{foo: "bar"}', 16 /* ExpressionType.IsProperty */),
+                from: expressionParser.parse('{foo: "bar"}', 'IsProperty'),
                 to: 'value',
                 mode: 1 /* BindingMode.oneTime */
             };
@@ -79,10 +79,10 @@ describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
             const targetElement = PLATFORM.document.createElement('span');
             const binding = new TranslationBinding({ state: 0 }, container, container.get(IObserverLocator), container.get(IPlatform), targetElement);
             const hydratable = { container, bindings: [binding] };
-            const paramExpr = expressionParser.parse('{foo: "bar"}', 16 /* ExpressionType.IsProperty */);
+            const paramExpr = expressionParser.parse('{foo: "bar"}', 'IsProperty');
             const callBindingInstruction = {
                 type: "rg" /* InstructionType.propertyBinding */,
-                from: expressionParser.parse('{foo: "bar"}', 16 /* ExpressionType.IsProperty */),
+                from: expressionParser.parse('{foo: "bar"}', 'IsProperty'),
                 to: 'value',
                 mode: 1 /* BindingMode.oneTime */
             };

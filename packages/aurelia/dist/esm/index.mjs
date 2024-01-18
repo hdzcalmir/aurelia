@@ -1,6 +1,6 @@
 import { DI as e, Registration as r } from "@aurelia/kernel";
 
-export { ColorOptions, ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, resolve, singleton, toArray, transient } from "@aurelia/kernel";
+export { ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, resolve, singleton, toArray, transient } from "@aurelia/kernel";
 
 import { Aurelia as t, CustomElement as o, IPlatform as a, StandardConfiguration as n } from "@aurelia/runtime-html";
 
@@ -12,9 +12,9 @@ export { HttpClient, HttpClientConfiguration, IHttpClient, json } from "@aurelia
 
 export { Metadata } from "@aurelia/metadata";
 
-export { Platform, Task, TaskAbortError, TaskQueue, TaskQueuePriority, TaskStatus } from "@aurelia/platform";
+export { Platform, Task, TaskAbortError, TaskQueue } from "@aurelia/platform";
 
-export { CollectionKind, ComputedObserver, IObserverLocator, ISignaler, batch, observable, subscriberCollection } from "@aurelia/runtime";
+export { ComputedObserver, IObserverLocator, ISignaler, batch, observable, subscriberCollection } from "@aurelia/runtime";
 
 const l = i.getOrCreate(globalThis);
 

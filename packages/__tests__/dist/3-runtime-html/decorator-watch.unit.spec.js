@@ -100,7 +100,7 @@ describe('3-runtime-html/decorator-watch.unit.spec.ts', function () {
             const expr = new class AccessWrapExpression {
                 constructor(ast = new AccessMemberExpression(new AccessScopeExpression('a'), 'prop')) {
                     this.ast = ast;
-                    this.$kind = 30 /* ExpressionKind.Custom */;
+                    this.$kind = 'Custom';
                 }
                 evaluate(...args) {
                     evaluateCallCount++;
@@ -111,7 +111,7 @@ describe('3-runtime-html/decorator-watch.unit.spec.ts', function () {
             const watcher = new ExpressionWatcher(createScopeForTest(obj), container, observerLocator, expr, newValue => {
                 callbackValues.push(newValue);
             });
-            // Object.defineProperty(expr, '$kind', { value: ExpressionKind.Custom });
+            // Object.defineProperty(expr, '$kind', { value: 'Custom' });
             // (expr as any).evaluate = function (...args: unknown[]) {
             //   evaluateCallCount++;
             //   assert.strictEqual(args[2], watcher);

@@ -1078,22 +1078,9 @@ class ParserState {
         }
     }
 }
-var ExpressionKind;
-(function (ExpressionKind) {
-    ExpressionKind[ExpressionKind["Route"] = 0] = "Route";
-    ExpressionKind[ExpressionKind["CompositeSegment"] = 1] = "CompositeSegment";
-    ExpressionKind[ExpressionKind["ScopedSegment"] = 2] = "ScopedSegment";
-    ExpressionKind[ExpressionKind["SegmentGroup"] = 3] = "SegmentGroup";
-    ExpressionKind[ExpressionKind["Segment"] = 4] = "Segment";
-    ExpressionKind[ExpressionKind["Component"] = 5] = "Component";
-    ExpressionKind[ExpressionKind["Action"] = 6] = "Action";
-    ExpressionKind[ExpressionKind["Viewport"] = 7] = "Viewport";
-    ExpressionKind[ExpressionKind["ParameterList"] = 8] = "ParameterList";
-    ExpressionKind[ExpressionKind["Parameter"] = 9] = "Parameter";
-})(ExpressionKind || (ExpressionKind = {}));
 const cache = new Map();
 class RouteExpression {
-    get kind() { return 0 /* ExpressionKind.Route */; }
+    get kind() { return 'Route'; }
     constructor(isAbsolute, root, queryParams, fragment) {
         this.isAbsolute = isAbsolute;
         this.root = root;
@@ -1161,7 +1148,7 @@ class RouteExpression {
  * - b = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
  */
 class CompositeSegmentExpression {
-    get kind() { return 1 /* ExpressionKind.CompositeSegment */; }
+    get kind() { return 'CompositeSegment'; }
     constructor(siblings) {
         this.siblings = siblings;
     }
@@ -1219,7 +1206,7 @@ class CompositeSegmentExpression {
  * - b = `ScopedSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression`)
  */
 class ScopedSegmentExpression {
-    get kind() { return 2 /* ExpressionKind.ScopedSegment */; }
+    get kind() { return 'ScopedSegment'; }
     constructor(left, right) {
         this.left = left;
         this.right = right;
@@ -1278,7 +1265,7 @@ class ScopedSegmentExpression {
  * - a = `CompositeSegmentExpressionOrHigher` (`SegmentExpression | SegmentGroupExpression | ScopedSegmentExpression | CompositeSegmentExpression`)
  */
 class SegmentGroupExpression {
-    get kind() { return 3 /* ExpressionKind.SegmentGroup */; }
+    get kind() { return 'SegmentGroup'; }
     constructor(expression) {
         this.expression = expression;
     }
@@ -1303,7 +1290,7 @@ class SegmentGroupExpression {
  * A (non-composite) segment specifying a single component and (optional) viewport / action.
  */
 class SegmentExpression {
-    get kind() { return 4 /* ExpressionKind.Segment */; }
+    get kind() { return 'Segment'; }
     static get Empty() { return new SegmentExpression(ComponentExpression.Empty, ViewportExpression.Empty, true); }
     constructor(component, viewport, scoped) {
         this.component = component;
@@ -1333,7 +1320,7 @@ class SegmentExpression {
     }
 }
 class ComponentExpression {
-    get kind() { return 5 /* ExpressionKind.Component */; }
+    get kind() { return 'Component'; }
     static get Empty() { return new ComponentExpression('', ParameterListExpression.Empty); }
     constructor(name, parameterList) {
         this.name = name;
@@ -1387,7 +1374,7 @@ class ComponentExpression {
     }
 }
 class ViewportExpression {
-    get kind() { return 7 /* ExpressionKind.Viewport */; }
+    get kind() { return 'Viewport'; }
     static get Empty() { return new ViewportExpression(''); }
     constructor(name) {
         this.name = name;
@@ -1411,7 +1398,7 @@ class ViewportExpression {
     }
 }
 class ParameterListExpression {
-    get kind() { return 8 /* ExpressionKind.ParameterList */; }
+    get kind() { return 'ParameterList'; }
     static get Empty() { return new ParameterListExpression([]); }
     constructor(expressions) {
         this.expressions = expressions;
@@ -1442,7 +1429,7 @@ class ParameterListExpression {
     }
 }
 class ParameterExpression {
-    get kind() { return 9 /* ExpressionKind.Parameter */; }
+    get kind() { return 'Parameter'; }
     static get Empty() { return new ParameterExpression('', ''); }
     constructor(key, value) {
         this.key = key;
@@ -2740,16 +2727,16 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
         let redirCur;
         const newSegs = [];
         switch (origPath.root.kind) {
-            case 2 /* ExpressionKind.ScopedSegment */:
-            case 4 /* ExpressionKind.Segment */:
+            case 'ScopedSegment':
+            case 'Segment':
                 origCur = origPath.root;
                 break;
             default:
                 throw new Error(getMessage(3502 /* Events.exprUnexpectedKind */, origPath.root.kind));
         }
         switch (redirPath.root.kind) {
-            case 2 /* ExpressionKind.ScopedSegment */:
-            case 4 /* ExpressionKind.Segment */:
+            case 'ScopedSegment':
+            case 'Segment':
                 redirCur = redirPath.root;
                 break;
             default:
@@ -2763,15 +2750,15 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
             if (origDone) {
                 origSeg = null;
             }
-            else if (origCur.kind === 4 /* ExpressionKind.Segment */) {
+            else if (origCur.kind === 'Segment') {
                 origSeg = origCur;
                 origDone = true;
             }
-            else if (origCur.left.kind === 4 /* ExpressionKind.Segment */) {
+            else if (origCur.left.kind === 'Segment') {
                 origSeg = origCur.left;
                 switch (origCur.right.kind) {
-                    case 2 /* ExpressionKind.ScopedSegment */:
-                    case 4 /* ExpressionKind.Segment */:
+                    case 'ScopedSegment':
+                    case 'Segment':
                         origCur = origCur.right;
                         break;
                     default:
@@ -2784,15 +2771,15 @@ function createConfiguredNode(log, node, vi, rr, originalVi, route = rr.route.en
             if (redirDone) {
                 redirSeg = null;
             }
-            else if (redirCur.kind === 4 /* ExpressionKind.Segment */) {
+            else if (redirCur.kind === 'Segment') {
                 redirSeg = redirCur;
                 redirDone = true;
             }
-            else if (redirCur.left.kind === 4 /* ExpressionKind.Segment */) {
+            else if (redirCur.left.kind === 'Segment') {
                 redirSeg = redirCur.left;
                 switch (redirCur.right.kind) {
-                    case 2 /* ExpressionKind.ScopedSegment */:
-                    case 4 /* ExpressionKind.Segment */:
+                    case 'ScopedSegment':
+                    case 'Segment':
                         redirCur = redirCur.right;
                         break;
                     default:
@@ -5146,5 +5133,5 @@ class ScrollStateManager {
     }
 }
 
-export { AST, AuNavId, ComponentExpression, CompositeSegmentExpression, DefaultComponents, DefaultResources, ExpressionKind, HrefCustomAttribute, HrefCustomAttributeRegistration, ILocationManager, IRouteContext, IRouter, IRouterEvents, IRouterOptions, IStateManager, LoadCustomAttribute, LoadCustomAttributeRegistration, LocationChangeEvent, NavigationCancelEvent, NavigationEndEvent, NavigationErrorEvent, NavigationOptions, NavigationStartEvent, ParameterExpression, ParameterListExpression, Route, RouteConfig, RouteContext, RouteExpression, RouteNode, RouteTree, Router, RouterConfiguration, RouterOptions, RouterRegistration, ScopedSegmentExpression, SegmentExpression, SegmentGroupExpression, Transition, ViewportAgent, ViewportCustomElement, ViewportCustomElementRegistration, ViewportExpression, fragmentUrlParser, isManagedState, pathUrlParser, route, toManagedState };
+export { AST, AuNavId, ComponentExpression, CompositeSegmentExpression, DefaultComponents, DefaultResources, HrefCustomAttribute, HrefCustomAttributeRegistration, ILocationManager, IRouteContext, IRouter, IRouterEvents, IRouterOptions, IStateManager, LoadCustomAttribute, LoadCustomAttributeRegistration, LocationChangeEvent, NavigationCancelEvent, NavigationEndEvent, NavigationErrorEvent, NavigationOptions, NavigationStartEvent, ParameterExpression, ParameterListExpression, Route, RouteConfig, RouteContext, RouteExpression, RouteNode, RouteTree, Router, RouterConfiguration, RouterOptions, RouterRegistration, ScopedSegmentExpression, SegmentExpression, SegmentGroupExpression, Transition, ViewportAgent, ViewportCustomElement, ViewportCustomElementRegistration, ViewportExpression, fragmentUrlParser, isManagedState, pathUrlParser, route, toManagedState };
 //# sourceMappingURL=index.dev.mjs.map

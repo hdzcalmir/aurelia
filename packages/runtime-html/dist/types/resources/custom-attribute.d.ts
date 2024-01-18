@@ -1,5 +1,4 @@
 import { Key } from '@aurelia/kernel';
-import { DefinitionType } from './resources-shared';
 import { BindingMode } from '../binding/interfaces-bindings';
 import type { Constructable, IContainer, IResourceKind, ResourceDefinition, PartialResourceDefinition, ResourceType } from '@aurelia/kernel';
 import type { BindableDefinition, PartialBindableDefinition } from '../bindable';
@@ -69,7 +68,7 @@ export declare class CustomAttributeDefinition<T extends Constructable = Constru
     readonly noMultiBindings: boolean;
     readonly watches: IWatchDefinition[];
     readonly dependencies: Key[];
-    get type(): DefinitionType.Attribute;
+    get type(): 'Attribute';
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialCustomAttributeDefinition, Type: CustomAttributeType<T>): CustomAttributeDefinition<T>;
     register(container: IContainer): void;

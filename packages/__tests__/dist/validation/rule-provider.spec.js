@@ -939,11 +939,51 @@ describe('validation/rule-provider.spec.ts', function () {
                     cov_1wjh4ld5ut1().s[50]++;
                     return o.prop;
                 }, expected: 'prop' },
+            // for the instrumenter: @jsdevtools/coverage-istanbul-loader - lambda
+            { property: (o) => { cov_1wjh4ld5ut1().s[50]++; return o.prop; }, expected: 'prop' },
+            { property: (o) => { cov_1wjh4ld5ut1().f[9]++; cov_1wjh4ld5ut1().s[50]++; return o.prop; }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict";
+                    cov_1wjh4ld5ut1().s[50]++;
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict";
+                    cov_1wjh4ld5ut1().f[9]++;
+                    cov_1wjh4ld5ut1().s[50]++;
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => { /* istanbul ignore next */ cov_1wjh4ld5ut1().s[50]++; return o.prop; }, expected: 'prop' },
+            { property: (o) => { /* istanbul ignore next */ cov_1wjh4ld5ut1().f[9]++; cov_1wjh4ld5ut1().s[50]++; return o.prop; }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict"; /* istanbul ignore next */
+                    cov_1wjh4ld5ut1().s[50]++;
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict"; /* istanbul ignore next */
+                    cov_1wjh4ld5ut1().f[9]++;
+                    cov_1wjh4ld5ut1().s[50]++;
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => { cov_1wjh4ld5ut1().s[50]++; /* istanbul ignore next */ /* istanbul ignore next */ return o.prop; }, expected: 'prop' },
+            { property: (o) => { cov_1wjh4ld5ut1().f[9]++; cov_1wjh4ld5ut1().s[50]++; /* istanbul ignore next */ /* istanbul ignore next */ return o.prop; }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict";
+                    cov_1wjh4ld5ut1().s[50]++; /* istanbul ignore next */
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict";
+                    cov_1wjh4ld5ut1().f[9]++;
+                    cov_1wjh4ld5ut1().s[50]++; /* istanbul ignore next */
+                    return o.prop;
+                }, expected: 'prop' },
         ];
         for (const { property, expected } of positiveDataRows) {
             it(`parses ${property.toString()} to ${expected}`, function () {
                 const { parser } = setup();
-                assert.deepStrictEqual(parsePropertyName(property, parser), [expected, parser.parse(`${rootObjectSymbol}.${expected}`, 0 /* ExpressionType.None */)]);
+                assert.deepStrictEqual(parsePropertyName(property, parser), [expected, parser.parse(`${rootObjectSymbol}.${expected}`, 'None')]);
             });
         }
         const negativeDataRows = [

@@ -3,9 +3,9 @@ export interface IExpressionParser extends ExpressionParser {
 }
 export declare const IExpressionParser: import("@aurelia/kernel").InterfaceSymbol<IExpressionParser>;
 export declare class ExpressionParser {
-    parse(expression: string, expressionType: ExpressionType.IsIterator): ForOfStatement;
-    parse(expression: string, expressionType: ExpressionType.Interpolation): Interpolation;
-    parse(expression: string, expressionType: Exclude<ExpressionType, ExpressionType.IsIterator | ExpressionType.Interpolation>): IsBindingBehavior;
+    parse(expression: string, expressionType: 'IsIterator'): ForOfStatement;
+    parse(expression: string, expressionType: 'Interpolation'): Interpolation;
+    parse(expression: string, expressionType: Exclude<ExpressionType, 'IsIterator' | 'Interpolation'>): IsBindingBehavior;
     parse(expression: string, expressionType: ExpressionType): AnyBindingExpression;
 }
 declare const enum Precedence {
@@ -24,15 +24,14 @@ declare const enum Precedence {
     Primary = 515,
     Unary = 516
 }
-export declare const enum ExpressionType {
-    None = 0,
-    Interpolation = 1,
-    IsIterator = 2,
-    IsChainable = 4,
-    IsFunction = 8,
-    IsProperty = 16,
-    IsCustom = 32
-}
+declare const etNone: "None";
+declare const etInterpolation: "Interpolation";
+declare const etIsIterator: "IsIterator";
+declare const etIsChainable: "IsChainable";
+declare const etIsFunction: "IsFunction";
+declare const etIsProperty: "IsProperty";
+declare const etIsCustom: "IsCustom";
+export type ExpressionType = typeof etNone | typeof etInterpolation | typeof etIsIterator | typeof etIsChainable | typeof etIsFunction | typeof etIsProperty | typeof etIsCustom;
 export declare function parseExpression(input: string, expressionType?: ExpressionType): AnyBindingExpression;
 export declare function parse(minPrecedence: Precedence, expressionType: ExpressionType): AnyBindingExpression;
 export {};

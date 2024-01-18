@@ -7,11 +7,7 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import * as $url from 'url';
 import { QualifiedHeaderValues } from './http-utils';
-export declare const enum HttpContextState {
-    head = 1,
-    body = 2,
-    end = 3
-}
+export type HttpContextState = 'head' | 'body' | 'end';
 export interface IHttpContext extends HttpContext {
 }
 export declare class HttpContext implements IHttpContext {

@@ -7,10 +7,7 @@ export type BindingWithBehavior = PropertyBinding & {
     ast: BindingBehaviorExpression;
     target: Element | object;
 };
-export declare const enum ValidateEventKind {
-    validate = "validate",
-    reset = "reset"
-}
+export type ValidateEventKind = 'validate' | 'reset';
 /**
  * The result of a call to the validation controller's validate method.
  */

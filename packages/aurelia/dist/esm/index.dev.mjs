@@ -1,12 +1,12 @@
 import { DI, Registration } from '@aurelia/kernel';
-export { ColorOptions, ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, resolve, singleton, toArray, transient } from '@aurelia/kernel';
+export { ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, resolve, singleton, toArray, transient } from '@aurelia/kernel';
 import { Aurelia as Aurelia$1, CustomElement, IPlatform, StandardConfiguration } from '@aurelia/runtime-html';
 export { AppTask, AuSlotsInfo, Bindable, BindingBehavior, BindingMode, ChildrenBinding, Controller, CustomAttribute, CustomElement, FlushQueue, IAppRoot, IAttrMapper, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IEventTarget, IFlushQueue, ILifecycleHooks, INode, IPlatform, IRenderLocation, ITemplateCompiler, ITemplateCompilerHooks, LifecycleHooks, NodeObserverLocator, ShortHandBindingSyntax, StyleConfiguration, TemplateCompilerHooks, ValueConverter, ViewFactory, alias, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, cssModules, customAttribute, customElement, lifecycleHooks, registerAliases, renderer, shadowCSS, slotted, templateCompilerHooks, templateController, useShadowDOM, valueConverter } from '@aurelia/runtime-html';
 import { BrowserPlatform } from '@aurelia/platform-browser';
 export { HttpClient, HttpClientConfiguration, IHttpClient, json } from '@aurelia/fetch-client';
 export { Metadata } from '@aurelia/metadata';
-export { Platform, Task, TaskAbortError, TaskQueue, TaskQueuePriority, TaskStatus } from '@aurelia/platform';
-export { CollectionKind, ComputedObserver, IObserverLocator, ISignaler, batch, observable, subscriberCollection } from '@aurelia/runtime';
+export { Platform, Task, TaskAbortError, TaskQueue } from '@aurelia/platform';
+export { ComputedObserver, IObserverLocator, ISignaler, batch, observable, subscriberCollection } from '@aurelia/runtime';
 
 const PLATFORM = BrowserPlatform.getOrCreate(globalThis);
 function createContainer() {

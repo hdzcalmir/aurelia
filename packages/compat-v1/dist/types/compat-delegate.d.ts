@@ -1,12 +1,12 @@
 import { IContainer } from '@aurelia/kernel';
 import { IAstEvaluator, IBinding, IConnectableBinding, IExpressionParser, Scope, type IsBindingBehavior } from '@aurelia/runtime';
-import { BindingCommandInstance, CommandType, ICommandBuildInfo, IHydratableController, IInstruction, InstructionType, IRenderer, IPlatform } from '@aurelia/runtime-html';
+import { BindingCommandInstance, ICommandBuildInfo, IHydratableController, IInstruction, InstructionType, IRenderer, IPlatform } from '@aurelia/runtime-html';
 import type { IDisposable, IServiceLocator } from '@aurelia/kernel';
 export declare const delegateSyntax: {
     register(container: IContainer): void;
 };
 export declare class DelegateBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.IgnoreAttr;
+    get type(): 'IgnoreAttr';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 export declare class ListenerBindingRenderer implements IRenderer {

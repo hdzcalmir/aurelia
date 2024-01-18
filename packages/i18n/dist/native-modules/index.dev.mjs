@@ -49,6 +49,11 @@ function createIntlFormatValueConverterExpression(name, binding) {
         binding.ast.expression = vcExpression;
     }
 }
+/** ExpressionType */
+/** @internal */ const etInterpolation = 'Interpolation';
+/** @internal */ const etIsProperty = 'IsProperty';
+/** CommandType */
+/** @internal */ const ctNone = 'None';
 
 let DateFormatBindingBehavior = class DateFormatBindingBehavior {
     bind(_scope, binding) {
@@ -360,13 +365,13 @@ class TranslationBinding {
     static create({ parser, observerLocator, context, controller, target, instruction, platform, isParameterContext, }) {
         const binding = this._getBinding({ observerLocator, context, controller, target, platform });
         const expr = typeof instruction.from === 'string'
-            ? parser.parse(instruction.from, 16 /* ExpressionType.IsProperty */)
+            ? parser.parse(instruction.from, etIsProperty)
             : instruction.from;
         if (isParameterContext) {
             binding.useParameter(expr);
         }
         else {
-            const interpolation = expr instanceof CustomExpression ? parser.parse(expr.value, 1 /* ExpressionType.Interpolation */) : undefined;
+            const interpolation = expr instanceof CustomExpression ? parser.parse(expr.value, etInterpolation) : undefined;
             binding.ast = interpolation || expr;
         }
     }
@@ -629,7 +634,7 @@ class TranslationParametersBindingInstruction {
 }
 let TranslationParametersBindingCommand = class TranslationParametersBindingCommand {
     constructor() {
-        this.type = 0 /* CommandType.None */;
+        this.type = ctNone;
     }
     get name() { return attribute; }
     build(info, exprParser, attrMapper) {
@@ -644,7 +649,7 @@ let TranslationParametersBindingCommand = class TranslationParametersBindingComm
         else {
             target = info.bindable.name;
         }
-        return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
+        return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, etIsProperty), target);
     }
 };
 TranslationParametersBindingCommand = __decorate([
@@ -687,7 +692,7 @@ class TranslationBindingInstruction {
 }
 class TranslationBindingCommand {
     constructor() {
-        this.type = 0 /* CommandType.None */;
+        this.type = ctNone;
     }
     get name() { return 't'; }
     build(info, parser, attrMapper) {
@@ -739,7 +744,7 @@ class TranslationBindBindingInstruction {
 }
 class TranslationBindBindingCommand {
     constructor() {
-        this.type = 0 /* CommandType.None */;
+        this.type = ctNone;
     }
     get name() { return 't-bind'; }
     build(info, exprParser, attrMapper) {
@@ -753,7 +758,7 @@ class TranslationBindBindingCommand {
         else {
             target = info.bindable.name;
         }
-        return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
+        return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, etIsProperty), target);
     }
 }
 let TranslationBindBindingRenderer = class TranslationBindBindingRenderer {

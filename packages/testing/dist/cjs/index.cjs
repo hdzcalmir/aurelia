@@ -4728,7 +4728,7 @@ class MockPropertySubscriber {
 class MockTracingExpression {
     constructor(e) {
         this.inner = e;
-        this.$kind = 30;
+        this.$kind = "Custom";
         this.hasBind = true;
         this.hasUnbind = true;
         this.calls = [];

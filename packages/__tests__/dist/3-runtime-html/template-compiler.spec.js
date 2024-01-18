@@ -762,7 +762,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     // nor a custom attribute,
                     && !ctx.container.find(CustomAttribute, syntax.target)
                     // nor with interpolation
-                    && exprParser.parse(a[1], 1 /* ExpressionType.Interpolation */) === null
+                    && exprParser.parse(a[1], 'Interpolation') === null
                     // nor a bindable
                     && !(BindablesInfo.from(def, false).attrs[a[0]]);
                 // then can stay in the template
@@ -845,7 +845,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 return { type, to, mode, from };
             }
             else {
-                const from = parseExpression(attributeValue, 1 /* ExpressionType.Interpolation */);
+                const from = parseExpression(attributeValue, 'Interpolation');
                 if (!!from) {
                     const type = "rf" /* TT.interpolation */;
                     const to = bindableDescription.name;
@@ -867,7 +867,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 return { type, to, mode, from };
             }
             else {
-                const from = parseExpression(attributeValue, 1 /* ExpressionType.Interpolation */);
+                const from = parseExpression(attributeValue, 'Interpolation');
                 if (!!from) {
                     const type2 = "rf" /* TT.interpolation */;
                     return { type: type2, to, from };
@@ -981,13 +981,13 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                                 {
                                     "type": "rf" /* InstructionType.interpolation */,
                                     "from": {
-                                        '$kind': 25 /* ExpressionKind.Interpolation */,
+                                        '$kind': 'Interpolation',
                                         "parts": ["abc-", ""],
                                         "expressions": [
-                                            { "$kind": 2 /* ExpressionKind.AccessScope */, "name": "value", "ancestor": 0 }
+                                            { "$kind": 'AccessScope', "name": "value", "ancestor": 0 }
                                         ],
                                         "isMulti": false,
-                                        "firstExpression": { "$kind": 2 /* ExpressionKind.AccessScope */, "name": "value", "ancestor": 0 }
+                                        "firstExpression": { "$kind": 'AccessScope', "name": "value", "ancestor": 0 }
                                     },
                                     "to": "class"
                                 }
@@ -1424,7 +1424,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 return {
                     result: sut.compile(templateDefinition, container, null),
                     parser,
-                    createProp: ({ from, to, mode = 2 /* BindingMode.toView */ }) => new PropertyBindingInstruction(parser.parse(from, 16 /* ExpressionType.IsProperty */), to, mode)
+                    createProp: ({ from, to, mode = 2 /* BindingMode.toView */ }) => new PropertyBindingInstruction(parser.parse(from, 'IsProperty'), to, mode)
                 };
             }
         });

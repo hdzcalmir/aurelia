@@ -1337,24 +1337,17 @@ var W;
     t[t["none"] = 6] = "none";
 })(W || (W = {}));
 
-var B;
+const B = /*@__PURE__*/ createInterface("ILogConfig", (t => t.instance(new LogConfig("no-colors", 3))));
 
-(function(t) {
-    t[t["noColors"] = 0] = "noColors";
-    t[t["colors"] = 1] = "colors";
-})(B || (B = {}));
+const z = /*@__PURE__*/ createInterface("ISink");
 
-const z = /*@__PURE__*/ createInterface("ILogConfig", (t => t.instance(new LogConfig(0, 3))));
+const Q = /*@__PURE__*/ createInterface("ILogEventFactory", (t => t.singleton(DefaultLogEventFactory)));
 
-const Q = /*@__PURE__*/ createInterface("ISink");
+const U = /*@__PURE__*/ createInterface("ILogger", (t => t.singleton(DefaultLogger)));
 
-const U = /*@__PURE__*/ createInterface("ILogEventFactory", (t => t.singleton(DefaultLogEventFactory)));
+const x = /*@__PURE__*/ createInterface("ILogScope");
 
-const x = /*@__PURE__*/ createInterface("ILogger", (t => t.singleton(DefaultLogger)));
-
-const H = /*@__PURE__*/ createInterface("ILogScope");
-
-const V = Object.freeze({
+const H = Object.freeze({
     key: getAnnotationKeyFor("logger-sink-handles"),
     define(t, e) {
         o(this.key, e.handles, t.prototype);
@@ -1365,9 +1358,9 @@ const V = Object.freeze({
     }
 });
 
-const sink = t => e => V.define(e, t);
+const sink = t => e => H.define(e, t);
 
-const q = toLookup({
+const V = toLookup({
     red(t) {
         return `[31m${t}[39m`;
     },
@@ -1401,24 +1394,27 @@ class LogConfig {
     }
 }
 
-const J = function() {
-    const t = [ toLookup({
-        TRC: "TRC",
-        DBG: "DBG",
-        INF: "INF",
-        WRN: "WRN",
-        ERR: "ERR",
-        FTL: "FTL",
-        QQQ: "???"
-    }), toLookup({
-        TRC: q.grey("TRC"),
-        DBG: q.grey("DBG"),
-        INF: q.white("INF"),
-        WRN: q.yellow("WRN"),
-        ERR: q.red("ERR"),
-        FTL: q.red("FTL"),
-        QQQ: q.grey("???")
-    }) ];
+const q = function() {
+    const t = {
+        "no-colors": toLookup({
+            TRC: "TRC",
+            DBG: "DBG",
+            INF: "INF",
+            WRN: "WRN",
+            ERR: "ERR",
+            FTL: "FTL",
+            QQQ: "???"
+        }),
+        colors: toLookup({
+            TRC: V.grey("TRC"),
+            DBG: V.grey("DBG"),
+            INF: V.white("INF"),
+            WRN: V.yellow("WRN"),
+            ERR: V.red("ERR"),
+            FTL: V.red("FTL"),
+            QQQ: V.grey("???")
+        })
+    };
     return (e, n) => {
         if (e <= 0) {
             return t[n].TRC;
@@ -1443,17 +1439,17 @@ const J = function() {
 }();
 
 const getScopeString = (t, e) => {
-    if (e === 0) {
+    if (e === "no-colors") {
         return t.join(".");
     }
-    return t.map(q.cyan).join(".");
+    return t.map(V.cyan).join(".");
 };
 
 const getIsoString = (t, e) => {
-    if (e === 0) {
+    if (e === "no-colors") {
         return new Date(t).toISOString();
     }
-    return q.grey(new Date(t).toISOString());
+    return V.grey(new Date(t).toISOString());
 };
 
 class DefaultLogEvent {
@@ -1468,15 +1464,15 @@ class DefaultLogEvent {
     toString() {
         const {severity: t, message: e, scope: n, colorOptions: r, timestamp: s} = this;
         if (n.length === 0) {
-            return `${getIsoString(s, r)} [${J(t, r)}] ${e}`;
+            return `${getIsoString(s, r)} [${q(t, r)}] ${e}`;
         }
-        return `${getIsoString(s, r)} [${J(t, r)} ${getScopeString(n, r)}] ${e}`;
+        return `${getIsoString(s, r)} [${q(t, r)} ${getScopeString(n, r)}] ${e}`;
     }
 }
 
 class DefaultLogEventFactory {
     constructor() {
-        this.config = resolve(z);
+        this.config = resolve(B);
     }
     createLogEvent(t, e, n, r) {
         return new DefaultLogEvent(e, n, r, t.scope, this.config.colorOptions, Date.now());
@@ -1485,7 +1481,7 @@ class DefaultLogEventFactory {
 
 class ConsoleSink {
     static register(t) {
-        singletonRegistration(Q, ConsoleSink).register(t);
+        singletonRegistration(z, ConsoleSink).register(t);
     }
     constructor(t = resolve(N)) {
         const e = t.console;
@@ -1535,7 +1531,7 @@ class ConsoleSink {
 }
 
 class DefaultLogger {
-    constructor(t = resolve(z), e = resolve(U), n = resolve(all(Q)), r = resolve(M(H)) ?? [], s = null) {
+    constructor(t = resolve(B), e = resolve(Q), n = resolve(all(z)), r = resolve(M(x)) ?? [], s = null) {
         this.scope = r;
         this.j = createObject();
         let i;
@@ -1557,7 +1553,7 @@ class DefaultLogger {
             u = this._ = [];
             a = this.P = [];
             for (const t of n) {
-                const e = V.getHandles(t);
+                const e = H.getHandles(t);
                 if (e?.includes(0) ?? true) {
                     i.push(t);
                 }
@@ -1647,14 +1643,14 @@ __decorate([ bound ], DefaultLogger.prototype, "error", null);
 
 __decorate([ bound ], DefaultLogger.prototype, "fatal", null);
 
-const X = toLookup({
-    create({level: t = 3, colorOptions: e = 0, sinks: n = []} = {}) {
+const J = toLookup({
+    create({level: t = 3, colorOptions: e = "no-colors", sinks: n = []} = {}) {
         return toLookup({
             register(r) {
-                r.register(instanceRegistration(z, new LogConfig(e, t)));
+                r.register(instanceRegistration(B, new LogConfig(e, t)));
                 for (const t of n) {
                     if (isFunction(t)) {
-                        r.register(singletonRegistration(Q, t));
+                        r.register(singletonRegistration(z, t));
                     } else {
                         r.register(t);
                     }
@@ -1665,7 +1661,7 @@ const X = toLookup({
     }
 });
 
-const Y = /*@__PURE__*/ createInterface((t => t.singleton(ModuleLoader)));
+const X = /*@__PURE__*/ createInterface((t => t.singleton(ModuleLoader)));
 
 const noTransform = t => t;
 
@@ -1788,7 +1784,7 @@ class Handler {
     }
 }
 
-const Z = /*@__PURE__*/ createInterface("IEventAggregator", (t => t.singleton(EventAggregator)));
+const Y = /*@__PURE__*/ createInterface("IEventAggregator", (t => t.singleton(EventAggregator)));
 
 class EventAggregator {
     constructor() {
@@ -1851,5 +1847,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, B as ColorOptions, ConsoleSink, ContainerConfiguration, $ as DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, O as DefaultResolver, EventAggregator, A as IContainer, Z as IEventAggregator, z as ILogConfig, U as ILogEventFactory, x as ILogger, Y as IModuleLoader, N as IPlatform, k as IServiceLocator, Q as ISink, InstanceProvider, LogConfig, W as LogLevel, X as LoggerConfiguration, ModuleItem, p as Protocol, K as Registration, all, bound, u as camelCase, S as emptyArray, G as emptyObject, T as factory, firstDefined, q as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, h as getPrototypeChain, ignore, j as inject, isArrayIndex, d as isNativeFunction, f as kebabCase, F as lazy, mergeArrays, _ as newInstanceForScope, P as newInstanceOf, noop, onResolve, onResolveAll, M as optional, a as pascalCase, resolve, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, $ as DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, O as DefaultResolver, EventAggregator, A as IContainer, Y as IEventAggregator, B as ILogConfig, Q as ILogEventFactory, U as ILogger, X as IModuleLoader, N as IPlatform, k as IServiceLocator, z as ISink, InstanceProvider, LogConfig, W as LogLevel, J as LoggerConfiguration, ModuleItem, p as Protocol, K as Registration, all, bound, u as camelCase, S as emptyArray, G as emptyObject, T as factory, firstDefined, V as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, h as getPrototypeChain, ignore, j as inject, isArrayIndex, d as isNativeFunction, f as kebabCase, F as lazy, mergeArrays, _ as newInstanceForScope, P as newInstanceOf, noop, onResolve, onResolveAll, M as optional, a as pascalCase, resolve, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.mjs.map

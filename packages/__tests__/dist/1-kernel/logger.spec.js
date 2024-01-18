@@ -102,8 +102,8 @@ describe('1-kernel/logger.spec.ts', function () {
         levels.slice(0, -1),
         levels.slice(),
         [
-            0 /* ColorOptions.noColors */,
-            1 /* ColorOptions.colors */,
+            'no-colors',
+            'colors',
         ],
         [
             [
@@ -127,7 +127,7 @@ describe('1-kernel/logger.spec.ts', function () {
             ['foo', 'bar'],
         ]
     ], function ([methodLevel, loggerMethodName, consoleMethodName, abbrev], [configLevel, configName], colorOpts, [msgOrGetMsg, ...optionalParams], scopeTo) {
-        const colorRE = colorOpts === 1 /* ColorOptions.colors */ ? '\\u001b\\[\\d{1,2}m' : '';
+        const colorRE = colorOpts === 'colors' ? '\\u001b\\[\\d{1,2}m' : '';
         const timestampRE = `${colorRE}\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z${colorRE}`;
         const scopeRE = scopeTo.length === 0
             ? ''
@@ -171,7 +171,7 @@ describe('1-kernel/logger.spec.ts', function () {
         });
     });
     it('additional sink registration works', function () {
-        const { sut } = createFixture(4 /* LogLevel.error */, 0 /* ColorOptions.noColors */, []);
+        const { sut } = createFixture(4 /* LogLevel.error */, 'no-colors', []);
         const sinks = sut.sinks;
         const eventLog = sinks.find((s) => s instanceof EventLog);
         assert.notStrictEqual(eventLog, void 0);
@@ -182,7 +182,7 @@ describe('1-kernel/logger.spec.ts', function () {
         assert.includes(event.toString(), "foo");
     });
     it('respects the handling capabilities of sinks', function () {
-        const { sut } = createFixture(0 /* LogLevel.trace */, 0 /* ColorOptions.noColors */, []);
+        const { sut } = createFixture(0 /* LogLevel.trace */, 'no-colors', []);
         const sinks = sut.sinks;
         const eventLog = sinks.find((s) => s instanceof EventLog);
         assert.strictEqual(eventLog !== void 0, true);
@@ -195,7 +195,7 @@ describe('1-kernel/logger.spec.ts', function () {
         assert.includes(event.toString(), "foo");
     });
     it('console logging can be deactivated', function () {
-        const { sut, mock } = createFixture(0 /* LogLevel.trace */, 0 /* ColorOptions.noColors */, [], true);
+        const { sut, mock } = createFixture(0 /* LogLevel.trace */, 'no-colors', [], true);
         const sinks = sut.sinks;
         const eventLog = sinks.find((s) => s instanceof EventLog);
         sut.error('foo');

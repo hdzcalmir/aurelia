@@ -1,14 +1,14 @@
-import { Registration, LoggerConfiguration, ConsoleSink } from '@aurelia/kernel';
-import { MockBrowserHistoryLocation } from '@aurelia/testing';
+import { ConsoleSink, LoggerConfiguration, Registration } from '@aurelia/kernel';
 import { IRouter } from '@aurelia/router';
 import { AppTask, IHistory, ILocation } from '@aurelia/runtime-html';
+import { MockBrowserHistoryLocation } from '@aurelia/testing';
 export const TestRouterConfiguration = {
     for(ctx, logLevel = 1 /* LogLevel.debug */) {
         return {
             register(container) {
                 container.register(LoggerConfiguration.create({
                     level: logLevel,
-                    colorOptions: 0 /* ColorOptions.noColors */,
+                    colorOptions: 'no-colors',
                     sinks: [ConsoleSink],
                 }));
                 const mockBrowserHistoryLocation = new MockBrowserHistoryLocation();

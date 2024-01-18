@@ -1,5 +1,5 @@
 import { Constructable, ResourceType, Writable } from '@aurelia/kernel';
-import { LoadInstruction, ComponentAppellation, ViewportHandle, ComponentParameters, RouteableComponentType, ReloadBehavior } from './interfaces';
+import { LoadInstruction, ComponentAppellation, ViewportHandle, ComponentParameters, RouteableComponentType, type ReloadBehavior } from './interfaces';
 export interface IRoute extends Writable<Partial<Route>> {
     /**
      * The component to load when this route is matched. Transfered into the `instructions` property.

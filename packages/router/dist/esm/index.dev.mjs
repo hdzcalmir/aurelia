@@ -842,27 +842,15 @@ class RouterOptions {
     }
 }
 
-/**
- * Shouldn't be used directly
- *
- * @internal
- */
-var ParametersType;
-(function (ParametersType) {
-    ParametersType["none"] = "none";
-    ParametersType["string"] = "string";
-    ParametersType["array"] = "array";
-    ParametersType["object"] = "object";
-})(ParametersType || (ParametersType = {}));
 class InstructionParameters {
     constructor() {
         this.parametersString = null;
         this.parametersRecord = null;
         this.parametersList = null;
-        this.parametersType = "none" /* ParametersType.none */;
+        this.parametersType = 'none';
     }
     get none() {
-        return this.parametersType === "none" /* ParametersType.none */;
+        return this.parametersType === 'none';
     }
     // Static methods
     static create(componentParameters) {
@@ -906,11 +894,11 @@ class InstructionParameters {
     }
     get typedParameters() {
         switch (this.parametersType) {
-            case "string" /* ParametersType.string */:
+            case 'string':
                 return this.parametersString;
-            case "array" /* ParametersType.array */:
+            case 'array':
                 return this.parametersList;
-            case "object" /* ParametersType.object */:
+            case 'object':
                 return this.parametersRecord;
             default:
                 return null;
@@ -950,19 +938,19 @@ class InstructionParameters {
         this.parametersList = null;
         this.parametersRecord = null;
         if (parameters == null || parameters === '') {
-            this.parametersType = "none" /* ParametersType.none */;
+            this.parametersType = 'none';
             parameters = null;
         }
         else if (typeof parameters === 'string') {
-            this.parametersType = "string" /* ParametersType.string */;
+            this.parametersType = 'string';
             this.parametersString = parameters;
         }
         else if (Array.isArray(parameters)) {
-            this.parametersType = "array" /* ParametersType.array */;
+            this.parametersType = 'array';
             this.parametersList = parameters;
         }
         else {
-            this.parametersType = "object" /* ParametersType.object */;
+            this.parametersType = 'object';
             this.parametersRecord = parameters;
         }
     }
@@ -979,10 +967,10 @@ class InstructionParameters {
     }
     // This only works with objects added to objects!
     addParameters(parameters) {
-        if (this.parametersType === "none" /* ParametersType.none */) {
+        if (this.parametersType === 'none') {
             return this.set(parameters);
         }
-        if (this.parametersType !== "object" /* ParametersType.object */) {
+        if (this.parametersType !== 'object') {
             throw new Error('Can\'t add object parameters to existing non-object parameters!');
         }
         this.set({ ...this.parametersRecord, ...parameters });
@@ -2521,7 +2509,7 @@ class ViewportContent extends EndpointContent {
             'reloadBehavior' in this.instruction.component.instance &&
             this.instruction.component.instance.reloadBehavior !== void 0)
             ? this.instruction.component.instance.reloadBehavior
-            : "default" /* ReloadBehavior.default */;
+            : 'default';
     }
     /**
      * Get the controller of the component in the viewport content.
@@ -3305,20 +3293,20 @@ class Viewport extends Endpoint$1 {
         }
         if (!content.equalComponent(nextContent) ||
             navigation.navigation.refresh || // Navigation 'refresh' performed
-            content.reloadBehavior === "refresh" /* ReloadBehavior.refresh */ // ReloadBehavior 'refresh' takes precedence
+            content.reloadBehavior === 'refresh' // ReloadBehavior 'refresh' takes precedence
         ) {
             return this.transitionAction = 'swap';
         }
         // If we got here, component is the same name/type
         // Explicitly don't allow navigation back to the same component again
-        if (content.reloadBehavior === "disallow" /* ReloadBehavior.disallow */) {
+        if (content.reloadBehavior === 'disallow') {
             nextContent.delete();
             this.contents.splice(this.contents.indexOf(nextContent), 1);
             return this.transitionAction = 'skip';
         }
         // Explicitly re-load same component again
         // TODO(alpha): NEED TO CHECK THIS TOWARDS activeContent REGARDING scope
-        if (content.reloadBehavior === "reload" /* ReloadBehavior.reload */) {
+        if (content.reloadBehavior === 'reload') {
             content.reload = true;
             nextContent.instruction.component.set(content.componentInstance);
             nextContent.contentStates = content.contentStates.clone();
@@ -8021,14 +8009,6 @@ LinkHandler = __decorate([
     __param(1, IRouter)
 ], LinkHandler);
 
-var ReloadBehavior;
-(function (ReloadBehavior) {
-    ReloadBehavior["default"] = "default";
-    ReloadBehavior["disallow"] = "disallow";
-    ReloadBehavior["reload"] = "reload";
-    ReloadBehavior["refresh"] = "refresh";
-})(ReloadBehavior || (ReloadBehavior = {}));
-
 function route(configOrPath) {
     return function (target) {
         return Route.configure(configOrPath, target);
@@ -8629,7 +8609,7 @@ let HrefCustomAttribute = class HrefCustomAttribute {
     hasLoad() {
         const parent = this.$controller.parent;
         const siblings = parent.children;
-        return siblings?.some(c => c.vmKind === 1 /* ViewModelKind.customAttribute */ && c.viewModel instanceof LoadCustomAttribute) ?? false;
+        return siblings?.some(c => c.vmKind === 'customAttribute' && c.viewModel instanceof LoadCustomAttribute) ?? false;
     }
 };
 __decorate([
@@ -8777,5 +8757,5 @@ RouterConfiguration.configurationCall = (router) => {
     router.start();
 };
 
-export { ConfigurableRoute, ConsideredActiveCustomAttribute, DefaultComponents, DefaultResources, Endpoint$1 as Endpoint, EndpointContent, FoundRoute, HrefCustomAttribute, HrefCustomAttributeRegistration, ILinkHandler, IRouter, IRouterConfiguration, InstructionParameters, LinkHandler, LoadCustomAttribute, LoadCustomAttributeRegistration, Navigation, NavigationCoordinator, NavigationFlags, Navigator, RecognizedRoute, Endpoint as RecognizerEndpoint, ReloadBehavior, Route, RouteRecognizer, Router, RouterConfiguration, RouterNavigationCancelEvent, RouterNavigationCompleteEvent, RouterNavigationEndEvent, RouterNavigationErrorEvent, RouterNavigationStartEvent, RouterOptions, RouterRegistration, RouterStartEvent, RouterStopEvent, Routes, RoutingHook, RoutingInstruction, RoutingScope, Runner, Step, Viewport, ViewportContent, ViewportCustomElement, ViewportCustomElementRegistration, ViewportOptions, ViewportScope, ViewportScopeContent, ViewportScopeCustomElement, ViewportScopeCustomElementRegistration, route, routes };
+export { ConfigurableRoute, ConsideredActiveCustomAttribute, DefaultComponents, DefaultResources, Endpoint$1 as Endpoint, EndpointContent, FoundRoute, HrefCustomAttribute, HrefCustomAttributeRegistration, ILinkHandler, IRouter, IRouterConfiguration, InstructionParameters, LinkHandler, LoadCustomAttribute, LoadCustomAttributeRegistration, Navigation, NavigationCoordinator, NavigationFlags, Navigator, RecognizedRoute, Endpoint as RecognizerEndpoint, Route, RouteRecognizer, Router, RouterConfiguration, RouterNavigationCancelEvent, RouterNavigationCompleteEvent, RouterNavigationEndEvent, RouterNavigationErrorEvent, RouterNavigationStartEvent, RouterOptions, RouterRegistration, RouterStartEvent, RouterStopEvent, Routes, RoutingHook, RoutingInstruction, RoutingScope, Runner, Step, Viewport, ViewportContent, ViewportCustomElement, ViewportCustomElementRegistration, ViewportOptions, ViewportScope, ViewportScopeContent, ViewportScopeCustomElement, ViewportScopeCustomElementRegistration, route, routes };
 //# sourceMappingURL=index.dev.mjs.map

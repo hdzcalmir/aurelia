@@ -109,6 +109,7 @@ const ensureExpression = (parser, srcOrExpr, expressionType) => {
     }
     return srcOrExpr;
 };
+/** @internal */ const etIsFunction = 'IsFunction';
 
 const registeredSymbol$1 = Symbol('.call');
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
@@ -131,12 +132,12 @@ class CallBindingInstruction {
     }
 }
 exports.CallBindingCommand = class CallBindingCommand {
-    get type() { return 0 /* CommandType.None */; }
+    get type() { return 'None'; }
     build(info, exprParser) {
         const target = info.bindable === null
             ? kernel.camelCase(info.attr.target)
             : info.bindable.name;
-        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, 8 /* ExpressionType.IsFunction */), target);
+        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), target);
     }
 };
 exports.CallBindingCommand = __decorate([
@@ -144,7 +145,7 @@ exports.CallBindingCommand = __decorate([
 ], exports.CallBindingCommand);
 exports.CallBindingRenderer = class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        const expr = ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */);
+        const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
 };
@@ -216,9 +217,9 @@ const delegateSyntax = {
 };
 const instructionType = 'dl';
 exports.DelegateBindingCommand = class DelegateBindingCommand {
-    get type() { return 1 /* CommandType.IgnoreAttr */; }
+    get type() { return 'IgnoreAttr'; }
     build(info, exprParser) {
-        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, 8 /* ExpressionType.IsFunction */), info.attr.target, false);
+        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false);
     }
 };
 exports.DelegateBindingCommand = __decorate([
@@ -230,7 +231,7 @@ exports.ListenerBindingRenderer = class ListenerBindingRenderer {
         this._eventDelegator = eventDelegator;
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        const expr = ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */);
+        const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
     }
 };
@@ -601,7 +602,7 @@ class BindingEngine {
         const scope = runtime.Scope.create(bindingContext, {}, true);
         return {
             subscribe: callback => {
-                const observer = new runtimeHtml.ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 16 /* ExpressionType.IsProperty */), callback);
+                const observer = new runtimeHtml.ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 'IsProperty'), callback);
                 observer.bind();
                 return {
                     dispose: () => observer.unbind()

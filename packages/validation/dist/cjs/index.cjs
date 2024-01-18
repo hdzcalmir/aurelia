@@ -564,7 +564,7 @@ exports.ValidationRules = class ValidationRules {
 
 exports.ValidationRules = __decorate([ __param(0, e.IServiceLocator), __param(1, s.IExpressionParser), __param(2, a), __param(3, n) ], exports.ValidationRules);
 
-const p = /^function\s*\([$_\w\d]+\)\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
+const p = /^(?:function)?\s*\(?[$_\w\d]+\)?\s*(?:=>)?\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
 
 const d = /^\(?[$_\w\d]+\)?\s*=>\s*[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)$/;
 
@@ -589,7 +589,7 @@ function parsePropertyName(e, t) {
       default:
         throw new Error(`Unable to parse accessor function:\n${e}`);
     }
-    return [ e, t.parse(`${$}.${e}`, 16) ];
+    return [ e, t.parse(`${$}.${e}`, "IsProperty") ];
 }
 
 class ValidationResult {
@@ -648,14 +648,14 @@ exports.ValidationMessageProvider = u = class ValidationMessageProvider {
         return s;
     }
     parseMessage(e) {
-        const t = this.parser.parse(e, 1);
-        if (t?.$kind === 25) {
+        const t = this.parser.parse(e, "Interpolation");
+        if (t?.$kind === "Interpolation") {
             for (const s of t.expressions) {
                 const t = s.name;
                 if (m.has(t)) {
                     this.logger.warn(`Did you mean to use "$${t}" instead of "${t}" in this validation message template: "${e}"?`);
                 }
-                if (s.$kind === 0 || s.ancestor > 0) {
+                if (s.$kind === "AccessThis" || s.ancestor > 0) {
                     throw new Error("$parent is not permitted in validation message expressions.");
                 }
             }
@@ -1339,7 +1339,7 @@ exports.ModelValidationExpressionHydrator = class ModelValidationExpressionHydra
         const i = e.when;
         if (i) {
             if (typeof i === "string") {
-                const e = this.parser.parse(i, 0);
+                const e = this.parser.parse(i, "None");
                 t.canExecute = t => s.astEvaluate(e, s.Scope.create({
                     $object: t
                 }), this, null);

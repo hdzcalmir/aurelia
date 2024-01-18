@@ -1,5 +1,5 @@
 import { Key } from '@aurelia/kernel';
-import { ExpressionKind, IRateLimitOptions } from '@aurelia/runtime';
+import { IRateLimitOptions } from '@aurelia/runtime';
 import type { IContainer, IDisposable, IIndexable, IServiceLocator } from '@aurelia/kernel';
 import type { Scope, IBinding, IConnectableBinding, IndexMap, IObserverLocator, ISignaler, BindingObserverRecord, Collection, ISubscribable, ICollectionSubscribable } from '@aurelia/runtime';
 export declare class MockBinding implements IConnectableBinding {
@@ -60,7 +60,7 @@ export declare class MockPropertySubscriber {
 }
 export declare class MockTracingExpression {
     inner: any;
-    $kind: ExpressionKind.Custom;
+    $kind: 'Custom';
     hasBind: true;
     hasUnbind: true;
     calls: [keyof MockTracingExpression, ...any[]][];

@@ -2,6 +2,10 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+const tsPending = 'pending';
+const tsRunning = 'running';
+const tsCompleted = 'completed';
+const tsCanceled = 'canceled';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const lookup = new Map();
 const notImplemented = (name) => {
@@ -143,7 +147,7 @@ class TaskQueue {
             while (this._processing.length > 0) {
                 (cur = this._processing.shift()).run();
                 // If it's still running, it can only be an async task
-                if (cur.status === 1 /* TaskStatus.running */) {
+                if (cur.status === tsRunning) {
                     if (cur.suspend === true) {
                         this._suspenderTask = cur;
                         this._requestFlush();
@@ -392,29 +396,22 @@ class TaskAbortError extends Error {
     }
 }
 let id = 0;
-exports.TaskStatus = void 0;
-(function (TaskStatus) {
-    TaskStatus[TaskStatus["pending"] = 0] = "pending";
-    TaskStatus[TaskStatus["running"] = 1] = "running";
-    TaskStatus[TaskStatus["completed"] = 2] = "completed";
-    TaskStatus[TaskStatus["canceled"] = 3] = "canceled";
-})(exports.TaskStatus || (exports.TaskStatus = {}));
 class Task {
     get result() {
         const result = this._result;
         if (result === void 0) {
             switch (this._status) {
-                case 0 /* TaskStatus.pending */: {
+                case tsPending: {
                     const promise = this._result = createExposedPromise();
                     this._resolve = promise.resolve;
                     this._reject = promise.reject;
                     return promise;
                 }
-                case 1 /* TaskStatus.running */:
+                case tsRunning:
                     throw createError('Trying to await task from within task will cause a deadlock.');
-                case 2 /* TaskStatus.completed */:
+                case tsCompleted:
                     return this._result = Promise.resolve();
-                case 3 /* TaskStatus.canceled */:
+                case tsCanceled:
                     return this._result = Promise.reject(new TaskAbortError(this));
             }
         }
@@ -438,14 +435,14 @@ class Task {
         /** @internal */
         this._result = void 0;
         /** @internal */
-        this._status = 0 /* TaskStatus.pending */;
+        this._status = tsPending;
         this._tracer = tracer;
     }
     run(time = this.taskQueue.platform.performanceNow()) {
         if (this._tracer.enabled) {
             this._tracer.enter(this, 'run');
         }
-        if (this._status !== 0 /* TaskStatus.pending */) {
+        if (this._status !== tsPending) {
             if (this._tracer.enabled) {
                 this._tracer.leave(this, 'run error');
             }
@@ -456,7 +453,7 @@ class Task {
         // so we can set the correct cancelation state.
         const { persistent, reusable, taskQueue, callback, _resolve: resolve, _reject: reject, createdTime, } = this;
         let ret;
-        this._status = 1 /* TaskStatus.running */;
+        this._status = tsRunning;
         try {
             ret = callback(time - createdTime);
             if (ret instanceof Promise) {
@@ -467,10 +464,10 @@ class Task {
                     else {
                         if (persistent) {
                             // Persistent tasks never reach completed status. They're either pending, running, or canceled.
-                            this._status = 3 /* TaskStatus.canceled */;
+                            this._status = tsCanceled;
                         }
                         else {
-                            this._status = 2 /* TaskStatus.completed */;
+                            this._status = tsCompleted;
                         }
                         this.dispose();
                     }
@@ -508,10 +505,10 @@ class Task {
                 else {
                     if (persistent) {
                         // Persistent tasks never reach completed status. They're either pending, running, or canceled.
-                        this._status = 3 /* TaskStatus.canceled */;
+                        this._status = tsCanceled;
                     }
                     else {
-                        this._status = 2 /* TaskStatus.completed */;
+                        this._status = tsCompleted;
                     }
                     this.dispose();
                 }
@@ -545,7 +542,7 @@ class Task {
         if (this._tracer.enabled) {
             this._tracer.enter(this, 'cancel');
         }
-        if (this._status === 0 /* TaskStatus.pending */) {
+        if (this._status === tsPending) {
             const taskQueue = this.taskQueue;
             const reusable = this.reusable;
             const reject = this._reject;
@@ -553,7 +550,7 @@ class Task {
             if (taskQueue.isEmpty) {
                 taskQueue.cancel();
             }
-            this._status = 3 /* TaskStatus.canceled */;
+            this._status = tsCanceled;
             this.dispose();
             if (reusable) {
                 taskQueue._returnToPool(this);
@@ -566,7 +563,7 @@ class Task {
             }
             return true;
         }
-        else if (this._status === 1 /* TaskStatus.running */ && this.persistent) {
+        else if (this._status === tsRunning && this.persistent) {
             this.persistent = false;
             if (this._tracer.enabled) {
                 this._tracer.leave(this, 'cancel true =running+persistent');
@@ -585,7 +582,7 @@ class Task {
         const delay = this.queueTime - this.createdTime;
         this.createdTime = time;
         this.queueTime = time + delay;
-        this._status = 0 /* TaskStatus.pending */;
+        this._status = tsPending;
         this._resolve = void 0;
         this._reject = void 0;
         this._result = void 0;
@@ -603,7 +600,7 @@ class Task {
         this.persistent = persistent;
         this.suspend = suspend;
         this.callback = callback;
-        this._status = 0 /* TaskStatus.pending */;
+        this._status = tsPending;
         if (this._tracer.enabled) {
             this._tracer.leave(this, 'reuse');
         }
@@ -618,12 +615,6 @@ class Task {
         this._result = void 0;
     }
 }
-exports.TaskQueuePriority = void 0;
-(function (TaskQueuePriority) {
-    TaskQueuePriority[TaskQueuePriority["render"] = 0] = "render";
-    TaskQueuePriority[TaskQueuePriority["macroTask"] = 1] = "macroTask";
-    TaskQueuePriority[TaskQueuePriority["postRender"] = 2] = "postRender";
-})(exports.TaskQueuePriority || (exports.TaskQueuePriority = {}));
 class Tracer {
     constructor(console) {
         this.console = console;
@@ -657,20 +648,12 @@ class Tracer {
             const reusable = obj['reusable'];
             const persistent = obj['persistent'];
             const suspend = obj['suspend'];
-            const status = taskStatus(obj['_status']);
+            const status = obj['_status'];
             const info = `id=${id} created=${created} queue=${queue} preempt=${preempt} persistent=${persistent} reusable=${reusable} status=${status} suspend=${suspend}`;
             this.console.log(`${prefix}[T.${method}] ${info}`);
         }
     }
 }
-const taskStatus = (status) => {
-    switch (status) {
-        case 0 /* TaskStatus.pending */: return 'pending';
-        case 1 /* TaskStatus.running */: return 'running';
-        case 3 /* TaskStatus.canceled */: return 'canceled';
-        case 2 /* TaskStatus.completed */: return 'completed';
-    }
-};
 const defaultQueueTaskOptions = {
     delay: 0,
     preempt: false,

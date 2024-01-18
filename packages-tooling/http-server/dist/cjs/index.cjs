@@ -59,10 +59,6 @@ function __param(paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 }
 
-exports.Encoding = void 0;
-(function (Encoding) {
-    Encoding["utf8"] = "utf8";
-})(exports.Encoding || (exports.Encoding = {}));
 class StartOutput {
     constructor(realPort) {
         this.realPort = realPort;
@@ -90,23 +86,7 @@ exports.HTTPStatusCode = void 0;
     HTTPStatusCode[HTTPStatusCode["ServiceUnavailable"] = 503] = "ServiceUnavailable";
     HTTPStatusCode[HTTPStatusCode["GatewayTimeout"] = 504] = "GatewayTimeout";
 })(exports.HTTPStatusCode || (exports.HTTPStatusCode = {}));
-exports.ContentType = void 0;
-(function (ContentType) {
-    ContentType["unknown"] = "";
-    ContentType["json"] = "application/json; charset=utf-8";
-    ContentType["javascript"] = "application/javascript; charset=utf-8";
-    ContentType["plain"] = "text/plain; charset=utf-8";
-    ContentType["html"] = "text/html; charset=utf-8";
-    ContentType["css"] = "text/css; charset=utf-8";
-})(exports.ContentType || (exports.ContentType = {}));
-var ContentEncoding;
-(function (ContentEncoding) {
-    ContentEncoding["identity"] = "identity";
-    ContentEncoding["br"] = "br";
-    ContentEncoding["gzip"] = "gzip";
-    ContentEncoding["compress"] = "compress";
-    // deflate = 'deflate', // Need to deal with this later. No known fixed file extension for deflate
-})(ContentEncoding || (ContentEncoding = {}));
+// | 'deflate' // Need to deal with this later. No known fixed file extension for deflate
 class HTTPError extends Error {
     constructor(statusCode, message) {
         super(message);
@@ -132,24 +112,24 @@ function getContentType(path) {
     const i = path.lastIndexOf('.');
     if (i >= 0) {
         switch (path.slice(i)) {
-            case '.js': return "application/javascript; charset=utf-8" /* ContentType.javascript */;
-            case '.css': return "text/css; charset=utf-8" /* ContentType.css */;
-            case '.json': return "application/json; charset=utf-8" /* ContentType.json */;
-            case '.html': return "text/html; charset=utf-8" /* ContentType.html */;
+            case '.js': return 'application/javascript; charset=utf-8';
+            case '.css': return 'text/css; charset=utf-8';
+            case '.json': return 'application/json; charset=utf-8';
+            case '.html': return 'text/html; charset=utf-8';
         }
     }
-    return "text/plain; charset=utf-8" /* ContentType.plain */;
+    return 'text/plain; charset=utf-8';
 }
 function getContentEncoding(path) {
     const i = path.lastIndexOf('.');
     if (i >= 0) {
         switch (path.slice(i)) {
-            case '.br': return "br" /* ContentEncoding.br */;
-            case '.gz': return "gzip" /* ContentEncoding.gzip */;
-            case '.lzw': return "compress" /* ContentEncoding.compress */;
+            case '.br': return 'br';
+            case '.gz': return 'gzip';
+            case '.lzw': return 'compress';
         }
     }
-    return "identity" /* ContentEncoding.identity */;
+    return 'identity';
 }
 const wildcardHeaderValue = {
     [http2.constants.HTTP2_HEADER_ACCEPT_ENCODING]: '*',
@@ -277,7 +257,7 @@ exports.FileServer = class FileServer {
                 content = await readFile(path$1);
                 contentEncoding = getContentEncoding(path$1);
             }
-            response.writeHead(200 /* HTTPStatusCode.OK */, {
+            response.writeHead(exports.HTTPStatusCode.OK, {
                 'Content-Type': contentType,
                 'Content-Encoding': contentEncoding,
                 'Cache-Control': this.cacheControlDirective
@@ -288,12 +268,12 @@ exports.FileServer = class FileServer {
         }
         else {
             this.logger.debug(`File "${path$1}" could not be found`);
-            response.writeHead(404 /* HTTPStatusCode.NotFound */);
+            response.writeHead(exports.HTTPStatusCode.NotFound);
             await new Promise(function (resolve) {
                 response.end(resolve);
             });
         }
-        context.state = 3 /* HttpContextState.end */;
+        context.state = 'end';
     }
 };
 exports.FileServer = __decorate([
@@ -337,10 +317,10 @@ let Http2FileServer = class Http2FileServer {
         }
         else {
             this.logger.debug(`File "${path$1}" could not be found`);
-            response.writeHead(404 /* HTTPStatusCode.NotFound */);
+            response.writeHead(exports.HTTPStatusCode.NotFound);
             response.end();
         }
-        context.state = 3 /* HttpContextState.end */;
+        context.state = 'end';
     }
     pushAll(stream, contentEncoding) {
         for (const path$1 of this.filePushMap.keys()) {
@@ -414,18 +394,12 @@ function determineContentEncoding(context) {
     return (_b = (_a = clientEncoding.mostPrioritized) === null || _a === void 0 ? void 0 : _a.name) !== null && _b !== void 0 ? _b : 'identity';
 }
 
-exports.HttpContextState = void 0;
-(function (HttpContextState) {
-    HttpContextState[HttpContextState["head"] = 1] = "head";
-    HttpContextState[HttpContextState["body"] = 2] = "body";
-    HttpContextState[HttpContextState["end"] = 3] = "end";
-})(exports.HttpContextState || (exports.HttpContextState = {}));
 class HttpContext {
     constructor(container, request, response, requestBuffer) {
         this.request = request;
         this.response = response;
         this.requestBuffer = requestBuffer;
-        this.state = 1 /* HttpContextState.head */;
+        this.state = 'head';
         this.parsedHeaders = Object.create(null);
         this.rewrittenUrl = null;
         this.container = container.createChild();
@@ -481,7 +455,7 @@ exports.HttpServer = class HttpServer {
         }
         catch (err) {
             this.logger.error(`handleRequest Error: ${err.message}\n${err.stack}`);
-            res.statusCode = 500 /* HTTPStatusCode.InternalServerError */;
+            res.statusCode = exports.HTTPStatusCode.InternalServerError;
             res.end();
         }
     }
@@ -530,7 +504,7 @@ let Http2Server = class Http2Server {
         }
         catch (err) {
             this.logger.error(`handleRequest Error: ${err.message}\n${err.stack}`);
-            res.statusCode = 500 /* HTTPStatusCode.InternalServerError */;
+            res.statusCode = exports.HTTPStatusCode.InternalServerError;
             res.end();
         }
     }
@@ -685,7 +659,7 @@ const HttpServerConfiguration = {
         opts.validate();
         return {
             register(container) {
-                container.register(kernel.Registration.instance(IHttpServerOptions, opts), kernel.Registration.singleton(IRequestHandler, PushStateHandler), kernel.Registration.singleton(IRequestHandler, exports.FileServer), kernel.Registration.singleton(IHttp2FileServer, Http2FileServer), kernel.LoggerConfiguration.create({ sinks: [kernel.ConsoleSink], level: opts.level, colorOptions: 1 /* ColorOptions.colors */ }), kernel.Registration.instance(kernel.IPlatform, new platform.Platform(globalThis)));
+                container.register(kernel.Registration.instance(IHttpServerOptions, opts), kernel.Registration.singleton(IRequestHandler, PushStateHandler), kernel.Registration.singleton(IRequestHandler, exports.FileServer), kernel.Registration.singleton(IHttp2FileServer, Http2FileServer), kernel.LoggerConfiguration.create({ sinks: [kernel.ConsoleSink], level: opts.level, colorOptions: 'colors' }), kernel.Registration.instance(kernel.IPlatform, new platform.Platform(globalThis)));
                 if (opts.useHttp2) {
                     container.register(kernel.Registration.singleton(IHttpServer, Http2Server));
                 }

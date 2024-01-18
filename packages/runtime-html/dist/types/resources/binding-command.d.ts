@@ -7,13 +7,12 @@ import { AttrSyntax, IAttributeParser } from './attribute-pattern';
 import type { BindableDefinition } from '../bindable';
 import type { CustomAttributeDefinition } from './custom-attribute';
 import type { CustomElementDefinition } from './custom-element';
+export declare const ctNone: "None";
+export declare const ctIgnoreAttr: "IgnoreAttr";
 /**
  * Characteristics of a binding command.
  */
-export declare const enum CommandType {
-    None = 0,
-    IgnoreAttr = 1
-}
+export type CommandType = typeof ctNone | typeof ctIgnoreAttr;
 export type PartialBindingCommandDefinition = PartialResourceDefinition<{
     readonly type?: string | null;
 }>;
@@ -56,69 +55,69 @@ export declare class BindingCommandDefinition<T extends Constructable = Construc
 }
 export declare const BindingCommand: Readonly<BindingCommandKind>;
 export declare class OneTimeBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.None;
+    get type(): 'None';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class ToViewBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.None;
+    get type(): 'None';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class FromViewBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.None;
+    get type(): 'None';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class TwoWayBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.None;
+    get type(): 'None';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class DefaultBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.None;
+    get type(): 'None';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class ForBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.None;
+    get type(): 'None';
     static get inject(): unknown[];
     constructor(attrParser: IAttributeParser);
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 export declare class TriggerBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.IgnoreAttr;
+    get type(): 'IgnoreAttr';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 export declare class CaptureBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.IgnoreAttr;
+    get type(): 'IgnoreAttr';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 /**
  * Attr binding command. Compile attr with binding symbol with command `attr` to `AttributeBindingInstruction`
  */
 export declare class AttrBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.IgnoreAttr;
+    get type(): 'IgnoreAttr';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 /**
  * Style binding command. Compile attr with binding symbol with command `style` to `AttributeBindingInstruction`
  */
 export declare class StyleBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.IgnoreAttr;
+    get type(): 'IgnoreAttr';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 /**
  * Class binding command. Compile attr with binding symbol with command `class` to `AttributeBindingInstruction`
  */
 export declare class ClassBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.IgnoreAttr;
+    get type(): 'IgnoreAttr';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 /**
  * Binding command to refer different targets (element, custom element/attribute view models, controller) attached to an element
  */
 export declare class RefBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.IgnoreAttr;
+    get type(): 'IgnoreAttr';
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 export declare class SpreadBindingCommand implements BindingCommandInstance {
-    get type(): CommandType.IgnoreAttr;
+    get type(): 'IgnoreAttr';
     build(_info: ICommandBuildInfo): IInstruction;
 }
 //# sourceMappingURL=binding-command.d.ts.map

@@ -225,8 +225,8 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
         const parser = container.get(IExpressionParser);
         return {
             ...sut.compile(templateDefinition, container, { projections: null }),
-            createProp: ({ from, to, mode = 2 /* BindingMode.toView */ }) => new PropertyBindingInstruction(parser.parse(from, 16 /* ExpressionType.IsProperty */), to, mode),
-            createTextInterpolation: ({ from }) => new TextBindingInstruction(parser.parse(from, 16 /* ExpressionType.IsProperty */)),
+            createProp: ({ from, to, mode = 2 /* BindingMode.toView */ }) => new PropertyBindingInstruction(parser.parse(from, 'IsProperty'), to, mode),
+            createTextInterpolation: ({ from }) => new TextBindingInstruction(parser.parse(from, 'IsProperty')),
         };
     }
     function assertTemplateEqual(template, expected, message) {

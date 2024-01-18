@@ -93,22 +93,22 @@ const i = /*@__PURE__*/ function() {
         let o;
         let i = "";
         let l = 0;
-        let u = t.charAt(0);
-        let c = charToKind(u);
+        let c = t.charAt(0);
+        let u = charToKind(c);
         let a = 0;
         for (;a < r; ++a) {
             o = l;
-            i = u;
-            l = c;
-            u = t.charAt(a + 1);
-            c = charToKind(u);
+            i = c;
+            l = u;
+            c = t.charAt(a + 1);
+            u = charToKind(c);
             if (l === 0) {
                 if (s.length > 0) {
                     n = true;
                 }
             } else {
                 if (!n && s.length > 0 && l === 2) {
-                    n = o === 3 || c === 3;
+                    n = o === 3 || u === 3;
                 }
                 s += e(i, n);
                 n = false;
@@ -130,7 +130,7 @@ const l = /*@__PURE__*/ function() {
     };
 }();
 
-const u = /*@__PURE__*/ function() {
+const c = /*@__PURE__*/ function() {
     const t = createObject();
     return e => {
         let r = t[e];
@@ -145,7 +145,7 @@ const u = /*@__PURE__*/ function() {
     };
 }();
 
-const c = /*@__PURE__*/ function() {
+const u = /*@__PURE__*/ function() {
     const t = createObject();
     const callback = (t, e) => e ? `-${t.toLowerCase()}` : t.toLowerCase();
     return e => {
@@ -456,8 +456,8 @@ class Container {
         let o;
         let i;
         let l = 0;
-        let u = e.length;
-        for (;l < u; ++l) {
+        let c = e.length;
+        for (;l < c; ++l) {
             r = e[l];
             if (!t.isObject(r)) {
                 continue;
@@ -1343,14 +1343,7 @@ exports.LogLevel = void 0;
     t[t["none"] = 6] = "none";
 })(exports.LogLevel || (exports.LogLevel = {}));
 
-exports.ColorOptions = void 0;
-
-(function(t) {
-    t[t["noColors"] = 0] = "noColors";
-    t[t["colors"] = 1] = "colors";
-})(exports.ColorOptions || (exports.ColorOptions = {}));
-
-const S = /*@__PURE__*/ createInterface("ILogConfig", (t => t.instance(new LogConfig(0, 3))));
+const S = /*@__PURE__*/ createInterface("ILogConfig", (t => t.instance(new LogConfig("no-colors", 3))));
 
 const G = /*@__PURE__*/ createInterface("ISink");
 
@@ -1408,23 +1401,26 @@ class LogConfig {
 }
 
 const U = function() {
-    const t = [ toLookup({
-        TRC: "TRC",
-        DBG: "DBG",
-        INF: "INF",
-        WRN: "WRN",
-        ERR: "ERR",
-        FTL: "FTL",
-        QQQ: "???"
-    }), toLookup({
-        TRC: Q.grey("TRC"),
-        DBG: Q.grey("DBG"),
-        INF: Q.white("INF"),
-        WRN: Q.yellow("WRN"),
-        ERR: Q.red("ERR"),
-        FTL: Q.red("FTL"),
-        QQQ: Q.grey("???")
-    }) ];
+    const t = {
+        "no-colors": toLookup({
+            TRC: "TRC",
+            DBG: "DBG",
+            INF: "INF",
+            WRN: "WRN",
+            ERR: "ERR",
+            FTL: "FTL",
+            QQQ: "???"
+        }),
+        colors: toLookup({
+            TRC: Q.grey("TRC"),
+            DBG: Q.grey("DBG"),
+            INF: Q.white("INF"),
+            WRN: Q.yellow("WRN"),
+            ERR: Q.red("ERR"),
+            FTL: Q.red("FTL"),
+            QQQ: Q.grey("???")
+        })
+    };
     return (e, r) => {
         if (e <= 0) {
             return t[r].TRC;
@@ -1449,14 +1445,14 @@ const U = function() {
 }();
 
 const getScopeString = (t, e) => {
-    if (e === 0) {
+    if (e === "no-colors") {
         return t.join(".");
     }
     return t.map(Q.cyan).join(".");
 };
 
 const getIsoString = (t, e) => {
-    if (e === 0) {
+    if (e === "no-colors") {
         return new Date(t).toISOString();
     }
     return Q.grey(new Date(t).toISOString());
@@ -1547,8 +1543,8 @@ class DefaultLogger {
         let o;
         let i;
         let l;
-        let u;
         let c;
+        let u;
         let a;
         this.config = t;
         this.f = e;
@@ -1559,8 +1555,8 @@ class DefaultLogger {
             o = this.I = [];
             i = this.F = [];
             l = this.M = [];
-            u = this._ = [];
-            c = this.T = [];
+            c = this._ = [];
+            u = this.T = [];
             a = this.P = [];
             for (const t of r) {
                 const e = z.getHandles(t);
@@ -1574,10 +1570,10 @@ class DefaultLogger {
                     l.push(t);
                 }
                 if (e?.includes(3) ?? true) {
-                    u.push(t);
+                    c.push(t);
                 }
                 if (e?.includes(4) ?? true) {
-                    c.push(t);
+                    u.push(t);
                 }
                 if (e?.includes(5) ?? true) {
                     a.push(t);
@@ -1589,8 +1585,8 @@ class DefaultLogger {
             o = this.I = s.I;
             i = this.F = s.F;
             l = this.M = s.M;
-            u = this._ = s._;
-            c = this.T = s.T;
+            c = this._ = s._;
+            u = this.T = s.T;
             a = this.P = s.P;
         }
     }
@@ -1654,7 +1650,7 @@ __decorate([ bound ], DefaultLogger.prototype, "error", null);
 __decorate([ bound ], DefaultLogger.prototype, "fatal", null);
 
 const H = toLookup({
-    create({level: t = 3, colorOptions: e = 0, sinks: r = []} = {}) {
+    create({level: t = 3, colorOptions: e = "no-colors", sinks: r = []} = {}) {
         return toLookup({
             register(n) {
                 n.register(instanceRegistration(S, new LogConfig(e, t)));
@@ -1937,7 +1933,7 @@ exports.isArrayIndex = isArrayIndex;
 
 exports.isNativeFunction = f;
 
-exports.kebabCase = c;
+exports.kebabCase = u;
 
 exports.lazy = j;
 
@@ -1955,7 +1951,7 @@ exports.onResolveAll = onResolveAll;
 
 exports.optional = E;
 
-exports.pascalCase = u;
+exports.pascalCase = c;
 
 exports.resolve = resolve;
 

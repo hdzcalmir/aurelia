@@ -422,7 +422,7 @@ DispatchAttributePattern = __decorate([
     attributePattern({ pattern: 'PART.dispatch', symbols: '.' })
 ], DispatchAttributePattern);
 let StateBindingCommand = class StateBindingCommand {
-    get type() { return 0 /* CommandType.None */; }
+    get type() { return 'None'; }
     get name() { return 'state'; }
     build(info, parser, attrMapper) {
         const attr = info.attr;
@@ -437,7 +437,7 @@ let StateBindingCommand = class StateBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
+            if (value === '' && info.def.type === 'Element') {
                 value = camelCase(target);
             }
             target = info.bindable.name;
@@ -449,7 +449,7 @@ StateBindingCommand = __decorate([
     bindingCommand('state')
 ], StateBindingCommand);
 let DispatchBindingCommand = class DispatchBindingCommand {
-    get type() { return 1 /* CommandType.IgnoreAttr */; }
+    get type() { return 'IgnoreAttr'; }
     get name() { return 'dispatch'; }
     build(info) {
         const attr = info.attr;
@@ -479,7 +479,7 @@ let StateBindingInstructionRenderer = class StateBindingInstructionRenderer {
         this._stateContainer = _stateContainer;
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */), target, instruction.to, this._stateContainer));
+        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
     }
 };
 /** @internal */ StateBindingInstructionRenderer.inject = [IStore];
@@ -492,7 +492,7 @@ let DispatchBindingInstructionRenderer = class DispatchBindingInstructionRendere
         this._stateContainer = _stateContainer;
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        const expr = ensureExpression(exprParser, instruction.ast, 16 /* ExpressionType.IsProperty */);
+        const expr = ensureExpression(exprParser, instruction.ast, 'IsProperty');
         renderingCtrl.addBinding(new StateDispatchBinding(renderingCtrl.container, expr, target, instruction.from, this._stateContainer));
     }
 };
