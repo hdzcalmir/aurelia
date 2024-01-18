@@ -168,14 +168,14 @@ let M = class ValidationController {
         const {object: i, objectTag: e} = t ?? {};
         let s;
         if (i !== void 0) {
-            s = [ new l(i, t.propertyName, t.rules ?? this.objects.get(i), e, t.propertyTag) ];
+            s = [ new l(i, t?.propertyName, t?.rules ?? this.objects.get(i), e, t?.propertyTag) ];
         } else {
-            s = [ ...Array.from(this.objects.entries()).map((([t, i]) => new l(t, void 0, i, e))), ...(!e ? Array.from(this.bindings.entries()) : []).reduce(((t, [i, e]) => {
-                const s = getPropertyInfo(i, e);
-                if (s !== void 0 && !this.objects.has(s.object)) {
-                    t.push(new l(s.object, s.propertyName, e.rules));
+            s = [ ...Array.from(this.objects.entries()).map((([t, i]) => new l(t, void 0, i, e))), ...Array.from(this.bindings.entries()).reduce(((i, [s, n]) => {
+                const r = getPropertyInfo(s, n);
+                if (r !== void 0 && !this.objects.has(r.object)) {
+                    i.push(new l(r.object, r.propertyName, n.rules, e, t?.propertyTag));
                 }
-                return t;
+                return i;
             }), []) ];
         }
         this.validating = true;

@@ -14,7 +14,7 @@ import { callSyntax, delegateSyntax } from '@aurelia/compat-v1';
 import { DI, IServiceLocator, newInstanceForScope, newInstanceOf, Registration } from '@aurelia/kernel';
 import { ArrayObserver, IObserverLocator, Unparser, } from '@aurelia/runtime';
 import { bindable, bindingBehavior, customAttribute, valueConverter, CustomElement, customElement, IPlatform, INode, Aurelia, } from '@aurelia/runtime-html';
-import { assert, createSpy, TestContext } from '@aurelia/testing';
+import { assert, createFixture, createSpy, TestContext } from '@aurelia/testing';
 import { IValidationRules, PropertyRule, RangeRule, RequiredRule } from '@aurelia/validation';
 import { IValidationController, ValidationController, ValidationHtmlConfiguration, ValidationTrigger, BindingMediator, } from '@aurelia/validation-html';
 import { createSpecFunction, ToNumberValueConverter } from '../util.js';
@@ -1114,6 +1114,59 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             await au.stop();
             ctx.doc.body.removeChild(host);
             au.dispose();
+        });
+        it('tagged rules works with binding behavior', async function () {
+            let App = class App {
+                constructor(controller, validationRules) {
+                    this.controller = controller;
+                    this.validationRules = validationRules;
+                    this.person = new Person((void 0), (void 0));
+                    validationRules
+                        .on(this.person)
+                        .ensure('name')
+                        .required()
+                        .tag('t1')
+                        .ensure('age')
+                        .required()
+                        .tag('t2');
+                }
+                unbinding() {
+                    this.validationRules.off();
+                }
+            };
+            App = __decorate([
+                __param(0, newInstanceOf(IValidationController)),
+                __param(1, IValidationRules),
+                __metadata("design:paramtypes", [ValidationController, Object])
+            ], App);
+            const { startPromise, stop, component } = createFixture('<input id="target-name" type="text" value.two-way="person.name & validate:undefined:controller"><input id="target-age" type="text" value.two-way="person.age & validate:undefined:controller">', App, [ValidationHtmlConfiguration]);
+            await startPromise;
+            const controller = component.controller;
+            let result = await controller.validate({ propertyTag: 't1' });
+            assert.strictEqual(result.valid, false, 'result.valid1');
+            let results = result.results.filter(x => !x.valid);
+            assert.strictEqual(results.every(x => x.propertyName === 'name'), true, 'results.every(x => x.propertyName === \'name\')');
+            component.person.name = 'foo';
+            result = await controller.validate({ propertyTag: 't1' });
+            assert.strictEqual(result.valid, true, 'result.valid2');
+            results = result.results.filter(x => !x.valid);
+            assert.strictEqual(results.length, 0, 'results.length2');
+            result = await controller.validate({ propertyTag: 't2' });
+            assert.strictEqual(result.valid, false, 'result.valid3');
+            results = result.results.filter(x => !x.valid);
+            assert.strictEqual(results.every(x => x.propertyName === 'age'), true, 'results.every(x => x.propertyName === \'age\')');
+            component.person.age = 42;
+            result = await controller.validate({ propertyTag: 't2' });
+            assert.strictEqual(result.valid, true, 'result.valid4');
+            results = result.results.filter(x => !x.valid);
+            assert.strictEqual(results.length, 0, 'results.length4');
+            assert.strictEqual((await controller.validate()).valid, true, 'await controller.validate()');
+            component.person.name = (void 0);
+            component.person.age = (void 0);
+            result = await controller.validate();
+            assert.strictEqual(result.valid, false, 'result.valid5');
+            assert.deepStrictEqual(result.results.map(x => [x.propertyName, x.valid]), [['name', false], ['age', false]], 'result.results.every(x => !x.valid)');
+            await stop(true);
         });
     });
 });

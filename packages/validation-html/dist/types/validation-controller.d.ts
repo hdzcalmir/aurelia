@@ -14,13 +14,13 @@ export type ValidateEventKind = 'validate' | 'reset';
 export declare class ControllerValidateResult {
     valid: boolean;
     results: ValidationResult[];
-    instruction?: ValidateInstruction<IValidateable> | undefined;
+    instruction?: Partial<ValidateInstruction<IValidateable>> | undefined;
     /**
      * @param {boolean} valid - `true` if the validation passed, else `false`.
      * @param {ValidationResult[]} results - The validation result of every rule that was evaluated.
      * @param {ValidateInstruction} [instruction] - The instruction passed to the controller's validate method.
      */
-    constructor(valid: boolean, results: ValidationResult[], instruction?: ValidateInstruction<IValidateable> | undefined);
+    constructor(valid: boolean, results: ValidationResult[], instruction?: Partial<ValidateInstruction<IValidateable>> | undefined);
 }
 /**
  * Describes the validation result and target elements pair.
@@ -125,7 +125,7 @@ export interface IValidationController {
      * @template TObject
      * @param {ValidateInstruction<TObject>} [instruction] - If omitted, then all the registered objects and bindings will be validated.
      */
-    validate<TObject extends IValidateable>(instruction?: ValidateInstruction<TObject>): Promise<ControllerValidateResult>;
+    validate<TObject extends IValidateable>(instruction?: Partial<ValidateInstruction<TObject>>): Promise<ControllerValidateResult>;
     /**
      * Registers the given `object` with optional `rules` to the controller.
      * During `validate` without instruction, the object will be validated.
@@ -197,7 +197,7 @@ export declare class ValidationController implements IValidationController {
     removeSubscriber(subscriber: ValidationResultsSubscriber): void;
     registerBinding(binding: BindingWithBehavior, info: BindingInfo): void;
     unregisterBinding(binding: BindingWithBehavior): void;
-    validate<TObject extends IValidateable>(instruction?: ValidateInstruction<TObject>): Promise<ControllerValidateResult>;
+    validate<TObject extends IValidateable>(instruction?: Partial<ValidateInstruction<TObject>>): Promise<ControllerValidateResult>;
     reset(instruction?: ValidateInstruction): void;
     validateBinding(binding: BindingWithBehavior): Promise<void>;
     resetBinding(binding: BindingWithBehavior): void;

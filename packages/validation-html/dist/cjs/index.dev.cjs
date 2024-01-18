@@ -216,19 +216,18 @@ exports.ValidationController = class ValidationController {
         const { object: obj, objectTag } = instruction ?? {};
         let instructions;
         if (obj !== void 0) {
-            instructions = [new validation.ValidateInstruction(obj, instruction.propertyName, instruction.rules ?? this.objects.get(obj), objectTag, instruction.propertyTag)];
+            instructions = [new validation.ValidateInstruction(obj, instruction?.propertyName, instruction?.rules ?? this.objects.get(obj), objectTag, instruction?.propertyTag)];
         }
         else {
             // validate all objects and bindings.
             instructions = [
                 ...Array.from(this.objects.entries())
                     .map(([object, rules]) => new validation.ValidateInstruction(object, void 0, rules, objectTag)),
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                ...(!objectTag ? Array.from(this.bindings.entries()) : [])
+                ...Array.from(this.bindings.entries())
                     .reduce((acc, [binding, info]) => {
                     const propertyInfo = getPropertyInfo(binding, info);
                     if (propertyInfo !== void 0 && !this.objects.has(propertyInfo.object)) {
-                        acc.push(new validation.ValidateInstruction(propertyInfo.object, propertyInfo.propertyName, info.rules));
+                        acc.push(new validation.ValidateInstruction(propertyInfo.object, propertyInfo.propertyName, info.rules, objectTag, instruction?.propertyTag));
                     }
                     return acc;
                 }, [])

@@ -174,14 +174,14 @@ exports.ValidationController = class ValidationController {
         const {object: i, objectTag: s} = t ?? {};
         let r;
         if (i !== void 0) {
-            r = [ new e.ValidateInstruction(i, t.propertyName, t.rules ?? this.objects.get(i), s, t.propertyTag) ];
+            r = [ new e.ValidateInstruction(i, t?.propertyName, t?.rules ?? this.objects.get(i), s, t?.propertyTag) ];
         } else {
-            r = [ ...Array.from(this.objects.entries()).map((([t, i]) => new e.ValidateInstruction(t, void 0, i, s))), ...(!s ? Array.from(this.bindings.entries()) : []).reduce(((t, [i, s]) => {
-                const r = getPropertyInfo(i, s);
-                if (r !== void 0 && !this.objects.has(r.object)) {
-                    t.push(new e.ValidateInstruction(r.object, r.propertyName, s.rules));
+            r = [ ...Array.from(this.objects.entries()).map((([t, i]) => new e.ValidateInstruction(t, void 0, i, s))), ...Array.from(this.bindings.entries()).reduce(((i, [r, o]) => {
+                const n = getPropertyInfo(r, o);
+                if (n !== void 0 && !this.objects.has(n.object)) {
+                    i.push(new e.ValidateInstruction(n.object, n.propertyName, o.rules, s, t?.propertyTag));
                 }
-                return t;
+                return i;
             }), []) ];
         }
         this.validating = true;
