@@ -2,8 +2,6 @@ import { camelCase, toArray } from '@aurelia/kernel';
 import {
   AccessorType,
   CustomExpression,
-  ExpressionType,
-  Interpolation,
   connectable,
   astEvaluate,
   astUnbind,
@@ -15,7 +13,6 @@ import {
   CustomElement,
   IPlatform,
   type IBindingController,
-  State,
   mixinAstEvaluator,
   mixingBindingLimited,
   type IHydratableController,
@@ -35,6 +32,7 @@ import type {
 } from '@aurelia/runtime';
 import type { TranslationBindBindingInstruction, TranslationBindingInstruction } from './translation-renderer';
 import type { TranslationParametersBindingInstruction } from './translation-parameters-renderer';
+import { etInterpolation, etIsProperty, stateActivating } from '../utils';
 
 interface TranslationBindingCreationContext {
   parser: IExpressionParser;
@@ -79,9 +77,6 @@ export class TranslationBinding implements IConnectableBinding {
 
   /** @internal */
   private _task: ITask | null = null;
-
-  /** @internal */
-  private _isInterpolation!: boolean;
 
   /** @internal */
   private readonly _targetAccessors: Set<IAccessor>;
@@ -137,12 +132,13 @@ export class TranslationBinding implements IConnectableBinding {
   }: TranslationBindingCreationContext) {
     const binding = this._getBinding({ observerLocator, context, controller, target, platform });
     const expr = typeof instruction.from === 'string'
-      ? parser.parse(instruction.from, ExpressionType.IsProperty)
+      /* istanbul ignore next */
+      ? parser.parse(instruction.from, etIsProperty)
       : instruction.from;
     if (isParameterContext) {
       binding.useParameter(expr);
     } else {
-      const interpolation = expr instanceof CustomExpression ? parser.parse(expr.value as string, ExpressionType.Interpolation) : undefined;
+      const interpolation = expr instanceof CustomExpression ? parser.parse(expr.value as string, etInterpolation) : undefined;
       binding.ast = interpolation || expr;
     }
   }
@@ -167,12 +163,12 @@ export class TranslationBinding implements IConnectableBinding {
     if (this.isBound) {
       return;
     }
+    const ast = this.ast;
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (!this.ast) { throw new Error('key expression is missing'); }
+    if (!ast) { throw new Error('key expression is missing'); }
     this._scope = _scope;
-    this._isInterpolation = this.ast instanceof Interpolation;
 
-    this._keyExpression = astEvaluate(this.ast, _scope, this, this) as string;
+    this._keyExpression = astEvaluate(ast, _scope, this, this) as string;
     this._ensureKeyExpression();
     this.parameter?.bind(_scope);
 
@@ -198,11 +194,9 @@ export class TranslationBinding implements IConnectableBinding {
     this.obs.clearAll();
   }
 
-  public handleChange(newValue: string | i18next.TOptions, _previousValue: string | i18next.TOptions): void {
+  public handleChange(_newValue: string | i18next.TOptions, _previousValue: string | i18next.TOptions): void {
     this.obs.version++;
-    this._keyExpression = this._isInterpolation
-        ? astEvaluate(this.ast, this._scope, this, this) as string
-        : newValue as string;
+    this._keyExpression = astEvaluate(this.ast, this._scope, this, this) as string;
     this.obs.clear();
     this._ensureKeyExpression();
     this.updateTranslations();
@@ -240,7 +234,7 @@ export class TranslationBinding implements IConnectableBinding {
           const accessor = controller?.viewModel
             ? this.oL.getAccessor(controller.viewModel, camelCase(attribute))
             : this.oL.getAccessor(this.target, attribute);
-          const shouldQueueUpdate = this._controller.state !== State.activating && (accessor.type & AccessorType.Layout) > 0;
+          const shouldQueueUpdate = this._controller.state !== stateActivating && (accessor.type & AccessorType.Layout) > 0;
           if (shouldQueueUpdate) {
             accessorUpdateTasks.push(new AccessorUpdateTask(accessor, value, this.target, attribute));
           } else {
@@ -253,7 +247,7 @@ export class TranslationBinding implements IConnectableBinding {
 
     let shouldQueueContent = false;
     if (Object.keys(content).length > 0) {
-      shouldQueueContent = this._controller.state !== State.activating;
+      shouldQueueContent = this._controller.state !== stateActivating;
       if (!shouldQueueContent) {
         this._updateContent(content);
       }

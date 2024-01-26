@@ -12,39 +12,68 @@ export {
   Unparser
 } from './ast.visitor';
 
-export const enum ExpressionKind {
-  AccessThis,
-  AccessGlobal,
-  AccessScope,
-  ArrayLiteral,
-  ObjectLiteral,
-  PrimitiveLiteral,
-  Template,
-  Unary,
-  CallScope,
-  CallMember,
-  CallFunction,
-  CallGlobal,
-  AccessMember,
-  AccessKeyed,
-  TaggedTemplate,
-  Binary,
-  Conditional,
-  Assign,
-  ArrowFunction,
-  ValueConverter,
-  BindingBehavior,
-  ArrayBindingPattern,
-  ObjectBindingPattern,
-  BindingIdentifier,
-  ForOfStatement,
-  Interpolation,
-  ArrayDestructuring,
-  ObjectDestructuring,
-  DestructuringAssignmentLeaf,
-  DestructuringAssignmentRestLeaf,
-  Custom,
-}
+/** @internal */ export const ekAccessThis = 'AccessThis';
+/** @internal */ export const ekAccessGlobal = 'AccessGlobal';
+/** @internal */ export const ekAccessScope = 'AccessScope';
+/** @internal */ export const ekArrayLiteral = 'ArrayLiteral';
+/** @internal */ export const ekObjectLiteral = 'ObjectLiteral';
+/** @internal */ export const ekPrimitiveLiteral = 'PrimitiveLiteral';
+/** @internal */ export const ekTemplate = 'Template';
+/** @internal */ export const ekUnary = 'Unary';
+/** @internal */ export const ekCallScope = 'CallScope';
+/** @internal */ export const ekCallMember = 'CallMember';
+/** @internal */ export const ekCallFunction = 'CallFunction';
+/** @internal */ export const ekCallGlobal = 'CallGlobal';
+/** @internal */ export const ekAccessMember = 'AccessMember';
+/** @internal */ export const ekAccessKeyed = 'AccessKeyed';
+/** @internal */ export const ekTaggedTemplate = 'TaggedTemplate';
+/** @internal */ export const ekBinary = 'Binary';
+/** @internal */ export const ekConditional = 'Conditional';
+/** @internal */ export const ekAssign = 'Assign';
+/** @internal */ export const ekArrowFunction = 'ArrowFunction';
+/** @internal */ export const ekValueConverter = 'ValueConverter';
+/** @internal */ export const ekBindingBehavior = 'BindingBehavior';
+/** @internal */ export const ekArrayBindingPattern = 'ArrayBindingPattern';
+/** @internal */ export const ekObjectBindingPattern = 'ObjectBindingPattern';
+/** @internal */ export const ekBindingIdentifier = 'BindingIdentifier';
+/** @internal */ export const ekForOfStatement = 'ForOfStatement';
+/** @internal */ export const ekInterpolation = 'Interpolation';
+/** @internal */ export const ekArrayDestructuring = 'ArrayDestructuring';
+/** @internal */ export const ekObjectDestructuring = 'ObjectDestructuring';
+/** @internal */ export const ekDestructuringAssignmentLeaf = 'DestructuringAssignmentLeaf';
+/** @internal */ export const ekCustom = 'Custom';
+
+export type ExpressionKind =
+  | 'AccessThis'
+  | 'AccessGlobal'
+  | 'AccessScope'
+  | 'ArrayLiteral'
+  | 'ObjectLiteral'
+  | 'PrimitiveLiteral'
+  | 'Template'
+  | 'Unary'
+  | 'CallScope'
+  | 'CallMember'
+  | 'CallFunction'
+  | 'CallGlobal'
+  | 'AccessMember'
+  | 'AccessKeyed'
+  | 'TaggedTemplate'
+  | 'Binary'
+  | 'Conditional'
+  | 'Assign'
+  | 'ArrowFunction'
+  | 'ValueConverter'
+  | 'BindingBehavior'
+  | 'ArrayBindingPattern'
+  | 'ObjectBindingPattern'
+  | 'BindingIdentifier'
+  | 'ForOfStatement'
+  | 'Interpolation'
+  | 'ArrayDestructuring'
+  | 'ObjectDestructuring'
+  | 'DestructuringAssignmentLeaf'
+  | 'Custom';
 
 export type UnaryOperator = 'void' | 'typeof' | '!' | '-' | '+';
 
@@ -66,7 +95,7 @@ export type IsExpressionOrStatement = IsExpression | ForOfStatement | BindingIde
 export type AnyBindingExpression = Interpolation | ForOfStatement | IsBindingBehavior;
 
 export class CustomExpression {
-  public readonly $kind = ExpressionKind.Custom;
+  public readonly $kind = ekCustom;
   public constructor(
     public readonly value: unknown,
   ) {}
@@ -101,7 +130,7 @@ export type BindingBehaviorInstance<T extends {} = {}> = {
 } & T;
 
 export class BindingBehaviorExpression {
-  public readonly $kind = ExpressionKind.BindingBehavior;
+  public readonly $kind = ekBindingBehavior;
   /**
    * The name of the property to store a binding behavior on the binding when binding
    */
@@ -123,7 +152,7 @@ export type ValueConverterInstance<T extends {} = {}> = {
 } & T;
 
 export class ValueConverterExpression {
-  public readonly $kind = ExpressionKind.ValueConverter;
+  public readonly $kind = ekValueConverter;
   public constructor(
     public readonly expression: IsValueConverter,
     public readonly name: string,
@@ -133,7 +162,7 @@ export class ValueConverterExpression {
 }
 
 export class AssignExpression {
-  public readonly $kind = ExpressionKind.Assign;
+  public readonly $kind = ekAssign;
 
   public constructor(
     public readonly target: IsAssignable,
@@ -142,7 +171,7 @@ export class AssignExpression {
 }
 
 export class ConditionalExpression {
-  public readonly $kind = ExpressionKind.Conditional;
+  public readonly $kind = ekConditional;
   public constructor(
     public readonly condition: IsBinary,
     public readonly yes: IsAssign,
@@ -151,7 +180,7 @@ export class ConditionalExpression {
 }
 
 export class AccessGlobalExpression {
-  public readonly $kind: ExpressionKind.AccessGlobal = ExpressionKind.AccessGlobal;
+  public readonly $kind: 'AccessGlobal' = ekAccessGlobal;
 
   public constructor(
     public readonly name: string,
@@ -159,7 +188,7 @@ export class AccessGlobalExpression {
 }
 
 export class AccessThisExpression {
-  public readonly $kind: ExpressionKind.AccessThis = ExpressionKind.AccessThis;
+  public readonly $kind: 'AccessThis' = ekAccessThis;
 
   public constructor(
     public readonly ancestor: number = 0,
@@ -167,7 +196,7 @@ export class AccessThisExpression {
 }
 
 export class AccessScopeExpression {
-  public readonly $kind = ExpressionKind.AccessScope;
+  public readonly $kind = ekAccessScope;
   public constructor(
     public readonly name: string,
     public readonly ancestor: number = 0,
@@ -175,15 +204,15 @@ export class AccessScopeExpression {
 }
 
 const isAccessGlobal = (ast: IsLeftHandSide) => (
-  ast.$kind === ExpressionKind.AccessGlobal ||
+  ast.$kind === ekAccessGlobal ||
   (
-    ast.$kind === ExpressionKind.AccessMember ||
-    ast.$kind === ExpressionKind.AccessKeyed
+    ast.$kind === ekAccessMember ||
+    ast.$kind === ekAccessKeyed
   ) && ast.accessGlobal
 );
 
 export class AccessMemberExpression {
-  public readonly $kind: ExpressionKind.AccessMember = ExpressionKind.AccessMember;
+  public readonly $kind: 'AccessMember' = ekAccessMember;
   public readonly accessGlobal: boolean;
   public constructor(
     public readonly object: IsLeftHandSide,
@@ -195,7 +224,7 @@ export class AccessMemberExpression {
 }
 
 export class AccessKeyedExpression {
-  public readonly $kind = ExpressionKind.AccessKeyed;
+  public readonly $kind = ekAccessKeyed;
   public readonly accessGlobal: boolean;
   public constructor(
     public readonly object: IsLeftHandSide,
@@ -207,7 +236,7 @@ export class AccessKeyedExpression {
 }
 
 export class CallScopeExpression {
-  public readonly $kind = ExpressionKind.CallScope;
+  public readonly $kind = ekCallScope;
   public constructor(
     public readonly name: string,
     public readonly args: readonly IsAssign[],
@@ -217,7 +246,7 @@ export class CallScopeExpression {
 }
 
 export class CallMemberExpression {
-  public readonly $kind = ExpressionKind.CallMember;
+  public readonly $kind = ekCallMember;
   public constructor(
     public readonly object: IsLeftHandSide,
     public readonly name: string,
@@ -228,7 +257,7 @@ export class CallMemberExpression {
 }
 
 export class CallFunctionExpression {
-  public readonly $kind = ExpressionKind.CallFunction;
+  public readonly $kind = ekCallFunction;
   public constructor(
     public readonly func: IsLeftHandSide,
     public readonly args: readonly IsAssign[],
@@ -237,7 +266,7 @@ export class CallFunctionExpression {
 }
 
 export class CallGlobalExpression {
-  public readonly $kind = ExpressionKind.CallGlobal;
+  public readonly $kind = ekCallGlobal;
   public constructor(
     public readonly name: string,
     public readonly args: readonly IsAssign[]
@@ -245,7 +274,7 @@ export class CallGlobalExpression {
 }
 
 export class BinaryExpression {
-  public readonly $kind: ExpressionKind.Binary = ExpressionKind.Binary;
+  public readonly $kind: 'Binary' = ekBinary;
   public constructor(
     public readonly operation: BinaryOperator,
     public readonly left: IsBinary,
@@ -254,7 +283,7 @@ export class BinaryExpression {
 }
 
 export class UnaryExpression {
-  public readonly $kind = ExpressionKind.Unary;
+  public readonly $kind = ekUnary;
   public constructor(
     public readonly operation: UnaryOperator,
     public readonly expression: IsLeftHandSide,
@@ -266,7 +295,7 @@ export class PrimitiveLiteralExpression<TValue extends null | undefined | number
   public static readonly $true: PrimitiveLiteralExpression<true> = new PrimitiveLiteralExpression<true>(true);
   public static readonly $false: PrimitiveLiteralExpression<false> = new PrimitiveLiteralExpression<false>(false);
   public static readonly $empty: PrimitiveLiteralExpression<string> = new PrimitiveLiteralExpression<''>('');
-  public readonly $kind = ExpressionKind.PrimitiveLiteral;
+  public readonly $kind = ekPrimitiveLiteral;
 
   public constructor(
     public readonly value: TValue,
@@ -275,7 +304,7 @@ export class PrimitiveLiteralExpression<TValue extends null | undefined | number
 
 export class ArrayLiteralExpression {
   public static readonly $empty: ArrayLiteralExpression = new ArrayLiteralExpression(emptyArray);
-  public readonly $kind = ExpressionKind.ArrayLiteral;
+  public readonly $kind = ekArrayLiteral;
   public constructor(
     public readonly elements: readonly IsAssign[],
   ) {}
@@ -283,7 +312,7 @@ export class ArrayLiteralExpression {
 
 export class ObjectLiteralExpression {
   public static readonly $empty: ObjectLiteralExpression = new ObjectLiteralExpression(emptyArray, emptyArray);
-  public readonly $kind = ExpressionKind.ObjectLiteral;
+  public readonly $kind = ekObjectLiteral;
   public constructor(
     public readonly keys: readonly (number | string)[],
     public readonly values: readonly IsAssign[],
@@ -292,7 +321,7 @@ export class ObjectLiteralExpression {
 
 export class TemplateExpression {
   public static readonly $empty: TemplateExpression = new TemplateExpression(['']);
-  public readonly $kind = ExpressionKind.Template;
+  public readonly $kind = ekTemplate;
   public constructor(
     public readonly cooked: readonly string[],
     public readonly expressions: readonly IsAssign[] = emptyArray,
@@ -300,7 +329,7 @@ export class TemplateExpression {
 }
 
 export class TaggedTemplateExpression {
-  public readonly $kind = ExpressionKind.TaggedTemplate;
+  public readonly $kind = ekTaggedTemplate;
   public constructor(
     public readonly cooked: readonly string[] & { raw?: readonly string[] },
     raw: readonly string[],
@@ -312,7 +341,7 @@ export class TaggedTemplateExpression {
 }
 
 export class ArrayBindingPattern {
-  public readonly $kind = ExpressionKind.ArrayBindingPattern;
+  public readonly $kind = ekArrayBindingPattern;
   // We'll either have elements, or keys+values, but never all 3
   public constructor(
     public readonly elements: readonly IsAssign[],
@@ -320,7 +349,7 @@ export class ArrayBindingPattern {
 }
 
 export class ObjectBindingPattern {
-  public readonly $kind = ExpressionKind.ObjectBindingPattern;
+  public readonly $kind = ekObjectBindingPattern;
   // We'll either have elements, or keys+values, but never all 3
   public constructor(
     public readonly keys: readonly (string | number)[],
@@ -329,7 +358,7 @@ export class ObjectBindingPattern {
 }
 
 export class BindingIdentifier {
-  public readonly $kind = ExpressionKind.BindingIdentifier;
+  public readonly $kind = ekBindingIdentifier;
   public constructor(
     public readonly name: string,
   ) {}
@@ -338,7 +367,7 @@ export class BindingIdentifier {
 // https://tc39.github.io/ecma262/#sec-iteration-statements
 // https://tc39.github.io/ecma262/#sec-for-in-and-for-of-statements
 export class ForOfStatement {
-  public readonly $kind = ExpressionKind.ForOfStatement;
+  public readonly $kind = ekForOfStatement;
   public constructor(
     public readonly declaration: BindingIdentifierOrPattern | DestructuringAssignmentExpression,
     public readonly iterable: IsBindingBehavior,
@@ -352,7 +381,7 @@ export class ForOfStatement {
 * but this class might be a candidate for removal if it turns out it does provide all we need
 */
 export class Interpolation {
-  public readonly $kind = ExpressionKind.Interpolation;
+  public readonly $kind = ekInterpolation;
   public readonly isMulti: boolean;
   public readonly firstExpression: IsBindingBehavior;
   public constructor(
@@ -368,7 +397,7 @@ export class Interpolation {
 /** This is an internal API */
 export class DestructuringAssignmentExpression {
   public constructor(
-    public readonly $kind: ExpressionKind.ArrayDestructuring | ExpressionKind.ObjectDestructuring,
+    public readonly $kind: 'ArrayDestructuring' | 'ObjectDestructuring',
     public readonly list: readonly (DestructuringAssignmentExpression | DestructuringAssignmentSingleExpression | DestructuringAssignmentRestExpression)[],
     public readonly source: AccessMemberExpression | AccessKeyedExpression | undefined,
     public readonly initializer: IsBindingBehavior | undefined,
@@ -377,7 +406,7 @@ export class DestructuringAssignmentExpression {
 
 /** This is an internal API */
 export class DestructuringAssignmentSingleExpression {
-  public readonly $kind = ExpressionKind.DestructuringAssignmentLeaf;
+  public readonly $kind = ekDestructuringAssignmentLeaf;
   public constructor(
     public readonly target: AccessMemberExpression,
     public readonly source: AccessMemberExpression | AccessKeyedExpression,
@@ -387,7 +416,7 @@ export class DestructuringAssignmentSingleExpression {
 
 /** This is an internal API */
 export class DestructuringAssignmentRestExpression {
-  public readonly $kind = ExpressionKind.DestructuringAssignmentLeaf;
+  public readonly $kind = ekDestructuringAssignmentLeaf;
   public constructor(
     public readonly target: AccessMemberExpression,
     public readonly indexOrProperties: string[] | number,
@@ -395,7 +424,7 @@ export class DestructuringAssignmentRestExpression {
 }
 
 export class ArrowFunction {
-  public readonly $kind = ExpressionKind.ArrowFunction;
+  public readonly $kind = ekArrowFunction;
   public constructor(
     public args: BindingIdentifier[],
     public body: IsAssign,

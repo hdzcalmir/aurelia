@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 import { emptyArray, toArray, ILogger, camelCase, ResourceDefinition, ResourceType, noop, Key } from '@aurelia/kernel';
-import { ExpressionType, IExpressionParser, IsBindingBehavior, PrimitiveLiteralExpression } from '@aurelia/runtime';
+import { IExpressionParser, IsBindingBehavior, PrimitiveLiteralExpression } from '@aurelia/runtime';
 import { IAttrMapper } from './attribute-mapper';
 import { ITemplateElementFactory } from './template-element-factory';
 import {
@@ -19,19 +19,19 @@ import {
   ITemplateCompiler,
   PropertyBindingInstruction,
   SpreadElementPropBindingInstruction,
-  InstructionType,
+  propertyBinding,
 } from '../renderer';
 import { IPlatform } from '../platform';
 import { BindableDefinition, PartialBindableDefinition } from '../bindable';
 import { AttrSyntax, IAttributeParser } from '../resources/attribute-pattern';
 import { CustomAttribute } from '../resources/custom-attribute';
 import { CustomElement, CustomElementDefinition, CustomElementType, defineElement, generateElementName, getElementDefinition } from '../resources/custom-element';
-import { BindingCommand, CommandType } from '../resources/binding-command';
-import { createLookup, def, isString, objectAssign, objectFreeze } from '../utilities';
+import { BindingCommandInstance, ICommandBuildInfo, ctIgnoreAttr, BindingCommand } from '../resources/binding-command';
+import { createLookup, def, etInterpolation, etIsProperty, isString, objectAssign, objectFreeze } from '../utilities';
 import { aliasRegistration, allResources, createInterface, singletonRegistration } from '../utilities-di';
 import { appendManyToTemplate, appendToTemplate, createComment, createElement, createText, insertBefore, insertManyBefore, isElement, isTextNode } from '../utilities-dom';
 import { appendResourceKey, defineMetadata, getResourceKeyFor } from '../utilities-metadata';
-import { BindingMode } from '../binding/interfaces-bindings';
+import { oneTime, type BindingMode, toView, fromView, twoWay, defaultMode } from '../binding/interfaces-bindings';
 
 import type {
   IContainer,
@@ -41,7 +41,6 @@ import type {
 import type { AnyBindingExpression } from '@aurelia/runtime';
 import type { CustomAttributeDefinition } from '../resources/custom-attribute';
 import type { PartialCustomElementDefinition } from '../resources/custom-element';
-import type { BindingCommandInstance, ICommandBuildInfo } from '../resources/binding-command';
 import type { ICompliationInstruction, IInstruction, } from '../renderer';
 import type { IAuSlotProjections } from '../templating/controller.projection';
 import { ErrorNames, createMappedError } from '../errors';
@@ -142,7 +141,7 @@ export class TemplateCompiler implements ITemplateCompiler {
       attrValue = attrSyntax.rawValue;
 
       bindingCommand = context._createCommand(attrSyntax);
-      if (bindingCommand !== null && (bindingCommand.type & CommandType.IgnoreAttr) > 0) {
+      if (bindingCommand !== null && bindingCommand.type === ctIgnoreAttr) {
         // when the binding command overrides everything
         // just pass the target as is to the binding command, and treat it as a normal attribute:
         // active.class="..."
@@ -185,7 +184,7 @@ export class TemplateCompiler implements ITemplateCompiler {
           // my-attr=""
           // my-attr="${}"
           if (bindingCommand === null) {
-            expr = exprParser.parse(attrValue, ExpressionType.Interpolation);
+            expr = exprParser.parse(attrValue, etInterpolation);
             attrBindableInstructions = [
               expr === null
                 ? new SetPropertyInstruction(attrValue, primaryBindable.name)
@@ -216,7 +215,7 @@ export class TemplateCompiler implements ITemplateCompiler {
       }
 
       if (bindingCommand === null) {
-        expr = exprParser.parse(attrValue, ExpressionType.Interpolation);
+        expr = exprParser.parse(attrValue, etInterpolation);
 
         // reaching here means:
         // + maybe a bindable attribute with interpolation
@@ -226,7 +225,7 @@ export class TemplateCompiler implements ITemplateCompiler {
           bindablesInfo = BindablesInfo.from(elDef, false);
           bindable = bindablesInfo.attrs[attrTarget];
           if (bindable !== void 0) {
-            expr = exprParser.parse(attrValue, ExpressionType.Interpolation);
+            expr = exprParser.parse(attrValue, etInterpolation);
             instructions.push(
               new SpreadElementPropBindingInstruction(
                 expr == null
@@ -336,7 +335,7 @@ export class TemplateCompiler implements ITemplateCompiler {
       }
 
       bindingCommand = context._createCommand(attrSyntax);
-      if (bindingCommand !== null && (bindingCommand.type & CommandType.IgnoreAttr) > 0) {
+      if (bindingCommand !== null && bindingCommand.type === ctIgnoreAttr) {
         // when the binding command overrides everything
         // just pass the target as is to the binding command, and treat it as a normal attribute:
         // active.class="..."
@@ -379,7 +378,7 @@ export class TemplateCompiler implements ITemplateCompiler {
           // my-attr=""
           // my-attr="${}"
           if (bindingCommand === null) {
-            expr = exprParser.parse(realAttrValue, ExpressionType.Interpolation);
+            expr = exprParser.parse(realAttrValue, etInterpolation);
             attrBindableInstructions = [
               expr === null
                 ? new SetPropertyInstruction(realAttrValue, primaryBindable.name)
@@ -413,7 +412,7 @@ export class TemplateCompiler implements ITemplateCompiler {
       }
 
       if (bindingCommand === null) {
-        expr = exprParser.parse(realAttrValue, ExpressionType.Interpolation);
+        expr = exprParser.parse(realAttrValue, etInterpolation);
         if (expr != null) {
           el.removeAttribute(attrName);
           --i;
@@ -530,7 +529,7 @@ export class TemplateCompiler implements ITemplateCompiler {
       if (bindingCommand !== null) {
         if (attrSyntax.command === 'bind') {
           letInstructions.push(new LetBindingInstruction(
-            exprParser.parse(realAttrValue, ExpressionType.IsProperty),
+            exprParser.parse(realAttrValue, etIsProperty),
             camelCase(realAttrTarget)
           ));
         } else {
@@ -539,7 +538,7 @@ export class TemplateCompiler implements ITemplateCompiler {
         continue;
       }
 
-      expr = exprParser.parse(realAttrValue, ExpressionType.Interpolation);
+      expr = exprParser.parse(realAttrValue, etInterpolation);
       if (expr === null) {
         if (__DEV__) {
           context._logger.warn(
@@ -702,7 +701,7 @@ export class TemplateCompiler implements ITemplateCompiler {
       realAttrValue = attrSyntax.rawValue;
 
       if (capture && (!hasCaptureFilter || hasCaptureFilter && capture(realAttrTarget))) {
-        if (bindingCommand != null && bindingCommand.type & CommandType.IgnoreAttr) {
+        if (bindingCommand != null && bindingCommand.type === ctIgnoreAttr) {
           removeAttr();
           captures.push(attrSyntax);
           continue;
@@ -725,7 +724,7 @@ export class TemplateCompiler implements ITemplateCompiler {
         }
       }
 
-      if (bindingCommand !== null && bindingCommand.type & CommandType.IgnoreAttr) {
+      if (bindingCommand !== null && bindingCommand.type === ctIgnoreAttr) {
         // when the binding command overrides everything
         // just pass the target as is to the binding command, and treat it as a normal attribute:
         // active.class="..."
@@ -770,7 +769,7 @@ export class TemplateCompiler implements ITemplateCompiler {
           // my-attr=""
           // my-attr="${}"
           if (bindingCommand === null) {
-            expr = exprParser.parse(realAttrValue, ExpressionType.Interpolation);
+            expr = exprParser.parse(realAttrValue, etInterpolation);
             attrBindableInstructions = [
               expr === null
                 ? new SetPropertyInstruction(realAttrValue, primaryBindable.name)
@@ -823,7 +822,7 @@ export class TemplateCompiler implements ITemplateCompiler {
           bindablesInfo = BindablesInfo.from(elDef, false);
           bindable = bindablesInfo.attrs[realAttrTarget];
           if (bindable !== void 0) {
-            expr = exprParser.parse(realAttrValue, ExpressionType.Interpolation);
+            expr = exprParser.parse(realAttrValue, etInterpolation);
             (elBindableInstructions ??= []).push(
               expr == null
                 ? new SetPropertyInstruction(realAttrValue, bindable.name)
@@ -838,7 +837,7 @@ export class TemplateCompiler implements ITemplateCompiler {
         // reaching here means:
         // + maybe a plain attribute with interpolation
         // + maybe a plain attribute
-        expr = exprParser.parse(realAttrValue, ExpressionType.Interpolation);
+        expr = exprParser.parse(realAttrValue, etInterpolation);
         if (expr != null) {
           // if it's an interpolation, remove the attribute
           removeAttr();
@@ -1332,7 +1331,7 @@ export class TemplateCompiler implements ITemplateCompiler {
   /** @internal */
   private _compileText(node: Text, context: CompilationContext): Node | null {
     const parent = node.parentNode!;
-    const expr = context._exprParser.parse(node.textContent!, ExpressionType.Interpolation);
+    const expr = context._exprParser.parse(node.textContent!, etInterpolation);
     const next = node.nextSibling;
     let parts: readonly string[];
     let expressions: readonly IsBindingBehavior[];
@@ -1433,7 +1432,7 @@ export class TemplateCompiler implements ITemplateCompiler {
           throw createMappedError(ErrorNames.compiler_binding_to_non_bindable, attrSyntax.target, attrDef.name);
         }
         if (command === null) {
-          expr = context._exprParser.parse(attrValue, ExpressionType.Interpolation);
+          expr = context._exprParser.parse(attrValue, etInterpolation);
           instructions.push(expr === null
             ? new SetPropertyInstruction(attrValue, bindable.name)
             : new InterpolationInstruction(expr, bindable.name)
@@ -1548,7 +1547,7 @@ export class TemplateCompiler implements ITemplateCompiler {
     return nodeName === 'INPUT' && orderSensitiveInputType[(el as HTMLInputElement).type] === 1
       || nodeName === 'SELECT' && (
         (el as HTMLSelectElement).hasAttribute('multiple')
-        || instructions?.some(i => i.type === InstructionType.propertyBinding && (i as PropertyBindingInstruction | InterpolationInstruction).to === 'multiple')
+        || instructions?.some(i => i.type === propertyBinding && (i as PropertyBindingInstruction | InterpolationInstruction).to === 'multiple')
       );
   }
 
@@ -1853,9 +1852,9 @@ export class BindablesInfo<T extends 0 | 1 = 0> {
       const attrs = createLookup<BindableDefinition>();
       const defaultBindingMode: BindingMode = isAttr
         ? (def as CA).defaultBindingMode === void 0
-          ? BindingMode.default
+          ? defaultMode
           : (def as CA).defaultBindingMode
-        : BindingMode.default;
+        : defaultMode;
       let bindable: BindableDefinition | undefined;
       let prop: string;
       let hasPrimary: boolean = false;
@@ -1928,16 +1927,16 @@ const processTemplateName = (owningElementName: string, localTemplate: HTMLTempl
 const getBindingMode = (bindable: Element): BindingMode => {
   switch (bindable.getAttribute(LocalTemplateBindableAttributes.mode)) {
     case 'oneTime':
-      return BindingMode.oneTime;
+      return oneTime;
     case 'toView':
-      return BindingMode.toView;
+      return toView;
     case 'fromView':
-      return BindingMode.fromView;
+      return fromView;
     case 'twoWay':
-      return BindingMode.twoWay;
+      return twoWay;
     case 'default':
     default:
-      return BindingMode.default;
+      return defaultMode;
   }
 };
 
