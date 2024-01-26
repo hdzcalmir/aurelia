@@ -1,6 +1,6 @@
 import { DI, IServiceLocator, optional, IContainer, Registration, noop } from '@aurelia/kernel';
 import { parsePropertyName, ValidationResult, ValidateInstruction, PropertyRule, IValidator, getDefaultValidationConfiguration, ValidationConfiguration } from '@aurelia/validation';
-import { IPlatform, bindable, INode, customAttribute, bindingBehavior, mixinAstEvaluator, PropertyBinding, IFlushQueue, BindingTargetSubscriber, CustomElement } from '@aurelia/runtime-html';
+import { IPlatform, bindable, INode, BindingMode, customAttribute, bindingBehavior, mixinAstEvaluator, PropertyBinding, IFlushQueue, BindingTargetSubscriber, CustomElement } from '@aurelia/runtime-html';
 import { astEvaluate, IExpressionParser, connectable, IObserverLocator } from '@aurelia/runtime';
 
 /******************************************************************************
@@ -523,7 +523,7 @@ __decorate([
     bindable
 ], ValidationErrorsCustomAttribute.prototype, "controller", void 0);
 __decorate([
-    bindable({ primary: true, mode: 6 /* BindingMode.twoWay */ })
+    bindable({ primary: true, mode: BindingMode.twoWay })
 ], ValidationErrorsCustomAttribute.prototype, "errors", void 0);
 ValidationErrorsCustomAttribute = __decorate([
     customAttribute('validation-errors'),

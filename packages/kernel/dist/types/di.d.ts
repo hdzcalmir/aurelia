@@ -54,6 +54,12 @@ export interface IContainer extends IServiceLocator, IDisposable {
     getFactory<T extends Constructable>(key: T): IFactory<T>;
     createChild(config?: IContainerConfiguration): IContainer;
     disposeResolvers(): void;
+    /**
+     * Register resources from another container, an API for manually registering resources
+     *
+     * This is a semi private API, apps should avoid using it directly
+     */
+    useResources(container: IContainer): void;
     find<TType extends ResourceType, TDef extends ResourceDefinition>(kind: IResourceKind<TType, TDef>, name: string): TDef | null;
     create<TType extends ResourceType, TDef extends ResourceDefinition>(kind: IResourceKind<TType, TDef>, name: string): InstanceType<TType> | null;
 }
@@ -192,6 +198,13 @@ export declare const DI: {
 };
 export declare const IContainer: InterfaceSymbol<IContainer>;
 export declare const IServiceLocator: InterfaceSymbol<IServiceLocator>;
+export type ICallableResolver<T> = IResolver<T> & ((...args: unknown[]) => any);
+/**
+ * ! Semi private API to avoid repetitive work creating resolvers.
+ *
+ * Naming isn't entirely correct, but it's good enough for internal usage.
+ */
+export declare function createResolver<T extends Key>(getter: (key: T, handler: IContainer, requestor: IContainer) => any): ((key: T) => ICallableResolver<T>);
 export declare const inject: (...dependencies: Key[]) => (target: Injectable, key?: string | number, descriptor?: PropertyDescriptor | number) => void;
 declare function transientDecorator<T extends Constructable>(target: T & Partial<RegisterSelf<T>>): T & RegisterSelf<T>;
 /**

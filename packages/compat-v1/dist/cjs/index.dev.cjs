@@ -57,9 +57,9 @@ function defineAstMethods() {
         def(ast, 'unbind', function (...args) {
             return runtime.astUnbind(this, ...args);
         });
-        console.warn('"evaluate"/"assign"/"accept"/"visit"/"bind"/"unbind" are only valid on AST with $kind Custom.'
-            + ' Or import and use astEvaluate/astAssign/astVisit/astBind/astUnbind accordingly.');
     });
+    console.warn('"evaluate"/"assign"/"accept"/"visit"/"bind"/"unbind" are only valid on AST with ast $kind "Custom".'
+        + ' Or import and use astEvaluate/astAssign/astVisit/astBind/astUnbind accordingly.');
 }
 
 /******************************************************************************
@@ -123,12 +123,12 @@ const callSyntax = {
         }
     }
 };
-const instructionType$1 = 'rh';
+const instructionType = 'rh';
 class CallBindingInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
-        this.type = instructionType$1;
+        this.type = instructionType;
     }
 }
 exports.CallBindingCommand = class CallBindingCommand {
@@ -150,7 +150,7 @@ exports.CallBindingRenderer = class CallBindingRenderer {
     }
 };
 exports.CallBindingRenderer = __decorate([
-    runtimeHtml.renderer(instructionType$1)
+    runtimeHtml.renderer(instructionType)
 ], exports.CallBindingRenderer);
 function getTarget(potentialTarget) {
     if (potentialTarget.viewModel != null) {
@@ -215,7 +215,6 @@ const delegateSyntax = {
         }
     }
 };
-const instructionType = 'dl';
 exports.DelegateBindingCommand = class DelegateBindingCommand {
     get type() { return 'IgnoreAttr'; }
     build(info, exprParser) {
@@ -236,7 +235,7 @@ exports.ListenerBindingRenderer = class ListenerBindingRenderer {
     }
 };
 exports.ListenerBindingRenderer = __decorate([
-    runtimeHtml.renderer(instructionType)
+    runtimeHtml.renderer('dl')
     /** @internal */
 ], exports.ListenerBindingRenderer);
 class DelegateBindingInstruction {
@@ -244,7 +243,7 @@ class DelegateBindingInstruction {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
-        this.type = "hb" /* InstructionType.listenerBinding */;
+        this.type = runtimeHtml.InstructionType.listenerBinding;
     }
 }
 class DelegateListenerOptions {

@@ -1,5 +1,5 @@
 import { AccessScopeExpression, ConditionalExpression, } from '@aurelia/runtime';
-import { IPlatform, LetBinding, PropertyBinding, } from '@aurelia/runtime-html';
+import { BindingMode, IPlatform, LetBinding, PropertyBinding, } from '@aurelia/runtime-html';
 import { assert, createContainer, createFixture, createObserverLocator, createScopeForTest, } from '@aurelia/testing';
 describe('2-runtime/ast.integration.spec.ts', function () {
     describe('[[AccessScope]]', function () {
@@ -10,7 +10,7 @@ describe('2-runtime/ast.integration.spec.ts', function () {
                 const accessScopeExpr = new AccessScopeExpression('name', 0);
                 const source = { name: 'hello' };
                 const target = { name: '' };
-                const binding = new PropertyBinding({ state: 0 }, container, observerLocator, {}, accessScopeExpr, target, 'name', 2 /* BindingMode.toView */);
+                const binding = new PropertyBinding({ state: 0 }, container, observerLocator, {}, accessScopeExpr, target, 'name', BindingMode.toView);
                 binding.bind(createScopeForTest(source));
                 assert.strictEqual(target.name, 'hello');
                 Array.from({ length: 5 }).forEach(idx => {
@@ -25,7 +25,7 @@ describe('2-runtime/ast.integration.spec.ts', function () {
                 const source = { checked: false, yesMessage: 'yes', noMessage: 'no' };
                 const target = { value: '' };
                 const scope = createScopeForTest(target, source);
-                const binding = new PropertyBinding({ state: 0 }, container, observerLocator, container.get(IPlatform).domWriteQueue, conditionalExpr, target, 'value', 2 /* BindingMode.toView */);
+                const binding = new PropertyBinding({ state: 0 }, container, observerLocator, container.get(IPlatform).domWriteQueue, conditionalExpr, target, 'value', BindingMode.toView);
                 let handleChangeCallCount = 0;
                 binding.handleChange = (handleChange => {
                     return function (...args) {

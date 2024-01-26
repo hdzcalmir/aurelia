@@ -1,5 +1,4 @@
-import { AccessorType } from '@aurelia/runtime';
-import type { ISubscriberCollection } from '@aurelia/runtime';
+import type { AccessorType, ISubscriberCollection } from '@aurelia/runtime';
 import type { INode } from '../dom';
 import type { INodeObserver, INodeObserverConfigBase } from './observer-locator';
 export interface ValueAttributeObserver extends ISubscriberCollection {

@@ -93,12 +93,13 @@ export type CollectionKind = 'indexed' | 'keyed' | 'array' | 'map' | 'set';
 export type LengthPropertyName<T> = T extends unknown[] ? 'length' : T extends Set<unknown> ? 'size' : T extends Map<unknown, unknown> ? 'size' : never;
 export type CollectionKindToType<T> = T extends 'array' ? unknown[] : T extends 'indexed' ? unknown[] : T extends 'map' ? Map<unknown, unknown> : T extends 'set' ? Set<unknown> : T extends 'keyed' ? Set<unknown> | Map<unknown, unknown> : never;
 export type ObservedCollectionKindToType<T> = T extends 'array' ? unknown[] : T extends 'indexed' ? unknown[] : T extends 'map' ? Map<unknown, unknown> : T extends 'set' ? Set<unknown> : T extends 'keyed' ? Map<unknown, unknown> | Set<unknown> : never;
-export declare const enum AccessorType {
-    None = 0,
-    Observer = 1,
-    Node = 2,
-    Layout = 4
-}
+export declare const AccessorType: Readonly<{
+    readonly None: 0;
+    readonly Observer: 1;
+    readonly Node: 2;
+    readonly Layout: 4;
+}>;
+export type AccessorType = typeof AccessorType[keyof typeof AccessorType];
 /**
  * Basic interface to normalize getting/setting a value of any property on any object
  */

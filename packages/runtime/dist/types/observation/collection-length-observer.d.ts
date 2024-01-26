@@ -1,5 +1,5 @@
-import { AccessorType, Collection, IObserver } from '../observation';
-import type { ICollectionObserver, IndexMap, ISubscriberCollection, ICollectionSubscriber } from '../observation';
+import { Collection, IObserver } from '../observation';
+import type { AccessorType, ICollectionObserver, IndexMap, ISubscriberCollection, ICollectionSubscriber } from '../observation';
 export interface CollectionLengthObserver extends ISubscriberCollection {
 }
 export declare class CollectionLengthObserver implements IObserver, ICollectionSubscriber {

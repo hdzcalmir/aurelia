@@ -1,9 +1,8 @@
 import { IAstEvaluator, IBinding, IConnectableBinding, ISubscriber } from '@aurelia/runtime';
-import { BindingMode } from './interfaces-bindings';
 import type { IServiceLocator } from '@aurelia/kernel';
 import type { TaskQueue } from '@aurelia/platform';
 import type { ForOfStatement, IObserver, IObserverLocator, IsBindingBehavior, Scope } from '@aurelia/runtime';
-import type { IBindingController } from './interfaces-bindings';
+import type { BindingMode, IBindingController } from './interfaces-bindings';
 export interface PropertyBinding extends IAstEvaluator, IConnectableBinding {
 }
 export declare class PropertyBinding implements IBinding {

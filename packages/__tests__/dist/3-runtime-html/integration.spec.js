@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Aurelia, CustomElement, customElement, IPlatform, bindable, } from '@aurelia/runtime-html';
+import { BindingMode, Aurelia, CustomElement, customElement, IPlatform, bindable, } from '@aurelia/runtime-html';
 import { assert, TestContext, } from '@aurelia/testing';
 import { createSpecFunction, } from '../util.js';
 describe('3-runtime-html/integration.spec.ts', function () {
@@ -326,7 +326,7 @@ describe('3-runtime-html/integration.spec.ts', function () {
             let Child = class Child {
             };
             __decorate([
-                bindable({ mode: 4 /* BindingMode.fromView */ }),
+                bindable({ mode: BindingMode.fromView }),
                 __metadata("design:type", Number)
             ], Child.prototype, "value", void 0);
             Child = __decorate([
@@ -365,7 +365,7 @@ describe('3-runtime-html/integration.spec.ts', function () {
                 }
             };
             __decorate([
-                bindable({ mode: 2 /* BindingMode.toView */ }),
+                bindable({ mode: BindingMode.toView }),
                 __metadata("design:type", Number)
             ], Child.prototype, "value", void 0);
             Child = __decorate([

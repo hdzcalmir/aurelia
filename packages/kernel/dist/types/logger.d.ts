@@ -1,50 +1,45 @@
 import { IContainer, IRegistry } from './di';
 import { Class, Constructable } from './interfaces';
 import { IPlatform } from './platform';
-export declare const enum LogLevel {
+export declare const LogLevel: Readonly<{
     /**
      * The most detailed information about internal app state.
      *
      * Disabled by default and should never be enabled in a production environment.
      */
-    trace = 0,
+    readonly trace: 0;
     /**
      * Information that is useful for debugging during development and has no long-term value.
      */
-    debug = 1,
+    readonly debug: 1;
     /**
      * Information about the general flow of the application that has long-term value.
      */
-    info = 2,
+    readonly info: 2;
     /**
      * Unexpected circumstances that require attention but do not otherwise cause the current flow of execution to stop.
      */
-    warn = 3,
+    readonly warn: 3;
     /**
      * Unexpected circumstances that cause the flow of execution in the current activity to stop but do not cause an app-wide failure.
      */
-    error = 4,
+    readonly error: 4;
     /**
      * Unexpected circumstances that cause an app-wide failure or otherwise require immediate attention.
      */
-    fatal = 5,
+    readonly fatal: 5;
     /**
      * No messages should be written.
      */
-    none = 6
-}
+    readonly none: 6;
+}>;
+export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
 /**
  * Flags to enable/disable color usage in the logging output.
+ * - `no-colors`: Do not use ASCII color codes in logging output.
+ * - `colors`: Use ASCII color codes in logging output. By default, timestamps and the TRC and DBG prefix are colored grey. INF white, WRN yellow, and ERR and FTL red.
  */
-export type ColorOptions = 
-/**
- * Do not use ASCII color codes in logging output.
- */
-'no-colors'
-/**
- * Use ASCII color codes in logging output. By default, timestamps and the TRC and DBG prefix are colored grey. INF white, WRN yellow, and ERR and FTL red.
- */
- | 'colors';
+export type ColorOptions = 'no-colors' | 'colors';
 /**
  * The global logger configuration.
  *
@@ -101,7 +96,7 @@ export interface ILogEventFactory {
      * This is called by the default console sink to get the message to emit to the console.
      * It could be any object of any shape, as long as the registered sinks understand that shape.
      */
-    createLogEvent(logger: ILogger, logLevel: LogLevel, message: string, optionalParams: unknown[]): ILogEvent;
+    createLogEvent(logger: ILogger, logLevel: LogLevel, message: string | Error, optionalParams: unknown[]): ILogEvent;
 }
 /**
  * A logging sink that emits `ILogEvent` objects to any kind of output. This can be the console, a database, a web api, a file, etc.
@@ -153,7 +148,7 @@ export declare const ILogEventFactory: import("./di").InterfaceSymbol<ILogEventF
 export declare const ILogger: import("./di").InterfaceSymbol<ILogger>;
 export declare const ILogScopes: import("./di").InterfaceSymbol<string[]>;
 interface SinkDefinition {
-    handles: Exclude<LogLevel, LogLevel.none>[];
+    handles: Exclude<LogLevel, typeof none>[];
 }
 export declare const LoggerSink: Readonly<{
     key: string;
@@ -179,8 +174,13 @@ export declare const format: {
 };
 export interface ILogEvent {
     readonly severity: LogLevel;
+    readonly message: string | Error;
     readonly optionalParams?: readonly unknown[];
+    readonly scope: readonly string[];
+    readonly colorOptions: ColorOptions;
+    readonly timestamp: number;
     toString(): string;
+    getFormattedLogInfo(forConsole?: boolean): [string, ...unknown[]];
 }
 export declare class LogConfig implements ILogConfig {
     readonly colorOptions: ColorOptions;
@@ -189,17 +189,18 @@ export declare class LogConfig implements ILogConfig {
 }
 export declare class DefaultLogEvent implements ILogEvent {
     readonly severity: LogLevel;
-    readonly message: string;
+    readonly message: string | Error;
     readonly optionalParams: unknown[];
     readonly scope: readonly string[];
     readonly colorOptions: ColorOptions;
     readonly timestamp: number;
-    constructor(severity: LogLevel, message: string, optionalParams: unknown[], scope: readonly string[], colorOptions: ColorOptions, timestamp: number);
+    constructor(severity: LogLevel, message: string | Error, optionalParams: unknown[], scope: readonly string[], colorOptions: ColorOptions, timestamp: number);
     toString(): string;
+    getFormattedLogInfo(forConsole?: boolean): [string, ...unknown[]];
 }
 export declare class DefaultLogEventFactory implements ILogEventFactory {
     readonly config: ILogConfig;
-    createLogEvent(logger: ILogger, level: LogLevel, message: string, optionalParams: unknown[]): ILogEvent;
+    createLogEvent(logger: ILogger, level: LogLevel, message: string | Error, optionalParams: unknown[]): ILogEvent;
 }
 export declare class ConsoleSink implements ISink {
     static register(container: IContainer): void;

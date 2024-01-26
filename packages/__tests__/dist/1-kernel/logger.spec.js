@@ -4,7 +4,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import { LoggerConfiguration, DI, ILogger, ISink, sink, ConsoleSink, Registration, } from '@aurelia/kernel';
+import { LoggerConfiguration, DI, ILogger, LogLevel, ISink, sink, ConsoleSink, Registration, } from '@aurelia/kernel';
 import { assert, eachCartesianJoin } from '@aurelia/testing';
 class ConsoleMock {
     constructor() {
@@ -36,47 +36,47 @@ let EventLog = class EventLog {
     }
 };
 EventLog = __decorate([
-    sink({ handles: [4 /* LogLevel.error */] })
+    sink({ handles: [LogLevel.error] })
 ], EventLog);
 const levels = [
     [
-        0 /* LogLevel.trace */,
+        LogLevel.trace,
         'trace',
         'debug',
         'TRC',
     ],
     [
-        1 /* LogLevel.debug */,
+        LogLevel.debug,
         'debug',
         'debug',
         'DBG',
     ],
     [
-        2 /* LogLevel.info */,
+        LogLevel.info,
         'info',
         'info',
         'INF',
     ],
     [
-        3 /* LogLevel.warn */,
+        LogLevel.warn,
         'warn',
         'warn',
         'WRN',
     ],
     [
-        4 /* LogLevel.error */,
+        LogLevel.error,
         'error',
         'error',
         'ERR',
     ],
     [
-        5 /* LogLevel.fatal */,
+        LogLevel.fatal,
         'fatal',
         'error',
         'FTL',
     ],
     [
-        6 /* LogLevel.none */,
+        LogLevel.none,
         'none',
         '',
         '',
@@ -171,18 +171,18 @@ describe('1-kernel/logger.spec.ts', function () {
         });
     });
     it('additional sink registration works', function () {
-        const { sut } = createFixture(4 /* LogLevel.error */, 'no-colors', []);
+        const { sut } = createFixture(LogLevel.error, 'no-colors', []);
         const sinks = sut.sinks;
         const eventLog = sinks.find((s) => s instanceof EventLog);
         assert.notStrictEqual(eventLog, void 0);
         sut.error('foo');
         assert.strictEqual(eventLog.log.length, 1, `eventLog.log.length`);
         const event = eventLog.log[0];
-        assert.strictEqual(event.severity, 4 /* LogLevel.error */);
+        assert.strictEqual(event.severity, LogLevel.error);
         assert.includes(event.toString(), "foo");
     });
     it('respects the handling capabilities of sinks', function () {
-        const { sut } = createFixture(0 /* LogLevel.trace */, 'no-colors', []);
+        const { sut } = createFixture(LogLevel.trace, 'no-colors', []);
         const sinks = sut.sinks;
         const eventLog = sinks.find((s) => s instanceof EventLog);
         assert.strictEqual(eventLog !== void 0, true);
@@ -191,19 +191,38 @@ describe('1-kernel/logger.spec.ts', function () {
         sut.error('foo');
         assert.strictEqual(eventLog.log.length, 1, `eventLog.log.length2`);
         const event = eventLog.log[0];
-        assert.strictEqual(event.severity, 4 /* LogLevel.error */);
+        assert.strictEqual(event.severity, LogLevel.error);
         assert.includes(event.toString(), "foo");
     });
     it('console logging can be deactivated', function () {
-        const { sut, mock } = createFixture(0 /* LogLevel.trace */, 'no-colors', [], true);
+        const { sut, mock } = createFixture(LogLevel.trace, 'no-colors', [], true);
         const sinks = sut.sinks;
         const eventLog = sinks.find((s) => s instanceof EventLog);
         sut.error('foo');
         assert.strictEqual(eventLog.log.length, 1, `eventLog.log.length`);
         const event = eventLog.log[0];
-        assert.strictEqual(event.severity, 4 /* LogLevel.error */);
+        assert.strictEqual(event.severity, LogLevel.error);
         assert.includes(event.toString(), "foo");
         assert.strictEqual(mock.calls.length, 0, `mock.calls.length`);
+    });
+    it('logging an error instance without a message results in empty message', function () {
+        const { sut, mock } = createFixture(LogLevel.trace, 'no-colors', []);
+        const error = new Error('foo');
+        sut.error(error);
+        assert.strictEqual(mock.calls.length, 1, `mock.calls.length`);
+        const [level, [message, $error]] = mock.calls[0];
+        assert.strictEqual(level, 'error', `level`);
+        assert.match(message, /\[ERR\] $/, `args[0]`);
+        assert.strictEqual($error, error, `args[1]`);
+    });
+    it('logging error with message template', function () {
+        const { sut, mock } = createFixture(LogLevel.trace, 'no-colors', []);
+        sut.error('foo %s', '1', 42);
+        assert.strictEqual(mock.calls.length, 1, `mock.calls.length`);
+        const [level, [message, additionalParam]] = mock.calls[0];
+        assert.strictEqual(level, 'error', `level`);
+        assert.match(message, /\[ERR\] foo 1$/, `args[0]`);
+        assert.strictEqual(additionalParam, 42, `args[1]`);
     });
 });
 //# sourceMappingURL=logger.spec.js.map

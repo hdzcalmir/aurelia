@@ -1,4 +1,4 @@
-import { Registration, ILogConfig, LoggerConfiguration, DI, ConsoleSink } from '@aurelia/kernel';
+import { LogLevel, Registration, ILogConfig, LoggerConfiguration, DI, ConsoleSink } from '@aurelia/kernel';
 import { Aurelia } from '@aurelia/runtime-html';
 import { RouterConfiguration, IRouter } from '@aurelia/router';
 import { TestContext } from '@aurelia/testing';
@@ -63,7 +63,7 @@ export class ActivityTracker {
         this.activeVMs.splice(this.activeVMs.indexOf(vm), 1);
     }
 }
-export async function createFixture(Component, deps = [], createHIAConfig = null, createRouterOptions = null, level = 3 /* LogLevel.warn */) {
+export async function createFixture(Component, deps = [], createHIAConfig = null, createRouterOptions = null, level = LogLevel.warn) {
     const hiaConfig = createHIAConfig != null ? createHIAConfig() : null;
     const routerOptions = createRouterOptions != null ? createRouterOptions() : null;
     const ctx = TestContext.create();
@@ -72,7 +72,7 @@ export async function createFixture(Component, deps = [], createHIAConfig = null
     container.register(Registration.instance(IHIAConfig, hiaConfig));
     container.register(TestRouterConfiguration.for(ctx, level));
     container.register(RouterConfiguration.customize(routerOptions));
-    container.register(LoggerConfiguration.create({ sinks: [ConsoleSink], level: 3 /* LogLevel.warn */ }));
+    container.register(LoggerConfiguration.create({ sinks: [ConsoleSink], level: LogLevel.warn }));
     container.register(...deps);
     const activityTracker = container.get(IActivityTracker);
     const hia = container.get(IHookInvocationAggregator);
@@ -95,7 +95,7 @@ export async function createFixture(Component, deps = [], createHIAConfig = null
         router,
         activityTracker,
         startTracing() {
-            logConfig.level = 0 /* LogLevel.trace */;
+            logConfig.level = LogLevel.trace;
         },
         stopTracing() {
             logConfig.level = level;

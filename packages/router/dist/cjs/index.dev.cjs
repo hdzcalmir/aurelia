@@ -8092,6 +8092,7 @@ function getLoadIndicator(element) {
     indicator ?? (indicator = element);
     return indicator;
 }
+/** @internal */ const bmToView = runtimeHtml.BindingMode.toView;
 
 const ParentViewport = runtimeHtml.CustomElement.createInjectable();
 exports.ViewportCustomElement = class ViewportCustomElement {
@@ -8550,7 +8551,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
     }
 };
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */ })
+    runtimeHtml.bindable({ mode: bmToView })
 ], exports.LoadCustomAttribute.prototype, "value", void 0);
 __decorate([
     runtimeHtml.bindable
@@ -8617,7 +8618,7 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
     }
 };
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */ })
+    runtimeHtml.bindable({ mode: bmToView })
 ], exports.HrefCustomAttribute.prototype, "value", void 0);
 exports.HrefCustomAttribute = __decorate([
     runtimeHtml.customAttribute({
@@ -8633,7 +8634,7 @@ exports.HrefCustomAttribute = __decorate([
 exports.ConsideredActiveCustomAttribute = class ConsideredActiveCustomAttribute {
 };
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */ })
+    runtimeHtml.bindable({ mode: bmToView })
 ], exports.ConsideredActiveCustomAttribute.prototype, "value", void 0);
 exports.ConsideredActiveCustomAttribute = __decorate([
     runtimeHtml.customAttribute('considered-active')

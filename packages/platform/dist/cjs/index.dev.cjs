@@ -407,6 +407,7 @@ class Task {
                     this._reject = promise.reject;
                     return promise;
                 }
+                /* istanbul ignore next */
                 case tsRunning:
                     throw createError('Trying to await task from within task will cause a deadlock.');
                 case tsCompleted:

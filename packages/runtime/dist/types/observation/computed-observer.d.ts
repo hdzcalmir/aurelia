@@ -1,5 +1,5 @@
-import { AccessorType, ICoercionConfiguration, IObserver, InterceptorFunc } from '../observation';
-import type { ISubscriber, ICollectionSubscriber, ISubscriberCollection, IConnectable } from '../observation';
+import { ICoercionConfiguration, IObserver, InterceptorFunc } from '../observation';
+import type { AccessorType, ISubscriber, ICollectionSubscriber, ISubscriberCollection, IConnectable } from '../observation';
 import type { IConnectableBinding } from '../binding/connectable';
 import type { IObserverLocator } from './observer-locator';
 export type ComputedGetterFn<T = any, R = any> = (this: T, obj: T, observer: IConnectable) => R;

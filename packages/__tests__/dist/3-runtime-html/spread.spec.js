@@ -1,4 +1,4 @@
-import { CustomAttribute, CustomElement, INode } from '@aurelia/runtime-html';
+import { BindingMode, CustomAttribute, CustomElement, INode } from '@aurelia/runtime-html';
 import { assert, createFixture } from '@aurelia/testing';
 // all the tests are using a common <my-input/> with a spreat on its internal <input/>
 describe('3-runtime-html/spread.spec.ts', function () {
@@ -189,7 +189,7 @@ describe('3-runtime-html/spread.spec.ts', function () {
                 name: 'form-input',
                 template: '<input value.bind="value">',
                 bindables: {
-                    value: { name: 'value', attribute: 'value', mode: 6 /* BindingMode.twoWay */ }
+                    value: { name: 'value', attribute: 'value', mode: BindingMode.twoWay }
                 }
             }),
         ];

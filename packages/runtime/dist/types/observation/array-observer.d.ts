@@ -1,4 +1,4 @@
-import { AccessorType, type ISubscriberCollection, type ICollectionSubscriberCollection, type IObserver, type ICollectionObserver, type IndexMap, type ISubscriber } from '../observation';
+import { type AccessorType, type ISubscriberCollection, type ICollectionSubscriberCollection, type IObserver, type ICollectionObserver, type IndexMap, type ISubscriber } from '../observation';
 import { CollectionLengthObserver } from './collection-length-observer';
 export declare function enableArrayObservation(): void;
 export declare function disableArrayObservation(): void;

@@ -431,7 +431,7 @@ __decorate([ i.bindable ], exports.ValidationErrorsCustomAttribute.prototype, "c
 
 __decorate([ i.bindable({
     primary: true,
-    mode: 6
+    mode: i.BindingMode.twoWay
 }) ], exports.ValidationErrorsCustomAttribute.prototype, "errors", void 0);
 
 exports.ValidationErrorsCustomAttribute = __decorate([ i.customAttribute("validation-errors"), __param(0, i.INode), __param(1, t.optional(r)) ], exports.ValidationErrorsCustomAttribute);

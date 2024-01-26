@@ -224,15 +224,16 @@ export interface IHydratableController<C extends IViewModel = IViewModel> extend
     readonly children: readonly IHydratedController[] | null;
     addChild(controller: IController): void;
 }
-export declare const enum State {
-    none = 0,
-    activating = 1,
-    activated = 2,
-    deactivating = 4,
-    deactivated = 8,
-    released = 16,
-    disposed = 32
-}
+export declare const State: Readonly<{
+    none: 0;
+    activating: 1;
+    activated: 2;
+    deactivating: 4;
+    deactivated: 8;
+    released: 16;
+    disposed: 32;
+}>;
+export type State = typeof State[keyof typeof State];
 export declare function stringifyState(state: State): string;
 /**
  * The controller for a synthetic view, that is, a controller created by an `IViewFactory`.

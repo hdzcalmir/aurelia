@@ -1,6 +1,6 @@
 import { IExpressionParser, IObserverLocator, type IsBindingBehavior } from '@aurelia/runtime';
-import { BindingMode, IRenderer, IHydratableController, AttrSyntax, IPlatform, IAttrMapper, ICommandBuildInfo } from '@aurelia/runtime-html';
-import type { BindingCommandInstance } from '@aurelia/runtime-html';
+import { IRenderer, IHydratableController, AttrSyntax, IPlatform, IAttrMapper, ICommandBuildInfo } from '@aurelia/runtime-html';
+import type { BindingMode, BindingCommandInstance } from '@aurelia/runtime-html';
 export declare const TranslationInstructionType = "tt";
 export declare class TranslationAttributePattern {
     [key: string]: ((rawName: string, rawValue: string, parts: string[]) => AttrSyntax);
@@ -10,7 +10,7 @@ export declare class TranslationBindingInstruction {
     from: IsBindingBehavior;
     to: string;
     readonly type: string;
-    mode: BindingMode.toView;
+    mode: typeof BindingMode.toView;
     constructor(from: IsBindingBehavior, to: string);
 }
 export declare class TranslationBindingCommand implements BindingCommandInstance {
@@ -31,7 +31,7 @@ export declare class TranslationBindBindingInstruction {
     from: IsBindingBehavior;
     to: string;
     readonly type: string;
-    mode: BindingMode.toView;
+    mode: typeof BindingMode.toView;
     constructor(from: IsBindingBehavior, to: string);
 }
 export declare class TranslationBindBindingCommand implements BindingCommandInstance {

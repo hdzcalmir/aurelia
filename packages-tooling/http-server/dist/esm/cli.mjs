@@ -1,7 +1,7 @@
 import { readFileSync, readFile as readFile$1, access, constants as constants$1, exists as exists$1, readdirSync, statSync, openSync, existsSync } from 'fs';
 import { resolve, join, extname, relative } from 'path';
+import { LogLevel, DI, all, bound, ILogger, IContainer, Registration, LoggerConfiguration, ConsoleSink, IPlatform } from '@aurelia/kernel';
 import { EOL } from 'os';
-import { DI, all, bound, ILogger, IContainer, Registration, LoggerConfiguration, ConsoleSink, IPlatform } from '@aurelia/kernel';
 import { Platform } from '@aurelia/platform';
 import { createServer, IncomingMessage, ServerResponse } from 'http';
 import * as https from 'https';
@@ -71,13 +71,13 @@ class HttpServerOptions {
             return logLevel;
         }
         switch (logLevel) {
-            case 'trace': return 0 /* $LogLevel.trace */;
-            case 'debug': return 1 /* $LogLevel.debug */;
-            case 'info': return 2 /* $LogLevel.info */;
-            case 'warn': return 3 /* $LogLevel.warn */;
-            case 'error': return 4 /* $LogLevel.error */;
-            case 'fatal': return 5 /* $LogLevel.fatal */;
-            case 'none': return 6 /* $LogLevel.none */;
+            case 'trace': return LogLevel.trace;
+            case 'debug': return LogLevel.debug;
+            case 'info': return LogLevel.info;
+            case 'warn': return LogLevel.warn;
+            case 'error': return LogLevel.error;
+            case 'fatal': return LogLevel.fatal;
+            case 'none': return LogLevel.none;
         }
     }
     applyOptionsFromCli(cwd, args, argPrefix = '') {

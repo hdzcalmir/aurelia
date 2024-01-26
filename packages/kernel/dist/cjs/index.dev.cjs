@@ -4,6 +4,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var metadata = require('@aurelia/metadata');
 
+/** @internal */ const objectFreeze = Object.freeze;
 /** @internal */ const safeString = String;
 /** @internal */ const getOwnMetadata = metadata.Metadata.getOwn;
 /** @internal */ const hasOwnMetadata = metadata.Metadata.hasOwn;
@@ -442,7 +443,7 @@ const appendAnnotation = (target, key) => {
         keys.push(key);
     }
 };
-const annotation = Object.freeze({
+const annotation = /*@__PURE__*/ objectFreeze({
     name: 'au:annotation',
     appendTo: appendAnnotation,
     set(target, prop, value) {
@@ -471,7 +472,7 @@ const getAllResources = (target) => {
         return keys.map(k => getOwnMetadata(k, target));
     }
 };
-const resource = Object.freeze({
+const resource = /*@__PURE__*/ objectFreeze({
     name: resBaseName,
     appendTo(target, key) {
         const keys = getOwnMetadata(resBaseName, target);
@@ -570,31 +571,29 @@ class Container {
     get parent() {
         return this._parent;
     }
-    constructor(_parent, config) {
-        this._parent = _parent;
-        this.config = config;
+    constructor(parent, config) {
         this.id = ++containerId;
         /** @internal */
         this._registerDepth = 0;
         /** @internal */
         this._disposableResolvers = new Map();
-        if (_parent === null) {
+        this._parent = parent;
+        this.config = config;
+        this._resolvers = new Map();
+        this.res = {};
+        if (parent === null) {
             this.root = this;
-            this._resolvers = new Map();
             this._factories = new Map();
-            this.res = {};
         }
         else {
-            this.root = _parent.root;
-            this._resolvers = new Map();
-            this._factories = _parent._factories;
-            this.res = {};
+            this.root = parent.root;
+            this._factories = parent._factories;
             if (config.inheritParentResources) {
                 // todo: when the simplify resource system work is commenced
                 //       this resource inheritance can just be a Object.create() call
                 //       with parent resources as the prototype of the child resources
-                for (const key in _parent.res) {
-                    this.registerResolver(key, _parent.res[key]);
+                for (const key in parent.res) {
+                    this.registerResolver(key, parent.res[key]);
                 }
             }
         }
@@ -888,6 +887,12 @@ class Container {
             resolvers.delete(key);
         }
         disposableResolvers.clear();
+    }
+    useResources(container) {
+        const res = container.res;
+        for (const key in res) {
+            this.registerResolver(key, res[key]);
+        }
     }
     find(kind, name) {
         const key = kind.keyFrom(name);
@@ -1406,16 +1411,21 @@ const DI = {
 };
 const IContainer = /*@__PURE__*/ createInterface('IContainer');
 const IServiceLocator = IContainer;
+/**
+ * ! Semi private API to avoid repetitive work creating resolvers.
+ *
+ * Naming isn't entirely correct, but it's good enough for internal usage.
+ */
 function createResolver(getter) {
     return function (key) {
-        const resolver = function (target, property, descriptor) {
-            inject(resolver)(target, property, descriptor);
-        };
-        resolver.$isResolver = true;
-        resolver.resolve = function (handler, requestor) {
+        function Resolver(target, property, descriptor) {
+            inject(Resolver)(target, property, descriptor);
+        }
+        Resolver.$isResolver = true;
+        Resolver.resolve = function (handler, requestor) {
             return getter(key, handler, requestor);
         };
-        return resolver;
+        return Resolver;
     };
 }
 const inject = DI.inject;
@@ -1785,9 +1795,9 @@ class InstanceProvider {
 const isInterface = (key) => isFunction(key) && key.$isInterface === true;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const emptyArray = Object.freeze([]);
+const emptyArray = objectFreeze([]);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const emptyObject = Object.freeze({});
+const emptyObject = objectFreeze({});
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 function noop() { }
 const IPlatform = /*@__PURE__*/ createInterface('IPlatform');
@@ -1814,45 +1824,51 @@ function __decorate(decorators, target, key, desc) {
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
 
-exports.LogLevel = void 0;
-(function (LogLevel) {
+/** @internal */ const trace = 0;
+/** @internal */ const debug = 1;
+/** @internal */ const info = 2;
+/** @internal */ const warn = 3;
+/** @internal */ const error = 4;
+/** @internal */ const fatal = 5;
+/** @internal */ const none = 6;
+const LogLevel = objectFreeze({
     /**
      * The most detailed information about internal app state.
      *
      * Disabled by default and should never be enabled in a production environment.
      */
-    LogLevel[LogLevel["trace"] = 0] = "trace";
+    trace,
     /**
      * Information that is useful for debugging during development and has no long-term value.
      */
-    LogLevel[LogLevel["debug"] = 1] = "debug";
+    debug,
     /**
      * Information about the general flow of the application that has long-term value.
      */
-    LogLevel[LogLevel["info"] = 2] = "info";
+    info,
     /**
      * Unexpected circumstances that require attention but do not otherwise cause the current flow of execution to stop.
      */
-    LogLevel[LogLevel["warn"] = 3] = "warn";
+    warn,
     /**
      * Unexpected circumstances that cause the flow of execution in the current activity to stop but do not cause an app-wide failure.
      */
-    LogLevel[LogLevel["error"] = 4] = "error";
+    error,
     /**
      * Unexpected circumstances that cause an app-wide failure or otherwise require immediate attention.
      */
-    LogLevel[LogLevel["fatal"] = 5] = "fatal";
+    fatal,
     /**
      * No messages should be written.
      */
-    LogLevel[LogLevel["none"] = 6] = "none";
-})(exports.LogLevel || (exports.LogLevel = {}));
-const ILogConfig = /*@__PURE__*/ createInterface('ILogConfig', x => x.instance(new LogConfig('no-colors', 3 /* LogLevel.warn */)));
+    none,
+});
+const ILogConfig = /*@__PURE__*/ createInterface('ILogConfig', x => x.instance(new LogConfig('no-colors', warn)));
 const ISink = /*@__PURE__*/ createInterface('ISink');
 const ILogEventFactory = /*@__PURE__*/ createInterface('ILogEventFactory', x => x.singleton(DefaultLogEventFactory));
 const ILogger = /*@__PURE__*/ createInterface('ILogger', x => x.singleton(DefaultLogger));
 const ILogScopes = /*@__PURE__*/ createInterface('ILogScope');
-const LoggerSink = Object.freeze({
+const LoggerSink = /*@__PURE__*/ objectFreeze({
     key: getAnnotationKeyFor('logger-sink-handles'),
     define(target, definition) {
         defineMetadata(this.key, definition.handles, target.prototype);
@@ -1920,22 +1936,22 @@ const getLogLevelString = (function () {
         }),
     };
     return (level, colorOptions) => {
-        if (level <= 0 /* LogLevel.trace */) {
+        if (level <= trace) {
             return logLevelString[colorOptions].TRC;
         }
-        if (level <= 1 /* LogLevel.debug */) {
+        if (level <= debug) {
             return logLevelString[colorOptions].DBG;
         }
-        if (level <= 2 /* LogLevel.info */) {
+        if (level <= info) {
             return logLevelString[colorOptions].INF;
         }
-        if (level <= 3 /* LogLevel.warn */) {
+        if (level <= warn) {
             return logLevelString[colorOptions].WRN;
         }
-        if (level <= 4 /* LogLevel.error */) {
+        if (level <= error) {
             return logLevelString[colorOptions].ERR;
         }
-        if (level <= 5 /* LogLevel.fatal */) {
+        if (level <= fatal) {
             return logLevelString[colorOptions].FTL;
         }
         return logLevelString[colorOptions].QQQ;
@@ -1969,6 +1985,27 @@ class DefaultLogEvent {
         }
         return `${getIsoString(timestamp, colorOptions)} [${getLogLevelString(severity, colorOptions)} ${getScopeString(scope, colorOptions)}] ${message}`;
     }
+    getFormattedLogInfo(forConsole = false) {
+        const { severity, message: messageOrError, scope, colorOptions, timestamp, optionalParams } = this;
+        let error = null;
+        let message = '';
+        if (forConsole && messageOrError instanceof Error) {
+            error = messageOrError;
+        }
+        else {
+            message = messageOrError;
+        }
+        const scopeInfo = scope.length === 0 ? '' : ` ${getScopeString(scope, colorOptions)}`;
+        let msg = `${getIsoString(timestamp, colorOptions)} [${getLogLevelString(severity, colorOptions)}${scopeInfo}] ${message}`;
+        if (optionalParams === void 0 || optionalParams.length === 0) {
+            return error === null ? [msg] : [msg, error];
+        }
+        let offset = 0;
+        while (msg.includes('%s')) {
+            msg = msg.replace('%s', String(optionalParams[offset++]));
+        }
+        return error !== null ? [msg, error, ...optionalParams.slice(offset)] : [msg, ...optionalParams.slice(offset)];
+    }
 }
 class DefaultLogEventFactory {
     constructor() {
@@ -1985,41 +2022,18 @@ class ConsoleSink {
     constructor(p = resolve(IPlatform)) {
         const $console = p.console;
         this.handleEvent = function emit(event) {
-            const optionalParams = event.optionalParams;
-            if (optionalParams === void 0 || optionalParams.length === 0) {
-                const msg = event.toString();
-                switch (event.severity) {
-                    case 0 /* LogLevel.trace */:
-                    case 1 /* LogLevel.debug */:
-                        return $console.debug(msg);
-                    case 2 /* LogLevel.info */:
-                        return $console.info(msg);
-                    case 3 /* LogLevel.warn */:
-                        return $console.warn(msg);
-                    case 4 /* LogLevel.error */:
-                    case 5 /* LogLevel.fatal */:
-                        return $console.error(msg);
-                }
-            }
-            else {
-                let msg = event.toString();
-                let offset = 0;
-                // console.log in chrome doesn't call .toString() on object inputs (https://bugs.chromium.org/p/chromium/issues/detail?id=1146817)
-                while (msg.includes('%s')) {
-                    msg = msg.replace('%s', String(optionalParams[offset++]));
-                }
-                switch (event.severity) {
-                    case 0 /* LogLevel.trace */:
-                    case 1 /* LogLevel.debug */:
-                        return $console.debug(msg, ...optionalParams.slice(offset));
-                    case 2 /* LogLevel.info */:
-                        return $console.info(msg, ...optionalParams.slice(offset));
-                    case 3 /* LogLevel.warn */:
-                        return $console.warn(msg, ...optionalParams.slice(offset));
-                    case 4 /* LogLevel.error */:
-                    case 5 /* LogLevel.fatal */:
-                        return $console.error(msg, ...optionalParams.slice(offset));
-                }
+            const _info = event.getFormattedLogInfo(true);
+            switch (event.severity) {
+                case trace:
+                case debug:
+                    return $console.debug(..._info);
+                case info:
+                    return $console.info(..._info);
+                case warn:
+                    return $console.warn(..._info);
+                case error:
+                case fatal:
+                    return $console.error(..._info);
             }
         };
     }
@@ -2059,22 +2073,22 @@ class DefaultLogger {
             fatalSinks = this._fatalSinks = [];
             for (const $sink of sinks) {
                 const handles = LoggerSink.getHandles($sink);
-                if (handles?.includes(0 /* LogLevel.trace */) ?? true) {
+                if (handles?.includes(trace) ?? true) {
                     traceSinks.push($sink);
                 }
-                if (handles?.includes(1 /* LogLevel.debug */) ?? true) {
+                if (handles?.includes(debug) ?? true) {
                     debugSinks.push($sink);
                 }
-                if (handles?.includes(2 /* LogLevel.info */) ?? true) {
+                if (handles?.includes(info) ?? true) {
                     infoSinks.push($sink);
                 }
-                if (handles?.includes(3 /* LogLevel.warn */) ?? true) {
+                if (handles?.includes(warn) ?? true) {
                     warnSinks.push($sink);
                 }
-                if (handles?.includes(4 /* LogLevel.error */) ?? true) {
+                if (handles?.includes(error) ?? true) {
                     errorSinks.push($sink);
                 }
-                if (handles?.includes(5 /* LogLevel.fatal */) ?? true) {
+                if (handles?.includes(fatal) ?? true) {
                     fatalSinks.push($sink);
                 }
             }
@@ -2091,33 +2105,33 @@ class DefaultLogger {
         }
     }
     trace(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= 0 /* LogLevel.trace */) {
-            this._emit(this._traceSinks, 0 /* LogLevel.trace */, messageOrGetMessage, optionalParams);
+        if (this.config.level <= trace) {
+            this._emit(this._traceSinks, trace, messageOrGetMessage, optionalParams);
         }
     }
     debug(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= 1 /* LogLevel.debug */) {
-            this._emit(this._debugSinks, 1 /* LogLevel.debug */, messageOrGetMessage, optionalParams);
+        if (this.config.level <= debug) {
+            this._emit(this._debugSinks, debug, messageOrGetMessage, optionalParams);
         }
     }
     info(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= 2 /* LogLevel.info */) {
-            this._emit(this._infoSinks, 2 /* LogLevel.info */, messageOrGetMessage, optionalParams);
+        if (this.config.level <= info) {
+            this._emit(this._infoSinks, info, messageOrGetMessage, optionalParams);
         }
     }
     warn(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= 3 /* LogLevel.warn */) {
-            this._emit(this._warnSinks, 3 /* LogLevel.warn */, messageOrGetMessage, optionalParams);
+        if (this.config.level <= warn) {
+            this._emit(this._warnSinks, warn, messageOrGetMessage, optionalParams);
         }
     }
     error(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= 4 /* LogLevel.error */) {
-            this._emit(this._errorSinks, 4 /* LogLevel.error */, messageOrGetMessage, optionalParams);
+        if (this.config.level <= error) {
+            this._emit(this._errorSinks, error, messageOrGetMessage, optionalParams);
         }
     }
     fatal(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= 5 /* LogLevel.fatal */) {
-            this._emit(this._fatalSinks, 5 /* LogLevel.fatal */, messageOrGetMessage, optionalParams);
+        if (this.config.level <= fatal) {
+            this._emit(this._fatalSinks, fatal, messageOrGetMessage, optionalParams);
         }
     }
     /**
@@ -2196,13 +2210,13 @@ __decorate([
  *
  * ```
  */
-const LoggerConfiguration = toLookup({
+const LoggerConfiguration = /*@__PURE__*/ toLookup({
     /**
      * @param $console - The `console` object to use. Can be the native `window.console` / `global.console`, but can also be a wrapper or mock that implements the same interface.
      * @param level - The global `LogLevel` to configure. Defaults to `warn` or higher.
      * @param colorOptions - Whether to use colors or not. Defaults to `noColors`. Colors are especially nice in nodejs environments but don't necessarily work (well) in all environments, such as browsers.
      */
-    create({ level = 3 /* LogLevel.warn */, colorOptions = 'no-colors', sinks = [], } = {}) {
+    create({ level = warn, colorOptions = 'no-colors', sinks = [], } = {}) {
         return toLookup({
             register(container) {
                 container.register(instanceRegistration(ILogConfig, new LogConfig(colorOptions, level)));
@@ -2440,6 +2454,7 @@ exports.IServiceLocator = IServiceLocator;
 exports.ISink = ISink;
 exports.InstanceProvider = InstanceProvider;
 exports.LogConfig = LogConfig;
+exports.LogLevel = LogLevel;
 exports.LoggerConfiguration = LoggerConfiguration;
 exports.ModuleItem = ModuleItem;
 exports.Protocol = Protocol;
@@ -2447,6 +2462,7 @@ exports.Registration = Registration;
 exports.all = all;
 exports.bound = bound;
 exports.camelCase = camelCase;
+exports.createResolver = createResolver;
 exports.emptyArray = emptyArray;
 exports.emptyObject = emptyObject;
 exports.factory = factory;

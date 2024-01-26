@@ -1,7 +1,7 @@
 import { I18nConfiguration, TranslationBinding, TranslationParametersAttributePattern, TranslationParametersBindingCommand, TranslationParametersBindingInstruction, TranslationParametersBindingRenderer, TranslationParametersInstructionType } from '@aurelia/i18n';
 import { DI } from '@aurelia/kernel';
 import { IExpressionParser, IObserverLocator, } from '@aurelia/runtime';
-import { StandardConfiguration, BindingCommand, IAttributePattern, IPlatform, IAttrMapper, } from '@aurelia/runtime-html';
+import { StandardConfiguration, BindingCommand, IAttributePattern, IPlatform, IAttrMapper, InstructionType, BindingMode, } from '@aurelia/runtime-html';
 import { assert, PLATFORM, TestContext } from '@aurelia/testing';
 const noopLocator = {};
 describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
@@ -64,10 +64,10 @@ describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
             const expressionParser = container.get(IExpressionParser);
             const controller = { container, bindings: [], addBinding(binding) { controller.bindings.push(binding); } };
             const callBindingInstruction = {
-                type: "rg" /* InstructionType.propertyBinding */,
+                type: InstructionType.propertyBinding,
                 from: expressionParser.parse('{foo: "bar"}', 'IsProperty'),
                 to: 'value',
-                mode: 1 /* BindingMode.oneTime */
+                mode: BindingMode.oneTime
             };
             sut.render(controller, PLATFORM.document.createElement('span'), callBindingInstruction, PLATFORM, expressionParser, noopLocator);
             assert.instanceOf(controller.bindings[0], TranslationBinding);
@@ -81,10 +81,10 @@ describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
             const hydratable = { container, bindings: [binding] };
             const paramExpr = expressionParser.parse('{foo: "bar"}', 'IsProperty');
             const callBindingInstruction = {
-                type: "rg" /* InstructionType.propertyBinding */,
+                type: InstructionType.propertyBinding,
                 from: expressionParser.parse('{foo: "bar"}', 'IsProperty'),
                 to: 'value',
-                mode: 1 /* BindingMode.oneTime */
+                mode: BindingMode.oneTime
             };
             sut.render(hydratable, targetElement, callBindingInstruction, PLATFORM, expressionParser, noopLocator);
             assert.equal(binding['parameter'].ast, paramExpr);

@@ -1,6 +1,6 @@
-import { AccessorType, ICoercionConfiguration, IObserver, InterceptorFunc } from '../observation';
+import { ICoercionConfiguration, IObserver, InterceptorFunc } from '../observation';
 import type { IIndexable } from '@aurelia/kernel';
-import type { ISubscriber, ISubscriberCollection } from '../observation';
+import type { AccessorType, ISubscriber, ISubscriberCollection } from '../observation';
 export interface SetterObserver extends ISubscriberCollection {
 }
 /**

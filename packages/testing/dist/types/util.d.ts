@@ -9,40 +9,6 @@ export type TypedArrayConstructor = IntArrayConstructor | FloatArrayConstructor;
 export declare const getPrototypeOf: (o: any) => any, getOwnPropertyDescriptor: (o: any, p: PropertyKey) => PropertyDescriptor | undefined, getOwnPropertyDescriptors: <T>(o: T) => { [P in keyof T]: TypedPropertyDescriptor<T[P]>; } & {
     [x: string]: PropertyDescriptor;
 }, getOwnPropertyNames: (o: any) => string[], getOwnPropertySymbols: (o: any) => symbol[], defineProperty: <T>(o: T, p: PropertyKey, attributes: PropertyDescriptor & ThisType<any>) => T, defineProperties: <T>(o: T, properties: PropertyDescriptorMap & ThisType<any>) => T;
-export declare const Object_keys: {
-    (o: object): string[];
-    (o: {}): string[];
-};
-export declare const Object_is: (value1: any, value2: any) => boolean;
-export declare const Object_freeze: {
-    <T extends Function>(f: T): T;
-    <T_1 extends {
-        [idx: string]: object | U | null | undefined;
-    }, U extends string | number | bigint | boolean | symbol>(o: T_1): Readonly<T_1>;
-    <T_2>(o: T_2): Readonly<T_2>;
-};
-export declare const Object_assign: {
-    <T extends {}, U>(target: T, source: U): T & U;
-    <T_1 extends {}, U_1, V>(target: T_1, source1: U_1, source2: V): T_1 & U_1 & V;
-    <T_2 extends {}, U_2, V_1, W>(target: T_2, source1: U_2, source2: V_1, source3: W): T_2 & U_2 & V_1 & W;
-    (target: object, ...sources: any[]): any;
-};
-export declare const Object_create: {
-    (o: object | null): any;
-    (o: object | null, properties: PropertyDescriptorMap & ThisType<any>): any;
-};
-export declare const Number_isNaN: (number: unknown) => boolean;
-export declare const Reflect_apply: typeof Reflect.apply;
-export declare const ArrayBuffer_isView: (arg: any) => arg is ArrayBufferView;
-export declare function uncurryThis<TArgs extends any[], TRet>(func: (...args: TArgs) => TRet): (thisArg: unknown, ...args: TArgs) => TRet;
-export declare const hasOwnProperty: (thisArg: unknown, v: PropertyKey) => boolean;
-export declare const propertyIsEnumerable: (thisArg: unknown, v: PropertyKey) => boolean;
-export declare const TypedArrayPrototype: any;
-export declare const Object_toString: (thisArg: unknown) => string;
-export declare const RegExp_toString: (thisArg: unknown) => string;
-export declare const Date_toISOString: (thisArg: unknown) => string;
-export declare const Date_toString: (thisArg: unknown) => string;
-export declare const Error_toString: (thisArg: unknown) => string;
 export declare const Date_getTime: (thisArg: unknown) => number;
 export declare const Set_values: (thisArg: unknown) => IterableIterator<any>;
 export declare const Map_entries: (thisArg: unknown) => IterableIterator<[any, any]>;

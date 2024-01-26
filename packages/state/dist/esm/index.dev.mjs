@@ -1,6 +1,6 @@
 import { DI, Registration, optional, all, ILogger, camelCase } from '@aurelia/kernel';
-import { mixinAstEvaluator, mixingBindingLimited, bindingBehavior, attributePattern, bindingCommand, renderer, AttrSyntax, lifecycleHooks, CustomElement, CustomAttribute, ILifecycleHooks } from '@aurelia/runtime-html';
-import { Scope, connectable, astEvaluate, astBind, astUnbind } from '@aurelia/runtime';
+import { State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, bindingBehavior, attributePattern, bindingCommand, renderer, AttrSyntax, lifecycleHooks, CustomElement, CustomAttribute, ILifecycleHooks } from '@aurelia/runtime-html';
+import { AccessorType, Scope, connectable, astEvaluate, astBind, astUnbind } from '@aurelia/runtime';
 
 const IActionHandler = /*@__PURE__*/ DI.createInterface('IActionHandler');
 const IStore = /*@__PURE__*/ DI.createInterface('IStore');
@@ -156,6 +156,8 @@ function createStateBindingScope(state, scope) {
 function isSubscribable$1(v) {
     return v instanceof Object && 'subscribe' in v;
 }
+/** @internal */ const atLayout = AccessorType.Layout;
+/** @internal */ const stateActivating = State$1.activating;
 
 class StateBinding {
     constructor(controller, locator, observerLocator, taskQueue, ast, target, prop, store) {
@@ -167,7 +169,7 @@ class StateBinding {
         // see Listener binding for explanation
         /** @internal */
         this.boundFn = false;
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = BindingMode.toView;
         this._controller = controller;
         this.l = locator;
         this._taskQueue = taskQueue;
@@ -208,7 +210,7 @@ class StateBinding {
         }
         this._targetObserver = this.oL.getAccessor(this.target, this.targetProperty);
         this._store.subscribe(this);
-        this.updateTarget(this._value = astEvaluate(this.ast, this._scope = createStateBindingScope(this._store.getState(), _scope), this, this.mode > 1 /* BindingMode.oneTime */ ? this : null));
+        this.updateTarget(this._value = astEvaluate(this.ast, this._scope = createStateBindingScope(this._store.getState(), _scope), this, this.mode > BindingMode.oneTime ? this : null));
         this.isBound = true;
     }
     unbind() {
@@ -232,7 +234,7 @@ class StateBinding {
         // todo:
         //  (1). determine whether this should be the behavior
         //  (2). if not, then fix tests to reflect the changes/platform to properly yield all with aurelia.start()
-        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */ && (this._targetObserver.type & 4 /* AccessorType.Layout */) > 0;
+        const shouldQueueFlush = this._controller.state !== stateActivating && (this._targetObserver.type & atLayout) > 0;
         const obsRecord = this.obs;
         obsRecord.version++;
         newValue = astEvaluate(this.ast, this._scope, this, this);
@@ -260,8 +262,8 @@ class StateBinding {
         const _scope = this._scope;
         const overrideContext = _scope.overrideContext;
         _scope.bindingContext = overrideContext.bindingContext = overrideContext.$state = state;
-        const value = astEvaluate(this.ast, _scope, this, this.mode > 1 /* BindingMode.oneTime */ ? this : null);
-        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */ && (this._targetObserver.type & 4 /* AccessorType.Layout */) > 0;
+        const value = astEvaluate(this.ast, _scope, this, this.mode > BindingMode.oneTime ? this : null);
+        const shouldQueueFlush = this._controller.state !== stateActivating && (this._targetObserver.type & atLayout) > 0;
         if (value === this._value) {
             return;
         }

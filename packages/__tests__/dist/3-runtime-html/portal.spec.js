@@ -1,7 +1,5 @@
 import { CustomElement, Aurelia } from '@aurelia/runtime-html';
-import { assert, eachCartesianJoin, 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-hJsx, // deepscan-disable-line UNUSED_IMPORT
+import { assert, eachCartesianJoin, hJsx, // deepscan-disable-line UNUSED_IMPORT
 TestContext, createFixture, } from '@aurelia/testing';
 describe('3-runtime-html/portal.spec.tsx', function () {
     it('portals to "beforebegin" position 🚪-🔁-🚪', function () {
@@ -41,6 +39,16 @@ describe('3-runtime-html/portal.spec.tsx', function () {
             hJsx("button", { portal: "target: #d1; position.bind: position" }, "click me")), { position: 'beforeend' });
         component.position = 'beforebegin';
         assertHtml('<!--au-start--><button>click me</button><!--au-end--><div id="d1">hello</div><!--au-start--><!--au-end-->');
+    });
+    it('removes location marker when portal is deactivated', function () {
+        const { component, assertHtml } = createFixture(hJsx(hJsx.Fragment, null,
+            hJsx("div", { id: "dest" }),
+            hJsx("p", { id: "package", "if$bind": "open", portal: "#dest" })), { open: false });
+        assertHtml('div', '');
+        component.open = true;
+        assertHtml('div', '<!--au-start--><p id="package"></p><!--au-end-->');
+        component.open = false;
+        assertHtml('div', '');
     });
     describe('basic', function () {
         const basicTestCases = [

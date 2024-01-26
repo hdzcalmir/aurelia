@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { DI, ILogConfig, Registration, onResolve } from '@aurelia/kernel';
+import { DI, ILogConfig, LogLevel, Registration, onResolve } from '@aurelia/kernel';
 import { CustomElement, customElement, IPlatform, Aurelia, } from '@aurelia/runtime-html';
 import { IRouter, RouterConfiguration, route, } from '@aurelia/router-lite';
 import { assert, TestContext } from '@aurelia/testing';
@@ -397,7 +397,7 @@ function* interleave(...generators) {
         }
     }
 }
-async function createFixture(Component, deps = [], level = 5 /* LogLevel.fatal */, restorePreviousRouteTreeOnError = true) {
+async function createFixture(Component, deps = [], level = LogLevel.fatal, restorePreviousRouteTreeOnError = true) {
     const ctx = TestContext.create();
     const cfg = new NotifierConfig([], 100);
     const { container, platform } = ctx;
@@ -424,7 +424,7 @@ async function createFixture(Component, deps = [], level = 5 /* LogLevel.fatal *
         platform,
         router,
         startTracing() {
-            logConfig.level = 0 /* LogLevel.trace */;
+            logConfig.level = LogLevel.trace;
         },
         stopTracing() {
             logConfig.level = level;

@@ -62,6 +62,10 @@ function createIntlFormatValueConverterExpression(name, binding) {
 /** @internal */ const etIsProperty = 'IsProperty';
 /** CommandType */
 /** @internal */ const ctNone = 'None';
+/** BindingMode */
+/** @internal */ const bmToView = runtimeHtml.BindingMode.toView;
+/** State */
+/** @internal */ const stateActivating = runtimeHtml.State.activating;
 
 exports.DateFormatBindingBehavior = class DateFormatBindingBehavior {
     bind(_scope, binding) {
@@ -373,6 +377,7 @@ class TranslationBinding {
     static create({ parser, observerLocator, context, controller, target, instruction, platform, isParameterContext, }) {
         const binding = this._getBinding({ observerLocator, context, controller, target, platform });
         const expr = typeof instruction.from === 'string'
+            /* istanbul ignore next */
             ? parser.parse(instruction.from, etIsProperty)
             : instruction.from;
         if (isParameterContext) {
@@ -459,7 +464,7 @@ class TranslationBinding {
                     const accessor = controller?.viewModel
                         ? this.oL.getAccessor(controller.viewModel, kernel.camelCase(attribute))
                         : this.oL.getAccessor(this.target, attribute);
-                    const shouldQueueUpdate = this._controller.state !== 1 /* State.activating */ && (accessor.type & 4 /* AccessorType.Layout */) > 0;
+                    const shouldQueueUpdate = this._controller.state !== stateActivating && (accessor.type & runtime.AccessorType.Layout) > 0;
                     if (shouldQueueUpdate) {
                         accessorUpdateTasks.push(new AccessorUpdateTask(accessor, value, this.target, attribute));
                     }
@@ -472,7 +477,7 @@ class TranslationBinding {
         }
         let shouldQueueContent = false;
         if (Object.keys(content).length > 0) {
-            shouldQueueContent = this._controller.state !== 1 /* State.activating */;
+            shouldQueueContent = this._controller.state !== stateActivating;
             if (!shouldQueueContent) {
                 this._updateContent(content);
             }
@@ -637,7 +642,7 @@ class TranslationParametersBindingInstruction {
         this.from = from;
         this.to = to;
         this.type = TranslationParametersInstructionType;
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = bmToView;
     }
 }
 exports.TranslationParametersBindingCommand = class TranslationParametersBindingCommand {
@@ -695,7 +700,7 @@ class TranslationBindingInstruction {
         this.from = from;
         this.to = to;
         this.type = TranslationInstructionType;
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = bmToView;
     }
 }
 class TranslationBindingCommand {
@@ -747,7 +752,7 @@ class TranslationBindBindingInstruction {
         this.from = from;
         this.to = to;
         this.type = TranslationBindInstructionType;
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = bmToView;
     }
 }
 class TranslationBindBindingCommand {

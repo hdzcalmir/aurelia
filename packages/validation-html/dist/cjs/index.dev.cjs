@@ -527,7 +527,7 @@ __decorate([
     runtimeHtml.bindable
 ], exports.ValidationErrorsCustomAttribute.prototype, "controller", void 0);
 __decorate([
-    runtimeHtml.bindable({ primary: true, mode: 6 /* BindingMode.twoWay */ })
+    runtimeHtml.bindable({ primary: true, mode: runtimeHtml.BindingMode.twoWay })
 ], exports.ValidationErrorsCustomAttribute.prototype, "errors", void 0);
 exports.ValidationErrorsCustomAttribute = __decorate([
     runtimeHtml.customAttribute('validation-errors'),

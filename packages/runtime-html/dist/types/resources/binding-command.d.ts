@@ -11,6 +11,8 @@ export declare const ctNone: "None";
 export declare const ctIgnoreAttr: "IgnoreAttr";
 /**
  * Characteristics of a binding command.
+ * - `None`: The normal process (check custom attribute -> check bindable -> command.build()) should take place.
+ * - `IgnoreAttr`: The binding command wants to take over the processing of an attribute. The template compiler keeps the attribute as is in compilation, instead of executing the normal process.
  */
 export type CommandType = typeof ctNone | typeof ctIgnoreAttr;
 export type PartialBindingCommandDefinition = PartialResourceDefinition<{

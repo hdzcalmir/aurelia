@@ -1,4 +1,4 @@
-import { AccessorType, type IObserverLocator, type ISubscriberCollection } from '@aurelia/runtime';
+import { type AccessorType, type IObserverLocator, type ISubscriberCollection } from '@aurelia/runtime';
 import type { INode } from '../dom';
 import { INodeObserver, INodeObserverConfigBase } from './observer-locator';
 declare function defaultMatcher(a: unknown, b: unknown): boolean;

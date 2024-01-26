@@ -2,16 +2,17 @@ import { State } from '../templating/controller';
 /**
  * Mode of a binding to operate
  */
-export declare const enum BindingMode {
-    oneTime = 1,
-    toView = 2,
-    fromView = 4,
-    twoWay = 6,
+export declare const BindingMode: Readonly<{
+    readonly oneTime: 1;
+    readonly toView: 2;
+    readonly fromView: 4;
+    readonly twoWay: 6;
     /**
      * Unspecified mode, bindings may act differently with this mode
      */
-    default = 8
-}
+    readonly default: 8;
+}>;
+export type BindingMode = typeof BindingMode[keyof typeof BindingMode];
 export interface IBindingController {
     readonly state: State;
 }

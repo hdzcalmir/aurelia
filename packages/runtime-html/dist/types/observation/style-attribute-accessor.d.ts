@@ -1,5 +1,4 @@
-import { AccessorType } from '@aurelia/runtime';
-import type { IAccessor } from '@aurelia/runtime';
+import type { AccessorType, IAccessor } from '@aurelia/runtime';
 export declare class StyleAttributeAccessor implements IAccessor {
     readonly obj: HTMLElement;
     type: AccessorType;

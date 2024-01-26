@@ -1,6 +1,6 @@
 import { DI, IServiceLocator, optional, IContainer, Registration, noop } from '../../../kernel/dist/native-modules/index.mjs';
 import { parsePropertyName, ValidationResult, ValidateInstruction, PropertyRule, IValidator, getDefaultValidationConfiguration, ValidationConfiguration } from '../../../validation/dist/native-modules/index.mjs';
-import { IPlatform, bindable, INode, customAttribute, bindingBehavior, mixinAstEvaluator, PropertyBinding, IFlushQueue, BindingTargetSubscriber, CustomElement } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { IPlatform, bindable, INode, BindingMode, customAttribute, bindingBehavior, mixinAstEvaluator, PropertyBinding, IFlushQueue, BindingTargetSubscriber, CustomElement } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { astEvaluate, IExpressionParser, connectable, IObserverLocator } from '../../../runtime/dist/native-modules/index.mjs';
 
 /******************************************************************************
@@ -523,7 +523,7 @@ __decorate([
     bindable
 ], ValidationErrorsCustomAttribute.prototype, "controller", void 0);
 __decorate([
-    bindable({ primary: true, mode: 6 /* BindingMode.twoWay */ })
+    bindable({ primary: true, mode: BindingMode.twoWay })
 ], ValidationErrorsCustomAttribute.prototype, "errors", void 0);
 ValidationErrorsCustomAttribute = __decorate([
     customAttribute('validation-errors'),

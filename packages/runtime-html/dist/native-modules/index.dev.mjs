@@ -1,6 +1,6 @@
-import { Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, firstDefined, mergeArrays, resolve, IPlatform as IPlatform$1, emptyArray, InstanceProvider, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, IContainer, optional, ILogger, onResolveAll, onResolve, all, camelCase, IServiceLocator, emptyObject, transient, toArray } from '../../../kernel/dist/native-modules/index.mjs';
+import { Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, createResolver, firstDefined, mergeArrays, resolve, IPlatform as IPlatform$1, emptyArray, InstanceProvider, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, IContainer, optional, ILogger, LogLevel, onResolveAll, onResolve, all, camelCase, IServiceLocator, emptyObject, transient, toArray } from '../../../kernel/dist/native-modules/index.mjs';
 import { Metadata, isObject } from '../../../metadata/dist/native-modules/index.mjs';
-import { ISignaler, astEvaluate, connectable, ConnectableSwitcher, ProxyObservable, astBind, astUnbind, astAssign, subscriberCollection, IExpressionParser, IObserverLocator, ICoercionConfiguration, Scope, AccessScopeExpression, PropertyAccessor, IDirtyChecker, INodeObserverLocator, getObserverLookup, SetterObserver, createIndexMap, getCollectionObserver as getCollectionObserver$1, BindingContext, PrimitiveLiteralExpression, DirtyChecker } from '../../../runtime/dist/native-modules/index.mjs';
+import { AccessorType, ISignaler, astEvaluate, connectable, ConnectableSwitcher, ProxyObservable, astBind, astUnbind, astAssign, subscriberCollection, IExpressionParser, IObserverLocator, ICoercionConfiguration, Scope, AccessScopeExpression, PropertyAccessor, IDirtyChecker, INodeObserverLocator, getObserverLookup, SetterObserver, createIndexMap, getCollectionObserver as getCollectionObserver$1, BindingContext, PrimitiveLiteralExpression, DirtyChecker } from '../../../runtime/dist/native-modules/index.mjs';
 import { BrowserPlatform } from '../../../platform-browser/dist/native-modules/index.mjs';
 import { TaskAbortError } from '../../../platform/dist/native-modules/index.mjs';
 
@@ -25,16 +25,6 @@ function __decorate(decorators, target, key, desc) {
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
-
-/** @internal */ const getOwnMetadata = Metadata.getOwn;
-/** @internal */ const hasOwnMetadata = Metadata.hasOwn;
-/** @internal */ const defineMetadata = Metadata.define;
-const { annotation, resource: resource$1 } = Protocol;
-/** @internal */ const getAnnotationKeyFor = annotation.keyFor;
-/** @internal */ const getResourceKeyFor = resource$1.keyFor;
-/** @internal */ const appendResourceKey = resource$1.appendTo;
-/** @internal */ const appendAnnotationKey = annotation.appendTo;
-/** @internal */ const getAllAnnotations = annotation.getKeys;
 
 const O = Object;
 /** @internal */ const safeString = String;
@@ -93,6 +83,45 @@ const removeSignalListener = (signaler, signal, listener) => signaler.removeSign
 /** TaskStatus */
 /** @internal */ const tsPending = 'pending';
 /** @internal */ const tsRunning = 'running';
+/** AccessorType */
+/** @internal */ const atObserver = AccessorType.Observer;
+/** @internal */ const atNode = AccessorType.Node;
+/** @internal */ const atLayout = AccessorType.Layout;
+
+// Note: the oneTime binding now has a non-zero value for 2 reasons:
+//  - plays nicer with bitwise operations (more consistent code, more explicit settings)
+//  - allows for potentially having something like BindingMode.oneTime | BindingMode.fromView, where an initial value is set once to the view but updates from the view also propagate back to the view model
+//
+// Furthermore, the "default" mode would be for simple ".bind" expressions to make it explicit for our logic that the default is being used.
+// This essentially adds extra information which binding could use to do smarter things and allows bindingBehaviors that add a mode instead of simply overwriting it
+/** @internal */ const oneTime = 0b0001;
+/** @internal */ const toView = 0b0010;
+/** @internal */ const fromView = 0b0100;
+/** @internal */ const twoWay = 0b0110;
+/** @internal */ const defaultMode = 0b1000;
+/**
+ * Mode of a binding to operate
+ */
+const BindingMode = /*@__PURE__*/ objectFreeze({
+    oneTime,
+    toView,
+    fromView,
+    twoWay,
+    /**
+     * Unspecified mode, bindings may act differently with this mode
+     */
+    default: defaultMode,
+});
+
+/** @internal */ const getOwnMetadata = Metadata.getOwn;
+/** @internal */ const hasOwnMetadata = Metadata.hasOwn;
+/** @internal */ const defineMetadata = Metadata.define;
+const { annotation, resource: resource$1 } = Protocol;
+/** @internal */ const getAnnotationKeyFor = annotation.keyFor;
+/** @internal */ const getResourceKeyFor = resource$1.keyFor;
+/** @internal */ const appendResourceKey = resource$1.appendTo;
+/** @internal */ const appendAnnotationKey = annotation.appendTo;
+/** @internal */ const getAllAnnotations = annotation.getKeys;
 
 function bindable(configOrTarget, prop) {
     let config;
@@ -190,7 +219,7 @@ class BindableDefinition {
         this.set = set;
     }
     static create(prop, target, def = {}) {
-        return new BindableDefinition(def.attribute ?? kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? 2 /* BindingMode.toView */, def.primary ?? false, def.name ?? prop, def.set ?? getInterceptor(prop, target, def));
+        return new BindableDefinition(def.attribute ?? kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? toView, def.primary ?? false, def.name ?? prop, def.set ?? getInterceptor(prop, target, def));
     }
 }
 /* eslint-enable @typescript-eslint/no-unused-vars,spaced-comment */
@@ -243,48 +272,26 @@ function createCoercer(coercer, nullable) {
     };
 }
 
-const resource = (key) => {
-    function Resolver(target, property, descriptor) {
-        DI.inject(Resolver)(target, property, descriptor);
-    }
-    Resolver.$isResolver = true;
-    Resolver.resolve = (handler, requestor) => requestor.has(key, false)
-        ? requestor.get(key)
-        : requestor.root.get(key);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return Resolver;
-};
-const optionalResource = (key) => {
-    return objectAssign(function Resolver(target, property, descriptor) {
-        DI.inject(Resolver)(target, property, descriptor);
-    }, {
-        $isResolver: true,
-        resolve: (handler, requestor) => requestor.has(key, false)
-            ? requestor.get(key)
-            : requestor.root.has(key, false)
-                ? requestor.root.get(key)
-                : void 0,
-    });
-};
+const resource = (key) => createResolver((key, handler, requestor) => requestor.has(key, false)
+    ? requestor.get(key)
+    : requestor.root.get(key))(key);
+const optionalResource = (key) => createResolver((key, handler, requestor) => (requestor.has(key, false)
+    ? requestor.get(key)
+    : requestor.root.has(key, false)
+        ? requestor.root.get(key)
+        : void 0))(key);
 /**
  * A resolver builder for resolving all registrations of a key
  * with resource semantic (leaf + root + ignore middle layer container)
  */
-const allResources = (key) => {
-    function Resolver(target, property, descriptor) {
-        DI.inject(Resolver)(target, property, descriptor);
+const allResources = (key) => createResolver((key, handler, requestor) => {
+    if ( /* is root? */requestor.root === requestor) {
+        return requestor.getAll(key, false);
     }
-    Resolver.$isResolver = true;
-    Resolver.resolve = function (handler, requestor) {
-        if ( /* is root? */requestor.root === requestor) {
-            return requestor.getAll(key, false);
-        }
-        return requestor.has(key, false)
-            ? requestor.getAll(key, false).concat(requestor.root.getAll(key, false))
-            : requestor.root.getAll(key, false);
-    };
-    return Resolver;
-};
+    return requestor.has(key, false)
+        ? requestor.getAll(key, false).concat(requestor.root.getAll(key, false))
+        : requestor.root.getAll(key, false);
+})(key);
 /** @internal */
 const createInterface = DI.createInterface;
 /** @internal */
@@ -566,16 +573,16 @@ class BindingModeBehavior {
     }
 }
 class OneTimeBindingBehavior extends BindingModeBehavior {
-    get mode() { return 1 /* BindingMode.oneTime */; }
+    get mode() { return oneTime; }
 }
 class ToViewBindingBehavior extends BindingModeBehavior {
-    get mode() { return 2 /* BindingMode.toView */; }
+    get mode() { return toView; }
 }
 class FromViewBindingBehavior extends BindingModeBehavior {
-    get mode() { return 4 /* BindingMode.fromView */; }
+    get mode() { return fromView; }
 }
 class TwoWayBindingBehavior extends BindingModeBehavior {
-    get mode() { return 6 /* BindingMode.twoWay */; }
+    get mode() { return twoWay; }
 }
 bindingBehavior('oneTime')(OneTimeBindingBehavior);
 bindingBehavior('toView')(ToViewBindingBehavior);
@@ -1057,7 +1064,7 @@ class CustomAttributeDefinition {
             name = nameOrDef.name;
             def = nameOrDef;
         }
-        return new CustomAttributeDefinition(Type, firstDefined(getAttributeAnnotation(Type, 'name'), name), mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, 2 /* BindingMode.toView */), firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(Type, ...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), mergeArrays(Watch.getAnnotation(Type), Type.watches), mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies));
+        return new CustomAttributeDefinition(Type, firstDefined(getAttributeAnnotation(Type, 'name'), name), mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, toView), firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(Type, ...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), mergeArrays(Watch.getAnnotation(Type), Type.watches), mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies));
     }
     register(container) {
         const { Type, key, aliases } = this;
@@ -1533,7 +1540,7 @@ class ClassAttributeAccessor {
     get doNotCache() { return true; }
     constructor(obj) {
         this.obj = obj;
-        this.type = 2 /* AccessorType.Node */ | 4 /* AccessorType.Layout */;
+        this.type = (atNode | atLayout);
         /** @internal */
         this._value = '';
         /** @internal */
@@ -2358,11 +2365,11 @@ class AttributeBinding {
         this.obs.version++;
         const newValue = astEvaluate(this.ast, this._scope, this, 
         // should observe?
-        (this.mode & 2 /* BindingMode.toView */) > 0 ? this : null);
+        (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
         if (newValue !== this._value) {
             this._value = newValue;
-            const shouldQueueFlush = this._controller.state !== 1 /* State.activating */;
+            const shouldQueueFlush = this._controller.state !== activating;
             if (shouldQueueFlush) {
                 // Queue the new one before canceling the old one, to prevent early yield
                 task = this._task;
@@ -2391,8 +2398,8 @@ class AttributeBinding {
         }
         this._scope = _scope;
         astBind(this.ast, _scope, this);
-        if (this.mode & (2 /* BindingMode.toView */ | 1 /* BindingMode.oneTime */)) {
-            this.updateTarget(this._value = astEvaluate(this.ast, _scope, this, /* should connect? */ (this.mode & 2 /* BindingMode.toView */) > 0 ? this : null));
+        if (this.mode & (toView | oneTime)) {
+            this.updateTarget(this._value = astEvaluate(this.ast, _scope, this, /* should connect? */ (this.mode & toView) > 0 ? this : null));
         }
         this.isBound = true;
     }
@@ -2468,7 +2475,7 @@ class InterpolationBinding {
         // todo:
         //  (1). determine whether this should be the behavior
         //  (2). if not, then fix tests to reflect the changes/platform to properly yield all with aurelia.start()
-        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */ && (targetObserver.type & 4 /* AccessorType.Layout */) > 0;
+        const shouldQueueFlush = this._controller.state !== activating && (targetObserver.type & atLayout) > 0;
         let task;
         if (shouldQueueFlush) {
             // Queue the new one before canceling the old one, to prevent early yield
@@ -2527,7 +2534,7 @@ class InterpolationPartBinding {
         this.owner = owner;
         // at runtime, mode may be overriden by binding behavior
         // but it wouldn't matter here, just start with something for later check
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = toView;
         this.task = null;
         this.isBound = false;
         /** @internal */
@@ -2549,7 +2556,7 @@ class InterpolationPartBinding {
         this.obs.version++;
         const newValue = astEvaluate(this.ast, this._scope, this, 
         // should observe?
-        (this.mode & 2 /* BindingMode.toView */) > 0 ? this : null);
+        (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
         // todo(!=): maybe should do strict comparison?
         // eslint-disable-next-line eqeqeq
@@ -2574,7 +2581,7 @@ class InterpolationPartBinding {
         }
         this._scope = _scope;
         astBind(this.ast, _scope, this);
-        this._value = astEvaluate(this.ast, this._scope, this, (this.mode & 2 /* BindingMode.toView */) > 0 ? this : null);
+        this._value = astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
         if (isArray(this._value)) {
             this.observeCollection(this._value);
         }
@@ -2611,7 +2618,7 @@ class ContentBinding {
         this.isBound = false;
         // at runtime, mode may be overriden by binding behavior
         // but it wouldn't matter here, just start with something for later check
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = toView;
         /** @internal */
         this._task = null;
         /** @internal */
@@ -2651,7 +2658,7 @@ class ContentBinding {
         this.obs.version++;
         const newValue = astEvaluate(this.ast, this._scope, this, 
         // should observe?
-        (this.mode & 2 /* BindingMode.toView */) > 0 ? this : null);
+        (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
         if (newValue === this._value) {
             // in a frequent update, e.g collection mutation in a loop
@@ -2661,7 +2668,7 @@ class ContentBinding {
             this._task = null;
             return;
         }
-        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */;
+        const shouldQueueFlush = this._controller.state !== activating;
         if (shouldQueueFlush) {
             this._queueUpdate(newValue);
         }
@@ -2675,12 +2682,12 @@ class ContentBinding {
             return;
         }
         this.obs.version++;
-        const v = this._value = astEvaluate(this.ast, this._scope, this, (this.mode & 2 /* BindingMode.toView */) > 0 ? this : null);
+        const v = this._value = astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
         if (isArray(v)) {
             this.observeCollection(v);
         }
-        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */;
+        const shouldQueueFlush = this._controller.state !== activating;
         if (shouldQueueFlush) {
             this._queueUpdate(v);
         }
@@ -2698,7 +2705,7 @@ class ContentBinding {
         }
         this._scope = _scope;
         astBind(this.ast, _scope, this);
-        const v = this._value = astEvaluate(this.ast, this._scope, this, (this.mode & 2 /* BindingMode.toView */) > 0 ? this : null);
+        const v = this._value = astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
         if (isArray(v)) {
             this.observeCollection(v);
         }
@@ -2838,9 +2845,9 @@ class PropertyBinding {
         this.obs.version++;
         const newValue = astEvaluate(this.ast, this._scope, this, 
         // should observe?
-        (this.mode & 2 /* BindingMode.toView */) > 0 ? this : null);
+        (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
-        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */ && (this._targetObserver.type & 4 /* AccessorType.Layout */) > 0;
+        const shouldQueueFlush = this._controller.state !== activating && (this._targetObserver.type & atLayout) > 0;
         if (shouldQueueFlush) {
             // Queue the new one before canceling the old one, to prevent early yield
             task = this._task;
@@ -2873,7 +2880,7 @@ class PropertyBinding {
         const $mode = this.mode;
         let targetObserver = this._targetObserver;
         if (!targetObserver) {
-            if ($mode & 4 /* BindingMode.fromView */) {
+            if ($mode & fromView) {
                 targetObserver = observerLocator.getObserver(this.target, this.targetProperty);
             }
             else {
@@ -2881,11 +2888,11 @@ class PropertyBinding {
             }
             this._targetObserver = targetObserver;
         }
-        const shouldConnect = ($mode & 2 /* BindingMode.toView */) > 0;
-        if ($mode & (2 /* BindingMode.toView */ | 1 /* BindingMode.oneTime */)) {
+        const shouldConnect = ($mode & toView) > 0;
+        if ($mode & (toView | oneTime)) {
             this.updateTarget(astEvaluate(this.ast, this._scope, this, shouldConnect ? this : null));
         }
-        if ($mode & 4 /* BindingMode.fromView */) {
+        if ($mode & fromView) {
             targetObserver.subscribe(this._targetSubscriber ?? (this._targetSubscriber = new BindingTargetSubscriber(this, this.l.get(IFlushQueue))));
             if (!shouldConnect) {
                 this.updateSource(targetObserver.getValue(this.target, this.targetProperty));
@@ -2930,7 +2937,7 @@ class PropertyBinding {
     }
 }
 mixinUseScope(PropertyBinding);
-mixingBindingLimited(PropertyBinding, (propBinding) => (propBinding.mode & 4 /* BindingMode.fromView */) ? 'updateSource' : 'updateTarget');
+mixingBindingLimited(PropertyBinding, (propBinding) => (propBinding.mode & fromView) ? 'updateSource' : 'updateTarget');
 connectable(PropertyBinding);
 mixinAstEvaluator(true, false)(PropertyBinding);
 let task = null;
@@ -3316,22 +3323,22 @@ class SpreadBinding {
         };
         const renderSpreadInstruction = (ancestor) => {
             const context = getHydrationContext(ancestor);
-            const spreadBinding = new SpreadBinding(context);
+            const spreadBinding$1 = new SpreadBinding(context);
             const instructions = compiler.compileSpread(context.controller.definition, context.instruction?.captures ?? emptyArray, context.controller.container, target, targetDef);
             let inst;
             for (inst of instructions) {
                 switch (inst.type) {
-                    case "hs" /* InstructionType.spreadBinding */:
+                    case spreadBinding:
                         renderSpreadInstruction(ancestor + 1);
                         break;
-                    case "hp" /* InstructionType.spreadElementProp */:
-                        renderers[inst.instructions.type].render(spreadBinding, findElementControllerFor(target), inst.instructions, platform, exprParser, observerLocator);
+                    case spreadElementProp:
+                        renderers[inst.instructions.type].render(spreadBinding$1, findElementControllerFor(target), inst.instructions, platform, exprParser, observerLocator);
                         break;
                     default:
-                        renderers[inst.type].render(spreadBinding, target, inst, platform, exprParser, observerLocator);
+                        renderers[inst.type].render(spreadBinding$1, target, inst, platform, exprParser, observerLocator);
                 }
             }
-            bindings.push(spreadBinding);
+            bindings.push(spreadBinding$1);
         };
         renderSpreadInstruction(0);
         return bindings;
@@ -3383,29 +3390,48 @@ class SpreadBinding {
     }
 }
 
-var InstructionType;
-(function (InstructionType) {
-    InstructionType["hydrateElement"] = "ra";
-    InstructionType["hydrateAttribute"] = "rb";
-    InstructionType["hydrateTemplateController"] = "rc";
-    InstructionType["hydrateLetElement"] = "rd";
-    InstructionType["setProperty"] = "re";
-    InstructionType["interpolation"] = "rf";
-    InstructionType["propertyBinding"] = "rg";
-    InstructionType["letBinding"] = "ri";
-    InstructionType["refBinding"] = "rj";
-    InstructionType["iteratorBinding"] = "rk";
-    InstructionType["multiAttr"] = "rl";
-    InstructionType["textBinding"] = "ha";
-    InstructionType["listenerBinding"] = "hb";
-    InstructionType["attributeBinding"] = "hc";
-    InstructionType["stylePropertyBinding"] = "hd";
-    InstructionType["setAttribute"] = "he";
-    InstructionType["setClassAttribute"] = "hf";
-    InstructionType["setStyleAttribute"] = "hg";
-    InstructionType["spreadBinding"] = "hs";
-    InstructionType["spreadElementProp"] = "hp";
-})(InstructionType || (InstructionType = {}));
+/** @internal */ const hydrateElement = 'ra';
+/** @internal */ const hydrateAttribute = 'rb';
+/** @internal */ const hydrateTemplateController = 'rc';
+/** @internal */ const hydrateLetElement = 'rd';
+/** @internal */ const setProperty = 're';
+/** @internal */ const interpolation = 'rf';
+/** @internal */ const propertyBinding = 'rg';
+/** @internal */ const letBinding = 'ri';
+/** @internal */ const refBinding = 'rj';
+/** @internal */ const iteratorBinding = 'rk';
+/** @internal */ const multiAttr = 'rl';
+/** @internal */ const textBinding = 'ha';
+/** @internal */ const listenerBinding = 'hb';
+/** @internal */ const attributeBinding = 'hc';
+/** @internal */ const stylePropertyBinding = 'hd';
+/** @internal */ const setAttribute = 'he';
+/** @internal */ const setClassAttribute = 'hf';
+/** @internal */ const setStyleAttribute = 'hg';
+/** @internal */ const spreadBinding = 'hs';
+/** @internal */ const spreadElementProp = 'hp';
+const InstructionType = /*@__PURE__*/ objectFreeze({
+    hydrateElement,
+    hydrateAttribute,
+    hydrateTemplateController,
+    hydrateLetElement,
+    setProperty,
+    interpolation,
+    propertyBinding,
+    letBinding,
+    refBinding,
+    iteratorBinding,
+    multiAttr,
+    textBinding,
+    listenerBinding,
+    attributeBinding,
+    stylePropertyBinding,
+    setAttribute,
+    setClassAttribute,
+    setStyleAttribute,
+    spreadBinding,
+    spreadElementProp,
+});
 const IInstruction = /*@__PURE__*/ createInterface('Instruction');
 function isInstruction(value) {
     const type = value.type;
@@ -3415,7 +3441,7 @@ class InterpolationInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
-        this.type = "rf" /* InstructionType.interpolation */;
+        this.type = interpolation;
     }
 }
 class PropertyBindingInstruction {
@@ -3423,7 +3449,7 @@ class PropertyBindingInstruction {
         this.from = from;
         this.to = to;
         this.mode = mode;
-        this.type = "rg" /* InstructionType.propertyBinding */;
+        this.type = propertyBinding;
     }
 }
 class IteratorBindingInstruction {
@@ -3431,21 +3457,21 @@ class IteratorBindingInstruction {
         this.forOf = forOf;
         this.to = to;
         this.props = props;
-        this.type = "rk" /* InstructionType.iteratorBinding */;
+        this.type = iteratorBinding;
     }
 }
 class RefBindingInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
-        this.type = "rj" /* InstructionType.refBinding */;
+        this.type = refBinding;
     }
 }
 class SetPropertyInstruction {
     constructor(value, to) {
         this.value = value;
         this.to = to;
-        this.type = "re" /* InstructionType.setProperty */;
+        this.type = setProperty;
     }
 }
 class MultiAttrInstruction {
@@ -3453,7 +3479,7 @@ class MultiAttrInstruction {
         this.value = value;
         this.to = to;
         this.command = command;
-        this.type = "rl" /* InstructionType.multiAttr */;
+        this.type = multiAttr;
     }
 }
 class HydrateElementInstruction {
@@ -3486,7 +3512,7 @@ class HydrateElementInstruction {
         this.projections = projections;
         this.containerless = containerless;
         this.captures = captures;
-        this.type = "ra" /* InstructionType.hydrateElement */;
+        this.type = hydrateElement;
         /**
          * A special property that can be used to store <au-slot/> usage information
          */
@@ -3505,7 +3531,7 @@ class HydrateAttributeInstruction {
         this.res = res;
         this.alias = alias;
         this.props = props;
-        this.type = "rb" /* InstructionType.hydrateAttribute */;
+        this.type = hydrateAttribute;
     }
 }
 class HydrateTemplateController {
@@ -3521,27 +3547,27 @@ class HydrateTemplateController {
         this.res = res;
         this.alias = alias;
         this.props = props;
-        this.type = "rc" /* InstructionType.hydrateTemplateController */;
+        this.type = hydrateTemplateController;
     }
 }
 class HydrateLetElementInstruction {
     constructor(instructions, toBindingContext) {
         this.instructions = instructions;
         this.toBindingContext = toBindingContext;
-        this.type = "rd" /* InstructionType.hydrateLetElement */;
+        this.type = hydrateLetElement;
     }
 }
 class LetBindingInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
-        this.type = "ri" /* InstructionType.letBinding */;
+        this.type = letBinding;
     }
 }
 class TextBindingInstruction {
     constructor(from) {
         this.from = from;
-        this.type = "ha" /* InstructionType.textBinding */;
+        this.type = textBinding;
     }
 }
 class ListenerBindingInstruction {
@@ -3550,33 +3576,33 @@ class ListenerBindingInstruction {
         this.to = to;
         this.preventDefault = preventDefault;
         this.capture = capture;
-        this.type = "hb" /* InstructionType.listenerBinding */;
+        this.type = listenerBinding;
     }
 }
 class StylePropertyBindingInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
-        this.type = "hd" /* InstructionType.stylePropertyBinding */;
+        this.type = stylePropertyBinding;
     }
 }
 class SetAttributeInstruction {
     constructor(value, to) {
         this.value = value;
         this.to = to;
-        this.type = "he" /* InstructionType.setAttribute */;
+        this.type = setAttribute;
     }
 }
 class SetClassAttributeInstruction {
     constructor(value) {
         this.value = value;
-        this.type = "hf" /* InstructionType.setClassAttribute */;
+        this.type = setClassAttribute;
     }
 }
 class SetStyleAttributeInstruction {
     constructor(value) {
         this.value = value;
-        this.type = "hg" /* InstructionType.setStyleAttribute */;
+        this.type = setStyleAttribute;
     }
 }
 class AttributeBindingInstruction {
@@ -3591,18 +3617,18 @@ class AttributeBindingInstruction {
         this.attr = attr;
         this.from = from;
         this.to = to;
-        this.type = "hc" /* InstructionType.attributeBinding */;
+        this.type = attributeBinding;
     }
 }
 class SpreadBindingInstruction {
     constructor() {
-        this.type = "hs" /* InstructionType.spreadBinding */;
+        this.type = spreadBinding;
     }
 }
 class SpreadElementPropBindingInstruction {
     constructor(instructions) {
         this.instructions = instructions;
-        this.type = "hp" /* InstructionType.spreadElementProp */;
+        this.type = spreadElementProp;
     }
 }
 const ITemplateCompiler = /*@__PURE__*/ createInterface('ITemplateCompiler');
@@ -3669,7 +3695,7 @@ let SetPropertyRenderer = class SetPropertyRenderer {
     }
 };
 SetPropertyRenderer = __decorate([
-    renderer("re" /* InstructionType.setProperty */)
+    renderer(setProperty)
     /** @internal */
 ], SetPropertyRenderer);
 let CustomElementRenderer = class CustomElementRenderer {
@@ -3737,7 +3763,7 @@ let CustomElementRenderer = class CustomElementRenderer {
     }
 };
 CustomElementRenderer = __decorate([
-    renderer("ra" /* InstructionType.hydrateElement */)
+    renderer(hydrateElement)
     /** @internal */
 ], CustomElementRenderer);
 let CustomAttributeRenderer = class CustomAttributeRenderer {
@@ -3798,7 +3824,7 @@ let CustomAttributeRenderer = class CustomAttributeRenderer {
     }
 };
 CustomAttributeRenderer = __decorate([
-    renderer("rb" /* InstructionType.hydrateAttribute */)
+    renderer(hydrateAttribute)
     /** @internal */
 ], CustomAttributeRenderer);
 let TemplateControllerRenderer = class TemplateControllerRenderer {
@@ -3858,7 +3884,7 @@ let TemplateControllerRenderer = class TemplateControllerRenderer {
     }
 };
 TemplateControllerRenderer = __decorate([
-    renderer("rc" /* InstructionType.hydrateTemplateController */)
+    renderer(hydrateTemplateController)
     /** @internal */
 ], TemplateControllerRenderer);
 let LetElementRenderer = class LetElementRenderer {
@@ -3880,7 +3906,7 @@ let LetElementRenderer = class LetElementRenderer {
     }
 };
 LetElementRenderer = __decorate([
-    renderer("rd" /* InstructionType.hydrateLetElement */)
+    renderer(hydrateLetElement)
     /** @internal */
 ], LetElementRenderer);
 let RefBindingRenderer = class RefBindingRenderer {
@@ -3889,16 +3915,16 @@ let RefBindingRenderer = class RefBindingRenderer {
     }
 };
 RefBindingRenderer = __decorate([
-    renderer("rj" /* InstructionType.refBinding */)
+    renderer(refBinding)
     /** @internal */
 ], RefBindingRenderer);
 let InterpolationBindingRenderer = class InterpolationBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, 2 /* BindingMode.toView */));
+        renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, toView));
     }
 };
 InterpolationBindingRenderer = __decorate([
-    renderer("rf" /* InstructionType.interpolation */)
+    renderer(interpolation)
     /** @internal */
 ], InterpolationBindingRenderer);
 let PropertyBindingRenderer = class PropertyBindingRenderer {
@@ -3907,16 +3933,16 @@ let PropertyBindingRenderer = class PropertyBindingRenderer {
     }
 };
 PropertyBindingRenderer = __decorate([
-    renderer("rg" /* InstructionType.propertyBinding */)
+    renderer(propertyBinding)
     /** @internal */
 ], PropertyBindingRenderer);
 let IteratorBindingRenderer = class IteratorBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.forOf, etIsIterator), getTarget(target), instruction.to, 2 /* BindingMode.toView */));
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.forOf, etIsIterator), getTarget(target), instruction.to, toView));
     }
 };
 IteratorBindingRenderer = __decorate([
-    renderer("rk" /* InstructionType.iteratorBinding */)
+    renderer(iteratorBinding)
     /** @internal */
 ], IteratorBindingRenderer);
 let TextBindingRenderer = class TextBindingRenderer {
@@ -3925,7 +3951,7 @@ let TextBindingRenderer = class TextBindingRenderer {
     }
 };
 TextBindingRenderer = __decorate([
-    renderer("ha" /* InstructionType.textBinding */)
+    renderer(textBinding)
     /** @internal */
 ], TextBindingRenderer);
 let ListenerBindingRenderer = class ListenerBindingRenderer {
@@ -3934,7 +3960,7 @@ let ListenerBindingRenderer = class ListenerBindingRenderer {
     }
 };
 ListenerBindingRenderer = __decorate([
-    renderer("hb" /* InstructionType.listenerBinding */)
+    renderer(listenerBinding)
     /** @internal */
 ], ListenerBindingRenderer);
 let SetAttributeRenderer = class SetAttributeRenderer {
@@ -3943,7 +3969,7 @@ let SetAttributeRenderer = class SetAttributeRenderer {
     }
 };
 SetAttributeRenderer = __decorate([
-    renderer("he" /* InstructionType.setAttribute */)
+    renderer(setAttribute)
     /** @internal */
 ], SetAttributeRenderer);
 let SetClassAttributeRenderer = class SetClassAttributeRenderer {
@@ -3952,7 +3978,7 @@ let SetClassAttributeRenderer = class SetClassAttributeRenderer {
     }
 };
 SetClassAttributeRenderer = __decorate([
-    renderer("hf" /* InstructionType.setClassAttribute */)
+    renderer(setClassAttribute)
 ], SetClassAttributeRenderer);
 let SetStyleAttributeRenderer = class SetStyleAttributeRenderer {
     render(_, target, instruction) {
@@ -3960,7 +3986,7 @@ let SetStyleAttributeRenderer = class SetStyleAttributeRenderer {
     }
 };
 SetStyleAttributeRenderer = __decorate([
-    renderer("hg" /* InstructionType.setStyleAttribute */)
+    renderer(setStyleAttribute)
 ], SetStyleAttributeRenderer);
 /* istanbul ignore next */
 const ambiguousStyles = [
@@ -3991,15 +4017,15 @@ let StylePropertyBindingRenderer = class StylePropertyBindingRenderer {
         {
             /* istanbul ignore next */
             if (ambiguousStyles.includes(instruction.to)) {
-                renderingCtrl.addBinding(new DevStylePropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, 2 /* BindingMode.toView */));
+                renderingCtrl.addBinding(new DevStylePropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
                 return;
             }
         }
-        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, 2 /* BindingMode.toView */));
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
     }
 };
 StylePropertyBindingRenderer = __decorate([
-    renderer("hd" /* InstructionType.stylePropertyBinding */)
+    renderer(stylePropertyBinding)
     /** @internal */
 ], StylePropertyBindingRenderer);
 /* istanbul ignore next */
@@ -4020,11 +4046,11 @@ let AttributeBindingRenderer = class AttributeBindingRenderer {
             : null;
         renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target, instruction.attr /* targetAttribute */, classMapping == null
             ? instruction.to /* targetKey */
-            : instruction.to.split(/\s/g).map(c => classMapping[c] ?? c).join(' '), 2 /* BindingMode.toView */));
+            : instruction.to.split(/\s/g).map(c => classMapping[c] ?? c).join(' '), toView));
     }
 };
 AttributeBindingRenderer = __decorate([
-    renderer("hc" /* InstructionType.attributeBinding */)
+    renderer(attributeBinding)
     /** @internal */
 ], AttributeBindingRenderer);
 let SpreadRenderer = class SpreadRenderer {
@@ -4039,7 +4065,7 @@ let SpreadRenderer = class SpreadRenderer {
     }
 };
 SpreadRenderer = __decorate([
-    renderer("hs" /* InstructionType.spreadBinding */)
+    renderer(spreadBinding)
 ], SpreadRenderer);
 // http://jsben.ch/7n5Kt
 function addClasses(classList, className) {
@@ -4321,7 +4347,7 @@ class Controller {
         return this._lifecycleHooks;
     }
     get isActive() {
-        return (this.state & (1 /* State.activating */ | 2 /* State.activated */)) > 0 && (this.state & 4 /* State.deactivating */) === 0;
+        return (this.state & (activating | activated)) > 0 && (this.state & deactivating) === 0;
     }
     get name() {
         if (this.parent === null) {
@@ -4399,7 +4425,7 @@ class Controller {
         this.location = null;
         /** @internal */
         this._lifecycleHooks = null;
-        this.state = 0 /* State.none */;
+        this.state = none;
         /** @internal */
         this._fullyNamed = false;
         this.$initiator = null;
@@ -4542,7 +4568,7 @@ class Controller {
     hydrationContext) {
         {
             this.logger = this.container.get(ILogger).root;
-            this.debug = this.logger.config.level <= 1 /* LogLevel.debug */;
+            this.debug = this.logger.config.level <= LogLevel.debug;
             if (this.debug) {
                 this.logger = this.logger.scopeTo(this.name);
             }
@@ -4688,8 +4714,8 @@ class Controller {
     }
     activate(initiator, parent, scope) {
         switch (this.state) {
-            case 0 /* State.none */:
-            case 8 /* State.deactivated */:
+            case none:
+            case deactivated:
                 if (!(parent === null || parent.isActive)) {
                     // If this is not the root, and the parent is either:
                     // 1. Not activated, or activating children OR
@@ -4699,12 +4725,12 @@ class Controller {
                 }
                 // Otherwise, proceed normally.
                 // 'deactivated' and 'none' are treated the same because, from an activation perspective, they mean the same thing.
-                this.state = 1 /* State.activating */;
+                this.state = activating;
                 break;
-            case 2 /* State.activated */:
+            case activated:
                 // If we're already activated, no need to do anything.
                 return;
-            case 32 /* State.disposed */:
+            case disposed:
                 throw createMappedError(502 /* ErrorNames.controller_activating_disposed */, this.name);
             default:
                 throw createMappedError(503 /* ErrorNames.controller_activation_unexpected_state */, this.name, stringifyState(this.state));
@@ -4754,7 +4780,7 @@ class Controller {
             this._ensurePromise();
             ret.then(() => {
                 this._isBindingDone = true;
-                if (this.state !== 1 /* State.activating */) {
+                if (this.state !== activating) {
                     // because controller can be deactivated, during a long running promise in the binding phase
                     this._leaveActivating();
                 }
@@ -4805,7 +4831,7 @@ class Controller {
             ret.then(() => {
                 this.isBound = true;
                 // because controller can be deactivated, during a long running promise in the bound phase
-                if (this.state !== 1 /* State.activating */) {
+                if (this.state !== activating) {
                     this._leaveActivating();
                 }
                 else {
@@ -4908,22 +4934,22 @@ class Controller {
     }
     deactivate(initiator, _parent) {
         let prevActivation = void 0;
-        switch ((this.state & ~16 /* State.released */)) {
-            case 2 /* State.activated */:
-                this.state = 4 /* State.deactivating */;
+        switch ((this.state & ~released)) {
+            case activated:
+                this.state = deactivating;
                 break;
-            case 1 /* State.activating */:
-                this.state = 4 /* State.deactivating */;
+            case activating:
+                this.state = deactivating;
                 // we are about to deactivate, the error from activation can be ignored
                 prevActivation = this.$promise?.catch(err => {
                         this.logger.warn('The activation error will be ignored, as the controller is already scheduled for deactivation. The activation was rejected with: %s', err);
                     }
                     );
                 break;
-            case 0 /* State.none */:
-            case 8 /* State.deactivated */:
-            case 32 /* State.disposed */:
-            case 8 /* State.deactivated */ | 32 /* State.disposed */:
+            case none:
+            case deactivated:
+            case disposed:
+            case deactivated | disposed:
                 // If we're already deactivated (or even disposed), or never activated in the first place, no need to do anything.
                 return;
             default:
@@ -5033,7 +5059,7 @@ class Controller {
                 if (!this.hasLockedScope) {
                     this.scope = null;
                 }
-                if ((this.state & 16 /* State.released */) === 16 /* State.released */ &&
+                if ((this.state & released) === released &&
                     !this.viewFactory.tryReturnToCache(this) &&
                     this.$initiator === this) {
                     this.dispose();
@@ -5043,7 +5069,7 @@ class Controller {
                 this.scope.parent = null;
                 break;
         }
-        this.state = 8 /* State.deactivated */;
+        this.state = deactivated;
         this.$initiator = null;
         this._resolve();
     }
@@ -5089,7 +5115,7 @@ class Controller {
     }
     /** @internal */
     _leaveActivating() {
-        if (this.state !== 1 /* State.activating */) {
+        if (this.state !== activating) {
             --this._activatingStack;
             // skip doing rest of the work if the controller is deactivated.
             this._resolve();
@@ -5112,7 +5138,7 @@ class Controller {
             if (isPromise(_retPromise)) {
                 this._ensurePromise();
                 _retPromise.then(() => {
-                    this.state = 2 /* State.activated */;
+                    this.state = activated;
                     // Resolve this.$promise, signaling that activation is done (path 1 of 2)
                     this._resolve();
                     if (this.$initiator !== this) {
@@ -5125,7 +5151,7 @@ class Controller {
                 return;
             }
             _retPromise = void 0;
-            this.state = 2 /* State.activated */;
+            this.state = activated;
             // Resolve this.$promise (if present), signaling that activation is done (path 2 of 2)
             this._resolve();
         }
@@ -5272,17 +5298,17 @@ class Controller {
         return this;
     }
     release() {
-        this.state |= 16 /* State.released */;
+        this.state |= released;
     }
     dispose() {
         /* istanbul ignore next */
         if (this.debug) {
             this.logger.trace(`dispose()`);
         }
-        if ((this.state & 32 /* State.disposed */) === 32 /* State.disposed */) {
+        if ((this.state & disposed) === disposed) {
             return;
         }
-        this.state |= 32 /* State.disposed */;
+        this.state |= disposed;
         if (this._vmHooks._dispose) {
             this._vm.dispose();
         }
@@ -5421,34 +5447,40 @@ const defaultShadowOptions = {
 const vmkCe = 'customElement';
 const vmkCa = 'customAttribute';
 const vmkSynth = 'synthetic';
-var State;
-(function (State) {
-    State[State["none"] = 0] = "none";
-    State[State["activating"] = 1] = "activating";
-    State[State["activated"] = 2] = "activated";
-    State[State["deactivating"] = 4] = "deactivating";
-    State[State["deactivated"] = 8] = "deactivated";
-    State[State["released"] = 16] = "released";
-    State[State["disposed"] = 32] = "disposed";
-})(State || (State = {}));
+/** @internal */ const none = 0;
+/** @internal */ const activating = 1;
+/** @internal */ const activated = 2;
+/** @internal */ const deactivating = 4;
+/** @internal */ const deactivated = 8;
+/** @internal */ const released = 16;
+/** @internal */ const disposed = 32;
+const State = /*@__PURE__*/ objectFreeze({
+    none,
+    activating,
+    activated,
+    deactivating,
+    deactivated,
+    released,
+    disposed,
+});
 function stringifyState(state) {
     const names = [];
-    if ((state & 1 /* State.activating */) === 1 /* State.activating */) {
+    if ((state & activating) === activating) {
         names.push('activating');
     }
-    if ((state & 2 /* State.activated */) === 2 /* State.activated */) {
+    if ((state & activated) === activated) {
         names.push('activated');
     }
-    if ((state & 4 /* State.deactivating */) === 4 /* State.deactivating */) {
+    if ((state & deactivating) === deactivating) {
         names.push('deactivating');
     }
-    if ((state & 8 /* State.deactivated */) === 8 /* State.deactivated */) {
+    if ((state & deactivated) === deactivated) {
         names.push('deactivated');
     }
-    if ((state & 16 /* State.released */) === 16 /* State.released */) {
+    if ((state & released) === released) {
         names.push('released');
     }
-    if ((state & 32 /* State.disposed */) === 32 /* State.disposed */) {
+    if ((state & disposed) === disposed) {
         names.push('disposed');
     }
     return names.length === 0 ? 'none' : names.join('|');
@@ -6269,7 +6301,7 @@ let OneTimeBindingCommand = class OneTimeBindingCommand {
             }
             target = info.bindable.name;
         }
-        return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, 1 /* BindingMode.oneTime */);
+        return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, oneTime);
     }
 };
 OneTimeBindingCommand = __decorate([
@@ -6295,7 +6327,7 @@ let ToViewBindingCommand = class ToViewBindingCommand {
             }
             target = info.bindable.name;
         }
-        return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, 2 /* BindingMode.toView */);
+        return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, toView);
     }
 };
 ToViewBindingCommand = __decorate([
@@ -6321,7 +6353,7 @@ let FromViewBindingCommand = class FromViewBindingCommand {
             }
             target = info.bindable.name;
         }
-        return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, 4 /* BindingMode.fromView */);
+        return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, fromView);
     }
 };
 FromViewBindingCommand = __decorate([
@@ -6347,7 +6379,7 @@ let TwoWayBindingCommand = class TwoWayBindingCommand {
             }
             target = info.bindable.name;
         }
-        return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, 6 /* BindingMode.twoWay */);
+        return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, twoWay);
     }
 };
 TwoWayBindingCommand = __decorate([
@@ -6358,12 +6390,12 @@ let DefaultBindingCommand = class DefaultBindingCommand {
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         const bindable = info.bindable;
-        let defaultMode;
+        let defaultMode$1;
         let mode;
         let target = attr.target;
         let value = attr.rawValue;
         if (bindable == null) {
-            mode = attrMapper.isTwoWay(info.node, target) ? 6 /* BindingMode.twoWay */ : 2 /* BindingMode.toView */;
+            mode = attrMapper.isTwoWay(info.node, target) ? twoWay : toView;
             target = attrMapper.map(info.node, target)
                 // if the mapper doesn't know how to map it
                 // use the default behavior, which is camel-casing
@@ -6375,11 +6407,11 @@ let DefaultBindingCommand = class DefaultBindingCommand {
             if (value === '' && info.def.type === dtElement) {
                 value = camelCase(target);
             }
-            defaultMode = info.def.defaultBindingMode;
-            mode = bindable.mode === 8 /* BindingMode.default */ || bindable.mode == null
-                ? defaultMode == null || defaultMode === 8 /* BindingMode.default */
-                    ? 2 /* BindingMode.toView */
-                    : defaultMode
+            defaultMode$1 = info.def.defaultBindingMode;
+            mode = bindable.mode === defaultMode || bindable.mode == null
+                ? defaultMode$1 == null || defaultMode$1 === defaultMode
+                    ? toView
+                    : defaultMode$1
                 : bindable.mode;
             target = bindable.name;
         }
@@ -6767,27 +6799,6 @@ function createError(attr, tagName) {
     return createMappedError(719 /* ErrorNames.compiler_attr_mapper_duplicate_mapping */, attr, tagName);
 }
 
-// Note: the oneTime binding now has a non-zero value for 2 reasons:
-//  - plays nicer with bitwise operations (more consistent code, more explicit settings)
-//  - allows for potentially having something like BindingMode.oneTime | BindingMode.fromView, where an initial value is set once to the view but updates from the view also propagate back to the view model
-//
-// Furthermore, the "default" mode would be for simple ".bind" expressions to make it explicit for our logic that the default is being used.
-// This essentially adds extra information which binding could use to do smarter things and allows bindingBehaviors that add a mode instead of simply overwriting it
-/**
- * Mode of a binding to operate
- */
-var BindingMode;
-(function (BindingMode) {
-    BindingMode[BindingMode["oneTime"] = 1] = "oneTime";
-    BindingMode[BindingMode["toView"] = 2] = "toView";
-    BindingMode[BindingMode["fromView"] = 4] = "fromView";
-    BindingMode[BindingMode["twoWay"] = 6] = "twoWay";
-    /**
-     * Unspecified mode, bindings may act differently with this mode
-     */
-    BindingMode[BindingMode["default"] = 8] = "default";
-})(BindingMode || (BindingMode = {}));
-
 const nsMap = createLookup();
 /**
  * Attribute accessor in a XML document/element that can be accessed via a namespace.
@@ -6805,7 +6816,7 @@ class AttributeNSAccessor {
         this.ns = ns;
         // ObserverType.Layout is not always true, it depends on the property
         // but for simplicity, always treat as such
-        this.type = 2 /* AccessorType.Node */ | 4 /* AccessorType.Layout */;
+        this.type = (atNode | atLayout);
     }
     getValue(obj, propertyKey) {
         return obj.getAttributeNS(this.ns, propertyKey);
@@ -6832,7 +6843,7 @@ class DataAttributeAccessor {
     constructor() {
         // ObserverType.Layout is not always true, it depends on the property
         // but for simplicity, always treat as such
-        this.type = 2 /* AccessorType.Node */ | 4 /* AccessorType.Layout */;
+        this.type = (atNode | atLayout);
     }
     getValue(obj, key) {
         return obj.getAttribute(key);
@@ -6863,7 +6874,7 @@ class SelectValueObserver {
     _key, config, observerLocator) {
         // ObserverType.Layout is not always true
         // but for simplicity, always treat as such
-        this.type = 2 /* AccessorType.Node */ | 1 /* AccessorType.Observer */ | 4 /* AccessorType.Layout */;
+        this.type = (atNode | atObserver | atLayout);
         /** @internal */
         this._value = void 0;
         /** @internal */
@@ -7113,7 +7124,7 @@ const customPropertyPrefix = '--';
 class StyleAttributeAccessor {
     constructor(obj) {
         this.obj = obj;
-        this.type = 2 /* AccessorType.Node */ | 4 /* AccessorType.Layout */;
+        this.type = (atNode | atLayout);
         /** @internal */
         this._value = '';
         /** @internal */
@@ -7267,7 +7278,7 @@ class ValueAttributeObserver {
     constructor(obj, key, config) {
         // ObserverType.Layout is not always true, it depends on the element & property combo
         // but for simplicity, always treat as such
-        this.type = 2 /* AccessorType.Node */ | 1 /* AccessorType.Observer */ | 4 /* AccessorType.Layout */;
+        this.type = (atNode | atObserver | atLayout);
         /** @internal */
         this._value = '';
         /** @internal */
@@ -7359,7 +7370,7 @@ const nsAttributes = objectAssign(createLookup(), {
     'xmlns:xlink': ['xlink', xmlnsNS],
 });
 const elementPropertyAccessor = new PropertyAccessor();
-elementPropertyAccessor.type = 2 /* AccessorType.Node */ | 4 /* AccessorType.Layout */;
+elementPropertyAccessor.type = (atNode | atLayout);
 class NodeObserverLocator {
     constructor() {
         /**
@@ -7626,7 +7637,7 @@ class CheckedObserver {
     constructor(obj, 
     // deepscan-disable-next-line
     _key, config, observerLocator) {
-        this.type = 2 /* AccessorType.Node */ | 1 /* AccessorType.Observer */ | 4 /* AccessorType.Layout */;
+        this.type = (atNode | atObserver | atLayout);
         /** @internal */
         this._value = void 0;
         /** @internal */
@@ -7895,7 +7906,7 @@ class UpdateTriggerBindingBehavior {
         if (events.length === 0) {
             throw createMappedError(802 /* ErrorNames.update_trigger_behavior_no_triggers */);
         }
-        if (!(binding instanceof PropertyBinding) || !(binding.mode & 4 /* BindingMode.fromView */)) {
+        if (!(binding instanceof PropertyBinding) || !(binding.mode & fromView)) {
             throw createMappedError(803 /* ErrorNames.update_trigger_invalid_usage */);
         }
         // ensure the binding's target observer has been set.
@@ -9023,7 +9034,7 @@ __decorate([
                 default: return !!v;
             }
         },
-        mode: 1 /* BindingMode.oneTime */
+        mode: oneTime
     })
 ], Case.prototype, "fallThrough", void 0);
 Case = __decorate([
@@ -9182,7 +9193,7 @@ let PendingTemplateController = class PendingTemplateController {
     }
 };
 __decorate([
-    bindable({ mode: 2 /* BindingMode.toView */ })
+    bindable({ mode: toView })
 ], PendingTemplateController.prototype, "value", void 0);
 PendingTemplateController = __decorate([
     templateController(tsPending)
@@ -9223,7 +9234,7 @@ let FulfilledTemplateController = class FulfilledTemplateController {
     }
 };
 __decorate([
-    bindable({ mode: 4 /* BindingMode.fromView */ })
+    bindable({ mode: fromView })
 ], FulfilledTemplateController.prototype, "value", void 0);
 FulfilledTemplateController = __decorate([
     templateController('then')
@@ -9264,7 +9275,7 @@ let RejectedTemplateController = class RejectedTemplateController {
     }
 };
 __decorate([
-    bindable({ mode: 4 /* BindingMode.fromView */ })
+    bindable({ mode: fromView })
 ], RejectedTemplateController.prototype, "value", void 0);
 RejectedTemplateController = __decorate([
     templateController('catch')
@@ -9407,7 +9418,7 @@ class Focus {
 }
 /** @internal */ Focus.inject = [INode, IPlatform];
 __decorate([
-    bindable({ mode: 6 /* BindingMode.twoWay */ })
+    bindable({ mode: twoWay })
 ], Focus.prototype, "value", void 0);
 customAttribute('focus')(Focus);
 
@@ -9519,7 +9530,7 @@ class Portal {
     /** @internal */
     _deactivated(target) {
         const { deactivated, callbackContext, view } = this;
-        return deactivated?.call(callbackContext, target, view);
+        return onResolve(deactivated?.call(callbackContext, target, view), () => this._removeLocation());
     }
     /** @internal */
     _getTarget() {
@@ -9554,6 +9565,11 @@ class Portal {
             return $document.body;
         }
         return target;
+    }
+    /** @internal */
+    _removeLocation() {
+        this._targetLocation.remove();
+        this._targetLocation.$start.remove();
     }
     /** @internal */
     _moveLocation(target, position) {
@@ -9635,26 +9651,58 @@ let AuSlot = class AuSlot {
         this._subs = new Set();
         /** @internal */
         this._observer = null;
+        const hdrContext = resolve(IHydrationContext);
         const location = resolve(IRenderLocation);
         const instruction = resolve(IInstruction);
-        const hdrContext = resolve(IHydrationContext);
         const rendering = resolve(IRendering);
         const slotInfo = instruction.auSlot;
         const projection = hdrContext.instruction?.projections?.[slotInfo.name];
-        const contextController = hdrContext.controller;
+        const contextContainer = hdrContext.controller.container;
         let factory;
         let container;
         this.name = slotInfo.name;
         if (projection == null) {
-            factory = rendering.getViewFactory(slotInfo.fallback, contextController.container);
+            container = contextContainer.createChild({ inheritParentResources: true });
+            factory = rendering.getViewFactory(slotInfo.fallback, container);
             this._hasProjection = false;
         }
         else {
-            container = hdrContext.parent.controller.container.createChild({ inheritParentResources: true });
-            registerResolver(container, contextController.definition.Type, new InstanceProvider(void 0, contextController.viewModel));
+            // projection could happen within a projection, example:
+            // --my-app--
+            // <s-1>
+            //   ---projection 1---
+            //   <s-2>
+            //     ---projection 2---
+            //     <s-3>
+            // for the template above, if <s-3> is injecting <S1>,
+            // we won't find the information in the hydration context hierarchy <MyApp>/<S3>
+            // as it's a flat wysiwyg structure based on the template html
+            //
+            // since we are construction the projection (2) view based on the
+            // container of <my-app>, we need to pre-register all information stored
+            // in projection (1) into the container created for the projection (2) view
+            // =============================
+            // my-app template:
+            // my-app  --- hydration context
+            // <el>     --- owning element (this has this <au-slot> that uses ---projection)
+            //   <s-1>  --- projection
+            //
+            container = contextContainer.createChild();
+            // registering resources from the parent hydration context is necessary
+            // as that's where the projection is declared in the template
+            //
+            // if neccessary, we can do the same gymnastic of registering information related to
+            // a custom element registration like in renderer.ts from line 1088 to 1098
+            // so we don't accidentally get information related to owning element (host, controller, instruction etc...)
+            // although it may be more desirable to have owning element information available here
+            container.useResources(hdrContext.parent.controller.container);
+            // doing this to shadow the owning element hydration context
+            // since we created a container out of the owning element container
+            // instead of the hydration context container
+            registerResolver(container, IHydrationContext, new InstanceProvider(void 0, hdrContext.parent));
             factory = rendering.getViewFactory(projection, container);
             this._hasProjection = true;
-            this._slotwatchers = contextController.container.getAll(IAuSlotWatcher, false)?.filter(w => w.slotName === '*' || w.slotName === slotInfo.name) ?? emptyArray;
+            this._slotwatchers = contextContainer.getAll(IAuSlotWatcher, false)?.filter(w => w.slotName === '*' || w.slotName === slotInfo.name) ?? emptyArray;
         }
         this._hasSlotWatcher = (this._slotwatchers ?? (this._slotwatchers = emptyArray)).length > 0;
         this._hdrContext = hdrContext;
@@ -10059,12 +10107,12 @@ __decorate([
 ], AuCompose.prototype, "scopeBehavior", void 0);
 __decorate([
     bindable({
-        mode: 4 /* BindingMode.fromView */
+        mode: fromView
     })
 ], AuCompose.prototype, "composing", null);
 __decorate([
     bindable({
-        mode: 4 /* BindingMode.fromView */
+        mode: fromView
     })
 ], AuCompose.prototype, "composition", null);
 customElement({
@@ -11592,7 +11640,7 @@ class TemplateCompiler {
         const nodeName = el.nodeName;
         return nodeName === 'INPUT' && orderSensitiveInputType[el.type] === 1
             || nodeName === 'SELECT' && (el.hasAttribute('multiple')
-                || instructions?.some(i => i.type === "rg" /* InstructionType.propertyBinding */ && i.to === 'multiple'));
+                || instructions?.some(i => i.type === propertyBinding && i.to === 'multiple'));
     }
     /** @internal */
     _reorder(el, instructions) {
@@ -11848,9 +11896,9 @@ class BindablesInfo {
             const attrs = createLookup();
             const defaultBindingMode = isAttr
                 ? def.defaultBindingMode === void 0
-                    ? 8 /* BindingMode.default */
+                    ? defaultMode
                     : def.defaultBindingMode
-                : 8 /* BindingMode.default */;
+                : defaultMode;
             let bindable;
             let prop;
             let hasPrimary = false;
@@ -11912,16 +11960,16 @@ const processTemplateName = (owningElementName, localTemplate, localTemplateName
 const getBindingMode = (bindable) => {
     switch (bindable.getAttribute("mode" /* LocalTemplateBindableAttributes.mode */)) {
         case 'oneTime':
-            return 1 /* BindingMode.oneTime */;
+            return oneTime;
         case 'toView':
-            return 2 /* BindingMode.toView */;
+            return toView;
         case 'fromView':
-            return 4 /* BindingMode.fromView */;
+            return fromView;
         case 'twoWay':
-            return 6 /* BindingMode.twoWay */;
+            return twoWay;
         case 'default':
         default:
-            return 8 /* BindingMode.default */;
+            return defaultMode;
     }
 };
 /**

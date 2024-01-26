@@ -1,5 +1,5 @@
 import { IContainer, IPlatform } from '@aurelia/kernel';
-import { AccessorType, type IObserver, type ISubscriberCollection, type IObservable, type ISubscriber } from '../observation';
+import { type AccessorType, type IObserver, type ISubscriberCollection, type IObservable, type ISubscriber } from '../observation';
 import type { IIndexable } from '@aurelia/kernel';
 export interface IDirtyChecker extends DirtyChecker {
 }

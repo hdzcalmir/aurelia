@@ -1,6 +1,6 @@
 import { Metadata, isObject } from '../../../metadata/dist/native-modules/index.mjs';
 import { DI, resolve, IEventAggregator, ILogger, Protocol, emptyArray, onResolve, onResolveAll, emptyObject, IContainer, Registration, isArrayIndex, IModuleLoader, InstanceProvider, noop } from '../../../kernel/dist/native-modules/index.mjs';
-import { isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, customElement, bindable, customAttribute, INode, getRef, CustomAttribute, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { BindingMode, isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, customElement, bindable, customAttribute, INode, getRef, CustomAttribute, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { RecognizedRoute, Endpoint, ConfigurableRoute, RESIDUE, RouteRecognizer } from '../../../route-recognizer/dist/native-modules/index.mjs';
 
 /**
@@ -326,6 +326,8 @@ function mergeURLSearchParams(source, other, clone) {
     }
     return query;
 }
+/** @internal */ const bmToView = BindingMode.toView;
+/** @internal */ const bmFromView = BindingMode.fromView;
 
 /**
  * @returns `true` if the given `value` is an non-null, non-undefined, and non-CustomElement object.
@@ -4904,19 +4906,19 @@ let LoadCustomAttribute = class LoadCustomAttribute {
     }
 };
 __decorate([
-    bindable({ mode: 2 /* BindingMode.toView */, primary: true, callback: 'valueChanged' })
+    bindable({ mode: bmToView, primary: true, callback: 'valueChanged' })
 ], LoadCustomAttribute.prototype, "route", void 0);
 __decorate([
-    bindable({ mode: 2 /* BindingMode.toView */, callback: 'valueChanged' })
+    bindable({ mode: bmToView, callback: 'valueChanged' })
 ], LoadCustomAttribute.prototype, "params", void 0);
 __decorate([
-    bindable({ mode: 2 /* BindingMode.toView */ })
+    bindable({ mode: bmToView })
 ], LoadCustomAttribute.prototype, "attribute", void 0);
 __decorate([
-    bindable({ mode: 4 /* BindingMode.fromView */ })
+    bindable({ mode: bmFromView })
 ], LoadCustomAttribute.prototype, "active", void 0);
 __decorate([
-    bindable({ mode: 2 /* BindingMode.toView */, callback: 'valueChanged' })
+    bindable({ mode: bmToView, callback: 'valueChanged' })
 ], LoadCustomAttribute.prototype, "context", void 0);
 LoadCustomAttribute = __decorate([
     customAttribute('load')
@@ -5012,7 +5014,7 @@ let HrefCustomAttribute = class HrefCustomAttribute {
     }
 };
 __decorate([
-    bindable({ mode: 2 /* BindingMode.toView */ })
+    bindable({ mode: bmToView })
 ], HrefCustomAttribute.prototype, "value", void 0);
 HrefCustomAttribute = __decorate([
     customAttribute({ name: 'href', noMultiBindings: true })

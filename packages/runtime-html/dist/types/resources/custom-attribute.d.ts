@@ -1,5 +1,5 @@
 import { Key } from '@aurelia/kernel';
-import { BindingMode } from '../binding/interfaces-bindings';
+import { type BindingMode } from '../binding/interfaces-bindings';
 import type { Constructable, IContainer, IResourceKind, ResourceDefinition, PartialResourceDefinition, ResourceType } from '@aurelia/kernel';
 import type { BindableDefinition, PartialBindableDefinition } from '../bindable';
 import type { ICustomAttributeViewModel, ICustomAttributeController } from '../templating/controller';

@@ -456,7 +456,7 @@ class RouterOptions {
         if (t instanceof Router) {
             t = t.configuration;
         } else {
-            t = t.get(d);
+            t = t.get(g);
         }
         return t.options;
     }
@@ -4708,7 +4708,7 @@ const l = /*@__PURE__*/ t.DI.createInterface("IRouter", (t => t.singleton(Router
 
 class Router {
     static get inject() {
-        return [ t.IContainer, t.IEventAggregator, exports.Navigator, a, a, d ];
+        return [ t.IContainer, t.IEventAggregator, exports.Navigator, a, a, g ];
     }
     constructor(t, i, e, s, n, r) {
         this.container = t;
@@ -5272,7 +5272,9 @@ function getLoadIndicator(t) {
     return i;
 }
 
-const f = i.CustomElement.createInjectable();
+const f = i.BindingMode.toView;
+
+const p = i.CustomElement.createInjectable();
 
 exports.ViewportCustomElement = class ViewportCustomElement {
     constructor(t, i, e, s, n, r) {
@@ -5412,10 +5414,10 @@ __decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "stateful", 
 
 exports.ViewportCustomElement = __decorate([ i.customElement({
     name: "au-viewport",
-    injectable: f
-}), __param(0, l), __param(1, i.INode), __param(2, t.IContainer), __param(3, t.IEventAggregator), __param(4, f), __param(5, i.IInstruction) ], exports.ViewportCustomElement);
+    injectable: p
+}), __param(0, l), __param(1, i.INode), __param(2, t.IContainer), __param(3, t.IEventAggregator), __param(4, p), __param(5, i.IInstruction) ], exports.ViewportCustomElement);
 
-const p = i.CustomElement.createInjectable();
+const d = i.CustomElement.createInjectable();
 
 exports.ViewportScopeCustomElement = class ViewportScopeCustomElement {
     constructor(t, i, e, s, n) {
@@ -5502,8 +5504,8 @@ exports.ViewportScopeCustomElement = __decorate([ i.customElement({
     name: "au-viewport-scope",
     template: "<template></template>",
     containerless: false,
-    injectable: p
-}), __param(0, l), __param(1, i.INode), __param(2, t.IContainer), __param(3, p), __param(4, i.IController) ], exports.ViewportScopeCustomElement);
+    injectable: d
+}), __param(0, l), __param(1, i.INode), __param(2, t.IContainer), __param(3, d), __param(4, i.IController) ], exports.ViewportScopeCustomElement);
 
 exports.LoadCustomAttribute = class LoadCustomAttribute {
     constructor(t, i, e, s) {
@@ -5596,7 +5598,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
 };
 
 __decorate([ i.bindable({
-    mode: 2
+    mode: f
 }) ], exports.LoadCustomAttribute.prototype, "value", void 0);
 
 __decorate([ i.bindable ], exports.LoadCustomAttribute.prototype, "component", void 0);
@@ -5657,7 +5659,7 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
 };
 
 __decorate([ i.bindable({
-    mode: 2
+    mode: f
 }) ], exports.HrefCustomAttribute.prototype, "value", void 0);
 
 exports.HrefCustomAttribute = __decorate([ i.customAttribute({
@@ -5668,34 +5670,34 @@ exports.HrefCustomAttribute = __decorate([ i.customAttribute({
 exports.ConsideredActiveCustomAttribute = class ConsideredActiveCustomAttribute {};
 
 __decorate([ i.bindable({
-    mode: 2
+    mode: f
 }) ], exports.ConsideredActiveCustomAttribute.prototype, "value", void 0);
 
 exports.ConsideredActiveCustomAttribute = __decorate([ i.customAttribute("considered-active") ], exports.ConsideredActiveCustomAttribute);
 
-const d = /*@__PURE__*/ t.DI.createInterface("IRouterConfiguration", (t => t.singleton(RouterConfiguration)));
+const g = /*@__PURE__*/ t.DI.createInterface("IRouterConfiguration", (t => t.singleton(RouterConfiguration)));
 
-const g = l;
+const v = l;
 
-const v = [ g ];
+const m = [ v ];
 
-const m = exports.ViewportCustomElement;
+const w = exports.ViewportCustomElement;
 
-const w = exports.ViewportScopeCustomElement;
+const R = exports.ViewportScopeCustomElement;
 
-const R = exports.LoadCustomAttribute;
+const y = exports.LoadCustomAttribute;
 
-const y = exports.HrefCustomAttribute;
+const I = exports.HrefCustomAttribute;
 
-const I = [ exports.ViewportCustomElement, exports.ViewportScopeCustomElement, exports.LoadCustomAttribute, exports.HrefCustomAttribute, exports.ConsideredActiveCustomAttribute ];
+const E = [ exports.ViewportCustomElement, exports.ViewportScopeCustomElement, exports.LoadCustomAttribute, exports.HrefCustomAttribute, exports.ConsideredActiveCustomAttribute ];
 
 class RouterConfiguration {
     static register(t) {
-        const e = t.get(d);
+        const e = t.get(g);
         e.options = RouterConfiguration.options;
         e.options.setRouterConfiguration(e);
         RouterConfiguration.options = RouterOptions.create();
-        return t.register(...v, ...I, i.AppTask.activating(l, RouterConfiguration.configurationCall), i.AppTask.activated(l, (t => t.initialLoad())), i.AppTask.deactivated(l, (t => t.stop())));
+        return t.register(...m, ...E, i.AppTask.activating(l, RouterConfiguration.configurationCall), i.AppTask.activated(l, (t => t.initialLoad())), i.AppTask.deactivated(l, (t => t.stop())));
     }
     static customize(t) {
         if (t === undefined) {
@@ -5718,7 +5720,7 @@ class RouterConfiguration {
         if (t instanceof Router) {
             return t.configuration;
         }
-        return t.get(d);
+        return t.get(g);
     }
     apply(t, i = false) {
         if (i) {
@@ -5745,9 +5747,9 @@ RouterConfiguration.configurationCall = t => {
 
 exports.ConfigurableRoute = o;
 
-exports.DefaultComponents = v;
+exports.DefaultComponents = m;
 
-exports.DefaultResources = I;
+exports.DefaultResources = E;
 
 exports.Endpoint = Endpoint$1;
 
@@ -5755,17 +5757,17 @@ exports.EndpointContent = EndpointContent;
 
 exports.FoundRoute = FoundRoute;
 
-exports.HrefCustomAttributeRegistration = y;
+exports.HrefCustomAttributeRegistration = I;
 
 exports.ILinkHandler = c;
 
 exports.IRouter = l;
 
-exports.IRouterConfiguration = d;
+exports.IRouterConfiguration = g;
 
 exports.InstructionParameters = InstructionParameters;
 
-exports.LoadCustomAttributeRegistration = R;
+exports.LoadCustomAttributeRegistration = y;
 
 exports.Navigation = Navigation;
 
@@ -5797,7 +5799,7 @@ exports.RouterNavigationStartEvent = RouterNavigationStartEvent;
 
 exports.RouterOptions = RouterOptions;
 
-exports.RouterRegistration = g;
+exports.RouterRegistration = v;
 
 exports.RouterStartEvent = RouterStartEvent;
 
@@ -5819,7 +5821,7 @@ exports.Viewport = Viewport;
 
 exports.ViewportContent = ViewportContent;
 
-exports.ViewportCustomElementRegistration = m;
+exports.ViewportCustomElementRegistration = w;
 
 exports.ViewportOptions = ViewportOptions;
 
@@ -5827,7 +5829,7 @@ exports.ViewportScope = ViewportScope;
 
 exports.ViewportScopeContent = ViewportScopeContent;
 
-exports.ViewportScopeCustomElementRegistration = w;
+exports.ViewportScopeCustomElementRegistration = R;
 
 exports.route = route;
 

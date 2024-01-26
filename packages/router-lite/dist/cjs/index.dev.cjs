@@ -330,6 +330,8 @@ function mergeURLSearchParams(source, other, clone) {
     }
     return query;
 }
+/** @internal */ const bmToView = runtimeHtml.BindingMode.toView;
+/** @internal */ const bmFromView = runtimeHtml.BindingMode.fromView;
 
 /**
  * @returns `true` if the given `value` is an non-null, non-undefined, and non-CustomElement object.
@@ -4908,19 +4910,19 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
     }
 };
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */, primary: true, callback: 'valueChanged' })
+    runtimeHtml.bindable({ mode: bmToView, primary: true, callback: 'valueChanged' })
 ], exports.LoadCustomAttribute.prototype, "route", void 0);
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */, callback: 'valueChanged' })
+    runtimeHtml.bindable({ mode: bmToView, callback: 'valueChanged' })
 ], exports.LoadCustomAttribute.prototype, "params", void 0);
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */ })
+    runtimeHtml.bindable({ mode: bmToView })
 ], exports.LoadCustomAttribute.prototype, "attribute", void 0);
 __decorate([
-    runtimeHtml.bindable({ mode: 4 /* BindingMode.fromView */ })
+    runtimeHtml.bindable({ mode: bmFromView })
 ], exports.LoadCustomAttribute.prototype, "active", void 0);
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */, callback: 'valueChanged' })
+    runtimeHtml.bindable({ mode: bmToView, callback: 'valueChanged' })
 ], exports.LoadCustomAttribute.prototype, "context", void 0);
 exports.LoadCustomAttribute = __decorate([
     runtimeHtml.customAttribute('load')
@@ -5016,7 +5018,7 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
     }
 };
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */ })
+    runtimeHtml.bindable({ mode: bmToView })
 ], exports.HrefCustomAttribute.prototype, "value", void 0);
 exports.HrefCustomAttribute = __decorate([
     runtimeHtml.customAttribute({ name: 'href', noMultiBindings: true })

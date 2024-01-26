@@ -1,9 +1,8 @@
 import { IAstEvaluator, IConnectableBinding } from '@aurelia/runtime';
-import { BindingMode } from './interfaces-bindings';
 import type { IServiceLocator } from '@aurelia/kernel';
 import type { ITask, TaskQueue } from '@aurelia/platform';
 import type { IBinding, ICollectionSubscriber, Interpolation, IObserverLocator, IsExpression, Scope } from '@aurelia/runtime';
-import type { IBindingController } from './interfaces-bindings';
+import type { BindingMode, IBindingController } from './interfaces-bindings';
 export interface InterpolationBinding extends IBinding {
 }
 export declare class InterpolationBinding implements IBinding {

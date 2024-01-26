@@ -2261,46 +2261,46 @@ function getVisibleText(e, t) {
 
 function instructionTypeName(e) {
     switch (e) {
-      case "ha":
+      case i.InstructionType.textBinding:
         return "textBinding";
 
-      case "rf":
+      case i.InstructionType.interpolation:
         return "interpolation";
 
-      case "rg":
+      case i.InstructionType.propertyBinding:
         return "propertyBinding";
 
-      case "rk":
+      case i.InstructionType.iteratorBinding:
         return "iteratorBinding";
 
-      case "hb":
+      case i.InstructionType.listenerBinding:
         return "listenerBinding";
 
-      case "rj":
+      case i.InstructionType.refBinding:
         return "refBinding";
 
-      case "hd":
+      case i.InstructionType.stylePropertyBinding:
         return "stylePropertyBinding";
 
-      case "re":
+      case i.InstructionType.setProperty:
         return "setProperty";
 
-      case "he":
+      case i.InstructionType.setAttribute:
         return "setAttribute";
 
-      case "ra":
+      case i.InstructionType.hydrateElement:
         return "hydrateElement";
 
-      case "rb":
+      case i.InstructionType.hydrateAttribute:
         return "hydrateAttribute";
 
-      case "rc":
+      case i.InstructionType.hydrateTemplateController:
         return "hydrateTemplateController";
 
-      case "rd":
+      case i.InstructionType.hydrateLetElement:
         return "hydrateLetElement";
 
-      case "ri":
+      case i.InstructionType.letBinding:
         return "letBinding";
 
       default:

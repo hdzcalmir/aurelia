@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { ConsoleSink, LoggerConfiguration } from '@aurelia/kernel';
+import { ConsoleSink, LoggerConfiguration, LogLevel } from '@aurelia/kernel';
 import { ISignaler } from '@aurelia/runtime';
 import { customElement, valueConverter, Aurelia, ValueConverter } from '@aurelia/runtime-html';
 import { assert, createFixture, TestContext } from '@aurelia/testing';
@@ -18,7 +18,7 @@ describe('3-runtime-html/signaler.integration.spec.ts', function () {
     it('1 non-observed input and 2 observed inputs - toView', async function () {
         const ctx = TestContext.create();
         const tq = ctx.platform.domWriteQueue;
-        ctx.container.register(LoggerConfiguration.create({ sinks: [ConsoleSink], level: 3 /* LogLevel.warn */ }));
+        ctx.container.register(LoggerConfiguration.create({ sinks: [ConsoleSink], level: LogLevel.warn }));
         const au = new Aurelia(ctx.container);
         const host = ctx.createElement('div');
         let counter = 0;
@@ -85,7 +85,7 @@ describe('3-runtime-html/signaler.integration.spec.ts', function () {
             it(expr, async function () {
                 const ctx = TestContext.create();
                 const tq = ctx.platform.domWriteQueue;
-                ctx.container.register(LoggerConfiguration.create({ $console: console, level: 3 /* LogLevel.warn */ }));
+                ctx.container.register(LoggerConfiguration.create({ $console: console, level: LogLevel.warn }));
                 const au = new Aurelia(ctx.container);
                 const host = ctx.createElement('div');
                 const items = [0, 1, 2];

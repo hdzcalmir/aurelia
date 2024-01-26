@@ -49,6 +49,7 @@ function ensureProto(proto, key, defaultValue) {
     }
 }
 /** @internal */ const objectAssign = Object.assign;
+/** @internal */ const objectFreeze = Object.freeze;
 // this is used inside template literal, since TS errs without String(...value)
 /** @internal */ const safeString = String;
 /** @internal */ const createInterface = DI.createInterface;
@@ -389,36 +390,36 @@ class Unparser {
     }
 }
 
-const ekAccessThis = 'AccessThis';
-const ekAccessGlobal = 'AccessGlobal';
-const ekAccessScope = 'AccessScope';
-const ekArrayLiteral = 'ArrayLiteral';
-const ekObjectLiteral = 'ObjectLiteral';
-const ekPrimitiveLiteral = 'PrimitiveLiteral';
-const ekTemplate = 'Template';
-const ekUnary = 'Unary';
-const ekCallScope = 'CallScope';
-const ekCallMember = 'CallMember';
-const ekCallFunction = 'CallFunction';
-const ekCallGlobal = 'CallGlobal';
-const ekAccessMember = 'AccessMember';
-const ekAccessKeyed = 'AccessKeyed';
-const ekTaggedTemplate = 'TaggedTemplate';
-const ekBinary = 'Binary';
-const ekConditional = 'Conditional';
-const ekAssign = 'Assign';
-const ekArrowFunction = 'ArrowFunction';
-const ekValueConverter = 'ValueConverter';
-const ekBindingBehavior = 'BindingBehavior';
-const ekArrayBindingPattern = 'ArrayBindingPattern';
-const ekObjectBindingPattern = 'ObjectBindingPattern';
-const ekBindingIdentifier = 'BindingIdentifier';
-const ekForOfStatement = 'ForOfStatement';
-const ekInterpolation = 'Interpolation';
-const ekArrayDestructuring = 'ArrayDestructuring';
-const ekObjectDestructuring = 'ObjectDestructuring';
-const ekDestructuringAssignmentLeaf = 'DestructuringAssignmentLeaf';
-const ekCustom = 'Custom';
+/** @internal */ const ekAccessThis = 'AccessThis';
+/** @internal */ const ekAccessGlobal = 'AccessGlobal';
+/** @internal */ const ekAccessScope = 'AccessScope';
+/** @internal */ const ekArrayLiteral = 'ArrayLiteral';
+/** @internal */ const ekObjectLiteral = 'ObjectLiteral';
+/** @internal */ const ekPrimitiveLiteral = 'PrimitiveLiteral';
+/** @internal */ const ekTemplate = 'Template';
+/** @internal */ const ekUnary = 'Unary';
+/** @internal */ const ekCallScope = 'CallScope';
+/** @internal */ const ekCallMember = 'CallMember';
+/** @internal */ const ekCallFunction = 'CallFunction';
+/** @internal */ const ekCallGlobal = 'CallGlobal';
+/** @internal */ const ekAccessMember = 'AccessMember';
+/** @internal */ const ekAccessKeyed = 'AccessKeyed';
+/** @internal */ const ekTaggedTemplate = 'TaggedTemplate';
+/** @internal */ const ekBinary = 'Binary';
+/** @internal */ const ekConditional = 'Conditional';
+/** @internal */ const ekAssign = 'Assign';
+/** @internal */ const ekArrowFunction = 'ArrowFunction';
+/** @internal */ const ekValueConverter = 'ValueConverter';
+/** @internal */ const ekBindingBehavior = 'BindingBehavior';
+/** @internal */ const ekArrayBindingPattern = 'ArrayBindingPattern';
+/** @internal */ const ekObjectBindingPattern = 'ObjectBindingPattern';
+/** @internal */ const ekBindingIdentifier = 'BindingIdentifier';
+/** @internal */ const ekForOfStatement = 'ForOfStatement';
+/** @internal */ const ekInterpolation = 'Interpolation';
+/** @internal */ const ekArrayDestructuring = 'ArrayDestructuring';
+/** @internal */ const ekObjectDestructuring = 'ObjectDestructuring';
+/** @internal */ const ekDestructuringAssignmentLeaf = 'DestructuringAssignmentLeaf';
+/** @internal */ const ekCustom = 'Custom';
 class CustomExpression {
     constructor(value) {
         this.value = value;
@@ -1494,11 +1495,14 @@ const autoObserveArrayMethods = 'at map filter includes indexOf lastIndexOf find
 // entries, // not meaningful in template
 
 const ICoercionConfiguration = /*@__PURE__*/ DI.createInterface('ICoercionConfiguration');
-var AccessorType;
-(function (AccessorType) {
-    AccessorType[AccessorType["None"] = 0] = "None";
-    AccessorType[AccessorType["Observer"] = 1] = "Observer";
-    AccessorType[AccessorType["Node"] = 2] = "Node";
+/** @internal */ const atNone = 0;
+/** @internal */ const atObserver = 1;
+/** @internal */ const atNode = 2;
+/** @internal */ const atLayout = 4;
+const AccessorType = /*@__PURE__*/ objectFreeze({
+    None: atNone,
+    Observer: atObserver,
+    Node: atNode,
     // misc characteristic of accessors/observers when update
     //
     // by default, everything is synchronous
@@ -1507,8 +1511,8 @@ var AccessorType;
     // queue it instead
     // todo: https://gist.github.com/paulirish/5d52fb081b3570c81e3a
     // todo: https://csstriggers.com/
-    AccessorType[AccessorType["Layout"] = 4] = "Layout";
-})(AccessorType || (AccessorType = {}));
+    Layout: atLayout,
+});
 function copyIndexMap(existing, deletedIndices, deletedItems) {
     const { length } = existing;
     const arr = Array(length);
@@ -1719,7 +1723,7 @@ function removeSubscriber(subscriber) {
 class CollectionLengthObserver {
     constructor(owner) {
         this.owner = owner;
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         this._value = (this._obj = owner.collection).length;
     }
     getValue() {
@@ -1754,7 +1758,7 @@ class CollectionLengthObserver {
 class CollectionSizeObserver {
     constructor(owner) {
         this.owner = owner;
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         this._value = (this._obj = owner.collection).size;
     }
     getValue() {
@@ -2169,7 +2173,7 @@ function disableArrayObservation() {
 }
 class ArrayObserver {
     constructor(array) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         if (!enableArrayObservationCalled) {
             enableArrayObservationCalled = true;
             enableArrayObservation();
@@ -2380,7 +2384,7 @@ function disableSetObservation() {
 }
 class SetObserver {
     constructor(observedSet) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         if (!enableSetObservationCalled) {
             enableSetObservationCalled = true;
             enableSetObservation();
@@ -2544,7 +2548,7 @@ function disableMapObservation() {
 }
 class MapObserver {
     constructor(map) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         if (!enableMapObservationCalled) {
             enableMapObservationCalled = true;
             enableMapObservation();
@@ -4227,7 +4231,7 @@ function exitConnectable(connectable) {
     _connectable = connectables.length > 0 ? connectables[connectables.length - 1] : null;
     connecting = _connectable != null;
 }
-const ConnectableSwitcher = Object.freeze({
+const ConnectableSwitcher = /*@__PURE__*/ objectFreeze({
     get current() {
         return _connectable;
     },
@@ -4648,7 +4652,7 @@ function wrappedEntries() {
     };
 }
 const observeCollection = (connectable, collection) => connectable?.observeCollection(collection);
-const ProxyObservable = Object.freeze({
+const ProxyObservable = /*@__PURE__*/ objectFreeze({
     getProxy,
     getRaw,
     wrap,
@@ -4658,7 +4662,7 @@ const ProxyObservable = Object.freeze({
 
 class ComputedObserver {
     constructor(obj, get, set, observerLocator, useProxy) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         /** @internal */
         this._value = void 0;
         // todo: maybe use a counter allow recursive call to a certain level
@@ -4873,7 +4877,7 @@ class DirtyCheckProperty {
     constructor(dirtyChecker, obj, key) {
         this.obj = obj;
         this.key = key;
-        this.type = 0 /* AccessorType.None */;
+        this.type = atNone;
         /** @internal */
         this._oldValue = void 0;
         this._dirtyChecker = dirtyChecker;
@@ -4911,7 +4915,7 @@ class DirtyCheckProperty {
 class PrimitiveObserver {
     get doNotCache() { return true; }
     constructor(obj, key) {
-        this.type = 0 /* AccessorType.None */;
+        this.type = atNone;
         this._obj = obj;
         this._key = key;
     }
@@ -4928,7 +4932,7 @@ class PropertyAccessor {
     constructor() {
         // the only thing can be guaranteed is it's an object
         // even if this property accessor is used to access an element
-        this.type = 0 /* AccessorType.None */;
+        this.type = atNone;
     }
     getValue(obj, key) {
         return obj[key];
@@ -4945,7 +4949,7 @@ class PropertyAccessor {
 class SetterObserver {
     constructor(obj, key) {
         // todo(bigopon): tweak the flag based on typeof obj (array/set/map/iterator/proxy etc...)
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         /** @internal */
         this._value = void 0;
         /** @internal */
@@ -5411,7 +5415,7 @@ function getNotifier(obj, key, callbackKey, initialValue, set) {
 }
 class SetterNotifier {
     constructor(obj, callbackKey, set, initialValue) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         /** @internal */
         this._value = void 0;
         /** @internal */

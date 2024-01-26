@@ -7,8 +7,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { DefaultLogger, kebabCase, LoggerConfiguration } from '@aurelia/kernel';
-import { Aurelia, bindable, customElement, CustomElement, HydrateElementInstruction } from '@aurelia/runtime-html';
+import { DefaultLogger, kebabCase, LoggerConfiguration, LogLevel } from '@aurelia/kernel';
+import { BindingMode, Aurelia, bindable, customElement, CustomElement, HydrateElementInstruction } from '@aurelia/runtime-html';
 import { assert, generateCartesianProduct, TestContext } from '@aurelia/testing';
 export function createAttribute(name, value) {
     const attr = document.createAttribute(name);
@@ -43,7 +43,7 @@ class ElementInfo {
         if (info === void 0) {
             info = rec[alias] = new ElementInfo(def.name, alias === def.name ? void 0 : alias, def.containerless);
             const bindables = def.bindables;
-            const defaultBindingMode = 2 /* BindingMode.toView */;
+            const defaultBindingMode = BindingMode.toView;
             let bindable;
             let prop;
             let attr;
@@ -62,7 +62,7 @@ class ElementInfo {
                     // derive the attribute name from the resolved property name
                     attr = kebabCase(prop);
                 }
-                if (bindable.mode !== void 0 && bindable.mode !== 8 /* BindingMode.default */) {
+                if (bindable.mode !== void 0 && bindable.mode !== BindingMode.default) {
                     mode = bindable.mode;
                 }
                 else {
@@ -113,9 +113,9 @@ class AttrInfo {
         if (info === void 0) {
             info = rec[alias] = new AttrInfo(def.name, alias === def.name ? void 0 : alias, def.isTemplateController, def.noMultiBindings);
             const bindables = def.bindables;
-            const defaultBindingMode = def.defaultBindingMode !== void 0 && def.defaultBindingMode !== 8 /* BindingMode.default */
+            const defaultBindingMode = def.defaultBindingMode !== void 0 && def.defaultBindingMode !== BindingMode.default
                 ? def.defaultBindingMode
-                : 2 /* BindingMode.toView */;
+                : BindingMode.toView;
             let bindable;
             let prop;
             let mode;
@@ -128,7 +128,7 @@ class AttrInfo {
                 if (bindable.name !== void 0) {
                     prop = bindable.name;
                 }
-                if (bindable.mode !== void 0 && bindable.mode !== 8 /* BindingMode.default */) {
+                if (bindable.mode !== void 0 && bindable.mode !== BindingMode.default) {
                     mode = bindable.mode;
                 }
                 else {
@@ -231,11 +231,11 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
         <fiz-baz></fiz-baz>
         <foo-bar></foo-bar>`, new Map([['foo-bar', new ElementInfo('foo-bar', void 0, false)], ['fiz-baz', new ElementInfo('fiz-baz', void 0, false)]]), new Map([['foo-bar', 1], ['fiz-baz', 1]]), 'static fiz-baz static foo-bar');
             const bindingModeMap = new Map([
-                ['oneTime', 1 /* BindingMode.oneTime */],
-                ['toView', 2 /* BindingMode.toView */],
-                ['fromView', 4 /* BindingMode.fromView */],
-                ['twoWay', 6 /* BindingMode.twoWay */],
-                ['default', 2 /* BindingMode.toView */],
+                ['oneTime', BindingMode.oneTime],
+                ['toView', BindingMode.toView],
+                ['fromView', BindingMode.fromView],
+                ['twoWay', BindingMode.twoWay],
+                ['default', BindingMode.toView],
             ]);
             for (const [bindingMode, props, attributeName] of generateCartesianProduct([
                 [...bindingModeMap.keys(), void 0],
@@ -243,7 +243,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
                 ['fiz-baz', undefined],
             ])) {
                 const ei = new ElementInfo('foo-bar', void 0, false);
-                const mode = bindingModeMap.get(bindingMode) ?? 2 /* BindingMode.toView */;
+                const mode = bindingModeMap.get(bindingMode) ?? BindingMode.toView;
                 let bindables = '';
                 let templateBody = '';
                 let attrExpr = '';
@@ -379,7 +379,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
                 const eventLog = sinks.find((s) => s instanceof EventLog);
                 assert.strictEqual(eventLog.log.length, 1, `eventLog.log.length`);
                 const event = eventLog.log[0];
-                assert.strictEqual(event.severity, 3 /* LogLevel.warn */);
+                assert.strictEqual(event.severity, LogLevel.warn);
                 assert.includes(event.toString(), 'The attribute(s) unknown-attr, who-cares will be ignored for <bindable name="prop" unknown-attr="" who-cares="no one"></bindable>. Only property, attribute, mode are processed.');
             }
         });

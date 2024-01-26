@@ -17,6 +17,7 @@ import { IHookInvocationAggregator } from './_shared/hook-invocation-tracker.js'
 import { HookSpecs, TestRouteViewModelBase } from './_shared/view-models.js';
 import { hookSpecsMap, verifyInvocationsEqual } from './_shared/hook-spec.js';
 import { createFixture, IActivityTracker } from './_shared/create-fixture.js';
+import { LogLevel } from '@aurelia/kernel';
 import { TestRouterConfiguration } from './_shared/configuration.js';
 function vp(count) {
     if (count === 1) {
@@ -546,7 +547,7 @@ describe('router-lite/config-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, C1, C2, P, Root);
+        container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, C1, C2, P, Root);
         const au = new Aurelia(container);
         const host = ctx.createElement('div');
         await au.app({ component: Root, host }).start();

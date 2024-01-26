@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { DI, ILogger, LoggerConfiguration, pascalCase, Registration, sink, } from '@aurelia/kernel';
+import { DI, ILogger, LoggerConfiguration, LogLevel, pascalCase, Registration, sink, } from '@aurelia/kernel';
 import { bindingBehavior, customElement, CustomElement, Switch, Aurelia, IPlatform, bindable, INode, valueConverter, } from '@aurelia/runtime-html';
 import { assert, createFixture, TestContext, } from '@aurelia/testing';
 import { createSpecFunction, } from '../util.js';
@@ -125,7 +125,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
         }
     };
     DebugLog = __decorate([
-        sink({ handles: [1 /* LogLevel.debug */] })
+        sink({ handles: [LogLevel.debug] })
     ], DebugLog);
     class SwitchTestExecutionContext {
         constructor(ctx, container, host, app, controller, error) {
@@ -196,7 +196,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
         let controller = null;
         try {
             await au
-                .register(LoggerConfiguration.create({ level: 0 /* LogLevel.trace */, sinks: [DebugLog] }), ...registrations, Registration.instance(InitialStatus, initialStatus), Registration.instance(InitialStatusNum, initialStatusNum), ToStatusStringValueConverter, NoopBindingBehavior)
+                .register(LoggerConfiguration.create({ level: LogLevel.trace, sinks: [DebugLog] }), ...registrations, Registration.instance(InitialStatus, initialStatus), Registration.instance(InitialStatusNum, initialStatusNum), ToStatusStringValueConverter, NoopBindingBehavior)
                 .app({
                 host,
                 component: CustomElement.define({ name: 'app', template }, App)

@@ -1,5 +1,5 @@
 import { Protocol, IEventAggregator, IContainer, DI, Registration } from '../../../kernel/dist/native-modules/index.mjs';
-import { CustomElement, isCustomElementViewModel, Controller, IPlatform, IWindow, IHistory, ILocation, IAppRoot, CustomAttribute, customElement, bindable, INode, IInstruction, IController, customAttribute, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { CustomElement, isCustomElementViewModel, Controller, IPlatform, IWindow, IHistory, ILocation, IAppRoot, CustomAttribute, BindingMode, customElement, bindable, INode, IInstruction, IController, customAttribute, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { Metadata } from '../../../metadata/dist/native-modules/index.mjs';
 import { RouteRecognizer as RouteRecognizer$1, ConfigurableRoute as ConfigurableRoute$1, RecognizedRoute as RecognizedRoute$1, Endpoint as Endpoint$2 } from '../../../route-recognizer/dist/native-modules/index.mjs';
 
@@ -8088,6 +8088,7 @@ function getLoadIndicator(element) {
     indicator ?? (indicator = element);
     return indicator;
 }
+/** @internal */ const bmToView = BindingMode.toView;
 
 const ParentViewport = CustomElement.createInjectable();
 let ViewportCustomElement = class ViewportCustomElement {
@@ -8546,7 +8547,7 @@ let LoadCustomAttribute = class LoadCustomAttribute {
     }
 };
 __decorate([
-    bindable({ mode: 2 /* BindingMode.toView */ })
+    bindable({ mode: bmToView })
 ], LoadCustomAttribute.prototype, "value", void 0);
 __decorate([
     bindable
@@ -8613,7 +8614,7 @@ let HrefCustomAttribute = class HrefCustomAttribute {
     }
 };
 __decorate([
-    bindable({ mode: 2 /* BindingMode.toView */ })
+    bindable({ mode: bmToView })
 ], HrefCustomAttribute.prototype, "value", void 0);
 HrefCustomAttribute = __decorate([
     customAttribute({
@@ -8629,7 +8630,7 @@ HrefCustomAttribute = __decorate([
 let ConsideredActiveCustomAttribute = class ConsideredActiveCustomAttribute {
 };
 __decorate([
-    bindable({ mode: 2 /* BindingMode.toView */ })
+    bindable({ mode: bmToView })
 ], ConsideredActiveCustomAttribute.prototype, "value", void 0);
 ConsideredActiveCustomAttribute = __decorate([
     customAttribute('considered-active')

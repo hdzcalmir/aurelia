@@ -1,6 +1,6 @@
 /* eslint-disable no-constant-condition, mocha/no-sibling-hooks */
 import { Metadata } from '@aurelia/metadata';
-import { DI, ISink, Protocol, Registration } from '@aurelia/kernel';
+import { DI, ISink, LogLevel, Protocol, Registration } from '@aurelia/kernel';
 import { Interpolation, PrimitiveLiteralExpression, IExpressionParser, Scope, astEvaluate } from '@aurelia/runtime';
 import { assert, TestContext } from '@aurelia/testing';
 import { EqualsRule, IValidationMessageProvider, IValidationRules, LengthRule, PropertyRule, RangeRule, RegexRule, RequiredRule, SizeRule, ValidationConfiguration, BaseValidationRule, parsePropertyName, ValidationRuleAliasMessage, validationRulesRegistrar, rootObjectSymbol, } from '@aurelia/validation';
@@ -458,7 +458,7 @@ describe('validation/rule-provider.spec.ts', function () {
                 const log = eventLog.log;
                 assert.equal(log.length, 1);
                 const entry = log[0];
-                assert.equal(entry.severity, 3 /* LogLevel.warn */);
+                assert.equal(entry.severity, LogLevel.warn);
                 assert.equal(entry
                     .toString()
                     .endsWith(`[WRN ValidationMessageProvider] Did you mean to use "$${property}" instead of "${property}" in this validation message template: "${message}"?`), true);

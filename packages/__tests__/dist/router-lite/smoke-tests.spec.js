@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { kebabCase, ILogConfig, Registration, noop, inject } from '@aurelia/kernel';
+import { LogLevel, kebabCase, ILogConfig, Registration, noop, inject } from '@aurelia/kernel';
 import { assert, TestContext } from '@aurelia/testing';
 import { RouterConfiguration, IRouter, IRouteContext, route, IRouterOptions, Router, IRouterEvents, RouterOptions, RouteContext } from '@aurelia/router-lite';
 import { Aurelia, valueConverter, customElement, CustomElement, IHistory, ILocation, INode, IPlatform, IWindow, StandardConfiguration, watch } from '@aurelia/runtime-html';
@@ -35,7 +35,7 @@ function assertIsActive(router, instruction, context, expected, assertId) {
     const isActive = router.isActive(instruction, context);
     assert.strictEqual(isActive, expected, `expected isActive to return ${expected} (assertId ${assertId})`);
 }
-async function createFixture(Component, deps, level = 5 /* LogLevel.fatal */) {
+async function createFixture(Component, deps, level = LogLevel.fatal) {
     const ctx = TestContext.create();
     const { container, platform } = ctx;
     container.register(TestRouterConfiguration.for(level));
@@ -56,7 +56,7 @@ async function createFixture(Component, deps, level = 5 /* LogLevel.fatal */) {
         container,
         router: container.get(IRouter),
         startTracing() {
-            logConfig.level = 0 /* LogLevel.trace */;
+            logConfig.level = LogLevel.trace;
         },
         stopTracing() {
             logConfig.level = level;
@@ -561,7 +561,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */));
+        container.register(TestRouterConfiguration.for(LogLevel.warn));
         container.register(RouterConfiguration);
         const component = container.get(Root);
         const router = container.get(IRouter);
@@ -605,7 +605,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */));
+        container.register(TestRouterConfiguration.for(LogLevel.warn));
         container.register(RouterConfiguration);
         const component = container.get(Root);
         const router = container.get(IRouter);
@@ -671,7 +671,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */));
+        container.register(TestRouterConfiguration.for(LogLevel.warn));
         container.register(RouterConfiguration);
         const component = container.get(Root);
         const router = container.get(IRouter);
@@ -717,7 +717,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             ], Root);
             const ctx = TestContext.create();
             const { container } = ctx;
-            container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, A);
+            container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, A);
             const component = container.get(Root);
             const router = container.get(IRouter);
             const au = new Aurelia(container);
@@ -752,7 +752,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             ], Root);
             const ctx = TestContext.create();
             const { container } = ctx;
-            container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, A);
+            container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, A);
             const component = container.get(Root);
             const router = container.get(IRouter);
             const au = new Aurelia(container);
@@ -787,7 +787,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             ], Root);
             const ctx = TestContext.create();
             const { container } = ctx;
-            container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, A);
+            container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, A);
             const component = container.get(Root);
             const router = container.get(IRouter);
             const au = new Aurelia(container);
@@ -829,7 +829,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, NF);
+        container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, NF);
         const component = container.get(Root);
         const router = container.get(IRouter);
         const au = new Aurelia(container);
@@ -882,7 +882,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */));
+        container.register(TestRouterConfiguration.for(LogLevel.warn));
         container.register(RouterConfiguration);
         const component = container.get(Root);
         const router = container.get(IRouter);
@@ -959,7 +959,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */));
+        container.register(TestRouterConfiguration.for(LogLevel.warn));
         container.register(RouterConfiguration);
         const component = container.get(Root);
         const router = container.get(IRouter);
@@ -1006,7 +1006,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */));
+        container.register(TestRouterConfiguration.for(LogLevel.warn));
         container.register(RouterConfiguration);
         const component = container.get(Root);
         const router = container.get(IRouter);
@@ -1056,7 +1056,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, NF1);
+        container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, NF1);
         const component = container.get(Root);
         const router = container.get(IRouter);
         const au = new Aurelia(container);
@@ -1133,7 +1133,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, NF1, NF2);
+        container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, NF1, NF2);
         const component = container.get(Root);
         const router = container.get(IRouter);
         const au = new Aurelia(container);
@@ -1184,7 +1184,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, NF1);
+        container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, NF1);
         const component = container.get(Root);
         const router = container.get(IRouter);
         const au = new Aurelia(container);
@@ -1267,7 +1267,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, NF1, NF2);
+        container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, NF1, NF2);
         const component = container.get(Root);
         const router = container.get(IRouter);
         const au = new Aurelia(container);
@@ -2378,7 +2378,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */));
+        container.register(TestRouterConfiguration.for(LogLevel.warn));
         container.register(RouterConfiguration);
         const component = container.get(Root);
         const router = container.get(IRouter);
@@ -2467,7 +2467,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             },
             replaceState: noop,
         }));
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */));
+        container.register(TestRouterConfiguration.for(LogLevel.warn));
         container.register(RouterConfiguration);
         const component = container.get(Root);
         const router = container.get(IRouter);
@@ -3213,7 +3213,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
     it('does not interfere with standard "href" attribute', async function () {
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */));
+        container.register(TestRouterConfiguration.for(LogLevel.warn));
         container.register(RouterConfiguration);
         const component = container.get(CustomElement.define({ name: 'app', template: '<a href.bind="href">' }, class App {
             constructor() {
@@ -3314,7 +3314,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         async function start(buildTitle = null) {
             const ctx = TestContext.create();
             const { container } = ctx;
-            container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration.customize({ buildTitle }));
+            container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration.customize({ buildTitle }));
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: AppRoot, host }).start();
@@ -3746,7 +3746,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const ctx = TestContext.create();
             const { container } = ctx;
             const navBarCe = getNavBarCe();
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, C11, C12, C21, C22, P1, P2, P3, navBarCe);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, C11, C12, C21, C22, P1, P2, P3, navBarCe);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -3853,7 +3853,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const ctx = TestContext.create();
             const { container } = ctx;
             const navBarCe = getNavBarCe();
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, C11, C12, C21, C22, P1, P2, P3, navBarCe);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, C11, C12, C21, C22, P1, P2, P3, navBarCe);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -3960,7 +3960,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const ctx = TestContext.create();
             const { container } = ctx;
             const navBarCe = getNavBarCe(true);
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, C11, C12, C21, C22, P1, P2, P3, navBarCe);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, C11, C12, C21, C22, P1, P2, P3, navBarCe);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -4054,7 +4054,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const ctx = TestContext.create();
             const { container } = ctx;
             const navBarCe = getNavBarCe();
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, navBarCe);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, navBarCe);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -4164,7 +4164,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const ctx = TestContext.create();
             const { container } = ctx;
             const navBarCe = getNavBarCe();
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, navBarCe);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, navBarCe);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -4267,7 +4267,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const ctx = TestContext.create();
             const { container } = ctx;
             const navBarCe = getNavBarCe(false);
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, navBarCe);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, navBarCe);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -4331,7 +4331,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const ctx = TestContext.create();
             const { container } = ctx;
             const navBarCe = getNavBarCe();
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, navBarCe);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, navBarCe);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -4380,7 +4380,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const ctx = TestContext.create();
             const { container } = ctx;
             const navBarCe = getNavBarCe();
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration.customize({ useNavigationModel: false }), navBarCe);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration.customize({ useNavigationModel: false }), navBarCe);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -4415,7 +4415,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 ], Root);
                 const ctx = TestContext.create();
                 const { container } = ctx;
-                container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration);
+                container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration);
                 const au = new Aurelia(container);
                 const host = ctx.createElement('div');
                 try {
@@ -4468,7 +4468,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, P1, P2);
+        container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, P1, P2);
         const au = new Aurelia(container);
         const host = ctx.createElement('div');
         await au.app({ component: Root, host }).start();
@@ -4511,7 +4511,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             removeEventListener() { },
             addEventListener() { },
         }));
-        container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration.customize({ basePath: '/mega-dodo/guide1/' }), P1, P2);
+        container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration.customize({ basePath: '/mega-dodo/guide1/' }), P1, P2);
         const au = new Aurelia(container);
         const host = ctx.createElement('div');
         await au.app({ component: Root, host }).start();
@@ -4562,7 +4562,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, P1, P2);
+        container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, P1, P2);
         const au = new Aurelia(container);
         const host = ctx.createElement('div');
         const router = container.get(IRouter);
@@ -4609,7 +4609,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, P1, P2);
+        container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, P1, P2);
         const au = new Aurelia(container);
         const host = ctx.createElement('div');
         const router = container.get(IRouter);
@@ -4663,7 +4663,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         ], Root);
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, P1, P2);
+        container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, P1, P2);
         const au = new Aurelia(container);
         const host = ctx.createElement('div');
         const router = container.get(IRouter);
@@ -4718,7 +4718,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             ], Root);
             const ctx = TestContext.create();
             const { container } = ctx;
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, Foo, Bar);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, Foo, Bar);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -4821,7 +4821,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             ], Root);
             const ctx = TestContext.create();
             const { container } = ctx;
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, Foo, Bar);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, Foo, Bar);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
@@ -4944,7 +4944,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             ], Root);
             const ctx = TestContext.create();
             const { container } = ctx;
-            container.register(StandardConfiguration, TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, CeL11, CeL21, CeL22, CeL12, CeL23, CeL24);
+            container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, CeL11, CeL21, CeL22, CeL12, CeL23, CeL24);
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();

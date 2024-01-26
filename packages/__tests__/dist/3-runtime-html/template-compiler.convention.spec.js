@@ -1,4 +1,4 @@
-import { ITemplateCompiler, } from '@aurelia/runtime-html';
+import { BindingMode, ITemplateCompiler, InstructionType as TT, } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 describe('3-runtime-html/template-compiler.convention.spec.ts', function () {
     const bindToTwoWayCombos = [
@@ -29,7 +29,7 @@ describe('3-runtime-html/template-compiler.convention.spec.ts', function () {
             const template = `<${el} ${bindingAttr}.bind="value" ${elAttrsStr}></${el}>`;
             const { instructions: rootInstructions } = compiler.compile({ name: '', template, surrogates: [], instructions: [] }, ctx.container, null);
             const expectedElInstructions = [
-                { toVerify: ['type', 'mode', 'to'], mode: 6 /* BindingMode.twoWay */, to: bindingProp, type: "rg" /* TT.propertyBinding */ }
+                { toVerify: ['type', 'mode', 'to'], mode: BindingMode.twoWay, to: bindingProp, type: TT.propertyBinding }
             ];
             verifyInstructions(rootInstructions[0], expectedElInstructions);
         });
@@ -67,7 +67,7 @@ describe('3-runtime-html/template-compiler.convention.spec.ts', function () {
             const template = `<${el} ${bindingAttr}.bind="value" ${elAttrsStr}></${el}>`;
             const { instructions: rootInstructions } = compiler.compile({ name: '', template, surrogates: [], instructions: [] }, ctx.container, null);
             const expectedElInstructions = [
-                { toVerify: ['type', 'mode', 'to'], mode: 2 /* BindingMode.toView */, to: bindingProp, type: "rg" /* TT.propertyBinding */ }
+                { toVerify: ['type', 'mode', 'to'], mode: BindingMode.toView, to: bindingProp, type: TT.propertyBinding }
             ];
             verifyInstructions(rootInstructions[0], expectedElInstructions);
         });

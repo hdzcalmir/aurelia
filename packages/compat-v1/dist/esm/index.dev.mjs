@@ -1,5 +1,5 @@
 import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astEvaluate, astAssign, astVisit, astBind, astUnbind, Unparser, getCollectionObserver, Scope, IExpressionParser, IObserverLocator } from '@aurelia/runtime';
-import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, BindablesInfo, ExpressionWatcher } from '@aurelia/runtime-html';
+import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, BindablesInfo, ExpressionWatcher } from '@aurelia/runtime-html';
 import { camelCase, DI } from '@aurelia/kernel';
 
 let defined$1 = false;
@@ -53,9 +53,9 @@ function defineAstMethods() {
         def(ast, 'unbind', function (...args) {
             return astUnbind(this, ...args);
         });
-        console.warn('"evaluate"/"assign"/"accept"/"visit"/"bind"/"unbind" are only valid on AST with $kind Custom.'
-            + ' Or import and use astEvaluate/astAssign/astVisit/astBind/astUnbind accordingly.');
     });
+    console.warn('"evaluate"/"assign"/"accept"/"visit"/"bind"/"unbind" are only valid on AST with ast $kind "Custom".'
+        + ' Or import and use astEvaluate/astAssign/astVisit/astBind/astUnbind accordingly.');
 }
 
 /******************************************************************************
@@ -119,12 +119,12 @@ const callSyntax = {
         }
     }
 };
-const instructionType$1 = 'rh';
+const instructionType = 'rh';
 class CallBindingInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
-        this.type = instructionType$1;
+        this.type = instructionType;
     }
 }
 let CallBindingCommand = class CallBindingCommand {
@@ -146,7 +146,7 @@ let CallBindingRenderer = class CallBindingRenderer {
     }
 };
 CallBindingRenderer = __decorate([
-    renderer(instructionType$1)
+    renderer(instructionType)
 ], CallBindingRenderer);
 function getTarget(potentialTarget) {
     if (potentialTarget.viewModel != null) {
@@ -211,7 +211,6 @@ const delegateSyntax = {
         }
     }
 };
-const instructionType = 'dl';
 let DelegateBindingCommand = class DelegateBindingCommand {
     get type() { return 'IgnoreAttr'; }
     build(info, exprParser) {
@@ -232,7 +231,7 @@ let ListenerBindingRenderer = class ListenerBindingRenderer {
     }
 };
 ListenerBindingRenderer = __decorate([
-    renderer(instructionType)
+    renderer('dl')
     /** @internal */
 ], ListenerBindingRenderer);
 class DelegateBindingInstruction {
@@ -240,7 +239,7 @@ class DelegateBindingInstruction {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
-        this.type = "hb" /* InstructionType.listenerBinding */;
+        this.type = InstructionType.listenerBinding;
     }
 }
 class DelegateListenerOptions {

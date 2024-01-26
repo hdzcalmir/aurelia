@@ -1,6 +1,6 @@
 import { IExpressionParser, IObserverLocator, type IsBindingBehavior } from '@aurelia/runtime';
-import { BindingMode, IHydratableController, IRenderer, AttrSyntax, IPlatform, IAttrMapper, ICommandBuildInfo } from '@aurelia/runtime-html';
-import type { BindingCommandInstance } from '@aurelia/runtime-html';
+import { IHydratableController, IRenderer, AttrSyntax, IPlatform, IAttrMapper, ICommandBuildInfo } from '@aurelia/runtime-html';
+import type { BindingMode, BindingCommandInstance } from '@aurelia/runtime-html';
 export declare const TranslationParametersInstructionType = "tpt";
 declare const attribute = "t-params.bind";
 export declare class TranslationParametersAttributePattern {
@@ -10,7 +10,7 @@ export declare class TranslationParametersBindingInstruction {
     from: IsBindingBehavior;
     to: string;
     readonly type: string;
-    mode: BindingMode.toView;
+    mode: typeof BindingMode.toView;
     constructor(from: IsBindingBehavior, to: string);
 }
 export declare class TranslationParametersBindingCommand implements BindingCommandInstance {

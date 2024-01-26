@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { kebabCase, camelCase, } from '@aurelia/kernel';
 import { ForOfStatement, Interpolation, parseExpression, AccessScopeExpression, BindingIdentifier, PrimitiveLiteralExpression, IExpressionParser, } from '@aurelia/runtime';
-import { bindable, BindableDefinition, customAttribute, CustomAttribute, customElement, CustomElement, IAttributeParser, HydrateAttributeInstruction, AttrSyntax, If, attributePattern, PropertyBindingInstruction, InterpolationInstruction, DefaultBindingSyntax, } from '@aurelia/runtime-html';
+import { bindable, BindingMode, BindableDefinition, customAttribute, CustomAttribute, customElement, CustomElement, InstructionType as HTT, InstructionType as TT, IAttributeParser, HydrateAttributeInstruction, AttrSyntax, If, attributePattern, PropertyBindingInstruction, InterpolationInstruction, InstructionType, DefaultBindingSyntax, } from '@aurelia/runtime-html';
 import { assert, eachCartesianJoinFactory, TestContext, verifyBindingInstructionsEqual, } from '@aurelia/testing';
 export function createAttribute(name, value) {
     const attr = document.createAttribute(name);
@@ -59,22 +59,22 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     it('compiles surrogate plain class attribute', function () {
                         const { instructions, surrogates } = compileWith(`<template class="h-100"></template>`, []);
                         verifyInstructions(instructions, []);
-                        verifyInstructions(surrogates, [{ toVerify: ['type', 'value'], type: "hf" /* HTT.setClassAttribute */, value: 'h-100' }]);
+                        verifyInstructions(surrogates, [{ toVerify: ['type', 'value'], type: HTT.setClassAttribute, value: 'h-100' }]);
                     });
                     it('compiles surrogate plain style attribute', function () {
                         const { instructions, surrogates } = compileWith(`<template style="background: red"></template>`, []);
                         verifyInstructions(instructions, []);
-                        verifyInstructions(surrogates, [{ toVerify: ['type', 'value'], type: "hg" /* HTT.setStyleAttribute */, value: 'background: red' }]);
+                        verifyInstructions(surrogates, [{ toVerify: ['type', 'value'], type: HTT.setStyleAttribute, value: 'background: red' }]);
                     });
                     it('compiles surrogate with binding expression', function () {
                         const { instructions, surrogates } = compileWith(`<template class.bind="base"></template>`, []);
                         verifyInstructions(instructions, [], 'normal');
-                        verifyInstructions(surrogates, [{ toVerify: ['type', 'to'], type: "rg" /* TT.propertyBinding */, to: 'class' }], 'surrogate');
+                        verifyInstructions(surrogates, [{ toVerify: ['type', 'to'], type: TT.propertyBinding, to: 'class' }], 'surrogate');
                     });
                     it('compiles surrogate with interpolation expression', function () {
                         const { instructions, surrogates } = compileWith(`<template class="h-100 \${base}"></template>`, []);
                         verifyInstructions(instructions, [], 'normal');
-                        verifyInstructions(surrogates, [{ toVerify: ['type', 'to'], type: "rf" /* TT.interpolation */, to: 'class' }], 'surrogate');
+                        verifyInstructions(surrogates, [{ toVerify: ['type', 'to'], type: TT.interpolation, to: 'class' }], 'surrogate');
                     });
                     it('throws on attributes that require to be unique', function () {
                         const attrs = ['id'];
@@ -113,14 +113,14 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     assert.strictEqual(actual.instructions[0].length, 3, `actual.instructions[0].length`);
                     const siblingInstructions = actual.instructions[0].slice(1);
                     const expectedSiblingInstructions = [
-                        { toVerify: ['type', 'res', 'to'], type: "rb" /* TT.hydrateAttribute */, res: CustomAttribute.getDefinition(Prop) },
-                        { toVerify: ['type', 'res', 'to'], type: "rb" /* TT.hydrateAttribute */, res: CustomAttribute.getDefinition(Prop) }
+                        { toVerify: ['type', 'res', 'to'], type: TT.hydrateAttribute, res: CustomAttribute.getDefinition(Prop) },
+                        { toVerify: ['type', 'res', 'to'], type: TT.hydrateAttribute, res: CustomAttribute.getDefinition(Prop) }
                     ];
                     verifyInstructions(siblingInstructions, expectedSiblingInstructions);
                     const rootInstructions = actual.instructions[0][0]['props'];
                     const expectedRootInstructions = [
-                        { toVerify: ['type', 'res', 'to'], type: "rg" /* TT.propertyBinding */, to: 'prop1' },
-                        { toVerify: ['type', 'res', 'to'], type: "rg" /* TT.propertyBinding */, to: 'prop2' }
+                        { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop1' },
+                        { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop2' }
                     ];
                     verifyInstructions(rootInstructions, expectedRootInstructions);
                 });
@@ -139,11 +139,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           </template>`, [El]);
                     const rootInstructions = actual.instructions[0];
                     const expectedRootInstructions = [
-                        { toVerify: ['type', 'res'], type: "ra" /* TT.hydrateElement */, res: CustomElement.getDefinition(El) }
+                        { toVerify: ['type', 'res'], type: TT.hydrateElement, res: CustomElement.getDefinition(El) }
                     ];
                     verifyInstructions(rootInstructions, expectedRootInstructions);
                     const expectedElInstructions = [
-                        { toVerify: ['type', 'to', 'value'], type: "re" /* TT.setProperty */, to: 'name', value: 'name' }
+                        { toVerify: ['type', 'to', 'value'], type: TT.setProperty, to: 'name', value: 'name' }
                     ];
                     verifyInstructions(rootInstructions[0].props, expectedElInstructions);
                 });
@@ -162,7 +162,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           </template>`, [El]);
                     const rootInstructions = actual.instructions[0];
                     const expectedElInstructions = [
-                        { toVerify: ['type', 'value', 'to'], type: "re" /* TT.setProperty */, value: 'label', to: 'backgroundColor' },
+                        { toVerify: ['type', 'value', 'to'], type: TT.setProperty, value: 'label', to: 'backgroundColor' },
                     ];
                     verifyInstructions(rootInstructions[0].props, expectedElInstructions);
                 });
@@ -170,7 +170,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     let El = class El {
                     };
                     __decorate([
-                        bindable({ mode: 6 /* BindingMode.twoWay */ }),
+                        bindable({ mode: BindingMode.twoWay }),
                         __metadata("design:type", String)
                     ], El.prototype, "propProp1", void 0);
                     __decorate([
@@ -203,13 +203,13 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           </template>`, [El]);
                     const rootInstructions = actual.instructions[0];
                     const expectedElInstructions = [
-                        { toVerify: ['type', 'mode', 'to'], mode: 6 /* BindingMode.twoWay */, to: 'propProp1' },
-                        { toVerify: ['type', 'mode', 'to'], mode: 1 /* BindingMode.oneTime */, to: 'prop2' },
-                        { toVerify: ['type', 'mode', 'to'], mode: 2 /* BindingMode.toView */, to: 'propProp3' },
-                        { toVerify: ['type', 'mode', 'to'], mode: 4 /* BindingMode.fromView */, to: 'prop4' },
-                        { toVerify: ['type', 'mode', 'to'], mode: 6 /* BindingMode.twoWay */, to: 'propProp5' },
+                        { toVerify: ['type', 'mode', 'to'], mode: BindingMode.twoWay, to: 'propProp1' },
+                        { toVerify: ['type', 'mode', 'to'], mode: BindingMode.oneTime, to: 'prop2' },
+                        { toVerify: ['type', 'mode', 'to'], mode: BindingMode.toView, to: 'propProp3' },
+                        { toVerify: ['type', 'mode', 'to'], mode: BindingMode.fromView, to: 'prop4' },
+                        { toVerify: ['type', 'mode', 'to'], mode: BindingMode.twoWay, to: 'propProp5' },
                     ].map((e) => {
-                        e.type = "rg" /* TT.propertyBinding */;
+                        e.type = TT.propertyBinding;
                         return e;
                     });
                     verifyInstructions(rootInstructions[0].props, expectedElInstructions);
@@ -220,7 +220,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     assertTemplateHtml(template, '<!--au*--><el></el>');
                     verifyInstructions(instructions[0], [
                         { toVerify: ['type', 'from', 'to', 'capture'],
-                            type: "hb" /* TT.listenerBinding */,
+                            type: TT.listenerBinding,
                             from: new PrimitiveLiteralExpression(1),
                             to: 'foo',
                             capture: false
@@ -257,17 +257,17 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         verifyInstructions(hydratePropAttrInstruction.props, [
                             {
                                 toVerify: ['type', 'to', 'from'],
-                                type: "rg" /* TT.propertyBinding */, to: 'value', from: new AccessScopeExpression('p')
+                                type: TT.propertyBinding, to: 'value', from: new AccessScopeExpression('p')
                             }
                         ]);
                         verifyInstructions(hydratePropAttrInstruction.def.instructions[0], [
                             {
                                 toVerify: ['type', 'to', 'from'],
-                                type: "rg" /* TT.propertyBinding */, to: 'name', from: new AccessScopeExpression('name')
+                                type: TT.propertyBinding, to: 'name', from: new AccessScopeExpression('name')
                             },
                             {
                                 toVerify: ['type', 'to', 'from'],
-                                type: "rg" /* TT.propertyBinding */, to: 'title', from: new AccessScopeExpression('title')
+                                type: TT.propertyBinding, to: 'title', from: new AccessScopeExpression('title')
                             },
                         ]);
                     });
@@ -282,7 +282,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                             verifyInstructions(instructions[0], [
                                 {
                                     toVerify: ['type', 'res'],
-                                    type: "ra" /* TT.hydrateElement */, res: CustomElement.getDefinition(NotDiv)
+                                    type: TT.hydrateElement, res: CustomElement.getDefinition(NotDiv)
                                 }
                             ]);
                         });
@@ -301,21 +301,21 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                                 verifyInstructions(instructions[0], [
                                     {
                                         toVerify: ['type', 'res', 'to'],
-                                        type: "rc" /* TT.hydrateTemplateController */, res: container.find(CustomAttribute, 'if')
+                                        type: TT.hydrateTemplateController, res: container.find(CustomAttribute, 'if')
                                     }
                                 ]);
                                 const templateControllerInst = instructions[0][0];
                                 verifyInstructions(templateControllerInst.props, [
                                     {
                                         toVerify: ['type', 'to', 'from'],
-                                        type: "rg" /* TT.propertyBinding */, to: 'value', from: new AccessScopeExpression('value')
+                                        type: TT.propertyBinding, to: 'value', from: new AccessScopeExpression('value')
                                     }
                                 ]);
                                 const [hydrateNotDivInstruction] = templateControllerInst.def.instructions[0];
                                 verifyInstructions([hydrateNotDivInstruction], [
                                     {
                                         toVerify: ['type', 'res'],
-                                        type: "ra" /* TT.hydrateElement */, res: CustomElement.getDefinition(NotDiv)
+                                        type: TT.hydrateElement, res: CustomElement.getDefinition(NotDiv)
                                     }
                                 ]);
                                 verifyInstructions(hydrateNotDivInstruction.props, []);
@@ -341,7 +341,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         ], Let);
                         const { instructions } = compileWith(`<template><let></let></template>`, [Let]);
                         verifyInstructions(instructions[0], [
-                            { toVerify: ['type'], type: "rd" /* TT.hydrateLetElement */ }
+                            { toVerify: ['type'], type: TT.hydrateLetElement }
                         ]);
                     });
                     it('compiles with attributes', function () {
@@ -349,11 +349,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         verifyInstructions(instructions[0][0].instructions, [
                             {
                                 toVerify: ['type', 'to', 'srcOrExp'],
-                                type: "ri" /* TT.letBinding */, to: 'a', from: 'b'
+                                type: TT.letBinding, to: 'a', from: 'b'
                             },
                             {
                                 toVerify: ['type', 'to'],
-                                type: "ri" /* TT.letBinding */, to: 'c'
+                                type: TT.letBinding, to: 'c'
                             }
                         ]);
                     });
@@ -365,11 +365,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         it('ignores [to-binding-context] order', function () {
                             let instructions = compileWith(`<template><let a.bind="a" to-binding-context></let></template>`).instructions[0];
                             verifyInstructions(instructions, [
-                                { toVerify: ['type', 'toBindingContext'], type: "rd" /* TT.hydrateLetElement */, toBindingContext: true }
+                                { toVerify: ['type', 'toBindingContext'], type: TT.hydrateLetElement, toBindingContext: true }
                             ]);
                             instructions = compileWith(`<template><let to-binding-context a.bind="a"></let></template>`).instructions[0];
                             verifyInstructions(instructions, [
-                                { toVerify: ['type', 'toBindingContext'], type: "rd" /* TT.hydrateLetElement */, toBindingContext: true }
+                                { toVerify: ['type', 'toBindingContext'], type: TT.hydrateLetElement, toBindingContext: true }
                             ]);
                         });
                     });
@@ -449,7 +449,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             if (info === void 0) {
                 info = rec[alias] = new ElementInfo(def.name, alias === def.name ? void 0 : alias, def.containerless);
                 const bindables = def.bindables;
-                const defaultBindingMode = 2 /* BindingMode.toView */;
+                const defaultBindingMode = BindingMode.toView;
                 let bindable;
                 let prop;
                 let attr;
@@ -468,7 +468,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         // derive the attribute name from the resolved property name
                         attr = kebabCase(prop);
                     }
-                    if (bindable.mode !== void 0 && bindable.mode !== 8 /* BindingMode.default */) {
+                    if (bindable.mode !== void 0 && bindable.mode !== BindingMode.default) {
                         mode = bindable.mode;
                     }
                     else {
@@ -519,9 +519,9 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             if (info === void 0) {
                 info = rec[alias] = new AttrInfo(def.name, alias === def.name ? void 0 : alias, def.isTemplateController, def.noMultiBindings);
                 const bindables = def.bindables;
-                const defaultBindingMode = def.defaultBindingMode !== void 0 && def.defaultBindingMode !== 8 /* BindingMode.default */
+                const defaultBindingMode = def.defaultBindingMode !== void 0 && def.defaultBindingMode !== BindingMode.default
                     ? def.defaultBindingMode
-                    : 2 /* BindingMode.toView */;
+                    : BindingMode.toView;
                 let bindable;
                 let prop;
                 let mode;
@@ -534,7 +534,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     if (bindable.name !== void 0) {
                         prop = bindable.name;
                     }
-                    if (bindable.mode !== void 0 && bindable.mode !== 8 /* BindingMode.default */) {
+                    if (bindable.mode !== void 0 && bindable.mode !== BindingMode.default) {
                         mode = bindable.mode;
                     }
                     else {
@@ -613,7 +613,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
     function createTplCtrlAttributeInstruction(attr, value) {
         if (attr === 'repeat.for') {
             return [{
-                    type: "rk" /* TT.iteratorBinding */,
+                    type: TT.iteratorBinding,
                     forOf: new ForOfStatement(new BindingIdentifier(value.split(' of ')[0]), new AccessScopeExpression(value.split(' of ')[1]), -1),
                     to: 'items',
                     props: [],
@@ -621,15 +621,15 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         }
         else if (attr.includes('.')) {
             return [{
-                    type: "rg" /* TT.propertyBinding */,
+                    type: TT.propertyBinding,
                     from: value.length === 0 ? PrimitiveLiteralExpression.$empty : new AccessScopeExpression(value),
                     to: 'value',
-                    mode: 2 /* BindingMode.toView */,
+                    mode: BindingMode.toView,
                 }];
         }
         else {
             return [{
-                    type: "re" /* TT.setProperty */,
+                    type: TT.setProperty,
                     to: 'value',
                     value
                 }];
@@ -652,7 +652,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             node.setAttribute(attr, value);
             const rawMarkup = node.outerHTML;
             const instruction = {
-                type: "rc" /* TT.hydrateTemplateController */,
+                type: TT.hydrateTemplateController,
                 res: resolveRes ? ctx.container.find(CustomAttribute, target) : target,
                 def: {
                     ...defaultCustomElementDefinitionProperties,
@@ -694,7 +694,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 instructions = [[childInstr]];
             }
             const instruction = {
-                type: "rc" /* TT.hydrateTemplateController */,
+                type: TT.hydrateTemplateController,
                 res: resolveRes ? ctx.container.find(CustomAttribute, target) : target,
                 def: {
                     ...defaultCustomElementDefinitionProperties,
@@ -730,7 +730,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
     }
     function createCustomElement(ctx, tagNameOrDef, finalize, attributes, childInstructions, siblingInstructions, nestedElInstructions, childOutput, childInput, debugMode) {
         const instruction = {
-            type: "ra" /* TT.hydrateElement */,
+            type: TT.hydrateElement,
             res: tagNameOrDef,
             props: childInstructions,
             auSlot: null,
@@ -792,7 +792,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
     function createCustomAttribute(ctx, attrNameOrDef, finalize, attributes, childInstructions, siblingInstructions, nestedElInstructions, childOutput, childInput) {
         const resName = typeof attrNameOrDef === 'string' ? attrNameOrDef : attrNameOrDef.name;
         const instruction = {
-            type: "rb" /* TT.hydrateAttribute */,
+            type: TT.hydrateAttribute,
             res: attrNameOrDef,
             props: childInstructions
         };
@@ -825,21 +825,21 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         return [input, output];
     }
     const commandToMode = {
-        'one-time': 1 /* BindingMode.oneTime */,
-        'to-view': 2 /* BindingMode.toView */,
-        'from-view': 4 /* BindingMode.fromView */,
-        'two-way': 6 /* BindingMode.twoWay */
+        'one-time': BindingMode.oneTime,
+        'to-view': BindingMode.toView,
+        'from-view': BindingMode.fromView,
+        'two-way': BindingMode.twoWay
     };
     const validCommands = ['bind', 'one-time', 'to-view', 'from-view', 'two-way', 'trigger', 'delegate', 'capture', 'call'];
     function createAttributeInstruction(bindableDescription, attributeName, attributeValue, isMulti) {
         const parts = attributeName.split('.');
         const attr = parts[0];
         const cmd = parts.pop();
-        const defaultMode = !!bindableDescription ? (bindableDescription.mode === 8 /* BindingMode.default */ ? 2 /* BindingMode.toView */ : bindableDescription.mode) : 2 /* BindingMode.toView */;
+        const defaultMode = !!bindableDescription ? (bindableDescription.mode === BindingMode.default ? BindingMode.toView : bindableDescription.mode) : BindingMode.toView;
         const mode = commandToMode[cmd] || defaultMode;
         if (!!bindableDescription) {
             if (!!cmd && validCommands.includes(cmd)) {
-                const type = "rg" /* TT.propertyBinding */;
+                const type = TT.propertyBinding;
                 const to = bindableDescription.name;
                 const from = parseExpression(attributeValue);
                 return { type, to, mode, from };
@@ -847,12 +847,12 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             else {
                 const from = parseExpression(attributeValue, 'Interpolation');
                 if (!!from) {
-                    const type = "rf" /* TT.interpolation */;
+                    const type = TT.interpolation;
                     const to = bindableDescription.name;
                     return { type, to, from };
                 }
                 else {
-                    const type = "re" /* TT.setProperty */;
+                    const type = TT.setProperty;
                     const to = bindableDescription.name;
                     const value = attributeValue;
                     return { type, to, value };
@@ -860,7 +860,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             }
         }
         else {
-            const type = "rg" /* TT.propertyBinding */;
+            const type = TT.propertyBinding;
             const to = camelCase(attr);
             if (!!cmd && validCommands.includes(cmd)) {
                 const from = parseExpression(attributeValue);
@@ -869,11 +869,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             else {
                 const from = parseExpression(attributeValue, 'Interpolation');
                 if (!!from) {
-                    const type2 = "rf" /* TT.interpolation */;
+                    const type2 = TT.interpolation;
                     return { type: type2, to, from };
                 }
                 else if (isMulti) {
-                    const type3 = "re" /* TT.setProperty */;
+                    const type3 = TT.setProperty;
                     const to3 = attr;
                     const value = attributeValue;
                     return { type: type3, to: to3, value };
@@ -906,15 +906,15 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     (_ctx) => ['value', 'value', 'value']
                 ],
                 [
-                    (ctx, $1, [, , value]) => [`ref`, value, { type: "rj" /* TT.refBinding */, from: new AccessScopeExpression(value), to: 'element' }],
-                    (ctx, $1, [attr, to, value]) => [`${attr}.bind`, value, { type: "rg" /* TT.propertyBinding */, from: new AccessScopeExpression(value), to, mode: 2 /* BindingMode.toView */, }],
-                    (ctx, $1, [attr, to, value]) => [`${attr}.to-view`, value, { type: "rg" /* TT.propertyBinding */, from: new AccessScopeExpression(value), to, mode: 2 /* BindingMode.toView */, }],
-                    (ctx, $1, [attr, to, value]) => [`${attr}.one-time`, value, { type: "rg" /* TT.propertyBinding */, from: new AccessScopeExpression(value), to, mode: 1 /* BindingMode.oneTime */, }],
-                    (ctx, $1, [attr, to, value]) => [`${attr}.from-view`, value, { type: "rg" /* TT.propertyBinding */, from: new AccessScopeExpression(value), to, mode: 4 /* BindingMode.fromView */, }],
-                    (ctx, $1, [attr, to, value]) => [`${attr}.two-way`, value, { type: "rg" /* TT.propertyBinding */, from: new AccessScopeExpression(value), to, mode: 6 /* BindingMode.twoWay */, }],
-                    (ctx, $1, [attr, to, value]) => [`${attr}.trigger`, value, { type: "hb" /* HTT.listenerBinding */, from: new AccessScopeExpression(value), to, preventDefault: true, capture: false }],
-                    (ctx, $1, [attr, to, value]) => [`${attr}.delegate`, value, { type: "hb" /* HTT.listenerBinding */, from: new AccessScopeExpression(value), to, preventDefault: false }],
-                    (ctx, $1, [attr, to, value]) => [`${attr}.capture`, value, { type: "hb" /* HTT.listenerBinding */, from: new AccessScopeExpression(value), to, preventDefault: false, capture: true }],
+                    (ctx, $1, [, , value]) => [`ref`, value, { type: TT.refBinding, from: new AccessScopeExpression(value), to: 'element' }],
+                    (ctx, $1, [attr, to, value]) => [`${attr}.bind`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.toView, }],
+                    (ctx, $1, [attr, to, value]) => [`${attr}.to-view`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.toView, }],
+                    (ctx, $1, [attr, to, value]) => [`${attr}.one-time`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.oneTime, }],
+                    (ctx, $1, [attr, to, value]) => [`${attr}.from-view`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.fromView, }],
+                    (ctx, $1, [attr, to, value]) => [`${attr}.two-way`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.twoWay, }],
+                    (ctx, $1, [attr, to, value]) => [`${attr}.trigger`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: true, capture: false }],
+                    (ctx, $1, [attr, to, value]) => [`${attr}.delegate`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: false }],
+                    (ctx, $1, [attr, to, value]) => [`${attr}.capture`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: false, capture: true }],
                 ]
             ], (ctx, [el], $2, [n1, v1, i1]) => {
                 const markup = `<${el} plain data-attr="value" ${n1}="${v1}"></${el}>`;
@@ -979,7 +979,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         template: ctx.createElementFromMarkup(`<template><!--au*--><span plain data-attr="value"${debugMode ? ` class="abc-\${value}"` : ''}></span></template>`),
                         instructions: [[
                                 {
-                                    "type": "rf" /* InstructionType.interpolation */,
+                                    "type": InstructionType.interpolation,
                                     "from": {
                                         '$kind': 'Interpolation',
                                         "parts": ["abc-", ""],
@@ -1015,13 +1015,13 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     (_ctx) => [undefined, undefined, 'value'],
                     (_ctx) => [{}, undefined, 'value'],
                     (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: 1 /* BindingMode.oneTime */ }), 1 /* BindingMode.oneTime */, 'bazBaz'],
+                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.oneTime }), BindingMode.oneTime, 'bazBaz'],
                     (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: 4 /* BindingMode.fromView */ }), 4 /* BindingMode.fromView */, 'bazBaz'],
+                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.fromView }), BindingMode.fromView, 'bazBaz'],
                     (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: 6 /* BindingMode.twoWay */ }), 6 /* BindingMode.twoWay */, 'bazBaz'],
+                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.twoWay }), BindingMode.twoWay, 'bazBaz'],
                     (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: 8 /* BindingMode.default */ }), 8 /* BindingMode.default */, 'bazBaz']
+                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.default }), BindingMode.default, 'bazBaz']
                 ],
                 [
                     (_ctx) => ['foo', '', class Foo1 {
@@ -1036,18 +1036,18 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 // PartialCustomAttributeDefinition.defaultBindingMode
                 [
                     (_ctx) => undefined,
-                    (_ctx) => 1 /* BindingMode.oneTime */,
-                    (_ctx) => 2 /* BindingMode.toView */,
-                    (_ctx) => 4 /* BindingMode.fromView */,
-                    (_ctx) => 6 /* BindingMode.twoWay */
+                    (_ctx) => BindingMode.oneTime,
+                    (_ctx) => BindingMode.toView,
+                    (_ctx) => BindingMode.fromView,
+                    (_ctx) => BindingMode.twoWay
                 ],
                 [
-                    (ctx, [, , to], [attr, value]) => [`${attr}`, { type: "re" /* TT.setProperty */, to, value }],
-                    (ctx, [, mode, to], [attr, value], defaultMode) => [`${attr}.bind`, { type: "rg" /* TT.propertyBinding */, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: (mode && mode !== 8 /* BindingMode.default */) ? mode : (defaultMode || 2 /* BindingMode.toView */) }],
-                    (ctx, [, , to], [attr, value]) => [`${attr}.to-view`, { type: "rg" /* TT.propertyBinding */, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: 2 /* BindingMode.toView */ }],
-                    (ctx, [, , to], [attr, value]) => [`${attr}.one-time`, { type: "rg" /* TT.propertyBinding */, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: 1 /* BindingMode.oneTime */ }],
-                    (ctx, [, , to], [attr, value]) => [`${attr}.from-view`, { type: "rg" /* TT.propertyBinding */, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: 4 /* BindingMode.fromView */ }],
-                    (ctx, [, , to], [attr, value]) => [`${attr}.two-way`, { type: "rg" /* TT.propertyBinding */, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: 6 /* BindingMode.twoWay */ }]
+                    (ctx, [, , to], [attr, value]) => [`${attr}`, { type: TT.setProperty, to, value }],
+                    (ctx, [, mode, to], [attr, value], defaultMode) => [`${attr}.bind`, { type: TT.propertyBinding, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: (mode && mode !== BindingMode.default) ? mode : (defaultMode || BindingMode.toView) }],
+                    (ctx, [, , to], [attr, value]) => [`${attr}.to-view`, { type: TT.propertyBinding, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: BindingMode.toView }],
+                    (ctx, [, , to], [attr, value]) => [`${attr}.one-time`, { type: TT.propertyBinding, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: BindingMode.oneTime }],
+                    (ctx, [, , to], [attr, value]) => [`${attr}.from-view`, { type: TT.propertyBinding, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: BindingMode.fromView }],
+                    (ctx, [, , to], [attr, value]) => [`${attr}.two-way`, { type: TT.propertyBinding, from: value.length > 0 ? new AccessScopeExpression(value) : new PrimitiveLiteralExpression(value), to, mode: BindingMode.twoWay }]
                 ]
             ], (ctx, [bindables], [attr, value, ctor], defaultBindingMode, [name, childInstruction]) => {
                 for (const resolveResources of [true, false]) {
@@ -1062,7 +1062,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                             surrogates: [],
                         };
                         const instruction = {
-                            type: "rb" /* TT.hydrateAttribute */,
+                            type: TT.hydrateAttribute,
                             res: resolveResources ? CustomAttribute.getDefinition($def) : attr,
                             props: [childInstruction],
                         };
@@ -1104,15 +1104,15 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 ],
                 [
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 8 /* BindingMode.default */ }) }),
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.default }) }),
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 1 /* BindingMode.oneTime */ }) }),
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.oneTime }) }),
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 2 /* BindingMode.toView */ }) }),
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.toView }) }),
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 4 /* BindingMode.fromView */ }) }),
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.fromView }) }),
                     (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: 6 /* BindingMode.twoWay */ }) })
+                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.twoWay }) })
                 ],
                 [
                     (_ctx) => [``, `''`],
@@ -1424,7 +1424,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 return {
                     result: sut.compile(templateDefinition, container, null),
                     parser,
-                    createProp: ({ from, to, mode = 2 /* BindingMode.toView */ }) => new PropertyBindingInstruction(parser.parse(from, 'IsProperty'), to, mode)
+                    createProp: ({ from, to, mode = BindingMode.toView }) => new PropertyBindingInstruction(parser.parse(from, 'IsProperty'), to, mode)
                 };
             }
         });
@@ -1447,15 +1447,15 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 ],
                 [
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: 8 /* BindingMode.default */ }) }),
+                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.default }) }),
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: 1 /* BindingMode.oneTime */ }) }),
+                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.oneTime }) }),
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: 2 /* BindingMode.toView */ }) }),
+                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.toView }) }),
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: 4 /* BindingMode.fromView */ }) }),
+                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.fromView }) }),
                     (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: 6 /* BindingMode.twoWay */ }) })
+                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.twoWay }) })
                 ],
                 [
                     (_ctx) => [``, `''`],
@@ -1663,7 +1663,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             it('works with pattern returning command', function () {
                 const MyPattern = createPattern((name, val, _parts) => new AttrSyntax(name, val, 'id', 'bind'));
                 const { definition } = compileWithPattern(MyPattern);
-                assert.deepStrictEqual(definition.instructions[0], [new PropertyBindingInstruction(new PrimitiveLiteralExpression(''), 'id', 2 /* BindingMode.toView */)]);
+                assert.deepStrictEqual(definition.instructions[0], [new PropertyBindingInstruction(new PrimitiveLiteralExpression(''), 'id', BindingMode.toView)]);
             });
             it('works when pattern returning interpolation', function () {
                 const MyPattern = createPattern((name, _val, _parts) => new AttrSyntax(name, `\${a}a`, 'id', null));
@@ -1681,7 +1681,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 const { definition } = compileWithPattern(MyPattern);
                 assert.deepStrictEqual(definition.instructions[0], 
                 // default value is '' attr pattern changed it to 'bb'
-                [new PropertyBindingInstruction(new AccessScopeExpression('bb'), 'id', 2 /* BindingMode.toView */)]);
+                [new PropertyBindingInstruction(new AccessScopeExpression('bb'), 'id', BindingMode.toView)]);
             });
             it('works with pattern returning custom attribute + command', function () {
                 let MyAttr = class MyAttr {
@@ -1694,7 +1694,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 const MyPattern = createPattern((name, _val, _parts) => new AttrSyntax(name, 'bb', 'my-attr', 'bind'));
                 const { definition } = compileWithPattern(MyPattern, [MyAttr]);
                 assert.deepStrictEqual(definition.instructions[0], [new HydrateAttributeInstruction(CustomAttribute.getDefinition(MyAttr), undefined, [
-                        new PropertyBindingInstruction(new AccessScopeExpression('bb'), 'value', 2 /* BindingMode.toView */)
+                        new PropertyBindingInstruction(new AccessScopeExpression('bb'), 'value', BindingMode.toView)
                     ])]);
             });
             it('works with pattern returning custom attribute + multi bindings', function () {
@@ -1708,7 +1708,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 const MyPattern = createPattern((name, _val, _parts) => new AttrSyntax(name, 'value.bind: bb', 'my-attr', null));
                 const { definition } = compileWithPattern(MyPattern, [MyAttr]);
                 assert.deepStrictEqual(definition.instructions[0], [new HydrateAttributeInstruction(CustomAttribute.getDefinition(MyAttr), undefined, [
-                        new PropertyBindingInstruction(new AccessScopeExpression('bb'), 'value', 2 /* BindingMode.toView */)
+                        new PropertyBindingInstruction(new AccessScopeExpression('bb'), 'value', BindingMode.toView)
                     ])]);
             });
             it('works with pattern returning custom attribute + interpolation', function () {
@@ -1733,9 +1733,9 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             const attrs = {};
             const defaultBindingMode = isAttr
                 ? def.defaultBindingMode === void 0
-                    ? 8 /* BindingMode.default */
+                    ? BindingMode.default
                     : def.defaultBindingMode
-                : 8 /* BindingMode.default */;
+                : BindingMode.default;
             let bindable;
             let prop;
             let hasPrimary = false;

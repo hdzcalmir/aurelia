@@ -2,8 +2,8 @@
 
 var fs = require('fs');
 var path = require('path');
-var os = require('os');
 var kernel = require('@aurelia/kernel');
+var os = require('os');
 var platform = require('@aurelia/platform');
 var http = require('http');
 var https = require('https');
@@ -94,13 +94,13 @@ class HttpServerOptions {
             return logLevel;
         }
         switch (logLevel) {
-            case 'trace': return 0 /* $LogLevel.trace */;
-            case 'debug': return 1 /* $LogLevel.debug */;
-            case 'info': return 2 /* $LogLevel.info */;
-            case 'warn': return 3 /* $LogLevel.warn */;
-            case 'error': return 4 /* $LogLevel.error */;
-            case 'fatal': return 5 /* $LogLevel.fatal */;
-            case 'none': return 6 /* $LogLevel.none */;
+            case 'trace': return kernel.LogLevel.trace;
+            case 'debug': return kernel.LogLevel.debug;
+            case 'info': return kernel.LogLevel.info;
+            case 'warn': return kernel.LogLevel.warn;
+            case 'error': return kernel.LogLevel.error;
+            case 'fatal': return kernel.LogLevel.fatal;
+            case 'none': return kernel.LogLevel.none;
         }
     }
     applyOptionsFromCli(cwd, args, argPrefix = '') {
