@@ -8,7 +8,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { noop, toArray } from '@aurelia/kernel';
-import { Aurelia, bindable, CustomElement, customElement, INode, IPlatform, processContent } from '@aurelia/runtime-html';
+import { Aurelia, BindingMode, bindable, CustomElement, customElement, INode, IPlatform, processContent } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 import { createSpecFunction } from '../util.js';
 describe('3-runtime-html/process-content.spec.ts', function () {
@@ -234,13 +234,13 @@ describe('3-runtime-html/process-content.spec.ts', function () {
         const SpanCe = CustomElement.define({
             name: 'span-ce',
             template: '<span>${value}</span>',
-            bindables: { value: { mode: 8 /* BindingMode.default */ } },
+            bindables: { value: { mode: BindingMode.default } },
         }, class SpanCe {
         });
         const StrongCe = CustomElement.define({
             name: 'strong-ce',
             template: '<strong>${value}</strong>',
-            bindables: { value: { mode: 8 /* BindingMode.default */ } },
+            bindables: { value: { mode: BindingMode.default } },
         }, class StrongCe {
         });
         function processContentWithCe(compile) {
@@ -294,7 +294,7 @@ describe('3-runtime-html/process-content.spec.ts', function () {
             CustomElement.define({
                 name: 'my-element',
                 template: '${textLength}',
-                bindables: { textLength: { mode: 8 /* BindingMode.default */ } },
+                bindables: { textLength: { mode: BindingMode.default } },
                 processContent: processContentWithNewBinding(true),
             }, class MyElement {
             })
@@ -304,7 +304,7 @@ describe('3-runtime-html/process-content.spec.ts', function () {
             CustomElement.define({
                 name: 'my-element',
                 template: '${textLength}',
-                bindables: { textLength: { mode: 8 /* BindingMode.default */ } },
+                bindables: { textLength: { mode: BindingMode.default } },
                 processContent: processContentWithNewBinding(false),
             }, class MyElement {
             })
@@ -326,7 +326,7 @@ describe('3-runtime-html/process-content.spec.ts', function () {
             CustomElement.define({
                 name: 'my-element',
                 template: '${rand}<div><au-slot></au-slot></div>',
-                bindables: { rand: { mode: 8 /* BindingMode.default */ } },
+                bindables: { rand: { mode: BindingMode.default } },
                 processContent(node, p) {
                     const retVal = processContentWithCe(false)(node, p);
                     node.setAttribute('rand.bind', rand.toString());
@@ -354,7 +354,7 @@ describe('3-runtime-html/process-content.spec.ts', function () {
             CustomElement.define({
                 name: 'my-element',
                 template: `<table><thead><tr><td>UPC_Code</td><td>Product_Name</td></tr></thead><tbody></tbody></table>`,
-                bindables: { products: { mode: 8 /* BindingMode.default */ } },
+                bindables: { products: { mode: BindingMode.default } },
                 processContent(node, p) {
                     /*
                     <template id="productrow">

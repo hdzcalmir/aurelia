@@ -1,8 +1,8 @@
-import { AccessorType, type ICollectionSubscriberCollection, type ICollectionObserver, type CollectionKind } from '../observation';
+import { type AccessorType, type ICollectionSubscriberCollection, type ICollectionObserver } from '../observation';
 import { CollectionSizeObserver } from './collection-length-observer';
 export declare function enableSetObservation(): void;
 export declare function disableSetObservation(): void;
-export interface SetObserver extends ICollectionObserver<CollectionKind.set>, ICollectionSubscriberCollection {
+export interface SetObserver extends ICollectionObserver<'set'>, ICollectionSubscriberCollection {
 }
 export declare class SetObserver {
     type: AccessorType;

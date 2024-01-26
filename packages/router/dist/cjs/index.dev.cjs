@@ -846,27 +846,15 @@ class RouterOptions {
     }
 }
 
-/**
- * Shouldn't be used directly
- *
- * @internal
- */
-var ParametersType;
-(function (ParametersType) {
-    ParametersType["none"] = "none";
-    ParametersType["string"] = "string";
-    ParametersType["array"] = "array";
-    ParametersType["object"] = "object";
-})(ParametersType || (ParametersType = {}));
 class InstructionParameters {
     constructor() {
         this.parametersString = null;
         this.parametersRecord = null;
         this.parametersList = null;
-        this.parametersType = "none" /* ParametersType.none */;
+        this.parametersType = 'none';
     }
     get none() {
-        return this.parametersType === "none" /* ParametersType.none */;
+        return this.parametersType === 'none';
     }
     // Static methods
     static create(componentParameters) {
@@ -910,11 +898,11 @@ class InstructionParameters {
     }
     get typedParameters() {
         switch (this.parametersType) {
-            case "string" /* ParametersType.string */:
+            case 'string':
                 return this.parametersString;
-            case "array" /* ParametersType.array */:
+            case 'array':
                 return this.parametersList;
-            case "object" /* ParametersType.object */:
+            case 'object':
                 return this.parametersRecord;
             default:
                 return null;
@@ -954,19 +942,19 @@ class InstructionParameters {
         this.parametersList = null;
         this.parametersRecord = null;
         if (parameters == null || parameters === '') {
-            this.parametersType = "none" /* ParametersType.none */;
+            this.parametersType = 'none';
             parameters = null;
         }
         else if (typeof parameters === 'string') {
-            this.parametersType = "string" /* ParametersType.string */;
+            this.parametersType = 'string';
             this.parametersString = parameters;
         }
         else if (Array.isArray(parameters)) {
-            this.parametersType = "array" /* ParametersType.array */;
+            this.parametersType = 'array';
             this.parametersList = parameters;
         }
         else {
-            this.parametersType = "object" /* ParametersType.object */;
+            this.parametersType = 'object';
             this.parametersRecord = parameters;
         }
     }
@@ -983,10 +971,10 @@ class InstructionParameters {
     }
     // This only works with objects added to objects!
     addParameters(parameters) {
-        if (this.parametersType === "none" /* ParametersType.none */) {
+        if (this.parametersType === 'none') {
             return this.set(parameters);
         }
-        if (this.parametersType !== "object" /* ParametersType.object */) {
+        if (this.parametersType !== 'object') {
             throw new Error('Can\'t add object parameters to existing non-object parameters!');
         }
         this.set({ ...this.parametersRecord, ...parameters });
@@ -2525,7 +2513,7 @@ class ViewportContent extends EndpointContent {
             'reloadBehavior' in this.instruction.component.instance &&
             this.instruction.component.instance.reloadBehavior !== void 0)
             ? this.instruction.component.instance.reloadBehavior
-            : "default" /* ReloadBehavior.default */;
+            : 'default';
     }
     /**
      * Get the controller of the component in the viewport content.
@@ -3309,20 +3297,20 @@ class Viewport extends Endpoint$1 {
         }
         if (!content.equalComponent(nextContent) ||
             navigation.navigation.refresh || // Navigation 'refresh' performed
-            content.reloadBehavior === "refresh" /* ReloadBehavior.refresh */ // ReloadBehavior 'refresh' takes precedence
+            content.reloadBehavior === 'refresh' // ReloadBehavior 'refresh' takes precedence
         ) {
             return this.transitionAction = 'swap';
         }
         // If we got here, component is the same name/type
         // Explicitly don't allow navigation back to the same component again
-        if (content.reloadBehavior === "disallow" /* ReloadBehavior.disallow */) {
+        if (content.reloadBehavior === 'disallow') {
             nextContent.delete();
             this.contents.splice(this.contents.indexOf(nextContent), 1);
             return this.transitionAction = 'skip';
         }
         // Explicitly re-load same component again
         // TODO(alpha): NEED TO CHECK THIS TOWARDS activeContent REGARDING scope
-        if (content.reloadBehavior === "reload" /* ReloadBehavior.reload */) {
+        if (content.reloadBehavior === 'reload') {
             content.reload = true;
             nextContent.instruction.component.set(content.componentInstance);
             nextContent.contentStates = content.contentStates.clone();
@@ -7837,7 +7825,12 @@ class Router {
         // if (instruction.path === void 0 || instruction.path.length === 0 || instruction.path === '/') {
         navigation.path = basePath + state + query + fragment;
         // }
-        const fullViewportStates = [RoutingInstruction.create(RoutingInstruction.clear(this))];
+        const fullViewportStates = [];
+        // Handle default / root page, because "-" + "" = "-" (so just a "clear")
+        const targetRoute = instructions.length === 1 ? instructions[0].route : null;
+        if (!(targetRoute != null && ((typeof targetRoute === 'string' && targetRoute === '') || (targetRoute.matching === '')))) {
+            fullViewportStates.push(RoutingInstruction.create(RoutingInstruction.clear(this)));
+        }
         fullViewportStates.push(...RoutingInstruction.clone(instructions, this.statefulHistory));
         navigation.fullStateInstruction = fullViewportStates;
         if ((navigation.title ?? null) === null) {
@@ -8020,14 +8013,6 @@ exports.LinkHandler = __decorate([
     __param(1, IRouter)
 ], exports.LinkHandler);
 
-exports.ReloadBehavior = void 0;
-(function (ReloadBehavior) {
-    ReloadBehavior["default"] = "default";
-    ReloadBehavior["disallow"] = "disallow";
-    ReloadBehavior["reload"] = "reload";
-    ReloadBehavior["refresh"] = "refresh";
-})(exports.ReloadBehavior || (exports.ReloadBehavior = {}));
-
 function route(configOrPath) {
     return function (target) {
         return Route.configure(configOrPath, target);
@@ -8107,6 +8092,7 @@ function getLoadIndicator(element) {
     indicator ?? (indicator = element);
     return indicator;
 }
+/** @internal */ const bmToView = runtimeHtml.BindingMode.toView;
 
 const ParentViewport = runtimeHtml.CustomElement.createInjectable();
 exports.ViewportCustomElement = class ViewportCustomElement {
@@ -8565,7 +8551,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
     }
 };
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */ })
+    runtimeHtml.bindable({ mode: bmToView })
 ], exports.LoadCustomAttribute.prototype, "value", void 0);
 __decorate([
     runtimeHtml.bindable
@@ -8628,11 +8614,11 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
     hasLoad() {
         const parent = this.$controller.parent;
         const siblings = parent.children;
-        return siblings?.some(c => c.vmKind === 1 /* ViewModelKind.customAttribute */ && c.viewModel instanceof exports.LoadCustomAttribute) ?? false;
+        return siblings?.some(c => c.vmKind === 'customAttribute' && c.viewModel instanceof exports.LoadCustomAttribute) ?? false;
     }
 };
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */ })
+    runtimeHtml.bindable({ mode: bmToView })
 ], exports.HrefCustomAttribute.prototype, "value", void 0);
 exports.HrefCustomAttribute = __decorate([
     runtimeHtml.customAttribute({
@@ -8648,7 +8634,7 @@ exports.HrefCustomAttribute = __decorate([
 exports.ConsideredActiveCustomAttribute = class ConsideredActiveCustomAttribute {
 };
 __decorate([
-    runtimeHtml.bindable({ mode: 2 /* BindingMode.toView */ })
+    runtimeHtml.bindable({ mode: bmToView })
 ], exports.ConsideredActiveCustomAttribute.prototype, "value", void 0);
 exports.ConsideredActiveCustomAttribute = __decorate([
     runtimeHtml.customAttribute('considered-active')

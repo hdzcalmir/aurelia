@@ -11,25 +11,25 @@ var metadata = require('@aurelia/metadata');
 
 // Significant portion of this code is copy-pasted from the node.js source
 const { getPrototypeOf, getOwnPropertyDescriptor, getOwnPropertyDescriptors, getOwnPropertyNames, getOwnPropertySymbols, defineProperty, defineProperties, } = Object;
-const Object_keys = Object.keys;
-const Object_is = Object.is;
-const Object_freeze = Object.freeze;
-const Object_assign = Object.assign;
-const Number_isNaN = Number.isNaN;
-const Reflect_apply = Reflect.apply;
-const ArrayBuffer_isView = ArrayBuffer.isView;
-function uncurryThis(func) {
+/** @internal */ const Object_keys = Object.keys;
+/** @internal */ const Object_is = Object.is;
+/** @internal */ const Object_freeze = Object.freeze;
+/** @internal */ const Object_assign = Object.assign;
+/** @internal */ const Number_isNaN = Number.isNaN;
+/** @internal */ const Reflect_apply = Reflect.apply;
+/** @internal */ const ArrayBuffer_isView = ArrayBuffer.isView;
+/** @internal */ function uncurryThis(func) {
     return (thisArg, ...args) => Reflect_apply(func, thisArg, args);
 }
-const hasOwnProperty = uncurryThis(Object.prototype.hasOwnProperty);
-const propertyIsEnumerable = uncurryThis(Object.prototype.propertyIsEnumerable);
-const TypedArrayPrototype = getPrototypeOf(Uint8Array.prototype);
+/** @internal */ const hasOwnProperty = uncurryThis(Object.prototype.hasOwnProperty);
+/** @internal */ const propertyIsEnumerable = uncurryThis(Object.prototype.propertyIsEnumerable);
+/** @internal */ const TypedArrayPrototype = getPrototypeOf(Uint8Array.prototype);
 const TypedArrayProto_toStringTag = uncurryThis(getOwnPropertyDescriptor(TypedArrayPrototype, Symbol.toStringTag).get);
-const Object_toString = uncurryThis(Object.prototype.toString);
-const RegExp_toString = uncurryThis(RegExp.prototype.toString);
-const Date_toISOString = uncurryThis(Date.prototype.toISOString);
-const Date_toString = uncurryThis(Date.prototype.toString);
-const Error_toString = uncurryThis(Error.prototype.toString);
+/** @internal */ const Object_toString = uncurryThis(Object.prototype.toString);
+/** @internal */ const RegExp_toString = uncurryThis(RegExp.prototype.toString);
+/** @internal */ const Date_toISOString = uncurryThis(Date.prototype.toISOString);
+/** @internal */ const Date_toString = uncurryThis(Date.prototype.toString);
+/** @internal */ const Error_toString = uncurryThis(Error.prototype.toString);
 const Date_getTime = uncurryThis(Date.prototype.getTime);
 const Set_values = uncurryThis(Set.prototype.values);
 const Map_entries = uncurryThis(Map.prototype.entries);
@@ -2373,33 +2373,33 @@ function getVisibleText(host, removeWhiteSpace) {
 }
 function instructionTypeName(type) {
     switch (type) {
-        case "ha" /* InstructionType.textBinding */:
+        case runtimeHtml.InstructionType.textBinding:
             return 'textBinding';
-        case "rf" /* InstructionType.interpolation */:
+        case runtimeHtml.InstructionType.interpolation:
             return 'interpolation';
-        case "rg" /* InstructionType.propertyBinding */:
+        case runtimeHtml.InstructionType.propertyBinding:
             return 'propertyBinding';
-        case "rk" /* InstructionType.iteratorBinding */:
+        case runtimeHtml.InstructionType.iteratorBinding:
             return 'iteratorBinding';
-        case "hb" /* InstructionType.listenerBinding */:
+        case runtimeHtml.InstructionType.listenerBinding:
             return 'listenerBinding';
-        case "rj" /* InstructionType.refBinding */:
+        case runtimeHtml.InstructionType.refBinding:
             return 'refBinding';
-        case "hd" /* InstructionType.stylePropertyBinding */:
+        case runtimeHtml.InstructionType.stylePropertyBinding:
             return 'stylePropertyBinding';
-        case "re" /* InstructionType.setProperty */:
+        case runtimeHtml.InstructionType.setProperty:
             return 'setProperty';
-        case "he" /* InstructionType.setAttribute */:
+        case runtimeHtml.InstructionType.setAttribute:
             return 'setAttribute';
-        case "ra" /* InstructionType.hydrateElement */:
+        case runtimeHtml.InstructionType.hydrateElement:
             return 'hydrateElement';
-        case "rb" /* InstructionType.hydrateAttribute */:
+        case runtimeHtml.InstructionType.hydrateAttribute:
             return 'hydrateAttribute';
-        case "rc" /* InstructionType.hydrateTemplateController */:
+        case runtimeHtml.InstructionType.hydrateTemplateController:
             return 'hydrateTemplateController';
-        case "rd" /* InstructionType.hydrateLetElement */:
+        case runtimeHtml.InstructionType.hydrateLetElement:
             return 'hydrateLetElement';
-        case "ri" /* InstructionType.letBinding */:
+        case runtimeHtml.InstructionType.letBinding:
             return 'letBinding';
         default:
             return type;
@@ -8081,7 +8081,7 @@ class MockPropertySubscriber {
 class MockTracingExpression {
     constructor(inner) {
         this.inner = inner;
-        this.$kind = 30 /* ExpressionKind.Custom */;
+        this.$kind = 'Custom';
         this.hasBind = true;
         this.hasUnbind = true;
         this.calls = [];

@@ -1,6 +1,6 @@
 import { IContainer } from '@aurelia/kernel';
 import { IPlatform } from '@aurelia/runtime-html';
-import { DialogDeactivationStatuses, IDialogController, DialogCloseResult } from './dialog-interfaces';
+import { IDialogController, DialogCloseResult } from './dialog-interfaces';
 import type { IDialogLoadedSettings } from './dialog-interfaces';
 /**
  * A controller object for a Dialog instance.
@@ -24,13 +24,13 @@ export declare class DialogController implements IDialogController {
      *
      * @param value - The returned success output.
      */
-    ok(value?: unknown): Promise<DialogCloseResult<DialogDeactivationStatuses.Ok>>;
+    ok(value?: unknown): Promise<DialogCloseResult<'ok'>>;
     /**
      * Closes the dialog with a cancel output.
      *
      * @param value - The returned cancel output.
      */
-    cancel(value?: unknown): Promise<DialogCloseResult<DialogDeactivationStatuses.Cancel>>;
+    cancel(value?: unknown): Promise<DialogCloseResult<'cancel'>>;
     /**
      * Closes the dialog with an error output.
      *

@@ -36,12 +36,7 @@ export interface IRouteableComponent extends ICustomElementViewModel {
     unloading?(instruction: RoutingInstruction, navigation: Navigation | null): void | Promise<void>;
     readonly $controller?: ICustomElementController<this>;
 }
-export declare const enum ReloadBehavior {
-    default = "default",
-    disallow = "disallow",
-    reload = "reload",
-    refresh = "refresh"
-}
+export type ReloadBehavior = 'default' | 'disallow' | 'reload' | 'refresh';
 export interface IRoutingInstruction {
     component: ComponentAppellation;
     viewport?: ViewportHandle;

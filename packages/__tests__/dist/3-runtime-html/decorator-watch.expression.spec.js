@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { bindable, customAttribute, customElement, watch } from '@aurelia/runtime-html';
+import { BindingMode, bindable, customAttribute, customElement, watch } from '@aurelia/runtime-html';
 import { assert, createFixture } from '@aurelia/testing';
 describe('3-runtime-html/decorator-watch.expression.spec.ts', function () {
     const testCases = [
@@ -220,7 +220,7 @@ describe('3-runtime-html/decorator-watch.expression.spec.ts', function () {
                 __metadata("design:type", Array)
             ], ListActiveIndicator.prototype, "items", void 0);
             __decorate([
-                bindable({ mode: 4 /* BindingMode.fromView */ }),
+                bindable({ mode: BindingMode.fromView }),
                 __metadata("design:type", Boolean)
             ], ListActiveIndicator.prototype, "active", void 0);
             ListActiveIndicator = __decorate([
@@ -252,7 +252,7 @@ describe('3-runtime-html/decorator-watch.expression.spec.ts', function () {
                 __metadata("design:type", Array)
             ], ListActiveIndicator.prototype, "items", void 0);
             __decorate([
-                bindable({ mode: 4 /* BindingMode.fromView */ }),
+                bindable({ mode: BindingMode.fromView }),
                 __metadata("design:type", Boolean)
             ], ListActiveIndicator.prototype, "active", void 0);
             ListActiveIndicator = __decorate([
@@ -284,7 +284,7 @@ describe('3-runtime-html/decorator-watch.expression.spec.ts', function () {
                 __metadata("design:type", Array)
             ], ListActiveIndicator.prototype, "items", void 0);
             __decorate([
-                bindable({ mode: 4 /* BindingMode.fromView */ }),
+                bindable({ mode: BindingMode.fromView }),
                 __metadata("design:type", Boolean)
             ], ListActiveIndicator.prototype, "active", void 0);
             __decorate([
@@ -321,7 +321,7 @@ describe('3-runtime-html/decorator-watch.expression.spec.ts', function () {
                 __metadata("design:type", Array)
             ], ListActiveIndicator.prototype, "items", void 0);
             __decorate([
-                bindable({ mode: 4 /* BindingMode.fromView */ }),
+                bindable({ mode: BindingMode.fromView }),
                 __metadata("design:type", Boolean)
             ], ListActiveIndicator.prototype, "active", void 0);
             __decorate([

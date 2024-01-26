@@ -31,7 +31,6 @@ function loader(contents, _preprocess = pluginConventions.preprocess) {
 const getHmrCode = (className) => {
     const code = `
     import { Metadata as $$M } from '@aurelia/metadata';
-    import { ExpressionKind as $$EK } from '@aurelia/runtime';
     import { Controller as $$C, CustomElement as $$CE, IHydrationContext as $$IHC } from '@aurelia/runtime-html';
 
     // @ts-ignore
@@ -101,7 +100,7 @@ const getHmrCode = (className) => {
           // if there' some bindings that target the existing property
           // @ts-ignore
           const isTargettedByBinding = controller.bindings?.some(y =>
-            y.ast?.$kind === $$EK.AccessScope
+            y.ast?.$kind === 'AccessScope'
               && y.ast.name === key && y.targetProperty
           );
           if (!isTargettedByBinding) {

@@ -1,4 +1,4 @@
-import { CustomElement } from '@aurelia/runtime-html';
+import { BindingMode, CustomElement } from '@aurelia/runtime-html';
 import { assert, createFixture, eachCartesianJoin } from '@aurelia/testing';
 import { ClassAttributePattern } from './attribute-pattern.js';
 // TemplateCompiler - Binding Commands integration
@@ -115,7 +115,7 @@ describe('3-runtime-html/binding-command.class.spec.ts', function () {
                         }
                     },
                     _a.bindables = {
-                        value: { property: 'value', attribute: 'value', mode: 6 /* BindingMode.twoWay */ }
+                        value: { property: 'value', attribute: 'value', mode: BindingMode.twoWay }
                     },
                     _a))
             ]);

@@ -1,4 +1,4 @@
-import { Scope } from '@aurelia/runtime';
+import { type Scope } from '@aurelia/runtime';
 import type { ICustomAttributeController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, IHydratableController, ISyntheticView, ControllerVisitor } from '../../templating/controller';
 import type { INode } from '../../dom';
 import type { IInstruction } from '../../renderer';

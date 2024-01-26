@@ -30,8 +30,8 @@ export interface IDialogController {
      * A promise that will be fulfilled once this dialog has been closed
      */
     readonly closed: Promise<DialogCloseResult>;
-    ok(value?: unknown): Promise<DialogCloseResult<DialogDeactivationStatuses.Ok>>;
-    cancel(value?: unknown): Promise<DialogCloseResult<DialogDeactivationStatuses.Cancel>>;
+    ok(value?: unknown): Promise<DialogCloseResult<'ok'>>;
+    cancel(value?: unknown): Promise<DialogCloseResult<'cancel'>>;
     error(value?: unknown): Promise<void>;
 }
 /**
@@ -155,16 +155,13 @@ export declare class DialogCloseResult<T extends DialogDeactivationStatuses = Di
 export interface IDialogCustomElementViewModel<T = unknown> extends ICustomElementViewModel, IDialogComponent<T> {
     readonly $dialog: IDialogController;
 }
-export declare const enum DialogDeactivationStatuses {
-    Ok = "ok",
-    Error = "error",
-    Cancel = "cancel",
-    /**
-     * If a view model refused to deactivate in canDeactivate,
-     * then this status should be used to reflect that
-     */
-    Abort = "abort"
-}
+/**
+ * - `ok`: The dialog is closed intentionally. This denotes the happy path.
+ * - `cancel`: The dialog is closed with an intent to cancel.
+ * - `abort`: The dialog model refused to deactivate in canDeactivate.
+ * - `error`: The dialog is closed due to an error.
+ */
+export type DialogDeactivationStatuses = 'ok' | 'error' | 'cancel' | 'abort';
 /**
  * The result received when a dialog opens.
  */

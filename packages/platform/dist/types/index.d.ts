@@ -1,3 +1,8 @@
+declare const tsPending: "pending";
+declare const tsRunning: "running";
+declare const tsCompleted: "completed";
+declare const tsCanceled: "canceled";
+export type TaskStatus = typeof tsPending | typeof tsRunning | typeof tsCompleted | typeof tsCanceled;
 export declare class Platform<TGlobal extends typeof globalThis = typeof globalThis> {
     readonly globalThis: TGlobal;
     readonly decodeURI: TGlobal['decodeURI'];
@@ -57,12 +62,6 @@ export declare class TaskAbortError<T = any> extends Error {
     task: Task<T>;
     constructor(task: Task<T>);
 }
-export declare const enum TaskStatus {
-    pending = 0,
-    running = 1,
-    completed = 2,
-    canceled = 3
-}
 type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;
 export interface ITask<T = any> {
     readonly result: Promise<UnwrapPromise<T>>;
@@ -88,11 +87,6 @@ export declare class Task<T = any> implements ITask {
     reset(time: number): void;
     reuse(time: number, delay: number, preempt: boolean, persistent: boolean, suspend: boolean, callback: TaskCallback<T>): void;
     dispose(): void;
-}
-export declare const enum TaskQueuePriority {
-    render = 0,
-    macroTask = 1,
-    postRender = 2
 }
 export type QueueTaskOptions = {
     /**

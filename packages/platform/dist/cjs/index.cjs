@@ -4,7 +4,15 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-const s = new Map;
+const s = "pending";
+
+const t = "running";
+
+const i = "completed";
+
+const e = "canceled";
+
+const h = new Map;
 
 const notImplemented = s => () => {
     throw createError(`AUR1005:${s}`);
@@ -25,15 +33,15 @@ class Platform {
         this.flushMacroTask = this.flushMacroTask.bind(this);
         this.taskQueue = new TaskQueue(this, this.requestMacroTask.bind(this), this.cancelMacroTask.bind(this));
     }
-    static getOrCreate(t, i = {}) {
-        let e = s.get(t);
-        if (e === void 0) {
-            s.set(t, e = new Platform(t, i));
+    static getOrCreate(s, t = {}) {
+        let i = h.get(s);
+        if (i === void 0) {
+            h.set(s, i = new Platform(s, t));
         }
-        return e;
+        return i;
     }
-    static set(t, i) {
-        s.set(t, i);
+    static set(s, t) {
+        h.set(s, t);
     }
     requestMacroTask() {
         this.macroTaskRequested = true;
@@ -102,12 +110,12 @@ class TaskQueue {
                 while (++t < this.u.length && this.u[t].queueTime <= s) {}
                 this.i.push(...this.u.splice(0, t));
             }
-            let t;
+            let i;
             while (this.i.length > 0) {
-                (t = this.i.shift()).run();
-                if (t.status === 1) {
-                    if (t.suspend === true) {
-                        this.$ = t;
+                (i = this.i.shift()).run();
+                if (i.status === t) {
+                    if (i.suspend === true) {
+                        this.$ = i;
                         this.q();
                         return;
                     } else {
@@ -151,15 +159,15 @@ class TaskQueue {
         }
     }
     queueTask(s, t) {
-        const {delay: e, preempt: h, persistent: r, reusable: o, suspend: n} = {
-            ...i,
+        const {delay: i, preempt: e, persistent: h, reusable: o, suspend: n} = {
+            ...r,
             ...t
         };
-        if (h) {
-            if (e > 0) {
+        if (e) {
+            if (i > 0) {
                 throw preemptDelayComboError();
             }
-            if (r) {
+            if (h) {
                 throw preemptyPersistentComboError();
             }
         }
@@ -170,21 +178,21 @@ class TaskQueue {
         let a;
         if (o) {
             const t = this.M;
-            const i = this.P - 1;
-            if (i >= 0) {
-                a = t[i];
-                t[i] = void 0;
-                this.P = i;
-                a.reuse(c, e, h, r, n, s);
+            const r = this.P - 1;
+            if (r >= 0) {
+                a = t[r];
+                t[r] = void 0;
+                this.P = r;
+                a.reuse(c, i, e, h, n, s);
             } else {
-                a = new Task(this.C, this, c, c + e, h, r, n, o, s);
+                a = new Task(this.C, this, c, c + i, e, h, n, o, s);
             }
         } else {
-            a = new Task(this.C, this, c, c + e, h, r, n, o, s);
+            a = new Task(this.C, this, c, c + i, e, h, n, o, s);
         }
-        if (h) {
+        if (e) {
             this.i[this.i.length] = a;
-        } else if (e === 0) {
+        } else if (i === 0) {
             this.h[this.h.length] = a;
         } else {
             this.u[this.u.length] = a;
@@ -247,23 +255,14 @@ class TaskAbortError extends Error {
     }
 }
 
-let t = 0;
-
-exports.TaskStatus = void 0;
-
-(function(s) {
-    s[s["pending"] = 0] = "pending";
-    s[s["running"] = 1] = "running";
-    s[s["completed"] = 2] = "completed";
-    s[s["canceled"] = 3] = "canceled";
-})(exports.TaskStatus || (exports.TaskStatus = {}));
+let o = 0;
 
 class Task {
     get result() {
-        const s = this.F;
-        if (s === void 0) {
+        const h = this.F;
+        if (h === void 0) {
             switch (this.W) {
-              case 0:
+              case s:
                 {
                     const s = this.F = createExposedPromise();
                     this.B = s.resolve;
@@ -271,110 +270,110 @@ class Task {
                     return s;
                 }
 
-              case 1:
+              case t:
                 throw createError("Trying to await task from within task will cause a deadlock.");
 
-              case 2:
+              case i:
                 return this.F = Promise.resolve();
 
-              case 3:
+              case e:
                 return this.F = Promise.reject(new TaskAbortError(this));
             }
         }
-        return s;
+        return h;
     }
     get status() {
         return this.W;
     }
-    constructor(s, i, e, h, r, o, n, c, a) {
+    constructor(t, i, e, h, r, n, c, a, l) {
         this.taskQueue = i;
         this.createdTime = e;
         this.queueTime = h;
         this.preempt = r;
-        this.persistent = o;
-        this.suspend = n;
-        this.reusable = c;
-        this.callback = a;
-        this.id = ++t;
+        this.persistent = n;
+        this.suspend = c;
+        this.reusable = a;
+        this.callback = l;
+        this.id = ++o;
         this.B = void 0;
         this.G = void 0;
         this.F = void 0;
-        this.W = 0;
-        this.C = s;
+        this.W = s;
+        this.C = t;
     }
-    run(s = this.taskQueue.platform.performanceNow()) {
-        if (this.W !== 0) {
+    run(h = this.taskQueue.platform.performanceNow()) {
+        if (this.W !== s) {
             throw createError(`Cannot run task in ${this.W} state`);
         }
-        const {persistent: t, reusable: i, taskQueue: e, callback: h, B: r, G: o, createdTime: n} = this;
-        let c;
-        this.W = 1;
+        const {persistent: o, reusable: r, taskQueue: n, callback: c, B: a, G: l, createdTime: f} = this;
+        let u;
+        this.W = t;
         try {
-            c = h(s - n);
-            if (c instanceof Promise) {
-                c.then((s => {
+            u = c(h - f);
+            if (u instanceof Promise) {
+                u.then((s => {
                     if (this.persistent) {
-                        e.N(this);
+                        n.N(this);
                     } else {
-                        if (t) {
-                            this.W = 3;
+                        if (o) {
+                            this.W = e;
                         } else {
-                            this.W = 2;
+                            this.W = i;
                         }
                         this.dispose();
                     }
-                    e.O(this);
+                    n.O(this);
                     if (false && this.C.enabled) ;
-                    if (r !== void 0) {
-                        r(s);
+                    if (a !== void 0) {
+                        a(s);
                     }
-                    if (!this.persistent && i) {
-                        e.j(this);
+                    if (!this.persistent && r) {
+                        n.j(this);
                     }
                 })).catch((s => {
                     if (!this.persistent) {
                         this.dispose();
                     }
-                    e.O(this);
+                    n.O(this);
                     if (false && this.C.enabled) ;
-                    if (o !== void 0) {
-                        o(s);
+                    if (l !== void 0) {
+                        l(s);
                     } else {
                         throw s;
                     }
                 }));
             } else {
                 if (this.persistent) {
-                    e.N(this);
+                    n.N(this);
                 } else {
-                    if (t) {
-                        this.W = 3;
+                    if (o) {
+                        this.W = e;
                     } else {
-                        this.W = 2;
+                        this.W = i;
                     }
                     this.dispose();
                 }
                 if (false && this.C.enabled) ;
-                if (r !== void 0) {
-                    r(c);
+                if (a !== void 0) {
+                    a(u);
                 }
-                if (!this.persistent && i) {
-                    e.j(this);
+                if (!this.persistent && r) {
+                    n.j(this);
                 }
             }
         } catch (s) {
             if (!this.persistent) {
                 this.dispose();
             }
-            if (o !== void 0) {
-                o(s);
+            if (l !== void 0) {
+                l(s);
             } else {
                 throw s;
             }
         }
     }
     cancel() {
-        if (this.W === 0) {
+        if (this.W === s) {
             const s = this.taskQueue;
             const t = this.reusable;
             const i = this.G;
@@ -382,7 +381,7 @@ class Task {
             if (s.isEmpty) {
                 s.cancel();
             }
-            this.W = 3;
+            this.W = e;
             this.dispose();
             if (t) {
                 s.j(this);
@@ -391,29 +390,29 @@ class Task {
                 i(new TaskAbortError(this));
             }
             return true;
-        } else if (this.W === 1 && this.persistent) {
+        } else if (this.W === t && this.persistent) {
             this.persistent = false;
             return true;
         }
         return false;
     }
-    reset(s) {
-        const t = this.queueTime - this.createdTime;
-        this.createdTime = s;
-        this.queueTime = s + t;
-        this.W = 0;
+    reset(t) {
+        const i = this.queueTime - this.createdTime;
+        this.createdTime = t;
+        this.queueTime = t + i;
+        this.W = s;
         this.B = void 0;
         this.G = void 0;
         this.F = void 0;
     }
-    reuse(s, t, i, e, h, r) {
-        this.createdTime = s;
-        this.queueTime = s + t;
-        this.preempt = i;
-        this.persistent = e;
-        this.suspend = h;
+    reuse(t, i, e, h, o, r) {
+        this.createdTime = t;
+        this.queueTime = t + i;
+        this.preempt = e;
+        this.persistent = h;
+        this.suspend = o;
         this.callback = r;
-        this.W = 0;
+        this.W = s;
     }
     dispose() {
         this.callback = void 0;
@@ -422,14 +421,6 @@ class Task {
         this.F = void 0;
     }
 }
-
-exports.TaskQueuePriority = void 0;
-
-(function(s) {
-    s[s["render"] = 0] = "render";
-    s[s["macroTask"] = 1] = "macroTask";
-    s[s["postRender"] = 2] = "postRender";
-})(exports.TaskQueuePriority || (exports.TaskQueuePriority = {}));
 
 class Tracer {
     constructor(s) {
@@ -450,43 +441,27 @@ class Tracer {
         if (t instanceof TaskQueue) {
             const e = t.i.length;
             const h = t.h.length;
-            const r = t.u.length;
-            const o = t.R;
+            const o = t.u.length;
+            const r = t.R;
             const n = !!t.$;
-            const c = `processing=${e} pending=${h} delayed=${r} flushReq=${o} susTask=${n}`;
+            const c = `processing=${e} pending=${h} delayed=${o} flushReq=${r} susTask=${n}`;
             this.console.log(`${s}[Q.${i}] ${c}`);
         } else {
             const e = t["id"];
             const h = Math.round(t["createdTime"] * 10) / 10;
-            const r = Math.round(t["queueTime"] * 10) / 10;
-            const o = t["preempt"];
+            const o = Math.round(t["queueTime"] * 10) / 10;
+            const r = t["preempt"];
             const n = t["reusable"];
             const c = t["persistent"];
             const a = t["suspend"];
-            const l = taskStatus(t["W"]);
-            const f = `id=${e} created=${h} queue=${r} preempt=${o} persistent=${c} reusable=${n} status=${l} suspend=${a}`;
+            const l = t["W"];
+            const f = `id=${e} created=${h} queue=${o} preempt=${r} persistent=${c} reusable=${n} status=${l} suspend=${a}`;
             this.console.log(`${s}[T.${i}] ${f}`);
         }
     }
 }
 
-const taskStatus = s => {
-    switch (s) {
-      case 0:
-        return "pending";
-
-      case 1:
-        return "running";
-
-      case 3:
-        return "canceled";
-
-      case 2:
-        return "completed";
-    }
-};
-
-const i = {
+const r = {
     delay: 0,
     preempt: false,
     persistent: false,
@@ -494,19 +469,19 @@ const i = {
     suspend: false
 };
 
-let e;
+let n;
 
-let h;
+let c;
 
 const executor = (s, t) => {
-    e = s;
-    h = t;
+    n = s;
+    c = t;
 };
 
 const createExposedPromise = () => {
     const s = new Promise(executor);
-    s.resolve = e;
-    s.reject = h;
+    s.resolve = n;
+    s.reject = c;
     return s;
 };
 

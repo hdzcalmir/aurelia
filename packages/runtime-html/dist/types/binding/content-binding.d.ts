@@ -1,10 +1,9 @@
 import { IAstEvaluator, IConnectableBinding } from '@aurelia/runtime';
-import { BindingMode } from './interfaces-bindings';
 import type { IServiceLocator } from '@aurelia/kernel';
 import type { TaskQueue } from '@aurelia/platform';
 import type { IBinding, ICollectionSubscriber, IObserverLocator, IsExpression, Scope } from '@aurelia/runtime';
 import type { IPlatform } from '../platform';
-import type { IBindingController } from './interfaces-bindings';
+import type { BindingMode, IBindingController } from './interfaces-bindings';
 export interface ContentBinding extends IAstEvaluator, IConnectableBinding {
 }
 /**

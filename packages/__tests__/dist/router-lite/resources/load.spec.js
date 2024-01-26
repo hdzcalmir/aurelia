@@ -11,7 +11,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import { IRouteContext, route } from '@aurelia/router-lite';
-import { customElement, ILocation, IPlatform } from '@aurelia/runtime-html';
+import { CustomElement, customElement, ILocation, IPlatform } from '@aurelia/runtime-html';
 import { assert } from '@aurelia/testing';
 import { start } from '../_shared/create-fixture.js';
 describe('router-lite/resources/load.spec.ts', function () {
@@ -1197,6 +1197,92 @@ describe('router-lite/resources/load.spec.ts', function () {
         host.querySelector('a').click();
         await queue.yield();
         assert.html.textContent(host, 'product init', 'round#2 - back - text');
+        await au.stop(true);
+    });
+    for (const value of [null, undefined]) {
+        it(`${value} value for a query-string param is ignored`, async function () {
+            let Product = class Product {
+                canLoad(_params, _next, _current) {
+                    this.query = _next.queryParams;
+                    return true;
+                }
+            };
+            Product = __decorate([
+                route('product'),
+                customElement({ name: 'pro-duct', template: `product` })
+            ], Product);
+            let Root = class Root {
+                constructor() {
+                    this.value = value;
+                }
+            };
+            Root = __decorate([
+                route({
+                    routes: [
+                        Product,
+                    ]
+                }),
+                customElement({ name: 'ro-ot', template: '<a load="route:product; params.bind: {id: value}"></a><au-viewport></au-viewport>' })
+            ], Root);
+            const { au, host, container } = await start({ appRoot: Root, registrations: [Product] });
+            const queue = container.get(IPlatform).domWriteQueue;
+            await queue.yield();
+            host.querySelector('a').click();
+            await queue.yield();
+            const product = CustomElement.for(host.querySelector('pro-duct')).viewModel;
+            const query = product.query;
+            assert.strictEqual(query.get('id'), null);
+            assert.deepStrictEqual(Array.from(query.keys()), []);
+            await au.stop(true);
+        });
+    }
+    it('respects constrained routes', async function () {
+        let NotFound = class NotFound {
+        };
+        NotFound = __decorate([
+            route('nf'),
+            customElement({ name: 'not-found', template: `nf` })
+        ], NotFound);
+        let Product = class Product {
+            canLoad(params, _next, _current) {
+                this.id = params.id;
+                return true;
+            }
+        };
+        Product = __decorate([
+            route({ id: 'product', path: 'product/:id{{^\\d+$}}' }),
+            customElement({ name: 'pro-duct', template: `product \${id}` })
+        ], Product);
+        let Root = class Root {
+        };
+        Root = __decorate([
+            route({ routes: [Product, NotFound], fallback: 'nf' }),
+            customElement({
+                name: 'ro-ot',
+                template: `
+        <a load="route:product; params.bind:{id: 42}"></a>
+        <a load="route:product; params.bind:{id: foo}"></a>
+        <a load="product/bar"></a>
+        <au-viewport></au-viewport>
+      `
+            })
+        ], Root);
+        const { au, host, container } = await start({ appRoot: Root });
+        const queue = container.get(IPlatform).domWriteQueue;
+        await queue.yield();
+        const anchors = Array.from(host.querySelectorAll('a'));
+        anchors[0].click();
+        await queue.yield();
+        assert.html.textContent(host, 'product 42');
+        anchors[1].click();
+        await queue.yield();
+        assert.html.textContent(host, 'nf');
+        anchors[0].click();
+        await queue.yield();
+        assert.html.textContent(host, 'product 42');
+        anchors[2].click();
+        await queue.yield();
+        assert.html.textContent(host, 'nf');
         await au.stop(true);
     });
 });

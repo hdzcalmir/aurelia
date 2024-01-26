@@ -160,6 +160,8 @@ function createStateBindingScope(state, scope) {
 function isSubscribable$1(v) {
     return v instanceof Object && 'subscribe' in v;
 }
+/** @internal */ const atLayout = runtime.AccessorType.Layout;
+/** @internal */ const stateActivating = runtimeHtml.State.activating;
 
 class StateBinding {
     constructor(controller, locator, observerLocator, taskQueue, ast, target, prop, store) {
@@ -171,7 +173,7 @@ class StateBinding {
         // see Listener binding for explanation
         /** @internal */
         this.boundFn = false;
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = runtimeHtml.BindingMode.toView;
         this._controller = controller;
         this.l = locator;
         this._taskQueue = taskQueue;
@@ -212,7 +214,7 @@ class StateBinding {
         }
         this._targetObserver = this.oL.getAccessor(this.target, this.targetProperty);
         this._store.subscribe(this);
-        this.updateTarget(this._value = runtime.astEvaluate(this.ast, this._scope = createStateBindingScope(this._store.getState(), _scope), this, this.mode > 1 /* BindingMode.oneTime */ ? this : null));
+        this.updateTarget(this._value = runtime.astEvaluate(this.ast, this._scope = createStateBindingScope(this._store.getState(), _scope), this, this.mode > runtimeHtml.BindingMode.oneTime ? this : null));
         this.isBound = true;
     }
     unbind() {
@@ -236,7 +238,7 @@ class StateBinding {
         // todo:
         //  (1). determine whether this should be the behavior
         //  (2). if not, then fix tests to reflect the changes/platform to properly yield all with aurelia.start()
-        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */ && (this._targetObserver.type & 4 /* AccessorType.Layout */) > 0;
+        const shouldQueueFlush = this._controller.state !== stateActivating && (this._targetObserver.type & atLayout) > 0;
         const obsRecord = this.obs;
         obsRecord.version++;
         newValue = runtime.astEvaluate(this.ast, this._scope, this, this);
@@ -264,8 +266,8 @@ class StateBinding {
         const _scope = this._scope;
         const overrideContext = _scope.overrideContext;
         _scope.bindingContext = overrideContext.bindingContext = overrideContext.$state = state;
-        const value = runtime.astEvaluate(this.ast, _scope, this, this.mode > 1 /* BindingMode.oneTime */ ? this : null);
-        const shouldQueueFlush = this._controller.state !== 1 /* State.activating */ && (this._targetObserver.type & 4 /* AccessorType.Layout */) > 0;
+        const value = runtime.astEvaluate(this.ast, _scope, this, this.mode > runtimeHtml.BindingMode.oneTime ? this : null);
+        const shouldQueueFlush = this._controller.state !== stateActivating && (this._targetObserver.type & atLayout) > 0;
         if (value === this._value) {
             return;
         }
@@ -426,7 +428,7 @@ exports.DispatchAttributePattern = __decorate([
     runtimeHtml.attributePattern({ pattern: 'PART.dispatch', symbols: '.' })
 ], exports.DispatchAttributePattern);
 exports.StateBindingCommand = class StateBindingCommand {
-    get type() { return 0 /* CommandType.None */; }
+    get type() { return 'None'; }
     get name() { return 'state'; }
     build(info, parser, attrMapper) {
         const attr = info.attr;
@@ -441,7 +443,7 @@ exports.StateBindingCommand = class StateBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === 1 /* DefinitionType.Element */) {
+            if (value === '' && info.def.type === 'Element') {
                 value = kernel.camelCase(target);
             }
             target = info.bindable.name;
@@ -453,7 +455,7 @@ exports.StateBindingCommand = __decorate([
     runtimeHtml.bindingCommand('state')
 ], exports.StateBindingCommand);
 exports.DispatchBindingCommand = class DispatchBindingCommand {
-    get type() { return 1 /* CommandType.IgnoreAttr */; }
+    get type() { return 'IgnoreAttr'; }
     get name() { return 'dispatch'; }
     build(info) {
         const attr = info.attr;
@@ -483,7 +485,7 @@ exports.StateBindingInstructionRenderer = class StateBindingInstructionRenderer 
         this._stateContainer = _stateContainer;
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */), target, instruction.to, this._stateContainer));
+        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
     }
 };
 /** @internal */ exports.StateBindingInstructionRenderer.inject = [IStore];
@@ -496,7 +498,7 @@ exports.DispatchBindingInstructionRenderer = class DispatchBindingInstructionRen
         this._stateContainer = _stateContainer;
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        const expr = ensureExpression(exprParser, instruction.ast, 16 /* ExpressionType.IsProperty */);
+        const expr = ensureExpression(exprParser, instruction.ast, 'IsProperty');
         renderingCtrl.addBinding(new StateDispatchBinding(renderingCtrl.container, expr, target, instruction.from, this._stateContainer));
     }
 };

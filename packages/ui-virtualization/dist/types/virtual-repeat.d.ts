@@ -19,9 +19,4 @@ export declare class VirtualRepeat implements IScrollerSubscriber, IVirtualRepea
     getDistances(): [top: number, bottom: number];
     getViews(): readonly ISyntheticView[];
 }
-export declare const enum SizingSignals {
-    none = 0,
-    reset = 1,
-    has_sizing = 2
-}
 //# sourceMappingURL=virtual-repeat.d.ts.map

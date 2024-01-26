@@ -49,17 +49,6 @@ class DialogCloseResult {
         return new DialogCloseResult(status, value);
     }
 }
-exports.DialogDeactivationStatuses = void 0;
-(function (DialogDeactivationStatuses) {
-    DialogDeactivationStatuses["Ok"] = "ok";
-    DialogDeactivationStatuses["Error"] = "error";
-    DialogDeactivationStatuses["Cancel"] = "cancel";
-    /**
-     * If a view model refused to deactivate in canDeactivate,
-     * then this status should be used to reflect that
-     */
-    DialogDeactivationStatuses["Abort"] = "abort";
-})(exports.DialogDeactivationStatuses || (exports.DialogDeactivationStatuses = {}));
 // #endregion
 
 /** @internal */ const createError = (message) => new Error(message);
@@ -144,12 +133,12 @@ class DialogController {
                     if (rejectOnCancel) {
                         throw createDialogCancelError(null, 'Dialog cancellation rejected');
                     }
-                    return DialogCloseResult.create("abort" /* DialogDeactivationStatuses.Abort */);
+                    return DialogCloseResult.create('abort');
                 }
                 return kernel.onResolve(cmp.deactivate?.(dialogResult), () => kernel.onResolve(controller.deactivate(controller, null), () => {
                     dom.dispose();
                     dom.overlay.removeEventListener(mouseEvent ?? 'click', this);
-                    if (!rejectOnCancel && status !== "error" /* DialogDeactivationStatuses.Error */) {
+                    if (!rejectOnCancel && status !== 'error') {
                         this._resolve(dialogResult);
                     }
                     else {
@@ -174,7 +163,7 @@ class DialogController {
      * @param value - The returned success output.
      */
     ok(value) {
-        return this.deactivate("ok" /* DialogDeactivationStatuses.Ok */, value);
+        return this.deactivate('ok', value);
     }
     /**
      * Closes the dialog with a cancel output.
@@ -182,7 +171,7 @@ class DialogController {
      * @param value - The returned cancel output.
      */
     cancel(value) {
-        return this.deactivate("cancel" /* DialogDeactivationStatuses.Cancel */, value);
+        return this.deactivate('cancel', value);
     }
     /**
      * Closes the dialog with an error output.
@@ -192,7 +181,7 @@ class DialogController {
      */
     error(value) {
         const closeError = createDialogCloseError(value);
-        return new Promise(r => r(kernel.onResolve(this.cmp.deactivate?.(DialogCloseResult.create("error" /* DialogDeactivationStatuses.Error */, closeError)), () => kernel.onResolve(this.controller.deactivate(this.controller, null), () => {
+        return new Promise(r => r(kernel.onResolve(this.cmp.deactivate?.(DialogCloseResult.create('error', closeError)), () => kernel.onResolve(this.controller.deactivate(this.controller, null), () => {
             this.dom.dispose();
             this._reject(closeError);
         }))));
@@ -322,7 +311,7 @@ class DialogService {
                 // so only leave return null as noop
                 return controller.cancel().then(() => null);
             }
-            return controller.cancel().then(result => result.status === "cancel" /* DialogDeactivationStatuses.Cancel */
+            return controller.cancel().then(result => result.status === 'cancel'
                 ? null
                 : controller);
         }))

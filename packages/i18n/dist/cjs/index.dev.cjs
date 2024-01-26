@@ -57,6 +57,15 @@ function createIntlFormatValueConverterExpression(name, binding) {
         binding.ast.expression = vcExpression;
     }
 }
+/** ExpressionType */
+/** @internal */ const etInterpolation = 'Interpolation';
+/** @internal */ const etIsProperty = 'IsProperty';
+/** CommandType */
+/** @internal */ const ctNone = 'None';
+/** BindingMode */
+/** @internal */ const bmToView = runtimeHtml.BindingMode.toView;
+/** State */
+/** @internal */ const stateActivating = runtimeHtml.State.activating;
 
 exports.DateFormatBindingBehavior = class DateFormatBindingBehavior {
     bind(_scope, binding) {
@@ -368,13 +377,14 @@ class TranslationBinding {
     static create({ parser, observerLocator, context, controller, target, instruction, platform, isParameterContext, }) {
         const binding = this._getBinding({ observerLocator, context, controller, target, platform });
         const expr = typeof instruction.from === 'string'
-            ? parser.parse(instruction.from, 16 /* ExpressionType.IsProperty */)
+            /* istanbul ignore next */
+            ? parser.parse(instruction.from, etIsProperty)
             : instruction.from;
         if (isParameterContext) {
             binding.useParameter(expr);
         }
         else {
-            const interpolation = expr instanceof runtime.CustomExpression ? parser.parse(expr.value, 1 /* ExpressionType.Interpolation */) : undefined;
+            const interpolation = expr instanceof runtime.CustomExpression ? parser.parse(expr.value, etInterpolation) : undefined;
             binding.ast = interpolation || expr;
         }
     }
@@ -391,13 +401,13 @@ class TranslationBinding {
         if (this.isBound) {
             return;
         }
+        const ast = this.ast;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!this.ast) {
+        if (!ast) {
             throw new Error('key expression is missing');
         }
         this._scope = _scope;
-        this._isInterpolation = this.ast instanceof runtime.Interpolation;
-        this._keyExpression = runtime.astEvaluate(this.ast, _scope, this, this);
+        this._keyExpression = runtime.astEvaluate(ast, _scope, this, this);
         this._ensureKeyExpression();
         this.parameter?.bind(_scope);
         this.updateTranslations();
@@ -417,11 +427,9 @@ class TranslationBinding {
         this._scope = (void 0);
         this.obs.clearAll();
     }
-    handleChange(newValue, _previousValue) {
+    handleChange(_newValue, _previousValue) {
         this.obs.version++;
-        this._keyExpression = this._isInterpolation
-            ? runtime.astEvaluate(this.ast, this._scope, this, this)
-            : newValue;
+        this._keyExpression = runtime.astEvaluate(this.ast, this._scope, this, this);
         this.obs.clear();
         this._ensureKeyExpression();
         this.updateTranslations();
@@ -456,7 +464,7 @@ class TranslationBinding {
                     const accessor = controller?.viewModel
                         ? this.oL.getAccessor(controller.viewModel, kernel.camelCase(attribute))
                         : this.oL.getAccessor(this.target, attribute);
-                    const shouldQueueUpdate = this._controller.state !== 1 /* State.activating */ && (accessor.type & 4 /* AccessorType.Layout */) > 0;
+                    const shouldQueueUpdate = this._controller.state !== stateActivating && (accessor.type & runtime.AccessorType.Layout) > 0;
                     if (shouldQueueUpdate) {
                         accessorUpdateTasks.push(new AccessorUpdateTask(accessor, value, this.target, attribute));
                     }
@@ -469,7 +477,7 @@ class TranslationBinding {
         }
         let shouldQueueContent = false;
         if (Object.keys(content).length > 0) {
-            shouldQueueContent = this._controller.state !== 1 /* State.activating */;
+            shouldQueueContent = this._controller.state !== stateActivating;
             if (!shouldQueueContent) {
                 this._updateContent(content);
             }
@@ -634,12 +642,12 @@ class TranslationParametersBindingInstruction {
         this.from = from;
         this.to = to;
         this.type = TranslationParametersInstructionType;
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = bmToView;
     }
 }
 exports.TranslationParametersBindingCommand = class TranslationParametersBindingCommand {
     constructor() {
-        this.type = 0 /* CommandType.None */;
+        this.type = ctNone;
     }
     get name() { return attribute; }
     build(info, exprParser, attrMapper) {
@@ -654,7 +662,7 @@ exports.TranslationParametersBindingCommand = class TranslationParametersBinding
         else {
             target = info.bindable.name;
         }
-        return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
+        return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, etIsProperty), target);
     }
 };
 exports.TranslationParametersBindingCommand = __decorate([
@@ -692,12 +700,12 @@ class TranslationBindingInstruction {
         this.from = from;
         this.to = to;
         this.type = TranslationInstructionType;
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = bmToView;
     }
 }
 class TranslationBindingCommand {
     constructor() {
-        this.type = 0 /* CommandType.None */;
+        this.type = ctNone;
     }
     get name() { return 't'; }
     build(info, parser, attrMapper) {
@@ -744,12 +752,12 @@ class TranslationBindBindingInstruction {
         this.from = from;
         this.to = to;
         this.type = TranslationBindInstructionType;
-        this.mode = 2 /* BindingMode.toView */;
+        this.mode = bmToView;
     }
 }
 class TranslationBindBindingCommand {
     constructor() {
-        this.type = 0 /* CommandType.None */;
+        this.type = ctNone;
     }
     get name() { return 't-bind'; }
     build(info, exprParser, attrMapper) {
@@ -763,7 +771,7 @@ class TranslationBindBindingCommand {
         else {
             target = info.bindable.name;
         }
-        return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, 16 /* ExpressionType.IsProperty */), target);
+        return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, etIsProperty), target);
     }
 }
 exports.TranslationBindBindingRenderer = class TranslationBindBindingRenderer {

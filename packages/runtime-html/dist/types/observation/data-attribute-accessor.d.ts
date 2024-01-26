@@ -1,5 +1,5 @@
-import { AccessorType, IObserver } from '@aurelia/runtime';
-import type { IAccessor } from '@aurelia/runtime';
+import { IObserver } from '@aurelia/runtime';
+import type { AccessorType, IAccessor } from '@aurelia/runtime';
 /**
  * Attribute accessor for HTML elements.
  * Note that Aurelia works with properties, so in all case it will try to assign to property instead of attributes.

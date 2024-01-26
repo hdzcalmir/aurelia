@@ -24,13 +24,6 @@ function __param(t, e) {
     };
 }
 
-exports.ValidateEventKind = void 0;
-
-(function(t) {
-    t["validate"] = "validate";
-    t["reset"] = "reset";
-})(exports.ValidateEventKind || (exports.ValidateEventKind = {}));
-
 class ControllerValidateResult {
     constructor(t, e, i) {
         this.valid = t;
@@ -79,23 +72,23 @@ function getPropertyInfo(t, e) {
     let o = t.ast.expression;
     let n = true;
     let a = "";
-    while (o !== void 0 && o?.$kind !== 2) {
+    while (o !== void 0 && o?.$kind !== "AccessScope") {
         let e;
         switch (o.$kind) {
-          case 20:
-          case 19:
+          case "BindingBehavior":
+          case "ValueConverter":
             o = o.expression;
             continue;
 
-          case 12:
+          case "AccessMember":
             e = o.name;
             break;
 
-          case 13:
+          case "AccessKeyed":
             {
                 const i = o.key;
                 if (n) {
-                    n = i.$kind === 5;
+                    n = i.$kind === "PrimitiveLiteral";
                 }
                 e = `[${s.astEvaluate(i, r, t, null).toString()}]`;
                 break;
@@ -181,14 +174,14 @@ exports.ValidationController = class ValidationController {
         const {object: i, objectTag: s} = t ?? {};
         let r;
         if (i !== void 0) {
-            r = [ new e.ValidateInstruction(i, t.propertyName, t.rules ?? this.objects.get(i), s, t.propertyTag) ];
+            r = [ new e.ValidateInstruction(i, t?.propertyName, t?.rules ?? this.objects.get(i), s, t?.propertyTag) ];
         } else {
-            r = [ ...Array.from(this.objects.entries()).map((([t, i]) => new e.ValidateInstruction(t, void 0, i, s))), ...(!s ? Array.from(this.bindings.entries()) : []).reduce(((t, [i, s]) => {
-                const r = getPropertyInfo(i, s);
-                if (r !== void 0 && !this.objects.has(r.object)) {
-                    t.push(new e.ValidateInstruction(r.object, r.propertyName, s.rules));
+            r = [ ...Array.from(this.objects.entries()).map((([t, i]) => new e.ValidateInstruction(t, void 0, i, s))), ...Array.from(this.bindings.entries()).reduce(((i, [r, o]) => {
+                const n = getPropertyInfo(r, o);
+                if (n !== void 0 && !this.objects.has(n.object)) {
+                    i.push(new e.ValidateInstruction(n.object, n.propertyName, o.rules, s, t?.propertyTag));
                 }
-                return t;
+                return i;
             }), []) ];
         }
         this.validating = true;
@@ -438,7 +431,7 @@ __decorate([ i.bindable ], exports.ValidationErrorsCustomAttribute.prototype, "c
 
 __decorate([ i.bindable({
     primary: true,
-    mode: 6
+    mode: i.BindingMode.twoWay
 }) ], exports.ValidationErrorsCustomAttribute.prototype, "errors", void 0);
 
 exports.ValidationErrorsCustomAttribute = __decorate([ i.customAttribute("validation-errors"), __param(0, i.INode), __param(1, t.optional(r)) ], exports.ValidationErrorsCustomAttribute);
@@ -544,7 +537,7 @@ class ValidatitionConnector {
         this.C(new ValidateArgumentsDelta(this.B(t), void 0, void 0));
     }
     handleRulesChange(t, e) {
-        this.C(new ValidateArgumentsDelta(void 0, void 0, this.T(t)));
+        this.C(new ValidateArgumentsDelta(void 0, void 0, this.M(t)));
     }
     handleValidationEvent(t) {
         if (this.validatedOnce || !this.isChangeTrigger) return;
@@ -576,7 +569,7 @@ class ValidatitionConnector {
                 break;
 
               case 2:
-                e = this.T(s.astEvaluate(a, t, this, this.h));
+                e = this.M(s.astEvaluate(a, t, this, this.h));
                 break;
 
               default:
@@ -605,7 +598,7 @@ class ValidatitionConnector {
             this.isDirty = false;
             this.trigger = e;
             this.isChangeTrigger = e === exports.ValidationTrigger.change || e === exports.ValidationTrigger.changeOrBlur || e === exports.ValidationTrigger.changeOrFocusout;
-            t = this.triggerEvent = this.M(this.trigger);
+            t = this.triggerEvent = this.T(this.trigger);
             if (t !== null) {
                 this.target.addEventListener(t, this);
             }
@@ -634,7 +627,7 @@ class ValidatitionConnector {
         }
         return t;
     }
-    T(t) {
+    M(t) {
         if (Array.isArray(t) && t.every((t => t instanceof e.PropertyRule))) {
             return t;
         }
@@ -651,7 +644,7 @@ class ValidatitionConnector {
             return e.host;
         }
     }
-    M(t) {
+    T(t) {
         let e = null;
         switch (t) {
           case exports.ValidationTrigger.blur:

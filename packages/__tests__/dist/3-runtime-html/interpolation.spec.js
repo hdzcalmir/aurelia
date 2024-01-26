@@ -1,6 +1,6 @@
 import { assert, createContainer, createFixture, createObserverLocator, createScopeForTest, } from '@aurelia/testing';
 import { Interpolation, ConditionalExpression, AccessScopeExpression } from '@aurelia/runtime';
-import { CustomElement, InterpolationBinding, SVGAnalyzer, IPlatform, ValueConverter, } from '@aurelia/runtime-html';
+import { BindingMode, CustomElement, InterpolationBinding, SVGAnalyzer, IPlatform, ValueConverter, } from '@aurelia/runtime-html';
 import { resolve } from '@aurelia/kernel';
 const testDateString = new Date('Sat Feb 02 2002 00:00:00 GMT+0000 (Coordinated Universal Time)').toString();
 const ThreeHoursAheadDateString = new Date('Sat Feb 02 2002 03:00:00 GMT+0000 (Coordinated Universal Time)').toString();
@@ -408,7 +408,7 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
                 const observerLocator = createObserverLocator(container);
                 const interpolation = new Interpolation(['', ''], [new ConditionalExpression(new AccessScopeExpression('checked'), new AccessScopeExpression('yesMsg'), new AccessScopeExpression('noMsg'))]);
                 const target = { value: '' };
-                const binding = new InterpolationBinding({ state: 0 }, container, observerLocator, {}, interpolation, target, 'value', 2 /* BindingMode.toView */);
+                const binding = new InterpolationBinding({ state: 0 }, container, observerLocator, {}, interpolation, target, 'value', BindingMode.toView);
                 const source = { checked: false, yesMsg: 'yes', noMsg: 'no' };
                 let handleChangeCallCount = 0;
                 let updateTargetCallCount = 0;
@@ -449,7 +449,7 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
                     new ConditionalExpression(new AccessScopeExpression('checked2'), new AccessScopeExpression('yes2'), new AccessScopeExpression('no2'))
                 ]);
                 const target = { value: '' };
-                const binding = new InterpolationBinding({ state: 0 }, container, observerLocator, {}, interpolation, target, 'value', 2 /* BindingMode.toView */);
+                const binding = new InterpolationBinding({ state: 0 }, container, observerLocator, {}, interpolation, target, 'value', BindingMode.toView);
                 const source = {
                     checked1: false,
                     yes1: 'yes1',

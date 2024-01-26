@@ -89,23 +89,17 @@ export interface ICollectionSubscriberCollection extends ICollectionSubscribable
  * A collection (array, set or map)
  */
 export type Collection = unknown[] | Set<unknown> | Map<unknown, unknown>;
-export declare const enum CollectionKind {
-    indexed = 8,
-    keyed = 4,
-    array = 9,
-    map = 6,
-    set = 7
-}
+export type CollectionKind = 'indexed' | 'keyed' | 'array' | 'map' | 'set';
 export type LengthPropertyName<T> = T extends unknown[] ? 'length' : T extends Set<unknown> ? 'size' : T extends Map<unknown, unknown> ? 'size' : never;
-export type CollectionTypeToKind<T> = T extends unknown[] ? CollectionKind.array | CollectionKind.indexed : T extends Set<unknown> ? CollectionKind.set | CollectionKind.keyed : T extends Map<unknown, unknown> ? CollectionKind.map | CollectionKind.keyed : never;
-export type CollectionKindToType<T> = T extends CollectionKind.array ? unknown[] : T extends CollectionKind.indexed ? unknown[] : T extends CollectionKind.map ? Map<unknown, unknown> : T extends CollectionKind.set ? Set<unknown> : T extends CollectionKind.keyed ? Set<unknown> | Map<unknown, unknown> : never;
-export type ObservedCollectionKindToType<T> = T extends CollectionKind.array ? unknown[] : T extends CollectionKind.indexed ? unknown[] : T extends CollectionKind.map ? Map<unknown, unknown> : T extends CollectionKind.set ? Set<unknown> : T extends CollectionKind.keyed ? Map<unknown, unknown> | Set<unknown> : never;
-export declare const enum AccessorType {
-    None = 0,
-    Observer = 1,
-    Node = 2,
-    Layout = 4
-}
+export type CollectionKindToType<T> = T extends 'array' ? unknown[] : T extends 'indexed' ? unknown[] : T extends 'map' ? Map<unknown, unknown> : T extends 'set' ? Set<unknown> : T extends 'keyed' ? Set<unknown> | Map<unknown, unknown> : never;
+export type ObservedCollectionKindToType<T> = T extends 'array' ? unknown[] : T extends 'indexed' ? unknown[] : T extends 'map' ? Map<unknown, unknown> : T extends 'set' ? Set<unknown> : T extends 'keyed' ? Map<unknown, unknown> | Set<unknown> : never;
+export declare const AccessorType: Readonly<{
+    readonly None: 0;
+    readonly Observer: 1;
+    readonly Node: 2;
+    readonly Layout: 4;
+}>;
+export type AccessorType = typeof AccessorType[keyof typeof AccessorType];
 /**
  * Basic interface to normalize getting/setting a value of any property on any object
  */
@@ -155,7 +149,7 @@ export interface ICollectionChangeTracker<T extends Collection> {
 export interface ICollectionObserver<T extends CollectionKind> extends ICollectionChangeTracker<CollectionKindToType<T>>, ICollectionSubscribable {
     type: AccessorType;
     collection: ObservedCollectionKindToType<T>;
-    getLengthObserver(): T extends CollectionKind.array ? CollectionLengthObserver : CollectionSizeObserver;
+    getLengthObserver(): T extends 'array' ? CollectionLengthObserver : CollectionSizeObserver;
     notify(): void;
 }
 export type CollectionObserver = ICollectionObserver<CollectionKind>;

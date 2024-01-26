@@ -1,6 +1,6 @@
 import { DI, IServiceLocator, optional, IContainer, Registration, noop } from '../../../kernel/dist/native-modules/index.mjs';
 import { parsePropertyName, ValidationResult, ValidateInstruction, PropertyRule, IValidator, getDefaultValidationConfiguration, ValidationConfiguration } from '../../../validation/dist/native-modules/index.mjs';
-import { IPlatform, bindable, INode, customAttribute, bindingBehavior, mixinAstEvaluator, PropertyBinding, IFlushQueue, BindingTargetSubscriber, CustomElement } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { IPlatform, bindable, INode, BindingMode, customAttribute, bindingBehavior, mixinAstEvaluator, PropertyBinding, IFlushQueue, BindingTargetSubscriber, CustomElement } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { astEvaluate, IExpressionParser, connectable, IObserverLocator } from '../../../runtime/dist/native-modules/index.mjs';
 
 /******************************************************************************
@@ -29,11 +29,6 @@ function __param(paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 }
 
-var ValidateEventKind;
-(function (ValidateEventKind) {
-    ValidateEventKind["validate"] = "validate";
-    ValidateEventKind["reset"] = "reset";
-})(ValidateEventKind || (ValidateEventKind = {}));
 /**
  * The result of a call to the validation controller's validate method.
  */
@@ -112,20 +107,20 @@ function getPropertyInfo(binding, info) {
     let expression = binding.ast.expression;
     let toCachePropertyName = true;
     let propertyName = '';
-    while (expression !== void 0 && expression?.$kind !== 2 /* ExpressionKind.AccessScope */) {
+    while (expression !== void 0 && expression?.$kind !== 'AccessScope') {
         let memberName;
         switch (expression.$kind) {
-            case 20 /* ExpressionKind.BindingBehavior */:
-            case 19 /* ExpressionKind.ValueConverter */:
+            case 'BindingBehavior':
+            case 'ValueConverter':
                 expression = expression.expression;
                 continue;
-            case 12 /* ExpressionKind.AccessMember */:
+            case 'AccessMember':
                 memberName = expression.name;
                 break;
-            case 13 /* ExpressionKind.AccessKeyed */: {
+            case 'AccessKeyed': {
                 const keyExpr = expression.key;
                 if (toCachePropertyName) {
-                    toCachePropertyName = keyExpr.$kind === 5 /* ExpressionKind.PrimitiveLiteral */;
+                    toCachePropertyName = keyExpr.$kind === 'PrimitiveLiteral';
                 }
                 // eslint-disable-next-line
                 memberName = `[${astEvaluate(keyExpr, scope, binding, null).toString()}]`;
@@ -184,7 +179,7 @@ let ValidationController = class ValidationController {
     }
     removeObject(object) {
         this.objects.delete(object);
-        this.processResultDelta("reset" /* ValidateEventKind.reset */, this.results.filter(result => result.object === object), []);
+        this.processResultDelta('reset', this.results.filter(result => result.object === object), []);
     }
     addError(message, object, propertyName) {
         let resolvedPropertyName;
@@ -192,12 +187,12 @@ let ValidationController = class ValidationController {
             [resolvedPropertyName] = parsePropertyName(propertyName, this.parser);
         }
         const result = new ValidationResult(false, message, resolvedPropertyName, object, undefined, undefined, true);
-        this.processResultDelta("validate" /* ValidateEventKind.validate */, [], [result]);
+        this.processResultDelta('validate', [], [result]);
         return result;
     }
     removeError(result) {
         if (this.results.includes(result)) {
-            this.processResultDelta("reset" /* ValidateEventKind.reset */, [result], []);
+            this.processResultDelta('reset', [result], []);
         }
     }
     addSubscriber(subscriber) {
@@ -217,19 +212,18 @@ let ValidationController = class ValidationController {
         const { object: obj, objectTag } = instruction ?? {};
         let instructions;
         if (obj !== void 0) {
-            instructions = [new ValidateInstruction(obj, instruction.propertyName, instruction.rules ?? this.objects.get(obj), objectTag, instruction.propertyTag)];
+            instructions = [new ValidateInstruction(obj, instruction?.propertyName, instruction?.rules ?? this.objects.get(obj), objectTag, instruction?.propertyTag)];
         }
         else {
             // validate all objects and bindings.
             instructions = [
                 ...Array.from(this.objects.entries())
                     .map(([object, rules]) => new ValidateInstruction(object, void 0, rules, objectTag)),
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                ...(!objectTag ? Array.from(this.bindings.entries()) : [])
+                ...Array.from(this.bindings.entries())
                     .reduce((acc, [binding, info]) => {
                     const propertyInfo = getPropertyInfo(binding, info);
                     if (propertyInfo !== void 0 && !this.objects.has(propertyInfo.object)) {
-                        acc.push(new ValidateInstruction(propertyInfo.object, propertyInfo.propertyName, info.rules));
+                        acc.push(new ValidateInstruction(propertyInfo.object, propertyInfo.propertyName, info.rules, objectTag, instruction?.propertyTag));
                     }
                     return acc;
                 }, [])
@@ -245,7 +239,7 @@ let ValidationController = class ValidationController {
                 }, []);
                 const predicate = this.getInstructionPredicate(instruction);
                 const oldResults = this.results.filter(predicate);
-                this.processResultDelta("validate" /* ValidateEventKind.validate */, oldResults, newResults);
+                this.processResultDelta('validate', oldResults, newResults);
                 return new ControllerValidateResult(newResults.find(r => !r.valid) === void 0, newResults, instruction);
             }
             finally {
@@ -257,7 +251,7 @@ let ValidationController = class ValidationController {
     reset(instruction) {
         const predicate = this.getInstructionPredicate(instruction);
         const oldResults = this.results.filter(predicate);
-        this.processResultDelta("reset" /* ValidateEventKind.reset */, oldResults, []);
+        this.processResultDelta('reset', oldResults, []);
     }
     async validateBinding(binding) {
         if (!binding.isBound) {
@@ -529,7 +523,7 @@ __decorate([
     bindable
 ], ValidationErrorsCustomAttribute.prototype, "controller", void 0);
 __decorate([
-    bindable({ primary: true, mode: 6 /* BindingMode.twoWay */ })
+    bindable({ primary: true, mode: BindingMode.twoWay })
 ], ValidationErrorsCustomAttribute.prototype, "errors", void 0);
 ValidationErrorsCustomAttribute = __decorate([
     customAttribute('validation-errors'),
@@ -956,5 +950,5 @@ ValidationResultPresenterService = __decorate([
     __param(0, IPlatform)
 ], ValidationResultPresenterService);
 
-export { BindingInfo, BindingMediator, ControllerValidateResult, IDefaultTrigger, IValidationController, IValidationResultPresenterService, ValidateBindingBehavior, ValidateEventKind, ValidationContainerCustomElement, ValidationController, ValidationControllerFactory, ValidationErrorsCustomAttribute, ValidationEvent, ValidationHtmlConfiguration, ValidationResultPresenterService, ValidationResultTarget, ValidationTrigger, defaultContainerDefinition, defaultContainerTemplate, getDefaultValidationHtmlConfiguration, getPropertyInfo };
+export { BindingInfo, BindingMediator, ControllerValidateResult, IDefaultTrigger, IValidationController, IValidationResultPresenterService, ValidateBindingBehavior, ValidationContainerCustomElement, ValidationController, ValidationControllerFactory, ValidationErrorsCustomAttribute, ValidationEvent, ValidationHtmlConfiguration, ValidationResultPresenterService, ValidationResultTarget, ValidationTrigger, defaultContainerDefinition, defaultContainerTemplate, getDefaultValidationHtmlConfiguration, getPropertyInfo };
 //# sourceMappingURL=index.dev.mjs.map

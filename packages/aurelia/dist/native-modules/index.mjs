@@ -1,6 +1,6 @@
 import { DI as e, Registration as r } from "../../../@aurelia/kernel/dist/native-modules/index.mjs";
 
-export { ColorOptions, ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, resolve, singleton, toArray, transient } from "../../../@aurelia/kernel/dist/native-modules/index.mjs";
+export { ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger, IServiceLocator, InstanceProvider, LogLevel, LoggerConfiguration, Registration, all, bound, camelCase, emptyArray, emptyObject, inject, isArrayIndex, kebabCase, lazy, noop, optional, pascalCase, resolve, singleton, toArray, transient } from "../../../@aurelia/kernel/dist/native-modules/index.mjs";
 
 import { Aurelia as t, CustomElement as o, IPlatform as a, StandardConfiguration as n } from "../../../@aurelia/runtime-html/dist/native-modules/index.mjs";
 
@@ -12,9 +12,9 @@ export { HttpClient, HttpClientConfiguration, IHttpClient, json } from "../../..
 
 export { Metadata } from "../../../@aurelia/metadata/dist/native-modules/index.mjs";
 
-export { Platform, Task, TaskAbortError, TaskQueue, TaskQueuePriority, TaskStatus } from "../../../@aurelia/platform/dist/native-modules/index.mjs";
+export { Platform, Task, TaskAbortError, TaskQueue } from "../../../@aurelia/platform/dist/native-modules/index.mjs";
 
-export { CollectionKind, ComputedObserver, IObserverLocator, ISignaler, batch, observable, subscriberCollection } from "../../../@aurelia/runtime/dist/native-modules/index.mjs";
+export { ComputedObserver, IObserverLocator, ISignaler, batch, observable, subscriberCollection } from "../../../@aurelia/runtime/dist/native-modules/index.mjs";
 
 const l = i.getOrCreate(globalThis);
 

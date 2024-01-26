@@ -1,8 +1,8 @@
-import { AccessorType, type ISubscriberCollection, type ICollectionSubscriberCollection, type IObserver, type CollectionKind, type ICollectionObserver, type IndexMap, type ISubscriber } from '../observation';
+import { type AccessorType, type ISubscriberCollection, type ICollectionSubscriberCollection, type IObserver, type ICollectionObserver, type IndexMap, type ISubscriber } from '../observation';
 import { CollectionLengthObserver } from './collection-length-observer';
 export declare function enableArrayObservation(): void;
 export declare function disableArrayObservation(): void;
-export interface ArrayObserver extends ICollectionObserver<CollectionKind.array>, ICollectionSubscriberCollection {
+export interface ArrayObserver extends ICollectionObserver<'array'>, ICollectionSubscriberCollection {
 }
 export declare class ArrayObserver {
     type: AccessorType;
@@ -14,7 +14,7 @@ export declare class ArrayObserver {
     getIndexObserver(index: number): IArrayIndexObserver;
 }
 export interface IArrayIndexObserver extends IObserver {
-    owner: ICollectionObserver<CollectionKind.array>;
+    owner: ICollectionObserver<'array'>;
 }
 export interface ArrayIndexObserver extends IArrayIndexObserver, ISubscriberCollection {
 }

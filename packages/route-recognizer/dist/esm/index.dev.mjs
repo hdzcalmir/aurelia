@@ -1,8 +1,15 @@
 class Parameter {
-    constructor(name, isOptional, isStar) {
+    constructor(name, isOptional, isStar, pattern) {
         this.name = name;
         this.isOptional = isOptional;
         this.isStar = isStar;
+        this.pattern = pattern;
+    }
+    satisfiesPattern(value) {
+        if (this.pattern === null)
+            return true;
+        this.pattern.lastIndex = 0;
+        return this.pattern.test(value);
     }
 }
 class ConfigurableRoute {
@@ -46,6 +53,9 @@ class Candidate {
         this.states = states;
         this.skippedStates = skippedStates;
         this.result = result;
+        this.params = null;
+        this.isConstrained = false;
+        this.satisfiesConstraints = null;
         this.head = states[states.length - 1];
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.endpoint = this.head?.endpoint;
@@ -90,6 +100,9 @@ class Candidate {
         if (stateToAdd !== null) {
             states.push(this.head = stateToAdd);
             chars.push(ch);
+            this.isConstrained = this.isConstrained
+                || stateToAdd.isDynamic
+                    && stateToAdd.segment.isConstrained;
             if (stateToAdd.endpoint !== null) {
                 this.endpoint = stateToAdd.endpoint;
             }
@@ -98,7 +111,8 @@ class Candidate {
             result.remove(this);
         }
     }
-    finalize() {
+    /** @internal */
+    _finalize() {
         function collectSkippedStates(skippedStates, state) {
             const nextStates = state.nextStates;
             if (nextStates !== null) {
@@ -121,10 +135,19 @@ class Candidate {
             }
         }
         collectSkippedStates(this.skippedStates, this.head);
+        if (!this.isConstrained)
+            return true;
+        this._getParams();
+        return this.satisfiesConstraints;
     }
-    getParams() {
+    /** @internal */
+    _getParams() {
+        let params = this.params;
+        if (params != null)
+            return params;
         const { states, chars, endpoint } = this;
-        const params = {};
+        params = {};
+        this.satisfiesConstraints = true;
         // First initialize all properties with undefined so they all exist (even if they're not filled, e.g. non-matched optional params)
         for (const param of endpoint.params) {
             params[param.name] = void 0;
@@ -132,14 +155,26 @@ class Candidate {
         for (let i = 0, ii = states.length; i < ii; ++i) {
             const state = states[i];
             if (state.isDynamic) {
-                const name = state.segment.name;
+                const segment = state.segment;
+                const name = segment.name;
                 if (params[name] === void 0) {
                     params[name] = chars[i];
                 }
                 else {
                     params[name] += chars[i];
                 }
+                // check for constraint if this state's segment is constrained
+                // and the state is the last dynamic state in a series of dynamic states.
+                // null fallback is used, as a star segment can also be a dynamic segment, but without a pattern.
+                const checkConstraint = state.isConstrained
+                    && !Object.is(states[i + 1]?.segment, segment);
+                if (!checkConstraint)
+                    continue;
+                this.satisfiesConstraints = this.satisfiesConstraints && state.satisfiesConstraint(params[name]);
             }
+        }
+        if (this.satisfiesConstraints) {
+            this.params = params;
         }
         return params;
     }
@@ -249,12 +284,9 @@ class RecognizeResult {
         this.candidates = [new Candidate([''], [rootState], [], this)];
     }
     getSolution() {
-        const candidates = this.candidates.filter(hasEndpoint);
+        const candidates = this.candidates.filter(x => hasEndpoint(x) && x._finalize());
         if (candidates.length === 0) {
             return null;
-        }
-        for (const candidate of candidates) {
-            candidate.finalize();
         }
         candidates.sort(compareChains);
         return candidates[0];
@@ -276,6 +308,7 @@ class RecognizeResult {
  * Reserved parameter name that's used when registering a route with residual star segment (catch-all).
  */
 const RESIDUE = '$$residue';
+const routeParameterPattern = /^:(?<name>[^?\s{}]+)(?:\{\{(?<constraint>.+)\}\})?(?<optional>\?)?$/g;
 class RouteRecognizer {
     constructor() {
         this.rootState = new State(null, null, '');
@@ -321,12 +354,16 @@ class RouteRecognizer {
             state = state.append(null, '/');
             switch (part.charAt(0)) {
                 case ':': { // route parameter
-                    const isOptional = part.endsWith('?');
-                    const name = isOptional ? part.slice(1, -1) : part.slice(1);
+                    routeParameterPattern.lastIndex = 0;
+                    const match = routeParameterPattern.exec(part);
+                    const { name, optional } = match?.groups ?? {};
+                    const isOptional = optional === '?';
                     if (name === RESIDUE)
                         throw new Error(`Invalid parameter name; usage of the reserved parameter name '${RESIDUE}' is used.`);
-                    params.push(new Parameter(name, isOptional, false));
-                    state = new DynamicSegment(name, isOptional).appendTo(state);
+                    const constraint = match?.groups?.constraint;
+                    const pattern = constraint != null ? new RegExp(constraint) : null;
+                    params.push(new Parameter(name, isOptional, false, pattern));
+                    state = new DynamicSegment(name, isOptional, pattern).appendTo(state);
                     break;
                 }
                 case '*': { // dynamic route
@@ -340,7 +377,7 @@ class RouteRecognizer {
                     else {
                         kind = 2 /* SegmentKind.star */;
                     }
-                    params.push(new Parameter(name, true, true));
+                    params.push(new Parameter(name, true, true, null));
                     state = new StarSegment(name, kind).appendTo(state);
                     break;
                 }
@@ -383,7 +420,7 @@ class RouteRecognizer {
             return null;
         }
         const { endpoint } = candidate;
-        const params = candidate.getParams();
+        const params = candidate._getParams();
         return new RecognizedRoute(endpoint, params);
     }
     getEndpoint(path) {
@@ -397,12 +434,14 @@ class State {
         this.value = value;
         this.nextStates = null;
         this.endpoint = null;
+        this.isConstrained = false;
         switch (segment?.kind) {
             case 3 /* SegmentKind.dynamic */:
                 this.length = prevState.length + 1;
                 this.isSeparator = false;
                 this.isDynamic = true;
                 this.isOptional = segment.optional;
+                this.isConstrained = segment.isConstrained;
                 break;
             case 2 /* SegmentKind.star */:
             case 1 /* SegmentKind.residue */:
@@ -469,6 +508,11 @@ class State {
                 return this.value.includes(ch);
         }
     }
+    satisfiesConstraint(value) {
+        return this.isConstrained
+            ? this.segment.satisfiesPattern(value)
+            : true;
+    }
 }
 function isNotEmpty(segment) {
     return segment.length > 0;
@@ -507,9 +551,13 @@ class StaticSegment {
 }
 class DynamicSegment {
     get kind() { return 3 /* SegmentKind.dynamic */; }
-    constructor(name, optional) {
+    constructor(name, optional, pattern) {
         this.name = name;
         this.optional = optional;
+        this.pattern = pattern;
+        if (pattern === void 0)
+            throw new Error(`Pattern is undefined`);
+        this.isConstrained = pattern !== null;
     }
     appendTo(state) {
         state = state.append(
@@ -521,6 +569,12 @@ class DynamicSegment {
         return (b.kind === 3 /* SegmentKind.dynamic */ &&
             b.optional === this.optional &&
             b.name === this.name);
+    }
+    satisfiesPattern(value) {
+        if (this.pattern === null)
+            return true;
+        this.pattern.lastIndex = 0;
+        return this.pattern.test(value);
     }
 }
 class StarSegment {

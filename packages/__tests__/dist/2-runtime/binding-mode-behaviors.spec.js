@@ -1,11 +1,11 @@
 import { DI, Registration, } from '@aurelia/kernel';
-import { PropertyBinding, FromViewBindingBehavior, OneTimeBindingBehavior, ToViewBindingBehavior, TwoWayBindingBehavior, IPlatform, } from '@aurelia/runtime-html';
+import { BindingMode, PropertyBinding, FromViewBindingBehavior, OneTimeBindingBehavior, ToViewBindingBehavior, TwoWayBindingBehavior, IPlatform, } from '@aurelia/runtime-html';
 import { assert } from '@aurelia/testing';
 const tests = [
-    { Behavior: OneTimeBindingBehavior, mode: 1 /* BindingMode.oneTime */ },
-    { Behavior: ToViewBindingBehavior, mode: 2 /* BindingMode.toView */ },
-    { Behavior: FromViewBindingBehavior, mode: 4 /* BindingMode.fromView */ },
-    { Behavior: TwoWayBindingBehavior, mode: 6 /* BindingMode.twoWay */ }
+    { Behavior: OneTimeBindingBehavior, mode: BindingMode.oneTime },
+    { Behavior: ToViewBindingBehavior, mode: BindingMode.toView },
+    { Behavior: FromViewBindingBehavior, mode: BindingMode.fromView },
+    { Behavior: TwoWayBindingBehavior, mode: BindingMode.twoWay }
 ];
 describe('2-runtime/binding-mode-behaviors.spec.ts', function () {
     const container = DI.createContainer();
@@ -13,7 +13,7 @@ describe('2-runtime/binding-mode-behaviors.spec.ts', function () {
     let binding;
     Registration.instance(IPlatform, {}).register(container);
     for (const { Behavior, mode } of tests) {
-        const initModeArr = [1 /* BindingMode.oneTime */, 2 /* BindingMode.toView */, 4 /* BindingMode.fromView */, 6 /* BindingMode.twoWay */, 8 /* BindingMode.default */];
+        const initModeArr = [BindingMode.oneTime, BindingMode.toView, BindingMode.fromView, BindingMode.twoWay, BindingMode.default];
         for (const initMode of initModeArr) {
             describe(Behavior.name, function () {
                 beforeEach(function () {

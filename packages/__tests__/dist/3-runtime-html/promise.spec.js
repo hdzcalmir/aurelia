@@ -11,7 +11,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import { reportTaskQueue, } from '@aurelia/platform';
-import { DI, IContainer, ILogger, LoggerConfiguration, pascalCase, Registration, sink, optional, } from '@aurelia/kernel';
+import { DI, IContainer, ILogger, LoggerConfiguration, LogLevel, pascalCase, Registration, sink, optional, } from '@aurelia/kernel';
 import { valueConverter, bindingBehavior, ValueConverter, customElement, CustomElement, Switch, Aurelia, IPlatform, PromiseTemplateController, If, bindable, INode, } from '@aurelia/runtime-html';
 import { assert, TestContext, } from '@aurelia/testing';
 import { createSpecFunction, } from '../util.js';
@@ -117,7 +117,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
         }
     };
     DebugLog = __decorate([
-        sink({ handles: [1 /* LogLevel.debug */] })
+        sink({ handles: [LogLevel.debug] })
     ], DebugLog);
     class PromiseTestExecutionContext {
         constructor(ctx, container, host, app, controller, error) {
@@ -162,7 +162,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
         let controller = null;
         try {
             await au
-                .register(LoggerConfiguration.create({ level: 0 /* LogLevel.trace */, sinks: [DebugLog] }), ...registrations, Promisify, Double, NoopBindingBehavior, typeof promise === 'function'
+                .register(LoggerConfiguration.create({ level: LogLevel.trace, sinks: [DebugLog] }), ...registrations, Promisify, Double, NoopBindingBehavior, typeof promise === 'function'
                 ? Registration.callback(seedPromise, promise)
                 : Registration.instance(seedPromise, promise), Registration.instance(delaySeedPromise, delayPromise))
                 .app({
@@ -1432,7 +1432,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
                             // Therefore, the expected logs are constructed dynamically to ensure certain level of confidence.
                             const tc = app.$controller.children.find((c) => c.viewModel instanceof PromiseTemplateController).viewModel;
                             const task = tc['preSettledTask'];
-                            const logs = task.status === 1 /* TaskStatus.running */ || task.status === 2 /* TaskStatus.completed */
+                            const logs = task.status === 'running' || task.status === 'completed'
                                 ? [...getActivationSequenceFor(phost), ...getDeactivationSequenceFor(phost)]
                                 : [];
                             try {

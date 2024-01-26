@@ -1,7 +1,7 @@
 import { ComputedGetterFn } from './computed-observer';
 import { IDirtyChecker } from './dirty-checker';
 import { PropertyAccessor } from './property-accessor';
-import type { Collection, IAccessor, ICollectionObserver, IObserver, AccessorOrObserver, CollectionKind, CollectionObserver } from '../observation';
+import type { Collection, IAccessor, ICollectionObserver, IObserver, AccessorOrObserver, CollectionObserver } from '../observation';
 export declare const propertyAccessor: PropertyAccessor;
 export interface IObjectObservationAdapter {
     getObserver(object: unknown, key: PropertyKey, descriptor: PropertyDescriptor, requestor: IObserverLocator): IObserver | null;
@@ -31,9 +31,9 @@ export declare class ObserverLocator {
     getObserver(obj: unknown, key: PropertyKey): IObserver;
     getObserver<T, R>(obj: T, key: ComputedGetterFn<T, R>): IObserver<R>;
     getAccessor(obj: object, key: PropertyKey): AccessorOrObserver;
-    getArrayObserver(observedArray: unknown[]): ICollectionObserver<CollectionKind.array>;
-    getMapObserver(observedMap: Map<unknown, unknown>): ICollectionObserver<CollectionKind.map>;
-    getSetObserver(observedSet: Set<unknown>): ICollectionObserver<CollectionKind.set>;
+    getArrayObserver(observedArray: unknown[]): ICollectionObserver<'array'>;
+    getMapObserver(observedMap: Map<unknown, unknown>): ICollectionObserver<'map'>;
+    getSetObserver(observedSet: Set<unknown>): ICollectionObserver<'set'>;
     private createObserver;
 }
 export type RepeatableCollection = Collection | null | undefined | number;

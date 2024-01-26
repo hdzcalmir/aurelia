@@ -50,7 +50,6 @@ class Aurelia extends runtimeHtml.Aurelia {
     }
 }
 
-exports.ColorOptions = kernel.ColorOptions;
 exports.ConsoleSink = kernel.ConsoleSink;
 exports.DI = kernel.DI;
 exports.EventAggregator = kernel.EventAggregator;
@@ -139,9 +138,6 @@ exports.Platform = platform.Platform;
 exports.Task = platform.Task;
 exports.TaskAbortError = platform.TaskAbortError;
 exports.TaskQueue = platform.TaskQueue;
-exports.TaskQueuePriority = platform.TaskQueuePriority;
-exports.TaskStatus = platform.TaskStatus;
-exports.CollectionKind = runtime.CollectionKind;
 exports.ComputedObserver = runtime.ComputedObserver;
 exports.IObserverLocator = runtime.IObserverLocator;
 exports.ISignaler = runtime.ISignaler;

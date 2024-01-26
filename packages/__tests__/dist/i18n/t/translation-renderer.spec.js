@@ -1,6 +1,6 @@
 import { I18nConfiguration, TranslationAttributePattern, TranslationBindAttributePattern, TranslationBindBindingCommand, TranslationBindBindingInstruction, TranslationBindBindingRenderer, TranslationBinding, TranslationBindingCommand, TranslationBindingInstruction, TranslationBindingRenderer, TranslationBindInstructionType, TranslationInstructionType, } from '@aurelia/i18n';
 import { IExpressionParser, } from '@aurelia/runtime';
-import { AttributePattern, BindingCommand, StandardConfiguration, IAttributePattern, IPlatform, IAttrMapper, } from '@aurelia/runtime-html';
+import { AttributePattern, BindingCommand, StandardConfiguration, IAttributePattern, IPlatform, IAttrMapper, InstructionType, BindingMode, } from '@aurelia/runtime-html';
 import { assert, PLATFORM, createContainer } from '@aurelia/testing';
 const noopLocator = {};
 describe('i18n/t/translation-renderer.spec.ts', function () {
@@ -79,8 +79,8 @@ describe('i18n/t/translation-renderer.spec.ts', function () {
             const sut = new TranslationBindingRenderer();
             const expressionParser = container.get(IExpressionParser);
             const controller = { container, bindings: [], addBinding(binding) { controller.bindings.push(binding); } };
-            const from = expressionParser.parse('simple.key', 32 /* ExpressionType.IsCustom */);
-            const callBindingInstruction = { type: "rg" /* InstructionType.propertyBinding */, from, to: 'value', mode: 1 /* BindingMode.oneTime */ };
+            const from = expressionParser.parse('simple.key', 'IsCustom');
+            const callBindingInstruction = { type: InstructionType.propertyBinding, from, to: 'value', mode: BindingMode.oneTime };
             sut.render(controller, PLATFORM.document.createElement('span'), callBindingInstruction, PLATFORM, expressionParser, noopLocator);
             assert.instanceOf(controller.bindings[0], TranslationBinding);
         });
@@ -91,8 +91,8 @@ describe('i18n/t/translation-renderer.spec.ts', function () {
             const targetElement = PLATFORM.document.createElement('span');
             const binding = new TranslationBinding({ state: 0 }, container, {}, container.get(IPlatform), targetElement);
             const controller = { container, bindings: [binding], addBinding(binding) { controller.bindings.push(binding); } };
-            const from = expressionParser.parse('simple.key', 32 /* ExpressionType.IsCustom */);
-            const callBindingInstruction = { type: "rg" /* InstructionType.propertyBinding */, from, to: 'value', mode: 1 /* BindingMode.oneTime */ };
+            const from = expressionParser.parse('simple.key', 'IsCustom');
+            const callBindingInstruction = { type: InstructionType.propertyBinding, from, to: 'value', mode: BindingMode.oneTime };
             sut.render(controller, targetElement, callBindingInstruction, PLATFORM, expressionParser, noopLocator);
             assert.equal(binding.ast, from);
         });
@@ -178,8 +178,8 @@ describe('i18n/t/translation-renderer.spec.ts', function () {
             const sut = new TranslationBindBindingRenderer();
             const expressionParser = container.get(IExpressionParser);
             const controller = { container, bindings: [], addBinding(binding) { controller.bindings.push(binding); } };
-            const from = expressionParser.parse('simple.key', 16 /* ExpressionType.IsProperty */);
-            const callBindingInstruction = { type: "rg" /* InstructionType.propertyBinding */, from, to: 'value', mode: 1 /* BindingMode.oneTime */ };
+            const from = expressionParser.parse('simple.key', 'IsProperty');
+            const callBindingInstruction = { type: InstructionType.propertyBinding, from, to: 'value', mode: BindingMode.oneTime };
             sut.render(controller, PLATFORM.document.createElement('span'), callBindingInstruction, PLATFORM, expressionParser, noopLocator);
             assert.instanceOf(controller.bindings[0], TranslationBinding);
         });
@@ -188,8 +188,8 @@ describe('i18n/t/translation-renderer.spec.ts', function () {
             const sut = new TranslationBindBindingRenderer();
             const expressionParser = container.get(IExpressionParser);
             const controller = { container, bindings: [], addBinding(binding) { controller.bindings.push(binding); } };
-            const from = expressionParser.parse('simple.key', 16 /* ExpressionType.IsProperty */);
-            const callBindingInstruction = { type: "rg" /* InstructionType.propertyBinding */, from, to: 'value', mode: 1 /* BindingMode.oneTime */ };
+            const from = expressionParser.parse('simple.key', 'IsProperty');
+            const callBindingInstruction = { type: InstructionType.propertyBinding, from, to: 'value', mode: BindingMode.oneTime };
             sut.render(controller, PLATFORM.document.createElement('span'), callBindingInstruction, PLATFORM, expressionParser, noopLocator);
             assert.instanceOf(controller.bindings[0], TranslationBinding);
         });
@@ -200,8 +200,8 @@ describe('i18n/t/translation-renderer.spec.ts', function () {
             const targetElement = PLATFORM.document.createElement('span');
             const binding = new TranslationBinding({ state: 0 }, container, {}, container.get(IPlatform), targetElement);
             const controller = { container, bindings: [binding], addBinding(binding) { controller.bindings.push(binding); } };
-            const from = expressionParser.parse('simple.key', 16 /* ExpressionType.IsProperty */);
-            const callBindingInstruction = { type: "rg" /* InstructionType.propertyBinding */, from, to: 'value', mode: 1 /* BindingMode.oneTime */ };
+            const from = expressionParser.parse('simple.key', 'IsProperty');
+            const callBindingInstruction = { type: InstructionType.propertyBinding, from, to: 'value', mode: BindingMode.oneTime };
             sut.render(controller, targetElement, callBindingInstruction, PLATFORM, expressionParser, noopLocator);
             assert.equal(binding.ast, from);
         });

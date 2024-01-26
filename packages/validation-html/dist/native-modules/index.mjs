@@ -2,9 +2,9 @@ import { DI as t, IServiceLocator as i, optional as e, IContainer as s, Registra
 
 import { parsePropertyName as o, ValidationResult as a, ValidateInstruction as l, PropertyRule as h, IValidator as c, getDefaultValidationConfiguration as u, ValidationConfiguration as d } from "../../../validation/dist/native-modules/index.mjs";
 
-import { IPlatform as f, bindable as g, INode as v, customAttribute as p, bindingBehavior as m, mixinAstEvaluator as w, PropertyBinding as b, IFlushQueue as _, BindingTargetSubscriber as V, CustomElement as C } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { IPlatform as f, bindable as g, INode as v, BindingMode as p, customAttribute as m, bindingBehavior as w, mixinAstEvaluator as b, PropertyBinding as _, IFlushQueue as V, BindingTargetSubscriber as C, CustomElement as y } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-import { astEvaluate as y, IExpressionParser as E, connectable as R, IObserverLocator as B } from "../../../runtime/dist/native-modules/index.mjs";
+import { astEvaluate as E, IExpressionParser as R, connectable as B, IObserverLocator as T } from "../../../runtime/dist/native-modules/index.mjs";
 
 function __decorate(t, i, e, s) {
     var n = arguments.length, r = n < 3 ? i : s === null ? s = Object.getOwnPropertyDescriptor(i, e) : s, o;
@@ -17,13 +17,6 @@ function __param(t, i) {
         i(e, s, t);
     };
 }
-
-var T;
-
-(function(t) {
-    t["validate"] = "validate";
-    t["reset"] = "reset";
-})(T || (T = {}));
 
 class ControllerValidateResult {
     constructor(t, i, e) {
@@ -73,25 +66,25 @@ function getPropertyInfo(t, i) {
     let n = t.ast.expression;
     let r = true;
     let o = "";
-    while (n !== void 0 && n?.$kind !== 2) {
+    while (n !== void 0 && n?.$kind !== "AccessScope") {
         let i;
         switch (n.$kind) {
-          case 20:
-          case 19:
+          case "BindingBehavior":
+          case "ValueConverter":
             n = n.expression;
             continue;
 
-          case 12:
+          case "AccessMember":
             i = n.name;
             break;
 
-          case 13:
+          case "AccessKeyed":
             {
                 const e = n.key;
                 if (r) {
-                    r = e.$kind === 5;
+                    r = e.$kind === "PrimitiveLiteral";
                 }
-                i = `[${y(e, s, t, null).toString()}]`;
+                i = `[${E(e, s, t, null).toString()}]`;
                 break;
             }
 
@@ -110,7 +103,7 @@ function getPropertyInfo(t, i) {
         o = n.name;
         a = s.bindingContext;
     } else {
-        a = y(n, s, t, null);
+        a = E(n, s, t, null);
     }
     if (a === null || a === void 0) {
         return void 0;
@@ -175,14 +168,14 @@ let P = class ValidationController {
         const {object: i, objectTag: e} = t ?? {};
         let s;
         if (i !== void 0) {
-            s = [ new l(i, t.propertyName, t.rules ?? this.objects.get(i), e, t.propertyTag) ];
+            s = [ new l(i, t?.propertyName, t?.rules ?? this.objects.get(i), e, t?.propertyTag) ];
         } else {
-            s = [ ...Array.from(this.objects.entries()).map((([t, i]) => new l(t, void 0, i, e))), ...(!e ? Array.from(this.bindings.entries()) : []).reduce(((t, [i, e]) => {
-                const s = getPropertyInfo(i, e);
-                if (s !== void 0 && !this.objects.has(s.object)) {
-                    t.push(new l(s.object, s.propertyName, e.rules));
+            s = [ ...Array.from(this.objects.entries()).map((([t, i]) => new l(t, void 0, i, e))), ...Array.from(this.bindings.entries()).reduce(((i, [s, n]) => {
+                const r = getPropertyInfo(s, n);
+                if (r !== void 0 && !this.objects.has(r.object)) {
+                    i.push(new l(r.object, r.propertyName, n.rules, e, t?.propertyTag));
                 }
-                return t;
+                return i;
             }), []) ];
         }
         this.validating = true;
@@ -307,7 +300,7 @@ let P = class ValidationController {
     }
 };
 
-P = __decorate([ __param(0, c), __param(1, E), __param(2, f), __param(3, i) ], P);
+P = __decorate([ __param(0, c), __param(1, R), __param(2, f), __param(3, i) ], P);
 
 class ValidationControllerFactory {
     constructor() {
@@ -336,7 +329,7 @@ function compareDocumentPositionFlat(t, i) {
 
 const I = `\n<slot></slot>\n<slot name='secondary'>\n  <span repeat.for="error of errors">\n    \${error.result.message}\n  </span>\n</slot>\n`;
 
-const D = {
+const A = {
     name: "validation-container",
     shadowOptions: {
         mode: "open"
@@ -344,7 +337,7 @@ const D = {
     hasSlots: true
 };
 
-let $ = class ValidationContainerCustomElement {
+let D = class ValidationContainerCustomElement {
     constructor(t, i) {
         this.host = t;
         this.scopedController = i;
@@ -382,13 +375,13 @@ let $ = class ValidationContainerCustomElement {
     }
 };
 
-__decorate([ g ], $.prototype, "controller", void 0);
+__decorate([ g ], D.prototype, "controller", void 0);
 
-__decorate([ g ], $.prototype, "errors", void 0);
+__decorate([ g ], D.prototype, "errors", void 0);
 
-$ = __decorate([ __param(0, v), __param(1, e(M)) ], $);
+D = __decorate([ __param(0, v), __param(1, e(M)) ], D);
 
-let j = class ValidationErrorsCustomAttribute {
+let $ = class ValidationErrorsCustomAttribute {
     constructor(t, i) {
         this.host = t;
         this.scopedController = i;
@@ -428,16 +421,16 @@ let j = class ValidationErrorsCustomAttribute {
     }
 };
 
-__decorate([ g ], j.prototype, "controller", void 0);
+__decorate([ g ], $.prototype, "controller", void 0);
 
 __decorate([ g({
     primary: true,
-    mode: 6
-}) ], j.prototype, "errors", void 0);
+    mode: p.twoWay
+}) ], $.prototype, "errors", void 0);
 
-j = __decorate([ p("validation-errors"), __param(0, v), __param(1, e(M)) ], j);
+$ = __decorate([ m("validation-errors"), __param(0, v), __param(1, e(M)) ], $);
 
-var A;
+var j;
 
 (function(t) {
     t["manual"] = "manual";
@@ -446,7 +439,7 @@ var A;
     t["change"] = "change";
     t["changeOrBlur"] = "changeOrBlur";
     t["changeOrFocusout"] = "changeOrFocusout";
-})(A || (A = {}));
+})(j || (j = {}));
 
 const k = /*@__PURE__*/ t.createInterface("IDefaultTrigger");
 
@@ -460,7 +453,7 @@ let F = class ValidateBindingBehavior {
         this.oL = i;
     }
     bind(t, i) {
-        if (!(i instanceof b)) {
+        if (!(i instanceof _)) {
             throw new Error("Validate behavior used on non property binding");
         }
         let e = S.get(i);
@@ -469,7 +462,7 @@ let F = class ValidateBindingBehavior {
         }
         let n = O.get(i);
         if (n == null) {
-            O.set(i, n = new WithValidationTargetSubscriber(e, i, i.get(_)));
+            O.set(i, n = new WithValidationTargetSubscriber(e, i, i.get(V)));
         }
         e.start(t);
         i.useTargetSubscriber(n);
@@ -479,9 +472,9 @@ let F = class ValidateBindingBehavior {
     }
 };
 
-F.inject = [ f, B ];
+F.inject = [ f, T ];
 
-F = __decorate([ m("validate") ], F);
+F = __decorate([ w("validate") ], F);
 
 class ValidatitionConnector {
     constructor(t, i, e, s, n) {
@@ -562,19 +555,19 @@ class ValidatitionConnector {
             const o = r[n];
             switch (n) {
               case 0:
-                e = this.R(y(o, t, this, this.t));
+                e = this.R(E(o, t, this, this.t));
                 break;
 
               case 1:
-                s = this.B(y(o, t, this, this.i));
+                s = this.B(E(o, t, this, this.i));
                 break;
 
               case 2:
-                i = this.T(y(o, t, this, this.h));
+                i = this.T(E(o, t, this, this.h));
                 break;
 
               default:
-                throw new Error(`Unconsumed argument#${n + 1} for validate binding behavior: ${y(o, t, this, null)}`);
+                throw new Error(`Unconsumed argument#${n + 1} for validate binding behavior: ${E(o, t, this, null)}`);
             }
         }
         return new ValidateArgumentsDelta(this.B(s), this.R(e), i);
@@ -598,7 +591,7 @@ class ValidatitionConnector {
             this.validatedOnce = false;
             this.isDirty = false;
             this.trigger = i;
-            this.isChangeTrigger = i === A.change || i === A.changeOrBlur || i === A.changeOrFocusout;
+            this.isChangeTrigger = i === j.change || i === j.changeOrBlur || i === j.changeOrFocusout;
             t = this.triggerEvent = this.M(this.trigger);
             if (t !== null) {
                 this.target.addEventListener(t, this);
@@ -615,7 +608,7 @@ class ValidatitionConnector {
     R(t) {
         if (t === void 0 || t === null) {
             t = this.defaultTrigger;
-        } else if (!Object.values(A).includes(t)) {
+        } else if (!Object.values(j).includes(t)) {
             throw new Error(`${t} is not a supported validation trigger`);
         }
         return t;
@@ -648,13 +641,13 @@ class ValidatitionConnector {
     M(t) {
         let i = null;
         switch (t) {
-          case A.blur:
-          case A.changeOrBlur:
+          case j.blur:
+          case j.changeOrBlur:
             i = "blur";
             break;
 
-          case A.focusout:
-          case A.changeOrFocusout:
+          case j.focusout:
+          case j.changeOrFocusout:
             i = "focusout";
             break;
         }
@@ -665,13 +658,13 @@ class ValidatitionConnector {
     }
 }
 
-ValidatitionConnector.inject = [ f, B, k ];
+ValidatitionConnector.inject = [ f, T, k ];
 
-R()(ValidatitionConnector);
+B()(ValidatitionConnector);
 
-w(true)(ValidatitionConnector);
+b(true)(ValidatitionConnector);
 
-class WithValidationTargetSubscriber extends V {
+class WithValidationTargetSubscriber extends C {
     constructor(t, i, e) {
         super(i, e);
         this.I = t;
@@ -702,15 +695,15 @@ class BindingMediator {
     }
 }
 
-R()(BindingMediator);
+B()(BindingMediator);
 
-w(true)(BindingMediator);
+b(true)(BindingMediator);
 
 function getDefaultValidationHtmlConfiguration() {
     return {
         ...u(),
         ValidationControllerFactoryType: ValidationControllerFactory,
-        DefaultTrigger: A.focusout,
+        DefaultTrigger: j.focusout,
         UseSubscriberCustomAttribute: true,
         SubscriberCustomElementTemplate: I
     };
@@ -731,14 +724,14 @@ function createConfiguration(t) {
                 }
             })), n.instance(k, e.DefaultTrigger), F);
             if (e.UseSubscriberCustomAttribute) {
-                i.register(j);
+                i.register($);
             }
             const s = e.SubscriberCustomElementTemplate;
             if (s) {
-                i.register(C.define({
-                    ...D,
+                i.register(y.define({
+                    ...A,
                     template: s
-                }, $));
+                }, D));
             }
             return i;
         },
@@ -830,5 +823,5 @@ let N = class ValidationResultPresenterService {
 
 N = __decorate([ __param(0, f) ], N);
 
-export { BindingInfo, BindingMediator, ControllerValidateResult, k as IDefaultTrigger, M as IValidationController, H as IValidationResultPresenterService, F as ValidateBindingBehavior, T as ValidateEventKind, $ as ValidationContainerCustomElement, P as ValidationController, ValidationControllerFactory, j as ValidationErrorsCustomAttribute, ValidationEvent, x as ValidationHtmlConfiguration, N as ValidationResultPresenterService, ValidationResultTarget, A as ValidationTrigger, D as defaultContainerDefinition, I as defaultContainerTemplate, getDefaultValidationHtmlConfiguration, getPropertyInfo };
+export { BindingInfo, BindingMediator, ControllerValidateResult, k as IDefaultTrigger, M as IValidationController, H as IValidationResultPresenterService, F as ValidateBindingBehavior, D as ValidationContainerCustomElement, P as ValidationController, ValidationControllerFactory, $ as ValidationErrorsCustomAttribute, ValidationEvent, x as ValidationHtmlConfiguration, N as ValidationResultPresenterService, ValidationResultTarget, j as ValidationTrigger, A as defaultContainerDefinition, I as defaultContainerTemplate, getDefaultValidationHtmlConfiguration, getPropertyInfo };
 

@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Aurelia, bindable, customElement, CustomElement, IAurelia, ValueConverter } from '@aurelia/runtime-html';
+import { Aurelia, bindable, BindingMode, customElement, CustomElement, IAurelia, ValueConverter } from '@aurelia/runtime-html';
 import { assert, createFixture } from '@aurelia/testing';
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { resolve } from '@aurelia/kernel';
@@ -33,7 +33,7 @@ describe('3-runtime-html/custom-elements.spec.ts', function () {
                 name: 'form-input',
                 template: '<input value.bind="value">',
                 bindables: {
-                    value: { mode: 6 /* BindingMode.twoWay */ }
+                    value: { mode: BindingMode.twoWay }
                 }
             }, class FormInput {
             }),

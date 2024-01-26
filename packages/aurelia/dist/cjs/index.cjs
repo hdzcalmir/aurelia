@@ -56,8 +56,6 @@ class Aurelia extends r.Aurelia {
     }
 }
 
-exports.ColorOptions = e.ColorOptions;
-
 exports.ConsoleSink = e.ConsoleSink;
 
 exports.DI = e.DI;
@@ -233,12 +231,6 @@ exports.Task = p.Task;
 exports.TaskAbortError = p.TaskAbortError;
 
 exports.TaskQueue = p.TaskQueue;
-
-exports.TaskQueuePriority = p.TaskQueuePriority;
-
-exports.TaskStatus = p.TaskStatus;
-
-exports.CollectionKind = x.CollectionKind;
 
 exports.ComputedObserver = x.ComputedObserver;
 

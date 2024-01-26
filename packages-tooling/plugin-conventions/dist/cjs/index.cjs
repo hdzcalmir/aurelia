@@ -6,6 +6,7 @@ var kernel = require('@aurelia/kernel');
 var path = require('path');
 var modifyCode = require('modify-code');
 var pkg = require('typescript');
+var runtimeHtml = require('@aurelia/runtime-html');
 var parse5 = require('parse5');
 var fs = require('fs');
 
@@ -447,13 +448,13 @@ function toBindingMode(mode) {
     if (mode) {
         const normalizedMode = kernel.kebabCase(mode);
         if (normalizedMode === 'one-time')
-            return 1;
+            return runtimeHtml.BindingMode.oneTime;
         if (normalizedMode === 'one-way' || normalizedMode === 'to-view')
-            return 2;
+            return runtimeHtml.BindingMode.toView;
         if (normalizedMode === 'from-view')
-            return 4;
+            return runtimeHtml.BindingMode.fromView;
         if (normalizedMode === 'two-way')
-            return 6;
+            return runtimeHtml.BindingMode.twoWay;
     }
 }
 

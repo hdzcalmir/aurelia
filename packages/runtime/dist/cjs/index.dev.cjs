@@ -53,6 +53,7 @@ function ensureProto(proto, key, defaultValue) {
     }
 }
 /** @internal */ const objectAssign = Object.assign;
+/** @internal */ const objectFreeze = Object.freeze;
 // this is used inside template literal, since TS errs without String(...value)
 /** @internal */ const safeString = String;
 /** @internal */ const createInterface = kernel.DI.createInterface;
@@ -66,34 +67,34 @@ function ensureProto(proto, key, defaultValue) {
 
 const astVisit = (ast, visitor) => {
     switch (ast.$kind) {
-        case 13 /* ExpressionKind.AccessKeyed */: return visitor.visitAccessKeyed(ast);
-        case 12 /* ExpressionKind.AccessMember */: return visitor.visitAccessMember(ast);
-        case 2 /* ExpressionKind.AccessScope */: return visitor.visitAccessScope(ast);
-        case 0 /* ExpressionKind.AccessThis */: return visitor.visitAccessThis(ast);
-        case 21 /* ExpressionKind.ArrayBindingPattern */: return visitor.visitArrayBindingPattern(ast);
-        case 26 /* ExpressionKind.ArrayDestructuring */: return visitor.visitDestructuringAssignmentExpression(ast);
-        case 3 /* ExpressionKind.ArrayLiteral */: return visitor.visitArrayLiteral(ast);
-        case 18 /* ExpressionKind.ArrowFunction */: return visitor.visitArrowFunction(ast);
-        case 17 /* ExpressionKind.Assign */: return visitor.visitAssign(ast);
-        case 15 /* ExpressionKind.Binary */: return visitor.visitBinary(ast);
-        case 20 /* ExpressionKind.BindingBehavior */: return visitor.visitBindingBehavior(ast);
-        case 23 /* ExpressionKind.BindingIdentifier */: return visitor.visitBindingIdentifier(ast);
-        case 10 /* ExpressionKind.CallFunction */: return visitor.visitCallFunction(ast);
-        case 9 /* ExpressionKind.CallMember */: return visitor.visitCallMember(ast);
-        case 8 /* ExpressionKind.CallScope */: return visitor.visitCallScope(ast);
-        case 16 /* ExpressionKind.Conditional */: return visitor.visitConditional(ast);
-        case 28 /* ExpressionKind.DestructuringAssignmentLeaf */: return visitor.visitDestructuringAssignmentSingleExpression(ast);
-        case 24 /* ExpressionKind.ForOfStatement */: return visitor.visitForOfStatement(ast);
-        case 25 /* ExpressionKind.Interpolation */: return visitor.visitInterpolation(ast);
-        case 22 /* ExpressionKind.ObjectBindingPattern */: return visitor.visitObjectBindingPattern(ast);
-        case 27 /* ExpressionKind.ObjectDestructuring */: return visitor.visitDestructuringAssignmentExpression(ast);
-        case 4 /* ExpressionKind.ObjectLiteral */: return visitor.visitObjectLiteral(ast);
-        case 5 /* ExpressionKind.PrimitiveLiteral */: return visitor.visitPrimitiveLiteral(ast);
-        case 14 /* ExpressionKind.TaggedTemplate */: return visitor.visitTaggedTemplate(ast);
-        case 6 /* ExpressionKind.Template */: return visitor.visitTemplate(ast);
-        case 7 /* ExpressionKind.Unary */: return visitor.visitUnary(ast);
-        case 19 /* ExpressionKind.ValueConverter */: return visitor.visitValueConverter(ast);
-        case 30 /* ExpressionKind.Custom */: return visitor.visitCustom(ast);
+        case ekAccessKeyed: return visitor.visitAccessKeyed(ast);
+        case ekAccessMember: return visitor.visitAccessMember(ast);
+        case ekAccessScope: return visitor.visitAccessScope(ast);
+        case ekAccessThis: return visitor.visitAccessThis(ast);
+        case ekArrayBindingPattern: return visitor.visitArrayBindingPattern(ast);
+        case ekArrayDestructuring: return visitor.visitDestructuringAssignmentExpression(ast);
+        case ekArrayLiteral: return visitor.visitArrayLiteral(ast);
+        case ekArrowFunction: return visitor.visitArrowFunction(ast);
+        case ekAssign: return visitor.visitAssign(ast);
+        case ekBinary: return visitor.visitBinary(ast);
+        case ekBindingBehavior: return visitor.visitBindingBehavior(ast);
+        case ekBindingIdentifier: return visitor.visitBindingIdentifier(ast);
+        case ekCallFunction: return visitor.visitCallFunction(ast);
+        case ekCallMember: return visitor.visitCallMember(ast);
+        case ekCallScope: return visitor.visitCallScope(ast);
+        case ekConditional: return visitor.visitConditional(ast);
+        case ekDestructuringAssignmentLeaf: return visitor.visitDestructuringAssignmentSingleExpression(ast);
+        case ekForOfStatement: return visitor.visitForOfStatement(ast);
+        case ekInterpolation: return visitor.visitInterpolation(ast);
+        case ekObjectBindingPattern: return visitor.visitObjectBindingPattern(ast);
+        case ekObjectDestructuring: return visitor.visitDestructuringAssignmentExpression(ast);
+        case ekObjectLiteral: return visitor.visitObjectLiteral(ast);
+        case ekPrimitiveLiteral: return visitor.visitPrimitiveLiteral(ast);
+        case ekTaggedTemplate: return visitor.visitTaggedTemplate(ast);
+        case ekTemplate: return visitor.visitTemplate(ast);
+        case ekUnary: return visitor.visitUnary(ast);
+        case ekValueConverter: return visitor.visitValueConverter(ast);
+        case ekCustom: return visitor.visitCustom(ast);
         default: {
             throw createError(`Unknown ast node ${JSON.stringify(ast)}`);
         }
@@ -338,7 +339,7 @@ class Unparser {
     }
     visitDestructuringAssignmentExpression(expr) {
         const $kind = expr.$kind;
-        const isObjDes = $kind === 27 /* ExpressionKind.ObjectDestructuring */;
+        const isObjDes = $kind === ekObjectDestructuring;
         this.text += isObjDes ? '{' : '[';
         const list = expr.list;
         const len = list.length;
@@ -347,11 +348,11 @@ class Unparser {
         for (i = 0; i < len; i++) {
             item = list[i];
             switch (item.$kind) {
-                case 28 /* ExpressionKind.DestructuringAssignmentLeaf */:
+                case ekDestructuringAssignmentLeaf:
                     astVisit(item, this);
                     break;
-                case 26 /* ExpressionKind.ArrayDestructuring */:
-                case 27 /* ExpressionKind.ObjectDestructuring */: {
+                case ekArrayDestructuring:
+                case ekObjectDestructuring: {
                     const source = item.source;
                     if (source) {
                         astVisit(source, this);
@@ -393,44 +394,40 @@ class Unparser {
     }
 }
 
-exports.ExpressionKind = void 0;
-(function (ExpressionKind) {
-    ExpressionKind[ExpressionKind["AccessThis"] = 0] = "AccessThis";
-    ExpressionKind[ExpressionKind["AccessGlobal"] = 1] = "AccessGlobal";
-    ExpressionKind[ExpressionKind["AccessScope"] = 2] = "AccessScope";
-    ExpressionKind[ExpressionKind["ArrayLiteral"] = 3] = "ArrayLiteral";
-    ExpressionKind[ExpressionKind["ObjectLiteral"] = 4] = "ObjectLiteral";
-    ExpressionKind[ExpressionKind["PrimitiveLiteral"] = 5] = "PrimitiveLiteral";
-    ExpressionKind[ExpressionKind["Template"] = 6] = "Template";
-    ExpressionKind[ExpressionKind["Unary"] = 7] = "Unary";
-    ExpressionKind[ExpressionKind["CallScope"] = 8] = "CallScope";
-    ExpressionKind[ExpressionKind["CallMember"] = 9] = "CallMember";
-    ExpressionKind[ExpressionKind["CallFunction"] = 10] = "CallFunction";
-    ExpressionKind[ExpressionKind["CallGlobal"] = 11] = "CallGlobal";
-    ExpressionKind[ExpressionKind["AccessMember"] = 12] = "AccessMember";
-    ExpressionKind[ExpressionKind["AccessKeyed"] = 13] = "AccessKeyed";
-    ExpressionKind[ExpressionKind["TaggedTemplate"] = 14] = "TaggedTemplate";
-    ExpressionKind[ExpressionKind["Binary"] = 15] = "Binary";
-    ExpressionKind[ExpressionKind["Conditional"] = 16] = "Conditional";
-    ExpressionKind[ExpressionKind["Assign"] = 17] = "Assign";
-    ExpressionKind[ExpressionKind["ArrowFunction"] = 18] = "ArrowFunction";
-    ExpressionKind[ExpressionKind["ValueConverter"] = 19] = "ValueConverter";
-    ExpressionKind[ExpressionKind["BindingBehavior"] = 20] = "BindingBehavior";
-    ExpressionKind[ExpressionKind["ArrayBindingPattern"] = 21] = "ArrayBindingPattern";
-    ExpressionKind[ExpressionKind["ObjectBindingPattern"] = 22] = "ObjectBindingPattern";
-    ExpressionKind[ExpressionKind["BindingIdentifier"] = 23] = "BindingIdentifier";
-    ExpressionKind[ExpressionKind["ForOfStatement"] = 24] = "ForOfStatement";
-    ExpressionKind[ExpressionKind["Interpolation"] = 25] = "Interpolation";
-    ExpressionKind[ExpressionKind["ArrayDestructuring"] = 26] = "ArrayDestructuring";
-    ExpressionKind[ExpressionKind["ObjectDestructuring"] = 27] = "ObjectDestructuring";
-    ExpressionKind[ExpressionKind["DestructuringAssignmentLeaf"] = 28] = "DestructuringAssignmentLeaf";
-    ExpressionKind[ExpressionKind["DestructuringAssignmentRestLeaf"] = 29] = "DestructuringAssignmentRestLeaf";
-    ExpressionKind[ExpressionKind["Custom"] = 30] = "Custom";
-})(exports.ExpressionKind || (exports.ExpressionKind = {}));
+/** @internal */ const ekAccessThis = 'AccessThis';
+/** @internal */ const ekAccessGlobal = 'AccessGlobal';
+/** @internal */ const ekAccessScope = 'AccessScope';
+/** @internal */ const ekArrayLiteral = 'ArrayLiteral';
+/** @internal */ const ekObjectLiteral = 'ObjectLiteral';
+/** @internal */ const ekPrimitiveLiteral = 'PrimitiveLiteral';
+/** @internal */ const ekTemplate = 'Template';
+/** @internal */ const ekUnary = 'Unary';
+/** @internal */ const ekCallScope = 'CallScope';
+/** @internal */ const ekCallMember = 'CallMember';
+/** @internal */ const ekCallFunction = 'CallFunction';
+/** @internal */ const ekCallGlobal = 'CallGlobal';
+/** @internal */ const ekAccessMember = 'AccessMember';
+/** @internal */ const ekAccessKeyed = 'AccessKeyed';
+/** @internal */ const ekTaggedTemplate = 'TaggedTemplate';
+/** @internal */ const ekBinary = 'Binary';
+/** @internal */ const ekConditional = 'Conditional';
+/** @internal */ const ekAssign = 'Assign';
+/** @internal */ const ekArrowFunction = 'ArrowFunction';
+/** @internal */ const ekValueConverter = 'ValueConverter';
+/** @internal */ const ekBindingBehavior = 'BindingBehavior';
+/** @internal */ const ekArrayBindingPattern = 'ArrayBindingPattern';
+/** @internal */ const ekObjectBindingPattern = 'ObjectBindingPattern';
+/** @internal */ const ekBindingIdentifier = 'BindingIdentifier';
+/** @internal */ const ekForOfStatement = 'ForOfStatement';
+/** @internal */ const ekInterpolation = 'Interpolation';
+/** @internal */ const ekArrayDestructuring = 'ArrayDestructuring';
+/** @internal */ const ekObjectDestructuring = 'ObjectDestructuring';
+/** @internal */ const ekDestructuringAssignmentLeaf = 'DestructuringAssignmentLeaf';
+/** @internal */ const ekCustom = 'Custom';
 class CustomExpression {
     constructor(value) {
         this.value = value;
-        this.$kind = 30 /* ExpressionKind.Custom */;
+        this.$kind = ekCustom;
     }
     evaluate(_s, _e, _c) {
         return this.value;
@@ -455,7 +452,7 @@ class BindingBehaviorExpression {
         this.expression = expression;
         this.name = name;
         this.args = args;
-        this.$kind = 20 /* ExpressionKind.BindingBehavior */;
+        this.$kind = ekBindingBehavior;
         this.key = `_bb_${name}`;
     }
 }
@@ -464,14 +461,14 @@ class ValueConverterExpression {
         this.expression = expression;
         this.name = name;
         this.args = args;
-        this.$kind = 19 /* ExpressionKind.ValueConverter */;
+        this.$kind = ekValueConverter;
     }
 }
 class AssignExpression {
     constructor(target, value) {
         this.target = target;
         this.value = value;
-        this.$kind = 17 /* ExpressionKind.Assign */;
+        this.$kind = ekAssign;
     }
 }
 class ConditionalExpression {
@@ -479,37 +476,37 @@ class ConditionalExpression {
         this.condition = condition;
         this.yes = yes;
         this.no = no;
-        this.$kind = 16 /* ExpressionKind.Conditional */;
+        this.$kind = ekConditional;
     }
 }
 class AccessGlobalExpression {
     constructor(name) {
         this.name = name;
-        this.$kind = 1 /* ExpressionKind.AccessGlobal */;
+        this.$kind = ekAccessGlobal;
     }
 }
 class AccessThisExpression {
     constructor(ancestor = 0) {
         this.ancestor = ancestor;
-        this.$kind = 0 /* ExpressionKind.AccessThis */;
+        this.$kind = ekAccessThis;
     }
 }
 class AccessScopeExpression {
     constructor(name, ancestor = 0) {
         this.name = name;
         this.ancestor = ancestor;
-        this.$kind = 2 /* ExpressionKind.AccessScope */;
+        this.$kind = ekAccessScope;
     }
 }
-const isAccessGlobal = (ast) => (ast.$kind === 1 /* ExpressionKind.AccessGlobal */ ||
-    (ast.$kind === 12 /* ExpressionKind.AccessMember */ ||
-        ast.$kind === 13 /* ExpressionKind.AccessKeyed */) && ast.accessGlobal);
+const isAccessGlobal = (ast) => (ast.$kind === ekAccessGlobal ||
+    (ast.$kind === ekAccessMember ||
+        ast.$kind === ekAccessKeyed) && ast.accessGlobal);
 class AccessMemberExpression {
     constructor(object, name, optional = false) {
         this.object = object;
         this.name = name;
         this.optional = optional;
-        this.$kind = 12 /* ExpressionKind.AccessMember */;
+        this.$kind = ekAccessMember;
         this.accessGlobal = isAccessGlobal(object);
     }
 }
@@ -518,7 +515,7 @@ class AccessKeyedExpression {
         this.object = object;
         this.key = key;
         this.optional = optional;
-        this.$kind = 13 /* ExpressionKind.AccessKeyed */;
+        this.$kind = ekAccessKeyed;
         this.accessGlobal = isAccessGlobal(object);
     }
 }
@@ -528,7 +525,7 @@ class CallScopeExpression {
         this.args = args;
         this.ancestor = ancestor;
         this.optional = optional;
-        this.$kind = 8 /* ExpressionKind.CallScope */;
+        this.$kind = ekCallScope;
     }
 }
 class CallMemberExpression {
@@ -538,7 +535,7 @@ class CallMemberExpression {
         this.args = args;
         this.optionalMember = optionalMember;
         this.optionalCall = optionalCall;
-        this.$kind = 9 /* ExpressionKind.CallMember */;
+        this.$kind = ekCallMember;
     }
 }
 class CallFunctionExpression {
@@ -546,14 +543,14 @@ class CallFunctionExpression {
         this.func = func;
         this.args = args;
         this.optional = optional;
-        this.$kind = 10 /* ExpressionKind.CallFunction */;
+        this.$kind = ekCallFunction;
     }
 }
 class CallGlobalExpression {
     constructor(name, args) {
         this.name = name;
         this.args = args;
-        this.$kind = 11 /* ExpressionKind.CallGlobal */;
+        this.$kind = ekCallGlobal;
     }
 }
 class BinaryExpression {
@@ -561,20 +558,20 @@ class BinaryExpression {
         this.operation = operation;
         this.left = left;
         this.right = right;
-        this.$kind = 15 /* ExpressionKind.Binary */;
+        this.$kind = ekBinary;
     }
 }
 class UnaryExpression {
     constructor(operation, expression) {
         this.operation = operation;
         this.expression = expression;
-        this.$kind = 7 /* ExpressionKind.Unary */;
+        this.$kind = ekUnary;
     }
 }
 class PrimitiveLiteralExpression {
     constructor(value) {
         this.value = value;
-        this.$kind = 5 /* ExpressionKind.PrimitiveLiteral */;
+        this.$kind = ekPrimitiveLiteral;
     }
 }
 PrimitiveLiteralExpression.$undefined = new PrimitiveLiteralExpression(void 0);
@@ -585,7 +582,7 @@ PrimitiveLiteralExpression.$empty = new PrimitiveLiteralExpression('');
 class ArrayLiteralExpression {
     constructor(elements) {
         this.elements = elements;
-        this.$kind = 3 /* ExpressionKind.ArrayLiteral */;
+        this.$kind = ekArrayLiteral;
     }
 }
 ArrayLiteralExpression.$empty = new ArrayLiteralExpression(kernel.emptyArray);
@@ -593,7 +590,7 @@ class ObjectLiteralExpression {
     constructor(keys, values) {
         this.keys = keys;
         this.values = values;
-        this.$kind = 4 /* ExpressionKind.ObjectLiteral */;
+        this.$kind = ekObjectLiteral;
     }
 }
 ObjectLiteralExpression.$empty = new ObjectLiteralExpression(kernel.emptyArray, kernel.emptyArray);
@@ -601,7 +598,7 @@ class TemplateExpression {
     constructor(cooked, expressions = kernel.emptyArray) {
         this.cooked = cooked;
         this.expressions = expressions;
-        this.$kind = 6 /* ExpressionKind.Template */;
+        this.$kind = ekTemplate;
     }
 }
 TemplateExpression.$empty = new TemplateExpression(['']);
@@ -610,7 +607,7 @@ class TaggedTemplateExpression {
         this.cooked = cooked;
         this.func = func;
         this.expressions = expressions;
-        this.$kind = 14 /* ExpressionKind.TaggedTemplate */;
+        this.$kind = ekTaggedTemplate;
         cooked.raw = raw;
     }
 }
@@ -618,7 +615,7 @@ class ArrayBindingPattern {
     // We'll either have elements, or keys+values, but never all 3
     constructor(elements) {
         this.elements = elements;
-        this.$kind = 21 /* ExpressionKind.ArrayBindingPattern */;
+        this.$kind = ekArrayBindingPattern;
     }
 }
 class ObjectBindingPattern {
@@ -626,13 +623,13 @@ class ObjectBindingPattern {
     constructor(keys, values) {
         this.keys = keys;
         this.values = values;
-        this.$kind = 22 /* ExpressionKind.ObjectBindingPattern */;
+        this.$kind = ekObjectBindingPattern;
     }
 }
 class BindingIdentifier {
     constructor(name) {
         this.name = name;
-        this.$kind = 23 /* ExpressionKind.BindingIdentifier */;
+        this.$kind = ekBindingIdentifier;
     }
 }
 // https://tc39.github.io/ecma262/#sec-iteration-statements
@@ -642,7 +639,7 @@ class ForOfStatement {
         this.declaration = declaration;
         this.iterable = iterable;
         this.semiIdx = semiIdx;
-        this.$kind = 24 /* ExpressionKind.ForOfStatement */;
+        this.$kind = ekForOfStatement;
     }
 }
 /*
@@ -654,7 +651,7 @@ class Interpolation {
     constructor(parts, expressions = kernel.emptyArray) {
         this.parts = parts;
         this.expressions = expressions;
-        this.$kind = 25 /* ExpressionKind.Interpolation */;
+        this.$kind = ekInterpolation;
         this.isMulti = expressions.length > 1;
         this.firstExpression = expressions[0];
     }
@@ -675,7 +672,7 @@ class DestructuringAssignmentSingleExpression {
         this.target = target;
         this.source = source;
         this.initializer = initializer;
-        this.$kind = 28 /* ExpressionKind.DestructuringAssignmentLeaf */;
+        this.$kind = ekDestructuringAssignmentLeaf;
     }
 }
 /** This is an internal API */
@@ -683,7 +680,7 @@ class DestructuringAssignmentRestExpression {
     constructor(target, indexOrProperties) {
         this.target = target;
         this.indexOrProperties = indexOrProperties;
-        this.$kind = 28 /* ExpressionKind.DestructuringAssignmentLeaf */;
+        this.$kind = ekDestructuringAssignmentLeaf;
     }
 }
 class ArrowFunction {
@@ -691,7 +688,7 @@ class ArrowFunction {
         this.args = args;
         this.body = body;
         this.rest = rest;
-        this.$kind = 18 /* ExpressionKind.ArrowFunction */;
+        this.$kind = ekArrowFunction;
     }
 }
 
@@ -725,7 +722,7 @@ const errorsMap = {
     [160 /* ErrorNames.parse_expected_behavior_identifier */]: `Expression error: expected identifier to come after binding behavior operator: {{0}}`,
     [161 /* ErrorNames.parse_unexpected_keyword_of */]: `Expression error: unexpected keyword "of": "{{0}}"`,
     [162 /* ErrorNames.parse_unexpected_keyword_import */]: `Expression error: unexpected keyword "import": "{{0}}"`,
-    [163 /* ErrorNames.parse_invalid_identifier_in_forof */]: `Expression error: invalid BindingIdentifier at left hand side of "of": "{{0}}"`,
+    [163 /* ErrorNames.parse_invalid_identifier_in_forof */]: `Expression error: invalid BindingIdentifier at left hand side of "of": "{{0}}" | kind: {{1}}`,
     [164 /* ErrorNames.parse_invalid_identifier_object_literal_key */]: `Expression error: invalid or unsupported property definition in object literal: "{{0}}"`,
     [165 /* ErrorNames.parse_unterminated_string */]: `Expression error: unterminated quote in string literal: "{{0}}"`,
     [166 /* ErrorNames.parse_unterminated_template_string */]: `Expression error: unterminated template string: "{{0}}"`,
@@ -906,7 +903,7 @@ const getContext = Scope.getContext;
 // eslint-disable-next-line max-lines-per-function
 function astEvaluate(ast, s, e, c) {
     switch (ast.$kind) {
-        case 0 /* ExpressionKind.AccessThis */: {
+        case ekAccessThis: {
             let oc = s.overrideContext;
             let currentScope = s;
             let i = ast.ancestor;
@@ -916,7 +913,7 @@ function astEvaluate(ast, s, e, c) {
             }
             return i < 1 && currentScope ? currentScope.bindingContext : void 0;
         }
-        case 2 /* ExpressionKind.AccessScope */: {
+        case ekAccessScope: {
             const obj = getContext(s, ast.name, ast.ancestor);
             if (c !== null) {
                 c.observe(obj, ast.name);
@@ -937,9 +934,9 @@ function astEvaluate(ast, s, e, c) {
                     ? evaluatedValue.bind(obj)
                     : evaluatedValue;
         }
-        case 1 /* ExpressionKind.AccessGlobal */:
+        case ekAccessGlobal:
             return globalThis[ast.name];
-        case 11 /* ExpressionKind.CallGlobal */: {
+        case ekCallGlobal: {
             const func = globalThis[ast.name];
             if (isFunction(func)) {
                 return func(...ast.args.map(a => astEvaluate(a, s, e, c)));
@@ -950,18 +947,18 @@ function astEvaluate(ast, s, e, c) {
             }
             throw createMappedError(107 /* ErrorNames.ast_not_a_function */);
         }
-        case 3 /* ExpressionKind.ArrayLiteral */:
+        case ekArrayLiteral:
             return ast.elements.map(expr => astEvaluate(expr, s, e, c));
-        case 4 /* ExpressionKind.ObjectLiteral */: {
+        case ekObjectLiteral: {
             const instance = {};
             for (let i = 0; i < ast.keys.length; ++i) {
                 instance[ast.keys[i]] = astEvaluate(ast.values[i], s, e, c);
             }
             return instance;
         }
-        case 5 /* ExpressionKind.PrimitiveLiteral */:
+        case ekPrimitiveLiteral:
             return ast.value;
-        case 6 /* ExpressionKind.Template */: {
+        case ekTemplate: {
             let result = ast.cooked[0];
             for (let i = 0; i < ast.expressions.length; ++i) {
                 result += String(astEvaluate(ast.expressions[i], s, e, c));
@@ -969,7 +966,7 @@ function astEvaluate(ast, s, e, c) {
             }
             return result;
         }
-        case 7 /* ExpressionKind.Unary */:
+        case ekUnary:
             switch (ast.operation) {
                 case 'void':
                     return void astEvaluate(ast.expression, s, e, c);
@@ -984,7 +981,7 @@ function astEvaluate(ast, s, e, c) {
                 default:
                     throw createMappedError(109 /* ErrorNames.ast_unknown_unary_operator */, ast.operation);
             }
-        case 8 /* ExpressionKind.CallScope */: {
+        case ekCallScope: {
             const args = ast.args.map(a => astEvaluate(a, s, e, c));
             const context = getContext(s, ast.name, ast.ancestor);
             // ideally, should observe property represents by ast.name as well
@@ -996,7 +993,7 @@ function astEvaluate(ast, s, e, c) {
             }
             return void 0;
         }
-        case 9 /* ExpressionKind.CallMember */: {
+        case ekCallMember: {
             const instance = astEvaluate(ast.object, s, e, c);
             const args = ast.args.map(a => astEvaluate(a, s, e, c));
             const func = getFunction(e?.strictFnCall, instance, ast.name);
@@ -1011,7 +1008,7 @@ function astEvaluate(ast, s, e, c) {
             }
             return ret;
         }
-        case 10 /* ExpressionKind.CallFunction */: {
+        case ekCallFunction: {
             const func = astEvaluate(ast.func, s, e, c);
             if (isFunction(func)) {
                 return func(...ast.args.map(a => astEvaluate(a, s, e, c)));
@@ -1021,7 +1018,7 @@ function astEvaluate(ast, s, e, c) {
             }
             throw createMappedError(107 /* ErrorNames.ast_not_a_function */);
         }
-        case 18 /* ExpressionKind.ArrowFunction */: {
+        case ekArrowFunction: {
             const func = (...args) => {
                 const params = ast.args;
                 const rest = ast.rest;
@@ -1040,7 +1037,7 @@ function astEvaluate(ast, s, e, c) {
             };
             return func;
         }
-        case 12 /* ExpressionKind.AccessMember */: {
+        case ekAccessMember: {
             const instance = astEvaluate(ast.object, s, e, c);
             let ret;
             if (e?.strict) {
@@ -1069,7 +1066,7 @@ function astEvaluate(ast, s, e, c) {
             }
             return '';
         }
-        case 13 /* ExpressionKind.AccessKeyed */: {
+        case ekAccessKeyed: {
             const instance = astEvaluate(ast.object, s, e, c);
             const key = astEvaluate(ast.key, s, e, c);
             if (isObject(instance)) {
@@ -1082,7 +1079,7 @@ function astEvaluate(ast, s, e, c) {
                 ? void 0
                 : instance[key];
         }
-        case 14 /* ExpressionKind.TaggedTemplate */: {
+        case ekTaggedTemplate: {
             const results = ast.expressions.map(expr => astEvaluate(expr, s, e, c));
             const func = astEvaluate(ast.func, s, e, c);
             if (!isFunction(func)) {
@@ -1090,7 +1087,7 @@ function astEvaluate(ast, s, e, c) {
             }
             return func(ast.cooked, ...results);
         }
-        case 15 /* ExpressionKind.Binary */: {
+        case ekBinary: {
             const left = ast.left;
             const right = ast.right;
             switch (ast.operation) {
@@ -1167,12 +1164,12 @@ function astEvaluate(ast, s, e, c) {
                     throw createMappedError(108 /* ErrorNames.ast_unknown_binary_operator */, ast.operation);
             }
         }
-        case 16 /* ExpressionKind.Conditional */:
+        case ekConditional:
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             return astEvaluate(ast.condition, s, e, c) ? astEvaluate(ast.yes, s, e, c) : astEvaluate(ast.no, s, e, c);
-        case 17 /* ExpressionKind.Assign */:
+        case ekAssign:
             return astAssign(ast.target, s, e, astEvaluate(ast.value, s, e, c));
-        case 19 /* ExpressionKind.ValueConverter */: {
+        case ekValueConverter: {
             const vc = e?.getConverter?.(ast.name);
             if (vc == null) {
                 throw createMappedError(103 /* ErrorNames.ast_converter_not_found */, ast.name);
@@ -1182,13 +1179,13 @@ function astEvaluate(ast, s, e, c) {
             }
             return astEvaluate(ast.expression, s, e, c);
         }
-        case 20 /* ExpressionKind.BindingBehavior */:
+        case ekBindingBehavior:
             return astEvaluate(ast.expression, s, e, c);
-        case 23 /* ExpressionKind.BindingIdentifier */:
+        case ekBindingIdentifier:
             return ast.name;
-        case 24 /* ExpressionKind.ForOfStatement */:
+        case ekForOfStatement:
             return astEvaluate(ast.iterable, s, e, c);
-        case 25 /* ExpressionKind.Interpolation */:
+        case ekInterpolation:
             if (ast.isMulti) {
                 let result = ast.parts[0];
                 let i = 0;
@@ -1201,9 +1198,9 @@ function astEvaluate(ast, s, e, c) {
             else {
                 return `${ast.parts[0]}${astEvaluate(ast.firstExpression, s, e, c)}${ast.parts[1]}`;
             }
-        case 28 /* ExpressionKind.DestructuringAssignmentLeaf */:
+        case ekDestructuringAssignmentLeaf:
             return astEvaluate(ast.target, s, e, c);
-        case 26 /* ExpressionKind.ArrayDestructuring */: {
+        case ekArrayDestructuring: {
             return ast.list.map(x => astEvaluate(x, s, e, c));
         }
         // TODO: this should come after batch
@@ -1218,29 +1215,29 @@ function astEvaluate(ast, s, e, c) {
         // instead of twice:
         // object.x = value[0]
         // object.y = value[1]
-        case 21 /* ExpressionKind.ArrayBindingPattern */:
+        case ekArrayBindingPattern:
         // TODO
         // similar to array binding ast, this should only come after batch
         // for a single notification per destructing,
         // regardless number of property assignments on the scope binding context
-        case 22 /* ExpressionKind.ObjectBindingPattern */:
-        case 27 /* ExpressionKind.ObjectDestructuring */:
+        case ekObjectBindingPattern:
+        case ekObjectDestructuring:
         default:
             return void 0;
-        case 30 /* ExpressionKind.Custom */:
+        case ekCustom:
             return ast.evaluate(s, e, c);
     }
 }
 function astAssign(ast, s, e, val) {
     switch (ast.$kind) {
-        case 2 /* ExpressionKind.AccessScope */: {
+        case ekAccessScope: {
             if (ast.name === '$host') {
                 throw createMappedError(106 /* ErrorNames.ast_no_assign_$host */);
             }
             const obj = getContext(s, ast.name, ast.ancestor);
             return obj[ast.name] = val;
         }
-        case 12 /* ExpressionKind.AccessMember */: {
+        case ekAccessMember: {
             const obj = astEvaluate(ast.object, s, e, null);
             if (isObject(obj)) {
                 if (ast.name === 'length' && isArray(obj) && !isNaN(val)) {
@@ -1255,7 +1252,7 @@ function astAssign(ast, s, e, val) {
             }
             return val;
         }
-        case 13 /* ExpressionKind.AccessKeyed */: {
+        case ekAccessKeyed: {
             const instance = astEvaluate(ast.object, s, e, null);
             const key = astEvaluate(ast.key, s, e, null);
             if (isArray(instance)) {
@@ -1270,10 +1267,10 @@ function astAssign(ast, s, e, val) {
             }
             return instance[key] = val;
         }
-        case 17 /* ExpressionKind.Assign */:
+        case ekAssign:
             astAssign(ast.value, s, e, val);
             return astAssign(ast.target, s, e, val);
-        case 19 /* ExpressionKind.ValueConverter */: {
+        case ekValueConverter: {
             const vc = e?.getConverter?.(ast.name);
             if (vc == null) {
                 throw createMappedError(103 /* ErrorNames.ast_converter_not_found */, ast.name);
@@ -1283,10 +1280,10 @@ function astAssign(ast, s, e, val) {
             }
             return astAssign(ast.expression, s, e, val);
         }
-        case 20 /* ExpressionKind.BindingBehavior */:
+        case ekBindingBehavior:
             return astAssign(ast.expression, s, e, val);
-        case 26 /* ExpressionKind.ArrayDestructuring */:
-        case 27 /* ExpressionKind.ObjectDestructuring */: {
+        case ekArrayDestructuring:
+        case ekObjectDestructuring: {
             const list = ast.list;
             const len = list.length;
             let i;
@@ -1294,11 +1291,11 @@ function astAssign(ast, s, e, val) {
             for (i = 0; i < len; i++) {
                 item = list[i];
                 switch (item.$kind) {
-                    case 28 /* ExpressionKind.DestructuringAssignmentLeaf */:
+                    case ekDestructuringAssignmentLeaf:
                         astAssign(item, s, e, val);
                         break;
-                    case 26 /* ExpressionKind.ArrayDestructuring */:
-                    case 27 /* ExpressionKind.ObjectDestructuring */: {
+                    case ekArrayDestructuring:
+                    case ekObjectDestructuring: {
                         if (typeof val !== 'object' || val === null) {
                             throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
                         }
@@ -1313,7 +1310,7 @@ function astAssign(ast, s, e, val) {
             }
             break;
         }
-        case 28 /* ExpressionKind.DestructuringAssignmentLeaf */: {
+        case ekDestructuringAssignmentLeaf: {
             if (ast instanceof DestructuringAssignmentSingleExpression) {
                 if (val == null) {
                     return;
@@ -1357,7 +1354,7 @@ function astAssign(ast, s, e, val) {
             }
             break;
         }
-        case 30 /* ExpressionKind.Custom */:
+        case ekCustom:
             return ast.assign(s, e, val);
         default:
             return void 0;
@@ -1365,7 +1362,7 @@ function astAssign(ast, s, e, val) {
 }
 function astBind(ast, s, b) {
     switch (ast.$kind) {
-        case 20 /* ExpressionKind.BindingBehavior */: {
+        case ekBindingBehavior: {
             const name = ast.name;
             const key = ast.key;
             const behavior = b.getBehavior?.(name);
@@ -1382,7 +1379,7 @@ function astBind(ast, s, b) {
             astBind(ast.expression, s, b);
             return;
         }
-        case 19 /* ExpressionKind.ValueConverter */: {
+        case ekValueConverter: {
             const name = ast.name;
             const vc = b.getConverter?.(name);
             if (vc == null) {
@@ -1405,18 +1402,18 @@ function astBind(ast, s, b) {
             astBind(ast.expression, s, b);
             return;
         }
-        case 24 /* ExpressionKind.ForOfStatement */: {
+        case ekForOfStatement: {
             astBind(ast.iterable, s, b);
             break;
         }
-        case 30 /* ExpressionKind.Custom */: {
+        case ekCustom: {
             ast.bind?.(s, b);
         }
     }
 }
 function astUnbind(ast, s, b) {
     switch (ast.$kind) {
-        case 20 /* ExpressionKind.BindingBehavior */: {
+        case ekBindingBehavior: {
             const key = ast.key;
             const $b = b;
             if ($b[key] !== void 0) {
@@ -1426,7 +1423,7 @@ function astUnbind(ast, s, b) {
             astUnbind(ast.expression, s, b);
             break;
         }
-        case 19 /* ExpressionKind.ValueConverter */: {
+        case ekValueConverter: {
             const vc = b.getConverter?.(ast.name);
             if (vc?.signals === void 0) {
                 return;
@@ -1441,11 +1438,11 @@ function astUnbind(ast, s, b) {
             astUnbind(ast.expression, s, b);
             break;
         }
-        case 24 /* ExpressionKind.ForOfStatement */: {
+        case ekForOfStatement: {
             astUnbind(ast.iterable, s, b);
             break;
         }
-        case 30 /* ExpressionKind.Custom */: {
+        case ekCustom: {
             ast.unbind?.(s, b);
         }
     }
@@ -1502,19 +1499,14 @@ const autoObserveArrayMethods = 'at map filter includes indexOf lastIndexOf find
 // entries, // not meaningful in template
 
 const ICoercionConfiguration = /*@__PURE__*/ kernel.DI.createInterface('ICoercionConfiguration');
-exports.CollectionKind = void 0;
-(function (CollectionKind) {
-    CollectionKind[CollectionKind["indexed"] = 8] = "indexed";
-    CollectionKind[CollectionKind["keyed"] = 4] = "keyed";
-    CollectionKind[CollectionKind["array"] = 9] = "array";
-    CollectionKind[CollectionKind["map"] = 6] = "map";
-    CollectionKind[CollectionKind["set"] = 7] = "set";
-})(exports.CollectionKind || (exports.CollectionKind = {}));
-exports.AccessorType = void 0;
-(function (AccessorType) {
-    AccessorType[AccessorType["None"] = 0] = "None";
-    AccessorType[AccessorType["Observer"] = 1] = "Observer";
-    AccessorType[AccessorType["Node"] = 2] = "Node";
+/** @internal */ const atNone = 0;
+/** @internal */ const atObserver = 1;
+/** @internal */ const atNode = 2;
+/** @internal */ const atLayout = 4;
+const AccessorType = /*@__PURE__*/ objectFreeze({
+    None: atNone,
+    Observer: atObserver,
+    Node: atNode,
     // misc characteristic of accessors/observers when update
     //
     // by default, everything is synchronous
@@ -1523,8 +1515,8 @@ exports.AccessorType = void 0;
     // queue it instead
     // todo: https://gist.github.com/paulirish/5d52fb081b3570c81e3a
     // todo: https://csstriggers.com/
-    AccessorType[AccessorType["Layout"] = 4] = "Layout";
-})(exports.AccessorType || (exports.AccessorType = {}));
+    Layout: atLayout,
+});
 function copyIndexMap(existing, deletedIndices, deletedItems) {
     const { length } = existing;
     const arr = Array(length);
@@ -1735,7 +1727,7 @@ function removeSubscriber(subscriber) {
 class CollectionLengthObserver {
     constructor(owner) {
         this.owner = owner;
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         this._value = (this._obj = owner.collection).length;
     }
     getValue() {
@@ -1770,7 +1762,7 @@ class CollectionLengthObserver {
 class CollectionSizeObserver {
     constructor(owner) {
         this.owner = owner;
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         this._value = (this._obj = owner.collection).size;
     }
     getValue() {
@@ -2185,7 +2177,7 @@ function disableArrayObservation() {
 }
 class ArrayObserver {
     constructor(array) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         if (!enableArrayObservationCalled) {
             enableArrayObservationCalled = true;
             enableArrayObservation();
@@ -2396,7 +2388,7 @@ function disableSetObservation() {
 }
 class SetObserver {
     constructor(observedSet) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         if (!enableSetObservationCalled) {
             enableSetObservationCalled = true;
             enableSetObservation();
@@ -2560,7 +2552,7 @@ function disableMapObservation() {
 }
 class MapObserver {
     constructor(map) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         if (!enableMapObservationCalled) {
             enableMapObservationCalled = true;
             enableMapObservation();
@@ -2696,15 +2688,15 @@ class ExpressionParser {
     parse(expression, expressionType) {
         let found;
         switch (expressionType) {
-            case 32 /* ExpressionType.IsCustom */:
+            case etIsCustom:
                 return new CustomExpression(expression);
-            case 1 /* ExpressionType.Interpolation */:
+            case etInterpolation:
                 found = this._interpolationLookup[expression];
                 if (found === void 0) {
                     found = this._interpolationLookup[expression] = this.$parse(expression, expressionType);
                 }
                 return found;
-            case 2 /* ExpressionType.IsIterator */:
+            case etIsIterator:
                 found = this._forOfLookup[expression];
                 if (found === void 0) {
                     found = this._forOfLookup[expression] = this.$parse(expression, expressionType);
@@ -2712,8 +2704,7 @@ class ExpressionParser {
                 return found;
             default: {
                 if (expression.length === 0) {
-                    // only allow function to be empty
-                    if ((expressionType & (8 /* ExpressionType.IsFunction */ | 16 /* ExpressionType.IsProperty */)) > 0) {
+                    if (expressionType === etIsFunction || expressionType === etIsProperty) {
                         return PrimitiveLiteralExpression.$empty;
                     }
                     throw invalidEmptyExpression();
@@ -2740,7 +2731,7 @@ class ExpressionParser {
         $optional = false;
         $accessGlobal = true;
         $semicolonIndex = -1;
-        return parse(61 /* Precedence.Variadic */, expressionType === void 0 ? 16 /* ExpressionType.IsProperty */ : expressionType);
+        return parse(61 /* Precedence.Variadic */, expressionType === void 0 ? etIsProperty : expressionType);
     }
 }
 
@@ -2766,16 +2757,13 @@ const $null = PrimitiveLiteralExpression.$null;
 const $undefined = PrimitiveLiteralExpression.$undefined;
 const $this = new AccessThisExpression(0);
 const $parent = new AccessThisExpression(1);
-exports.ExpressionType = void 0;
-(function (ExpressionType) {
-    ExpressionType[ExpressionType["None"] = 0] = "None";
-    ExpressionType[ExpressionType["Interpolation"] = 1] = "Interpolation";
-    ExpressionType[ExpressionType["IsIterator"] = 2] = "IsIterator";
-    ExpressionType[ExpressionType["IsChainable"] = 4] = "IsChainable";
-    ExpressionType[ExpressionType["IsFunction"] = 8] = "IsFunction";
-    ExpressionType[ExpressionType["IsProperty"] = 16] = "IsProperty";
-    ExpressionType[ExpressionType["IsCustom"] = 32] = "IsCustom";
-})(exports.ExpressionType || (exports.ExpressionType = {}));
+const etNone = 'None';
+const etInterpolation = 'Interpolation';
+const etIsIterator = 'IsIterator';
+const etIsChainable = 'IsChainable';
+const etIsFunction = 'IsFunction';
+const etIsProperty = 'IsProperty';
+const etIsCustom = 'IsCustom';
 let $input = '';
 let $index = 0;
 let $length = 0;
@@ -2806,7 +2794,7 @@ function parseExpression(input, expressionType) {
     $optional = false;
     $accessGlobal = true;
     $semicolonIndex = -1;
-    return parse(61 /* Precedence.Variadic */, expressionType === void 0 ? 16 /* ExpressionType.IsProperty */ : expressionType);
+    return parse(61 /* Precedence.Variadic */, expressionType === void 0 ? etIsProperty : expressionType);
 }
 // This is performance-critical code which follows a subset of the well-known ES spec.
 // Knowing the spec, or parsers in general, will help with understanding this code and it is therefore not the
@@ -2817,12 +2805,12 @@ function parseExpression(input, expressionType) {
 // For reference, most of the parsing logic is based on: https://tc39.github.io/ecma262/#sec-ecmascript-language-expressions
 // eslint-disable-next-line max-lines-per-function
 function parse(minPrecedence, expressionType) {
-    if (expressionType === 32 /* ExpressionType.IsCustom */) {
+    if (expressionType === etIsCustom) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return new CustomExpression($input);
     }
     if ($index === 0) {
-        if (expressionType & 1 /* ExpressionType.Interpolation */) {
+        if (expressionType === etInterpolation) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return parseInterpolation();
         }
@@ -2928,7 +2916,7 @@ function parse(minPrecedence, expressionType) {
             // falls through
             case 4096 /* Token.Identifier */: { // identifier
                 const id = $tokenValue;
-                if (expressionType & 2 /* ExpressionType.IsIterator */) {
+                if (expressionType === etIsIterator) {
                     result = new BindingIdentifier(id);
                 }
                 else if ($accessGlobal && globalNames.includes(id)) {
@@ -2949,7 +2937,7 @@ function parse(minPrecedence, expressionType) {
                     const _optional = $optional;
                     const _scopeDepth = $scopeDepth;
                     ++$scopeDepth;
-                    const body = parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */);
+                    const body = parse(62 /* Precedence.Assign */, etNone);
                     $optional = _optional;
                     $scopeDepth = _scopeDepth;
                     $assignable = false;
@@ -3015,7 +3003,7 @@ function parse(minPrecedence, expressionType) {
                     throw unconsumedToken();
                 }
         }
-        if (expressionType & 2 /* ExpressionType.IsIterator */) {
+        if (expressionType === etIsIterator) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return parseForOfStatement(result);
         }
@@ -3026,7 +3014,7 @@ function parse(minPrecedence, expressionType) {
         if ($currentToken === 10 /* Token.DotDot */ || $currentToken === 11 /* Token.DotDotDot */) {
             throw expectedIdentifier();
         }
-        if (result.$kind === 0 /* ExpressionKind.AccessThis */) {
+        if (result.$kind === ekAccessThis) {
             switch ($currentToken) {
                 case 2162700 /* Token.QuestionDot */:
                     $optional = true;
@@ -3117,13 +3105,13 @@ function parse(minPrecedence, expressionType) {
                 case 11 /* Token.DotDotDot */:
                     throw expectedIdentifier();
                 case 2688007 /* Token.OpenParen */:
-                    if (result.$kind === 2 /* ExpressionKind.AccessScope */) {
+                    if (result.$kind === ekAccessScope) {
                         result = new CallScopeExpression(result.name, parseArguments(), result.ancestor, false);
                     }
-                    else if (result.$kind === 12 /* ExpressionKind.AccessMember */) {
+                    else if (result.$kind === ekAccessMember) {
                         result = new CallMemberExpression(result.object, result.name, parseArguments(), result.optional, false);
                     }
-                    else if (result.$kind === 1 /* ExpressionKind.AccessGlobal */) {
+                    else if (result.$kind === ekAccessGlobal) {
                         result = new CallGlobalExpression(result.name, parseArguments());
                     }
                     else {
@@ -3283,11 +3271,11 @@ function parse(minPrecedence, expressionType) {
         result = new BindingBehaviorExpression(result, name, args);
     }
     if ($currentToken !== 6291456 /* Token.EOF */) {
-        if ((expressionType & 1 /* ExpressionType.Interpolation */) > 0 && $currentToken === 7340045 /* Token.CloseBrace */) {
+        if (expressionType === etInterpolation && $currentToken === 7340045 /* Token.CloseBrace */) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return result;
         }
-        if ((expressionType & 4 /* ExpressionType.IsChainable */) > 0 && $currentToken === 6291477 /* Token.Semicolon */) {
+        if (expressionType === etIsChainable && $currentToken === 6291477 /* Token.Semicolon */) {
             if ($index === $length) {
                 throw unconsumedToken();
             }
@@ -3311,7 +3299,7 @@ function parse(minPrecedence, expressionType) {
  */
 function parseArrayDestructuring() {
     const items = [];
-    const dae = new DestructuringAssignmentExpression(26 /* ExpressionKind.ArrayDestructuring */, items, void 0, void 0);
+    const dae = new DestructuringAssignmentExpression(ekArrayDestructuring, items, void 0, void 0);
     let target = '';
     let $continue = true;
     let index = 0;
@@ -3349,7 +3337,7 @@ function parseArguments() {
     nextToken();
     const args = [];
     while ($currentToken !== 7340046 /* Token.CloseParen */) {
-        args.push(parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */));
+        args.push(parse(62 /* Precedence.Assign */, etNone));
         if (!consumeOpt(6291471 /* Token.Comma */)) {
             break;
         }
@@ -3362,7 +3350,7 @@ function parseArguments() {
 function parseKeyedExpression(result, optional) {
     const _optional = $optional;
     nextToken();
-    result = new AccessKeyedExpression(result, parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */), optional);
+    result = new AccessKeyedExpression(result, parse(62 /* Precedence.Assign */, etNone), optional);
     consume(7340051 /* Token.CloseBracket */);
     $assignable = !_optional;
     $optional = _optional;
@@ -3379,10 +3367,10 @@ function parseOptionalChainLHS(lhs) {
         return parseMemberExpressionLHS(lhs, true);
     }
     if ($currentToken === 2688007 /* Token.OpenParen */) {
-        if (lhs.$kind === 2 /* ExpressionKind.AccessScope */) {
+        if (lhs.$kind === ekAccessScope) {
             return new CallScopeExpression(lhs.name, parseArguments(), lhs.ancestor, true);
         }
-        else if (lhs.$kind === 12 /* ExpressionKind.AccessMember */) {
+        else if (lhs.$kind === ekAccessMember) {
             return new CallMemberExpression(lhs.object, lhs.name, parseArguments(), lhs.optional, true);
         }
         else {
@@ -3478,7 +3466,7 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
             const _optional = $optional;
             const _scopeDepth = $scopeDepth;
             ++$scopeDepth;
-            const body = parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */);
+            const body = parse(62 /* Precedence.Assign */, etNone);
             $optional = _optional;
             $scopeDepth = _scopeDepth;
             $assignable = false;
@@ -3561,7 +3549,7 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
             const _optional = $optional;
             const _scopeDepth = $scopeDepth;
             ++$scopeDepth;
-            const body = parse(62 /* Precedence.Assign */, 0 /* ExpressionType.None */);
+            const body = parse(62 /* Precedence.Assign */, etNone);
             $optional = _optional;
             $scopeDepth = _scopeDepth;
             $assignable = false;
@@ -3637,7 +3625,7 @@ function parseArrayLiteralExpression(expressionType) {
             }
         }
         else {
-            elements.push(parse(62 /* Precedence.Assign */, expressionType & ~2 /* ExpressionType.IsIterator */));
+            elements.push(parse(62 /* Precedence.Assign */, expressionType === etIsIterator ? etNone : expressionType));
             if (consumeOpt(6291471 /* Token.Comma */)) {
                 if ($currentToken === 7340051 /* Token.CloseBracket */) {
                     break;
@@ -3650,7 +3638,7 @@ function parseArrayLiteralExpression(expressionType) {
     }
     $optional = _optional;
     consume(7340051 /* Token.CloseBracket */);
-    if (expressionType & 2 /* ExpressionType.IsIterator */) {
+    if (expressionType === etIsIterator) {
         return new ArrayBindingPattern(elements);
     }
     else {
@@ -3658,18 +3646,17 @@ function parseArrayLiteralExpression(expressionType) {
         return new ArrayLiteralExpression(elements);
     }
 }
+const allowedForExprKinds = [ekArrayBindingPattern, ekObjectBindingPattern, ekBindingIdentifier, ekArrayDestructuring, ekObjectDestructuring];
 function parseForOfStatement(result) {
-    if ((result.$kind & (21 /* ExpressionKind.ArrayBindingPattern */
-        | 22 /* ExpressionKind.ObjectBindingPattern */
-        | 23 /* ExpressionKind.BindingIdentifier */)) === 0) {
-        throw invalidLHSBindingIdentifierInForOf();
+    if (!allowedForExprKinds.includes(result.$kind)) {
+        throw invalidLHSBindingIdentifierInForOf(result.$kind);
     }
     if ($currentToken !== 4204593 /* Token.OfKeyword */) {
-        throw invalidLHSBindingIdentifierInForOf();
+        throw invalidLHSBindingIdentifierInForOf(result.$kind);
     }
     nextToken();
     const declaration = result;
-    const statement = parse(61 /* Precedence.Variadic */, 4 /* ExpressionType.IsChainable */);
+    const statement = parse(61 /* Precedence.Variadic */, etIsChainable);
     return new ForOfStatement(declaration, statement, $semicolonIndex);
 }
 /**
@@ -3704,7 +3691,7 @@ function parseObjectLiteralExpression(expressionType) {
         if ($currentToken & 49152 /* Token.StringOrNumericLiteral */) {
             nextToken();
             consume(6291476 /* Token.Colon */);
-            values.push(parse(62 /* Precedence.Assign */, expressionType & ~2 /* ExpressionType.IsIterator */));
+            values.push(parse(62 /* Precedence.Assign */, expressionType === etIsIterator ? etNone : expressionType));
         }
         else if ($currentToken & 12288 /* Token.IdentifierName */) {
             // IdentifierName = optional colon
@@ -3713,14 +3700,14 @@ function parseObjectLiteralExpression(expressionType) {
             const index = $index;
             nextToken();
             if (consumeOpt(6291476 /* Token.Colon */)) {
-                values.push(parse(62 /* Precedence.Assign */, expressionType & ~2 /* ExpressionType.IsIterator */));
+                values.push(parse(62 /* Precedence.Assign */, expressionType === etIsIterator ? etNone : expressionType));
             }
             else {
                 // Shorthand
                 $currentChar = currentChar;
                 $currentToken = currentToken;
                 $index = index;
-                values.push(parse(515 /* Precedence.Primary */, expressionType & ~2 /* ExpressionType.IsIterator */));
+                values.push(parse(515 /* Precedence.Primary */, expressionType === etIsIterator ? etNone : expressionType));
             }
         }
         else {
@@ -3732,7 +3719,7 @@ function parseObjectLiteralExpression(expressionType) {
     }
     $optional = _optional;
     consume(7340045 /* Token.CloseBrace */);
-    if (expressionType & 2 /* ExpressionType.IsIterator */) {
+    if (expressionType === etIsIterator) {
         return new ObjectBindingPattern(keys, values);
     }
     else {
@@ -3754,7 +3741,7 @@ function parseInterpolation() {
                     $index += 2;
                     $currentChar = $charCodeAt($index);
                     nextToken();
-                    const expression = parse(61 /* Precedence.Variadic */, 1 /* ExpressionType.Interpolation */);
+                    const expression = parse(61 /* Precedence.Variadic */, etInterpolation);
                     expressions.push(expression);
                     continue;
                 }
@@ -3983,7 +3970,7 @@ const expectedValueConverterIdentifier = () => createMappedError(159 /* ErrorNam
 const expectedBindingBehaviorIdentifier = () => createMappedError(160 /* ErrorNames.parse_expected_behavior_identifier */, $input);
 const unexpectedOfKeyword = () => createMappedError(161 /* ErrorNames.parse_unexpected_keyword_of */, $input);
 const unexpectedImportKeyword = () => createMappedError(162 /* ErrorNames.parse_unexpected_keyword_import */, $input);
-const invalidLHSBindingIdentifierInForOf = () => createMappedError(163 /* ErrorNames.parse_invalid_identifier_in_forof */, $input);
+const invalidLHSBindingIdentifierInForOf = (kind) => createMappedError(163 /* ErrorNames.parse_invalid_identifier_in_forof */, $input, kind);
 const invalidPropDefInObjLiteral = () => createMappedError(164 /* ErrorNames.parse_invalid_identifier_object_literal_key */, $input);
 const unterminatedStringLiteral = () => createMappedError(165 /* ErrorNames.parse_unterminated_string */, $input);
 const unterminatedTemplateLiteral = () => createMappedError(166 /* ErrorNames.parse_unterminated_template_string */, $input);
@@ -4248,7 +4235,7 @@ function exitConnectable(connectable) {
     _connectable = connectables.length > 0 ? connectables[connectables.length - 1] : null;
     connecting = _connectable != null;
 }
-const ConnectableSwitcher = Object.freeze({
+const ConnectableSwitcher = /*@__PURE__*/ objectFreeze({
     get current() {
         return _connectable;
     },
@@ -4669,7 +4656,7 @@ function wrappedEntries() {
     };
 }
 const observeCollection = (connectable, collection) => connectable?.observeCollection(collection);
-const ProxyObservable = Object.freeze({
+const ProxyObservable = /*@__PURE__*/ objectFreeze({
     getProxy,
     getRaw,
     wrap,
@@ -4679,7 +4666,7 @@ const ProxyObservable = Object.freeze({
 
 class ComputedObserver {
     constructor(obj, get, set, observerLocator, useProxy) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         /** @internal */
         this._value = void 0;
         // todo: maybe use a counter allow recursive call to a certain level
@@ -4894,7 +4881,7 @@ class DirtyCheckProperty {
     constructor(dirtyChecker, obj, key) {
         this.obj = obj;
         this.key = key;
-        this.type = 0 /* AccessorType.None */;
+        this.type = atNone;
         /** @internal */
         this._oldValue = void 0;
         this._dirtyChecker = dirtyChecker;
@@ -4932,7 +4919,7 @@ class DirtyCheckProperty {
 class PrimitiveObserver {
     get doNotCache() { return true; }
     constructor(obj, key) {
-        this.type = 0 /* AccessorType.None */;
+        this.type = atNone;
         this._obj = obj;
         this._key = key;
     }
@@ -4949,7 +4936,7 @@ class PropertyAccessor {
     constructor() {
         // the only thing can be guaranteed is it's an object
         // even if this property accessor is used to access an element
-        this.type = 0 /* AccessorType.None */;
+        this.type = atNone;
     }
     getValue(obj, key) {
         return obj[key];
@@ -4966,7 +4953,7 @@ class PropertyAccessor {
 class SetterObserver {
     constructor(obj, key) {
         // todo(bigopon): tweak the flag based on typeof obj (array/set/map/iterator/proxy etc...)
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         /** @internal */
         this._value = void 0;
         /** @internal */
@@ -5432,7 +5419,7 @@ function getNotifier(obj, key, callbackKey, initialValue, set) {
 }
 class SetterNotifier {
     constructor(obj, callbackKey, set, initialValue) {
-        this.type = 1 /* AccessorType.Observer */;
+        this.type = atObserver;
         /** @internal */
         this._value = void 0;
         /** @internal */
@@ -5548,6 +5535,7 @@ exports.AccessKeyedExpression = AccessKeyedExpression;
 exports.AccessMemberExpression = AccessMemberExpression;
 exports.AccessScopeExpression = AccessScopeExpression;
 exports.AccessThisExpression = AccessThisExpression;
+exports.AccessorType = AccessorType;
 exports.ArrayBindingPattern = ArrayBindingPattern;
 exports.ArrayIndexObserver = ArrayIndexObserver;
 exports.ArrayLiteralExpression = ArrayLiteralExpression;

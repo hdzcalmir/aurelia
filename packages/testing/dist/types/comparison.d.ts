@@ -1,6 +1,6 @@
 import { Primitive } from '@aurelia/kernel';
 import { FloatArray, TypedArray } from './util';
-export declare const enum IterationType {
+declare const enum IterationType {
     noIterator = 0,
     isArray = 1,
     isSet = 2,
@@ -29,4 +29,5 @@ export declare function mapEquiv(a: Map<any, any>, b: Map<any, any>, strict: boo
 export declare function objEquiv(a: Object, b: Object, strict: boolean, keys: PropertyKey[], memos: Memos | undefined, iterationType: IterationType): boolean;
 export declare function isDeepEqual(val1: unknown, val2: unknown): boolean;
 export declare function isDeepStrictEqual(val1: unknown, val2: unknown): boolean;
+export {};
 //# sourceMappingURL=comparison.d.ts.map

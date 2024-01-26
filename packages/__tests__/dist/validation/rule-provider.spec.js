@@ -1,6 +1,6 @@
 /* eslint-disable no-constant-condition, mocha/no-sibling-hooks */
 import { Metadata } from '@aurelia/metadata';
-import { DI, ISink, Protocol, Registration } from '@aurelia/kernel';
+import { DI, ISink, LogLevel, Protocol, Registration } from '@aurelia/kernel';
 import { Interpolation, PrimitiveLiteralExpression, IExpressionParser, Scope, astEvaluate } from '@aurelia/runtime';
 import { assert, TestContext } from '@aurelia/testing';
 import { EqualsRule, IValidationMessageProvider, IValidationRules, LengthRule, PropertyRule, RangeRule, RegexRule, RequiredRule, SizeRule, ValidationConfiguration, BaseValidationRule, parsePropertyName, ValidationRuleAliasMessage, validationRulesRegistrar, rootObjectSymbol, } from '@aurelia/validation';
@@ -458,7 +458,7 @@ describe('validation/rule-provider.spec.ts', function () {
                 const log = eventLog.log;
                 assert.equal(log.length, 1);
                 const entry = log[0];
-                assert.equal(entry.severity, 3 /* LogLevel.warn */);
+                assert.equal(entry.severity, LogLevel.warn);
                 assert.equal(entry
                     .toString()
                     .endsWith(`[WRN ValidationMessageProvider] Did you mean to use "$${property}" instead of "${property}" in this validation message template: "${message}"?`), true);
@@ -939,11 +939,51 @@ describe('validation/rule-provider.spec.ts', function () {
                     cov_1wjh4ld5ut1().s[50]++;
                     return o.prop;
                 }, expected: 'prop' },
+            // for the instrumenter: @jsdevtools/coverage-istanbul-loader - lambda
+            { property: (o) => { cov_1wjh4ld5ut1().s[50]++; return o.prop; }, expected: 'prop' },
+            { property: (o) => { cov_1wjh4ld5ut1().f[9]++; cov_1wjh4ld5ut1().s[50]++; return o.prop; }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict";
+                    cov_1wjh4ld5ut1().s[50]++;
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict";
+                    cov_1wjh4ld5ut1().f[9]++;
+                    cov_1wjh4ld5ut1().s[50]++;
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => { /* istanbul ignore next */ cov_1wjh4ld5ut1().s[50]++; return o.prop; }, expected: 'prop' },
+            { property: (o) => { /* istanbul ignore next */ cov_1wjh4ld5ut1().f[9]++; cov_1wjh4ld5ut1().s[50]++; return o.prop; }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict"; /* istanbul ignore next */
+                    cov_1wjh4ld5ut1().s[50]++;
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict"; /* istanbul ignore next */
+                    cov_1wjh4ld5ut1().f[9]++;
+                    cov_1wjh4ld5ut1().s[50]++;
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => { cov_1wjh4ld5ut1().s[50]++; /* istanbul ignore next */ /* istanbul ignore next */ return o.prop; }, expected: 'prop' },
+            { property: (o) => { cov_1wjh4ld5ut1().f[9]++; cov_1wjh4ld5ut1().s[50]++; /* istanbul ignore next */ /* istanbul ignore next */ return o.prop; }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict";
+                    cov_1wjh4ld5ut1().s[50]++; /* istanbul ignore next */
+                    return o.prop;
+                }, expected: 'prop' },
+            { property: (o) => {
+                    "use strict";
+                    cov_1wjh4ld5ut1().f[9]++;
+                    cov_1wjh4ld5ut1().s[50]++; /* istanbul ignore next */
+                    return o.prop;
+                }, expected: 'prop' },
         ];
         for (const { property, expected } of positiveDataRows) {
             it(`parses ${property.toString()} to ${expected}`, function () {
                 const { parser } = setup();
-                assert.deepStrictEqual(parsePropertyName(property, parser), [expected, parser.parse(`${rootObjectSymbol}.${expected}`, 0 /* ExpressionType.None */)]);
+                assert.deepStrictEqual(parsePropertyName(property, parser), [expected, parser.parse(`${rootObjectSymbol}.${expected}`, 'None')]);
             });
         }
         const negativeDataRows = [

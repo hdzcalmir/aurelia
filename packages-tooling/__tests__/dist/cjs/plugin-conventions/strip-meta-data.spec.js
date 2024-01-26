@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const runtime_html_1 = require("@aurelia/runtime-html");
 const plugin_conventions_1 = require("@aurelia/plugin-conventions");
 const assert = require("assert");
 describe('stripMetaData', function () {
@@ -327,11 +328,11 @@ ${'  ' /* leading space is untouched */}
             hasSlot: false,
             capture: false,
             bindables: {
-                firstName: { mode: 2 /* BindingMode.toView */ },
-                lastName: { mode: 6 /* BindingMode.twoWay */, attribute: 'surname' },
-                foo: { mode: 1 /* BindingMode.oneTime */ },
-                bar: { mode: 2 /* BindingMode.toView */ },
-                lo: { mode: 4 /* BindingMode.fromView */ }
+                firstName: { mode: runtime_html_1.BindingMode.toView },
+                lastName: { mode: runtime_html_1.BindingMode.twoWay, attribute: 'surname' },
+                foo: { mode: runtime_html_1.BindingMode.oneTime },
+                bar: { mode: runtime_html_1.BindingMode.toView },
+                lo: { mode: runtime_html_1.BindingMode.fromView }
             }
         });
     });

@@ -1,5 +1,5 @@
 import { IExpressionParser } from '@aurelia/runtime';
-import { AuSlot, CustomElement, CustomElementDefinition, DefaultBindingSyntax, PropertyBindingInstruction, TextBindingInstruction } from '@aurelia/runtime-html';
+import { BindingMode, AuSlot, CustomElement, CustomElementDefinition, InstructionType, DefaultBindingSyntax, PropertyBindingInstruction, TextBindingInstruction } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 export function createAttribute(name, value) {
     const attr = document.createAttribute(name);
@@ -16,7 +16,7 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
         return { ctx, container, sut };
     }
     function $createCustomElement(template, name) {
-        return CustomElement.define({ name, template, bindables: { people: { mode: 8 /* BindingMode.default */ } }, }, class MyElement {
+        return CustomElement.define({ name, template, bindables: { people: { mode: BindingMode.default } }, }, class MyElement {
         });
     }
     class ExpectedSlotFallbackInfo {
@@ -183,7 +183,7 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
             }), container, { projections: null });
             const allInstructions = compiledDefinition.instructions.flat();
             for (const expectedSlotInfo of expectedSlotInfos) {
-                const actualInstruction = allInstructions.find((i) => i.type === "ra" /* InstructionType.hydrateElement */
+                const actualInstruction = allInstructions.find((i) => i.type === InstructionType.hydrateElement
                     && (typeof i.res === 'string' && i.res.includes('au-slot')
                         || i.res === CustomElement.getDefinition(AuSlot))
                     && i.auSlot.name === expectedSlotInfo.slotName);
@@ -198,7 +198,7 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
                 return;
             }
             for (const [elName, projections] of allExpectedProjections) {
-                const elementInstruction = allInstructions.find(i => i.type === "ra" /* InstructionType.hydrateElement */
+                const elementInstruction = allInstructions.find(i => i.type === InstructionType.hydrateElement
                     && (typeof i.res === 'string' && i.res === elName
                         || i.res === container.find(CustomElement, elName)));
                 assert.notEqual(elementInstruction, void 0, `Instruction for element "${elName}" missing`);
@@ -225,8 +225,8 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
         const parser = container.get(IExpressionParser);
         return {
             ...sut.compile(templateDefinition, container, { projections: null }),
-            createProp: ({ from, to, mode = 2 /* BindingMode.toView */ }) => new PropertyBindingInstruction(parser.parse(from, 16 /* ExpressionType.IsProperty */), to, mode),
-            createTextInterpolation: ({ from }) => new TextBindingInstruction(parser.parse(from, 16 /* ExpressionType.IsProperty */)),
+            createProp: ({ from, to, mode = BindingMode.toView }) => new PropertyBindingInstruction(parser.parse(from, 'IsProperty'), to, mode),
+            createTextInterpolation: ({ from }) => new TextBindingInstruction(parser.parse(from, 'IsProperty')),
         };
     }
     function assertTemplateEqual(template, expected, message) {
@@ -235,7 +235,7 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
     function assertAuSlotFallback(instruction, { name: expectedName = 'default', template: expectedTemplate, instructions: expectedInstructions }, message) {
         const $instruction = instruction;
         const { name, fallback: { template, instructions } } = $instruction.auSlot ?? {};
-        assert.strictEqual($instruction.type, "ra" /* InstructionType.hydrateElement */, `#instruction.type ${message}`);
+        assert.strictEqual($instruction.type, InstructionType.hydrateElement, `#instruction.type ${message}`);
         assert.strictEqual(name, expectedName, `#fallback.slotname ${message}`);
         assertTemplateEqual(template, expectedTemplate, `#fallback.template ${message}`);
         if (expectedInstructions !== anything) {

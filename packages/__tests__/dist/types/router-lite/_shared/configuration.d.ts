@@ -1,4 +1,4 @@
-import { IRegistry, LogLevel, ISink, Class } from '@aurelia/kernel';
+import { Class, IRegistry, ISink, LogLevel } from '@aurelia/kernel';
 export declare const TestRouterConfiguration: {
     for(logLevel?: LogLevel, sinks?: Class<ISink>[]): IRegistry;
 };

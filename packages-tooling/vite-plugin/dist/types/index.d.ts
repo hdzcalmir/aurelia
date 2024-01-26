@@ -8,5 +8,5 @@ export default function au(options?: {
      * Indiciates whether the plugin should alias aurelia packages to the dev bundle.
      */
     useDev?: boolean;
-} & IOptionalPreprocessOptions): import("vite").Plugin[];
+} & IOptionalPreprocessOptions): import("vite").Plugin<any>[];
 //# sourceMappingURL=index.d.ts.map

@@ -327,7 +327,7 @@ describe('2-runtime/scheduler.spec.ts', function () {
                             let count = 0;
                             const task = sut.queueTask(function () {
                                 if (++count === iterations) {
-                                    assert.strictEqual(task.status, 1 /* TaskStatus.running */, `task.status at count=${count} ${reportTask(task)}`);
+                                    assert.strictEqual(task.status, 'running', `task.status at count=${count} ${reportTask(task)}`);
                                     task.cancel();
                                     assert.areTaskQueuesEmpty();
                                 }
@@ -338,12 +338,12 @@ describe('2-runtime/scheduler.spec.ts', function () {
                             let thenCount = 0;
                             function callback() {
                                 if (++thenCount === iterations) {
-                                    assert.strictEqual(task.status, 3 /* TaskStatus.canceled */, `task.status at thenCount=${thenCount} ${reportTask(task)}`);
+                                    assert.strictEqual(task.status, 'canceled', `task.status at thenCount=${thenCount} ${reportTask(task)}`);
                                     assert.areTaskQueuesEmpty();
                                     done();
                                 }
                                 else {
-                                    assert.strictEqual(task.status, 0 /* TaskStatus.pending */, `task.status at thenCount=${thenCount} ${reportTask(task)}`);
+                                    assert.strictEqual(task.status, 'pending', `task.status at thenCount=${thenCount} ${reportTask(task)}`);
                                     task.result.then(callback).catch((error) => { throw error; });
                                 }
                             }
@@ -352,8 +352,8 @@ describe('2-runtime/scheduler.spec.ts', function () {
                         it(`from within a followup task`, function (done) {
                             let count = 0;
                             const task = sut.queueTask(function () {
-                                assert.strictEqual(nextTask.status, 0 /* TaskStatus.pending */, `nextTask.status in task at count=${count} ${reportTask(nextTask)}`);
-                                assert.strictEqual(task.status, 1 /* TaskStatus.running */, `task.status in task at count=${count} ${reportTask(task)}`);
+                                assert.strictEqual(nextTask.status, 'pending', `nextTask.status in task at count=${count} ${reportTask(nextTask)}`);
+                                assert.strictEqual(task.status, 'running', `task.status in task at count=${count} ${reportTask(task)}`);
                                 ++count;
                             }, {
                                 persistent: true,
@@ -362,8 +362,8 @@ describe('2-runtime/scheduler.spec.ts', function () {
                             let nextTask;
                             function createNextTask() {
                                 return sut.queueTask(function () {
-                                    assert.strictEqual(nextTask.status, 1 /* TaskStatus.running */, `nextTask.status in nextTask at count=${count} ${reportTask(nextTask)}`);
-                                    assert.strictEqual(task.status, 0 /* TaskStatus.pending */, `task.status in nextTask at count=${count} ${reportTask(task)}`);
+                                    assert.strictEqual(nextTask.status, 'running', `nextTask.status in nextTask at count=${count} ${reportTask(nextTask)}`);
+                                    assert.strictEqual(task.status, 'pending', `task.status in nextTask at count=${count} ${reportTask(task)}`);
                                     if (count === iterations) {
                                         task.cancel();
                                         assert.areTaskQueuesEmpty();
@@ -379,14 +379,14 @@ describe('2-runtime/scheduler.spec.ts', function () {
                             let thenCount = 0;
                             function callback() {
                                 if (++thenCount === iterations) {
-                                    assert.strictEqual(nextTask.status, 2 /* TaskStatus.completed */, `nextTask.status at thenCount=${thenCount} ${reportTask(nextTask)}`);
-                                    assert.strictEqual(task.status, 3 /* TaskStatus.canceled */, `task.status at thenCount=${thenCount} ${reportTask(task)}`);
+                                    assert.strictEqual(nextTask.status, 'completed', `nextTask.status at thenCount=${thenCount} ${reportTask(nextTask)}`);
+                                    assert.strictEqual(task.status, 'canceled', `task.status at thenCount=${thenCount} ${reportTask(task)}`);
                                     assert.areTaskQueuesEmpty();
                                     done();
                                 }
                                 else {
-                                    assert.strictEqual(nextTask.status, 0 /* TaskStatus.pending */, `nextTask.status at thenCount=${thenCount} ${reportTask(nextTask)}`);
-                                    assert.strictEqual(task.status, 0 /* TaskStatus.pending */, `task.status at thenCount=${thenCount} ${reportTask(task)}`);
+                                    assert.strictEqual(nextTask.status, 'pending', `nextTask.status at thenCount=${thenCount} ${reportTask(nextTask)}`);
+                                    assert.strictEqual(task.status, 'pending', `task.status at thenCount=${thenCount} ${reportTask(task)}`);
                                     nextTask.result.then(callback).catch((error) => { throw error; });
                                 }
                             }
@@ -396,7 +396,7 @@ describe('2-runtime/scheduler.spec.ts', function () {
                             let count = 0;
                             let yieldCount = 0;
                             const task = sut.queueTask(function () {
-                                assert.strictEqual(task.status, 1 /* TaskStatus.running */, `task.status at count=${count} ${reportTask(task)}`);
+                                assert.strictEqual(task.status, 'running', `task.status at count=${count} ${reportTask(task)}`);
                                 assert.strictEqual(++count, yieldCount + 1, '++count === yieldCount + 1');
                             }, {
                                 persistent: true,
@@ -420,7 +420,7 @@ describe('2-runtime/scheduler.spec.ts', function () {
                         it(`yields after the first iteration with several other tasks`, function (done) {
                             let count = 0;
                             const task = sut.queueTask(function () {
-                                assert.strictEqual(task.status, 1 /* TaskStatus.running */, `task.status at count=${count} ${reportTask(task)}`);
+                                assert.strictEqual(task.status, 'running', `task.status at count=${count} ${reportTask(task)}`);
                                 ++count;
                             }, {
                                 persistent: true,
@@ -777,7 +777,7 @@ describe('2-runtime/scheduler.spec.ts', function () {
                                 let count = 0;
                                 const task = sut.queueTask(async function () {
                                     if (++count === iterations) {
-                                        assert.strictEqual(task.status, 1 /* TaskStatus.running */, `task.status at count=${count} ${reportTask(task)}`);
+                                        assert.strictEqual(task.status, 'running', `task.status at count=${count} ${reportTask(task)}`);
                                         task.cancel();
                                         assert.areTaskQueuesEmpty();
                                     }
@@ -789,12 +789,12 @@ describe('2-runtime/scheduler.spec.ts', function () {
                                 let thenCount = 0;
                                 async function callback() {
                                     if (++thenCount === iterations) {
-                                        assert.strictEqual(task.status, 3 /* TaskStatus.canceled */, `task.status at thenCount=${thenCount} ${reportTask(task)}`);
+                                        assert.strictEqual(task.status, 'canceled', `task.status at thenCount=${thenCount} ${reportTask(task)}`);
                                         assert.areTaskQueuesEmpty();
                                         resolve();
                                     }
                                     else {
-                                        assert.strictEqual(task.status, 0 /* TaskStatus.pending */, `task.status at thenCount=${thenCount} ${reportTask(task)}`);
+                                        assert.strictEqual(task.status, 'pending', `task.status at thenCount=${thenCount} ${reportTask(task)}`);
                                         await task.result;
                                         await callback();
                                     }
@@ -807,8 +807,8 @@ describe('2-runtime/scheduler.spec.ts', function () {
                                 const { promise, resolve } = createExposedPromise();
                                 let count = 0;
                                 const task = sut.queueTask(async function () {
-                                    assert.strictEqual(nextTask.status, 0 /* TaskStatus.pending */, `nextTask.status in task at count=${count} ${reportTask(nextTask)}`);
-                                    assert.strictEqual(task.status, 1 /* TaskStatus.running */, `task.status in task at count=${count} ${reportTask(task)}`);
+                                    assert.strictEqual(nextTask.status, 'pending', `nextTask.status in task at count=${count} ${reportTask(nextTask)}`);
+                                    assert.strictEqual(task.status, 'running', `task.status in task at count=${count} ${reportTask(task)}`);
                                     ++count;
                                 }, {
                                     persistent: true,
@@ -818,8 +818,8 @@ describe('2-runtime/scheduler.spec.ts', function () {
                                 let nextTask;
                                 function createNextTask() {
                                     return sut.queueTask(async function () {
-                                        assert.strictEqual(nextTask.status, 1 /* TaskStatus.running */, `nextTask.status in nextTask at count=${count} ${reportTask(nextTask)}`);
-                                        assert.strictEqual(task.status, 0 /* TaskStatus.pending */, `task.status in nextTask at count=${count} ${reportTask(task)}`);
+                                        assert.strictEqual(nextTask.status, 'running', `nextTask.status in nextTask at count=${count} ${reportTask(nextTask)}`);
+                                        assert.strictEqual(task.status, 'pending', `task.status in nextTask at count=${count} ${reportTask(task)}`);
                                         if (count === iterations) {
                                             task.cancel();
                                             assert.areTaskQueuesEmpty();
@@ -836,22 +836,22 @@ describe('2-runtime/scheduler.spec.ts', function () {
                                 let thenCount = 0;
                                 async function callback() {
                                     if (++thenCount === iterations) {
-                                        assert.strictEqual(nextTask.status, 2 /* TaskStatus.completed */, `nextTask.status at thenCount=${thenCount} ${reportTask(nextTask)}`);
-                                        assert.strictEqual(task.status, 3 /* TaskStatus.canceled */, `task.status at thenCount=${thenCount} ${reportTask(task)}`);
+                                        assert.strictEqual(nextTask.status, 'completed', `nextTask.status at thenCount=${thenCount} ${reportTask(nextTask)}`);
+                                        assert.strictEqual(task.status, 'canceled', `task.status at thenCount=${thenCount} ${reportTask(task)}`);
                                         assert.areTaskQueuesEmpty();
                                         resolve();
                                     }
                                     else {
-                                        assert.strictEqual(nextTask.status, 0 /* TaskStatus.pending */, `nextTask.status at thenCount=${thenCount} ${reportTask(nextTask)}`);
-                                        assert.strictEqual(task.status, 0 /* TaskStatus.pending */, `task.status at thenCount=${thenCount} ${reportTask(task)}`);
+                                        assert.strictEqual(nextTask.status, 'pending', `nextTask.status at thenCount=${thenCount} ${reportTask(nextTask)}`);
+                                        assert.strictEqual(task.status, 'pending', `task.status at thenCount=${thenCount} ${reportTask(task)}`);
                                         await nextTask.result;
                                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
                                         callback();
                                     }
                                 }
                                 await task.result;
-                                assert.strictEqual(nextTask.status, 0 /* TaskStatus.pending */, `nextTask.status after awaiting task.result at thenCount=${thenCount} ${reportTask(nextTask)}`);
-                                assert.strictEqual(task.status, 0 /* TaskStatus.pending */, `task.status after awaiting task.result at thenCount=${thenCount} ${reportTask(task)}`);
+                                assert.strictEqual(nextTask.status, 'pending', `nextTask.status after awaiting task.result at thenCount=${thenCount} ${reportTask(nextTask)}`);
+                                assert.strictEqual(task.status, 'pending', `task.status after awaiting task.result at thenCount=${thenCount} ${reportTask(task)}`);
                                 await nextTask.result;
                                 await callback();
                                 await promise;
@@ -861,7 +861,7 @@ describe('2-runtime/scheduler.spec.ts', function () {
                                 let count = 0;
                                 let yieldCount = 0;
                                 const task = sut.queueTask(async function () {
-                                    assert.strictEqual(task.status, 1 /* TaskStatus.running */, `task.status at count=${count} ${reportTask(task)}`);
+                                    assert.strictEqual(task.status, 'running', `task.status at count=${count} ${reportTask(task)}`);
                                     assert.strictEqual(++count, yieldCount + 1, '++count === yieldCount + 1');
                                 }, {
                                     persistent: true,
@@ -887,7 +887,7 @@ describe('2-runtime/scheduler.spec.ts', function () {
                             it(`yields after the first iteration with several other tasks`, async function () {
                                 let count = 0;
                                 const task = sut.queueTask(async function () {
-                                    assert.strictEqual(task.status, 1 /* TaskStatus.running */, `task.status at count=${count} ${reportTask(task)}`);
+                                    assert.strictEqual(task.status, 'running', `task.status at count=${count} ${reportTask(task)}`);
                                     ++count;
                                 }, {
                                     persistent: true,
@@ -933,16 +933,16 @@ describe('2-runtime/scheduler.spec.ts', function () {
                     }
                     it(`yields after the first iteration with no other tasks, after finishing a persistent task that was canceled from within a followup task`, async function () {
                         const primerTask = sut.queueTask(async function () {
-                            assert.strictEqual(primerTask.status, 1 /* TaskStatus.running */, `primerTask.status in primerTask ${reportTask(primerTask)}`);
-                            assert.strictEqual(primerCancelTask.status, 0 /* TaskStatus.pending */, `primerCancelTask.status in primerTask ${reportTask(primerCancelTask)}`);
+                            assert.strictEqual(primerTask.status, 'running', `primerTask.status in primerTask ${reportTask(primerTask)}`);
+                            assert.strictEqual(primerCancelTask.status, 'pending', `primerCancelTask.status in primerTask ${reportTask(primerCancelTask)}`);
                         }, {
                             persistent: true,
                             reusable,
                             suspend: true,
                         });
                         const primerCancelTask = sut.queueTask(async function () {
-                            assert.strictEqual(primerTask.status, 0 /* TaskStatus.pending */, `primerTask.status in primerCancelTask ${reportTask(primerTask)}`);
-                            assert.strictEqual(primerCancelTask.status, 1 /* TaskStatus.running */, `primerCancelTask.status in primerCancelTask ${reportTask(primerCancelTask)}`);
+                            assert.strictEqual(primerTask.status, 'pending', `primerTask.status in primerCancelTask ${reportTask(primerTask)}`);
+                            assert.strictEqual(primerCancelTask.status, 'running', `primerCancelTask.status in primerCancelTask ${reportTask(primerCancelTask)}`);
                             primerTask.cancel();
                             assert.areTaskQueuesEmpty();
                         }, {
@@ -950,16 +950,16 @@ describe('2-runtime/scheduler.spec.ts', function () {
                             suspend: true,
                         });
                         await primerTask.result;
-                        assert.strictEqual(primerTask.status, 0 /* TaskStatus.pending */, `primerTask.status after awaiting primerTask.result ${reportTask(primerTask)}`);
-                        assert.strictEqual(primerCancelTask.status, 0 /* TaskStatus.pending */, `primerCancelTask.status after awaiting primerTask.result ${reportTask(primerCancelTask)}`);
+                        assert.strictEqual(primerTask.status, 'pending', `primerTask.status after awaiting primerTask.result ${reportTask(primerTask)}`);
+                        assert.strictEqual(primerCancelTask.status, 'pending', `primerCancelTask.status after awaiting primerTask.result ${reportTask(primerCancelTask)}`);
                         await primerCancelTask.result;
-                        assert.strictEqual(primerTask.status, 3 /* TaskStatus.canceled */, `primerTask.status after awaiting primerCancelTask.result ${reportTask(primerTask)}`);
-                        assert.strictEqual(primerCancelTask.status, 2 /* TaskStatus.completed */, `primerCancelTask.status after awaiting primerCancelTask.result ${reportTask(primerCancelTask)}`);
+                        assert.strictEqual(primerTask.status, 'canceled', `primerTask.status after awaiting primerCancelTask.result ${reportTask(primerTask)}`);
+                        assert.strictEqual(primerCancelTask.status, 'completed', `primerCancelTask.status after awaiting primerCancelTask.result ${reportTask(primerCancelTask)}`);
                         assert.areTaskQueuesEmpty();
                         let count = 0;
                         let yieldCount = 0;
                         const persistentTask = sut.queueTask(async function () {
-                            assert.strictEqual(persistentTask.status, 1 /* TaskStatus.running */, `persistentTask.status in persistentTask ${reportTask(persistentTask)}`);
+                            assert.strictEqual(persistentTask.status, 'running', `persistentTask.status in persistentTask ${reportTask(persistentTask)}`);
                             assert.strictEqual(++count, yieldCount + 1, `++count (${count}) === yieldCount + 1 (${yieldCount + 1}) in persistentTask`);
                         }, {
                             persistent: true,

@@ -33,11 +33,6 @@ function __param(paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 }
 
-exports.ValidateEventKind = void 0;
-(function (ValidateEventKind) {
-    ValidateEventKind["validate"] = "validate";
-    ValidateEventKind["reset"] = "reset";
-})(exports.ValidateEventKind || (exports.ValidateEventKind = {}));
 /**
  * The result of a call to the validation controller's validate method.
  */
@@ -116,20 +111,20 @@ function getPropertyInfo(binding, info) {
     let expression = binding.ast.expression;
     let toCachePropertyName = true;
     let propertyName = '';
-    while (expression !== void 0 && expression?.$kind !== 2 /* ExpressionKind.AccessScope */) {
+    while (expression !== void 0 && expression?.$kind !== 'AccessScope') {
         let memberName;
         switch (expression.$kind) {
-            case 20 /* ExpressionKind.BindingBehavior */:
-            case 19 /* ExpressionKind.ValueConverter */:
+            case 'BindingBehavior':
+            case 'ValueConverter':
                 expression = expression.expression;
                 continue;
-            case 12 /* ExpressionKind.AccessMember */:
+            case 'AccessMember':
                 memberName = expression.name;
                 break;
-            case 13 /* ExpressionKind.AccessKeyed */: {
+            case 'AccessKeyed': {
                 const keyExpr = expression.key;
                 if (toCachePropertyName) {
-                    toCachePropertyName = keyExpr.$kind === 5 /* ExpressionKind.PrimitiveLiteral */;
+                    toCachePropertyName = keyExpr.$kind === 'PrimitiveLiteral';
                 }
                 // eslint-disable-next-line
                 memberName = `[${runtime.astEvaluate(keyExpr, scope, binding, null).toString()}]`;
@@ -188,7 +183,7 @@ exports.ValidationController = class ValidationController {
     }
     removeObject(object) {
         this.objects.delete(object);
-        this.processResultDelta("reset" /* ValidateEventKind.reset */, this.results.filter(result => result.object === object), []);
+        this.processResultDelta('reset', this.results.filter(result => result.object === object), []);
     }
     addError(message, object, propertyName) {
         let resolvedPropertyName;
@@ -196,12 +191,12 @@ exports.ValidationController = class ValidationController {
             [resolvedPropertyName] = validation.parsePropertyName(propertyName, this.parser);
         }
         const result = new validation.ValidationResult(false, message, resolvedPropertyName, object, undefined, undefined, true);
-        this.processResultDelta("validate" /* ValidateEventKind.validate */, [], [result]);
+        this.processResultDelta('validate', [], [result]);
         return result;
     }
     removeError(result) {
         if (this.results.includes(result)) {
-            this.processResultDelta("reset" /* ValidateEventKind.reset */, [result], []);
+            this.processResultDelta('reset', [result], []);
         }
     }
     addSubscriber(subscriber) {
@@ -221,19 +216,18 @@ exports.ValidationController = class ValidationController {
         const { object: obj, objectTag } = instruction ?? {};
         let instructions;
         if (obj !== void 0) {
-            instructions = [new validation.ValidateInstruction(obj, instruction.propertyName, instruction.rules ?? this.objects.get(obj), objectTag, instruction.propertyTag)];
+            instructions = [new validation.ValidateInstruction(obj, instruction?.propertyName, instruction?.rules ?? this.objects.get(obj), objectTag, instruction?.propertyTag)];
         }
         else {
             // validate all objects and bindings.
             instructions = [
                 ...Array.from(this.objects.entries())
                     .map(([object, rules]) => new validation.ValidateInstruction(object, void 0, rules, objectTag)),
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                ...(!objectTag ? Array.from(this.bindings.entries()) : [])
+                ...Array.from(this.bindings.entries())
                     .reduce((acc, [binding, info]) => {
                     const propertyInfo = getPropertyInfo(binding, info);
                     if (propertyInfo !== void 0 && !this.objects.has(propertyInfo.object)) {
-                        acc.push(new validation.ValidateInstruction(propertyInfo.object, propertyInfo.propertyName, info.rules));
+                        acc.push(new validation.ValidateInstruction(propertyInfo.object, propertyInfo.propertyName, info.rules, objectTag, instruction?.propertyTag));
                     }
                     return acc;
                 }, [])
@@ -249,7 +243,7 @@ exports.ValidationController = class ValidationController {
                 }, []);
                 const predicate = this.getInstructionPredicate(instruction);
                 const oldResults = this.results.filter(predicate);
-                this.processResultDelta("validate" /* ValidateEventKind.validate */, oldResults, newResults);
+                this.processResultDelta('validate', oldResults, newResults);
                 return new ControllerValidateResult(newResults.find(r => !r.valid) === void 0, newResults, instruction);
             }
             finally {
@@ -261,7 +255,7 @@ exports.ValidationController = class ValidationController {
     reset(instruction) {
         const predicate = this.getInstructionPredicate(instruction);
         const oldResults = this.results.filter(predicate);
-        this.processResultDelta("reset" /* ValidateEventKind.reset */, oldResults, []);
+        this.processResultDelta('reset', oldResults, []);
     }
     async validateBinding(binding) {
         if (!binding.isBound) {
@@ -533,7 +527,7 @@ __decorate([
     runtimeHtml.bindable
 ], exports.ValidationErrorsCustomAttribute.prototype, "controller", void 0);
 __decorate([
-    runtimeHtml.bindable({ primary: true, mode: 6 /* BindingMode.twoWay */ })
+    runtimeHtml.bindable({ primary: true, mode: runtimeHtml.BindingMode.twoWay })
 ], exports.ValidationErrorsCustomAttribute.prototype, "errors", void 0);
 exports.ValidationErrorsCustomAttribute = __decorate([
     runtimeHtml.customAttribute('validation-errors'),

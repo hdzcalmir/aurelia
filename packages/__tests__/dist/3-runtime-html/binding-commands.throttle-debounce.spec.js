@@ -8,7 +8,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { TestContext, assert, createFixture } from '@aurelia/testing';
-import { customElement, bindable, Aurelia } from '@aurelia/runtime-html';
+import { BindingMode, customElement, bindable, Aurelia } from '@aurelia/runtime-html';
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { ISignaler } from '@aurelia/runtime';
 async function wait(ms) {
@@ -188,7 +188,7 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
                 }
             };
             __decorate([
-                bindable({ mode: 2 /* BindingMode.toView */ }),
+                bindable({ mode: BindingMode.toView }),
                 __metadata("design:type", String)
             ], Receiver.prototype, "value", void 0);
             Receiver = __decorate([
@@ -238,7 +238,7 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
                 }
             };
             __decorate([
-                bindable({ mode: 6 /* BindingMode.twoWay */ }),
+                bindable({ mode: BindingMode.twoWay }),
                 __metadata("design:type", String)
             ], Receiver.prototype, "value", void 0);
             Receiver = __decorate([
@@ -450,7 +450,7 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
                 }
             };
             __decorate([
-                bindable({ mode: 6 /* BindingMode.twoWay */ }),
+                bindable({ mode: BindingMode.twoWay }),
                 __metadata("design:type", String)
             ], Receiver.prototype, "value", void 0);
             Receiver = __decorate([

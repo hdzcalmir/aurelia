@@ -57,9 +57,9 @@ function defineAstMethods() {
         def(ast, 'unbind', function (...args) {
             return runtime.astUnbind(this, ...args);
         });
-        console.warn('"evaluate"/"assign"/"accept"/"visit"/"bind"/"unbind" are only valid on AST with $kind Custom.'
-            + ' Or import and use astEvaluate/astAssign/astVisit/astBind/astUnbind accordingly.');
     });
+    console.warn('"evaluate"/"assign"/"accept"/"visit"/"bind"/"unbind" are only valid on AST with ast $kind "Custom".'
+        + ' Or import and use astEvaluate/astAssign/astVisit/astBind/astUnbind accordingly.');
 }
 
 /******************************************************************************
@@ -109,6 +109,7 @@ const ensureExpression = (parser, srcOrExpr, expressionType) => {
     }
     return srcOrExpr;
 };
+/** @internal */ const etIsFunction = 'IsFunction';
 
 const registeredSymbol$1 = Symbol('.call');
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
@@ -122,21 +123,21 @@ const callSyntax = {
         }
     }
 };
-const instructionType$1 = 'rh';
+const instructionType = 'rh';
 class CallBindingInstruction {
     constructor(from, to) {
         this.from = from;
         this.to = to;
-        this.type = instructionType$1;
+        this.type = instructionType;
     }
 }
 exports.CallBindingCommand = class CallBindingCommand {
-    get type() { return 0 /* CommandType.None */; }
+    get type() { return 'None'; }
     build(info, exprParser) {
         const target = info.bindable === null
             ? kernel.camelCase(info.attr.target)
             : info.bindable.name;
-        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, (16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */)), target);
+        return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), target);
     }
 };
 exports.CallBindingCommand = __decorate([
@@ -144,12 +145,12 @@ exports.CallBindingCommand = __decorate([
 ], exports.CallBindingCommand);
 exports.CallBindingRenderer = class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        const expr = ensureExpression(exprParser, instruction.from, 16 /* ExpressionType.IsProperty */ | 8 /* ExpressionType.IsFunction */);
+        const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
 };
 exports.CallBindingRenderer = __decorate([
-    runtimeHtml.renderer(instructionType$1)
+    runtimeHtml.renderer(instructionType)
 ], exports.CallBindingRenderer);
 function getTarget(potentialTarget) {
     if (potentialTarget.viewModel != null) {
@@ -214,11 +215,10 @@ const delegateSyntax = {
         }
     }
 };
-const instructionType = 'dl';
 exports.DelegateBindingCommand = class DelegateBindingCommand {
-    get type() { return 1 /* CommandType.IgnoreAttr */; }
+    get type() { return 'IgnoreAttr'; }
     build(info, exprParser) {
-        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, 8 /* ExpressionType.IsFunction */), info.attr.target, false);
+        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false);
     }
 };
 exports.DelegateBindingCommand = __decorate([
@@ -230,12 +230,12 @@ exports.ListenerBindingRenderer = class ListenerBindingRenderer {
         this._eventDelegator = eventDelegator;
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        const expr = ensureExpression(exprParser, instruction.from, 8 /* ExpressionType.IsFunction */);
+        const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
     }
 };
 exports.ListenerBindingRenderer = __decorate([
-    runtimeHtml.renderer(instructionType)
+    runtimeHtml.renderer('dl')
     /** @internal */
 ], exports.ListenerBindingRenderer);
 class DelegateBindingInstruction {
@@ -243,7 +243,7 @@ class DelegateBindingInstruction {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
-        this.type = "hb" /* InstructionType.listenerBinding */;
+        this.type = runtimeHtml.InstructionType.listenerBinding;
     }
 }
 class DelegateListenerOptions {
@@ -601,7 +601,7 @@ class BindingEngine {
         const scope = runtime.Scope.create(bindingContext, {}, true);
         return {
             subscribe: callback => {
-                const observer = new runtimeHtml.ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 16 /* ExpressionType.IsProperty */), callback);
+                const observer = new runtimeHtml.ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 'IsProperty'), callback);
                 observer.bind();
                 return {
                     dispose: () => observer.unbind()

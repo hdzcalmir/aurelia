@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { DI, noop } from '@aurelia/kernel';
+import { DI, LogLevel, noop } from '@aurelia/kernel';
 import { IRouter, IRouterEvents, pathUrlParser, RouterConfiguration, route } from '@aurelia/router-lite';
 import { AppTask, Aurelia, customElement } from '@aurelia/runtime-html';
 import { TestContext, assert } from '@aurelia/testing';
@@ -19,7 +19,7 @@ describe('router-lite/events.spec.ts', function () {
     async function start({ appRoot, registrations = [] }) {
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration, ...registrations, IRouterEventLoggerService, AppTask.creating(IRouterEventLoggerService, noop), // force the service creation
+        container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration, ...registrations, IRouterEventLoggerService, AppTask.creating(IRouterEventLoggerService, noop), // force the service creation
         AppTask.deactivating(IRouterEventLoggerService, service => service.dispose()));
         const au = new Aurelia(container);
         const host = ctx.createElement('div');

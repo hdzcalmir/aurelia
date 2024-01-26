@@ -9,7 +9,7 @@ export { EndpointContent, } from './endpoints/endpoint-content';
 export { FoundRoute, } from './found-route';
 export { ILinkHandler, LinkHandler, } from './resources/link-handler';
 export { InstructionParameters, type Parameters, } from './instructions/instruction-parameters';
-export { type ComponentAppellation, type IRouteableComponent, type RouteableComponentType, type IRoutingInstruction, type LoadInstruction, ReloadBehavior, } from './interfaces';
+export { type ComponentAppellation, type IRouteableComponent, type RouteableComponentType, type IRoutingInstruction, type LoadInstruction, type ReloadBehavior, } from './interfaces';
 export { Navigation, NavigationFlags, } from './navigation';
 export { NavigationCoordinator, type NavigationState, } from './navigation-coordinator';
 export { type INavigatorOptions, type INavigatorState, type INavigatorStore, type INavigatorViewer, Navigator, } from './navigator';

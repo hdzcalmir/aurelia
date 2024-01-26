@@ -21,7 +21,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { DI, ILogger, ISink, Registration, } from '@aurelia/kernel';
+import { DI, ILogger, ISink, LogLevel, Registration, } from '@aurelia/kernel';
 import { IRouter, route, RouteNode, RouterConfiguration } from '@aurelia/router-lite';
 import { Aurelia, CustomElement, customElement, lifecycleHooks, StandardConfiguration } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
@@ -71,7 +71,7 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     async function createFixture(rootComponent, ...registrations) {
         const ctx = TestContext.create();
         const { container } = ctx;
-        container.register(StandardConfiguration, TestRouterConfiguration.for(0 /* LogLevel.trace */, [
+        container.register(StandardConfiguration, TestRouterConfiguration.for(LogLevel.trace, [
             EventLog
             // uncomment the following line to see the logs in console - debug
             /* , ConsoleSink */

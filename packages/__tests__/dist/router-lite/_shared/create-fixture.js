@@ -1,4 +1,4 @@
-import { Registration, ILogConfig, DI, LoggerConfiguration, ConsoleSink } from '@aurelia/kernel';
+import { LogLevel, Registration, ILogConfig, DI, LoggerConfiguration, ConsoleSink } from '@aurelia/kernel';
 import { Aurelia } from '@aurelia/runtime-html';
 import { RouterConfiguration, IRouter } from '@aurelia/router-lite';
 import { TestContext } from '@aurelia/testing';
@@ -16,7 +16,7 @@ export class ActivityTracker {
         this.activeVMs.splice(this.activeVMs.indexOf(vm), 1);
     }
 }
-export async function createFixture(Component, deps, createHIAConfig, createRouterOptions, level = 5 /* LogLevel.fatal */) {
+export async function createFixture(Component, deps, createHIAConfig, createRouterOptions, level = LogLevel.fatal) {
     const hiaConfig = createHIAConfig();
     const routerOptions = createRouterOptions?.();
     const ctx = TestContext.create();
@@ -24,7 +24,7 @@ export async function createFixture(Component, deps, createHIAConfig, createRout
     container.register(Registration.instance(IHIAConfig, hiaConfig));
     container.register(TestRouterConfiguration.for(level));
     container.register(RouterConfiguration.customize(routerOptions));
-    container.register(LoggerConfiguration.create({ sinks: [ConsoleSink], level: 5 /* LogLevel.fatal */ }));
+    container.register(LoggerConfiguration.create({ sinks: [ConsoleSink], level: LogLevel.fatal }));
     container.register(...deps);
     const activityTracker = container.get(IActivityTracker);
     const hia = container.get(IHookInvocationAggregator);
@@ -47,7 +47,7 @@ export async function createFixture(Component, deps, createHIAConfig, createRout
         router,
         activityTracker,
         startTracing() {
-            logConfig.level = 0 /* LogLevel.trace */;
+            logConfig.level = LogLevel.trace;
         },
         stopTracing() {
             logConfig.level = level;
@@ -64,7 +64,7 @@ export async function createFixture(Component, deps, createHIAConfig, createRout
 export async function start({ appRoot, useHash = false, registrations = [], historyStrategy = 'replace', activeClass }) {
     const ctx = TestContext.create();
     const { container } = ctx;
-    container.register(TestRouterConfiguration.for(3 /* LogLevel.warn */), RouterConfiguration.customize({ useUrlFragmentHash: useHash, historyStrategy, activeClass }), ...registrations);
+    container.register(TestRouterConfiguration.for(LogLevel.warn), RouterConfiguration.customize({ useUrlFragmentHash: useHash, historyStrategy, activeClass }), ...registrations);
     const au = new Aurelia(container);
     const host = ctx.createElement('div');
     await au.app({ component: appRoot, host }).start();

@@ -1,5 +1,4 @@
-import { AccessorType } from '../observation';
-import type { IAccessor } from '../observation';
+import type { AccessorType, IAccessor } from '../observation';
 export declare class PropertyAccessor implements IAccessor {
     type: AccessorType;
     getValue(obj: object, key: string): unknown;

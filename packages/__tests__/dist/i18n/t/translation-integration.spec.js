@@ -754,6 +754,9 @@ describe('i18n/t/translation-integration.spec.ts', function () {
                 app.keyExpr = '[prepend]pre;[append]post';
                 platform.domWriteQueue.flush();
                 assert.equal(host.querySelector('span').innerHTML, 'tic tac toe');
+                app.keyExpr = '[prepend]preHtml;[append]postHtml';
+                platform.domWriteQueue.flush();
+                assert.equal(host.querySelector('span').innerHTML, '<b>tic</b><span>foo</span> tac <b>toe</b><span>bar</span>');
             }, { component: App });
         }
         {
@@ -883,6 +886,160 @@ describe('i18n/t/translation-integration.spec.ts', function () {
                 app.obj.key = 'simple.attr';
                 ctx.platform.domWriteQueue.flush();
                 assertTextContent(host, `span`, translation.simple.attr);
+            }, { component: App });
+        }
+        {
+            let App = class App {
+                constructor() {
+                    this.key = 'simple.text';
+                }
+            };
+            App = __decorate([
+                customElement({
+                    name: 'app', template: `<span t.bind='key'></span>`
+                })
+            ], App);
+            $it('when the key expression changed - property', function ({ ctx, host, en: translation, app }) {
+                app.key = 'simple.attr';
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, `span`, translation.simple.attr);
+                app.key = 'simple.text';
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, `span`, translation.simple.text);
+                app.key = 'simple.attr';
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, `span`, translation.simple.attr);
+            }, { component: App });
+        }
+        {
+            let MyCe = class MyCe {
+            };
+            __decorate([
+                bindable,
+                __metadata("design:type", String)
+            ], MyCe.prototype, "value", void 0);
+            MyCe = __decorate([
+                customElement({ name: 'my-ce', template: '${value}' })
+            ], MyCe);
+            let App = class App {
+                constructor() {
+                    this.key = 'simple.text';
+                }
+            };
+            App = __decorate([
+                customElement({
+                    name: 'app',
+                    template: `<my-ce t.bind='"[value]"+key'></my-ce>`,
+                    dependencies: [MyCe]
+                })
+            ], App);
+            $it('when the key expression changed - property - custom element', function ({ ctx, host, en: translation, app }) {
+                app.key = 'simple.attr';
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, `my-ce`, translation.simple.attr);
+                app.key = 'simple.text';
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, `my-ce`, translation.simple.text);
+                app.key = 'simple.attr';
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, `my-ce`, translation.simple.attr);
+            }, { component: App });
+        }
+        {
+            let App = class App {
+                constructor() {
+                    this.key = 'simple.text';
+                }
+            };
+            App = __decorate([
+                customElement({
+                    name: 'app', template: `<span t.bind='"[data-foo]"+key'></span>`
+                })
+            ], App);
+            $it('when the key expression changed - property - DOM Element attribute', function ({ ctx, host, en: translation, app }) {
+                const span = host.querySelector('span');
+                assert.strictEqual(span.dataset.foo, translation.simple.text);
+                app.key = 'simple.attr';
+                ctx.platform.domWriteQueue.flush();
+                assert.strictEqual(span.dataset.foo, translation.simple.attr);
+                app.key = 'simple.text';
+                ctx.platform.domWriteQueue.flush();
+                assert.strictEqual(span.dataset.foo, translation.simple.text);
+                app.key = 'simple.attr';
+                ctx.platform.domWriteQueue.flush();
+                assert.strictEqual(span.dataset.foo, translation.simple.attr);
+            }, { component: App });
+        }
+        {
+            let MyCe = class MyCe {
+            };
+            __decorate([
+                bindable,
+                __metadata("design:type", String)
+            ], MyCe.prototype, "foo", void 0);
+            __decorate([
+                bindable,
+                __metadata("design:type", String)
+            ], MyCe.prototype, "bar", void 0);
+            MyCe = __decorate([
+                customElement({ name: 'my-ce', template: '${foo} ${bar}' })
+            ], MyCe);
+            let App = class App {
+                constructor() {
+                    this.key1 = 'simple.text';
+                    this.key2 = 'simple.attr';
+                }
+            };
+            App = __decorate([
+                customElement({
+                    name: 'app',
+                    template: `<my-ce t.bind='"[foo]"+key1+";[bar]"+key2'></my-ce>`,
+                    dependencies: [MyCe]
+                })
+            ], App);
+            $it('when the key expression changed - property - custom element - multiple bindables', function ({ ctx, host, en: translation, app }) {
+                const r = translation.simple;
+                assertTextContent(host, `my-ce`, `${r.text} ${r.attr}`);
+                app.key1 = 'simple.attr';
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, `my-ce`, `${r.attr} ${r.attr}`);
+                app.key2 = 'simple.text';
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, `my-ce`, `${r.attr} ${r.text}`);
+                app.key1 = 'simple.text';
+                ctx.platform.domWriteQueue.flush();
+                assertTextContent(host, `my-ce`, `${r.text} ${r.text}`);
+            }, { component: App });
+        }
+        {
+            let App = class App {
+                constructor() {
+                    this.key1 = 'simple.text';
+                    this.key2 = 'simple.attr';
+                }
+            };
+            App = __decorate([
+                customElement({
+                    name: 'app', template: `<span t.bind='"[data-foo]"+key1+";[bar]"+key2'></span>`
+                })
+            ], App);
+            $it('when the key expression changed - property - multiple DOM Element attributes', function ({ ctx, host, en: translation, app }) {
+                const r = translation.simple;
+                const span = host.querySelector('span');
+                assert.strictEqual(span.dataset.foo, r.text);
+                assert.strictEqual(span.bar, r.attr);
+                app.key1 = 'simple.attr';
+                ctx.platform.domWriteQueue.flush();
+                assert.strictEqual(span.dataset.foo, r.attr);
+                assert.strictEqual(span.bar, r.attr);
+                app.key2 = 'simple.text';
+                ctx.platform.domWriteQueue.flush();
+                assert.strictEqual(span.dataset.foo, r.attr);
+                assert.strictEqual(span.bar, r.text);
+                app.key1 = 'simple.text';
+                ctx.platform.domWriteQueue.flush();
+                assert.strictEqual(span.dataset.foo, translation.simple.text);
+                assert.strictEqual(span.bar, r.text);
             }, { component: App });
         }
         {
