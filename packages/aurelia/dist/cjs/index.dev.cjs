@@ -146,5 +146,5 @@ exports.observable = runtime.observable;
 exports.subscriberCollection = runtime.subscriberCollection;
 exports.Aurelia = Aurelia;
 exports.PLATFORM = PLATFORM;
-exports["default"] = Aurelia;
+exports.default = Aurelia;
 //# sourceMappingURL=index.dev.cjs.map

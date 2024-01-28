@@ -3,14 +3,30 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 var plugin = require('@parcel/plugin');
-var SourceMap = require('@parcel/source-map');
+var $SourceMap = require('@parcel/source-map');
 var pluginConventions = require('@aurelia/plugin-conventions');
 var path = require('path');
 
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e["default"] : e; }
+function _interopNamespaceDefault(e) {
+    var n = Object.create(null);
+    if (e) {
+        for (var k in e) {
+            n[k] = e[k];
+        }
+    }
+    n.default = e;
+    return Object.freeze(n);
+}
 
-var SourceMap__default = /*#__PURE__*/_interopDefaultLegacy(SourceMap);
+var $SourceMap__namespace = /*#__PURE__*/_interopNamespaceDefault($SourceMap);
 
+const SourceMap = (typeof $SourceMap === 'function'
+    ? $SourceMap
+    : typeof $SourceMap.default === 'function'
+        ? $SourceMap.default
+        : (typeof $SourceMap__namespace === 'function'
+            ? $SourceMap__namespace
+            : $SourceMap__namespace.default));
 var index = new plugin.Transformer({
     async loadConfig({ config }) {
         try {
@@ -40,7 +56,7 @@ var index = new plugin.Transformer({
             return [asset];
         }
         asset.setCode(result.code);
-        const map = new SourceMap__default();
+        const map = new SourceMap();
         map.addVLQMap(result.map);
         asset.setMap(map);
         if (auOptions.templateExtensions.includes(`.${asset.type}`)) {
@@ -50,5 +66,5 @@ var index = new plugin.Transformer({
     }
 });
 
-exports["default"] = index;
+exports.default = index;
 //# sourceMappingURL=index.cjs.map

@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 function isObject(t) {
     return typeof t === "object" && t !== null || typeof t === "function";
 }

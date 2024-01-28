@@ -689,6 +689,7 @@ class ArrowFunction {
 }
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
 /** @internal */
 const createMappedError = (code, ...details) => new Error(`AUR${safeString(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
     ;

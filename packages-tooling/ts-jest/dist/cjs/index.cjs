@@ -6,24 +6,26 @@ var pluginConventions = require('@aurelia/plugin-conventions');
 var tsJest = require('ts-jest');
 var path = require('path');
 
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e["default"] : e; }
-
-function _interopNamespace(e) {
-    if (e && e.__esModule) return e;
+function _interopNamespaceDefault(e) {
     var n = Object.create(null);
     if (e) {
         for (var k in e) {
             n[k] = e[k];
         }
     }
-    n["default"] = e;
+    n.default = e;
     return Object.freeze(n);
 }
 
-var tsJest__default = /*#__PURE__*/_interopDefaultLegacy(tsJest);
-var path__namespace = /*#__PURE__*/_interopNamespace(path);
+var path__namespace = /*#__PURE__*/_interopNamespaceDefault(path);
 
-const tsTransformer = tsJest__default.createTransformer();
+var _a;
+const $createTransformer = (typeof tsJest.createTransformer === 'function'
+    ? tsJest.createTransformer
+    : typeof ((_a = tsJest.default) === null || _a === void 0 ? void 0 : _a.createTransformer) === 'function'
+        ? tsJest.default.createTransformer
+        : (() => { throw new Error('Unable to import createTransformer from "ts-jest"'); }));
+const tsTransformer = $createTransformer();
 function _createTransformer(conventionsOptions = {}, _preprocess = pluginConventions.preprocess, _tsProcess = tsTransformer.process.bind(tsTransformer)) {
     const au2Options = pluginConventions.preprocessOptions(conventionsOptions);
     function getCacheKey(fileData, filePath, options) {
@@ -55,5 +57,5 @@ function createTransformer(conventionsOptions = {}) {
 const { canInstrument, getCacheKey, process } = createTransformer();
 var index = { canInstrument, getCacheKey, process, createTransformer, _createTransformer };
 
-exports["default"] = index;
+exports.default = index;
 //# sourceMappingURL=index.cjs.map

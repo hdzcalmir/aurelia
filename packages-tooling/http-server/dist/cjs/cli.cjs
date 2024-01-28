@@ -10,8 +10,7 @@ var https = require('https');
 var http2 = require('http2');
 var $url = require('url');
 
-function _interopNamespace(e) {
-    if (e && e.__esModule) return e;
+function _interopNamespaceDefault(e) {
     var n = Object.create(null);
     if (e) {
         Object.keys(e).forEach(function (k) {
@@ -24,12 +23,12 @@ function _interopNamespace(e) {
             }
         });
     }
-    n["default"] = e;
+    n.default = e;
     return Object.freeze(n);
 }
 
-var https__namespace = /*#__PURE__*/_interopNamespace(https);
-var $url__namespace = /*#__PURE__*/_interopNamespace($url);
+var https__namespace = /*#__PURE__*/_interopNamespaceDefault(https);
+var $url__namespace = /*#__PURE__*/_interopNamespaceDefault($url);
 
 const space = ' ';
 class HttpServerOptions {
@@ -159,6 +158,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -679,15 +680,15 @@ async function parseArgs(args) {
         else {
             let config;
             try {
-                config = (await (function (t) { return Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require(t)); }); })(`${configurationFile}`)).default;
+                config = (await import(`${configurationFile}`)).default;
             }
             catch (_a) {
                 try {
-                    config = (await (function (t) { return Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require(t)); }); })(`file://${configurationFile}`)).default;
+                    config = (await import(`file://${configurationFile}`)).default;
                 }
                 catch (_b) {
                     try {
-                        config = (await (function (t) { return Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require(t)); }); })(`file:///${configurationFile}`)).default;
+                        config = (await import(`file:///${configurationFile}`)).default;
                     }
                     catch ( /*  */_c) { /*  */ }
                 }

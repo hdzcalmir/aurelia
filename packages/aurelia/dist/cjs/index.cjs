@@ -248,5 +248,5 @@ exports.Aurelia = Aurelia;
 
 exports.PLATFORM = a;
 
-exports["default"] = Aurelia;
+exports.default = Aurelia;
 //# sourceMappingURL=index.cjs.map

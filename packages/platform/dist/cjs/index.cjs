@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 const s = "pending";
 
 const t = "running";
@@ -83,23 +79,23 @@ class TaskQueue {
         this.u = [];
         this.R = false;
         this.A = void 0;
-        this.M = [];
-        this.P = 0;
-        this._ = 0;
+        this.P = [];
+        this.M = 0;
         this.U = 0;
-        this.q = () => {
+        this.q = 0;
+        this.I = () => {
             if (!this.R) {
                 this.R = true;
-                this._ = this.I();
+                this.U = this._();
                 this.$request();
             }
         };
-        this.I = s.performanceNow;
+        this._ = s.performanceNow;
         this.C = new Tracer(s.console);
     }
-    flush(s = this.I()) {
+    flush(s = this._()) {
         this.R = false;
-        this.U = s;
+        this.q = s;
         if (this.$ === void 0) {
             if (this.h.length > 0) {
                 this.i.push(...this.h);
@@ -116,7 +112,7 @@ class TaskQueue {
                 if (i.status === t) {
                     if (i.suspend === true) {
                         this.$ = i;
-                        this.q();
+                        this.I();
                         return;
                     } else {
                         ++this.t;
@@ -133,7 +129,7 @@ class TaskQueue {
                 this.i.push(...this.u.splice(0, t));
             }
             if (this.i.length > 0 || this.u.length > 0 || this.t > 0) {
-                this.q();
+                this.I();
             }
             if (this.A !== void 0 && this.T) {
                 const s = this.A;
@@ -141,7 +137,7 @@ class TaskQueue {
                 s.resolve();
             }
         } else {
-            this.q();
+            this.I();
         }
     }
     cancel() {
@@ -172,17 +168,17 @@ class TaskQueue {
             }
         }
         if (this.i.length === 0) {
-            this.q();
+            this.I();
         }
-        const c = this.I();
+        const c = this._();
         let a;
         if (o) {
-            const t = this.M;
-            const r = this.P - 1;
+            const t = this.P;
+            const r = this.M - 1;
             if (r >= 0) {
                 a = t[r];
                 t[r] = void 0;
-                this.P = r;
+                this.M = r;
                 a.reuse(c, i, e, h, n, s);
             } else {
                 a = new Task(this.C, this, c, c + i, e, h, n, o, s);
@@ -217,18 +213,18 @@ class TaskQueue {
         }
         throw createError(`Task #${s.id} could not be found`);
     }
-    j(s) {
-        this.M[this.P++] = s;
-    }
     N(s) {
-        s.reset(this.I());
+        this.P[this.M++] = s;
+    }
+    j(s) {
+        s.reset(this._());
         if (s.createdTime === s.queueTime) {
             this.h[this.h.length] = s;
         } else {
             this.u[this.u.length] = s;
         }
     }
-    O(s) {
+    F(s) {
         if (s.suspend === true) {
             if (this.$ !== s) {
                 throw createError(`Async task completion mismatch: suspenderTask=${this.$?.id}, task=${s.id}`);
@@ -259,12 +255,12 @@ let o = 0;
 
 class Task {
     get result() {
-        const h = this.F;
+        const h = this.O;
         if (h === void 0) {
             switch (this.W) {
               case s:
                 {
-                    const s = this.F = createExposedPromise();
+                    const s = this.O = createExposedPromise();
                     this.B = s.resolve;
                     this.G = s.reject;
                     return s;
@@ -274,10 +270,10 @@ class Task {
                 throw createError("Trying to await task from within task will cause a deadlock.");
 
               case i:
-                return this.F = Promise.resolve();
+                return this.O = Promise.resolve();
 
               case e:
-                return this.F = Promise.reject(new TaskAbortError(this));
+                return this.O = Promise.reject(new TaskAbortError(this));
             }
         }
         return h;
@@ -297,7 +293,7 @@ class Task {
         this.id = ++o;
         this.B = void 0;
         this.G = void 0;
-        this.F = void 0;
+        this.O = void 0;
         this.W = s;
         this.C = t;
     }
@@ -313,7 +309,7 @@ class Task {
             if (u instanceof Promise) {
                 u.then((s => {
                     if (this.persistent) {
-                        n.N(this);
+                        n.j(this);
                     } else {
                         if (o) {
                             this.W = e;
@@ -322,19 +318,19 @@ class Task {
                         }
                         this.dispose();
                     }
-                    n.O(this);
+                    n.F(this);
                     if (false && this.C.enabled) ;
                     if (a !== void 0) {
                         a(s);
                     }
                     if (!this.persistent && r) {
-                        n.j(this);
+                        n.N(this);
                     }
                 })).catch((s => {
                     if (!this.persistent) {
                         this.dispose();
                     }
-                    n.O(this);
+                    n.F(this);
                     if (false && this.C.enabled) ;
                     if (l !== void 0) {
                         l(s);
@@ -344,7 +340,7 @@ class Task {
                 }));
             } else {
                 if (this.persistent) {
-                    n.N(this);
+                    n.j(this);
                 } else {
                     if (o) {
                         this.W = e;
@@ -358,7 +354,7 @@ class Task {
                     a(u);
                 }
                 if (!this.persistent && r) {
-                    n.j(this);
+                    n.N(this);
                 }
             }
         } catch (s) {
@@ -384,7 +380,7 @@ class Task {
             this.W = e;
             this.dispose();
             if (t) {
-                s.j(this);
+                s.N(this);
             }
             if (i !== void 0) {
                 i(new TaskAbortError(this));
@@ -403,7 +399,7 @@ class Task {
         this.W = s;
         this.B = void 0;
         this.G = void 0;
-        this.F = void 0;
+        this.O = void 0;
     }
     reuse(t, i, e, h, o, r) {
         this.createdTime = t;
@@ -418,7 +414,7 @@ class Task {
         this.callback = void 0;
         this.B = void 0;
         this.G = void 0;
-        this.F = void 0;
+        this.O = void 0;
     }
 }
 

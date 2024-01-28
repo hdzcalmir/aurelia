@@ -1,10 +1,24 @@
-import { DI, Registration, optional, all, ILogger, camelCase } from '../../../kernel/dist/native-modules/index.mjs';
-import { State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, bindingBehavior, attributePattern, bindingCommand, renderer, AttrSyntax, lifecycleHooks, CustomElement, CustomAttribute, ILifecycleHooks } from '../../../runtime-html/dist/native-modules/index.mjs';
-import { AccessorType, Scope, connectable, astEvaluate, astBind, astUnbind } from '../../../runtime/dist/native-modules/index.mjs';
+import { DI, Registration, optional, all, ILogger, lazy, camelCase, IContainer } from '../../../kernel/dist/native-modules/index.mjs';
+import { Scope, AccessorType, connectable, astEvaluate, astBind, astUnbind } from '../../../runtime/dist/native-modules/index.mjs';
+import { IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, bindingBehavior, attributePattern, bindingCommand, renderer, AttrSyntax, AppTask, lifecycleHooks, CustomElement, CustomAttribute, ILifecycleHooks } from '../../../runtime-html/dist/native-modules/index.mjs';
 
-const IActionHandler = /*@__PURE__*/ DI.createInterface('IActionHandler');
-const IStore = /*@__PURE__*/ DI.createInterface('IStore');
-const IState = /*@__PURE__*/ DI.createInterface('IState');
+/** @internal */
+const createInterface = DI.createInterface;
+/** @internal */
+function createStateBindingScope(state, scope) {
+    const overrideContext = { bindingContext: state };
+    const stateScope = Scope.create(state, overrideContext, true);
+    stateScope.parent = scope;
+    return stateScope;
+}
+/** @internal */
+function isSubscribable$1(v) {
+    return v instanceof Object && 'subscribe' in v;
+}
+
+const IActionHandler = /*@__PURE__*/ createInterface('IActionHandler');
+const IStore = /*@__PURE__*/ createInterface('IStore');
+const IState = /*@__PURE__*/ createInterface('IState');
 
 const actionHandlerSymbol = '__au_ah__';
 const ActionHandler = Object.freeze({
@@ -21,17 +35,24 @@ const ActionHandler = Object.freeze({
     isType: (r) => typeof r === 'function' && actionHandlerSymbol in r,
 });
 
+const IDevToolsExtension = /*@__PURE__*/ createInterface("IDevToolsExtension", x => x.cachedCallback((container) => {
+    const win = container.get(IWindow);
+    const devToolsExtension = win.__REDUX_DEVTOOLS_EXTENSION__;
+    return devToolsExtension ?? null;
+}));
+
 class Store {
     static register(c) {
         Registration.singleton(IStore, this).register(c);
     }
-    constructor(initialState, actionHandlers, logger) {
+    constructor(initialState, actionHandlers, logger, getDevTools) {
         /** @internal */ this._subs = new Set();
         /** @internal */ this._dispatching = 0;
         /** @internal */ this._dispatchQueues = [];
-        this._state = initialState ?? new State();
+        this._initialState = this._state = initialState ?? new State();
         this._handlers = actionHandlers;
         this._logger = logger;
+        this._getDevTools = getDevTools;
     }
     subscribe(subscriber) {
         {
@@ -104,8 +125,67 @@ class Store {
             return afterDispatch(this._state);
         }
     }
+    /* istanbul ignore next */
+    connectDevTools(options) {
+        const extension = this._getDevTools();
+        const hasDevTools = extension != null;
+        if (!hasDevTools) {
+            throw new Error('Devtools extension is not available');
+        }
+        options.name ?? (options.name = 'Aurelia State plugin');
+        const devTools = extension.connect(options);
+        devTools.init(this._initialState);
+        devTools.subscribe((message) => {
+            this._logger.info('DevTools sent a message:', message);
+            const payload = typeof message.payload === 'string'
+                ? tryParseJson(message.payload)
+                : message.payload;
+            if (payload === void 0) {
+                return;
+            }
+            if (message.type === "ACTION") {
+                if (payload == null) {
+                    throw new Error('DevTools sent an action with no payload');
+                }
+                void new Promise(r => {
+                    r(this.dispatch(payload));
+                }).catch((ex) => {
+                    throw new Error(`Issue when trying to dispatch an action through devtools:\n${ex}`);
+                }).then(() => {
+                    devTools.send('ACTION', this._state);
+                });
+                return;
+            }
+            if (message.type === "DISPATCH" && payload != null) {
+                switch (payload.type) {
+                    case "JUMP_TO_STATE":
+                    case "JUMP_TO_ACTION":
+                        this._setState(JSON.parse(message.state));
+                        return;
+                    case "COMMIT":
+                        devTools.init(this._state);
+                        return;
+                    case "RESET":
+                        devTools.init(this._initialState);
+                        this._setState(this._initialState);
+                        return;
+                    case "ROLLBACK": {
+                        const parsedState = JSON.parse(message.state);
+                        this._setState(parsedState);
+                        devTools.send('ROLLBACK', parsedState);
+                        return;
+                    }
+                }
+            }
+        });
+    }
 }
-/** @internal */ Store.inject = [optional(IState), all(IActionHandler), ILogger];
+/** @internal */ Store.inject = [
+    optional(IState),
+    all(IActionHandler),
+    ILogger,
+    lazy(IDevToolsExtension)
+];
 class State {
 }
 class StateProxyHandler {
@@ -122,6 +202,16 @@ class StateProxyHandler {
     }
 }
 /* eslint-enable */
+function tryParseJson(str) {
+    try {
+        return JSON.parse(str);
+    }
+    catch (ex) {
+        // eslint-disable-next-line no-console
+        console.log(`Error parsing JSON:\n${(str ?? '').slice(0, 200)}\n${ex}`);
+        return undefined;
+    }
+}
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -137,6 +227,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -145,20 +237,8 @@ function __decorate(decorators, target, key, desc) {
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
 
-/** @internal */
-function createStateBindingScope(state, scope) {
-    const overrideContext = { bindingContext: state };
-    const stateScope = Scope.create(state, overrideContext, true);
-    stateScope.parent = scope;
-    return stateScope;
-}
-/** @internal */
-function isSubscribable$1(v) {
-    return v instanceof Object && 'subscribe' in v;
-}
-/** @internal */ const atLayout = AccessorType.Layout;
-/** @internal */ const stateActivating = State$1.activating;
-
+const atLayout = AccessorType.Layout;
+const stateActivating = State$1.activating;
 class StateBinding {
     constructor(controller, locator, observerLocator, taskQueue, ast, target, prop, store) {
         this.isBound = false;
@@ -519,15 +599,28 @@ const standardRegistrations = [
     StateBindingBehavior,
     Store,
 ];
-const createConfiguration = (initialState, actionHandlers) => {
+const createConfiguration = (initialState, actionHandlers, options = {}) => {
     return {
         register: (c) => {
-            c.register(Registration.instance(IState, initialState), ...standardRegistrations, ...actionHandlers.map(ActionHandler.define));
+            c.register(Registration.instance(IState, initialState), ...standardRegistrations, ...actionHandlers.map(ActionHandler.define), 
+            /* istanbul ignore next */
+            AppTask.creating(IContainer, container => {
+                const store = container.get(IStore);
+                const devTools = container.get(IDevToolsExtension);
+                if (options.devToolsOptions?.disable !== true && devTools != null) {
+                    store.connectDevTools(options.devToolsOptions ?? {});
+                }
+            }));
         },
-        init: (state, ...actionHandlers) => createConfiguration(state, actionHandlers),
+        init: (state, optionsOrHandler, ...actionHandlers) => {
+            const isHandler = typeof optionsOrHandler === 'function';
+            const options = isHandler ? {} : optionsOrHandler;
+            actionHandlers = isHandler ? [optionsOrHandler, ...actionHandlers] : actionHandlers;
+            return createConfiguration(state, actionHandlers, options);
+        }
     };
 };
-const StateDefaultConfiguration = createConfiguration({}, []);
+const StateDefaultConfiguration = /*@__PURE__*/ createConfiguration({}, []);
 
 let StateGetterBinding = class StateGetterBinding {
     constructor(target, prop, store, getValue) {

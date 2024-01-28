@@ -1,33 +1,27 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', { value: true });
-
 var kernel = require('@aurelia/kernel');
 var path = require('path');
-var modifyCode = require('modify-code');
 var pkg = require('typescript');
+var $modifyCode = require('modify-code');
 var runtimeHtml = require('@aurelia/runtime-html');
 var parse5 = require('parse5');
 var fs = require('fs');
 
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e["default"] : e; }
-
-function _interopNamespace(e) {
-    if (e && e.__esModule) return e;
+function _interopNamespaceDefault(e) {
     var n = Object.create(null);
     if (e) {
         for (var k in e) {
             n[k] = e[k];
         }
     }
-    n["default"] = e;
+    n.default = e;
     return Object.freeze(n);
 }
 
-var path__namespace = /*#__PURE__*/_interopNamespace(path);
-var modifyCode__default = /*#__PURE__*/_interopDefaultLegacy(modifyCode);
-var pkg__default = /*#__PURE__*/_interopDefaultLegacy(pkg);
-var fs__namespace = /*#__PURE__*/_interopNamespace(fs);
+var path__namespace = /*#__PURE__*/_interopNamespaceDefault(path);
+var $modifyCode__namespace = /*#__PURE__*/_interopNamespaceDefault($modifyCode);
+var fs__namespace = /*#__PURE__*/_interopNamespaceDefault(fs);
 
 function nameConvention(className) {
     const m = /^(.+?)(CustomElement|CustomAttribute|ValueConverter|BindingBehavior|BindingCommand|TemplateController)?$/.exec(className);
@@ -54,7 +48,15 @@ function resourceName(filePath) {
     return kernel.kebabCase(name);
 }
 
-const { createSourceFile, ScriptTarget, isImportDeclaration, isStringLiteral, isNamedImports, isClassDeclaration, canHaveModifiers, getModifiers, SyntaxKind, canHaveDecorators, getDecorators, isCallExpression, isIdentifier } = pkg__default;
+const modifyCode = (typeof $modifyCode === 'function'
+    ? $modifyCode
+    : typeof $modifyCode.default === 'function'
+        ? $modifyCode.default
+        : typeof $modifyCode__namespace === 'function'
+            ? $modifyCode__namespace
+            : $modifyCode__namespace.default);
+
+const { createSourceFile, ScriptTarget, isImportDeclaration, isStringLiteral, isNamedImports, isClassDeclaration, canHaveModifiers, getModifiers, SyntaxKind, canHaveDecorators, getDecorators, isCallExpression, isIdentifier } = pkg;
 function preprocessResource(unit, options) {
     const expectedResourceName = resourceName(unit.path);
     const sf = createSourceFile(unit.path, unit.contents, ScriptTarget.Latest);
@@ -101,7 +103,7 @@ function preprocessResource(unit, options) {
         if (customName)
             customElementName = customName;
     });
-    let m = modifyCode__default(unit.contents, unit.path);
+    let m = modifyCode(unit.contents, unit.path);
     const hmrEnabled = options.hmr && exportedClassName && process.env.NODE_ENV !== 'production';
     if (options.enableConventions || hmrEnabled) {
         if (hmrEnabled && metadataImport.names.length) {
@@ -543,7 +545,7 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
         statements.push(`import d${i} from ${s(d)};\n`);
         viewDeps.push(`Registration.defer('${ext}', d${i})`);
     });
-    const m = modifyCode__default('', unit.path);
+    const m = modifyCode('', unit.path);
     const hmrEnabled = !hasViewModel && options.hmr && process.env.NODE_ENV !== 'production';
     m.append(`import { CustomElement } from '@aurelia/runtime-html';\n`);
     if (cssDeps.length > 0) {

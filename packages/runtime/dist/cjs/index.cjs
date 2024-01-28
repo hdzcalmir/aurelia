@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var e = require("@aurelia/kernel");
 
 var t = require("@aurelia/metadata");
@@ -121,10 +117,10 @@ const astVisit = (e, t) => {
       case U:
         return t.visitDestructuringAssignmentSingleExpression(e);
 
-      case j:
+      case F:
         return t.visitForOfStatement(e);
 
-      case F:
+      case j:
         return t.visitInterpolation(e);
 
       case B:
@@ -502,9 +498,9 @@ const B = "ObjectBindingPattern";
 
 const D = "BindingIdentifier";
 
-const j = "ForOfStatement";
+const F = "ForOfStatement";
 
-const F = "Interpolation";
+const j = "Interpolation";
 
 const N = "ArrayDestructuring";
 
@@ -750,7 +746,7 @@ class ForOfStatement {
         this.declaration = e;
         this.iterable = t;
         this.semiIdx = r;
-        this.$kind = j;
+        this.$kind = F;
     }
 }
 
@@ -758,7 +754,7 @@ class Interpolation {
     constructor(t, r = e.emptyArray) {
         this.parts = t;
         this.expressions = r;
-        this.$kind = F;
+        this.$kind = j;
         this.isMulti = r.length > 1;
         this.firstExpression = r[0];
     }
@@ -1177,10 +1173,10 @@ function astEvaluate(e, t, r, n) {
       case D:
         return e.name;
 
-      case j:
+      case F:
         return astEvaluate(e.iterable, t, r, n);
 
-      case F:
+      case j:
         if (e.isMulti) {
             let i = e.parts[0];
             let o = 0;
@@ -1397,7 +1393,7 @@ function astBind(e, t, r) {
             return;
         }
 
-      case j:
+      case F:
         {
             astBind(e.iterable, t, r);
             break;
@@ -1439,7 +1435,7 @@ function astUnbind(e, t, r) {
             break;
         }
 
-      case j:
+      case F:
         {
             astUnbind(e.iterable, t, r);
             break;
@@ -2544,13 +2540,13 @@ for (const e of $e) {
     });
 }
 
-let je = false;
+let Fe = false;
 
-const Fe = "__au_map_on__";
+const je = "__au_map_on__";
 
 function enableMapObservation() {
-    if (!(h(Fe, Map) ?? false)) {
-        f(Fe, true, Map);
+    if (!(h(je, Map) ?? false)) {
+        f(je, true, Map);
         for (const e of $e) {
             if (Ie[e].observing !== true) {
                 i(Ie, e, {
@@ -2576,8 +2572,8 @@ function disableMapObservation() {
 class MapObserver {
     constructor(e) {
         this.type = q;
-        if (!je) {
-            je = true;
+        if (!Fe) {
+            Fe = true;
             enableMapObservation();
         }
         this.collection = e;
@@ -4906,9 +4902,9 @@ subscriberCollection(SetterObserver);
 
 let Dt = void 0;
 
-const jt = new PropertyAccessor;
+const Ft = new PropertyAccessor;
 
-const Ft = /*@__PURE__*/ l("IObserverLocator", (e => e.singleton(ObserverLocator)));
+const jt = /*@__PURE__*/ l("IObserverLocator", (e => e.singleton(ObserverLocator)));
 
 const Nt = /*@__PURE__*/ l("INodeObserverLocator", (e => e.cachedCallback((e => new DefaultNodeObserverLocator))));
 
@@ -4917,10 +4913,10 @@ class DefaultNodeObserverLocator {
         return false;
     }
     getObserver() {
-        return jt;
+        return Ft;
     }
     getAccessor() {
-        return jt;
+        return Ft;
     }
 }
 
@@ -4961,7 +4957,7 @@ class ObserverLocator {
         if (this.M.handles(e, t, this)) {
             return this.M.getAccessor(e, t, this);
         }
-        return jt;
+        return Ft;
     }
     getArrayObserver(e) {
         return getArrayObserver(e);
@@ -5078,7 +5074,7 @@ const Ht = /*@__PURE__*/ l("IObservation", (e => e.singleton(Observation)));
 
 class Observation {
     static get inject() {
-        return [ Ft ];
+        return [ jt ];
     }
     constructor(e) {
         this.oL = e;
@@ -5402,7 +5398,7 @@ exports.INodeObserverLocator = Nt;
 
 exports.IObservation = Ht;
 
-exports.IObserverLocator = Ft;
+exports.IObserverLocator = jt;
 
 exports.ISignaler = zt;
 

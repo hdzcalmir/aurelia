@@ -10,6 +10,28 @@ var platformBrowser = require('@aurelia/platform-browser');
 var metadata = require('@aurelia/metadata');
 
 // Significant portion of this code is copy-pasted from the node.js source
+// Modifications consist primarily of removing dependencies on v8 natives and adding typings
+// Original license:
+/*
+ * Copyright Joyent, Inc. and other Node contributors. All rights reserved.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
 const { getPrototypeOf, getOwnPropertyDescriptor, getOwnPropertyDescriptors, getOwnPropertyNames, getOwnPropertySymbols, defineProperty, defineProperties, } = Object;
 /** @internal */ const Object_keys = Object.keys;
 /** @internal */ const Object_is = Object.is;
@@ -391,6 +413,7 @@ function createSpy(instanceOrInnerFn, key, callThroughOrInnerFn) {
 }
 
 // Significant portion of this code is copy-pasted from the node.js source
+// Modifications consist primarily of removing dependencies on v8 natives and adding typings
 /* eslint-disable @typescript-eslint/ban-types */
 var IterationType;
 (function (IterationType) {
@@ -940,6 +963,28 @@ function createContainer(...registries) {
 }
 
 // Significant portion of this code is copy-pasted from the node.js source
+// Modifications consist primarily of removing dependencies on v8 natives and adding typings
+// Original license:
+/*
+ * Copyright Joyent, Inc. and other Node contributors. All rights reserved.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
 
 /* eslint-disable max-lines-per-function, @typescript-eslint/ban-types */
 let maxStack_ErrorName;
@@ -2496,6 +2541,28 @@ function ensureTaskQueuesEmpty(platform$1) {
 }
 
 // Significant portion of this code is copy-pasted from the node.js source
+// Modifications consist primarily of removing dependencies on v8 natives and adding typings
+// Original license:
+/*
+ * Copyright Joyent, Inc. and other Node contributors. All rights reserved.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
 const noException = Symbol('noException');
 function innerFail(obj) {
     if (isError(obj.message)) {
@@ -3169,6 +3236,9 @@ const assert = Object_freeze({
 });
 
 /* THIS IS AN AUTOGENERATED FILE.  DO NOT EDIT */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 /**
  * This file is automatically generated by `mach devtools-css-db`. It contains
  * a static list of CSS properties that can be computed by Gecko. The actual script
@@ -7705,28 +7775,30 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
     }
     const component = container.get(App);
     let startPromise = void 0;
-    if (autoStart) {
-        try {
-            au.app({ host: host, component });
-            startPromise = au.start();
-        }
-        catch (ex) {
+    function startFixtureApp() {
+        if (autoStart) {
             try {
-                const dispose = () => {
-                    root.remove();
-                    au.dispose();
-                };
-                const ret = au.stop();
-                if (ret instanceof Promise)
-                    void ret.then(dispose);
-                else
-                    dispose();
+                au.app({ host: host, component });
+                fixture.startPromise = startPromise = au.start();
             }
-            catch {
-                console.warn('(!) corrupted fixture state, should isolate the failing test and restart the run'
-                    + 'as it is likely that this failing fixture creation will pollute others.');
+            catch (ex) {
+                try {
+                    const dispose = () => {
+                        root.remove();
+                        au.dispose();
+                    };
+                    const ret = au.stop();
+                    if (ret instanceof Promise)
+                        void ret.then(dispose);
+                    else
+                        dispose();
+                }
+                catch {
+                    console.warn('(!) corrupted fixture state, should isolate the failing test and restart the run'
+                        + 'as it is likely that this failing fixture creation will pollute others.');
+                }
+                throw ex;
             }
-            throw ex;
         }
     }
     let tornCount = 0;
@@ -7939,6 +8011,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         }
     }();
     fixtureHooks.publish('fixture:created', fixture);
+    startFixtureApp();
     return fixture;
 }
 class FixtureBuilder {
@@ -8386,6 +8459,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;

@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var e = require("@aurelia/platform");
 
 var t = require("@aurelia/kernel");
@@ -4348,25 +4344,27 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
     }
     const y = l.get(v);
     let x = void 0;
-    if (s) {
-        try {
-            p.app({
-                host: d,
-                component: y
-            });
-            x = p.start();
-        } catch (e) {
+    function startFixtureApp() {
+        if (s) {
             try {
-                const dispose = () => {
-                    f.remove();
-                    p.dispose();
-                };
-                const e = p.stop();
-                if (e instanceof Promise) void e.then(dispose); else dispose();
-            } catch {
-                console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
+                p.app({
+                    host: d,
+                    component: y
+                });
+                k.startPromise = x = p.start();
+            } catch (e) {
+                try {
+                    const dispose = () => {
+                        f.remove();
+                        p.dispose();
+                    };
+                    const e = p.stop();
+                    if (e instanceof Promise) void e.then(dispose); else dispose();
+                } catch {
+                    console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
+                }
+                throw e;
             }
-            throw e;
         }
     }
     let $ = 0;
@@ -4575,6 +4573,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         }
     };
     ke.publish("fixture:created", k);
+    startFixtureApp();
     return k;
 }
 

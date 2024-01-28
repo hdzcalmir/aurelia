@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var t = require("@aurelia/kernel");
 
 var e = require("@aurelia/validation");
@@ -537,7 +533,7 @@ class ValidatitionConnector {
         this.C(new ValidateArgumentsDelta(this.B(t), void 0, void 0));
     }
     handleRulesChange(t, e) {
-        this.C(new ValidateArgumentsDelta(void 0, void 0, this.M(t)));
+        this.C(new ValidateArgumentsDelta(void 0, void 0, this.T(t)));
     }
     handleValidationEvent(t) {
         if (this.validatedOnce || !this.isChangeTrigger) return;
@@ -569,7 +565,7 @@ class ValidatitionConnector {
                 break;
 
               case 2:
-                e = this.M(s.astEvaluate(a, t, this, this.h));
+                e = this.T(s.astEvaluate(a, t, this, this.h));
                 break;
 
               default:
@@ -598,7 +594,7 @@ class ValidatitionConnector {
             this.isDirty = false;
             this.trigger = e;
             this.isChangeTrigger = e === exports.ValidationTrigger.change || e === exports.ValidationTrigger.changeOrBlur || e === exports.ValidationTrigger.changeOrFocusout;
-            t = this.triggerEvent = this.T(this.trigger);
+            t = this.triggerEvent = this.M(this.trigger);
             if (t !== null) {
                 this.target.addEventListener(t, this);
             }
@@ -627,7 +623,7 @@ class ValidatitionConnector {
         }
         return t;
     }
-    M(t) {
+    T(t) {
         if (Array.isArray(t) && t.every((t => t instanceof e.PropertyRule))) {
             return t;
         }
@@ -644,7 +640,7 @@ class ValidatitionConnector {
             return e.host;
         }
     }
-    T(t) {
+    M(t) {
         let e = null;
         switch (t) {
           case exports.ValidationTrigger.blur:

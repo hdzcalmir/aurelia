@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var t = require("@aurelia/metadata");
 
 const e = Object.freeze;
@@ -444,7 +440,7 @@ class Container {
                 }
             }
         }
-        this.h.set($, b);
+        this.h.set($, C);
     }
     register(...e) {
         if (++this.i === 100) {
@@ -477,7 +473,7 @@ class Container {
                     }
                 }
             } else if (isClass(r)) {
-                T.singleton(r, r).register(this);
+                _.singleton(r, r).register(this);
             } else {
                 n = Object.keys(r);
                 o = 0;
@@ -837,7 +833,7 @@ const buildAllResponse = (t, e, r) => {
     return [ t.resolve(e, r) ];
 };
 
-const b = {
+const C = {
     $isResolver: true,
     resolve(t, e) {
         return e;
@@ -868,12 +864,12 @@ const aliasToRegistration = (t, e) => new Resolver(e, 5, t);
 
 const deferRegistration = (t, ...e) => new ParameterizedRegistry(t, e);
 
-const C = new WeakMap;
+const b = new WeakMap;
 
 const cacheCallbackResult = t => (e, r, n) => {
-    let s = C.get(e);
+    let s = b.get(e);
     if (s === void 0) {
-        C.set(e, s = new WeakMap);
+        b.set(e, s = new WeakMap);
     }
     if (s.has(n)) {
         return s.get(n);
@@ -1089,7 +1085,7 @@ const L = {
     },
     transient(t) {
         t.register = function(e) {
-            const r = T.transient(t, t);
+            const r = _.transient(t, t);
             return r.register(e, t);
         };
         t.registerInRequestor = false;
@@ -1097,7 +1093,7 @@ const L = {
     },
     singleton(t, e = k) {
         t.register = function(e) {
-            const r = T.singleton(t, t);
+            const r = _.singleton(t, t);
             return r.register(e, t);
         };
         t.registerInRequestor = e.scoped;
@@ -1176,7 +1172,7 @@ ignore.resolve = () => undefined;
 
 const M = /*@__PURE__*/ createResolver(((t, e, r) => (...n) => e.getFactory(t).construct(r, n)));
 
-const _ = /*@__PURE__*/ createResolver(((t, e, n) => {
+const T = /*@__PURE__*/ createResolver(((t, e, n) => {
     const s = createNewInstance(t, e, n);
     const o = new InstanceProvider(r(t), s);
     n.registerResolver(t, o, true);
@@ -1283,7 +1279,7 @@ class ParameterizedRegistry {
     }
 }
 
-const T = {
+const _ = {
     instance: instanceRegistration,
     singleton: singletonRegistration,
     transient: transientRegistation,
@@ -1568,9 +1564,9 @@ class DefaultLogger {
             this.parent = this;
             o = this.F = [];
             i = this.M = [];
-            l = this._ = [];
+            l = this.T = [];
             c = this.j = [];
-            u = this.T = [];
+            u = this._ = [];
             a = this.P = [];
             for (const t of r) {
                 const e = Z.getHandles(t);
@@ -1598,9 +1594,9 @@ class DefaultLogger {
             this.parent = s;
             o = this.F = s.F;
             i = this.M = s.M;
-            l = this._ = s._;
+            l = this.T = s.T;
             c = this.j = s.j;
-            u = this.T = s.T;
+            u = this._ = s._;
             a = this.P = s.P;
         }
     }
@@ -1616,7 +1612,7 @@ class DefaultLogger {
     }
     info(t, ...e) {
         if (this.config.level <= W) {
-            this.K(this._, W, t, e);
+            this.K(this.T, W, t, e);
         }
     }
     warn(t, ...e) {
@@ -1626,7 +1622,7 @@ class DefaultLogger {
     }
     error(t, ...e) {
         if (this.config.level <= z) {
-            this.K(this.T, z, t, e);
+            this.K(this._, z, t, e);
         }
     }
     fatal(t, ...e) {
@@ -1915,7 +1911,7 @@ exports.ModuleItem = ModuleItem;
 
 exports.Protocol = w;
 
-exports.Registration = T;
+exports.Registration = _;
 
 exports.all = all;
 
@@ -1957,7 +1953,7 @@ exports.lazy = I;
 
 exports.mergeArrays = mergeArrays;
 
-exports.newInstanceForScope = _;
+exports.newInstanceForScope = T;
 
 exports.newInstanceOf = j;
 

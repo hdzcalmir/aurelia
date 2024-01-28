@@ -7,10 +7,22 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { ValueConverter, customAttribute, customElement } from '@aurelia/runtime-html';
+import { ValueConverter, customAttribute, customElement, IWindow } from '@aurelia/runtime-html';
 import { StateDefaultConfiguration, fromState } from '@aurelia/state';
-import { assert, createFixture } from '@aurelia/testing';
+import { assert, createFixture, onFixtureCreated } from '@aurelia/testing';
 describe('state/state.spec.ts', function () {
+    this.beforeEach(function () {
+        onFixtureCreated(({ ctx }) => {
+            const window = ctx.container.get(IWindow);
+            if ('__REDUX_DEVTOOLS_EXTENSION__' in window)
+                return;
+            Object.assign(window, {
+                __REDUX_DEVTOOLS_EXTENSION__: {
+                    connect: () => ({ init: () => { }, subscribe: () => { } })
+                }
+            });
+        });
+    });
     it('connects to initial state object', async function () {
         const state = { text: '123' };
         const { getBy } = await createFixture

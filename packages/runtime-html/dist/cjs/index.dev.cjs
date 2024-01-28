@@ -22,6 +22,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -329,6 +331,7 @@ function registerAliases(aliases, resource, key, container) {
 }
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
 /** @internal */
 const createMappedError = (code, ...details) => new Error(`AUR${safeString(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
     ;
@@ -10310,6 +10313,7 @@ class TemplateElementFactory {
 }
 
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 class TemplateCompiler {
     constructor() {
         this.debug = false;

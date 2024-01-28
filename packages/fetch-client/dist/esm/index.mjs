@@ -299,7 +299,7 @@ class HttpClient {
         }
     }
     trackRequestEnd() {
-        this.isRequesting = !!--this.activeRequestCount;
+        this.isRequesting = !! --this.activeRequestCount;
         if (!this.isRequesting && this.dispatcher !== null) {
             const t = new this.dispatcher.ownerDocument.defaultView.CustomEvent("aurelia-fetch-client-requests-drained", {
                 bubbles: true,

@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var e = require("@aurelia/i18n");
 
 var r = require("@aurelia/kernel");

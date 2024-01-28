@@ -1013,6 +1013,11 @@ function createNavigationInstruction(routeable) {
 }
 
 // The commented-out terminal symbols below are for reference / potential future need (should there be use cases to loosen up the syntax)
+// These symbols are basically the minimum necessary terminals.
+// const viewportTerminal = ['?', '#', '/', '+', ')', '!'];
+// const actionTerminal = [...componentTerminal, '@', '('];
+// const componentTerminal = [...actionTerminal, '.'];
+// const paramTerminal = ['=', ',', ')'];
 // These are the currently used terminal symbols.
 // We're deliberately having every "special" (including the not-in-use '&', ''', '~', ';') as a terminal symbol,
 // so as to make the syntax maximally restrictive for consistency and to minimize the risk of us having to introduce breaking changes in the future.
@@ -1484,6 +1489,7 @@ const AST = Object.freeze({
 });
 
 // No-fallthrough disabled due to large numbers of false positives
+/* eslint-disable no-fallthrough */
 class ViewportRequest {
     constructor(viewportName, componentName) {
         this.viewportName = viewportName;
@@ -4723,6 +4729,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;

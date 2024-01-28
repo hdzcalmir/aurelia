@@ -1,4 +1,5 @@
 import { type MaybePromise, type IRegistry } from '@aurelia/kernel';
+import { IDevToolsOptions } from './interfaces-devtools';
 export declare const IActionHandler: import("@aurelia/kernel").InterfaceSymbol<IActionHandler<any>>;
 export type IActionHandler<T = any> = (state: T, action: unknown) => MaybePromise<T>;
 export declare const IStore: import("@aurelia/kernel").InterfaceSymbol<IStore<object, unknown>>;
@@ -13,6 +14,10 @@ export interface IStore<T extends object, TAction = unknown> {
      * @param params - all the parameters to be called with the action
      */
     dispatch(action: TAction): void | Promise<void>;
+    /**
+     * For Devtools integration
+     */
+    connectDevTools(options?: IDevToolsOptions): void;
 }
 export declare const IState: import("@aurelia/kernel").InterfaceSymbol<object>;
 export type IRegistrableAction = IActionHandler & IRegistry;

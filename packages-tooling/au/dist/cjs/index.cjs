@@ -1,29 +1,9 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', { value: true });
-
 var fs = require('fs');
 var path = require('path');
 var httpServer = require('@aurelia/http-server');
 var kernel = require('@aurelia/kernel');
-
-function _interopNamespace(e) {
-    if (e && e.__esModule) return e;
-    var n = Object.create(null);
-    if (e) {
-        Object.keys(e).forEach(function (k) {
-            if (k !== 'default') {
-                var d = Object.getOwnPropertyDescriptor(e, k);
-                Object.defineProperty(n, k, d.get ? d : {
-                    enumerable: true,
-                    get: function () { return e[k]; }
-                });
-            }
-        });
-    }
-    n["default"] = e;
-    return Object.freeze(n);
-}
 
 /* eslint-disable prefer-template */
 const space = ' ';
@@ -61,6 +41,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -118,15 +100,15 @@ async function parseArgs(args) {
         else {
             let config;
             try {
-                config = (await (function (t) { return Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require(t)); }); })(`${configurationFile}`)).default;
+                config = (await import(`${configurationFile}`)).default;
             }
             catch (_a) {
                 try {
-                    config = (await (function (t) { return Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require(t)); }); })(`file://${configurationFile}`)).default;
+                    config = (await import(`file://${configurationFile}`)).default;
                 }
                 catch (_b) {
                     try {
-                        config = (await (function (t) { return Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require(t)); }); })(`file:///${configurationFile}`)).default;
+                        config = (await import(`file:///${configurationFile}`)).default;
                     }
                     catch ( /*  */_c) { /*  */ }
                 }

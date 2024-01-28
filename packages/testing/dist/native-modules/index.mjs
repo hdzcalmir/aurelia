@@ -4342,25 +4342,27 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
     }
     const b = a.get(g);
     let v = void 0;
-    if (i) {
-        try {
-            f.app({
-                host: c,
-                component: b
-            });
-            v = f.start();
-        } catch (e) {
+    function startFixtureApp() {
+        if (i) {
             try {
-                const dispose = () => {
-                    l.remove();
-                    f.dispose();
-                };
-                const e = f.stop();
-                if (e instanceof Promise) void e.then(dispose); else dispose();
-            } catch {
-                console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
+                f.app({
+                    host: c,
+                    component: b
+                });
+                $.startPromise = v = f.start();
+            } catch (e) {
+                try {
+                    const dispose = () => {
+                        l.remove();
+                        f.dispose();
+                    };
+                    const e = f.stop();
+                    if (e instanceof Promise) void e.then(dispose); else dispose();
+                } catch {
+                    console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
+                }
+                throw e;
             }
-            throw e;
         }
     }
     let y = 0;
@@ -4569,6 +4571,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         }
     };
     Ke.publish("fixture:created", $);
+    startFixtureApp();
     return $;
 }
 

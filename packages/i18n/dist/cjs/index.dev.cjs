@@ -7,10 +7,6 @@ var runtimeHtml = require('@aurelia/runtime-html');
 var runtime = require('@aurelia/runtime');
 var i18next = require('i18next');
 
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e["default"] : e; }
-
-var i18next__default = /*#__PURE__*/_interopDefaultLegacy(i18next);
-
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -25,6 +21,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -84,7 +82,7 @@ const I18nWrapper = /*@__PURE__*/ kernel.DI.createInterface('I18nextWrapper');
  */
 class I18nextWrapper {
     constructor() {
-        this.i18next = i18next__default;
+        this.i18next = i18next;
     }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "au",
-  "version": "2.0.1-dev.202401261010",
+  "version": "2.1.0-dev.202401281151",
   "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.mjs",
   "exports": {
@@ -50,10 +50,10 @@
     "access": "public"
   },
   "dependencies": {
-    "@aurelia/http-server": "2.0.1-dev.202401261010",
-    "@aurelia/kernel": "2.0.1-dev.202401261010",
-    "@aurelia/metadata": "2.0.1-dev.202401261010",
-    "@aurelia/platform": "2.0.1-dev.202401261010"
+    "@aurelia/http-server": "2.1.0-dev.202401281151",
+    "@aurelia/kernel": "2.1.0-dev.202401281151",
+    "@aurelia/metadata": "2.1.0-dev.202401281151",
+    "@aurelia/platform": "2.1.0-dev.202401281151"
   },
   "devDependencies": {
     "@types/node": "^14.18.14",

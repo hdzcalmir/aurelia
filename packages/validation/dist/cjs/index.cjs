@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var e = require("@aurelia/kernel");
 
 var t = require("@aurelia/metadata");
@@ -12,19 +8,18 @@ var s = require("@aurelia/runtime");
 
 var r = require("@aurelia/runtime-html");
 
-function _interopNamespace(e) {
-    if (e && e.__esModule) return e;
+function _interopNamespaceDefault(e) {
     var t = Object.create(null);
     if (e) {
         for (var s in e) {
             t[s] = e[s];
         }
     }
-    t["default"] = e;
+    t.default = e;
     return Object.freeze(t);
 }
 
-var i = _interopNamespace(s);
+var i = /*#__PURE__*/ _interopNamespaceDefault(s);
 
 const n = /*@__PURE__*/ e.DI.createInterface("IValidationExpressionHydrator");
 
