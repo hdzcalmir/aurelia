@@ -146,11 +146,22 @@ export interface IFixture<T> {
     scrollBy(selector: string, options: number | ScrollToOptions): void;
     flush(): void;
 }
-export type ITrigger = ((selector: string, event: string, init?: CustomEventInit) => void) & {
-    click(selector: string, init?: CustomEventInit): void;
-    change(selector: string, init?: CustomEventInit): void;
-    input(selector: string, init?: CustomEventInit): void;
-    scroll(selector: string, init?: CustomEventInit): void;
+export type ITrigger = {
+    (selector: string, event: 'keydown' | 'keyup' | 'keypress', init?: KeyboardEventInit, overrides?: Record<string, unknown>): void;
+    (selector: string, event: 'click' | 'mousedown' | 'mouseup' | 'mousemove' | 'dbclick' | 'contextmenu', init?: MouseEventInit, overrides?: Record<string, unknown>): void;
+    (selector: string, event: string, init?: CustomEventInit, overrides?: Record<string, unknown>): void;
+    keydown(selector: string, init?: KeyboardEventInit, overrides?: Record<string, unknown>): void;
+    keyup(selector: string, init?: KeyboardEventInit, overrides?: Record<string, unknown>): void;
+    keypress(selector: string, init?: KeyboardEventInit, overrides?: Record<string, unknown>): void;
+    click(selector: string, init?: MouseEventInit, overrides?: Record<string, unknown>): void;
+    mousedown(selector: string, init?: MouseEventInit, overrides?: Record<string, unknown>): void;
+    mouseup(selector: string, init?: MouseEventInit, overrides?: Record<string, unknown>): void;
+    mousemove(selector: string, init?: MouseEventInit, overrides?: Record<string, unknown>): void;
+    dbclick(selector: string, init?: MouseEventInit, overrides?: Record<string, unknown>): void;
+    contextmenu(selector: string, init?: MouseEventInit, overrides?: Record<string, unknown>): void;
+    change(selector: string, init?: CustomEventInit, overrides?: Record<string, unknown>): void;
+    input(selector: string, init?: CustomEventInit, overrides?: Record<string, unknown>): void;
+    scroll(selector: string, init?: CustomEventInit, overrides?: Record<string, unknown>): void;
 };
 export interface IFixtureBuilderBase<T, E = {}> {
     html(html: string): this & E;

@@ -1,10 +1,11 @@
 import { CustomExpression } from './ast';
-import type { AccessKeyedExpression, AccessMemberExpression, AccessScopeExpression, AccessThisExpression, ArrayBindingPattern, ArrayLiteralExpression, ArrowFunction, AssignExpression, BinaryExpression, BindingBehaviorExpression, BindingIdentifier, CallFunctionExpression, CallMemberExpression, CallScopeExpression, ConditionalExpression, ForOfStatement, Interpolation, ObjectBindingPattern, ObjectLiteralExpression, PrimitiveLiteralExpression, TaggedTemplateExpression, TemplateExpression, UnaryExpression, ValueConverterExpression, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, IsExpressionOrStatement } from './ast';
+import type { AccessKeyedExpression, AccessMemberExpression, AccessScopeExpression, AccessThisExpression, ArrayBindingPattern, ArrayLiteralExpression, ArrowFunction, AssignExpression, BinaryExpression, BindingBehaviorExpression, BindingIdentifier, CallFunctionExpression, CallMemberExpression, CallScopeExpression, ConditionalExpression, ForOfStatement, Interpolation, ObjectBindingPattern, ObjectLiteralExpression, PrimitiveLiteralExpression, TaggedTemplateExpression, TemplateExpression, UnaryExpression, ValueConverterExpression, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, IsExpressionOrStatement, AccessBoundaryExpression } from './ast';
 export interface IVisitor<T = unknown> {
     visitAccessKeyed(expr: AccessKeyedExpression): T;
     visitAccessMember(expr: AccessMemberExpression): T;
     visitAccessScope(expr: AccessScopeExpression): T;
     visitAccessThis(expr: AccessThisExpression): T;
+    visitAccessBoundary(expr: AccessBoundaryExpression): T;
     visitArrayBindingPattern(expr: ArrayBindingPattern): T;
     visitArrayLiteral(expr: ArrayLiteralExpression): T;
     visitArrowFunction(expr: ArrowFunction): T;
@@ -37,6 +38,7 @@ export declare class Unparser implements IVisitor<void> {
     visitAccessMember(expr: AccessMemberExpression): void;
     visitAccessKeyed(expr: AccessKeyedExpression): void;
     visitAccessThis(expr: AccessThisExpression): void;
+    visitAccessBoundary(expr: AccessBoundaryExpression): void;
     visitAccessScope(expr: AccessScopeExpression): void;
     visitArrayLiteral(expr: ArrayLiteralExpression): void;
     visitArrowFunction(expr: ArrowFunction): void;

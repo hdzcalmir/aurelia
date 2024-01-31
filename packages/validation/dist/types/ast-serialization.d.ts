@@ -12,6 +12,7 @@ export declare class Serializer implements AST.IVisitor<string> {
     visitAccessMember(expr: AST.AccessMemberExpression): string;
     visitAccessKeyed(expr: AST.AccessKeyedExpression): string;
     visitAccessThis(expr: AST.AccessThisExpression): string;
+    visitAccessBoundary(expr: AST.AccessBoundaryExpression): string;
     visitAccessScope(expr: AST.AccessScopeExpression): string;
     visitArrayLiteral(expr: AST.ArrayLiteralExpression): string;
     visitObjectLiteral(expr: AST.ObjectLiteralExpression): string;

@@ -498,9 +498,6 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
     const cssDeps = [];
     const statements = [];
     let registrationImported = false;
-    if (shadowMode === null && hasSlot) {
-        throw new Error(`<slot> cannot be used in ${unit.path}. <slot> is only available when using ShadowDOM. Please turn on ShadowDOM, or use <au-slot> in non-ShadowDOM mode. https://docs.aurelia.io/app-basics/components-revisited#au-slot`);
-    }
     deps.forEach((d, i) => {
         var _a;
         let ext = path__namespace.extname(d);

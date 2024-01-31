@@ -682,6 +682,7 @@ var f;
     e["AssignExpression"] = "AssignExpression";
     e["ConditionalExpression"] = "ConditionalExpression";
     e["AccessThisExpression"] = "AccessThisExpression";
+    e["AccessBoundaryExpression"] = "AccessBoundaryExpression";
     e["AccessScopeExpression"] = "AccessScopeExpression";
     e["AccessMemberExpression"] = "AccessMemberExpression";
     e["AccessKeyedExpression"] = "AccessKeyedExpression";
@@ -731,6 +732,11 @@ class Deserializer {
             {
                 const t = e;
                 return new i.AccessThisExpression(t.ancestor);
+            }
+
+          case f.AccessBoundaryExpression:
+            {
+                return new i.AccessBoundaryExpression;
             }
 
           case f.AccessScopeExpression:
@@ -911,6 +917,9 @@ class Serializer {
     }
     visitAccessThis(e) {
         return `{"$TYPE":"${f.AccessThisExpression}","ancestor":${e.ancestor}}`;
+    }
+    visitAccessBoundary(e) {
+        return `{"$TYPE":"${f.AccessBoundaryExpression}"}`;
     }
     visitAccessScope(e) {
         return `{"$TYPE":"${f.AccessScopeExpression}","name":"${e.name}","ancestor":${e.ancestor}}`;

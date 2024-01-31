@@ -873,6 +873,8 @@ class TestContext {
     get UIEvent() { return this.platform.globalThis.UIEvent; }
     get Event() { return this.platform.globalThis.Event; }
     get CustomEvent() { return this.platform.globalThis.CustomEvent; }
+    get KeyboardEvent() { return this.platform.globalThis.KeyboardEvent; }
+    get MouseEvent() { return this.platform.globalThis.MouseEvent; }
     get Node() { return this.platform.globalThis.Node; }
     get Element() { return this.platform.globalThis.Element; }
     get HTMLElement() { return this.platform.globalThis.HTMLElement; }
@@ -7900,15 +7902,32 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         const el = strictQueryBy(selector, `to compare value against "${value}"`);
         assert.strictEqual(el.value, value);
     }
-    function trigger(selector, event, init) {
+    function trigger(selector, event, init, overrides) {
         const el = strictQueryBy(selector, `to fire event "${event}"`);
-        el.dispatchEvent(new ctx.CustomEvent(event, init));
+        return $triggerEvent(el, ctx, event, init, overrides);
     }
-    ['click', 'change', 'input', 'scroll'].forEach(event => {
+    mouseEvents.forEach(event => {
         Object.defineProperty(trigger, event, {
-            configurable: true, writable: true, value: (selector, init) => {
-                const el = strictQueryBy(selector, `to fire event "${event}"`);
-                el.dispatchEvent(new ctx.CustomEvent(event, init));
+            configurable: true,
+            writable: true,
+            value: (selector, init, overrides) => {
+                return triggerMouseEvent(strictQueryBy(selector, `to fire event "${event}"`), ctx, event, init, overrides);
+            }
+        });
+    });
+    keyboardEvents.forEach(event => {
+        Object.defineProperty(trigger, event, {
+            configurable: true,
+            writable: true,
+            value: (selector, init, overrides) => {
+                return triggerKeyboardEvent(strictQueryBy(selector, `to fire event "${event}"`), ctx, event, init, overrides);
+            }
+        });
+    });
+    ['change', 'input', 'scroll'].forEach(event => {
+        Object.defineProperty(trigger, event, {
+            configurable: true, writable: true, value: (selector, init, overrides) => {
+                return $triggerEvent(strictQueryBy(selector, `to fire event "${event}"`), ctx, event, init, overrides);
             }
         });
     });
@@ -8046,6 +8065,58 @@ createFixture.html = (html, ...values) => new FixtureBuilder().html(html, ...val
 createFixture.component = (component) => new FixtureBuilder().component(component);
 createFixture.deps = (...deps) => new FixtureBuilder().deps(...deps);
 /* eslint-enable */
+const mouseEvents = ['click', 'mousedown', 'mouseup', 'mousemove', 'dbclick', 'contextmenu'];
+const keyboardEvents = ['keydown', 'keyup', 'keypress'];
+function $triggerEvent(el, ctx, event, init, overrides) {
+    if (mouseEvents.includes(event)) {
+        return triggerMouseEvent(el, ctx, event, init, overrides);
+    }
+    if (keyboardEvents.includes(event)) {
+        return triggerKeyboardEvent(el, ctx, event, init, overrides);
+    }
+    const e = new ctx.CustomEvent(event, init);
+    // define props on event based on overrides
+    if (overrides !== void 0) {
+        for (const prop in overrides) {
+            Object.defineProperty(e, prop, { value: overrides[prop] });
+        }
+    }
+    el.dispatchEvent(e);
+}
+function triggerKeyboardEvent(el, ctx, event, init, overrides) {
+    const e = new ctx.KeyboardEvent(event, init);
+    // define props on event based on overrides
+    if (overrides !== void 0) {
+        for (const prop in overrides) {
+            Object.defineProperty(e, prop, { value: overrides[prop] });
+        }
+    }
+    el.dispatchEvent(e);
+}
+function triggerMouseEvent(el, ctx, event, init, overrides) {
+    const e = new ctx.MouseEvent(event, init);
+    // define props on event based on overrides
+    if (overrides !== void 0) {
+        for (const prop in overrides) {
+            Object.defineProperty(e, prop, { value: overrides[prop] });
+        }
+    }
+    el.dispatchEvent(e);
+}
+mouseEvents.forEach(event => {
+    Object.defineProperty($triggerEvent, event, {
+        configurable: true, writable: true, value: (el, ctx, init, overrides) => {
+            return triggerMouseEvent(el, ctx, event, init, overrides);
+        }
+    });
+});
+keyboardEvents.forEach(event => {
+    Object.defineProperty($triggerEvent, event, {
+        configurable: true, writable: true, value: (el, ctx, init, overrides) => {
+            return triggerKeyboardEvent(el, ctx, event, init, overrides);
+        }
+    });
+});
 
 class MockBinding {
     constructor() {

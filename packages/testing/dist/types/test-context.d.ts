@@ -22,6 +22,18 @@ export declare class TestContext {
         new <T>(type: string, eventInitDict?: CustomEventInit<T> | undefined): CustomEvent<T>;
         prototype: CustomEvent<any>;
     };
+    get KeyboardEvent(): {
+        new (type: string, eventInitDict?: KeyboardEventInit | undefined): KeyboardEvent;
+        prototype: KeyboardEvent;
+        readonly DOM_KEY_LOCATION_STANDARD: 0;
+        readonly DOM_KEY_LOCATION_LEFT: 1;
+        readonly DOM_KEY_LOCATION_RIGHT: 2;
+        readonly DOM_KEY_LOCATION_NUMPAD: 3;
+    };
+    get MouseEvent(): {
+        new (type: string, eventInitDict?: MouseEventInit | undefined): MouseEvent;
+        prototype: MouseEvent;
+    };
     get Node(): {
         new (): Node;
         prototype: Node;

@@ -1,6 +1,6 @@
 import { IContainer } from '@aurelia/kernel';
 import { DirtyChecker, ICoercionConfiguration } from '@aurelia/runtime';
-import { AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, SpreadAttributePattern, DotSeparatedAttributePattern, RefAttributePattern } from './resources/attribute-pattern';
+import { AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, SpreadAttributePattern, DotSeparatedAttributePattern, RefAttributePattern, EventAttributePattern } from './resources/attribute-pattern';
 import { ForBindingCommand, OneTimeBindingCommand, TriggerBindingCommand } from './resources/binding-command';
 import { TemplateCompiler } from './compiler/template-compiler';
 import { CustomAttributeRenderer, CustomElementRenderer, InterpolationBindingRenderer, IteratorBindingRenderer, LetElementRenderer, PropertyBindingRenderer, RefBindingRenderer, SetPropertyRenderer, TemplateControllerRenderer, AttributeBindingRenderer, ListenerBindingRenderer, SetAttributeRenderer, StylePropertyBindingRenderer, TextBindingRenderer, SetClassAttributeRenderer, SetStyleAttributeRenderer, SpreadRenderer } from './renderer';
@@ -33,7 +33,9 @@ export declare const DefaultComponents: (typeof NodeObserverLocator | typeof Tem
  * - `ref`
  * - `target.command` (dot-separated)
  */
-export declare const DefaultBindingSyntax: (typeof DotSeparatedAttributePattern | typeof RefAttributePattern | typeof SpreadAttributePattern)[];
+export declare const DefaultBindingSyntax: ({
+    register(c: IContainer): void;
+} | typeof DotSeparatedAttributePattern | typeof RefAttributePattern | typeof EventAttributePattern | typeof SpreadAttributePattern)[];
 /**
  * Binding syntax for short-hand attribute name patterns:
  * - `@target` (short-hand for `target.trigger`)

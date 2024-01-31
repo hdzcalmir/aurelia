@@ -671,57 +671,6 @@ export function register(container) {
         }), false, () => false);
         testing_1.assert.equal(result.code, expected);
     });
-    it('rejects <slot> usage in non-ShadowDOM mode', function () {
-        const html = '<slot></slot>';
-        testing_1.assert.throws(() => {
-            (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
-                hmr: false,
-            }), false, () => false);
-        });
-    });
-    it('does not reject <slot> usage in ShadowDOM mode', function () {
-        const html = '<slot></slot>';
-        const expected = `import { CustomElement } from '@aurelia/runtime-html';
-export const name = "foo-bar";
-export const template = "<slot></slot>";
-export default template;
-export const dependencies = [  ];
-export const shadowOptions = { mode: 'open' };
-let _e;
-export function register(container) {
-  if (!_e) {
-    _e = CustomElement.define({ name, template, dependencies, shadowOptions });
-  }
-  container.register(_e);
-}
-`;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
-            hmr: false,
-            defaultShadowOptions: { mode: 'open' }
-        }), false, () => false);
-        testing_1.assert.equal(result.code, expected);
-    });
-    it('does not reject <slot> usage in local ShadowDOM mode', function () {
-        const html = '<use-shadow-dom><slot></slot>';
-        const expected = `import { CustomElement } from '@aurelia/runtime-html';
-export const name = "foo-bar";
-export const template = "<slot></slot>";
-export default template;
-export const dependencies = [  ];
-export const shadowOptions = { mode: 'open' };
-let _e;
-export function register(container) {
-  if (!_e) {
-    _e = CustomElement.define({ name, template, dependencies, shadowOptions });
-  }
-  container.register(_e);
-}
-`;
-        const result = (0, plugin_conventions_1.preprocessHtmlTemplate)({ path: path.join('lo', 'FooBar.html'), contents: html }, (0, plugin_conventions_1.preprocessOptions)({
-            hmr: false,
-        }), false, () => false);
-        testing_1.assert.equal(result.code, expected);
-    });
     it('processes template with index file', function () {
         const html = '<template></template>';
         const expected = `import { CustomElement } from '@aurelia/runtime-html';

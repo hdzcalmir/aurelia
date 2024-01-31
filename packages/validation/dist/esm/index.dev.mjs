@@ -790,6 +790,7 @@ var ASTExpressionTypes;
     ASTExpressionTypes["AssignExpression"] = "AssignExpression";
     ASTExpressionTypes["ConditionalExpression"] = "ConditionalExpression";
     ASTExpressionTypes["AccessThisExpression"] = "AccessThisExpression";
+    ASTExpressionTypes["AccessBoundaryExpression"] = "AccessBoundaryExpression";
     ASTExpressionTypes["AccessScopeExpression"] = "AccessScopeExpression";
     ASTExpressionTypes["AccessMemberExpression"] = "AccessMemberExpression";
     ASTExpressionTypes["AccessKeyedExpression"] = "AccessKeyedExpression";
@@ -833,6 +834,9 @@ class Deserializer {
             case ASTExpressionTypes.AccessThisExpression: {
                 const expr = raw;
                 return new AST.AccessThisExpression(expr.ancestor);
+            }
+            case ASTExpressionTypes.AccessBoundaryExpression: {
+                return new AST.AccessBoundaryExpression();
             }
             case ASTExpressionTypes.AccessScopeExpression: {
                 const expr = raw;
@@ -965,6 +969,9 @@ class Serializer {
     }
     visitAccessThis(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.AccessThisExpression}","ancestor":${expr.ancestor}}`;
+    }
+    visitAccessBoundary(expr) {
+        return `{"$TYPE":"${ASTExpressionTypes.AccessBoundaryExpression}"}`;
     }
     visitAccessScope(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.AccessScopeExpression}","name":"${expr.name}","ancestor":${expr.ancestor}}`;

@@ -1,6 +1,6 @@
 {
   "name": "@aurelia/fetch-client",
-  "version": "2.1.0-dev.202401281151",
+  "version": "2.1.0-dev.202401310648",
   "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.mjs",
   "exports": {
@@ -53,8 +53,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@aurelia/kernel": "2.1.0-dev.202401281151",
-    "@aurelia/metadata": "2.1.0-dev.202401281151"
+    "@aurelia/kernel": "2.1.0-dev.202401310648",
+    "@aurelia/metadata": "2.1.0-dev.202401310648"
   },
   "devDependencies": {
     "typescript": "5.2.2"

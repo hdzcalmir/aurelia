@@ -1,4 +1,4 @@
-import { Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, createResolver, firstDefined, mergeArrays, resolve, IPlatform as IPlatform$1, emptyArray, InstanceProvider, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, IContainer, optional, ILogger, LogLevel, onResolveAll, onResolve, all, camelCase, IServiceLocator, emptyObject, transient, toArray } from '../../../kernel/dist/native-modules/index.mjs';
+import { Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, createResolver, firstDefined, mergeArrays, resolve, IPlatform as IPlatform$1, emptyArray, InstanceProvider, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, IContainer, all, optional, ILogger, LogLevel, onResolveAll, onResolve, camelCase, IServiceLocator, emptyObject, transient, toArray } from '../../../kernel/dist/native-modules/index.mjs';
 import { Metadata, isObject } from '../../../metadata/dist/native-modules/index.mjs';
 import { AccessorType, ISignaler, astEvaluate, connectable, ConnectableSwitcher, ProxyObservable, astBind, astUnbind, astAssign, subscriberCollection, IExpressionParser, IObserverLocator, ICoercionConfiguration, Scope, AccessScopeExpression, PropertyAccessor, IDirtyChecker, INodeObserverLocator, getObserverLookup, SetterObserver, createIndexMap, getCollectionObserver as getCollectionObserver$1, BindingContext, PrimitiveLiteralExpression, DirtyChecker } from '../../../runtime/dist/native-modules/index.mjs';
 import { BrowserPlatform } from '../../../platform-browser/dist/native-modules/index.mjs';
@@ -2997,7 +2997,7 @@ class ListenerBindingOptions {
  * Listener binding. Handle event binding between view and view model
  */
 class ListenerBinding {
-    constructor(locator, ast, target, targetEvent, options) {
+    constructor(locator, ast, target, targetEvent, options, modifiedEventHandler) {
         this.ast = ast;
         this.target = target;
         this.targetEvent = targetEvent;
@@ -3013,8 +3013,11 @@ class ListenerBinding {
          * @internal
          */
         this.boundFn = true;
+        /** @internal */
+        this._modifiedEventHandler = null;
         this.l = locator;
         this._options = options;
+        this._modifiedEventHandler = modifiedEventHandler;
     }
     callSource(event) {
         const overrideContext = this._scope.overrideContext;
@@ -3036,7 +3039,9 @@ class ListenerBinding {
                 return;
             }
         }
-        this.callSource(event);
+        if (this._modifiedEventHandler?.(event) !== false) {
+            this.callSource(event);
+        }
     }
     bind(scope) {
         if (this.isBound) {
@@ -3065,6 +3070,153 @@ class ListenerBinding {
 mixinUseScope(ListenerBinding);
 mixingBindingLimited(ListenerBinding, () => 'callSource');
 mixinAstEvaluator(true, true)(ListenerBinding);
+const IModifiedEventHandlerCreator = /*@__PURE__*/ createInterface('IEventModifier');
+const IKeyMapping = /*@__PURE__*/ createInterface('IKeyMapping', x => x.instance({
+    meta: objectFreeze(['ctrl', 'alt', 'shift', 'meta']),
+    keys: {
+        escape: 'Escape',
+        enter: 'Enter',
+        space: 'Space',
+        tab: 'tab',
+        // by default, maps the key a-z and A-Z to their respective keycodes
+        ...Array.from({ length: 25 }).reduce((acc, _, idx) => {
+            // map keycode of upper case character from A-Z
+            let char = String.fromCharCode(idx + 65);
+            acc[idx + 65] = char;
+            // map keycode and character code of lower case character from a-z
+            char = String.fromCharCode(idx + 97);
+            acc[idx + 97] = acc[char] = char;
+            return acc;
+        }, {})
+    },
+}));
+class ModifiedMouseEventHandler {
+    constructor() {
+        this.type = ['click', 'mousedown', 'mousemove', 'mouseup', 'dblclick', 'contextmenu'];
+        /** @internal */
+        this._mapping = resolve(IKeyMapping);
+        /** @internal */
+        this._mouseButtons = ['left', 'middle', 'right'];
+    }
+    static register(c) {
+        c.register(singletonRegistration(IModifiedEventHandlerCreator, ModifiedMouseEventHandler));
+    }
+    getHandler(modifier) {
+        const modifiers = modifier.split(/[:+.]/);
+        return ((event) => {
+            let prevent = false;
+            let stop = false;
+            let m;
+            for (m of modifiers) {
+                switch (m) {
+                    case 'prevent':
+                        prevent = true;
+                        continue;
+                    case 'stop':
+                        stop = true;
+                        continue;
+                    case 'left':
+                    case 'middle':
+                    case 'right':
+                        if (event.button !== this._mouseButtons.indexOf(m))
+                            return false;
+                        continue;
+                }
+                if (this._mapping.meta.includes(m) && event[`${m}Key`] !== true) {
+                    return false;
+                }
+                {
+                    // eslint-disable-next-line no-console
+                    console.warn(`Modifier '${m}' is not supported for mouse events.`);
+                }
+            }
+            if (prevent)
+                event.preventDefault();
+            if (stop)
+                event.stopPropagation();
+            return true;
+        });
+    }
+}
+class ModifiedKeyboardEventHandler {
+    constructor() {
+        /** @internal */
+        this._mapping = resolve(IKeyMapping);
+        this.type = ['keydown', 'keyup'];
+    }
+    static register(c) {
+        c.register(singletonRegistration(IModifiedEventHandlerCreator, ModifiedKeyboardEventHandler));
+    }
+    getHandler(modifier) {
+        const modifiers = modifier.split(/[:+.]/);
+        return ((event) => {
+            let prevent = false;
+            let stop = false;
+            let mod;
+            for (mod of modifiers) {
+                switch (mod) {
+                    case 'prevent':
+                        prevent = true;
+                        continue;
+                    case 'stop':
+                        stop = true;
+                        continue;
+                }
+                if (this._mapping.meta.includes(mod)) {
+                    if (event[`${mod}Key`] !== true) {
+                        return false;
+                    }
+                    continue;
+                }
+                const mappedKey = this._mapping.keys[mod];
+                if (mappedKey !== event.key) {
+                    return false;
+                }
+                {
+                    // eslint-disable-next-line no-console
+                    console.warn(`Modifier '${mod}' is not supported for keyboard event with key "${event.key}".`);
+                }
+            }
+            if (prevent)
+                event.preventDefault();
+            if (stop)
+                event.stopPropagation();
+            return true;
+        });
+    }
+}
+const IEventModifier = /*@__PURE__*/ createInterface('IEventModifierHandler', x => x.instance({
+    getHandler: () => {
+        {
+            // eslint-disable-next-line no-console
+            console.warn('No event modifier handler registered');
+        }
+        /* istanbul ignore next */
+        return null;
+    }
+}));
+class EventModifier {
+    constructor() {
+        /** @internal */
+        this._reg = resolve(all(IModifiedEventHandlerCreator))
+            .reduce((acc, cur) => {
+            const types = isArray(cur.type) ? cur.type : [cur.type];
+            types.forEach(t => acc[t] = cur);
+            return acc;
+        }, {});
+    }
+    static register(c) {
+        c.register(singletonRegistration(IEventModifier, EventModifier));
+    }
+    getHandler(type, modifier) {
+        return isString(modifier) ? this._reg[type]?.getHandler(modifier) ?? null : null;
+    }
+}
+const EventModifierRegistration = {
+    register(c) {
+        c.register(EventModifier, ModifiedMouseEventHandler, ModifiedKeyboardEventHandler);
+    }
+};
 
 const IViewFactory = /*@__PURE__*/ createInterface('IViewFactory');
 class ViewFactory {
@@ -3574,11 +3726,12 @@ class TextBindingInstruction {
     }
 }
 class ListenerBindingInstruction {
-    constructor(from, to, preventDefault, capture) {
+    constructor(from, to, preventDefault, capture, modifier) {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
         this.capture = capture;
+        this.modifier = modifier;
         this.type = listenerBinding;
     }
 }
@@ -3958,8 +4111,12 @@ TextBindingRenderer = __decorate([
     /** @internal */
 ], TextBindingRenderer);
 let ListenerBindingRenderer = class ListenerBindingRenderer {
+    constructor() {
+        /** @internal */
+        this._modifierHandler = resolve(IEventModifier);
+    }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(instruction.preventDefault, instruction.capture)));
+        renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(instruction.preventDefault, instruction.capture), this._modifierHandler.getHandler(instruction.to, instruction.modifier)));
     }
 };
 ListenerBindingRenderer = __decorate([
@@ -6107,11 +6264,12 @@ function sortEndpoint(a, b) {
     return 0;
 }
 class AttrSyntax {
-    constructor(rawName, rawValue, target, command) {
+    constructor(rawName, rawValue, target, command, parts = null) {
         this.rawName = rawName;
         this.rawValue = rawValue;
         this.target = target;
         this.command = command;
+        this.parts = parts;
     }
 }
 const IAttributePattern = /*@__PURE__*/ createInterface('IAttributePattern');
@@ -6136,7 +6294,7 @@ class AttributeParser {
         }
         const pattern = interpretation.pattern;
         if (pattern == null) {
-            return new AttrSyntax(name, value, name, null);
+            return new AttrSyntax(name, value, name, null, null);
         }
         else {
             return this._patterns[pattern][pattern](name, value, interpretation.parts);
@@ -6206,6 +6364,17 @@ let RefAttributePattern = class RefAttributePattern {
 RefAttributePattern = __decorate([
     attributePattern({ pattern: 'ref', symbols: '' }, { pattern: 'PART.ref', symbols: '.' })
 ], RefAttributePattern);
+let EventAttributePattern = class EventAttributePattern {
+    'PART.trigger:PART'(rawName, rawValue, parts) {
+        return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', parts);
+    }
+    'PART.capture:PART'(rawName, rawValue, parts) {
+        return new AttrSyntax(rawName, rawValue, parts[0], 'capture', parts);
+    }
+};
+EventAttributePattern = __decorate([
+    attributePattern({ pattern: 'PART.trigger:PART', symbols: '.:' }, { pattern: 'PART.capture:PART', symbols: '.:' })
+], EventAttributePattern);
 let ColonPrefixedBindAttributePattern = class ColonPrefixedBindAttributePattern {
     ':PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'bind');
@@ -6218,9 +6387,13 @@ let AtPrefixedTriggerAttributePattern = class AtPrefixedTriggerAttributePattern 
     '@PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger');
     }
+    '@PART:PART'(rawName, rawValue, parts) {
+        parts.splice(1, 0, 'trigger');
+        return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', parts);
+    }
 };
 AtPrefixedTriggerAttributePattern = __decorate([
-    attributePattern({ pattern: '@PART', symbols: '@' })
+    attributePattern({ pattern: '@PART', symbols: '@' }, { pattern: '@PART:PART', symbols: '@:' })
 ], AtPrefixedTriggerAttributePattern);
 let SpreadAttributePattern = class SpreadAttributePattern {
     '...$attrs'(rawName, rawValue, _parts) {
@@ -6455,7 +6628,7 @@ ForBindingCommand = __decorate([
 let TriggerBindingCommand = class TriggerBindingCommand {
     get type() { return ctIgnoreAttr; }
     build(info, exprParser) {
-        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true, false);
+        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true, false, info.attr.parts?.[2] ?? null);
     }
 };
 TriggerBindingCommand = __decorate([
@@ -6464,7 +6637,7 @@ TriggerBindingCommand = __decorate([
 let CaptureBindingCommand = class CaptureBindingCommand {
     get type() { return ctIgnoreAttr; }
     build(info, exprParser) {
-        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false, true);
+        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false, true, info.attr.parts?.[2] ?? null);
     }
 };
 CaptureBindingCommand = __decorate([
@@ -12099,6 +12272,8 @@ const DefaultBindingSyntax = [
     RefAttributePattern,
     DotSeparatedAttributePattern,
     SpreadAttributePattern,
+    EventAttributePattern,
+    EventModifierRegistration,
 ];
 /**
  * Binding syntax for short-hand attribute name patterns:
@@ -12402,5 +12577,5 @@ class ChildrenLifecycleHooks {
 }
 let mixed = false;
 
-export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DotSeparatedAttributePattern, Else, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, ILifecycleHooks, ILocation, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
+export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DotSeparatedAttributePattern, Else, EventModifier, EventModifierRegistration, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventModifier, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, IKeyMapping, ILifecycleHooks, ILocation, IModifiedEventHandlerCreator, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
 //# sourceMappingURL=index.dev.mjs.map

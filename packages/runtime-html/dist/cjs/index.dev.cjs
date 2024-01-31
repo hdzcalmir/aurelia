@@ -3001,7 +3001,7 @@ class ListenerBindingOptions {
  * Listener binding. Handle event binding between view and view model
  */
 class ListenerBinding {
-    constructor(locator, ast, target, targetEvent, options) {
+    constructor(locator, ast, target, targetEvent, options, modifiedEventHandler) {
         this.ast = ast;
         this.target = target;
         this.targetEvent = targetEvent;
@@ -3017,8 +3017,11 @@ class ListenerBinding {
          * @internal
          */
         this.boundFn = true;
+        /** @internal */
+        this._modifiedEventHandler = null;
         this.l = locator;
         this._options = options;
+        this._modifiedEventHandler = modifiedEventHandler;
     }
     callSource(event) {
         const overrideContext = this._scope.overrideContext;
@@ -3040,7 +3043,9 @@ class ListenerBinding {
                 return;
             }
         }
-        this.callSource(event);
+        if (this._modifiedEventHandler?.(event) !== false) {
+            this.callSource(event);
+        }
     }
     bind(scope) {
         if (this.isBound) {
@@ -3069,6 +3074,153 @@ class ListenerBinding {
 mixinUseScope(ListenerBinding);
 mixingBindingLimited(ListenerBinding, () => 'callSource');
 mixinAstEvaluator(true, true)(ListenerBinding);
+const IModifiedEventHandlerCreator = /*@__PURE__*/ createInterface('IEventModifier');
+const IKeyMapping = /*@__PURE__*/ createInterface('IKeyMapping', x => x.instance({
+    meta: objectFreeze(['ctrl', 'alt', 'shift', 'meta']),
+    keys: {
+        escape: 'Escape',
+        enter: 'Enter',
+        space: 'Space',
+        tab: 'tab',
+        // by default, maps the key a-z and A-Z to their respective keycodes
+        ...Array.from({ length: 25 }).reduce((acc, _, idx) => {
+            // map keycode of upper case character from A-Z
+            let char = String.fromCharCode(idx + 65);
+            acc[idx + 65] = char;
+            // map keycode and character code of lower case character from a-z
+            char = String.fromCharCode(idx + 97);
+            acc[idx + 97] = acc[char] = char;
+            return acc;
+        }, {})
+    },
+}));
+class ModifiedMouseEventHandler {
+    constructor() {
+        this.type = ['click', 'mousedown', 'mousemove', 'mouseup', 'dblclick', 'contextmenu'];
+        /** @internal */
+        this._mapping = kernel.resolve(IKeyMapping);
+        /** @internal */
+        this._mouseButtons = ['left', 'middle', 'right'];
+    }
+    static register(c) {
+        c.register(singletonRegistration(IModifiedEventHandlerCreator, ModifiedMouseEventHandler));
+    }
+    getHandler(modifier) {
+        const modifiers = modifier.split(/[:+.]/);
+        return ((event) => {
+            let prevent = false;
+            let stop = false;
+            let m;
+            for (m of modifiers) {
+                switch (m) {
+                    case 'prevent':
+                        prevent = true;
+                        continue;
+                    case 'stop':
+                        stop = true;
+                        continue;
+                    case 'left':
+                    case 'middle':
+                    case 'right':
+                        if (event.button !== this._mouseButtons.indexOf(m))
+                            return false;
+                        continue;
+                }
+                if (this._mapping.meta.includes(m) && event[`${m}Key`] !== true) {
+                    return false;
+                }
+                {
+                    // eslint-disable-next-line no-console
+                    console.warn(`Modifier '${m}' is not supported for mouse events.`);
+                }
+            }
+            if (prevent)
+                event.preventDefault();
+            if (stop)
+                event.stopPropagation();
+            return true;
+        });
+    }
+}
+class ModifiedKeyboardEventHandler {
+    constructor() {
+        /** @internal */
+        this._mapping = kernel.resolve(IKeyMapping);
+        this.type = ['keydown', 'keyup'];
+    }
+    static register(c) {
+        c.register(singletonRegistration(IModifiedEventHandlerCreator, ModifiedKeyboardEventHandler));
+    }
+    getHandler(modifier) {
+        const modifiers = modifier.split(/[:+.]/);
+        return ((event) => {
+            let prevent = false;
+            let stop = false;
+            let mod;
+            for (mod of modifiers) {
+                switch (mod) {
+                    case 'prevent':
+                        prevent = true;
+                        continue;
+                    case 'stop':
+                        stop = true;
+                        continue;
+                }
+                if (this._mapping.meta.includes(mod)) {
+                    if (event[`${mod}Key`] !== true) {
+                        return false;
+                    }
+                    continue;
+                }
+                const mappedKey = this._mapping.keys[mod];
+                if (mappedKey !== event.key) {
+                    return false;
+                }
+                {
+                    // eslint-disable-next-line no-console
+                    console.warn(`Modifier '${mod}' is not supported for keyboard event with key "${event.key}".`);
+                }
+            }
+            if (prevent)
+                event.preventDefault();
+            if (stop)
+                event.stopPropagation();
+            return true;
+        });
+    }
+}
+const IEventModifier = /*@__PURE__*/ createInterface('IEventModifierHandler', x => x.instance({
+    getHandler: () => {
+        {
+            // eslint-disable-next-line no-console
+            console.warn('No event modifier handler registered');
+        }
+        /* istanbul ignore next */
+        return null;
+    }
+}));
+class EventModifier {
+    constructor() {
+        /** @internal */
+        this._reg = kernel.resolve(kernel.all(IModifiedEventHandlerCreator))
+            .reduce((acc, cur) => {
+            const types = isArray(cur.type) ? cur.type : [cur.type];
+            types.forEach(t => acc[t] = cur);
+            return acc;
+        }, {});
+    }
+    static register(c) {
+        c.register(singletonRegistration(IEventModifier, EventModifier));
+    }
+    getHandler(type, modifier) {
+        return isString(modifier) ? this._reg[type]?.getHandler(modifier) ?? null : null;
+    }
+}
+const EventModifierRegistration = {
+    register(c) {
+        c.register(EventModifier, ModifiedMouseEventHandler, ModifiedKeyboardEventHandler);
+    }
+};
 
 const IViewFactory = /*@__PURE__*/ createInterface('IViewFactory');
 class ViewFactory {
@@ -3578,11 +3730,12 @@ class TextBindingInstruction {
     }
 }
 class ListenerBindingInstruction {
-    constructor(from, to, preventDefault, capture) {
+    constructor(from, to, preventDefault, capture, modifier) {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
         this.capture = capture;
+        this.modifier = modifier;
         this.type = listenerBinding;
     }
 }
@@ -3962,8 +4115,12 @@ exports.TextBindingRenderer = __decorate([
     /** @internal */
 ], exports.TextBindingRenderer);
 exports.ListenerBindingRenderer = class ListenerBindingRenderer {
+    constructor() {
+        /** @internal */
+        this._modifierHandler = kernel.resolve(IEventModifier);
+    }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(instruction.preventDefault, instruction.capture)));
+        renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(instruction.preventDefault, instruction.capture), this._modifierHandler.getHandler(instruction.to, instruction.modifier)));
     }
 };
 exports.ListenerBindingRenderer = __decorate([
@@ -6111,11 +6268,12 @@ function sortEndpoint(a, b) {
     return 0;
 }
 class AttrSyntax {
-    constructor(rawName, rawValue, target, command) {
+    constructor(rawName, rawValue, target, command, parts = null) {
         this.rawName = rawName;
         this.rawValue = rawValue;
         this.target = target;
         this.command = command;
+        this.parts = parts;
     }
 }
 const IAttributePattern = /*@__PURE__*/ createInterface('IAttributePattern');
@@ -6140,7 +6298,7 @@ class AttributeParser {
         }
         const pattern = interpretation.pattern;
         if (pattern == null) {
-            return new AttrSyntax(name, value, name, null);
+            return new AttrSyntax(name, value, name, null, null);
         }
         else {
             return this._patterns[pattern][pattern](name, value, interpretation.parts);
@@ -6210,6 +6368,17 @@ exports.RefAttributePattern = class RefAttributePattern {
 exports.RefAttributePattern = __decorate([
     attributePattern({ pattern: 'ref', symbols: '' }, { pattern: 'PART.ref', symbols: '.' })
 ], exports.RefAttributePattern);
+let EventAttributePattern = class EventAttributePattern {
+    'PART.trigger:PART'(rawName, rawValue, parts) {
+        return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', parts);
+    }
+    'PART.capture:PART'(rawName, rawValue, parts) {
+        return new AttrSyntax(rawName, rawValue, parts[0], 'capture', parts);
+    }
+};
+EventAttributePattern = __decorate([
+    attributePattern({ pattern: 'PART.trigger:PART', symbols: '.:' }, { pattern: 'PART.capture:PART', symbols: '.:' })
+], EventAttributePattern);
 exports.ColonPrefixedBindAttributePattern = class ColonPrefixedBindAttributePattern {
     ':PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'bind');
@@ -6222,9 +6391,13 @@ exports.AtPrefixedTriggerAttributePattern = class AtPrefixedTriggerAttributePatt
     '@PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger');
     }
+    '@PART:PART'(rawName, rawValue, parts) {
+        parts.splice(1, 0, 'trigger');
+        return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', parts);
+    }
 };
 exports.AtPrefixedTriggerAttributePattern = __decorate([
-    attributePattern({ pattern: '@PART', symbols: '@' })
+    attributePattern({ pattern: '@PART', symbols: '@' }, { pattern: '@PART:PART', symbols: '@:' })
 ], exports.AtPrefixedTriggerAttributePattern);
 let SpreadAttributePattern = class SpreadAttributePattern {
     '...$attrs'(rawName, rawValue, _parts) {
@@ -6459,7 +6632,7 @@ exports.ForBindingCommand = __decorate([
 exports.TriggerBindingCommand = class TriggerBindingCommand {
     get type() { return ctIgnoreAttr; }
     build(info, exprParser) {
-        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true, false);
+        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true, false, info.attr.parts?.[2] ?? null);
     }
 };
 exports.TriggerBindingCommand = __decorate([
@@ -6468,7 +6641,7 @@ exports.TriggerBindingCommand = __decorate([
 exports.CaptureBindingCommand = class CaptureBindingCommand {
     get type() { return ctIgnoreAttr; }
     build(info, exprParser) {
-        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false, true);
+        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false, true, info.attr.parts?.[2] ?? null);
     }
 };
 exports.CaptureBindingCommand = __decorate([
@@ -12103,6 +12276,8 @@ const DefaultBindingSyntax = [
     exports.RefAttributePattern,
     exports.DotSeparatedAttributePattern,
     SpreadAttributePattern,
+    EventAttributePattern,
+    EventModifierRegistration,
 ];
 /**
  * Binding syntax for short-hand attribute name patterns:
@@ -12447,6 +12622,8 @@ exports.DefaultComponents = DefaultComponents;
 exports.DefaultRenderers = DefaultRenderers;
 exports.DefaultResources = DefaultResources;
 exports.Else = Else;
+exports.EventModifier = EventModifier;
+exports.EventModifierRegistration = EventModifierRegistration;
 exports.ExpressionWatcher = ExpressionWatcher;
 exports.FlushQueue = FlushQueue;
 exports.Focus = Focus;
@@ -12465,13 +12642,16 @@ exports.IAuSlotWatcher = IAuSlotWatcher;
 exports.IAuSlotsInfo = IAuSlotsInfo;
 exports.IAurelia = IAurelia;
 exports.IController = IController;
+exports.IEventModifier = IEventModifier;
 exports.IEventTarget = IEventTarget;
 exports.IFlushQueue = IFlushQueue;
 exports.IHistory = IHistory;
 exports.IHydrationContext = IHydrationContext;
 exports.IInstruction = IInstruction;
+exports.IKeyMapping = IKeyMapping;
 exports.ILifecycleHooks = ILifecycleHooks;
 exports.ILocation = ILocation;
+exports.IModifiedEventHandlerCreator = IModifiedEventHandlerCreator;
 exports.INode = INode;
 exports.IPlatform = IPlatform;
 exports.IRenderLocation = IRenderLocation;
