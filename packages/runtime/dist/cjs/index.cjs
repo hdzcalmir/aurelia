@@ -72,7 +72,7 @@ const astVisit = (e, t) => {
       case S:
         return t.visitAccessMember(e);
 
-      case w:
+      case b:
         return t.visitAccessScope(e);
 
       case p:
@@ -460,9 +460,9 @@ const p = "AccessThis";
 
 const d = "AccessBoundary";
 
-const b = "AccessGlobal";
+const w = "AccessGlobal";
 
-const w = "AccessScope";
+const b = "AccessScope";
 
 const v = "ArrayLiteral";
 
@@ -575,7 +575,7 @@ class ConditionalExpression {
 class AccessGlobalExpression {
     constructor(e) {
         this.name = e;
-        this.$kind = b;
+        this.$kind = w;
     }
 }
 
@@ -596,11 +596,11 @@ class AccessScopeExpression {
     constructor(e, t = 0) {
         this.name = e;
         this.ancestor = t;
-        this.$kind = w;
+        this.$kind = b;
     }
 }
 
-const isAccessGlobal = e => e.$kind === b || (e.$kind === S || e.$kind === T) && e.accessGlobal;
+const isAccessGlobal = e => e.$kind === w || (e.$kind === S || e.$kind === T) && e.accessGlobal;
 
 class AccessMemberExpression {
     constructor(e, t, r = false) {
@@ -856,7 +856,7 @@ class Scope {
         if (e == null) {
             throw createMappedError(204);
         }
-        return new Scope(null, e, t == null ? new OverrideContext : t, r ?? false);
+        return new Scope(null, e, t ?? new OverrideContext, r ?? false);
     }
     static fromParent(e, t) {
         if (e == null) {
@@ -893,7 +893,7 @@ function astEvaluate(e, t, r, n) {
             return e ? e.bindingContext : void 0;
         }
 
-      case w:
+      case b:
         {
             const i = z(t, e.name, e.ancestor);
             if (n !== null) {
@@ -909,7 +909,7 @@ function astEvaluate(e, t, r, n) {
             return o == null ? "" : r?.boundFn && isFunction(o) ? o.bind(i) : o;
         }
 
-      case b:
+      case w:
         return globalThis[e.name];
 
       case O:
@@ -1233,7 +1233,7 @@ function astEvaluate(e, t, r, n) {
 
 function astAssign(t, r, n, i) {
     switch (t.$kind) {
-      case w:
+      case b:
         {
             if (t.name === "$host") {
                 throw createMappedError(106);
@@ -1848,7 +1848,7 @@ function quickSort(e, t, r, n, i) {
     let o = 0, a = 0;
     let c, u, l;
     let h, f, p;
-    let d, b, w;
+    let d, w, b;
     let v, x;
     let E, y, A, C;
     let m, k, O, S;
@@ -1873,8 +1873,8 @@ function quickSort(e, t, r, n, i) {
             u = v;
             f = x;
         }
-        b = i(c, l);
-        if (b >= 0) {
+        w = i(c, l);
+        if (w >= 0) {
             v = c;
             x = h;
             c = l;
@@ -1884,8 +1884,8 @@ function quickSort(e, t, r, n, i) {
             u = v;
             f = x;
         } else {
-            w = i(u, l);
-            if (w > 0) {
+            b = i(u, l);
+            if (b > 0) {
                 v = u;
                 x = f;
                 u = l;
@@ -2156,13 +2156,13 @@ for (const e of pe) {
     });
 }
 
-let be = false;
+let we = false;
 
-const we = "__au_arr_on__";
+const be = "__au_arr_on__";
 
 function enableArrayObservation() {
-    if (!(h(we, Array) ?? false)) {
-        f(we, true, Array);
+    if (!(h(be, Array) ?? false)) {
+        f(be, true, Array);
         for (const e of pe) {
             if (ne[e].observing !== true) {
                 defineHiddenProp(ne, e, de[e]);
@@ -2182,8 +2182,8 @@ function disableArrayObservation() {
 class ArrayObserver {
     constructor(e) {
         this.type = J;
-        if (!be) {
-            be = true;
+        if (!we) {
+            we = true;
             enableArrayObservation();
         }
         this.indexObservers = {};
@@ -2871,7 +2871,7 @@ const $charCodeAt = e => st.charCodeAt(e);
 
 const $tokenRaw = () => st.slice(ot, rt);
 
-const bt = ("Infinity NaN isFinite isNaN parseFloat parseInt decodeURI decodeURIComponent encodeURI encodeURIComponent" + " Array BigInt Boolean Date Map Number Object RegExp Set String JSON Math Intl").split(" ");
+const wt = ("Infinity NaN isFinite isNaN parseFloat parseInt decodeURI decodeURIComponent encodeURI encodeURIComponent" + " Array BigInt Boolean Date Map Number Object RegExp Set String JSON Math Intl").split(" ");
 
 function parseExpression(e, t) {
     st = e;
@@ -2958,7 +2958,7 @@ function parse(e, t) {
                 const e = ct;
                 if (t === Xe) {
                     n = new BindingIdentifier(e);
-                } else if (ft && bt.includes(e)) {
+                } else if (ft && wt.includes(e)) {
                     n = new AccessGlobalExpression(e);
                 } else if (ft && e === "import") {
                     throw unexpectedImportKeyword();
@@ -3138,11 +3138,11 @@ function parse(e, t) {
                 throw expectedIdentifier();
 
               case 2688008:
-                if (n.$kind === w) {
+                if (n.$kind === b) {
                     n = new CallScopeExpression(n.name, parseArguments(), n.ancestor, false);
                 } else if (n.$kind === S) {
                     n = new CallMemberExpression(n.object, n.name, parseArguments(), n.optional, false);
-                } else if (n.$kind === b) {
+                } else if (n.$kind === w) {
                     n = new CallGlobalExpression(n.name, parseArguments());
                 } else {
                     n = new CallFunctionExpression(n, parseArguments(), false);
@@ -3323,7 +3323,7 @@ function parseOptionalChainLHS(e) {
         return parseMemberExpressionLHS(e, true);
     }
     if (at === 2688008) {
-        if (e.$kind === w) {
+        if (e.$kind === b) {
             return new CallScopeExpression(e.name, parseArguments(), e.ancestor, true);
         } else if (e.$kind === S) {
             return new CallMemberExpression(e.object, e.name, parseArguments(), e.optional, true);
@@ -3575,10 +3575,10 @@ function parseArrayLiteralExpression(e) {
     }
 }
 
-const wt = [ $, D, F, V, U ];
+const bt = [ $, D, F, V, U ];
 
 function parseForOfStatement(e) {
-    if (!wt.includes(e.$kind)) {
+    if (!bt.includes(e.$kind)) {
         throw invalidLHSBindingIdentifierInForOf(e.$kind);
     }
     if (at !== 4204594) {
@@ -4735,11 +4735,11 @@ class DirtyChecker {
     static register(t) {
         t.register(e.Registration.singleton(this, this), e.Registration.aliasTo(this, Dt));
     }
-    constructor(e) {
-        this.p = e;
+    constructor() {
         this.tracked = [];
         this.T = null;
         this.P = 0;
+        this.p = e.resolve(e.IPlatform);
         this.check = () => {
             if (Ft.disabled) {
                 return;
@@ -4783,8 +4783,6 @@ class DirtyChecker {
         }
     }
 }
-
-DirtyChecker.inject = [ e.IPlatform ];
 
 class DirtyCheckProperty {
     constructor(e, t, r) {
@@ -4953,10 +4951,10 @@ class DefaultNodeObserverLocator {
 }
 
 class ObserverLocator {
-    constructor(e, t) {
+    constructor() {
         this.L = [];
-        this.I = e;
-        this.M = t;
+        this.I = e.resolve(Dt);
+        this.M = e.resolve(Ut);
     }
     addAdapter(e) {
         this.L.push(e);
@@ -5072,8 +5070,6 @@ class ObserverLocator {
         return null;
     }
 }
-
-ObserverLocator.inject = [ Dt, Ut ];
 
 const getCollectionObserver = e => {
     let t;
@@ -5341,13 +5337,8 @@ class Signaler {
         }
     }
     addSignalListener(e, t) {
-        const r = this.signals;
-        const n = r[e];
-        if (n === undefined) {
-            r[e] = new Set([ t ]);
-        } else {
-            n.add(t);
-        }
+        var r;
+        ((r = this.signals)[e] ?? (r[e] = new Set)).add(t);
     }
     removeSignalListener(e, t) {
         this.signals[e]?.delete(t);

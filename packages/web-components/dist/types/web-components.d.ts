@@ -1,5 +1,5 @@
-import { IContainer, type Constructable } from '@aurelia/kernel';
-import { IPlatform, IRendering, type PartialCustomElementDefinition } from '@aurelia/runtime-html';
+import { type Constructable } from '@aurelia/kernel';
+import { type PartialCustomElementDefinition } from '@aurelia/runtime-html';
 export declare const IWcElementRegistry: import("@aurelia/kernel").InterfaceSymbol<IWcElementRegistry>;
 export interface IWcElementRegistry {
     /**
@@ -28,7 +28,6 @@ export type WebComponentViewModelClass = Constructable | {
  * A default implementation of `IWcElementRegistry` interface.
  */
 export declare class WcCustomElementRegistry implements IWcElementRegistry {
-    constructor(ctn: IContainer, p: IPlatform, r: IRendering);
     define(name: string, def: Constructable | Omit<PartialCustomElementDefinition, 'name'>, options?: ElementDefinitionOptions): Constructable<HTMLElement>;
 }
 //# sourceMappingURL=web-components.d.ts.map

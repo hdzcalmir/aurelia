@@ -137,7 +137,6 @@ describe('3-runtime-html/enhance.spec.ts', function () {
         ctx.doc.body.appendChild(host);
         const component = {
             eventLog: [],
-            define() { this.eventLog.push('define'); },
             hydrating() { this.eventLog.push('hydrating'); },
             hydrated() { this.eventLog.push('hydrated'); },
             created() { this.eventLog.push('created'); },
@@ -153,7 +152,6 @@ describe('3-runtime-html/enhance.spec.ts', function () {
         await controller.deactivate(controller, null);
         ctx.doc.body.removeChild(host);
         assert.deepStrictEqual(component.eventLog, [
-            'define',
             'hydrating',
             'hydrated',
             'created',

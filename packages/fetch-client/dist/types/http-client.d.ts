@@ -1,5 +1,10 @@
 import { HttpClientConfiguration } from './http-client-configuration';
-import { Interceptor } from './interfaces';
+import { IFetchInterceptor } from './interfaces';
+/**
+ * An interface to resolve what fetch function will be used for the http client
+ * Default to the global fetch function via global `fetch` variable.
+ */
+export declare const IFetchFn: import("@aurelia/kernel").InterfaceSymbol<typeof fetch>;
 export declare const IHttpClient: import("@aurelia/kernel").InterfaceSymbol<IHttpClient>;
 export interface IHttpClient extends HttpClient {
 }
@@ -31,12 +36,7 @@ export declare class HttpClient {
     /**
      * The interceptors to be run during requests.
      */
-    interceptors: Interceptor[];
-    dispatcher: Node | null;
-    /**
-     * Creates an instance of HttpClient.
-     */
-    constructor();
+    get interceptors(): IFetchInterceptor[];
     /**
      * Configure this client with default settings to be used by all requests.
      *
@@ -45,7 +45,7 @@ export declare class HttpClient {
      * @returns The chainable instance of this HttpClient.
      * @chainable
      */
-    configure(config: RequestInit | ((config: HttpClientConfiguration) => HttpClientConfiguration) | HttpClientConfiguration): HttpClient;
+    configure(config: RequestInit | ((config: HttpClientConfiguration) => HttpClientConfiguration | void) | HttpClientConfiguration): HttpClient;
     /**
      * Starts the process of fetching a resource. Default configuration parameters
      * will be applied to the Request. The constructed Request will be passed to
@@ -61,6 +61,9 @@ export declare class HttpClient {
      * @returns A Promise for the Response from the fetch request.
      */
     fetch(input: Request | string, init?: RequestInit): Promise<Response>;
+    /**
+     * Creates a new Request object using the current configuration of this http client
+     */
     buildRequest(input: string | Request, init: RequestInit | undefined): Request;
     /**
      * Calls fetch as a GET request.
@@ -116,11 +119,24 @@ export declare class HttpClient {
      * @returns A Promise for the Response from the fetch request.
      */
     delete(input: Request | string, body?: BodyInit, init?: RequestInit): Promise<Response>;
-    private trackRequestStart;
-    private trackRequestEnd;
+    /**
+     * Dispose and cleanup used resources of this client.
+     */
+    dispose(): void;
     private processRequest;
     private processResponse;
-    private applyInterceptors;
-    private callFetch;
 }
+/**
+ * A lookup containing events used by HttpClient.
+ */
+export declare const HttpClientEvent: Readonly<{
+    /**
+     * Event to be triggered when a request is sent.
+     */
+    started: "aurelia-fetch-client-request-started";
+    /**
+     * Event to be triggered when a request is completed.
+     */
+    drained: "aurelia-fetch-client-requests-drained";
+}>;
 //# sourceMappingURL=http-client.d.ts.map

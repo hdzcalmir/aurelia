@@ -222,6 +222,9 @@ exports.I18nService = class I18nService {
     subscribeLocaleChange(subscriber) {
         this._localeSubscribers.add(subscriber);
     }
+    unsubscribeLocaleChange(subscriber) {
+        this._localeSubscribers.delete(subscriber);
+    }
     now() {
         return new Date().getTime();
     }
@@ -352,26 +355,6 @@ const taskQueueOpts = {
     preempt: true,
 };
 class TranslationBinding {
-    constructor(controller, locator, observerLocator, platform, target) {
-        this.isBound = false;
-        /** @internal */
-        this._contentAttributes = contentAttributes;
-        /** @internal */
-        this._task = null;
-        this.parameter = null;
-        // see Listener binding for explanation
-        /** @internal */
-        this.boundFn = false;
-        this.l = locator;
-        this._controller = controller;
-        this.target = target;
-        this.i18n = locator.get(I18N);
-        this._platform = platform;
-        this._targetAccessors = new Set();
-        this.oL = observerLocator;
-        this.i18n.subscribeLocaleChange(this);
-        this._taskQueue = platform.domWriteQueue;
-    }
     static create({ parser, observerLocator, context, controller, target, instruction, platform, isParameterContext, }) {
         const binding = this._getBinding({ observerLocator, context, controller, target, platform });
         const expr = typeof instruction.from === 'string'
@@ -395,16 +378,35 @@ class TranslationBinding {
         }
         return binding;
     }
+    constructor(controller, locator, observerLocator, platform, target) {
+        this.isBound = false;
+        /** @internal */
+        this._contentAttributes = contentAttributes;
+        /** @internal */
+        this._task = null;
+        this.parameter = null;
+        // see Listener binding for explanation
+        /** @internal */
+        this.boundFn = false;
+        this.l = locator;
+        this._controller = controller;
+        this.target = target;
+        this.i18n = locator.get(I18N);
+        this._platform = platform;
+        this._targetAccessors = new Set();
+        this.oL = observerLocator;
+        this._taskQueue = platform.domWriteQueue;
+    }
     bind(_scope) {
         if (this.isBound) {
             return;
         }
         const ast = this.ast;
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!ast) {
+        if (ast == null) {
             throw new Error('key expression is missing');
         }
         this._scope = _scope;
+        this.i18n.subscribeLocaleChange(this);
         this._keyExpression = runtime.astEvaluate(ast, _scope, this, this);
         this._ensureKeyExpression();
         this.parameter?.bind(_scope);
@@ -415,6 +417,7 @@ class TranslationBinding {
         if (!this.isBound) {
             return;
         }
+        this.i18n.unsubscribeLocaleChange(this);
         runtime.astUnbind(this.ast, this._scope, this);
         this.parameter?.unbind();
         this._targetAccessors.clear();

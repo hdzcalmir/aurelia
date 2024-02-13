@@ -24,7 +24,7 @@ let RandomGenerator = class RandomGenerator {
         this.random = Math.round(Math.random() * 10000);
     }
     doSomething() {
-        console.log('random-generator.ts__doSomething()');
+        // console.log('random-generator.ts__doSomething()');
     }
 };
 RandomGenerator = __decorate([

@@ -1,15 +1,18 @@
-import { DI, IContainer, InstanceProvider } from '@aurelia/kernel';
-import { CustomElementDefinition, CustomElement, IPlatform, IRendering, INode, Controller, setRef } from '@aurelia/runtime-html';
+import { DI, resolve, IContainer, InstanceProvider } from '@aurelia/kernel';
+import { IPlatform, IRendering, CustomElementDefinition, CustomElement, INode, Controller, setRef } from '@aurelia/runtime-html';
 
 const IWcElementRegistry = /*@__PURE__*/ DI.createInterface(x => x.singleton(WcCustomElementRegistry));
 /**
  * A default implementation of `IWcElementRegistry` interface.
  */
 class WcCustomElementRegistry {
-    constructor(ctn, p, r) {
-        this.ctn = ctn;
-        this.p = p;
-        this.r = r;
+    constructor() {
+        /** @internal */
+        this.ctn = resolve(IContainer);
+        /** @internal */
+        this.p = resolve(IPlatform);
+        /** @internal */
+        this.r = resolve(IRendering);
     }
     define(name, def, options) {
         if (!name.includes('-')) {
@@ -93,8 +96,6 @@ class WcCustomElementRegistry {
         return CustomElementClass;
     }
 }
-/** @internal */
-WcCustomElementRegistry.inject = [IContainer, IPlatform, IRendering];
 const registerResolver = (ctn, key, resolver) => ctn.registerResolver(key, resolver);
 const createError = (message) => new Error(message);
 

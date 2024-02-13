@@ -3,7 +3,6 @@ import { Collection, IExpressionParser, IndexMap, IObserverLocator } from '@aure
 export declare class BindingEngine {
     readonly parser: IExpressionParser;
     readonly observerLocator: IObserverLocator;
-    constructor(parser: IExpressionParser, observerLocator: IObserverLocator);
     propertyObserver(object: {}, prop: PropertyKey): IBindingEnginePropertyObserver;
     collectionObserver(collection: Collection): IBindingEngineCollectionObserver;
     expressionObserver(bindingContext: {}, expression: string): IBindingEngineExpressionObserver;

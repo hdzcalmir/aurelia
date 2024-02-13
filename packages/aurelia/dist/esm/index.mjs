@@ -8,7 +8,7 @@ export { AppTask, AuSlotsInfo, Bindable, BindingBehavior, BindingMode, ChildrenB
 
 import { BrowserPlatform as i } from "@aurelia/platform-browser";
 
-export { HttpClient, HttpClientConfiguration, IHttpClient, json } from "@aurelia/fetch-client";
+export { HttpClient, HttpClientConfiguration, IFetchFn, IHttpClient, json } from "@aurelia/fetch-client";
 
 export { Metadata } from "@aurelia/metadata";
 

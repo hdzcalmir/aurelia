@@ -228,6 +228,8 @@ exports.HttpClient = s.HttpClient;
 
 exports.HttpClientConfiguration = s.HttpClientConfiguration;
 
+exports.IFetchFn = s.IFetchFn;
+
 exports.IHttpClient = s.IHttpClient;
 
 exports.json = s.json;

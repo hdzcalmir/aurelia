@@ -3,7 +3,7 @@ export { ConsoleSink, DI, EventAggregator, IContainer, IEventAggregator, ILogger
 import { Aurelia as Aurelia$1, CustomElement, IPlatform, StandardConfiguration } from '@aurelia/runtime-html';
 export { AppTask, AuSlotsInfo, Bindable, BindingBehavior, BindingMode, ChildrenBinding, Controller, CustomAttribute, CustomElement, FlushQueue, IAppRoot, IAttrMapper, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IEventModifier, IEventTarget, IFlushQueue, IKeyMapping, ILifecycleHooks, IModifiedEventHandlerCreator, INode, IPlatform, IRenderLocation, ITemplateCompiler, ITemplateCompilerHooks, LifecycleHooks, NodeObserverLocator, ShortHandBindingSyntax, StyleConfiguration, TemplateCompilerHooks, ValueConverter, ViewFactory, alias, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, cssModules, customAttribute, customElement, lifecycleHooks, processContent, registerAliases, renderer, shadowCSS, slotted, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch } from '@aurelia/runtime-html';
 import { BrowserPlatform } from '@aurelia/platform-browser';
-export { HttpClient, HttpClientConfiguration, IHttpClient, json } from '@aurelia/fetch-client';
+export { HttpClient, HttpClientConfiguration, IFetchFn, IHttpClient, json } from '@aurelia/fetch-client';
 export { Metadata } from '@aurelia/metadata';
 export { Platform, Task, TaskAbortError, TaskQueue } from '@aurelia/platform';
 export { ComputedObserver, IObserverLocator, ISignaler, batch, observable, subscriberCollection } from '@aurelia/runtime';

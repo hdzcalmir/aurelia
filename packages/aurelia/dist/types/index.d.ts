@@ -13,7 +13,7 @@ export declare class Aurelia extends $Aurelia {
     app(config: ISinglePageApp | CustomElementType): Omit<this, 'register' | 'app' | 'enhance'>;
 }
 export default Aurelia;
-export { type Interceptor, json, HttpClientConfiguration, HttpClient, IHttpClient, } from '@aurelia/fetch-client';
+export { type IFetchInterceptor, IFetchFn, json, HttpClientConfiguration, HttpClient, IHttpClient, } from '@aurelia/fetch-client';
 export { Metadata, } from '@aurelia/metadata';
 export { type ITask, Platform, type QueueTaskOptions, Task, TaskAbortError, TaskQueue, type TaskStatus } from '@aurelia/platform';
 export { all, DI, IContainer, inject, resolve, type IRegistration, type IRegistry, type IResolver, IServiceLocator, type Key, lazy, optional, Registration, singleton, transient, InstanceProvider, type Resolved, type Class, type Constructable, type ConstructableClass, type IDisposable, type IIndexable, type ColorOptions, ILogger, ConsoleSink, LoggerConfiguration, emptyArray, emptyObject, noop, LogLevel, EventAggregator, IEventAggregator, isArrayIndex, camelCase, kebabCase, pascalCase, toArray, bound, } from '@aurelia/kernel';

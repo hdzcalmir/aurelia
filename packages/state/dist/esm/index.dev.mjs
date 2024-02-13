@@ -1,4 +1,4 @@
-import { DI, Registration, optional, all, ILogger, lazy, camelCase, IContainer } from '@aurelia/kernel';
+import { DI, Registration, resolve, optional, all, ILogger, lazy, camelCase, IContainer } from '@aurelia/kernel';
 import { Scope, AccessorType, connectable, astEvaluate, astBind, astUnbind } from '@aurelia/runtime';
 import { IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, bindingBehavior, attributePattern, bindingCommand, renderer, AttrSyntax, AppTask, lifecycleHooks, CustomElement, CustomAttribute, ILifecycleHooks } from '@aurelia/runtime-html';
 
@@ -43,16 +43,16 @@ const IDevToolsExtension = /*@__PURE__*/ createInterface("IDevToolsExtension", x
 
 class Store {
     static register(c) {
-        Registration.singleton(IStore, this).register(c);
+        c.register(Registration.singleton(this, this), Registration.aliasTo(this, IStore));
     }
-    constructor(initialState, actionHandlers, logger, getDevTools) {
+    constructor() {
         /** @internal */ this._subs = new Set();
         /** @internal */ this._dispatching = 0;
         /** @internal */ this._dispatchQueues = [];
-        this._initialState = this._state = initialState ?? new State();
-        this._handlers = actionHandlers;
-        this._logger = logger;
-        this._getDevTools = getDevTools;
+        this._initialState = this._state = resolve(optional(IState)) ?? new State();
+        this._handlers = resolve(all(IActionHandler));
+        this._logger = resolve(ILogger);
+        this._getDevTools = resolve(lazy(IDevToolsExtension));
     }
     subscribe(subscriber) {
         {
@@ -180,12 +180,6 @@ class Store {
         });
     }
 }
-/** @internal */ Store.inject = [
-    optional(IState),
-    all(IActionHandler),
-    ILogger,
-    lazy(IDevToolsExtension)
-];
 class State {
 }
 class StateProxyHandler {
@@ -387,8 +381,8 @@ mixingBindingLimited(StateBinding, () => 'updateTarget');
 
 const bindingStateSubscriberMap = new WeakMap();
 let StateBindingBehavior = class StateBindingBehavior {
-    constructor(store) {
-        this._store = store;
+    constructor() {
+        /** @internal */ this._store = resolve(IStore);
     }
     bind(scope, binding) {
         const isStateBinding = binding instanceof StateBinding;
@@ -418,7 +412,6 @@ let StateBindingBehavior = class StateBindingBehavior {
         }
     }
 };
-/** @internal */ StateBindingBehavior.inject = [IStore];
 StateBindingBehavior = __decorate([
     bindingBehavior('state')
 ], StateBindingBehavior);
@@ -556,29 +549,25 @@ class DispatchBindingInstruction {
     }
 }
 let StateBindingInstructionRenderer = class StateBindingInstructionRenderer {
-    constructor(
-    /** @internal */ _stateContainer) {
-        this._stateContainer = _stateContainer;
+    constructor() {
+        /** @internal */ this._stateContainer = resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
     }
 };
-/** @internal */ StateBindingInstructionRenderer.inject = [IStore];
 StateBindingInstructionRenderer = __decorate([
     renderer('sb')
 ], StateBindingInstructionRenderer);
 let DispatchBindingInstructionRenderer = class DispatchBindingInstructionRenderer {
-    constructor(
-    /** @internal */ _stateContainer) {
-        this._stateContainer = _stateContainer;
+    constructor() {
+        /** @internal */ this._stateContainer = resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
         const expr = ensureExpression(exprParser, instruction.ast, 'IsProperty');
         renderingCtrl.addBinding(new StateDispatchBinding(renderingCtrl.container, expr, target, instruction.from, this._stateContainer));
     }
 };
-/** @internal */ DispatchBindingInstructionRenderer.inject = [IStore];
 DispatchBindingInstructionRenderer = __decorate([
     renderer('sd')
 ], DispatchBindingInstructionRenderer);

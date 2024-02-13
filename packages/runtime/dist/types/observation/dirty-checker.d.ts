@@ -1,4 +1,4 @@
-import { IContainer, IPlatform } from '@aurelia/kernel';
+import { IContainer } from '@aurelia/kernel';
 import { type AccessorType, type IObserver, type ISubscriberCollection, type IObservable, type ISubscriber } from '../observation';
 import type { IIndexable } from '@aurelia/kernel';
 export interface IDirtyChecker extends DirtyChecker {
@@ -33,10 +33,10 @@ export declare const DirtyCheckSettings: {
     resetToDefault(): void;
 };
 export declare class DirtyChecker {
-    private readonly p;
     static register(c: IContainer): void;
     private readonly tracked;
-    constructor(p: IPlatform);
+    private readonly p;
+    constructor();
     createProperty(obj: object, key: PropertyKey): DirtyCheckProperty;
     addProperty(property: DirtyCheckProperty): void;
     removeProperty(property: DirtyCheckProperty): void;

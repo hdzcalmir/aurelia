@@ -604,7 +604,6 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
                     [
                         'canActivate',
                         'activate',
-                        'define',
                         'hydrating',
                         'hydrated',
                         'binding',
@@ -625,7 +624,6 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
                         'constructor',
                         'canActivate',
                         'activate',
-                        'define',
                         'hydrating',
                         'hydrated',
                         'binding',
@@ -639,7 +637,6 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
                         'constructor',
                         'canActivate',
                         'activate',
-                        'define',
                         'hydrating',
                         'hydrated',
                         'binding',

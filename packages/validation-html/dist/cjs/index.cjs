@@ -450,9 +450,9 @@ const l = new WeakMap;
 const h = new WeakMap;
 
 exports.ValidateBindingBehavior = class ValidateBindingBehavior {
-    constructor(t, e) {
-        this.p = t;
-        this.oL = e;
+    constructor() {
+        this.p = t.resolve(i.IPlatform);
+        this.oL = t.resolve(s.IObserverLocator);
     }
     bind(e, s) {
         if (!(s instanceof i.PropertyBinding)) {
@@ -473,8 +473,6 @@ exports.ValidateBindingBehavior = class ValidateBindingBehavior {
         l.get(e)?.stop();
     }
 };
-
-exports.ValidateBindingBehavior.inject = [ i.IPlatform, s.IObserverLocator ];
 
 exports.ValidateBindingBehavior = __decorate([ i.bindingBehavior("validate") ], exports.ValidateBindingBehavior);
 
@@ -659,8 +657,6 @@ class ValidatitionConnector {
         return this.bindingInfo = new BindingInfo(this.target, this.scope, t);
     }
 }
-
-ValidatitionConnector.inject = [ i.IPlatform, s.IObserverLocator, a ];
 
 s.connectable()(ValidatitionConnector);
 

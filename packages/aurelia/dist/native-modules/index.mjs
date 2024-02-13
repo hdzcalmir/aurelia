@@ -8,7 +8,7 @@ export { AppTask, AuSlotsInfo, Bindable, BindingBehavior, BindingMode, ChildrenB
 
 import { BrowserPlatform as i } from "../../../@aurelia/platform-browser/dist/native-modules/index.mjs";
 
-export { HttpClient, HttpClientConfiguration, IHttpClient, json } from "../../../@aurelia/fetch-client/dist/native-modules/index.mjs";
+export { HttpClient, HttpClientConfiguration, IFetchFn, IHttpClient, json } from "../../../@aurelia/fetch-client/dist/native-modules/index.mjs";
 
 export { Metadata } from "../../../@aurelia/metadata/dist/native-modules/index.mjs";
 

@@ -136,6 +136,7 @@ exports.valueConverter = runtimeHtml.valueConverter;
 exports.watch = runtimeHtml.watch;
 exports.HttpClient = fetchClient.HttpClient;
 exports.HttpClientConfiguration = fetchClient.HttpClientConfiguration;
+exports.IFetchFn = fetchClient.IFetchFn;
 exports.IHttpClient = fetchClient.IHttpClient;
 exports.json = fetchClient.json;
 exports.Metadata = metadata.Metadata;

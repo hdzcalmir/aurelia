@@ -200,6 +200,9 @@ exports.I18nService = class I18nService {
     subscribeLocaleChange(t) {
         this.i.add(t);
     }
+    unsubscribeLocaleChange(t) {
+        this.i.delete(t);
+    }
     now() {
         return (new Date).getTime();
     }
@@ -322,24 +325,8 @@ const _ = {
 };
 
 class TranslationBinding {
-    constructor(t, n, e, s, r) {
-        this.isBound = false;
-        this._ = x;
-        this.T = null;
-        this.parameter = null;
-        this.boundFn = false;
-        this.l = n;
-        this.B = t;
-        this.target = r;
-        this.i18n = n.get(f);
-        this.p = s;
-        this.I = new Set;
-        this.oL = e;
-        this.i18n.subscribeLocaleChange(this);
-        this.C = s.domWriteQueue;
-    }
     static create({parser: t, observerLocator: n, context: s, controller: r, target: i, instruction: c, platform: h, isParameterContext: l}) {
-        const u = this.P({
+        const u = this._({
             observerLocator: n,
             context: s,
             controller: r,
@@ -354,7 +341,7 @@ class TranslationBinding {
             u.ast = n || p;
         }
     }
-    static P({observerLocator: t, context: n, controller: e, target: s, platform: r}) {
+    static _({observerLocator: t, context: n, controller: e, target: s, platform: r}) {
         let i = e.bindings && e.bindings.find((t => t instanceof TranslationBinding && t.target === s));
         if (!i) {
             i = new TranslationBinding(e, n, t, r, s);
@@ -362,15 +349,31 @@ class TranslationBinding {
         }
         return i;
     }
+    constructor(t, n, e, s, r) {
+        this.isBound = false;
+        this.T = x;
+        this.B = null;
+        this.parameter = null;
+        this.boundFn = false;
+        this.l = n;
+        this.I = t;
+        this.target = r;
+        this.i18n = n.get(f);
+        this.p = s;
+        this.C = new Set;
+        this.oL = e;
+        this.P = s.domWriteQueue;
+    }
     bind(t) {
         if (this.isBound) {
             return;
         }
         const n = this.ast;
-        if (!n) {
+        if (n == null) {
             throw new Error("key expression is missing");
         }
         this.s = t;
+        this.i18n.subscribeLocaleChange(this);
         this.M = e.astEvaluate(n, t, this, this);
         this.A();
         this.parameter?.bind(t);
@@ -381,12 +384,13 @@ class TranslationBinding {
         if (!this.isBound) {
             return;
         }
+        this.i18n.unsubscribeLocaleChange(this);
         e.astUnbind(this.ast, this.s, this);
         this.parameter?.unbind();
-        this.I.clear();
-        if (this.T !== null) {
-            this.T.cancel();
-            this.T = null;
+        this.C.clear();
+        if (this.B !== null) {
+            this.B.cancel();
+            this.B = null;
         }
         this.s = void 0;
         this.obs.clearAll();
@@ -411,8 +415,8 @@ class TranslationBinding {
         const s = this.i18n.evaluate(this.M, this.parameter?.value);
         const r = Object.create(null);
         const i = [];
-        const o = this.T;
-        this.I.clear();
+        const o = this.B;
+        this.C.clear();
         for (const o of s) {
             const s = o.value;
             const a = this.L(o.attributes);
@@ -422,26 +426,26 @@ class TranslationBinding {
                 } else {
                     const r = n.CustomElement.for(this.target, g);
                     const a = r?.viewModel ? this.oL.getAccessor(r.viewModel, t.camelCase(o)) : this.oL.getAccessor(this.target, o);
-                    const c = this.B.state !== l && (a.type & e.AccessorType.Layout) > 0;
+                    const c = this.I.state !== l && (a.type & e.AccessorType.Layout) > 0;
                     if (c) {
                         i.push(new AccessorUpdateTask(a, s, this.target, o));
                     } else {
                         a.setValue(s, this.target, o);
                     }
-                    this.I.add(a);
+                    this.C.add(a);
                 }
             }
         }
         let a = false;
         if (Object.keys(r).length > 0) {
-            a = this.B.state !== l;
+            a = this.I.state !== l;
             if (!a) {
                 this.R(r);
             }
         }
         if (i.length > 0 || a) {
-            this.T = this.C.queueTask((() => {
-                this.T = null;
+            this.B = this.P.queueTask((() => {
+                this.B = null;
                 for (const t of i) {
                     t.run();
                 }
@@ -465,7 +469,7 @@ class TranslationBinding {
         return t;
     }
     N(t) {
-        return this._.includes(t);
+        return this.T.includes(t);
     }
     R(n) {
         const e = t.toArray(this.target.childNodes);

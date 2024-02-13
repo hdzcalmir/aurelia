@@ -10,7 +10,6 @@ import type { INode, INodeSequence, IRenderLocation } from '../dom';
 import type { IViewFactory } from './view';
 import type { IInstruction } from '../renderer';
 import type { PartialCustomElementDefinition } from '../resources/custom-element';
-type BindingContext<C extends IViewModel> = Required<ICompileHooks> & Required<IActivationHooks<IHydratedController | null>> & C;
 export declare class Controller<C extends IViewModel = IViewModel> implements IController<C> {
     container: IContainer;
     readonly vmKind: ViewModelKind;
@@ -129,6 +128,21 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
     dispose(): void;
     accept(visitor: ControllerVisitor): void | true;
 }
+export type BindingContext<C extends IViewModel> = Required<ICompileHooks> & Required<IActivationHooks<IHydratedController | null>> & C;
+/**
+ * Describes the type of the host node/location of a controller
+ * - `none` / 1:       no host
+ * - `host` / 2:       an HTML element is the host of a controller
+ * - `shadowRoot` / 3: a shadow root is the host of a controller
+ * - `location` / 4:   a render location is the location of a controller, this is often used for template controllers
+ */
+export declare const MountTarget: Readonly<{
+    none: 0;
+    host: 1;
+    shadowRoot: 2;
+    location: 3;
+}>;
+export type MountTarget = typeof MountTarget[keyof typeof MountTarget];
 export declare function isCustomElementController<C extends ICustomElementViewModel = ICustomElementViewModel>(value: unknown): value is ICustomElementController<C>;
 export declare function isCustomElementViewModel(value: unknown): value is ICustomElementViewModel;
 declare const vmkCe: "customElement";

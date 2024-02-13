@@ -233,7 +233,6 @@ describe('1-kernel/di.get.spec.ts', function () {
             });
             it('Boolean', function () {
                 let Foo = class Foo {
-                    // eslint-disable-next-line @typescript-eslint/ban-types
                     constructor(test) {
                         this.test = test;
                     }
@@ -330,7 +329,6 @@ describe('1-kernel/di.get.spec.ts', function () {
             });
             it('Function', function () {
                 let Foo = class Foo {
-                    // eslint-disable-next-line @typescript-eslint/ban-types
                     constructor(test) {
                         this.test = test;
                     }
@@ -391,7 +389,6 @@ describe('1-kernel/di.get.spec.ts', function () {
             });
             it('Number', function () {
                 let Foo = class Foo {
-                    // eslint-disable-next-line @typescript-eslint/ban-types
                     constructor(test) {
                         this.test = test;
                     }
@@ -416,7 +413,6 @@ describe('1-kernel/di.get.spec.ts', function () {
             });
             it('Object', function () {
                 let Foo = class Foo {
-                    // eslint-disable-next-line @typescript-eslint/ban-types
                     constructor(test) {
                         this.test = test;
                     }
@@ -515,7 +511,6 @@ describe('1-kernel/di.get.spec.ts', function () {
             }
             it('String', function () {
                 let Foo = class Foo {
-                    // eslint-disable-next-line @typescript-eslint/ban-types
                     constructor(test) {
                         this.test = test;
                     }

@@ -47,16 +47,16 @@ const IDevToolsExtension = /*@__PURE__*/ createInterface("IDevToolsExtension", x
 
 class Store {
     static register(c) {
-        kernel.Registration.singleton(IStore, this).register(c);
+        c.register(kernel.Registration.singleton(this, this), kernel.Registration.aliasTo(this, IStore));
     }
-    constructor(initialState, actionHandlers, logger, getDevTools) {
+    constructor() {
         /** @internal */ this._subs = new Set();
         /** @internal */ this._dispatching = 0;
         /** @internal */ this._dispatchQueues = [];
-        this._initialState = this._state = initialState ?? new State();
-        this._handlers = actionHandlers;
-        this._logger = logger;
-        this._getDevTools = getDevTools;
+        this._initialState = this._state = kernel.resolve(kernel.optional(IState)) ?? new State();
+        this._handlers = kernel.resolve(kernel.all(IActionHandler));
+        this._logger = kernel.resolve(kernel.ILogger);
+        this._getDevTools = kernel.resolve(kernel.lazy(IDevToolsExtension));
     }
     subscribe(subscriber) {
         {
@@ -184,12 +184,6 @@ class Store {
         });
     }
 }
-/** @internal */ Store.inject = [
-    kernel.optional(IState),
-    kernel.all(IActionHandler),
-    kernel.ILogger,
-    kernel.lazy(IDevToolsExtension)
-];
 class State {
 }
 class StateProxyHandler {
@@ -391,8 +385,8 @@ runtimeHtml.mixingBindingLimited(StateBinding, () => 'updateTarget');
 
 const bindingStateSubscriberMap = new WeakMap();
 exports.StateBindingBehavior = class StateBindingBehavior {
-    constructor(store) {
-        this._store = store;
+    constructor() {
+        /** @internal */ this._store = kernel.resolve(IStore);
     }
     bind(scope, binding) {
         const isStateBinding = binding instanceof StateBinding;
@@ -422,7 +416,6 @@ exports.StateBindingBehavior = class StateBindingBehavior {
         }
     }
 };
-/** @internal */ exports.StateBindingBehavior.inject = [IStore];
 exports.StateBindingBehavior = __decorate([
     runtimeHtml.bindingBehavior('state')
 ], exports.StateBindingBehavior);
@@ -560,29 +553,25 @@ class DispatchBindingInstruction {
     }
 }
 exports.StateBindingInstructionRenderer = class StateBindingInstructionRenderer {
-    constructor(
-    /** @internal */ _stateContainer) {
-        this._stateContainer = _stateContainer;
+    constructor() {
+        /** @internal */ this._stateContainer = kernel.resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
     }
 };
-/** @internal */ exports.StateBindingInstructionRenderer.inject = [IStore];
 exports.StateBindingInstructionRenderer = __decorate([
     runtimeHtml.renderer('sb')
 ], exports.StateBindingInstructionRenderer);
 exports.DispatchBindingInstructionRenderer = class DispatchBindingInstructionRenderer {
-    constructor(
-    /** @internal */ _stateContainer) {
-        this._stateContainer = _stateContainer;
+    constructor() {
+        /** @internal */ this._stateContainer = kernel.resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
         const expr = ensureExpression(exprParser, instruction.ast, 'IsProperty');
         renderingCtrl.addBinding(new StateDispatchBinding(renderingCtrl.container, expr, target, instruction.from, this._stateContainer));
     }
 };
-/** @internal */ exports.DispatchBindingInstructionRenderer.inject = [IStore];
 exports.DispatchBindingInstructionRenderer = __decorate([
     runtimeHtml.renderer('sd')
 ], exports.DispatchBindingInstructionRenderer);

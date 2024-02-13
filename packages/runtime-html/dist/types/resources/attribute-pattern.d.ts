@@ -62,7 +62,7 @@ export interface IAttributeParser {
 }
 export declare const IAttributeParser: import("@aurelia/kernel").InterfaceSymbol<IAttributeParser>;
 export declare class AttributeParser implements IAttributeParser {
-    constructor(interpreter: ISyntaxInterpreter, attrPatterns: IAttributePattern[]);
+    constructor();
     parse(name: string, value: string): AttrSyntax;
 }
 type DecoratableAttributePattern<TProto, TClass> = Class<TProto & Partial<{} | IAttributePattern>, TClass>;

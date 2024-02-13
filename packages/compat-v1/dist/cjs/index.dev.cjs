@@ -567,9 +567,9 @@ function disableComposeCompat() {
 }
 
 class BindingEngine {
-    constructor(parser, observerLocator) {
-        this.parser = parser;
-        this.observerLocator = observerLocator;
+    constructor() {
+        this.parser = kernel.resolve(runtime.IExpressionParser);
+        this.observerLocator = kernel.resolve(runtime.IObserverLocator);
     }
     propertyObserver(object, prop) {
         return {
@@ -612,8 +612,6 @@ class BindingEngine {
         };
     }
 }
-/** @internal */
-BindingEngine.inject = [runtime.IExpressionParser, runtime.IObserverLocator];
 
 /**
  * Register all services/functionalities necessary for a v1 app to work with Aurelia v2.

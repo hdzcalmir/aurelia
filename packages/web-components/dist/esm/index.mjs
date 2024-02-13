@@ -1,54 +1,54 @@
-import { DI as t, IContainer as s, InstanceProvider as e } from "@aurelia/kernel";
+import { DI as t, resolve as s, IContainer as e, InstanceProvider as n } from "@aurelia/kernel";
 
-import { CustomElementDefinition as n, CustomElement as i, IPlatform as o, IRendering as l, INode as c, Controller as r, setRef as u } from "@aurelia/runtime-html";
+import { IPlatform as i, IRendering as o, CustomElementDefinition as l, CustomElement as c, INode as r, Controller as a, setRef as u } from "@aurelia/runtime-html";
 
-const a = /*@__PURE__*/ t.createInterface((t => t.singleton(WcCustomElementRegistry)));
+const h = /*@__PURE__*/ t.createInterface((t => t.singleton(WcCustomElementRegistry)));
 
 class WcCustomElementRegistry {
-    constructor(t, s, e) {
-        this.ctn = t;
-        this.p = s;
-        this.r = e;
+    constructor() {
+        this.ctn = s(e);
+        this.p = s(i);
+        this.r = s(o);
     }
-    define(t, s, o) {
+    define(t, s, e) {
         if (!t.includes("-")) {
             throw createError('Invalid web-components custom element name. It must include a "-"');
         }
-        let l;
+        let i;
         if (s == null) {
             throw createError("Invalid custom element definition");
         }
         switch (typeof s) {
           case "function":
-            l = i.isType(s) ? i.getDefinition(s) : n.create(i.generateName(), s);
+            i = c.isType(s) ? c.getDefinition(s) : l.create(c.generateName(), s);
             break;
 
           default:
-            l = n.getOrCreate(s);
+            i = l.getOrCreate(s);
             break;
         }
-        if (l.containerless) {
+        if (i.containerless) {
             throw createError("Containerless custom element is not supported. Consider using buitl-in extends instead");
         }
-        const a = o?.extends ? this.p.document.createElement(o.extends).constructor : this.p.HTMLElement;
-        const m = this.ctn;
-        const h = this.r;
-        const C = l.bindables;
+        const o = e?.extends ? this.p.document.createElement(e.extends).constructor : this.p.HTMLElement;
+        const h = this.ctn;
+        const m = this.r;
+        const C = i.bindables;
         const d = this.p;
-        class CustomElementClass extends a {
+        class CustomElementClass extends o {
             auInit() {
                 if (this.auInited) {
                     return;
                 }
                 this.auInited = true;
-                const t = m.createChild();
-                registerResolver(t, d.HTMLElement, registerResolver(t, d.Element, registerResolver(t, c, new e("ElementProvider", this))));
-                const s = h.compile(l, t, {
+                const t = h.createChild();
+                registerResolver(t, d.HTMLElement, registerResolver(t, d.Element, registerResolver(t, r, new n("ElementProvider", this))));
+                const s = m.compile(i, t, {
                     projections: null
                 });
-                const n = t.invoke(s.Type);
-                const i = this.auCtrl = r.$el(t, n, this, null, s);
-                u(this, s.key, i);
+                const e = t.invoke(s.Type);
+                const o = this.auCtrl = a.$el(t, e, this, null, s);
+                u(this, s.key, o);
             }
             connectedCallback() {
                 this.auInit();
@@ -81,16 +81,14 @@ class WcCustomElementRegistry {
                 }
             });
         }
-        this.p.customElements.define(t, CustomElementClass, o);
+        this.p.customElements.define(t, CustomElementClass, e);
         return CustomElementClass;
     }
 }
-
-WcCustomElementRegistry.inject = [ s, o, l ];
 
 const registerResolver = (t, s, e) => t.registerResolver(s, e);
 
 const createError = t => new Error(t);
 
-export { a as IWcElementRegistry, WcCustomElementRegistry };
+export { h as IWcElementRegistry, WcCustomElementRegistry };
 //# sourceMappingURL=index.mjs.map

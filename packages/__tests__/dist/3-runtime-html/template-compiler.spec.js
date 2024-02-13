@@ -83,7 +83,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         });
                     });
                 });
-                it('understands attr precendence: custom attr > element prop', function () {
+                it('understands attr precendence: element prop > custom attr', function () {
                     let El = class El {
                     };
                     __decorate([
@@ -101,30 +101,28 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     El = __decorate([
                         customElement('el')
                     ], El);
-                    let Prop = class Prop {
+                    let Prop3 = class Prop3 {
                     };
-                    Prop = __decorate([
+                    Prop3 = __decorate([
                         customAttribute('prop3')
-                    ], Prop);
+                    ], Prop3);
                     const actual = compileWith(`<template>
             <el prop1.bind="p" prop2.bind="p" prop3.bind="t" prop3="t"></el>
-          </template>`, [El, Prop]);
+          </template>`, [El, Prop3]);
+                    // only 1 target
                     assert.strictEqual(actual.instructions.length, 1, `actual.instructions.length`);
-                    assert.strictEqual(actual.instructions[0].length, 3, `actual.instructions[0].length`);
-                    const siblingInstructions = actual.instructions[0].slice(1);
-                    const expectedSiblingInstructions = [
-                        { toVerify: ['type', 'res', 'to'], type: TT.hydrateAttribute, res: CustomAttribute.getDefinition(Prop) },
-                        { toVerify: ['type', 'res', 'to'], type: TT.hydrateAttribute, res: CustomAttribute.getDefinition(Prop) }
-                    ];
-                    verifyInstructions(siblingInstructions, expectedSiblingInstructions);
+                    // the target has only 1 instruction, which is hydrate custom element <el>
+                    assert.strictEqual(actual.instructions[0].length, 1, `actual.instructions[0].length`);
                     const rootInstructions = actual.instructions[0][0]['props'];
                     const expectedRootInstructions = [
                         { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop1' },
-                        { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop2' }
+                        { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop2' },
+                        { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop3' },
+                        { toVerify: ['type', 'res', 'to'], type: TT.setProperty, to: 'prop3' }
                     ];
                     verifyInstructions(rootInstructions, expectedRootInstructions);
                 });
-                it('distinguishs element properties / normal attributes', function () {
+                it('distinguishes element properties / normal attributes', function () {
                     let El = class El {
                     };
                     __decorate([

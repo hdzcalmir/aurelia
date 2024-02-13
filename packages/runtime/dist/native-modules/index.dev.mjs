@@ -1,4 +1,4 @@
-import { DI, Protocol, emptyArray, isArrayIndex, Registration, IPlatform, ILogger } from '../../../kernel/dist/native-modules/index.mjs';
+import { DI, Protocol, emptyArray, isArrayIndex, Registration, resolve, IPlatform, ILogger } from '../../../kernel/dist/native-modules/index.mjs';
 import { Metadata } from '../../../metadata/dist/native-modules/index.mjs';
 
 const O = Object;
@@ -893,7 +893,7 @@ class Scope {
         if (bc == null) {
             throw createMappedError(204 /* ErrorNames.create_scope_with_null_context */);
         }
-        return new Scope(null, bc, oc == null ? new OverrideContext() : oc, isBoundary ?? false);
+        return new Scope(null, bc, oc ?? new OverrideContext(), isBoundary ?? false);
     }
     static fromParent(ps, bc) {
         if (ps == null) {
@@ -4847,13 +4847,13 @@ class DirtyChecker {
     static register(c) {
         c.register(Registration.singleton(this, this), Registration.aliasTo(this, IDirtyChecker));
     }
-    constructor(p) {
-        this.p = p;
+    constructor() {
         this.tracked = [];
         /** @internal */
         this._task = null;
         /** @internal */
         this._elapsedFrames = 0;
+        this.p = resolve(IPlatform);
         this.check = () => {
             if (DirtyCheckSettings.disabled) {
                 return;
@@ -4895,10 +4895,6 @@ class DirtyChecker {
         }
     }
 }
-/**
- * @internal
- */
-DirtyChecker.inject = [IPlatform];
 class DirtyCheckProperty {
     constructor(dirtyChecker, obj, key) {
         this.obj = obj;
@@ -5089,10 +5085,10 @@ class DefaultNodeObserverLocator {
     }
 }
 class ObserverLocator {
-    constructor(dirtyChecker, nodeObserverLocator) {
+    constructor() {
         /** @internal */ this._adapters = [];
-        this._dirtyChecker = dirtyChecker;
-        this._nodeObserverLocator = nodeObserverLocator;
+        /** @internal */ this._dirtyChecker = resolve(IDirtyChecker);
+        /** @internal */ this._nodeObserverLocator = resolve(INodeObserverLocator);
     }
     addAdapter(adapter) {
         this._adapters.push(adapter);
@@ -5180,6 +5176,7 @@ class ObserverLocator {
             if (obs == null) {
                 obs = (pd.get?.getObserver ?? pd.set?.getObserver)?.(obj, this);
             }
+            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
             return obs == null
                 ? pd.configurable
                     ? this._createComputedObserver(obj, key, pd, true)
@@ -5216,7 +5213,6 @@ class ObserverLocator {
         return null;
     }
 }
-/** @internal */ ObserverLocator.inject = [IDirtyChecker, INodeObserverLocator];
 const getCollectionObserver = (collection) => {
     let obs;
     if (isArray(collection)) {
@@ -5538,14 +5534,8 @@ class Signaler {
         }
     }
     addSignalListener(name, listener) {
-        const signals = this.signals;
-        const listeners = signals[name];
-        if (listeners === undefined) {
-            signals[name] = new Set([listener]);
-        }
-        else {
-            listeners.add(listener);
-        }
+        var _a;
+        ((_a = this.signals)[name] ?? (_a[name] = new Set())).add(listener);
     }
     removeSignalListener(name, listener) {
         this.signals[name]?.delete(listener);
