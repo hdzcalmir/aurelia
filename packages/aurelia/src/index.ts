@@ -58,7 +58,8 @@ export class Aurelia extends $Aurelia {
 export default Aurelia;
 
 export {
-  type Interceptor,
+  type IFetchInterceptor,
+  IFetchFn,
   // RetryConfiguration,
   // RetryableRequest,
   // ValidInterceptorMethodName,
@@ -802,6 +803,7 @@ export {
   // ShadowDOMRegistry,
   // IShadowDOMStyleFactory,
   shadowCSS,
+  processContent,
 
   // AdoptedStyleSheetsStyles,
   // StyleElementStyles,
@@ -845,4 +847,11 @@ export {
   type LifecycleHook,
   LifecycleHooks,
   lifecycleHooks,
+
+  watch,
+
+  IKeyMapping,
+  IModifiedEventHandlerCreator,
+  IEventModifier,
+  type IModifiedEventHandler,
 } from '@aurelia/runtime-html';

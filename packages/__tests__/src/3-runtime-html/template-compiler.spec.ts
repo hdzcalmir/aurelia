@@ -167,7 +167,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           });
         });
 
-        it('understands attr precendence: custom attr > element prop', function () {
+        it('understands attr precendence: element prop > custom attr', function () {
           @customElement('el')
           class El {
             @bindable() public prop1: string;
@@ -176,31 +176,30 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           }
 
           @customAttribute('prop3')
-          class Prop { }
+          class Prop3 { }
 
           const actual = compileWith(
             `<template>
             <el prop1.bind="p" prop2.bind="p" prop3.bind="t" prop3="t"></el>
           </template>`,
-            [El, Prop]
+            [El, Prop3]
           );
+          // only 1 target
           assert.strictEqual(actual.instructions.length, 1, `actual.instructions.length`);
-          assert.strictEqual(actual.instructions[0].length, 3, `actual.instructions[0].length`);
-          const siblingInstructions = actual.instructions[0].slice(1);
-          const expectedSiblingInstructions = [
-            { toVerify: ['type', 'res', 'to'], type: TT.hydrateAttribute, res: CustomAttribute.getDefinition(Prop) },
-            { toVerify: ['type', 'res', 'to'], type: TT.hydrateAttribute, res: CustomAttribute.getDefinition(Prop) }
-          ];
-          verifyInstructions(siblingInstructions, expectedSiblingInstructions);
+          // the target has only 1 instruction, which is hydrate custom element <el>
+          assert.strictEqual(actual.instructions[0].length, 1, `actual.instructions[0].length`);
+
           const rootInstructions = actual.instructions[0][0]['props'];
           const expectedRootInstructions = [
             { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop1' },
-            { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop2' }
+            { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop2' },
+            { toVerify: ['type', 'res', 'to'], type: TT.propertyBinding, to: 'prop3' },
+            { toVerify: ['type', 'res', 'to'], type: TT.setProperty, to: 'prop3' }
           ];
           verifyInstructions(rootInstructions, expectedRootInstructions);
         });
 
-        it('distinguishs element properties / normal attributes', function () {
+        it('distinguishes element properties / normal attributes', function () {
           @customElement('el')
           class El {
 
@@ -1074,9 +1073,9 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           (ctx, $1, [attr, to, value]) => [`${attr}.one-time`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.oneTime, }],
           (ctx, $1, [attr, to, value]) => [`${attr}.from-view`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.fromView, }],
           (ctx, $1, [attr, to, value]) => [`${attr}.two-way`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.twoWay, }],
-          (ctx, $1, [attr, to, value]) => [`${attr}.trigger`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: true, capture: false }],
+          (ctx, $1, [attr, to, value]) => [`${attr}.trigger`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: true, capture: false, modifier: null }],
           (ctx, $1, [attr, to, value]) => [`${attr}.delegate`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: false }],
-          (ctx, $1, [attr, to, value]) => [`${attr}.capture`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: false, capture: true }],
+          (ctx, $1, [attr, to, value]) => [`${attr}.capture`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: false, capture: true, modifier: null }],
         ] as ((ctx: TestContext, $1: [string], $2: [string, string, string]) => [string, string, any])[]
       ], (ctx, [el], $2, [n1, v1, i1]) => {
         const markup = `<${el} plain data-attr="value" ${n1}="${v1}"></${el}>`;
