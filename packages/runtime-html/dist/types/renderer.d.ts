@@ -181,8 +181,9 @@ export declare class ListenerBindingInstruction {
     to: string;
     preventDefault: boolean;
     capture: boolean;
+    modifier: string | null;
     readonly type = "hb";
-    constructor(from: string | IsBindingBehavior, to: string, preventDefault: boolean, capture: boolean);
+    constructor(from: string | IsBindingBehavior, to: string, preventDefault: boolean, capture: boolean, modifier: string | null);
 }
 export declare class StylePropertyBindingInstruction {
     from: string | IsBindingBehavior;

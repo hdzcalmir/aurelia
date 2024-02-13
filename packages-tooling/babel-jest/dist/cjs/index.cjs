@@ -5,19 +5,18 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var pluginConventions = require('@aurelia/plugin-conventions');
 var babelJest = require('babel-jest');
 
-function _interopNamespace(e) {
-    if (e && e.__esModule) return e;
+function _interopNamespaceDefault(e) {
     var n = Object.create(null);
     if (e) {
         for (var k in e) {
             n[k] = e[k];
         }
     }
-    n["default"] = e;
+    n.default = e;
     return Object.freeze(n);
 }
 
-var babelJest__namespace = /*#__PURE__*/_interopNamespace(babelJest);
+var babelJest__namespace = /*#__PURE__*/_interopNamespaceDefault(babelJest);
 
 const babelTransformer = babelJest__namespace.createTransformer();
 function _createTransformer(conventionsOptions = {}, _preprocess = pluginConventions.preprocess, _babelProcess = babelTransformer.process.bind(babelTransformer)) {
@@ -45,5 +44,5 @@ function createTransformer(conventionsOptions = {}) {
 const { canInstrument, getCacheKey, process } = createTransformer();
 var index = { canInstrument, getCacheKey, process, createTransformer, _createTransformer };
 
-exports["default"] = index;
+exports.default = index;
 //# sourceMappingURL=index.cjs.map

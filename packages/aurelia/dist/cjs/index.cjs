@@ -142,11 +142,17 @@ exports.IAuSlotsInfo = r.IAuSlotsInfo;
 
 exports.IAurelia = r.IAurelia;
 
+exports.IEventModifier = r.IEventModifier;
+
 exports.IEventTarget = r.IEventTarget;
 
 exports.IFlushQueue = r.IFlushQueue;
 
+exports.IKeyMapping = r.IKeyMapping;
+
 exports.ILifecycleHooks = r.ILifecycleHooks;
+
+exports.IModifiedEventHandlerCreator = r.IModifiedEventHandlerCreator;
 
 exports.INode = r.INode;
 
@@ -198,6 +204,8 @@ exports.customElement = r.customElement;
 
 exports.lifecycleHooks = r.lifecycleHooks;
 
+exports.processContent = r.processContent;
+
 exports.registerAliases = r.registerAliases;
 
 exports.renderer = r.renderer;
@@ -214,9 +222,13 @@ exports.useShadowDOM = r.useShadowDOM;
 
 exports.valueConverter = r.valueConverter;
 
+exports.watch = r.watch;
+
 exports.HttpClient = s.HttpClient;
 
 exports.HttpClientConfiguration = s.HttpClientConfiguration;
+
+exports.IFetchFn = s.IFetchFn;
 
 exports.IHttpClient = s.IHttpClient;
 
@@ -248,5 +260,5 @@ exports.Aurelia = Aurelia;
 
 exports.PLATFORM = a;
 
-exports["default"] = Aurelia;
+exports.default = Aurelia;
 //# sourceMappingURL=index.cjs.map

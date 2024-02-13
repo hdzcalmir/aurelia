@@ -45,12 +45,12 @@ export interface INodeObserverConfig {
     readonly default?: unknown;
 }
 export declare class NodeObserverLocator implements INodeObserverLocator {
+    static register(container: IContainer): void;
     /**
      * Indicates whether the node observer will be allowed to use dirty checking for a property it doesn't know how to observe
      */
     allowDirtyCheck: boolean;
     constructor();
-    static register(container: IContainer): void;
     handles(obj: unknown, _key: PropertyKey): boolean;
     useConfig(config: Record<string, Record<string, INodeObserverConfig>>): void;
     useConfig(nodeName: string, key: PropertyKey, events: INodeObserverConfig): void;

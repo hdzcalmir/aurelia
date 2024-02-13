@@ -18,6 +18,7 @@ interface TranslationBindingCreationContext {
 export interface TranslationBinding extends IAstEvaluator, IConnectableBinding {
 }
 export declare class TranslationBinding implements IConnectableBinding {
+    static create({ parser, observerLocator, context, controller, target, instruction, platform, isParameterContext, }: TranslationBindingCreationContext): void;
     isBound: boolean;
     ast: IsExpression;
     private readonly i18n;
@@ -28,7 +29,6 @@ export declare class TranslationBinding implements IConnectableBinding {
      */
     readonly oL: IObserverLocator;
     constructor(controller: IBindingController, locator: IServiceLocator, observerLocator: IObserverLocator, platform: IPlatform, target: INode);
-    static create({ parser, observerLocator, context, controller, target, instruction, platform, isParameterContext, }: TranslationBindingCreationContext): void;
     bind(_scope: Scope): void;
     unbind(): void;
     handleChange(_newValue: string | i18next.TOptions, _previousValue: string | i18next.TOptions): void;

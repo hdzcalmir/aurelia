@@ -20,6 +20,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -779,6 +781,7 @@ ValidationMessageProvider = ValidationMessageProvider_1 = __decorate([
 ], ValidationMessageProvider);
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 const astVisit = AST.astVisit;
 var ASTExpressionTypes;
 (function (ASTExpressionTypes) {
@@ -787,6 +790,7 @@ var ASTExpressionTypes;
     ASTExpressionTypes["AssignExpression"] = "AssignExpression";
     ASTExpressionTypes["ConditionalExpression"] = "ConditionalExpression";
     ASTExpressionTypes["AccessThisExpression"] = "AccessThisExpression";
+    ASTExpressionTypes["AccessBoundaryExpression"] = "AccessBoundaryExpression";
     ASTExpressionTypes["AccessScopeExpression"] = "AccessScopeExpression";
     ASTExpressionTypes["AccessMemberExpression"] = "AccessMemberExpression";
     ASTExpressionTypes["AccessKeyedExpression"] = "AccessKeyedExpression";
@@ -830,6 +834,9 @@ class Deserializer {
             case ASTExpressionTypes.AccessThisExpression: {
                 const expr = raw;
                 return new AST.AccessThisExpression(expr.ancestor);
+            }
+            case ASTExpressionTypes.AccessBoundaryExpression: {
+                return new AST.AccessBoundaryExpression();
             }
             case ASTExpressionTypes.AccessScopeExpression: {
                 const expr = raw;
@@ -962,6 +969,9 @@ class Serializer {
     }
     visitAccessThis(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.AccessThisExpression}","ancestor":${expr.ancestor}}`;
+    }
+    visitAccessBoundary(expr) {
+        return `{"$TYPE":"${ASTExpressionTypes.AccessBoundaryExpression}"}`;
     }
     visitAccessScope(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.AccessScopeExpression}","name":"${expr.name}","ancestor":${expr.ancestor}}`;

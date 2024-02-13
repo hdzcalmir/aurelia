@@ -206,5 +206,5 @@ if (${moduleText}.hot) {
     return code;
 }
 
-exports["default"] = au;
+exports.default = au;
 //# sourceMappingURL=index.cjs.map

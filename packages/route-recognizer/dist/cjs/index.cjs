@@ -1,14 +1,10 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 class Parameter {
-    constructor(t, e, s, i) {
+    constructor(t, s, e, i) {
         this.name = t;
-        this.isOptional = e;
-        this.isStar = s;
+        this.isOptional = s;
+        this.isStar = e;
         this.pattern = i;
     }
     satisfiesPattern(t) {
@@ -19,10 +15,10 @@ class Parameter {
 }
 
 class ConfigurableRoute {
-    constructor(t, e, s) {
+    constructor(t, s, e) {
         this.path = t;
-        this.caseSensitive = e;
-        this.handler = s;
+        this.caseSensitive = s;
+        this.handler = e;
     }
 }
 
@@ -34,9 +30,9 @@ class Endpoint {
         if (this.t !== null) throw new Error("Residual endpoint is already set");
         this.t = t;
     }
-    constructor(t, e) {
+    constructor(t, s) {
         this.route = t;
-        this.params = e;
+        this.params = s;
         this.t = null;
     }
     equalsOrResidual(t) {
@@ -45,53 +41,53 @@ class Endpoint {
 }
 
 class RecognizedRoute {
-    constructor(t, e) {
+    constructor(t, s) {
         this.endpoint = t;
-        const s = Object.create(null);
-        for (const t in e) {
-            const i = e[t];
-            s[t] = i != null ? decodeURIComponent(i) : i;
+        const e = Object.create(null);
+        for (const t in s) {
+            const i = s[t];
+            e[t] = i != null ? decodeURIComponent(i) : i;
         }
-        this.params = Object.freeze(s);
+        this.params = Object.freeze(e);
     }
 }
 
 class Candidate {
-    constructor(t, e, s, i) {
+    constructor(t, s, e, i) {
         this.chars = t;
-        this.states = e;
-        this.skippedStates = s;
+        this.states = s;
+        this.skippedStates = e;
         this.result = i;
         this.params = null;
         this.isConstrained = false;
         this.satisfiesConstraints = null;
-        this.head = e[e.length - 1];
+        this.head = s[s.length - 1];
         this.endpoint = this.head?.endpoint;
     }
     advance(t) {
-        const {chars: e, states: s, skippedStates: i, result: n} = this;
+        const {chars: s, states: e, skippedStates: i, result: n} = this;
         let r = null;
         let o = 0;
-        const l = s[s.length - 1];
-        function $process(u, a) {
-            if (u.isMatch(t)) {
+        const l = e[e.length - 1];
+        function $process(a, u) {
+            if (a.isMatch(t)) {
                 if (++o === 1) {
-                    r = u;
+                    r = a;
                 } else {
-                    n.add(new Candidate(e.concat(t), s.concat(u), a === null ? i : i.concat(a), n));
+                    n.add(new Candidate(s.concat(t), e.concat(a), u === null ? i : i.concat(u), n));
                 }
             }
-            if (l.segment === null && u.isOptional && u.nextStates !== null) {
-                if (u.nextStates.length > 1) {
-                    throw createError(`${u.nextStates.length} nextStates`);
+            if (l.segment === null && a.isOptional && a.nextStates !== null) {
+                if (a.nextStates.length > 1) {
+                    throw createError(`${a.nextStates.length} nextStates`);
                 }
-                const t = u.nextStates[0];
+                const t = a.nextStates[0];
                 if (!t.isSeparator) {
                     throw createError(`Not a separator`);
                 }
                 if (t.nextStates !== null) {
-                    for (const e of t.nextStates) {
-                        $process(e, u);
+                    for (const s of t.nextStates) {
+                        $process(s, a);
                     }
                 }
             }
@@ -105,8 +101,8 @@ class Candidate {
             }
         }
         if (r !== null) {
-            s.push(this.head = r);
-            e.push(t);
+            e.push(this.head = r);
+            s.push(t);
             this.isConstrained = this.isConstrained || r.isDynamic && r.segment.isConstrained;
             if (r.endpoint !== null) {
                 this.endpoint = r.endpoint;
@@ -117,18 +113,18 @@ class Candidate {
         }
     }
     i() {
-        function collectSkippedStates(t, e) {
-            const s = e.nextStates;
-            if (s !== null) {
-                if (s.length === 1 && s[0].segment === null) {
-                    collectSkippedStates(t, s[0]);
+        function collectSkippedStates(t, s) {
+            const e = s.nextStates;
+            if (e !== null) {
+                if (e.length === 1 && e[0].segment === null) {
+                    collectSkippedStates(t, e[0]);
                 } else {
-                    for (const e of s) {
-                        if (e.isOptional && e.endpoint !== null) {
-                            t.push(e);
-                            if (e.nextStates !== null) {
-                                for (const s of e.nextStates) {
-                                    collectSkippedStates(t, s);
+                    for (const s of e) {
+                        if (s.isOptional && s.endpoint !== null) {
+                            t.push(s);
+                            if (s.nextStates !== null) {
+                                for (const e of s.nextStates) {
+                                    collectSkippedStates(t, e);
                                 }
                             }
                             break;
@@ -145,23 +141,23 @@ class Candidate {
     u() {
         let t = this.params;
         if (t != null) return t;
-        const {states: e, chars: s, endpoint: i} = this;
+        const {states: s, chars: e, endpoint: i} = this;
         t = {};
         this.satisfiesConstraints = true;
-        for (const e of i.params) {
-            t[e.name] = void 0;
+        for (const s of i.params) {
+            t[s.name] = void 0;
         }
-        for (let i = 0, n = e.length; i < n; ++i) {
-            const n = e[i];
+        for (let i = 0, n = s.length; i < n; ++i) {
+            const n = s[i];
             if (n.isDynamic) {
                 const r = n.segment;
                 const o = r.name;
                 if (t[o] === void 0) {
-                    t[o] = s[i];
+                    t[o] = e[i];
                 } else {
-                    t[o] += s[i];
+                    t[o] += e[i];
                 }
-                const l = n.isConstrained && !Object.is(e[i + 1]?.segment, r);
+                const l = n.isConstrained && !Object.is(s[i + 1]?.segment, r);
                 if (!l) continue;
                 this.satisfiesConstraints = this.satisfiesConstraints && n.satisfiesConstraint(t[o]);
             }
@@ -172,14 +168,14 @@ class Candidate {
         return t;
     }
     compareTo(t) {
-        const e = this.states;
-        const s = t.states;
-        for (let t = 0, i = 0, n = Math.max(e.length, s.length); t < n; ++t) {
-            let n = e[t];
+        const s = this.states;
+        const e = t.states;
+        for (let t = 0, i = 0, n = Math.max(s.length, e.length); t < n; ++t) {
+            let n = s[t];
             if (n === void 0) {
                 return 1;
             }
-            let r = s[i];
+            let r = e[i];
             if (r === void 0) {
                 return -1;
             }
@@ -190,12 +186,12 @@ class Candidate {
                     ++i;
                     continue;
                 }
-                if ((n = e[++t]) === void 0) {
+                if ((n = s[++t]) === void 0) {
                     return 1;
                 }
                 o = n.segment;
             } else if (l === null) {
-                if ((r = s[++i]) === void 0) {
+                if ((r = e[++i]) === void 0) {
                     return -1;
                 }
                 l = r.segment;
@@ -219,12 +215,12 @@ class Candidate {
             return -1;
         }
         for (let t = 0; t < r; ++t) {
-            const e = i[t];
-            const s = n[t];
-            if (e.length < s.length) {
+            const s = i[t];
+            const e = n[t];
+            if (s.length < e.length) {
                 return 1;
             }
-            if (e.length > s.length) {
+            if (s.length > e.length) {
                 return -1;
             }
         }
@@ -236,8 +232,8 @@ function hasEndpoint(t) {
     return t.head.endpoint !== null;
 }
 
-function compareChains(t, e) {
-    return t.compareTo(e);
+function compareChains(t, s) {
+    return t.compareTo(s);
 }
 
 class RecognizeResult {
@@ -263,16 +259,16 @@ class RecognizeResult {
         this.candidates.splice(this.candidates.indexOf(t), 1);
     }
     advance(t) {
-        const e = this.candidates.slice();
-        for (const s of e) {
-            s.advance(t);
+        const s = this.candidates.slice();
+        for (const e of s) {
+            e.advance(t);
         }
     }
 }
 
 const t = "$$residue";
 
-const e = /^:(?<name>[^?\s{}]+)(?:\{\{(?<constraint>.+)\}\})?(?<optional>\?)?$/g;
+const s = /^:(?<name>[^?\s{}]+)(?:\{\{(?<constraint>.+)\}\})?(?<optional>\?)?$/g;
 
 class RouteRecognizer {
     constructor() {
@@ -280,89 +276,89 @@ class RouteRecognizer {
         this.cache = new Map;
         this.endpointLookup = new Map;
     }
-    add(e, s = false) {
+    add(s, e = false) {
         let i;
         let n;
-        if (e instanceof Array) {
-            for (const r of e) {
+        if (s instanceof Array) {
+            for (const r of s) {
                 n = this.$add(r, false);
                 i = n.params;
-                if (!s || (i[i.length - 1]?.isStar ?? false)) continue;
+                if (!e || (i[i.length - 1]?.isStar ?? false)) continue;
                 n.residualEndpoint = this.$add({
                     ...r,
                     path: `${r.path}/*${t}`
                 }, true);
             }
         } else {
-            n = this.$add(e, false);
+            n = this.$add(s, false);
             i = n.params;
-            if (s && !(i[i.length - 1]?.isStar ?? false)) {
+            if (e && !(i[i.length - 1]?.isStar ?? false)) {
                 n.residualEndpoint = this.$add({
-                    ...e,
-                    path: `${e.path}/*${t}`
+                    ...s,
+                    path: `${s.path}/*${t}`
                 }, true);
             }
         }
         this.cache.clear();
     }
-    $add(s, i) {
-        const n = s.path;
+    $add(e, i) {
+        const n = e.path;
         const r = this.endpointLookup;
         if (r.has(n)) throw createError(`Cannot add duplicate path '${n}'.`);
-        const o = new ConfigurableRoute(n, s.caseSensitive === true, s.handler);
+        const o = new ConfigurableRoute(n, e.caseSensitive === true, e.handler);
         const l = n === "" ? [ "" ] : n.split("/").filter(isNotEmpty);
-        const u = [];
-        let a = this.rootState;
-        for (const s of l) {
-            a = a.append(null, "/");
-            switch (s.charAt(0)) {
+        const a = [];
+        let u = this.rootState;
+        for (const e of l) {
+            u = u.append(null, "/");
+            switch (e.charAt(0)) {
               case ":":
                 {
-                    e.lastIndex = 0;
-                    const i = e.exec(s);
+                    s.lastIndex = 0;
+                    const i = s.exec(e);
                     const {name: n, optional: r} = i?.groups ?? {};
                     const o = r === "?";
                     if (n === t) throw new Error(`Invalid parameter name; usage of the reserved parameter name '${t}' is used.`);
                     const l = i?.groups?.constraint;
                     const h = l != null ? new RegExp(l) : null;
-                    u.push(new Parameter(n, o, false, h));
-                    a = new DynamicSegment(n, o, h).appendTo(a);
+                    a.push(new Parameter(n, o, false, h));
+                    u = new DynamicSegment(n, o, h).appendTo(u);
                     break;
                 }
 
               case "*":
                 {
-                    const e = s.slice(1);
+                    const s = e.slice(1);
                     let n;
-                    if (e === t) {
+                    if (s === t) {
                         if (!i) throw new Error(`Invalid parameter name; usage of the reserved parameter name '${t}' is used.`);
                         n = 1;
                     } else {
                         n = 2;
                     }
-                    u.push(new Parameter(e, true, true, null));
-                    a = new StarSegment(e, n).appendTo(a);
+                    a.push(new Parameter(s, true, true, null));
+                    u = new StarSegment(s, n).appendTo(u);
                     break;
                 }
 
               default:
                 {
-                    a = new StaticSegment(s, o.caseSensitive).appendTo(a);
+                    u = new StaticSegment(e, o.caseSensitive).appendTo(u);
                     break;
                 }
             }
         }
-        const h = new Endpoint(o, u);
-        a.setEndpoint(h);
+        const h = new Endpoint(o, a);
+        u.setEndpoint(h);
         r.set(n, h);
         return h;
     }
     recognize(t) {
-        let e = this.cache.get(t);
-        if (e === void 0) {
-            this.cache.set(t, e = this.$recognize(t));
+        let s = this.cache.get(t);
+        if (s === void 0) {
+            this.cache.set(t, s = this.$recognize(t));
         }
-        return e;
+        return s;
     }
     $recognize(t) {
         t = decodeURI(t);
@@ -372,20 +368,20 @@ class RouteRecognizer {
         if (t.length > 1 && t.endsWith("/")) {
             t = t.slice(0, -1);
         }
-        const e = new RecognizeResult(this.rootState);
-        for (let s = 0, i = t.length; s < i; ++s) {
-            const i = t.charAt(s);
-            e.advance(i);
-            if (e.isEmpty) {
+        const s = new RecognizeResult(this.rootState);
+        for (let e = 0, i = t.length; e < i; ++e) {
+            const i = t.charAt(e);
+            s.advance(i);
+            if (s.isEmpty) {
                 return null;
             }
         }
-        const s = e.getSolution();
-        if (s === null) {
+        const e = s.getSolution();
+        if (e === null) {
             return null;
         }
-        const {endpoint: i} = s;
-        const n = s.u();
+        const {endpoint: i} = e;
+        const n = e.u();
         return new RecognizedRoute(i, n);
     }
     getEndpoint(t) {
@@ -394,20 +390,20 @@ class RouteRecognizer {
 }
 
 class State {
-    constructor(t, e, s) {
+    constructor(t, s, e) {
         this.prevState = t;
-        this.segment = e;
-        this.value = s;
+        this.segment = s;
+        this.value = e;
         this.nextStates = null;
         this.endpoint = null;
         this.isConstrained = false;
-        switch (e?.kind) {
+        switch (s?.kind) {
           case 3:
             this.length = t.length + 1;
             this.isSeparator = false;
             this.isDynamic = true;
-            this.isOptional = e.optional;
-            this.isConstrained = e.isConstrained;
+            this.isOptional = s.optional;
+            this.isConstrained = s.isConstrained;
             break;
 
           case 2:
@@ -433,21 +429,21 @@ class State {
             break;
         }
     }
-    append(t, e) {
-        let s;
+    append(t, s) {
+        let e;
         let i = this.nextStates;
         if (i === null) {
-            s = void 0;
+            e = void 0;
             i = this.nextStates = [];
         } else if (t === null) {
-            s = i.find((t => t.value === e));
+            e = i.find((t => t.value === s));
         } else {
-            s = i.find((e => e.segment?.equals(t)));
+            e = i.find((s => s.segment?.equals(t)));
         }
-        if (s === void 0) {
-            i.push(s = new State(this, t, e));
+        if (e === void 0) {
+            i.push(e = new State(this, t, s));
         }
-        return s;
+        return e;
     }
     setEndpoint(t) {
         if (this.endpoint !== null) {
@@ -462,8 +458,8 @@ class State {
         }
     }
     isMatch(t) {
-        const e = this.segment;
-        switch (e?.kind) {
+        const s = this.segment;
+        switch (s?.kind) {
           case 3:
             return !this.value.includes(t);
 
@@ -489,20 +485,20 @@ class StaticSegment {
     get kind() {
         return 4;
     }
-    constructor(t, e) {
+    constructor(t, s) {
         this.value = t;
-        this.caseSensitive = e;
+        this.caseSensitive = s;
     }
     appendTo(t) {
-        const {value: e, value: {length: s}} = this;
+        const {value: s, value: {length: e}} = this;
         if (this.caseSensitive) {
-            for (let i = 0; i < s; ++i) {
-                t = t.append(this, e.charAt(i));
+            for (let i = 0; i < e; ++i) {
+                t = t.append(this, s.charAt(i));
             }
         } else {
-            for (let i = 0; i < s; ++i) {
-                const s = e.charAt(i);
-                t = t.append(this, s.toUpperCase() + s.toLowerCase());
+            for (let i = 0; i < e; ++i) {
+                const e = s.charAt(i);
+                t = t.append(this, e.toUpperCase() + e.toLowerCase());
             }
         }
         return t;
@@ -516,12 +512,12 @@ class DynamicSegment {
     get kind() {
         return 3;
     }
-    constructor(t, e, s) {
+    constructor(t, s, e) {
         this.name = t;
-        this.optional = e;
-        this.pattern = s;
-        if (s === void 0) throw new Error(`Pattern is undefined`);
-        this.isConstrained = s !== null;
+        this.optional = s;
+        this.pattern = e;
+        if (e === void 0) throw new Error(`Pattern is undefined`);
+        this.isConstrained = e !== null;
     }
     appendTo(t) {
         t = t.append(this, "/");
@@ -538,9 +534,9 @@ class DynamicSegment {
 }
 
 class StarSegment {
-    constructor(t, e) {
+    constructor(t, s) {
         this.name = t;
-        this.kind = e;
+        this.kind = s;
     }
     appendTo(t) {
         t = t.append(this, "");

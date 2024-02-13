@@ -7,19 +7,18 @@ var metadata = require('@aurelia/metadata');
 var AST = require('@aurelia/runtime');
 var runtimeHtml = require('@aurelia/runtime-html');
 
-function _interopNamespace(e) {
-    if (e && e.__esModule) return e;
+function _interopNamespaceDefault(e) {
     var n = Object.create(null);
     if (e) {
         for (var k in e) {
             n[k] = e[k];
         }
     }
-    n["default"] = e;
+    n.default = e;
     return Object.freeze(n);
 }
 
-var AST__namespace = /*#__PURE__*/_interopNamespace(AST);
+var AST__namespace = /*#__PURE__*/_interopNamespaceDefault(AST);
 
 const IValidationExpressionHydrator = /*@__PURE__*/ kernel.DI.createInterface('IValidationExpressionHydrator');
 
@@ -37,6 +36,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -796,6 +797,7 @@ exports.ValidationMessageProvider = ValidationMessageProvider_1 = __decorate([
 ], exports.ValidationMessageProvider);
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 const astVisit = AST__namespace.astVisit;
 var ASTExpressionTypes;
 (function (ASTExpressionTypes) {
@@ -804,6 +806,7 @@ var ASTExpressionTypes;
     ASTExpressionTypes["AssignExpression"] = "AssignExpression";
     ASTExpressionTypes["ConditionalExpression"] = "ConditionalExpression";
     ASTExpressionTypes["AccessThisExpression"] = "AccessThisExpression";
+    ASTExpressionTypes["AccessBoundaryExpression"] = "AccessBoundaryExpression";
     ASTExpressionTypes["AccessScopeExpression"] = "AccessScopeExpression";
     ASTExpressionTypes["AccessMemberExpression"] = "AccessMemberExpression";
     ASTExpressionTypes["AccessKeyedExpression"] = "AccessKeyedExpression";
@@ -847,6 +850,9 @@ class Deserializer {
             case ASTExpressionTypes.AccessThisExpression: {
                 const expr = raw;
                 return new AST__namespace.AccessThisExpression(expr.ancestor);
+            }
+            case ASTExpressionTypes.AccessBoundaryExpression: {
+                return new AST__namespace.AccessBoundaryExpression();
             }
             case ASTExpressionTypes.AccessScopeExpression: {
                 const expr = raw;
@@ -979,6 +985,9 @@ class Serializer {
     }
     visitAccessThis(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.AccessThisExpression}","ancestor":${expr.ancestor}}`;
+    }
+    visitAccessBoundary(expr) {
+        return `{"$TYPE":"${ASTExpressionTypes.AccessBoundaryExpression}"}`;
     }
     visitAccessScope(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.AccessScopeExpression}","name":"${expr.name}","ancestor":${expr.ancestor}}`;

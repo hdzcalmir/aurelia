@@ -1,6 +1,11 @@
 import { State } from '../templating/controller';
 /**
  * Mode of a binding to operate
+ * - 1 / one time - bindings should only update the target once
+ * - 2 / to view - bindings should update the target and observe the source for changes to update again
+ * - 3 / from view - bindings should update the source and observe the target for changes to update again
+ * - 6 / two way - bindings should observe both target and source for changes to update the other side
+ * - 8 / default - undecided mode, bindings, depends on the circumstance, may decide what to do accordingly
  */
 export declare const BindingMode: Readonly<{
     readonly oneTime: 1;

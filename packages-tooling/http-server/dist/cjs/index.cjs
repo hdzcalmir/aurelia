@@ -1,7 +1,5 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', { value: true });
-
 var fs = require('fs');
 var http = require('http');
 var http2 = require('http2');
@@ -12,8 +10,7 @@ var https = require('https');
 var $url = require('url');
 var os = require('os');
 
-function _interopNamespace(e) {
-    if (e && e.__esModule) return e;
+function _interopNamespaceDefault(e) {
     var n = Object.create(null);
     if (e) {
         Object.keys(e).forEach(function (k) {
@@ -26,12 +23,12 @@ function _interopNamespace(e) {
             }
         });
     }
-    n["default"] = e;
+    n.default = e;
     return Object.freeze(n);
 }
 
-var https__namespace = /*#__PURE__*/_interopNamespace(https);
-var $url__namespace = /*#__PURE__*/_interopNamespace($url);
+var https__namespace = /*#__PURE__*/_interopNamespaceDefault(https);
+var $url__namespace = /*#__PURE__*/_interopNamespaceDefault($url);
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -47,6 +44,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;

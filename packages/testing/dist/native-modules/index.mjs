@@ -4,15 +4,15 @@ import { noop as n, isArrayIndex as i, DI as r, Registration as a, kebabCase as 
 
 import { IObserverLocator as c, astEvaluate as f, astAssign as d, astBind as p, astUnbind as m, IDirtyChecker as g, INodeObserverLocator as b, Scope as v } from "../../../runtime/dist/native-modules/index.mjs";
 
-import { StandardConfiguration as y, IPlatform as x, ITemplateCompiler as $, CustomElement as w, InstructionType as k, CustomAttribute as E, Aurelia as S, valueConverter as C, bindable as O, customElement as q } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { StandardConfiguration as y, IPlatform as x, ITemplateCompiler as $, CustomElement as w, InstructionType as k, CustomAttribute as E, Aurelia as S, valueConverter as C, bindable as O, customElement as j } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-import { BrowserPlatform as j } from "../../../platform-browser/dist/native-modules/index.mjs";
+import { BrowserPlatform as q } from "../../../platform-browser/dist/native-modules/index.mjs";
 
 import { Metadata as A } from "../../../metadata/dist/native-modules/index.mjs";
 
-const {getPrototypeOf: T, getOwnPropertyDescriptor: F, getOwnPropertyDescriptors: I, getOwnPropertyNames: M, getOwnPropertySymbols: R, defineProperty: P, defineProperties: N} = Object;
+const {getPrototypeOf: T, getOwnPropertyDescriptor: F, getOwnPropertyDescriptors: I, getOwnPropertyNames: M, getOwnPropertySymbols: R, defineProperty: P, defineProperties: B} = Object;
 
-const B = Object.keys;
+const N = Object.keys;
 
 const L = Object.is;
 
@@ -210,7 +210,7 @@ function getOwnNonIndexProperties(e, t) {
     if (t) {
         return M(e).filter((e => !i(e)));
     } else {
-        return B(e).filter((e => !i(e)));
+        return N(e).filter((e => !i(e)));
     }
 }
 
@@ -615,8 +615,8 @@ function innerDeepEqual(e, t, n, i) {
 
 function keyCheck(e, t, n, i, r, a) {
     if (arguments.length === 5) {
-        a = B(e);
-        const n = B(t);
+        a = N(e);
+        const n = N(t);
         if (a.length !== n.length) {
             return false;
         }
@@ -837,14 +837,14 @@ function objEquiv(e, t, n, i, r, a) {
             } else if (H(t, s)) {
                 return false;
             } else {
-                const i = B(e);
+                const i = N(e);
                 for (;s < i.length; s++) {
                     const a = i[s];
                     if (!H(t, a) || !innerDeepEqual(e[a], t[a], n, r)) {
                         return false;
                     }
                 }
-                if (i.length !== B(t).length) {
+                if (i.length !== N(t).length) {
                     return false;
                 }
                 return true;
@@ -886,6 +886,12 @@ class TestContext {
     }
     get CustomEvent() {
         return this.platform.globalThis.CustomEvent;
+    }
+    get KeyboardEvent() {
+        return this.platform.globalThis.KeyboardEvent;
+    }
+    get MouseEvent() {
+        return this.platform.globalThis.MouseEvent;
     }
     get Node() {
         return this.platform.globalThis.Node;
@@ -1021,7 +1027,7 @@ const $e = z({
     stylize: stylizeWithColor
 });
 
-const we = B($e);
+const we = N($e);
 
 function getUserOptions(e) {
     const t = {};
@@ -1326,9 +1332,9 @@ function createErrDiff(e, t, n) {
 
 const Oe = 0;
 
-const qe = 1;
+const je = 1;
 
-const je = 2;
+const qe = 2;
 
 const Ae = new Int8Array(128);
 
@@ -1417,7 +1423,7 @@ function handleMaxCallStackSize(e, t, n, i, r) {
     throw t;
 }
 
-const Ne = z([ "BYTES_PER_ELEMENT", "length", "byteLength", "byteOffset", "buffer" ]);
+const Be = z([ "BYTES_PER_ELEMENT", "length", "byteLength", "byteOffset", "buffer" ]);
 
 function entriesToArray(e) {
     const t = [];
@@ -1503,7 +1509,7 @@ function getPrefix(e, t, n) {
     return `${e} `;
 }
 
-const Be = formatPrimitive.bind(null, stylizeNoColor);
+const Ne = formatPrimitive.bind(null, stylizeNoColor);
 
 function getKeys(e, t) {
     let n;
@@ -1514,7 +1520,7 @@ function getKeys(e, t) {
             n.push(...i);
         }
     } else {
-        n = B(e);
+        n = N(e);
         if (i.length !== 0) {
             n.push(...i.filter((t => W(e, t))));
         }
@@ -1590,7 +1596,7 @@ function noPrototypeIterator(e, t, n) {
         i = new n(t);
     }
     if (i !== undefined) {
-        N(i, I(t));
+        B(i, I(t));
         return formatRaw(e, i, n);
     }
     return void 0;
@@ -1646,7 +1652,7 @@ function formatError(e) {
 }
 
 function formatSpecialArray(e, t, n, r, a, s) {
-    const o = B(t);
+    const o = N(t);
     let l = s;
     for (;s < o.length && a.length < r; s++) {
         const u = o[s];
@@ -1667,7 +1673,7 @@ function formatSpecialArray(e, t, n, r, a, s) {
                 break;
             }
         }
-        a.push(formatProperty(e, t, n, u, qe));
+        a.push(formatProperty(e, t, n, u, je));
         l++;
     }
     const u = t.length - l;
@@ -1702,7 +1708,7 @@ function formatArray(e, t, n) {
         if (!H(t, i)) {
             return formatSpecialArray(e, t, n, r, s, i);
         }
-        s.push(formatProperty(e, t, n, i, qe));
+        s.push(formatProperty(e, t, n, i, je));
     }
     if (a > 0) {
         s.push(`... ${a} more item${a > 1 ? "s" : ""}`);
@@ -1723,7 +1729,7 @@ function formatTypedArray(e, t, n) {
     }
     if (e.showHidden) {
         e.indentationLvl += 2;
-        for (const i of Ne) {
+        for (const i of Be) {
             const r = formatValue(e, t[i], n, true);
             a.push(`[${i}]: ${r}`);
         }
@@ -1886,7 +1892,7 @@ function formatProperty(e, t, n, i, r) {
     } else {
         s = e.stylize("undefined", "undefined");
     }
-    if (r === qe) {
+    if (r === je) {
         return s;
     }
     if (isSymbol(i)) {
@@ -1935,7 +1941,7 @@ function formatRaw(e, t, n, i) {
             if (t.length === 0 && r.length === 0) {
                 return `${u[0]}]`;
             }
-            d = je;
+            d = qe;
             l = formatArray;
         } else if (isSet(t)) {
             r = getKeys(t, e.showHidden);
@@ -1961,7 +1967,7 @@ function formatRaw(e, t, n, i) {
                 return `${u[0]}]`;
             }
             l = formatTypedArray;
-            d = je;
+            d = qe;
         } else if (isMapIterator(t)) {
             r = getKeys(t, e.showHidden);
             u = setIteratorBraces("Map", s);
@@ -2056,17 +2062,17 @@ function formatRaw(e, t, n, i) {
         } else if (isBoxedPrimitive(t)) {
             let n;
             if (isNumberObject(t)) {
-                o = `[Number: ${Be(ae(t), e)}]`;
+                o = `[Number: ${Ne(ae(t), e)}]`;
                 n = "number";
             } else if (isStringObject(t)) {
-                o = `[String: ${Be(oe(t), e)}]`;
+                o = `[String: ${Ne(oe(t), e)}]`;
                 n = "string";
                 r = r.slice(t.length);
             } else if (isBooleanObject(t)) {
-                o = `[Boolean: ${Be(re(t), e)}]`;
+                o = `[Boolean: ${Ne(re(t), e)}]`;
                 n = "boolean";
             } else {
-                o = `[Symbol: ${Be(se(t), e)}]`;
+                o = `[Symbol: ${Ne(se(t), e)}]`;
                 n = "symbol";
             }
             if (r.length === 0) {
@@ -2126,7 +2132,7 @@ function formatRaw(e, t, n, i) {
     let g = false;
     if (isNumber(e.compact)) {
         const t = p.length;
-        if (d === je && p.length > 6) {
+        if (d === qe && p.length > 6) {
             p = groupArrayElements(e, p);
         }
         if (e.currentDepth - n < e.compact && t === p.length) {
@@ -2374,7 +2380,7 @@ function verifyBindingInstructionsEqual(e, t, n, i) {
 
 function ensureTaskQueuesEmpty(t) {
     if (!t) {
-        t = j.getOrCreate(globalThis);
+        t = q.getOrCreate(globalThis);
     }
     e(t.taskQueue);
     e(t.domWriteQueue);
@@ -2467,7 +2473,7 @@ function expectedException(e, t, n) {
             i.operator = "throws";
             throw i;
         }
-        const i = B(t);
+        const i = N(t);
         if (isError(t)) {
             i.push("name", "message");
         }
@@ -3007,7 +3013,7 @@ const Qe = function() {
         return o;
     }
     return function $areTaskQueuesEmpty(e) {
-        const t = j.getOrCreate(globalThis);
+        const t = q.getOrCreate(globalThis);
         const n = t.domWriteQueue;
         const i = t.taskQueue;
         const r = t.domReadQueue;
@@ -4342,25 +4348,27 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
     }
     const b = a.get(g);
     let v = void 0;
-    if (i) {
-        try {
-            f.app({
-                host: c,
-                component: b
-            });
-            v = f.start();
-        } catch (e) {
+    function startFixtureApp() {
+        if (i) {
             try {
-                const dispose = () => {
-                    l.remove();
-                    f.dispose();
-                };
-                const e = f.stop();
-                if (e instanceof Promise) void e.then(dispose); else dispose();
-            } catch {
-                console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
+                f.app({
+                    host: c,
+                    component: b
+                });
+                $.startPromise = v = f.start();
+            } catch (e) {
+                try {
+                    const dispose = () => {
+                        l.remove();
+                        f.dispose();
+                    };
+                    const e = f.stop();
+                    if (e instanceof Promise) void e.then(dispose); else dispose();
+                } catch {
+                    console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
+                }
+                throw e;
             }
-            throw e;
         }
     }
     let y = 0;
@@ -4457,18 +4465,29 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         const n = strictQueryBy(e, `to compare value against "${t}"`);
         Ue.strictEqual(n.value, t);
     }
-    function trigger(e, t, n) {
-        const i = strictQueryBy(e, `to fire event "${t}"`);
-        i.dispatchEvent(new r.CustomEvent(t, n));
+    function trigger(e, t, n, i) {
+        const a = strictQueryBy(e, `to fire event "${t}"`);
+        return $triggerEvent(a, r, t, n, i);
     }
-    [ "click", "change", "input", "scroll" ].forEach((e => {
+    Ge.forEach((e => {
         Object.defineProperty(trigger, e, {
             configurable: true,
             writable: true,
-            value: (t, n) => {
-                const i = strictQueryBy(t, `to fire event "${e}"`);
-                i.dispatchEvent(new r.CustomEvent(e, n));
-            }
+            value: (t, n, i) => triggerMouseEvent(strictQueryBy(t, `to fire event "${e}"`), r, e, n, i)
+        });
+    }));
+    Ye.forEach((e => {
+        Object.defineProperty(trigger, e, {
+            configurable: true,
+            writable: true,
+            value: (t, n, i) => triggerKeyboardEvent(strictQueryBy(t, `to fire event "${e}"`), r, e, n, i)
+        });
+    }));
+    [ "change", "input", "scroll" ].forEach((e => {
+        Object.defineProperty(trigger, e, {
+            configurable: true,
+            writable: true,
+            value: (t, n, i) => $triggerEvent(strictQueryBy(t, `to fire event "${e}"`), r, e, n, i)
         });
     }));
     function type(e, t) {
@@ -4569,6 +4588,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         }
     };
     Ke.publish("fixture:created", $);
+    startFixtureApp();
     return $;
 }
 
@@ -4607,6 +4627,68 @@ createFixture.html = (e, ...t) => (new FixtureBuilder).html(e, ...t);
 createFixture.component = e => (new FixtureBuilder).component(e);
 
 createFixture.deps = (...e) => (new FixtureBuilder).deps(...e);
+
+const Ge = [ "click", "mousedown", "mouseup", "mousemove", "dbclick", "contextmenu" ];
+
+const Ye = [ "keydown", "keyup", "keypress" ];
+
+function $triggerEvent(e, t, n, i, r) {
+    if (Ge.includes(n)) {
+        return triggerMouseEvent(e, t, n, i, r);
+    }
+    if (Ye.includes(n)) {
+        return triggerKeyboardEvent(e, t, n, i, r);
+    }
+    const a = new t.CustomEvent(n, i);
+    if (r !== void 0) {
+        for (const e in r) {
+            Object.defineProperty(a, e, {
+                value: r[e]
+            });
+        }
+    }
+    e.dispatchEvent(a);
+}
+
+function triggerKeyboardEvent(e, t, n, i, r) {
+    const a = new t.KeyboardEvent(n, i);
+    if (r !== void 0) {
+        for (const e in r) {
+            Object.defineProperty(a, e, {
+                value: r[e]
+            });
+        }
+    }
+    e.dispatchEvent(a);
+}
+
+function triggerMouseEvent(e, t, n, i, r) {
+    const a = new t.MouseEvent(n, i);
+    if (r !== void 0) {
+        for (const e in r) {
+            Object.defineProperty(a, e, {
+                value: r[e]
+            });
+        }
+    }
+    e.dispatchEvent(a);
+}
+
+Ge.forEach((e => {
+    Object.defineProperty($triggerEvent, e, {
+        configurable: true,
+        writable: true,
+        value: (t, n, i, r) => triggerMouseEvent(t, n, e, i, r)
+    });
+}));
+
+Ye.forEach((e => {
+    Object.defineProperty($triggerEvent, e, {
+        configurable: true,
+        writable: true,
+        value: (t, n, i, r) => triggerKeyboardEvent(t, n, e, i, r)
+    });
+}));
 
 class MockBinding {
     constructor() {
@@ -4935,23 +5017,23 @@ class ProxyChangeSet {
 
 class CollectionChangeSet {
     get indexMap() {
-        return this.q;
+        return this.j;
     }
     constructor(e, t) {
         this.index = e;
-        this.q = t;
+        this.j = t;
     }
     dispose() {
-        this.q = void 0;
+        this.j = void 0;
     }
 }
 
 class SpySubscriber {
     get changes() {
-        if (this.j === void 0) {
+        if (this.q === void 0) {
             return [];
         }
-        return this.j;
+        return this.q;
     }
     get collectionChanges() {
         if (this.A === void 0) {
@@ -4960,7 +5042,7 @@ class SpySubscriber {
         return this.A;
     }
     get hasChanges() {
-        return this.j !== void 0;
+        return this.q !== void 0;
     }
     get hasProxyChanges() {
         return this.T !== void 0;
@@ -4972,16 +5054,16 @@ class SpySubscriber {
         return this.F;
     }
     constructor() {
-        this.j = void 0;
+        this.q = void 0;
         this.T = void 0;
         this.A = void 0;
         this.F = 0;
     }
     handleChange(e, t) {
-        if (this.j === void 0) {
-            this.j = [ new ChangeSet(this.F++, e, t) ];
+        if (this.q === void 0) {
+            this.q = [ new ChangeSet(this.F++, e, t) ];
         } else {
-            this.j.push(new ChangeSet(this.F++, e, t));
+            this.q.push(new ChangeSet(this.F++, e, t));
         }
     }
     handleCollectionChange(e, t) {
@@ -4992,9 +5074,9 @@ class SpySubscriber {
         }
     }
     dispose() {
-        if (this.j !== void 0) {
-            this.j.forEach((e => e.dispose()));
-            this.j = void 0;
+        if (this.q !== void 0) {
+            this.q.forEach((e => e.dispose()));
+            this.q = void 0;
         }
         if (this.T !== void 0) {
             this.T.forEach((e => e.dispose()));
@@ -5014,7 +5096,7 @@ function __decorate(e, t, n, i) {
     return r > 3 && a && Object.defineProperty(t, n, a), a;
 }
 
-let Ge = class SortValueConverter {
+let Xe = class SortValueConverter {
     toView(e, t, n = "asc") {
         if (Array.isArray(e)) {
             const i = n === "asc" ? 1 : -1;
@@ -5028,9 +5110,9 @@ let Ge = class SortValueConverter {
     }
 };
 
-Ge = __decorate([ C("sort") ], Ge);
+Xe = __decorate([ C("sort") ], Xe);
 
-let Ye = class JsonValueConverter {
+let Ze = class JsonValueConverter {
     toView(e) {
         return JSON.stringify(e);
     }
@@ -5039,26 +5121,26 @@ let Ye = class JsonValueConverter {
     }
 };
 
-Ye = __decorate([ C("json") ], Ye);
+Ze = __decorate([ C("json") ], Ze);
 
-let Xe = class NameTag {};
+let et = class NameTag {};
 
-__decorate([ O() ], Xe.prototype, "name", void 0);
+__decorate([ O() ], et.prototype, "name", void 0);
 
-Xe = __decorate([ q({
+et = __decorate([ j({
     name: "name-tag",
     template: `<template>\${name}</template>`,
     needsCompile: true,
     dependencies: [],
     instructions: [],
     surrogates: []
-}) ], Xe);
+}) ], et);
 
-const Ze = [ Ge, Ye, Xe ];
+const tt = [ Xe, Ze, et ];
 
-const et = {
+const nt = {
     register(e) {
-        e.register(...Ze);
+        e.register(...tt);
     }
 };
 
@@ -5073,14 +5155,14 @@ function _(e, ...t) {
     return n.result + e[i];
 }
 
-const tt = /\r?\n/g;
+const it = /\r?\n/g;
 
-const nt = /\s+/g;
+const rt = /\s+/g;
 
-const it = Object.prototype.toString;
+const at = Object.prototype.toString;
 
 function stringify(e, t) {
-    const n = it.call(e);
+    const n = at.call(e);
     switch (n) {
       case "[object Undefined]":
         return "undefined";
@@ -5114,7 +5196,7 @@ function stringify(e, t) {
         if (e.name && e.name.length) {
             return `class ${e.name}`;
         }
-        return e.toString().replace(nt, "");
+        return e.toString().replace(rt, "");
 
       default:
         return jsonStringify(e, t);
@@ -5154,7 +5236,7 @@ function jsonStringify(e, t) {
             return r;
         }));
         n = void 0;
-        let a = r.replace(tt, "");
+        let a = r.replace(it, "");
         if (a.length > 25) {
             const e = a.length;
             a = `${a.slice(0, 25)}...(+${e - 25})`;
@@ -5177,7 +5259,7 @@ function htmlStringify(e, t) {
         return "undefined";
     }
     if (e.textContent != null && e.textContent.length || e.nodeType === 3 || e.nodeType === 8) {
-        const t = e.textContent.replace(tt, "");
+        const t = e.textContent.replace(it, "");
         if (t.length > 10) {
             const e = t.length;
             return `${t.slice(0, 10)}...(+${e - 10})`;
@@ -5186,7 +5268,7 @@ function htmlStringify(e, t) {
     }
     if (e.nodeType === 1) {
         if (e.innerHTML.length) {
-            const t = e.innerHTML.replace(tt, "");
+            const t = e.innerHTML.replace(it, "");
             if (t.length > 10) {
                 const e = t.length;
                 return `${t.slice(0, 10)}...(+${e - 10})`;
@@ -5352,5 +5434,5 @@ function trace(e) {
     };
 }
 
-export { He as CSS_PROPERTIES, Call, CallCollection, ChangeSet, CollectionChangeSet, Ye as JsonValueConverter, MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, be as PLATFORM, ve as PLATFORMRegistration, We as PSEUDO_ELEMENTS, ProxyChangeSet, Ge as SortValueConverter, SpySubscriber, et as TestConfiguration, TestContext, _, Ue as assert, createContainer, createFixture, createObserverLocator, createScopeForTest, createSpy, eachCartesianJoin, eachCartesianJoinAsync, eachCartesianJoinFactory, ensureTaskQueuesEmpty, fail, generateCartesianProduct, getVisibleText, _e as globalAttributeNames, h, hJsx, htmlStringify, inspect, instructionTypeName, jsonStringify, onFixtureCreated, padLeft, padRight, recordCalls, setPlatform, stopRecordingCalls, stringify, trace, me as trimFull, verifyBindingInstructionsEqual, verifyEqual };
+export { He as CSS_PROPERTIES, Call, CallCollection, ChangeSet, CollectionChangeSet, Ze as JsonValueConverter, MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, be as PLATFORM, ve as PLATFORMRegistration, We as PSEUDO_ELEMENTS, ProxyChangeSet, Xe as SortValueConverter, SpySubscriber, nt as TestConfiguration, TestContext, _, Ue as assert, createContainer, createFixture, createObserverLocator, createScopeForTest, createSpy, eachCartesianJoin, eachCartesianJoinAsync, eachCartesianJoinFactory, ensureTaskQueuesEmpty, fail, generateCartesianProduct, getVisibleText, _e as globalAttributeNames, h, hJsx, htmlStringify, inspect, instructionTypeName, jsonStringify, onFixtureCreated, padLeft, padRight, recordCalls, setPlatform, stopRecordingCalls, stringify, trace, me as trimFull, verifyBindingInstructionsEqual, verifyEqual };
 

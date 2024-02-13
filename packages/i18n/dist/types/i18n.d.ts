@@ -69,6 +69,10 @@ export interface I18N {
      * Queue a subscriber to be invoked for when the locale of a I18N service changes
      */
     subscribeLocaleChange(subscriber: ILocalChangeSubscriber): void;
+    /**
+     * Remove a subscriber from the list of subscribers to be invoked for when the locale of a I18N service changes
+     */
+    unsubscribeLocaleChange(subscriber: ILocalChangeSubscriber): void;
 }
 export declare const I18N: import("@aurelia/kernel").InterfaceSymbol<I18N>;
 export interface ILocalChangeSubscriber {
@@ -104,6 +108,7 @@ export declare class I18nService implements I18N {
     createRelativeTimeFormat(options?: Intl.RelativeTimeFormatOptions, locales?: string | string[]): Intl.RelativeTimeFormat;
     rt(input: Date, options?: Intl.RelativeTimeFormatOptions, locales?: string | string[]): string;
     subscribeLocaleChange(subscriber: ILocalChangeSubscriber): void;
+    unsubscribeLocaleChange(subscriber: ILocalChangeSubscriber): void;
     private now;
 }
 //# sourceMappingURL=i18n.d.ts.map

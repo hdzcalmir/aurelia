@@ -1,5 +1,5 @@
 /* eslint-disable mocha/no-sibling-hooks */
-import { IExpressionParser, Interpolation, PrimitiveLiteralExpression, UnaryExpression, BinaryExpression, ConditionalExpression, ValueConverterExpression, BindingBehaviorExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, AccessThisExpression, ForOfStatement, ArrayLiteralExpression, ObjectLiteralExpression, CallFunctionExpression, CallScopeExpression, CallMemberExpression, TemplateExpression, TaggedTemplateExpression, AssignExpression, } from '@aurelia/runtime';
+import { IExpressionParser, Interpolation, PrimitiveLiteralExpression, UnaryExpression, BinaryExpression, ConditionalExpression, ValueConverterExpression, BindingBehaviorExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, AccessThisExpression, ForOfStatement, ArrayLiteralExpression, ObjectLiteralExpression, CallFunctionExpression, CallScopeExpression, CallMemberExpression, TemplateExpression, TaggedTemplateExpression, AssignExpression, AccessBoundaryExpression, } from '@aurelia/runtime';
 import { TestContext, assert } from '@aurelia/testing';
 import { Deserializer, Serializer } from '@aurelia/validation';
 describe('validation/expression-serialization.spec.ts', function () {
@@ -49,6 +49,7 @@ describe('validation/expression-serialization.spec.ts', function () {
         { name: 'access keyed (string)', strExpr: 'value.prop["a"]', expressionType: 'None', exprType: AccessKeyedExpression },
         { name: 'access keyed (number)', strExpr: 'value.prop[0]', expressionType: 'None', exprType: AccessKeyedExpression },
         { name: 'access this', strExpr: '$this', expressionType: 'None', exprType: AccessThisExpression },
+        { name: 'access boundary', strExpr: 'this', expressionType: 'None', exprType: AccessBoundaryExpression },
         { name: 'array literal', strExpr: '[0]', expressionType: 'None', exprType: ArrayLiteralExpression },
         { name: 'object literal', strExpr: '{}', expressionType: 'None', exprType: ObjectLiteralExpression },
         { name: 'call scope', strExpr: 'fn()', expressionType: 'None', exprType: CallScopeExpression },

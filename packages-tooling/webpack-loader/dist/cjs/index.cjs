@@ -127,6 +127,6 @@ const getHmrCode = (className) => {
     return code;
 };
 
-exports["default"] = index;
+exports.default = index;
 exports.loader = loader;
 //# sourceMappingURL=index.cjs.map

@@ -21,6 +21,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -569,9 +571,11 @@ const IDefaultTrigger = /*@__PURE__*/ kernel.DI.createInterface('IDefaultTrigger
 const validationConnectorMap = new WeakMap();
 const validationTargetSubscriberMap = new WeakMap();
 exports.ValidateBindingBehavior = class ValidateBindingBehavior {
-    constructor(platform, observerLocator) {
-        this._platform = platform;
-        this._observerLocator = observerLocator;
+    constructor() {
+        /** @internal */
+        this._platform = kernel.resolve(runtimeHtml.IPlatform);
+        /** @internal */
+        this._observerLocator = kernel.resolve(runtime.IObserverLocator);
     }
     bind(scope, binding) {
         if (!(binding instanceof runtimeHtml.PropertyBinding)) {
@@ -596,7 +600,6 @@ exports.ValidateBindingBehavior = class ValidateBindingBehavior {
         // there's no need to do anything
     }
 };
-exports.ValidateBindingBehavior.inject = [runtimeHtml.IPlatform, runtime.IObserverLocator];
 exports.ValidateBindingBehavior = __decorate([
     runtimeHtml.bindingBehavior('validate')
 ], exports.ValidateBindingBehavior);
@@ -801,8 +804,6 @@ class ValidatitionConnector {
         return this.bindingInfo = new BindingInfo(this.target, this.scope, rules);
     }
 }
-/** @internal */
-ValidatitionConnector.inject = [runtimeHtml.IPlatform, runtime.IObserverLocator, IDefaultTrigger];
 runtime.connectable()(ValidatitionConnector);
 runtimeHtml.mixinAstEvaluator(true)(ValidatitionConnector);
 class WithValidationTargetSubscriber extends runtimeHtml.BindingTargetSubscriber {

@@ -6,9 +6,9 @@ import * as u from "../../../runtime/dist/native-modules/index.mjs";
 
 import { Scope as l, astEvaluate as c, PrimitiveLiteralExpression as h, IExpressionParser as d } from "../../../runtime/dist/native-modules/index.mjs";
 
-import { mixinAstEvaluator as m } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { mixinAstEvaluator as $ } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-const $ = /*@__PURE__*/ e.createInterface("IValidationExpressionHydrator");
+const m = /*@__PURE__*/ e.createInterface("IValidationExpressionHydrator");
 
 function __decorate(e, t, s, i) {
     var r = arguments.length, n = r < 3 ? t : i === null ? i = Object.getOwnPropertyDescriptor(t, s) : i, a;
@@ -477,7 +477,7 @@ class PropertyRule {
 
 PropertyRule.$TYPE = "PropertyRule";
 
-m()(PropertyRule);
+$()(PropertyRule);
 
 class ModelBasedRule {
     constructor(e, t = b.defaultRuleSetName) {
@@ -544,7 +544,7 @@ let T = class ValidationRules {
     }
 };
 
-T = __decorate([ __param(0, i), __param(1, d), __param(2, p), __param(3, $) ], T);
+T = __decorate([ __param(0, i), __param(1, d), __param(2, p), __param(3, m) ], T);
 
 const M = /^(?:function)?\s*\(?[$_\w\d]+\)?\s*(?:=>)?\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
 
@@ -669,6 +669,7 @@ var j;
     e["AssignExpression"] = "AssignExpression";
     e["ConditionalExpression"] = "ConditionalExpression";
     e["AccessThisExpression"] = "AccessThisExpression";
+    e["AccessBoundaryExpression"] = "AccessBoundaryExpression";
     e["AccessScopeExpression"] = "AccessScopeExpression";
     e["AccessMemberExpression"] = "AccessMemberExpression";
     e["AccessKeyedExpression"] = "AccessKeyedExpression";
@@ -718,6 +719,11 @@ class Deserializer {
             {
                 const t = e;
                 return new u.AccessThisExpression(t.ancestor);
+            }
+
+          case j.AccessBoundaryExpression:
+            {
+                return new u.AccessBoundaryExpression;
             }
 
           case j.AccessScopeExpression:
@@ -898,6 +904,9 @@ class Serializer {
     }
     visitAccessThis(e) {
         return `{"$TYPE":"${j.AccessThisExpression}","ancestor":${e.ancestor}}`;
+    }
+    visitAccessBoundary(e) {
+        return `{"$TYPE":"${j.AccessBoundaryExpression}"}`;
     }
     visitAccessScope(e) {
         return `{"$TYPE":"${j.AccessScopeExpression}","name":"${e.name}","ancestor":${e.ancestor}}`;
@@ -1379,7 +1388,7 @@ let D = class ModelValidationExpressionHydrator {
 
 D = __decorate([ __param(0, i), __param(1, p), __param(2, d) ], D);
 
-m()(D);
+$()(D);
 
 class ValidateInstruction {
     constructor(e = void 0, t = void 0, s = void 0, i = void 0, r = void 0) {
@@ -1424,7 +1433,7 @@ function createConfiguration(e) {
         register(t) {
             const s = getDefaultValidationConfiguration();
             e(s);
-            t.register(n.instance(z, s.CustomMessages), n.singleton(O, s.ValidatorType), n.singleton(p, s.MessageProviderType), n.singleton($, s.HydratorType), n.transient(_, T), C);
+            t.register(n.instance(z, s.CustomMessages), n.singleton(O, s.ValidatorType), n.singleton(p, s.MessageProviderType), n.singleton(m, s.HydratorType), n.transient(_, T), C);
             return t;
         },
         customize(t) {
@@ -1435,5 +1444,5 @@ function createConfiguration(e) {
 
 const L = createConfiguration(a);
 
-export { v as BaseValidationRule, Deserializer, x as EqualsRule, z as ICustomMessages, $ as IValidationExpressionHydrator, p as IValidationMessageProvider, _ as IValidationRules, O as IValidator, w as LengthRule, ModelBasedRule, D as ModelValidationExpressionHydrator, PropertyRule, R as RangeRule, y as RegexRule, g as RequiredRule, RuleProperty, Serializer, P as SizeRule, StandardValidator, ValidateInstruction, L as ValidationConfiguration, C as ValidationDeserializer, S as ValidationMessageProvider, ValidationResult, f as ValidationRuleAliasMessage, T as ValidationRules, ValidationSerializer, deserializePrimitive, getDefaultValidationConfiguration, parsePropertyName, A as rootObjectSymbol, serializePrimitive, serializePrimitives, validationRule, b as validationRulesRegistrar };
+export { v as BaseValidationRule, Deserializer, x as EqualsRule, z as ICustomMessages, m as IValidationExpressionHydrator, p as IValidationMessageProvider, _ as IValidationRules, O as IValidator, w as LengthRule, ModelBasedRule, D as ModelValidationExpressionHydrator, PropertyRule, R as RangeRule, y as RegexRule, g as RequiredRule, RuleProperty, Serializer, P as SizeRule, StandardValidator, ValidateInstruction, L as ValidationConfiguration, C as ValidationDeserializer, S as ValidationMessageProvider, ValidationResult, f as ValidationRuleAliasMessage, T as ValidationRules, ValidationSerializer, deserializePrimitive, getDefaultValidationConfiguration, parsePropertyName, A as rootObjectSymbol, serializePrimitive, serializePrimitives, validationRule, b as validationRulesRegistrar };
 

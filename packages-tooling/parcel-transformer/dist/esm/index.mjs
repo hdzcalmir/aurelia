@@ -1,8 +1,16 @@
 import { Transformer } from '@parcel/plugin';
-import SourceMap from '@parcel/source-map';
+import * as $SourceMap from '@parcel/source-map';
+import $SourceMap__default from '@parcel/source-map';
 import { preprocessOptions, preprocess } from '@aurelia/plugin-conventions';
 import { extname, relative } from 'path';
 
+const SourceMap = (typeof $SourceMap__default === 'function'
+    ? $SourceMap__default
+    : typeof $SourceMap__default.default === 'function'
+        ? $SourceMap__default.default
+        : (typeof $SourceMap === 'function'
+            ? $SourceMap
+            : $SourceMap.default));
 var index = new Transformer({
     async loadConfig({ config }) {
         try {

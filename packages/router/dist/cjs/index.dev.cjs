@@ -7,7 +7,7 @@ var runtimeHtml = require('@aurelia/runtime-html');
 var metadata = require('@aurelia/metadata');
 var routeRecognizer = require('@aurelia/route-recognizer');
 
-class Endpoint$1 {
+let Endpoint$1 = class Endpoint {
     constructor(router, 
     /**
      * The endpoint name
@@ -227,7 +227,7 @@ class Endpoint$1 {
     load(_coordinator, _step) {
         return;
     }
-}
+};
 
 /**
  * The endpoint content encapsulates the content of an endpoint.
@@ -329,6 +329,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7246,6 +7248,12 @@ class Title {
 }
 
 /* eslint-disable prefer-template */
+/**
+ *
+ * NOTE: This file is still WIP and will go through at least one more iteration of refactoring, commenting and clean up!
+ * In its current state, it is NOT a good source for learning about the inner workings and design of the router.
+ *
+ */
 const IRouter = /*@__PURE__*/ kernel.DI.createInterface('IRouter', x => x.singleton(Router));
 class Router {
     static get inject() { return [kernel.IContainer, kernel.IEventAggregator, exports.Navigator, BrowserViewerStore, BrowserViewerStore, IRouterConfiguration]; }

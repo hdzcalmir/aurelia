@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var t = require("@aurelia/runtime");
 
 var e = require("@aurelia/runtime-html");
@@ -299,7 +295,7 @@ class ListenerTracker {
             this.h.addEventListener(this.u, this, this.i);
         }
     }
-    O() {
+    I() {
         if (--this.C === 0) {
             this.h.removeEventListener(this.u, this, this.i);
         }
@@ -312,7 +308,7 @@ class ListenerTracker {
         this.B.clear();
         this.L.clear();
     }
-    I(t) {
+    O(t) {
         const e = this.i.capture === true ? this.B : this.L;
         let s = e.get(t);
         if (s === void 0) {
@@ -349,15 +345,15 @@ class ListenerTracker {
 
 class DelegateSubscription {
     constructor(t, e, s, i) {
-        this.M = t;
-        this.R = e;
+        this.R = t;
+        this.M = e;
         this.u = s;
         t._();
         e[s] = i;
     }
     dispose() {
-        this.M.O();
-        this.R[this.u] = void 0;
+        this.R.I();
+        this.M[this.u] = void 0;
     }
 }
 
@@ -378,7 +374,7 @@ class EventDelegator {
         if (l === void 0) {
             o.set(t, l = new ListenerTracker(t, s, n));
         }
-        return new DelegateSubscription(l, l.I(e), s, i);
+        return new DelegateSubscription(l, l.O(e), s, i);
     }
     dispose() {
         for (const t in this.j) {
@@ -506,9 +502,9 @@ function disableComposeCompat() {
 }
 
 class BindingEngine {
-    constructor(t, e) {
-        this.parser = t;
-        this.observerLocator = e;
+    constructor() {
+        this.parser = s.resolve(t.IExpressionParser);
+        this.observerLocator = s.resolve(t.IObserverLocator);
     }
     propertyObserver(t, e) {
         return {
@@ -551,8 +547,6 @@ class BindingEngine {
         };
     }
 }
-
-BindingEngine.inject = [ t.IExpressionParser, t.IObserverLocator ];
 
 const B = {
     register(t) {

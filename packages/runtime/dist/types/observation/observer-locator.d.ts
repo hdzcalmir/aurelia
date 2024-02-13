@@ -1,5 +1,4 @@
 import { ComputedGetterFn } from './computed-observer';
-import { IDirtyChecker } from './dirty-checker';
 import { PropertyAccessor } from './property-accessor';
 import type { Collection, IAccessor, ICollectionObserver, IObserver, AccessorOrObserver, CollectionObserver } from '../observation';
 export declare const propertyAccessor: PropertyAccessor;
@@ -26,7 +25,6 @@ export type ObservableSetter = PropertyDescriptor['set'] & {
     getObserver?(obj: unknown, requestor: IObserverLocator): IObserver;
 };
 export declare class ObserverLocator {
-    constructor(dirtyChecker: IDirtyChecker, nodeObserverLocator: INodeObserverLocator);
     addAdapter(adapter: IObjectObservationAdapter): void;
     getObserver(obj: unknown, key: PropertyKey): IObserver;
     getObserver<T, R>(obj: T, key: ComputedGetterFn<T, R>): IObserver<R>;

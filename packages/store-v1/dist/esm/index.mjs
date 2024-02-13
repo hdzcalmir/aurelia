@@ -353,11 +353,11 @@ let g = class Store {
     executeMiddlewares(t, e, r) {
         return Array.from(this.middlewares).filter((t => t[1].placement === e)).reduce((async (t, s, n) => {
             try {
-                const n = await s[0](await t, this._state.getValue(), s[1].settings, r);
-                if (n === false) {
+                const e = await s[0](await t, this._state.getValue(), s[1].settings, r);
+                if (e === false) {
                     return false;
                 }
-                return n || await t;
+                return e || await t;
             } catch (e) {
                 if (this.options.propagateError) {
                     throw e;

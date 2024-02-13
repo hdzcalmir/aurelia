@@ -38,7 +38,7 @@ describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
         });
         it('compiles the binding to a TranslationParametersBindingInstruction', function () {
             const { sut, parser, mapper } = createFixture();
-            const syntax = { command: 't-params.bind', rawName: 't-params.bind', rawValue: '{foo: "bar"}', target: '' };
+            const syntax = { command: 't-params.bind', rawName: 't-params.bind', rawValue: '{foo: "bar"}', target: '', parts: null };
             const actual = sut.build({
                 node: { nodeName: 'abc' },
                 attr: syntax,

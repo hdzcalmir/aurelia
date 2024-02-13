@@ -1,14 +1,10 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-const e = {
-    register(e) {
-        return e;
+const r = {
+    register(r) {
+        return r;
     }
 };
 
-exports.AddonsConfiguration = e;
+exports.AddonsConfiguration = r;
 //# sourceMappingURL=index.cjs.map

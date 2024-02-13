@@ -2,7 +2,7 @@ import { eachCartesianJoin, eachCartesianJoinFactory, createScopeForTest, MockTr
 import { AccessKeyedExpression, AccessMemberExpression, AccessScopeExpression, AccessThisExpression, ArrayLiteralExpression, AssignExpression, BinaryExpression, BindingBehaviorExpression, CallFunctionExpression, CallMemberExpression, CallScopeExpression, ConditionalExpression, Scope, 
 // IsPrimary,
 // IsUnary,
-ObjectLiteralExpression, PrimitiveLiteralExpression, TaggedTemplateExpression, TemplateExpression, UnaryExpression, ValueConverterExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, DestructuringAssignmentExpression, ArrowFunction, BindingIdentifier, Unparser, astEvaluate, astAssign, astBind, } from '@aurelia/runtime';
+ObjectLiteralExpression, PrimitiveLiteralExpression, TaggedTemplateExpression, TemplateExpression, UnaryExpression, ValueConverterExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, DestructuringAssignmentExpression, ArrowFunction, BindingIdentifier, Unparser, astEvaluate, astAssign, astBind, AccessBoundaryExpression, } from '@aurelia/runtime';
 const $false = PrimitiveLiteralExpression.$false;
 const $true = PrimitiveLiteralExpression.$true;
 const $null = PrimitiveLiteralExpression.$null;
@@ -13,6 +13,7 @@ const $obj = ObjectLiteralExpression.$empty;
 const $tpl = TemplateExpression.$empty;
 const $this = new AccessThisExpression(0);
 const $parent = new AccessThisExpression(1);
+const boundary = new AccessBoundaryExpression();
 const dummyLocator = { get: () => null };
 const dummyLocatorThatReturnsNull = {
     get() {
@@ -60,7 +61,11 @@ describe('2-runtime/ast.spec.ts', function () {
             [`$parent`, $parent],
             [`$parent.$parent`, new AccessThisExpression(2)]
         ];
+        const AccessBoundaryList = [
+            [`this`, boundary],
+        ];
         const AccessScopeList = [
+            ...AccessBoundaryList,
             ...AccessThisList.map(([input, expr]) => [`${input}.a`, new AccessScopeExpression('a', expr.ancestor)]),
             [`$this.$parent`, new AccessScopeExpression('$parent')],
             [`$host.$parent`, new AccessScopeExpression('$parent', undefined)],
@@ -759,6 +764,22 @@ describe('2-runtime/ast.spec.ts', function () {
             astEvaluate($parentfoo, scope, dummyLocator, binding);
             assert.strictEqual(binding.calls.length, 1, 'binding.calls.length');
             assert.deepStrictEqual(binding.calls[0], ['observe', scope.parent.bindingContext, 'foo'], 'binding.calls[0]');
+        });
+    });
+    describe('AccessBoundaryExpression', function () {
+        it('evaluates scope boundary', function () {
+            const a = { a: 'a' };
+            const b = { b: 'b' };
+            const c = { c: 'c' };
+            const d = { d: 'd' };
+            let scope = Scope.create(a, null, true);
+            assert.strictEqual(astEvaluate(boundary, scope, null, null), a, `astEvaluate(boundary, scope, null)`);
+            scope = Scope.fromParent(Scope.create(b, null, true), a);
+            assert.strictEqual(astEvaluate(boundary, scope, null, null), b, `astEvaluate(boundary, scope, null)`);
+            scope = Scope.fromParent(Scope.fromParent(Scope.create(c, null, true), b), a);
+            assert.strictEqual(astEvaluate(boundary, scope, null, null), c, `astEvaluate(boundary, scope, null)`);
+            scope = Scope.fromParent(Scope.fromParent(Scope.fromParent(Scope.create(d, null, true), c), b), a);
+            assert.strictEqual(astEvaluate(boundary, scope, null, null), d, `astEvaluate(boundary, scope, null)`);
         });
     });
     describe('AccessThisExpression', function () {

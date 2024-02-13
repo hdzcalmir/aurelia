@@ -1,4 +1,4 @@
-export { StateDefaultConfiguration } from './configuration';
+export { StateDefaultConfiguration, type IStateConfigurationOptions, type IConfigurationInit, type IStateConfiguration, } from './configuration';
 export { ActionHandler, } from './action-handler';
 export { IState, IStore, type IStoreSubscriber, IActionHandler, type IRegistrableAction, } from './interfaces';
 export { StateBinding, } from './state-binding';

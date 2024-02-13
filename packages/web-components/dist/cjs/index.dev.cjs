@@ -10,10 +10,13 @@ const IWcElementRegistry = /*@__PURE__*/ kernel.DI.createInterface(x => x.single
  * A default implementation of `IWcElementRegistry` interface.
  */
 class WcCustomElementRegistry {
-    constructor(ctn, p, r) {
-        this.ctn = ctn;
-        this.p = p;
-        this.r = r;
+    constructor() {
+        /** @internal */
+        this.ctn = kernel.resolve(kernel.IContainer);
+        /** @internal */
+        this.p = kernel.resolve(runtimeHtml.IPlatform);
+        /** @internal */
+        this.r = kernel.resolve(runtimeHtml.IRendering);
     }
     define(name, def, options) {
         if (!name.includes('-')) {
@@ -97,8 +100,6 @@ class WcCustomElementRegistry {
         return CustomElementClass;
     }
 }
-/** @internal */
-WcCustomElementRegistry.inject = [kernel.IContainer, runtimeHtml.IPlatform, runtimeHtml.IRendering];
 const registerResolver = (ctn, key, resolver) => ctn.registerResolver(key, resolver);
 const createError = (message) => new Error(message);
 

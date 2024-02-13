@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var e = require("@aurelia/platform");
 
 var t = require("@aurelia/kernel");
@@ -224,7 +220,7 @@ function getEnumerables(e, t) {
     return t.filter((t => w(e, t)));
 }
 
-const N = g({
+const B = g({
     bold(e) {
         return `[1m${e}[22m`;
     },
@@ -266,7 +262,7 @@ const N = g({
     }
 });
 
-const B = /\u001b\[\d\d?m/g;
+const N = /\u001b\[\d\d?m/g;
 
 const L = /[\x00-\x1f\x27\x5c]/;
 
@@ -277,7 +273,7 @@ const D = /[\x00-\x1f\x5c]/;
 const V = /[\x00-\x1f\x5c]/g;
 
 function removeColors(e) {
-    return e.replace(B, "");
+    return e.replace(N, "");
 }
 
 function join(e, t) {
@@ -893,6 +889,12 @@ class TestContext {
     get CustomEvent() {
         return this.platform.globalThis.CustomEvent;
     }
+    get KeyboardEvent() {
+        return this.platform.globalThis.KeyboardEvent;
+    }
+    get MouseEvent() {
+        return this.platform.globalThis.MouseEvent;
+    }
     get Node() {
         return this.platform.globalThis.Node;
     }
@@ -1091,7 +1093,7 @@ const Z = Symbol.for("customInspect");
 function stylizeWithColor(e, t) {
     const n = Y[t];
     if (isString(n)) {
-        return N[n](e);
+        return B[n](e);
     } else {
         return e;
     }
@@ -1116,7 +1118,7 @@ class AssertionError extends Error {
                 e = X.notStrictEqualObject;
             }
             if (n.length > 30) {
-                n[26] = N.blue("...");
+                n[26] = B.blue("...");
                 while (n.length > 27) {
                     n.pop();
                 }
@@ -1240,7 +1242,7 @@ function createErrDiff(e, t, n) {
     if (g === 0) {
         const e = l.split("\n");
         if (e.length > 30) {
-            e[26] = N.blue("...");
+            e[26] = B.blue("...");
             while (e.length > 27) {
                 e.pop();
             }
@@ -1248,7 +1250,7 @@ function createErrDiff(e, t, n) {
         return `${X.notIdentical}\n\n${join(e, "\n")}\n`;
     }
     if (f > 3) {
-        s = `\n${N.blue("...")}${s}`;
+        s = `\n${B.blue("...")}${s}`;
         o = true;
     }
     if (i !== "") {
@@ -1256,14 +1258,14 @@ function createErrDiff(e, t, n) {
         i = "";
     }
     let b = 0;
-    const v = `${X[n]}\n${N.green("+ actual")} ${N.red("- expected")}`;
-    const y = ` ${N.blue("...")} Lines skipped`;
+    const v = `${X[n]}\n${B.green("+ actual")} ${B.red("- expected")}`;
+    const y = ` ${B.blue("...")} Lines skipped`;
     for (f = 0; f < g; f++) {
         const e = f - a;
         if (u.length < f + 1) {
             if (e > 1 && f > 2) {
                 if (e > 4) {
-                    r += `\n${N.blue("...")}`;
+                    r += `\n${B.blue("...")}`;
                     o = true;
                 } else if (e > 3) {
                     r += `\n  ${c[f - 2]}`;
@@ -1273,12 +1275,12 @@ function createErrDiff(e, t, n) {
                 b++;
             }
             a = f;
-            i += `\n${N.red("-")} ${c[f]}`;
+            i += `\n${B.red("-")} ${c[f]}`;
             b++;
         } else if (c.length < f + 1) {
             if (e > 1 && f > 2) {
                 if (e > 4) {
-                    r += `\n${N.blue("...")}`;
+                    r += `\n${B.blue("...")}`;
                     o = true;
                 } else if (e > 3) {
                     r += `\n  ${u[f - 2]}`;
@@ -1288,7 +1290,7 @@ function createErrDiff(e, t, n) {
                 b++;
             }
             a = f;
-            r += `\n${N.green("+")} ${u[f]}`;
+            r += `\n${B.green("+")} ${u[f]}`;
             b++;
         } else {
             const t = c[f];
@@ -1301,7 +1303,7 @@ function createErrDiff(e, t, n) {
             if (s) {
                 if (e > 1 && f > 2) {
                     if (e > 4) {
-                        r += `\n${N.blue("...")}`;
+                        r += `\n${B.blue("...")}`;
                         o = true;
                     } else if (e > 3) {
                         r += `\n  ${u[f - 2]}`;
@@ -1311,8 +1313,8 @@ function createErrDiff(e, t, n) {
                     b++;
                 }
                 a = f;
-                r += `\n${N.green("+")} ${n}`;
-                i += `\n${N.red("-")} ${t}`;
+                r += `\n${B.green("+")} ${n}`;
+                i += `\n${B.red("-")} ${t}`;
                 b += 2;
             } else {
                 r += i;
@@ -1324,7 +1326,7 @@ function createErrDiff(e, t, n) {
             }
         }
         if (b > 1e3 && f < g - 2) {
-            return `${v}${y}\n${r}\n${N.blue("...")}${i}\n${N.blue("...")}`;
+            return `${v}${y}\n${r}\n${B.blue("...")}${i}\n${B.blue("...")}`;
         }
     }
     return `${v}${o ? y : ""}\n${r}${i}${s}${d}`;
@@ -4348,25 +4350,27 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
     }
     const y = l.get(v);
     let x = void 0;
-    if (s) {
-        try {
-            p.app({
-                host: d,
-                component: y
-            });
-            x = p.start();
-        } catch (e) {
+    function startFixtureApp() {
+        if (s) {
             try {
-                const dispose = () => {
-                    f.remove();
-                    p.dispose();
-                };
-                const e = p.stop();
-                if (e instanceof Promise) void e.then(dispose); else dispose();
-            } catch {
-                console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
+                p.app({
+                    host: d,
+                    component: y
+                });
+                k.startPromise = x = p.start();
+            } catch (e) {
+                try {
+                    const dispose = () => {
+                        f.remove();
+                        p.dispose();
+                    };
+                    const e = p.stop();
+                    if (e instanceof Promise) void e.then(dispose); else dispose();
+                } catch {
+                    console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
+                }
+                throw e;
             }
-            throw e;
         }
     }
     let $ = 0;
@@ -4463,18 +4467,29 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         const n = strictQueryBy(e, `to compare value against "${t}"`);
         ve.strictEqual(n.value, t);
     }
-    function trigger(e, t, n) {
-        const i = strictQueryBy(e, `to fire event "${t}"`);
-        i.dispatchEvent(new o.CustomEvent(t, n));
+    function trigger(e, t, n, i) {
+        const r = strictQueryBy(e, `to fire event "${t}"`);
+        return $triggerEvent(r, o, t, n, i);
     }
-    [ "click", "change", "input", "scroll" ].forEach((e => {
+    Ee.forEach((e => {
         Object.defineProperty(trigger, e, {
             configurable: true,
             writable: true,
-            value: (t, n) => {
-                const i = strictQueryBy(t, `to fire event "${e}"`);
-                i.dispatchEvent(new o.CustomEvent(e, n));
-            }
+            value: (t, n, i) => triggerMouseEvent(strictQueryBy(t, `to fire event "${e}"`), o, e, n, i)
+        });
+    }));
+    Se.forEach((e => {
+        Object.defineProperty(trigger, e, {
+            configurable: true,
+            writable: true,
+            value: (t, n, i) => triggerKeyboardEvent(strictQueryBy(t, `to fire event "${e}"`), o, e, n, i)
+        });
+    }));
+    [ "change", "input", "scroll" ].forEach((e => {
+        Object.defineProperty(trigger, e, {
+            configurable: true,
+            writable: true,
+            value: (t, n, i) => $triggerEvent(strictQueryBy(t, `to fire event "${e}"`), o, e, n, i)
         });
     }));
     function type(e, t) {
@@ -4575,6 +4590,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         }
     };
     ke.publish("fixture:created", k);
+    startFixtureApp();
     return k;
 }
 
@@ -4613,6 +4629,68 @@ createFixture.html = (e, ...t) => (new FixtureBuilder).html(e, ...t);
 createFixture.component = e => (new FixtureBuilder).component(e);
 
 createFixture.deps = (...e) => (new FixtureBuilder).deps(...e);
+
+const Ee = [ "click", "mousedown", "mouseup", "mousemove", "dbclick", "contextmenu" ];
+
+const Se = [ "keydown", "keyup", "keypress" ];
+
+function $triggerEvent(e, t, n, i, r) {
+    if (Ee.includes(n)) {
+        return triggerMouseEvent(e, t, n, i, r);
+    }
+    if (Se.includes(n)) {
+        return triggerKeyboardEvent(e, t, n, i, r);
+    }
+    const a = new t.CustomEvent(n, i);
+    if (r !== void 0) {
+        for (const e in r) {
+            Object.defineProperty(a, e, {
+                value: r[e]
+            });
+        }
+    }
+    e.dispatchEvent(a);
+}
+
+function triggerKeyboardEvent(e, t, n, i, r) {
+    const a = new t.KeyboardEvent(n, i);
+    if (r !== void 0) {
+        for (const e in r) {
+            Object.defineProperty(a, e, {
+                value: r[e]
+            });
+        }
+    }
+    e.dispatchEvent(a);
+}
+
+function triggerMouseEvent(e, t, n, i, r) {
+    const a = new t.MouseEvent(n, i);
+    if (r !== void 0) {
+        for (const e in r) {
+            Object.defineProperty(a, e, {
+                value: r[e]
+            });
+        }
+    }
+    e.dispatchEvent(a);
+}
+
+Ee.forEach((e => {
+    Object.defineProperty($triggerEvent, e, {
+        configurable: true,
+        writable: true,
+        value: (t, n, i, r) => triggerMouseEvent(t, n, e, i, r)
+    });
+}));
+
+Se.forEach((e => {
+    Object.defineProperty($triggerEvent, e, {
+        configurable: true,
+        writable: true,
+        value: (t, n, i, r) => triggerKeyboardEvent(t, n, e, i, r)
+    });
+}));
 
 class MockBinding {
     constructor() {
@@ -5047,24 +5125,24 @@ exports.JsonValueConverter = class JsonValueConverter {
 
 exports.JsonValueConverter = __decorate([ i.valueConverter("json") ], exports.JsonValueConverter);
 
-let Ee = class NameTag {};
+let Ce = class NameTag {};
 
-__decorate([ i.bindable() ], Ee.prototype, "name", void 0);
+__decorate([ i.bindable() ], Ce.prototype, "name", void 0);
 
-Ee = __decorate([ i.customElement({
+Ce = __decorate([ i.customElement({
     name: "name-tag",
     template: `<template>\${name}</template>`,
     needsCompile: true,
     dependencies: [],
     instructions: [],
     surrogates: []
-}) ], Ee);
+}) ], Ce);
 
-const Se = [ exports.SortValueConverter, exports.JsonValueConverter, Ee ];
+const Oe = [ exports.SortValueConverter, exports.JsonValueConverter, Ce ];
 
-const Ce = {
+const qe = {
     register(e) {
-        e.register(...Se);
+        e.register(...Oe);
     }
 };
 
@@ -5079,14 +5157,14 @@ function _(e, ...t) {
     return n.result + e[i];
 }
 
-const Oe = /\r?\n/g;
+const je = /\r?\n/g;
 
-const qe = /\s+/g;
+const Ae = /\s+/g;
 
-const je = Object.prototype.toString;
+const Te = Object.prototype.toString;
 
 function stringify(e, t) {
-    const n = je.call(e);
+    const n = Te.call(e);
     switch (n) {
       case "[object Undefined]":
         return "undefined";
@@ -5120,7 +5198,7 @@ function stringify(e, t) {
         if (e.name && e.name.length) {
             return `class ${e.name}`;
         }
-        return e.toString().replace(qe, "");
+        return e.toString().replace(Ae, "");
 
       default:
         return jsonStringify(e, t);
@@ -5160,7 +5238,7 @@ function jsonStringify(e, t) {
             return r;
         }));
         n = void 0;
-        let a = r.replace(Oe, "");
+        let a = r.replace(je, "");
         if (a.length > 25) {
             const e = a.length;
             a = `${a.slice(0, 25)}...(+${e - 25})`;
@@ -5183,7 +5261,7 @@ function htmlStringify(e, t) {
         return "undefined";
     }
     if (e.textContent != null && e.textContent.length || e.nodeType === 3 || e.nodeType === 8) {
-        const t = e.textContent.replace(Oe, "");
+        const t = e.textContent.replace(je, "");
         if (t.length > 10) {
             const e = t.length;
             return `${t.slice(0, 10)}...(+${e - 10})`;
@@ -5192,7 +5270,7 @@ function htmlStringify(e, t) {
     }
     if (e.nodeType === 1) {
         if (e.innerHTML.length) {
-            const t = e.innerHTML.replace(Oe, "");
+            const t = e.innerHTML.replace(je, "");
             if (t.length > 10) {
                 const e = t.length;
                 return `${t.slice(0, 10)}...(+${e - 10})`;
@@ -5392,7 +5470,7 @@ exports.ProxyChangeSet = ProxyChangeSet;
 
 exports.SpySubscriber = SpySubscriber;
 
-exports.TestConfiguration = Ce;
+exports.TestConfiguration = qe;
 
 exports.TestContext = TestContext;
 

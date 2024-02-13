@@ -1,7 +1,8 @@
 import { camelCase, kebabCase } from '@aurelia/kernel';
 import * as path from 'path';
-import modifyCode from 'modify-code';
 import pkg from 'typescript';
+import * as $modifyCode from 'modify-code';
+import $modifyCode__default from 'modify-code';
 import { BindingMode } from '@aurelia/runtime-html';
 import { parseFragment } from 'parse5';
 import * as fs from 'fs';
@@ -30,6 +31,14 @@ function resourceName(filePath) {
     const name = parsed.name === 'index' ? path.basename(parsed.dir) : parsed.name;
     return kebabCase(name);
 }
+
+const modifyCode = (typeof $modifyCode__default === 'function'
+    ? $modifyCode__default
+    : typeof $modifyCode__default.default === 'function'
+        ? $modifyCode__default.default
+        : typeof $modifyCode === 'function'
+            ? $modifyCode
+            : $modifyCode.default);
 
 const { createSourceFile, ScriptTarget, isImportDeclaration, isStringLiteral, isNamedImports, isClassDeclaration, canHaveModifiers, getModifiers, SyntaxKind, canHaveDecorators, getDecorators, isCallExpression, isIdentifier } = pkg;
 function preprocessResource(unit, options) {
@@ -473,9 +482,6 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
     const cssDeps = [];
     const statements = [];
     let registrationImported = false;
-    if (shadowMode === null && hasSlot) {
-        throw new Error(`<slot> cannot be used in ${unit.path}. <slot> is only available when using ShadowDOM. Please turn on ShadowDOM, or use <au-slot> in non-ShadowDOM mode. https://docs.aurelia.io/app-basics/components-revisited#au-slot`);
-    }
     deps.forEach((d, i) => {
         var _a;
         let ext = path.extname(d);

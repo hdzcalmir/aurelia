@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var t = require("@aurelia/kernel");
 
 var e = require("@aurelia/runtime-html");
@@ -359,11 +355,11 @@ exports.Store = class Store {
     executeMiddlewares(t, r, s) {
         return Array.from(this.middlewares).filter((t => t[1].placement === r)).reduce((async (t, i, n) => {
             try {
-                const n = await i[0](await t, this._state.getValue(), i[1].settings, s);
-                if (n === false) {
+                const e = await i[0](await t, this._state.getValue(), i[1].settings, s);
+                if (e === false) {
                     return false;
                 }
-                return n || await t;
+                return e || await t;
             } catch (e) {
                 if (this.options.propagateError) {
                     throw e;

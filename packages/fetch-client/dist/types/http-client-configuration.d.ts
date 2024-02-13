@@ -1,4 +1,5 @@
-import { Interceptor, RetryConfiguration } from './interfaces';
+import { IRetryConfiguration } from './interceptors';
+import { IFetchInterceptor } from './interfaces';
 /**
  * A class for configuring HttpClients.
  */
@@ -17,7 +18,7 @@ export declare class HttpClientConfiguration {
     /**
      * Interceptors to be added to the HttpClient.
      */
-    interceptors: Interceptor[];
+    interceptors: IFetchInterceptor[];
     dispatcher: Node | null;
     /**
      * Sets the baseUrl.
@@ -46,7 +47,7 @@ export declare class HttpClientConfiguration {
      * @returns The chainable instance of this configuration object.
      * @chainable
      */
-    withInterceptor(interceptor: Interceptor): HttpClientConfiguration;
+    withInterceptor(interceptor: IFetchInterceptor): HttpClientConfiguration;
     /**
      * Applies a configuration that addresses common application needs, including
      * configuring same-origin credentials, and using rejectErrorResponses.
@@ -67,7 +68,7 @@ export declare class HttpClientConfiguration {
      * @chainable
      */
     rejectErrorResponses(): HttpClientConfiguration;
-    withRetry(config?: RetryConfiguration): HttpClientConfiguration;
+    withRetry(config?: IRetryConfiguration): HttpClientConfiguration;
     withDispatcher(dispatcher: Node): HttpClientConfiguration;
 }
 //# sourceMappingURL=http-client-configuration.d.ts.map

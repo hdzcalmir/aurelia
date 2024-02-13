@@ -2,7 +2,13 @@ import { preprocessOptions, preprocess } from '@aurelia/plugin-conventions';
 import tsJest from 'ts-jest';
 import * as path from 'path';
 
-const tsTransformer = tsJest.createTransformer();
+var _a;
+const $createTransformer = (typeof tsJest.createTransformer === 'function'
+    ? tsJest.createTransformer
+    : typeof ((_a = tsJest.default) === null || _a === void 0 ? void 0 : _a.createTransformer) === 'function'
+        ? tsJest.default.createTransformer
+        : (() => { throw new Error('Unable to import createTransformer from "ts-jest"'); }));
+const tsTransformer = $createTransformer();
 function _createTransformer(conventionsOptions = {}, _preprocess = preprocess, _tsProcess = tsTransformer.process.bind(tsTransformer)) {
     const au2Options = preprocessOptions(conventionsOptions);
     function getCacheKey(fileData, filePath, options) {

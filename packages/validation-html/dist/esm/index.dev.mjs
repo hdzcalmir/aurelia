@@ -1,4 +1,4 @@
-import { DI, IServiceLocator, optional, IContainer, Registration, noop } from '@aurelia/kernel';
+import { DI, IServiceLocator, optional, resolve, IContainer, Registration, noop } from '@aurelia/kernel';
 import { parsePropertyName, ValidationResult, ValidateInstruction, PropertyRule, IValidator, getDefaultValidationConfiguration, ValidationConfiguration } from '@aurelia/validation';
 import { IPlatform, bindable, INode, BindingMode, customAttribute, bindingBehavior, mixinAstEvaluator, PropertyBinding, IFlushQueue, BindingTargetSubscriber, CustomElement } from '@aurelia/runtime-html';
 import { astEvaluate, IExpressionParser, connectable, IObserverLocator } from '@aurelia/runtime';
@@ -17,6 +17,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -565,9 +567,11 @@ const IDefaultTrigger = /*@__PURE__*/ DI.createInterface('IDefaultTrigger');
 const validationConnectorMap = new WeakMap();
 const validationTargetSubscriberMap = new WeakMap();
 let ValidateBindingBehavior = class ValidateBindingBehavior {
-    constructor(platform, observerLocator) {
-        this._platform = platform;
-        this._observerLocator = observerLocator;
+    constructor() {
+        /** @internal */
+        this._platform = resolve(IPlatform);
+        /** @internal */
+        this._observerLocator = resolve(IObserverLocator);
     }
     bind(scope, binding) {
         if (!(binding instanceof PropertyBinding)) {
@@ -592,7 +596,6 @@ let ValidateBindingBehavior = class ValidateBindingBehavior {
         // there's no need to do anything
     }
 };
-ValidateBindingBehavior.inject = [IPlatform, IObserverLocator];
 ValidateBindingBehavior = __decorate([
     bindingBehavior('validate')
 ], ValidateBindingBehavior);
@@ -797,8 +800,6 @@ class ValidatitionConnector {
         return this.bindingInfo = new BindingInfo(this.target, this.scope, rules);
     }
 }
-/** @internal */
-ValidatitionConnector.inject = [IPlatform, IObserverLocator, IDefaultTrigger];
 connectable()(ValidatitionConnector);
 mixinAstEvaluator(true)(ValidatitionConnector);
 class WithValidationTargetSubscriber extends BindingTargetSubscriber {

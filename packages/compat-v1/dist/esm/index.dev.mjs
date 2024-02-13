@@ -1,6 +1,6 @@
-import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astEvaluate, astAssign, astVisit, astBind, astUnbind, Unparser, getCollectionObserver, Scope, IExpressionParser, IObserverLocator } from '@aurelia/runtime';
+import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astEvaluate, astAssign, astVisit, astBind, astUnbind, Unparser, IExpressionParser, IObserverLocator, getCollectionObserver, Scope } from '@aurelia/runtime';
 import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, BindablesInfo, ExpressionWatcher } from '@aurelia/runtime-html';
-import { camelCase, DI } from '@aurelia/kernel';
+import { camelCase, DI, resolve } from '@aurelia/kernel';
 
 let defined$1 = false;
 function defineAstMethods() {
@@ -72,6 +72,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -561,9 +563,9 @@ function disableComposeCompat() {
 }
 
 class BindingEngine {
-    constructor(parser, observerLocator) {
-        this.parser = parser;
-        this.observerLocator = observerLocator;
+    constructor() {
+        this.parser = resolve(IExpressionParser);
+        this.observerLocator = resolve(IObserverLocator);
     }
     propertyObserver(object, prop) {
         return {
@@ -606,8 +608,6 @@ class BindingEngine {
         };
     }
 }
-/** @internal */
-BindingEngine.inject = [IExpressionParser, IObserverLocator];
 
 /**
  * Register all services/functionalities necessary for a v1 app to work with Aurelia v2.

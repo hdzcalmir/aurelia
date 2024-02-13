@@ -50,7 +50,8 @@ export declare class AttrSyntax {
     rawValue: string;
     target: string;
     command: string | null;
-    constructor(rawName: string, rawValue: string, target: string, command: string | null);
+    parts: string[] | null;
+    constructor(rawName: string, rawValue: string, target: string, command: string | null, parts?: string[] | null);
 }
 export interface IAttributePattern {
     [pattern: string]: (rawName: string, rawValue: string, parts: readonly string[]) => AttrSyntax;
@@ -61,7 +62,7 @@ export interface IAttributeParser {
 }
 export declare const IAttributeParser: import("@aurelia/kernel").InterfaceSymbol<IAttributeParser>;
 export declare class AttributeParser implements IAttributeParser {
-    constructor(interpreter: ISyntaxInterpreter, attrPatterns: IAttributePattern[]);
+    constructor();
     parse(name: string, value: string): AttrSyntax;
 }
 type DecoratableAttributePattern<TProto, TClass> = Class<TProto & Partial<{} | IAttributePattern>, TClass>;
@@ -89,11 +90,16 @@ export declare class RefAttributePattern {
     'ref'(rawName: string, rawValue: string, _parts: string[]): AttrSyntax;
     'PART.ref'(rawName: string, rawValue: string, parts: string[]): AttrSyntax;
 }
+export declare class EventAttributePattern {
+    'PART.trigger:PART'(rawName: string, rawValue: string, parts: string[]): AttrSyntax;
+    'PART.capture:PART'(rawName: string, rawValue: string, parts: string[]): AttrSyntax;
+}
 export declare class ColonPrefixedBindAttributePattern {
     ':PART'(rawName: string, rawValue: string, parts: string[]): AttrSyntax;
 }
 export declare class AtPrefixedTriggerAttributePattern {
     '@PART'(rawName: string, rawValue: string, parts: string[]): AttrSyntax;
+    '@PART:PART'(rawName: string, rawValue: string, parts: string[]): AttrSyntax;
 }
 export declare class SpreadAttributePattern {
     '...$attrs'(rawName: string, rawValue: string, _parts: string[]): AttrSyntax;

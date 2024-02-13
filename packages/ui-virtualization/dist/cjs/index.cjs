@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var t = require("@aurelia/kernel");
 
 var e = require("@aurelia/runtime");
@@ -121,26 +117,26 @@ class VirtualRepeat {
     }
     detaching() {
         this.task?.cancel();
-        this._();
+        this.R();
         this.dom.dispose();
         this.scrollerObserver.unsubscribe(this);
         this.T.stop();
         this.dom = this.scrollerObserver = this.task = null;
     }
-    M() {
+    V() {
         if (!(this.collectionStrategy.count > 0)) {
             throw new Error("AURxxxx: Invalid calculation state. Virtual repeater has no items.");
         }
-        const t = this.R();
+        const t = this._();
         const e = calcOuterHeight(t.nodes.firstChild);
         const s = this.scrollerObserver.getValue();
-        const r = this.V(s, this.collectionStrategy.count, e);
+        const r = this.M(s, this.collectionStrategy.count, e);
         if (r.signals & 1) {
-            this._();
+            this.R();
             return r;
         }
         if ((r.signals & 2) === 0) {
-            this._();
+            this.R();
             return r;
         }
         this.itemHeight = e;
@@ -148,7 +144,7 @@ class VirtualRepeat {
         this.u = false;
         return r;
     }
-    V(t, e, s) {
+    M(t, e, s) {
         if (e === 0) {
             return Calculation.reset;
         }
@@ -158,7 +154,7 @@ class VirtualRepeat {
         const r = Math.ceil(calcScrollerViewportHeight(t.scroller) / s);
         return Calculation.from(2, r);
     }
-    _() {
+    R() {
         this.u = true;
         this.minViewsRequired = 0;
         this.itemHeight = 0;
@@ -177,11 +173,11 @@ class VirtualRepeat {
                 void h.deactivate(h, r);
             }
             n.length = 0;
-            this._();
+            this.R();
             return;
         }
         if (this.u) {
-            const t = this.M();
+            const t = this.V();
             if (t.signals === 1 || (t.signals & 2) === 0) {
                 return;
             }
@@ -270,7 +266,7 @@ class VirtualRepeat {
         this.task = this.taskQueue.queueTask((() => {
             this.task = null;
             if (this.views.length > 0 && this.itemHeight > 0) {
-                this.M();
+                this.V();
                 this.handleScroll(t);
             }
         }));
@@ -370,7 +366,7 @@ class VirtualRepeat {
         }));
         t?.cancel();
     }
-    R() {
+    _() {
         const t = this.getOrCreateFirstView();
         if (!t.isActive) {
             const s = this.$controller;

@@ -12,7 +12,7 @@ export { bindingCommand, type ICommandBuildInfo, BindingCommand, type BindingCom
 export { IAttrMapper, type IsTwoWayPredicate, } from './compiler/attribute-mapper';
 export { BindingMode, type IBindingController, } from './binding/interfaces-bindings';
 export { IFlushQueue, FlushQueue, type IFlushable, BindingTargetSubscriber, mixinAstEvaluator, mixingBindingLimited, mixinUseScope, } from './binding/binding-utils';
-export { ListenerBinding, ListenerBindingOptions, } from './binding/listener-binding';
+export { ListenerBinding, ListenerBindingOptions, type IModifiedEventHandler, IEventModifier, EventModifier, EventModifierRegistration, IModifiedEventHandlerCreator, IKeyMapping, } from './binding/listener-binding';
 export { AttributeBinding, } from './binding/attribute';
 export { InterpolationBinding, InterpolationPartBinding, } from './binding/interpolation-binding';
 export { ContentBinding, } from './binding/content-binding';
@@ -46,7 +46,7 @@ export { capture, containerless, customElement, CustomElement, type CustomElemen
 export { AuCompose, type IDynamicComponentActivate, } from './resources/custom-elements/au-compose';
 export { ValueConverter, ValueConverterDefinition, type PartialValueConverterDefinition, type ValueConverterKind, type ValueConverterDecorator, type ValueConverterType, valueConverter, } from './resources/value-converter';
 export { ISanitizer, SanitizeValueConverter, } from './resources/value-converters/sanitize';
-export { DefaultComponents, DefaultBindingSyntax, ShortHandBindingSyntax, DefaultBindingLanguage, DefaultResources, DefaultRenderers, StandardConfiguration, } from './configuration';
+export { type ConfigurationOptionsProvider, DefaultComponents, DefaultBindingSyntax, ShortHandBindingSyntax, DefaultBindingLanguage, DefaultResources, DefaultRenderers, StandardConfiguration, } from './configuration';
 export { ITemplateElementFactory } from './compiler/template-element-factory';
 export { BindablesInfo, TemplateCompiler, ITemplateCompilerHooks, TemplateCompilerHooks, templateCompilerHooks, } from './compiler/template-compiler';
 export { allResources, } from './utilities-di';
