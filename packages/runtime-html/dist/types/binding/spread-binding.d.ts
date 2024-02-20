@@ -29,8 +29,7 @@ export declare class SpreadBinding implements IBinding, IHasController {
     get container(): IServiceLocator;
     get definition(): CustomElementDefinition;
     get state(): import("../templating/controller").State;
-    constructor(
-    /** @internal */ _hydrationContext: IHydrationContext<object>);
+    constructor(hydrationContext: IHydrationContext<object>);
     get(key: Key): any;
     bind(_scope: Scope): void;
     unbind(): void;

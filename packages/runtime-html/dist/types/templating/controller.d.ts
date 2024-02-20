@@ -1,15 +1,15 @@
-import { Scope, ICoercionConfiguration } from '@aurelia/runtime';
-import { CustomElementDefinition } from '../resources/custom-element';
+import { ICoercionConfiguration, Scope } from '@aurelia/runtime';
 import { CustomAttributeDefinition } from '../resources/custom-attribute';
-import type { IContainer, Writable, IDisposable } from '@aurelia/kernel';
+import { CustomElementDefinition } from '../resources/custom-element';
+import type { IContainer, IDisposable, Writable } from '@aurelia/kernel';
 import type { IBinding } from '@aurelia/runtime';
+import type { INode, INodeSequence, IRenderLocation } from '../dom';
+import type { IInstruction } from '../renderer';
 import type { AttrSyntax } from '../resources/attribute-pattern';
+import type { PartialCustomElementDefinition } from '../resources/custom-element';
 import type { IAuSlotProjections } from './controller.projection';
 import type { LifecycleHooksLookup } from './lifecycle-hooks';
-import type { INode, INodeSequence, IRenderLocation } from '../dom';
 import type { IViewFactory } from './view';
-import type { IInstruction } from '../renderer';
-import type { PartialCustomElementDefinition } from '../resources/custom-element';
 export declare class Controller<C extends IViewModel = IViewModel> implements IController<C> {
     container: IContainer;
     readonly vmKind: ViewModelKind;
@@ -145,8 +145,6 @@ export declare const MountTarget: Readonly<{
 export type MountTarget = typeof MountTarget[keyof typeof MountTarget];
 export declare function isCustomElementController<C extends ICustomElementViewModel = ICustomElementViewModel>(value: unknown): value is ICustomElementController<C>;
 export declare function isCustomElementViewModel(value: unknown): value is ICustomElementViewModel;
-declare const vmkCe: "customElement";
-export declare const vmkCa: "customAttribute";
 declare const vmkSynth: "synthetic";
 export type ViewModelKind = typeof vmkCe | typeof vmkCa | typeof vmkSynth;
 /**

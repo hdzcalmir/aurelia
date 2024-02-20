@@ -10,7 +10,7 @@ export interface IDynamicComponentActivate<T> {
      */
     activate?(model?: T): unknown;
 }
-type ChangeSource = keyof Pick<AuCompose, 'template' | 'component' | 'model' | 'scopeBehavior' | 'composing' | 'composition'>;
+type ChangeSource = keyof Pick<AuCompose, 'template' | 'component' | 'model' | 'scopeBehavior' | 'composing' | 'composition' | 'tag'>;
 export declare class AuCompose {
     template?: string | Promise<string>;
     component?: Constructable | object | Promise<Constructable | object>;
@@ -25,6 +25,12 @@ export declare class AuCompose {
     scopeBehavior: 'auto' | 'scoped';
     get composing(): Promise<void> | void;
     get composition(): ICompositionController | undefined;
+    /**
+     * The tag name of the element to be created for non custom element composition.
+     *
+     * `null`/`undefined` means containerless
+     */
+    tag: string | null | undefined;
     attaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void>;
     detaching(initiator: IHydratedController): void | Promise<void>;
 }
@@ -33,7 +39,7 @@ export interface ICompositionController {
     readonly context: CompositionContext;
     activate(initiator?: IHydratedController): void | Promise<void>;
     deactivate(detachInitator?: IHydratedController): void | Promise<void>;
-    update(model: unknown): void | Promise<void>;
+    update(model: unknown): unknown;
 }
 declare class LoadedChangeInfo {
     readonly _template: string | undefined;

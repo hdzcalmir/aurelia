@@ -1,6 +1,6 @@
 {
   "name": "@aurelia/ui-virtualization",
-  "version": "2.0.1-dev.202402130428",
+  "version": "2.0.1-dev.202402200642",
   "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.mjs",
   "exports": {
@@ -52,12 +52,12 @@
     "access": "public"
   },
   "dependencies": {
-    "@aurelia/kernel": "2.0.1-dev.202402130428",
-    "@aurelia/metadata": "2.0.1-dev.202402130428",
-    "@aurelia/platform": "2.0.1-dev.202402130428",
-    "@aurelia/platform-browser": "2.0.1-dev.202402130428",
-    "@aurelia/runtime": "2.0.1-dev.202402130428",
-    "@aurelia/runtime-html": "2.0.1-dev.202402130428"
+    "@aurelia/kernel": "2.0.1-dev.202402200642",
+    "@aurelia/metadata": "2.0.1-dev.202402200642",
+    "@aurelia/platform": "2.0.1-dev.202402200642",
+    "@aurelia/platform-browser": "2.0.1-dev.202402200642",
+    "@aurelia/runtime": "2.0.1-dev.202402200642",
+    "@aurelia/runtime-html": "2.0.1-dev.202402200642"
   },
   "devDependencies": {
     "typescript": "5.2.2"
