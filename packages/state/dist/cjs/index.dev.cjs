@@ -516,7 +516,7 @@ exports.StateBindingCommand = class StateBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === 'Element') {
+            if (value === '' && info.def.type === 'element') {
                 value = kernel.camelCase(target);
             }
             target = info.bindable.name;

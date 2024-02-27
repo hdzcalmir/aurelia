@@ -1252,7 +1252,7 @@ class InstructionComponent {
         }
         const container = parentContainer.createChild();
         const instance = this.isType()
-            ? container.get(this.type)
+            ? container.invoke(this.type)
             : container.get(routerComponentResolver(this.name));
         // TODO: Implement non-traversing lookup (below) based on router configuration
         // let instance;
@@ -1982,7 +1982,7 @@ class Route {
         }
         // Clone it so that original route isn't affected
         // NOTE that it's not a deep clone (yet)
-        const config = { ...configOrType } ?? {};
+        const config = { ...configOrType };
         if ('component' in config || 'instructions' in config) {
             throw new Error(`Invalid route configuration: The 'component' and 'instructions' properties ` +
                 `can't be specified in a component route configuration.`);
@@ -4487,7 +4487,7 @@ class RoutingInstruction {
      */
     clone(keepInstances = false, scopeModifier = false, shallow = false) {
         // Create a clone without instances...
-        const clone = RoutingInstruction.create(this.component.func ?? this.component.promise ?? this.component.type ?? this.component.name, this.endpoint.name, this.parameters.typedParameters !== null ? this.parameters.typedParameters : void 0);
+        const clone = RoutingInstruction.create(this.component.func ?? this.component.promise ?? this.component.type ?? this.component.name, this.endpoint.name, this.parameters.typedParameters ?? void 0);
         // ...and then set them if they should be transfered.
         if (keepInstances) {
             clone.component.set(this.component.instance ?? this.component.type ?? this.component.name);
@@ -4577,6 +4577,7 @@ class RoutingInstruction {
             if (routeTitle != null) {
                 // Only add the title (once) if it's the first instruction
                 if (this.routeStart) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
                     return typeof routeTitle === 'string' ? routeTitle : routeTitle(this, navigation);
                 }
                 else {
@@ -7312,6 +7313,8 @@ class Router {
          * Whether the first load has happened
          */
         this.loadedFirst = false;
+        /** @internal */
+        this._logger = kernel.resolve(kernel.ILogger);
         /**
          * Handle the navigator's navigate event.
          *
@@ -7717,7 +7720,7 @@ class Router {
     unresolvedInstructionsError(navigation, instructions) {
         this.ea.publish(RouterNavigationErrorEvent.eventName, RouterNavigationErrorEvent.create(navigation));
         this.ea.publish(RouterNavigationEndEvent.eventName, RouterNavigationEndEvent.create(navigation));
-        throw createUnresolvedinstructionsError(instructions);
+        throw createUnresolvedinstructionsError(instructions, this._logger);
     }
     /**
      * Cancel a navigation (without it being an error).
@@ -7844,6 +7847,7 @@ class Router {
         if ((navigation.title ?? null) === null) {
             const title = await Title.getTitle(instructions, navigation, this.configuration.options.title);
             if (title !== null) {
+                // eslint-disable-next-line require-atomic-updates
                 navigation.title = title;
             }
         }
@@ -7907,11 +7911,15 @@ class Router {
     }
 }
 Router.closestEndpointKey = kernel.Protocol.annotation.keyFor('closest-endpoint');
-function createUnresolvedinstructionsError(remainingInstructions) {
+function createUnresolvedinstructionsError(remainingInstructions, logger) {
     // TODO: Improve error message, including suggesting solutions
     const error = new Error(`${remainingInstructions.length} remaining instructions after 100 iterations; there is likely an infinite loop.`);
     error.remainingInstructions = remainingInstructions;
-    console.log(error, error.remainingInstructions);
+    logger.warn(error, error.remainingInstructions);
+    {
+        // eslint-disable-next-line no-console
+        console.log(error, error.remainingInstructions);
+    }
     return error;
 }
 class RouterEvent {
@@ -7968,14 +7976,14 @@ class RouterNavigationErrorEvent extends RouterNavigationEvent {
 }
 RouterNavigationErrorEvent.eventName = 'au:router:navigation-error';
 
-const ILinkHandler = /*@__PURE__*/ kernel.DI.createInterface('ILinkHandler', x => x.singleton(exports.LinkHandler));
+const ILinkHandler = /*@__PURE__*/ kernel.DI.createInterface('ILinkHandler', x => x.singleton(LinkHandler));
 /**
  * Class responsible for handling interactions that should trigger navigation.
  */
-exports.LinkHandler = class LinkHandler {
-    constructor(window, router) {
-        this.window = window;
-        this.router = router;
+class LinkHandler {
+    constructor() {
+        this.window = kernel.resolve(runtimeHtml.IWindow);
+        this.router = kernel.resolve(IRouter);
     }
     handleEvent(e) {
         this.handleClick(e);
@@ -8015,11 +8023,7 @@ exports.LinkHandler = class LinkHandler {
         }
         this.router.load(instruction, { origin: target }).catch(error => { throw error; });
     }
-};
-exports.LinkHandler = __decorate([
-    __param(0, runtimeHtml.IWindow),
-    __param(1, IRouter)
-], exports.LinkHandler);
+}
 
 function route(configOrPath) {
     return function (target) {
@@ -8104,13 +8108,7 @@ function getLoadIndicator(element) {
 
 const ParentViewport = runtimeHtml.CustomElement.createInjectable();
 exports.ViewportCustomElement = class ViewportCustomElement {
-    constructor(router, element, container, ea, parentViewport, instruction) {
-        this.router = router;
-        this.element = element;
-        this.container = container;
-        this.ea = ea;
-        this.parentViewport = parentViewport;
-        this.instruction = instruction;
+    constructor() {
         /**
          * The name of the viewport. Should be unique within the routing scope.
          */
@@ -8177,10 +8175,17 @@ exports.ViewportCustomElement = class ViewportCustomElement {
          * Whether the viewport is bound or not.
          */
         this.isBound = false;
+        this.router = kernel.resolve(IRouter);
+        this.element = kernel.resolve(runtimeHtml.INode);
+        this.container = kernel.resolve(kernel.IContainer);
+        this.ea = kernel.resolve(kernel.IEventAggregator);
+        this.parentViewport = kernel.resolve(ParentViewport);
+        this.instruction = kernel.resolve(runtimeHtml.IInstruction);
     }
     hydrated(controller) {
         this.controller = controller;
         this.container = controller.container;
+        // eslint-disable-next-line
         const hasDefault = this.instruction.props.filter((instr) => instr.to === 'default').length > 0;
         if (hasDefault && this.parentViewport != null) {
             this.parentViewport.pendingChildren.push(this);
@@ -8338,29 +8343,23 @@ exports.ViewportCustomElement = __decorate([
     runtimeHtml.customElement({
         name: 'au-viewport',
         injectable: ParentViewport
-    }),
-    __param(0, IRouter),
-    __param(1, runtimeHtml.INode),
-    __param(2, kernel.IContainer),
-    __param(3, kernel.IEventAggregator),
-    __param(4, ParentViewport),
-    __param(5, runtimeHtml.IInstruction)
+    })
 ], exports.ViewportCustomElement);
 
 const ParentViewportScope = runtimeHtml.CustomElement.createInjectable();
 exports.ViewportScopeCustomElement = class ViewportScopeCustomElement {
-    constructor(router, element, container, parent, parentController) {
-        this.router = router;
-        this.element = element;
-        this.container = container;
-        this.parent = parent;
-        this.parentController = parentController;
+    constructor() {
         this.name = 'default';
         this.catches = '';
         this.collection = false;
         this.source = null;
         this.viewportScope = null;
         this.isBound = false;
+        this.router = kernel.resolve(IRouter);
+        this.element = kernel.resolve(runtimeHtml.INode);
+        this.container = kernel.resolve(kernel.IContainer);
+        this.parent = kernel.resolve(ParentViewportScope);
+        this.parentController = kernel.resolve(runtimeHtml.IController);
     }
     // Maybe this really should be here. Check with Binh.
     // public create(
@@ -8416,7 +8415,7 @@ exports.ViewportScopeCustomElement = class ViewportScopeCustomElement {
             options.collection = value;
         }
         // TODO: Needs to be bound? How to solve?
-        options.source = this.source || null;
+        options.source = this.source ?? null;
         this.viewportScope = this.router.connectEndpoint(this.viewportScope, 'ViewportScope', this, name, options);
     }
     disconnect() {
@@ -8463,26 +8462,21 @@ exports.ViewportScopeCustomElement = __decorate([
         template: '<template></template>',
         containerless: false,
         injectable: ParentViewportScope
-    }),
-    __param(0, IRouter),
-    __param(1, runtimeHtml.INode),
-    __param(2, kernel.IContainer),
-    __param(3, ParentViewportScope),
-    __param(4, runtimeHtml.IController)
+    })
 ], exports.ViewportScopeCustomElement);
 
 exports.LoadCustomAttribute = class LoadCustomAttribute {
-    constructor(element, router, linkHandler, ea) {
-        this.element = element;
-        this.router = router;
-        this.linkHandler = linkHandler;
-        this.ea = ea;
+    constructor() {
         /** @internal */ this._separateProperties = false;
         this.hasHref = null;
+        this.element = kernel.resolve(runtimeHtml.INode);
+        this.router = kernel.resolve(IRouter);
+        this.linkHandler = kernel.resolve(ILinkHandler);
+        this.ea = kernel.resolve(kernel.IEventAggregator);
+        this.activeClass = this.router.configuration.options.indicators.loadActive;
         this.navigationEndHandler = (_navigation) => {
             void this.updateActive();
         };
-        this.activeClass = this.router.configuration.options.indicators.loadActive;
     }
     binding() {
         if (this.value == null) {
@@ -8574,23 +8568,19 @@ __decorate([
     runtimeHtml.bindable
 ], exports.LoadCustomAttribute.prototype, "id", void 0);
 exports.LoadCustomAttribute = __decorate([
-    runtimeHtml.customAttribute('load'),
-    __param(0, runtimeHtml.INode),
-    __param(1, IRouter),
-    __param(2, ILinkHandler),
-    __param(3, kernel.IEventAggregator)
+    runtimeHtml.customAttribute('load')
 ], exports.LoadCustomAttribute);
 
 exports.HrefCustomAttribute = class HrefCustomAttribute {
-    constructor(element, router, linkHandler, ea) {
-        this.element = element;
-        this.router = router;
-        this.linkHandler = linkHandler;
-        this.ea = ea;
+    constructor() {
+        this.element = kernel.resolve(runtimeHtml.INode);
+        this.router = kernel.resolve(IRouter);
+        this.linkHandler = kernel.resolve(ILinkHandler);
+        this.ea = kernel.resolve(kernel.IEventAggregator);
+        this.activeClass = this.router.configuration.options.indicators.loadActive;
         this.navigationEndHandler = (_navigation) => {
             this.updateActive();
         };
-        this.activeClass = this.router.configuration.options.indicators.loadActive;
     }
     binding() {
         if (this.router.configuration.options.useHref && !this.hasLoad() && !this.element.hasAttribute('external')) {
@@ -8632,11 +8622,7 @@ exports.HrefCustomAttribute = __decorate([
     runtimeHtml.customAttribute({
         name: 'href',
         noMultiBindings: true
-    }),
-    __param(0, runtimeHtml.INode),
-    __param(1, IRouter),
-    __param(2, ILinkHandler),
-    __param(3, kernel.IEventAggregator)
+    })
 ], exports.HrefCustomAttribute);
 
 exports.ConsideredActiveCustomAttribute = class ConsideredActiveCustomAttribute {
@@ -8781,6 +8767,7 @@ exports.ILinkHandler = ILinkHandler;
 exports.IRouter = IRouter;
 exports.IRouterConfiguration = IRouterConfiguration;
 exports.InstructionParameters = InstructionParameters;
+exports.LinkHandler = LinkHandler;
 exports.LoadCustomAttributeRegistration = LoadCustomAttributeRegistration;
 exports.Navigation = Navigation;
 exports.NavigationCoordinator = NavigationCoordinator;

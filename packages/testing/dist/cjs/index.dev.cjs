@@ -7768,7 +7768,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
     const existingDefs = (runtimeHtml.CustomElement.isType($$class) ? runtimeHtml.CustomElement.getDefinition($$class) : {});
     const App = runtimeHtml.CustomElement.define({
         ...existingDefs,
-        name: 'app',
+        name: existingDefs.name ?? 'app',
         template,
     }, $$class);
     if (container.has(App, true)) {
@@ -7862,21 +7862,37 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         let actual = el.innerHTML;
         if (compact) {
             actual = actual
+                .trim()
                 .replace(/<!--au-start-->/g, '')
                 .replace(/<!--au-end-->/g, '')
-                .replace(/\s+/g, ' ')
-                .trim();
+                .replace(/\s+/g, ' ');
         }
         return actual;
     }
-    function assertHtml(selectorOrHtml, html = selectorOrHtml, { compact } = { compact: false }) {
-        if (arguments.length > 1) {
-            const el = strictQueryBy(selectorOrHtml, `to compare innerHTML against "${html}`);
-            assert.strictEqual(getInnerHtml(el, compact), html);
+    function assertHtml(selectorOrHtml, html = selectorOrHtml, options) {
+        let $html;
+        let $options;
+        // assertHtml('some html content')
+        if (arguments.length === 1) {
+            assert.strictEqual(getInnerHtml(host), selectorOrHtml);
+            return;
         }
-        else {
-            assert.strictEqual(getInnerHtml(host, compact), selectorOrHtml);
+        // assertHtml('some selector', void 0/ null);
+        if (html == null) {
+            throw new Error('Invalid null/undefined expected html value');
         }
+        // assertHtml('some html content', { compact: true/false })
+        if (typeof html !== 'string') {
+            $html = selectorOrHtml;
+            $options = html;
+            assert.strictEqual(getInnerHtml(host, $options?.compact), $html);
+            return;
+        }
+        // assertHtml('selector', 'some html content')
+        // assertHtml('selector', 'some html content', { compact: true/false })
+        const el = strictQueryBy(selectorOrHtml, `to compare innerHTML against "${html}`);
+        $options = options;
+        assert.strictEqual(getInnerHtml(el, $options?.compact), html);
     }
     function assertClass(selector, ...classes) {
         const el = strictQueryBy(selector, `to assert className contains "${classes}"`);

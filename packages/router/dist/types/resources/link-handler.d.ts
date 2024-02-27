@@ -1,5 +1,3 @@
-import { IWindow } from '@aurelia/runtime-html';
-import { IRouter } from '../router';
 export declare const ILinkHandler: import("@aurelia/kernel").InterfaceSymbol<ILinkHandler>;
 export interface ILinkHandler extends LinkHandler {
 }
@@ -9,7 +7,6 @@ export interface ILinkHandler extends LinkHandler {
 export declare class LinkHandler implements EventListenerObject {
     private readonly window;
     private readonly router;
-    constructor(window: IWindow, router: IRouter);
     handleEvent(e: Event): void;
     private handleClick;
 }

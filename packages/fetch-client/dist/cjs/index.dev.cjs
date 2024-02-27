@@ -149,19 +149,7 @@ const IFetchFn = /*@__PURE__*/ kernel.DI.createInterface('fetch', x => {
     }
     return x.instance(fetch);
 });
-const IHttpClient = /*@__PURE__*/ kernel.DI.createInterface('IHttpClient', x => x.cachedCallback((handler) => {
-    // reason for this gymnastic is because the way fetch-client is used in applications
-    // there's no registration, there's only direct usage
-    // which means application won't have the opportunity to register IHttpClient and HttpClient properly
-    // app may inject HttpClient in some places and IHttpClient in some other
-    // so we need to make sure HttpClient and IHttpClient are the same instance
-    if (handler.has(HttpClient, false)) {
-        return handler.get(HttpClient);
-    }
-    const client = handler.invoke(HttpClient);
-    handler.register(kernel.Registration.instance(HttpClient, client));
-    return client;
-}));
+const IHttpClient = /*@__PURE__*/ kernel.DI.createInterface('IHttpClient', x => x.aliasTo(HttpClient));
 /**
  * An HTTP client based on the Fetch API.
  */
@@ -195,7 +183,7 @@ class HttpClient {
         /** @internal */
         this._dispatcher = null;
         /** @internal */
-        this._container = kernel.resolve(kernel.IContainer);
+        this._createConfiguration = kernel.resolve(kernel.factory(HttpClientConfiguration));
         /** @internal */
         this._fetchFn = kernel.resolve(IFetchFn);
     }
@@ -220,7 +208,7 @@ class HttpClient {
             normalizedConfig = requestInitConfiguration;
         }
         else if (typeof config === 'function') {
-            normalizedConfig = this._container.invoke(HttpClientConfiguration);
+            normalizedConfig = this._createConfiguration();
             normalizedConfig.baseUrl = this.baseUrl;
             normalizedConfig.defaults = { ...this.defaults };
             normalizedConfig.interceptors = this._interceptors;

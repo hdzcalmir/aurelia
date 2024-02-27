@@ -466,7 +466,7 @@ exports.StateBindingCommand = class StateBindingCommand {
         if (s.bindable == null) {
             r = e.map(s.node, r) ?? t.camelCase(r);
         } else {
-            if (h === "" && s.def.type === "Element") {
+            if (h === "" && s.def.type === "element") {
                 h = t.camelCase(r);
             }
             r = s.bindable.name;

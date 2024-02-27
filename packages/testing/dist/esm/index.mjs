@@ -24,13 +24,13 @@ const V = Number.isNaN;
 
 const Q = Reflect.apply;
 
-const U = ArrayBuffer.isView;
+const H = ArrayBuffer.isView;
 
 function uncurryThis(e) {
     return (t, ...n) => Q(e, t, n);
 }
 
-const H = uncurryThis(Object.prototype.hasOwnProperty);
+const U = uncurryThis(Object.prototype.hasOwnProperty);
 
 const W = uncurryThis(Object.prototype.propertyIsEnumerable);
 
@@ -579,7 +579,7 @@ function innerDeepEqual(e, t, n, i) {
         if (e.message !== t.message || e.name !== t.name) {
             return false;
         }
-    } else if (U(e)) {
+    } else if (H(e)) {
         if (!n && (isFloat32Array(e) || isFloat64Array(e))) {
             if (!areSimilarFloatArrays(e, t)) {
                 return false;
@@ -623,7 +623,7 @@ function keyCheck(e, t, n, i, r, a) {
     }
     let s = 0;
     for (;s < a.length; s++) {
-        if (!H(t, a[s])) {
+        if (!U(t, a[s])) {
             return false;
         }
     }
@@ -830,17 +830,17 @@ function objEquiv(e, t, n, i, r, a) {
         }
     } else if (a === 1) {
         for (;s < e.length; s++) {
-            if (H(e, s)) {
-                if (!H(t, s) || !innerDeepEqual(e[s], t[s], n, r)) {
+            if (U(e, s)) {
+                if (!U(t, s) || !innerDeepEqual(e[s], t[s], n, r)) {
                     return false;
                 }
-            } else if (H(t, s)) {
+            } else if (U(t, s)) {
                 return false;
             } else {
                 const i = N(e);
                 for (;s < i.length; s++) {
                     const a = i[s];
-                    if (!H(t, a) || !innerDeepEqual(e[a], t[a], n, r)) {
+                    if (!U(t, a) || !innerDeepEqual(e[a], t[a], n, r)) {
                         return false;
                     }
                 }
@@ -1050,7 +1050,7 @@ function getInspectContext(e) {
         stylize: e.colors ? stylizeWithColor : stylizeNoColor
     };
     for (const n of we) {
-        if (H(e, n)) {
+        if (U(e, n)) {
             t[n] = e[n];
         }
     }
@@ -1705,7 +1705,7 @@ function formatArray(e, t, n) {
     const a = i - r;
     const s = [];
     for (let i = 0; i < r; i++) {
-        if (!H(t, i)) {
+        if (!U(t, i)) {
             return formatSpecialArray(e, t, n, r, s, i);
         }
         s.push(formatProperty(e, t, n, i, je));
@@ -2203,7 +2203,7 @@ function verifyEqual(e, t, n, i, r) {
         n = 0;
     }
     if (typeof t !== "object" || t === null) {
-        Ue.strictEqual(e, t, `actual, depth=${n}, prop=${i}, index=${r}`);
+        He.strictEqual(e, t, `actual, depth=${n}, prop=${i}, index=${r}`);
         return;
     }
     if (t instanceof Array) {
@@ -2218,13 +2218,13 @@ function verifyEqual(e, t, n, i, r) {
                 verifyEqual(e.childNodes.item(r), t.childNodes.item(r), n + 1, i, r);
             }
         } else {
-            Ue.strictEqual(e.outerHTML, t.outerHTML, `actual.outerHTML, depth=${n}, prop=${i}, index=${r}`);
+            He.strictEqual(e.outerHTML, t.outerHTML, `actual.outerHTML, depth=${n}, prop=${i}, index=${r}`);
         }
         return;
     }
     if (e) {
-        Ue.strictEqual(e.constructor.name, t.constructor.name, `actual.constructor.name, depth=${n}, prop=${i}, index=${r}`);
-        Ue.strictEqual(e.toString(), t.toString(), `actual.toString(), depth=${n}, prop=${i}, index=${r}`);
+        He.strictEqual(e.constructor.name, t.constructor.name, `actual.constructor.name, depth=${n}, prop=${i}, index=${r}`);
+        He.strictEqual(e.toString(), t.toString(), `actual.toString(), depth=${n}, prop=${i}, index=${r}`);
         for (const i of Object.keys(t)) {
             verifyEqual(e[i], t[i], n + 1, i, r);
         }
@@ -3046,7 +3046,7 @@ const Qe = function() {
     };
 }();
 
-const Ue = z({
+const He = z({
     throws: throws,
     doesNotThrow: doesNotThrow,
     rejects: rejects,
@@ -3093,7 +3093,7 @@ const Ue = z({
     }
 });
 
-const He = {
+const Ue = {
     "align-content": {
         values: [ "baseline", "center", "end", "first baseline", "flex-end", "flex-start", "inherit", "initial", "last baseline", "normal", "safe", "space-around", "space-between", "space-evenly", "start", "stretch", "unsafe", "unset" ]
     },
@@ -4340,7 +4340,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
     const m = w.isType(d) ? w.getDefinition(d) : {};
     const g = w.define({
         ...m,
-        name: "app",
+        name: m.name ?? "app",
         template: e
     }, d);
     if (a.has(g, true)) {
@@ -4408,9 +4408,9 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
             if (n === null) {
                 throw new Error(`No element found for selector "${e}" to compare text content with "${t}"`);
             }
-            Ue.strictEqual(getVisibleText(n), t);
+            He.strictEqual(getVisibleText(n), t);
         } else {
-            Ue.strictEqual(getVisibleText(c), e);
+            He.strictEqual(getVisibleText(c), e);
         }
     }
     function assertTextContain(e, t) {
@@ -4419,39 +4419,49 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
             if (n === null) {
                 throw new Error(`No element found for selector "${e}" to compare text content with "${t}"`);
             }
-            Ue.includes(getVisibleText(n), t);
+            He.includes(getVisibleText(n), t);
         } else {
-            Ue.includes(getVisibleText(c), e);
+            He.includes(getVisibleText(c), e);
         }
     }
     function getInnerHtml(e, t) {
         let n = e.innerHTML;
         if (t) {
-            n = n.replace(/<!--au-start-->/g, "").replace(/<!--au-end-->/g, "").replace(/\s+/g, " ").trim();
+            n = n.trim().replace(/<!--au-start-->/g, "").replace(/<!--au-end-->/g, "").replace(/\s+/g, " ");
         }
         return n;
     }
-    function assertHtml(e, t = e, {compact: n} = {
-        compact: false
-    }) {
-        if (arguments.length > 1) {
-            const i = strictQueryBy(e, `to compare innerHTML against "${t}`);
-            Ue.strictEqual(getInnerHtml(i, n), t);
-        } else {
-            Ue.strictEqual(getInnerHtml(c, n), e);
+    function assertHtml(e, t = e, n) {
+        let i;
+        let r;
+        if (arguments.length === 1) {
+            He.strictEqual(getInnerHtml(c), e);
+            return;
         }
+        if (t == null) {
+            throw new Error("Invalid null/undefined expected html value");
+        }
+        if (typeof t !== "string") {
+            i = e;
+            r = t;
+            He.strictEqual(getInnerHtml(c, r?.compact), i);
+            return;
+        }
+        const a = strictQueryBy(e, `to compare innerHTML against "${t}`);
+        r = n;
+        He.strictEqual(getInnerHtml(a, r?.compact), t);
     }
     function assertClass(e, ...t) {
         const n = strictQueryBy(e, `to assert className contains "${t}"`);
-        t.forEach((e => Ue.contains(n.classList, e)));
+        t.forEach((e => He.contains(n.classList, e)));
     }
     function assertAttr(e, t, n) {
         const i = strictQueryBy(e, `to compare attribute "${t}" against "${n}"`);
-        Ue.strictEqual(i.getAttribute(t), n);
+        He.strictEqual(i.getAttribute(t), n);
     }
     function assertAttrNS(e, t, n, i) {
         const r = strictQueryBy(e, `to compare attribute "${n}" against "${i}"`);
-        Ue.strictEqual(r.getAttributeNS(t, n), i);
+        He.strictEqual(r.getAttributeNS(t, n), i);
     }
     function assertStyles(e, t) {
         const n = strictQueryBy(e, `to compare style attribute against ${JSON.stringify(t ?? {})}`);
@@ -4459,11 +4469,11 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         for (const e in t) {
             i[e] = n.style[e];
         }
-        Ue.deepStrictEqual(i, t);
+        He.deepStrictEqual(i, t);
     }
     function assertValue(e, t) {
         const n = strictQueryBy(e, `to compare value against "${t}"`);
-        Ue.strictEqual(n.value, t);
+        He.strictEqual(n.value, t);
     }
     function trigger(e, t, n, i) {
         const a = strictQueryBy(e, `to fire event "${t}"`);
@@ -5434,5 +5444,5 @@ function trace(e) {
     };
 }
 
-export { He as CSS_PROPERTIES, Call, CallCollection, ChangeSet, CollectionChangeSet, Ze as JsonValueConverter, MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, be as PLATFORM, ve as PLATFORMRegistration, We as PSEUDO_ELEMENTS, ProxyChangeSet, Xe as SortValueConverter, SpySubscriber, nt as TestConfiguration, TestContext, _, Ue as assert, createContainer, createFixture, createObserverLocator, createScopeForTest, createSpy, eachCartesianJoin, eachCartesianJoinAsync, eachCartesianJoinFactory, ensureTaskQueuesEmpty, fail, generateCartesianProduct, getVisibleText, _e as globalAttributeNames, h, hJsx, htmlStringify, inspect, instructionTypeName, jsonStringify, onFixtureCreated, padLeft, padRight, recordCalls, setPlatform, stopRecordingCalls, stringify, trace, me as trimFull, verifyBindingInstructionsEqual, verifyEqual };
+export { Ue as CSS_PROPERTIES, Call, CallCollection, ChangeSet, CollectionChangeSet, Ze as JsonValueConverter, MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, be as PLATFORM, ve as PLATFORMRegistration, We as PSEUDO_ELEMENTS, ProxyChangeSet, Xe as SortValueConverter, SpySubscriber, nt as TestConfiguration, TestContext, _, He as assert, createContainer, createFixture, createObserverLocator, createScopeForTest, createSpy, eachCartesianJoin, eachCartesianJoinAsync, eachCartesianJoinFactory, ensureTaskQueuesEmpty, fail, generateCartesianProduct, getVisibleText, _e as globalAttributeNames, h, hJsx, htmlStringify, inspect, instructionTypeName, jsonStringify, onFixtureCreated, padLeft, padRight, recordCalls, setPlatform, stopRecordingCalls, stringify, trace, me as trimFull, verifyBindingInstructionsEqual, verifyEqual };
 //# sourceMappingURL=index.mjs.map

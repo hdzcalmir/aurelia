@@ -1,18 +1,11 @@
-import { IContainer, IEventAggregator } from '@aurelia/kernel';
-import { INode, HydrateElementInstruction, ICompiledCustomElementController, ICustomElementViewModel, ICustomElementController, IHydratedController, IHydratedParentController, ISyntheticView } from '@aurelia/runtime-html';
-import { IRouter, NavigationFlags } from '../index';
+import { IContainer } from '@aurelia/kernel';
+import { ICompiledCustomElementController, ICustomElementViewModel, ICustomElementController, IHydratedController, IHydratedParentController, ISyntheticView } from '@aurelia/runtime-html';
+import { NavigationFlags } from '../index';
 import { Viewport } from '../endpoints/viewport';
 import { Step } from '../utilities/runner';
 import { OpenPromise } from '../utilities/open-promise';
 import { FallbackAction } from '../router-options';
-export declare const ParentViewport: import("@aurelia/runtime-html/dist/types/resources/custom-element").InjectableToken<import("@aurelia/kernel").Key>;
 export declare class ViewportCustomElement implements ICustomElementViewModel {
-    private readonly router;
-    readonly element: INode<HTMLElement>;
-    container: IContainer;
-    private readonly ea;
-    readonly parentViewport: ViewportCustomElement;
-    private readonly instruction;
     /**
      * The name of the viewport. Should be unique within the routing scope.
      */
@@ -83,7 +76,12 @@ export declare class ViewportCustomElement implements ICustomElementViewModel {
      * Whether the viewport is bound or not.
      */
     private isBound;
-    constructor(router: IRouter, element: INode<HTMLElement>, container: IContainer, ea: IEventAggregator, parentViewport: ViewportCustomElement, instruction: HydrateElementInstruction);
+    private readonly router;
+    readonly element: HTMLElement;
+    container: IContainer;
+    private readonly ea;
+    readonly parentViewport: ViewportCustomElement | null;
+    private readonly instruction;
     hydrated(controller: ICompiledCustomElementController): void | Promise<void>;
     binding(initiator: IHydratedController, _parent: IHydratedParentController | null): void | Promise<void>;
     detaching(initiator: IHydratedController, parent: ISyntheticView | ICustomElementController | null): void | Promise<void>;

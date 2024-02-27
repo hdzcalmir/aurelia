@@ -347,7 +347,7 @@ function escapeString(e) {
     return e.replace(z, escapeFn);
 }
 
-const U = function() {
+const H = function() {
     const e = {};
     return function(t) {
         let n = e[t];
@@ -440,14 +440,14 @@ function createSpy(e, n, i) {
     return a;
 }
 
-var H;
+var U;
 
 (function(e) {
     e[e["noIterator"] = 0] = "noIterator";
     e[e["isArray"] = 1] = "isArray";
     e[e["isSet"] = 2] = "isSet";
     e[e["isMap"] = 3] = "isMap";
-})(H || (H = {}));
+})(U || (U = {}));
 
 function areSimilarRegExps(e, t) {
     return e.source === t.source && e.flags === t.flags;
@@ -4342,7 +4342,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
     const b = i.CustomElement.isType(m) ? i.CustomElement.getDefinition(m) : {};
     const v = i.CustomElement.define({
         ...b,
-        name: "app",
+        name: b.name ?? "app",
         template: e
     }, m);
     if (l.has(v, true)) {
@@ -4429,19 +4429,29 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
     function getInnerHtml(e, t) {
         let n = e.innerHTML;
         if (t) {
-            n = n.replace(/<!--au-start-->/g, "").replace(/<!--au-end-->/g, "").replace(/\s+/g, " ").trim();
+            n = n.trim().replace(/<!--au-start-->/g, "").replace(/<!--au-end-->/g, "").replace(/\s+/g, " ");
         }
         return n;
     }
-    function assertHtml(e, t = e, {compact: n} = {
-        compact: false
-    }) {
-        if (arguments.length > 1) {
-            const i = strictQueryBy(e, `to compare innerHTML against "${t}`);
-            ve.strictEqual(getInnerHtml(i, n), t);
-        } else {
-            ve.strictEqual(getInnerHtml(d, n), e);
+    function assertHtml(e, t = e, n) {
+        let i;
+        let r;
+        if (arguments.length === 1) {
+            ve.strictEqual(getInnerHtml(d), e);
+            return;
         }
+        if (t == null) {
+            throw new Error("Invalid null/undefined expected html value");
+        }
+        if (typeof t !== "string") {
+            i = e;
+            r = t;
+            ve.strictEqual(getInnerHtml(d, r?.compact), i);
+            return;
+        }
+        const a = strictQueryBy(e, `to compare innerHTML against "${t}`);
+        r = n;
+        ve.strictEqual(getInnerHtml(a, r?.compact), t);
     }
     function assertClass(e, ...t) {
         const n = strictQueryBy(e, `to assert className contains "${t}"`);
@@ -5532,7 +5542,7 @@ exports.stringify = stringify;
 
 exports.trace = trace;
 
-exports.trimFull = U;
+exports.trimFull = H;
 
 exports.verifyBindingInstructionsEqual = verifyBindingInstructionsEqual;
 

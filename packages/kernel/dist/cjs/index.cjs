@@ -562,7 +562,7 @@ class Container {
         return null;
     }
     has(t, e = false) {
-        return this.h.has(t) || isResourceKey(t) && t in this.res ? true : e && this.t != null ? this.t.has(t, true) : false;
+        return this.h.has(t) || isResourceKey(t) && t in this.res || ((e && this.t?.has(t, true)) ?? false);
     }
     get(t) {
         validateKey(t);
@@ -743,22 +743,6 @@ class Container {
                 throw createMappedError(11, t);
             }
             return r;
-        }
-        if (hasResources(t)) {
-            const r = getAllResources(t);
-            if (r.length === 1) {
-                r[0].register(e);
-            } else {
-                const t = r.length;
-                for (let n = 0; n < t; ++n) {
-                    r[n].register(e);
-                }
-            }
-            const n = e.h.get(t);
-            if (n != null) {
-                return n;
-            }
-            throw createMappedError(11, t);
         }
         if (t.$isInterface) {
             throw createMappedError(12, t.friendlyName);
@@ -1187,8 +1171,15 @@ const createNewInstance = (t, e, r) => {
     }
     if (isInterface(t)) {
         const n = isFunction(t.register);
-        const s = e.getResolver(t, n);
-        const o = s?.getFactory?.(e);
+        const s = e.getResolver(t, false);
+        let o;
+        if (s == null) {
+            if (n) {
+                o = createContainer().getResolver(t, true)?.getFactory?.(e);
+            }
+        } else {
+            o = s.getFactory?.(e);
+        }
         if (o != null) {
             return o.construct(r);
         }

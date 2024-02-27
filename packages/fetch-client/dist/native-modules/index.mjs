@@ -1,4 +1,4 @@
-import { DI as t, resolve as e, IContainer as s, Registration as r, IPlatform as i, IEventAggregator as n } from "../../../kernel/dist/native-modules/index.mjs";
+import { DI as t, resolve as e, IContainer as s, factory as r, IPlatform as i, IEventAggregator as n } from "../../../kernel/dist/native-modules/index.mjs";
 
 function json(t, e) {
     return JSON.stringify(t !== undefined ? t : {}, e);
@@ -75,14 +75,7 @@ const c = /*@__PURE__*/ t.createInterface("fetch", (t => {
     return t.instance(fetch);
 }));
 
-const a = /*@__PURE__*/ t.createInterface("IHttpClient", (t => t.cachedCallback((t => {
-    if (t.has(HttpClient, false)) {
-        return t.get(HttpClient);
-    }
-    const e = t.invoke(HttpClient);
-    t.register(r.instance(HttpClient, e));
-    return e;
-}))));
+const a = /*@__PURE__*/ t.createInterface("IHttpClient", (t => t.aliasTo(HttpClient)));
 
 class HttpClient {
     constructor() {
@@ -93,8 +86,8 @@ class HttpClient {
         this.defaults = null;
         this.t = [];
         this.i = null;
-        this.c = e(s);
-        this.h = e(c);
+        this.h = e(r(HttpClientConfiguration));
+        this.u = e(c);
     }
     get interceptors() {
         return this.t.slice(0);
@@ -107,7 +100,7 @@ class HttpClient {
             };
             e = s;
         } else if (typeof t === "function") {
-            e = this.c.invoke(HttpClientConfiguration);
+            e = this.h();
             e.baseUrl = this.baseUrl;
             e.defaults = {
                 ...this.defaults
@@ -147,7 +140,7 @@ class HttpClient {
         return this;
     }
     fetch(t, e) {
-        this.u();
+        this.C();
         let s = this.buildRequest(t, e);
         return this.processRequest(s, this.t).then((t => {
             let e;
@@ -155,7 +148,7 @@ class HttpClient {
                 e = Promise.resolve(t);
             } else if (t instanceof Request) {
                 s = t;
-                e = this.h.call(void 0, s);
+                e = this.u.call(void 0, s);
             } else {
                 throw new Error(`An invalid result was returned by the interceptor chain. Expected a Request or Response instance, but got [${t}]`);
             }
@@ -166,10 +159,10 @@ class HttpClient {
             }
             return t;
         })).then((t => {
-            this.C();
+            this.R();
             return t;
         }), (t => {
-            this.C();
+            this.R();
             throw t;
         }));
     }
@@ -216,48 +209,48 @@ class HttpClient {
         return this.fetch(t, e);
     }
     post(t, e, s) {
-        return this.R(t, e, s, "POST");
+        return this.I(t, e, s, "POST");
     }
     put(t, e, s) {
-        return this.R(t, e, s, "PUT");
+        return this.I(t, e, s, "PUT");
     }
     patch(t, e, s) {
-        return this.R(t, e, s, "PATCH");
+        return this.I(t, e, s, "PATCH");
     }
     delete(t, e, s) {
-        return this.R(t, e, s, "DELETE");
+        return this.I(t, e, s, "DELETE");
     }
     dispose() {
         this.t.forEach((t => t.dispose?.()));
         this.t.length = 0;
         this.i = null;
     }
-    u() {
+    C() {
         this.isRequesting = !!++this.activeRequestCount;
         if (this.isRequesting && this.i != null) {
             dispatch(this.i, u.started);
         }
     }
-    C() {
+    R() {
         this.isRequesting = !! --this.activeRequestCount;
         if (!this.isRequesting && this.i != null) {
             dispatch(this.i, u.drained);
         }
     }
     processRequest(t, e) {
-        return this.I(t, e, "request", "requestError", Request, this);
+        return this.B(t, e, "request", "requestError", Request, this);
     }
     processResponse(t, e, s) {
-        return this.I(t, e, "response", "responseError", Response, s, this);
+        return this.B(t, e, "response", "responseError", Response, s, this);
     }
-    I(t, e, s, r, i, ...n) {
+    B(t, e, s, r, i, ...n) {
         return (e ?? []).reduce(((t, e) => {
             const h = e[s];
             const o = e[r];
             return t.then(h ? t => t instanceof i ? h.call(e, t, ...n) : t : identity, o ? t => o.call(e, t, ...n) : thrower);
         }), Promise.resolve(t));
     }
-    R(t, e, s, r) {
+    I(t, e, s, r) {
         if (!s) {
             s = {};
         }
@@ -349,11 +342,11 @@ class CacheService {
         this.storage = e(h);
         this.p = e(i);
         this.ea = e(n);
-        this.B = e(a);
+        this.q = e(a);
         this.H = [];
-        this.q = -1;
-        this.O = [];
-        this.j = new Map;
+        this.O = -1;
+        this.j = [];
+        this.T = new Map;
     }
     subscribe(t, e) {
         const s = this.ea.subscribe(t, e);
@@ -368,23 +361,23 @@ class CacheService {
     setStaleTimer(t, e, s) {
         const r = this.p.setTimeout((async () => {
             this.delete(t);
-            await this.B.get(s);
+            await this.q.get(s);
             const e = this.getItem(t);
             this.ea.publish(f.CacheStaleRefreshed, {
                 key: t,
                 value: e
             });
-            this.T(r);
+            this.P(r);
         }), e);
-        this.O.push(r);
+        this.j.push(r);
     }
     startBackgroundRefresh(t) {
-        if (!t || this.q > -1) return;
-        this.q = this.p.setInterval((() => {
+        if (!t || this.O > -1) return;
+        this.O = this.p.setInterval((() => {
             this.ea.publish(f.CacheBackgroundRefreshing);
-            this.j.forEach(((t, e) => {
+            this.T.forEach(((t, e) => {
                 this.delete(e);
-                void this.B.get(t).then((() => {
+                void this.q.get(t).then((() => {
                     const t = this.getItem(e);
                     this.ea.publish(f.CacheBackgroundRefreshed, {
                         key: e,
@@ -395,8 +388,8 @@ class CacheService {
         }), t);
     }
     stopBackgroundRefresh() {
-        this.p.clearInterval(this.q);
-        this.q = -1;
+        this.p.clearInterval(this.O);
+        this.O = -1;
         this.ea.publish(f.CacheBackgroundStopped);
     }
     set(t, e, s, r) {
@@ -412,7 +405,7 @@ class CacheService {
     setItem(t, e, s) {
         e.lastCached = Date.now();
         this.storage.set(t, e);
-        this.j.set(t, s);
+        this.T.set(t, s);
         this.ea.publish(f.Set, {
             key: t,
             value: e
@@ -462,24 +455,24 @@ class CacheService {
     }
     clear() {
         this.storage.clear();
-        this.j.clear();
+        this.T.clear();
         this.ea.publish(f.Reset);
         this.stopBackgroundRefresh();
-        this.O.forEach((t => {
+        this.j.forEach((t => {
             this.p.clearTimeout(t);
         }));
-        this.O.length = 0;
+        this.j.length = 0;
     }
     dispose() {
         this.clear();
         this.H.forEach((t => t.dispose()));
         this.ea.publish(f.Dispose);
     }
-    T(t) {
+    P(t) {
         this.p.clearTimeout(t);
-        const e = this.O.indexOf(t);
+        const e = this.j.indexOf(t);
         if (e > -1) {
-            this.O.splice(e, 1);
+            this.j.splice(e, 1);
         }
     }
 }
@@ -493,16 +486,16 @@ const p = {
 
 class CacheInterceptor {
     constructor(t) {
-        this.P = e(l);
+        this.N = e(l);
         this.cf = {
             ...p,
             ...t ?? {}
         };
     }
     request(t) {
-        this.P.startBackgroundRefresh(this.cf.refreshInterval);
+        this.N.startBackgroundRefresh(this.cf.refreshInterval);
         if (t.method !== "GET") return t;
-        const e = this.P.get(this.key(t));
+        const e = this.N.get(this.key(t));
         return this.mark(e) ?? t;
     }
     response(t, e) {
@@ -513,17 +506,17 @@ class CacheInterceptor {
             return t;
         }
         const s = this.key(e);
-        this.P.setItem(s, {
+        this.N.setItem(s, {
             data: t,
             ...this.cf
         }, e);
         if (this.cf?.refreshStaleImmediate && this.cf.staleTime > 0) {
-            this.P.setStaleTimer(s, this.cf.staleTime, e);
+            this.N.setStaleTimer(s, this.cf.staleTime, e);
         }
         return t;
     }
     dispose() {
-        this.P.stopBackgroundRefresh();
+        this.N.stopBackgroundRefresh();
     }
     key(t) {
         return `${CacheInterceptor.prefix}${t.url}`;

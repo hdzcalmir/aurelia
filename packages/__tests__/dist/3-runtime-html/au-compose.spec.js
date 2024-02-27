@@ -97,17 +97,15 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             await tearDown();
             assert.strictEqual(appHost.textContent, '');
         });
-        it('throws on invalid scope-behavior value', async function () {
-            const { component, startPromise, tearDown } = createFixture('<au-compose template.bind="view" scope-behavior.bind="behavior">', class App {
+        it('throws on invalid scope-behavior value', function () {
+            const { component } = createFixture('<au-compose template.bind="view" scope-behavior.bind="behavior">', class App {
                 constructor() {
                     this.message = 'hello world';
                     this.view = `<div>\${message}</div>`;
                     this.behavior = "auto";
                 }
             });
-            await startPromise;
             assert.throws(() => component.behavior = 'scope', 'Invalid scope behavior');
-            await tearDown();
         });
     });
     describe('.component', function () {
@@ -169,7 +167,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.strictEqual(appHost.textContent, '');
             assert.strictEqual(appHost.querySelector('input'), null);
         });
-        it('passes model to activate method', async function () {
+        it('passes model to activate method', function () {
             const models = [];
             const model = { a: 1, b: Symbol() };
             createFixture(`<au-compose component.bind="{ activate }" model.bind="model">`, class App {
@@ -185,7 +183,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
         it('waits for activate promise', async function () {
             let resolve;
             let attachedCallCount = 0;
-            const { startPromise, tearDown } = createFixture(`<au-compose component.bind="{ activate }" template.bind="view">`, class App {
+            const { startPromise } = createFixture(`<au-compose component.bind="{ activate }" template.bind="view">`, class App {
                 constructor() {
                     this.activate = () => {
                         return new Promise(r => {
@@ -208,7 +206,6 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
                 startPromise
             ]);
             assert.strictEqual(attachedCallCount, 1);
-            await tearDown();
         });
         it('does not re-compose when only model is updated', function () {
             let constructorCallCount = 0;
@@ -571,7 +568,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
                     template: '<div>Hello world from Parent</div>'
                 })
             ], Parent);
-            const { appHost, ctx, component, startPromise, tearDown } = createFixture(`<au-compose component.bind="El" template.bind="view" model.bind="{ index: 0 }" containerless>`, class App {
+            const { appHost, ctx, component, startPromise, tearDown } = createFixture(`<au-compose component.bind="El" template.bind="view" model.bind="{ index: 0 }">`, class App {
                 constructor() {
                     this.message = 'app';
                     this.El = { message: 'POJO' };
@@ -597,7 +594,7 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.strictEqual(appHost.innerHTML, '');
         });
         it('discards stale composition', function () {
-            const { appHost, ctx, component } = createFixture(`<au-compose component.bind="El" template.bind="\`<div>$\\{text}</div>\`" model.bind="{ index: 0 }" containerless>`, class App {
+            const { appHost, ctx, component } = createFixture(`<au-compose component.bind="El" template.bind="\`<div>$\\{text}</div>\`" model.bind="{ index: 0 }">`, class App {
                 constructor() {
                     this.El = { text: 'Hello' };
                 }
@@ -609,6 +606,78 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             ctx.platform.domWriteQueue.flush();
             assert.visibleTextEqual(appHost, 'Hello 33');
             assert.html.innerEqual(appHost, '<div>Hello 33</div>');
+        });
+        it('composes string as component', function () {
+            const { assertHtml } = createFixture('<au-compose component="el">', class {
+            }, [CustomElement.define({ name: 'el', template: 'from string' })]);
+            assertHtml('<el>from string</el>', { compact: true });
+        });
+        it('throws when component name is specified but cannot be found', function () {
+            assert.throws(() => createFixture('<au-compose component="el">'));
+        });
+        it('composes string promise', async function () {
+            const { assertHtml } = await createFixture('<au-compose component.bind="elPromise">', class {
+                constructor() {
+                    this.elPromise = Promise.resolve('el');
+                }
+            }, [CustomElement.define({ name: 'el', template: 'from string' })]).started;
+            assertHtml('<el>from string</el>', { compact: true });
+        });
+        it('does not find element beside local or global registries', function () {
+            let El1 = class El1 {
+            };
+            El1 = __decorate([
+                customElement({ name: 'el1', template: '<au-compose component="el2">' })
+            ], El1);
+            let El2 = class El2 {
+            };
+            El2 = __decorate([
+                customElement({ name: 'el2', template: 'el2 <el1>' })
+            ], El2);
+            let El3 = class El3 {
+            };
+            El3 = __decorate([
+                customElement({ name: 'el3', template: 'el3 <el2>', dependencies: [El1, El2] })
+            ], El3);
+            assert.throws(() => createFixture('<el3></el3>', class {
+            }, [El1, El3]));
+        });
+        it('switches POJO -> string', function () {
+            const { assertHtml, component } = createFixture(`<au-compose component.bind="El" template.bind="view" model.bind="{ index: 0 }">`, class App {
+                constructor() {
+                    this.message = 'app';
+                    this.El = { message: 'POJO' };
+                    this.view = `<div>Hello world from \${message}</div>`;
+                }
+            }, [CustomElement.define({ name: 'my-el', template: 'Hello world from ce' })]);
+            assertHtml('<div>Hello world from POJO</div>', { compact: true });
+            component.El = 'my-el';
+            assertHtml('<my-el>Hello world from ce</my-el>', { compact: true });
+        });
+        it('switches from CE -> string (in local registry)', function () {
+            var Child_1;
+            let Child = Child_1 = class Child {
+                constructor() {
+                    this.id = ++Child_1.id;
+                }
+            };
+            Child.id = 0;
+            Child = Child_1 = __decorate([
+                customElement({ name: 'child', template: 'Hello world from child ${id}' })
+            ], Child);
+            let Parent = class Parent {
+                constructor() {
+                    this.c = Child;
+                }
+            };
+            Parent = __decorate([
+                customElement({ name: 'parent', template: '<au-compose component.bind="c">', dependencies: [Child] })
+            ], Parent);
+            const { assertHtml, component } = createFixture(`<parent component.ref=parent>`, class App {
+            }, [Parent]);
+            assertHtml('<parent><child>Hello world from child 1</child></parent>', { compact: true });
+            component.parent.c = 'child';
+            assertHtml('<parent><child>Hello world from child 2</child></parent>', { compact: true });
         });
     });
     describe('multi updates + <Promise>', function () {
@@ -1174,6 +1243,71 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assertAttr('input', 'id', 'i1');
             type('input', 'hey');
             assert.strictEqual(component.message, 'hey');
+        });
+    });
+    describe('comparison with normal rendering', function () {
+        it('renders similar output', function () {
+            let El = class El {
+            };
+            __decorate([
+                bindable,
+                __metadata("design:type", Object)
+            ], El.prototype, "v", void 0);
+            El = __decorate([
+                customElement({
+                    name: 'my-el',
+                    template: '<p>hey ${v}</p>'
+                })
+            ], El);
+            const { assertHtml } = createFixture(`<div id=d1>
+          <au-compose component.bind="el" style="width: 20%;" v="aurelia"></au-compose>
+        </div>
+        <div id=d2>
+          <my-el style="width: 20%;" v="aurelia"></my-el>
+        </div>
+        <div id=d3>
+          <au-compose component="my-el" style="width: 20%;" v="aurelia"></au-compose>
+        </div>
+        `, class {
+                constructor() {
+                    this.el = El;
+                }
+            }, [El]);
+            assertHtml('#d1', '<my-el style="width: 20%;"><p>hey aurelia</p></my-el>', { compact: true });
+            assertHtml('#d2', '<my-el style="width: 20%;"><p>hey aurelia</p></my-el>', { compact: true });
+            assertHtml('#d3', '<my-el style="width: 20%;"><p>hey aurelia</p></my-el>', { compact: true });
+        });
+        it('renders similar output for containerless element', function () {
+            let El = class El {
+            };
+            __decorate([
+                bindable,
+                __metadata("design:type", Object)
+            ], El.prototype, "v", void 0);
+            El = __decorate([
+                customElement({
+                    name: 'my-el',
+                    template: '<p>hey ${v}</p>',
+                    containerless: true,
+                })
+            ], El);
+            const { assertHtml } = createFixture(`<div id=d1>
+          <au-compose component.bind="el" style="width: 20%;" v="aurelia"></au-compose>
+        </div>
+        <div id=d2>
+          <my-el style="width: 20%;" v="aurelia"></my-el>
+        </div>
+        <div id=d3>
+          <au-compose component="my-el" style="width: 20%;" v="aurelia"></au-compose>
+        </div>
+        `, class {
+                constructor() {
+                    this.el = El;
+                }
+            }, [El]);
+            assertHtml('#d1', '<p>hey aurelia</p>', { compact: true });
+            assertHtml('#d2', '<p>hey aurelia</p>', { compact: true });
+            assertHtml('#d3', '<p>hey aurelia</p>', { compact: true });
         });
     });
 });

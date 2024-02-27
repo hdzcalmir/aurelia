@@ -1,13 +1,6 @@
-import { IEventAggregator } from '@aurelia/kernel';
-import { INode, ICustomAttributeViewModel } from '@aurelia/runtime-html';
-import { ILinkHandler } from './link-handler';
-import { IRouter } from '../router';
+import { ICustomAttributeViewModel } from '@aurelia/runtime-html';
 import { Parameters } from '../instructions/instruction-parameters';
 export declare class LoadCustomAttribute implements ICustomAttributeViewModel {
-    private readonly element;
-    private readonly router;
-    private readonly linkHandler;
-    private readonly ea;
     value: unknown;
     component?: string;
     parameters?: Parameters;
@@ -15,8 +8,11 @@ export declare class LoadCustomAttribute implements ICustomAttributeViewModel {
     id?: string;
     private hasHref;
     private routerNavigationSubscription;
+    private readonly element;
+    private readonly router;
+    private readonly linkHandler;
+    private readonly ea;
     private readonly activeClass;
-    constructor(element: INode<Element>, router: IRouter, linkHandler: ILinkHandler, ea: IEventAggregator);
     binding(): void;
     unbinding(): void;
     valueChanged(_newValue: unknown): void;

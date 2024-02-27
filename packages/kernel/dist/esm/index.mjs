@@ -91,12 +91,12 @@ const u = /*@__PURE__*/ function() {
         let l = 0;
         let c = t.charAt(0);
         let u = charToKind(c);
-        let f = 0;
-        for (;f < n; ++f) {
+        let a = 0;
+        for (;a < n; ++a) {
             o = l;
             i = c;
             l = u;
-            c = t.charAt(f + 1);
+            c = t.charAt(a + 1);
             u = charToKind(c);
             if (l === 0) {
                 if (s.length > 0) {
@@ -114,7 +114,7 @@ const u = /*@__PURE__*/ function() {
     };
 }();
 
-const f = /*@__PURE__*/ function() {
+const a = /*@__PURE__*/ function() {
     const t = createObject();
     const callback = (t, e) => e ? t.toUpperCase() : t.toLowerCase();
     return e => {
@@ -126,12 +126,12 @@ const f = /*@__PURE__*/ function() {
     };
 }();
 
-const a = /*@__PURE__*/ function() {
+const f = /*@__PURE__*/ function() {
     const t = createObject();
     return e => {
         let n = t[e];
         if (n === void 0) {
-            n = f(e);
+            n = a(e);
             if (n.length > 0) {
                 n = n[0].toUpperCase() + n.slice(1);
             }
@@ -560,7 +560,7 @@ class Container {
         return null;
     }
     has(t, e = false) {
-        return this.h.has(t) || isResourceKey(t) && t in this.res ? true : e && this.t != null ? this.t.has(t, true) : false;
+        return this.h.has(t) || isResourceKey(t) && t in this.res || ((e && this.t?.has(t, true)) ?? false);
     }
     get(t) {
         validateKey(t);
@@ -741,22 +741,6 @@ class Container {
                 throw createMappedError(11, t);
             }
             return n;
-        }
-        if (hasResources(t)) {
-            const n = getAllResources(t);
-            if (n.length === 1) {
-                n[0].register(e);
-            } else {
-                const t = n.length;
-                for (let r = 0; r < t; ++r) {
-                    n[r].register(e);
-                }
-            }
-            const r = e.h.get(t);
-            if (r != null) {
-                return r;
-            }
-            throw createMappedError(11, t);
         }
         if (t.$isInterface) {
             throw createMappedError(12, t.friendlyName);
@@ -1185,8 +1169,15 @@ const createNewInstance = (t, e, n) => {
     }
     if (isInterface(t)) {
         const r = isFunction(t.register);
-        const s = e.getResolver(t, r);
-        const o = s?.getFactory?.(e);
+        const s = e.getResolver(t, false);
+        let o;
+        if (s == null) {
+            if (r) {
+                o = createContainer().getResolver(t, true)?.getFactory?.(e);
+            }
+        } else {
+            o = s.getFactory?.(e);
+        }
         if (o != null) {
             return o.construct(n);
         }
@@ -1496,15 +1487,15 @@ class DefaultLogEvent {
             c = n;
         }
         const u = r.length === 0 ? "" : ` ${getScopeString(r, s)}`;
-        let f = `${getIsoString(o, s)} [${rt(e, s)}${u}] ${c}`;
+        let a = `${getIsoString(o, s)} [${rt(e, s)}${u}] ${c}`;
         if (i === void 0 || i.length === 0) {
-            return l === null ? [ f ] : [ f, l ];
+            return l === null ? [ a ] : [ a, l ];
         }
-        let a = 0;
-        while (f.includes("%s")) {
-            f = f.replace("%s", String(i[a++]));
+        let f = 0;
+        while (a.includes("%s")) {
+            a = a.replace("%s", String(i[f++]));
         }
-        return l !== null ? [ f, l, ...i.slice(a) ] : [ f, ...i.slice(a) ];
+        return l !== null ? [ a, l, ...i.slice(f) ] : [ a, ...i.slice(f) ];
     }
 }
 
@@ -1553,7 +1544,7 @@ class DefaultLogger {
         let l;
         let c;
         let u;
-        let f;
+        let a;
         this.config = t;
         this.f = e;
         this.sinks = n;
@@ -1565,7 +1556,7 @@ class DefaultLogger {
             l = this.T = [];
             c = this.j = [];
             u = this._ = [];
-            f = this.P = [];
+            a = this.P = [];
             for (const t of n) {
                 const e = et.getHandles(t);
                 if (e?.includes(B) ?? true) {
@@ -1584,7 +1575,7 @@ class DefaultLogger {
                     u.push(t);
                 }
                 if (e?.includes(H) ?? true) {
-                    f.push(t);
+                    a.push(t);
                 }
             }
         } else {
@@ -1595,7 +1586,7 @@ class DefaultLogger {
             l = this.T = s.T;
             c = this.j = s.j;
             u = this._ = s._;
-            f = this.P = s.P;
+            a = this.P = s.P;
         }
     }
     trace(t, ...e) {
@@ -1861,5 +1852,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ConsoleSink, ContainerConfiguration, A as DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, O as DefaultResolver, EventAggregator, k as IContainer, it as IEventAggregator, J as ILogConfig, Y as ILogEventFactory, Z as ILogger, ot as IModuleLoader, W as IPlatform, E as IServiceLocator, X as ISink, InstanceProvider, LogConfig, q as LogLevel, st as LoggerConfiguration, ModuleItem, p as Protocol, S as Registration, all, bound, f as camelCase, createResolver, G as emptyArray, N as emptyObject, _ as factory, firstDefined, nt as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, d as getPrototypeChain, ignore, I as inject, isArrayIndex, v as isNativeFunction, h as kebabCase, T as lazy, mergeArrays, P as newInstanceForScope, K as newInstanceOf, noop, onResolve, onResolveAll, j as optional, a as pascalCase, resolve, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, A as DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, O as DefaultResolver, EventAggregator, k as IContainer, it as IEventAggregator, J as ILogConfig, Y as ILogEventFactory, Z as ILogger, ot as IModuleLoader, W as IPlatform, E as IServiceLocator, X as ISink, InstanceProvider, LogConfig, q as LogLevel, st as LoggerConfiguration, ModuleItem, p as Protocol, S as Registration, all, bound, a as camelCase, createResolver, G as emptyArray, N as emptyObject, _ as factory, firstDefined, nt as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, d as getPrototypeChain, ignore, I as inject, isArrayIndex, v as isNativeFunction, h as kebabCase, T as lazy, mergeArrays, P as newInstanceForScope, K as newInstanceOf, noop, onResolve, onResolveAll, j as optional, f as pascalCase, resolve, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.mjs.map

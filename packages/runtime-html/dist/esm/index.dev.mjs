@@ -341,6 +341,11 @@ const errorsMap = {
     [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
     [151 /* ErrorNames.binding_behavior_def_not_found */]: `No binding behavior definition found for type {{0:name}}`,
     [152 /* ErrorNames.value_converter_def_not_found */]: `No value converter definition found for type {{0:name}}`,
+    [153 /* ErrorNames.element_existed */]: `Element {{0}} has already been registered.`,
+    [154 /* ErrorNames.attribute_existed */]: `Attribute {{0}} has already been registered.`,
+    [155 /* ErrorNames.value_converter_existed */]: `Value converter {{0}} has already been registered.`,
+    [156 /* ErrorNames.binding_behavior_existed */]: `Binding behavior {{0}} has already been registered.`,
+    [157 /* ErrorNames.binding_command_existed */]: `Binding command {{0}} has already been registered.`,
     [500 /* ErrorNames.controller_cached_not_found */]: `There is no cached controller for the provided ViewModel: {{0}}`,
     [501 /* ErrorNames.controller_no_shadow_on_containerless */]: `Invalid combination: cannot combine the containerless custom element option with Shadow DOM.`,
     [502 /* ErrorNames.controller_activating_disposed */]: `Trying to activate a disposed controller: {{0}}.`,
@@ -410,7 +415,7 @@ const errorsMap = {
     [803 /* ErrorNames.update_trigger_invalid_usage */]: `"& updateTrigger" invalid usage. This binding behavior can only be applied to two-way/ from-view bindings.`,
     [805 /* ErrorNames.au_compose_invalid_scope_behavior */]: `Invalid scope behavior "{{0}}" on <au-compose />. Only "scoped" or "auto" allowed.`,
     // originally not supported
-    // [ErrorNames.au_compose_containerless]: `Containerless custom element {{0:name}} is not supported by <au-compose />`,
+    [806 /* ErrorNames.au_compose_component_name_not_found */]: `<au-compose /> couldn't find a custom element with name "{{0}}", did you forget to register it locally or globally?`,
     [807 /* ErrorNames.au_compose_invalid_run */]: `Composition has already been activated/deactivated. Id: {{0:controller}}`,
     [808 /* ErrorNames.au_compose_duplicate_deactivate */]: `Composition has already been deactivated.`,
     [810 /* ErrorNames.else_without_if */]: `Invalid [else] usage, it should follow an [if]`,
@@ -534,9 +539,13 @@ class BindingBehaviorDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
-        singletonRegistration(key, Type).register(container);
-        aliasRegistration(key, Type).register(container);
-        registerAliases(aliases, BindingBehavior, key, container);
+        if (!container.has(key, false)) {
+            container.register(singletonRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, BindingBehavior.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(156 /* ErrorNames.binding_behavior_existed */)}`);
+        }
     }
 }
 const bbBaseName = /*@__PURE__*/ getResourceKeyFor('binding-behavior');
@@ -824,8 +833,8 @@ const Watch = objectFreeze({
     },
 });
 
-const dtElement = 'Element';
-const dtAttribute = 'Attribute';
+/** @internal */ const dtElement = 'element';
+/** @internal */ const dtAttribute = 'attribute';
 
 function customAttribute(nameOrDef) {
     return function (target) {
@@ -869,9 +878,13 @@ class CustomAttributeDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
-        transientRegistration(key, Type).register(container);
-        aliasRegistration(key, Type).register(container);
-        registerAliases(aliases, CustomAttribute, key, container);
+        if (!container.has(key, false)) {
+            container.register(transientRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, CustomAttribute.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(154 /* ErrorNames.attribute_existed */)}`);
+        }
     }
     toString() {
         return `au:ca:${this.name}`;
@@ -1048,9 +1061,13 @@ class ValueConverterDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
-        Registration.singleton(key, Type).register(container);
-        Registration.aliasTo(key, Type).register(container);
-        registerAliases(aliases, ValueConverter, key, container);
+        if (!container.has(key, false)) {
+            container.register(singletonRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, ValueConverter.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(155 /* ErrorNames.value_converter_existed */)}`);
+        }
     }
 }
 const vcBaseName = getResourceKeyFor('value-converter');
@@ -5487,10 +5504,13 @@ class CustomElementDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
+        // todo: warn if alreay has key
         if (!container.has(key, false)) {
-            transientRegistration(key, Type).register(container);
-            aliasRegistration(key, Type).register(container);
-            registerAliases(aliases, CustomElement, key, container);
+            container.register(transientRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, CustomElement.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(153 /* ErrorNames.element_existed */)}`);
         }
     }
     toString() {
@@ -5599,19 +5619,17 @@ const createElementInjectable = () => {
         annotationParamtypes[index] = $injectable;
         return target;
     };
-    $injectable.register = function (_container) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        return {
-            resolve(container, requestor) {
-                if (requestor.has($injectable, true)) {
-                    return requestor.get($injectable);
-                }
-                else {
-                    return null;
-                }
-            },
-        };
-    };
+    $injectable.register = () => ({
+        $isResolver: true,
+        resolve(container, requestor) {
+            if (requestor.has($injectable, true)) {
+                return requestor.get($injectable);
+            }
+            else {
+                return null;
+            }
+        }
+    });
     return $injectable;
 };
 /** @internal */
@@ -5626,7 +5644,7 @@ const generateElementType = /*@__PURE__*/ (function () {
     return function (name, proto = defaultProto) {
         // Anonymous class ensures that minification cannot cause unintended side-effects, and keeps the class
         // looking similarly from the outside (when inspected via debugger, etc).
-        const Type = class {
+        const Type = class Anonymous {
         };
         // Define the name property so that Type.name can be used by end users / plugin authors if they really need to,
         // even when minified.
@@ -5707,7 +5725,8 @@ class AppRoot {
             const childCtn = container.createChild();
             let instance;
             if (isElementType(component)) {
-                instance = this.container.get(component);
+                instance = childCtn.invoke(component);
+                instanceRegistration(component, instance);
             }
             else {
                 instance = config.component;
@@ -6434,9 +6453,13 @@ class BindingCommandDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
-        singletonRegistration(key, Type).register(container);
-        aliasRegistration(key, Type).register(container);
-        registerAliases(aliases, BindingCommand, key, container);
+        if (!container.has(key, false)) {
+            container.register(singletonRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(key, BindingCommand.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(157 /* ErrorNames.binding_command_existed */)}`);
+        }
     }
 }
 const cmdBaseName = /*@__PURE__*/ getResourceKeyFor('binding-command');
@@ -10132,7 +10155,7 @@ class AuCompose {
         //       current: proceed
         const { _template: template, _component: component, _model: model } = context.change;
         const { _container: container, $controller, _location: loc, _instruction } = this;
-        const vmDef = this.getDef(component);
+        const vmDef = this._getDefinition(this._hydrationContext.controller.container, component);
         const childCtn = container.createChild();
         const compositionHost = this._platform.document.createElement(vmDef == null ? this.tag ?? 'div' : vmDef.name);
         loc.parentNode.insertBefore(compositionHost, loc);
@@ -10157,7 +10180,7 @@ class AuCompose {
                 compositionLocation.remove();
             }
         };
-        const comp = this._createCompInstance(childCtn, component, compositionHost, compositionLocation);
+        const comp = this._createComponentInstance(childCtn, typeof component === 'string' ? vmDef.Type : component, compositionHost, compositionLocation);
         const compose = () => {
             const aucomposeCapturedAttrs = _instruction.captures ?? emptyArray;
             // custom element based composition
@@ -10175,12 +10198,11 @@ class AuCompose {
                     projections: _instruction.projections,
                     captures: capturedBindingAttrs
                 }, vmDef, compositionLocation);
-                const bindings = this._createSpreadBindings(compositionHost, vmDef, transferedToHostBindingAttrs);
                 // Theoretically these bindings aren't bindings of the composed custom element
                 // Though they are meant to be activated (bound)/ deactivated (unbound) together
                 // with the custom element controller, so it's practically ok to let the composed
                 // custom element manage these bindings
-                bindings.forEach(b => controller.addBinding(b));
+                this._createSpreadBindings(compositionHost, vmDef, transferedToHostBindingAttrs).forEach(b => controller.addBinding(b));
                 return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, $controller.scope.parent), 
                 // todo: call deactivate on the component component
                 (deactachInitiator) => onResolve(controller.deactivate(deactachInitiator ?? controller, $controller), removeCompositionHost), 
@@ -10202,8 +10224,7 @@ class AuCompose {
                 if (compositionLocation == null) {
                     // only spread the bindings if there is an actual host
                     // otherwise we may accidentally do unnecessary work
-                    const spreadBindings = this._createSpreadBindings(compositionHost, targetDef, aucomposeCapturedAttrs);
-                    spreadBindings.forEach(b => controller.addBinding(b));
+                    this._createSpreadBindings(compositionHost, targetDef, aucomposeCapturedAttrs).forEach(b => controller.addBinding(b));
                 }
                 else {
                     controller.setLocation(compositionLocation);
@@ -10228,7 +10249,7 @@ class AuCompose {
         }
     }
     /** @internal */
-    _createCompInstance(container, comp, host, location) {
+    _createComponentInstance(container, comp, host, location) {
         if (comp == null) {
             return new EmptyComponent();
         }
@@ -10243,7 +10264,14 @@ class AuCompose {
         return instance;
     }
     /** @internal */
-    getDef(component) {
+    _getDefinition(container, component) {
+        if (typeof component === 'string') {
+            const def = container.find(CustomElement, component);
+            if (def == null) {
+                throw createMappedError(806 /* ErrorNames.au_compose_component_name_not_found */, component);
+            }
+            return def;
+        }
         const Ctor = (isFunction(component)
             ? component
             : component?.constructor);
@@ -10519,7 +10547,7 @@ class TemplateCompiler {
         }
         this._compileLocalElement(content, context);
         this._compileNode(content, context);
-        return CustomElementDefinition.create({
+        const compiledDef = CustomElementDefinition.create({
             ...partialDefinition,
             name: partialDefinition.name || generateElementName(),
             dependencies: (partialDefinition.dependencies ?? emptyArray).concat(context.deps ?? emptyArray),
@@ -10531,6 +10559,22 @@ class TemplateCompiler {
             hasSlots: context.hasSlot,
             needsCompile: false,
         });
+        if (context.deps != null) {
+            // if we have a template like this
+            //
+            // my-app.html
+            // <template as-custom-element="le-1">
+            //  <le-2></le-2>
+            // </template>
+            // <template as-custom-element="le-2">...</template>
+            //
+            // without registering dependencies properly, <le-1> will not see <le-2> as a custom element
+            const allDepsForLocalElements = [compiledDef.Type, ...compiledDef.dependencies, ...context.deps];
+            for (const localElementType of context.deps) {
+                getElementDefinition(localElementType).dependencies.push(...allDepsForLocalElements.filter(d => d !== localElementType));
+            }
+        }
+        return compiledDef;
     }
     compileSpread(requestor, attrSyntaxs, container, target, targetDef) {
         const context = new CompilationContext(requestor, container, emptyCompilationInstructions, null, null, void 0);
@@ -11757,7 +11801,6 @@ class TemplateCompiler {
             throw createMappedError(708 /* ErrorNames.compiler_template_only_local_template */, elName);
         }
         const localTemplateNames = new Set();
-        const localElTypes = [];
         for (const localTemplate of localTemplates) {
             if (localTemplate.parentNode !== root) {
                 throw createMappedError(709 /* ErrorNames.compiler_local_el_not_under_root */, elName);
@@ -11798,23 +11841,8 @@ class TemplateCompiler {
             class LocalTemplateType {
             }
             def(LocalTemplateType, 'name', { value: name });
-            localElTypes.push(LocalTemplateType);
-            context._addDep(defineElement({ name, template: localTemplate, bindables }, LocalTemplateType));
+            context._addLocalDep(defineElement({ name, template: localTemplate, bindables }, LocalTemplateType));
             root.removeChild(localTemplate);
-        }
-        // if we have a template like this
-        //
-        // my-app.html
-        // <template as-custom-element="le-1">
-        //  <le-2></le-2>
-        // </template>
-        // <template as-custom-element="le-2">...</template>
-        //
-        // eagerly registering depdendencies inside the loop above
-        // will make `<le-1/>` miss `<le-2/>` as its dependency
-        const allDeps = [...context.def.dependencies ?? emptyArray, ...localElTypes];
-        for (const Type of localElTypes) {
-            getElementDefinition(Type).dependencies.push(allDeps.filter(d => d !== Type));
         }
     }
     /** @internal */
@@ -11955,10 +11983,11 @@ class CompilationContext {
         this.localEls = hasParent ? parent.localEls : new Set();
         this.rows = instructions ?? [];
     }
-    _addDep(dep) {
+    _addLocalDep(dep) {
         var _a;
         ((_a = this.root).deps ?? (_a.deps = [])).push(dep);
         this.root.c.register(dep);
+        return dep;
     }
     _text(text) {
         return createText(this.p, text);

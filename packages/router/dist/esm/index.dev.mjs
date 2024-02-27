@@ -1,5 +1,5 @@
-import { Protocol, IEventAggregator, IContainer, DI, Registration } from '@aurelia/kernel';
-import { CustomElement, isCustomElementViewModel, Controller, IPlatform, IWindow, IHistory, ILocation, IAppRoot, CustomAttribute, BindingMode, customElement, bindable, INode, IInstruction, IController, customAttribute, AppTask } from '@aurelia/runtime-html';
+import { Protocol, IEventAggregator, IContainer, DI, resolve, ILogger, Registration } from '@aurelia/kernel';
+import { CustomElement, isCustomElementViewModel, Controller, IPlatform, IWindow, IHistory, ILocation, IAppRoot, CustomAttribute, BindingMode, customElement, INode, IInstruction, bindable, IController, customAttribute, AppTask } from '@aurelia/runtime-html';
 import { Metadata } from '@aurelia/metadata';
 import { RouteRecognizer as RouteRecognizer$1, ConfigurableRoute as ConfigurableRoute$1, RecognizedRoute as RecognizedRoute$1, Endpoint as Endpoint$2 } from '@aurelia/route-recognizer';
 
@@ -1248,7 +1248,7 @@ class InstructionComponent {
         }
         const container = parentContainer.createChild();
         const instance = this.isType()
-            ? container.get(this.type)
+            ? container.invoke(this.type)
             : container.get(routerComponentResolver(this.name));
         // TODO: Implement non-traversing lookup (below) based on router configuration
         // let instance;
@@ -1978,7 +1978,7 @@ class Route {
         }
         // Clone it so that original route isn't affected
         // NOTE that it's not a deep clone (yet)
-        const config = { ...configOrType } ?? {};
+        const config = { ...configOrType };
         if ('component' in config || 'instructions' in config) {
             throw new Error(`Invalid route configuration: The 'component' and 'instructions' properties ` +
                 `can't be specified in a component route configuration.`);
@@ -4483,7 +4483,7 @@ class RoutingInstruction {
      */
     clone(keepInstances = false, scopeModifier = false, shallow = false) {
         // Create a clone without instances...
-        const clone = RoutingInstruction.create(this.component.func ?? this.component.promise ?? this.component.type ?? this.component.name, this.endpoint.name, this.parameters.typedParameters !== null ? this.parameters.typedParameters : void 0);
+        const clone = RoutingInstruction.create(this.component.func ?? this.component.promise ?? this.component.type ?? this.component.name, this.endpoint.name, this.parameters.typedParameters ?? void 0);
         // ...and then set them if they should be transfered.
         if (keepInstances) {
             clone.component.set(this.component.instance ?? this.component.type ?? this.component.name);
@@ -4573,6 +4573,7 @@ class RoutingInstruction {
             if (routeTitle != null) {
                 // Only add the title (once) if it's the first instruction
                 if (this.routeStart) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
                     return typeof routeTitle === 'string' ? routeTitle : routeTitle(this, navigation);
                 }
                 else {
@@ -7308,6 +7309,8 @@ class Router {
          * Whether the first load has happened
          */
         this.loadedFirst = false;
+        /** @internal */
+        this._logger = resolve(ILogger);
         /**
          * Handle the navigator's navigate event.
          *
@@ -7713,7 +7716,7 @@ class Router {
     unresolvedInstructionsError(navigation, instructions) {
         this.ea.publish(RouterNavigationErrorEvent.eventName, RouterNavigationErrorEvent.create(navigation));
         this.ea.publish(RouterNavigationEndEvent.eventName, RouterNavigationEndEvent.create(navigation));
-        throw createUnresolvedinstructionsError(instructions);
+        throw createUnresolvedinstructionsError(instructions, this._logger);
     }
     /**
      * Cancel a navigation (without it being an error).
@@ -7840,6 +7843,7 @@ class Router {
         if ((navigation.title ?? null) === null) {
             const title = await Title.getTitle(instructions, navigation, this.configuration.options.title);
             if (title !== null) {
+                // eslint-disable-next-line require-atomic-updates
                 navigation.title = title;
             }
         }
@@ -7903,11 +7907,15 @@ class Router {
     }
 }
 Router.closestEndpointKey = Protocol.annotation.keyFor('closest-endpoint');
-function createUnresolvedinstructionsError(remainingInstructions) {
+function createUnresolvedinstructionsError(remainingInstructions, logger) {
     // TODO: Improve error message, including suggesting solutions
     const error = new Error(`${remainingInstructions.length} remaining instructions after 100 iterations; there is likely an infinite loop.`);
     error.remainingInstructions = remainingInstructions;
-    console.log(error, error.remainingInstructions);
+    logger.warn(error, error.remainingInstructions);
+    {
+        // eslint-disable-next-line no-console
+        console.log(error, error.remainingInstructions);
+    }
     return error;
 }
 class RouterEvent {
@@ -7968,10 +7976,10 @@ const ILinkHandler = /*@__PURE__*/ DI.createInterface('ILinkHandler', x => x.sin
 /**
  * Class responsible for handling interactions that should trigger navigation.
  */
-let LinkHandler = class LinkHandler {
-    constructor(window, router) {
-        this.window = window;
-        this.router = router;
+class LinkHandler {
+    constructor() {
+        this.window = resolve(IWindow);
+        this.router = resolve(IRouter);
     }
     handleEvent(e) {
         this.handleClick(e);
@@ -8011,11 +8019,7 @@ let LinkHandler = class LinkHandler {
         }
         this.router.load(instruction, { origin: target }).catch(error => { throw error; });
     }
-};
-LinkHandler = __decorate([
-    __param(0, IWindow),
-    __param(1, IRouter)
-], LinkHandler);
+}
 
 function route(configOrPath) {
     return function (target) {
@@ -8100,13 +8104,7 @@ function getLoadIndicator(element) {
 
 const ParentViewport = CustomElement.createInjectable();
 let ViewportCustomElement = class ViewportCustomElement {
-    constructor(router, element, container, ea, parentViewport, instruction) {
-        this.router = router;
-        this.element = element;
-        this.container = container;
-        this.ea = ea;
-        this.parentViewport = parentViewport;
-        this.instruction = instruction;
+    constructor() {
         /**
          * The name of the viewport. Should be unique within the routing scope.
          */
@@ -8173,10 +8171,17 @@ let ViewportCustomElement = class ViewportCustomElement {
          * Whether the viewport is bound or not.
          */
         this.isBound = false;
+        this.router = resolve(IRouter);
+        this.element = resolve(INode);
+        this.container = resolve(IContainer);
+        this.ea = resolve(IEventAggregator);
+        this.parentViewport = resolve(ParentViewport);
+        this.instruction = resolve(IInstruction);
     }
     hydrated(controller) {
         this.controller = controller;
         this.container = controller.container;
+        // eslint-disable-next-line
         const hasDefault = this.instruction.props.filter((instr) => instr.to === 'default').length > 0;
         if (hasDefault && this.parentViewport != null) {
             this.parentViewport.pendingChildren.push(this);
@@ -8334,29 +8339,23 @@ ViewportCustomElement = __decorate([
     customElement({
         name: 'au-viewport',
         injectable: ParentViewport
-    }),
-    __param(0, IRouter),
-    __param(1, INode),
-    __param(2, IContainer),
-    __param(3, IEventAggregator),
-    __param(4, ParentViewport),
-    __param(5, IInstruction)
+    })
 ], ViewportCustomElement);
 
 const ParentViewportScope = CustomElement.createInjectable();
 let ViewportScopeCustomElement = class ViewportScopeCustomElement {
-    constructor(router, element, container, parent, parentController) {
-        this.router = router;
-        this.element = element;
-        this.container = container;
-        this.parent = parent;
-        this.parentController = parentController;
+    constructor() {
         this.name = 'default';
         this.catches = '';
         this.collection = false;
         this.source = null;
         this.viewportScope = null;
         this.isBound = false;
+        this.router = resolve(IRouter);
+        this.element = resolve(INode);
+        this.container = resolve(IContainer);
+        this.parent = resolve(ParentViewportScope);
+        this.parentController = resolve(IController);
     }
     // Maybe this really should be here. Check with Binh.
     // public create(
@@ -8412,7 +8411,7 @@ let ViewportScopeCustomElement = class ViewportScopeCustomElement {
             options.collection = value;
         }
         // TODO: Needs to be bound? How to solve?
-        options.source = this.source || null;
+        options.source = this.source ?? null;
         this.viewportScope = this.router.connectEndpoint(this.viewportScope, 'ViewportScope', this, name, options);
     }
     disconnect() {
@@ -8459,26 +8458,21 @@ ViewportScopeCustomElement = __decorate([
         template: '<template></template>',
         containerless: false,
         injectable: ParentViewportScope
-    }),
-    __param(0, IRouter),
-    __param(1, INode),
-    __param(2, IContainer),
-    __param(3, ParentViewportScope),
-    __param(4, IController)
+    })
 ], ViewportScopeCustomElement);
 
 let LoadCustomAttribute = class LoadCustomAttribute {
-    constructor(element, router, linkHandler, ea) {
-        this.element = element;
-        this.router = router;
-        this.linkHandler = linkHandler;
-        this.ea = ea;
+    constructor() {
         /** @internal */ this._separateProperties = false;
         this.hasHref = null;
+        this.element = resolve(INode);
+        this.router = resolve(IRouter);
+        this.linkHandler = resolve(ILinkHandler);
+        this.ea = resolve(IEventAggregator);
+        this.activeClass = this.router.configuration.options.indicators.loadActive;
         this.navigationEndHandler = (_navigation) => {
             void this.updateActive();
         };
-        this.activeClass = this.router.configuration.options.indicators.loadActive;
     }
     binding() {
         if (this.value == null) {
@@ -8570,23 +8564,19 @@ __decorate([
     bindable
 ], LoadCustomAttribute.prototype, "id", void 0);
 LoadCustomAttribute = __decorate([
-    customAttribute('load'),
-    __param(0, INode),
-    __param(1, IRouter),
-    __param(2, ILinkHandler),
-    __param(3, IEventAggregator)
+    customAttribute('load')
 ], LoadCustomAttribute);
 
 let HrefCustomAttribute = class HrefCustomAttribute {
-    constructor(element, router, linkHandler, ea) {
-        this.element = element;
-        this.router = router;
-        this.linkHandler = linkHandler;
-        this.ea = ea;
+    constructor() {
+        this.element = resolve(INode);
+        this.router = resolve(IRouter);
+        this.linkHandler = resolve(ILinkHandler);
+        this.ea = resolve(IEventAggregator);
+        this.activeClass = this.router.configuration.options.indicators.loadActive;
         this.navigationEndHandler = (_navigation) => {
             this.updateActive();
         };
-        this.activeClass = this.router.configuration.options.indicators.loadActive;
     }
     binding() {
         if (this.router.configuration.options.useHref && !this.hasLoad() && !this.element.hasAttribute('external')) {
@@ -8628,11 +8618,7 @@ HrefCustomAttribute = __decorate([
     customAttribute({
         name: 'href',
         noMultiBindings: true
-    }),
-    __param(0, INode),
-    __param(1, IRouter),
-    __param(2, ILinkHandler),
-    __param(3, IEventAggregator)
+    })
 ], HrefCustomAttribute);
 
 let ConsideredActiveCustomAttribute = class ConsideredActiveCustomAttribute {

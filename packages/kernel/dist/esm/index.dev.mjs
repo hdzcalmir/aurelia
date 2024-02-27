@@ -33,7 +33,8 @@ const errorsMap = {
         `A common cause is circular dependency with bundler, did you accidentally introduce circular dependency into your module graph?`,
     [15 /* ErrorNames.no_construct_native_fn */]: `'{{0}}' is a native function and cannot be safely constructed by DI. If this is intentional, please use a callback or cachedCallback resolver.`,
     [16 /* ErrorNames.no_active_container_for_resolve */]: `There is not a currently active container to resolve "{{0}}". Are you trying to "new Class(...)" that has a resolve(...) call?`,
-    [17 /* ErrorNames.invalid_new_instance_on_interface */]: `Failed to instantiate '{{0}}' via @newInstanceOf/@newInstanceForScope, there's no registration and no default implementation.`,
+    [17 /* ErrorNames.invalid_new_instance_on_interface */]: `Failed to instantiate '{{0}}' via @newInstanceOf/@newInstanceForScope, there's no registration and no default implementation,`
+        + ` or the default implementation does not result in factory for constructing the instances.`,
     [18 /* ErrorNames.event_aggregator_publish_invalid_event_name */]: `Invalid channel name or instance: '{{0}}'.`,
     [19 /* ErrorNames.event_aggregator_subscribe_invalid_event_name */]: `Invalid channel name or type: {{0}}.`,
     [20 /* ErrorNames.first_defined_no_value */]: `No defined value found when calling firstDefined()`,
@@ -759,11 +760,9 @@ class Container {
         return null;
     }
     has(key, searchAncestors = false) {
-        return this._resolvers.has(key) || isResourceKey(key) && key in this.res
-            ? true
-            : searchAncestors && this._parent != null
-                ? this._parent.has(key, true)
-                : false;
+        return this._resolvers.has(key)
+            || isResourceKey(key) && key in this.res
+            || ((searchAncestors && this._parent?.has(key, true)) ?? false);
     }
     get(key) {
         validateKey(key);
@@ -954,24 +953,6 @@ class Container {
                 throw createMappedError(11 /* ErrorNames.null_resolver_from_register */, keyAsValue);
             }
             return registrationResolver;
-        }
-        if (hasResources(keyAsValue)) {
-            const defs = getAllResources(keyAsValue);
-            if (defs.length === 1) {
-                // Fast path for the very common case
-                defs[0].register(handler);
-            }
-            else {
-                const len = defs.length;
-                for (let d = 0; d < len; ++d) {
-                    defs[d].register(handler);
-                }
-            }
-            const newResolver = handler._resolvers.get(keyAsValue);
-            if (newResolver != null) {
-                return newResolver;
-            }
-            throw createMappedError(11 /* ErrorNames.null_resolver_from_register */, keyAsValue);
         }
         if (keyAsValue.$isInterface) {
             throw createMappedError(12 /* ErrorNames.no_jit_interface */, keyAsValue.friendlyName);
@@ -1581,9 +1562,19 @@ const createNewInstance = (key, handler, requestor) => {
     // 2. if key is an interface
     if (isInterface(key)) {
         const hasDefault = isFunction(key.register);
-        const resolver = handler.getResolver(key, hasDefault);
-        const factory = resolver?.getFactory?.(handler);
-        // 2.1 and has factory
+        const resolver = handler.getResolver(key, false);
+        let factory;
+        if (resolver == null) {
+            if (hasDefault) {
+                // creating a child as we do not want to pollute the resolver registry
+                // there may be a better way but wasting a container probably isn't the worst
+                factory = createContainer().getResolver(key, true)?.getFactory?.(handler);
+            }
+        }
+        else {
+            factory = resolver.getFactory?.(handler);
+        }
+        // 2.1 and has resolvable factory
         if (factory != null) {
             return factory.construct(requestor);
         }

@@ -1,4 +1,4 @@
-import { DI, resolve } from '@aurelia/kernel';
+import { DI, newInstanceForScope, resolve } from '@aurelia/kernel';
 import { HttpClient, HttpClientConfiguration, HttpClientEvent, IHttpClient, json } from '@aurelia/fetch-client';
 import { assert, createFixture } from '@aurelia/testing';
 import { isNode } from '../util.js';
@@ -106,6 +106,15 @@ describe('fetch-client/fetch-client.spec.ts', function () {
         it('works when injecting IHttpClient', async function () {
             assert.deepStrictEqual(await client.fetch('/a'), { method: 'GET', url: '/a', headers: {} });
         });
+        it('resolves to the same instance when injecting IHttpClient then HttpClient', async function () {
+            const { component: { http: client, http2: http2 } } = createFixture('${message}', class App {
+                constructor() {
+                    this.http = resolve(IHttpClient);
+                    this.http2 = resolve(HttpClient);
+                }
+            });
+            assert.strictEqual(client, http2);
+        });
         it('works when injecting HttpClient', async function () {
             const { component: { http: client, http2: http2 } } = createFixture('${message}', class App {
                 constructor() {
@@ -115,6 +124,17 @@ describe('fetch-client/fetch-client.spec.ts', function () {
             });
             assert.strictEqual(client, http2);
             assert.deepStrictEqual(await client.fetch('/a'), { method: 'GET', url: '/a', headers: {} });
+        });
+        it('allows injection by newInstanceForScope resolver', function () {
+            const { component: { http, http2 } } = createFixture('${message}', class App {
+                constructor() {
+                    this.http = resolve(newInstanceForScope(IHttpClient));
+                    this.http2 = resolve(IHttpClient);
+                }
+            });
+            assert.instanceOf(http, HttpClient);
+            // should be the same instance
+            assert.strictEqual(http, http2);
         });
         it('makes requests with full url string inputs', async function () {
             assert.deepStrictEqual(await client.fetch('http://example.com/some/cool/path'), { method: 'GET', url: 'http://example.com/some/cool/path', headers: {} });
