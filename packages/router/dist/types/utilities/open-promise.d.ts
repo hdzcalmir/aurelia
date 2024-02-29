@@ -10,14 +10,6 @@ export declare class OpenPromise<T = void> {
      * The actual promise
      */
     promise: Promise<T>;
-    /**
-     * The resolve method of the promise
-     */
-    private _resolve;
-    /**
-     * The reject method of the promise
-     */
-    private _reject;
     constructor();
     /**
      * Resolve the (open) promise.
@@ -30,6 +22,6 @@ export declare class OpenPromise<T = void> {
      *
      * @param reason - The reason the promise is rejected
      */
-    reject(reason?: any): void;
+    reject(reason?: unknown): void;
 }
 //# sourceMappingURL=open-promise.d.ts.map

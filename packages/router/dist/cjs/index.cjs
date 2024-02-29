@@ -912,8 +912,8 @@ class Runner {
         this.isAsync = false;
     }
     static run(t, ...i) {
-        if ((i?.length ?? 0) === 0) {
-            return i?.[0];
+        if (i.length === 0) {
+            return void 0;
         }
         let e = false;
         if (t === null) {
@@ -1776,39 +1776,26 @@ class ViewportContent extends EndpointContent {
             ...e
         };
         const n = this.getLifecycleHooks(t, "canLoad").map((i => e => {
-            const n = i(t, s, this.instruction, this.navigation);
-            if (typeof n === "boolean") {
-                if (n === false) {
-                    e.exit();
-                }
-                return n;
+            if (e?.previousValue === false) {
+                return false;
             }
-            if (typeof n === "string") {
-                e.exit();
-                return n;
-            }
-            return n;
+            return i(t, s, this.instruction, this.navigation);
         }));
-        if (n.length !== 0) {
-            const t = Runner.run(null, ...n);
-            if (t !== true) {
-                if (t === false) {
+        if (t.canLoad != null) {
+            n.push((i => {
+                if (i?.previousValue === false) {
                     return false;
                 }
-                if (typeof t === "string") {
-                    return t;
-                }
-                return t;
-            }
+                return t.canLoad(s, this.instruction, this.navigation);
+            }));
         }
-        if (t.canLoad == null) {
+        if (n.length === 0) {
             return true;
         }
-        const r = t.canLoad(s, this.instruction, this.navigation);
-        if (typeof r === "boolean" || typeof r === "string") {
-            return r;
+        if (n.length === 1) {
+            return n[0](null);
         }
-        return r;
+        return Runner.run(null, ...n);
     }
     canUnload(t) {
         if (this.contentStates.has("checkedUnload") && !this.reload) {
@@ -1827,32 +1814,27 @@ class ViewportContent extends EndpointContent {
             });
         }
         const e = this.getLifecycleHooks(i, "canUnload").map((e => s => {
-            const n = e(i, this.instruction, t);
-            if (typeof n === "boolean") {
-                if (n === false) {
-                    s.exit();
-                }
-                return n;
+            if (s?.previousValue === false) {
+                return false;
             }
-            return n;
+            return e(i, this.instruction, t);
         }));
-        if (e.length !== 0) {
-            const t = Runner.run(null, ...e);
-            if (t !== true) {
-                if (t === false) {
+        if (i.canUnload != null) {
+            e.push((e => {
+                if (e?.previousValue === false) {
                     return false;
                 }
-                return t;
-            }
+                const s = i.canUnload?.(this.instruction, t);
+                return s instanceof Promise ? s.then(Boolean) : Boolean(s);
+            }));
         }
-        if (!i.canUnload) {
+        if (e.length === 0) {
             return true;
         }
-        const s = i.canUnload(this.instruction, t);
-        if (typeof s !== "boolean" && !(s instanceof Promise)) {
-            throw new Error(`Method 'canUnload' in component "${this.instruction.component.name}" needs to return true or false or a Promise resolving to true or false.`);
+        if (e.length === 1) {
+            return e[0](null);
         }
-        return s;
+        return Runner.run(null, ...e);
     }
     load(t) {
         return Runner.run(t, (() => this.contentStates.await("checkedLoad")), (() => {
@@ -1878,16 +1860,16 @@ class ViewportContent extends EndpointContent {
                 if (typeof t.loading === "function") {
                     n.push((() => t.loading(s, this.instruction, this.navigation)));
                 }
-                if (typeof t.load === "function") {
+                if (hasVmHook(t, "load")) {
                     console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                     n.push((() => t.load(s, this.instruction, this.navigation)));
                 }
                 return Runner.run(null, ...n);
             }
-            if (typeof t.loading === "function") {
+            if (hasVmHook(t, "loading")) {
                 return t.loading(s, this.instruction, this.navigation);
             }
-            if (typeof t.load === "function") {
+            if (hasVmHook(t, "load")) {
                 console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                 return t.load(s, this.instruction, this.navigation);
             }
@@ -1912,19 +1894,19 @@ class ViewportContent extends EndpointContent {
             return e(i, this.instruction, t);
         })));
         if (e.length !== 0) {
-            if (typeof i.unloading === "function") {
+            if (hasVmHook(i, "unloading")) {
                 e.push((() => i.unloading(this.instruction, t)));
             }
-            if (typeof i.unload === "function") {
+            if (hasVmHook(i, "unload")) {
                 console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
                 e.push((() => i.unload(this.instruction, t)));
             }
             return Runner.run(null, ...e);
         }
-        if (typeof i.unloading === "function") {
+        if (hasVmHook(i, "unloading")) {
             return i.unloading(this.instruction, t);
         }
-        if (typeof i.unload === "function") {
+        if (hasVmHook(i, "unload")) {
             console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
             return i.unload(this.instruction, t);
         }
@@ -2001,6 +1983,10 @@ class ViewportContent extends EndpointContent {
         const e = t.$controller.lifecycleHooks[i] ?? [];
         return e.map((t => t.instance[i].bind(t.instance)));
     }
+}
+
+function hasVmHook(t, i) {
+    return typeof t[i] === "function";
 }
 
 class ViewportOptions {
@@ -4449,6 +4435,7 @@ class NavigationCoordinator {
         this.entities.forEach((t => t.endpoint.finalizeContentChange(this, null)));
         this.completed = true;
         this.navigation.completed = true;
+        this.syncStates.clear();
     }
     cancel() {
         this.cancelled = true;
@@ -4467,6 +4454,12 @@ class NavigationCoordinator {
         }));
         this.completed = true;
         this.navigation.completed = true;
+        [ ...this.syncStates.values() ].forEach((t => {
+            if (t.isPending) {
+                t.resolve();
+            }
+        }));
+        this.syncStates.clear();
     }
     enqueueAppendedInstructions(t) {
         this.appendedInstructions.push(...t);
@@ -4719,11 +4712,10 @@ class Router {
         this.isActive = false;
         this.coordinators = [];
         this.loadedFirst = false;
-        this.h = t.resolve(t.ILogger);
+        this.h = false;
+        this.u = t.resolve(t.ILogger);
         this.handleNavigatorNavigateEvent = t => {
-            this.processNavigation(t.navigation).catch((t => {
-                throw t;
-            }));
+            void this.R(t);
         };
         this.handleNavigatorStateChangeEvent = t => {
             if (t.state?.navigationIndex != null) {
@@ -4841,6 +4833,31 @@ class Router {
         this.loadedFirst = true;
         return e;
     }
+    async R(t) {
+        if (this.h) {
+            if (this.I) {
+                this.I.navigation.process?.resolve(false);
+            }
+            this.I = t;
+            return;
+        }
+        this.h = true;
+        try {
+            await this.processNavigation(t.navigation);
+        } catch (i) {
+            t.navigation.process?.reject(i);
+        } finally {
+            this.h = false;
+        }
+        if (this.I) {
+            const t = this.I;
+            this.I = undefined;
+            await this.R(t);
+        }
+    }
+    get isProcessingNav() {
+        return this.h || this.I != null;
+    }
     getEndpoint(t, i) {
         return this.allEndpoints(t).find((t => t.name === i)) ?? null;
     }
@@ -4955,7 +4972,7 @@ class Router {
     unresolvedInstructionsError(t, i) {
         this.ea.publish(RouterNavigationErrorEvent.eventName, RouterNavigationErrorEvent.create(t));
         this.ea.publish(RouterNavigationEndEvent.eventName, RouterNavigationEndEvent.create(t));
-        throw createUnresolvedinstructionsError(i, this.h);
+        throw createUnresolvedinstructionsError(i, this.u);
     }
     cancelNavigation(t, i) {
         i.cancel();
@@ -5504,7 +5521,7 @@ exports.ViewportScopeCustomElement = __decorate([ i.customElement({
 
 exports.LoadCustomAttribute = class LoadCustomAttribute {
     constructor() {
-        this.u = false;
+        this.C = false;
         this.hasHref = null;
         this.element = t.resolve(i.INode);
         this.router = t.resolve(c);
@@ -5517,7 +5534,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
     }
     binding() {
         if (this.value == null) {
-            this.u = true;
+            this.C = true;
         }
         this.element.addEventListener("click", this.linkHandler);
         this.updateValue();
@@ -5533,7 +5550,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
         void this.updateActive();
     }
     updateValue() {
-        if (this.u) {
+        if (this.C) {
             this.value = {
                 component: this.component,
                 parameters: this.parameters,
@@ -5548,7 +5565,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
             let t = this.value;
             if (typeof t !== "string") {
                 const i = RoutingInstruction.from(this.router, t).shift();
-                const e = this.R(t);
+                const e = this.N(t);
                 if (e.foundConfiguration) {
                     i.route = e.matching;
                 }
@@ -5569,14 +5586,14 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
             id: this.value,
             path: this.value
         } : this.value;
-        const s = this.R(e);
+        const s = this.N(e);
         const n = s.foundConfiguration ? s.instructions : getConsideredActiveInstructions(this.router, t, this.element, this.value);
         const r = getLoadIndicator(this.element);
         r.classList.toggle(this.activeClass, this.router.checkActive(n, {
             context: t
         }));
     }
-    R(t) {
+    N(t) {
         if (typeof t === "string") {
             return new FoundRoute;
         }
@@ -5672,15 +5689,15 @@ exports.ConsideredActiveCustomAttribute = __decorate([ i.customAttribute("consid
 
 const v = /*@__PURE__*/ t.DI.createInterface("IRouterConfiguration", (t => t.singleton(RouterConfiguration)));
 
-const w = c;
+const m = c;
 
-const m = [ w ];
+const w = [ m ];
 
 const R = exports.ViewportCustomElement;
 
-const y = exports.ViewportScopeCustomElement;
+const I = exports.ViewportScopeCustomElement;
 
-const I = exports.LoadCustomAttribute;
+const y = exports.LoadCustomAttribute;
 
 const E = exports.HrefCustomAttribute;
 
@@ -5692,7 +5709,7 @@ class RouterConfiguration {
         e.options = RouterConfiguration.options;
         e.options.setRouterConfiguration(e);
         RouterConfiguration.options = RouterOptions.create();
-        return t.register(...m, ...C, i.AppTask.activating(c, RouterConfiguration.configurationCall), i.AppTask.activated(c, (t => t.initialLoad())), i.AppTask.deactivated(c, (t => t.stop())));
+        return t.register(...w, ...C, i.AppTask.activating(c, RouterConfiguration.configurationCall), i.AppTask.activated(c, (t => t.initialLoad())), i.AppTask.deactivated(c, (t => t.stop())));
     }
     static customize(t) {
         if (t === undefined) {
@@ -5742,7 +5759,7 @@ RouterConfiguration.configurationCall = t => {
 
 exports.ConfigurableRoute = h;
 
-exports.DefaultComponents = m;
+exports.DefaultComponents = w;
 
 exports.DefaultResources = C;
 
@@ -5764,7 +5781,7 @@ exports.InstructionParameters = InstructionParameters;
 
 exports.LinkHandler = LinkHandler;
 
-exports.LoadCustomAttributeRegistration = I;
+exports.LoadCustomAttributeRegistration = y;
 
 exports.Navigation = Navigation;
 
@@ -5796,7 +5813,7 @@ exports.RouterNavigationStartEvent = RouterNavigationStartEvent;
 
 exports.RouterOptions = RouterOptions;
 
-exports.RouterRegistration = w;
+exports.RouterRegistration = m;
 
 exports.RouterStartEvent = RouterStartEvent;
 
@@ -5826,7 +5843,7 @@ exports.ViewportScope = ViewportScope;
 
 exports.ViewportScopeContent = ViewportScopeContent;
 
-exports.ViewportScopeCustomElementRegistration = y;
+exports.ViewportScopeCustomElementRegistration = I;
 
 exports.route = route;
 

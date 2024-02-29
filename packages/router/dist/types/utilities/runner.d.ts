@@ -93,7 +93,7 @@ export declare class Runner {
     static cancel(value: unknown): void;
     private static add;
     private static connect;
-    static roots: any;
+    static roots: Record<string, Step>;
     static process<T = unknown>(step: Step<T> | null): void;
     private static ensurePromise;
     private static settlePromise;

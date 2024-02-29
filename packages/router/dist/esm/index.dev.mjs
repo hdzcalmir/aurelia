@@ -1413,8 +1413,8 @@ class Runner {
      * case, the return value will be the first new step and not the result (since it doesn't exist yet).
      */
     static run(predecessor, ...steps) {
-        if ((steps?.length ?? 0) === 0) {
-            return steps?.[0];
+        if (steps.length === 0) {
+            return void 0;
         }
         let newRoot = false;
         // No predecessor, so create a new root and add steps as children to it
@@ -2585,6 +2585,7 @@ class ViewportContent extends EndpointContent {
                     throw e;
                 }
                 {
+                    // eslint-disable-next-line no-console
                     console.warn(`'${this.instruction.component.name}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                 }
                 // If there's a fallback component...
@@ -2639,41 +2640,30 @@ class ViewportContent extends EndpointContent {
             .parentViewport?.getTimeContent(this.navigation.timestamp)?.instruction?.typeParameters(this.router);
         const parameters = this.instruction.typeParameters(this.router);
         const merged = { ...this.navigation.parameters, ...parentParameters, ...parameters };
-        const hooks = this.getLifecycleHooks(instance, 'canLoad').map(hook => ((innerStep) => {
-            const result = hook(instance, merged, this.instruction, this.navigation);
-            if (typeof result === 'boolean') {
-                if (result === false) {
-                    innerStep.exit();
-                }
-                return result;
+        const hooks = this.getLifecycleHooks(instance, 'canLoad')
+            .map(hook => ((innerStep) => {
+            if (innerStep?.previousValue === false) {
+                return false;
             }
-            if (typeof result === 'string') {
-                innerStep.exit();
-                return result;
-            }
-            return result;
+            // TODO: If requested, pass previous value into hook
+            return hook(instance, merged, this.instruction, this.navigation);
         }));
-        if (hooks.length !== 0) {
-            const hooksResult = Runner.run(null, ...hooks);
-            if (hooksResult !== true) {
-                if (hooksResult === false) {
+        if (instance.canLoad != null) {
+            hooks.push((innerStep) => {
+                if (innerStep?.previousValue === false) {
                     return false;
                 }
-                if (typeof hooksResult === 'string') {
-                    return hooksResult;
-                }
-                return hooksResult;
-            }
+                // TODO: If requested, pass previous value into hook
+                return instance.canLoad(merged, this.instruction, this.navigation);
+            });
         }
-        // No hook for component, we can load
-        if (instance.canLoad == null) {
+        if (hooks.length === 0) {
             return true;
         }
-        const result = instance.canLoad(merged, this.instruction, this.navigation);
-        if (typeof result === 'boolean' || typeof result === 'string') {
-            return result;
+        if (hooks.length === 1) {
+            return hooks[0](null);
         }
-        return result;
+        return Runner.run(null, ...hooks);
     }
     /**
      * Check if the viewport content's component can be unloaded.
@@ -2702,33 +2692,28 @@ class ViewportContent extends EndpointContent {
             });
         }
         const hooks = this.getLifecycleHooks(instance, 'canUnload').map(hook => ((innerStep) => {
-            const result = hook(instance, this.instruction, navigation);
-            if (typeof result === 'boolean') {
-                if (result === false) {
-                    innerStep.exit();
-                }
-                return result;
+            if (innerStep?.previousValue === false) {
+                return false;
             }
-            return result;
+            return hook(instance, this.instruction, navigation);
         }));
-        if (hooks.length !== 0) {
-            const hooksResult = Runner.run(null, ...hooks);
-            if (hooksResult !== true) {
-                if (hooksResult === false) {
+        if (instance.canUnload != null) {
+            hooks.push((innerStep) => {
+                if (innerStep?.previousValue === false) {
                     return false;
                 }
-                return hooksResult;
-            }
+                // TODO: If requested, pass previous value into hook
+                const result = instance.canUnload?.(this.instruction, navigation);
+                return result instanceof Promise ? result.then(Boolean) : Boolean(result);
+            });
         }
-        // No hook in component, we can unload
-        if (!instance.canUnload) {
+        if (hooks.length === 0) {
             return true;
         }
-        const result = instance.canUnload(this.instruction, navigation);
-        if (typeof result !== 'boolean' && !(result instanceof Promise)) {
-            throw new Error(`Method 'canUnload' in component "${this.instruction.component.name}" needs to return true or false or a Promise resolving to true or false.`);
+        if (hooks.length === 1) {
+            return hooks[0](null);
         }
-        return result;
+        return Runner.run(null, ...hooks);
     }
     /**
      * Load the viewport content's content.
@@ -2753,6 +2738,7 @@ class ViewportContent extends EndpointContent {
             const merged = { ...this.navigation.parameters, ...parentParameters, ...parameters };
             const hooks = this.getLifecycleHooks(instance, 'loading').map(hook => () => hook(instance, merged, this.instruction, this.navigation));
             hooks.push(...this.getLifecycleHooks(instance, 'load').map(hook => () => {
+                // eslint-disable-next-line no-console
                 console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                 return hook(instance, merged, this.instruction, this.navigation);
             }));
@@ -2761,18 +2747,20 @@ class ViewportContent extends EndpointContent {
                 if (typeof instance.loading === 'function') {
                     hooks.push(() => instance.loading(merged, this.instruction, this.navigation));
                 }
-                if (typeof instance.load === 'function') {
+                if (hasVmHook(instance, 'load')) {
+                    // eslint-disable-next-line no-console
                     console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                     hooks.push(() => instance.load(merged, this.instruction, this.navigation));
                 }
                 return Runner.run(null, ...hooks);
             }
             // Skip if there's no hook in component
-            if (typeof instance.loading === 'function') {
+            if (hasVmHook(instance, 'loading')) {
                 return instance.loading(merged, this.instruction, this.navigation);
             }
             // Skip if there's no hook in component
-            if (typeof instance.load === 'function') {
+            if (hasVmHook(instance, 'load')) {
+                // eslint-disable-next-line no-console
                 console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                 return instance.load(merged, this.instruction, this.navigation);
             }
@@ -2800,25 +2788,28 @@ class ViewportContent extends EndpointContent {
         }
         const hooks = this.getLifecycleHooks(instance, 'unloading').map(hook => () => hook(instance, this.instruction, navigation));
         hooks.push(...this.getLifecycleHooks(instance, 'unload').map(hook => () => {
+            // eslint-disable-next-line no-console
             console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
             return hook(instance, this.instruction, navigation);
         }));
         if (hooks.length !== 0) {
             // Add hook in component
-            if (typeof instance.unloading === 'function') {
+            if (hasVmHook(instance, 'unloading')) {
                 hooks.push(() => instance.unloading(this.instruction, navigation));
             }
-            if (typeof instance.unload === 'function') {
+            if (hasVmHook(instance, 'unload')) {
+                // eslint-disable-next-line no-console
                 console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
                 hooks.push(() => instance.unload(this.instruction, navigation));
             }
             return Runner.run(null, ...hooks);
         }
         // Skip if there's no hook in component
-        if (typeof instance.unloading === 'function') {
+        if (hasVmHook(instance, 'unloading')) {
             return instance.unloading(this.instruction, navigation);
         }
-        if (typeof instance.unload === 'function') {
+        if (hasVmHook(instance, 'unload')) {
+            // eslint-disable-next-line no-console
             console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
             return instance.unload(this.instruction, navigation);
         }
@@ -2834,8 +2825,13 @@ class ViewportContent extends EndpointContent {
      * @param boundCallback - A callback that's called when the content's component has been bound
      * @param attachPromise - A promise that th content's component controller will await before attaching
      */
+    activateComponent(step, initiator, parent, 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    activateComponent(step, initiator, parent, connectedCE, boundCallback, attachPromise) {
+    connectedCE, 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    boundCallback, 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    attachPromise) {
         return Runner.run(step, () => this.contentStates.await('loaded'), () => this.waitForParent(parent), // TODO: It might be possible to refactor this away
         () => {
             if (this.contentStates.has('activating') || this.contentStates.has('activated')) {
@@ -2959,11 +2955,13 @@ class ViewportContent extends EndpointContent {
             });
         }
     }
-    // TODO: Move this elsewhere and fix the typings
     getLifecycleHooks(instance, name) {
-        const hooks = (instance.$controller.lifecycleHooks[name] ?? []);
-        return hooks.map(hook => hook.instance[name].bind(hook.instance));
+        const hooks = instance.$controller.lifecycleHooks[name] ?? [];
+        return hooks.map(hook => (hook.instance[name]).bind(hook.instance));
     }
+}
+function hasVmHook(instance, lifecycle) {
+    return typeof instance[lifecycle] === 'function';
 }
 
 class ViewportOptions {
@@ -5447,6 +5445,7 @@ class RoutingScope {
         }
         if (container == null) {
             {
+                // eslint-disable-next-line no-console
                 console.warn("RoutingScope failed to find a container for provided origin", origin);
             }
             return { scope: null, instruction };
@@ -5588,6 +5587,7 @@ class RoutingScope {
             // ...and use any already found and the newly found routing instructions.
             instructions = [...instructions.filter(instruction => instruction.route instanceof Route), ...foundRoute.instructions];
             if (instructions.some(instr => instr.scope !== this)) {
+                // eslint-disable-next-line no-console
                 console.warn('Not the current scope for instruction(s)!', this, instructions);
             }
             // If it's a configured route...
@@ -5639,6 +5639,7 @@ class RoutingScope {
                 .filter(endpoint => !matchedEndpoints.includes(endpoint))
                 .map(endpoint => RoutingInstruction.createClear(router, endpoint)));
             // TODO: Review whether this await poses a problem (it's currently necessary for new viewports to load)
+            // eslint-disable-next-line no-await-in-loop
             const hooked = await RoutingHook.invokeBeforeNavigation(matchedInstructions, navigation);
             if (hooked === false) {
                 router.cancelNavigation(navigation, coordinator);
@@ -5694,6 +5695,7 @@ class RoutingScope {
                     // If the endpoint has not been changed/swapped and there are no next scope
                     // instructions the endpoint's scope (its children) needs to be cleared
                     if (action === 'skip' && !matchedInstruction.hasNextScopeInstructions) {
+                        // eslint-disable-next-line no-await-in-loop
                         allChangedEndpoints.push(...(await endpoint.scope.processInstructions([], earlierMatchedInstructions, navigation, coordinator, configuredRoutePath)));
                     }
                 }
@@ -5715,6 +5717,7 @@ class RoutingScope {
                 if (coordinator.hasAllEndpoints) {
                     const guardedUnload = coordinator.waitForSyncState('guardedUnload');
                     if (guardedUnload instanceof Promise) {
+                        // eslint-disable-next-line no-await-in-loop
                         await guardedUnload;
                     }
                 }
@@ -5747,6 +5750,7 @@ class RoutingScope {
                 coordinator.running) {
                 const waitForSwapped = coordinator.waitForSyncState('swapped');
                 if (waitForSwapped instanceof Promise) {
+                    // eslint-disable-next-line no-await-in-loop
                     await waitForSwapped;
                 }
             }
@@ -5761,6 +5765,7 @@ class RoutingScope {
                     const nextScope = instruction.endpoint.instance?.scope ?? instruction.endpoint.scope;
                     nextProcesses.push(nextScope.processInstructions(instruction.nextScopeInstructions, earlierMatchedInstructions, navigation, coordinator, configuredRoutePath));
                 }
+                // eslint-disable-next-line no-await-in-loop
                 allChangedEndpoints.push(...(await Promise.all(nextProcesses)).flat());
             }
             // // Don't add defaults when it's a full state navigation (since it's complete state)
@@ -5779,6 +5784,7 @@ class RoutingScope {
                     .filter(promise => promise != null);
                 // ...and await first one...
                 if (pendingEndpoints.length > 0) {
+                    // eslint-disable-next-line no-await-in-loop
                     await Promise.any(pendingEndpoints);
                     // ...and dequeue them.
                     ({ matchedInstructions, remainingInstructions } =
@@ -5792,6 +5798,7 @@ class RoutingScope {
             // If there are any unresolved components (functions or promises) to be appended, resolve them
             const unresolvedPromise = RoutingInstruction.resolve(matchedInstructions);
             if (unresolvedPromise instanceof Promise) {
+                // eslint-disable-next-line no-await-in-loop
                 await unresolvedPromise;
             }
             // Remove cancelled endpoints from changed endpoints (last instruction is cancelled)
@@ -6925,6 +6932,7 @@ class NavigationCoordinator {
         this.entities.forEach(entity => entity.endpoint.finalizeContentChange(this, null));
         this.completed = true;
         this.navigation.completed = true;
+        this.syncStates.clear();
     }
     /**
      * Cancel the navigation, calling cancelContentChange in all endpoints and
@@ -6940,11 +6948,20 @@ class NavigationCoordinator {
             }
         });
         // TODO: Review this since it probably should happen in turn
-        this.router.navigator.cancel(this.navigation).then(() => {
+        this.router.navigator.cancel(this.navigation)
+            .then(() => {
             this.navigation.process?.resolve(false);
-        }).catch(error => { throw error; });
+        })
+            .catch(error => { throw error; });
         this.completed = true;
         this.navigation.completed = true;
+        // Resolve awaiting processes
+        [...this.syncStates.values()].forEach(promise => {
+            if (promise.isPending) {
+                promise.resolve();
+            }
+        });
+        this.syncStates.clear();
     }
     /**
      * Enqueue instructions that should be appended to the navigation
@@ -7309,6 +7326,12 @@ class Router {
          * Whether the first load has happened
          */
         this.loadedFirst = false;
+        /**
+         * Is processing navigation
+         *
+         * @internal
+         */
+        this._isProcessingNav = false;
         /** @internal */
         this._logger = resolve(ILogger);
         /**
@@ -7319,11 +7342,7 @@ class Router {
          * @internal
          */
         this.handleNavigatorNavigateEvent = (event) => {
-            // Instructions extracted from queue, one at a time
-            this.processNavigation(event.navigation).catch(error => {
-                // event.navigation.reject?.();
-                throw error;
-            });
+            void this._handleNavigatorNavigateEvent(event);
         };
         /**
          * Handle the navigator's state change event.
@@ -7508,6 +7527,41 @@ class Router {
         });
         this.loadedFirst = true;
         return result;
+    }
+    /** @internal */
+    async _handleNavigatorNavigateEvent(event) {
+        if (this._isProcessingNav) {
+            // We prevent multiple navigation at the same time, but we store the last navigation requested.
+            if (this._pendingNavigation) {
+                // This pending navigation is cancelled
+                this._pendingNavigation.navigation.process?.resolve(false);
+            }
+            this._pendingNavigation = event;
+            return;
+        }
+        this._isProcessingNav = true;
+        try {
+            await this.processNavigation(event.navigation);
+        }
+        catch (error) {
+            event.navigation.process?.reject(error);
+        }
+        finally {
+            this._isProcessingNav = false;
+        }
+        if (this._pendingNavigation) {
+            const pending = this._pendingNavigation;
+            this._pendingNavigation = undefined;
+            await this._handleNavigatorNavigateEvent(pending);
+        }
+    }
+    /**
+     * Is processing navigation
+     *
+     * @internal
+     */
+    get isProcessingNav() {
+        return this._isProcessingNav || this._pendingNavigation != null;
     }
     /**
      * Get a named endpoint of a specific type.
