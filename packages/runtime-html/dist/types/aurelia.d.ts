@@ -1,5 +1,4 @@
-import { IAppRoot, ISinglePageApp } from './app-root';
-import { ICustomElementController, ICustomElementViewModel, IHydratedParentController } from './templating/controller';
+import { IAppRoot } from './app-root';
 import type { Constructable, IContainer, IDisposable } from '@aurelia/kernel';
 export interface IAurelia extends Aurelia {
 }
@@ -13,22 +12,32 @@ export declare class Aurelia implements IDisposable {
     private next;
     constructor(container?: IContainer);
     register(...params: unknown[]): this;
-    app(config: ISinglePageApp): Omit<this, 'register' | 'app' | 'enhance'>;
+    app(config: ISinglePageAppConfig<object>): Omit<this, 'register' | 'app' | 'enhance'>;
     /**
      * @param parentController - The owning controller of the view created by this enhance call
      */
-    enhance<T extends ICustomElementViewModel, K extends ICustomElementViewModel = T extends Constructable<infer I extends ICustomElementViewModel> ? I : T>(config: IEnhancementConfig<T>, parentController?: IHydratedParentController | null): ICustomElementController<K> | Promise<ICustomElementController<K>>;
+    enhance<T extends object>(config: IEnhancementConfig<T>): IAppRoot<T> | Promise<IAppRoot<T>>;
     waitForIdle(): Promise<void>;
     start(root?: IAppRoot | undefined): void | Promise<void>;
     stop(dispose?: boolean): void | Promise<void>;
     dispose(): void;
+}
+export interface ISinglePageAppConfig<T = unknown> {
+    /**
+     * The host element of the app
+     */
+    host: HTMLElement;
+    /**
+     * The root component of the app
+     */
+    component: T | Constructable<T>;
 }
 export interface IEnhancementConfig<T> {
     host: Element;
     /**
      * The binding context of the enhancement. Will be instantiate by DI if a constructor is given
      */
-    component: T;
+    component: T | Constructable<T>;
     /**
      * A predefined container for the enhanced view.
      */

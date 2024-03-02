@@ -132,7 +132,7 @@ class Store {
         if (!hasDevTools) {
             throw new Error('Devtools extension is not available');
         }
-        options.name ?? (options.name = 'Aurelia State plugin');
+        options.name ??= 'Aurelia State plugin';
         const devTools = extension.connect(options);
         devTools.init(this._initialState);
         devTools.subscribe((message) => {
@@ -512,7 +512,7 @@ let StateBindingCommand = class StateBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === 'Element') {
+            if (value === '' && info.def.type === 'element') {
                 value = camelCase(target);
             }
             target = info.bindable.name;

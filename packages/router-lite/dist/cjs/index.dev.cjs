@@ -2386,7 +2386,7 @@ class RouteNode {
         /** @internal */
         this._isInstructionsFinalized = false;
         this.children = [];
-        this._originalInstruction ?? (this._originalInstruction = instruction);
+        this._originalInstruction ??= instruction;
     }
     static create(input) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -2938,7 +2938,7 @@ class Router {
         return routeTree;
     }
     get currentTr() {
-        return this._currentTr ?? (this._currentTr = Transition._create({
+        return this._currentTr ??= Transition._create({
             id: 0,
             prevInstructions: this._instructions,
             instructions: this._instructions,
@@ -2954,7 +2954,7 @@ class Router {
             promise: null,
             guardsResult: true,
             error: void 0,
-        }));
+        });
     }
     /** @internal */
     set currentTr(value) {
@@ -3475,7 +3475,7 @@ function stringify(pathOrParsedUrl, query, fragment) {
         query = pathOrParsedUrl.query;
         fragment = pathOrParsedUrl.fragment;
     }
-    query ?? (query = emptyQuery);
+    query ??= emptyQuery;
     // compose the path, query and fragment to compose the serialized URL
     let queryString = query.toString();
     queryString = queryString === '' ? '' : `?${queryString}`;

@@ -10,10 +10,21 @@ export interface IDynamicComponentActivate<T> {
      */
     activate?(model?: T): unknown;
 }
-type ChangeSource = keyof Pick<AuCompose, 'template' | 'component' | 'model' | 'scopeBehavior' | 'composing' | 'composition'>;
+type ChangeSource = keyof Pick<AuCompose, 'template' | 'component' | 'model' | 'scopeBehavior' | 'composing' | 'composition' | 'tag'>;
 export declare class AuCompose {
     template?: string | Promise<string>;
-    component?: Constructable | object | Promise<Constructable | object>;
+    /**
+     * Determine the component instance used to compose the component.
+     *
+     * - When a string is given as a value, it will be used as the name of the custom element to compose.
+     * If there is no locally or globally registered custom element with that name, an error will be thrown.
+     *
+     * - When an object is given as a value, the object will be used as the component instance.
+     * - When a constructor is given as a value, the constructor will be used to create the component instance.
+     * - When a null/undefined is given as a value, the component will be composed as a template-only composition with an empty component instance.
+     * - When a promise is given as a value, the promise will be awaited and the resolved value will be used as the value.
+     */
+    component?: string | Constructable | object | Promise<string | Constructable | object>;
     model?: unknown;
     /**
      * Control scoping behavior of the view created by the au-compose.
@@ -25,6 +36,12 @@ export declare class AuCompose {
     scopeBehavior: 'auto' | 'scoped';
     get composing(): Promise<void> | void;
     get composition(): ICompositionController | undefined;
+    /**
+     * The tag name of the element to be created for non custom element composition.
+     *
+     * `null`/`undefined` means containerless
+     */
+    tag: string | null | undefined;
     attaching(initiator: IHydratedController, _parent: IHydratedController): void | Promise<void>;
     detaching(initiator: IHydratedController): void | Promise<void>;
 }
@@ -33,14 +50,14 @@ export interface ICompositionController {
     readonly context: CompositionContext;
     activate(initiator?: IHydratedController): void | Promise<void>;
     deactivate(detachInitator?: IHydratedController): void | Promise<void>;
-    update(model: unknown): void | Promise<void>;
+    update(model: unknown): unknown;
 }
 declare class LoadedChangeInfo {
     readonly _template: string | undefined;
-    readonly _component: Constructable | object | undefined;
+    readonly _component: string | Constructable | object | undefined;
     readonly _model: unknown;
     readonly _src: ChangeSource | undefined;
-    constructor(_template: string | undefined, _component: Constructable | object | undefined, _model: unknown, _src: ChangeSource | undefined);
+    constructor(_template: string | undefined, _component: string | Constructable | object | undefined, _model: unknown, _src: ChangeSource | undefined);
 }
 declare class CompositionContext {
     readonly id: number;

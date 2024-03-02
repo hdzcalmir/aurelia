@@ -33,7 +33,8 @@ const errorsMap = {
         `A common cause is circular dependency with bundler, did you accidentally introduce circular dependency into your module graph?`,
     [15 /* ErrorNames.no_construct_native_fn */]: `'{{0}}' is a native function and cannot be safely constructed by DI. If this is intentional, please use a callback or cachedCallback resolver.`,
     [16 /* ErrorNames.no_active_container_for_resolve */]: `There is not a currently active container to resolve "{{0}}". Are you trying to "new Class(...)" that has a resolve(...) call?`,
-    [17 /* ErrorNames.invalid_new_instance_on_interface */]: `Failed to instantiate '{{0}}' via @newInstanceOf/@newInstanceForScope, there's no registration and no default implementation.`,
+    [17 /* ErrorNames.invalid_new_instance_on_interface */]: `Failed to instantiate '{{0}}' via @newInstanceOf/@newInstanceForScope, there's no registration and no default implementation,`
+        + ` or the default implementation does not result in factory for constructing the instances.`,
     [18 /* ErrorNames.event_aggregator_publish_invalid_event_name */]: `Invalid channel name or instance: '{{0}}'.`,
     [19 /* ErrorNames.event_aggregator_subscribe_invalid_event_name */]: `Invalid channel name or type: {{0}}.`,
     [20 /* ErrorNames.first_defined_no_value */]: `No defined value found when calling firstDefined()`,
@@ -759,11 +760,9 @@ class Container {
         return null;
     }
     has(key, searchAncestors = false) {
-        return this._resolvers.has(key) || isResourceKey(key) && key in this.res
-            ? true
-            : searchAncestors && this._parent != null
-                ? this._parent.has(key, true)
-                : false;
+        return this._resolvers.has(key)
+            || isResourceKey(key) && key in this.res
+            || ((searchAncestors && this._parent?.has(key, true)) ?? false);
     }
     get(key) {
         validateKey(key);
@@ -894,47 +893,30 @@ class Container {
     find(kind, name) {
         const key = kind.keyFrom(name);
         let resolver = this.res[key];
-        if (resolver === void 0) {
+        if (resolver == null) {
             resolver = this.root.res[key];
-            if (resolver === void 0) {
+            if (resolver == null) {
                 return null;
             }
-        }
-        if (resolver === null) {
-            return null;
         }
         if (isFunction(resolver.getFactory)) {
             const factory = resolver.getFactory(this);
-            if (factory === null || factory === void 0) {
+            if (factory == null) {
                 return null;
             }
-            const definition = getOwnMetadata(kind.name, factory.Type);
-            if (definition === void 0) {
-                // TODO: we may want to log a warning here, or even throw. This would happen if a dependency is registered with a resource-like key
-                // but does not actually have a definition associated via the type's metadata. That *should* generally not happen.
-                return null;
-            }
-            return definition;
+            return getOwnMetadata(kind.name, factory.Type) ?? null;
         }
         return null;
-    }
-    create(kind, name) {
-        const key = kind.keyFrom(name);
-        let resolver = this.res[key];
-        if (resolver === void 0) {
-            resolver = this.root.res[key];
-            if (resolver === void 0) {
-                return null;
-            }
-            return resolver.resolve(this.root, this) ?? null;
-        }
-        return resolver.resolve(this, this) ?? null;
     }
     dispose() {
         if (this._disposableResolvers.size > 0) {
             this.disposeResolvers();
         }
         this._resolvers.clear();
+        if (this.root === this) {
+            this._factories.clear();
+            this.res = {};
+        }
     }
     /** @internal */
     _jitRegister(keyAsValue, handler) {
@@ -954,24 +936,6 @@ class Container {
                 throw createMappedError(11 /* ErrorNames.null_resolver_from_register */, keyAsValue);
             }
             return registrationResolver;
-        }
-        if (hasResources(keyAsValue)) {
-            const defs = getAllResources(keyAsValue);
-            if (defs.length === 1) {
-                // Fast path for the very common case
-                defs[0].register(handler);
-            }
-            else {
-                const len = defs.length;
-                for (let d = 0; d < len; ++d) {
-                    defs[d].register(handler);
-                }
-            }
-            const newResolver = handler._resolvers.get(keyAsValue);
-            if (newResolver != null) {
-                return newResolver;
-            }
-            throw createMappedError(11 /* ErrorNames.null_resolver_from_register */, keyAsValue);
         }
         if (keyAsValue.$isInterface) {
             throw createMappedError(12 /* ErrorNames.no_jit_interface */, keyAsValue.friendlyName);
@@ -1009,7 +973,7 @@ class Factory {
         }
     }
     registerTransformer(transformer) {
-        (this.transformers ?? (this.transformers = [])).push(transformer);
+        (this.transformers ??= []).push(transformer);
     }
 }
 function transformInstance(inst, transform) {
@@ -1581,9 +1545,19 @@ const createNewInstance = (key, handler, requestor) => {
     // 2. if key is an interface
     if (isInterface(key)) {
         const hasDefault = isFunction(key.register);
-        const resolver = handler.getResolver(key, hasDefault);
-        const factory = resolver?.getFactory?.(handler);
-        // 2.1 and has factory
+        const resolver = handler.getResolver(key, false);
+        let factory;
+        if (resolver == null) {
+            if (hasDefault) {
+                // creating a new container as we do not want to pollute the resolver registry
+                factory = (newInstanceContainer ??= createContainer()).getResolver(key, true)?.getFactory?.(handler);
+            }
+            newInstanceContainer.dispose();
+        }
+        else {
+            factory = resolver.getFactory?.(handler);
+        }
+        // 2.1 and has resolvable factory
         if (factory != null) {
             return factory.construct(requestor);
         }
@@ -1593,6 +1567,7 @@ const createNewInstance = (key, handler, requestor) => {
     // 3. jit factory, in case of newInstanceOf(SomeClass)
     return handler.getFactory(key).construct(requestor);
 };
+let newInstanceContainer;
 
 /** @internal */
 class Resolver {

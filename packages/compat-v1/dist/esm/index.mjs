@@ -366,13 +366,12 @@ class EventDelegator {
         this.j = createLookup();
     }
     addEventListener(t, e, i, s, n) {
-        var r;
-        const o = (r = this.j)[i] ?? (r[i] = new Map);
-        let l = o.get(t);
-        if (l === void 0) {
-            o.set(t, l = new ListenerTracker(t, i, n));
+        const r = this.j[i] ??= new Map;
+        let o = r.get(t);
+        if (o === void 0) {
+            r.set(t, o = new ListenerTracker(t, i, n));
         }
-        return new DelegateSubscription(l, l.O(e), i, s);
+        return new DelegateSubscription(o, o.O(e), i, s);
     }
     dispose() {
         for (const t in this.j) {

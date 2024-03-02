@@ -4,8 +4,13 @@ export { BindingModeBehavior, OneTimeBindingBehavior, ToViewBindingBehavior, Fro
 export { DebounceBindingBehavior, } from './resources/binding-behaviors/debounce';
 export { SignalBindingBehavior, } from './resources/binding-behaviors/signals';
 export { ThrottleBindingBehavior, } from './resources/binding-behaviors/throttle';
-export { Aurelia, IAurelia, type IEnhancementConfig, } from './aurelia';
-export { type ISinglePageApp, AppRoot, IAppRoot, } from './app-root';
+export { Aurelia, IAurelia, type IEnhancementConfig, 
+/**
+ * @deprecated
+ * Use `ISinglePageAppConfig` instead
+ */
+type ISinglePageAppConfig as ISinglePageApp, type ISinglePageAppConfig, } from './aurelia';
+export { type IAppRootConfig, AppRoot, IAppRoot, } from './app-root';
 export { type TaskSlot, AppTask, IAppTask, type AppTaskCallback, type AppTaskCallbackNoArg, } from './app-task';
 export { AttrSyntax, IAttributeParser, attributePattern, type AttributePatternDefinition, IAttributePattern, AttributePattern, Interpretation, ISyntaxInterpreter, AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, DotSeparatedAttributePattern, RefAttributePattern, } from './resources/attribute-pattern';
 export { bindingCommand, type ICommandBuildInfo, BindingCommand, type BindingCommandInstance, BindingCommandDefinition, type BindingCommandKind, type BindingCommandType, type CommandType, DefaultBindingCommand, ForBindingCommand, FromViewBindingCommand, OneTimeBindingCommand, ToViewBindingCommand, TwoWayBindingCommand, TriggerBindingCommand, CaptureBindingCommand, AttrBindingCommand, ClassBindingCommand, StyleBindingCommand, } from './resources/binding-command';
@@ -41,8 +46,7 @@ export { PromiseTemplateController, FulfilledTemplateController, PendingTemplate
 export { Focus, } from './resources/custom-attributes/focus';
 export { Portal, type PortalTarget, type PortalLifecycleCallback, } from './resources/template-controllers/portal';
 export { AuSlot, } from './resources/custom-elements/au-slot';
-export type { DefinitionType, } from './resources/resources-shared';
-export { capture, containerless, customElement, CustomElement, type CustomElementDecorator, type CustomElementKind, type CustomElementType, CustomElementDefinition, type PartialCustomElementDefinition, useShadowDOM, processContent, } from './resources/custom-element';
+export { capture, containerless, customElement, CustomElement, type InjectableToken, type CustomElementDecorator, type CustomElementKind, type CustomElementType, CustomElementDefinition, type PartialCustomElementDefinition, useShadowDOM, processContent, } from './resources/custom-element';
 export { AuCompose, type IDynamicComponentActivate, } from './resources/custom-elements/au-compose';
 export { ValueConverter, ValueConverterDefinition, type PartialValueConverterDefinition, type ValueConverterKind, type ValueConverterDecorator, type ValueConverterType, valueConverter, } from './resources/value-converter';
 export { ISanitizer, SanitizeValueConverter, } from './resources/value-converters/sanitize';

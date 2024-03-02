@@ -4,17 +4,10 @@
  * In its current state, it is NOT a good source for learning about the inner workings and design of the router.
  *
  */
-import { INode, ICompiledCustomElementController, ICustomElementViewModel, ICustomElementController, IHydratedController, ISyntheticView } from '@aurelia/runtime-html';
+import { ICompiledCustomElementController, ICustomElementViewModel, ICustomElementController, IHydratedController, ISyntheticView } from '@aurelia/runtime-html';
 import { IContainer } from '@aurelia/kernel';
-import { IRouter } from '../index';
 import { ViewportScope } from '../endpoints/viewport-scope';
-export declare const ParentViewportScope: import("@aurelia/runtime-html/dist/types/resources/custom-element").InjectableToken<import("@aurelia/kernel").Key>;
 export declare class ViewportScopeCustomElement implements ICustomElementViewModel {
-    private readonly router;
-    readonly element: INode<HTMLElement>;
-    container: IContainer;
-    private readonly parent;
-    private readonly parentController;
     name: string;
     catches: string;
     collection: boolean;
@@ -23,7 +16,11 @@ export declare class ViewportScopeCustomElement implements ICustomElementViewMod
     readonly $controller: ICustomElementController<this>;
     controller: ICustomElementController;
     private isBound;
-    constructor(router: IRouter, element: INode<HTMLElement>, container: IContainer, parent: ViewportScopeCustomElement, parentController: IHydratedController);
+    private readonly router;
+    readonly element: HTMLElement;
+    container: IContainer;
+    private readonly parent;
+    private readonly parentController;
     hydrated(controller: ICompiledCustomElementController): void;
     bound(_initiator: IHydratedController, _parent: ISyntheticView | ICustomElementController | null): void;
     unbinding(_initiator: IHydratedController, _parent: ISyntheticView | ICustomElementController | null): void | Promise<void>;

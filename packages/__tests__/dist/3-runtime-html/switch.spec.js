@@ -57,7 +57,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
                 }
             }
             async binding() {
-                this.logger ?? (this.logger = this.ceId === null ? this.$logger.scopeTo(name) : this.$logger.scopeTo(`${name}-${this.ceId}`));
+                this.logger ??= this.ceId === null ? this.$logger.scopeTo(name) : this.$logger.scopeTo(`${name}-${this.ceId}`);
                 if (this.config.hasPromise) {
                     await this.config.wait();
                 }

@@ -1,4 +1,4 @@
-import type { Constructable, IContainer, IResourceKind, ResourceType, PartialResourceDefinition, Key, ResourceDefinition, Injectable } from '@aurelia/kernel';
+import type { Constructable, IContainer, IResourceKind, ResourceType, PartialResourceDefinition, Key, ResourceDefinition } from '@aurelia/kernel';
 import type { BindableDefinition, PartialBindableDefinition } from '../bindable';
 import type { INode } from '../dom';
 import type { ICustomElementViewModel, ICustomElementController } from '../templating/controller';
@@ -149,7 +149,7 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     readonly enhance: boolean;
     readonly watches: IWatchDefinition[];
     readonly processContent: ProcessContentHook | null;
-    get type(): 'Element';
+    get type(): 'element';
     private constructor();
     static create(def: PartialCustomElementDefinition, Type?: null): CustomElementDefinition;
     static create(name: string, Type: CustomElementType): CustomElementDefinition;
@@ -158,7 +158,9 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     register(container: IContainer): void;
     toString(): string;
 }
-export type InjectableToken<K = any> = (target: Injectable, property: string | symbol | undefined, index: number) => void;
+export type InjectableToken<K = any> = ((target: Constructable, property: string | symbol | undefined, index: number) => void) & {
+    readonly __resolved__: K | null;
+};
 export declare const CustomElement: Readonly<CustomElementKind>;
 type DecoratorFactoryMethod<TClass> = (target: Constructable<TClass>, propertyKey: string, descriptor: PropertyDescriptor) => void;
 type ProcessContentHook = (node: INode, platform: IPlatform) => boolean | void;

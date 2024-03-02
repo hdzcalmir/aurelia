@@ -61,7 +61,6 @@ export interface IContainer extends IServiceLocator, IDisposable {
      */
     useResources(container: IContainer): void;
     find<TType extends ResourceType, TDef extends ResourceDefinition>(kind: IResourceKind<TType, TDef>, name: string): TDef | null;
-    create<TType extends ResourceType, TDef extends ResourceDefinition>(kind: IResourceKind<TType, TDef>, name: string): InstanceType<TType> | null;
 }
 export declare class ResolverBuilder<K> {
     constructor(

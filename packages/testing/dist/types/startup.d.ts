@@ -32,6 +32,13 @@ export declare namespace createFixture {
         };
     };
 }
+export interface IHtmlAssertOptions {
+    /**
+     * Describe the html in a way similar like how the browser renders whitespace
+     * Multiple consecutive whitespaces are collapsed into one, and leading/trailing whitespaces are removed
+     */
+    compact?: boolean;
+}
 export interface IFixture<T> {
     readonly startPromise: void | Promise<void>;
     readonly ctx: TestContext;
@@ -96,13 +103,13 @@ export interface IFixture<T> {
     /**
      * Assert the inner html of the current application host equals to the given html string
      */
-    assertHtml(html: string): void;
+    assertHtml(html: string, options?: IHtmlAssertOptions): void;
     /**
      * Assert the inner html of an element matching the selector inside the current application host equals to the given html string.
      *
      * Will throw if there' more than one elements with matching selector
      */
-    assertHtml(selector: string, html: string): void;
+    assertHtml(selector: string, html: string, options?: IHtmlAssertOptions): void;
     /**
      * Assert an element based on the given selector has the given css classes
      */

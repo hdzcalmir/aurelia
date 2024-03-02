@@ -53,8 +53,8 @@ export async function startup(config = {}) {
         await au.start();
     }
     else {
-        const controller = (await au.enhance({ host, component }));
-        $deactivate = () => controller.deactivate(controller, null);
+        const enhanceRoot = (await au.enhance({ host, component }));
+        $deactivate = () => enhanceRoot.deactivate();
     }
     async function tearDown() {
         await au.stop();

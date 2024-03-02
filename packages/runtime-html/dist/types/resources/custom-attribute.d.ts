@@ -68,7 +68,7 @@ export declare class CustomAttributeDefinition<T extends Constructable = Constru
     readonly noMultiBindings: boolean;
     readonly watches: IWatchDefinition[];
     readonly dependencies: Key[];
-    get type(): 'Attribute';
+    get type(): 'attribute';
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialCustomAttributeDefinition, Type: CustomAttributeType<T>): CustomAttributeDefinition<T>;
     register(container: IContainer): void;

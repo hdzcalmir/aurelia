@@ -345,6 +345,11 @@ const errorsMap = {
     [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
     [151 /* ErrorNames.binding_behavior_def_not_found */]: `No binding behavior definition found for type {{0:name}}`,
     [152 /* ErrorNames.value_converter_def_not_found */]: `No value converter definition found for type {{0:name}}`,
+    [153 /* ErrorNames.element_existed */]: `Element {{0}} has already been registered.`,
+    [154 /* ErrorNames.attribute_existed */]: `Attribute {{0}} has already been registered.`,
+    [155 /* ErrorNames.value_converter_existed */]: `Value converter {{0}} has already been registered.`,
+    [156 /* ErrorNames.binding_behavior_existed */]: `Binding behavior {{0}} has already been registered.`,
+    [157 /* ErrorNames.binding_command_existed */]: `Binding command {{0}} has already been registered.`,
     [500 /* ErrorNames.controller_cached_not_found */]: `There is no cached controller for the provided ViewModel: {{0}}`,
     [501 /* ErrorNames.controller_no_shadow_on_containerless */]: `Invalid combination: cannot combine the containerless custom element option with Shadow DOM.`,
     [502 /* ErrorNames.controller_activating_disposed */]: `Trying to activate a disposed controller: {{0}}.`,
@@ -389,7 +394,7 @@ const errorsMap = {
     [718 /* ErrorNames.compiler_no_spread_tc */]: `Spreading template controller "{{0}}" is not supported.`,
     [767 /* ErrorNames.root_not_found */]: `Aurelia.root was accessed without a valid root.`,
     [768 /* ErrorNames.aurelia_instance_existed_in_container */]: `An instance of Aurelia is already registered with the container or an ancestor of it.`,
-    [769 /* ErrorNames.invalid_platform_impl */]: `Failed to initialize the platform object. The host element's ownerDocument does not have a defaultView`,
+    [769 /* ErrorNames.invalid_platform_impl */]: `Failed to initialize the platform object. The host element's ownerDocument does not have a defaultView, did you create the host from a DOMParser and forget to call adoptNode()?`,
     [770 /* ErrorNames.no_composition_root */]: `Aurelia.start() was called without a composition root`,
     [771 /* ErrorNames.invalid_dispose_call */]: `The aurelia instance must be fully stopped before it can be disposed`,
     [750 /* ErrorNames.not_supported_view_ref_api */]: `view.ref is not supported. If you are migrating from v1, this can be understood as the controller.`,
@@ -414,7 +419,7 @@ const errorsMap = {
     [803 /* ErrorNames.update_trigger_invalid_usage */]: `"& updateTrigger" invalid usage. This binding behavior can only be applied to two-way/ from-view bindings.`,
     [805 /* ErrorNames.au_compose_invalid_scope_behavior */]: `Invalid scope behavior "{{0}}" on <au-compose />. Only "scoped" or "auto" allowed.`,
     // originally not supported
-    // [ErrorNames.au_compose_containerless]: `Containerless custom element {{0:name}} is not supported by <au-compose />`,
+    [806 /* ErrorNames.au_compose_component_name_not_found */]: `<au-compose /> couldn't find a custom element with name "{{0}}", did you forget to register it locally or globally?`,
     [807 /* ErrorNames.au_compose_invalid_run */]: `Composition has already been activated/deactivated. Id: {{0:controller}}`,
     [808 /* ErrorNames.au_compose_duplicate_deactivate */]: `Composition has already been deactivated.`,
     [810 /* ErrorNames.else_without_if */]: `Invalid [else] usage, it should follow an [if]`,
@@ -538,9 +543,13 @@ class BindingBehaviorDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
-        singletonRegistration(key, Type).register(container);
-        aliasRegistration(key, Type).register(container);
-        registerAliases(aliases, BindingBehavior, key, container);
+        if (!container.has(key, false)) {
+            container.register(singletonRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, BindingBehavior.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(156 /* ErrorNames.binding_behavior_existed */)}`);
+        }
     }
 }
 const bbBaseName = /*@__PURE__*/ getResourceKeyFor('binding-behavior');
@@ -556,7 +565,6 @@ const BindingBehavior = objectFreeze({
     define(nameOrDef, Type) {
         const definition = BindingBehaviorDefinition.create(nameOrDef, Type);
         defineMetadata(bbBaseName, definition, definition.Type);
-        defineMetadata(bbBaseName, definition, definition);
         appendResourceKey(Type, bbBaseName);
         return definition.Type;
     },
@@ -828,8 +836,8 @@ const Watch = objectFreeze({
     },
 });
 
-const dtElement = 'Element';
-const dtAttribute = 'Attribute';
+/** @internal */ const dtElement = 'element';
+/** @internal */ const dtAttribute = 'attribute';
 
 function customAttribute(nameOrDef) {
     return function (target) {
@@ -873,9 +881,13 @@ class CustomAttributeDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
-        transientRegistration(key, Type).register(container);
-        aliasRegistration(key, Type).register(container);
-        registerAliases(aliases, CustomAttribute, key, container);
+        if (!container.has(key, false)) {
+            container.register(transientRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, CustomAttribute.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(154 /* ErrorNames.attribute_existed */)}`);
+        }
     }
     toString() {
         return `au:ca:${this.name}`;
@@ -898,7 +910,6 @@ const findAttributeControllerFor = (node, name) => {
 const defineAttribute = (nameOrDef, Type) => {
     const definition = CustomAttributeDefinition.create(nameOrDef, Type);
     defineMetadata(caBaseName, definition, definition.Type);
-    defineMetadata(caBaseName, definition, definition);
     appendResourceKey(Type, caBaseName);
     return definition.Type;
 };
@@ -924,293 +935,106 @@ const CustomAttribute = objectFreeze({
     getAnnotation: getAttributeAnnotation,
 });
 
-const addListener = (target, name, handler, options) => {
-    target.addEventListener(name, handler, options);
-};
-const removeListener = (target, name, handler, options) => {
-    target.removeEventListener(name, handler, options);
-};
-/** @internal */
-const mixinNodeObserverUseConfig = (target) => {
-    let event;
-    const prototype = target.prototype;
-    defineHiddenProp(prototype, 'subscribe', function (subscriber) {
-        if (this.subs.add(subscriber) && this.subs.count === 1) {
-            for (event of this._config.events) {
-                addListener(this._el, event, this);
-            }
-            this._listened = true;
-            this._start?.();
-        }
-    });
-    defineHiddenProp(prototype, 'unsubscribe', function (subscriber) {
-        if (this.subs.remove(subscriber) && this.subs.count === 0) {
-            for (event of this._config.events) {
-                removeListener(this._el, event, this);
-            }
-            this._listened = false;
-            this._stop?.();
-        }
-    });
-    defineHiddenProp(prototype, 'useConfig', function (config) {
-        this._config = config;
-        if (this._listened) {
-            for (event of this._config.events) {
-                removeListener(this._el, event, this);
-            }
-            for (event of this._config.events) {
-                addListener(this._el, event, this);
-            }
-        }
-    });
-};
-/** @internal */
-const mixinNoopSubscribable = (target) => {
-    defineHiddenProp(target.prototype, 'subscribe', kernel.noop);
-    defineHiddenProp(target.prototype, 'unsubscribe', kernel.noop);
-};
-
-class ClassAttributeAccessor {
-    get doNotCache() { return true; }
-    constructor(obj) {
-        this.obj = obj;
-        this.type = (atNode | atLayout);
-        /** @internal */
-        this._value = '';
-        /** @internal */
-        this._nameIndex = {};
-        /** @internal */
-        this._version = 0;
+const ILifecycleHooks = /*@__PURE__*/ createInterface('ILifecycleHooks');
+class LifecycleHooksEntry {
+    constructor(definition, instance) {
+        this.definition = definition;
+        this.instance = instance;
     }
-    getValue() {
-        return this._value;
+}
+/**
+ * This definition has no specific properties yet other than the type, but is in place for future extensions.
+ *
+ * See: https://github.com/aurelia/aurelia/issues/1044
+ */
+class LifecycleHooksDefinition {
+    constructor(Type, propertyNames) {
+        this.Type = Type;
+        this.propertyNames = propertyNames;
     }
-    setValue(newValue) {
-        if (newValue !== this._value) {
-            this._value = newValue;
-            this._flushChanges();
-        }
-    }
-    /** @internal */
-    _flushChanges() {
-        const nameIndex = this._nameIndex;
-        const version = ++this._version;
-        const classList = this.obj.classList;
-        const classesToAdd = getClassesToAdd(this._value);
-        const ii = classesToAdd.length;
-        let i = 0;
-        let name;
-        // Get strings split on a space not including empties
-        if (ii > 0) {
-            for (; i < ii; i++) {
-                name = classesToAdd[i];
-                if (name.length === 0) {
-                    continue;
+    /**
+     * @param def - Placeholder for future extensions. Currently always an empty object.
+     */
+    static create(def, Type) {
+        const propertyNames = new Set();
+        let proto = Type.prototype;
+        while (proto !== baseObjectPrototype) {
+            for (const name of getOwnPropertyNames(proto)) {
+                // This is the only check we will do for now. Filtering on e.g. function types might not always work properly when decorators come into play. This would need more testing first.
+                if (name !== 'constructor' && !name.startsWith('_')) {
+                    propertyNames.add(name);
                 }
-                nameIndex[name] = this._version;
-                classList.add(name);
             }
+            proto = Object.getPrototypeOf(proto);
         }
-        // First call to setValue?  We're done.
-        if (version === 1) {
-            return;
-        }
-        for (name in nameIndex) {
-            if (nameIndex[name] === version) {
-                continue;
-            }
-            // TODO: this has the side-effect that classes already present which are added again,
-            // will be removed if they're not present in the next update.
-            // Better would be do have some configurability for this behavior, allowing the user to
-            // decide whether initial classes always need to be kept, always removed, or something in between
-            classList.remove(name);
-        }
-    }
-}
-function getClassesToAdd(object) {
-    if (isString(object)) {
-        return splitClassString(object);
-    }
-    if (typeof object !== 'object') {
-        return kernel.emptyArray;
-    }
-    if (object instanceof Array) {
-        const len = object.length;
-        if (len > 0) {
-            const classes = [];
-            let i = 0;
-            for (; len > i; ++i) {
-                classes.push(...getClassesToAdd(object[i]));
-            }
-            return classes;
-        }
-        else {
-            return kernel.emptyArray;
-        }
-    }
-    const classes = [];
-    let property;
-    for (property in object) {
-        // Let non typical values also evaluate true so disable bool check
-        // eslint-disable-next-line no-extra-boolean-cast
-        if (Boolean(object[property])) {
-            // We must do this in case object property has a space in the name which results in two classes
-            if (property.includes(' ')) {
-                classes.push(...splitClassString(property));
-            }
-            else {
-                classes.push(property);
-            }
-        }
-    }
-    return classes;
-}
-function splitClassString(classString) {
-    const matches = classString.match(/\S+/g);
-    if (matches === null) {
-        return kernel.emptyArray;
-    }
-    return matches;
-}
-mixinNoopSubscribable(ClassAttributeAccessor);
-
-function cssModules(...modules) {
-    return new CSSModulesProcessorRegistry(modules);
-}
-class CSSModulesProcessorRegistry {
-    constructor(modules) {
-        this.modules = modules;
+        return new LifecycleHooksDefinition(Type, propertyNames);
     }
     register(container) {
-        var _a;
-        // it'd be nice to be able to register a template compiler hook instead
-        // so that it's lighter weight on the creation of a custom element with css module
-        // also it'll be more consitent in terms as CSS class output
-        // if custom attribute is used, the class controlled by custom attribute may come after
-        // other bindings, regardless what their declaration order is in the template
-        const classLookup = objectAssign({}, ...this.modules);
-        const ClassCustomAttribute = defineAttribute({
-            name: 'class',
-            bindables: ['value'],
-            noMultiBindings: true,
-        }, (_a = class CustomAttributeClass {
-                constructor(element) {
-                    this._accessor = new ClassAttributeAccessor(element);
-                }
-                binding() {
-                    this.valueChanged();
-                }
-                valueChanged() {
-                    this._accessor.setValue(this.value?.split(/\s+/g).map(x => classLookup[x] || x) ?? '');
-                }
-            },
-            _a.inject = [INode],
-            _a));
-        container.register(ClassCustomAttribute, instanceRegistration(ICssModulesMapping, classLookup));
+        singletonRegistration(ILifecycleHooks, this.Type).register(container);
     }
 }
-function shadowCSS(...css) {
-    return new ShadowDOMRegistry(css);
-}
-const IShadowDOMStyleFactory = /*@__PURE__*/ createInterface('IShadowDOMStyleFactory', x => x.cachedCallback(handler => {
-    if (AdoptedStyleSheetsStyles.supported(handler.get(IPlatform))) {
-        return handler.get(AdoptedStyleSheetsStylesFactory);
-    }
-    return handler.get(StyleElementStylesFactory);
-}));
-class ShadowDOMRegistry {
-    constructor(css) {
-        this.css = css;
-    }
-    register(container) {
-        const sharedStyles = container.get(IShadowDOMGlobalStyles);
-        const factory = container.get(IShadowDOMStyleFactory);
-        container.register(instanceRegistration(IShadowDOMStyles, factory.createStyles(this.css, sharedStyles)));
-    }
-}
-class AdoptedStyleSheetsStylesFactory {
-    constructor() {
-        this.p = kernel.resolve(IPlatform);
-        this.cache = new Map();
-    }
-    createStyles(localStyles, sharedStyles) {
-        return new AdoptedStyleSheetsStyles(this.p, localStyles, this.cache, sharedStyles);
-    }
-}
-class StyleElementStylesFactory {
-    constructor() {
-        this.p = kernel.resolve(IPlatform);
-    }
-    createStyles(localStyles, sharedStyles) {
-        return new StyleElementStyles(this.p, localStyles, sharedStyles);
-    }
-}
-const IShadowDOMStyles = /*@__PURE__*/ createInterface('IShadowDOMStyles');
-const IShadowDOMGlobalStyles = /*@__PURE__*/ createInterface('IShadowDOMGlobalStyles', x => x.instance({ applyTo: kernel.noop }));
-class AdoptedStyleSheetsStyles {
-    constructor(p, localStyles, styleSheetCache, sharedStyles = null) {
-        this.sharedStyles = sharedStyles;
-        this.styleSheets = localStyles.map(x => {
-            let sheet;
-            if (x instanceof p.CSSStyleSheet) {
-                sheet = x;
-            }
-            else {
-                sheet = styleSheetCache.get(x);
-                if (sheet === void 0) {
-                    sheet = new p.CSSStyleSheet();
-                    // eslint-disable-next-line
-                    sheet.replaceSync(x);
-                    styleSheetCache.set(x, sheet);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const containerLookup = new WeakMap();
+const lhBaseName = getAnnotationKeyFor('lifecycle-hooks');
+const LifecycleHooks = objectFreeze({
+    name: lhBaseName,
+    /**
+     * @param def - Placeholder for future extensions. Currently always an empty object.
+     */
+    define(def, Type) {
+        const definition = LifecycleHooksDefinition.create(def, Type);
+        defineMetadata(lhBaseName, definition, Type);
+        appendResourceKey(Type, lhBaseName);
+        return definition.Type;
+    },
+    /**
+     * @param ctx - The container where the resolution starts
+     * @param Type - The constructor of the Custom element/ Custom attribute with lifecycle metadata
+     */
+    resolve(ctx) {
+        let lookup = containerLookup.get(ctx);
+        if (lookup === void 0) {
+            containerLookup.set(ctx, lookup = new LifecycleHooksLookupImpl());
+            const root = ctx.root;
+            const instances = root.id === ctx.id
+                ? ctx.getAll(ILifecycleHooks)
+                // if it's not root, only resolve it from the current context when it has the resolver
+                // to maintain resources semantic: current -> root
+                : ctx.has(ILifecycleHooks, false)
+                    ? root.getAll(ILifecycleHooks).concat(ctx.getAll(ILifecycleHooks))
+                    : root.getAll(ILifecycleHooks);
+            let instance;
+            let definition;
+            let entry;
+            let name;
+            let entries;
+            for (instance of instances) {
+                definition = getOwnMetadata(lhBaseName, instance.constructor);
+                entry = new LifecycleHooksEntry(definition, instance);
+                for (name of definition.propertyNames) {
+                    entries = lookup[name];
+                    if (entries === void 0) {
+                        lookup[name] = [entry];
+                    }
+                    else {
+                        entries.push(entry);
+                    }
                 }
             }
-            return sheet;
-        });
-    }
-    static supported(p) {
-        return 'adoptedStyleSheets' in p.ShadowRoot.prototype;
-    }
-    applyTo(shadowRoot) {
-        if (this.sharedStyles !== null) {
-            this.sharedStyles.applyTo(shadowRoot);
         }
-        // https://wicg.github.io/construct-stylesheets/
-        // https://developers.google.com/web/updates/2019/02/constructable-stylesheets
-        shadowRoot.adoptedStyleSheets = [
-            ...shadowRoot.adoptedStyleSheets,
-            ...this.styleSheets
-        ];
-    }
+        return lookup;
+    },
+});
+class LifecycleHooksLookupImpl {
 }
-class StyleElementStyles {
-    constructor(p, localStyles, sharedStyles = null) {
-        this.p = p;
-        this.localStyles = localStyles;
-        this.sharedStyles = sharedStyles;
-    }
-    applyTo(shadowRoot) {
-        const styles = this.localStyles;
-        const p = this.p;
-        for (let i = styles.length - 1; i > -1; --i) {
-            const element = p.document.createElement('style');
-            element.innerHTML = styles[i];
-            shadowRoot.prepend(element);
-        }
-        if (this.sharedStyles !== null) {
-            this.sharedStyles.applyTo(shadowRoot);
-        }
-    }
+/**
+ * Decorator: Indicates that the decorated class is a custom element.
+ */
+function lifecycleHooks() {
+    return function decorator(target) {
+        return LifecycleHooks.define({}, target);
+    };
 }
-const StyleConfiguration = {
-    shadowDOM(config) {
-        return AppTask.creating(kernel.IContainer, container => {
-            if (config.sharedStyles != null) {
-                const factory = container.get(IShadowDOMStyleFactory);
-                container.register(instanceRegistration(IShadowDOMGlobalStyles, factory.createStyles(config.sharedStyles, null)));
-            }
-        });
-    }
-};
 
 function valueConverter(nameOrDef) {
     return function (target) {
@@ -1239,9 +1063,13 @@ class ValueConverterDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
-        kernel.Registration.singleton(key, Type).register(container);
-        kernel.Registration.aliasTo(key, Type).register(container);
-        registerAliases(aliases, ValueConverter, key, container);
+        if (!container.has(key, false)) {
+            container.register(singletonRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, ValueConverter.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(155 /* ErrorNames.value_converter_existed */)}`);
+        }
     }
 }
 const vcBaseName = getResourceKeyFor('value-converter');
@@ -1255,7 +1083,6 @@ const ValueConverter = objectFreeze({
     define(nameOrDef, Type) {
         const definition = ValueConverterDefinition.create(nameOrDef, Type);
         defineMetadata(vcBaseName, definition, definition.Type);
-        defineMetadata(vcBaseName, definition, definition);
         appendResourceKey(Type, vcBaseName);
         return definition.Type;
     },
@@ -1371,7 +1198,7 @@ function evaluatorGetConverter(name) {
     if (resourceLookup == null) {
         resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
     }
-    return resourceLookup[key] ?? (resourceLookup[key] = this.l.get(resource(key)));
+    return resourceLookup[key] ??= this.l.get(resource(key));
 }
 function evaluatorGetBehavior(name) {
     const key = BindingBehavior.keyFrom(name);
@@ -1379,7 +1206,7 @@ function evaluatorGetBehavior(name) {
     if (resourceLookup == null) {
         resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
     }
-    return resourceLookup[key] ?? (resourceLookup[key] = this.l.get(resource(key)));
+    return resourceLookup[key] ??= this.l.get(resource(key));
 }
 function flushItem(item, _, items) {
     items.delete(item);
@@ -1509,225 +1336,6 @@ const throttled = (opts, callOriginal, binding) => {
     };
     return fn;
 };
-
-const { enter, exit } = runtime.ConnectableSwitcher;
-const { wrap, unwrap } = runtime.ProxyObservable;
-class ComputedWatcher {
-    get value() {
-        return this._value;
-    }
-    constructor(obj, observerLocator, $get, cb, useProxy) {
-        this.obj = obj;
-        this.$get = $get;
-        this.useProxy = useProxy;
-        this.isBound = false;
-        // todo: maybe use a counter allow recursive call to a certain level
-        this.running = false;
-        /** @internal */
-        this._value = void 0;
-        this._callback = cb;
-        this.oL = observerLocator;
-    }
-    handleChange() {
-        this.run();
-    }
-    handleCollectionChange() {
-        this.run();
-    }
-    bind() {
-        if (this.isBound) {
-            return;
-        }
-        this.compute();
-        this.isBound = true;
-    }
-    unbind() {
-        if (!this.isBound) {
-            return;
-        }
-        this.isBound = false;
-        this.obs.clearAll();
-    }
-    run() {
-        if (!this.isBound || this.running) {
-            return;
-        }
-        const obj = this.obj;
-        const oldValue = this._value;
-        const newValue = this.compute();
-        if (!areEqual(newValue, oldValue)) {
-            // should optionally queue
-            this._callback.call(obj, newValue, oldValue, obj);
-        }
-    }
-    compute() {
-        this.running = true;
-        this.obs.version++;
-        try {
-            enter(this);
-            return this._value = unwrap(this.$get.call(void 0, this.useProxy ? wrap(this.obj) : this.obj, this));
-        }
-        finally {
-            this.obs.clear();
-            this.running = false;
-            exit(this);
-        }
-    }
-}
-class ExpressionWatcher {
-    get value() {
-        return this._value;
-    }
-    constructor(scope, l, oL, expression, callback) {
-        this.scope = scope;
-        this.l = l;
-        this.oL = oL;
-        this.isBound = false;
-        // see Listener binding for explanation
-        /** @internal */
-        this.boundFn = false;
-        this.obj = scope.bindingContext;
-        this._expression = expression;
-        this._callback = callback;
-    }
-    handleChange(value) {
-        const expr = this._expression;
-        const obj = this.obj;
-        const oldValue = this._value;
-        const canOptimize = expr.$kind === 'AccessScope' && this.obs.count === 1;
-        if (!canOptimize) {
-            this.obs.version++;
-            value = runtime.astEvaluate(expr, this.scope, this, this);
-            this.obs.clear();
-        }
-        if (!areEqual(value, oldValue)) {
-            this._value = value;
-            // should optionally queue for batch synchronous
-            this._callback.call(obj, value, oldValue, obj);
-        }
-    }
-    bind() {
-        if (this.isBound) {
-            return;
-        }
-        this.obs.version++;
-        this._value = runtime.astEvaluate(this._expression, this.scope, this, this);
-        this.obs.clear();
-        this.isBound = true;
-    }
-    unbind() {
-        if (!this.isBound) {
-            return;
-        }
-        this.isBound = false;
-        this.obs.clearAll();
-        this._value = void 0;
-    }
-}
-runtime.connectable(ComputedWatcher);
-runtime.connectable(ExpressionWatcher);
-mixinAstEvaluator(true)(ExpressionWatcher);
-
-const ILifecycleHooks = /*@__PURE__*/ createInterface('ILifecycleHooks');
-class LifecycleHooksEntry {
-    constructor(definition, instance) {
-        this.definition = definition;
-        this.instance = instance;
-    }
-}
-/**
- * This definition has no specific properties yet other than the type, but is in place for future extensions.
- *
- * See: https://github.com/aurelia/aurelia/issues/1044
- */
-class LifecycleHooksDefinition {
-    constructor(Type, propertyNames) {
-        this.Type = Type;
-        this.propertyNames = propertyNames;
-    }
-    /**
-     * @param def - Placeholder for future extensions. Currently always an empty object.
-     */
-    static create(def, Type) {
-        const propertyNames = new Set();
-        let proto = Type.prototype;
-        while (proto !== baseObjectPrototype) {
-            for (const name of getOwnPropertyNames(proto)) {
-                // This is the only check we will do for now. Filtering on e.g. function types might not always work properly when decorators come into play. This would need more testing first.
-                if (name !== 'constructor' && !name.startsWith('_')) {
-                    propertyNames.add(name);
-                }
-            }
-            proto = Object.getPrototypeOf(proto);
-        }
-        return new LifecycleHooksDefinition(Type, propertyNames);
-    }
-    register(container) {
-        singletonRegistration(ILifecycleHooks, this.Type).register(container);
-    }
-}
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const containerLookup = new WeakMap();
-const lhBaseName = getAnnotationKeyFor('lifecycle-hooks');
-const LifecycleHooks = objectFreeze({
-    name: lhBaseName,
-    /**
-     * @param def - Placeholder for future extensions. Currently always an empty object.
-     */
-    define(def, Type) {
-        const definition = LifecycleHooksDefinition.create(def, Type);
-        defineMetadata(lhBaseName, definition, Type);
-        appendResourceKey(Type, lhBaseName);
-        return definition.Type;
-    },
-    /**
-     * @param ctx - The container where the resolution starts
-     * @param Type - The constructor of the Custom element/ Custom attribute with lifecycle metadata
-     */
-    resolve(ctx) {
-        let lookup = containerLookup.get(ctx);
-        if (lookup === void 0) {
-            containerLookup.set(ctx, lookup = new LifecycleHooksLookupImpl());
-            const root = ctx.root;
-            const instances = root.id === ctx.id
-                ? ctx.getAll(ILifecycleHooks)
-                // if it's not root, only resolve it from the current context when it has the resolver
-                // to maintain resources semantic: current -> root
-                : ctx.has(ILifecycleHooks, false)
-                    ? root.getAll(ILifecycleHooks).concat(ctx.getAll(ILifecycleHooks))
-                    : root.getAll(ILifecycleHooks);
-            let instance;
-            let definition;
-            let entry;
-            let name;
-            let entries;
-            for (instance of instances) {
-                definition = getOwnMetadata(lhBaseName, instance.constructor);
-                entry = new LifecycleHooksEntry(definition, instance);
-                for (name of definition.propertyNames) {
-                    entries = lookup[name];
-                    if (entries === void 0) {
-                        lookup[name] = [entry];
-                    }
-                    else {
-                        entries.push(entry);
-                    }
-                }
-            }
-        }
-        return lookup;
-    },
-});
-class LifecycleHooksLookupImpl {
-}
-/**
- * Decorator: Indicates that the decorated class is a custom element.
- */
-function lifecycleHooks() {
-    return function decorator(target) {
-        return LifecycleHooks.define({}, target);
-    };
-}
 
 const taskOptions = {
     reusable: false,
@@ -2330,7 +1938,7 @@ class PropertyBinding {
             this.updateTarget(runtime.astEvaluate(this.ast, this._scope, this, shouldConnect ? this : null));
         }
         if ($mode & fromView) {
-            targetObserver.subscribe(this._targetSubscriber ?? (this._targetSubscriber = new BindingTargetSubscriber(this, this.l.get(IFlushQueue))));
+            targetObserver.subscribe(this._targetSubscriber ??= new BindingTargetSubscriber(this, this.l.get(IFlushQueue)));
             if (!shouldConnect) {
                 this.updateSource(targetObserver.getValue(this.target, this.targetProperty));
             }
@@ -2941,13 +2549,10 @@ class SpreadBinding {
     get state() {
         return this.$controller.state;
     }
-    constructor(
-    /** @internal */ _hydrationContext) {
-        this._hydrationContext = _hydrationContext;
+    constructor(hydrationContext) {
         this.isBound = false;
         /** @internal */ this._innerBindings = [];
-        this.$controller = _hydrationContext.controller;
-        this.locator = this.$controller.container;
+        this.locator = (this.$controller = (this._hydrationContext = hydrationContext).controller).container;
     }
     get(key) {
         return this.locator.get(key);
@@ -3754,10 +3359,10 @@ const noAuSlotProvider = new kernel.InstanceProvider(slotInfoProviderName, new A
 const IRendering = /*@__PURE__*/ createInterface('IRendering', x => x.singleton(Rendering));
 class Rendering {
     get renderers() {
-        return this._renderers ?? (this._renderers = this._ctn.getAll(IRenderer, false).reduce((all, r) => {
+        return this._renderers ??= this._ctn.getAll(IRenderer, false).reduce((all, r) => {
             all[r.target] = r;
             return all;
-        }, createLookup()));
+        }, createLookup());
     }
     constructor() {
         /** @internal */
@@ -3924,6 +3529,412 @@ class Rendering {
     }
 }
 
+const addListener = (target, name, handler, options) => {
+    target.addEventListener(name, handler, options);
+};
+const removeListener = (target, name, handler, options) => {
+    target.removeEventListener(name, handler, options);
+};
+/** @internal */
+const mixinNodeObserverUseConfig = (target) => {
+    let event;
+    const prototype = target.prototype;
+    defineHiddenProp(prototype, 'subscribe', function (subscriber) {
+        if (this.subs.add(subscriber) && this.subs.count === 1) {
+            for (event of this._config.events) {
+                addListener(this._el, event, this);
+            }
+            this._listened = true;
+            this._start?.();
+        }
+    });
+    defineHiddenProp(prototype, 'unsubscribe', function (subscriber) {
+        if (this.subs.remove(subscriber) && this.subs.count === 0) {
+            for (event of this._config.events) {
+                removeListener(this._el, event, this);
+            }
+            this._listened = false;
+            this._stop?.();
+        }
+    });
+    defineHiddenProp(prototype, 'useConfig', function (config) {
+        this._config = config;
+        if (this._listened) {
+            for (event of this._config.events) {
+                removeListener(this._el, event, this);
+            }
+            for (event of this._config.events) {
+                addListener(this._el, event, this);
+            }
+        }
+    });
+};
+/** @internal */
+const mixinNoopSubscribable = (target) => {
+    defineHiddenProp(target.prototype, 'subscribe', kernel.noop);
+    defineHiddenProp(target.prototype, 'unsubscribe', kernel.noop);
+};
+
+class ClassAttributeAccessor {
+    get doNotCache() { return true; }
+    constructor(obj) {
+        this.obj = obj;
+        this.type = (atNode | atLayout);
+        /** @internal */
+        this._value = '';
+        /** @internal */
+        this._nameIndex = {};
+        /** @internal */
+        this._version = 0;
+    }
+    getValue() {
+        return this._value;
+    }
+    setValue(newValue) {
+        if (newValue !== this._value) {
+            this._value = newValue;
+            this._flushChanges();
+        }
+    }
+    /** @internal */
+    _flushChanges() {
+        const nameIndex = this._nameIndex;
+        const version = ++this._version;
+        const classList = this.obj.classList;
+        const classesToAdd = getClassesToAdd(this._value);
+        const ii = classesToAdd.length;
+        let i = 0;
+        let name;
+        // Get strings split on a space not including empties
+        if (ii > 0) {
+            for (; i < ii; i++) {
+                name = classesToAdd[i];
+                if (name.length === 0) {
+                    continue;
+                }
+                nameIndex[name] = this._version;
+                classList.add(name);
+            }
+        }
+        // First call to setValue?  We're done.
+        if (version === 1) {
+            return;
+        }
+        for (name in nameIndex) {
+            if (nameIndex[name] === version) {
+                continue;
+            }
+            // TODO: this has the side-effect that classes already present which are added again,
+            // will be removed if they're not present in the next update.
+            // Better would be do have some configurability for this behavior, allowing the user to
+            // decide whether initial classes always need to be kept, always removed, or something in between
+            classList.remove(name);
+        }
+    }
+}
+function getClassesToAdd(object) {
+    if (isString(object)) {
+        return splitClassString(object);
+    }
+    if (typeof object !== 'object') {
+        return kernel.emptyArray;
+    }
+    if (object instanceof Array) {
+        const len = object.length;
+        if (len > 0) {
+            const classes = [];
+            let i = 0;
+            for (; len > i; ++i) {
+                classes.push(...getClassesToAdd(object[i]));
+            }
+            return classes;
+        }
+        else {
+            return kernel.emptyArray;
+        }
+    }
+    const classes = [];
+    let property;
+    for (property in object) {
+        // Let non typical values also evaluate true so disable bool check
+        // eslint-disable-next-line no-extra-boolean-cast
+        if (Boolean(object[property])) {
+            // We must do this in case object property has a space in the name which results in two classes
+            if (property.includes(' ')) {
+                classes.push(...splitClassString(property));
+            }
+            else {
+                classes.push(property);
+            }
+        }
+    }
+    return classes;
+}
+function splitClassString(classString) {
+    const matches = classString.match(/\S+/g);
+    if (matches === null) {
+        return kernel.emptyArray;
+    }
+    return matches;
+}
+mixinNoopSubscribable(ClassAttributeAccessor);
+
+function cssModules(...modules) {
+    return new CSSModulesProcessorRegistry(modules);
+}
+class CSSModulesProcessorRegistry {
+    constructor(modules) {
+        this.modules = modules;
+    }
+    register(container) {
+        var _a;
+        // it'd be nice to be able to register a template compiler hook instead
+        // so that it's lighter weight on the creation of a custom element with css module
+        // also it'll be more consitent in terms as CSS class output
+        // if custom attribute is used, the class controlled by custom attribute may come after
+        // other bindings, regardless what their declaration order is in the template
+        const classLookup = objectAssign({}, ...this.modules);
+        const ClassCustomAttribute = defineAttribute({
+            name: 'class',
+            bindables: ['value'],
+            noMultiBindings: true,
+        }, (_a = class CustomAttributeClass {
+                constructor(element) {
+                    this._accessor = new ClassAttributeAccessor(element);
+                }
+                binding() {
+                    this.valueChanged();
+                }
+                valueChanged() {
+                    this._accessor.setValue(this.value?.split(/\s+/g).map(x => classLookup[x] || x) ?? '');
+                }
+            },
+            _a.inject = [INode],
+            _a));
+        container.register(ClassCustomAttribute, instanceRegistration(ICssModulesMapping, classLookup));
+    }
+}
+function shadowCSS(...css) {
+    return new ShadowDOMRegistry(css);
+}
+const IShadowDOMStyleFactory = /*@__PURE__*/ createInterface('IShadowDOMStyleFactory', x => x.cachedCallback(handler => {
+    if (AdoptedStyleSheetsStyles.supported(handler.get(IPlatform))) {
+        return handler.get(AdoptedStyleSheetsStylesFactory);
+    }
+    return handler.get(StyleElementStylesFactory);
+}));
+class ShadowDOMRegistry {
+    constructor(css) {
+        this.css = css;
+    }
+    register(container) {
+        const sharedStyles = container.get(IShadowDOMGlobalStyles);
+        const factory = container.get(IShadowDOMStyleFactory);
+        container.register(instanceRegistration(IShadowDOMStyles, factory.createStyles(this.css, sharedStyles)));
+    }
+}
+class AdoptedStyleSheetsStylesFactory {
+    constructor() {
+        this.p = kernel.resolve(IPlatform);
+        this.cache = new Map();
+    }
+    createStyles(localStyles, sharedStyles) {
+        return new AdoptedStyleSheetsStyles(this.p, localStyles, this.cache, sharedStyles);
+    }
+}
+class StyleElementStylesFactory {
+    constructor() {
+        this.p = kernel.resolve(IPlatform);
+    }
+    createStyles(localStyles, sharedStyles) {
+        return new StyleElementStyles(this.p, localStyles, sharedStyles);
+    }
+}
+const IShadowDOMStyles = /*@__PURE__*/ createInterface('IShadowDOMStyles');
+const IShadowDOMGlobalStyles = /*@__PURE__*/ createInterface('IShadowDOMGlobalStyles', x => x.instance({ applyTo: kernel.noop }));
+class AdoptedStyleSheetsStyles {
+    constructor(p, localStyles, styleSheetCache, sharedStyles = null) {
+        this.sharedStyles = sharedStyles;
+        this.styleSheets = localStyles.map(x => {
+            let sheet;
+            if (x instanceof p.CSSStyleSheet) {
+                sheet = x;
+            }
+            else {
+                sheet = styleSheetCache.get(x);
+                if (sheet === void 0) {
+                    sheet = new p.CSSStyleSheet();
+                    // eslint-disable-next-line
+                    sheet.replaceSync(x);
+                    styleSheetCache.set(x, sheet);
+                }
+            }
+            return sheet;
+        });
+    }
+    static supported(p) {
+        return 'adoptedStyleSheets' in p.ShadowRoot.prototype;
+    }
+    applyTo(shadowRoot) {
+        if (this.sharedStyles !== null) {
+            this.sharedStyles.applyTo(shadowRoot);
+        }
+        // https://wicg.github.io/construct-stylesheets/
+        // https://developers.google.com/web/updates/2019/02/constructable-stylesheets
+        shadowRoot.adoptedStyleSheets = [
+            ...shadowRoot.adoptedStyleSheets,
+            ...this.styleSheets
+        ];
+    }
+}
+class StyleElementStyles {
+    constructor(p, localStyles, sharedStyles = null) {
+        this.p = p;
+        this.localStyles = localStyles;
+        this.sharedStyles = sharedStyles;
+    }
+    applyTo(shadowRoot) {
+        const styles = this.localStyles;
+        const p = this.p;
+        for (let i = styles.length - 1; i > -1; --i) {
+            const element = p.document.createElement('style');
+            element.innerHTML = styles[i];
+            shadowRoot.prepend(element);
+        }
+        if (this.sharedStyles !== null) {
+            this.sharedStyles.applyTo(shadowRoot);
+        }
+    }
+}
+const StyleConfiguration = {
+    shadowDOM(config) {
+        return AppTask.creating(kernel.IContainer, container => {
+            if (config.sharedStyles != null) {
+                const factory = container.get(IShadowDOMStyleFactory);
+                container.register(instanceRegistration(IShadowDOMGlobalStyles, factory.createStyles(config.sharedStyles, null)));
+            }
+        });
+    }
+};
+
+const { enter, exit } = runtime.ConnectableSwitcher;
+const { wrap, unwrap } = runtime.ProxyObservable;
+class ComputedWatcher {
+    get value() {
+        return this._value;
+    }
+    constructor(obj, observerLocator, $get, cb, useProxy) {
+        this.obj = obj;
+        this.$get = $get;
+        this.useProxy = useProxy;
+        this.isBound = false;
+        // todo: maybe use a counter allow recursive call to a certain level
+        this.running = false;
+        /** @internal */
+        this._value = void 0;
+        this._callback = cb;
+        this.oL = observerLocator;
+    }
+    handleChange() {
+        this.run();
+    }
+    handleCollectionChange() {
+        this.run();
+    }
+    bind() {
+        if (this.isBound) {
+            return;
+        }
+        this.compute();
+        this.isBound = true;
+    }
+    unbind() {
+        if (!this.isBound) {
+            return;
+        }
+        this.isBound = false;
+        this.obs.clearAll();
+    }
+    run() {
+        if (!this.isBound || this.running) {
+            return;
+        }
+        const obj = this.obj;
+        const oldValue = this._value;
+        const newValue = this.compute();
+        if (!areEqual(newValue, oldValue)) {
+            // should optionally queue
+            this._callback.call(obj, newValue, oldValue, obj);
+        }
+    }
+    compute() {
+        this.running = true;
+        this.obs.version++;
+        try {
+            enter(this);
+            return this._value = unwrap(this.$get.call(void 0, this.useProxy ? wrap(this.obj) : this.obj, this));
+        }
+        finally {
+            this.obs.clear();
+            this.running = false;
+            exit(this);
+        }
+    }
+}
+class ExpressionWatcher {
+    get value() {
+        return this._value;
+    }
+    constructor(scope, l, oL, expression, callback) {
+        this.scope = scope;
+        this.l = l;
+        this.oL = oL;
+        this.isBound = false;
+        // see Listener binding for explanation
+        /** @internal */
+        this.boundFn = false;
+        this.obj = scope.bindingContext;
+        this._expression = expression;
+        this._callback = callback;
+    }
+    handleChange(value) {
+        const expr = this._expression;
+        const obj = this.obj;
+        const oldValue = this._value;
+        const canOptimize = expr.$kind === 'AccessScope' && this.obs.count === 1;
+        if (!canOptimize) {
+            this.obs.version++;
+            value = runtime.astEvaluate(expr, this.scope, this, this);
+            this.obs.clear();
+        }
+        if (!areEqual(value, oldValue)) {
+            this._value = value;
+            // should optionally queue for batch synchronous
+            this._callback.call(obj, value, oldValue, obj);
+        }
+    }
+    bind() {
+        if (this.isBound) {
+            return;
+        }
+        this.obs.version++;
+        this._value = runtime.astEvaluate(this._expression, this.scope, this, this);
+        this.obs.clear();
+        this.isBound = true;
+    }
+    unbind() {
+        if (!this.isBound) {
+            return;
+        }
+        this.isBound = false;
+        this.obs.clearAll();
+        this._value = void 0;
+    }
+}
+runtime.connectable(ComputedWatcher);
+runtime.connectable(ExpressionWatcher);
+mixinAstEvaluator(true)(ExpressionWatcher);
+
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 class Controller {
     get lifecycleHooks() {
@@ -4061,7 +4072,18 @@ class Controller {
         if (controllerLookup.has(viewModel)) {
             return controllerLookup.get(viewModel);
         }
-        definition = definition ?? getElementDefinition(viewModel.constructor);
+        {
+            if (definition == null) {
+                try {
+                    definition = getElementDefinition(viewModel.constructor);
+                }
+                catch (ex) {
+                    // eslint-disable-next-line no-console
+                    console.error(`[DEV:aurelia] Custom element definition not found for creating a controller with host: <${host.nodeName} /> and component ${JSON.stringify(viewModel)}`);
+                    throw ex;
+                }
+            }
+        }
         const controller = new Controller(
         /* container      */ ctn, 
         /* vmKind         */ vmkCe, 
@@ -4138,7 +4160,7 @@ class Controller {
         /* host           */ null, 
         /* location       */ null);
         controller.parent = parentController ?? null;
-        controller._hydrateSynthetic( /* context */);
+        controller._hydrateSynthetic();
         return controller;
     }
     /** @internal */
@@ -4308,7 +4330,7 @@ class Controller {
         this.parent = parent;
         if (this.debug && !this._fullyNamed) {
             this._fullyNamed = true;
-            (this.logger ?? (this.logger = this.container.get(kernel.ILogger).root.scopeTo(this.name))).trace(`activate()`);
+            (this.logger ??= this.container.get(kernel.ILogger).root.scopeTo(this.name)).trace(`activate()`);
         }
         switch (this.vmKind) {
             case vmkCe:
@@ -5034,8 +5056,8 @@ HooksDefinition.none = new HooksDefinition({});
 const defaultShadowOptions = {
     mode: 'open'
 };
-const vmkCe = 'customElement';
-const vmkCa = 'customAttribute';
+/** @internal */ const vmkCe = 'customElement';
+/** @internal */ const vmkCa = 'customAttribute';
 const vmkSynth = 'synthetic';
 /** @internal */ const none = 0;
 /** @internal */ const activating = 1;
@@ -5126,8 +5148,7 @@ function getRef(node, name) {
     return node.$au?.[name] ?? null;
 }
 function setRef(node, name, controller) {
-    var _a;
-    ((_a = node).$au ?? (_a.$au = new Refs()))[name] = controller;
+    (node.$au ??= new Refs())[name] = controller;
 }
 const INode = /*@__PURE__*/ createInterface('INode');
 const IEventTarget = /*@__PURE__*/ createInterface('IEventTarget', x => x.cachedCallback(handler => {
@@ -5494,10 +5515,13 @@ class CustomElementDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
+        // todo: warn if alreay has key
         if (!container.has(key, false)) {
-            transientRegistration(key, Type).register(container);
-            aliasRegistration(key, Type).register(container);
-            registerAliases(aliases, CustomElement, key, container);
+            container.register(transientRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, CustomElement.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(153 /* ErrorNames.element_existed */)}`);
         }
     }
     toString() {
@@ -5530,7 +5554,6 @@ const annotateElementMetadata = (Type, prop, value) => {
 const defineElement = (nameOrDef, Type) => {
     const definition = CustomElementDefinition.create(nameOrDef, Type);
     defineMetadata(elementBaseName, definition, definition.Type);
-    defineMetadata(elementBaseName, definition, definition);
     appendResourceKey(definition.Type, elementBaseName);
     return definition.Type;
 };
@@ -5606,19 +5629,17 @@ const createElementInjectable = () => {
         annotationParamtypes[index] = $injectable;
         return target;
     };
-    $injectable.register = function (_container) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        return {
-            resolve(container, requestor) {
-                if (requestor.has($injectable, true)) {
-                    return requestor.get($injectable);
-                }
-                else {
-                    return null;
-                }
-            },
-        };
-    };
+    $injectable.register = () => ({
+        $isResolver: true,
+        resolve(container, requestor) {
+            if (requestor.has($injectable, true)) {
+                return requestor.get($injectable);
+            }
+            else {
+                return null;
+            }
+        }
+    });
     return $injectable;
 };
 /** @internal */
@@ -5633,7 +5654,7 @@ const generateElementType = /*@__PURE__*/ (function () {
     return function (name, proto = defaultProto) {
         // Anonymous class ensures that minification cannot cause unintended side-effects, and keeps the class
         // looking similarly from the outside (when inspected via debugger, etc).
-        const Type = class {
+        const Type = class Anonymous {
         };
         // Define the name property so that Type.name can be used by end users / plugin authors if they really need to,
         // even when minified.
@@ -5700,27 +5721,35 @@ function capture(targetOrFilter) {
 
 const IAppRoot = /*@__PURE__*/ createInterface('IAppRoot');
 class AppRoot {
-    constructor(config, platform, container, rootProvider) {
+    get controller() {
+        return this._controller;
+    }
+    constructor(config, container, rootProvider, enhance) {
         this.config = config;
-        this.platform = platform;
         this.container = container;
         /** @internal */
         this._hydratePromise = void 0;
-        this.host = config.host;
+        const host = this.host = config.host;
         rootProvider.prepare(this);
-        registerHostNode(container, platform, config.host);
+        registerHostNode(container, this.platform = this._createPlatform(container, host), host);
         this._hydratePromise = kernel.onResolve(this._runAppTasks('creating'), () => {
+            const childCtn = enhance ? container : container.createChild();
             const component = config.component;
-            const childCtn = container.createChild();
             let instance;
-            if (isElementType(component)) {
-                instance = this.container.get(component);
+            if (isFunction(component)) {
+                instance = childCtn.invoke(component);
+                instanceRegistration(component, instance);
             }
             else {
                 instance = config.component;
             }
             const hydrationInst = { hydrate: false, projections: null };
-            const controller = (this.controller = Controller.$el(childCtn, instance, this.host, hydrationInst));
+            const definition = enhance
+                ? CustomElementDefinition.create({ name: generateElementName(), template: this.host, enhance: true })
+                // leave the work of figuring out the definition to the controller
+                // there's proper error messages in case of failure inside the $el() call
+                : void 0;
+            const controller = (this._controller = Controller.$el(childCtn, instance, host, hydrationInst, definition));
             controller._hydrateCustomElement(hydrationInst, /* root does not have hydration context */ null);
             return kernel.onResolve(this._runAppTasks('hydrating'), () => {
                 controller._hydrate(null);
@@ -5734,7 +5763,7 @@ class AppRoot {
     activate() {
         return kernel.onResolve(this._hydratePromise, () => {
             return kernel.onResolve(this._runAppTasks('activating'), () => {
-                return kernel.onResolve(this.controller.activate(this.controller, null, void 0), () => {
+                return kernel.onResolve(this._controller.activate(this._controller, null, void 0), () => {
                     return this._runAppTasks('activated');
                 });
             });
@@ -5742,7 +5771,7 @@ class AppRoot {
     }
     deactivate() {
         return kernel.onResolve(this._runAppTasks('deactivating'), () => {
-            return kernel.onResolve(this.controller.deactivate(this.controller, null), () => {
+            return kernel.onResolve(this._controller.deactivate(this._controller, null), () => {
                 return this._runAppTasks('deactivated');
             });
         });
@@ -5756,8 +5785,23 @@ class AppRoot {
             return results;
         }, []));
     }
+    /** @internal */
+    _createPlatform(container, host) {
+        let p;
+        if (!container.has(IPlatform, false)) {
+            if (host.ownerDocument.defaultView === null) {
+                throw createMappedError(769 /* ErrorNames.invalid_platform_impl */);
+            }
+            p = new platformBrowser.BrowserPlatform(host.ownerDocument.defaultView);
+            container.register(instanceRegistration(IPlatform, p));
+        }
+        else {
+            p = container.get(IPlatform);
+        }
+        return p;
+    }
     dispose() {
-        this.controller?.dispose();
+        this._controller?.dispose();
     }
 }
 
@@ -5807,50 +5851,21 @@ class Aurelia {
         return this;
     }
     app(config) {
-        this.next = new AppRoot(config, this._initPlatform(config.host), this.container, this._rootProvider);
+        this.next = new AppRoot(config, this.container, this._rootProvider);
         return this;
     }
     /**
      * @param parentController - The owning controller of the view created by this enhance call
      */
-    enhance(config, parentController) {
-        const ctn = config.container ?? this.container.createChild();
-        const host = config.host;
-        const p = this._initPlatform(host);
-        const comp = config.component;
-        let bc;
-        if (isFunction(comp)) {
-            registerHostNode(ctn, p, host);
-            bc = ctn.invoke(comp);
-        }
-        else {
-            bc = comp;
-        }
-        registerResolver(ctn, IEventTarget, new kernel.InstanceProvider('IEventTarget', host));
-        parentController = parentController ?? null;
-        const view = Controller.$el(ctn, bc, host, null, CustomElementDefinition.create({ name: generateElementName(), template: host, enhance: true }));
-        return kernel.onResolve(view.activate(view, parentController), () => view);
+    enhance(config) {
+        const appRoot = new AppRoot({ host: config.host, component: config.component }, config.container ?? this.container.createChild(), new kernel.InstanceProvider('IAppRoot'), true);
+        return kernel.onResolve(appRoot.activate(), () => appRoot);
     }
     async waitForIdle() {
         const platform = this.root.platform;
         await platform.domWriteQueue.yield();
         await platform.domReadQueue.yield();
         await platform.taskQueue.yield();
-    }
-    /** @internal */
-    _initPlatform(host) {
-        let p;
-        if (!this.container.has(IPlatform, false)) {
-            if (host.ownerDocument.defaultView === null) {
-                throw createMappedError(769 /* ErrorNames.invalid_platform_impl */);
-            }
-            p = new platformBrowser.BrowserPlatform(host.ownerDocument.defaultView);
-            this.container.register(instanceRegistration(IPlatform, p));
-        }
-        else {
-            p = this.container.get(IPlatform);
-        }
-        return p;
     }
     start(root = this.next) {
         if (root == null) {
@@ -6441,9 +6456,13 @@ class BindingCommandDefinition {
     }
     register(container) {
         const { Type, key, aliases } = this;
-        singletonRegistration(key, Type).register(container);
-        aliasRegistration(key, Type).register(container);
-        registerAliases(aliases, BindingCommand, key, container);
+        if (!container.has(key, false)) {
+            container.register(singletonRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(key, BindingCommand.keyFrom(alias))));
+        } /* istanbul ignore next */
+        else {
+            // eslint-disable-next-line no-console
+            console.warn(`[DEV:aurelia] ${createMappedError(157 /* ErrorNames.binding_command_existed */)}`);
+        }
     }
 }
 const cmdBaseName = /*@__PURE__*/ getResourceKeyFor('binding-command');
@@ -6458,7 +6477,6 @@ const BindingCommand = objectFreeze({
     define(nameOrDef, Type) {
         const definition = BindingCommandDefinition.create(nameOrDef, Type);
         defineMetadata(cmdBaseName, definition, definition.Type);
-        defineMetadata(cmdBaseName, definition, definition);
         appendResourceKey(Type, cmdBaseName);
         return definition.Type;
     },
@@ -6889,14 +6907,13 @@ class AttrMapper {
      * based on element tagName
      */
     useMapping(config) {
-        var _a;
         let newAttrMapping;
         let targetAttrMapping;
         let tagName;
         let attr;
         for (tagName in config) {
             newAttrMapping = config[tagName];
-            targetAttrMapping = (_a = this._tagAttrMap)[tagName] ?? (_a[tagName] = createLookup());
+            targetAttrMapping = this._tagAttrMap[tagName] ??= createLookup();
             for (attr in newAttrMapping) {
                 if (targetAttrMapping[attr] !== void 0) {
                     throw createError(attr, tagName);
@@ -6986,7 +7003,7 @@ const nsMap = createLookup();
  */
 class AttributeNSAccessor {
     static forNs(ns) {
-        return nsMap[ns] ?? (nsMap[ns] = new AttributeNSAccessor(ns));
+        return nsMap[ns] ??= new AttributeNSAccessor(ns);
     }
     constructor(
     /**
@@ -7621,7 +7638,7 @@ class NodeObserverLocator {
         const lookup = this._events;
         let existingMapping;
         if (isString(nodeNameOrConfig)) {
-            existingMapping = lookup[nodeNameOrConfig] ?? (lookup[nodeNameOrConfig] = createLookup());
+            existingMapping = lookup[nodeNameOrConfig] ??= createLookup();
             if (existingMapping[key] == null) {
                 existingMapping[key] = eventsConfig;
             }
@@ -7631,7 +7648,7 @@ class NodeObserverLocator {
         }
         else {
             for (const nodeName in nodeNameOrConfig) {
-                existingMapping = lookup[nodeName] ?? (lookup[nodeName] = createLookup());
+                existingMapping = lookup[nodeName] ??= createLookup();
                 const newMapping = nodeNameOrConfig[nodeName];
                 for (key in newMapping) {
                     if (existingMapping[key] == null) {
@@ -7710,16 +7727,15 @@ class NodeObserverLocator {
         }
     }
     overrideAccessor(tagNameOrOverrides, key) {
-        var _a, _b;
         let existingTagOverride;
         if (isString(tagNameOrOverrides)) {
-            existingTagOverride = (_a = this._overrides)[tagNameOrOverrides] ?? (_a[tagNameOrOverrides] = createLookup());
+            existingTagOverride = this._overrides[tagNameOrOverrides] ??= createLookup();
             existingTagOverride[key] = true;
         }
         else {
             for (const tagName in tagNameOrOverrides) {
                 for (const key of tagNameOrOverrides[tagName]) {
-                    existingTagOverride = (_b = this._overrides)[tagName] ?? (_b[tagName] = createLookup());
+                    existingTagOverride = this._overrides[tagName] ??= createLookup();
                     existingTagOverride[key] = true;
                 }
             }
@@ -8034,7 +8050,7 @@ class CheckedObserver {
     /** @internal */
     _observe() {
         const obj = this._el;
-        (this._valueObserver ?? (this._valueObserver = obj.$observers?.model ?? obj.$observers?.value))?.subscribe(this);
+        (this._valueObserver ??= obj.$observers?.model ?? obj.$observers?.value)?.subscribe(this);
         this._collectionObserver?.unsubscribe(this);
         this._collectionObserver = void 0;
         if (obj.type === 'checkbox') {
@@ -9880,7 +9896,7 @@ exports.AuSlot = class AuSlot {
             this._hasProjection = true;
             this._slotwatchers = contextContainer.getAll(IAuSlotWatcher, false)?.filter(w => w.slotName === '*' || w.slotName === slotInfo.name) ?? kernel.emptyArray;
         }
-        this._hasSlotWatcher = (this._slotwatchers ?? (this._slotwatchers = kernel.emptyArray)).length > 0;
+        this._hasSlotWatcher = (this._slotwatchers ??= kernel.emptyArray).length > 0;
         this._hdrContext = hdrContext;
         this.view = factory.create().setLocation(this._location = location);
     }
@@ -10032,9 +10048,15 @@ class AuCompose {
         this.scopeBehavior = 'auto';
         /** @internal */
         this._composition = void 0;
+        /**
+         * The tag name of the element to be created for non custom element composition.
+         *
+         * `null`/`undefined` means containerless
+         */
+        this.tag = null;
         /** @internal */ this._container = kernel.resolve(kernel.IContainer);
         /** @internal */ this.parent = kernel.resolve(IController);
-        /** @internal */ this.host = kernel.resolve(INode);
+        /** @internal */ this._host = kernel.resolve(INode);
         /** @internal */ this._location = kernel.resolve(IRenderLocation);
         /** @internal */ this._platform = kernel.resolve(IPlatform);
         /** @internal */ this._rendering = kernel.resolve(IRendering);
@@ -10070,8 +10092,14 @@ class AuCompose {
         if (name === 'composing' || name === 'composition')
             return;
         if (name === 'model' && this._composition != null) {
-            // eslint-disable-next-line
             this._composition.update(this.model);
+            return;
+        }
+        // tag change does not affect existing custom element composition
+        if (name === 'tag' && this._composition?.controller.vmKind === vmkCe) {
+            {
+                console.warn('[DEV:aurelia] Changing tag name of a custom element composition is ignored.'); // eslint-disable-line
+            }
             return;
         }
         this._composing = kernel.onResolve(this._composing, () => kernel.onResolve(this.queue(new ChangeInfo(this.template, this.component, this.model, name), void 0), (context) => {
@@ -10122,35 +10150,43 @@ class AuCompose {
     }
     /** @internal */
     compose(context) {
-        let comp;
         // todo: when both component and template are empty
         //       should it throw or try it best to proceed?
         //       current: proceed
         const { _template: template, _component: component, _model: model } = context.change;
-        const { _container: container, host, $controller, _location: loc, _instruction } = this;
-        const vmDef = this.getDef(component);
+        const { _container: container, $controller, _location: loc, _instruction } = this;
+        const vmDef = this._getDefinition(this._hydrationContext.controller.container, component);
         const childCtn = container.createChild();
-        let compositionHost;
-        if (vmDef !== null) {
-            compositionHost = this._platform.document.createElement(vmDef.name);
-            if (loc == null) {
-                host.appendChild(compositionHost);
-            }
-            else {
-                loc.parentNode.insertBefore(compositionHost, loc);
-            }
-            comp = this._getComp(childCtn, component, compositionHost);
+        const compositionHost = this._platform.document.createElement(vmDef == null ? this.tag ?? 'div' : vmDef.name);
+        loc.parentNode.insertBefore(compositionHost, loc);
+        let compositionLocation;
+        if (vmDef == null) {
+            compositionLocation = this.tag == null ? convertToRenderLocation(compositionHost) : null;
         }
         else {
-            compositionHost = loc ?? host;
-            comp = this._getComp(childCtn, component, compositionHost);
+            compositionLocation = vmDef.containerless ? convertToRenderLocation(compositionHost) : null;
         }
+        const removeCompositionHost = () => {
+            compositionHost.remove();
+            if (compositionLocation != null) {
+                let curr = compositionLocation.$start.nextSibling;
+                let next = null;
+                while (curr !== null && curr !== compositionLocation) {
+                    next = curr.nextSibling;
+                    curr.remove();
+                    curr = next;
+                }
+                compositionLocation.$start?.remove();
+                compositionLocation.remove();
+            }
+        };
+        const comp = this._createComponentInstance(childCtn, typeof component === 'string' ? vmDef.Type : component, compositionHost, compositionLocation);
         const compose = () => {
+            const aucomposeCapturedAttrs = _instruction.captures ?? kernel.emptyArray;
             // custom element based composition
             if (vmDef !== null) {
-                const composeCapturedAttrs = _instruction.captures ?? kernel.emptyArray;
                 const capture = vmDef.capture;
-                const [capturedBindingAttrs, transferedToHostBindingAttrs] = composeCapturedAttrs
+                const [capturedBindingAttrs, transferedToHostBindingAttrs] = aucomposeCapturedAttrs
                     .reduce((attrGroups, attr) => {
                     const shouldCapture = !(attr.target in vmDef.bindables)
                         && (capture === true
@@ -10158,34 +10194,15 @@ class AuCompose {
                     attrGroups[shouldCapture ? 0 : 1].push(attr);
                     return attrGroups;
                 }, [[], []]);
-                const location = vmDef.containerless ? convertToRenderLocation(compositionHost) : null;
                 const controller = Controller.$el(childCtn, comp, compositionHost, {
                     projections: _instruction.projections,
                     captures: capturedBindingAttrs
-                }, vmDef, location);
-                const transferHydrationContext = new HydrationContext($controller, { projections: null, captures: transferedToHostBindingAttrs }, this._hydrationContext.parent);
-                const removeCompositionHost = () => {
-                    if (location == null) {
-                        compositionHost.remove();
-                    }
-                    else {
-                        let curr = location.$start.nextSibling;
-                        let next = null;
-                        while (curr !== null && curr !== location) {
-                            next = curr.nextSibling;
-                            curr.remove();
-                            curr = next;
-                        }
-                        location.$start?.remove();
-                        location.remove();
-                    }
-                };
-                const bindings = SpreadBinding.create(transferHydrationContext, compositionHost, vmDef, this._rendering, this._compiler, this._platform, this._exprParser, this._observerLocator);
+                }, vmDef, compositionLocation);
                 // Theoretically these bindings aren't bindings of the composed custom element
                 // Though they are meant to be activated (bound)/ deactivated (unbound) together
                 // with the custom element controller, so it's practically ok to let the composed
                 // custom element manage these bindings
-                bindings.forEach(b => controller.addBinding(b));
+                this._createSpreadBindings(compositionHost, vmDef, transferedToHostBindingAttrs).forEach(b => controller.addBinding(b));
                 return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, $controller.scope.parent), 
                 // todo: call deactivate on the component component
                 (deactachInitiator) => kernel.onResolve(controller.deactivate(deactachInitiator ?? controller, $controller), removeCompositionHost), 
@@ -10194,14 +10211,6 @@ class AuCompose {
                 (model) => comp.activate?.(model), context);
             }
             else {
-                {
-                    const captures = this._instruction.captures ?? [];
-                    if (captures.length > 0) {
-                        // eslint-disable-next-line no-console
-                        console.warn(`[au-compose]: Ignored bindings ${captures.map(({ rawName, rawValue }) => `${rawName}="${rawValue}"`).join(", ")}`
-                            + ' in composition without a custom element definition as component.');
-                    }
-                }
                 const targetDef = CustomElementDefinition.create({
                     name: CustomElement.generateName(),
                     template: template,
@@ -10211,17 +10220,20 @@ class AuCompose {
                 const scope = this.scopeBehavior === 'auto'
                     ? runtime.Scope.fromParent(this.parent.scope, comp)
                     : runtime.Scope.create(comp);
-                if (isRenderLocation(compositionHost)) {
-                    controller.setLocation(compositionHost);
+                controller.setHost(compositionHost);
+                if (compositionLocation == null) {
+                    // only spread the bindings if there is an actual host
+                    // otherwise we may accidentally do unnecessary work
+                    this._createSpreadBindings(compositionHost, targetDef, aucomposeCapturedAttrs).forEach(b => controller.addBinding(b));
                 }
                 else {
-                    controller.setHost(compositionHost);
+                    controller.setLocation(compositionLocation);
                 }
                 return new CompositionController(controller, (attachInitiator) => controller.activate(attachInitiator ?? controller, $controller, scope), 
                 // todo: call deactivate on the component
                 // a difference with composing custom element is that we leave render location/host alone
                 // as they all share the same host/render location
-                (detachInitiator) => controller.deactivate(detachInitiator ?? controller, $controller), 
+                (detachInitiator) => kernel.onResolve(controller.deactivate(detachInitiator ?? controller, $controller), removeCompositionHost), 
                 // casting is technically incorrect
                 // but it's ignored in the caller anyway
                 (model) => comp.activate?.(model), context);
@@ -10237,7 +10249,7 @@ class AuCompose {
         }
     }
     /** @internal */
-    _getComp(container, comp, host) {
+    _createComponentInstance(container, comp, host, location) {
         if (comp == null) {
             return new EmptyComponent();
         }
@@ -10245,21 +10257,32 @@ class AuCompose {
             return comp;
         }
         const p = this._platform;
-        const isLocation = isRenderLocation(host);
-        registerHostNode(container, p, isLocation ? null : host);
-        registerResolver(container, IRenderLocation, new kernel.InstanceProvider('IRenderLocation', isLocation ? host : null));
+        registerHostNode(container, p, host);
+        registerResolver(container, IRenderLocation, new kernel.InstanceProvider('IRenderLocation', location));
         const instance = container.invoke(comp);
         registerResolver(container, comp, new kernel.InstanceProvider('au-compose.component', instance));
         return instance;
     }
     /** @internal */
-    getDef(component) {
+    _getDefinition(container, component) {
+        if (typeof component === 'string') {
+            const def = container.find(CustomElement, component);
+            if (def == null) {
+                throw createMappedError(806 /* ErrorNames.au_compose_component_name_not_found */, component);
+            }
+            return def;
+        }
         const Ctor = (isFunction(component)
             ? component
             : component?.constructor);
         return CustomElement.isType(Ctor)
             ? CustomElement.getDefinition(Ctor)
             : null;
+    }
+    /** @internal */
+    _createSpreadBindings(host, def, capturedAttrs) {
+        const transferHydrationContext = new HydrationContext(this.$controller, { projections: null, captures: capturedAttrs }, this._hydrationContext.parent);
+        return SpreadBinding.create(transferHydrationContext, host, def, this._rendering, this._compiler, this._platform, this._exprParser, this._observerLocator);
     }
 }
 __decorate([
@@ -10291,9 +10314,13 @@ __decorate([
         mode: fromView
     })
 ], AuCompose.prototype, "composition", null);
+__decorate([
+    bindable
+], AuCompose.prototype, "tag", void 0);
 customElement({
     name: 'au-compose',
     capture: true,
+    containerless: true,
 })(AuCompose);
 class EmptyComponent {
 }
@@ -10499,7 +10526,7 @@ class TemplateCompiler {
         if (definition.needsCompile === false) {
             return definition;
         }
-        compilationInstruction ?? (compilationInstruction = emptyCompilationInstructions);
+        compilationInstruction ??= emptyCompilationInstructions;
         const context = new CompilationContext(partialDefinition, container, compilationInstruction, null, null, void 0);
         const template = isString(definition.template) || !partialDefinition.enhance
             ? context._templateFactory.createTemplate(definition.template)
@@ -10520,7 +10547,7 @@ class TemplateCompiler {
         }
         this._compileLocalElement(content, context);
         this._compileNode(content, context);
-        return CustomElementDefinition.create({
+        const compiledDef = CustomElementDefinition.create({
             ...partialDefinition,
             name: partialDefinition.name || generateElementName(),
             dependencies: (partialDefinition.dependencies ?? kernel.emptyArray).concat(context.deps ?? kernel.emptyArray),
@@ -10532,6 +10559,22 @@ class TemplateCompiler {
             hasSlots: context.hasSlot,
             needsCompile: false,
         });
+        if (context.deps != null) {
+            // if we have a template like this
+            //
+            // my-app.html
+            // <template as-custom-element="le-1">
+            //  <le-2></le-2>
+            // </template>
+            // <template as-custom-element="le-2">...</template>
+            //
+            // without registering dependencies properly, <le-1> will not see <le-2> as a custom element
+            const allDepsForLocalElements = [compiledDef.Type, ...compiledDef.dependencies, ...context.deps];
+            for (const localElementType of context.deps) {
+                getElementDefinition(localElementType).dependencies.push(...allDepsForLocalElements.filter(d => d !== localElementType));
+            }
+        }
+        return compiledDef;
     }
     compileSpread(requestor, attrSyntaxs, container, target, targetDef) {
         const context = new CompilationContext(requestor, container, emptyCompilationInstructions, null, null, void 0);
@@ -10618,7 +10661,7 @@ class TemplateCompiler {
                         attrBindableInstructions = [bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper)];
                     }
                 }
-                (attrInstructions ?? (attrInstructions = [])).push(new HydrateAttributeInstruction(
+                (attrInstructions ??= []).push(new HydrateAttributeInstruction(
                 // todo: def/ def.Type or def.name should be configurable
                 //       example: AOT/runtime can use def.Type, but there are situation
                 //       where instructions need to be serialized, def.name should be used
@@ -10788,7 +10831,7 @@ class TemplateCompiler {
                 el.removeAttribute(attrName);
                 --i;
                 --ii;
-                (attrInstructions ?? (attrInstructions = [])).push(new HydrateAttributeInstruction(
+                (attrInstructions ??= []).push(new HydrateAttributeInstruction(
                 // todo: def/ def.Type or def.name should be configurable
                 //       example: AOT/runtime can use def.Type, but there are situation
                 //       where instructions need to be serialized, def.name should be used
@@ -10928,7 +10971,6 @@ class TemplateCompiler {
     /** @internal */
     // eslint-disable-next-line
     _compileElement(el, context) {
-        var _a, _b, _c, _d;
         // overall, the template compiler does it job by compiling one node,
         // and let that the process of compiling that node point to the next node to be compiled.
         // ----------------------------------------
@@ -11092,7 +11134,7 @@ class TemplateCompiler {
                 commandBuildInfo.attr = attrSyntax;
                 commandBuildInfo.bindable = null;
                 commandBuildInfo.def = null;
-                (plainAttrInstructions ?? (plainAttrInstructions = [])).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
+                (plainAttrInstructions ??= []).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
                 removeAttr();
                 // to next attribute
                 continue;
@@ -11107,7 +11149,7 @@ class TemplateCompiler {
                 if (bindable !== void 0) {
                     if (bindingCommand === null) {
                         expr = exprParser.parse(realAttrValue, etInterpolation);
-                        (elBindableInstructions ?? (elBindableInstructions = [])).push(expr == null
+                        (elBindableInstructions ??= []).push(expr == null
                             ? new SetPropertyInstruction(realAttrValue, bindable.name)
                             : new InterpolationInstruction(expr, bindable.name));
                     }
@@ -11116,7 +11158,7 @@ class TemplateCompiler {
                         commandBuildInfo.attr = attrSyntax;
                         commandBuildInfo.bindable = bindable;
                         commandBuildInfo.def = elDef;
-                        (elBindableInstructions ?? (elBindableInstructions = [])).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
+                        (elBindableInstructions ??= []).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
                     }
                     removeAttr();
                     {
@@ -11181,14 +11223,14 @@ class TemplateCompiler {
                 }
                 removeAttr();
                 if (attrDef.isTemplateController) {
-                    (tcInstructions ?? (tcInstructions = [])).push(new HydrateTemplateController(voidDefinition, 
+                    (tcInstructions ??= []).push(new HydrateTemplateController(voidDefinition, 
                     // todo: def/ def.Type or def.name should be configurable
                     //       example: AOT/runtime can use def.Type, but there are situation
                     //       where instructions need to be serialized, def.name should be used
                     this.resolveResources ? attrDef : attrDef.name, void 0, attrBindableInstructions));
                 }
                 else {
-                    (attrInstructions ?? (attrInstructions = [])).push(new HydrateAttributeInstruction(
+                    (attrInstructions ??= []).push(new HydrateAttributeInstruction(
                     // todo: def/ def.Type or def.name should be configurable
                     //       example: AOT/runtime can use def.Type, but there are situation
                     //       where instructions need to be serialized, def.name should be used
@@ -11207,7 +11249,7 @@ class TemplateCompiler {
                 if (expr != null) {
                     // if it's an interpolation, remove the attribute
                     removeAttr();
-                    (plainAttrInstructions ?? (plainAttrInstructions = [])).push(new InterpolationInstruction(expr, 
+                    (plainAttrInstructions ??= []).push(new InterpolationInstruction(expr, 
                     // if not a bindable, then ensure plain attribute are mapped correctly:
                     // e.g: colspan -> colSpan
                     //      innerhtml -> innerHTML
@@ -11225,7 +11267,7 @@ class TemplateCompiler {
             commandBuildInfo.attr = attrSyntax;
             commandBuildInfo.bindable = null;
             commandBuildInfo.def = null;
-            (plainAttrInstructions ?? (plainAttrInstructions = [])).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
+            (plainAttrInstructions ??= []).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
             removeAttr();
         }
         resetCommandBuildInfo();
@@ -11369,7 +11411,7 @@ class TemplateCompiler {
                         // ignore all whitespace
                         isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
                         if (!isEmptyTextNode) {
-                            ((_a = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_b = targetSlot || DEFAULT_SLOT_NAME] ?? (_a[_b] = [])).push(child);
+                            ((slotTemplateRecord ??= {})[targetSlot || DEFAULT_SLOT_NAME] ??= []).push(child);
                         }
                         el.removeChild(child);
                     }
@@ -11556,7 +11598,7 @@ class TemplateCompiler {
                         // ignore all whitespace
                         isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
                         if (!isEmptyTextNode) {
-                            ((_c = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_d = targetSlot || DEFAULT_SLOT_NAME] ?? (_c[_d] = [])).push(child);
+                            ((slotTemplateRecord ??= {})[targetSlot || DEFAULT_SLOT_NAME] ??= []).push(child);
                         }
                         el.removeChild(child);
                     }
@@ -11758,7 +11800,6 @@ class TemplateCompiler {
             throw createMappedError(708 /* ErrorNames.compiler_template_only_local_template */, elName);
         }
         const localTemplateNames = new Set();
-        const localElTypes = [];
         for (const localTemplate of localTemplates) {
             if (localTemplate.parentNode !== root) {
                 throw createMappedError(709 /* ErrorNames.compiler_local_el_not_under_root */, elName);
@@ -11799,23 +11840,8 @@ class TemplateCompiler {
             class LocalTemplateType {
             }
             def(LocalTemplateType, 'name', { value: name });
-            localElTypes.push(LocalTemplateType);
-            context._addDep(defineElement({ name, template: localTemplate, bindables }, LocalTemplateType));
+            context._addLocalDep(defineElement({ name, template: localTemplate, bindables }, LocalTemplateType));
             root.removeChild(localTemplate);
-        }
-        // if we have a template like this
-        //
-        // my-app.html
-        // <template as-custom-element="le-1">
-        //  <le-2></le-2>
-        // </template>
-        // <template as-custom-element="le-2">...</template>
-        //
-        // eagerly registering depdendencies inside the loop above
-        // will make `<le-1/>` miss `<le-2/>` as its dependency
-        const allDeps = [...context.def.dependencies ?? kernel.emptyArray, ...localElTypes];
-        for (const Type of localElTypes) {
-            getElementDefinition(Type).dependencies.push(allDeps.filter(d => d !== Type));
         }
     }
     /** @internal */
@@ -11956,10 +11982,10 @@ class CompilationContext {
         this.localEls = hasParent ? parent.localEls : new Set();
         this.rows = instructions ?? [];
     }
-    _addDep(dep) {
-        var _a;
-        ((_a = this.root).deps ?? (_a.deps = [])).push(dep);
+    _addLocalDep(dep) {
+        (this.root.deps ??= []).push(dep);
         this.root.c.register(dep);
+        return dep;
     }
     _text(text) {
         return createText(this.p, text);
@@ -12014,9 +12040,13 @@ class CompilationContext {
             return null;
         }
         let result = this._commands[name];
+        let commandDef;
         if (result === void 0) {
-            result = this.c.create(BindingCommand, name);
-            if (result === null) {
+            commandDef = this.c.find(BindingCommand, name);
+            if (commandDef != null) {
+                result = this.c.invoke(commandDef.Type);
+            }
+            if (result == null) {
                 throw createMappedError(713 /* ErrorNames.compiler_unknown_binding_command */, name);
             }
             this._commands[name] = result;

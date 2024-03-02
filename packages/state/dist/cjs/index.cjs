@@ -122,7 +122,7 @@ class Store {
         if (!i) {
             throw new Error("Devtools extension is not available");
         }
-        t.name ?? (t.name = "Aurelia State plugin");
+        t.name ??= "Aurelia State plugin";
         const e = s.connect(t);
         e.init(this.u);
         e.subscribe((t => {
@@ -466,7 +466,7 @@ exports.StateBindingCommand = class StateBindingCommand {
         if (s.bindable == null) {
             r = e.map(s.node, r) ?? t.camelCase(r);
         } else {
-            if (h === "" && s.def.type === "Element") {
+            if (h === "" && s.def.type === "element") {
                 h = t.camelCase(r);
             }
             r = s.bindable.name;

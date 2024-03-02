@@ -562,7 +562,7 @@ class TranslationBinding {
     }
     /** @internal */
     _ensureKeyExpression() {
-        const expr = this._keyExpression ?? (this._keyExpression = '');
+        const expr = this._keyExpression ??= '';
         const exprType = typeof expr;
         if (exprType !== 'string') {
             throw new Error(`Expected the i18n key to be a string, but got ${expr} of type ${exprType}`); // TODO use reporter/logger
