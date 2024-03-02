@@ -187,7 +187,7 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     }
     let AsyncBaseViewModelWithAllHooks = class AsyncBaseViewModelWithAllHooks {
         get ceName() {
-            return this._ceName ?? (this._ceName = CustomElement.getDefinition(this.constructor).name);
+            return this._ceName ??= CustomElement.getDefinition(this.constructor).name;
         }
         constructor(logger, ticks) {
             this.logger = logger;

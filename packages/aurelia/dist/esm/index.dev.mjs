@@ -23,8 +23,8 @@ class Aurelia extends Aurelia$1 {
     static app(config) {
         return new Aurelia().app(config);
     }
-    static enhance(config, parentController) {
-        return new Aurelia().enhance(config, parentController);
+    static enhance(config) {
+        return new Aurelia().enhance(config);
     }
     static register(...params) {
         return new Aurelia().register(...params);

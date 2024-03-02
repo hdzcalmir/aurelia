@@ -32,8 +32,8 @@ class Aurelia extends t {
     static app(e) {
         return (new Aurelia).app(e);
     }
-    static enhance(e, r) {
-        return (new Aurelia).enhance(e, r);
+    static enhance(e) {
+        return (new Aurelia).enhance(e);
     }
     static register(...e) {
         return (new Aurelia).register(...e);

@@ -1,5 +1,5 @@
 import { IContainer } from '@aurelia/kernel';
-import { Aurelia as $Aurelia, IPlatform, IAppRoot, CustomElementType, IHydratedParentController, ICustomElementViewModel } from '@aurelia/runtime-html';
+import { Aurelia as $Aurelia, IPlatform, IAppRoot, CustomElementType, ICustomElementViewModel } from '@aurelia/runtime-html';
 import { BrowserPlatform } from '@aurelia/platform-browser';
 import type { ISinglePageApp, IEnhancementConfig } from '@aurelia/runtime-html';
 export declare const PLATFORM: BrowserPlatform<typeof globalThis>;
@@ -7,10 +7,10 @@ export { IPlatform };
 export declare class Aurelia extends $Aurelia {
     constructor(container?: IContainer);
     static start(root: IAppRoot | undefined): void | Promise<void>;
-    static app(config: ISinglePageApp | CustomElementType): Omit<Aurelia, 'register' | 'app' | 'enhance'>;
-    static enhance<T extends ICustomElementViewModel>(config: IEnhancementConfig<T>, parentController?: IHydratedParentController): ReturnType<$Aurelia['enhance']>;
+    static app(config: ISinglePageApp<object> | CustomElementType): Omit<Aurelia, 'register' | 'app' | 'enhance'>;
+    static enhance<T extends ICustomElementViewModel>(config: IEnhancementConfig<T>): ReturnType<$Aurelia['enhance']>;
     static register(...params: readonly unknown[]): Aurelia;
-    app(config: ISinglePageApp | CustomElementType): Omit<this, 'register' | 'app' | 'enhance'>;
+    app(config: ISinglePageApp<object> | CustomElementType): Omit<this, 'register' | 'app' | 'enhance'>;
 }
 export default Aurelia;
 export { type IFetchInterceptor, IFetchFn, json, HttpClientConfiguration, HttpClient, IHttpClient, } from '@aurelia/fetch-client';

@@ -132,7 +132,7 @@ class Store {
         if (!hasDevTools) {
             throw new Error('Devtools extension is not available');
         }
-        options.name ?? (options.name = 'Aurelia State plugin');
+        options.name ??= 'Aurelia State plugin';
         const devTools = extension.connect(options);
         devTools.init(this._initialState);
         devTools.subscribe((message) => {

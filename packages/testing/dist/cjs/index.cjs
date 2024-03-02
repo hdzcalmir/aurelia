@@ -4576,10 +4576,10 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             this.flush = flush;
         }
         start() {
-            return (w ?? (w = p.app({
+            return (w ??= p.app({
                 host: d,
                 component: y
-            }))).start();
+            })).start();
         }
         tearDown() {
             return stop(true);

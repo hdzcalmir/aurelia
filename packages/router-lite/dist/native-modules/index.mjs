@@ -1918,7 +1918,7 @@ class RouteNode {
         this.oe = 1;
         this.ie = false;
         this.children = [];
-        this.ne ?? (this.ne = n);
+        this.ne ??= n;
     }
     static create(t) {
         const {[L]: e, ...s} = t.params ?? {};
@@ -2398,7 +2398,7 @@ class Router {
         return t;
     }
     get currentTr() {
-        return this.Ee ?? (this.Ee = Transition.J({
+        return this.Ee ??= Transition.J({
             id: 0,
             prevInstructions: this.ye,
             instructions: this.ye,
@@ -2414,7 +2414,7 @@ class Router {
             promise: null,
             guardsResult: true,
             error: void 0
-        }));
+        });
     }
     set currentTr(t) {
         this.Ee = t;
@@ -2794,7 +2794,7 @@ function stringify(t, e, s) {
         e = t.query;
         s = t.fragment;
     }
-    e ?? (e = tt);
+    e ??= tt;
     let n = e.toString();
     n = n === "" ? "" : `?${n}`;
     const r = s != null && s.length > 0 ? `#${encodeURIComponent(s)}` : "";

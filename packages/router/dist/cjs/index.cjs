@@ -4198,8 +4198,8 @@ let l = class BrowserViewerStore {
     }
     async replaceNavigatorState(t, i, e) {
         const s = t.navigations[t.navigationIndex];
-        i ?? (i = s.title);
-        e ?? (e = s.path);
+        i ??= s.title;
+        e ??= s.path;
         const n = this.options.useUrlFragmentHash ? "#/" : "";
         return this.pendingCalls.enqueue((s => {
             const r = this.history;
@@ -4753,7 +4753,7 @@ class Router {
             if (typeof s === "string") {
                 s = s === "" ? [ new RoutingInstruction("") ] : RoutingInstruction.parse(this, s);
             }
-            t.scope ?? (t.scope = this.rootScope.scope);
+            t.scope ??= this.rootScope.scope;
             const r = await t.scope.processInstructions(s, [], t, e);
             return Runner.run(null, (() => {
                 e.finalEndpoint();
@@ -4958,7 +4958,7 @@ class Router {
         }
         i = i ?? {};
         ({instructions: t} = this.applyLoadOptions(t, i));
-        t.forEach((t => t.scope ?? (t.scope = this.rootScope.scope)));
+        t.forEach((t => t.scope ??= this.rootScope.scope));
         const e = arrayUnique(t.map((t => t.scope)));
         for (const i of e) {
             const e = i.matchScope(t, false);
@@ -5081,7 +5081,7 @@ class Router {
             i.parameters = void 0;
         }
         if (typeof i.query === "string" && i.query.length > 0) {
-            i.parameters ?? (i.parameters = {});
+            i.parameters ??= {};
             const t = new URLSearchParams(i.query);
             t.forEach(((t, e) => {
                 e = decodeURIComponent(e);
@@ -5280,7 +5280,7 @@ function getLoadIndicator(t) {
         }
         i = i.parentElement;
     }
-    i ?? (i = t);
+    i ??= t;
     return i;
 }
 

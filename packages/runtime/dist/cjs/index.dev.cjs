@@ -2227,13 +2227,12 @@ class ArrayObserver {
         this.subs.notifyCollection(arr, indexMap);
     }
     getLengthObserver() {
-        return this.lenObs ?? (this.lenObs = new CollectionLengthObserver(this));
+        return this.lenObs ??= new CollectionLengthObserver(this);
     }
     getIndexObserver(index) {
-        var _a;
         // It's unnecessary to destroy/recreate index observer all the time,
         // so just create once, and add/remove instead
-        return (_a = this.indexObservers)[index] ?? (_a[index] = new ArrayIndexObserver(this, index));
+        return this.indexObservers[index] ??= new ArrayIndexObserver(this, index);
     }
 }
 class ArrayIndexObserver {
@@ -2437,7 +2436,7 @@ class SetObserver {
         this.subs.notifyCollection(set, indexMap);
     }
     getLengthObserver() {
-        return this.lenObs ?? (this.lenObs = new CollectionSizeObserver(this));
+        return this.lenObs ??= new CollectionSizeObserver(this);
     }
 }
 subscriberCollection(SetObserver);
@@ -2601,7 +2600,7 @@ class MapObserver {
         subs.notifyCollection(map, indexMap);
     }
     getLengthObserver() {
-        return this.lenObs ?? (this.lenObs = new CollectionSizeObserver(this));
+        return this.lenObs ??= new CollectionSizeObserver(this);
     }
 }
 subscriberCollection(MapObserver);
@@ -5545,8 +5544,7 @@ class Signaler {
         }
     }
     addSignalListener(name, listener) {
-        var _a;
-        ((_a = this.signals)[name] ?? (_a[name] = new Set())).add(listener);
+        (this.signals[name] ??= new Set()).add(listener);
     }
     removeSignalListener(name, listener) {
         this.signals[name]?.delete(listener);

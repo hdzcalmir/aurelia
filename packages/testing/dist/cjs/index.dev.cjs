@@ -8022,7 +8022,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
             this.flush = flush;
         }
         start() {
-            return (app ?? (app = au.app({ host: host, component }))).start();
+            return (app ??= au.app({ host: host, component })).start();
         }
         tearDown() {
             return stop(true);

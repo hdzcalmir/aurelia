@@ -2205,11 +2205,10 @@ class ArrayObserver {
         this.subs.notifyCollection(r, t);
     }
     getLengthObserver() {
-        return this.lenObs ?? (this.lenObs = new CollectionLengthObserver(this));
+        return this.lenObs ??= new CollectionLengthObserver(this);
     }
     getIndexObserver(e) {
-        var t;
-        return (t = this.indexObservers)[e] ?? (t[e] = new ArrayIndexObserver(this, e));
+        return this.indexObservers[e] ??= new ArrayIndexObserver(this, e);
     }
 }
 
@@ -2431,7 +2430,7 @@ class SetObserver {
         this.subs.notifyCollection(r, t);
     }
     getLengthObserver() {
-        return this.lenObs ?? (this.lenObs = new CollectionSizeObserver(this));
+        return this.lenObs ??= new CollectionSizeObserver(this);
     }
 }
 
@@ -2617,7 +2616,7 @@ class MapObserver {
         e.notifyCollection(r, t);
     }
     getLengthObserver() {
-        return this.lenObs ?? (this.lenObs = new CollectionSizeObserver(this));
+        return this.lenObs ??= new CollectionSizeObserver(this);
     }
 }
 
@@ -5337,8 +5336,7 @@ class Signaler {
         }
     }
     addSignalListener(e, t) {
-        var r;
-        ((r = this.signals)[e] ?? (r[e] = new Set)).add(t);
+        (this.signals[e] ??= new Set).add(t);
     }
     removeSignalListener(e, t) {
         this.signals[e]?.delete(t);

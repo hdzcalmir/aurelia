@@ -404,8 +404,7 @@ class EventDelegator {
         this._trackerMaps = createLookup();
     }
     addEventListener(publisher, target, eventName, listener, options) {
-        var _a;
-        const trackerMap = (_a = this._trackerMaps)[eventName] ?? (_a[eventName] = new Map());
+        const trackerMap = this._trackerMaps[eventName] ??= new Map();
         let tracker = trackerMap.get(publisher);
         if (tracker === void 0) {
             trackerMap.set(publisher, tracker = new ListenerTracker(publisher, eventName, options));

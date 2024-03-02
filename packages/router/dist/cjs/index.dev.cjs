@@ -6489,8 +6489,8 @@ let BrowserViewerStore = class BrowserViewerStore {
     async replaceNavigatorState(state, title, path) {
         // const { title, path } = state.currentEntry;
         const lastNavigation = state.navigations[state.navigationIndex];
-        title ?? (title = lastNavigation.title);
-        path ?? (path = lastNavigation.path);
+        title ??= lastNavigation.title;
+        path ??= lastNavigation.path;
         const fragment = this.options.useUrlFragmentHash ? '#/' : '';
         return this.pendingCalls.enqueue((task) => {
             const history = this.history;
@@ -7410,7 +7410,7 @@ class Router {
                     : RoutingInstruction.parse(this, transformedInstruction);
             }
             // The instruction should have a scope so use rootScope if it doesn't
-            navigation.scope ?? (navigation.scope = this.rootScope.scope);
+            navigation.scope ??= this.rootScope.scope;
             // TODO(return): Only use navigation.scope for string and instructions without their own scope
             const allChangedEndpoints = await navigation.scope.processInstructions(transformedInstruction, [], navigation, coordinator);
             // Mark all as top instructions ("children"/next scope instructions are in a property on
@@ -7748,7 +7748,7 @@ class Router {
         // Make sure we have proper routing instructions
         ({ instructions } = this.applyLoadOptions(instructions, options));
         // If no scope is set, use the root scope
-        instructions.forEach((instruction) => instruction.scope ?? (instruction.scope = this.rootScope.scope));
+        instructions.forEach((instruction) => instruction.scope ??= this.rootScope.scope);
         // Get all unique involved scopes.
         const scopes = arrayUnique(instructions.map(instruction => instruction.scope));
         // Go through all the scopes and for each scope...
@@ -7945,7 +7945,7 @@ class Router {
             options.parameters = void 0;
         }
         if (typeof (options.query) === 'string' && options.query.length > 0) {
-            options.parameters ?? (options.parameters = {});
+            options.parameters ??= {};
             const searchParams = new URLSearchParams(options.query);
             searchParams.forEach((value, key) => {
                 key = decodeURIComponent(key);
@@ -8155,7 +8155,7 @@ function getLoadIndicator(element) {
         }
         indicator = indicator.parentElement;
     }
-    indicator ?? (indicator = element);
+    indicator ??= element;
     return indicator;
 }
 /** @internal */ const bmToView = runtimeHtml.BindingMode.toView;

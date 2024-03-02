@@ -508,7 +508,7 @@ class TranslationBinding {
         return false;
     }
     A() {
-        const t = this.M ?? (this.M = "");
+        const t = this.M ??= "";
         const n = typeof t;
         if (n !== "string") {
             throw new Error(`Expected the i18n key to be a string, but got ${t} of type ${n}`);

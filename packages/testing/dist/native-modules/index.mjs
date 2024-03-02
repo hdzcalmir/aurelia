@@ -4574,10 +4574,10 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
             this.flush = flush;
         }
         start() {
-            return (x ?? (x = f.app({
+            return (x ??= f.app({
                 host: c,
                 component: b
-            }))).start();
+            })).start();
         }
         tearDown() {
             return stop(true);

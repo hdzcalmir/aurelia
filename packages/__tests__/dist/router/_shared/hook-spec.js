@@ -81,7 +81,7 @@ function groupByPrefix(list) {
     for (let i = 0; i < list.length; ++i) {
         const item = list[i];
         const prefix = item.slice(0, item.indexOf('.'));
-        (groups[prefix] ?? (groups[prefix] = [])).push(item);
+        (groups[prefix] ??= []).push(item);
     }
     return groups;
 }

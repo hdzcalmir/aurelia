@@ -390,7 +390,7 @@ const errorsMap = {
     [718 /* ErrorNames.compiler_no_spread_tc */]: `Spreading template controller "{{0}}" is not supported.`,
     [767 /* ErrorNames.root_not_found */]: `Aurelia.root was accessed without a valid root.`,
     [768 /* ErrorNames.aurelia_instance_existed_in_container */]: `An instance of Aurelia is already registered with the container or an ancestor of it.`,
-    [769 /* ErrorNames.invalid_platform_impl */]: `Failed to initialize the platform object. The host element's ownerDocument does not have a defaultView`,
+    [769 /* ErrorNames.invalid_platform_impl */]: `Failed to initialize the platform object. The host element's ownerDocument does not have a defaultView, did you create the host from a DOMParser and forget to call adoptNode()?`,
     [770 /* ErrorNames.no_composition_root */]: `Aurelia.start() was called without a composition root`,
     [771 /* ErrorNames.invalid_dispose_call */]: `The aurelia instance must be fully stopped before it can be disposed`,
     [750 /* ErrorNames.not_supported_view_ref_api */]: `view.ref is not supported. If you are migrating from v1, this can be understood as the controller.`,
@@ -561,7 +561,6 @@ const BindingBehavior = objectFreeze({
     define(nameOrDef, Type) {
         const definition = BindingBehaviorDefinition.create(nameOrDef, Type);
         defineMetadata(bbBaseName, definition, definition.Type);
-        defineMetadata(bbBaseName, definition, definition);
         appendResourceKey(Type, bbBaseName);
         return definition.Type;
     },
@@ -907,7 +906,6 @@ const findAttributeControllerFor = (node, name) => {
 const defineAttribute = (nameOrDef, Type) => {
     const definition = CustomAttributeDefinition.create(nameOrDef, Type);
     defineMetadata(caBaseName, definition, definition.Type);
-    defineMetadata(caBaseName, definition, definition);
     appendResourceKey(Type, caBaseName);
     return definition.Type;
 };
@@ -1081,7 +1079,6 @@ const ValueConverter = objectFreeze({
     define(nameOrDef, Type) {
         const definition = ValueConverterDefinition.create(nameOrDef, Type);
         defineMetadata(vcBaseName, definition, definition.Type);
-        defineMetadata(vcBaseName, definition, definition);
         appendResourceKey(Type, vcBaseName);
         return definition.Type;
     },
@@ -1197,7 +1194,7 @@ function evaluatorGetConverter(name) {
     if (resourceLookup == null) {
         resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
     }
-    return resourceLookup[key] ?? (resourceLookup[key] = this.l.get(resource(key)));
+    return resourceLookup[key] ??= this.l.get(resource(key));
 }
 function evaluatorGetBehavior(name) {
     const key = BindingBehavior.keyFrom(name);
@@ -1205,7 +1202,7 @@ function evaluatorGetBehavior(name) {
     if (resourceLookup == null) {
         resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
     }
-    return resourceLookup[key] ?? (resourceLookup[key] = this.l.get(resource(key)));
+    return resourceLookup[key] ??= this.l.get(resource(key));
 }
 function flushItem(item, _, items) {
     items.delete(item);
@@ -1937,7 +1934,7 @@ class PropertyBinding {
             this.updateTarget(astEvaluate(this.ast, this._scope, this, shouldConnect ? this : null));
         }
         if ($mode & fromView) {
-            targetObserver.subscribe(this._targetSubscriber ?? (this._targetSubscriber = new BindingTargetSubscriber(this, this.l.get(IFlushQueue))));
+            targetObserver.subscribe(this._targetSubscriber ??= new BindingTargetSubscriber(this, this.l.get(IFlushQueue)));
             if (!shouldConnect) {
                 this.updateSource(targetObserver.getValue(this.target, this.targetProperty));
             }
@@ -3358,10 +3355,10 @@ const noAuSlotProvider = new InstanceProvider(slotInfoProviderName, new AuSlotsI
 const IRendering = /*@__PURE__*/ createInterface('IRendering', x => x.singleton(Rendering));
 class Rendering {
     get renderers() {
-        return this._renderers ?? (this._renderers = this._ctn.getAll(IRenderer, false).reduce((all, r) => {
+        return this._renderers ??= this._ctn.getAll(IRenderer, false).reduce((all, r) => {
             all[r.target] = r;
             return all;
-        }, createLookup()));
+        }, createLookup());
     }
     constructor() {
         /** @internal */
@@ -4071,7 +4068,18 @@ class Controller {
         if (controllerLookup.has(viewModel)) {
             return controllerLookup.get(viewModel);
         }
-        definition = definition ?? getElementDefinition(viewModel.constructor);
+        {
+            if (definition == null) {
+                try {
+                    definition = getElementDefinition(viewModel.constructor);
+                }
+                catch (ex) {
+                    // eslint-disable-next-line no-console
+                    console.error(`[DEV:aurelia] Custom element definition not found for creating a controller with host: <${host.nodeName} /> and component ${JSON.stringify(viewModel)}`);
+                    throw ex;
+                }
+            }
+        }
         const controller = new Controller(
         /* container      */ ctn, 
         /* vmKind         */ vmkCe, 
@@ -4318,7 +4326,7 @@ class Controller {
         this.parent = parent;
         if (this.debug && !this._fullyNamed) {
             this._fullyNamed = true;
-            (this.logger ?? (this.logger = this.container.get(ILogger).root.scopeTo(this.name))).trace(`activate()`);
+            (this.logger ??= this.container.get(ILogger).root.scopeTo(this.name)).trace(`activate()`);
         }
         switch (this.vmKind) {
             case vmkCe:
@@ -5136,8 +5144,7 @@ function getRef(node, name) {
     return node.$au?.[name] ?? null;
 }
 function setRef(node, name, controller) {
-    var _a;
-    ((_a = node).$au ?? (_a.$au = new Refs()))[name] = controller;
+    (node.$au ??= new Refs())[name] = controller;
 }
 const INode = /*@__PURE__*/ createInterface('INode');
 const IEventTarget = /*@__PURE__*/ createInterface('IEventTarget', x => x.cachedCallback(handler => {
@@ -5543,7 +5550,6 @@ const annotateElementMetadata = (Type, prop, value) => {
 const defineElement = (nameOrDef, Type) => {
     const definition = CustomElementDefinition.create(nameOrDef, Type);
     defineMetadata(elementBaseName, definition, definition.Type);
-    defineMetadata(elementBaseName, definition, definition);
     appendResourceKey(definition.Type, elementBaseName);
     return definition.Type;
 };
@@ -5711,20 +5717,22 @@ function capture(targetOrFilter) {
 
 const IAppRoot = /*@__PURE__*/ createInterface('IAppRoot');
 class AppRoot {
-    constructor(config, platform, container, rootProvider) {
+    get controller() {
+        return this._controller;
+    }
+    constructor(config, container, rootProvider, enhance) {
         this.config = config;
-        this.platform = platform;
         this.container = container;
         /** @internal */
         this._hydratePromise = void 0;
-        this.host = config.host;
+        const host = this.host = config.host;
         rootProvider.prepare(this);
-        registerHostNode(container, platform, config.host);
+        registerHostNode(container, this.platform = this._createPlatform(container, host), host);
         this._hydratePromise = onResolve(this._runAppTasks('creating'), () => {
+            const childCtn = enhance ? container : container.createChild();
             const component = config.component;
-            const childCtn = container.createChild();
             let instance;
-            if (isElementType(component)) {
+            if (isFunction(component)) {
                 instance = childCtn.invoke(component);
                 instanceRegistration(component, instance);
             }
@@ -5732,7 +5740,12 @@ class AppRoot {
                 instance = config.component;
             }
             const hydrationInst = { hydrate: false, projections: null };
-            const controller = (this.controller = Controller.$el(childCtn, instance, this.host, hydrationInst));
+            const definition = enhance
+                ? CustomElementDefinition.create({ name: generateElementName(), template: this.host, enhance: true })
+                // leave the work of figuring out the definition to the controller
+                // there's proper error messages in case of failure inside the $el() call
+                : void 0;
+            const controller = (this._controller = Controller.$el(childCtn, instance, host, hydrationInst, definition));
             controller._hydrateCustomElement(hydrationInst, /* root does not have hydration context */ null);
             return onResolve(this._runAppTasks('hydrating'), () => {
                 controller._hydrate(null);
@@ -5746,7 +5759,7 @@ class AppRoot {
     activate() {
         return onResolve(this._hydratePromise, () => {
             return onResolve(this._runAppTasks('activating'), () => {
-                return onResolve(this.controller.activate(this.controller, null, void 0), () => {
+                return onResolve(this._controller.activate(this._controller, null, void 0), () => {
                     return this._runAppTasks('activated');
                 });
             });
@@ -5754,7 +5767,7 @@ class AppRoot {
     }
     deactivate() {
         return onResolve(this._runAppTasks('deactivating'), () => {
-            return onResolve(this.controller.deactivate(this.controller, null), () => {
+            return onResolve(this._controller.deactivate(this._controller, null), () => {
                 return this._runAppTasks('deactivated');
             });
         });
@@ -5768,8 +5781,23 @@ class AppRoot {
             return results;
         }, []));
     }
+    /** @internal */
+    _createPlatform(container, host) {
+        let p;
+        if (!container.has(IPlatform, false)) {
+            if (host.ownerDocument.defaultView === null) {
+                throw createMappedError(769 /* ErrorNames.invalid_platform_impl */);
+            }
+            p = new BrowserPlatform(host.ownerDocument.defaultView);
+            container.register(instanceRegistration(IPlatform, p));
+        }
+        else {
+            p = container.get(IPlatform);
+        }
+        return p;
+    }
     dispose() {
-        this.controller?.dispose();
+        this._controller?.dispose();
     }
 }
 
@@ -5819,50 +5847,21 @@ class Aurelia {
         return this;
     }
     app(config) {
-        this.next = new AppRoot(config, this._initPlatform(config.host), this.container, this._rootProvider);
+        this.next = new AppRoot(config, this.container, this._rootProvider);
         return this;
     }
     /**
      * @param parentController - The owning controller of the view created by this enhance call
      */
-    enhance(config, parentController) {
-        const ctn = config.container ?? this.container.createChild();
-        const host = config.host;
-        const p = this._initPlatform(host);
-        const comp = config.component;
-        let bc;
-        if (isFunction(comp)) {
-            registerHostNode(ctn, p, host);
-            bc = ctn.invoke(comp);
-        }
-        else {
-            bc = comp;
-        }
-        registerResolver(ctn, IEventTarget, new InstanceProvider('IEventTarget', host));
-        parentController = parentController ?? null;
-        const view = Controller.$el(ctn, bc, host, null, CustomElementDefinition.create({ name: generateElementName(), template: host, enhance: true }));
-        return onResolve(view.activate(view, parentController), () => view);
+    enhance(config) {
+        const appRoot = new AppRoot({ host: config.host, component: config.component }, config.container ?? this.container.createChild(), new InstanceProvider('IAppRoot'), true);
+        return onResolve(appRoot.activate(), () => appRoot);
     }
     async waitForIdle() {
         const platform = this.root.platform;
         await platform.domWriteQueue.yield();
         await platform.domReadQueue.yield();
         await platform.taskQueue.yield();
-    }
-    /** @internal */
-    _initPlatform(host) {
-        let p;
-        if (!this.container.has(IPlatform, false)) {
-            if (host.ownerDocument.defaultView === null) {
-                throw createMappedError(769 /* ErrorNames.invalid_platform_impl */);
-            }
-            p = new BrowserPlatform(host.ownerDocument.defaultView);
-            this.container.register(instanceRegistration(IPlatform, p));
-        }
-        else {
-            p = this.container.get(IPlatform);
-        }
-        return p;
     }
     start(root = this.next) {
         if (root == null) {
@@ -6474,7 +6473,6 @@ const BindingCommand = objectFreeze({
     define(nameOrDef, Type) {
         const definition = BindingCommandDefinition.create(nameOrDef, Type);
         defineMetadata(cmdBaseName, definition, definition.Type);
-        defineMetadata(cmdBaseName, definition, definition);
         appendResourceKey(Type, cmdBaseName);
         return definition.Type;
     },
@@ -6905,14 +6903,13 @@ class AttrMapper {
      * based on element tagName
      */
     useMapping(config) {
-        var _a;
         let newAttrMapping;
         let targetAttrMapping;
         let tagName;
         let attr;
         for (tagName in config) {
             newAttrMapping = config[tagName];
-            targetAttrMapping = (_a = this._tagAttrMap)[tagName] ?? (_a[tagName] = createLookup());
+            targetAttrMapping = this._tagAttrMap[tagName] ??= createLookup();
             for (attr in newAttrMapping) {
                 if (targetAttrMapping[attr] !== void 0) {
                     throw createError(attr, tagName);
@@ -7002,7 +6999,7 @@ const nsMap = createLookup();
  */
 class AttributeNSAccessor {
     static forNs(ns) {
-        return nsMap[ns] ?? (nsMap[ns] = new AttributeNSAccessor(ns));
+        return nsMap[ns] ??= new AttributeNSAccessor(ns);
     }
     constructor(
     /**
@@ -7637,7 +7634,7 @@ class NodeObserverLocator {
         const lookup = this._events;
         let existingMapping;
         if (isString(nodeNameOrConfig)) {
-            existingMapping = lookup[nodeNameOrConfig] ?? (lookup[nodeNameOrConfig] = createLookup());
+            existingMapping = lookup[nodeNameOrConfig] ??= createLookup();
             if (existingMapping[key] == null) {
                 existingMapping[key] = eventsConfig;
             }
@@ -7647,7 +7644,7 @@ class NodeObserverLocator {
         }
         else {
             for (const nodeName in nodeNameOrConfig) {
-                existingMapping = lookup[nodeName] ?? (lookup[nodeName] = createLookup());
+                existingMapping = lookup[nodeName] ??= createLookup();
                 const newMapping = nodeNameOrConfig[nodeName];
                 for (key in newMapping) {
                     if (existingMapping[key] == null) {
@@ -7726,16 +7723,15 @@ class NodeObserverLocator {
         }
     }
     overrideAccessor(tagNameOrOverrides, key) {
-        var _a, _b;
         let existingTagOverride;
         if (isString(tagNameOrOverrides)) {
-            existingTagOverride = (_a = this._overrides)[tagNameOrOverrides] ?? (_a[tagNameOrOverrides] = createLookup());
+            existingTagOverride = this._overrides[tagNameOrOverrides] ??= createLookup();
             existingTagOverride[key] = true;
         }
         else {
             for (const tagName in tagNameOrOverrides) {
                 for (const key of tagNameOrOverrides[tagName]) {
-                    existingTagOverride = (_b = this._overrides)[tagName] ?? (_b[tagName] = createLookup());
+                    existingTagOverride = this._overrides[tagName] ??= createLookup();
                     existingTagOverride[key] = true;
                 }
             }
@@ -8050,7 +8046,7 @@ class CheckedObserver {
     /** @internal */
     _observe() {
         const obj = this._el;
-        (this._valueObserver ?? (this._valueObserver = obj.$observers?.model ?? obj.$observers?.value))?.subscribe(this);
+        (this._valueObserver ??= obj.$observers?.model ?? obj.$observers?.value)?.subscribe(this);
         this._collectionObserver?.unsubscribe(this);
         this._collectionObserver = void 0;
         if (obj.type === 'checkbox') {
@@ -9896,7 +9892,7 @@ let AuSlot = class AuSlot {
             this._hasProjection = true;
             this._slotwatchers = contextContainer.getAll(IAuSlotWatcher, false)?.filter(w => w.slotName === '*' || w.slotName === slotInfo.name) ?? emptyArray;
         }
-        this._hasSlotWatcher = (this._slotwatchers ?? (this._slotwatchers = emptyArray)).length > 0;
+        this._hasSlotWatcher = (this._slotwatchers ??= emptyArray).length > 0;
         this._hdrContext = hdrContext;
         this.view = factory.create().setLocation(this._location = location);
     }
@@ -10526,7 +10522,7 @@ class TemplateCompiler {
         if (definition.needsCompile === false) {
             return definition;
         }
-        compilationInstruction ?? (compilationInstruction = emptyCompilationInstructions);
+        compilationInstruction ??= emptyCompilationInstructions;
         const context = new CompilationContext(partialDefinition, container, compilationInstruction, null, null, void 0);
         const template = isString(definition.template) || !partialDefinition.enhance
             ? context._templateFactory.createTemplate(definition.template)
@@ -10661,7 +10657,7 @@ class TemplateCompiler {
                         attrBindableInstructions = [bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper)];
                     }
                 }
-                (attrInstructions ?? (attrInstructions = [])).push(new HydrateAttributeInstruction(
+                (attrInstructions ??= []).push(new HydrateAttributeInstruction(
                 // todo: def/ def.Type or def.name should be configurable
                 //       example: AOT/runtime can use def.Type, but there are situation
                 //       where instructions need to be serialized, def.name should be used
@@ -10831,7 +10827,7 @@ class TemplateCompiler {
                 el.removeAttribute(attrName);
                 --i;
                 --ii;
-                (attrInstructions ?? (attrInstructions = [])).push(new HydrateAttributeInstruction(
+                (attrInstructions ??= []).push(new HydrateAttributeInstruction(
                 // todo: def/ def.Type or def.name should be configurable
                 //       example: AOT/runtime can use def.Type, but there are situation
                 //       where instructions need to be serialized, def.name should be used
@@ -10971,7 +10967,6 @@ class TemplateCompiler {
     /** @internal */
     // eslint-disable-next-line
     _compileElement(el, context) {
-        var _a, _b, _c, _d;
         // overall, the template compiler does it job by compiling one node,
         // and let that the process of compiling that node point to the next node to be compiled.
         // ----------------------------------------
@@ -11135,7 +11130,7 @@ class TemplateCompiler {
                 commandBuildInfo.attr = attrSyntax;
                 commandBuildInfo.bindable = null;
                 commandBuildInfo.def = null;
-                (plainAttrInstructions ?? (plainAttrInstructions = [])).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
+                (plainAttrInstructions ??= []).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
                 removeAttr();
                 // to next attribute
                 continue;
@@ -11150,7 +11145,7 @@ class TemplateCompiler {
                 if (bindable !== void 0) {
                     if (bindingCommand === null) {
                         expr = exprParser.parse(realAttrValue, etInterpolation);
-                        (elBindableInstructions ?? (elBindableInstructions = [])).push(expr == null
+                        (elBindableInstructions ??= []).push(expr == null
                             ? new SetPropertyInstruction(realAttrValue, bindable.name)
                             : new InterpolationInstruction(expr, bindable.name));
                     }
@@ -11159,7 +11154,7 @@ class TemplateCompiler {
                         commandBuildInfo.attr = attrSyntax;
                         commandBuildInfo.bindable = bindable;
                         commandBuildInfo.def = elDef;
-                        (elBindableInstructions ?? (elBindableInstructions = [])).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
+                        (elBindableInstructions ??= []).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
                     }
                     removeAttr();
                     {
@@ -11224,14 +11219,14 @@ class TemplateCompiler {
                 }
                 removeAttr();
                 if (attrDef.isTemplateController) {
-                    (tcInstructions ?? (tcInstructions = [])).push(new HydrateTemplateController(voidDefinition, 
+                    (tcInstructions ??= []).push(new HydrateTemplateController(voidDefinition, 
                     // todo: def/ def.Type or def.name should be configurable
                     //       example: AOT/runtime can use def.Type, but there are situation
                     //       where instructions need to be serialized, def.name should be used
                     this.resolveResources ? attrDef : attrDef.name, void 0, attrBindableInstructions));
                 }
                 else {
-                    (attrInstructions ?? (attrInstructions = [])).push(new HydrateAttributeInstruction(
+                    (attrInstructions ??= []).push(new HydrateAttributeInstruction(
                     // todo: def/ def.Type or def.name should be configurable
                     //       example: AOT/runtime can use def.Type, but there are situation
                     //       where instructions need to be serialized, def.name should be used
@@ -11250,7 +11245,7 @@ class TemplateCompiler {
                 if (expr != null) {
                     // if it's an interpolation, remove the attribute
                     removeAttr();
-                    (plainAttrInstructions ?? (plainAttrInstructions = [])).push(new InterpolationInstruction(expr, 
+                    (plainAttrInstructions ??= []).push(new InterpolationInstruction(expr, 
                     // if not a bindable, then ensure plain attribute are mapped correctly:
                     // e.g: colspan -> colSpan
                     //      innerhtml -> innerHTML
@@ -11268,7 +11263,7 @@ class TemplateCompiler {
             commandBuildInfo.attr = attrSyntax;
             commandBuildInfo.bindable = null;
             commandBuildInfo.def = null;
-            (plainAttrInstructions ?? (plainAttrInstructions = [])).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
+            (plainAttrInstructions ??= []).push(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper));
             removeAttr();
         }
         resetCommandBuildInfo();
@@ -11412,7 +11407,7 @@ class TemplateCompiler {
                         // ignore all whitespace
                         isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
                         if (!isEmptyTextNode) {
-                            ((_a = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_b = targetSlot || DEFAULT_SLOT_NAME] ?? (_a[_b] = [])).push(child);
+                            ((slotTemplateRecord ??= {})[targetSlot || DEFAULT_SLOT_NAME] ??= []).push(child);
                         }
                         el.removeChild(child);
                     }
@@ -11599,7 +11594,7 @@ class TemplateCompiler {
                         // ignore all whitespace
                         isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
                         if (!isEmptyTextNode) {
-                            ((_c = (slotTemplateRecord ?? (slotTemplateRecord = {})))[_d = targetSlot || DEFAULT_SLOT_NAME] ?? (_c[_d] = [])).push(child);
+                            ((slotTemplateRecord ??= {})[targetSlot || DEFAULT_SLOT_NAME] ??= []).push(child);
                         }
                         el.removeChild(child);
                     }
@@ -11984,8 +11979,7 @@ class CompilationContext {
         this.rows = instructions ?? [];
     }
     _addLocalDep(dep) {
-        var _a;
-        ((_a = this.root).deps ?? (_a.deps = [])).push(dep);
+        (this.root.deps ??= []).push(dep);
         this.root.c.register(dep);
         return dep;
     }
@@ -12042,9 +12036,13 @@ class CompilationContext {
             return null;
         }
         let result = this._commands[name];
+        let commandDef;
         if (result === void 0) {
-            result = this.c.create(BindingCommand, name);
-            if (result === null) {
+            commandDef = this.c.find(BindingCommand, name);
+            if (commandDef != null) {
+                result = this.c.invoke(commandDef.Type);
+            }
+            if (result == null) {
                 throw createMappedError(713 /* ErrorNames.compiler_unknown_binding_command */, name);
             }
             this._commands[name] = result;

@@ -897,47 +897,30 @@ class Container {
     find(kind, name) {
         const key = kind.keyFrom(name);
         let resolver = this.res[key];
-        if (resolver === void 0) {
+        if (resolver == null) {
             resolver = this.root.res[key];
-            if (resolver === void 0) {
+            if (resolver == null) {
                 return null;
             }
-        }
-        if (resolver === null) {
-            return null;
         }
         if (isFunction(resolver.getFactory)) {
             const factory = resolver.getFactory(this);
-            if (factory === null || factory === void 0) {
+            if (factory == null) {
                 return null;
             }
-            const definition = getOwnMetadata(kind.name, factory.Type);
-            if (definition === void 0) {
-                // TODO: we may want to log a warning here, or even throw. This would happen if a dependency is registered with a resource-like key
-                // but does not actually have a definition associated via the type's metadata. That *should* generally not happen.
-                return null;
-            }
-            return definition;
+            return getOwnMetadata(kind.name, factory.Type) ?? null;
         }
         return null;
-    }
-    create(kind, name) {
-        const key = kind.keyFrom(name);
-        let resolver = this.res[key];
-        if (resolver === void 0) {
-            resolver = this.root.res[key];
-            if (resolver === void 0) {
-                return null;
-            }
-            return resolver.resolve(this.root, this) ?? null;
-        }
-        return resolver.resolve(this, this) ?? null;
     }
     dispose() {
         if (this._disposableResolvers.size > 0) {
             this.disposeResolvers();
         }
         this._resolvers.clear();
+        if (this.root === this) {
+            this._factories.clear();
+            this.res = {};
+        }
     }
     /** @internal */
     _jitRegister(keyAsValue, handler) {
@@ -994,7 +977,7 @@ class Factory {
         }
     }
     registerTransformer(transformer) {
-        (this.transformers ?? (this.transformers = [])).push(transformer);
+        (this.transformers ??= []).push(transformer);
     }
 }
 function transformInstance(inst, transform) {
@@ -1570,10 +1553,10 @@ const createNewInstance = (key, handler, requestor) => {
         let factory;
         if (resolver == null) {
             if (hasDefault) {
-                // creating a child as we do not want to pollute the resolver registry
-                // there may be a better way but wasting a container probably isn't the worst
-                factory = createContainer().getResolver(key, true)?.getFactory?.(handler);
+                // creating a new container as we do not want to pollute the resolver registry
+                factory = (newInstanceContainer ??= createContainer()).getResolver(key, true)?.getFactory?.(handler);
             }
+            newInstanceContainer.dispose();
         }
         else {
             factory = resolver.getFactory?.(handler);
@@ -1588,6 +1571,7 @@ const createNewInstance = (key, handler, requestor) => {
     // 3. jit factory, in case of newInstanceOf(SomeClass)
     return handler.getFactory(key).construct(requestor);
 };
+let newInstanceContainer;
 
 /** @internal */
 class Resolver {
