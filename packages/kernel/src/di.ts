@@ -88,7 +88,6 @@ export interface IContainer extends IServiceLocator, IDisposable {
    */
   useResources(container: IContainer): void;
   find<TType extends ResourceType, TDef extends ResourceDefinition>(kind: IResourceKind<TType, TDef>, name: string): TDef | null;
-  create<TType extends ResourceType, TDef extends ResourceDefinition>(kind: IResourceKind<TType, TDef>, name: string): InstanceType<TType> | null;
 }
 
 export class ResolverBuilder<K> {
@@ -749,9 +748,18 @@ const createNewInstance = (key: any, handler: IContainer, requestor: IContainer)
   // 2. if key is an interface
   if (isInterface(key)) {
     const hasDefault = isFunction((key as unknown as IRegistry).register);
-    const resolver = handler.getResolver(key, hasDefault) as IResolver<Constructable<typeof key>>;
-    const factory = resolver?.getFactory?.(handler);
-    // 2.1 and has factory
+    const resolver = handler.getResolver(key, false) as IResolver<Constructable<typeof key>>;
+    let factory: IFactory | null | undefined;
+    if (resolver == null) {
+      if (hasDefault) {
+        // creating a new container as we do not want to pollute the resolver registry
+        factory = (newInstanceContainer ??= createContainer()).getResolver(key, true)?.getFactory?.(handler);
+      }
+      newInstanceContainer.dispose();
+    } else {
+      factory = resolver.getFactory?.(handler);
+    }
+    // 2.1 and has resolvable factory
     if (factory != null) {
       return factory.construct(requestor);
     }
@@ -761,6 +769,8 @@ const createNewInstance = (key: any, handler: IContainer, requestor: IContainer)
   // 3. jit factory, in case of newInstanceOf(SomeClass)
   return handler.getFactory(key).construct(requestor);
 };
+
+let newInstanceContainer: IContainer;
 
 _START_CONST_ENUM();
 /** @internal */

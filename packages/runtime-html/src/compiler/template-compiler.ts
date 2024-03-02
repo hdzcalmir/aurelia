@@ -26,7 +26,7 @@ import { BindableDefinition, PartialBindableDefinition } from '../bindable';
 import { AttrSyntax, IAttributeParser } from '../resources/attribute-pattern';
 import { CustomAttribute } from '../resources/custom-attribute';
 import { CustomElement, CustomElementDefinition, CustomElementType, defineElement, generateElementName, getElementDefinition } from '../resources/custom-element';
-import { BindingCommandInstance, ICommandBuildInfo, ctIgnoreAttr, BindingCommand } from '../resources/binding-command';
+import { BindingCommandInstance, ICommandBuildInfo, ctIgnoreAttr, BindingCommand, BindingCommandDefinition } from '../resources/binding-command';
 import { createLookup, def, etInterpolation, etIsProperty, isString, objectAssign, objectFreeze } from '../utilities';
 import { aliasRegistration, allResources, createInterface, singletonRegistration } from '../utilities-di';
 import { appendManyToTemplate, appendToTemplate, createComment, createElement, createText, insertBefore, insertManyBefore, isElement, isTextNode } from '../utilities-dom';
@@ -92,7 +92,7 @@ export class TemplateCompiler implements ITemplateCompiler {
     this._compileLocalElement(content, context);
     this._compileNode(content, context);
 
-    return CustomElementDefinition.create({
+    const compiledDef = CustomElementDefinition.create({
       ...partialDefinition,
       name: partialDefinition.name || generateElementName(),
       dependencies: (partialDefinition.dependencies ?? emptyArray).concat(context.deps ?? emptyArray),
@@ -104,6 +104,24 @@ export class TemplateCompiler implements ITemplateCompiler {
       hasSlots: context.hasSlot,
       needsCompile: false,
     });
+
+    if (context.deps != null) {
+      // if we have a template like this
+      //
+      // my-app.html
+      // <template as-custom-element="le-1">
+      //  <le-2></le-2>
+      // </template>
+      // <template as-custom-element="le-2">...</template>
+      //
+      // without registering dependencies properly, <le-1> will not see <le-2> as a custom element
+      const allDepsForLocalElements = [compiledDef.Type, ...compiledDef.dependencies, ...context.deps];
+      for (const localElementType of context.deps) {
+        (getElementDefinition(localElementType).dependencies as Key[]).push(...allDepsForLocalElements.filter(d => d !== localElementType));
+      }
+    }
+
+    return compiledDef;
   }
 
   public compileSpread(
@@ -1479,7 +1497,6 @@ export class TemplateCompiler implements ITemplateCompiler {
       throw createMappedError(ErrorNames.compiler_template_only_local_template, elName);
     }
     const localTemplateNames: Set<string> = new Set();
-    const localElTypes: CustomElementType[] = [];
 
     for (const localTemplate of localTemplates) {
       if (localTemplate.parentNode !== root) {
@@ -1527,26 +1544,9 @@ export class TemplateCompiler implements ITemplateCompiler {
       }, {});
       class LocalTemplateType {}
       def(LocalTemplateType, 'name', { value: name });
-      localElTypes.push(LocalTemplateType);
-      context._addDep(defineElement({ name, template: localTemplate, bindables }, LocalTemplateType));
+      context._addLocalDep(defineElement({ name, template: localTemplate, bindables }, LocalTemplateType));
 
       root.removeChild(localTemplate);
-    }
-
-    // if we have a template like this
-    //
-    // my-app.html
-    // <template as-custom-element="le-1">
-    //  <le-2></le-2>
-    // </template>
-    // <template as-custom-element="le-2">...</template>
-    //
-    // eagerly registering depdendencies inside the loop above
-    // will make `<le-1/>` miss `<le-2/>` as its dependency
-
-    const allDeps = [...context.def.dependencies ?? emptyArray, ...localElTypes];
-    for (const Type of localElTypes) {
-      (getElementDefinition(Type).dependencies as Key[]).push(allDeps.filter(d => d !== Type));
     }
   }
 
@@ -1687,7 +1687,7 @@ class CompilationContext {
   public readonly rows: IInstruction[][];
   public readonly localEls: Set<string>;
   public hasSlot: boolean = false;
-  public deps: unknown[] | undefined;
+  public deps: CustomElementType[] | undefined;
 
   /** @internal */
   private readonly c: IContainer;
@@ -1717,9 +1717,10 @@ class CompilationContext {
     this.rows = instructions ?? [];
   }
 
-  public _addDep(dep: unknown) {
+  public _addLocalDep(dep: CustomElementType) {
     (this.root.deps ??= []).push(dep);
     this.root.c.register(dep);
+    return dep;
   }
 
   public _text(text: string) {
@@ -1790,9 +1791,13 @@ class CompilationContext {
       return null;
     }
     let result = this._commands[name];
+    let commandDef: BindingCommandDefinition;
     if (result === void 0) {
-      result = this.c.create(BindingCommand, name) as BindingCommandInstance;
-      if (result === null) {
+      commandDef = this.c.find(BindingCommand, name) as BindingCommandDefinition;
+      if (commandDef != null) {
+        result = this.c.invoke(commandDef.Type);
+      }
+      if (result == null) {
         throw createMappedError(ErrorNames.compiler_unknown_binding_command, name);
       }
       this._commands[name] = result;

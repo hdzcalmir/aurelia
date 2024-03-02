@@ -37,9 +37,15 @@ export {
   Aurelia,
   IAurelia,
   type IEnhancementConfig,
+  /**
+   * @deprecated
+   * Use `ISinglePageAppConfig` instead
+   */
+  type ISinglePageAppConfig as ISinglePageApp,
+  type ISinglePageAppConfig,
 } from './aurelia';
 export {
-  type ISinglePageApp,
+  type IAppRootConfig,
   AppRoot,
   IAppRoot,
 } from './app-root';
@@ -273,15 +279,13 @@ export {
 export {
   AuSlot,
 } from './resources/custom-elements/au-slot';
-export type {
-  DefinitionType,
-} from './resources/resources-shared';
 
 export {
   capture,
   containerless,
   customElement,
   CustomElement,
+  type InjectableToken,
   type CustomElementDecorator,
   type CustomElementKind,
   type CustomElementType,

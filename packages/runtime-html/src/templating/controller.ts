@@ -1,55 +1,55 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import {
-  ILogger,
-  LogLevel,
-  InstanceProvider,
-  optional,
-  onResolveAll,
-  noop,
-  IIndexable,
   AnyFunction,
+  IIndexable,
+  ILogger,
+  InstanceProvider,
+  LogLevel,
+  noop,
   onResolve,
+  onResolveAll,
+  optional,
 } from '@aurelia/kernel';
+import { isObject } from '@aurelia/metadata';
 import {
   AccessScopeExpression,
-  Scope,
-  IObserverLocator,
-  IExpressionParser,
   ICoercionConfiguration,
+  IExpressionParser,
+  IObserverLocator,
+  Scope,
 } from '@aurelia/runtime';
 import { convertToRenderLocation, setRef } from '../dom';
-import { CustomElementDefinition, getElementDefinition, elementBaseName, isElementType, findElementControllerFor } from '../resources/custom-element';
-import { CustomAttributeDefinition, getAttributeDefinition } from '../resources/custom-attribute';
 import { IPlatform } from '../platform';
-import { IShadowDOMGlobalStyles, IShadowDOMStyles } from './styles';
-import { ComputedWatcher, ExpressionWatcher } from './watchers';
+import { CustomAttributeDefinition, getAttributeDefinition } from '../resources/custom-attribute';
+import { CustomElementDefinition, elementBaseName, findElementControllerFor, getElementDefinition, isElementType } from '../resources/custom-element';
+import { etIsProperty, getOwnPropertyNames, isFunction, isPromise, isString, objectFreeze } from '../utilities';
+import { createInterface, optionalResource, registerResolver } from '../utilities-di';
 import { LifecycleHooks, LifecycleHooksEntry } from './lifecycle-hooks';
 import { IRendering } from './rendering';
-import { etIsProperty, getOwnPropertyNames, isFunction, isPromise, isString, objectFreeze } from '../utilities';
-import { isObject } from '@aurelia/metadata';
-import { createInterface, optionalResource, registerResolver } from '../utilities-di';
+import { IShadowDOMGlobalStyles, IShadowDOMStyles } from './styles';
+import { ComputedWatcher, ExpressionWatcher } from './watchers';
 
 import type {
-  IContainer,
-  Writable,
   Constructable,
+  IContainer,
   IDisposable,
   IServiceLocator,
+  Writable,
 } from '@aurelia/kernel';
 import type {
   IBinding,
   IObservable,
   IsBindingBehavior,
 } from '@aurelia/runtime';
+import type { INode, INodeSequence, IRenderLocation } from '../dom';
+import { ErrorNames, createMappedError } from '../errors';
+import type { IInstruction } from '../renderer';
 import type { AttrSyntax } from '../resources/attribute-pattern';
+import type { PartialCustomElementDefinition } from '../resources/custom-element';
+import type { IWatchDefinition, IWatcherCallback } from '../watch';
 import type { IAuSlotProjections } from './controller.projection';
 import type { LifecycleHooksLookup } from './lifecycle-hooks';
-import type { INode, INodeSequence, IRenderLocation } from '../dom';
 import type { IViewFactory } from './view';
-import type { IInstruction } from '../renderer';
-import type { IWatchDefinition, IWatcherCallback } from '../watch';
-import type { PartialCustomElementDefinition } from '../resources/custom-element';
-import { ErrorNames, createMappedError } from '../errors';
 
 export class Controller<C extends IViewModel = IViewModel> implements IController<C> {
 
@@ -210,7 +210,19 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
       return controllerLookup.get(viewModel) as unknown as ICustomElementController<C>;
     }
 
-    definition = definition ?? getElementDefinition(viewModel.constructor as Constructable);
+    if (__DEV__) {
+      if (definition == null) {
+        try {
+          definition = getElementDefinition(viewModel.constructor as Constructable);
+        } catch (ex) {
+          // eslint-disable-next-line no-console
+          console.error(`[DEV:aurelia] Custom element definition not found for creating a controller with host: <${host.nodeName} /> and component ${JSON.stringify(viewModel)}`);
+          throw ex;
+        }
+      }
+    } else {
+      definition = definition ?? getElementDefinition(viewModel.constructor as Constructable);
+    }
 
     const controller = new Controller<C>(
       /* container      */ctn,
@@ -317,7 +329,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
     );
     controller.parent = parentController ?? null;
 
-    controller._hydrateSynthetic(/* context */);
+    controller._hydrateSynthetic();
 
     return controller as unknown as ISyntheticView;
   }
@@ -1371,8 +1383,8 @@ const defaultShadowOptions = {
   mode: 'open' as 'open' | 'closed'
 };
 
-const vmkCe = 'customElement' as const;
-export const vmkCa = 'customAttribute' as const;
+/** @internal */ export const vmkCe = 'customElement' as const;
+/** @internal */ export const vmkCa = 'customAttribute' as const;
 const vmkSynth = 'synthetic' as const;
 export type ViewModelKind = typeof vmkCe | typeof vmkCa | typeof vmkSynth;
 
