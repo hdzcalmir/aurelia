@@ -477,13 +477,13 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         [
           MyElement,
         ],
-        { 'my-element': [`<h4>First Name</h4> <h4>Last Name</h4> <div>John</div> <div>Doe</div> <div>Max</div> <div>Mustermann</div>`, new AuSlotsInfo([])] },
+        { 'my-element': [`<h4>First Name</h4><h4>Last Name</h4> <div>John</div><div>Doe</div> <div>Max</div><div>Mustermann</div>`, new AuSlotsInfo([])] },
         async function ({ app, host, platform }) {
           app.people.push(new Person('Jane', 'Doe', []));
           platform.domWriteQueue.flush();
           assert.html.innerEqual(
             'my-element',
-            `<h4>First Name</h4> <h4>Last Name</h4> <div>John</div> <div>Doe</div> <div>Max</div> <div>Mustermann</div> <div>Jane</div> <div>Doe</div>`,
+            `<h4>First Name</h4><h4>Last Name</h4> <div>John</div><div>Doe</div> <div>Max</div><div>Mustermann</div> <div>Jane</div><div>Doe</div>`,
             'my-element.innerHTML',
             host);
         }
@@ -1079,7 +1079,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
           CollVwr,
           MyElement,
         ],
-        { 'my-element': ['<h4>First Name</h4> <h4>Last Name</h4> <h4>Pets</h4> <div>John</div> <div>Doe</div> <coll-vwr><div>Browny</div><div>Smokey</div></coll-vwr> <div>Max</div> <div>Mustermann</div> <coll-vwr><div>Sea biscuit</div><div>Swift Thunder</div></coll-vwr>', new AuSlotsInfo([])] },
+        { 'my-element': ['<h4>First Name</h4><h4>Last Name</h4><h4>Pets</h4> <div>John</div><div>Doe</div><coll-vwr><div>Browny</div><div>Smokey</div></coll-vwr> <div>Max</div><div>Mustermann</div><coll-vwr><div>Sea biscuit</div><div>Swift Thunder</div></coll-vwr>', new AuSlotsInfo([])] },
       );
 
       yield new TestData(
@@ -1098,7 +1098,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
           MyElement,
         ],
         { 'my-element': [
-          '<h4>First Name</h4> <h4>Last Name</h4> <h4>Pets</h4> <div>John</div> <div>Doe</div> <coll-vwr><ul><li>Browny</li><li>Smokey</li></ul></coll-vwr> <div>Max</div> <div>Mustermann</div> <coll-vwr><ul><li>Sea biscuit</li><li>Swift Thunder</li></ul></coll-vwr>',
+          '<h4>First Name</h4><h4>Last Name</h4><h4>Pets</h4> <div>John</div> <div>Doe</div> <coll-vwr><ul><li>Browny</li><li>Smokey</li></ul></coll-vwr> <div>Max</div> <div>Mustermann</div> <coll-vwr><ul><li>Sea biscuit</li><li>Swift Thunder</li></ul></coll-vwr>',
           new AuSlotsInfo(['content'])
         ]},
       );
@@ -1119,7 +1119,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
           CollVwr,
           MyElement,
         ],
-        { 'my-element': ['<h4>First Name</h4> <h4>Last Name</h4> <h4>Pets</h4> <div>John</div> <div>Doe</div> <coll-vwr><ul><li>Browny</li><li>Smokey</li></ul></coll-vwr> <div>Max</div> <div>Mustermann</div> <coll-vwr><ul><li>Sea biscuit</li><li>Swift Thunder</li></ul></coll-vwr>', new AuSlotsInfo(['content'])] },
+        { 'my-element': ['<h4>First Name</h4><h4>Last Name</h4><h4>Pets</h4> <div>John</div> <div>Doe</div> <coll-vwr><ul><li>Browny</li><li>Smokey</li></ul></coll-vwr> <div>Max</div> <div>Mustermann</div> <coll-vwr><ul><li>Sea biscuit</li><li>Swift Thunder</li></ul></coll-vwr>', new AuSlotsInfo(['content'])] },
       );
 
       yield new TestData(
@@ -1140,7 +1140,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         ],
         {
           'my-element': [
-            '<h4>First Name</h4> <h4>Last Name</h4> <h4>Pets</h4> <div>John</div> <div>Doe</div> <coll-vwr><ul><li>Browny</li><li>Smokey</li></ul></coll-vwr> <div>Max</div> <div>Mustermann</div> <coll-vwr><ul><li>Sea biscuit</li><li>Swift Thunder</li></ul></coll-vwr>',
+            '<h4>First Name</h4><h4>Last Name</h4><h4>Pets</h4> <div>John</div> <div>Doe</div> <coll-vwr><ul><li>Browny</li><li>Smokey</li></ul></coll-vwr> <div>Max</div> <div>Mustermann</div> <coll-vwr><ul><li>Sea biscuit</li><li>Swift Thunder</li></ul></coll-vwr>',
             new AuSlotsInfo(['content'])
           ],
         }
@@ -1156,7 +1156,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
           CollVwr,
           MyElement,
         ],
-        { 'my-element': ['<h4>First Name</h4> <h4>Last Name</h4> <h4>Pets</h4> <div>John</div> <div>Doe</div> <coll-vwr><div>Browny</div><div>Smokey</div></coll-vwr> <div>Max</div> <div>Mustermann</div> <coll-vwr><div>Sea biscuit</div><div>Swift Thunder</div></coll-vwr>', new AuSlotsInfo(['colleslawt'])] },
+        { 'my-element': ['<h4>First Name</h4><h4>Last Name</h4><h4>Pets</h4> <div>John</div><div>Doe</div><coll-vwr><div>Browny</div><div>Smokey</div></coll-vwr> <div>Max</div><div>Mustermann</div><coll-vwr><div>Sea biscuit</div><div>Swift Thunder</div></coll-vwr>', new AuSlotsInfo(['colleslawt'])] },
       );
 
       yield new TestData(
@@ -2107,6 +2107,60 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
 
     assertText('p', 'my-el content: hello');
     assertHtml('p > a', 'hello');
+  });
+
+  describe('with multi layers of repeaters', function () {
+    // au-slot creates a layer of scope
+    // making $parent from the inner repeater not reaching to the outer repeater
+    // but to this au-slot scope layer
+    // doing $parent.$parent will reach to the outer repeater
+    // it could be confusing, but maybe the doc can do a decent job explaining this,
+    // since this intermediate scope layer of au-slot is necessary to support $host
+    it('works with 2 layers of repeaters', function () {
+      const { assertText } = createFixture('<my-el>', class App {}, [
+        CustomElement.define({
+          name: 'my-el',
+          template: `<div repeat.for="i of 1">
+            <my-child-el>
+              <div repeat.for="i of 1">
+                \${$parent.$parent.$index}-\${$index}
+              </div>
+            </my-child-el>
+          </div>`
+        }),
+        CustomElement.define({
+          name: 'my-child-el',
+          template: `<au-slot>`
+        }),
+      ]);
+
+      assertText('0-0', { compact: true });
+    });
+
+    it('works with 3 or more layers of repeaters + au slot', function () {
+      const { assertText } = createFixture('<my-el>', class App {}, [
+        CustomElement.define({
+          name: 'my-el',
+          template: `<div repeat.for="i of 1">
+            <my-child-el>
+              <div repeat.for="i of 1">
+                <my-child-el>
+                  <div repeat.for="i of 1">
+                    \${$parent.$parent.$parent.$parent.$index}-\${$parent.$parent.$index}-\${$index}
+                  </div>
+                </my-child-el>
+              </div>
+            </my-child-el>
+          </div>`
+        }),
+        CustomElement.define({
+          name: 'my-child-el',
+          template: `<au-slot>`
+        }),
+      ]);
+
+      assertText('0-0-0', { compact: true });
+    });
   });
 
   describe('with dependency injection', function () {

@@ -9,6 +9,7 @@ import {
   onResolve,
   onResolveAll,
   optional,
+  optionalResource,
 } from '@aurelia/kernel';
 import { isObject } from '@aurelia/metadata';
 import {
@@ -23,7 +24,7 @@ import { IPlatform } from '../platform';
 import { CustomAttributeDefinition, getAttributeDefinition } from '../resources/custom-attribute';
 import { CustomElementDefinition, elementBaseName, findElementControllerFor, getElementDefinition, isElementType } from '../resources/custom-element';
 import { etIsProperty, getOwnPropertyNames, isFunction, isPromise, isString, objectFreeze } from '../utilities';
-import { createInterface, optionalResource, registerResolver } from '../utilities-di';
+import { createInterface, registerResolver } from '../utilities-di';
 import { LifecycleHooks, LifecycleHooksEntry } from './lifecycle-hooks';
 import { IRendering } from './rendering';
 import { IShadowDOMGlobalStyles, IShadowDOMStyles } from './styles';
@@ -224,6 +225,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
       definition = definition ?? getElementDefinition(viewModel.constructor as Constructable);
     }
 
+    registerResolver(ctn, definition.Type, new InstanceProvider<typeof definition.Type>(definition.key, viewModel, definition.Type));
     const controller = new Controller<C>(
       /* container      */ctn,
       /* vmKind         */vmkCe,
@@ -283,6 +285,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
     }
 
     definition = definition ?? getAttributeDefinition(viewModel.constructor as Constructable);
+    registerResolver(ctn, definition.Type, new InstanceProvider<typeof definition.Type>(definition.key, viewModel, definition.Type));
 
     const controller = new Controller<C>(
       /* own ct         */ctn,
@@ -365,7 +368,8 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
 
     this._lifecycleHooks = LifecycleHooks.resolve(container);
     // Support Recursive Components by adding self to own context
-    definition.register(container);
+    container.register(definition.Type);
+    // definition.register(container);
 
     if (definition.injectable !== null) {
       registerResolver(

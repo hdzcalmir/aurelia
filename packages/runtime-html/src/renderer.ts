@@ -2,11 +2,10 @@ import {
   emptyArray,
   InstanceProvider,
   type IContainer,
-  type Class,
-  type IRegistry,
   type Constructable,
   type IResolver,
   resolve,
+  Registrable,
 } from '@aurelia/kernel';
 import {
   type ExpressionType,
@@ -88,10 +87,8 @@ export const InstructionType = /*@__PURE__*/ objectFreeze({
 });
 export type InstructionType = typeof InstructionType[keyof typeof InstructionType];
 
-export type InstructionTypeName = string;
-
 export interface IInstruction {
-  readonly type: InstructionTypeName;
+  readonly type: string;
 }
 export const IInstruction = /*@__PURE__*/createInterface<IInstruction>('Instruction');
 
@@ -157,13 +154,8 @@ export class MultiAttrInstruction {
   ) {}
 }
 
-export class HydrateElementInstruction {
+export class HydrateElementInstruction<T extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>> {
   public readonly type = hydrateElement;
-
-  /**
-   * A special property that can be used to store <au-slot/> usage information
-   */
-  public auSlot: { name: string; fallback: CustomElementDefinition } | null = null;
 
   public constructor(
     /**
@@ -172,7 +164,6 @@ export class HydrateElementInstruction {
     // in theory, Constructor of resources should be accepted too
     // though it would be unnecessary right now
     public res: string | /* Constructable |  */CustomElementDefinition,
-    public alias: string | undefined,
     /**
      * Bindable instructions for the custom element instance
      */
@@ -189,6 +180,10 @@ export class HydrateElementInstruction {
      * A list of captured attr syntaxes
      */
     public captures: AttrSyntax[] | undefined,
+    /**
+     * Any data associated with this instruction
+     */
+    public readonly data: T,
   ) {
   }
 }
@@ -256,7 +251,6 @@ export class ListenerBindingInstruction {
   public constructor(
     public from: string | IsBindingBehavior,
     public to: string,
-    public preventDefault: boolean,
     public capture: boolean,
     public modifier: string | null,
   ) {}
@@ -376,12 +370,8 @@ export interface ICompliationInstruction {
   projections: IAuSlotProjections | null;
 }
 
-export interface IInstructionTypeClassifier<TType extends string = string> {
+export interface IRenderer<TType extends string = string> {
   target: TType;
-}
-export interface IRenderer<
-  TType extends InstructionTypeName = InstructionTypeName
-> extends IInstructionTypeClassifier<TType> {
   render(
     /**
      * The controller that is current invoking this renderer
@@ -397,21 +387,15 @@ export interface IRenderer<
 
 export const IRenderer = /*@__PURE__*/createInterface<IRenderer>('IRenderer');
 
-type DecoratableInstructionRenderer<TType extends string, TProto, TClass> = Class<TProto & Partial<IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>>, TClass> & Partial<IRegistry>;
-type DecoratedInstructionRenderer<TType extends string, TProto, TClass> =  Class<TProto & IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>, TClass> & IRegistry;
-
-type InstructionRendererDecorator<TType extends string> = <TProto, TClass>(target: DecoratableInstructionRenderer<TType, TProto, TClass>) => DecoratedInstructionRenderer<TType, TProto, TClass>;
-
-export function renderer<TType extends string>(targetType: TType): InstructionRendererDecorator<TType> {
-  return function decorator<TProto, TClass>(target: DecoratableInstructionRenderer<TType, TProto, TClass>): DecoratedInstructionRenderer<TType, TProto, TClass> {
-    target.register = function (container: IContainer): void {
-      singletonRegistration(IRenderer, this).register(container);
-    };
+export function renderer<TType extends string, T extends Constructable<IRenderer<TType>>>(targetType: TType): (target: T) => T {
+  return function decorator(target) {
     def(target.prototype, 'target', {
       configurable: true,
-      get: function () { return targetType; }
+      get() { return targetType; }
     });
-    return target as DecoratedInstructionRenderer<TType, TProto, TClass>;
+    return Registrable.define(target, function (this: typeof target, container: IContainer): void {
+      singletonRegistration(IRenderer, this).register(container);
+    });
   };
 }
 
@@ -492,7 +476,6 @@ export class CustomElementRenderer implements IRenderer {
   ): void {
     /* eslint-disable prefer-const */
     let def: CustomElementDefinition | null;
-    let Ctor: Constructable<ICustomElementViewModel>;
     let component: ICustomElementViewModel;
     let childCtrl: ICustomElementController;
     const res = instruction.res;
@@ -500,7 +483,7 @@ export class CustomElementRenderer implements IRenderer {
     const ctxContainer = renderingCtrl.container;
     switch (typeof res) {
       case 'string':
-        def = ctxContainer.find(CustomElement, res);
+        def = CustomElement.find(ctxContainer, res);
         if (def == null) {
           throw createMappedError(ErrorNames.element_res_not_found, instruction, renderingCtrl);
         }
@@ -525,9 +508,7 @@ export class CustomElementRenderer implements IRenderer {
       /* location         */location,
       /* SlotsInfo      */projections == null ? void 0 : new AuSlotsInfo(objectKeys(projections)),
     );
-    Ctor = def.Type;
-    component = container.invoke(Ctor);
-    registerResolver(container, Ctor, new InstanceProvider<typeof Ctor>(def.key, component));
+    component = container.invoke(def.Type);
     childCtrl = Controller.$el(
       /* own container       */container,
       /* viewModel           */component,
@@ -578,7 +559,7 @@ export class CustomAttributeRenderer implements IRenderer {
     let def: CustomAttributeDefinition | null;
     switch (typeof instruction.res) {
       case 'string':
-        def = ctxContainer.find(CustomAttribute, instruction.res);
+        def = CustomAttribute.find(ctxContainer, instruction.res);
         if (def == null) {
           throw createMappedError(ErrorNames.attribute_res_not_found, instruction, renderingCtrl);
         }
@@ -647,7 +628,7 @@ export class TemplateControllerRenderer implements IRenderer {
     let def: CustomAttributeDefinition | null;
     switch (typeof instruction.res) {
       case 'string':
-        def = ctxContainer.find(CustomAttribute, instruction.res);
+        def = CustomAttribute.find(ctxContainer, instruction.res);
         if (def == null) {
           throw createMappedError(ErrorNames.attribute_tc_res_not_found, instruction, renderingCtrl);
         }
@@ -662,7 +643,16 @@ export class TemplateControllerRenderer implements IRenderer {
       default:
         def = instruction.res;
     }
-    const viewFactory = this._rendering.getViewFactory(instruction.def, ctxContainer);
+    // const viewFactory = this._rendering.getViewFactory(
+    //   instruction.def,
+    //   ctxContainer
+    // );
+    const viewFactory = this._rendering.getViewFactory(
+      instruction.def,
+      def.containerStrategy === 'new'
+        ? ctxContainer.createChild({ inheritParentResources: true })
+        : ctxContainer
+    );
     const renderLocation = convertToRenderLocation(target);
     const results = invokeAttribute(
       /* platform         */platform,
@@ -854,6 +844,19 @@ export class TextBindingRenderer implements IRenderer {
   }
 }
 
+/**
+ * An interface describing configuration for listener bindings
+ */
+export interface IListenerBindingOptions {
+  /**
+   * Indicate whether listener should by default call preventDefault on all the events
+   */
+  prevent: boolean;
+}
+export const IListenerBindingOptions = createInterface<IListenerBindingOptions>('IListenerBindingOptions', x => x.instance({
+  prevent: false,
+}));
+
 @renderer(listenerBinding)
 /** @internal */
 export class ListenerBindingRenderer implements IRenderer {
@@ -861,6 +864,8 @@ export class ListenerBindingRenderer implements IRenderer {
 
   /** @internal */
   private readonly _modifierHandler = resolve(IEventModifier);
+  /** @internal */
+  private readonly _defaultOptions = resolve(IListenerBindingOptions);
 
   public render(
     renderingCtrl: IHydratableController,
@@ -874,7 +879,7 @@ export class ListenerBindingRenderer implements IRenderer {
       ensureExpression(exprParser, instruction.from, etIsFunction),
       target,
       instruction.to,
-      new ListenerBindingOptions(instruction.preventDefault, instruction.capture),
+      new ListenerBindingOptions(this._defaultOptions.prevent, instruction.capture),
       this._modifierHandler.getHandler(instruction.to, instruction.modifier),
     ));
   }

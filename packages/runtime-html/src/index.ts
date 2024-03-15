@@ -62,6 +62,7 @@ export {
   attributePattern,
   type AttributePatternDefinition,
   IAttributePattern,
+  type AttributePatternKind,
   AttributePattern,
   Interpretation,
   ISyntaxInterpreter,
@@ -140,7 +141,6 @@ export {
 
 export {
   IRenderer,
-  type IInstructionTypeClassifier,
   ITemplateCompiler,
   type ICompliationInstruction,
   renderer,
@@ -165,13 +165,13 @@ export {
   SpreadElementPropBindingInstruction,
 
   isInstruction,
-  type InstructionTypeName,
   IInstruction,
   InstructionType,
 
   PropertyBindingRenderer,
   TextBindingRenderer,
   ListenerBindingRenderer,
+  IListenerBindingOptions,
   LetElementRenderer,
   TemplateControllerRenderer,
   AttributeBindingRenderer,
@@ -291,6 +291,7 @@ export {
   type CustomElementType,
   CustomElementDefinition,
   type PartialCustomElementDefinition,
+  type ProcessContentHook,
   useShadowDOM,
   processContent,
 } from './resources/custom-element';
@@ -342,10 +343,6 @@ export {
   TemplateCompilerHooks,
   templateCompilerHooks,
 } from './compiler/template-compiler';
-
-export {
-  allResources,
-} from './utilities-di';
 
 export {
   type PartialChildrenDefinition,
