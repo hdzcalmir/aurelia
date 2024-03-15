@@ -230,7 +230,7 @@ export declare class DefaultLogger {
     /**
      * The global logger configuration.
      */
-    config?: ILogConfig, factory?: ILogEventFactory, sinks?: readonly ISink[], 
+    config?: ILogConfig, factory?: ILogEventFactory, sinks?: ISink[], 
     /**
      * The scopes that this logger was created for, if any.
      */

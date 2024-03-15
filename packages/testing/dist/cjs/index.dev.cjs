@@ -7834,17 +7834,30 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         }
         return elements[0];
     }
-    function assertText(selector, text) {
-        if (arguments.length === 2) {
-            const el = strictQueryBy(selector);
-            if (el === null) {
-                throw new Error(`No element found for selector "${selector}" to compare text content with "${text}"`);
-            }
-            assert.strictEqual(getVisibleText(el), text);
+    function assertText(selectorOrText, text, options) {
+        let $text;
+        let $options;
+        // assertText('some text content')
+        if (arguments.length === 1) {
+            assert.strictEqual(getVisibleText(host, false), selectorOrText);
+            return;
         }
-        else {
-            assert.strictEqual(getVisibleText(host), selector);
+        // assertText('some selector', void 0/ null);
+        if (text == null) {
+            throw new Error('Invalid null/undefined expected html value');
         }
+        // assertHtml('some html content', { compact: true/false })
+        if (typeof text !== 'string') {
+            $text = selectorOrText;
+            $options = text;
+            assert.strictEqual(getVisibleText(host, $options?.compact), $text);
+            return;
+        }
+        // assertText('selector', 'some html content')
+        // assertText('selector', 'some html content', { compact: true/false })
+        const el = strictQueryBy(selectorOrText, `to compare text content against "${text}`);
+        $options = options;
+        assert.strictEqual(getVisibleText(el, $options?.compact), text);
     }
     function assertTextContain(selector, text) {
         if (arguments.length === 2) {
@@ -7869,7 +7882,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         }
         return actual;
     }
-    function assertHtml(selectorOrHtml, html = selectorOrHtml, options) {
+    function assertHtml(selectorOrHtml, html, options) {
         let $html;
         let $options;
         // assertHtml('some html content')

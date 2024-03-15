@@ -1,5 +1,5 @@
 import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astEvaluate, astAssign, astVisit, astBind, astUnbind, Unparser, IExpressionParser, IObserverLocator, getCollectionObserver, Scope } from '../../../runtime/dist/native-modules/index.mjs';
-import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, BindablesInfo, ExpressionWatcher } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, IListenerBindingOptions, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, BindablesInfo, ExpressionWatcher } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { camelCase, DI, resolve } from '../../../kernel/dist/native-modules/index.mjs';
 
 let defined$1 = false;
@@ -109,14 +109,14 @@ const ensureExpression = (parser, srcOrExpr, expressionType) => {
 };
 /** @internal */ const etIsFunction = 'IsFunction';
 
-const registeredSymbol$1 = Symbol('.call');
+const registeredSymbol = Symbol('.call');
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 const callSyntax = {
     register(container) {
         /* istanbul ignore next */
-        if (!container[registeredSymbol$1]) {
+        if (!container[registeredSymbol]) {
             /* istanbul ignore next */
-            container[registeredSymbol$1] = true;
+            container[registeredSymbol] = true;
             container.register(CallBindingCommand, CallBindingRenderer);
         }
     }
@@ -201,14 +201,23 @@ mixinUseScope(CallBinding);
 mixingBindingLimited(CallBinding, () => 'callSource');
 mixinAstEvaluator(true)(CallBinding);
 
-const registeredSymbol = Symbol('.delegate');
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-const delegateSyntax = {
+const preventDefaultRegisteredContainer = new WeakSet();
+const eventPreventDefaultBehavior = {
+    /* istanbul ignore next */
     register(container) {
-        /* istanbul ignore next */
-        if (!container[registeredSymbol]) {
-            /* istanbul ignore next */
-            container[registeredSymbol] = true;
+        if (preventDefaultRegisteredContainer.has(container)) {
+            return;
+        }
+        preventDefaultRegisteredContainer.add(container);
+        container.get(IListenerBindingOptions).prevent = true;
+    }
+};
+const delegateRegisteredContainer = new WeakSet();
+const delegateSyntax = {
+    /* istanbul ignore next */
+    register(container) {
+        if (!delegateRegisteredContainer.has(container)) {
+            delegateRegisteredContainer.add(container);
             container.register(IEventDelegator, DelegateBindingCommand, ListenerBindingRenderer);
         }
     }
@@ -216,7 +225,7 @@ const delegateSyntax = {
 let DelegateBindingCommand = class DelegateBindingCommand {
     get type() { return 'IgnoreAttr'; }
     build(info, exprParser) {
-        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false);
+        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true);
     }
 };
 DelegateBindingCommand = __decorate([
@@ -618,11 +627,9 @@ const compatRegistration = {
         defineAstMethods();
         defineBindingMethods();
         enableComposeCompat();
-        container.register(PreventFormActionlessSubmit);
-        delegateSyntax.register(container);
-        callSyntax.register(container);
+        container.register(PreventFormActionlessSubmit, eventPreventDefaultBehavior, delegateSyntax, callSyntax);
     }
 };
 
-export { BindingEngine, CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, PreventFormActionlessSubmit, callSyntax, compatRegistration, delegateSyntax, disableComposeCompat, enableComposeCompat };
+export { BindingEngine, CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, PreventFormActionlessSubmit, callSyntax, compatRegistration, delegateSyntax, disableComposeCompat, enableComposeCompat, eventPreventDefaultBehavior };
 //# sourceMappingURL=index.dev.mjs.map

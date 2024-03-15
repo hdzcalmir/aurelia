@@ -9,7 +9,8 @@ function index (contents, sourceMap) {
     return loader.call(this, contents);
 }
 function loader(contents, _preprocess = pluginConventions.preprocess) {
-    this.cacheable && this.cacheable();
+    var _a;
+    (_a = this.cacheable) === null || _a === void 0 ? void 0 : _a.call(this);
     const cb = this.async();
     const options = loaderUtils.getOptions(this);
     const filePath = this.resourcePath;

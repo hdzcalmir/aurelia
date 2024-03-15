@@ -7,7 +7,7 @@ import { RoutingInstruction } from './instructions/routing-instruction';
 import { Viewport } from './endpoints/viewport';
 import { IViewportOptions } from './endpoints/viewport-options';
 import { Step } from './utilities/runner';
-import { Endpoint, IConnectedCustomElement } from './endpoints/endpoint';
+import { Endpoint, EndpointTypeName, IConnectedCustomElement } from './endpoints/endpoint';
 import { EndpointContent, Navigation } from './index';
 import { IContainer } from '@aurelia/kernel';
 import { Parameters } from './instructions/instruction-parameters';
@@ -142,7 +142,7 @@ export declare class RoutingScope {
         matchedInstructions: RoutingInstruction[];
         remainingInstructions: RoutingInstruction[];
     };
-    addEndpoint(type: string, name: string, connectedCE: IConnectedCustomElement | null, options?: IViewportOptions | IViewportScopeOptions): Viewport | ViewportScope;
+    addEndpoint(type: EndpointTypeName, name: string, connectedCE: IConnectedCustomElement | null, options?: IViewportOptions | IViewportScopeOptions): Viewport | ViewportScope;
     removeEndpoint(step: Step | null, endpoint: Endpoint, connectedCE: IConnectedCustomElement | null): boolean;
     addChild(scope: RoutingScope): void;
     removeChild(scope: RoutingScope): void;

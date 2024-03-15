@@ -78,7 +78,7 @@ export declare class ViewportCustomElement implements ICustomElementViewModel {
     private isBound;
     private readonly router;
     readonly element: HTMLElement;
-    container: IContainer;
+    readonly container: IContainer;
     private readonly ea;
     readonly parentViewport: ViewportCustomElement | null;
     private readonly instruction;

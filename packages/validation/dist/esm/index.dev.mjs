@@ -4,6 +4,7 @@ import * as AST from '@aurelia/runtime';
 import { Scope, astEvaluate, PrimitiveLiteralExpression, IExpressionParser } from '@aurelia/runtime';
 import { mixinAstEvaluator } from '@aurelia/runtime-html';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const IValidationExpressionHydrator = /*@__PURE__*/ DI.createInterface('IValidationExpressionHydrator');
 
 /******************************************************************************

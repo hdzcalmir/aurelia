@@ -68,7 +68,7 @@ export interface ITypedModuleItem<TisRegistry extends boolean, TisConstructable 
     readonly value: TValue;
     readonly isRegistry: TisRegistry;
     readonly isConstructable: TisConstructable;
-    readonly definitions: readonly ResourceDefinition[];
+    readonly definition: ResourceDefinition | null;
 }
 export interface ITypedModuleItem_Unknown extends ITypedModuleItem<false, false, unknown> {
 }
@@ -84,7 +84,11 @@ export declare class ModuleItem {
     readonly value: unknown;
     readonly isRegistry: boolean;
     readonly isConstructable: boolean;
-    readonly definitions: readonly ResourceDefinition[];
-    constructor(key: string, value: unknown, isRegistry: boolean, isConstructable: boolean, definitions: readonly ResourceDefinition[]);
+    readonly definition: ResourceDefinition | null;
+    constructor(key: string, value: unknown, isRegistry: boolean, isConstructable: boolean, definition: ResourceDefinition | null);
 }
+/**
+ * Iterate through the exports of a module and register aliases for resources respectively
+ */
+export declare const aliasedResourcesRegistry: (mod: IModule, mainKeyAlias: string | null | undefined, aliases?: Record<string, string>) => IRegistry;
 //# sourceMappingURL=module-loader.d.ts.map

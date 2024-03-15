@@ -52,12 +52,12 @@ export declare class RejectedTemplateController implements ICustomAttributeViewM
     dispose(): void;
 }
 export declare class PromiseAttributePattern {
-    'promise.resolve'(name: string, value: string, _parts: string[]): AttrSyntax;
+    'promise.resolve'(name: string, value: string): AttrSyntax;
 }
 export declare class FulfilledAttributePattern {
-    'then'(name: string, value: string, _parts: string[]): AttrSyntax;
+    'then'(name: string, value: string): AttrSyntax;
 }
 export declare class RejectedAttributePattern {
-    'catch'(name: string, value: string, _parts: string[]): AttrSyntax;
+    'catch'(name: string, value: string): AttrSyntax;
 }
 //# sourceMappingURL=promise.d.ts.map

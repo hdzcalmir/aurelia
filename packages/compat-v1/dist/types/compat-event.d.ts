@@ -2,6 +2,9 @@ import { IContainer } from '@aurelia/kernel';
 import { IAstEvaluator, IBinding, IConnectableBinding, IExpressionParser, Scope, type IsBindingBehavior } from '@aurelia/runtime';
 import { BindingCommandInstance, ICommandBuildInfo, IHydratableController, IInstruction, IRenderer, IPlatform } from '@aurelia/runtime-html';
 import type { IDisposable, IServiceLocator } from '@aurelia/kernel';
+export declare const eventPreventDefaultBehavior: {
+    register(container: IContainer): void;
+};
 export declare const delegateSyntax: {
     register(container: IContainer): void;
 };
@@ -50,4 +53,4 @@ export declare class EventDelegator implements IDisposable {
     addEventListener(publisher: EventTarget, target: Node, eventName: string, listener: EventListenerOrEventListenerObject, options?: AddEventListenerOptions): IDisposable;
     dispose(): void;
 }
-//# sourceMappingURL=compat-delegate.d.ts.map
+//# sourceMappingURL=compat-event.d.ts.map

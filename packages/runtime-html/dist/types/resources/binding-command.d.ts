@@ -1,20 +1,19 @@
 import { IExpressionParser } from '@aurelia/runtime';
 import { IAttrMapper } from '../compiler/attribute-mapper';
 import { PropertyBindingInstruction } from '../renderer';
-import type { Constructable, IContainer, IResourceKind, ResourceType, ResourceDefinition, PartialResourceDefinition } from '@aurelia/kernel';
+import type { Constructable, IContainer, ResourceType, ResourceDefinition, PartialResourceDefinition, IServiceLocator } from '@aurelia/kernel';
 import type { IInstruction } from '../renderer';
 import { AttrSyntax, IAttributeParser } from './attribute-pattern';
 import type { BindableDefinition } from '../bindable';
 import type { CustomAttributeDefinition } from './custom-attribute';
 import type { CustomElementDefinition } from './custom-element';
-export declare const ctNone: "None";
-export declare const ctIgnoreAttr: "IgnoreAttr";
+import { type IResourceKind } from './resources-shared';
 /**
  * Characteristics of a binding command.
  * - `None`: The normal process (check custom attribute -> check bindable -> command.build()) should take place.
  * - `IgnoreAttr`: The binding command wants to take over the processing of an attribute. The template compiler keeps the attribute as is in compilation, instead of executing the normal process.
  */
-export type CommandType = typeof ctNone | typeof ctIgnoreAttr;
+export type CommandType = 'None' | 'IgnoreAttr';
 export type PartialBindingCommandDefinition = PartialResourceDefinition<{
     readonly type?: string | null;
 }>;
@@ -36,11 +35,13 @@ export type BindingCommandInstance<T extends {} = {}> = {
     build(info: ICommandBuildInfo, parser: IExpressionParser, mapper: IAttrMapper): IInstruction;
 } & T;
 export type BindingCommandType<T extends Constructable = Constructable> = ResourceType<T, BindingCommandInstance, PartialBindingCommandDefinition>;
-export type BindingCommandKind = IResourceKind<BindingCommandType, BindingCommandDefinition> & {
+export type BindingCommandKind = IResourceKind & {
     define<T extends Constructable>(name: string, Type: T): BindingCommandType<T>;
     define<T extends Constructable>(def: PartialBindingCommandDefinition, Type: T): BindingCommandType<T>;
     define<T extends Constructable>(nameOrDef: string | PartialBindingCommandDefinition, Type: T): BindingCommandType<T>;
     getAnnotation<K extends keyof PartialBindingCommandDefinition>(Type: Constructable, prop: K): PartialBindingCommandDefinition[K];
+    find(container: IContainer, name: string): BindingCommandDefinition | null;
+    get(container: IServiceLocator, name: string): BindingCommandInstance;
 };
 export type BindingCommandDecorator = <T extends Constructable>(Type: T) => BindingCommandType<T>;
 export declare function bindingCommand(name: string): BindingCommandDecorator;
@@ -53,7 +54,7 @@ export declare class BindingCommandDefinition<T extends Constructable = Construc
     readonly type: string | null;
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialBindingCommandDefinition, Type: BindingCommandType<T>): BindingCommandDefinition<T>;
-    register(container: IContainer): void;
+    register(container: IContainer, aliasName?: string | undefined): void;
 }
 export declare const BindingCommand: Readonly<BindingCommandKind>;
 export declare class OneTimeBindingCommand implements BindingCommandInstance {

@@ -1,14 +1,10 @@
 import { Key } from '@aurelia/kernel';
 import { type BindingMode } from '../binding/interfaces-bindings';
-import type { Constructable, IContainer, IResourceKind, ResourceDefinition, PartialResourceDefinition, ResourceType } from '@aurelia/kernel';
+import type { Constructable, IContainer, ResourceDefinition, PartialResourceDefinition, ResourceType } from '@aurelia/kernel';
 import type { BindableDefinition, PartialBindableDefinition } from '../bindable';
 import type { ICustomAttributeViewModel, ICustomAttributeController } from '../templating/controller';
 import type { IWatchDefinition } from '../watch';
-declare module '@aurelia/kernel' {
-    interface IContainer {
-        find<T extends ICustomAttributeViewModel>(kind: typeof CustomAttribute, name: string): CustomAttributeDefinition<Constructable<T>> | null;
-    }
-}
+import { type IResourceKind } from './resources-shared';
 export type PartialCustomAttributeDefinition = PartialResourceDefinition<{
     readonly defaultBindingMode?: BindingMode;
     readonly isTemplateController?: boolean;
@@ -29,9 +25,20 @@ export type PartialCustomAttributeDefinition = PartialResourceDefinition<{
     readonly noMultiBindings?: boolean;
     readonly watches?: IWatchDefinition[];
     readonly dependencies?: readonly Key[];
+    /**
+     * **Only used by template controller custom attributes.**
+     *
+     * Container strategy for the view factory of this template controller.
+     *
+     * By default, the view factory will be reusing the container of the parent view (controller),
+     * as this container has information about the resources registered.
+     *
+     * Specify `'new'` to create a new container for the view factory.
+     */
+    readonly containerStrategy?: 'reuse' | 'new';
 }>;
 export type CustomAttributeType<T extends Constructable = Constructable> = ResourceType<T, ICustomAttributeViewModel, PartialCustomAttributeDefinition>;
-export type CustomAttributeKind = IResourceKind<CustomAttributeType, CustomAttributeDefinition> & {
+export type CustomAttributeKind = IResourceKind & {
     for<C extends ICustomAttributeViewModel = ICustomAttributeViewModel>(node: Node, name: string): ICustomAttributeController<C> | undefined;
     isType<T>(value: T): value is (T extends Constructable ? CustomAttributeType<T> : never);
     define<T extends Constructable>(name: string, Type: T): CustomAttributeType<T>;
@@ -41,6 +48,7 @@ export type CustomAttributeKind = IResourceKind<CustomAttributeType, CustomAttri
     getDefinition<T extends Constructable>(Type: Function): CustomAttributeDefinition<T>;
     annotate<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K, value: PartialCustomAttributeDefinition[K]): void;
     getAnnotation<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K): PartialCustomAttributeDefinition[K];
+    find(c: IContainer, name: string): CustomAttributeDefinition | null;
 };
 export type CustomAttributeDecorator = <T extends Constructable>(Type: T) => CustomAttributeType<T>;
 /**
@@ -68,10 +76,11 @@ export declare class CustomAttributeDefinition<T extends Constructable = Constru
     readonly noMultiBindings: boolean;
     readonly watches: IWatchDefinition[];
     readonly dependencies: Key[];
+    readonly containerStrategy: 'reuse' | 'new';
     get type(): 'attribute';
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialCustomAttributeDefinition, Type: CustomAttributeType<T>): CustomAttributeDefinition<T>;
-    register(container: IContainer): void;
+    register(container: IContainer, aliasName?: string | undefined): void;
     toString(): string;
 }
 export declare const CustomAttribute: Readonly<CustomAttributeKind>;

@@ -3,7 +3,7 @@ import { IRenderer, IHydratableController, AttrSyntax, IPlatform, IAttrMapper, I
 import type { BindingMode, BindingCommandInstance } from '@aurelia/runtime-html';
 export declare const TranslationInstructionType = "tt";
 export declare class TranslationAttributePattern {
-    [key: string]: ((rawName: string, rawValue: string, parts: string[]) => AttrSyntax);
+    [key: string]: ((rawName: string, rawValue: string, parts: readonly string[]) => AttrSyntax);
     static registerAlias(alias: string): void;
 }
 export declare class TranslationBindingInstruction {
@@ -24,7 +24,7 @@ export declare class TranslationBindingRenderer implements IRenderer {
 }
 export declare const TranslationBindInstructionType = "tbt";
 export declare class TranslationBindAttributePattern {
-    [key: string]: ((rawName: string, rawValue: string, parts: string[]) => AttrSyntax);
+    [key: string]: ((rawName: string, rawValue: string, parts: readonly string[]) => AttrSyntax);
     static registerAlias(alias: string): void;
 }
 export declare class TranslationBindBindingInstruction {

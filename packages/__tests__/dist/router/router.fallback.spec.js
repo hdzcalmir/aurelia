@@ -2,7 +2,6 @@ import { IRouter, RouterConfiguration } from '@aurelia/router';
 import { Aurelia, CustomElement } from '@aurelia/runtime-html';
 import { MockBrowserHistoryLocation, TestContext, assert } from '@aurelia/testing';
 describe('router/router.fallback.spec.ts', function () {
-    var _a;
     function getModifiedRouter(container) {
         const router = container.get(IRouter);
         const mockBrowserHistoryLocation = new MockBrowserHistoryLocation();
@@ -66,13 +65,16 @@ describe('router/router.fallback.spec.ts', function () {
     for (const config of configs) {
         for (const fallbackAction of fallbackActions) {
             const names = ['parent', 'child', 'grandchild'];
-            const dependencies = [];
-            for (let i = 0, ii = names.length; i < ii; i++) {
-                const name = names[i];
-                const fallback = i < ii - 1 ? names[i + 1] : null;
-                const viewport = fallback ? `<au-viewport name="${name}" fallback="${fallback}" ${fallbackAction.length ? `fallback-action="${fallbackAction}"` : ''}></au-viewport>` : '';
-                const template = `!${name}\${param ? ":" + param : ""}!${viewport}`;
-                dependencies.push(CustomElement.define({ name, template }, (_a = class {
+            const dependencies = names.map((name, i) => {
+                var _a;
+                const fallback = i < names.length - 1 ? names[i + 1] : null;
+                const viewport = fallback
+                    ? `<au-viewport name="${name}" fallback="${fallback}" ${fallbackAction.length ? `fallback-action="${fallbackAction}"` : ''}></au-viewport>`
+                    : '';
+                return CustomElement.define({
+                    name,
+                    template: `!${name}\${param ? ":" + param : ""}!${viewport}`
+                }, (_a = class {
                         loading(params) {
                             if (params.id !== void 0) {
                                 this.param = params.id;
@@ -80,11 +82,11 @@ describe('router/router.fallback.spec.ts', function () {
                         }
                     },
                     _a.parameters = ['id'],
-                    _a)));
-            }
+                    _a));
+            });
             const App = CustomElement.define({
                 name: 'app',
-                template: `<au-viewport fallback="parent"  ${fallbackAction.length ? `fallback-action="${fallbackAction}"` : ''}></au-viewport>`,
+                template: `<au-viewport fallback="parent"  ${fallbackAction !== '' ? `fallback-action="${fallbackAction}"` : ''}></au-viewport>`,
                 dependencies
             });
             const tests = (fallbackAction === 'abort' || (fallbackAction === '' && config.fallbackAction === 'abort'))
@@ -162,7 +164,14 @@ describe('router/router.fallback.spec.ts', function () {
     }
 });
 const $load = async (path, router, platform) => {
-    await router.load(path);
+    await Promise.race([
+        router.load(path),
+        new Promise((resolve, reject) => {
+            setTimeout(() => {
+                reject(new Error(`Timeout error: failed to load route ${path}.`));
+            }, 1000);
+        })
+    ]);
     platform.domWriteQueue.flush();
 };
 //# sourceMappingURL=router.fallback.spec.js.map

@@ -631,15 +631,10 @@ class RouteConfig {
         const n = this.fallback;
         return typeof n === "function" && !s.CustomElement.isType(n) ? n(t, e, i) : n;
     }
-    register(t) {
-        const e = this.component;
-        if (e == null) return;
-        t.register(e);
-    }
 }
 
 const l = {
-    name: e.Protocol.resource.keyFor("route-configuration"),
+    name: /*@__PURE__*/ e.getResourceKeyFor("route-configuration"),
     isConfigured(e) {
         return t.Metadata.hasOwn(l.name, e);
     },
@@ -684,7 +679,7 @@ function resolveCustomElementDefinition(t, e) {
       case 0:
         {
             if (e == null) throw new Error(getMessage(3551));
-            const t = e.container.find(s.CustomElement, i.value);
+            const t = s.CustomElement.find(e.container, i.value);
             if (t === null) throw new Error(getMessage(3552, i.value, e));
             n = t;
             break;
@@ -1254,7 +1249,7 @@ class ViewportAgent {
         }
         return true;
     }
-    Dt(t, s) {
+    qt(t, s) {
         if (this.Pt === null) {
             this.Pt = t;
         }
@@ -1266,7 +1261,7 @@ class ViewportAgent {
         void e.onResolve(this.Vt, (() => {
             Batch.C((e => {
                 for (const s of this.Tt.children) {
-                    s.context.vpa.Dt(t, e);
+                    s.context.vpa.qt(t, e);
                 }
             })).T((e => {
                 switch (this.bt) {
@@ -1281,7 +1276,7 @@ class ViewportAgent {
                         this.bt = 2048;
                         e._();
                         Batch.C((e => {
-                            this.Nt.Dt(t, this.It, e);
+                            this.Nt.qt(t, this.It, e);
                         })).T((() => {
                             this.bt = 1024;
                             e.N();
@@ -1293,7 +1288,7 @@ class ViewportAgent {
                     return;
 
                   default:
-                    t.qt(new Error(`Unexpected state at canUnload of ${this}`));
+                    t.Dt(new Error(`Unexpected state at canUnload of ${this}`));
                 }
             })).T((() => {
                 s.N();
@@ -2357,16 +2352,16 @@ class Transition {
             const s = t();
             if (s instanceof Promise) {
                 s.then(e).catch((t => {
-                    this.qt(t);
+                    this.Dt(t);
                 }));
             } else {
                 e(s);
             }
         } catch (t) {
-            this.qt(t);
+            this.Dt(t);
         }
     }
-    qt(t) {
+    Dt(t) {
         this.de = t instanceof UnknownRouteError;
         this.reject(this.error = t);
     }
@@ -2565,7 +2560,7 @@ class Router {
             try {
                 this.Qt(h);
             } catch (t) {
-                h.qt(t);
+                h.Dt(t);
             }
         }
         return h.promise.then((t => t)).catch((t => {
@@ -2622,7 +2617,7 @@ class Router {
             const i = mergeDistinct(e, s);
             Batch.C((s => {
                 for (const i of e) {
-                    i.context.vpa.Dt(t, s);
+                    i.context.vpa.qt(t, s);
                 }
             })).T((e => {
                 if (t.guardsResult !== true) {
@@ -2729,7 +2724,7 @@ class Router {
             try {
                 this.Qt(t);
             } catch (e) {
-                t.qt(e);
+                t.Dt(e);
             }
         }));
     }
@@ -2783,7 +2778,7 @@ class ParsedUrl {
             t = t.slice(0, n);
             i = Object.freeze(new URLSearchParams(e));
         }
-        return new ParsedUrl(t, i != null ? i : v, e);
+        return new ParsedUrl(t, i ?? v, e);
     }
 }
 
@@ -3162,8 +3157,8 @@ class ComponentAgent {
         this.Le = (o.canLoad ?? []).map((t => t.instance));
         this.ze = (o.loading ?? []).map((t => t.instance));
         this.Be = (o.canUnload ?? []).map((t => t.instance));
-        this.De = (o.unloading ?? []).map((t => t.instance));
-        this.qe = "canLoad" in t;
+        this.qe = (o.unloading ?? []).map((t => t.instance));
+        this.De = "canLoad" in t;
         this.He = "loading" in t;
         this.Fe = "canUnload" in t;
         this.Ge = "unloading" in t;
@@ -3183,7 +3178,7 @@ class ComponentAgent {
     Jt() {
         this.je.dispose();
     }
-    Dt(t, e, s) {
+    qt(t, e, s) {
         s._();
         let i = Promise.resolve();
         for (const n of this.Be) {
@@ -3241,7 +3236,7 @@ class ComponentAgent {
                 }));
             }))));
         }
-        if (this.qe) {
+        if (this.De) {
             s._();
             n = n.then((() => {
                 if (t.guardsResult !== true) {
@@ -3260,7 +3255,7 @@ class ComponentAgent {
     }
     Gt(t, e, s) {
         s._();
-        for (const i of this.De) {
+        for (const i of this.qe) {
             t.Qt((() => {
                 s._();
                 return i.unloading(this.Me, e, this.Zt);
@@ -3368,7 +3363,6 @@ class RouteContext {
         const l = new e.InstanceProvider("IRouteContext", this);
         h.registerResolver(S, l);
         h.registerResolver(RouteContext, l);
-        h.register(o);
         this.ns = new i.RouteRecognizer;
         if (u.options.useNavigationModel) {
             const t = this.Xe = new NavigationModel([]);
@@ -3491,7 +3485,7 @@ class RouteContext {
     Ft(t, i) {
         this.ss.prepare(t);
         const n = this.container;
-        const r = n.get(i.component.key);
+        const r = n.invoke(i.component.Type);
         const o = this.ts ? void 0 : e.onResolve(resolveRouteConfiguration(r, false, this.config, i, null), (t => this.os(t)));
         return e.onResolve(o, (() => {
             const e = s.Controller.$el(n, r, t.host, null);
@@ -3547,23 +3541,21 @@ class RouteContext {
         }, true);
     }
     et(t) {
-        return this.es.load(t, (s => {
-            const i = s.raw;
+        return this.es.load(t, (e => {
+            const i = e.raw;
             if (typeof i === "function") {
-                const t = e.Protocol.resource.getAll(i).find(isCustomElementDefinition);
-                if (t !== void 0) return t;
+                const t = s.CustomElement.isType(i) ? s.CustomElement.getDefinition(i) : null;
+                if (t != null) return t;
             }
             let n = void 0;
             let r = void 0;
-            for (const t of s.items) {
-                if (t.isConstructable) {
-                    const e = t.definitions.find(isCustomElementDefinition);
-                    if (e !== void 0) {
-                        if (t.key === "default") {
-                            n = e;
-                        } else if (r === void 0) {
-                            r = e;
-                        }
+            for (const t of e.items) {
+                const e = s.CustomElement.isType(t.value) ? t.definition : null;
+                if (e != null) {
+                    if (t.key === "default") {
+                        n = e;
+                    } else if (r === void 0) {
+                        r = e;
                     }
                 }
             }
@@ -3695,10 +3687,6 @@ class RouteContext {
         }
         return t.join("\n");
     }
-}
-
-function isCustomElementDefinition(t) {
-    return s.CustomElement.isType(t.Type);
 }
 
 class $RecognizedRoute {

@@ -581,7 +581,7 @@ const X = "tpt";
 const Z = "t-params.bind";
 
 let tt = class TranslationParametersAttributePattern {
-    [Z](t, n, e) {
+    [Z](t, n) {
         return new p(t, n, "", Z);
     }
 };

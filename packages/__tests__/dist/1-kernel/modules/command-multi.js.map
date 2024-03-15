@@ -1,0 +1,1 @@
+{"version":3,"file":"command-multi.js","sourceRoot":"","sources":["../../../src/1-kernel/modules/command-multi.ts"],"names":[],"mappings":";;;;;;AAAA,OAAO,EAAE,cAAc,EAAE,MAAM,uBAAuB,CAAC;AAGhD,IAAM,GAAG,GAAT,MAAM,GAAG;CAAG,CAAA;AAAN,GAAG;IADf,cAAc,CAAC,KAAK,CAAC;GACT,GAAG,CAAG;;AAGZ,IAAM,IAAI,GAAV,MAAM,IAAI;CAAG,CAAA;AAAP,IAAI;IADhB,cAAc,CAAC,YAAY,CAAC;GAChB,IAAI,CAAG"}

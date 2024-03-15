@@ -233,6 +233,9 @@ describe('3-runtime-html/attribute-pattern.spec.ts', function () {
                     let receivedRawName;
                     let receivedRawValue;
                     let receivedParts;
+                    // disabling ts error since we are ensuring that the class has all the pattern methods
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-expect-error
                     let ThePattern = class ThePattern {
                     };
                     ThePattern = __decorate([

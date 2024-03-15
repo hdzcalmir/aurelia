@@ -4,10 +4,20 @@ export type ResourceType<TUserType extends Constructable = Constructable, TResIn
     readonly aliases?: readonly string[];
 } & TResType & TUserType;
 export type ResourceDefinition<TUserType extends Constructable = Constructable, TResInstance extends {} = {}, TDef extends {} = {}, TResType extends {} = {}, TUserInstance extends InstanceType<TUserType> = InstanceType<TUserType>> = {
+    /**
+     * Unique key to identify the resource.
+     */
+    readonly key: string;
+    /**
+     * A common name for the resource.
+     */
     readonly name: string;
     readonly Type: ResourceType<TUserType, TResInstance, TResType, TUserInstance>;
     readonly aliases?: readonly string[];
-    register(container: IContainer): void;
+    /**
+     * @param aliasName - If provided, the resource will be registered with this alias key.
+     */
+    register(container: IContainer, aliasName?: string): void;
 } & TDef;
 export type PartialResourceDefinition<TDef extends {} = {}> = {
     readonly name: string;
@@ -17,7 +27,11 @@ export interface IResourceKind<TType extends ResourceType, TDef extends Resource
     readonly name: string;
     keyFrom(name: string): string;
 }
-export declare const hasResources: (target: unknown) => target is Constructable;
+export declare const resourceBaseName = "au:resource";
+/**
+ * Builds a resource key from the provided parts.
+ */
+export declare const getResourceKeyFor: (type: string, name?: string, context?: string) => string;
 export declare const Protocol: {
     annotation: Readonly<{
         name: "au:annotation";
@@ -27,15 +41,6 @@ export declare const Protocol: {
         getKeys(target: Constructable): readonly string[];
         isKey: (key: string) => boolean;
         keyFor: (name: string, context?: string) => string;
-    }>;
-    resource: Readonly<{
-        name: "au:resource";
-        appendTo(target: Constructable, key: string): void;
-        has: (target: unknown) => target is Constructable;
-        getAll: (target: Constructable) => readonly ResourceDefinition[];
-        getKeys(target: Constructable): readonly string[];
-        isKey: (key: string) => boolean;
-        keyFor(name: string, context?: string): string;
     }>;
 };
 /**

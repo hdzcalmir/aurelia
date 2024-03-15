@@ -909,20 +909,9 @@ class RouteConfig {
             ? fallback(viewportInstruction, routeNode, context)
             : fallback;
     }
-    register(container) {
-        /**
-         * When an instance of the RouteConfig is created, via the static `_create` and `resolveRouteConfiguration`, the component is always resolved to a custom element.
-         * This makes the process to registering to registering the custom element to the DI.
-         * The component can only be null for redirection configurations and that is ignored here.
-         */
-        const component = this.component;
-        if (component == null)
-            return;
-        container.register(component);
-    }
 }
 const Route = {
-    name: kernel.Protocol.resource.keyFor('route-configuration'),
+    name: /*@__PURE__*/ kernel.getResourceKeyFor('route-configuration'),
     /**
      * Returns `true` if the specified type has any static route configuration (either via static properties or a &#64;route decorator)
      */
@@ -985,7 +974,7 @@ function resolveCustomElementDefinition(routeable, context) {
         case 0 /* NavigationInstructionType.string */: {
             if (context == null)
                 throw new Error(getMessage(3551 /* Events.rtNoCtxStrComponent */));
-            const component = context.container.find(runtimeHtml.CustomElement, instruction.value);
+            const component = runtimeHtml.CustomElement.find(context.container, instruction.value);
             if (component === null)
                 throw new Error(getMessage(3552 /* Events.rtNoComponent */, instruction.value, context));
             ceDef = component;
@@ -3461,7 +3450,7 @@ class ParsedUrl {
             value = value.slice(0, queryStart);
             queryParams = Object.freeze(new URLSearchParams(queryString));
         }
-        return new ParsedUrl(value, queryParams != null ? queryParams : emptyQuery, fragment);
+        return new ParsedUrl(value, queryParams ?? emptyQuery, fragment);
     }
 }
 function stringify(pathOrParsedUrl, query, fragment) {
@@ -4218,7 +4207,6 @@ class RouteContext {
         const ctxProvider = new kernel.InstanceProvider('IRouteContext', this);
         container.registerResolver(IRouteContext, ctxProvider);
         container.registerResolver(RouteContext, ctxProvider);
-        container.register(config);
         this._recognizer = new routeRecognizer.RouteRecognizer();
         if (_router.options.useNavigationModel) {
             const navModel = this._navigationModel = new NavigationModel([]);
@@ -4379,7 +4367,7 @@ class RouteContext {
         trace(this._logger, 3159 /* Events.rcCreateCa */, routeNode);
         this._hostControllerProvider.prepare(hostController);
         const container = this.container;
-        const componentInstance = container.get(routeNode.component.key);
+        const componentInstance = container.invoke(routeNode.component.Type);
         // this is the point where we can load the delayed (non-static) child route configuration by calling the getRouteConfig
         const task = this._childRoutesConfigured
             ? void 0
@@ -4457,22 +4445,24 @@ class RouteContext {
             // when we have import('./some-path').then(x => x.somethingSpecific)
             const raw = m.raw;
             if (typeof raw === 'function') {
-                const def = kernel.Protocol.resource.getAll(raw).find(isCustomElementDefinition);
-                if (def !== void 0)
+                const def = runtimeHtml.CustomElement.isType(raw) ? runtimeHtml.CustomElement.getDefinition(raw) : null;
+                if (def != null)
                     return def;
             }
             let defaultExport = void 0;
             let firstNonDefaultExport = void 0;
             for (const item of m.items) {
-                if (item.isConstructable) {
-                    const def = item.definitions.find(isCustomElementDefinition);
-                    if (def !== void 0) {
-                        if (item.key === 'default') {
-                            defaultExport = def;
-                        }
-                        else if (firstNonDefaultExport === void 0) {
-                            firstNonDefaultExport = def;
-                        }
+                const def = (runtimeHtml.CustomElement.isType(item.value)
+                    // static resource API may require to change this item.definition
+                    // into CustomElement.getDefinition(item.value) or CustomElement.getOrCreateDefinition(item.value)
+                    ? item.definition
+                    : null);
+                if (def != null) {
+                    if (item.key === 'default') {
+                        defaultExport = def;
+                    }
+                    else if (firstNonDefaultExport === void 0) {
+                        firstNonDefaultExport = def;
                     }
                 }
             }
@@ -4621,9 +4611,6 @@ class RouteContext {
         }
         return tree.join('\n');
     }
-}
-function isCustomElementDefinition(value) {
-    return runtimeHtml.CustomElement.isType(value.Type);
 }
 class $RecognizedRoute {
     constructor(route, residue) {

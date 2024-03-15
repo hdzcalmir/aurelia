@@ -2,7 +2,9 @@ import { preprocess } from '@aurelia/plugin-conventions';
 import { createFilter } from '@rollup/pluginutils';
 import { resolve, dirname } from 'path';
 import { promises } from 'fs';
+import { createRequire } from 'module';
 
+const require = createRequire(import.meta.url);
 function au(options = {}) {
     const { include = 'src/**/*.{ts,js,html}', exclude, pre = true, useDev, ...additionalOptions } = options;
     const filter = createFilter(include, exclude);
@@ -12,7 +14,7 @@ function au(options = {}) {
         config(config) {
             var _a, _b;
             var _c;
-            const isDev = useDev || (!useDev && config.mode !== 'production');
+            const isDev = useDev === true || (useDev == null && config.mode !== 'production');
             if (!isDev) {
                 return;
             }
@@ -94,7 +96,8 @@ function au(options = {}) {
 }
 function getHmrCode(className, moduleNames = '') {
     const moduleText = 'import.meta';
-    const code = `import { Metadata as $$M } from '@aurelia/metadata';
+    const code = `
+import { Metadata as $$M } from '@aurelia/metadata';
 import {
   Controller as $$C,
   CustomElement as $$CE,
