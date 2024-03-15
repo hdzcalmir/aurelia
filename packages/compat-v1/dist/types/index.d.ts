@@ -8,7 +8,7 @@ import { PreventFormActionlessSubmit } from './compat-form';
 export declare const compatRegistration: IRegistry;
 export { PreventFormActionlessSubmit, };
 export { CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, callSyntax, } from './compat-call';
-export { DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, delegateSyntax, } from './compat-delegate';
+export { DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, delegateSyntax, eventPreventDefaultBehavior, } from './compat-event';
 export { BindingEngine, } from './compat-binding-engine';
 export { enableComposeCompat, disableComposeCompat, } from './compat-au-compose';
 //# sourceMappingURL=index.d.ts.map

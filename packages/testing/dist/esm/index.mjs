@@ -4402,16 +4402,25 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         }
         return n[0];
     }
-    function assertText(e, t) {
-        if (arguments.length === 2) {
-            const n = strictQueryBy(e);
-            if (n === null) {
-                throw new Error(`No element found for selector "${e}" to compare text content with "${t}"`);
-            }
-            He.strictEqual(getVisibleText(n), t);
-        } else {
-            He.strictEqual(getVisibleText(c), e);
+    function assertText(e, t, n) {
+        let i;
+        let r;
+        if (arguments.length === 1) {
+            He.strictEqual(getVisibleText(c, false), e);
+            return;
         }
+        if (t == null) {
+            throw new Error("Invalid null/undefined expected html value");
+        }
+        if (typeof t !== "string") {
+            i = e;
+            r = t;
+            He.strictEqual(getVisibleText(c, r?.compact), i);
+            return;
+        }
+        const a = strictQueryBy(e, `to compare text content against "${t}`);
+        r = n;
+        He.strictEqual(getVisibleText(a, r?.compact), t);
     }
     function assertTextContain(e, t) {
         if (arguments.length === 2) {
@@ -4431,7 +4440,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         }
         return n;
     }
-    function assertHtml(e, t = e, n) {
+    function assertHtml(e, t, n) {
         let i;
         let r;
         if (arguments.length === 1) {

@@ -10,8 +10,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { resolve } from '@aurelia/kernel';
-import { alias, bindable, customAttribute, INode, CustomAttribute, IAurelia } from '@aurelia/runtime-html';
+import { DI, IContainer, Registration, resolve } from '@aurelia/kernel';
+import { alias, bindable, customAttribute, INode, CustomAttribute, IAurelia, templateController, IViewFactory, IRenderLocation, customElement } from '@aurelia/runtime-html';
 import { assert, eachCartesianJoin, createFixture } from '@aurelia/testing';
 describe('3-runtime-html/custom-attributes.spec.ts', function () {
     // custom elements
@@ -824,6 +824,89 @@ describe('3-runtime-html/custom-attributes.spec.ts', function () {
             assert.strictEqual(component.value, 'hello world');
             component.attr._m[1].v = 'world+';
             assert.strictEqual(component.value, 'hello world+');
+        });
+    });
+    describe('template controller', function () {
+        const IExample = DI.createInterface("IExample");
+        let ExampleTemplateController = class ExampleTemplateController {
+            constructor() {
+                this.viewFactory = resolve(IViewFactory);
+                this.location = resolve(IRenderLocation);
+            }
+            bound() {
+                this.viewFactory.container.register(Registration.instance(IExample, this.value));
+                const view = this.viewFactory.create();
+                view.setLocation(this.location);
+                return view.activate(view, this.$controller, this.$controller.scope);
+            }
+        };
+        __decorate([
+            bindable,
+            __metadata("design:type", Object)
+        ], ExampleTemplateController.prototype, "value", void 0);
+        ExampleTemplateController = __decorate([
+            templateController({
+                name: 'example',
+                containerStrategy: 'new'
+            })
+        ], ExampleTemplateController);
+        it('creates new container for factory when containerStrategy is "new"', function () {
+            let MyAttr = class MyAttr {
+                constructor() {
+                    this.v = resolve(IExample);
+                    this.host = resolve(INode);
+                }
+                bound() {
+                    this.host.textContent = String(this.v);
+                }
+            };
+            MyAttr = __decorate([
+                customAttribute('my-attr')
+            ], MyAttr);
+            let examples;
+            let MyEl = class MyEl {
+                constructor() {
+                    this.c = resolve(IContainer);
+                }
+                attached() {
+                    examples = this.c.getAll(IExample, false);
+                }
+            };
+            MyEl = __decorate([
+                customElement({
+                    name: 'my-el',
+                    template: `<div example.bind="5" my-attr></div>
+        <div example.bind="6" my-attr></div>`,
+                })
+            ], MyEl);
+            const { assertText } = createFixture('<my-el>', class App {
+            }, [ExampleTemplateController, MyAttr, MyEl]);
+            assertText('5 6', { compact: true });
+            assert.deepStrictEqual(examples, []);
+        });
+        it('new container strategy does not get affected by nesting', function () {
+            let MyCe = class MyCe {
+                constructor() {
+                    this.e = resolve(IExample);
+                    this.host = resolve(INode);
+                }
+                attached() {
+                    this.host.textContent = String(this.e);
+                }
+            };
+            MyCe = __decorate([
+                customElement('my-ce')
+            ], MyCe);
+            const { getAllBy } = createFixture(`<div example.bind="1">
+          <my-ce></my-ce>
+          <div example.bind="2">
+            <my-ce></my-ce>
+            <my-ce></my-ce>
+          </div>
+          <my-ce />
+        </div>`, class App {
+            }, [ExampleTemplateController, MyCe]);
+            assert.deepStrictEqual(getAllBy('my-ce').map(el => el.textContent), ['1', '2', '2', '1']);
         });
     });
 });

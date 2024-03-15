@@ -4,6 +4,7 @@ import * as AST from '../../../runtime/dist/native-modules/index.mjs';
 import { Scope, astEvaluate, PrimitiveLiteralExpression, IExpressionParser } from '../../../runtime/dist/native-modules/index.mjs';
 import { mixinAstEvaluator } from '../../../runtime-html/dist/native-modules/index.mjs';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const IValidationExpressionHydrator = /*@__PURE__*/ DI.createInterface('IValidationExpressionHydrator');
 
 /******************************************************************************

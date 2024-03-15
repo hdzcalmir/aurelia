@@ -113,14 +113,14 @@ const ensureExpression = (parser, srcOrExpr, expressionType) => {
 };
 /** @internal */ const etIsFunction = 'IsFunction';
 
-const registeredSymbol$1 = Symbol('.call');
+const registeredSymbol = Symbol('.call');
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 const callSyntax = {
     register(container) {
         /* istanbul ignore next */
-        if (!container[registeredSymbol$1]) {
+        if (!container[registeredSymbol]) {
             /* istanbul ignore next */
-            container[registeredSymbol$1] = true;
+            container[registeredSymbol] = true;
             container.register(exports.CallBindingCommand, exports.CallBindingRenderer);
         }
     }
@@ -205,14 +205,23 @@ runtimeHtml.mixinUseScope(CallBinding);
 runtimeHtml.mixingBindingLimited(CallBinding, () => 'callSource');
 runtimeHtml.mixinAstEvaluator(true)(CallBinding);
 
-const registeredSymbol = Symbol('.delegate');
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-const delegateSyntax = {
+const preventDefaultRegisteredContainer = new WeakSet();
+const eventPreventDefaultBehavior = {
+    /* istanbul ignore next */
     register(container) {
-        /* istanbul ignore next */
-        if (!container[registeredSymbol]) {
-            /* istanbul ignore next */
-            container[registeredSymbol] = true;
+        if (preventDefaultRegisteredContainer.has(container)) {
+            return;
+        }
+        preventDefaultRegisteredContainer.add(container);
+        container.get(runtimeHtml.IListenerBindingOptions).prevent = true;
+    }
+};
+const delegateRegisteredContainer = new WeakSet();
+const delegateSyntax = {
+    /* istanbul ignore next */
+    register(container) {
+        if (!delegateRegisteredContainer.has(container)) {
+            delegateRegisteredContainer.add(container);
             container.register(IEventDelegator, exports.DelegateBindingCommand, exports.ListenerBindingRenderer);
         }
     }
@@ -220,7 +229,7 @@ const delegateSyntax = {
 exports.DelegateBindingCommand = class DelegateBindingCommand {
     get type() { return 'IgnoreAttr'; }
     build(info, exprParser) {
-        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false);
+        return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true);
     }
 };
 exports.DelegateBindingCommand = __decorate([
@@ -622,9 +631,7 @@ const compatRegistration = {
         defineAstMethods();
         defineBindingMethods();
         enableComposeCompat();
-        container.register(PreventFormActionlessSubmit);
-        delegateSyntax.register(container);
-        callSyntax.register(container);
+        container.register(PreventFormActionlessSubmit, eventPreventDefaultBehavior, delegateSyntax, callSyntax);
     }
 };
 
@@ -642,4 +649,5 @@ exports.compatRegistration = compatRegistration;
 exports.delegateSyntax = delegateSyntax;
 exports.disableComposeCompat = disableComposeCompat;
 exports.enableComposeCompat = enableComposeCompat;
+exports.eventPreventDefaultBehavior = eventPreventDefaultBehavior;
 //# sourceMappingURL=index.dev.cjs.map

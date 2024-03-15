@@ -1,10 +1,10 @@
 import { IExpressionParser, IObserverLocator, type IsBindingBehavior } from '@aurelia/runtime';
 import { AttrSyntax, type CommandType, IAttrMapper, IHydratableController, IPlatform, type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, type IRenderer } from '@aurelia/runtime-html';
 export declare class StateAttributePattern {
-    'PART.state'(rawName: string, rawValue: string, parts: string[]): AttrSyntax;
+    'PART.state'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;
 }
 export declare class DispatchAttributePattern {
-    'PART.dispatch'(rawName: string, rawValue: string, parts: string[]): AttrSyntax;
+    'PART.dispatch'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;
 }
 export declare class StateBindingCommand implements BindingCommandInstance {
     get type(): CommandType;

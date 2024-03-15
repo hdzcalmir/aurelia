@@ -631,7 +631,7 @@ const TranslationParametersInstructionType = 'tpt';
 // `.bind` part is needed here only for vCurrent compliance
 const attribute = 't-params.bind';
 exports.TranslationParametersAttributePattern = class TranslationParametersAttributePattern {
-    [attribute](rawName, rawValue, _parts) {
+    [attribute](rawName, rawValue) {
         return new runtimeHtml.AttrSyntax(rawName, rawValue, '', attribute);
     }
 };

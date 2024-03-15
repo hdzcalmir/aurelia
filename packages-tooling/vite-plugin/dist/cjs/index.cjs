@@ -6,7 +6,10 @@ var pluginConventions = require('@aurelia/plugin-conventions');
 var pluginutils = require('@rollup/pluginutils');
 var path = require('path');
 var fs = require('fs');
+var module$1 = require('module');
 
+var _documentCurrentScript = typeof document !== 'undefined' ? document.currentScript : null;
+const require$1 = module$1.createRequire((typeof document === 'undefined' ? require('u' + 'rl').pathToFileURL(__filename).href : (_documentCurrentScript && _documentCurrentScript.src || new URL('index.cjs', document.baseURI).href)));
 function au(options = {}) {
     const { include = 'src/**/*.{ts,js,html}', exclude, pre = true, useDev, ...additionalOptions } = options;
     const filter = pluginutils.createFilter(include, exclude);
@@ -16,7 +19,7 @@ function au(options = {}) {
         config(config) {
             var _a, _b;
             var _c;
-            const isDev = useDev || (!useDev && config.mode !== 'production');
+            const isDev = useDev === true || (useDev == null && config.mode !== 'production');
             if (!isDev) {
                 return;
             }
@@ -40,7 +43,7 @@ function au(options = {}) {
             ].reduce((aliases, pkg) => {
                 const name = pkg === 'aurelia' ? pkg : `@aurelia/${pkg}`;
                 try {
-                    const packageLocation = require.resolve(name);
+                    const packageLocation = require$1.resolve(name);
                     aliases[name] = path.resolve(packageLocation, `../../esm/index.dev.mjs`);
                 }
                 catch (_a) { }
@@ -98,7 +101,8 @@ function au(options = {}) {
 }
 function getHmrCode(className, moduleNames = '') {
     const moduleText = 'import.meta';
-    const code = `import { Metadata as $$M } from '@aurelia/metadata';
+    const code = `
+import { Metadata as $$M } from '@aurelia/metadata';
 import {
   Controller as $$C,
   CustomElement as $$CE,

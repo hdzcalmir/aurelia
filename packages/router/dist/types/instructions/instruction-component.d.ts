@@ -60,6 +60,11 @@ export declare class InstructionComponent {
     isPromise(): boolean;
     isFunction(): boolean;
     toType(container: IContainer, instruction: RoutingInstruction): RouteableComponentType | null;
+    /**
+     * Returns the component instance of this instruction.
+     *
+     * Throws instantiation error if there was an error during instantiation.
+     */
     toInstance(parentContainer: IContainer, parentController: IHydratedController, parentElement: HTMLElement, instruction: RoutingInstruction): IRouteableComponent | null;
     same(other: InstructionComponent, compareType?: boolean): boolean;
     private getNewName;

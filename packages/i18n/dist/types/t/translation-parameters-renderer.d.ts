@@ -4,7 +4,7 @@ import type { BindingMode, BindingCommandInstance } from '@aurelia/runtime-html'
 export declare const TranslationParametersInstructionType = "tpt";
 declare const attribute = "t-params.bind";
 export declare class TranslationParametersAttributePattern {
-    [attribute](rawName: string, rawValue: string, _parts: string[]): AttrSyntax;
+    [attribute](rawName: string, rawValue: string): AttrSyntax;
 }
 export declare class TranslationParametersBindingInstruction {
     from: IsBindingBehavior;

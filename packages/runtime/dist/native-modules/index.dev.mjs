@@ -1,4 +1,4 @@
-import { DI, Protocol, emptyArray, isArrayIndex, Registration, resolve, IPlatform, ILogger } from '../../../kernel/dist/native-modules/index.mjs';
+import { DI, emptyArray, isArrayIndex, Registration, resolve, IPlatform, ILogger } from '../../../kernel/dist/native-modules/index.mjs';
 import { Metadata } from '../../../metadata/dist/native-modules/index.mjs';
 
 const O = Object;
@@ -57,9 +57,6 @@ function ensureProto(proto, key, defaultValue) {
 /** @internal */ const getOwnMetadata = Metadata.getOwn;
 /** @internal */ Metadata.hasOwn;
 /** @internal */ const defineMetadata = Metadata.define;
-/** @internal */ Protocol.annotation.keyFor;
-/** @internal */ Protocol.resource.keyFor;
-/** @internal */ Protocol.resource.appendTo;
 
 const astVisit = (ast, visitor) => {
     switch (ast.$kind) {

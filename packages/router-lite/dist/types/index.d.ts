@@ -12,5 +12,5 @@ export { IRouterOptions, type INavigationOptions, RouterOptions, NavigationOptio
 export { AuNavId, type ManagedState, IRouterEvents, type RouterEvent, LocationChangeEvent, NavigationStartEvent, NavigationEndEvent, NavigationCancelEvent, NavigationErrorEvent, } from './router-events';
 export { IStateManager, } from './state-manager';
 export { ViewportAgent, } from './viewport-agent';
-export { IUrlParser, pathUrlParser, fragmentUrlParser, } from './url-parser';
+export { type IUrlParser, pathUrlParser, fragmentUrlParser, } from './url-parser';
 //# sourceMappingURL=index.d.ts.map

@@ -10,18 +10,16 @@ var r = require("@aurelia/runtime-html");
 
 var t = require("@aurelia/platform-browser");
 
-var s = require("@aurelia/fetch-client");
+var s = require("@aurelia/metadata");
 
-var o = require("@aurelia/metadata");
+var o = require("@aurelia/platform");
 
-var p = require("@aurelia/platform");
+var p = require("@aurelia/runtime");
 
-var x = require("@aurelia/runtime");
-
-const a = t.BrowserPlatform.getOrCreate(globalThis);
+const x = t.BrowserPlatform.getOrCreate(globalThis);
 
 function createContainer() {
-    return e.DI.createContainer().register(e.Registration.instance(r.IPlatform, a), r.StandardConfiguration);
+    return e.DI.createContainer().register(e.Registration.instance(r.IPlatform, x), r.StandardConfiguration);
 }
 
 class Aurelia extends r.Aurelia {
@@ -80,6 +78,8 @@ exports.Registration = e.Registration;
 
 exports.all = e.all;
 
+exports.allResources = e.allResources;
+
 exports.bound = e.bound;
 
 exports.camelCase = e.camelCase;
@@ -87,6 +87,10 @@ exports.camelCase = e.camelCase;
 exports.emptyArray = e.emptyArray;
 
 exports.emptyObject = e.emptyObject;
+
+exports.factory = e.factory;
+
+exports.ignore = e.ignore;
 
 exports.inject = e.inject;
 
@@ -96,6 +100,10 @@ exports.kebabCase = e.kebabCase;
 
 exports.lazy = e.lazy;
 
+exports.newInstanceForScope = e.newInstanceForScope;
+
+exports.newInstanceOf = e.newInstanceOf;
+
 exports.noop = e.noop;
 
 exports.optional = e.optional;
@@ -103,6 +111,8 @@ exports.optional = e.optional;
 exports.pascalCase = e.pascalCase;
 
 exports.resolve = e.resolve;
+
+exports.resource = e.resource;
 
 exports.singleton = e.singleton;
 
@@ -142,6 +152,8 @@ exports.IAuSlotsInfo = r.IAuSlotsInfo;
 
 exports.IAurelia = r.IAurelia;
 
+exports.IController = r.IController;
+
 exports.IEventModifier = r.IEventModifier;
 
 exports.IEventTarget = r.IEventTarget;
@@ -163,6 +175,8 @@ exports.IRenderLocation = r.IRenderLocation;
 exports.ITemplateCompiler = r.ITemplateCompiler;
 
 exports.ITemplateCompilerHooks = r.ITemplateCompilerHooks;
+
+exports.IViewFactory = r.IViewFactory;
 
 exports.LifecycleHooks = r.LifecycleHooks;
 
@@ -224,41 +238,31 @@ exports.valueConverter = r.valueConverter;
 
 exports.watch = r.watch;
 
-exports.HttpClient = s.HttpClient;
+exports.Metadata = s.Metadata;
 
-exports.HttpClientConfiguration = s.HttpClientConfiguration;
+exports.Platform = o.Platform;
 
-exports.IFetchFn = s.IFetchFn;
+exports.Task = o.Task;
 
-exports.IHttpClient = s.IHttpClient;
+exports.TaskAbortError = o.TaskAbortError;
 
-exports.json = s.json;
+exports.TaskQueue = o.TaskQueue;
 
-exports.Metadata = o.Metadata;
+exports.ComputedObserver = p.ComputedObserver;
 
-exports.Platform = p.Platform;
+exports.IObserverLocator = p.IObserverLocator;
 
-exports.Task = p.Task;
+exports.ISignaler = p.ISignaler;
 
-exports.TaskAbortError = p.TaskAbortError;
+exports.batch = p.batch;
 
-exports.TaskQueue = p.TaskQueue;
+exports.observable = p.observable;
 
-exports.ComputedObserver = x.ComputedObserver;
-
-exports.IObserverLocator = x.IObserverLocator;
-
-exports.ISignaler = x.ISignaler;
-
-exports.batch = x.batch;
-
-exports.observable = x.observable;
-
-exports.subscriberCollection = x.subscriberCollection;
+exports.subscriberCollection = p.subscriberCollection;
 
 exports.Aurelia = Aurelia;
 
-exports.PLATFORM = a;
+exports.PLATFORM = x;
 
 exports.default = Aurelia;
 //# sourceMappingURL=index.cjs.map

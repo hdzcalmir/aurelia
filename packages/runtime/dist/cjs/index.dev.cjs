@@ -61,9 +61,6 @@ function ensureProto(proto, key, defaultValue) {
 /** @internal */ const getOwnMetadata = metadata.Metadata.getOwn;
 /** @internal */ metadata.Metadata.hasOwn;
 /** @internal */ const defineMetadata = metadata.Metadata.define;
-/** @internal */ kernel.Protocol.annotation.keyFor;
-/** @internal */ kernel.Protocol.resource.keyFor;
-/** @internal */ kernel.Protocol.resource.appendTo;
 
 const astVisit = (ast, visitor) => {
     switch (ast.$kind) {

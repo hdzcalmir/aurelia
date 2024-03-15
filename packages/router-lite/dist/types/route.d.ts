@@ -1,4 +1,4 @@
-import { Constructable, ResourceType, IContainer } from '@aurelia/kernel';
+import { Constructable, ResourceType } from '@aurelia/kernel';
 import type { RouteNode } from './route-tree';
 import type { FallbackFunction, IChildRouteConfig, IRouteConfig, Routeable, TransitionPlanOrFunc } from './options';
 export declare const noRoutes: readonly Routeable[];
@@ -16,7 +16,6 @@ export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     readonly nav: boolean;
     get path(): string[];
     private constructor();
-    register(container: IContainer): void;
 }
 export declare const Route: {
     name: string;

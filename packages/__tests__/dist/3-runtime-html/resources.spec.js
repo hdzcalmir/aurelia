@@ -8,7 +8,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { Metadata } from '@aurelia/metadata';
-import { alias, Aurelia, customAttribute, CustomAttributeDefinition, customElement } from '@aurelia/runtime-html';
+import { alias, Aurelia, CustomAttribute, customAttribute, CustomAttributeDefinition, customElement } from '@aurelia/runtime-html';
 import { assert, TestContext } from "@aurelia/testing";
 function startAndStop(component) {
     const ctx = TestContext.create();
@@ -48,9 +48,7 @@ describe('3-runtime-html/resources.spec.ts', function () {
         assert.deepStrictEqual($class['au:annotation'], [
             'au:annotation:di:dependencies',
         ], `$class['au:annotation']`);
-        assert.deepStrictEqual($class['au:resource'], [
-            'au:resource:custom-attribute',
-        ], `$class['au:resource']`);
+        assert.deepStrictEqual($class['au:resource'], CustomAttribute.getDefinition(AuAttr), `$class['au:resource']`);
         assert.deepStrictEqual($class['au:resource:custom-attribute'], CustomAttributeDefinition.create({
             name: 'au-name',
         }, AuAttr), `$class['au:resource:custom-attribute']`);
@@ -90,9 +88,7 @@ describe('3-runtime-html/resources.spec.ts', function () {
         assert.deepStrictEqual($class['au:annotation'], [
             'au:annotation:di:dependencies',
         ], `$class['au:annotation']`);
-        assert.deepStrictEqual($class['au:resource'], [
-            'au:resource:custom-attribute',
-        ], `$class['au:resource']`);
+        assert.deepStrictEqual($class['au:resource'], CustomAttribute.getDefinition(AuAttr), `$class['au:resource']`);
         assert.deepStrictEqual($class['au:resource:custom-attribute'], CustomAttributeDefinition.create({
             name: 'au-name',
         }, AuAttr), `$class['au:resource:custom-attribute']`);

@@ -20,6 +20,7 @@ function _interopNamespaceDefault(e) {
 
 var AST__namespace = /*#__PURE__*/_interopNamespaceDefault(AST);
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const IValidationExpressionHydrator = /*@__PURE__*/ kernel.DI.createInterface('IValidationExpressionHydrator');
 
 /******************************************************************************

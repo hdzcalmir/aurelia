@@ -1,4 +1,4 @@
-import { Protocol, IEventAggregator, IContainer, DI, resolve, ILogger, Registration } from '../../../kernel/dist/native-modules/index.mjs';
+import { getResourceKeyFor, IEventAggregator, IContainer, Protocol, DI, resolve, ILogger, Registration } from '../../../kernel/dist/native-modules/index.mjs';
 import { CustomElement, isCustomElementViewModel, Controller, IPlatform, IWindow, IHistory, ILocation, IAppRoot, CustomAttribute, BindingMode, customElement, INode, IInstruction, bindable, IController, customAttribute, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { Metadata } from '../../../metadata/dist/native-modules/index.mjs';
 import { RouteRecognizer as RouteRecognizer$1, ConfigurableRoute as ConfigurableRoute$1, RecognizedRoute as RecognizedRoute$1, Endpoint as Endpoint$2 } from '../../../route-recognizer/dist/native-modules/index.mjs';
@@ -1173,7 +1173,6 @@ class InstructionComponent {
         if (!(this.promise instanceof Promise)) {
             return;
         }
-        // TODO(alpha): Fix the type here
         return this.promise.then((component) => {
             // TODO(alpha): Fix the issues with import/module here
             if (InstructionComponent.isAppelation(component)) {
@@ -1200,7 +1199,7 @@ class InstructionComponent {
         return !this.isName() && !this.isType() && !this.isInstance() && !this.isFunction() && !this.isPromise();
     }
     isName() {
-        return !!this.name && !this.isType() && !this.isInstance();
+        return this.name != null && this.name !== '' && !this.isType() && !this.isInstance();
     }
     isType() {
         return this.type !== null && !this.isInstance();
@@ -1237,6 +1236,11 @@ class InstructionComponent {
         }
         return null;
     }
+    /**
+     * Returns the component instance of this instruction.
+     *
+     * Throws instantiation error if there was an error during instantiation.
+     */
     toInstance(parentContainer, parentController, parentElement, instruction) {
         // TODO: Allow instantiation from a promise here, but awaiting resolve?
         void this.resolve(instruction);
@@ -1255,7 +1259,7 @@ class InstructionComponent {
         // if (this.isType()) {
         //   instance = ownContainer.invoke(this.type!);
         // } else {
-        //   const def = ownContainer.find(CustomElement, CustomElement.keyFrom(this.name!));
+        //   const def = CustomElement.find(ownContainer, this.name!);
         //   if (def != null) {
         //     instance = ownContainer.invoke(def.Type);
         //   }
@@ -1287,15 +1291,19 @@ function routerComponentResolver(name) {
     return {
         $isResolver: true,
         resolve(_, requestor) {
+            // const container = requestor.get(IHydrationContext).parent!.controller.container;
             if (requestor.has(key, false)) {
                 return requestor.get(key);
             }
             if (requestor.root.has(key, false)) {
                 return requestor.root.get(key);
             }
-            // eslint-disable-next-line no-console
-            console.warn(`Detected resource traversal behavior. A custom element "${name}" is neither`
-                + ` registered locally nor globally. This is not a supported behavior and will be removed in a future release`);
+            // it's not always correct to consider this resolution as a traversal
+            // since sometimes it could be the work of trying a fallback configuration as component
+            // todo: cleanup the paths so that it's clearer when a fallback is being tried vs when an actual component name configuration
+            //
+            // console.warn(`Detected resource traversal behavior. A custom element "${name}" is neither`
+            //   + ` registered locally nor globally. This is not a supported behavior and will be removed in a future release`);
             return requestor.get(key);
         }
     };
@@ -1308,7 +1316,9 @@ function routerComponentResolver(name) {
  *
  */
 /**
- * @internal - Shouldn't be used directly
+ * Shouldn't be used directly
+ *
+ * @internal
  */
 function arrayRemove(arr, func) {
     const removed = [];
@@ -2032,10 +2042,10 @@ class Route {
 /**
  * The metadata resource key for a configured route.
  */
-Route.resourceKey = Protocol.resource.keyFor('route');
+Route.resourceKey = getResourceKeyFor('route');
 
 const Routes = {
-    name: Protocol.resource.keyFor('routes'),
+    name: /*@__PURE__*/ getResourceKeyFor('routes'),
     /**
      * Returns `true` if the specified type has any static routes configuration (either via static properties or a &#64;route decorator)
      */
@@ -2430,6 +2440,83 @@ class AwaitableMap {
     }
 }
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [2000 /* ErrorNames.instantiation_error */]: `There was an error durating the instantiation of "{{0}}".`
+        + ` "{{0}}" did not match any configured route or registered component name`
+        + ` - did you forget to add the component "{{0}}" to the dependencies or to register it as a global dependency?\n`
+        + `{{1:innerError}}`,
+    [2001 /* ErrorNames.element_name_not_found */]: `Cannot find an element with the name "{{0}}", did you register it via "dependencies" option or <import> with convention?.\n`,
+    [2002 /* ErrorNames.router_error_3 */]: `-- placeholder --`,
+    [2003 /* ErrorNames.router_error_4 */]: `-- placeholder --`,
+    [2004 /* ErrorNames.router_error_5 */]: `-- placeholder --`,
+    [2005 /* ErrorNames.router_error_6 */]: `-- placeholder --`,
+    [2006 /* ErrorNames.router_error_7 */]: `-- placeholder --`,
+    [2007 /* ErrorNames.router_error_8 */]: `-- placeholder --`,
+    [2008 /* ErrorNames.router_error_9 */]: `-- placeholder --`,
+    [2009 /* ErrorNames.router_error_10 */]: `-- placeholder --`,
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
+        let matches = regex.exec(cooked);
+        while (matches != null) {
+            const method = matches[1]?.slice(1);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let value = details[i];
+            if (value != null) {
+                switch (method) {
+                    case 'nodeName':
+                        value = value.nodeName.toLowerCase();
+                        break;
+                    case 'name':
+                        value = value.name;
+                        break;
+                    case 'typeof':
+                        value = typeof value;
+                        break;
+                    case 'ctor':
+                        value = value.constructor.name;
+                        break;
+                    case 'toString':
+                        value = Object.prototype.toString.call(value);
+                        break;
+                    case 'join(!=)':
+                        value = value.join('!=');
+                        break;
+                    case 'element':
+                        value = value === '*' ? 'all elements' : `<${value} />`;
+                        break;
+                    case 'innerError':
+                        value = `\nDetails:\n${value}\n${(value instanceof Error) && value.cause != null ? `${String(value.cause)}\n` : ''}`;
+                        break;
+                    default: {
+                        // property access
+                        if (method?.startsWith('.')) {
+                            const paths = method.slice(1).split('.');
+                            for (let j = 0; j < paths.length && value != null; ++j) {
+                                value = value[paths[j]];
+                            }
+                        }
+                        else {
+                            value = String(value);
+                        }
+                    }
+                }
+            }
+            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
+            matches = regex.exec(cooked);
+        }
+    }
+    return cooked;
+};
+
 /**
  * @internal
  */
@@ -2585,8 +2672,9 @@ class ViewportContent extends EndpointContent {
                     throw e;
                 }
                 {
+                    const componentName = this.instruction.component.name;
                     // eslint-disable-next-line no-console
-                    console.warn(`'${this.instruction.component.name}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
+                    console.warn(createMappedError(2000 /* ErrorNames.instantiation_error */, componentName, e));
                 }
                 // If there's a fallback component...
                 if ((fallback ?? '') !== '') {
@@ -2610,11 +2698,15 @@ class ViewportContent extends EndpointContent {
                         if (!ee.message.startsWith('AUR0009:')) {
                             throw ee;
                         }
-                        throw new Error(`'${this.instruction.component.name}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
+                        const componentName = this.instruction.component.name;
+                        throw createMappedError(2000 /* ErrorNames.instantiation_error */, componentName, ee);
+                        // throw new Error(`'${this.instruction.component.name as string}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                     }
                 }
                 else {
-                    throw new Error(`'${this.instruction.component.name}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
+                    const componentName = this.instruction.component.name;
+                    throw createMappedError(2000 /* ErrorNames.instantiation_error */, componentName);
+                    // throw new Error(`'${this.instruction.component.name as string}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                 }
             }
         }
@@ -2640,7 +2732,7 @@ class ViewportContent extends EndpointContent {
             .parentViewport?.getTimeContent(this.navigation.timestamp)?.instruction?.typeParameters(this.router);
         const parameters = this.instruction.typeParameters(this.router);
         const merged = { ...this.navigation.parameters, ...parentParameters, ...parameters };
-        const hooks = this.getLifecycleHooks(instance, 'canLoad')
+        const hooks = this._getLifecycleHooks(instance, 'canLoad')
             .map(hook => ((innerStep) => {
             if (innerStep?.previousValue === false) {
                 return false;
@@ -2691,7 +2783,7 @@ class ViewportContent extends EndpointContent {
                 previous: this.navigation,
             });
         }
-        const hooks = this.getLifecycleHooks(instance, 'canUnload').map(hook => ((innerStep) => {
+        const hooks = this._getLifecycleHooks(instance, 'canUnload').map(hook => ((innerStep) => {
             if (innerStep?.previousValue === false) {
                 return false;
             }
@@ -2736,8 +2828,8 @@ class ViewportContent extends EndpointContent {
                 .parentViewport?.getTimeContent(this.navigation.timestamp)?.instruction?.typeParameters(this.router);
             const parameters = this.instruction.typeParameters(this.router);
             const merged = { ...this.navigation.parameters, ...parentParameters, ...parameters };
-            const hooks = this.getLifecycleHooks(instance, 'loading').map(hook => () => hook(instance, merged, this.instruction, this.navigation));
-            hooks.push(...this.getLifecycleHooks(instance, 'load').map(hook => () => {
+            const hooks = this._getLifecycleHooks(instance, 'loading').map(hook => () => hook(instance, merged, this.instruction, this.navigation));
+            hooks.push(...this._getLifecycleHooks(instance, 'load').map(hook => () => {
                 // eslint-disable-next-line no-console
                 console.warn(`[Deprecated] Found deprecated hook name "load" in ${this.instruction.component.name}. Please use the new name "loading" instead.`);
                 return hook(instance, merged, this.instruction, this.navigation);
@@ -2786,8 +2878,8 @@ class ViewportContent extends EndpointContent {
                 previous: this.navigation,
             });
         }
-        const hooks = this.getLifecycleHooks(instance, 'unloading').map(hook => () => hook(instance, this.instruction, navigation));
-        hooks.push(...this.getLifecycleHooks(instance, 'unload').map(hook => () => {
+        const hooks = this._getLifecycleHooks(instance, 'unloading').map(hook => () => hook(instance, this.instruction, navigation));
+        hooks.push(...this._getLifecycleHooks(instance, 'unload').map(hook => () => {
             // eslint-disable-next-line no-console
             console.warn(`[Deprecated] Found deprecated hook name "unload" in ${this.instruction.component.name}. Please use the new name "unloading" instead.`);
             return hook(instance, this.instruction, navigation);
@@ -2955,7 +3047,7 @@ class ViewportContent extends EndpointContent {
             });
         }
     }
-    getLifecycleHooks(instance, name) {
+    _getLifecycleHooks(instance, name) {
         const hooks = instance.$controller.lifecycleHooks[name] ?? [];
         return hooks.map(hook => (hook.instance[name]).bind(hook.instance));
     }
@@ -3271,7 +3363,7 @@ class Viewport extends Endpoint$1 {
         // Can have a (resolved) type or a string (to be resolved later)
         const nextContent = new ViewportContent(this.router, this, this.owningScope, this.scope.hasScope, !this.clear ? instruction : void 0, navigation, this.connectedCE ?? null);
         this.contents.push(nextContent);
-        nextContent.fromHistory = nextContent.componentInstance !== null && navigation.navigation
+        nextContent.fromHistory = nextContent.componentInstance !== null && navigation.navigation != null
             ? !!navigation.navigation.back || !!navigation.navigation.forward
             : false;
         if (this.options.stateful) {
@@ -3315,8 +3407,7 @@ class Viewport extends Endpoint$1 {
         }
         // ReloadBehavior is now 'default'
         // Requires updated parameters if viewport stateful
-        if (this.options.stateful &&
-            content.equalParameters(nextContent)) {
+        if (this.options.stateful && content.equalParameters(nextContent)) {
             nextContent.delete();
             this.contents.splice(this.contents.indexOf(nextContent), 1);
             return this.transitionAction = 'skip';
@@ -3348,14 +3439,14 @@ class Viewport extends Endpoint$1 {
             this.clearState();
             this.connectedCE = connectedCE;
             this.options.apply(options);
-            if (this.connectionResolve != null) {
-                this.connectionResolve();
-            }
+            this.connectionResolve?.();
         }
         const parentDefaultRoute = (this.scope.parent?.endpoint.getRoutes() ?? [])
             .filter(route => (Array.isArray(route.path) ? route.path : [route.path]).includes(''))
             .length > 0;
-        if (this.getContent().componentInstance === null && this.getNextContent()?.componentInstance == null && (this.options.default || parentDefaultRoute)) {
+        if (this.getContent().componentInstance === null
+            && this.getNextContent()?.componentInstance == null
+            && (this.options.default || parentDefaultRoute)) {
             const instructions = RoutingInstruction.parse(this.router, this.options.default ?? '');
             if (instructions.length === 0 && parentDefaultRoute) {
                 const foundRoute = this.scope.parent?.findInstructions([RoutingInstruction.create('')], false, this.router.configuration.options.useConfiguredRoutes);
@@ -7605,7 +7696,9 @@ class Router {
      */
     connectEndpoint(endpoint, type, connectedCE, name, options) {
         const container = connectedCE.container;
-        const closestEndpoint = (container.has(Router.closestEndpointKey, true) ? container.get(Router.closestEndpointKey) : this.rootScope);
+        const closestEndpoint = container.has(Router.closestEndpointKey, true)
+            ? container.get(Router.closestEndpointKey)
+            : this.rootScope;
         const parentScope = closestEndpoint.connectedScope;
         if (endpoint === null) {
             endpoint = parentScope.addEndpoint(type, name, connectedCE, options);
@@ -8234,7 +8327,6 @@ let ViewportCustomElement = class ViewportCustomElement {
     }
     hydrated(controller) {
         this.controller = controller;
-        this.container = controller.container;
         // eslint-disable-next-line
         const hasDefault = this.instruction.props.filter((instr) => instr.to === 'default').length > 0;
         if (hasDefault && this.parentViewport != null) {

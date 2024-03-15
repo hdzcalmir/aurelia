@@ -13,7 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 // This is to test for some intrinsic properties of enhance which is otherwise difficult to test in Data-driven tests parallel to `.app`
 import { BrowserPlatform } from '@aurelia/platform-browser';
 import { DI, IContainer, Registration, onResolve } from '@aurelia/kernel';
-import { CustomElement, IPlatform, Aurelia, customElement, bindable, StandardConfiguration, ValueConverter, AppTask, } from '@aurelia/runtime-html';
+import { CustomElement, IPlatform, Aurelia, customElement, bindable, StandardConfiguration, ValueConverter, AppTask, BindingBehavior, } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 import { createSpecFunction } from '../util.js';
 import { delegateSyntax } from '@aurelia/compat-v1';
@@ -327,10 +327,12 @@ describe('3-runtime-html/enhance.spec.ts', function () {
                 toView(v) {
                     return Number(v) + 10;
                 }
+            }), BindingBehavior.define('xoixoi', class Xoixoi {
             }))
         });
         assert.strictEqual(host.innerHTML, '<div data-id="11"></div>');
-        assert.strictEqual(container.find(ValueConverter, 'plus10'), null, 'It should register resources with child contaienr only.');
+        assert.strictEqual(ValueConverter.find(container, 'plus10'), null, 'It should register resources with the given container only.');
+        assert.strictEqual(BindingBehavior.find(container, 'xoixoi'), null, 'It should register resources with the given container only.');
         await root.deactivate();
     });
     it('calls app tasks', function () {

@@ -275,6 +275,7 @@ function findResource(node, expectedResourceName, filePair, isViewPair, code) {
 
 function stripMetaData(rawHtml) {
     const deps = [];
+    const depsAliases = {};
     let shadowMode = null;
     let containerless = false;
     let hasSlot = false;
@@ -284,9 +285,13 @@ function stripMetaData(rawHtml) {
     const toRemove = [];
     const tree = parseFragment(rawHtml, { sourceCodeLocationInfo: true });
     traverse(tree, node => {
-        stripImport(node, (dep, ranges) => {
-            if (dep)
+        stripImport(node, (dep, aliases, ranges) => {
+            if (dep) {
                 deps.push(dep);
+                if (aliases != null) {
+                    depsAliases[dep] = { ...depsAliases[dep], ...aliases };
+                }
+            }
             toRemove.push(...ranges);
         });
         stripUseShadowDom(node, (mode, ranges) => {
@@ -321,7 +326,7 @@ function stripMetaData(rawHtml) {
         lastIdx = end;
     });
     html += rawHtml.slice(lastIdx);
-    return { html, deps, shadowMode, containerless, hasSlot, bindables, aliases, capture };
+    return { html, deps, depsAliases, shadowMode, containerless, hasSlot, bindables, aliases, capture };
 }
 function traverse(tree, cb) {
     tree.childNodes.forEach((n) => {
@@ -367,7 +372,22 @@ function stripAttribute(node, tagName, attributeName, cb) {
 }
 function stripImport(node, cb) {
     return stripTag(node, ['import', 'require'], (attrs, ranges) => {
-        cb(attrs.from, ranges);
+        const aliases = { __MAIN__: null };
+        let aliasCount = 0;
+        Object.keys(attrs).forEach(attr => {
+            if (attr === 'from') {
+                return;
+            }
+            if (attr === 'as') {
+                aliases.__MAIN__ = attrs[attr];
+                aliasCount++;
+            }
+            else if (attr.endsWith('.as')) {
+                aliases[attr.slice(0, -3)] = attrs[attr];
+                aliasCount++;
+            }
+        });
+        cb(attrs.from, aliasCount > 0 ? aliases : null, ranges);
     });
 }
 function stripUseShadowDom(node, cb) {
@@ -466,7 +486,7 @@ function fileExists(unit, relativeOrAbsolutePath) {
 function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileExists) {
     const name = resourceName(unit.path);
     const stripped = stripMetaData(unit.contents);
-    const { html, deps, containerless, hasSlot, bindables, aliases, capture } = stripped;
+    const { html, deps, depsAliases, containerless, hasSlot, bindables, aliases, capture } = stripped;
     let { shadowMode } = stripped;
     if (unit.filePair) {
         const basename = path.basename(unit.filePair, path.extname(unit.filePair));
@@ -482,8 +502,10 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
     const cssDeps = [];
     const statements = [];
     let registrationImported = false;
+    let aliasedModule = 0;
     deps.forEach((d, i) => {
-        var _a;
+        var _a, _b;
+        const aliases = (_a = depsAliases[d]) !== null && _a !== void 0 ? _a : {};
         let ext = path.extname(d);
         if (!ext) {
             if (_fileExists(unit, `${d}.ts`)) {
@@ -495,13 +517,34 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
             d = d + ext;
         }
         if (!ext || ext === '.js' || ext === '.ts') {
+            const { __MAIN__: main, ...others } = aliases;
+            const hasAliases = main != null || Object.keys(others).length > 0;
+            if (hasAliases && aliasedModule++ === 0) {
+                statements.push(`import { aliasedResourcesRegistry as $$arr } from '@aurelia/kernel';\n`);
+            }
             statements.push(`import * as d${i} from ${s(d)};\n`);
-            viewDeps.push(`d${i}`);
+            if (hasAliases) {
+                viewDeps.push(`$$arr(d${i}, ${JSON.stringify(main)}${Object.keys(others).length > 0 ? `, ${JSON.stringify(others)}` : ''})`);
+            }
+            else {
+                viewDeps.push(`d${i}`);
+            }
             return;
         }
         if (options.templateExtensions.includes(ext)) {
-            statements.push(`import * as d${i} from ${s(((_a = options.transformHtmlImportSpecifier) !== null && _a !== void 0 ? _a : (s => s))(d))};\n`);
-            viewDeps.push(`d${i}`);
+            const { __MAIN__: main } = aliases;
+            const hasAliases = main != null;
+            if (hasAliases && aliasedModule++ === 0) {
+                statements.push(`import { aliasedResourcesRegistry as $$arr } from '@aurelia/kernel';\n`);
+                statements.push(`function __get_el__(m) { let e; m.register({ register(el) { e = el; } }); return { default: e }; }\n`);
+            }
+            statements.push(`import * as d${i} from ${s(((_b = options.transformHtmlImportSpecifier) !== null && _b !== void 0 ? _b : (s => s))(d))};\n`);
+            if (hasAliases) {
+                viewDeps.push(`$$arr(__get_el__(d${i}), ${JSON.stringify(main)})`);
+            }
+            else {
+                viewDeps.push(`d${i}`);
+            }
             return;
         }
         if (options.cssExtensions.includes(ext)) {

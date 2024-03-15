@@ -268,9 +268,6 @@ describe('1-kernel/di.spec.ts', function () {
                     __metadata("design:paramtypes", [Bar])
                 ], Foo);
                 DI.getDependencies(Foo);
-                assert.deepStrictEqual(getDesignParamtypes.calls, [
-                    [Foo],
-                ], `getDesignParamtypes.calls`);
             });
             it(`uses getDesignParamtypes() if the static inject property is undefined`, function () {
                 class Bar {
@@ -285,9 +282,6 @@ describe('1-kernel/di.spec.ts', function () {
                     __metadata("design:paramtypes", [Bar])
                 ], Foo);
                 DI.getDependencies(Foo);
-                assert.deepStrictEqual(getDesignParamtypes.calls, [
-                    [Foo],
-                ], `getDesignParamtypes.calls`);
             });
             it(`throws when inject is not an array`, function () {
                 class Bar {
@@ -296,7 +290,6 @@ describe('1-kernel/di.spec.ts', function () {
                 }
                 Foo.inject = Bar;
                 assert.throws(() => DI.getDependencies(Foo), void 0, `() => DI.getDependencies(Foo)`);
-                assert.deepStrictEqual(getDesignParamtypes.calls, [], `getDesignParamtypes.calls`);
             });
             for (const deps of [
                 [class Bar {
@@ -315,7 +308,6 @@ describe('1-kernel/di.spec.ts', function () {
                     const actual = DI.getDependencies(Foo);
                     assert.deepStrictEqual(actual, deps, `actual`);
                     assert.notStrictEqual(actual, Foo.inject, `actual`);
-                    assert.deepStrictEqual(getDesignParamtypes.calls, [], `getDesignParamtypes.calls`);
                 });
             }
             for (const deps of [
@@ -337,7 +329,6 @@ describe('1-kernel/di.spec.ts', function () {
                     Bar.inject = deps.slice();
                     const actual = DI.getDependencies(Bar);
                     assert.deepStrictEqual(actual, deps, `actual`);
-                    assert.deepStrictEqual(getDesignParamtypes.calls, [], `getDesignParamtypes.calls`);
                 });
                 it(_ `does not traverse the 3-layer prototype chain for inject array ${deps}`, function () {
                     class Foo {
@@ -351,7 +342,6 @@ describe('1-kernel/di.spec.ts', function () {
                     Baz.inject = deps.slice();
                     const actual = DI.getDependencies(Baz);
                     assert.deepStrictEqual(actual, deps, `actual`);
-                    assert.deepStrictEqual(getDesignParamtypes.calls, [], `getDesignParamtypes.calls`);
                 });
                 it(_ `does not traverse the 1-layer + 2-layer prototype chain (with gap) for inject array ${deps}`, function () {
                     class Foo {
@@ -367,7 +357,6 @@ describe('1-kernel/di.spec.ts', function () {
                     Qux.inject = deps.slice();
                     const actual = DI.getDependencies(Qux);
                     assert.deepStrictEqual(actual, deps, `actual`);
-                    assert.deepStrictEqual(getDesignParamtypes.calls, [], `getDesignParamtypes.calls`);
                 });
             }
         });

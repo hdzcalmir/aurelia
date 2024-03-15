@@ -86,7 +86,7 @@ class BindingInfo {
      * @param {Element} target - The HTMLElement associated with the binding.
      * @param {Scope} scope - The binding scope.
      * @param {PropertyRule[]} [rules] - Rules bound to the binding behavior.
-     * @param {(PropertyInfo | undefined)} [propertyInfo=void 0] - Information describing the associated property for the binding.
+     * @param {(PropertyInfo | undefined)} [propertyInfo] - Information describing the associated property for the binding.
      * @memberof BindingInfo
      */
     constructor(target, scope, rules, propertyInfo = void 0) {
@@ -626,7 +626,11 @@ class ValidatitionConnector {
             this.scopedController = locator.get(IValidationController);
         }
     }
-    /** @internal */
+    /**
+     * Entry trigger for when the view value gets changed, either from user input or view model prop changes
+     *
+     * @internal
+     */
     _onUpdateSource() {
         this.isDirty = true;
         const event = this.triggerEvent;

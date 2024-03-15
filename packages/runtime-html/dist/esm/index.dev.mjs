@@ -1,6 +1,6 @@
-import { Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, createResolver, firstDefined, mergeArrays, resolve, IPlatform as IPlatform$1, emptyArray, all, InstanceProvider, IContainer, optional, ILogger, LogLevel, onResolveAll, onResolve, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, camelCase, IServiceLocator, emptyObject, transient, toArray } from '@aurelia/kernel';
+import { Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, firstDefined, mergeArrays, resourceBaseName, resource, getResourceKeyFor, resolve, IPlatform as IPlatform$1, emptyArray, Registrable, all, InstanceProvider, IContainer, optionalResource, optional, ILogger, LogLevel, onResolveAll, onResolve, fromDefinitionOrDefault, pascalCase, fromAnnotationOrTypeOrDefault, fromAnnotationOrDefinitionOrTypeOrDefault, camelCase, IServiceLocator, emptyObject, transient, toArray, allResources } from '@aurelia/kernel';
 import { Metadata, isObject } from '@aurelia/metadata';
-import { AccessorType, ISignaler, astEvaluate, connectable, astBind, astUnbind, astAssign, subscriberCollection, IExpressionParser, IObserverLocator, ConnectableSwitcher, ProxyObservable, Scope, ICoercionConfiguration, AccessScopeExpression, PropertyAccessor, INodeObserverLocator, IDirtyChecker, getObserverLookup, SetterObserver, createIndexMap, getCollectionObserver as getCollectionObserver$1, BindingContext, PrimitiveLiteralExpression, DirtyChecker } from '@aurelia/runtime';
+import { AccessorType, ISignaler, astEvaluate, connectable, astBind, astUnbind, astAssign, subscriberCollection, IExpressionParser, IObserverLocator, ConnectableSwitcher, ProxyObservable, ICoercionConfiguration, Scope, AccessScopeExpression, PropertyAccessor, INodeObserverLocator, IDirtyChecker, getObserverLookup, SetterObserver, createIndexMap, getCollectionObserver as getCollectionObserver$1, BindingContext, PrimitiveLiteralExpression, DirtyChecker } from '@aurelia/runtime';
 import { BrowserPlatform } from '@aurelia/platform-browser';
 import { TaskAbortError } from '@aurelia/platform';
 
@@ -123,10 +123,8 @@ const BindingMode = /*@__PURE__*/ objectFreeze({
 /** @internal */ const getOwnMetadata = Metadata.getOwn;
 /** @internal */ const hasOwnMetadata = Metadata.hasOwn;
 /** @internal */ const defineMetadata = Metadata.define;
-const { annotation, resource: resource$1 } = Protocol;
+const { annotation } = Protocol;
 /** @internal */ const getAnnotationKeyFor = annotation.keyFor;
-/** @internal */ const getResourceKeyFor = resource$1.keyFor;
-/** @internal */ const appendResourceKey = resource$1.appendTo;
 /** @internal */ const appendAnnotationKey = annotation.appendTo;
 /** @internal */ const getAllAnnotations = annotation.getKeys;
 
@@ -279,26 +277,6 @@ function createCoercer(coercer, nullable) {
     };
 }
 
-const resource = (key) => createResolver((key, handler, requestor) => requestor.has(key, false)
-    ? requestor.get(key)
-    : requestor.root.get(key))(key);
-const optionalResource = (key) => createResolver((key, handler, requestor) => (requestor.has(key, false)
-    ? requestor.get(key)
-    : requestor.root.has(key, false)
-        ? requestor.root.get(key)
-        : void 0))(key);
-/**
- * A resolver builder for resolving all registrations of a key
- * with resource semantic (leaf + root + ignore middle layer container)
- */
-const allResources = (key) => createResolver((key, handler, requestor) => {
-    if ( /* is root? */requestor.root === requestor) {
-        return requestor.getAll(key, false);
-    }
-    return requestor.has(key, false)
-        ? requestor.getAll(key, false).concat(requestor.root.getAll(key, false))
-        : requestor.root.getAll(key, false);
-})(key);
 /** @internal */
 const createInterface = DI.createInterface;
 /** @internal */
@@ -537,32 +515,35 @@ class BindingBehaviorDefinition {
         }
         return new BindingBehaviorDefinition(Type, firstDefined(getBehaviorAnnotation(Type, 'name'), name), mergeArrays(getBehaviorAnnotation(Type, 'aliases'), def.aliases, Type.aliases), BindingBehavior.keyFrom(name));
     }
-    register(container) {
-        const { Type, key, aliases } = this;
+    register(container, aliasName) {
+        const $Type = this.Type;
+        const key = typeof aliasName === 'string' ? getBindingBehaviorKeyFrom(aliasName) : this.key;
+        const aliases = this.aliases;
         if (!container.has(key, false)) {
-            container.register(singletonRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, BindingBehavior.keyFrom(alias))));
+            container.register(container.has($Type, false) ? null : singletonRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getBindingBehaviorKeyFrom(alias))));
         } /* istanbul ignore next */
         else {
             // eslint-disable-next-line no-console
-            console.warn(`[DEV:aurelia] ${createMappedError(156 /* ErrorNames.binding_behavior_existed */)}`);
+            console.warn(`[DEV:aurelia] ${createMappedError(156 /* ErrorNames.binding_behavior_existed */, this.name)}`);
         }
     }
 }
 const bbBaseName = /*@__PURE__*/ getResourceKeyFor('binding-behavior');
 const getBehaviorAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const getBindingBehaviorKeyFrom = (name) => `${bbBaseName}:${name}`;
 const BindingBehavior = objectFreeze({
     name: bbBaseName,
-    keyFrom(name) {
-        return `${bbBaseName}:${name}`;
-    },
+    keyFrom: getBindingBehaviorKeyFrom,
     isType(value) {
         return isFunction(value) && hasOwnMetadata(bbBaseName, value);
     },
     define(nameOrDef, Type) {
         const definition = BindingBehaviorDefinition.create(nameOrDef, Type);
-        defineMetadata(bbBaseName, definition, definition.Type);
-        appendResourceKey(Type, bbBaseName);
-        return definition.Type;
+        const $Type = definition.Type;
+        defineMetadata(bbBaseName, definition, $Type);
+        // a requirement for the resource system in kernel
+        defineMetadata(resourceBaseName, definition, $Type);
+        return $Type;
     },
     getDefinition(Type) {
         const def = getOwnMetadata(bbBaseName, Type);
@@ -571,10 +552,24 @@ const BindingBehavior = objectFreeze({
         }
         return def;
     },
-    annotate(Type, prop, value) {
-        defineMetadata(getAnnotationKeyFor(prop), value, Type);
+    find(container, name) {
+        const key = getBindingBehaviorKeyFrom(name);
+        const Type = container.find(key);
+        return Type == null ? null : getOwnMetadata(bbBaseName, Type) ?? null;
     },
-    getAnnotation: getBehaviorAnnotation,
+    get(container, name) {
+        {
+            try {
+                return container.get(resource(getBindingBehaviorKeyFrom(name)));
+            }
+            catch (ex) {
+                // eslint-disable-next-line no-console
+                console.error('[DEV:aurelia] Cannot retrieve binding behavior with name', name);
+                throw ex;
+            }
+        }
+        return container.get(resource(getBindingBehaviorKeyFrom(name)));
+    },
 });
 
 const originalModesMap = new Map();
@@ -816,21 +811,21 @@ class WatchDefinition {
         this.callback = callback;
     }
 }
-const noDefinitions = emptyArray;
-const watchBaseName = getAnnotationKeyFor('watch');
-const Watch = objectFreeze({
-    name: watchBaseName,
-    add(Type, definition) {
-        let watchDefinitions = getOwnMetadata(watchBaseName, Type);
-        if (watchDefinitions == null) {
-            defineMetadata(watchBaseName, watchDefinitions = [], Type);
+const Watch = /*@__PURE__*/ (() => {
+    const watches = new WeakMap();
+    return objectFreeze({
+        add(Type, definition) {
+            let defs = watches.get(Type);
+            if (defs == null) {
+                watches.set(Type, defs = []);
+            }
+            defs.push(definition);
+        },
+        getDefinitions(Type) {
+            return watches.get(Type) ?? emptyArray;
         }
-        watchDefinitions.push(definition);
-    },
-    getAnnotation(Type) {
-        return getOwnMetadata(watchBaseName, Type) ?? noDefinitions;
-    },
-});
+    });
+})();
 
 /** @internal */ const dtElement = 'element';
 /** @internal */ const dtAttribute = 'attribute';
@@ -850,7 +845,7 @@ function templateController(nameOrDef) {
 class CustomAttributeDefinition {
     // a simple marker to distinguish between Custom Element definition & Custom attribute definition
     get type() { return dtAttribute; }
-    constructor(Type, name, aliases, key, defaultBindingMode, isTemplateController, bindables, noMultiBindings, watches, dependencies) {
+    constructor(Type, name, aliases, key, defaultBindingMode, isTemplateController, bindables, noMultiBindings, watches, dependencies, containerStrategy) {
         this.Type = Type;
         this.name = name;
         this.aliases = aliases;
@@ -861,6 +856,7 @@ class CustomAttributeDefinition {
         this.noMultiBindings = noMultiBindings;
         this.watches = watches;
         this.dependencies = dependencies;
+        this.containerStrategy = containerStrategy;
     }
     static create(nameOrDef, Type) {
         let name;
@@ -873,16 +869,18 @@ class CustomAttributeDefinition {
             name = nameOrDef.name;
             def = nameOrDef;
         }
-        return new CustomAttributeDefinition(Type, firstDefined(getAttributeAnnotation(Type, 'name'), name), mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, toView), firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(Type, ...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), mergeArrays(Watch.getAnnotation(Type), Type.watches), mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies));
+        return new CustomAttributeDefinition(Type, firstDefined(getAttributeAnnotation(Type, 'name'), name), mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, toView), firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(Type, ...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), mergeArrays(Watch.getDefinitions(Type), Type.watches), mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies), firstDefined(getAttributeAnnotation(Type, 'containerStrategy'), def.containerStrategy, Type.containerStrategy, 'reuse'));
     }
-    register(container) {
-        const { Type, key, aliases } = this;
+    register(container, aliasName) {
+        const $Type = this.Type;
+        const key = typeof aliasName === 'string' ? getAttributeKeyFrom(aliasName) : this.key;
+        const aliases = this.aliases;
         if (!container.has(key, false)) {
-            container.register(transientRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, CustomAttribute.keyFrom(alias))));
+            container.register(container.has($Type, false) ? null : transientRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getAttributeKeyFrom(alias))));
         } /* istanbul ignore next */
         else {
             // eslint-disable-next-line no-console
-            console.warn(`[DEV:aurelia] ${createMappedError(154 /* ErrorNames.attribute_existed */)}`);
+            console.warn(`[DEV:aurelia] ${createMappedError(154 /* ErrorNames.attribute_existed */, this.name)}`);
         }
     }
     toString() {
@@ -890,7 +888,7 @@ class CustomAttributeDefinition {
     }
 }
 /** @internal */
-const caBaseName = getResourceKeyFor('custom-attribute');
+const caBaseName = /*@__PURE__*/ getResourceKeyFor('custom-attribute');
 /** @internal */
 const getAttributeKeyFrom = (name) => `${caBaseName}:${name}`;
 const getAttributeAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
@@ -905,9 +903,11 @@ const findAttributeControllerFor = (node, name) => {
 /** @internal */
 const defineAttribute = (nameOrDef, Type) => {
     const definition = CustomAttributeDefinition.create(nameOrDef, Type);
-    defineMetadata(caBaseName, definition, definition.Type);
-    appendResourceKey(Type, caBaseName);
-    return definition.Type;
+    const $Type = definition.Type;
+    defineMetadata(caBaseName, definition, $Type);
+    // a requirement for the resource system in kernel
+    defineMetadata(resourceBaseName, definition, $Type);
+    return $Type;
 };
 /** @internal */
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -929,6 +929,11 @@ const CustomAttribute = objectFreeze({
         defineMetadata(getAnnotationKeyFor(prop), value, Type);
     },
     getAnnotation: getAttributeAnnotation,
+    find(c, name) {
+        const key = getAttributeKeyFrom(name);
+        const Type = c.find(key);
+        return Type === null ? null : getOwnMetadata(caBaseName, Type) ?? null;
+    },
 });
 
 const ILifecycleHooks = /*@__PURE__*/ createInterface('ILifecycleHooks');
@@ -965,62 +970,64 @@ class LifecycleHooksDefinition {
         }
         return new LifecycleHooksDefinition(Type, propertyNames);
     }
-    register(container) {
-        singletonRegistration(ILifecycleHooks, this.Type).register(container);
-    }
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const containerLookup = new WeakMap();
-const lhBaseName = getAnnotationKeyFor('lifecycle-hooks');
-const LifecycleHooks = objectFreeze({
-    name: lhBaseName,
-    /**
-     * @param def - Placeholder for future extensions. Currently always an empty object.
-     */
-    define(def, Type) {
-        const definition = LifecycleHooksDefinition.create(def, Type);
-        defineMetadata(lhBaseName, definition, Type);
-        appendResourceKey(Type, lhBaseName);
-        return definition.Type;
-    },
-    /**
-     * @param ctx - The container where the resolution starts
-     * @param Type - The constructor of the Custom element/ Custom attribute with lifecycle metadata
-     */
-    resolve(ctx) {
-        let lookup = containerLookup.get(ctx);
-        if (lookup === void 0) {
-            containerLookup.set(ctx, lookup = new LifecycleHooksLookupImpl());
-            const root = ctx.root;
-            const instances = root.id === ctx.id
-                ? ctx.getAll(ILifecycleHooks)
-                // if it's not root, only resolve it from the current context when it has the resolver
-                // to maintain resources semantic: current -> root
-                : ctx.has(ILifecycleHooks, false)
-                    ? root.getAll(ILifecycleHooks).concat(ctx.getAll(ILifecycleHooks))
-                    : root.getAll(ILifecycleHooks);
-            let instance;
-            let definition;
-            let entry;
-            let name;
-            let entries;
-            for (instance of instances) {
-                definition = getOwnMetadata(lhBaseName, instance.constructor);
-                entry = new LifecycleHooksEntry(definition, instance);
-                for (name of definition.propertyNames) {
-                    entries = lookup[name];
-                    if (entries === void 0) {
-                        lookup[name] = [entry];
-                    }
-                    else {
-                        entries.push(entry);
+const LifecycleHooks = /*@__PURE__*/ (() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const containerLookup = new WeakMap();
+    // const lhBaseName = getAnnotationKeyFor('lifecycle-hooks');
+    const definitionMap = new WeakMap();
+    return objectFreeze({
+        // name: lhBaseName,
+        /**
+         * @param def - Placeholder for future extensions. Currently always an empty object.
+         */
+        define(def, Type) {
+            const definition = LifecycleHooksDefinition.create(def, Type);
+            const $Type = definition.Type;
+            definitionMap.set($Type, definition);
+            return Registrable.define($Type, container => {
+                singletonRegistration(ILifecycleHooks, $Type).register(container);
+            });
+        },
+        /**
+         * @param ctx - The container where the resolution starts
+         * @param Type - The constructor of the Custom element/ Custom attribute with lifecycle metadata
+         */
+        resolve(ctx) {
+            let lookup = containerLookup.get(ctx);
+            if (lookup === void 0) {
+                containerLookup.set(ctx, lookup = new LifecycleHooksLookupImpl());
+                const root = ctx.root;
+                const instances = root === ctx
+                    ? ctx.getAll(ILifecycleHooks)
+                    // if it's not root, only resolve it from the current context when it has the resolver
+                    // to maintain resources semantic: current -> root
+                    : ctx.has(ILifecycleHooks, false)
+                        ? root.getAll(ILifecycleHooks).concat(ctx.getAll(ILifecycleHooks))
+                        : root.getAll(ILifecycleHooks);
+                let instance;
+                let definition;
+                let entry;
+                let name;
+                let entries;
+                for (instance of instances) {
+                    definition = definitionMap.get(instance.constructor);
+                    entry = new LifecycleHooksEntry(definition, instance);
+                    for (name of definition.propertyNames) {
+                        entries = lookup[name];
+                        if (entries === void 0) {
+                            lookup[name] = [entry];
+                        }
+                        else {
+                            entries.push(entry);
+                        }
                     }
                 }
             }
-        }
-        return lookup;
-    },
-});
+            return lookup;
+        },
+    });
+})();
 class LifecycleHooksLookupImpl {
 }
 /**
@@ -1057,30 +1064,35 @@ class ValueConverterDefinition {
         }
         return new ValueConverterDefinition(Type, firstDefined(getConverterAnnotation(Type, 'name'), name), mergeArrays(getConverterAnnotation(Type, 'aliases'), def.aliases, Type.aliases), ValueConverter.keyFrom(name));
     }
-    register(container) {
-        const { Type, key, aliases } = this;
+    register(container, aliasName) {
+        const $Type = this.Type;
+        const key = typeof aliasName === 'string' ? getValueConverterKeyFrom(aliasName) : this.key;
+        const aliases = this.aliases;
         if (!container.has(key, false)) {
-            container.register(singletonRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, ValueConverter.keyFrom(alias))));
+            container.register(container.has($Type, false) ? null : singletonRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getValueConverterKeyFrom(alias))));
         } /* istanbul ignore next */
         else {
             // eslint-disable-next-line no-console
-            console.warn(`[DEV:aurelia] ${createMappedError(155 /* ErrorNames.value_converter_existed */)}`);
+            console.warn(`[DEV:aurelia] ${createMappedError(155 /* ErrorNames.value_converter_existed */, this.name)}`);
         }
     }
 }
-const vcBaseName = getResourceKeyFor('value-converter');
+const vcBaseName = /*@__PURE__*/ getResourceKeyFor('value-converter');
 const getConverterAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const getValueConverterKeyFrom = (name) => `${vcBaseName}:${name}`;
 const ValueConverter = objectFreeze({
     name: vcBaseName,
-    keyFrom: (name) => `${vcBaseName}:${name}`,
+    keyFrom: getValueConverterKeyFrom,
     isType(value) {
         return isFunction(value) && hasOwnMetadata(vcBaseName, value);
     },
     define(nameOrDef, Type) {
         const definition = ValueConverterDefinition.create(nameOrDef, Type);
-        defineMetadata(vcBaseName, definition, definition.Type);
-        appendResourceKey(Type, vcBaseName);
-        return definition.Type;
+        const $Type = definition.Type;
+        defineMetadata(vcBaseName, definition, $Type);
+        // a requirement for the resource system in kernel
+        defineMetadata(resourceBaseName, definition, $Type);
+        return $Type;
     },
     getDefinition(Type) {
         const def = getOwnMetadata(vcBaseName, Type);
@@ -1093,6 +1105,24 @@ const ValueConverter = objectFreeze({
         defineMetadata(getAnnotationKeyFor(prop), value, Type);
     },
     getAnnotation: getConverterAnnotation,
+    find(container, name) {
+        const key = getValueConverterKeyFrom(name);
+        const Type = container.find(key);
+        return Type == null ? null : getOwnMetadata(vcBaseName, Type) ?? null;
+    },
+    get(container, name) {
+        {
+            try {
+                return container.get(resource(getValueConverterKeyFrom(name)));
+            }
+            catch (ex) {
+                // eslint-disable-next-line no-console
+                console.error('[DEV:aurelia] Cannot retrieve value converter with name', name);
+                throw ex;
+            }
+        }
+        return container.get(resource(getValueConverterKeyFrom(name)));
+    },
 });
 
 /**
@@ -1147,7 +1177,8 @@ const mixinAstEvaluator = (strict, strictFnCall = true) => {
         defineHiddenProp(proto, 'getBehavior', (evaluatorGetBehavior));
     };
 };
-const resourceLookupCache = new WeakMap();
+const converterResourceLookupCache = new WeakMap();
+const behaviorResourceLookupCache = new WeakMap();
 class ResourceLookup {
 }
 const IFlushQueue = /*@__PURE__*/ createInterface('IFlushQueue', x => x.singleton(FlushQueue));
@@ -1189,20 +1220,18 @@ function evaluatorGetSignaler() {
     return this.l.root.get(ISignaler);
 }
 function evaluatorGetConverter(name) {
-    const key = ValueConverter.keyFrom(name);
-    let resourceLookup = resourceLookupCache.get(this);
+    let resourceLookup = converterResourceLookupCache.get(this);
     if (resourceLookup == null) {
-        resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
+        converterResourceLookupCache.set(this, resourceLookup = new ResourceLookup());
     }
-    return resourceLookup[key] ??= this.l.get(resource(key));
+    return resourceLookup[name] ??= ValueConverter.get(this.l, name);
 }
 function evaluatorGetBehavior(name) {
-    const key = BindingBehavior.keyFrom(name);
-    let resourceLookup = resourceLookupCache.get(this);
+    let resourceLookup = behaviorResourceLookupCache.get(this);
     if (resourceLookup == null) {
-        resourceLookupCache.set(this, resourceLookup = new ResourceLookup());
+        behaviorResourceLookupCache.set(this, resourceLookup = new ResourceLookup());
     }
-    return resourceLookup[key] ??= this.l.get(resource(key));
+    return resourceLookup[name] ??= BindingBehavior.get(this.l, name);
 }
 function flushItem(item, _, items) {
     items.delete(item);
@@ -2366,6 +2395,10 @@ const isElement = (node) => node.nodeType === 1;
 /** @internal */
 const isTextNode = (node) => node.nodeType === 3;
 
+/** @internal */
+const defaultSlotName = 'default';
+/** @internal */
+const auslotAttr = 'au-slot';
 /**
  * Describing the projection information statically available for a custom element
  */
@@ -2679,7 +2712,7 @@ class HydrateElementInstruction {
      */
     // in theory, Constructor of resources should be accepted too
     // though it would be unnecessary right now
-    res, alias, 
+    res, 
     /**
      * Bindable instructions for the custom element instance
      */
@@ -2695,18 +2728,18 @@ class HydrateElementInstruction {
     /**
      * A list of captured attr syntaxes
      */
-    captures) {
+    captures, 
+    /**
+     * Any data associated with this instruction
+     */
+    data) {
         this.res = res;
-        this.alias = alias;
         this.props = props;
         this.projections = projections;
         this.containerless = containerless;
         this.captures = captures;
+        this.data = data;
         this.type = hydrateElement;
-        /**
-         * A special property that can be used to store <au-slot/> usage information
-         */
-        this.auSlot = null;
     }
 }
 class HydrateAttributeInstruction {
@@ -2761,10 +2794,9 @@ class TextBindingInstruction {
     }
 }
 class ListenerBindingInstruction {
-    constructor(from, to, preventDefault, capture, modifier) {
+    constructor(from, to, capture, modifier) {
         this.from = from;
         this.to = to;
-        this.preventDefault = preventDefault;
         this.capture = capture;
         this.modifier = modifier;
         this.type = listenerBinding;
@@ -2826,14 +2858,13 @@ const ITemplateCompiler = /*@__PURE__*/ createInterface('ITemplateCompiler');
 const IRenderer = /*@__PURE__*/ createInterface('IRenderer');
 function renderer(targetType) {
     return function decorator(target) {
-        target.register = function (container) {
-            singletonRegistration(IRenderer, this).register(container);
-        };
         def(target.prototype, 'target', {
             configurable: true,
-            get: function () { return targetType; }
+            get() { return targetType; }
         });
-        return target;
+        return Registrable.define(target, function (container) {
+            singletonRegistration(IRenderer, this).register(container);
+        });
     };
 }
 function ensureExpression(parser, srcOrExpr, expressionType) {
@@ -2896,7 +2927,6 @@ let CustomElementRenderer = class CustomElementRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         /* eslint-disable prefer-const */
         let def;
-        let Ctor;
         let component;
         let childCtrl;
         const res = instruction.res;
@@ -2904,7 +2934,7 @@ let CustomElementRenderer = class CustomElementRenderer {
         const ctxContainer = renderingCtrl.container;
         switch (typeof res) {
             case 'string':
-                def = ctxContainer.find(CustomElement, res);
+                def = CustomElement.find(ctxContainer, res);
                 if (def == null) {
                     throw createMappedError(752 /* ErrorNames.element_res_not_found */, instruction, renderingCtrl);
                 }
@@ -2928,9 +2958,7 @@ let CustomElementRenderer = class CustomElementRenderer {
         /* instruction      */ instruction, 
         /* location         */ location, 
         /* SlotsInfo      */ projections == null ? void 0 : new AuSlotsInfo(objectKeys(projections)));
-        Ctor = def.Type;
-        component = container.invoke(Ctor);
-        registerResolver(container, Ctor, new InstanceProvider(def.key, component));
+        component = container.invoke(def.Type);
         childCtrl = Controller.$el(
         /* own container       */ container, 
         /* viewModel           */ component, 
@@ -2971,7 +2999,7 @@ let CustomAttributeRenderer = class CustomAttributeRenderer {
         let def;
         switch (typeof instruction.res) {
             case 'string':
-                def = ctxContainer.find(CustomAttribute, instruction.res);
+                def = CustomAttribute.find(ctxContainer, instruction.res);
                 if (def == null) {
                     throw createMappedError(753 /* ErrorNames.attribute_res_not_found */, instruction, renderingCtrl);
                 }
@@ -3028,7 +3056,7 @@ let TemplateControllerRenderer = class TemplateControllerRenderer {
         let def;
         switch (typeof instruction.res) {
             case 'string':
-                def = ctxContainer.find(CustomAttribute, instruction.res);
+                def = CustomAttribute.find(ctxContainer, instruction.res);
                 if (def == null) {
                     throw createMappedError(754 /* ErrorNames.attribute_tc_res_not_found */, instruction, renderingCtrl);
                 }
@@ -3043,7 +3071,13 @@ let TemplateControllerRenderer = class TemplateControllerRenderer {
             default:
                 def = instruction.res;
         }
-        const viewFactory = this._rendering.getViewFactory(instruction.def, ctxContainer);
+        // const viewFactory = this._rendering.getViewFactory(
+        //   instruction.def,
+        //   ctxContainer
+        // );
+        const viewFactory = this._rendering.getViewFactory(instruction.def, def.containerStrategy === 'new'
+            ? ctxContainer.createChild({ inheritParentResources: true })
+            : ctxContainer);
         const renderLocation = convertToRenderLocation(target);
         const results = invokeAttribute(
         /* platform         */ platform, 
@@ -3145,13 +3179,18 @@ TextBindingRenderer = __decorate([
     renderer(textBinding)
     /** @internal */
 ], TextBindingRenderer);
+const IListenerBindingOptions = createInterface('IListenerBindingOptions', x => x.instance({
+    prevent: false,
+}));
 let ListenerBindingRenderer = class ListenerBindingRenderer {
     constructor() {
         /** @internal */
         this._modifierHandler = resolve(IEventModifier);
+        /** @internal */
+        this._defaultOptions = resolve(IListenerBindingOptions);
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
-        renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(instruction.preventDefault, instruction.capture), this._modifierHandler.getHandler(instruction.to, instruction.modifier)));
+        renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(this._defaultOptions.prevent, instruction.capture), this._modifierHandler.getHandler(instruction.to, instruction.modifier)));
     }
 };
 ListenerBindingRenderer = __decorate([
@@ -3683,7 +3722,6 @@ class CSSModulesProcessorRegistry {
         this.modules = modules;
     }
     register(container) {
-        var _a;
         // it'd be nice to be able to register a template compiler hook instead
         // so that it's lighter weight on the creation of a custom element with css module
         // also it'll be more consitent in terms as CSS class output
@@ -3694,19 +3732,19 @@ class CSSModulesProcessorRegistry {
             name: 'class',
             bindables: ['value'],
             noMultiBindings: true,
-        }, (_a = class CustomAttributeClass {
-                constructor(element) {
-                    this._accessor = new ClassAttributeAccessor(element);
-                }
-                binding() {
-                    this.valueChanged();
-                }
-                valueChanged() {
-                    this._accessor.setValue(this.value?.split(/\s+/g).map(x => classLookup[x] || x) ?? '');
-                }
-            },
-            _a.inject = [INode],
-            _a));
+        }, class CustomAttributeClass {
+            constructor() {
+                /** @internal */
+                this._accessor = new ClassAttributeAccessor(resolve(INode));
+                this.value = '';
+            }
+            binding() {
+                this.valueChanged();
+            }
+            valueChanged() {
+                this._accessor.setValue(this.value?.split(/\s+/g).map(x => classLookup[x] || x) ?? '');
+            }
+        });
         container.register(ClassCustomAttribute, instanceRegistration(ICssModulesMapping, classLookup));
     }
 }
@@ -4080,6 +4118,7 @@ class Controller {
                 }
             }
         }
+        registerResolver(ctn, definition.Type, new InstanceProvider(definition.key, viewModel, definition.Type));
         const controller = new Controller(
         /* container      */ ctn, 
         /* vmKind         */ vmkCe, 
@@ -4122,6 +4161,7 @@ class Controller {
             return controllerLookup.get(viewModel);
         }
         definition = definition ?? getAttributeDefinition(viewModel.constructor);
+        registerResolver(ctn, definition.Type, new InstanceProvider(definition.key, viewModel, definition.Type));
         const controller = new Controller(
         /* own ct         */ ctn, 
         /* vmKind         */ vmkCa, 
@@ -4184,7 +4224,8 @@ class Controller {
         createObservers(this, definition, instance);
         this._lifecycleHooks = LifecycleHooks.resolve(container);
         // Support Recursive Components by adding self to own context
-        definition.register(container);
+        container.register(definition.Type);
+        // definition.register(container);
         if (definition.injectable !== null) {
             registerResolver(container, definition.injectable, new InstanceProvider('definition.injectable', instance));
         }
@@ -5487,14 +5528,14 @@ class CustomElementDefinition {
         // If a type is passed in, we ignore the Type property on the definition if it exists.
         // TODO: document this behavior
         if (isString(nameOrDef)) {
-            return new CustomElementDefinition(Type, nameOrDef, mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), fromAnnotationOrTypeOrDefault('cache', Type, returnZero), fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), fromAnnotationOrTypeOrDefault('template', Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), mergeArrays(Watch.getAnnotation(Type), Type.watches), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, nameOrDef, mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), fromAnnotationOrTypeOrDefault('cache', Type, returnZero), fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), fromAnnotationOrTypeOrDefault('template', Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), mergeArrays(Watch.getDefinitions(Type), Type.watches), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // This is the typical default behavior, e.g. from regular CustomElement.define invocations or from @customElement deco
         // The ViewValueConverter also uses this signature and passes in a definition where everything except for the 'hooks'
         // property needs to be copied. So we have that exception for 'hooks', but we may need to revisit that default behavior
         // if this turns out to be too opinionated.
         const name = fromDefinitionOrDefault('name', nameOrDef, generateElementName);
-        return new CustomElementDefinition(Type, name, mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), mergeArrays(nameOrDef.watches, Watch.getAnnotation(Type), Type.watches), fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
+        return new CustomElementDefinition(Type, name, mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), mergeArrays(nameOrDef.watches, Watch.getDefinitions(Type), Type.watches), fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
     }
     static getOrCreate(partialDefinition) {
         if (partialDefinition instanceof CustomElementDefinition) {
@@ -5509,15 +5550,17 @@ class CustomElementDefinition {
         defineMetadata(elementBaseName, definition, definition.Type);
         return definition;
     }
-    register(container) {
-        const { Type, key, aliases } = this;
+    register(container, aliasName) {
+        const $Type = this.Type;
+        const key = typeof aliasName === 'string' ? getElementKeyFrom(aliasName) : this.key;
+        const aliases = this.aliases;
         // todo: warn if alreay has key
         if (!container.has(key, false)) {
-            container.register(transientRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(Type, CustomElement.keyFrom(alias))));
+            container.register(container.has($Type, false) ? null : transientRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getElementKeyFrom(alias))));
         } /* istanbul ignore next */
         else {
             // eslint-disable-next-line no-console
-            console.warn(`[DEV:aurelia] ${createMappedError(153 /* ErrorNames.element_existed */)}`);
+            console.warn(`[DEV:aurelia] ${createMappedError(153 /* ErrorNames.element_existed */, this.name)}`);
         }
     }
     toString() {
@@ -5549,9 +5592,11 @@ const annotateElementMetadata = (Type, prop, value) => {
 /** @internal */
 const defineElement = (nameOrDef, Type) => {
     const definition = CustomElementDefinition.create(nameOrDef, Type);
-    defineMetadata(elementBaseName, definition, definition.Type);
-    appendResourceKey(definition.Type, elementBaseName);
-    return definition.Type;
+    const $Type = definition.Type;
+    defineMetadata(elementBaseName, definition, $Type);
+    // a requirement for the resource system in kernel
+    defineMetadata(resourceBaseName, definition, $Type);
+    return $Type;
 };
 /** @internal */
 const isElementType = (value) => {
@@ -5675,6 +5720,11 @@ const CustomElement = objectFreeze({
     generateName: generateElementName,
     createInjectable: createElementInjectable,
     generateType: generateElementType,
+    find(c, name) {
+        const key = getElementKeyFrom(name);
+        const Type = c.find(key);
+        return Type == null ? null : getOwnMetadata(elementBaseName, Type) ?? null;
+    }
 });
 const pcHookMetadataProperty = /*@__PURE__*/ getAnnotationKeyFor('processContent');
 function processContent(hook) {
@@ -6298,7 +6348,7 @@ class AttributeParser {
         /** @internal */
         this._cache = {};
         const interpreter = this._interpreter = resolve(ISyntaxInterpreter);
-        const attrPatterns = resolve(all(IAttributePattern));
+        const attrPatterns = AttributePattern.findAll(resolve(IContainer));
         const patterns = this._patterns = {};
         const allDefs = attrPatterns.reduce((allDefs, attrPattern) => {
             const patternDefs = getAllPatternDefinitions(attrPattern.constructor);
@@ -6326,30 +6376,18 @@ function attributePattern(...patternDefs) {
         return AttributePattern.define(patternDefs, target);
     };
 }
-class AttributePatternResourceDefinition {
-    constructor(Type) {
-        this.Type = Type;
-        this.name = (void 0);
-    }
-    register(container) {
-        singletonRegistration(IAttributePattern, this.Type).register(container);
-    }
-}
-const apBaseName = getResourceKeyFor('attribute-pattern');
-const annotationKey = 'attribute-pattern-definitions';
-const getAllPatternDefinitions = (Type) => Protocol.annotation.get(Type, annotationKey);
+const getAllPatternDefinitions = (Type) => patterns.get(Type) ?? emptyArray;
+const patterns = new WeakMap();
 const AttributePattern = objectFreeze({
-    name: apBaseName,
-    definitionAnnotationKey: annotationKey,
+    name: getResourceKeyFor('attribute-pattern'),
     define(patternDefs, Type) {
-        const definition = new AttributePatternResourceDefinition(Type);
-        defineMetadata(apBaseName, definition, Type);
-        appendResourceKey(Type, apBaseName);
-        Protocol.annotation.set(Type, annotationKey, patternDefs);
-        appendAnnotationKey(Type, annotationKey);
-        return Type;
+        patterns.set(Type, patternDefs);
+        return Registrable.define(Type, (container) => {
+            singletonRegistration(IAttributePattern, Type).register(container);
+        });
     },
     getPatternDefinitions: getAllPatternDefinitions,
+    findAll: (container) => container.root.getAll(IAttributePattern),
 });
 let DotSeparatedAttributePattern = class DotSeparatedAttributePattern {
     'PART.PART'(rawName, rawValue, parts) {
@@ -6406,8 +6444,7 @@ let AtPrefixedTriggerAttributePattern = class AtPrefixedTriggerAttributePattern 
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger');
     }
     '@PART:PART'(rawName, rawValue, parts) {
-        parts.splice(1, 0, 'trigger');
-        return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', parts);
+        return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', [parts[0], 'trigger', ...parts.slice(1)]);
     }
 };
 AtPrefixedTriggerAttributePattern = __decorate([
@@ -6422,8 +6459,8 @@ SpreadAttributePattern = __decorate([
     attributePattern({ pattern: '...$attrs', symbols: '' })
 ], SpreadAttributePattern);
 
-const ctNone = 'None';
-const ctIgnoreAttr = 'IgnoreAttr';
+/** @internal */ const ctNone = 'None';
+/** @internal */ const ctIgnoreAttr = 'IgnoreAttr';
 function bindingCommand(nameOrDefinition) {
     return function (target) {
         return BindingCommand.define(nameOrDefinition, target);
@@ -6450,14 +6487,16 @@ class BindingCommandDefinition {
         }
         return new BindingCommandDefinition(Type, firstDefined(getCommandAnnotation(Type, 'name'), name), mergeArrays(getCommandAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getCommandKeyFrom(name), firstDefined(getCommandAnnotation(Type, 'type'), def.type, Type.type, null));
     }
-    register(container) {
-        const { Type, key, aliases } = this;
+    register(container, aliasName) {
+        const $Type = this.Type;
+        const key = typeof aliasName === 'string' ? getCommandKeyFrom(aliasName) : this.key;
+        const aliases = this.aliases;
         if (!container.has(key, false)) {
-            container.register(singletonRegistration(key, Type), aliasRegistration(key, Type), ...aliases.map(alias => aliasRegistration(key, BindingCommand.keyFrom(alias))));
+            container.register(container.has($Type, false) ? null : singletonRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getCommandKeyFrom(alias))));
         } /* istanbul ignore next */
         else {
             // eslint-disable-next-line no-console
-            console.warn(`[DEV:aurelia] ${createMappedError(157 /* ErrorNames.binding_command_existed */)}`);
+            console.warn(`[DEV:aurelia] ${createMappedError(157 /* ErrorNames.binding_command_existed */, this.name)}`);
         }
     }
 }
@@ -6467,16 +6506,37 @@ const getCommandAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(
 const BindingCommand = objectFreeze({
     name: cmdBaseName,
     keyFrom: getCommandKeyFrom,
+    // need this?
     // isType<T>(value: T): value is (T extends Constructable ? BindingCommandType<T> : never) {
     //   return isFunction(value) && hasOwnMetadata(cmdBaseName, value);
     // },
     define(nameOrDef, Type) {
         const definition = BindingCommandDefinition.create(nameOrDef, Type);
-        defineMetadata(cmdBaseName, definition, definition.Type);
-        appendResourceKey(Type, cmdBaseName);
-        return definition.Type;
+        const $Type = definition.Type;
+        defineMetadata(cmdBaseName, definition, $Type);
+        // a requirement for the resource system in kernel
+        defineMetadata(resourceBaseName, definition, $Type);
+        return $Type;
     },
     getAnnotation: getCommandAnnotation,
+    find(container, name) {
+        const key = getCommandKeyFrom(name);
+        const Type = container.find(key);
+        return Type == null ? null : getOwnMetadata(cmdBaseName, Type) ?? null;
+    },
+    get(container, name) {
+        {
+            try {
+                return container.get(resource(getCommandKeyFrom(name)));
+            }
+            catch (ex) {
+                // eslint-disable-next-line no-console
+                console.log(`\n\n\n[DEV:aurelia] Cannot retrieve binding command with name\n\n\n\n\n`, name);
+                throw ex;
+            }
+        }
+        return container.get(resource(getCommandKeyFrom(name)));
+    },
 });
 let OneTimeBindingCommand = class OneTimeBindingCommand {
     get type() { return ctNone; }
@@ -6649,7 +6709,7 @@ ForBindingCommand = __decorate([
 let TriggerBindingCommand = class TriggerBindingCommand {
     get type() { return ctIgnoreAttr; }
     build(info, exprParser) {
-        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true, false, info.attr.parts?.[2] ?? null);
+        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false, info.attr.parts?.[2] ?? null);
     }
 };
 TriggerBindingCommand = __decorate([
@@ -6658,7 +6718,7 @@ TriggerBindingCommand = __decorate([
 let CaptureBindingCommand = class CaptureBindingCommand {
     get type() { return ctIgnoreAttr; }
     build(info, exprParser) {
-        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false, true, info.attr.parts?.[2] ?? null);
+        return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true, info.attr.parts?.[2] ?? null);
     }
 };
 CaptureBindingCommand = __decorate([
@@ -9478,7 +9538,7 @@ function getPromiseController(controller) {
     throw createMappedError(813 /* ErrorNames.promise_invalid_usage */);
 }
 let PromiseAttributePattern = class PromiseAttributePattern {
-    'promise.resolve'(name, value, _parts) {
+    'promise.resolve'(name, value) {
         return new AttrSyntax(name, value, 'promise', 'bind');
     }
 };
@@ -9486,7 +9546,7 @@ PromiseAttributePattern = __decorate([
     attributePattern({ pattern: 'promise.resolve', symbols: '' })
 ], PromiseAttributePattern);
 let FulfilledAttributePattern = class FulfilledAttributePattern {
-    'then'(name, value, _parts) {
+    'then'(name, value) {
         return new AttrSyntax(name, value, 'then', 'from-view');
     }
 };
@@ -9494,7 +9554,7 @@ FulfilledAttributePattern = __decorate([
     attributePattern({ pattern: 'then', symbols: '' })
 ], FulfilledAttributePattern);
 let RejectedAttributePattern = class RejectedAttributePattern {
-    'catch'(name, value, _parts) {
+    'catch'(name, value) {
         return new AttrSyntax(name, value, 'catch', 'from-view');
     }
 };
@@ -9822,6 +9882,7 @@ __decorate([
 ], Portal.prototype, "callbackContext", void 0);
 templateController('portal')(Portal);
 
+let emptyTemplate;
 let AuSlot = class AuSlot {
     constructor() {
         /** @internal */ this._parentScope = null;
@@ -9843,15 +9904,22 @@ let AuSlot = class AuSlot {
         const location = resolve(IRenderLocation);
         const instruction = resolve(IInstruction);
         const rendering = resolve(IRendering);
-        const slotInfo = instruction.auSlot;
-        const projection = hdrContext.instruction?.projections?.[slotInfo.name];
+        const slotName = this.name = instruction.data.name;
+        // when <au-slot> is empty, there's not even projections
+        // hence ?. operator is used
+        // for fallback, there's only default slot used
+        const fallback = instruction.projections?.[defaultSlotName];
+        const projection = hdrContext.instruction?.projections?.[slotName];
         const contextContainer = hdrContext.controller.container;
         let factory;
         let container;
-        this.name = slotInfo.name;
         if (projection == null) {
             container = contextContainer.createChild({ inheritParentResources: true });
-            factory = rendering.getViewFactory(slotInfo.fallback, container);
+            factory = rendering.getViewFactory(fallback ?? (emptyTemplate ??= CustomElementDefinition.create({
+                name: 'au-slot-empty-template',
+                template: '',
+                needsCompile: false,
+            })), container);
             this._hasProjection = false;
         }
         else {
@@ -9890,7 +9958,7 @@ let AuSlot = class AuSlot {
             registerResolver(container, IHydrationContext, new InstanceProvider(void 0, hdrContext.parent));
             factory = rendering.getViewFactory(projection, container);
             this._hasProjection = true;
-            this._slotwatchers = contextContainer.getAll(IAuSlotWatcher, false)?.filter(w => w.slotName === '*' || w.slotName === slotInfo.name) ?? emptyArray;
+            this._slotwatchers = contextContainer.getAll(IAuSlotWatcher, false)?.filter(w => w.slotName === '*' || w.slotName === slotName) ?? emptyArray;
         }
         this._hasSlotWatcher = (this._slotwatchers ??= emptyArray).length > 0;
         this._hdrContext = hdrContext;
@@ -10002,7 +10070,23 @@ AuSlot = __decorate([
     customElement({
         name: 'au-slot',
         template: null,
-        containerless: true
+        containerless: true,
+        processContent(el, p, data) {
+            data.name = el.getAttribute('name') ?? defaultSlotName;
+            let node = el.firstChild;
+            let next = null;
+            while (node !== null) {
+                next = node.nextSibling;
+                if (isElement(node) && node.hasAttribute(auslotAttr)) {
+                    {
+                        // eslint-disable-next-line no-console
+                        console.warn(`[DEV:aurelia] detected [au-slot] attribute on a child node`, `of an <au-slot> element: "<${node.nodeName} au-slot>".`, `This element will be ignored and removed`);
+                    }
+                    el.removeChild(node);
+                }
+                node = next;
+            }
+        },
     })
 ], AuSlot);
 const comparePosition = (a, b) => a.compareDocumentPosition(b);
@@ -10262,7 +10346,7 @@ class AuCompose {
     /** @internal */
     _getDefinition(container, component) {
         if (typeof component === 'string') {
-            const def = container.find(CustomElement, component);
+            const def = CustomElement.find(container, component);
             if (def == null) {
                 throw createMappedError(806 /* ErrorNames.au_compose_component_name_not_found */, component);
             }
@@ -10504,8 +10588,6 @@ class TemplateElementFactory {
     }
 }
 
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 class TemplateCompiler {
     constructor() {
         this.debug = false;
@@ -10529,7 +10611,7 @@ class TemplateCompiler {
             : definition.template;
         const isTemplateElement = template.nodeName === TEMPLATE_NODE_NAME && template.content != null;
         const content = isTemplateElement ? template.content : template;
-        const hooks = container.get(allResources(ITemplateCompilerHooks));
+        const hooks = TemplateCompilerHooks.findAll(container);
         const ii = hooks.length;
         let i = 0;
         if (ii > 0) {
@@ -10977,8 +11059,6 @@ class TemplateCompiler {
         //    plain attrs with bindings -> list 3
         //    el bindables              -> list 4
         // 2. ensure element instruction is present
-        //    2.1.
-        //      if element is an <au-slot/> compile its content into auSlot property of the element instruction created
         // 3. sort instructions:
         //    hydrate custom element instruction
         //    hydrate custom attribute instructions
@@ -11061,6 +11141,7 @@ class TemplateCompiler {
         let hasContainerless = false;
         let canCapture = false;
         let needsMarker = false;
+        let elementMetadata;
         if (elName === 'slot') {
             if (context.root.def.shadowOptions == null) {
                 throw createMappedError(717 /* ErrorNames.compiler_slot_without_shadowdom */, context.root.def.name);
@@ -11068,9 +11149,10 @@ class TemplateCompiler {
             context.root.hasSlot = true;
         }
         if (isCustomElement) {
+            elementMetadata = {};
             // todo: this is a bit ... powerful
             // maybe do not allow it to process its own attributes
-            processContentResult = elDef.processContent?.call(elDef.Type, el, context.p);
+            processContentResult = elDef.processContent?.call(elDef.Type, el, context.p, elementMetadata);
             // might have changed during the process
             attrs = el.attributes;
             ii = attrs.length;
@@ -11104,7 +11186,7 @@ class TemplateCompiler {
                     captures.push(attrSyntax);
                     continue;
                 }
-                canCapture = realAttrTarget !== AU_SLOT && realAttrTarget !== 'slot';
+                canCapture = realAttrTarget !== auslotAttr && realAttrTarget !== 'slot';
                 if (canCapture) {
                     bindablesInfo = BindablesInfo.from(elDef, false);
                     // if capture is on, capture everything except:
@@ -11276,49 +11358,7 @@ class TemplateCompiler {
             // todo: def/ def.Type or def.name should be configurable
             //       example: AOT/runtime can use def.Type, but there are situation
             //       where instructions need to be serialized, def.name should be used
-            this.resolveResources ? elDef : elDef.name, void 0, (elBindableInstructions ?? emptyArray), null, hasContainerless, captures);
-            // 2.1 prepare fallback content for <au-slot/>
-            if (elName === AU_SLOT) {
-                const slotName = el.getAttribute('name') || /* name="" is the same with no name */ DEFAULT_SLOT_NAME;
-                const template = context.t();
-                const fallbackContentContext = context._createChild();
-                let node = el.firstChild;
-                let count = 0;
-                while (node !== null) {
-                    // a special case:
-                    // <au-slot> doesn't have its own template
-                    // so anything attempting to project into it is discarded
-                    // doing so during compilation via removing the node,
-                    // instead of considering it as part of the fallback view
-                    if (isElement(node) && node.hasAttribute(AU_SLOT)) {
-                        {
-                            // eslint-disable-next-line no-console
-                            console.warn(`[DEV:aurelia] detected [au-slot] attribute on a child node`, `of an <au-slot> element: "<${node.nodeName} au-slot>".`, `This element will be ignored and removed`);
-                        }
-                        el.removeChild(node);
-                    }
-                    else {
-                        appendToTemplate(template, node);
-                        count++;
-                    }
-                    node = el.firstChild;
-                }
-                if (count > 0) {
-                    this._compileNode(template.content, fallbackContentContext);
-                }
-                elementInstruction.auSlot = {
-                    name: slotName,
-                    fallback: CustomElementDefinition.create({
-                        name: generateElementName(),
-                        template,
-                        instructions: fallbackContentContext.rows,
-                        needsCompile: false,
-                    }),
-                };
-                // todo: shouldn't have to eagerly replace everything like this
-                // this is a leftover refactoring work from the old binder
-                // el = this._replaceByMarker(el, context);
-            }
+            this.resolveResources ? elDef : elDef.name, (elBindableInstructions ?? emptyArray), null, hasContainerless, captures, elementMetadata);
         }
         // 3. merge and sort all instructions into a single list
         //    as instruction list for this element
@@ -11396,18 +11436,18 @@ class TemplateCompiler {
             let isEmptyTextNode = false;
             if (processContentResult !== false) {
                 while (child !== null) {
-                    targetSlot = isElement(child) ? child.getAttribute(AU_SLOT) : null;
+                    targetSlot = isElement(child) ? child.getAttribute(auslotAttr) : null;
                     hasAuSlot = targetSlot !== null || isCustomElement && !isShadowDom;
                     childEl = child.nextSibling;
                     if (hasAuSlot) {
                         if (!isCustomElement) {
                             throw createMappedError(706 /* ErrorNames.compiler_au_slot_on_non_element */, targetSlot, elName);
                         }
-                        child.removeAttribute?.(AU_SLOT);
+                        child.removeAttribute?.(auslotAttr);
                         // ignore all whitespace
                         isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
                         if (!isEmptyTextNode) {
-                            ((slotTemplateRecord ??= {})[targetSlot || DEFAULT_SLOT_NAME] ??= []).push(child);
+                            ((slotTemplateRecord ??= {})[targetSlot || defaultSlotName] ??= []).push(child);
                         }
                         el.removeChild(child);
                     }
@@ -11583,18 +11623,18 @@ class TemplateCompiler {
             //  </my-el>
             if (processContentResult !== false) {
                 while (child !== null) {
-                    targetSlot = isElement(child) ? child.getAttribute(AU_SLOT) : null;
+                    targetSlot = isElement(child) ? child.getAttribute(auslotAttr) : null;
                     hasAuSlot = targetSlot !== null || isCustomElement && !isShadowDom;
                     childEl = child.nextSibling;
                     if (hasAuSlot) {
                         if (!isCustomElement) {
                             throw createMappedError(706 /* ErrorNames.compiler_au_slot_on_non_element */, targetSlot, elName);
                         }
-                        child.removeAttribute?.(AU_SLOT);
+                        child.removeAttribute?.(auslotAttr);
                         // ignore all whitespace
                         isEmptyTextNode = isTextNode(child) && child.textContent.trim() === '';
                         if (!isEmptyTextNode) {
-                            ((slotTemplateRecord ??= {})[targetSlot || DEFAULT_SLOT_NAME] ??= []).push(child);
+                            ((slotTemplateRecord ??= {})[targetSlot || defaultSlotName] ??= []).push(child);
                         }
                         el.removeChild(child);
                     }
@@ -12006,13 +12046,13 @@ class CompilationContext {
      * Find the custom element definition of a given name
      */
     _findElement(name) {
-        return this.c.find(CustomElement, name);
+        return CustomElement.find(this.c, name);
     }
     /**
      * Find the custom attribute definition of a given name
      */
     _findAttr(name) {
-        return this.c.find(CustomAttribute, name);
+        return CustomAttribute.find(this.c, name);
     }
     /**
      * Create a new child compilation context
@@ -12038,14 +12078,11 @@ class CompilationContext {
         let result = this._commands[name];
         let commandDef;
         if (result === void 0) {
-            commandDef = this.c.find(BindingCommand, name);
-            if (commandDef != null) {
-                result = this.c.invoke(commandDef.Type);
-            }
-            if (result == null) {
+            commandDef = BindingCommand.find(this.c, name);
+            if (commandDef == null) {
                 throw createMappedError(713 /* ErrorNames.compiler_unknown_binding_command */, name);
             }
-            this._commands[name] = result;
+            this._commands[name] = result = BindingCommand.get(this.c, name);
         }
         return result;
     }
@@ -12187,29 +12224,17 @@ const getBindingMode = (bindable) => {
  * A feature available to the default template compiler.
  */
 const ITemplateCompilerHooks = /*@__PURE__*/ createInterface('ITemplateCompilerHooks');
-const typeToHooksDefCache = new WeakMap();
-const hooksBaseName = /*@__PURE__*/ getResourceKeyFor('compiler-hooks');
 const TemplateCompilerHooks = objectFreeze({
-    name: hooksBaseName,
+    name: /*@__PURE__*/ getResourceKeyFor('compiler-hooks'),
     define(Type) {
-        let def = typeToHooksDefCache.get(Type);
-        if (def === void 0) {
-            typeToHooksDefCache.set(Type, def = new TemplateCompilerHooksDefinition(Type));
-            defineMetadata(hooksBaseName, def, Type);
-            appendResourceKey(Type, hooksBaseName);
-        }
-        return Type;
+        return Registrable.define(Type, function (container) {
+            singletonRegistration(ITemplateCompilerHooks, this).register(container);
+        });
+    },
+    findAll(container) {
+        return container.get(allResources(ITemplateCompilerHooks));
     }
 });
-class TemplateCompilerHooksDefinition {
-    get name() { return ''; }
-    constructor(Type) {
-        this.Type = Type;
-    }
-    register(c) {
-        c.register(singletonRegistration(ITemplateCompilerHooks, this.Type));
-    }
-}
 /**
  * Decorator: Indicates that the decorated class is a template compiler hooks.
  *
@@ -12224,9 +12249,6 @@ const templateCompilerHooks = (target) => {
         return TemplateCompilerHooks.define(t);
     }
 };
-/* eslint-enable */
-const DEFAULT_SLOT_NAME = 'default';
-const AU_SLOT = 'au-slot';
 
 class Show {
     constructor() {
@@ -12609,5 +12631,5 @@ class ChildrenLifecycleHooks {
 }
 let mixed = false;
 
-export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DotSeparatedAttributePattern, Else, EventModifier, EventModifierRegistration, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventModifier, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, IKeyMapping, ILifecycleHooks, ILocation, IModifiedEventHandlerCreator, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, Watch, With, alias, allResources, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
+export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AtPrefixedTriggerAttributePattern, AttrBindingBehavior, AttrBindingCommand, AttrSyntax, AttributeBinding, AttributeBindingInstruction, AttributeBindingRenderer, AttributeNSAccessor, AttributePattern, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindablesInfo, BindingBehavior, BindingBehaviorDefinition, BindingCommand, BindingCommandDefinition, BindingMode, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, CaptureBindingCommand, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ClassBindingCommand, ColonPrefixedBindAttributePattern, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingCommand, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, DotSeparatedAttributePattern, Else, EventModifier, EventModifierRegistration, ExpressionWatcher, FlushQueue, Focus, ForBindingCommand, FragmentNodeSequence, FromViewBindingBehavior, FromViewBindingCommand, FulfilledTemplateController, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAppRoot, IAppTask, IAttrMapper, IAttributeParser, IAttributePattern, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventModifier, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IInstruction, IKeyMapping, ILifecycleHooks, IListenerBindingOptions, ILocation, IModifiedEventHandlerCreator, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyles, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, IViewFactory, IWindow, If, InstructionType, InterpolationBinding, InterpolationBindingRenderer, InterpolationInstruction, InterpolationPartBinding, Interpretation, IteratorBindingInstruction, IteratorBindingRenderer, LetBinding, LetBindingInstruction, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingInstruction, ListenerBindingOptions, ListenerBindingRenderer, MultiAttrInstruction, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, OneTimeBindingCommand, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingInstruction, PropertyBindingRenderer, RefAttributePattern, RefBinding, RefBindingInstruction, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, SVGAnalyzer, SanitizeValueConverter, SelectValueObserver, SelfBindingBehavior, SetAttributeInstruction, SetAttributeRenderer, SetClassAttributeInstruction, SetClassAttributeRenderer, SetPropertyInstruction, SetPropertyRenderer, SetStyleAttributeInstruction, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadBindingInstruction, SpreadElementPropBindingInstruction, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleBindingCommand, StyleConfiguration, StyleElementStyles, StylePropertyBindingInstruction, StylePropertyBindingRenderer, Switch, TemplateCompiler, TemplateCompilerHooks, TemplateControllerRenderer, TextBindingInstruction, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingBehavior, TwoWayBindingCommand, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, Watch, With, alias, attributePattern, bindable, bindingBehavior, bindingCommand, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isInstruction, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateCompilerHooks, templateController, useShadowDOM, valueConverter, watch };
 //# sourceMappingURL=index.dev.mjs.map

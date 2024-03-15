@@ -24,13 +24,20 @@ export declare namespace createFixture {
             (html: string): CreateBuilder<T, "component">;
             (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component">;
         };
-        component: (comp: T) => {
+        component: <K>(comp: K | Constructable<K>) => {
             html: {
-                (html: string): CreateBuilder<T, never>;
-                (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, never>;
+                (html: string): CreateBuilder<K, never>;
+                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
             };
         };
     };
+}
+export interface ITextAssertOptions {
+    /**
+     * Describe the text in a way similar like how the browser renders whitespace
+     * Multiple consecutive whitespaces are collapsed into one, and leading/trailing whitespaces are removed
+     */
+    compact?: boolean;
 }
 export interface IHtmlAssertOptions {
     /**
@@ -83,13 +90,13 @@ export interface IFixture<T> {
     /**
      * Assert the text content of the current application host equals to a given string
      */
-    assertText(text: string): void;
+    assertText(text: string, options?: ITextAssertOptions): void;
     /**
      * Assert the text content of an element matching the given selector inside the application host equals to a given string.
      *
      * Will throw if there' more than one elements with matching selector
      */
-    assertText(selector: string, text: string): void;
+    assertText(selector: string, text: string, options?: ITextAssertOptions): void;
     /**
      * Assert the text content of the current application host equals to a given string
      */
@@ -181,7 +188,7 @@ type CreateBuilder<T, Availables extends BuilderMethodNames> = {
     [key in Availables]: key extends 'html' ? {
         (html: string): CreateBuilder<T, Exclude<Availables, 'html'>>;
         (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, Exclude<Availables, 'html'>>;
-    } : (...args: Parameters<IFixtureBuilderBase<T>[key]>) => CreateBuilder<T, Exclude<Availables, key>>;
+    } : key extends 'component' ? <K>(comp: Constructable<K> | K) => CreateBuilder<K, Exclude<Availables, 'component'>> : (...args: Parameters<IFixtureBuilderBase<T>[key]>) => CreateBuilder<T, Exclude<Availables, key>>;
 } & ('html' extends Availables ? {} : {
     build(): IFixture<T>;
 });

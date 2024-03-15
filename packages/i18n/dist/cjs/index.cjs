@@ -583,7 +583,7 @@ const b = "tpt";
 const T = "t-params.bind";
 
 exports.TranslationParametersAttributePattern = class TranslationParametersAttributePattern {
-    [T](t, e, s) {
+    [T](t, e) {
         return new n.AttrSyntax(t, e, "", T);
     }
 };

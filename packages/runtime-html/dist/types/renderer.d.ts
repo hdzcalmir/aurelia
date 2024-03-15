@@ -1,4 +1,4 @@
-import { type IContainer, type Class, type IRegistry } from '@aurelia/kernel';
+import { type IContainer, type Constructable } from '@aurelia/kernel';
 import { IExpressionParser, IObserverLocator, type Interpolation, type IsBindingBehavior, type ForOfStatement } from '@aurelia/runtime';
 import { type BindingMode } from './binding/interfaces-bindings';
 import { CustomElementDefinition } from './resources/custom-element';
@@ -33,9 +33,8 @@ export declare const InstructionType: Readonly<{
     spreadElementProp: "hp";
 }>;
 export type InstructionType = typeof InstructionType[keyof typeof InstructionType];
-export type InstructionTypeName = string;
 export interface IInstruction {
-    readonly type: InstructionTypeName;
+    readonly type: string;
 }
 export declare const IInstruction: import("@aurelia/kernel").InterfaceSymbol<IInstruction>;
 export declare function isInstruction(value: unknown): value is IInstruction;
@@ -78,12 +77,11 @@ export declare class MultiAttrInstruction {
     readonly type = "rl";
     constructor(value: string, to: string, command: string | null);
 }
-export declare class HydrateElementInstruction {
+export declare class HydrateElementInstruction<T extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>> {
     /**
      * The name of the custom element this instruction is associated with
      */
     res: string | /* Constructable |  */ CustomElementDefinition;
-    alias: string | undefined;
     /**
      * Bindable instructions for the custom element instance
      */
@@ -100,19 +98,16 @@ export declare class HydrateElementInstruction {
      * A list of captured attr syntaxes
      */
     captures: AttrSyntax[] | undefined;
-    readonly type = "ra";
     /**
-     * A special property that can be used to store <au-slot/> usage information
+     * Any data associated with this instruction
      */
-    auSlot: {
-        name: string;
-        fallback: CustomElementDefinition;
-    } | null;
+    readonly data: T;
+    readonly type = "ra";
     constructor(
     /**
      * The name of the custom element this instruction is associated with
      */
-    res: string | /* Constructable |  */ CustomElementDefinition, alias: string | undefined, 
+    res: string | /* Constructable |  */ CustomElementDefinition, 
     /**
      * Bindable instructions for the custom element instance
      */
@@ -128,7 +123,11 @@ export declare class HydrateElementInstruction {
     /**
      * A list of captured attr syntaxes
      */
-    captures: AttrSyntax[] | undefined);
+    captures: AttrSyntax[] | undefined, 
+    /**
+     * Any data associated with this instruction
+     */
+    data: T);
 }
 export declare class HydrateAttributeInstruction {
     res: string | /* Constructable |  */ CustomAttributeDefinition;
@@ -179,11 +178,10 @@ export declare class TextBindingInstruction {
 export declare class ListenerBindingInstruction {
     from: string | IsBindingBehavior;
     to: string;
-    preventDefault: boolean;
     capture: boolean;
     modifier: string | null;
     readonly type = "hb";
-    constructor(from: string | IsBindingBehavior, to: string, preventDefault: boolean, capture: boolean, modifier: string | null);
+    constructor(from: string | IsBindingBehavior, to: string, capture: boolean, modifier: string | null);
 }
 export declare class StylePropertyBindingInstruction {
     from: string | IsBindingBehavior;
@@ -277,10 +275,8 @@ export interface ICompliationInstruction {
      */
     projections: IAuSlotProjections | null;
 }
-export interface IInstructionTypeClassifier<TType extends string = string> {
+export interface IRenderer<TType extends string = string> {
     target: TType;
-}
-export interface IRenderer<TType extends InstructionTypeName = InstructionTypeName> extends IInstructionTypeClassifier<TType> {
     render(
     /**
      * The controller that is current invoking this renderer
@@ -288,10 +284,7 @@ export interface IRenderer<TType extends InstructionTypeName = InstructionTypeNa
     renderingCtrl: IHydratableController, target: unknown, instruction: IInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
 export declare const IRenderer: import("@aurelia/kernel").InterfaceSymbol<IRenderer<string>>;
-type DecoratableInstructionRenderer<TType extends string, TProto, TClass> = Class<TProto & Partial<IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>>, TClass> & Partial<IRegistry>;
-type DecoratedInstructionRenderer<TType extends string, TProto, TClass> = Class<TProto & IInstructionTypeClassifier<TType> & Pick<IRenderer, 'render'>, TClass> & IRegistry;
-type InstructionRendererDecorator<TType extends string> = <TProto, TClass>(target: DecoratableInstructionRenderer<TType, TProto, TClass>) => DecoratedInstructionRenderer<TType, TProto, TClass>;
-export declare function renderer<TType extends string>(targetType: TType): InstructionRendererDecorator<TType>;
+export declare function renderer<TType extends string, T extends Constructable<IRenderer<TType>>>(targetType: TType): (target: T) => T;
 export declare class SetPropertyRenderer implements IRenderer {
     target: typeof InstructionType.setProperty;
     render(renderingCtrl: IHydratableController, target: IController, instruction: SetPropertyInstruction): void;
@@ -336,6 +329,16 @@ export declare class TextBindingRenderer implements IRenderer {
     target: typeof InstructionType.textBinding;
     render(renderingCtrl: IHydratableController, target: ChildNode, instruction: TextBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
+/**
+ * An interface describing configuration for listener bindings
+ */
+export interface IListenerBindingOptions {
+    /**
+     * Indicate whether listener should by default call preventDefault on all the events
+     */
+    prevent: boolean;
+}
+export declare const IListenerBindingOptions: import("@aurelia/kernel").InterfaceSymbol<IListenerBindingOptions>;
 export declare class ListenerBindingRenderer implements IRenderer {
     target: typeof InstructionType.listenerBinding;
     render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: ListenerBindingInstruction, platform: IPlatform, exprParser: IExpressionParser): void;
@@ -364,5 +367,4 @@ export declare class SpreadRenderer implements IRenderer {
     readonly target: typeof InstructionType.spreadBinding;
     render(renderingCtrl: IHydratableController, target: HTMLElement, _instruction: SpreadBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
 }
-export {};
 //# sourceMappingURL=renderer.d.ts.map

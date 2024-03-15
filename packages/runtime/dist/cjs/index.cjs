@@ -58,12 +58,6 @@ t.Metadata.hasOwn;
 
 const f = t.Metadata.define;
 
-e.Protocol.annotation.keyFor;
-
-e.Protocol.resource.keyFor;
-
-e.Protocol.resource.appendTo;
-
 const astVisit = (e, t) => {
     switch (e.$kind) {
       case T:
