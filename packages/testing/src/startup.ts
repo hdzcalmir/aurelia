@@ -131,16 +131,34 @@ export function createFixture<T extends object>(
     }
     return elements[0];
   }
-  function assertText(selector: string, text?: string) {
-    if (arguments.length === 2) {
-      const el = strictQueryBy(selector);
-      if (el === null) {
-        throw new Error(`No element found for selector "${selector}" to compare text content with "${text}"`);
-      }
-      assert.strictEqual(getVisibleText(el), text);
-    } else {
-      assert.strictEqual(getVisibleText(host), selector);
+  function assertText(selectorOrText: string, text?: string | ITextAssertOptions, options?: ITextAssertOptions) {
+    let $text: string;
+    let $options: ITextAssertOptions | undefined;
+
+    // assertText('some text content')
+    if (arguments.length === 1) {
+      assert.strictEqual(getVisibleText(host, false), selectorOrText);
+      return;
     }
+
+    // assertText('some selector', void 0/ null);
+    if (text == null) {
+      throw new Error('Invalid null/undefined expected html value');
+    }
+
+    // assertHtml('some html content', { compact: true/false })
+    if (typeof text !== 'string') {
+      $text = selectorOrText;
+      $options = text;
+      assert.strictEqual(getVisibleText(host, $options?.compact), $text);
+      return;
+    }
+
+    // assertText('selector', 'some html content')
+    // assertText('selector', 'some html content', { compact: true/false })
+    const el = strictQueryBy(selectorOrText, `to compare text content against "${text}`);
+    $options = options;
+    assert.strictEqual(getVisibleText(el, $options?.compact), text);
   }
   function assertTextContain(selector: string, text?: string) {
     if (arguments.length === 2) {
@@ -164,7 +182,7 @@ export function createFixture<T extends object>(
     }
     return actual;
   }
-  function assertHtml(selectorOrHtml: string, html: string | IHtmlAssertOptions = selectorOrHtml, options?: IHtmlAssertOptions) {
+  function assertHtml(selectorOrHtml: string, html?: string | IHtmlAssertOptions, options?: IHtmlAssertOptions) {
     let $html;
     let $options: IHtmlAssertOptions | undefined;
 
@@ -360,6 +378,14 @@ export function createFixture<T extends object>(
   return fixture;
 }
 
+export interface ITextAssertOptions {
+  /**
+   * Describe the text in a way similar like how the browser renders whitespace
+   * Multiple consecutive whitespaces are collapsed into one, and leading/trailing whitespaces are removed
+   */
+  compact?: boolean;
+}
+
 export interface IHtmlAssertOptions {
   /**
    * Describe the html in a way similar like how the browser renders whitespace
@@ -415,13 +441,13 @@ export interface IFixture<T> {
   /**
    * Assert the text content of the current application host equals to a given string
    */
-  assertText(text: string): void;
+  assertText(text: string, options?: ITextAssertOptions): void;
   /**
    * Assert the text content of an element matching the given selector inside the application host equals to a given string.
    *
    * Will throw if there' more than one elements with matching selector
    */
-  assertText(selector: string, text: string): void;
+  assertText(selector: string, text: string, options?: ITextAssertOptions): void;
 
   /**
    * Assert the text content of the current application host equals to a given string
@@ -526,7 +552,9 @@ type CreateBuilder<T, Availables extends BuilderMethodNames> = {
         (html: string): CreateBuilder<T, Exclude<Availables, 'html'>>;
         (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, Exclude<Availables, 'html'>>;
       }
-      : (...args: Parameters<IFixtureBuilderBase<T>[key]>) => CreateBuilder<T, Exclude<Availables, key>>
+      : key extends 'component'
+        ? <K>(comp: Constructable<K> | K) => CreateBuilder<K, Exclude<Availables, 'component'>>
+        : (...args: Parameters<IFixtureBuilderBase<T>[key]>) => CreateBuilder<T, Exclude<Availables, key>>
 } & ('html' extends Availables ? {} : { build(): IFixture<T> });
 
 type TaggedTemplateLambda<M> = (vm: M) => unknown;
@@ -551,7 +579,7 @@ class FixtureBuilder<T> {
 
   public deps(...args: unknown[]): CreateBuilder<T, Exclude<BuilderMethodNames, 'deps'>> {
     this._args = args;
-    return this;
+    return this as CreateBuilder<T, Exclude<BuilderMethodNames, 'deps'>>;
   }
 
   public build() {
@@ -629,6 +657,8 @@ function testBuilderTypings() {
     { a: [1, 2] }
   );
   const C1: IsType<{ a: number[] }, typeof component> = 1;
+  
+  const a9 = createFixture.html``.component(class Abc { a = 1 }).build().component.a;
 }
 /* eslint-enable */
 

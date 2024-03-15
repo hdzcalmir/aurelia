@@ -380,7 +380,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 verifyInstructions(instructions[0], [
                   {
                     toVerify: ['type', 'res', 'to'],
-                    type: TT.hydrateTemplateController, res: container.find(CustomAttribute, 'if')
+                    type: TT.hydrateTemplateController, res: CustomAttribute.find(container, 'if')
                   }
                 ]);
                 const templateControllerInst = instructions[0][0] as HydrateTemplateController;
@@ -786,7 +786,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
       const rawMarkup = node.outerHTML;
       const instruction: Partial<HydrateTemplateController & { def: PartialCustomElementDefinition & { key: string } }> = {
         type: TT.hydrateTemplateController,
-        res: resolveRes ? ctx.container.find(CustomAttribute, target)! : target,
+        res: resolveRes ? CustomAttribute.find(ctx.container, target)! : target,
         def: {
           ...defaultCustomElementDefinitionProperties,
           name: stringOrUnnamed(target),
@@ -826,7 +826,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
       }
       const instruction: Partial<HydrateTemplateController & { def: PartialCustomElementDefinition & { key: string } }> = {
         type: TT.hydrateTemplateController,
-        res: resolveRes ? ctx.container.find(CustomAttribute, target)! : target,
+        res: resolveRes ? CustomAttribute.find(ctx.container, target)! : target,
         def: {
           ...defaultCustomElementDefinitionProperties,
           name: stringOrUnnamed(target),
@@ -878,13 +878,13 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
       type: TT.hydrateElement,
       res: tagNameOrDef,
       props: childInstructions as IInstruction[],
-      auSlot: null,
       containerless: false,
       projections: null,
       captures: [],
+      data: {},
     };
     const def = typeof tagNameOrDef === 'string'
-      ? ctx.container.find(CustomElement, tagNameOrDef)
+      ? CustomElement.find(ctx.container, tagNameOrDef)
       : tagNameOrDef;
     const exprParser = ctx.container.get(IExpressionParser);
     const attrParser = ctx.container.get(IAttributeParser);
@@ -905,7 +905,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           // if not with a binding command,
           const canStay = syntax.command === null
             // nor a custom attribute,
-            && !ctx.container.find(CustomAttribute, syntax.target)
+            && !CustomAttribute.find(ctx.container, syntax.target)
             // nor with interpolation
             && exprParser.parse(a[1], 'Interpolation') === null
             // nor a bindable
@@ -1062,8 +1062,6 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         ] as ((ctx: TestContext) => [string])[],
         [
           (_ctx) => ['foo', 'foo', 'bar'],
-          // (_ctx) => ['foo.bar', 'foo', 'bar'],
-          // (_ctx) => ['foo.bind', 'foo', 'bar'],
           (_ctx) => ['value', 'value', 'value']
         ] as ((ctx: TestContext, $1: [string]) => [string, string, string])[],
         [
@@ -1073,9 +1071,9 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           (ctx, $1, [attr, to, value]) => [`${attr}.one-time`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.oneTime, }],
           (ctx, $1, [attr, to, value]) => [`${attr}.from-view`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.fromView, }],
           (ctx, $1, [attr, to, value]) => [`${attr}.two-way`, value, { type: TT.propertyBinding, from: new AccessScopeExpression(value), to, mode: BindingMode.twoWay, }],
-          (ctx, $1, [attr, to, value]) => [`${attr}.trigger`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: true, capture: false, modifier: null }],
-          (ctx, $1, [attr, to, value]) => [`${attr}.delegate`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: false }],
-          (ctx, $1, [attr, to, value]) => [`${attr}.capture`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: false, capture: true, modifier: null }],
+          (ctx, $1, [attr, to, value]) => [`${attr}.trigger`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, capture: false, modifier: null }],
+          (ctx, $1, [attr, to, value]) => [`${attr}.delegate`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, preventDefault: true }],
+          (ctx, $1, [attr, to, value]) => [`${attr}.capture`, value, { type: HTT.listenerBinding, from: new AccessScopeExpression(value), to, capture: true, modifier: null }],
         ] as ((ctx: TestContext, $1: [string], $2: [string, string, string]) => [string, string, any])[]
       ], (ctx, [el], $2, [n1, v1, i1]) => {
         const markup = `<${el} plain data-attr="value" ${n1}="${v1}"></${el}>`;
