@@ -65,6 +65,7 @@ function au(options = {}) {
                         ? s
                         : s.replace(/\.html$/, '.$au.ts');
                 },
+                stringModuleWrap: (id) => `${id}?inline`,
                 ...additionalOptions
             });
             return result;
