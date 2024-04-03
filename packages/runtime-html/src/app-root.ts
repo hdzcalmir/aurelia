@@ -16,6 +16,13 @@ import { ErrorNames, createMappedError } from './errors';
 export interface IAppRootConfig<T extends object = object> {
   host: HTMLElement;
   component: T | Constructable<T>;
+  /**
+   * When a HTML form is submitted, the default behavior is to "redirect" the page to the action of the form
+   * This is not desirable for SPA applications, so by default, this behavior is prevented.
+   *
+   * This option re-enables the default behavior of HTML forms.
+   */
+  allowActionlessForm?: boolean;
 }
 
 export interface IAppRoot<C extends object = object> extends IDisposable {
@@ -44,7 +51,7 @@ export const IAppRoot = /*@__PURE__*/createInterface<IAppRoot>('IAppRoot');
 
 export class AppRoot<
   T extends object,
-  K extends ICustomElementViewModel = T extends Constructable<infer R> ? R : T,
+  K extends ICustomElementViewModel = ICustomElementViewModel & (T extends Constructable<infer R> ? R : T),
 > implements IAppRoot<K> {
 
   /** @internal */
@@ -52,6 +59,9 @@ export class AppRoot<
 
   /** @internal */
   private _controller!: ICustomElementController<K>;
+
+  /** @internal */
+  private readonly _useOwnAppTasks: boolean;
 
   public readonly host: HTMLElement;
   public readonly platform: IPlatform;
@@ -63,14 +73,26 @@ export class AppRoot<
     public readonly config: IAppRootConfig<K>,
     public readonly container: IContainer,
     rootProvider: InstanceProvider<IAppRoot>,
-    enhance?: boolean
+    enhance: boolean = false,
   ) {
+    this._useOwnAppTasks = enhance;
     const host = this.host = config.host;
     rootProvider.prepare(this);
 
     registerHostNode(container, this.platform = this._createPlatform(container, host), host);
 
     this._hydratePromise = onResolve(this._runAppTasks('creating'), () => {
+      if (!config.allowActionlessForm !== false) {
+        host.addEventListener('submit', (e: Event) => {
+          const target = e.target as HTMLFormElement;
+          const hasAction = (target.getAttribute('action')?.length ?? 0) > 0;
+
+          if (target.tagName === 'FORM' && !hasAction) {
+            e.preventDefault();
+          }
+        }, false);
+      }
+
       const childCtn = enhance ? container : container.createChild();
       const component = config.component as Constructable | ICustomElementViewModel;
       let instance: object;
@@ -126,7 +148,11 @@ export class AppRoot<
 
   /** @internal */
   private _runAppTasks(slot: TaskSlot): void | Promise<void> {
-    return onResolveAll(...this.container.getAll(IAppTask).reduce((results, task) => {
+    const container = this.container;
+    const appTasks = this._useOwnAppTasks && !container.has(IAppTask, false)
+      ? []
+      : container.getAll(IAppTask);
+    return onResolveAll(...appTasks.reduce((results, task) => {
       if (task.slot === slot) {
         results.push(task.run());
       }
