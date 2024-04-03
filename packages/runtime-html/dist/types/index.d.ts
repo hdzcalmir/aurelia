@@ -61,7 +61,7 @@ export { IRendering, Rendering, } from './templating/rendering';
 export { ViewFactory, IViewFactory, } from './templating/view';
 export { INode, IEventTarget, IRenderLocation, type INodeSequence, FragmentNodeSequence, IHistory, IWindow, ILocation, getEffectiveParentNode, setEffectiveParentNode, convertToRenderLocation, isRenderLocation, getRef, setRef, } from './dom';
 export { IPlatform, } from './platform';
-export { CSSModulesProcessorRegistry, cssModules, ShadowDOMRegistry, type IShadowDOMStyleFactory, shadowCSS, StyleConfiguration, type IShadowDOMConfiguration, AdoptedStyleSheetsStyles, StyleElementStyles, IShadowDOMStyles, IShadowDOMGlobalStyles, } from './templating/styles';
+export { CSSModulesProcessorRegistry, cssModules, ShadowDOMRegistry, shadowCSS, StyleConfiguration, IShadowDOMStyleFactory, type IShadowDOMConfiguration, AdoptedStyleSheetsStyles, StyleElementStyles, IShadowDOMStyles, IShadowDOMGlobalStyles, } from './templating/styles';
 export { Watch, watch, type IWatchDefinition, type IWatcherCallback, type IDepCollectionFn, } from './watch';
 export { ComputedWatcher, ExpressionWatcher, } from './templating/watchers';
 export { alias, registerAliases, } from './utilities-di';

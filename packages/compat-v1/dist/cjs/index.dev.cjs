@@ -468,21 +468,6 @@ const defineBindingMethods = () => {
     const getMessage = (name, ast) => console.warn(`@deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${runtime.Unparser.unparse(ast)}"`);
 };
 
-/**
- * A registration that will enable the default form submission behavior of form without a valid action.
- *
- * The default behavior of <form> without action attribute is normally not desirable for SPA applications.
- */
-const PreventFormActionlessSubmit = runtimeHtml.AppTask.creating(runtimeHtml.IEventTarget, appRoot => {
-    appRoot.addEventListener('submit', (e) => {
-        const target = e.target;
-        const action = target.action;
-        if (target.tagName.toLowerCase() === 'form' && !action) {
-            e.preventDefault();
-        }
-    }, false);
-});
-
 let compatEnabled = false;
 let addedMetadata = false;
 const prototype = runtimeHtml.AuCompose.prototype;
@@ -631,7 +616,7 @@ const compatRegistration = {
         defineAstMethods();
         defineBindingMethods();
         enableComposeCompat();
-        container.register(PreventFormActionlessSubmit, eventPreventDefaultBehavior, delegateSyntax, callSyntax);
+        container.register(eventPreventDefaultBehavior, delegateSyntax, callSyntax);
     }
 };
 
@@ -643,7 +628,6 @@ exports.DelegateListenerBinding = DelegateListenerBinding;
 exports.DelegateListenerOptions = DelegateListenerOptions;
 exports.EventDelegator = EventDelegator;
 exports.IEventDelegator = IEventDelegator;
-exports.PreventFormActionlessSubmit = PreventFormActionlessSubmit;
 exports.callSyntax = callSyntax;
 exports.compatRegistration = compatRegistration;
 exports.delegateSyntax = delegateSyntax;

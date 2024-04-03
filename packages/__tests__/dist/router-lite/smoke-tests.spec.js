@@ -3098,12 +3098,12 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         assert.html.textContent(vps[1], '', 'round#1 vp2');
         await router.load([
             {
-                component: 'c1',
+                component: 'c1', /* route-id */
                 children: [{ component: 'gc-12' /* path */ }],
                 viewport: 'vp2',
             },
             {
-                component: ChildTwo,
+                component: ChildTwo, /* class */
                 params: { id: 21 },
                 children: [{ component: 'gc22' /* route-id */ }],
                 viewport: 'vp1',
@@ -3114,7 +3114,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         assert.html.textContent(vps[1], 'c1 gc12', 'round#2 vp2');
         await router.load([
             {
-                component: CustomElement.getDefinition(ChildTwo),
+                component: CustomElement.getDefinition(ChildTwo), /* definition */
                 viewport: 'vp2',
             },
         ]);
@@ -3123,7 +3123,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         assert.html.textContent(vps[1], 'c2 NA gc21', 'round#3 vp2');
         await router.load([
             {
-                component: CustomElement.getDefinition(ChildTwo),
+                component: CustomElement.getDefinition(ChildTwo), /* definition */
                 params: { id: 42 },
                 children: [{ component: GrandChildTwoTwo /* class */, params: { id: 21 } }],
                 viewport: 'vp1',
@@ -3134,7 +3134,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         assert.html.textContent(vps[1], '', 'round#4 vp2');
         await router.load([
             {
-                component: CustomElement.getDefinition(ChildTwo),
+                component: CustomElement.getDefinition(ChildTwo), /* definition */
                 children: [{ component: GrandChildTwoTwo /* class */ }],
                 viewport: 'vp1',
             },
@@ -5662,7 +5662,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 '#4 - len: 1 - state: {"au-nav-id":4}',
             ]);
             yield new TestData('none', [
-                '#1 - len: 1 - state: {"au-nav-id":1}',
+                '#1 - len: 1 - state: {"au-nav-id":1}', // initial state replace
                 '#2 - len: 1 - state: {"au-nav-id":1}',
                 '#3 - len: 1 - state: {"au-nav-id":1}',
                 '#4 - len: 1 - state: {"au-nav-id":1}',

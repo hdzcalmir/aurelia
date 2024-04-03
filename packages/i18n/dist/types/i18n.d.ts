@@ -1,6 +1,6 @@
 import { IEventAggregator } from '@aurelia/kernel';
 import { ISignaler } from '@aurelia/runtime';
-import i18nextCore from 'i18next';
+import type * as i18next from 'i18next';
 import { I18nInitOptions } from './i18n-configuration-options';
 import { I18nextWrapper } from './i18next-wrapper';
 export declare class I18nKeyEvaluationResult {
@@ -10,7 +10,7 @@ export declare class I18nKeyEvaluationResult {
     constructor(keyExpr: string);
 }
 export interface I18N {
-    i18next: i18nextCore.i18n;
+    i18next: i18next.i18n;
     readonly initPromise: Promise<void>;
     /**
      * Evaluates the `keyExpr` to translated values.
@@ -23,8 +23,8 @@ export interface I18N {
      *    {key: 'key3', attributes:['attr1', 'attr2'], value: 'translated_value_of_key3'}
      *  ]
      */
-    evaluate(keyExpr: string, options?: i18nextCore.TOptions): I18nKeyEvaluationResult[];
-    tr(key: string | string[], options?: i18nextCore.TOptions): string;
+    evaluate(keyExpr: string, options?: i18next.TOptions): I18nKeyEvaluationResult[];
+    tr(key: string | string[], options?: i18next.TOptions): string;
     getLocale(): string;
     setLocale(newLocale: string): Promise<void>;
     /**
@@ -86,7 +86,7 @@ export interface ILocalChangeSubscriber {
  */
 export declare class I18nService implements I18N {
     private readonly ea;
-    i18next: i18nextCore.i18n;
+    i18next: i18next.i18n;
     /**
      * This is used for i18next initialization and awaited for before the bind phase.
      * If need be (usually there is none), this can be awaited for explicitly in client code.
@@ -96,8 +96,8 @@ export declare class I18nService implements I18N {
     private readonly _localeSubscribers;
     private readonly _signaler;
     constructor(i18nextWrapper: I18nextWrapper, options: I18nInitOptions, ea: IEventAggregator, signaler: ISignaler);
-    evaluate(keyExpr: string, options?: i18nextCore.TOptions): I18nKeyEvaluationResult[];
-    tr(key: string | string[], options?: i18nextCore.TOptions): string;
+    evaluate(keyExpr: string, options?: i18next.TOptions): I18nKeyEvaluationResult[];
+    tr(key: string | string[], options?: i18next.TOptions): string;
     getLocale(): string;
     setLocale(newLocale: string): Promise<void>;
     createNumberFormat(options?: Intl.NumberFormatOptions, locales?: string | string[]): Intl.NumberFormat;

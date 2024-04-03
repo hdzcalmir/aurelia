@@ -464,21 +464,6 @@ const defineBindingMethods = () => {
     const getMessage = (name, ast) => console.warn(`@deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${Unparser.unparse(ast)}"`);
 };
 
-/**
- * A registration that will enable the default form submission behavior of form without a valid action.
- *
- * The default behavior of <form> without action attribute is normally not desirable for SPA applications.
- */
-const PreventFormActionlessSubmit = AppTask.creating(IEventTarget, appRoot => {
-    appRoot.addEventListener('submit', (e) => {
-        const target = e.target;
-        const action = target.action;
-        if (target.tagName.toLowerCase() === 'form' && !action) {
-            e.preventDefault();
-        }
-    }, false);
-});
-
 let compatEnabled = false;
 let addedMetadata = false;
 const prototype = AuCompose.prototype;
@@ -627,9 +612,9 @@ const compatRegistration = {
         defineAstMethods();
         defineBindingMethods();
         enableComposeCompat();
-        container.register(PreventFormActionlessSubmit, eventPreventDefaultBehavior, delegateSyntax, callSyntax);
+        container.register(eventPreventDefaultBehavior, delegateSyntax, callSyntax);
     }
 };
 
-export { BindingEngine, CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, PreventFormActionlessSubmit, callSyntax, compatRegistration, delegateSyntax, disableComposeCompat, enableComposeCompat, eventPreventDefaultBehavior };
+export { BindingEngine, CallBinding, CallBindingCommand, CallBindingInstruction, CallBindingRenderer, DelegateBindingCommand, DelegateBindingInstruction, DelegateListenerBinding, DelegateListenerOptions, EventDelegator, IEventDelegator, ListenerBindingRenderer, callSyntax, compatRegistration, delegateSyntax, disableComposeCompat, enableComposeCompat, eventPreventDefaultBehavior };
 //# sourceMappingURL=index.dev.mjs.map

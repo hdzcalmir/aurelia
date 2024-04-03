@@ -128,7 +128,7 @@ class Unparser {
             this.text += '.$parent';
         }
     }
-    visitAccessBoundary(expr) {
+    visitAccessBoundary(_expr) {
         this.text += 'this';
     }
     visitAccessScope(expr) {
@@ -1515,10 +1515,10 @@ const autoObserveArrayMethods = 'at map filter includes indexOf lastIndexOf find
 // entries, // not meaningful in template
 
 const ICoercionConfiguration = /*@__PURE__*/ kernel.DI.createInterface('ICoercionConfiguration');
-/** @internal */ const atNone = 0;
-/** @internal */ const atObserver = 1;
-/** @internal */ const atNode = 2;
-/** @internal */ const atLayout = 4;
+/** @internal */ const atNone = 0b0_000_000;
+/** @internal */ const atObserver = 0b0_000_001;
+/** @internal */ const atNode = 0b0_000_010;
+/** @internal */ const atLayout = 0b0_000_100;
 const AccessorType = /*@__PURE__*/ objectFreeze({
     None: atNone,
     Observer: atObserver,

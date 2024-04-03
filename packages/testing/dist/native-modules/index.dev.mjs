@@ -871,6 +871,7 @@ class TestContext {
     get CustomEvent() { return this.platform.globalThis.CustomEvent; }
     get KeyboardEvent() { return this.platform.globalThis.KeyboardEvent; }
     get MouseEvent() { return this.platform.globalThis.MouseEvent; }
+    get SubmitEvent() { return this.platform.globalThis.SubmitEvent; }
     get Node() { return this.platform.globalThis.Node; }
     get Element() { return this.platform.globalThis.Element; }
     get HTMLElement() { return this.platform.globalThis.HTMLElement; }
@@ -7736,7 +7737,7 @@ const onFixtureCreated = (callback) => {
     });
 };
 // eslint-disable-next-line max-lines-per-function
-function createFixture(template, $class, registrations = [], autoStart = true, ctx = TestContext.create()) {
+function createFixture(template, $class, registrations = [], autoStart = true, ctx = TestContext.create(), appConfig = {}) {
     const { container } = ctx;
     container.register(...registrations);
     // platform and observer locator have side effect when accessed on ctx
@@ -7776,7 +7777,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
     function startFixtureApp() {
         if (autoStart) {
             try {
-                au.app({ host: host, component });
+                au.app({ host: host, component, ...appConfig });
                 fixture.startPromise = startPromise = au.start();
             }
             catch (ex) {
@@ -8072,6 +8073,10 @@ class FixtureBuilder {
         this._args = args;
         return this;
     }
+    config(config) {
+        this._config = config;
+        return this;
+    }
     build() {
         if (this._html === void 0) {
             throw new Error('Builder is not ready, missing template, call .html()/.html`` first');
@@ -8089,6 +8094,7 @@ function brokenProcessFastTemplate(html, ..._args) {
 createFixture.html = (html, ...values) => new FixtureBuilder().html(html, ...values);
 createFixture.component = (component) => new FixtureBuilder().component(component);
 createFixture.deps = (...deps) => new FixtureBuilder().deps(...deps);
+createFixture.config = (config) => new FixtureBuilder().config(config);
 /* eslint-enable */
 const mouseEvents = ['click', 'mousedown', 'mouseup', 'mousemove', 'dbclick', 'contextmenu'];
 const keyboardEvents = ['keydown', 'keyup', 'keypress'];

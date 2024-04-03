@@ -1,12 +1,11 @@
 import { IContainer } from '@aurelia/kernel';
-import { Aurelia as $Aurelia, IPlatform, IAppRoot, CustomElementType, ICustomElementViewModel } from '@aurelia/runtime-html';
+import { Aurelia as $Aurelia, IPlatform, CustomElementType, ICustomElementViewModel } from '@aurelia/runtime-html';
 import { BrowserPlatform } from '@aurelia/platform-browser';
 import type { ISinglePageAppConfig, IEnhancementConfig } from '@aurelia/runtime-html';
 export declare const PLATFORM: BrowserPlatform<typeof globalThis>;
 export { IPlatform };
 export declare class Aurelia extends $Aurelia {
     constructor(container?: IContainer);
-    static start(root: IAppRoot | undefined): void | Promise<void>;
     static app(config: ISinglePageAppConfig<object> | CustomElementType): Omit<Aurelia, 'register' | 'app' | 'enhance'>;
     static enhance<T extends ICustomElementViewModel>(config: IEnhancementConfig<T>): ReturnType<$Aurelia['enhance']>;
     static register(...params: readonly unknown[]): Aurelia;

@@ -1,7 +1,7 @@
 export interface IDisposable {
     dispose(): void;
 }
-export type Constructable<T = {}> = {
+export type Constructable<T = object> = {
     new (...args: any[]): T;
 };
 export type Class<T, C = {}> = C & {

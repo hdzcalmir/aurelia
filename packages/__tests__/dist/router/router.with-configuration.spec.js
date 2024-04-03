@@ -122,15 +122,15 @@ describe('router/router.with-configuration.spec.ts', function () {
         { path: '/parent2@default', result: '!parent2!', url: 'parent2', title: 'Parent2 | Aurelia' },
         { path: '/parent-config/child-config', result: '!parent!!child!', url: 'parent-config/child-config', title: 'ParentConfigChildConfig | Aurelia' },
         { path: '/parent2@default/child2@parent2', result: '!parent2!!child2!', url: 'parent2/child2', title: 'Parent2 > Child2 | Aurelia' },
-        { path: '/parent-config/child2@parent', result: '!parent!!child2!', url: 'parent-config/child2@parent', title: 'ParentConfigChild2@ParentConfig | Aurelia' },
+        { path: '/parent-config/child2@parent', result: '!parent!!child2!', url: 'parent-config/child2@parent', title: 'ParentConfigChild2@ParentConfig | Aurelia' }, // Specific config
         { path: '/parent2@default/child-config', result: '!parent2!!child!', url: 'parent2/child-config', title: 'Parent2 > ChildConfig | Aurelia' },
         { path: '/parent-config/child-config/grandchild-config', result: '!parent!!child!!grandchild!', url: 'parent-config/child-config/grandchild-config', title: 'ParentConfigChildConfig > GrandchildConfig | Aurelia' },
         { path: '/parent2@default/child2@parent2/grandchild2@child2', result: '!parent2!!child2!!grandchild2!', url: 'parent2/child2/grandchild2', title: 'Parent2 > Child2 > TheGrandchild2 | Aurelia' },
         { path: '/parent-config/child-config/grandchild2@child', result: '!parent!!child!!grandchild2!', url: 'parent-config/child-config/grandchild2', title: 'ParentConfigChildConfig > TheGrandchild2 | Aurelia' },
         { path: '/parent2@default/child2@parent2/grandchild-config', result: '!parent2!!child2!!grandchild!', url: 'parent2/child2/grandchild-config', title: 'Parent2 > Child2 > GrandchildConfig | Aurelia' },
-        { path: '/parent-config/child2@parent/grandchild-config', result: '!parent!!child2!!grandchild!', url: 'parent-config/child2@parent/grandchild-config', title: 'ParentConfigChild2@ParentConfig > GrandchildConfig | Aurelia' },
+        { path: '/parent-config/child2@parent/grandchild-config', result: '!parent!!child2!!grandchild!', url: 'parent-config/child2@parent/grandchild-config', title: 'ParentConfigChild2@ParentConfig > GrandchildConfig | Aurelia' }, // Specific config
         { path: '/parent2@default/child-config/grandchild2@child', result: '!parent2!!child!!grandchild2!', url: 'parent2/child-config/grandchild2', title: 'Parent2 > ChildConfig > TheGrandchild2 | Aurelia' },
-        { path: '/parent-config/child2@parent/grandchild2@child2', result: '!parent!!child2!!grandchild2!', url: 'parent-config/child2@parent/grandchild2', title: 'ParentConfigChild2@ParentConfig > TheGrandchild2 | Aurelia' },
+        { path: '/parent-config/child2@parent/grandchild2@child2', result: '!parent!!child2!!grandchild2!', url: 'parent-config/child2@parent/grandchild2', title: 'ParentConfigChild2@ParentConfig > TheGrandchild2 | Aurelia' }, // Specific config
         { path: '/parent2@default/child-config/grandchild-config', result: '!parent2!!child!!grandchild!', url: 'parent2/child-config/grandchild-config', title: 'Parent2 > ChildConfig > GrandchildConfig | Aurelia' },
         { path: '/parent-config/abc', result: '!parent!!child:abc!', url: 'parent-config/abc', title: 'ParentConfigabcConfig | Aurelia' },
         { path: '/parent2@default/child2(abc)@parent2', result: '!parent2!!child2:abc!', url: 'parent2/child2(abc)', title: 'Parent2 > abc | Aurelia' },

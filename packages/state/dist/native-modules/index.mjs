@@ -464,7 +464,7 @@ let F = class StateBindingCommand {
         if (t.bindable == null) {
             n = s.map(t.node, n) ?? o(n);
         } else {
-            if (r === "" && t.def.type === "element") {
+            if (r === "" && t.def.kind === "element") {
                 r = o(n);
             }
             n = t.bindable.name;

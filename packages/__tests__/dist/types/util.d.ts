@@ -1,3 +1,4 @@
+/// <reference types="mocha" />
 import { IContainer } from '@aurelia/kernel';
 import { IPlatform } from '@aurelia/runtime-html';
 import { TestContext } from '@aurelia/testing';

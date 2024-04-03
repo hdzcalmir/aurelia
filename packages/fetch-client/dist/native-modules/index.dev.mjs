@@ -667,7 +667,7 @@ class CacheService {
 /** Default configuration which gets spread with overrides */
 const defaultCacheConfig = {
     /** 5 minutes */
-    cacheTime: 300000,
+    cacheTime: 300_000,
     /** Always stale */
     staleTime: 0,
     refreshStaleImmediate: false,

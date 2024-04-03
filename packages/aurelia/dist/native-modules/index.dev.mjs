@@ -16,9 +16,6 @@ class Aurelia extends Aurelia$1 {
     constructor(container = createContainer()) {
         super(container);
     }
-    static start(root) {
-        return new Aurelia().start(root);
-    }
     static app(config) {
         return new Aurelia().app(config);
     }

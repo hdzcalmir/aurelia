@@ -1752,11 +1752,11 @@ class ViewportContent extends EndpointContent {
                             throw t;
                         }
                         const i = this.instruction.component.name;
-                        throw createMappedError(2e3, i, t);
+                        throw createMappedError(2006, i, t);
                     }
                 } else {
                     const t = this.instruction.component.name;
-                    throw createMappedError(2e3, t);
+                    throw createMappedError(2006, t);
                 }
             }
         }
@@ -3371,15 +3371,13 @@ class EndpointMatcher {
 
 class RoutingScope {
     constructor(t, i, s, e) {
-        this.router = t;
-        this.hasScope = i;
-        this.owningScope = s;
-        this.endpointContent = e;
-        this.id = -1;
+        this.id = ++RoutingScope.lastId;
         this.parent = null;
         this.children = [];
-        this.id = ++RoutingScope.lastId;
+        this.router = t;
+        this.hasScope = i;
         this.owningScope = s ?? this;
+        this.endpointContent = e;
     }
     static for(t, s) {
         if (t == null) {
@@ -3525,7 +3523,7 @@ class RoutingScope {
         if (h.length > 0) {
             const i = this.findInstructions(h, o.useDirectRouting, o.useConfiguredRoutes);
             if (h.some((t => !t.component.none || t.route != null)) && !i.foundConfiguration && !i.foundInstructions) {
-                this.unknownRoute(h);
+                throw this.createUnknownRouteError(h);
             }
             t = [ ...t.filter((t => t.route instanceof Route)), ...i.instructions ];
             if (t.some((t => t.scope !== this))) {
@@ -3658,21 +3656,21 @@ class RoutingScope {
         } while (c.length > 0 || f.length > 0);
         return l;
     }
-    unknownRoute(t) {
+    createUnknownRouteError(t) {
         const i = this.router.configuration.options;
         const s = RoutingInstruction.stringify(this.router, t);
         if (t[0].route != null) {
             if (!i.useConfiguredRoutes) {
-                throw new Error("Can not match '" + s + "' since the router is configured to not use configured routes.");
+                return new Error("Can not match '" + s + "' since the router is configured to not use configured routes.");
             } else {
-                throw new Error("No matching configured route found for '" + s + "'.");
+                return new Error("No matching configured route found for '" + s + "'.");
             }
         } else if (i.useConfiguredRoutes && i.useDirectRouting) {
-            throw new Error("No matching configured route or component found for '" + s + "'.");
+            return new Error("No matching configured route or component found for '" + s + "'.");
         } else if (i.useConfiguredRoutes) {
-            throw new Error("No matching configured route found for '" + s + "'.");
+            return new Error("No matching configured route found for '" + s + "'.");
         } else {
-            throw new Error("No matching route/component found for '" + s + "'.");
+            return new Error("No matching route/component found for '" + s + "'.");
         }
     }
     ensureClearStateInstruction(t) {
@@ -4697,16 +4695,7 @@ class Title {
 const c = /*@__PURE__*/ t.DI.createInterface("IRouter", (t => t.singleton(Router)));
 
 class Router {
-    static get inject() {
-        return [ t.IContainer, t.IEventAggregator, exports.Navigator, l, l, v ];
-    }
-    constructor(i, s, e, n, r, o) {
-        this.container = i;
-        this.ea = s;
-        this.navigator = e;
-        this.viewer = n;
-        this.store = r;
-        this.configuration = o;
+    constructor() {
         this.rootScope = null;
         this.activeComponents = [];
         this.appendedInstructions = [];
@@ -4715,6 +4704,12 @@ class Router {
         this.loadedFirst = false;
         this.u = false;
         this.R = t.resolve(t.ILogger);
+        this.container = t.resolve(t.IContainer);
+        this.ea = t.resolve(t.IEventAggregator);
+        this.navigator = t.resolve(exports.Navigator);
+        this.viewer = t.resolve(l);
+        this.store = t.resolve(l);
+        this.configuration = t.resolve(v);
         this.handleNavigatorNavigateEvent = t => {
             void this.I(t);
         };
@@ -4789,7 +4784,7 @@ class Router {
     }
     start() {
         if (this.isActive) {
-            throw new Error("Router has already been started");
+            throw createMappedError(2e3);
         }
         this.isActive = true;
         const t = this.container.get(i.IAppRoot);
@@ -4807,8 +4802,8 @@ class Router {
             viewer: this.viewer,
             statefulHistoryLength: this.configuration.options.statefulHistoryLength
         });
-        this.navigatorStateChangeEventSubscription = this.ea.subscribe(NavigatorStateChangeEvent.eventName, this.handleNavigatorStateChangeEvent);
-        this.navigatorNavigateEventSubscription = this.ea.subscribe(NavigatorNavigateEvent.eventName, this.handleNavigatorNavigateEvent);
+        this.C = this.ea.subscribe(NavigatorStateChangeEvent.eventName, this.handleNavigatorStateChangeEvent);
+        this.N = this.ea.subscribe(NavigatorNavigateEvent.eventName, this.handleNavigatorNavigateEvent);
         this.viewer.start({
             useUrlFragmentHash: this.configuration.options.useUrlFragmentHash
         });
@@ -4816,13 +4811,13 @@ class Router {
     }
     stop() {
         if (!this.isActive) {
-            throw new Error("Router has not been started");
+            throw createMappedError(2001);
         }
         this.ea.publish(RouterStopEvent.eventName, RouterStopEvent.create());
         this.navigator.stop();
         this.viewer.stop();
-        this.navigatorStateChangeEventSubscription.dispose();
-        this.navigatorNavigateEventSubscription.dispose();
+        this.C.dispose();
+        this.N.dispose();
     }
     async initialLoad() {
         const {instruction: t, hash: i} = this.viewer.viewerState;
@@ -4836,10 +4831,10 @@ class Router {
     }
     async I(t) {
         if (this.u) {
-            if (this.C) {
-                this.C.navigation.process?.resolve(false);
+            if (this.$) {
+                this.$.navigation.process?.resolve(false);
             }
-            this.C = t;
+            this.$ = t;
             return;
         }
         this.u = true;
@@ -4850,14 +4845,14 @@ class Router {
         } finally {
             this.u = false;
         }
-        if (this.C) {
-            const t = this.C;
-            this.C = undefined;
+        if (this.$) {
+            const t = this.$;
+            this.$ = undefined;
             await this.I(t);
         }
     }
     get isProcessingNav() {
-        return this.u || this.C != null;
+        return this.u || this.$ != null;
     }
     getEndpoint(t, i) {
         return this.allEndpoints(t).find((t => t.name === i)) ?? null;
@@ -4880,7 +4875,7 @@ class Router {
     }
     disconnectEndpoint(t, i, s) {
         if (!i.connectedScope.parent.removeEndpoint(t, i, s)) {
-            throw new Error("Router failed to remove endpoint: " + i.name);
+            throw createMappedError(2002, i.name);
         }
     }
     async load(t, i) {
@@ -4955,7 +4950,7 @@ class Router {
     }
     checkActive(t, i) {
         if (typeof t === "string") {
-            throw new Error(`Parameter instructions to checkActivate can not be a string ('${t}')!`);
+            throw createMappedError(2003, t);
         }
         i = i ?? {};
         ({instructions: t} = this.applyLoadOptions(t, i));
@@ -5000,7 +4995,7 @@ class Router {
             if (!this.loadedFirst) {
                 this.appendedInstructions.push(...t);
             } else {
-                throw Error("Router failed to append routing instructions to coordinator");
+                throw createMappedError(2004);
             }
         }
         s?.enqueueAppendedInstructions(t);
@@ -5012,7 +5007,7 @@ class Router {
         let e = 100;
         while (s.length > 0) {
             if (e-- === 0) {
-                throw new Error("Router failed to find viewport when updating viewer paths.");
+                throw createMappedError(2005);
             }
             s = s.map((t => {
                 const {matchedInstructions: i} = t.endpoint.instance.scope.matchEndpoints(t.nextScopeInstructions ?? [], [], true);
@@ -5521,7 +5516,7 @@ exports.ViewportScopeCustomElement = __decorate([ i.customElement({
 
 exports.LoadCustomAttribute = class LoadCustomAttribute {
     constructor() {
-        this.N = false;
+        this.P = false;
         this.hasHref = null;
         this.element = t.resolve(i.INode);
         this.router = t.resolve(c);
@@ -5534,7 +5529,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
     }
     binding() {
         if (this.value == null) {
-            this.N = true;
+            this.P = true;
         }
         this.element.addEventListener("click", this.linkHandler);
         this.updateValue();
@@ -5550,7 +5545,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
         void this.updateActive();
     }
     updateValue() {
-        if (this.N) {
+        if (this.P) {
             this.value = {
                 component: this.component,
                 parameters: this.parameters,
@@ -5565,7 +5560,7 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
             let t = this.value;
             if (typeof t !== "string") {
                 const i = RoutingInstruction.from(this.router, t).shift();
-                const s = this.$(t);
+                const s = this.V(t);
                 if (s.foundConfiguration) {
                     i.route = s.matching;
                 }
@@ -5586,14 +5581,14 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
             id: this.value,
             path: this.value
         } : this.value;
-        const e = this.$(s);
+        const e = this.V(s);
         const n = e.foundConfiguration ? e.instructions : getConsideredActiveInstructions(this.router, t, this.element, this.value);
         const r = getLoadIndicator(this.element);
         r.classList.toggle(this.activeClass, this.router.checkActive(n, {
             context: t
         }));
     }
-    $(t) {
+    V(t) {
         if (typeof t === "string") {
             return new FoundRoute;
         }
@@ -5689,9 +5684,9 @@ exports.ConsideredActiveCustomAttribute = __decorate([ i.customAttribute("consid
 
 const v = /*@__PURE__*/ t.DI.createInterface("IRouterConfiguration", (t => t.singleton(RouterConfiguration)));
 
-const w = c;
+const m = c;
 
-const m = [ w ];
+const w = [ m ];
 
 const R = exports.ViewportCustomElement;
 
@@ -5709,7 +5704,7 @@ class RouterConfiguration {
         s.options = RouterConfiguration.options;
         s.options.setRouterConfiguration(s);
         RouterConfiguration.options = RouterOptions.create();
-        return t.register(...m, ...C, i.AppTask.activating(c, RouterConfiguration.configurationCall), i.AppTask.activated(c, (t => t.initialLoad())), i.AppTask.deactivated(c, (t => t.stop())));
+        return t.register(...w, ...C, i.AppTask.activating(c, RouterConfiguration.configurationCall), i.AppTask.activated(c, (t => t.initialLoad())), i.AppTask.deactivated(c, (t => t.stop())));
     }
     static customize(t) {
         if (t === undefined) {
@@ -5759,7 +5754,7 @@ RouterConfiguration.configurationCall = t => {
 
 exports.ConfigurableRoute = h;
 
-exports.DefaultComponents = m;
+exports.DefaultComponents = w;
 
 exports.DefaultResources = C;
 
@@ -5813,7 +5808,7 @@ exports.RouterNavigationStartEvent = RouterNavigationStartEvent;
 
 exports.RouterOptions = RouterOptions;
 
-exports.RouterRegistration = w;
+exports.RouterRegistration = m;
 
 exports.RouterStartEvent = RouterStartEvent;
 

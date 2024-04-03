@@ -1,6 +1,6 @@
 import { Constructable, IDisposable } from './interfaces';
 import { ResourceType } from './resource';
-import type { IAllResolver, IFactoryResolver, ILazyResolver, INewInstanceResolver, IOptionalResolver, IResolvedFactory, IResolvedLazy } from './di.resolvers';
+import type { IAllResolver, ICallableResolver, IFactoryResolver, ILazyResolver, INewInstanceResolver, IOptionalResolver, IResolvedFactory, IResolvedLazy } from './di.resolvers';
 export type ResolveCallback<T = any> = (handler: IContainer, requestor: IContainer, resolver: IResolver<T>) => T;
 export type InterfaceSymbol<K = any> = (target: Injectable | AbstractInjectable, property: string | symbol | undefined, index?: number) => void;
 interface IResolverLike<C, K = any> {
@@ -25,11 +25,12 @@ export interface IFactory<T extends Constructable = any> {
 export interface IServiceLocator {
     readonly root: IServiceLocator;
     has<K extends Key>(key: K | Key, searchAncestors: boolean): boolean;
-    get<K extends Key>(key: IAllResolver<K>): readonly Resolved<K>[];
+    get<K extends Key>(key: IAllResolver<K>): Resolved<K>[];
     get<K extends Key>(key: INewInstanceResolver<K>): Resolved<K>;
     get<K extends Key>(key: ILazyResolver<K>): IResolvedLazy<K>;
     get<K extends Key>(key: IOptionalResolver<K>): Resolved<K> | undefined;
     get<K extends Key>(key: IFactoryResolver<K>): IResolvedFactory<K>;
+    get<K extends Key>(key: ICallableResolver<K>): Resolved<K>;
     get<K extends Key>(key: IResolver<K>): Resolved<K>;
     get<K extends Key>(key: K): Resolved<K>;
     get<K extends Key>(key: Key): Resolved<K>;

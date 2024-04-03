@@ -41,7 +41,7 @@ describe('3-runtime-html/interpolation.spec.ts', function () {
             {
                 expected: NaN,
                 expectedStrictMode: 'NaN',
-                expectedValueAfterChange: '-4',
+                expectedValueAfterChange: '-4', // ((value || 0) + 1) - value1
                 app: class {
                     constructor() {
                         this.value = undefined;

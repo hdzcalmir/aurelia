@@ -49,6 +49,15 @@ export type TransitionAction = 'skip' | 'reload' | 'swap' | '';
  * (Scope self-hoisting will not be available for early-on alpha.)
  */
 export declare class RoutingScope {
+    id: number;
+    /**
+     * The parent of the routing scope (parent/child hierarchy)
+     */
+    parent: RoutingScope | null;
+    /**
+     * The children of the routing scope (parent/child hierarchy)
+     */
+    children: RoutingScope[];
     readonly router: IRouter;
     /**
      * Whether the routing scope has a scope and can own other scopes
@@ -62,16 +71,6 @@ export declare class RoutingScope {
      * The endpoint content the routing scope is connected to
      */
     endpointContent: EndpointContent;
-    static lastId: number;
-    id: number;
-    /**
-     * The parent of the routing scope (parent/child hierarchy)
-     */
-    parent: RoutingScope | null;
-    /**
-     * The children of the routing scope (parent/child hierarchy)
-     */
-    children: RoutingScope[];
     constructor(router: IRouter, 
     /**
      * Whether the routing scope has a scope and can own other scopes
@@ -118,7 +117,7 @@ export declare class RoutingScope {
      *
      * @param instructions - The failing instructions
      */
-    private unknownRoute;
+    private createUnknownRouteError;
     /**
      * Ensure that there's a clear all instruction present in instructions.
      */

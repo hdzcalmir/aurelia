@@ -12,7 +12,7 @@ export declare class EventAggregator {
      * @param channel - The channel to publish to.
      * @param message - The message to publish on the channel.
      */
-    publish<T, C extends string>(channel: C, message: T): void;
+    publish<C extends string>(channel: C, message?: unknown): void;
     /**
      * Publishes a message.
      *
@@ -25,7 +25,7 @@ export declare class EventAggregator {
      * @param channel - The event channel.
      * @param callback - The callback to be invoked when the specified message is published.
      */
-    subscribe<T, C extends string>(channel: C, callback: (message: T, channel: C) => void): IDisposable;
+    subscribe<T, C extends string = string>(channel: C, callback: (message: T, channel: C) => void): IDisposable;
     /**
      * Subscribes to a message type.
      *

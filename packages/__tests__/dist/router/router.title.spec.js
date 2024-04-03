@@ -109,7 +109,7 @@ describe('router/router.title.spec.ts', function () {
         { path: '/my-parent2@default', result: '!my-parent2!', url: 'my-parent2', },
         { path: '/parent-config/child-config', result: '!my-parent!!my-child!', url: 'parent-config/child-config', },
         { path: '/my-parent2@default/my-child2@parent2', result: '!my-parent2!!my-child2!', url: 'my-parent2/my-child2', },
-        { path: '/parent-config/my-child2@parent', result: '!my-parent!!my-child2!', url: 'parent-config/my-child2@parent', },
+        { path: '/parent-config/my-child2@parent', result: '!my-parent!!my-child2!', url: 'parent-config/my-child2@parent', }, // Specific config
         { path: '/my-parent2@default/child-config', result: '!my-parent2!!my-child!', url: 'my-parent2/child-config', },
         { path: '/parent-config/abc', result: '!my-parent!!my-child:abc!', url: 'parent-config/abc', },
         { path: '/my-parent2@default/my-child2(abc)@parent2', result: '!my-parent2!!my-child2:abc!', url: 'my-parent2/my-child2(abc)', },

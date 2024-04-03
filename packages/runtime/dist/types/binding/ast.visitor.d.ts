@@ -38,7 +38,7 @@ export declare class Unparser implements IVisitor<void> {
     visitAccessMember(expr: AccessMemberExpression): void;
     visitAccessKeyed(expr: AccessKeyedExpression): void;
     visitAccessThis(expr: AccessThisExpression): void;
-    visitAccessBoundary(expr: AccessBoundaryExpression): void;
+    visitAccessBoundary(_expr: AccessBoundaryExpression): void;
     visitAccessScope(expr: AccessScopeExpression): void;
     visitArrayLiteral(expr: ArrayLiteralExpression): void;
     visitArrowFunction(expr: ArrowFunction): void;
