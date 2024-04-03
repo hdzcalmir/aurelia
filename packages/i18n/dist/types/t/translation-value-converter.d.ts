@@ -1,4 +1,4 @@
-import i18next from 'i18next';
+import type * as i18next from 'i18next';
 import { I18N } from '../i18n';
 export declare class TranslationValueConverter {
     private readonly i18n;

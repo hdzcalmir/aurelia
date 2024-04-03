@@ -909,5 +909,82 @@ describe('3-runtime-html/custom-attributes.spec.ts', function () {
             assert.deepStrictEqual(getAllBy('my-ce').map(el => el.textContent), ['1', '2', '2', '1']);
         });
     });
+    describe('finding closest', function () {
+        const Foo = CustomAttribute.define('foo', class Foo {
+            constructor() {
+                this.host = resolve(INode);
+            }
+        });
+        const Baz = CustomAttribute.define('baz', class Baz {
+            constructor() {
+                this.host = resolve(INode);
+                this.parent = CustomAttribute.closest(this.host, 'foo')?.viewModel;
+            }
+            bound() {
+                this.host.textContent = this.parent?.value ?? this.value;
+            }
+        });
+        const Bar = CustomAttribute.define('bar', class Bar {
+            constructor() {
+                this.host = resolve(INode);
+                this.parent = CustomAttribute.closest(this.host, Foo)?.viewModel;
+            }
+            bound() {
+                this.host.textContent = this.parent?.value ?? this.value;
+            }
+        });
+        it('finds closest custom attribute using string', function () {
+            const { assertText } = createFixture(`<div foo="1"><div baz="2"></div></div>`, class App {
+            }, [Foo, Baz]);
+            assertText('1');
+        });
+        it('finds closest custom attribute using view model constructor', function () {
+            const { assertText } = createFixture(`<div foo="1"><div bar="2"></div></div>`, class App {
+            }, [Foo, Bar]);
+            assertText('1');
+        });
+        it('returns null if no controller for the name can be found', function () {
+            const { assertText } = createFixture(
+            // Bar is not on an child element that hosts Foo
+            `
+        <div foo="1"></div>
+        <div bar="2"></div>
+        <div baz="3"></div>
+      `, class App {
+            }, [Foo, Bar, Baz]);
+            assertText('2 3', { compact: true });
+        });
+        it('finds closest custom attribute when nested multiple dom layers', function () {
+            const { assertText } = createFixture(`
+        <div foo="1">
+          <center>
+            <div bar="2"></div>
+            <div baz="3"></div>
+          </center>
+        </div>
+        `, class App {
+            }, [Foo, Bar, Baz]);
+            assertText('1 1', { compact: true });
+        });
+        it('finds closest custom attribute when nested multiple dom layers + multiple parent attributes', function () {
+            const { assertText } = createFixture(`
+        <div foo="1">
+          <center>
+            <div foo="3">
+              <div bar="2"></div>
+            </div>
+            <div baz="4"></div>
+          </center>
+        </div>
+        `, class App {
+            }, [Foo, Bar, Baz]);
+            assertText('3 1', { compact: true });
+        });
+        it('throws when theres no attribute definition associated with the type', function () {
+            const { appHost } = createFixture('');
+            assert.throws(() => CustomAttribute.closest(appHost, class NotAttr {
+            }));
+        });
+    });
 });
 //# sourceMappingURL=custom-attributes.spec.js.map

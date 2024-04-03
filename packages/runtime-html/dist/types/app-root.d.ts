@@ -5,6 +5,13 @@ import { IPlatform } from './platform';
 export interface IAppRootConfig<T extends object = object> {
     host: HTMLElement;
     component: T | Constructable<T>;
+    /**
+     * When a HTML form is submitted, the default behavior is to "redirect" the page to the action of the form
+     * This is not desirable for SPA applications, so by default, this behavior is prevented.
+     *
+     * This option re-enables the default behavior of HTML forms.
+     */
+    allowActionlessForm?: boolean;
 }
 export interface IAppRoot<C extends object = object> extends IDisposable {
     readonly config: IAppRootConfig<C>;
@@ -28,7 +35,7 @@ export interface IAppRoot<C extends object = object> extends IDisposable {
     deactivate(): void | Promise<void>;
 }
 export declare const IAppRoot: import("@aurelia/kernel").InterfaceSymbol<IAppRoot<object>>;
-export declare class AppRoot<T extends object, K extends ICustomElementViewModel = T extends Constructable<infer R> ? R : T> implements IAppRoot<K> {
+export declare class AppRoot<T extends object, K extends ICustomElementViewModel = ICustomElementViewModel & (T extends Constructable<infer R> ? R : T)> implements IAppRoot<K> {
     readonly config: IAppRootConfig<K>;
     readonly container: IContainer;
     readonly host: HTMLElement;

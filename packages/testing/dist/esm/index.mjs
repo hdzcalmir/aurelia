@@ -4,7 +4,7 @@ import { noop as n, isArrayIndex as i, DI as r, Registration as a, kebabCase as 
 
 import { IObserverLocator as c, astEvaluate as f, astAssign as d, astBind as p, astUnbind as m, IDirtyChecker as g, INodeObserverLocator as b, Scope as v } from "@aurelia/runtime";
 
-import { StandardConfiguration as y, IPlatform as x, ITemplateCompiler as $, CustomElement as w, InstructionType as k, CustomAttribute as E, Aurelia as S, valueConverter as C, bindable as O, customElement as j } from "@aurelia/runtime-html";
+import { StandardConfiguration as y, IPlatform as x, ITemplateCompiler as $, CustomElement as w, InstructionType as E, CustomAttribute as k, Aurelia as S, valueConverter as C, bindable as O, customElement as j } from "@aurelia/runtime-html";
 
 import { BrowserPlatform as q } from "@aurelia/platform-browser";
 
@@ -893,6 +893,9 @@ class TestContext {
     get MouseEvent() {
         return this.platform.globalThis.MouseEvent;
     }
+    get SubmitEvent() {
+        return this.platform.globalThis.SubmitEvent;
+    }
     get Node() {
         return this.platform.globalThis.Node;
     }
@@ -1060,7 +1063,7 @@ function getInspectContext(e) {
     return t;
 }
 
-const ke = z({
+const Ee = z({
     special: "cyan",
     number: "yellow",
     boolean: "yellow",
@@ -1072,7 +1075,7 @@ const ke = z({
     regexp: "red"
 });
 
-const Ee = z({
+const ke = z({
     deepStrictEqual: "Expected values to be strictly deep-equal:",
     strictEqual: "Expected values to be strictly equal:",
     strictEqualObject: 'Expected "actual" to be reference-equal to "expected":',
@@ -1089,7 +1092,7 @@ const Ee = z({
 const Se = Symbol.for("customInspect");
 
 function stylizeWithColor(e, t) {
-    const n = ke[t];
+    const n = Ee[t];
     if (isString(n)) {
         return le[n](e);
     } else {
@@ -1110,10 +1113,10 @@ class AssertionError extends Error {
         if (r === "deepStrictEqual" || r === "strictEqual") {
             super(`${o}${createErrDiff(t, n, r)}`);
         } else if (r === "notDeepStrictEqual" || r === "notStrictEqual") {
-            let e = Ee[r];
+            let e = ke[r];
             let n = inspectValue(t).split("\n");
             if (r === "notStrictEqual" && isObject(t)) {
-                e = Ee.notStrictEqualObject;
+                e = ke.notStrictEqualObject;
             }
             if (n.length > 30) {
                 n[26] = le.blue("...");
@@ -1129,9 +1132,9 @@ class AssertionError extends Error {
         } else {
             let e = inspectValue(t);
             let i = "";
-            const a = Ee[r];
+            const a = ke[r];
             if (r === "notDeepEqual" || r === "notEqual") {
-                e = `${Ee[r]}\n\n${e}`;
+                e = `${ke[r]}\n\n${e}`;
                 if (e.length > 1024) {
                     e = `${e.slice(0, 1021)}...`;
                 }
@@ -1208,7 +1211,7 @@ function createErrDiff(e, t, n) {
         const i = u[0].length + c[0].length;
         if (i <= Ce) {
             if (!isObject(e) && !isObject(t) && (e !== 0 || t !== 0)) {
-                return `${Ee[n]}\n\n${u[0]} !== ${c[0]}\n`;
+                return `${ke[n]}\n\n${u[0]} !== ${c[0]}\n`;
             }
         } else if (n !== "strictEqualObject" && i < 80) {
             while (u[0][f] === c[0][f]) {
@@ -1245,7 +1248,7 @@ function createErrDiff(e, t, n) {
                 e.pop();
             }
         }
-        return `${Ee.notIdentical}\n\n${join(e, "\n")}\n`;
+        return `${ke.notIdentical}\n\n${join(e, "\n")}\n`;
     }
     if (f > 3) {
         s = `\n${le.blue("...")}${s}`;
@@ -1256,7 +1259,7 @@ function createErrDiff(e, t, n) {
         i = "";
     }
     let b = 0;
-    const v = `${Ee[n]}\n${le.green("+ actual")} ${le.red("- expected")}`;
+    const v = `${ke[n]}\n${le.green("+ actual")} ${le.red("- expected")}`;
     const y = ` ${le.blue("...")} Lines skipped`;
     for (f = 0; f < g; f++) {
         const e = f - a;
@@ -2261,46 +2264,46 @@ function getVisibleText(e, t) {
 
 function instructionTypeName(e) {
     switch (e) {
-      case k.textBinding:
+      case E.textBinding:
         return "textBinding";
 
-      case k.interpolation:
+      case E.interpolation:
         return "interpolation";
 
-      case k.propertyBinding:
+      case E.propertyBinding:
         return "propertyBinding";
 
-      case k.iteratorBinding:
+      case E.iteratorBinding:
         return "iteratorBinding";
 
-      case k.listenerBinding:
+      case E.listenerBinding:
         return "listenerBinding";
 
-      case k.refBinding:
+      case E.refBinding:
         return "refBinding";
 
-      case k.stylePropertyBinding:
+      case E.stylePropertyBinding:
         return "stylePropertyBinding";
 
-      case k.setProperty:
+      case E.setProperty:
         return "setProperty";
 
-      case k.setAttribute:
+      case E.setAttribute:
         return "setAttribute";
 
-      case k.hydrateElement:
+      case E.hydrateElement:
         return "hydrateElement";
 
-      case k.hydrateAttribute:
+      case E.hydrateAttribute:
         return "hydrateAttribute";
 
-      case k.hydrateTemplateController:
+      case E.hydrateTemplateController:
         return "hydrateTemplateController";
 
-      case k.hydrateLetElement:
+      case E.hydrateLetElement:
         return "hydrateLetElement";
 
-      case k.letBinding:
+      case E.letBinding:
         return "letBinding";
 
       default:
@@ -2878,7 +2881,7 @@ function isCustomElementType(e, t) {
 }
 
 function isCustomAttributeType(e, t) {
-    if (!E.isType(e)) {
+    if (!k.isType(e)) {
         innerFail({
             actual: false,
             expected: true,
@@ -4320,49 +4323,50 @@ const onFixtureCreated = e => Ke.subscribe("fixture:created", (t => {
     }
 }));
 
-function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
-    const {container: a} = r;
-    a.register(...n);
-    const {platform: s, observerLocator: o} = r;
-    const l = r.doc.body.appendChild(r.createElement("div"));
-    const c = l.appendChild(r.createElement("app"));
-    const f = new S(a);
-    const d = typeof t === "function" ? t : t == null ? class {} : function $Ctor() {
+function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {}) {
+    const {container: s} = r;
+    s.register(...n);
+    const {platform: o, observerLocator: l} = r;
+    const c = r.doc.body.appendChild(r.createElement("div"));
+    const f = c.appendChild(r.createElement("app"));
+    const d = new S(s);
+    const p = typeof t === "function" ? t : t == null ? class {} : function $Ctor() {
         Object.setPrototypeOf(t, $Ctor.prototype);
         return t;
     };
-    const p = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
-    if (d !== t && t != null) {
-        p.forEach((e => {
-            A.define(e, w.getAnnotation(t, e), d);
+    const m = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
+    if (p !== t && t != null) {
+        m.forEach((e => {
+            A.define(e, w.getAnnotation(t, e), p);
         }));
     }
-    const m = w.isType(d) ? w.getDefinition(d) : {};
-    const g = w.define({
-        ...m,
-        name: m.name ?? "app",
+    const g = w.isType(p) ? w.getDefinition(p) : {};
+    const b = w.define({
+        ...g,
+        name: g.name ?? "app",
         template: e
-    }, d);
-    if (a.has(g, true)) {
+    }, p);
+    if (s.has(b, true)) {
         throw new Error("Container of the context contains instance of the application root component. " + "Consider using a different class, or context as it will likely cause surprises in tests.");
     }
-    const b = a.get(g);
-    let v = void 0;
+    const v = s.get(b);
+    let y = void 0;
     function startFixtureApp() {
         if (i) {
             try {
-                f.app({
-                    host: c,
-                    component: b
+                d.app({
+                    host: f,
+                    component: v,
+                    ...a
                 });
-                $.startPromise = v = f.start();
+                E.startPromise = y = d.start();
             } catch (e) {
                 try {
                     const dispose = () => {
-                        l.remove();
-                        f.dispose();
+                        c.remove();
+                        d.dispose();
                     };
-                    const e = f.stop();
+                    const e = d.stop();
                     if (e instanceof Promise) void e.then(dispose); else dispose();
                 } catch {
                     console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
@@ -4371,9 +4375,9 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
             }
         }
     }
-    let y = 0;
+    let x = 0;
     const getBy = e => {
-        const t = c.querySelectorAll(e);
+        const t = f.querySelectorAll(e);
         if (t.length > 1) {
             throw new Error(`There is more than 1 element with selector "${e}": ${t.length} found`);
         }
@@ -4383,17 +4387,17 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         return t[0];
     };
     function getAllBy(e) {
-        return Array.from(c.querySelectorAll(e));
+        return Array.from(f.querySelectorAll(e));
     }
     function queryBy(e) {
-        const t = c.querySelectorAll(e);
+        const t = f.querySelectorAll(e);
         if (t.length > 1) {
             throw new Error(`There is more than 1 element with selector "${e}": ${t.length} found`);
         }
         return t.length === 0 ? null : t[0];
     }
     function strictQueryBy(e, t = "") {
-        const n = c.querySelectorAll(e);
+        const n = f.querySelectorAll(e);
         if (n.length > 1) {
             throw new Error(`There is more than 1 element with selector "${e}": ${n.length} found${t ? ` ${t}` : ""}`);
         }
@@ -4406,7 +4410,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         let i;
         let r;
         if (arguments.length === 1) {
-            He.strictEqual(getVisibleText(c, false), e);
+            He.strictEqual(getVisibleText(f, false), e);
             return;
         }
         if (t == null) {
@@ -4415,7 +4419,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         if (typeof t !== "string") {
             i = e;
             r = t;
-            He.strictEqual(getVisibleText(c, r?.compact), i);
+            He.strictEqual(getVisibleText(f, r?.compact), i);
             return;
         }
         const a = strictQueryBy(e, `to compare text content against "${t}`);
@@ -4430,7 +4434,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
             }
             He.includes(getVisibleText(n), t);
         } else {
-            He.includes(getVisibleText(c), e);
+            He.includes(getVisibleText(f), e);
         }
     }
     function getInnerHtml(e, t) {
@@ -4444,7 +4448,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         let i;
         let r;
         if (arguments.length === 1) {
-            He.strictEqual(getInnerHtml(c), e);
+            He.strictEqual(getInnerHtml(f), e);
             return;
         }
         if (t == null) {
@@ -4453,7 +4457,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         if (typeof t !== "string") {
             i = e;
             r = t;
-            He.strictEqual(getInnerHtml(c, r?.compact), i);
+            He.strictEqual(getInnerHtml(f, r?.compact), i);
             return;
         }
         const a = strictQueryBy(e, `to compare innerHTML against "${t}`);
@@ -4515,14 +4519,14 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
             throw new Error(`No <input>/<textarea> element found for selector "${e}" to emulate input for "${t}"`);
         }
         n.value = t;
-        n.dispatchEvent(new s.window.Event("input"));
+        n.dispatchEvent(new o.window.Event("input"));
     }
     const scrollBy = (e, t) => {
         const n = strictQueryBy(e, `to scroll by "${JSON.stringify(t)}"`);
         n.scrollBy(typeof t === "number" ? {
             top: t
         } : t);
-        n.dispatchEvent(new s.window.Event("scroll"));
+        n.dispatchEvent(new o.window.Event("scroll"));
     };
     const flush = e => {
         r.platform.domWriteQueue.flush(e);
@@ -4530,15 +4534,15 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
     const stop = (e = false) => {
         let t = void 0;
         try {
-            t = f.stop(e);
+            t = d.stop(e);
         } finally {
             if (e) {
-                if (++y > 1) {
+                if (++x > 1) {
                     console.log("(!) Fixture has already been torn down");
                 } else {
                     const $dispose = () => {
-                        l.remove();
-                        f.dispose();
+                        c.remove();
+                        d.dispose();
                     };
                     if (t instanceof Promise) {
                         t = t.then($dispose);
@@ -4550,19 +4554,19 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
         }
         return t;
     };
-    let x;
-    const $ = new class Results {
+    let $;
+    const E = new class Results {
         constructor() {
-            this.startPromise = v;
+            this.startPromise = y;
             this.ctx = r;
-            this.container = a;
-            this.platform = s;
-            this.testHost = l;
-            this.appHost = c;
-            this.au = f;
-            this.component = b;
-            this.observerLocator = o;
-            this.logger = a.get(u);
+            this.container = s;
+            this.platform = o;
+            this.testHost = c;
+            this.appHost = f;
+            this.au = d;
+            this.component = v;
+            this.observerLocator = l;
+            this.logger = s.get(u);
             this.hJsx = hJsx.bind(r.doc);
             this.stop = stop;
             this.getBy = getBy;
@@ -4576,39 +4580,39 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create()) {
             this.assertAttrNS = assertAttrNS;
             this.assertStyles = assertStyles;
             this.assertValue = assertValue;
-            this.createEvent = (e, t) => new s.CustomEvent(e, t);
+            this.createEvent = (e, t) => new o.CustomEvent(e, t);
             this.trigger = trigger;
             this.type = type;
             this.scrollBy = scrollBy;
             this.flush = flush;
         }
         start() {
-            return (x ??= f.app({
-                host: c,
-                component: b
+            return ($ ??= d.app({
+                host: f,
+                component: v
             })).start();
         }
         tearDown() {
             return stop(true);
         }
         get torn() {
-            return y > 0;
+            return x > 0;
         }
         get started() {
-            if (v instanceof Promise) {
-                return Promise.resolve(v).then((() => this));
+            if (y instanceof Promise) {
+                return Promise.resolve(y).then((() => this));
             }
             return Promise.resolve(this);
         }
         printHtml() {
-            const e = c.innerHTML;
+            const e = f.innerHTML;
             console.log(e);
             return e;
         }
     };
-    Ke.publish("fixture:created", $);
+    Ke.publish("fixture:created", E);
     startFixtureApp();
-    return $;
+    return E;
 }
 
 class FixtureBuilder {
@@ -4623,6 +4627,10 @@ class FixtureBuilder {
     }
     deps(...e) {
         this.C = e;
+        return this;
+    }
+    config(e) {
+        this.cf = e;
         return this;
     }
     build() {
@@ -4646,6 +4654,8 @@ createFixture.html = (e, ...t) => (new FixtureBuilder).html(e, ...t);
 createFixture.component = e => (new FixtureBuilder).component(e);
 
 createFixture.deps = (...e) => (new FixtureBuilder).deps(...e);
+
+createFixture.config = e => (new FixtureBuilder).config(e);
 
 const Ge = [ "click", "mousedown", "mouseup", "mousemove", "dbclick", "contextmenu" ];
 

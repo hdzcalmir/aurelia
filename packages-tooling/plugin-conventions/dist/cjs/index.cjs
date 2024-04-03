@@ -540,7 +540,7 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
             }
             statements.push(`import * as d${i} from ${s(d)};\n`);
             if (hasAliases) {
-                viewDeps.push(`$$arr(d${i}, ${JSON.stringify(main)}${Object.keys(others).length > 0 ? `, ${JSON.stringify(others)}` : ''})`);
+                viewDeps.push(`$$arr(d${i}, ${s(main)}${Object.keys(others).length > 0 ? `, ${s(others)}` : ''})`);
             }
             else {
                 viewDeps.push(`d${i}`);
@@ -556,7 +556,7 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
             }
             statements.push(`import * as d${i} from ${s(((_b = options.transformHtmlImportSpecifier) !== null && _b !== void 0 ? _b : (s => s))(d))};\n`);
             if (hasAliases) {
-                viewDeps.push(`$$arr(__get_el__(d${i}), ${JSON.stringify(main)})`);
+                viewDeps.push(`$$arr(__get_el__(d${i}), ${s(main)})`);
             }
             else {
                 viewDeps.push(`d${i}`);
@@ -653,8 +653,8 @@ export function register(container) {
     map.sourcesContent = [unit.contents];
     return { code, map };
 }
-function s(str) {
-    return JSON.stringify(str);
+function s(input) {
+    return JSON.stringify(input);
 }
 
 const defaultCssExtensions = ['.css', '.scss', '.sass', '.less', '.styl'];

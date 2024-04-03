@@ -1,5 +1,4 @@
-import { CustomElement, Aurelia, Focus } from '@aurelia/runtime-html';
-import { PLATFORM, assert, eachCartesianJoin, TestContext } from '@aurelia/testing';
+import { PLATFORM, assert, eachCartesianJoin, createFixture } from '@aurelia/testing';
 import { isNode } from '../util.js';
 describe('3-runtime-html/focus.spec.ts', function () {
     // there are focus/blur API that won't work with JSDOM
@@ -15,37 +14,34 @@ describe('3-runtime-html/focus.spec.ts', function () {
     describe('basic scenarios', function () {
         describe('with non-focusable element', function () {
             it('focuses when there is tabindex attribute', async function () {
-                const { startPromise, testHost, dispose, component, ctx } = createFixture(`<template>
+                const { appHost, component, ctx } = createFixture(`<template>
             <div focus.two-way="hasFocus" id="blurred" tabindex="-1"></div>
           </template>`, class App {
                     constructor() {
                         this.hasFocus = true;
                     }
                 });
-                await startPromise;
                 const activeElement = ctx.doc.activeElement;
-                const div = testHost.querySelector('app div');
+                const div = appHost.querySelector('app div');
                 assert.notEqual(div, null, '<app/> <div/> not null');
                 assert.equal(activeElement.tagName, 'DIV', 'activeElement === <div/>');
                 assert.equal(activeElement, div, 'activeElement === <div/>');
                 assert.equal(component.hasFocus, true, 'It should not have affected component.hasFocus');
-                await dispose();
             });
         });
-        it('invokes focus when there is **NO** tabindex attribute', async function () {
+        it('invokes focus when there is **NO** tabindex attribute', function () {
             let callCount = 0;
             PLATFORM.window.HTMLDivElement.prototype.focus = function () {
                 callCount++;
                 return PLATFORM.HTMLElement.prototype.focus.call(this);
             };
-            const { startPromise, testHost, dispose, component, ctx } = createFixture(`<template>
+            const { testHost, component, ctx } = createFixture(`<template>
           <div focus.two-way="hasFocus" id="blurred"></div>
         </template>`, class App {
                 constructor() {
                     this.hasFocus = true;
                 }
             });
-            await startPromise;
             const activeElement = ctx.doc.activeElement;
             const div = testHost.querySelector('app div');
             assert.equal(callCount, 1, 'It should have invoked focus on DIV element prototype');
@@ -55,7 +51,6 @@ describe('3-runtime-html/focus.spec.ts', function () {
             assert.equal(component.hasFocus, true, 'It should not have affected component.hasFocus');
             // focus belongs to HTMLElement class
             delete PLATFORM.window.HTMLDivElement.prototype.focus;
-            await dispose();
         });
         const specs = [
             ['<input/>', `<input focus.two-way=hasFocus id=blurred>`],
@@ -70,15 +65,14 @@ describe('3-runtime-html/focus.spec.ts', function () {
         }
         for (const [desc, template] of specs) {
             describe(`with ${desc}`, function () {
-                it('Works in basic scenario', async function () {
-                    const { startPromise, testHost, dispose, component, ctx } = createFixture(`<template>
+                it('Works in basic scenario', function () {
+                    const { testHost, component, ctx } = createFixture(`<template>
               ${template}
             </template>`, class App {
                         constructor() {
                             this.hasFocus = true;
                         }
                     });
-                    await startPromise;
                     const elName = desc.replace(/^<|\/>.*$/g, '');
                     const activeElement = ctx.doc.activeElement;
                     const focusable = testHost.querySelector(`app ${elName}`);
@@ -86,7 +80,6 @@ describe('3-runtime-html/focus.spec.ts', function () {
                     assert.equal(activeElement.tagName, elName.toUpperCase());
                     assert.equal(activeElement, focusable);
                     assert.equal(component.hasFocus, true, 'It should not have affected component.hasFocus');
-                    await dispose();
                 });
             });
         }
@@ -124,12 +117,12 @@ describe('3-runtime-html/focus.spec.ts', function () {
                 const hasShadowRoot = shadowMode !== null;
                 const isFocusable = ceProp && (typeof ceProp.tabIndex !== 'undefined' || ceProp.contentEditable);
                 const ceName = `ce-${Math.random().toString().slice(-6)}`;
-                it(`works with ${isFocusable ? 'focusable' : ''} custom element ${ceName}, #shadowRoot: ${shadowMode}`, async function () {
-                    const { testHost, start, dispose, component, ctx } = createFixture(`<template><${ceName} focus.two-way=hasFocus></${ceName}></template>`, class App {
+                it(`works with ${isFocusable ? 'focusable' : ''} custom element ${ceName}, #shadowRoot: ${shadowMode}`, function () {
+                    const { testHost, start, component, ctx } = createFixture(`<template><${ceName} focus.two-way=hasFocus></${ceName}></template>`, class App {
                         constructor() {
                             this.hasFocus = true;
                         }
-                    }, false /* autoStart? */);
+                    }, [], false /* autoStart? */);
                     const CustomEl = defineCustomElement(ctx, ceName, ceTemplate, { tabIndex: 1 }, shadowMode);
                     let callCount = 0;
                     // only track call, virtually no different without this layer
@@ -153,7 +146,7 @@ describe('3-runtime-html/focus.spec.ts', function () {
                             }
                         }
                     });
-                    await start();
+                    void start();
                     const activeElement = ctx.doc.activeElement;
                     const ceEl = testHost.querySelector(`app ${ceName}`);
                     assert.equal(callCount, 1, 'It should have called focus()');
@@ -168,7 +161,6 @@ describe('3-runtime-html/focus.spec.ts', function () {
                         }
                     }
                     assert.equal(component.hasFocus, true, 'It should not have affected component.hasFocus');
-                    await dispose();
                 });
             });
         });
@@ -276,7 +268,7 @@ describe('3-runtime-html/focus.spec.ts', function () {
         ];
         eachCartesianJoin([focusAttrs, templates], (command, { title, template, getFocusable, app, assertionFn }) => {
             it(title(command), async function () {
-                const { testHost, start, dispose, component, ctx } = createFixture(template(command), app, false);
+                const { testHost, start, component, ctx } = createFixture(template(command), app, [], false);
                 await start();
                 const doc = ctx.doc;
                 const activeElement = doc.activeElement;
@@ -291,44 +283,9 @@ describe('3-runtime-html/focus.spec.ts', function () {
                 assert.equal(activeElement, focusable, '@setup -> document.activeElement === focusable');
                 assert.equal(component.hasFocus, true, 'It should not have affected component.hasFocus');
                 await assertionFn(ctx, testHost, component, focusable);
-                await dispose();
             });
         });
     });
-    function createFixture(template, $class, autoStart = true, ...registrations) {
-        const ctx = TestContext.create();
-        const { container, observerLocator } = ctx;
-        container.register(...registrations, Focus);
-        const testHost = ctx.doc.body.appendChild(ctx.doc.createElement('div'));
-        const appHost = testHost.appendChild(ctx.createElement('app'));
-        const au = new Aurelia(container);
-        const App = CustomElement.define({ name: 'app', template }, $class);
-        const component = new App();
-        let startPromise;
-        if (autoStart) {
-            au.app({ host: appHost, component });
-            startPromise = au.start();
-        }
-        return {
-            startPromise,
-            ctx,
-            container,
-            testHost,
-            appHost,
-            au,
-            component,
-            observerLocator,
-            start: async () => {
-                au.app({ host: appHost, component });
-                await au.start();
-            },
-            dispose: async () => {
-                await au.stop();
-                testHost.remove();
-                au.dispose();
-            }
-        };
-    }
     function defineCustomElement(ctx, name, template, props = null, mode = 'open') {
         class CustomEl extends ctx.HTMLElement {
             constructor() {

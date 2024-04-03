@@ -65,7 +65,7 @@ describe('router/runner.spec.ts', function () {
                 (step) => createTimedPromise(`four (${step.previousValue})`, 100),
             ],
             result: 'four (three (two (one (undefined))))',
-            cancelled: 'two (one (undefined))',
+            cancelled: 'two (one (undefined))', // Now rejecting, not supporting partials
             results: ['one (undefined)', 'two (undefined)', 'three (undefined)', 'four (undefined)'],
         },
         {
@@ -76,7 +76,7 @@ describe('router/runner.spec.ts', function () {
                 (step) => `one (${step.previousValue})`,
             ],
             result: 'one (two (three (four (undefined))))',
-            cancelled: 'four (undefined)',
+            cancelled: 'four (undefined)', // Now rejecting, not supporting partials
             results: ['four (undefined)', 'three (undefined)', 'two (undefined)', 'one (undefined)'],
         },
     ];

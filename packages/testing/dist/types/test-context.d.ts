@@ -34,6 +34,10 @@ export declare class TestContext {
         new (type: string, eventInitDict?: MouseEventInit | undefined): MouseEvent;
         prototype: MouseEvent;
     };
+    get SubmitEvent(): {
+        new (type: string, eventInitDict?: SubmitEventInit | undefined): SubmitEvent;
+        prototype: SubmitEvent;
+    };
     get Node(): {
         new (): Node;
         prototype: Node;

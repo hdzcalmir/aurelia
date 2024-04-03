@@ -848,7 +848,7 @@ function templateController(nameOrDef) {
 }
 class CustomAttributeDefinition {
     // a simple marker to distinguish between Custom Element definition & Custom attribute definition
-    get type() { return dtAttribute; }
+    get kind() { return dtAttribute; }
     constructor(Type, name, aliases, key, defaultBindingMode, isTemplateController, bindables, noMultiBindings, watches, dependencies, containerStrategy) {
         this.Type = Type;
         this.name = name;
@@ -922,11 +922,34 @@ const getAttributeDefinition = (Type) => {
     }
     return def;
 };
+const findClosestControllerByName = (node, attrNameOrType) => {
+    let key = '';
+    let attrName = '';
+    if (isString(attrNameOrType)) {
+        key = getAttributeKeyFrom(attrNameOrType);
+        attrName = attrNameOrType;
+    }
+    else {
+        const definition = getAttributeDefinition(attrNameOrType);
+        key = definition.key;
+        attrName = definition.name;
+    }
+    let cur = node;
+    while (cur !== null) {
+        const controller = getRef(cur, key);
+        if (controller?.is(attrName)) {
+            return controller;
+        }
+        cur = getEffectiveParentNode(cur);
+    }
+    return null;
+};
 const CustomAttribute = objectFreeze({
     name: caBaseName,
     keyFrom: getAttributeKeyFrom,
     isType: isAttributeType,
     for: findAttributeControllerFor,
+    closest: findClosestControllerByName,
     define: defineAttribute,
     getDefinition: getAttributeDefinition,
     annotate(Type, prop, value) {
@@ -3718,6 +3741,19 @@ function splitClassString(classString) {
 }
 mixinNoopSubscribable(ClassAttributeAccessor);
 
+/**
+ * There are 2 implementations of CSS registry: css module registry and shadow dom registry.
+ *
+ * CSS registry alters the way class attribute works instead.
+ *
+ * Shadow dom registry regisiters some interfaces with the custom element container to handle shadow dom styles.
+ * abtraction summary:
+ * CSS registry ---(register)---> IShadowDOMStyleFactory ---(createStyles)---> IShadowDOMStyles ---(applyTo)---> ShadowRoot
+ */
+/**
+ * create a registry to register CSS module handling for a custom element.
+ * The resulting registry can be registered as a dependency of a custom element.
+ */
 function cssModules(...modules) {
     return new CSSModulesProcessorRegistry(modules);
 }
@@ -3752,6 +3788,10 @@ class CSSModulesProcessorRegistry {
         container.register(ClassCustomAttribute, instanceRegistration(ICssModulesMapping, classLookup));
     }
 }
+/**
+ * Creates a registry to register shadow dom styles handling for a custom element.
+ * The resulting registry can be registered as a dependency of a custom element.
+ */
 function shadowCSS(...css) {
     return new ShadowDOMRegistry(css);
 }
@@ -3780,6 +3820,9 @@ class AdoptedStyleSheetsStylesFactory {
         return new AdoptedStyleSheetsStyles(this.p, localStyles, this.cache, sharedStyles);
     }
 }
+// not really needed nowadays since all browsers support adopted style sheet
+// though keep it here for a bit longer before removing
+/* istanbul ignore next */
 class StyleElementStylesFactory {
     constructor() {
         this.p = kernel.resolve(IPlatform);
@@ -3802,7 +3845,6 @@ class AdoptedStyleSheetsStyles {
                 sheet = styleSheetCache.get(x);
                 if (sheet === void 0) {
                     sheet = new p.CSSStyleSheet();
-                    // eslint-disable-next-line
                     sheet.replaceSync(x);
                     styleSheetCache.set(x, sheet);
                 }
@@ -4257,28 +4299,32 @@ class Controller {
             }
             this._vm.hydrating(this);
         }
-        const compiledDef = this._compiledDef = this._rendering.compile(this.definition, this.container, hydrationInst);
-        const { shadowOptions, hasSlots, containerless } = compiledDef;
+        const definition = this.definition;
+        const compiledDef = this._compiledDef = this._rendering.compile(definition, this.container, hydrationInst);
+        const shadowOptions = compiledDef.shadowOptions;
+        const hasSlots = compiledDef.hasSlots;
+        const containerless = compiledDef.containerless;
+        let host = this.host;
         let location = this.location;
-        if ((this.hostController = findElementControllerFor(this.host, optionalCeFind)) !== null) {
-            this.host = this.container.root.get(IPlatform).document.createElement(this.definition.name);
+        if ((this.hostController = findElementControllerFor(host, optionalCeFind)) !== null) {
+            host = this.host = this.container.root.get(IPlatform).document.createElement(definition.name);
             if (containerless && location == null) {
-                location = this.location = convertToRenderLocation(this.host);
+                location = this.location = convertToRenderLocation(host);
             }
         }
-        setRef(this.host, elementBaseName, this);
-        setRef(this.host, this.definition.key, this);
+        setRef(host, elementBaseName, this);
+        setRef(host, definition.key, this);
         if (shadowOptions !== null || hasSlots) {
             if (location != null) {
                 throw createMappedError(501 /* ErrorNames.controller_no_shadow_on_containerless */);
             }
-            setRef(this.shadowRoot = this.host.attachShadow(shadowOptions ?? defaultShadowOptions), elementBaseName, this);
-            setRef(this.shadowRoot, this.definition.key, this);
+            setRef(this.shadowRoot = host.attachShadow(shadowOptions ?? defaultShadowOptions), elementBaseName, this);
+            setRef(this.shadowRoot, definition.key, this);
             this.mountTarget = targetShadowRoot;
         }
         else if (location != null) {
             setRef(location, elementBaseName, this);
-            setRef(location, this.definition.key, this);
+            setRef(location, definition.key, this);
             this.mountTarget = targetLocation;
         }
         else {
@@ -4889,11 +4935,9 @@ class Controller {
     }
     is(name) {
         switch (this.vmKind) {
-            case vmkCa: {
-                return getAttributeDefinition(this._vm.constructor).name === name;
-            }
+            case vmkCa:
             case vmkCe: {
-                return getElementDefinition(this._vm.constructor).name === name;
+                return this.definition.name === name;
             }
             case vmkSynth:
                 return this.viewFactory.name === name;
@@ -5100,13 +5144,13 @@ const defaultShadowOptions = {
 /** @internal */ const vmkCe = 'customElement';
 /** @internal */ const vmkCa = 'customAttribute';
 const vmkSynth = 'synthetic';
-/** @internal */ const none = 0;
-/** @internal */ const activating = 1;
-/** @internal */ const activated = 2;
-/** @internal */ const deactivating = 4;
-/** @internal */ const deactivated = 8;
-/** @internal */ const released = 16;
-/** @internal */ const disposed = 32;
+/** @internal */ const none = 0b00_00_00;
+/** @internal */ const activating = 0b00_00_01;
+/** @internal */ const activated = 0b00_00_10;
+/** @internal */ const deactivating = 0b00_01_00;
+/** @internal */ const deactivated = 0b00_10_00;
+/** @internal */ const released = 0b01_00_00;
+/** @internal */ const disposed = 0b10_00_00;
 const State = /*@__PURE__*/ objectFreeze({
     none,
     activating,
@@ -5244,8 +5288,8 @@ function getEffectiveParentNode(node) {
     }
     if (node.parentNode === null && node.nodeType === 11 /* NodeType.DocumentFragment */) {
         // Could be a shadow root; see if there's a controller and if so, get the original host via the projector
-        const controller = findElementControllerFor(node);
-        if (controller === void 0) {
+        const controller = findElementControllerFor(node, { optional: true });
+        if (controller == null) {
             // Not a shadow root (or at least, not one created by Aurelia)
             // Nothing more we can try, just return null
             return null;
@@ -5485,7 +5529,7 @@ function markContainerless(target) {
 }
 const definitionLookup = new WeakMap();
 class CustomElementDefinition {
-    get type() { return dtElement; }
+    get kind() { return dtElement; }
     constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, shadowOptions, 
     /**
      * Indicates whether the custom element has <slot/> in its template
@@ -5774,15 +5818,25 @@ class AppRoot {
     get controller() {
         return this._controller;
     }
-    constructor(config, container, rootProvider, enhance) {
+    constructor(config, container, rootProvider, enhance = false) {
         this.config = config;
         this.container = container;
         /** @internal */
         this._hydratePromise = void 0;
+        this._useOwnAppTasks = enhance;
         const host = this.host = config.host;
         rootProvider.prepare(this);
         registerHostNode(container, this.platform = this._createPlatform(container, host), host);
         this._hydratePromise = kernel.onResolve(this._runAppTasks('creating'), () => {
+            if (!config.allowActionlessForm !== false) {
+                host.addEventListener('submit', (e) => {
+                    const target = e.target;
+                    const hasAction = (target.getAttribute('action')?.length ?? 0) > 0;
+                    if (target.tagName === 'FORM' && !hasAction) {
+                        e.preventDefault();
+                    }
+                }, false);
+            }
             const childCtn = enhance ? container : container.createChild();
             const component = config.component;
             let instance;
@@ -5828,7 +5882,11 @@ class AppRoot {
     }
     /** @internal */
     _runAppTasks(slot) {
-        return kernel.onResolveAll(...this.container.getAll(IAppTask).reduce((results, task) => {
+        const container = this.container;
+        const appTasks = this._useOwnAppTasks && !container.has(IAppTask, false)
+            ? []
+            : container.getAll(IAppTask);
+        return kernel.onResolveAll(...appTasks.reduce((results, task) => {
             if (task.slot === slot) {
                 results.push(task.run());
             }
@@ -6557,7 +6615,7 @@ exports.OneTimeBindingCommand = class OneTimeBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === dtElement) {
+            if (value === '' && info.def.kind === dtElement) {
                 value = kernel.camelCase(target);
             }
             target = info.bindable.name;
@@ -6583,7 +6641,7 @@ exports.ToViewBindingCommand = class ToViewBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === dtElement) {
+            if (value === '' && info.def.kind === dtElement) {
                 value = kernel.camelCase(target);
             }
             target = info.bindable.name;
@@ -6609,7 +6667,7 @@ exports.FromViewBindingCommand = class FromViewBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === dtElement) {
+            if (value === '' && info.def.kind === dtElement) {
                 value = kernel.camelCase(target);
             }
             target = info.bindable.name;
@@ -6635,7 +6693,7 @@ exports.TwoWayBindingCommand = class TwoWayBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === dtElement) {
+            if (value === '' && info.def.kind === dtElement) {
                 value = kernel.camelCase(target);
             }
             target = info.bindable.name;
@@ -6665,7 +6723,7 @@ exports.DefaultBindingCommand = class DefaultBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === dtElement) {
+            if (value === '' && info.def.kind === dtElement) {
                 value = kernel.camelCase(target);
             }
             defaultMode$1 = info.def.defaultBindingMode;
@@ -10893,11 +10951,13 @@ class TemplateCompiler {
                     // my-attr="${}"
                     if (bindingCommand === null) {
                         expr = exprParser.parse(realAttrValue, etInterpolation);
-                        attrBindableInstructions = [
-                            expr === null
-                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.name)
-                                : new InterpolationInstruction(expr, primaryBindable.name)
-                        ];
+                        attrBindableInstructions = expr === null
+                            ? realAttrValue === ''
+                                // when the attribute usage is <div attr>
+                                // it's considered as no bindings
+                                ? []
+                                : [new SetPropertyInstruction(realAttrValue, primaryBindable.name)]
+                            : [new InterpolationInstruction(expr, primaryBindable.name)];
                     }
                     else {
                         // custom attribute with binding command:
@@ -11286,11 +11346,13 @@ class TemplateCompiler {
                     // my-attr="${}"
                     if (bindingCommand === null) {
                         expr = exprParser.parse(realAttrValue, etInterpolation);
-                        attrBindableInstructions = [
-                            expr === null
-                                ? new SetPropertyInstruction(realAttrValue, primaryBindable.name)
-                                : new InterpolationInstruction(expr, primaryBindable.name)
-                        ];
+                        attrBindableInstructions = expr === null
+                            ? realAttrValue === ''
+                                // when the attribute usage is <div attr>
+                                // it's considered as no bindings
+                                ? []
+                                : [new SetPropertyInstruction(realAttrValue, primaryBindable.name)]
+                            : [new InterpolationInstruction(expr, primaryBindable.name)];
                     }
                     else {
                         // custom attribute with binding command:
@@ -12715,6 +12777,7 @@ exports.IRendering = IRendering;
 exports.ISVGAnalyzer = ISVGAnalyzer;
 exports.ISanitizer = ISanitizer;
 exports.IShadowDOMGlobalStyles = IShadowDOMGlobalStyles;
+exports.IShadowDOMStyleFactory = IShadowDOMStyleFactory;
 exports.IShadowDOMStyles = IShadowDOMStyles;
 exports.ISyntaxInterpreter = ISyntaxInterpreter;
 exports.ITemplateCompiler = ITemplateCompiler;

@@ -2451,19 +2451,25 @@ const createMappedError = (code, ...details) => new Error(`AUR${String(code).pad
     ;
 
 const errorsMap = {
-    [2000 /* ErrorNames.instantiation_error */]: `There was an error durating the instantiation of "{{0}}".`
+    [2000 /* ErrorNames.router_started */]: `Router.start() called while the it has already been started.`,
+    [2001 /* ErrorNames.router_not_started */]: 'Router.stop() has been called while it has not been started',
+    [2002 /* ErrorNames.router_remove_endpoint_failure */]: "Router failed to remove endpoint: {{0}}",
+    [2003 /* ErrorNames.router_check_activate_string_error */]: `Parameter instructions to checkActivate can not be a string ('{{0}}')!`,
+    [2004 /* ErrorNames.router_failed_appending_routing_instructions */]: 'Router failed to append routing instructions to coordinator',
+    [2005 /* ErrorNames.router_failed_finding_viewport_when_updating_viewer_path */]: 'Router failed to find viewport when updating viewer paths.',
+    [2006 /* ErrorNames.instantiation_error */]: `There was an error durating the instantiation of "{{0}}".`
         + ` "{{0}}" did not match any configured route or registered component name`
         + ` - did you forget to add the component "{{0}}" to the dependencies or to register it as a global dependency?\n`
         + `{{1:innerError}}`,
-    [2001 /* ErrorNames.element_name_not_found */]: `Cannot find an element with the name "{{0}}", did you register it via "dependencies" option or <import> with convention?.\n`,
-    [2002 /* ErrorNames.router_error_3 */]: `-- placeholder --`,
-    [2003 /* ErrorNames.router_error_4 */]: `-- placeholder --`,
-    [2004 /* ErrorNames.router_error_5 */]: `-- placeholder --`,
-    [2005 /* ErrorNames.router_error_6 */]: `-- placeholder --`,
-    [2006 /* ErrorNames.router_error_7 */]: `-- placeholder --`,
-    [2007 /* ErrorNames.router_error_8 */]: `-- placeholder --`,
-    [2008 /* ErrorNames.router_error_9 */]: `-- placeholder --`,
-    [2009 /* ErrorNames.router_error_10 */]: `-- placeholder --`,
+    [2007 /* ErrorNames.element_name_not_found */]: `Cannot find an element with the name "{{0}}", did you register it via "dependencies" option or <import> with convention?.\n`,
+    [2008 /* ErrorNames.router_error_3 */]: `-- placeholder --`,
+    [2009 /* ErrorNames.router_error_4 */]: `-- placeholder --`,
+    [2010 /* ErrorNames.router_error_5 */]: `-- placeholder --`,
+    [2011 /* ErrorNames.router_error_6 */]: `-- placeholder --`,
+    [2012 /* ErrorNames.router_error_7 */]: `-- placeholder --`,
+    [2013 /* ErrorNames.router_error_8 */]: `-- placeholder --`,
+    [2014 /* ErrorNames.router_error_9 */]: `-- placeholder --`,
+    [2015 /* ErrorNames.router_error_10 */]: `-- placeholder --`,
 };
 const getMessageByCode = (name, ...details) => {
     let cooked = errorsMap[name];
@@ -2508,13 +2514,10 @@ const getMessageByCode = (name, ...details) => {
                                 value = value[paths[j]];
                             }
                         }
-                        else {
-                            value = String(value);
-                        }
                     }
                 }
             }
-            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
+            cooked = cooked.slice(0, matches.index) + String(value) + cooked.slice(regex.lastIndex);
             matches = regex.exec(cooked);
         }
     }
@@ -2678,7 +2681,7 @@ class ViewportContent extends EndpointContent {
                 {
                     const componentName = this.instruction.component.name;
                     // eslint-disable-next-line no-console
-                    console.warn(createMappedError(2000 /* ErrorNames.instantiation_error */, componentName, e));
+                    console.warn(createMappedError(2006 /* ErrorNames.instantiation_error */, componentName, e));
                 }
                 // If there's a fallback component...
                 if ((fallback ?? '') !== '') {
@@ -2703,13 +2706,13 @@ class ViewportContent extends EndpointContent {
                             throw ee;
                         }
                         const componentName = this.instruction.component.name;
-                        throw createMappedError(2000 /* ErrorNames.instantiation_error */, componentName, ee);
+                        throw createMappedError(2006 /* ErrorNames.instantiation_error */, componentName, ee);
                         // throw new Error(`'${this.instruction.component.name as string}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                     }
                 }
                 else {
                     const componentName = this.instruction.component.name;
-                    throw createMappedError(2000 /* ErrorNames.instantiation_error */, componentName);
+                    throw createMappedError(2006 /* ErrorNames.instantiation_error */, componentName);
                     // throw new Error(`'${this.instruction.component.name as string}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                 }
             }
@@ -3541,8 +3544,8 @@ class Viewport extends Endpoint$1 {
                 }
                 coordinator.addEndpointState(this, 'guardedUnload');
             },
-            () => coordinator.waitForSyncState('guardedUnload', this),
-            () => actingParentViewport !== null ? coordinator.waitForEndpointState(actingParentViewport, 'guardedLoad') : void 0,
+            () => coordinator.waitForSyncState('guardedUnload', this), // Awaits all `canUnload` hooks
+            () => actingParentViewport !== null ? coordinator.waitForEndpointState(actingParentViewport, 'guardedLoad') : void 0, // Awaits parent `canLoad`
             (step) => {
                 if (this.isActiveNavigation(coordinator)) {
                     return this.canLoad(coordinator, step);
@@ -5480,7 +5483,6 @@ class EndpointMatcher {
  * (Scope self-hoisting will not be available for early-on alpha.)
  */
 class RoutingScope {
-    // public path: string | null = null;
     constructor(router, 
     /**
      * Whether the routing scope has a scope and can own other scopes
@@ -5494,11 +5496,7 @@ class RoutingScope {
      * The endpoint content the routing scope is connected to
      */
     endpointContent) {
-        this.router = router;
-        this.hasScope = hasScope;
-        this.owningScope = owningScope;
-        this.endpointContent = endpointContent;
-        this.id = -1;
+        this.id = ++RoutingScope.lastId;
         /**
          * The parent of the routing scope (parent/child hierarchy)
          */
@@ -5507,9 +5505,10 @@ class RoutingScope {
          * The children of the routing scope (parent/child hierarchy)
          */
         this.children = [];
-        this.id = ++RoutingScope.lastId;
+        this.router = router;
+        this.hasScope = hasScope;
         this.owningScope = owningScope ?? this;
-        // console.log('Created RoutingScope', this.id, this);
+        this.endpointContent = endpointContent;
     }
     static for(origin, instruction) {
         if (origin == null) {
@@ -5677,7 +5676,7 @@ class RoutingScope {
                 && !foundRoute.foundInstructions) {
                 // ...call unknownRoute hook if we didn't...
                 // TODO: Add unknownRoute hook here and put possible result in instructions
-                this.unknownRoute(nonRouteInstructions);
+                throw this.createUnknownRouteError(nonRouteInstructions);
             }
             // ...and use any already found and the newly found routing instructions.
             instructions = [...instructions.filter(instruction => instruction.route instanceof Route), ...foundRoute.instructions];
@@ -5909,26 +5908,27 @@ class RoutingScope {
      *
      * @param instructions - The failing instructions
      */
-    unknownRoute(instructions) {
+    createUnknownRouteError(instructions) {
         const options = this.router.configuration.options;
         const route = RoutingInstruction.stringify(this.router, instructions);
         // TODO: Add missing/unknown route handling
+        //       shouldn't this check all routes, instead of only the first one?
         if (instructions[0].route != null) {
             if (!options.useConfiguredRoutes) {
-                throw new Error("Can not match '" + route + "' since the router is configured to not use configured routes.");
+                return new Error("Can not match '" + route + "' since the router is configured to not use configured routes.");
             }
             else {
-                throw new Error("No matching configured route found for '" + route + "'.");
+                return new Error("No matching configured route found for '" + route + "'.");
             }
         }
         else if (options.useConfiguredRoutes && options.useDirectRouting) {
-            throw new Error("No matching configured route or component found for '" + route + "'.");
+            return new Error("No matching configured route or component found for '" + route + "'.");
         }
         else if (options.useConfiguredRoutes) {
-            throw new Error("No matching configured route found for '" + route + "'.");
+            return new Error("No matching configured route found for '" + route + "'.");
         }
         else {
-            throw new Error("No matching route/component found for '" + route + "'.");
+            return new Error("No matching route/component found for '" + route + "'.");
         }
     }
     /**
@@ -6293,6 +6293,7 @@ class RoutingScope {
         return route;
     }
 }
+/** @internal */
 RoutingScope.lastId = 0;
 
 /**
@@ -7365,36 +7366,7 @@ class Title {
  */
 const IRouter = /*@__PURE__*/ kernel.DI.createInterface('IRouter', x => x.singleton(Router));
 class Router {
-    static get inject() { return [kernel.IContainer, kernel.IEventAggregator, exports.Navigator, BrowserViewerStore, BrowserViewerStore, IRouterConfiguration]; }
-    constructor(
-    /**
-     * @internal
-     */
-    container, ea, 
-    /**
-     * The navigator that manages navigation queue and history
-     *
-     * @internal
-     */
-    navigator, 
-    /**
-     * The viewer (browser) that displays url, navigation buttons
-     */
-    viewer, 
-    /**
-     * The store (browser) that stores navigations
-     */
-    store, 
-    /**
-     * The router configuration
-     */
-    configuration) {
-        this.container = container;
-        this.ea = ea;
-        this.navigator = navigator;
-        this.viewer = viewer;
-        this.store = store;
-        this.configuration = configuration;
+    constructor() {
         /**
          * The root viewport scope.
          */
@@ -7430,6 +7402,29 @@ class Router {
         /** @internal */
         this._logger = kernel.resolve(kernel.ILogger);
         /**
+         * @internal
+         */
+        this.container = kernel.resolve(kernel.IContainer);
+        this.ea = kernel.resolve(kernel.IEventAggregator);
+        /**
+         * The navigator that manages navigation queue and history
+         *
+         * @internal
+         */
+        this.navigator = kernel.resolve(exports.Navigator);
+        /**
+         * The viewer (browser) that displays url, navigation buttons
+         */
+        this.viewer = kernel.resolve(BrowserViewerStore);
+        /**
+         * The store (browser) that stores navigations
+         */
+        this.store = kernel.resolve(BrowserViewerStore);
+        /**
+         * The router configuration
+         */
+        this.configuration = kernel.resolve(IRouterConfiguration);
+        /**
          * Handle the navigator's navigate event.
          *
          * @param event - The event to handle
@@ -7437,7 +7432,7 @@ class Router {
          * @internal
          */
         this.handleNavigatorNavigateEvent = (event) => {
-            void this._handleNavigatorNavigateEvent(event);
+            void this._doHandleNavigatorNavigateEvent(event);
         };
         /**
          * Handle the navigator's state change event.
@@ -7568,7 +7563,7 @@ class Router {
      */
     start() {
         if (this.isActive) {
-            throw new Error('Router has already been started');
+            throw createMappedError(2000 /* ErrorNames.router_started */);
         }
         this.isActive = true;
         const root = this.container.get(runtimeHtml.IAppRoot);
@@ -7590,8 +7585,8 @@ class Router {
             viewer: this.viewer,
             statefulHistoryLength: this.configuration.options.statefulHistoryLength,
         });
-        this.navigatorStateChangeEventSubscription = this.ea.subscribe(NavigatorStateChangeEvent.eventName, this.handleNavigatorStateChangeEvent);
-        this.navigatorNavigateEventSubscription = this.ea.subscribe(NavigatorNavigateEvent.eventName, this.handleNavigatorNavigateEvent);
+        this._navigatorStateChangeEventSubscription = this.ea.subscribe(NavigatorStateChangeEvent.eventName, this.handleNavigatorStateChangeEvent);
+        this._navigatorNavigateEventSubscription = this.ea.subscribe(NavigatorNavigateEvent.eventName, this.handleNavigatorNavigateEvent);
         this.viewer.start({ useUrlFragmentHash: this.configuration.options.useUrlFragmentHash });
         this.ea.publish(RouterStartEvent.eventName, RouterStartEvent.create());
     }
@@ -7600,13 +7595,13 @@ class Router {
      */
     stop() {
         if (!this.isActive) {
-            throw new Error('Router has not been started');
+            throw createMappedError(2001 /* ErrorNames.router_not_started */);
         }
         this.ea.publish(RouterStopEvent.eventName, RouterStopEvent.create());
         this.navigator.stop();
         this.viewer.stop();
-        this.navigatorStateChangeEventSubscription.dispose();
-        this.navigatorNavigateEventSubscription.dispose();
+        this._navigatorStateChangeEventSubscription.dispose();
+        this._navigatorNavigateEventSubscription.dispose();
     }
     /**
      * Perform the initial load, using the current url.
@@ -7624,7 +7619,7 @@ class Router {
         return result;
     }
     /** @internal */
-    async _handleNavigatorNavigateEvent(event) {
+    async _doHandleNavigatorNavigateEvent(event) {
         if (this._isProcessingNav) {
             // We prevent multiple navigation at the same time, but we store the last navigation requested.
             if (this._pendingNavigation) {
@@ -7647,7 +7642,7 @@ class Router {
         if (this._pendingNavigation) {
             const pending = this._pendingNavigation;
             this._pendingNavigation = undefined;
-            await this._handleNavigatorNavigateEvent(pending);
+            await this._doHandleNavigatorNavigateEvent(pending);
         }
     }
     /**
@@ -7720,7 +7715,7 @@ class Router {
      */
     disconnectEndpoint(step, endpoint, connectedCE) {
         if (!endpoint.connectedScope.parent.removeEndpoint(step, endpoint, connectedCE)) {
-            throw new Error("Router failed to remove endpoint: " + endpoint.name);
+            throw createMappedError(2002 /* ErrorNames.router_remove_endpoint_failure */, endpoint.name);
         }
     }
     /**
@@ -7763,8 +7758,8 @@ class Router {
      *
      * @param loadInstructions - The instructions to load
      * @param options - The load options to apply when loading the instructions
-     * @param keepString - Whether the load instructions should remain as a
-     * string (if it's a string)
+     * @param keepString - Whether the load instructions should remain as a string (if it's a string)
+     *
      */
     applyLoadOptions(loadInstructions, options, keepString = true) {
         options = options ?? {};
@@ -7835,7 +7830,7 @@ class Router {
     checkActive(instructions, options) {
         // TODO: Look into allowing strings/routes as well
         if (typeof instructions === 'string') {
-            throw new Error(`Parameter instructions to checkActivate can not be a string ('${instructions}')!`);
+            throw createMappedError(2003 /* ErrorNames.router_check_activate_string_error */, instructions);
         }
         options = options ?? {};
         // Make sure we have proper routing instructions
@@ -7910,7 +7905,7 @@ class Router {
                 this.appendedInstructions.push(...instructions);
             }
             else {
-                throw Error('Router failed to append routing instructions to coordinator');
+                throw createMappedError(2004 /* ErrorNames.router_failed_appending_routing_instructions */);
             }
         }
         coordinator?.enqueueAppendedInstructions(instructions);
@@ -7933,7 +7928,7 @@ class Router {
         while (matchedInstructions.length > 0) {
             // Guard against endless loop
             if (guard-- === 0) {
-                throw new Error('Router failed to find viewport when updating viewer paths.');
+                throw createMappedError(2005 /* ErrorNames.router_failed_finding_viewport_when_updating_viewer_path */);
             }
             matchedInstructions = matchedInstructions.map(instruction => {
                 const { matchedInstructions } = instruction.endpoint.instance.scope.matchEndpoints(instruction.nextScopeInstructions ?? [], [], true);
@@ -8007,6 +8002,8 @@ class Router {
      * @param options - The options containing the fragment
      *
      * TODO: Review query extraction; different pos for path and fragment
+     *
+     * @internal
      */
     extractFragment(instructions, options) {
         // If instructions is a string and contains a fragment, extract it
@@ -8024,6 +8021,8 @@ class Router {
      * @param options - The options containing query and/or parameters
      *
      * TODO: Review query extraction; different pos for path and fragment
+     *
+     * @internal
      */
     extractQuery(instructions, options) {
         // If instructions is a string and contains a query string, extract it

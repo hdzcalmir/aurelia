@@ -40,6 +40,8 @@ export type PartialCustomAttributeDefinition = PartialResourceDefinition<{
 export type CustomAttributeType<T extends Constructable = Constructable> = ResourceType<T, ICustomAttributeViewModel, PartialCustomAttributeDefinition>;
 export type CustomAttributeKind = IResourceKind & {
     for<C extends ICustomAttributeViewModel = ICustomAttributeViewModel>(node: Node, name: string): ICustomAttributeController<C> | undefined;
+    closest<A extends object | Constructable, TType extends A extends Constructable<infer T extends object> ? Constructable<T> : Constructable<A> = A extends Constructable<infer T extends object> ? Constructable<T> : Constructable<A>>(node: Node, Type: CustomAttributeType<TType>): ICustomAttributeController<InstanceType<TType>> | null;
+    closest<A extends object | Constructable, TType extends A extends Constructable<infer T extends object> ? Constructable<T> : Constructable<A> = A extends Constructable<infer T extends object> ? Constructable<T> : Constructable<A>>(node: Node, name: string): ICustomAttributeController<InstanceType<TType>> | null;
     isType<T>(value: T): value is (T extends Constructable ? CustomAttributeType<T> : never);
     define<T extends Constructable>(name: string, Type: T): CustomAttributeType<T>;
     define<T extends Constructable>(def: PartialCustomAttributeDefinition, Type: T): CustomAttributeType<T>;
@@ -77,7 +79,7 @@ export declare class CustomAttributeDefinition<T extends Constructable = Constru
     readonly watches: IWatchDefinition[];
     readonly dependencies: Key[];
     readonly containerStrategy: 'reuse' | 'new';
-    get type(): 'attribute';
+    get kind(): 'attribute';
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialCustomAttributeDefinition, Type: CustomAttributeType<T>): CustomAttributeDefinition<T>;
     register(container: IContainer, aliasName?: string | undefined): void;

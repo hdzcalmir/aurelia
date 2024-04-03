@@ -44,7 +44,7 @@ function eventPropertiesShallowClone(e) {
         instance: e
     };
 }
-describe('3-runtime-html/event-manager.spec.ts', function () {
+describe('compat-v1/event-delegator.spec.ts', function () {
     describe('ListenerTracker', function () {
         function createFixture(eventName, listener, capture, bubbles) {
             const ctx = TestContext.create();
@@ -410,4 +410,4 @@ describe('3-runtime-html/event-manager.spec.ts', function () {
         });
     });
 });
-//# sourceMappingURL=event-manager.spec.js.map
+//# sourceMappingURL=event-delegator.spec.js.map

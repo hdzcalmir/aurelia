@@ -1,33 +1,99 @@
 import { Constructable, IContainer, ILogger } from '@aurelia/kernel';
 import { IObserverLocator } from '@aurelia/runtime';
-import { Aurelia, IPlatform, type ICustomElementViewModel } from '@aurelia/runtime-html';
+import { Aurelia, IPlatform, type ICustomElementViewModel, IAppRootConfig } from '@aurelia/runtime-html';
 import { TestContext } from './test-context';
-export declare const onFixtureCreated: <T>(callback: (fixture: IFixture<T>) => unknown) => import("@aurelia/kernel").IDisposable;
-export type ObjectType<T> = T extends Constructable<infer U> ? U : T;
-export declare function createFixture<T extends object>(template: string | Node, $class?: T, registrations?: unknown[], autoStart?: boolean, ctx?: TestContext): IFixture<ICustomElementViewModel & ObjectType<T>>;
+export declare const onFixtureCreated: <T extends object>(callback: (fixture: IFixture<T>) => unknown) => import("@aurelia/kernel").IDisposable;
+export type ObjectType<T> = T extends Constructable<infer U extends object> ? U : T;
+export declare function createFixture<T extends object>(template: string | Node, $class?: T | Constructable<T>, registrations?: unknown[], autoStart?: boolean, ctx?: TestContext, appConfig?: IFixtureConfig): IFixture<ICustomElementViewModel & ObjectType<T>>;
 export declare namespace createFixture {
-    var html: <T = Record<PropertyKey, any>>(html: string | TemplateStringsArray, ...values: TemplateValues<T>[]) => CreateBuilder<T, "component" | "deps">;
+    var html: <T = Record<PropertyKey, any>>(html: string | TemplateStringsArray, ...values: TemplateValues<T>[]) => CreateBuilder<T, "component" | "deps" | "config">;
     var component: <T, K extends ObjectType<T>>(component: T) => {
         html: {
-            (html: string): CreateBuilder<K, "deps">;
-            (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "deps">;
+            (html: string): CreateBuilder<K, "deps" | "config">;
+            (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "deps" | "config">;
         };
         deps: (...args: unknown[]) => {
             html: {
-                (html: string): CreateBuilder<K, never>;
-                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
+                (html: string): CreateBuilder<K, "config">;
+                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "config">;
+            };
+            config: (config: IFixtureConfig) => {
+                html: {
+                    (html: string): CreateBuilder<K, never>;
+                    (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
+                };
+            };
+        };
+        config: (config: IFixtureConfig) => {
+            html: {
+                (html: string): CreateBuilder<K, "deps">;
+                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "deps">;
+            };
+            deps: (...args: unknown[]) => {
+                html: {
+                    (html: string): CreateBuilder<K, never>;
+                    (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
+                };
             };
         };
     };
     var deps: <T = Record<PropertyKey, any>>(...deps: unknown[]) => {
         html: {
-            (html: string): CreateBuilder<T, "component">;
-            (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component">;
+            (html: string): CreateBuilder<T, "component" | "config">;
+            (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component" | "config">;
         };
         component: <K>(comp: K | Constructable<K>) => {
             html: {
-                (html: string): CreateBuilder<K, never>;
-                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
+                (html: string): CreateBuilder<K, "config">;
+                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "config">;
+            };
+            config: (config: IFixtureConfig) => {
+                html: {
+                    (html: string): CreateBuilder<K, never>;
+                    (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
+                };
+            };
+        };
+        config: (config: IFixtureConfig) => {
+            html: {
+                (html: string): CreateBuilder<T, "component">;
+                (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component">;
+            };
+            component: <K_1>(comp: K_1 | Constructable<K_1>) => {
+                html: {
+                    (html: string): CreateBuilder<K_1, never>;
+                    (html: TemplateStringsArray, ...values: TemplateValues<K_1>[]): CreateBuilder<K_1, never>;
+                };
+            };
+        };
+    };
+    var config: <T = Record<PropertyKey, any>>(config: IFixtureConfig) => {
+        html: {
+            (html: string): CreateBuilder<T, "component" | "deps">;
+            (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component" | "deps">;
+        };
+        component: <K>(comp: K | Constructable<K>) => {
+            html: {
+                (html: string): CreateBuilder<K, "deps">;
+                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "deps">;
+            };
+            deps: (...args: unknown[]) => {
+                html: {
+                    (html: string): CreateBuilder<K, never>;
+                    (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
+                };
+            };
+        };
+        deps: (...args: unknown[]) => {
+            html: {
+                (html: string): CreateBuilder<T, "component">;
+                (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component">;
+            };
+            component: <K_1>(comp: K_1 | Constructable<K_1>) => {
+                html: {
+                    (html: string): CreateBuilder<K_1, never>;
+                    (html: TemplateStringsArray, ...values: TemplateValues<K_1>[]): CreateBuilder<K_1, never>;
+                };
             };
         };
     };
@@ -182,8 +248,9 @@ export interface IFixtureBuilderBase<T, E = {}> {
     html<M>(html: TemplateStringsArray, ...values: TemplateValues<M>[]): this & E;
     component(comp: T): this & E;
     deps(...args: unknown[]): this & E;
+    config(config: IFixtureConfig): this & E;
 }
-type BuilderMethodNames = 'html' | 'component' | 'deps';
+type BuilderMethodNames = 'html' | 'component' | 'deps' | 'config';
 type CreateBuilder<T, Availables extends BuilderMethodNames> = {
     [key in Availables]: key extends 'html' ? {
         (html: string): CreateBuilder<T, Exclude<Availables, 'html'>>;
@@ -194,5 +261,6 @@ type CreateBuilder<T, Availables extends BuilderMethodNames> = {
 });
 type TaggedTemplateLambda<M> = (vm: M) => unknown;
 type TemplateValues<M> = string | number | TaggedTemplateLambda<M>;
+export type IFixtureConfig = Pick<IAppRootConfig, 'allowActionlessForm'>;
 export {};
 //# sourceMappingURL=startup.d.ts.map

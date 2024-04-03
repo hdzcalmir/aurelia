@@ -1,13 +1,5 @@
-/**
- *
- * NOTE: This file is still WIP and will go through at least one more iteration of refactoring, commenting and clean up!
- * In its current state, it is NOT a good source for learning about the inner workings and design of the router.
- *
- */
-import { IContainer, Key, EventAggregator } from '@aurelia/kernel';
 import { ICustomElementViewModel, ICustomElementController } from '@aurelia/runtime-html';
 import { LoadInstruction } from './interfaces';
-import { Navigator } from './navigator';
 import { Viewport } from './endpoints/viewport';
 import { RoutingInstruction } from './instructions/routing-instruction';
 import { RoutingScope } from './routing-scope';
@@ -51,7 +43,7 @@ import { IRouterConfiguration } from './index';
  * and title) and Store (browser History).
  */
 /**
- * The load options.
+ * Options for loading new routing instructions.
  */
 export interface ILoadOptions {
     /**
@@ -106,20 +98,6 @@ export declare const IRouter: import("@aurelia/kernel").InterfaceSymbol<IRouter>
 export interface IRouter extends Router {
 }
 export declare class Router implements IRouter {
-    private readonly ea;
-    /**
-     * The viewer (browser) that displays url, navigation buttons
-     */
-    viewer: BrowserViewerStore;
-    /**
-     * The store (browser) that stores navigations
-     */
-    store: BrowserViewerStore;
-    /**
-     * The router configuration
-     */
-    configuration: IRouterConfiguration;
-    static get inject(): Key[];
     static readonly closestEndpointKey: string;
     /**
      * The root viewport scope.
@@ -151,31 +129,19 @@ export declare class Router implements IRouter {
      * Whether the first load has happened
      */
     private loadedFirst;
-    private navigatorStateChangeEventSubscription;
-    private navigatorNavigateEventSubscription;
-    constructor(
-    /**
-     * @internal
-     */
-    container: IContainer, ea: EventAggregator, 
-    /**
-     * The navigator that manages navigation queue and history
-     *
-     * @internal
-     */
-    navigator: Navigator, 
+    private readonly ea;
     /**
      * The viewer (browser) that displays url, navigation buttons
      */
-    viewer: BrowserViewerStore, 
+    viewer: BrowserViewerStore;
     /**
      * The store (browser) that stores navigations
      */
-    store: BrowserViewerStore, 
+    store: BrowserViewerStore;
     /**
      * The router configuration
      */
-    configuration: IRouterConfiguration);
+    configuration: IRouterConfiguration;
     /**
      * Whether the router is currently navigating.
      */
@@ -232,10 +198,10 @@ export declare class Router implements IRouter {
      *
      * @param loadInstructions - The instructions to load
      * @param options - The load options to apply when loading the instructions
-     * @param keepString - Whether the load instructions should remain as a
-     * string (if it's a string)
+     * @param keepString - Whether the load instructions should remain as a string (if it's a string)
+     *
      */
-    applyLoadOptions(loadInstructions: LoadInstruction | LoadInstruction[], options?: ILoadOptions, keepString?: boolean): {
+    applyLoadOptions(loadInstructions: LoadInstruction | LoadInstruction[], options: ILoadOptions, keepString?: boolean): {
         instructions: string | RoutingInstruction[];
         scope: RoutingScope | null;
     };
@@ -294,24 +260,6 @@ export declare class Router implements IRouter {
      * @param navigation - The navigation to update
      */
     private updateNavigation;
-    /**
-     * Extract and setup the fragment from instructions or options.
-     *
-     * @param instructions - The instructions to extract the fragment from
-     * @param options - The options containing the fragment
-     *
-     * TODO: Review query extraction; different pos for path and fragment
-     */
-    private extractFragment;
-    /**
-     * Extract and setup the query and parameters from instructions or options.
-     *
-     * @param instructions - The instructions to extract the query from
-     * @param options - The options containing query and/or parameters
-     *
-     * TODO: Review query extraction; different pos for path and fragment
-     */
-    private extractQuery;
 }
 export declare class RouterEvent {
     readonly eventName: string;

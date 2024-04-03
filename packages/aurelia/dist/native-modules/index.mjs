@@ -24,9 +24,6 @@ class Aurelia extends t {
     constructor(e = createContainer()) {
         super(e);
     }
-    static start(e) {
-        return (new Aurelia).start(e);
-    }
     static app(e) {
         return (new Aurelia).app(e);
     }

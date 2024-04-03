@@ -17,7 +17,7 @@ describe('3-runtime-html/binding-command.class.spec.ts', function () {
         '__1',
         '✔',
         '⛓',
-        '🤷‍♂️',
+        '🤷‍♂️', // double characters
         '🤯',
         ...[
             '@',

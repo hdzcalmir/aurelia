@@ -512,7 +512,7 @@ let StateBindingCommand = class StateBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === 'element') {
+            if (value === '' && info.def.kind === 'element') {
                 value = camelCase(target);
             }
             target = info.bindable.name;

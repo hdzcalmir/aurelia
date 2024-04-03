@@ -36,9 +36,9 @@ const $ = uncurryThis(Object.prototype.hasOwnProperty);
 
 const w = uncurryThis(Object.prototype.propertyIsEnumerable);
 
-const k = s(Uint8Array.prototype);
+const E = s(Uint8Array.prototype);
 
-const E = uncurryThis(o(k, Symbol.toStringTag).get);
+const k = uncurryThis(o(E, Symbol.toStringTag).get);
 
 const S = uncurryThis(Object.prototype.toString);
 
@@ -149,43 +149,43 @@ function isBoxedPrimitive(e) {
 }
 
 function isTypedArray(e) {
-    return E(e) !== void 0;
+    return k(e) !== void 0;
 }
 
 function isUint8Array(e) {
-    return E(e) === "Uint8Array";
+    return k(e) === "Uint8Array";
 }
 
 function isUint8ClampedArray(e) {
-    return E(e) === "Uint8ClampedArray";
+    return k(e) === "Uint8ClampedArray";
 }
 
 function isUint16Array(e) {
-    return E(e) === "Uint16Array";
+    return k(e) === "Uint16Array";
 }
 
 function isUint32Array(e) {
-    return E(e) === "Uint32Array";
+    return k(e) === "Uint32Array";
 }
 
 function isInt8Array(e) {
-    return E(e) === "Int8Array";
+    return k(e) === "Int8Array";
 }
 
 function isInt16Array(e) {
-    return E(e) === "Int16Array";
+    return k(e) === "Int16Array";
 }
 
 function isInt32Array(e) {
-    return E(e) === "Int32Array";
+    return k(e) === "Int32Array";
 }
 
 function isFloat32Array(e) {
-    return E(e) === "Float32Array";
+    return k(e) === "Float32Array";
 }
 
 function isFloat64Array(e) {
-    return E(e) === "Float64Array";
+    return k(e) === "Float64Array";
 }
 
 function isArgumentsObject(e) {
@@ -894,6 +894,9 @@ class TestContext {
     }
     get MouseEvent() {
         return this.platform.globalThis.MouseEvent;
+    }
+    get SubmitEvent() {
+        return this.platform.globalThis.SubmitEvent;
     }
     get Node() {
         return this.platform.globalThis.Node;
@@ -4311,9 +4314,9 @@ const hJsx = function(e, n, ...i) {
 
 hJsx.Fragment = "template";
 
-const ke = new t.EventAggregator;
+const Ee = new t.EventAggregator;
 
-const onFixtureCreated = e => ke.subscribe("fixture:created", (t => {
+const onFixtureCreated = e => Ee.subscribe("fixture:created", (t => {
     try {
         e(t);
     } catch (e) {
@@ -4322,49 +4325,50 @@ const onFixtureCreated = e => ke.subscribe("fixture:created", (t => {
     }
 }));
 
-function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
-    const {container: l} = o;
-    l.register(...r);
-    const {platform: u, observerLocator: c} = o;
-    const f = o.doc.body.appendChild(o.createElement("div"));
-    const d = f.appendChild(o.createElement("app"));
-    const p = new i.Aurelia(l);
-    const m = typeof n === "function" ? n : n == null ? class {} : function $Ctor() {
+function createFixture(e, n, r = [], s = true, o = TestContext.create(), l = {}) {
+    const {container: u} = o;
+    u.register(...r);
+    const {platform: c, observerLocator: f} = o;
+    const d = o.doc.body.appendChild(o.createElement("div"));
+    const p = d.appendChild(o.createElement("app"));
+    const m = new i.Aurelia(u);
+    const g = typeof n === "function" ? n : n == null ? class {} : function $Ctor() {
         Object.setPrototypeOf(n, $Ctor.prototype);
         return n;
     };
-    const g = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
-    if (m !== n && n != null) {
-        g.forEach((e => {
-            a.Metadata.define(e, i.CustomElement.getAnnotation(n, e), m);
+    const b = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
+    if (g !== n && n != null) {
+        b.forEach((e => {
+            a.Metadata.define(e, i.CustomElement.getAnnotation(n, e), g);
         }));
     }
-    const b = i.CustomElement.isType(m) ? i.CustomElement.getDefinition(m) : {};
-    const v = i.CustomElement.define({
-        ...b,
-        name: b.name ?? "app",
+    const v = i.CustomElement.isType(g) ? i.CustomElement.getDefinition(g) : {};
+    const y = i.CustomElement.define({
+        ...v,
+        name: v.name ?? "app",
         template: e
-    }, m);
-    if (l.has(v, true)) {
+    }, g);
+    if (u.has(y, true)) {
         throw new Error("Container of the context contains instance of the application root component. " + "Consider using a different class, or context as it will likely cause surprises in tests.");
     }
-    const y = l.get(v);
-    let x = void 0;
+    const x = u.get(y);
+    let $ = void 0;
     function startFixtureApp() {
         if (s) {
             try {
-                p.app({
-                    host: d,
-                    component: y
+                m.app({
+                    host: p,
+                    component: x,
+                    ...l
                 });
-                k.startPromise = x = p.start();
+                k.startPromise = $ = m.start();
             } catch (e) {
                 try {
                     const dispose = () => {
-                        f.remove();
-                        p.dispose();
+                        d.remove();
+                        m.dispose();
                     };
-                    const e = p.stop();
+                    const e = m.stop();
                     if (e instanceof Promise) void e.then(dispose); else dispose();
                 } catch {
                     console.warn("(!) corrupted fixture state, should isolate the failing test and restart the run" + "as it is likely that this failing fixture creation will pollute others.");
@@ -4373,9 +4377,9 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             }
         }
     }
-    let $ = 0;
+    let w = 0;
     const getBy = e => {
-        const t = d.querySelectorAll(e);
+        const t = p.querySelectorAll(e);
         if (t.length > 1) {
             throw new Error(`There is more than 1 element with selector "${e}": ${t.length} found`);
         }
@@ -4385,17 +4389,17 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         return t[0];
     };
     function getAllBy(e) {
-        return Array.from(d.querySelectorAll(e));
+        return Array.from(p.querySelectorAll(e));
     }
     function queryBy(e) {
-        const t = d.querySelectorAll(e);
+        const t = p.querySelectorAll(e);
         if (t.length > 1) {
             throw new Error(`There is more than 1 element with selector "${e}": ${t.length} found`);
         }
         return t.length === 0 ? null : t[0];
     }
     function strictQueryBy(e, t = "") {
-        const n = d.querySelectorAll(e);
+        const n = p.querySelectorAll(e);
         if (n.length > 1) {
             throw new Error(`There is more than 1 element with selector "${e}": ${n.length} found${t ? ` ${t}` : ""}`);
         }
@@ -4408,7 +4412,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         let i;
         let r;
         if (arguments.length === 1) {
-            ve.strictEqual(getVisibleText(d, false), e);
+            ve.strictEqual(getVisibleText(p, false), e);
             return;
         }
         if (t == null) {
@@ -4417,7 +4421,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         if (typeof t !== "string") {
             i = e;
             r = t;
-            ve.strictEqual(getVisibleText(d, r?.compact), i);
+            ve.strictEqual(getVisibleText(p, r?.compact), i);
             return;
         }
         const a = strictQueryBy(e, `to compare text content against "${t}`);
@@ -4432,7 +4436,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             }
             ve.includes(getVisibleText(n), t);
         } else {
-            ve.includes(getVisibleText(d), e);
+            ve.includes(getVisibleText(p), e);
         }
     }
     function getInnerHtml(e, t) {
@@ -4446,7 +4450,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         let i;
         let r;
         if (arguments.length === 1) {
-            ve.strictEqual(getInnerHtml(d), e);
+            ve.strictEqual(getInnerHtml(p), e);
             return;
         }
         if (t == null) {
@@ -4455,7 +4459,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         if (typeof t !== "string") {
             i = e;
             r = t;
-            ve.strictEqual(getInnerHtml(d, r?.compact), i);
+            ve.strictEqual(getInnerHtml(p, r?.compact), i);
             return;
         }
         const a = strictQueryBy(e, `to compare innerHTML against "${t}`);
@@ -4490,7 +4494,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         const r = strictQueryBy(e, `to fire event "${t}"`);
         return $triggerEvent(r, o, t, n, i);
     }
-    Ee.forEach((e => {
+    ke.forEach((e => {
         Object.defineProperty(trigger, e, {
             configurable: true,
             writable: true,
@@ -4517,14 +4521,14 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             throw new Error(`No <input>/<textarea> element found for selector "${e}" to emulate input for "${t}"`);
         }
         n.value = t;
-        n.dispatchEvent(new u.window.Event("input"));
+        n.dispatchEvent(new c.window.Event("input"));
     }
     const scrollBy = (e, t) => {
         const n = strictQueryBy(e, `to scroll by "${JSON.stringify(t)}"`);
         n.scrollBy(typeof t === "number" ? {
             top: t
         } : t);
-        n.dispatchEvent(new u.window.Event("scroll"));
+        n.dispatchEvent(new c.window.Event("scroll"));
     };
     const flush = e => {
         o.platform.domWriteQueue.flush(e);
@@ -4532,15 +4536,15 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
     const stop = (e = false) => {
         let t = void 0;
         try {
-            t = p.stop(e);
+            t = m.stop(e);
         } finally {
             if (e) {
-                if (++$ > 1) {
+                if (++w > 1) {
                     console.log("(!) Fixture has already been torn down");
                 } else {
                     const $dispose = () => {
-                        f.remove();
-                        p.dispose();
+                        d.remove();
+                        m.dispose();
                     };
                     if (t instanceof Promise) {
                         t = t.then($dispose);
@@ -4552,19 +4556,19 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
         }
         return t;
     };
-    let w;
+    let E;
     const k = new class Results {
         constructor() {
-            this.startPromise = x;
+            this.startPromise = $;
             this.ctx = o;
-            this.container = l;
-            this.platform = u;
-            this.testHost = f;
-            this.appHost = d;
-            this.au = p;
-            this.component = y;
-            this.observerLocator = c;
-            this.logger = l.get(t.ILogger);
+            this.container = u;
+            this.platform = c;
+            this.testHost = d;
+            this.appHost = p;
+            this.au = m;
+            this.component = x;
+            this.observerLocator = f;
+            this.logger = u.get(t.ILogger);
             this.hJsx = hJsx.bind(o.doc);
             this.stop = stop;
             this.getBy = getBy;
@@ -4578,37 +4582,37 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create()) {
             this.assertAttrNS = assertAttrNS;
             this.assertStyles = assertStyles;
             this.assertValue = assertValue;
-            this.createEvent = (e, t) => new u.CustomEvent(e, t);
+            this.createEvent = (e, t) => new c.CustomEvent(e, t);
             this.trigger = trigger;
             this.type = type;
             this.scrollBy = scrollBy;
             this.flush = flush;
         }
         start() {
-            return (w ??= p.app({
-                host: d,
-                component: y
+            return (E ??= m.app({
+                host: p,
+                component: x
             })).start();
         }
         tearDown() {
             return stop(true);
         }
         get torn() {
-            return $ > 0;
+            return w > 0;
         }
         get started() {
-            if (x instanceof Promise) {
-                return Promise.resolve(x).then((() => this));
+            if ($ instanceof Promise) {
+                return Promise.resolve($).then((() => this));
             }
             return Promise.resolve(this);
         }
         printHtml() {
-            const e = d.innerHTML;
+            const e = p.innerHTML;
             console.log(e);
             return e;
         }
     };
-    ke.publish("fixture:created", k);
+    Ee.publish("fixture:created", k);
     startFixtureApp();
     return k;
 }
@@ -4625,6 +4629,10 @@ class FixtureBuilder {
     }
     deps(...e) {
         this.C = e;
+        return this;
+    }
+    config(e) {
+        this.cf = e;
         return this;
     }
     build() {
@@ -4649,12 +4657,14 @@ createFixture.component = e => (new FixtureBuilder).component(e);
 
 createFixture.deps = (...e) => (new FixtureBuilder).deps(...e);
 
-const Ee = [ "click", "mousedown", "mouseup", "mousemove", "dbclick", "contextmenu" ];
+createFixture.config = e => (new FixtureBuilder).config(e);
+
+const ke = [ "click", "mousedown", "mouseup", "mousemove", "dbclick", "contextmenu" ];
 
 const Se = [ "keydown", "keyup", "keypress" ];
 
 function $triggerEvent(e, t, n, i, r) {
-    if (Ee.includes(n)) {
+    if (ke.includes(n)) {
         return triggerMouseEvent(e, t, n, i, r);
     }
     if (Se.includes(n)) {
@@ -4695,7 +4705,7 @@ function triggerMouseEvent(e, t, n, i, r) {
     e.dispatchEvent(a);
 }
 
-Ee.forEach((e => {
+ke.forEach((e => {
     Object.defineProperty($triggerEvent, e, {
         configurable: true,
         writable: true,

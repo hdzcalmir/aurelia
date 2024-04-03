@@ -127,6 +127,7 @@ let I18nService = class I18nService {
             const translation = this.tr(key, options);
             if (this.options.skipTranslationOnMissingKey && translation === key) {
                 // TODO change this once the logging infra is there.
+                // eslint-disable-next-line no-console
                 console.warn(`Couldn't find translation for key: ${key}`);
             }
             else {
@@ -151,12 +152,14 @@ let I18nService = class I18nService {
         this._signaler.dispatchSignal(Signals.I18N_SIGNAL);
     }
     createNumberFormat(options, locales) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         return Intl.NumberFormat(locales || this.getLocale(), options);
     }
     nf(input, options, locales) {
         return this.createNumberFormat(options, locales).format(input);
     }
     createDateTimeFormat(options, locales) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         return Intl.DateTimeFormat(locales || this.getLocale(), options);
     }
     df(input, options, locales) {
@@ -181,6 +184,7 @@ let I18nService = class I18nService {
         return Number(result);
     }
     createRelativeTimeFormat(options, locales) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         return new Intl.RelativeTimeFormat(locales || this.getLocale(), options);
     }
     rt(input, options, locales) {
