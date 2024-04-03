@@ -35,6 +35,7 @@ import type {
   IContainer,
   IDisposable,
   IServiceLocator,
+  ResourceDefinition,
   Writable,
 } from '@aurelia/kernel';
 import type {
@@ -403,29 +404,33 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
       this._vm!.hydrating(this as ICustomElementController);
     }
 
-    const compiledDef = this._compiledDef = this._rendering.compile(this.definition as CustomElementDefinition, this.container, hydrationInst);
-    const { shadowOptions, hasSlots, containerless } = compiledDef;
+    const definition = this.definition!;
+    const compiledDef = this._compiledDef = this._rendering.compile(definition as CustomElementDefinition, this.container, hydrationInst);
+    const shadowOptions = compiledDef.shadowOptions;
+    const hasSlots = compiledDef.hasSlots;
+    const containerless = compiledDef.containerless;
+    let host = this.host!;
     let location: IRenderLocation | null = this.location;
 
-    if ((this.hostController = findElementControllerFor(this.host!, optionalCeFind) as Controller | null) !== null) {
-      this.host = this.container.root.get(IPlatform).document.createElement(this.definition!.name);
+    if ((this.hostController = findElementControllerFor(host, optionalCeFind) as Controller | null) !== null) {
+      host = this.host = this.container.root.get(IPlatform).document.createElement(definition.name);
       if (containerless && location == null) {
-        location = this.location = convertToRenderLocation(this.host);
+        location = this.location = convertToRenderLocation(host);
       }
     }
 
-    setRef(this.host!, elementBaseName, this as IHydratedController);
-    setRef(this.host!, this.definition!.key, this as IHydratedController);
+    setRef(host, elementBaseName, this as IHydratedController);
+    setRef(host, definition.key, this as IHydratedController);
     if (shadowOptions !== null || hasSlots) {
       if (location != null) {
         throw createMappedError(ErrorNames.controller_no_shadow_on_containerless);
       }
-      setRef(this.shadowRoot = this.host!.attachShadow(shadowOptions ?? defaultShadowOptions), elementBaseName, this as IHydratedController);
-      setRef(this.shadowRoot!, this.definition!.key, this as IHydratedController);
+      setRef(this.shadowRoot = host.attachShadow(shadowOptions ?? defaultShadowOptions), elementBaseName, this as IHydratedController);
+      setRef(this.shadowRoot, definition.key, this as IHydratedController);
       this.mountTarget = targetShadowRoot;
     } else if (location != null) {
       setRef(location, elementBaseName, this as IHydratedController);
-      setRef(location, this.definition!.key, this as IHydratedController);
+      setRef(location, definition.key, this as IHydratedController);
       this.mountTarget = targetLocation;
     } else {
       this.mountTarget = targetHost;
@@ -1106,11 +1111,9 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
 
   public is(name: string): boolean {
     switch (this.vmKind) {
-      case vmkCa: {
-        return getAttributeDefinition(this._vm!.constructor).name === name;
-      }
+      case vmkCa:
       case vmkCe: {
-        return getElementDefinition(this._vm!.constructor).name === name;
+        return (this.definition as ResourceDefinition).name === name;
       }
       case vmkSynth:
         return this.viewFactory!.name === name;

@@ -53,7 +53,7 @@ export type PartialCustomElementDefinition = PartialResourceDefinition<{
   readonly processContent?: ProcessContentHook | null;
 }>;
 
-export type CustomElementType<C extends Constructable = Constructable> = ResourceType<C, ICustomElementViewModel & (C extends Constructable<infer P> ? P : {}), PartialCustomElementDefinition>;
+export type CustomElementType<C extends Constructable = Constructable> = ResourceType<C, ICustomElementViewModel & (C extends Constructable<infer P> ? P : object), PartialCustomElementDefinition>;
 export type CustomElementKind = IResourceKind & {
   /**
    * Returns the closest controller that is associated with either this node (if it is a custom element) or the first
@@ -192,7 +192,7 @@ function markContainerless(target: Constructable) {
 const definitionLookup = new WeakMap<PartialCustomElementDefinition, CustomElementDefinition>();
 
 export class CustomElementDefinition<C extends Constructable = Constructable> implements ResourceDefinition<C, ICustomElementViewModel, PartialCustomElementDefinition> {
-  public get type(): 'element' { return dtElement; }
+  public get kind(): 'element' { return dtElement; }
   private constructor(
     public readonly Type: CustomElementType<C>,
     public readonly name: string,
