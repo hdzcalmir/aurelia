@@ -88,7 +88,9 @@ function au(options = {}) {
                 contents: code,
             }, {
                 hmrModule: 'import.meta',
-                transformHtmlImportSpecifier: s => s.replace(/\.html$/, '.$au.ts')
+                transformHtmlImportSpecifier: s => s.replace(/\.html$/, '.$au.ts'),
+                stringModuleWrap: (id) => `${id}?inline`,
+                ...additionalOptions
             });
             return result.code;
         }
