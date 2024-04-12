@@ -500,9 +500,8 @@ exports.DispatchAttributePattern = class DispatchAttributePattern {
 exports.DispatchAttributePattern = __decorate([
     runtimeHtml.attributePattern({ pattern: 'PART.dispatch', symbols: '.' })
 ], exports.DispatchAttributePattern);
-exports.StateBindingCommand = class StateBindingCommand {
-    get type() { return 'None'; }
-    get name() { return 'state'; }
+class StateBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, parser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -523,21 +522,22 @@ exports.StateBindingCommand = class StateBindingCommand {
         }
         return new StateBindingInstruction(value, target);
     }
+}
+StateBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'state',
 };
-exports.StateBindingCommand = __decorate([
-    runtimeHtml.bindingCommand('state')
-], exports.StateBindingCommand);
-exports.DispatchBindingCommand = class DispatchBindingCommand {
-    get type() { return 'IgnoreAttr'; }
-    get name() { return 'dispatch'; }
+class DispatchBindingCommand {
+    get ignoreAttr() { return true; }
     build(info) {
         const attr = info.attr;
         return new DispatchBindingInstruction(attr.target, attr.rawValue);
     }
+}
+DispatchBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'dispatch',
 };
-exports.DispatchBindingCommand = __decorate([
-    runtimeHtml.bindingCommand('dispatch')
-], exports.DispatchBindingCommand);
 class StateBindingInstruction {
     constructor(from, to) {
         this.from = from;
@@ -584,10 +584,10 @@ function ensureExpression(parser, srcOrExpr, expressionType) {
 
 const standardRegistrations = [
     exports.StateAttributePattern,
-    exports.StateBindingCommand,
+    StateBindingCommand,
     exports.StateBindingInstructionRenderer,
     exports.DispatchAttributePattern,
-    exports.DispatchBindingCommand,
+    DispatchBindingCommand,
     exports.DispatchBindingInstructionRenderer,
     exports.StateBindingBehavior,
     Store,
@@ -765,11 +765,13 @@ CreatedLifecycleHooks = __decorate([
 ], CreatedLifecycleHooks);
 
 exports.ActionHandler = ActionHandler;
+exports.DispatchBindingCommand = DispatchBindingCommand;
 exports.DispatchBindingInstruction = DispatchBindingInstruction;
 exports.IActionHandler = IActionHandler;
 exports.IState = IState;
 exports.IStore = IStore;
 exports.StateBinding = StateBinding;
+exports.StateBindingCommand = StateBindingCommand;
 exports.StateBindingInstruction = StateBindingInstruction;
 exports.StateDefaultConfiguration = StateDefaultConfiguration;
 exports.StateDispatchBinding = StateDispatchBinding;

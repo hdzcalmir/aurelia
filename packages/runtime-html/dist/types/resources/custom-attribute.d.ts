@@ -5,10 +5,12 @@ import type { BindableDefinition, PartialBindableDefinition } from '../bindable'
 import type { ICustomAttributeViewModel, ICustomAttributeController } from '../templating/controller';
 import type { IWatchDefinition } from '../watch';
 import { type IResourceKind } from './resources-shared';
-export type PartialCustomAttributeDefinition = PartialResourceDefinition<{
+export type PartialCustomAttributeDefinition<TBindables extends string = string> = PartialResourceDefinition<{
     readonly defaultBindingMode?: BindingMode;
     readonly isTemplateController?: boolean;
-    readonly bindables?: Record<string, PartialBindableDefinition> | readonly string[];
+    readonly bindables?: (Record<TBindables, true | Omit<PartialBindableDefinition, 'name'>>) | (TBindables | PartialBindableDefinition & {
+        name: TBindables;
+    })[];
     /**
      * A config that can be used by template compliler to change attr value parsing mode
      * `true` to always parse as a single value, mostly will be string in URL scenario
@@ -37,6 +39,9 @@ export type PartialCustomAttributeDefinition = PartialResourceDefinition<{
      */
     readonly containerStrategy?: 'reuse' | 'new';
 }>;
+export type CustomAttributeStaticAuDefinition<TBindables extends string = string> = PartialCustomAttributeDefinition<TBindables> & {
+    type: 'custom-attribute';
+};
 export type CustomAttributeType<T extends Constructable = Constructable> = ResourceType<T, ICustomAttributeViewModel, PartialCustomAttributeDefinition>;
 export type CustomAttributeKind = IResourceKind & {
     for<C extends ICustomAttributeViewModel = ICustomAttributeViewModel>(node: Node, name: string): ICustomAttributeController<C> | undefined;

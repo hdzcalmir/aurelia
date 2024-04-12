@@ -8,7 +8,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { DefaultLogger, kebabCase, LoggerConfiguration, LogLevel } from '@aurelia/kernel';
-import { BindingMode, Aurelia, bindable, customElement, CustomElement, HydrateElementInstruction } from '@aurelia/runtime-html';
+import { BindingMode, Aurelia, bindable, customElement, CustomElement, CustomElementDefinition, HydrateElementInstruction, } from '@aurelia/runtime-html';
 import { assert, generateCartesianProduct, TestContext, } from '@aurelia/testing';
 export function createAttribute(name, value) {
     const attr = document.createAttribute(name);
@@ -194,7 +194,17 @@ function $$createFixture() {
     const ctx = TestContext.create();
     const container = ctx.container;
     container.register(LoggerConfiguration.create({ sinks: [EventLog] }));
-    const sut = ctx.templateCompiler;
+    const sut = {
+        get resolveResources() {
+            return ctx.templateCompiler.resolveResources;
+        },
+        set resolveResources(v) {
+            ctx.templateCompiler.resolveResources = v;
+        },
+        compile(def, container, instruction) {
+            return ctx.templateCompiler.compile(CustomElementDefinition.create(def), container, instruction);
+        }
+    };
     return { ctx, container, sut };
 }
 class LocalTemplateTestData {

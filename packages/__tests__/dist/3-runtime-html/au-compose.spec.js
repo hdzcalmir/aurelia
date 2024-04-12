@@ -13,11 +13,10 @@ import { assert, createFixture, createSpy, } from '@aurelia/testing';
 import { isNode } from '../util.js';
 describe('3-runtime-html/au-compose.spec.ts', function () {
     describe('view', function () {
-        it('works with literal string', async function () {
-            const { appHost, startPromise, tearDown } = createFixture('<au-compose template="<div>hello world</div>">');
-            await startPromise;
+        it('works with literal string', function () {
+            const { appHost, stop } = createFixture('<au-compose template="<div>hello world</div>">');
             assert.strictEqual(appHost.textContent, 'hello world');
-            await tearDown();
+            void stop(true);
             assert.strictEqual(appHost.textContent, '');
         });
         // this test is a different with the rest, where the view is being recreated

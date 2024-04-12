@@ -409,7 +409,7 @@ const cacheCallbackResult = t => (e, n, r) => {
     return o;
 };
 
-const C = {
+const $ = {
     instance: instanceRegistration,
     singleton: singletonRegistration,
     transient: transientRegistation,
@@ -419,7 +419,7 @@ const C = {
     defer: deferRegistration
 };
 
-const b = /*@__PURE__*/ (() => {
+const C = /*@__PURE__*/ (() => {
     const t = new WeakMap;
     return r({
         define: (e, n) => {
@@ -431,7 +431,7 @@ const b = /*@__PURE__*/ (() => {
     });
 })();
 
-const $ = {
+const b = {
     none(t) {
         throw createMappedError(2, t);
     },
@@ -448,7 +448,7 @@ class ContainerConfiguration {
         if (t === void 0 || t === ContainerConfiguration.DEFAULT) {
             return ContainerConfiguration.DEFAULT;
         }
-        return new ContainerConfiguration(t.inheritParentResources ?? false, t.defaultResolver ?? $.singleton);
+        return new ContainerConfiguration(t.inheritParentResources ?? false, t.defaultResolver ?? b.singleton);
     }
 }
 
@@ -510,12 +510,32 @@ class Container {
             }
             if (isRegistry(r)) {
                 r.register(this);
-            } else if (b.has(r)) {
-                b.get(r).call(r, this);
+            } else if (C.has(r)) {
+                C.get(r).call(r, this);
             } else if ((a = t.getOwn(y, r)) != null) {
                 a.register(this);
             } else if (isClass(r)) {
-                singletonRegistration(r, r).register(this);
+                if (isString(r.$au?.type)) {
+                    const t = r.$au;
+                    const e = (r.aliases ?? T).concat(t.aliases ?? T);
+                    let n = `${y}:${t.type}:${t.name}`;
+                    if (!this.has(n, false)) {
+                        aliasToRegistration(r, n).register(this);
+                        if (!this.has(r, false)) {
+                            singletonRegistration(r, r).register(this);
+                        }
+                        i = 0;
+                        l = e.length;
+                        for (;i < l; ++i) {
+                            n = `${y}:${t.type}:${e[i]}`;
+                            if (!this.has(n, false)) {
+                                aliasToRegistration(r, n).register(this);
+                            }
+                        }
+                    }
+                } else {
+                    singletonRegistration(r, r).register(this);
+                }
             } else {
                 s = Object.keys(r);
                 i = 0;
@@ -527,8 +547,8 @@ class Container {
                     }
                     if (isRegistry(o)) {
                         o.register(this);
-                    } else if (b.has(o)) {
-                        b.get(o).call(o, this);
+                    } else if (C.has(o)) {
+                        C.get(o).call(o, this);
                     } else {
                         this.register(o);
                     }
@@ -550,7 +570,7 @@ class Container {
                 }
                 this.res[t] = e;
             }
-        } else if (s instanceof Resolver && s.C === 4) {
+        } else if (s instanceof Resolver && s.$ === 4) {
             s._state.push(e);
         } else {
             r.set(t, new Resolver(t, 4, [ s, e ]));
@@ -591,7 +611,7 @@ class Container {
                     if (r.t == null) {
                         o = isRegisterInRequester(t) ? this : r;
                         if (e) {
-                            return this.$(t, o);
+                            return this.C(t, o);
                         }
                         return null;
                     }
@@ -623,7 +643,7 @@ class Container {
                 if (r == null) {
                     if (n.t == null) {
                         s = isRegisterInRequester(t) ? this : n;
-                        r = this.$(t, s);
+                        r = this.C(t, s);
                         return r.resolve(n, this);
                     }
                     n = n.t;
@@ -727,17 +747,18 @@ class Container {
             this.registerResolver(t, e[t]);
         }
     }
-    find(t) {
-        let e = this;
-        let n = e.res[t];
-        if (n == null) {
-            e = e.root;
-            n = e.res[t];
+    find(t, e) {
+        const n = isString(e) ? `${y}:${t}:${e}` : t;
+        let r = this;
+        let s = r.res[n];
+        if (s == null) {
+            r = r.root;
+            s = r.res[n];
         }
-        if (n == null) {
+        if (s == null) {
             return null;
         }
-        return n.getFactory?.(e)?.Type ?? null;
+        return s.getFactory?.(r)?.Type ?? null;
     }
     dispose() {
         if (this.u.size > 0) {
@@ -749,7 +770,7 @@ class Container {
             this.res = {};
         }
     }
-    $(t, e) {
+    C(t, e) {
         if (!isFunction(t)) {
             throw createMappedError(9, t);
         }
@@ -827,7 +848,7 @@ function resolve(...t) {
 }
 
 const buildAllResponse = (t, e, n) => {
-    if (t instanceof Resolver && t.C === 4) {
+    if (t instanceof Resolver && t.$ === 4) {
         const r = t._state;
         const s = r.length;
         const o = Array(s);
@@ -1089,14 +1110,14 @@ class Resolver {
         this.O = false;
         this.A = null;
         this.k = t;
-        this.C = e;
+        this.$ = e;
         this._state = n;
     }
     register(t, e) {
         return t.registerResolver(e || this.k, this);
     }
     resolve(t, e) {
-        switch (this.C) {
+        switch (this.$) {
           case 0:
             return this._state;
 
@@ -1107,7 +1128,7 @@ class Resolver {
                 }
                 this.O = true;
                 this._state = (this.A = t.getFactory(this._state)).construct(e);
-                this.C = 0;
+                this.$ = 0;
                 this.O = false;
                 return this._state;
             }
@@ -1131,11 +1152,11 @@ class Resolver {
             return e.get(this._state);
 
           default:
-            throw createMappedError(5, this.C);
+            throw createMappedError(5, this.$);
         }
     }
     getFactory(t) {
-        switch (this.C) {
+        switch (this.$) {
           case 1:
           case 2:
             return t.getFactory(this._state);
@@ -1847,5 +1868,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ConsoleSink, ContainerConfiguration, k as DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, $ as DefaultResolver, EventAggregator, E as IContainer, ft as IEventAggregator, et as ILogConfig, rt as ILogEventFactory, st as ILogger, at as IModuleLoader, j as IPlatform, I as IServiceLocator, nt as ISink, InstanceProvider, LogConfig, tt as LogLevel, ut as LoggerConfiguration, ModuleItem, m as Protocol, b as Registrable, C as Registration, aliasedResourcesRegistry, all, z as allResources, bound, a as camelCase, createResolver, T as emptyArray, _ as emptyObject, W as factory, firstDefined, lt as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, v as getPrototypeChain, getResourceKeyFor, K as ignore, inject, c as isArrayIndex, d as isNativeFunction, h as kebabCase, P as lazy, mergeArrays, Q as newInstanceForScope, U as newInstanceOf, noop, onResolve, onResolveAll, S as optional, B as optionalResource, G as own, f as pascalCase, resolve, N as resource, y as resourceBaseName, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, k as DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, b as DefaultResolver, EventAggregator, E as IContainer, ft as IEventAggregator, et as ILogConfig, rt as ILogEventFactory, st as ILogger, at as IModuleLoader, j as IPlatform, I as IServiceLocator, nt as ISink, InstanceProvider, LogConfig, tt as LogLevel, ut as LoggerConfiguration, ModuleItem, m as Protocol, C as Registrable, $ as Registration, aliasedResourcesRegistry, all, z as allResources, bound, a as camelCase, createResolver, T as emptyArray, _ as emptyObject, W as factory, firstDefined, lt as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, v as getPrototypeChain, getResourceKeyFor, K as ignore, inject, c as isArrayIndex, d as isNativeFunction, h as kebabCase, P as lazy, mergeArrays, Q as newInstanceForScope, U as newInstanceOf, noop, onResolve, onResolveAll, S as optional, B as optionalResource, G as own, f as pascalCase, resolve, N as resource, y as resourceBaseName, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.mjs.map

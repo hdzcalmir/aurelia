@@ -1,11 +1,11 @@
-import { type CustomElementDefinition } from '../resources/custom-element';
+import { PartialCustomElementDefinition } from '../resources/custom-element';
 import { type ISubscribable } from '@aurelia/runtime';
 export type PartialSlottedDefinition = {
     callback?: PropertyKey;
     slotName?: string;
     query?: string;
 };
-export type IAuSlotProjections = Record<string, CustomElementDefinition>;
+export type IAuSlotProjections = Record<string, PartialCustomElementDefinition>;
 export interface IAuSlotsInfo {
     /**
      * Name of the slots to which content are projected.

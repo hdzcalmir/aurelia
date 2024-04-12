@@ -181,11 +181,13 @@ const Bindable = objectFreeze({
             bindables[name] = BindableDefinition.create(name, type);
         }
         function addDescription(name, def) {
-            bindables[name] = def instanceof BindableDefinition ? def : BindableDefinition.create(name, type, def);
+            bindables[name] = def instanceof BindableDefinition
+                ? def
+                : BindableDefinition.create(name, type, def === true ? {} : def);
         }
         function addList(maybeList) {
             if (isArray(maybeList)) {
-                maybeList.forEach(addName);
+                maybeList.forEach(nameOrDef => isString(nameOrDef) ? addName(nameOrDef) : addDescription(nameOrDef.name, nameOrDef));
             }
             else if (maybeList instanceof BindableDefinition) {
                 bindables[maybeList.name] = maybeList;
@@ -292,7 +294,7 @@ const instanceRegistration = kernel.Registration.instance;
 /** @internal */
 kernel.Registration.callback;
 /** @internal */
-const transientRegistration = kernel.Registration.transient;
+kernel.Registration.transient;
 /** @internal */
 const registerResolver = (ctn, key, resolver) => ctn.registerResolver(key, resolver);
 function alias(...aliases) {
@@ -494,6 +496,22 @@ function getBindingCommandHelp(name) {
     }
 }
 
+/** @internal */ const dtElement = 'element';
+/** @internal */ const dtAttribute = 'attribute';
+/** @internal */ const staticResourceDefinitionMetadataKey = '__au_static_resource__';
+const getDefinitionFromStaticAu = (
+// eslint-disable-next-line @typescript-eslint/ban-types
+Type, typeName, createDef) => {
+    let def = getOwnMetadata(staticResourceDefinitionMetadataKey, Type);
+    if (def == null) {
+        if (Type.$au?.type === typeName) {
+            def = createDef(Type.$au, Type);
+            defineMetadata(staticResourceDefinitionMetadataKey, def, Type);
+        }
+    }
+    return def;
+};
+
 function bindingBehavior(nameOrDef) {
     return function (target) {
         return BindingBehavior.define(nameOrDef, target);
@@ -532,14 +550,15 @@ class BindingBehaviorDefinition {
         }
     }
 }
-const bbBaseName = /*@__PURE__*/ kernel.getResourceKeyFor('binding-behavior');
+/** @internal */ const behaviorTypeName = 'binding-behavior';
+const bbBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(behaviorTypeName);
 const getBehaviorAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
 const getBindingBehaviorKeyFrom = (name) => `${bbBaseName}:${name}`;
 const BindingBehavior = objectFreeze({
     name: bbBaseName,
     keyFrom: getBindingBehaviorKeyFrom,
     isType(value) {
-        return isFunction(value) && hasOwnMetadata(bbBaseName, value);
+        return isFunction(value) && (hasOwnMetadata(bbBaseName, value) || value.$au?.type === behaviorTypeName);
     },
     define(nameOrDef, Type) {
         const definition = BindingBehaviorDefinition.create(nameOrDef, Type);
@@ -550,16 +569,18 @@ const BindingBehavior = objectFreeze({
         return $Type;
     },
     getDefinition(Type) {
-        const def = getOwnMetadata(bbBaseName, Type);
+        const def = getOwnMetadata(bbBaseName, Type)
+            ?? getDefinitionFromStaticAu(Type, behaviorTypeName, BindingBehaviorDefinition.create);
         if (def === void 0) {
             throw createMappedError(151 /* ErrorNames.binding_behavior_def_not_found */, Type);
         }
         return def;
     },
     find(container, name) {
-        const key = getBindingBehaviorKeyFrom(name);
-        const Type = container.find(key);
-        return Type == null ? null : getOwnMetadata(bbBaseName, Type) ?? null;
+        const Type = container.find(behaviorTypeName, name);
+        return Type == null
+            ? null
+            : getOwnMetadata(bbBaseName, Type) ?? getDefinitionFromStaticAu(Type, behaviorTypeName, BindingBehaviorDefinition.create) ?? null;
     },
     get(container, name) {
         {
@@ -577,6 +598,7 @@ const BindingBehavior = objectFreeze({
 });
 
 const originalModesMap = new Map();
+const createConfig = (name) => ({ type: behaviorTypeName, name });
 class BindingModeBehavior {
     bind(scope, binding) {
         originalModesMap.set(binding, binding.mode);
@@ -590,19 +612,19 @@ class BindingModeBehavior {
 class OneTimeBindingBehavior extends BindingModeBehavior {
     get mode() { return oneTime; }
 }
+OneTimeBindingBehavior.$au = createConfig('oneTime');
 class ToViewBindingBehavior extends BindingModeBehavior {
     get mode() { return toView; }
 }
+ToViewBindingBehavior.$au = createConfig('toView');
 class FromViewBindingBehavior extends BindingModeBehavior {
     get mode() { return fromView; }
 }
+FromViewBindingBehavior.$au = createConfig('fromView');
 class TwoWayBindingBehavior extends BindingModeBehavior {
     get mode() { return twoWay; }
 }
-bindingBehavior('oneTime')(OneTimeBindingBehavior);
-bindingBehavior('toView')(ToViewBindingBehavior);
-bindingBehavior('fromView')(FromViewBindingBehavior);
-bindingBehavior('twoWay')(TwoWayBindingBehavior);
+TwoWayBindingBehavior.$au = createConfig('twoWay');
 
 const bindingHandlerMap$1 = new WeakMap();
 const defaultDelay$1 = 200;
@@ -636,7 +658,10 @@ class DebounceBindingBehavior {
         bindingHandlerMap$1.delete(binding);
     }
 }
-bindingBehavior('debounce')(DebounceBindingBehavior);
+DebounceBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: 'debounce',
+};
 
 class SignalBindingBehavior {
     constructor() {
@@ -667,7 +692,10 @@ class SignalBindingBehavior {
         }
     }
 }
-bindingBehavior('signal')(SignalBindingBehavior);
+SignalBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: 'signal',
+};
 
 const bindingHandlerMap = new WeakMap();
 const defaultDelay = 200;
@@ -700,7 +728,10 @@ class ThrottleBindingBehavior {
         bindingHandlerMap.delete(binding);
     }
 }
-bindingBehavior('throttle')(ThrottleBindingBehavior);
+ThrottleBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: 'throttle',
+};
 
 const IAppTask = /*@__PURE__*/ createInterface('IAppTask');
 class $AppTask {
@@ -831,9 +862,6 @@ const Watch = /*@__PURE__*/ (() => {
     });
 })();
 
-/** @internal */ const dtElement = 'element';
-/** @internal */ const dtAttribute = 'attribute';
-
 function customAttribute(nameOrDef) {
     return function (target) {
         return defineAttribute(nameOrDef, target);
@@ -880,7 +908,7 @@ class CustomAttributeDefinition {
         const key = typeof aliasName === 'string' ? getAttributeKeyFrom(aliasName) : this.key;
         const aliases = this.aliases;
         if (!container.has(key, false)) {
-            container.register(container.has($Type, false) ? null : transientRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getAttributeKeyFrom(alias))));
+            container.register(container.has($Type, false) ? null : singletonRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getAttributeKeyFrom(alias))));
         } /* istanbul ignore next */
         else {
             // eslint-disable-next-line no-console
@@ -891,14 +919,14 @@ class CustomAttributeDefinition {
         return `au:ca:${this.name}`;
     }
 }
-/** @internal */
-const caBaseName = /*@__PURE__*/ kernel.getResourceKeyFor('custom-attribute');
-/** @internal */
-const getAttributeKeyFrom = (name) => `${caBaseName}:${name}`;
+/** @internal */ const attrTypeName = 'custom-attribute';
+const attributeBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(attrTypeName);
+const getAttributeKeyFrom = (name) => `${attributeBaseName}:${name}`;
 const getAttributeAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
 /** @internal */
 const isAttributeType = (value) => {
-    return isFunction(value) && hasOwnMetadata(caBaseName, value);
+    return isFunction(value) && (hasOwnMetadata(attributeBaseName, value)
+        || value.$au?.type === attrTypeName);
 };
 /** @internal */
 const findAttributeControllerFor = (node, name) => {
@@ -908,7 +936,7 @@ const findAttributeControllerFor = (node, name) => {
 const defineAttribute = (nameOrDef, Type) => {
     const definition = CustomAttributeDefinition.create(nameOrDef, Type);
     const $Type = definition.Type;
-    defineMetadata(caBaseName, definition, $Type);
+    defineMetadata(attributeBaseName, definition, $Type);
     // a requirement for the resource system in kernel
     defineMetadata(kernel.resourceBaseName, definition, $Type);
     return $Type;
@@ -916,7 +944,8 @@ const defineAttribute = (nameOrDef, Type) => {
 /** @internal */
 // eslint-disable-next-line @typescript-eslint/ban-types
 const getAttributeDefinition = (Type) => {
-    const def = getOwnMetadata(caBaseName, Type);
+    const def = getOwnMetadata(attributeBaseName, Type)
+        ?? getDefinitionFromStaticAu(Type, attrTypeName, CustomAttributeDefinition.create);
     if (def === void 0) {
         throw createMappedError(759 /* ErrorNames.attribute_def_not_found */, Type);
     }
@@ -945,7 +974,7 @@ const findClosestControllerByName = (node, attrNameOrType) => {
     return null;
 };
 const CustomAttribute = objectFreeze({
-    name: caBaseName,
+    name: attributeBaseName,
     keyFrom: getAttributeKeyFrom,
     isType: isAttributeType,
     for: findAttributeControllerFor,
@@ -957,9 +986,10 @@ const CustomAttribute = objectFreeze({
     },
     getAnnotation: getAttributeAnnotation,
     find(c, name) {
-        const key = getAttributeKeyFrom(name);
-        const Type = c.find(key);
-        return Type === null ? null : getOwnMetadata(caBaseName, Type) ?? null;
+        const Type = c.find(attrTypeName, name);
+        return Type === null
+            ? null
+            : getOwnMetadata(attributeBaseName, Type) ?? getDefinitionFromStaticAu(Type, attrTypeName, CustomAttributeDefinition.create) ?? null;
     },
 });
 
@@ -1104,14 +1134,16 @@ class ValueConverterDefinition {
         }
     }
 }
-const vcBaseName = /*@__PURE__*/ kernel.getResourceKeyFor('value-converter');
+/** @internal */ const converterTypeName = 'value-converter';
+const vcBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(converterTypeName);
 const getConverterAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
 const getValueConverterKeyFrom = (name) => `${vcBaseName}:${name}`;
 const ValueConverter = objectFreeze({
     name: vcBaseName,
     keyFrom: getValueConverterKeyFrom,
     isType(value) {
-        return isFunction(value) && hasOwnMetadata(vcBaseName, value);
+        return isFunction(value)
+            && (hasOwnMetadata(vcBaseName, value) || value.$au?.type === converterTypeName);
     },
     define(nameOrDef, Type) {
         const definition = ValueConverterDefinition.create(nameOrDef, Type);
@@ -1122,7 +1154,7 @@ const ValueConverter = objectFreeze({
         return $Type;
     },
     getDefinition(Type) {
-        const def = getOwnMetadata(vcBaseName, Type);
+        const def = getOwnMetadata(vcBaseName, Type) ?? getDefinitionFromStaticAu(Type, converterTypeName, ValueConverterDefinition.create);
         if (def === void 0) {
             throw createMappedError(152 /* ErrorNames.value_converter_def_not_found */, Type);
         }
@@ -1133,9 +1165,10 @@ const ValueConverter = objectFreeze({
     },
     getAnnotation: getConverterAnnotation,
     find(container, name) {
-        const key = getValueConverterKeyFrom(name);
-        const Type = container.find(key);
-        return Type == null ? null : getOwnMetadata(vcBaseName, Type) ?? null;
+        const Type = container.find(converterTypeName, name);
+        return Type == null
+            ? null
+            : getOwnMetadata(vcBaseName, Type) ?? getDefinitionFromStaticAu(Type, converterTypeName, ValueConverterDefinition.create) ?? null;
     },
     get(container, name) {
         {
@@ -3443,7 +3476,8 @@ class Rendering {
             const compiler = container.get(ITemplateCompiler);
             let compiled = compiledMap.get(definition);
             if (compiled == null) {
-                compiledMap.set(definition, compiled = compiler.compile(definition, container, compilationInstruction));
+                // const fullDefinition = CustomElementDefinition.getOrCreate(definition);
+                compiledMap.set(definition, compiled = compiler.compile(CustomElementDefinition.getOrCreate(definition), container, compilationInstruction));
             }
             else {
                 // todo:
@@ -5604,7 +5638,7 @@ class CustomElementDefinition {
         const aliases = this.aliases;
         // todo: warn if alreay has key
         if (!container.has(key, false)) {
-            container.register(container.has($Type, false) ? null : transientRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getElementKeyFrom(alias))));
+            container.register(container.has($Type, false) ? null : singletonRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getElementKeyFrom(alias))));
         } /* istanbul ignore next */
         else {
             // eslint-disable-next-line no-console
@@ -5625,15 +5659,12 @@ const returnNull = () => null;
 const returnFalse = () => false;
 const returnTrue = () => true;
 const returnEmptyArray = () => kernel.emptyArray;
-/** @internal */
-const elementBaseName = /*@__PURE__*/ kernel.getResourceKeyFor('custom-element');
+/** @internal */ const elementTypeName = 'custom-element';
+/** @internal */ const elementBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(elementTypeName);
 /** @internal */
 const getElementKeyFrom = (name) => `${elementBaseName}:${name}`;
 /** @internal */
-const generateElementName = /*@__PURE__*/ (() => {
-    let id = 0;
-    return () => `unnamed-${++id}`;
-})();
+const generateElementName = /*@__PURE__*/ (id => () => `unnamed-${++id}`)(0);
 const annotateElementMetadata = (Type, prop, value) => {
     defineMetadata(getAnnotationKeyFor(prop), value, Type);
 };
@@ -5648,7 +5679,9 @@ const defineElement = (nameOrDef, Type) => {
 };
 /** @internal */
 const isElementType = (value) => {
-    return isFunction(value) && hasOwnMetadata(elementBaseName, value);
+    return isFunction(value)
+        && (hasOwnMetadata(elementBaseName, value)
+            || value.$au?.type === elementTypeName);
 };
 /** @internal */
 const findElementControllerFor = (node, opts = defaultForOpts) => {
@@ -5704,8 +5737,9 @@ const getElementAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(
 /** @internal */
 // eslint-disable-next-line @typescript-eslint/ban-types
 const getElementDefinition = (Type) => {
-    const def = getOwnMetadata(elementBaseName, Type);
-    if (def === void 0) {
+    const def = getOwnMetadata(elementBaseName, Type)
+        ?? getDefinitionFromStaticAu(Type, elementTypeName, CustomElementDefinition.create);
+    if (def == null) {
         throw createMappedError(760 /* ErrorNames.element_def_not_found */, Type);
     }
     return def;
@@ -5769,9 +5803,10 @@ const CustomElement = objectFreeze({
     createInjectable: createElementInjectable,
     generateType: generateElementType,
     find(c, name) {
-        const key = getElementKeyFrom(name);
-        const Type = c.find(key);
-        return Type == null ? null : getOwnMetadata(elementBaseName, Type) ?? null;
+        const Type = c.find(elementTypeName, name);
+        return Type == null
+            ? null
+            : getOwnMetadata(elementBaseName, Type) ?? getDefinitionFromStaticAu(Type, elementTypeName, CustomElementDefinition.create) ?? null;
     }
 });
 const pcHookMetadataProperty = /*@__PURE__*/ getAnnotationKeyFor('processContent');
@@ -6521,20 +6556,17 @@ SpreadAttributePattern = __decorate([
     attributePattern({ pattern: '...$attrs', symbols: '' })
 ], SpreadAttributePattern);
 
-/** @internal */ const ctNone = 'None';
-/** @internal */ const ctIgnoreAttr = 'IgnoreAttr';
 function bindingCommand(nameOrDefinition) {
     return function (target) {
         return BindingCommand.define(nameOrDefinition, target);
     };
 }
 class BindingCommandDefinition {
-    constructor(Type, name, aliases, key, type) {
+    constructor(Type, name, aliases, key) {
         this.Type = Type;
         this.name = name;
         this.aliases = aliases;
         this.key = key;
-        this.type = type;
     }
     static create(nameOrDef, Type) {
         let name;
@@ -6547,7 +6579,7 @@ class BindingCommandDefinition {
             name = nameOrDef.name;
             def = nameOrDef;
         }
-        return new BindingCommandDefinition(Type, kernel.firstDefined(getCommandAnnotation(Type, 'name'), name), kernel.mergeArrays(getCommandAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getCommandKeyFrom(name), kernel.firstDefined(getCommandAnnotation(Type, 'type'), def.type, Type.type, null));
+        return new BindingCommandDefinition(Type, kernel.firstDefined(getCommandAnnotation(Type, 'name'), name), kernel.mergeArrays(getCommandAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getCommandKeyFrom(name));
     }
     register(container, aliasName) {
         const $Type = this.Type;
@@ -6562,13 +6594,13 @@ class BindingCommandDefinition {
         }
     }
 }
-const cmdBaseName = /*@__PURE__*/ kernel.getResourceKeyFor('binding-command');
+const bindingCommandTypeName = 'binding-command';
+const cmdBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(bindingCommandTypeName);
 const getCommandKeyFrom = (name) => `${cmdBaseName}:${name}`;
 const getCommandAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
 const BindingCommand = objectFreeze({
     name: cmdBaseName,
     keyFrom: getCommandKeyFrom,
-    // need this?
     // isType<T>(value: T): value is (T extends Constructable ? BindingCommandType<T> : never) {
     //   return isFunction(value) && hasOwnMetadata(cmdBaseName, value);
     // },
@@ -6582,9 +6614,10 @@ const BindingCommand = objectFreeze({
     },
     getAnnotation: getCommandAnnotation,
     find(container, name) {
-        const key = getCommandKeyFrom(name);
-        const Type = container.find(key);
-        return Type == null ? null : getOwnMetadata(cmdBaseName, Type) ?? null;
+        const Type = container.find(bindingCommandTypeName, name);
+        return Type == null
+            ? null
+            : getOwnMetadata(cmdBaseName, Type) ?? getDefinitionFromStaticAu(Type, bindingCommandTypeName, BindingCommandDefinition.create) ?? null;
     },
     get(container, name) {
         {
@@ -6600,8 +6633,8 @@ const BindingCommand = objectFreeze({
         return container.get(kernel.resource(getCommandKeyFrom(name)));
     },
 });
-exports.OneTimeBindingCommand = class OneTimeBindingCommand {
-    get type() { return ctNone; }
+class OneTimeBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -6622,12 +6655,13 @@ exports.OneTimeBindingCommand = class OneTimeBindingCommand {
         }
         return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, oneTime);
     }
+}
+OneTimeBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'one-time',
 };
-exports.OneTimeBindingCommand = __decorate([
-    bindingCommand('one-time')
-], exports.OneTimeBindingCommand);
-exports.ToViewBindingCommand = class ToViewBindingCommand {
-    get type() { return ctNone; }
+class ToViewBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -6648,12 +6682,13 @@ exports.ToViewBindingCommand = class ToViewBindingCommand {
         }
         return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, toView);
     }
+}
+ToViewBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'to-view',
 };
-exports.ToViewBindingCommand = __decorate([
-    bindingCommand('to-view')
-], exports.ToViewBindingCommand);
-exports.FromViewBindingCommand = class FromViewBindingCommand {
-    get type() { return ctNone; }
+class FromViewBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -6674,12 +6709,13 @@ exports.FromViewBindingCommand = class FromViewBindingCommand {
         }
         return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, fromView);
     }
+}
+FromViewBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'from-view',
 };
-exports.FromViewBindingCommand = __decorate([
-    bindingCommand('from-view')
-], exports.FromViewBindingCommand);
-exports.TwoWayBindingCommand = class TwoWayBindingCommand {
-    get type() { return ctNone; }
+class TwoWayBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -6700,12 +6736,13 @@ exports.TwoWayBindingCommand = class TwoWayBindingCommand {
         }
         return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, twoWay);
     }
+}
+TwoWayBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'two-way',
 };
-exports.TwoWayBindingCommand = __decorate([
-    bindingCommand('two-way')
-], exports.TwoWayBindingCommand);
-exports.DefaultBindingCommand = class DefaultBindingCommand {
-    get type() { return ctNone; }
+class DefaultBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         const bindable = info.bindable;
@@ -6736,16 +6773,17 @@ exports.DefaultBindingCommand = class DefaultBindingCommand {
         }
         return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, mode);
     }
+}
+DefaultBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'bind',
 };
-exports.DefaultBindingCommand = __decorate([
-    bindingCommand('bind')
-], exports.DefaultBindingCommand);
-exports.ForBindingCommand = class ForBindingCommand {
-    get type() { return ctNone; }
-    static get inject() { return [IAttributeParser]; }
-    constructor(attrParser) {
-        this._attrParser = attrParser;
+class ForBindingCommand {
+    constructor() {
+        /** @internal */
+        this._attrParser = kernel.resolve(IAttributeParser);
     }
+    get ignoreAttr() { return false; }
     build(info, exprParser) {
         const target = info.bindable === null
             ? kernel.camelCase(info.attr.target)
@@ -6764,85 +6802,93 @@ exports.ForBindingCommand = class ForBindingCommand {
         }
         return new IteratorBindingInstruction(forOf, target, props);
     }
+}
+ForBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'for',
 };
-exports.ForBindingCommand = __decorate([
-    bindingCommand('for')
-], exports.ForBindingCommand);
-exports.TriggerBindingCommand = class TriggerBindingCommand {
-    get type() { return ctIgnoreAttr; }
+class TriggerBindingCommand {
+    get ignoreAttr() { return true; }
     build(info, exprParser) {
         return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, false, info.attr.parts?.[2] ?? null);
     }
+}
+TriggerBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'trigger',
 };
-exports.TriggerBindingCommand = __decorate([
-    bindingCommand('trigger')
-], exports.TriggerBindingCommand);
-exports.CaptureBindingCommand = class CaptureBindingCommand {
-    get type() { return ctIgnoreAttr; }
+class CaptureBindingCommand {
+    get ignoreAttr() { return true; }
     build(info, exprParser) {
         return new ListenerBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true, info.attr.parts?.[2] ?? null);
     }
+}
+CaptureBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'capture',
 };
-exports.CaptureBindingCommand = __decorate([
-    bindingCommand('capture')
-], exports.CaptureBindingCommand);
 /**
  * Attr binding command. Compile attr with binding symbol with command `attr` to `AttributeBindingInstruction`
  */
-exports.AttrBindingCommand = class AttrBindingCommand {
-    get type() { return ctIgnoreAttr; }
+class AttrBindingCommand {
+    get ignoreAttr() { return true; }
     build(info, exprParser) {
         return new AttributeBindingInstruction(info.attr.target, exprParser.parse(info.attr.rawValue, etIsProperty), info.attr.target);
     }
+}
+AttrBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'attr',
 };
-exports.AttrBindingCommand = __decorate([
-    bindingCommand('attr')
-], exports.AttrBindingCommand);
 /**
  * Style binding command. Compile attr with binding symbol with command `style` to `AttributeBindingInstruction`
  */
-exports.StyleBindingCommand = class StyleBindingCommand {
-    get type() { return ctIgnoreAttr; }
+class StyleBindingCommand {
+    get ignoreAttr() { return true; }
     build(info, exprParser) {
         return new AttributeBindingInstruction('style', exprParser.parse(info.attr.rawValue, etIsProperty), info.attr.target);
     }
+}
+StyleBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'style',
 };
-exports.StyleBindingCommand = __decorate([
-    bindingCommand('style')
-], exports.StyleBindingCommand);
 /**
  * Class binding command. Compile attr with binding symbol with command `class` to `AttributeBindingInstruction`
  */
-exports.ClassBindingCommand = class ClassBindingCommand {
-    get type() { return ctIgnoreAttr; }
+class ClassBindingCommand {
+    get ignoreAttr() { return true; }
     build(info, exprParser) {
         return new AttributeBindingInstruction('class', exprParser.parse(info.attr.rawValue, etIsProperty), info.attr.target);
     }
+}
+ClassBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'class',
 };
-exports.ClassBindingCommand = __decorate([
-    bindingCommand('class')
-], exports.ClassBindingCommand);
 /**
  * Binding command to refer different targets (element, custom element/attribute view models, controller) attached to an element
  */
-let RefBindingCommand = class RefBindingCommand {
-    get type() { return ctIgnoreAttr; }
+class RefBindingCommand {
+    get ignoreAttr() { return true; }
     build(info, exprParser) {
         return new RefBindingInstruction(exprParser.parse(info.attr.rawValue, etIsProperty), info.attr.target);
     }
+}
+RefBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: 'ref',
 };
-RefBindingCommand = __decorate([
-    bindingCommand('ref')
-], RefBindingCommand);
-let SpreadBindingCommand = class SpreadBindingCommand {
-    get type() { return ctIgnoreAttr; }
+class SpreadBindingCommand {
+    get ignoreAttr() { return true; }
     build(_info) {
         return new SpreadBindingInstruction();
     }
+}
+SpreadBindingCommand.$au = {
+    type: bindingCommandTypeName,
+    name: '...$attrs',
 };
-SpreadBindingCommand = __decorate([
-    bindingCommand('...$attrs')
-], SpreadBindingCommand);
 
 const ISVGAnalyzer = /*@__PURE__*/ createInterface('ISVGAnalyzer', x => x.singleton(NoopSVGAnalyzer));
 const o = (keys) => {
@@ -8190,7 +8236,10 @@ class AttrBindingBehavior {
         binding.useTargetObserver(attrAccessor);
     }
 }
-bindingBehavior('attr')(AttrBindingBehavior);
+AttrBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: 'attr',
+};
 
 class SelfBindingBehavior {
     bind(_scope, binding) {
@@ -8203,7 +8252,10 @@ class SelfBindingBehavior {
         binding.self = false;
     }
 }
-bindingBehavior('self')(SelfBindingBehavior);
+SelfBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: 'self',
+};
 
 class UpdateTriggerBindingBehavior {
     constructor() {
@@ -8232,8 +8284,12 @@ class UpdateTriggerBindingBehavior {
         binding.useTargetObserver(targetObserver);
     }
 }
-bindingBehavior('updateTrigger')(UpdateTriggerBindingBehavior);
+UpdateTriggerBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: 'updateTrigger',
+};
 
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 class If {
     constructor() {
         this.elseFactory = void 0;
@@ -8327,15 +8383,17 @@ class If {
         }
     }
 }
-__decorate([
-    bindable
-], If.prototype, "value", void 0);
-__decorate([
-    bindable({
-        set: v => v === '' || !!v && v !== 'false'
-    })
-], If.prototype, "cache", void 0);
-templateController('if')(If);
+If.$au = {
+    type: attrTypeName,
+    name: 'if',
+    isTemplateController: true,
+    bindables: {
+        value: true,
+        cache: {
+            set: v => v === '' || !!v && v !== 'false',
+        }
+    }
+};
 class Else {
     constructor() {
         /** @internal */ this._factory = kernel.resolve(IViewFactory);
@@ -8354,7 +8412,12 @@ class Else {
         }
     }
 }
-templateController({ name: 'else' })(Else);
+Else.$au = {
+    type: 'custom-attribute',
+    name: 'else',
+    isTemplateController: true,
+};
+// templateController({ name: 'else' })(Else);
 
 function dispose(disposable) {
     disposable.dispose();
@@ -8852,11 +8915,13 @@ class Repeat {
         }
     }
 }
+Repeat.$au = {
+    type: attrTypeName,
+    name: 'repeat',
+    isTemplateController: true,
+    bindables: ['items'],
+};
 /** @internal */ Repeat.inject = [IInstruction, runtime.IExpressionParser, IRenderLocation, IController, IViewFactory];
-__decorate([
-    bindable
-], Repeat.prototype, "items", void 0);
-templateController('repeat')(Repeat);
 let maxLen = 16;
 let prevIndices = new Int32Array(maxLen);
 let tailIndices = new Int32Array(maxLen);
@@ -9062,12 +9127,15 @@ class With {
         }
     }
 }
-__decorate([
-    bindable
-], With.prototype, "value", void 0);
-templateController('with')(With);
+With.$au = {
+    type: attrTypeName,
+    name: 'with',
+    isTemplateController: true,
+    bindables: ['value'],
+};
 
-exports.Switch = class Switch {
+var _a, _b;
+class Switch {
     constructor() {
         /** @internal */
         this.cases = [];
@@ -9238,15 +9306,15 @@ exports.Switch = class Switch {
             return true;
         }
     }
+}
+Switch.$au = {
+    type: attrTypeName,
+    name: 'switch',
+    isTemplateController: true,
+    bindables: ['value'],
 };
-__decorate([
-    bindable
-], exports.Switch.prototype, "value", void 0);
-exports.Switch = __decorate([
-    templateController('switch')
-], exports.Switch);
 let caseId = 0;
-exports.Case = class Case {
+class Case {
     constructor() {
         /** @internal */ this.id = ++caseId;
         this.fallThrough = false;
@@ -9259,7 +9327,7 @@ exports.Case = class Case {
     link(controller, _childController, _target, _instruction) {
         const switchController = controller.parent;
         const $switch = switchController?.viewModel;
-        if ($switch instanceof exports.Switch) {
+        if ($switch instanceof Switch) {
             this.$switch = $switch;
             this.linkToSwitch($switch);
         }
@@ -9331,39 +9399,36 @@ exports.Case = class Case {
         }
         return this.view?.accept(visitor);
     }
+}
+Case.$au = {
+    type: 'custom-attribute',
+    name: 'case',
+    isTemplateController: true,
+    bindables: ['value', { name: 'fallThrough', mode: oneTime, set(v) {
+                switch (v) {
+                    case 'true': return true;
+                    case 'false': return false;
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                    default: return !!v;
+                }
+            } }]
 };
-__decorate([
-    bindable
-], exports.Case.prototype, "value", void 0);
-__decorate([
-    bindable({
-        set: v => {
-            switch (v) {
-                case 'true': return true;
-                case 'false': return false;
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                default: return !!v;
-            }
-        },
-        mode: oneTime
-    })
-], exports.Case.prototype, "fallThrough", void 0);
-exports.Case = __decorate([
-    templateController('case')
-], exports.Case);
-exports.DefaultCase = class DefaultCase extends exports.Case {
+class DefaultCase extends (_b = Case) {
     linkToSwitch($switch) {
         if ($switch.defaultCase !== void 0) {
             throw createMappedError(816 /* ErrorNames.switch_no_multiple_default */);
         }
         $switch.defaultCase = this;
     }
+}
+_a = DefaultCase;
+DefaultCase.$au = {
+    ...Reflect.get(_b, "$au", _a),
+    name: 'default-case',
+    bindables: ['value']
 };
-exports.DefaultCase = __decorate([
-    templateController('default-case')
-], exports.DefaultCase);
 
-exports.PromiseTemplateController = class PromiseTemplateController {
+class PromiseTemplateController {
     constructor() {
         this.preSettledTask = null;
         this.postSettledTask = null;
@@ -9462,14 +9527,14 @@ exports.PromiseTemplateController = class PromiseTemplateController {
         this.view?.dispose();
         this.view = (void 0);
     }
+}
+PromiseTemplateController.$au = {
+    type: attrTypeName,
+    name: 'promise',
+    isTemplateController: true,
+    bindables: ['value'],
 };
-__decorate([
-    bindable
-], exports.PromiseTemplateController.prototype, "value", void 0);
-exports.PromiseTemplateController = __decorate([
-    templateController('promise')
-], exports.PromiseTemplateController);
-exports.PendingTemplateController = class PendingTemplateController {
+class PendingTemplateController {
     constructor() {
         this.view = void 0;
         /** @internal */ this._factory = kernel.resolve(IViewFactory);
@@ -9502,14 +9567,16 @@ exports.PendingTemplateController = class PendingTemplateController {
         this.view?.dispose();
         this.view = (void 0);
     }
+}
+PendingTemplateController.$au = {
+    type: 'custom-attribute',
+    name: 'pending',
+    isTemplateController: true,
+    bindables: {
+        value: { mode: toView }
+    }
 };
-__decorate([
-    bindable({ mode: toView })
-], exports.PendingTemplateController.prototype, "value", void 0);
-exports.PendingTemplateController = __decorate([
-    templateController(tsPending)
-], exports.PendingTemplateController);
-exports.FulfilledTemplateController = class FulfilledTemplateController {
+class FulfilledTemplateController {
     constructor() {
         this.view = void 0;
         /** @internal */ this._factory = kernel.resolve(IViewFactory);
@@ -9543,14 +9610,16 @@ exports.FulfilledTemplateController = class FulfilledTemplateController {
         this.view?.dispose();
         this.view = (void 0);
     }
+}
+FulfilledTemplateController.$au = {
+    type: 'custom-attribute',
+    name: 'then',
+    isTemplateController: true,
+    bindables: {
+        value: { mode: fromView }
+    }
 };
-__decorate([
-    bindable({ mode: fromView })
-], exports.FulfilledTemplateController.prototype, "value", void 0);
-exports.FulfilledTemplateController = __decorate([
-    templateController('then')
-], exports.FulfilledTemplateController);
-exports.RejectedTemplateController = class RejectedTemplateController {
+class RejectedTemplateController {
     constructor() {
         this.view = void 0;
         /** @internal */ this._factory = kernel.resolve(IViewFactory);
@@ -9584,17 +9653,19 @@ exports.RejectedTemplateController = class RejectedTemplateController {
         this.view?.dispose();
         this.view = (void 0);
     }
+}
+RejectedTemplateController.$au = {
+    type: 'custom-attribute',
+    name: 'catch',
+    isTemplateController: true,
+    bindables: {
+        value: { mode: fromView }
+    }
 };
-__decorate([
-    bindable({ mode: fromView })
-], exports.RejectedTemplateController.prototype, "value", void 0);
-exports.RejectedTemplateController = __decorate([
-    templateController('catch')
-], exports.RejectedTemplateController);
 function getPromiseController(controller) {
     const promiseController = controller.parent;
     const $promise = promiseController?.viewModel;
-    if ($promise instanceof exports.PromiseTemplateController) {
+    if ($promise instanceof PromiseTemplateController) {
         return $promise;
     }
     throw createMappedError(813 /* ErrorNames.promise_invalid_usage */);
@@ -9727,10 +9798,13 @@ class Focus {
         return this._element === this._platform.document.activeElement;
     }
 }
-__decorate([
-    bindable({ mode: twoWay })
-], Focus.prototype, "value", void 0);
-customAttribute('focus')(Focus);
+Focus.$au = {
+    type: attrTypeName,
+    name: 'focus',
+    bindables: {
+        value: { mode: twoWay },
+    }
+};
 
 class Portal {
     constructor() {
@@ -9915,37 +9989,37 @@ class Portal {
         }
     }
 }
-__decorate([
-    bindable({ primary: true })
-], Portal.prototype, "target", void 0);
-__decorate([
-    bindable()
-], Portal.prototype, "position", void 0);
-__decorate([
-    bindable({ callback: 'targetChanged' })
-], Portal.prototype, "renderContext", void 0);
-__decorate([
-    bindable()
-], Portal.prototype, "strict", void 0);
-__decorate([
-    bindable()
-], Portal.prototype, "deactivating", void 0);
-__decorate([
-    bindable()
-], Portal.prototype, "activating", void 0);
-__decorate([
-    bindable()
-], Portal.prototype, "deactivated", void 0);
-__decorate([
-    bindable()
-], Portal.prototype, "activated", void 0);
-__decorate([
-    bindable()
-], Portal.prototype, "callbackContext", void 0);
-templateController('portal')(Portal);
+Portal.$au = {
+    type: attrTypeName,
+    name: 'portal',
+    isTemplateController: true,
+    bindables: [
+        { name: 'target', primary: true },
+        'position',
+        'activated',
+        'activating',
+        'callbackContext',
+        { name: 'renderContext', callback: 'targetChanged' },
+        'strict',
+        'deactivated',
+        'deactivating'
+    ],
+    // bindables: {
+    //   target: { primary: true },
+    //   position: true,
+    //   renderContext: { callback: 'targetChanged' },
+    //   activated: true,
+    //   activating: true,
+    //   callbackContext: true,
+    //   deactivated: true,
+    //   deactivating: true,
+    //   strict: true
+    // }
+};
+// templateController('portal')(Portal);
 
 let emptyTemplate;
-exports.AuSlot = class AuSlot {
+class AuSlot {
     constructor() {
         /** @internal */ this._parentScope = null;
         /** @internal */ this._outerScope = null;
@@ -10121,36 +10195,30 @@ exports.AuSlot = class AuSlot {
             sub.handleSlotChange(this, nodes);
         }
     }
-};
-__decorate([
-    bindable
-], exports.AuSlot.prototype, "expose", void 0);
-__decorate([
-    bindable
-], exports.AuSlot.prototype, "slotchange", void 0);
-exports.AuSlot = __decorate([
-    customElement({
-        name: 'au-slot',
-        template: null,
-        containerless: true,
-        processContent(el, p, data) {
-            data.name = el.getAttribute('name') ?? defaultSlotName;
-            let node = el.firstChild;
-            let next = null;
-            while (node !== null) {
-                next = node.nextSibling;
-                if (isElement(node) && node.hasAttribute(auslotAttr)) {
-                    {
-                        // eslint-disable-next-line no-console
-                        console.warn(`[DEV:aurelia] detected [au-slot] attribute on a child node`, `of an <au-slot> element: "<${node.nodeName} au-slot>".`, `This element will be ignored and removed`);
-                    }
-                    el.removeChild(node);
+}
+AuSlot.$au = {
+    type: elementTypeName,
+    name: 'au-slot',
+    template: null,
+    containerless: true,
+    processContent(el, p, data) {
+        data.name = el.getAttribute('name') ?? defaultSlotName;
+        let node = el.firstChild;
+        let next = null;
+        while (node !== null) {
+            next = node.nextSibling;
+            if (isElement(node) && node.hasAttribute(auslotAttr)) {
+                {
+                    // eslint-disable-next-line no-console
+                    console.warn(`[DEV:aurelia] detected [au-slot] attribute on a child node`, `of an <au-slot> element: "<${node.nodeName} au-slot>".`, `This element will be ignored and removed`);
                 }
-                node = next;
+                el.removeChild(node);
             }
-        },
-    })
-], exports.AuSlot);
+            node = next;
+        }
+    },
+    bindables: ['expose', 'slotchange'],
+};
 const comparePosition = (a, b) => a.compareDocumentPosition(b);
 const isMutationWithinLocation = (location, records) => {
     for (const { addedNodes, removedNodes, nextSibling } of records) {
@@ -10427,43 +10495,27 @@ class AuCompose {
         return SpreadBinding.create(transferHydrationContext, host, def, this._rendering, this._compiler, this._platform, this._exprParser, this._observerLocator);
     }
 }
-__decorate([
-    bindable
-], AuCompose.prototype, "template", void 0);
-__decorate([
-    bindable
-], AuCompose.prototype, "component", void 0);
-__decorate([
-    bindable
-], AuCompose.prototype, "model", void 0);
-__decorate([
-    bindable({
-        set: v => {
-            if (v === 'scoped' || v === 'auto') {
-                return v;
-            }
-            throw createMappedError(805 /* ErrorNames.au_compose_invalid_scope_behavior */, v);
-        }
-    })
-], AuCompose.prototype, "scopeBehavior", void 0);
-__decorate([
-    bindable({
-        mode: fromView
-    })
-], AuCompose.prototype, "composing", null);
-__decorate([
-    bindable({
-        mode: fromView
-    })
-], AuCompose.prototype, "composition", null);
-__decorate([
-    bindable
-], AuCompose.prototype, "tag", void 0);
-customElement({
+/** @internal */
+AuCompose.$au = {
+    type: elementTypeName,
     name: 'au-compose',
     capture: true,
     containerless: true,
-})(AuCompose);
+    bindables: [
+        'template',
+        'component',
+        'model',
+        { name: 'scopeBehavior', set: v => {
+                if (v === 'scoped' || v === 'auto') {
+                    return v;
+                }
+                throw createMappedError(805 /* ErrorNames.au_compose_invalid_scope_behavior */, v);
+            } },
+        { name: 'composing', mode: fromView },
+        { name: 'composition', mode: fromView },
+        'tag'
+    ]
+};
 class EmptyComponent {
 }
 class CompositionContextFactory {
@@ -10568,7 +10620,10 @@ class SanitizeValueConverter {
         return this._sanitizer.sanitize(untrustedMarkup);
     }
 }
-valueConverter('sanitize')(SanitizeValueConverter);
+SanitizeValueConverter.$au = {
+    type: converterTypeName,
+    name: 'sanitize',
+};
 
 const ITemplateElementFactory = /*@__PURE__*/ createInterface('ITemplateElementFactory', x => x.singleton(TemplateElementFactory));
 const markupCache = {};
@@ -10652,23 +10707,21 @@ class TemplateElementFactory {
 
 class TemplateCompiler {
     constructor() {
+        /** @internal */
+        this._bindableResolver = kernel.resolve(IBindablesInfoResolver);
         this.debug = false;
         this.resolveResources = true;
     }
     static register(container) {
         container.register(singletonRegistration(this, this), aliasRegistration(this, ITemplateCompiler));
     }
-    compile(partialDefinition, container, compilationInstruction) {
-        const definition = CustomElementDefinition.getOrCreate(partialDefinition);
-        if (definition.template === null || definition.template === void 0) {
-            return definition;
-        }
-        if (definition.needsCompile === false) {
+    compile(definition, container, compilationInstruction) {
+        if (definition.template == null || definition.needsCompile === false) {
             return definition;
         }
         compilationInstruction ??= emptyCompilationInstructions;
-        const context = new CompilationContext(partialDefinition, container, compilationInstruction, null, null, void 0);
-        const template = isString(definition.template) || !partialDefinition.enhance
+        const context = new CompilationContext(definition, container, compilationInstruction, null, null, void 0);
+        const template = isString(definition.template) || !definition.enhance
             ? context._templateFactory.createTemplate(definition.template)
             : definition.template;
         const isTemplateElement = template.nodeName === TEMPLATE_NODE_NAME && template.content != null;
@@ -10688,9 +10741,9 @@ class TemplateCompiler {
         this._compileLocalElement(content, context);
         this._compileNode(content, context);
         const compiledDef = CustomElementDefinition.create({
-            ...partialDefinition,
-            name: partialDefinition.name || generateElementName(),
-            dependencies: (partialDefinition.dependencies ?? kernel.emptyArray).concat(context.deps ?? kernel.emptyArray),
+            ...definition,
+            name: definition.name || generateElementName(),
+            dependencies: (definition.dependencies ?? kernel.emptyArray).concat(context.deps ?? kernel.emptyArray),
             instructions: context.rows,
             surrogates: isTemplateElement
                 ? this._compileSurrogate(template, context)
@@ -10728,7 +10781,6 @@ class TemplateCompiler {
         let attrDef = null;
         let attrInstructions;
         let attrBindableInstructions;
-        // eslint-disable-next-line
         let bindablesInfo;
         let bindable;
         let primaryBindable;
@@ -10742,7 +10794,7 @@ class TemplateCompiler {
             attrTarget = attrSyntax.target;
             attrValue = attrSyntax.rawValue;
             bindingCommand = context._createCommand(attrSyntax);
-            if (bindingCommand !== null && bindingCommand.type === ctIgnoreAttr) {
+            if (bindingCommand !== null && bindingCommand.ignoreAttr) {
                 // when the binding command overrides everything
                 // just pass the target as is to the binding command, and treat it as a normal attribute:
                 // active.class="..."
@@ -10761,7 +10813,7 @@ class TemplateCompiler {
                 if (attrDef.isTemplateController) {
                     throw createMappedError(9998 /* ErrorNames.no_spread_template_controller */, attrTarget);
                 }
-                bindablesInfo = BindablesInfo.from(attrDef, true);
+                bindablesInfo = this._bindableResolver.get(attrDef);
                 // Custom attributes are always in multiple binding mode,
                 // except when they can't be
                 // When they cannot be:
@@ -10815,7 +10867,7 @@ class TemplateCompiler {
                 // + maybe a plain attribute with interpolation
                 // + maybe a plain attribute
                 if (isCustomElement) {
-                    bindablesInfo = BindablesInfo.from(elDef, false);
+                    bindablesInfo = this._bindableResolver.get(elDef);
                     bindable = bindablesInfo.attrs[attrTarget];
                     if (bindable !== void 0) {
                         expr = exprParser.parse(attrValue, etInterpolation);
@@ -10852,7 +10904,7 @@ class TemplateCompiler {
                 if (isCustomElement) {
                     // if the element is a custom element
                     // - prioritize bindables on a custom element before plain attributes
-                    bindablesInfo = BindablesInfo.from(elDef, false);
+                    bindablesInfo = this._bindableResolver.get(elDef);
                     bindable = bindablesInfo.attrs[attrTarget];
                     if (bindable !== void 0) {
                         commandBuildInfo.node = target;
@@ -10890,7 +10942,6 @@ class TemplateCompiler {
         let attrDef = null;
         let attrInstructions;
         let attrBindableInstructions;
-        // eslint-disable-next-line
         let bindableInfo;
         let primaryBindable;
         let bindingCommand = null;
@@ -10909,7 +10960,7 @@ class TemplateCompiler {
                 throw createMappedError(702 /* ErrorNames.compiler_invalid_surrogate_attr */, attrName);
             }
             bindingCommand = context._createCommand(attrSyntax);
-            if (bindingCommand !== null && bindingCommand.type === ctIgnoreAttr) {
+            if (bindingCommand !== null && bindingCommand.ignoreAttr) {
                 // when the binding command overrides everything
                 // just pass the target as is to the binding command, and treat it as a normal attribute:
                 // active.class="..."
@@ -10928,7 +10979,7 @@ class TemplateCompiler {
                 if (attrDef.isTemplateController) {
                     throw createMappedError(703 /* ErrorNames.compiler_no_tc_on_surrogate */, realAttrTarget);
                 }
-                bindableInfo = BindablesInfo.from(attrDef, true);
+                bindableInfo = this._bindableResolver.get(attrDef);
                 // Custom attributes are always in multiple binding mode,
                 // except when they can't be
                 // When they cannot be:
@@ -11196,7 +11247,6 @@ class TemplateCompiler {
         let expr;
         let elementInstruction;
         let bindingCommand = null;
-        // eslint-disable-next-line
         let bindablesInfo;
         let primaryBindable;
         let realAttrTarget;
@@ -11245,14 +11295,14 @@ class TemplateCompiler {
             realAttrTarget = attrSyntax.target;
             realAttrValue = attrSyntax.rawValue;
             if (capture && (!hasCaptureFilter || hasCaptureFilter && capture(realAttrTarget))) {
-                if (bindingCommand != null && bindingCommand.type === ctIgnoreAttr) {
+                if (bindingCommand != null && bindingCommand.ignoreAttr) {
                     removeAttr();
                     captures.push(attrSyntax);
                     continue;
                 }
                 canCapture = realAttrTarget !== auslotAttr && realAttrTarget !== 'slot';
                 if (canCapture) {
-                    bindablesInfo = BindablesInfo.from(elDef, false);
+                    bindablesInfo = this._bindableResolver.get(elDef);
                     // if capture is on, capture everything except:
                     // - as-element
                     // - containerless
@@ -11266,7 +11316,7 @@ class TemplateCompiler {
                     }
                 }
             }
-            if (bindingCommand?.type === ctIgnoreAttr) {
+            if (bindingCommand?.ignoreAttr) {
                 // when the binding command overrides everything
                 // just pass the target as is to the binding command, and treat it as a normal attribute:
                 // active.class="..."
@@ -11286,7 +11336,7 @@ class TemplateCompiler {
             if (isCustomElement) {
                 // if the element is a custom element
                 // - prioritize bindables on a custom element before plain attributes
-                bindablesInfo = BindablesInfo.from(elDef, false);
+                bindablesInfo = this._bindableResolver.get(elDef);
                 bindable = bindablesInfo.attrs[realAttrTarget];
                 if (bindable !== void 0) {
                     if (bindingCommand === null) {
@@ -11323,7 +11373,7 @@ class TemplateCompiler {
             // check for custom attributes before plain attributes
             attrDef = context._findAttr(realAttrTarget);
             if (attrDef !== null) {
-                bindablesInfo = BindablesInfo.from(attrDef, true);
+                bindablesInfo = this._bindableResolver.get(attrDef);
                 // Custom attributes are always in multiple binding mode,
                 // except when they can't be
                 // When they cannot be:
@@ -11817,7 +11867,7 @@ class TemplateCompiler {
         // my-attr="prop1: literal1 prop2.bind: ...; prop3: literal3"
         // my-attr="prop1.bind: ...; prop2.bind: ..."
         // my-attr="prop1: ${}; prop2.bind: ...; prop3: ${}"
-        const bindableAttrsInfo = BindablesInfo.from(attrDef, true);
+        const bindableAttrsInfo = this._bindableResolver.get(attrDef);
         const valueLength = attrRawValue.length;
         const instructions = [];
         let attrName = void 0;
@@ -12063,17 +12113,13 @@ const isMarker = (el) => el.nodeValue === 'au*';
 class CompilationContext {
     constructor(def, container, compilationInstruction, parent, root, instructions) {
         this.hasSlot = false;
-        // todo: ideally binding command shouldn't have to be cached
-        // it can just be a singleton where it' retrieved
-        // the resources semantic should be defined by the resource itself,
-        // rather than baked in the container
-        this._commands = createLookup();
         const hasParent = parent !== null;
         this.c = container;
         this.root = root === null ? this : root;
         this.def = def;
         this.ci = compilationInstruction;
         this.parent = parent;
+        this._resourceResolver = hasParent ? parent._resourceResolver : container.get(IResourceResolver);
         this._templateFactory = hasParent ? parent._templateFactory : container.get(ITemplateElementFactory);
         // todo: attr parser should be retrieved based in resource semantic (current leaf + root + ignore parent)
         this._attrParser = hasParent ? parent._attrParser : container.get(IAttributeParser);
@@ -12112,13 +12158,13 @@ class CompilationContext {
      * Find the custom element definition of a given name
      */
     _findElement(name) {
-        return CustomElement.find(this.c, name);
+        return this._resourceResolver.el(this.c, name);
     }
     /**
      * Find the custom attribute definition of a given name
      */
     _findAttr(name) {
-        return CustomAttribute.find(this.c, name);
+        return this._resourceResolver.attr(this.c, name);
     }
     /**
      * Create a new child compilation context
@@ -12126,6 +12172,11 @@ class CompilationContext {
     _createChild(instructions) {
         return new CompilationContext(this.def, this.c, this.ci, this, this.root, instructions);
     }
+    // // todo: ideally binding command shouldn't have to be cached
+    // // it can just be a singleton where it' retrieved
+    // // the resources semantic should be defined by the resource itself,
+    // // rather than baked in the container
+    // private readonly _commands: Record<string, BindingCommandInstance | null | undefined> = createLookup();
     /**
      * Retrieve a binding command resource instance.
      *
@@ -12134,23 +12185,28 @@ class CompilationContext {
      * @returns An instance of the command if it exists, or `null` if it does not exist.
      */
     _createCommand(syntax) {
-        if (this.root !== this) {
-            return this.root._createCommand(syntax);
-        }
         const name = syntax.command;
         if (name === null) {
             return null;
         }
-        let result = this._commands[name];
-        let commandDef;
-        if (result === void 0) {
-            commandDef = BindingCommand.find(this.c, name);
-            if (commandDef == null) {
-                throw createMappedError(713 /* ErrorNames.compiler_unknown_binding_command */, name);
-            }
-            this._commands[name] = result = BindingCommand.get(this.c, name);
-        }
-        return result;
+        return this._resourceResolver.command(this.c, name);
+        //   if (this.root !== this) {
+        //     return this.root._createCommand(syntax);
+        //   }
+        //   const name = syntax.command;
+        //   if (name === null) {
+        //     return null;
+        //   }
+        //   let result = this._commands[name];
+        //   let commandDef: BindingCommandDefinition | null;
+        //   if (result === void 0) {
+        //     commandDef = BindingCommand.find(this.c, name);
+        //     if (commandDef == null) {
+        //       throw createMappedError(ErrorNames.compiler_unknown_binding_command, name);
+        //     }
+        //     this._commands[name] = result = BindingCommand.get(this.c, name);
+        //   }
+        //   return result;
     }
 }
 const hasInlineBindings = (rawValue) => {
@@ -12199,53 +12255,103 @@ const orderSensitiveInputType = {
     radio: 1,
     // todo: range is also sensitive to order, for min/max
 };
-const bindableAttrsInfoCache = new WeakMap();
-class BindablesInfo {
-    static from(def, isAttr) {
-        let info = bindableAttrsInfoCache.get(def);
-        if (info == null) {
-            const bindables = def.bindables;
-            const attrs = createLookup();
-            const defaultBindingMode = isAttr
-                ? def.defaultBindingMode === void 0
-                    ? defaultMode
-                    : def.defaultBindingMode
-                : defaultMode;
-            let bindable;
-            let prop;
-            let hasPrimary = false;
-            let primary;
-            let attr;
-            // from all bindables, pick the first primary bindable
-            // if there is no primary, pick the first bindable
-            // if there's no bindables, create a new primary with property value
-            for (prop in bindables) {
-                bindable = bindables[prop];
-                attr = bindable.attribute;
-                if (bindable.primary === true) {
-                    if (hasPrimary) {
-                        throw createMappedError(714 /* ErrorNames.compiler_primary_already_existed */, def);
-                    }
-                    hasPrimary = true;
-                    primary = bindable;
-                }
-                else if (!hasPrimary && primary == null) {
-                    primary = bindable;
-                }
-                attrs[attr] = BindableDefinition.create(prop, def.Type, bindable);
-            }
-            if (bindable == null && isAttr) {
-                // if no bindables are present, default to "value"
-                primary = attrs.value = BindableDefinition.create('value', def.Type, { mode: defaultBindingMode });
-            }
-            bindableAttrsInfoCache.set(def, info = new BindablesInfo(attrs, bindables, primary));
+const IBindablesInfoResolver = /*@__PURE__*/ createInterface('IBindablesInfoResolver', x => {
+    class BindablesInfoResolver {
+        constructor() {
+            /** @internal */
+            this._cache = new WeakMap();
         }
-        return info;
+        get(def) {
+            let info = this._cache.get(def);
+            if (info == null) {
+                const bindables = def.bindables;
+                const attrs = createLookup();
+                let bindable;
+                let prop;
+                let hasPrimary = false;
+                let primary;
+                let attr;
+                // from all bindables, pick the first primary bindable
+                // if there is no primary, pick the first bindable
+                // if there's no bindables, create a new primary with property value
+                for (prop in bindables) {
+                    bindable = bindables[prop];
+                    attr = bindable.attribute;
+                    if (bindable.primary === true) {
+                        if (hasPrimary) {
+                            throw createMappedError(714 /* ErrorNames.compiler_primary_already_existed */, def);
+                        }
+                        hasPrimary = true;
+                        primary = bindable;
+                    }
+                    else if (!hasPrimary && primary == null) {
+                        primary = bindable;
+                    }
+                    attrs[attr] = BindableDefinition.create(prop, def.Type, bindable);
+                }
+                if (bindable == null && def.kind === 'attribute') {
+                    // if no bindables are present, default to "value"
+                    primary = attrs.value = BindableDefinition.create('value', def.Type, { mode: def.defaultBindingMode != null ? def.defaultBindingMode : defaultMode });
+                }
+                this._cache.set(def, info = new BindablesInfo(attrs, bindables, primary ?? null));
+            }
+            return info;
+        }
     }
-    constructor(attrs, bindables, primary) {
-        this.attrs = attrs;
-        this.bindables = bindables;
-        this.primary = primary;
+    class BindablesInfo {
+        constructor(attrs, bindables, primary) {
+            this.attrs = attrs;
+            this.bindables = bindables;
+            this.primary = primary;
+        }
+    }
+    return x.singleton(BindablesInfoResolver);
+});
+const IResourceResolver = /*@__PURE__*/ createInterface('IResourceResolver', x => x.singleton(ResourceResolver));
+class ResourceResolver {
+    constructor() {
+        this._resourceCache = new WeakMap();
+        this._commandCache = new WeakMap();
+    }
+    el(c, name) {
+        let record = this._resourceCache.get(c);
+        if (record == null) {
+            this._resourceCache.set(c, record = new RecordCache());
+        }
+        return name in record.element ? record.element[name] : (record.element[name] = CustomElement.find(c, name));
+    }
+    attr(c, name) {
+        let record = this._resourceCache.get(c);
+        if (record == null) {
+            this._resourceCache.set(c, record = new RecordCache());
+        }
+        return name in record.attr ? record.attr[name] : (record.attr[name] = CustomAttribute.find(c, name));
+    }
+    command(c, name) {
+        let commandInstanceCache = this._commandCache.get(c);
+        if (commandInstanceCache == null) {
+            this._commandCache.set(c, commandInstanceCache = createLookup());
+        }
+        let result = commandInstanceCache[name];
+        if (result === void 0) {
+            let record = this._resourceCache.get(c);
+            if (record == null) {
+                this._resourceCache.set(c, record = new RecordCache());
+            }
+            const commandDef = name in record.command ? record.command[name] : (record.command[name] = BindingCommand.find(c, name));
+            if (commandDef == null) {
+                throw createMappedError(713 /* ErrorNames.compiler_unknown_binding_command */, name);
+            }
+            commandInstanceCache[name] = result = BindingCommand.get(c, name);
+        }
+        return result;
+    }
+}
+class RecordCache {
+    constructor() {
+        this.element = createLookup();
+        this.attr = createLookup();
+        this.command = createLookup();
     }
 }
 
@@ -12366,11 +12472,12 @@ class Show {
         }
     }
 }
-__decorate([
-    bindable
-], Show.prototype, "value", void 0);
-alias('hide')(Show);
-customAttribute('show')(Show);
+Show.$au = {
+    type: attrTypeName,
+    name: 'show',
+    bindables: ['value'],
+    aliases: ['hide']
+};
 
 /**
  * Default HTML-specific (but environment-agnostic) implementations for the following interfaces:
@@ -12411,18 +12518,18 @@ const ShortHandBindingSyntax = [
  * - Event listeners: `.trigger`, `.capture`
  */
 const DefaultBindingLanguage = [
-    exports.DefaultBindingCommand,
-    exports.OneTimeBindingCommand,
-    exports.FromViewBindingCommand,
-    exports.ToViewBindingCommand,
-    exports.TwoWayBindingCommand,
-    exports.ForBindingCommand,
+    DefaultBindingCommand,
+    OneTimeBindingCommand,
+    FromViewBindingCommand,
+    ToViewBindingCommand,
+    TwoWayBindingCommand,
+    ForBindingCommand,
     RefBindingCommand,
-    exports.TriggerBindingCommand,
-    exports.CaptureBindingCommand,
-    exports.ClassBindingCommand,
-    exports.StyleBindingCommand,
-    exports.AttrBindingCommand,
+    TriggerBindingCommand,
+    CaptureBindingCommand,
+    ClassBindingCommand,
+    StyleBindingCommand,
+    AttrBindingCommand,
     SpreadBindingCommand,
 ];
 /**
@@ -12446,13 +12553,13 @@ const DefaultResources = [
     Else,
     Repeat,
     With,
-    exports.Switch,
-    exports.Case,
-    exports.DefaultCase,
-    exports.PromiseTemplateController,
-    exports.PendingTemplateController,
-    exports.FulfilledTemplateController,
-    exports.RejectedTemplateController,
+    Switch,
+    Case,
+    DefaultCase,
+    PromiseTemplateController,
+    PendingTemplateController,
+    FulfilledTemplateController,
+    RejectedTemplateController,
     // TODO: activate after the attribute parser and/or interpreter such that for `t`, `then` is not picked up.
     PromiseAttributePattern,
     FulfilledAttributePattern,
@@ -12464,7 +12571,7 @@ const DefaultResources = [
     Portal,
     Focus,
     Show,
-    exports.AuSlot,
+    AuSlot,
 ];
 /**
  * Default renderers for:
@@ -12701,17 +12808,18 @@ exports.AdoptedStyleSheetsStyles = AdoptedStyleSheetsStyles;
 exports.AppRoot = AppRoot;
 exports.AppTask = AppTask;
 exports.AttrBindingBehavior = AttrBindingBehavior;
+exports.AttrBindingCommand = AttrBindingCommand;
 exports.AttrSyntax = AttrSyntax;
 exports.AttributeBinding = AttributeBinding;
 exports.AttributeBindingInstruction = AttributeBindingInstruction;
 exports.AttributeNSAccessor = AttributeNSAccessor;
 exports.AttributePattern = AttributePattern;
 exports.AuCompose = AuCompose;
+exports.AuSlot = AuSlot;
 exports.AuSlotsInfo = AuSlotsInfo;
 exports.Aurelia = Aurelia;
 exports.Bindable = Bindable;
 exports.BindableDefinition = BindableDefinition;
-exports.BindablesInfo = BindablesInfo;
 exports.BindingBehavior = BindingBehavior;
 exports.BindingBehaviorDefinition = BindingBehaviorDefinition;
 exports.BindingCommand = BindingCommand;
@@ -12720,9 +12828,12 @@ exports.BindingMode = BindingMode;
 exports.BindingModeBehavior = BindingModeBehavior;
 exports.BindingTargetSubscriber = BindingTargetSubscriber;
 exports.CSSModulesProcessorRegistry = CSSModulesProcessorRegistry;
+exports.CaptureBindingCommand = CaptureBindingCommand;
+exports.Case = Case;
 exports.CheckedObserver = CheckedObserver;
 exports.ChildrenBinding = ChildrenBinding;
 exports.ClassAttributeAccessor = ClassAttributeAccessor;
+exports.ClassBindingCommand = ClassBindingCommand;
 exports.ComputedWatcher = ComputedWatcher;
 exports.ContentBinding = ContentBinding;
 exports.Controller = Controller;
@@ -12732,8 +12843,10 @@ exports.CustomElement = CustomElement;
 exports.CustomElementDefinition = CustomElementDefinition;
 exports.DataAttributeAccessor = DataAttributeAccessor;
 exports.DebounceBindingBehavior = DebounceBindingBehavior;
+exports.DefaultBindingCommand = DefaultBindingCommand;
 exports.DefaultBindingLanguage = DefaultBindingLanguage;
 exports.DefaultBindingSyntax = DefaultBindingSyntax;
+exports.DefaultCase = DefaultCase;
 exports.DefaultComponents = DefaultComponents;
 exports.DefaultRenderers = DefaultRenderers;
 exports.DefaultResources = DefaultResources;
@@ -12743,8 +12856,11 @@ exports.EventModifierRegistration = EventModifierRegistration;
 exports.ExpressionWatcher = ExpressionWatcher;
 exports.FlushQueue = FlushQueue;
 exports.Focus = Focus;
+exports.ForBindingCommand = ForBindingCommand;
 exports.FragmentNodeSequence = FragmentNodeSequence;
 exports.FromViewBindingBehavior = FromViewBindingBehavior;
+exports.FromViewBindingCommand = FromViewBindingCommand;
+exports.FulfilledTemplateController = FulfilledTemplateController;
 exports.HydrateAttributeInstruction = HydrateAttributeInstruction;
 exports.HydrateElementInstruction = HydrateElementInstruction;
 exports.HydrateLetElementInstruction = HydrateLetElementInstruction;
@@ -12757,6 +12873,7 @@ exports.IAttributePattern = IAttributePattern;
 exports.IAuSlotWatcher = IAuSlotWatcher;
 exports.IAuSlotsInfo = IAuSlotsInfo;
 exports.IAurelia = IAurelia;
+exports.IBindablesInfoResolver = IBindablesInfoResolver;
 exports.IController = IController;
 exports.IEventModifier = IEventModifier;
 exports.IEventTarget = IEventTarget;
@@ -12804,11 +12921,15 @@ exports.MultiAttrInstruction = MultiAttrInstruction;
 exports.NodeObserverLocator = NodeObserverLocator;
 exports.NoopSVGAnalyzer = NoopSVGAnalyzer;
 exports.OneTimeBindingBehavior = OneTimeBindingBehavior;
+exports.OneTimeBindingCommand = OneTimeBindingCommand;
+exports.PendingTemplateController = PendingTemplateController;
 exports.Portal = Portal;
+exports.PromiseTemplateController = PromiseTemplateController;
 exports.PropertyBinding = PropertyBinding;
 exports.PropertyBindingInstruction = PropertyBindingInstruction;
 exports.RefBinding = RefBinding;
 exports.RefBindingInstruction = RefBindingInstruction;
+exports.RejectedTemplateController = RejectedTemplateController;
 exports.Rendering = Rendering;
 exports.Repeat = Repeat;
 exports.SVGAnalyzer = SVGAnalyzer;
@@ -12827,15 +12948,20 @@ exports.SpreadElementPropBindingInstruction = SpreadElementPropBindingInstructio
 exports.StandardConfiguration = StandardConfiguration;
 exports.State = State;
 exports.StyleAttributeAccessor = StyleAttributeAccessor;
+exports.StyleBindingCommand = StyleBindingCommand;
 exports.StyleConfiguration = StyleConfiguration;
 exports.StyleElementStyles = StyleElementStyles;
 exports.StylePropertyBindingInstruction = StylePropertyBindingInstruction;
+exports.Switch = Switch;
 exports.TemplateCompiler = TemplateCompiler;
 exports.TemplateCompilerHooks = TemplateCompilerHooks;
 exports.TextBindingInstruction = TextBindingInstruction;
 exports.ThrottleBindingBehavior = ThrottleBindingBehavior;
 exports.ToViewBindingBehavior = ToViewBindingBehavior;
+exports.ToViewBindingCommand = ToViewBindingCommand;
+exports.TriggerBindingCommand = TriggerBindingCommand;
 exports.TwoWayBindingBehavior = TwoWayBindingBehavior;
+exports.TwoWayBindingCommand = TwoWayBindingCommand;
 exports.UpdateTriggerBindingBehavior = UpdateTriggerBindingBehavior;
 exports.ValueAttributeObserver = ValueAttributeObserver;
 exports.ValueConverter = ValueConverter;

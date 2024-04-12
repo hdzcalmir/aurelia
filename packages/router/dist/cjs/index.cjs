@@ -835,13 +835,14 @@ class InstructionComponent {
             return null;
         }
         const r = t.createChild();
-        const o = this.isType() ? r.invoke(this.type) : r.get(routerComponentResolver(this.name));
-        if (o == null) {
+        const o = this.isType() ? this.type : r.getResolver(i.CustomElement.keyFrom(this.name)).getFactory(r).Type;
+        const h = r.invoke(o);
+        if (h == null) {
             throw new Error(`Failed to create instance when trying to resolve component '${this.name}'!`);
         }
-        const h = i.Controller.$el(r, o, e, null);
-        h.parent = s;
-        return o;
+        const u = i.Controller.$el(r, h, e, null);
+        u.parent = s;
+        return h;
     }
     same(t, i = false) {
         return i ? this.type === t.type : this.name === t.name;
@@ -852,22 +853,6 @@ class InstructionComponent {
         }
         return this.name;
     }
-}
-
-function routerComponentResolver(t) {
-    const s = i.CustomElement.keyFrom(t);
-    return {
-        $isResolver: true,
-        resolve(t, i) {
-            if (i.has(s, false)) {
-                return i.get(s);
-            }
-            if (i.root.has(s, false)) {
-                return i.root.get(s);
-            }
-            return i.get(s);
-        }
-    };
 }
 
 function arrayRemove(t, i) {
@@ -5618,7 +5603,7 @@ __decorate([ i.bindable ], exports.LoadCustomAttribute.prototype, "id", void 0);
 
 exports.LoadCustomAttribute = __decorate([ i.customAttribute("load") ], exports.LoadCustomAttribute);
 
-exports.HrefCustomAttribute = class HrefCustomAttribute {
+class HrefCustomAttribute {
     constructor() {
         this.element = t.resolve(i.INode);
         this.router = t.resolve(c);
@@ -5663,16 +5648,18 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
         const i = t.children;
         return i?.some((t => t.vmKind === "customAttribute" && t.viewModel instanceof exports.LoadCustomAttribute)) ?? false;
     }
-};
+}
 
-__decorate([ i.bindable({
-    mode: d
-}) ], exports.HrefCustomAttribute.prototype, "value", void 0);
-
-exports.HrefCustomAttribute = __decorate([ i.customAttribute({
+HrefCustomAttribute.$au = {
+    type: "custom-attribute",
     name: "href",
-    noMultiBindings: true
-}) ], exports.HrefCustomAttribute);
+    noMultiBindings: true,
+    bindables: {
+        value: {
+            mode: d
+        }
+    }
+};
 
 exports.ConsideredActiveCustomAttribute = class ConsideredActiveCustomAttribute {};
 
@@ -5694,9 +5681,9 @@ const I = exports.ViewportScopeCustomElement;
 
 const y = exports.LoadCustomAttribute;
 
-const E = exports.HrefCustomAttribute;
+const E = HrefCustomAttribute;
 
-const C = [ exports.ViewportCustomElement, exports.ViewportScopeCustomElement, exports.LoadCustomAttribute, exports.HrefCustomAttribute, exports.ConsideredActiveCustomAttribute ];
+const C = [ exports.ViewportCustomElement, exports.ViewportScopeCustomElement, exports.LoadCustomAttribute, HrefCustomAttribute, exports.ConsideredActiveCustomAttribute ];
 
 class RouterConfiguration {
     static register(t) {
@@ -5763,6 +5750,8 @@ exports.Endpoint = n;
 exports.EndpointContent = EndpointContent;
 
 exports.FoundRoute = FoundRoute;
+
+exports.HrefCustomAttribute = HrefCustomAttribute;
 
 exports.HrefCustomAttributeRegistration = E;
 

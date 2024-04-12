@@ -1,5 +1,6 @@
-import { ICustomAttributeViewModel, ICustomAttributeController } from '@aurelia/runtime-html';
+import { ICustomAttributeViewModel, ICustomAttributeController, CustomAttributeStaticAuDefinition } from '@aurelia/runtime-html';
 export declare class HrefCustomAttribute implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     value: string | undefined;
     readonly $controller: ICustomAttributeController<this>;
     private routerNavigationSubscription?;

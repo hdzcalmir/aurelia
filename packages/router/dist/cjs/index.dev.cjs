@@ -1196,6 +1196,7 @@ class InstructionComponent {
             }
             const key = keys[0];
             // TODO(alpha): Fix type here
+            // eslint-disable-next-line
             this.set(component[key]);
         });
     }
@@ -1255,9 +1256,13 @@ class InstructionComponent {
             return null;
         }
         const container = parentContainer.createChild();
-        const instance = this.isType()
-            ? container.invoke(this.type)
-            : container.get(routerComponentResolver(this.name));
+        const Type = this.isType()
+            ? this.type
+            : container.getResolver(runtimeHtml.CustomElement.keyFrom(this.name)).getFactory(container).Type;
+        const instance = container.invoke(Type);
+        // const instance: IRouteableComponent = this.isType()
+        //   ? container.invoke(this.type!)
+        //   : container.get(routerComponentResolver(this.name!));
         // TODO: Implement non-traversing lookup (below) based on router configuration
         // let instance;
         // if (this.isType()) {
@@ -1290,28 +1295,28 @@ class InstructionComponent {
         return this.name;
     }
 }
-function routerComponentResolver(name) {
-    const key = runtimeHtml.CustomElement.keyFrom(name);
-    return {
-        $isResolver: true,
-        resolve(_, requestor) {
-            // const container = requestor.get(IHydrationContext).parent!.controller.container;
-            if (requestor.has(key, false)) {
-                return requestor.get(key);
-            }
-            if (requestor.root.has(key, false)) {
-                return requestor.root.get(key);
-            }
-            // it's not always correct to consider this resolution as a traversal
-            // since sometimes it could be the work of trying a fallback configuration as component
-            // todo: cleanup the paths so that it's clearer when a fallback is being tried vs when an actual component name configuration
-            //
-            // console.warn(`Detected resource traversal behavior. A custom element "${name}" is neither`
-            //   + ` registered locally nor globally. This is not a supported behavior and will be removed in a future release`);
-            return requestor.get(key);
-        }
-    };
-}
+// function routerComponentResolver(name: string): IResolver<IRouteableComponent> {
+//   const key = CustomElement.keyFrom(name);
+//   return {
+//     $isResolver: true,
+//     resolve(_, requestor) {
+//       // const container = requestor.get(IHydrationContext).parent!.controller.container;
+//       if (requestor.has(key, false)) {
+//         return requestor.get(key);
+//       }
+//       if (requestor.root.has(key, false)) {
+//         return requestor.root.get(key);
+//       }
+//       // it's not always correct to consider this resolution as a traversal
+//       // since sometimes it could be the work of trying a fallback configuration as component
+//       // todo: cleanup the paths so that it's clearer when a fallback is being tried vs when an actual component name configuration
+//       //
+//       // console.warn(`Detected resource traversal behavior. A custom element "${name}" is neither`
+//       //   + ` registered locally nor globally. This is not a supported behavior and will be removed in a future release`);
+//       return requestor.get(key);
+//     }
+//   };
+// }
 
 /**
  *
@@ -8716,7 +8721,7 @@ exports.LoadCustomAttribute = __decorate([
     runtimeHtml.customAttribute('load')
 ], exports.LoadCustomAttribute);
 
-exports.HrefCustomAttribute = class HrefCustomAttribute {
+class HrefCustomAttribute {
     constructor() {
         this.element = kernel.resolve(runtimeHtml.INode);
         this.router = kernel.resolve(IRouter);
@@ -8759,16 +8764,15 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
         const siblings = parent.children;
         return siblings?.some(c => c.vmKind === 'customAttribute' && c.viewModel instanceof exports.LoadCustomAttribute) ?? false;
     }
+}
+HrefCustomAttribute.$au = {
+    type: 'custom-attribute',
+    name: 'href',
+    noMultiBindings: true,
+    bindables: {
+        value: { mode: bmToView }
+    }
 };
-__decorate([
-    runtimeHtml.bindable({ mode: bmToView })
-], exports.HrefCustomAttribute.prototype, "value", void 0);
-exports.HrefCustomAttribute = __decorate([
-    runtimeHtml.customAttribute({
-        name: 'href',
-        noMultiBindings: true
-    })
-], exports.HrefCustomAttribute);
 
 exports.ConsideredActiveCustomAttribute = class ConsideredActiveCustomAttribute {
 };
@@ -8791,7 +8795,7 @@ const DefaultComponents = [
 const ViewportCustomElementRegistration = exports.ViewportCustomElement;
 const ViewportScopeCustomElementRegistration = exports.ViewportScopeCustomElement;
 const LoadCustomAttributeRegistration = exports.LoadCustomAttribute;
-const HrefCustomAttributeRegistration = exports.HrefCustomAttribute;
+const HrefCustomAttributeRegistration = HrefCustomAttribute;
 /**
  * Default router resources:
  * - Custom Elements: `au-viewport`, `au-nav`
@@ -8801,7 +8805,7 @@ const DefaultResources = [
     exports.ViewportCustomElement,
     exports.ViewportScopeCustomElement,
     exports.LoadCustomAttribute,
-    exports.HrefCustomAttribute,
+    HrefCustomAttribute,
     exports.ConsideredActiveCustomAttribute,
 ];
 /**
@@ -8907,6 +8911,7 @@ exports.DefaultResources = DefaultResources;
 exports.Endpoint = Endpoint$1;
 exports.EndpointContent = EndpointContent;
 exports.FoundRoute = FoundRoute;
+exports.HrefCustomAttribute = HrefCustomAttribute;
 exports.HrefCustomAttributeRegistration = HrefCustomAttributeRegistration;
 exports.ILinkHandler = ILinkHandler;
 exports.IRouter = IRouter;

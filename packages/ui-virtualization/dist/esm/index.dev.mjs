@@ -1,6 +1,6 @@
 import { DI, resolve, Registration } from '@aurelia/kernel';
 import { BindingBehaviorExpression, ValueConverterExpression, Scope, BindingContext, astEvaluate, getCollectionObserver } from '@aurelia/runtime';
-import { customAttribute, IRenderLocation, IInstruction, IController, IViewFactory, IPlatform } from '@aurelia/runtime-html';
+import { IRenderLocation, IInstruction, IController, IViewFactory, IPlatform } from '@aurelia/runtime-html';
 
 const IDomRenderer = /*@__PURE__*/ DI.createInterface('IDomRenderer');
 const IScrollerObsererLocator = /*@__PURE__*/ DI.createInterface('IScrollerObsererLocator');
@@ -476,15 +476,15 @@ class VirtualRepeat {
         return view;
     }
 }
-// avoid excessive code generation, if it doesn't affect readability too much
-customAttribute({
-    isTemplateController: true,
+VirtualRepeat.$au = {
+    type: 'custom-attribute',
     name: 'virtual-repeat',
+    isTemplateController: true,
     bindables: {
-        local: { name: 'local' },
-        items: { name: 'items', primary: true }
+        local: true,
+        items: { primary: true }
     }
-})(VirtualRepeat);
+};
 class CollectionObservationMediator {
     constructor(repeat, handleCollectionChange) {
         this.repeat = repeat;

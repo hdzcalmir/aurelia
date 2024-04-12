@@ -1,7 +1,7 @@
 import { IContainer } from '@aurelia/kernel';
 import { DirtyChecker, ICoercionConfiguration } from '@aurelia/runtime';
 import { AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, SpreadAttributePattern, DotSeparatedAttributePattern, RefAttributePattern, EventAttributePattern } from './resources/attribute-pattern';
-import { ForBindingCommand, OneTimeBindingCommand, TriggerBindingCommand } from './resources/binding-command';
+import { OneTimeBindingCommand, TriggerBindingCommand } from './resources/binding-command';
 import { TemplateCompiler } from './compiler/template-compiler';
 import { CustomAttributeRenderer, CustomElementRenderer, InterpolationBindingRenderer, IteratorBindingRenderer, LetElementRenderer, PropertyBindingRenderer, RefBindingRenderer, SetPropertyRenderer, TemplateControllerRenderer, AttributeBindingRenderer, ListenerBindingRenderer, SetAttributeRenderer, StylePropertyBindingRenderer, TextBindingRenderer, SetClassAttributeRenderer, SetStyleAttributeRenderer, SpreadRenderer } from './renderer';
 import { DebounceBindingBehavior } from './resources/binding-behaviors/debounce';
@@ -48,7 +48,7 @@ export declare const ShortHandBindingSyntax: (typeof ColonPrefixedBindAttributeP
  * - Collection observation: `.for`
  * - Event listeners: `.trigger`, `.capture`
  */
-export declare const DefaultBindingLanguage: (typeof OneTimeBindingCommand | typeof ForBindingCommand | typeof TriggerBindingCommand)[];
+export declare const DefaultBindingLanguage: (typeof OneTimeBindingCommand | typeof TriggerBindingCommand)[];
 /**
  * Default HTML-specific (but environment-agnostic) resources:
  * - Binding Behaviors: `oneTime`, `toView`, `fromView`, `twoWay`, `signal`, `debounce`, `throttle`, `attr`, `self`, `updateTrigger`

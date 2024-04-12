@@ -4931,7 +4931,7 @@ LoadCustomAttribute = __decorate([
  * and will fail as it won't find a bindable property `https` here in this CA.
  * Therefore, till the template compiler can handle that correctly, introduction of a bindable context is intentionally omitted.
  */
-let HrefCustomAttribute = class HrefCustomAttribute {
+class HrefCustomAttribute {
     /** @internal */
     get _isExternal() {
         return this._el.hasAttribute('external') || this._el.hasAttribute('data-external');
@@ -5007,13 +5007,15 @@ let HrefCustomAttribute = class HrefCustomAttribute {
             void this._router.load(href, { context: this._ctx });
         }
     }
+}
+HrefCustomAttribute.$au = {
+    type: 'custom-attribute',
+    name: 'href',
+    noMultiBindings: true,
+    bindables: {
+        value: { mode: bmToView }
+    }
 };
-__decorate([
-    bindable({ mode: bmToView })
-], HrefCustomAttribute.prototype, "value", void 0);
-HrefCustomAttribute = __decorate([
-    customAttribute({ name: 'href', noMultiBindings: true })
-], HrefCustomAttribute);
 
 const RouterRegistration = IRouter;
 /**

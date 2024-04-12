@@ -25,7 +25,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         beforeEach(function () {
             ctx = TestContext.create();
             container = ctx.container;
-            sut = ctx.templateCompiler;
+            sut = createCompilerWrapper(ctx.templateCompiler);
             sut.resolveResources = false;
             container.register(CustomAttribute.define('foo', class {
             }));
@@ -945,7 +945,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         function createFixture(ctx, ...globals) {
             const container = ctx.container;
             container.register(...globals, delegateSyntax);
-            const sut = ctx.templateCompiler;
+            const sut = createCompilerWrapper(ctx.templateCompiler);
             return { container, sut };
         }
         describe('TemplateCompiler - combinations -- plain attributes', function () {
@@ -1467,7 +1467,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             function compileWith(markup, ...extraResources) {
                 const ctx = TestContext.create();
                 const container = ctx.container;
-                const sut = ctx.templateCompiler;
+                const sut = createCompilerWrapper(ctx.templateCompiler);
                 container.register(...extraResources);
                 const templateDefinition = {
                     template: markup,
@@ -1830,6 +1830,21 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         assert.strictEqual(typeof template === 'string'
             ? template
             : template.innerHTML, expected);
+    }
+    function createCompilerWrapper(compiler) {
+        return {
+            get resolveResources() { return compiler.resolveResources; },
+            set resolveResources(value) { compiler.resolveResources = value; },
+            get debug() { return compiler.debug; },
+            set debug(value) { compiler.debug = value; },
+            compile(definition, container, instruction) {
+                return compiler.compile(CustomElementDefinition.create(definition), container, instruction);
+            },
+            compileSpread(...args) {
+                // eslint-disable-next-line prefer-spread
+                return compiler.compileSpread.apply(compiler, args);
+            }
+        };
     }
 });
 //# sourceMappingURL=template-compiler.spec.js.map

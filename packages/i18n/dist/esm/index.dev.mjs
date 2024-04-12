@@ -1,7 +1,47 @@
 import { DI, IEventAggregator, camelCase, toArray, Registration } from '@aurelia/kernel';
-import { BindingMode, State, bindingBehavior, valueConverter, mixinAstEvaluator, mixingBindingLimited, CustomElement, attributePattern, bindingCommand, renderer, AttrSyntax, AttributePattern, BindingCommand, AppTask } from '@aurelia/runtime-html';
+import { BindingMode, State, bindingBehavior, mixinAstEvaluator, mixingBindingLimited, CustomElement, attributePattern, renderer, AttrSyntax, valueConverter, AttributePattern, BindingCommand, AppTask } from '@aurelia/runtime-html';
 import { ValueConverterExpression, nowrap, ISignaler, connectable, CustomExpression, astEvaluate, astUnbind, AccessorType, astBind } from '@aurelia/runtime';
 import i18next from 'i18next';
+
+const Signals = {
+    I18N_EA_CHANNEL: 'i18n:locale:changed',
+    I18N_SIGNAL: 'aurelia-translation-signal',
+    RT_SIGNAL: 'aurelia-relativetime-signal'
+};
+/** @internal */
+var ValueConverters;
+(function (ValueConverters) {
+    ValueConverters["translationValueConverterName"] = "t";
+    ValueConverters["dateFormatValueConverterName"] = "df";
+    ValueConverters["numberFormatValueConverterName"] = "nf";
+    ValueConverters["relativeTimeValueConverterName"] = "rt";
+})(ValueConverters || (ValueConverters = {}));
+function createIntlFormatValueConverterExpression(name, binding) {
+    const expression = binding.ast.expression;
+    if (!(expression instanceof ValueConverterExpression)) {
+        const vcExpression = new ValueConverterExpression(expression, name, binding.ast.args);
+        binding.ast.expression = vcExpression;
+    }
+}
+/** ExpressionType */
+/** @internal */ const etInterpolation = 'Interpolation';
+/** @internal */ const etIsProperty = 'IsProperty';
+/** BindingMode */
+/** @internal */ const bmToView = BindingMode.toView;
+/** State */
+/** @internal */ const stateActivating = State.activating;
+/** @internal */ const behaviorTypeName = 'binding-behavior';
+/** @internal */ const valueConverterTypeName = 'value-converter';
+
+class DateFormatBindingBehavior {
+    bind(_scope, binding) {
+        createIntlFormatValueConverterExpression("df" /* ValueConverters.dateFormatValueConverterName */, binding);
+    }
+}
+DateFormatBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: "df" /* ValueConverters.dateFormatValueConverterName */,
+};
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -31,45 +71,6 @@ function __param(paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 }
 
-const Signals = {
-    I18N_EA_CHANNEL: 'i18n:locale:changed',
-    I18N_SIGNAL: 'aurelia-translation-signal',
-    RT_SIGNAL: 'aurelia-relativetime-signal'
-};
-/** @internal */
-var ValueConverters;
-(function (ValueConverters) {
-    ValueConverters["translationValueConverterName"] = "t";
-    ValueConverters["dateFormatValueConverterName"] = "df";
-    ValueConverters["numberFormatValueConverterName"] = "nf";
-    ValueConverters["relativeTimeValueConverterName"] = "rt";
-})(ValueConverters || (ValueConverters = {}));
-function createIntlFormatValueConverterExpression(name, binding) {
-    const expression = binding.ast.expression;
-    if (!(expression instanceof ValueConverterExpression)) {
-        const vcExpression = new ValueConverterExpression(expression, name, binding.ast.args);
-        binding.ast.expression = vcExpression;
-    }
-}
-/** ExpressionType */
-/** @internal */ const etInterpolation = 'Interpolation';
-/** @internal */ const etIsProperty = 'IsProperty';
-/** CommandType */
-/** @internal */ const ctNone = 'None';
-/** BindingMode */
-/** @internal */ const bmToView = BindingMode.toView;
-/** State */
-/** @internal */ const stateActivating = State.activating;
-
-let DateFormatBindingBehavior = class DateFormatBindingBehavior {
-    bind(_scope, binding) {
-        createIntlFormatValueConverterExpression("df" /* ValueConverters.dateFormatValueConverterName */, binding);
-    }
-};
-DateFormatBindingBehavior = __decorate([
-    bindingBehavior("df" /* ValueConverters.dateFormatValueConverterName */)
-], DateFormatBindingBehavior);
-
 const I18nInitOptions = /*@__PURE__*/ DI.createInterface('I18nInitOptions');
 
 const I18nWrapper = /*@__PURE__*/ DI.createInterface('I18nextWrapper');
@@ -82,16 +83,6 @@ class I18nextWrapper {
     }
 }
 
-var TimeSpan;
-(function (TimeSpan) {
-    TimeSpan[TimeSpan["Second"] = 1000] = "Second";
-    TimeSpan[TimeSpan["Minute"] = 60000] = "Minute";
-    TimeSpan[TimeSpan["Hour"] = 3600000] = "Hour";
-    TimeSpan[TimeSpan["Day"] = 86400000] = "Day";
-    TimeSpan[TimeSpan["Week"] = 604800000] = "Week";
-    TimeSpan[TimeSpan["Month"] = 2592000000] = "Month";
-    TimeSpan[TimeSpan["Year"] = 31536000000] = "Year";
-})(TimeSpan || (TimeSpan = {}));
 class I18nKeyEvaluationResult {
     constructor(keyExpr) {
         this.value = (void 0);
@@ -277,19 +268,23 @@ let DateFormatValueConverter = class DateFormatValueConverter {
         return this.i18n.df(value, options, locale);
     }
 };
+DateFormatValueConverter.$au = {
+    type: valueConverterTypeName,
+    name: "df" /* ValueConverters.dateFormatValueConverterName */,
+};
 DateFormatValueConverter = __decorate([
-    valueConverter("df" /* ValueConverters.dateFormatValueConverterName */),
     __param(0, I18N)
 ], DateFormatValueConverter);
 
-let NumberFormatBindingBehavior = class NumberFormatBindingBehavior {
+class NumberFormatBindingBehavior {
     bind(_scope, binding) {
         createIntlFormatValueConverterExpression("nf" /* ValueConverters.numberFormatValueConverterName */, binding);
     }
+}
+NumberFormatBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: "nf" /* ValueConverters.numberFormatValueConverterName */,
 };
-NumberFormatBindingBehavior = __decorate([
-    bindingBehavior("nf" /* ValueConverters.numberFormatValueConverterName */)
-], NumberFormatBindingBehavior);
 
 let NumberFormatValueConverter = class NumberFormatValueConverter {
     constructor(i18n) {
@@ -303,19 +298,23 @@ let NumberFormatValueConverter = class NumberFormatValueConverter {
         return this.i18n.nf(value, options, locale);
     }
 };
+NumberFormatValueConverter.$au = {
+    type: valueConverterTypeName,
+    name: "nf" /* ValueConverters.numberFormatValueConverterName */,
+};
 NumberFormatValueConverter = __decorate([
-    valueConverter("nf" /* ValueConverters.numberFormatValueConverterName */),
     __param(0, I18N)
 ], NumberFormatValueConverter);
 
-let RelativeTimeBindingBehavior = class RelativeTimeBindingBehavior {
+class RelativeTimeBindingBehavior {
     bind(_scope, binding) {
         createIntlFormatValueConverterExpression("rt" /* ValueConverters.relativeTimeValueConverterName */, binding);
     }
+}
+RelativeTimeBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: "rt" /* ValueConverters.relativeTimeValueConverterName */,
 };
-RelativeTimeBindingBehavior = __decorate([
-    bindingBehavior("rt" /* ValueConverters.relativeTimeValueConverterName */)
-], RelativeTimeBindingBehavior);
 
 let RelativeTimeValueConverter = class RelativeTimeValueConverter {
     constructor(i18n) {
@@ -329,8 +328,11 @@ let RelativeTimeValueConverter = class RelativeTimeValueConverter {
         return this.i18n.rt(value, options, locale);
     }
 };
+RelativeTimeValueConverter.$au = {
+    type: valueConverterTypeName,
+    name: "rt" /* ValueConverters.relativeTimeValueConverterName */,
+};
 RelativeTimeValueConverter = __decorate([
-    valueConverter("rt" /* ValueConverters.relativeTimeValueConverterName */),
     __param(0, I18N)
 ], RelativeTimeValueConverter);
 
@@ -646,11 +648,10 @@ class TranslationParametersBindingInstruction {
         this.mode = bmToView;
     }
 }
-let TranslationParametersBindingCommand = class TranslationParametersBindingCommand {
+class TranslationParametersBindingCommand {
     constructor() {
-        this.type = ctNone;
+        this.ignoreAttr = false;
     }
-    get name() { return attribute; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -665,10 +666,11 @@ let TranslationParametersBindingCommand = class TranslationParametersBindingComm
         }
         return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, etIsProperty), target);
     }
+}
+TranslationParametersBindingCommand.$au = {
+    type: 'binding-command',
+    name: attribute,
 };
-TranslationParametersBindingCommand = __decorate([
-    bindingCommand(attribute)
-], TranslationParametersBindingCommand);
 let TranslationParametersBindingRenderer = class TranslationParametersBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
@@ -706,9 +708,8 @@ class TranslationBindingInstruction {
 }
 class TranslationBindingCommand {
     constructor() {
-        this.type = ctNone;
+        this.ignoreAttr = false;
     }
-    get name() { return 't'; }
     build(info, parser, attrMapper) {
         let target;
         if (info.bindable == null) {
@@ -758,9 +759,8 @@ class TranslationBindBindingInstruction {
 }
 class TranslationBindBindingCommand {
     constructor() {
-        this.type = ctNone;
+        this.ignoreAttr = false;
     }
-    get name() { return 't-bind'; }
     build(info, exprParser, attrMapper) {
         let target;
         if (info.bindable == null) {

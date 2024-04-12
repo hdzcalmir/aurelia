@@ -5,7 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { Registration } from '@aurelia/kernel';
-import { CustomElement, ITemplateCompilerHooks, templateCompilerHooks, TemplateCompilerHooks } from '@aurelia/runtime-html';
+import { CustomElement, CustomElementDefinition, ITemplateCompilerHooks, templateCompilerHooks, TemplateCompilerHooks, } from '@aurelia/runtime-html';
 import { assert, createFixture, TestContext } from '@aurelia/testing';
 describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
     it('compiles with child hooks', async function () {
@@ -286,7 +286,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
                     template.setAttribute('data-hello', 'world');
                 }
             }));
-            const definition = sut.compile({ name: 'lorem-ipsum', template }, container, null);
+            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), container, null);
             assert.strictEqual(hookCallCount, 1);
             assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
         });
@@ -306,7 +306,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
                     template.setAttribute('data-world', 'hello');
                 }
             }));
-            const definition = sut.compile({ name: 'lorem-ipsum', template }, container, null);
+            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), container, null);
             assert.strictEqual(hookCallCount, 2);
             assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
             assert.strictEqual(definition.template.getAttribute('data-world'), 'hello');
@@ -315,7 +315,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
             const template = `<template></template>`;
             const { container, sut } = createFixture();
             container.register(Registration.instance(ITemplateCompilerHooks, {}));
-            assert.doesNotThrow(() => sut.compile({ name: 'lorem-ipsum', template }, container, null));
+            assert.doesNotThrow(() => sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), container, null));
         });
         it('invokes hooks with resources semantic - only leaf', function () {
             const template = `<template></template>`;
@@ -331,7 +331,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
             const leafContainer = middleContainer.createChild();
             middleContainer.register(createResolver());
             leafContainer.register(createResolver());
-            const definition = sut.compile({ name: 'lorem-ipsum', template }, leafContainer, null);
+            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), leafContainer, null);
             assert.strictEqual(hookCallCount, 1);
             assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
         });
@@ -350,7 +350,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
             container.register(createResolver('root'));
             middleContainer.register(createResolver('middle'));
             leafContainer.register(createResolver('leaf'));
-            const definition = sut.compile({ name: 'lorem-ipsum', template }, leafContainer, null);
+            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), leafContainer, null);
             assert.strictEqual(hookCallCount, 2);
             assert.strictEqual(definition.template.getAttribute('data-root'), 'root');
             assert.strictEqual(definition.template.getAttribute('data-middle'), null);

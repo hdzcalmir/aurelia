@@ -4935,7 +4935,7 @@ exports.LoadCustomAttribute = __decorate([
  * and will fail as it won't find a bindable property `https` here in this CA.
  * Therefore, till the template compiler can handle that correctly, introduction of a bindable context is intentionally omitted.
  */
-exports.HrefCustomAttribute = class HrefCustomAttribute {
+class HrefCustomAttribute {
     /** @internal */
     get _isExternal() {
         return this._el.hasAttribute('external') || this._el.hasAttribute('data-external');
@@ -5011,13 +5011,15 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
             void this._router.load(href, { context: this._ctx });
         }
     }
+}
+HrefCustomAttribute.$au = {
+    type: 'custom-attribute',
+    name: 'href',
+    noMultiBindings: true,
+    bindables: {
+        value: { mode: bmToView }
+    }
 };
-__decorate([
-    runtimeHtml.bindable({ mode: bmToView })
-], exports.HrefCustomAttribute.prototype, "value", void 0);
-exports.HrefCustomAttribute = __decorate([
-    runtimeHtml.customAttribute({ name: 'href', noMultiBindings: true })
-], exports.HrefCustomAttribute);
 
 const RouterRegistration = IRouter;
 /**
@@ -5029,7 +5031,7 @@ const DefaultComponents = [
 ];
 const ViewportCustomElementRegistration = exports.ViewportCustomElement;
 const LoadCustomAttributeRegistration = exports.LoadCustomAttribute;
-const HrefCustomAttributeRegistration = exports.HrefCustomAttribute;
+const HrefCustomAttributeRegistration = HrefCustomAttribute;
 /**
  * Default router resources:
  * - Custom Elements: `au-viewport`
@@ -5038,7 +5040,7 @@ const HrefCustomAttributeRegistration = exports.HrefCustomAttribute;
 const DefaultResources = [
     exports.ViewportCustomElement,
     exports.LoadCustomAttribute,
-    exports.HrefCustomAttribute,
+    HrefCustomAttribute,
 ];
 function configure(container, options) {
     let basePath = null;
@@ -5140,6 +5142,7 @@ exports.ComponentExpression = ComponentExpression;
 exports.CompositeSegmentExpression = CompositeSegmentExpression;
 exports.DefaultComponents = DefaultComponents;
 exports.DefaultResources = DefaultResources;
+exports.HrefCustomAttribute = HrefCustomAttribute;
 exports.HrefCustomAttributeRegistration = HrefCustomAttributeRegistration;
 exports.ILocationManager = ILocationManager;
 exports.IRouteContext = IRouteContext;

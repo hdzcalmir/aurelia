@@ -1,6 +1,6 @@
 import { IContainer } from '@aurelia/kernel';
 import { IAstEvaluator, IBinding, IConnectableBinding, IExpressionParser, Scope, type IsBindingBehavior } from '@aurelia/runtime';
-import { BindingCommandInstance, ICommandBuildInfo, IHydratableController, IInstruction, IRenderer, IPlatform } from '@aurelia/runtime-html';
+import { BindingCommandInstance, ICommandBuildInfo, IHydratableController, IInstruction, IRenderer, IPlatform, BindingCommandStaticAuDefinition } from '@aurelia/runtime-html';
 import type { IDisposable, IServiceLocator } from '@aurelia/kernel';
 export declare const eventPreventDefaultBehavior: {
     register(container: IContainer): void;
@@ -9,12 +9,12 @@ export declare const delegateSyntax: {
     register(container: IContainer): void;
 };
 export declare class DelegateBindingCommand implements BindingCommandInstance {
-    get type(): 'IgnoreAttr';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 export declare class ListenerBindingRenderer implements IRenderer {
     readonly target: 'dl';
-    constructor(eventDelegator: IEventDelegator);
     render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: DelegateBindingInstruction, platform: IPlatform, exprParser: IExpressionParser): void;
 }
 export declare class DelegateBindingInstruction {

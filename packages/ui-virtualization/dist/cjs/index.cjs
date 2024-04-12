@@ -211,24 +211,24 @@ class VirtualRepeat {
         const u = this.itemHeight;
         const f = this.local;
         const {firstIndex: d, topCount: p, botCount: g} = this.measureBuffer(this.scrollerObserver.getValue(), n.length, i, u);
-        let m = 0;
-        let w;
+        let w = 0;
+        let m;
         let C;
         let b;
         for (o = 0; a > o; ++o) {
-            m = d + o;
-            w = s.item(m);
+            w = d + o;
+            m = s.item(w);
             h = n[o];
             C = n[o - 1];
             if (h.isActive) {
                 b = h.scope;
-                b.bindingContext[f] = w;
-                b.overrideContext.$index = m;
+                b.bindingContext[f] = m;
+                b.overrideContext.$index = w;
                 b.overrideContext.$length = i;
             } else {
                 h.nodes.insertBefore(C.nodes.firstChild.nextSibling);
-                b = e.Scope.fromParent(r.scope, new e.BindingContext(f, s.item(m)));
-                b.overrideContext.$index = m;
+                b = e.Scope.fromParent(r.scope, new e.BindingContext(f, s.item(w)));
+                b.overrideContext.$index = w;
                 b.overrideContext.$length = i;
                 enhanceOverrideContext(b.overrideContext);
                 void h.activate(r, r, b);
@@ -290,29 +290,29 @@ class VirtualRepeat {
             return;
         }
         let g = null;
-        let m = null;
-        let w = 0;
+        let w = null;
+        let m = 0;
         let C = 0;
         let b = 0;
         let v = 0;
         if (p) {
             for (v = 0; l > v; ++v) {
-                w = a + v;
-                m = n[v].scope;
-                m.bindingContext[s] = o.item(w);
-                m.overrideContext.$index = w;
-                m.overrideContext.$length = h;
+                m = a + v;
+                w = n[v].scope;
+                w.bindingContext[s] = o.item(m);
+                w.overrideContext.$index = m;
+                w.overrideContext.$length = h;
             }
         } else if (d) {
             C = a - c;
             while (C > 0) {
                 g = n.shift();
-                w = n[n.length - 1].scope.overrideContext["$index"] + 1;
+                m = n[n.length - 1].scope.overrideContext["$index"] + 1;
                 n.push(g);
-                m = g.scope;
-                m.bindingContext[s] = o.item(w);
-                m.overrideContext.$index = w;
-                m.overrideContext.$length = h;
+                w = g.scope;
+                w.bindingContext[s] = o.item(m);
+                w.overrideContext.$index = m;
+                w.overrideContext.$length = h;
                 g.nodes.insertBefore(i.bottom);
                 ++b;
                 --C;
@@ -320,12 +320,12 @@ class VirtualRepeat {
         } else {
             C = c - a;
             while (C > 0) {
-                w = c - (b + 1);
+                m = c - (b + 1);
                 g = n.pop();
-                m = g.scope;
-                m.bindingContext[s] = o.item(w);
-                m.overrideContext.$index = w;
-                m.overrideContext.$length = h;
+                w = g.scope;
+                w.bindingContext[s] = o.item(m);
+                w.overrideContext.$index = m;
+                w.overrideContext.$length = h;
                 g.nodes.insertBefore(n[0].nodes.firstChild);
                 n.unshift(g);
                 ++b;
@@ -392,19 +392,17 @@ class VirtualRepeat {
     }
 }
 
-s.customAttribute({
-    isTemplateController: true,
+VirtualRepeat.$au = {
+    type: "custom-attribute",
     name: "virtual-repeat",
+    isTemplateController: true,
     bindables: {
-        local: {
-            name: "local"
-        },
+        local: true,
         items: {
-            name: "items",
             primary: true
         }
     }
-})(VirtualRepeat);
+};
 
 class CollectionObservationMediator {
     constructor(t, e) {

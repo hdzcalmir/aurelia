@@ -3,6 +3,9 @@ import { BindingBehaviorInstance } from '@aurelia/runtime';
 import type { Constructable, IContainer, IServiceLocator, PartialResourceDefinition, ResourceDefinition } from '@aurelia/kernel';
 import { type IResourceKind } from './resources-shared';
 export type PartialBindingBehaviorDefinition = PartialResourceDefinition;
+export type BindingBehaviorStaticAuDefinition = PartialBindingBehaviorDefinition & {
+    type: 'binding-behavior';
+};
 export type BindingBehaviorType<T extends Constructable = Constructable> = ResourceType<T, BindingBehaviorInstance>;
 export type BindingBehaviorKind = IResourceKind & {
     isType<T>(value: T): value is (T extends Constructable ? BindingBehaviorType<T> : never);

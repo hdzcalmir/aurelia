@@ -5,16 +5,21 @@ import type { IPlatform } from '../platform';
 import type { IInstruction } from '../renderer';
 import type { IWatchDefinition } from '../watch';
 import { type IResourceKind } from './resources-shared';
-export type PartialCustomElementDefinition = PartialResourceDefinition<{
+export type PartialCustomElementDefinition<TBindables extends string = string> = PartialResourceDefinition<{
     readonly cache?: '*' | number;
     readonly capture?: boolean | ((attr: string) => boolean);
     readonly template?: null | string | Node;
     readonly instructions?: readonly (readonly IInstruction[])[];
     readonly dependencies?: readonly Key[];
     readonly injectable?: InjectableToken | null;
+    /**
+     * An semi internal property used to signal the rendering process not to try to compile the template again
+     */
     readonly needsCompile?: boolean;
     readonly surrogates?: readonly IInstruction[];
-    readonly bindables?: Record<string, PartialBindableDefinition> | readonly string[];
+    readonly bindables?: Record<TBindables, true | Omit<PartialBindableDefinition, 'name'>> | (TBindables | PartialBindableDefinition & {
+        name: TBindables;
+    })[];
     readonly containerless?: boolean;
     readonly shadowOptions?: {
         mode: 'open' | 'closed';
@@ -24,6 +29,9 @@ export type PartialCustomElementDefinition = PartialResourceDefinition<{
     readonly watches?: IWatchDefinition[];
     readonly processContent?: ProcessContentHook | null;
 }>;
+export type CustomElementStaticAuDefinition<TBindables extends string = string> = PartialCustomElementDefinition<TBindables> & {
+    type: 'custom-element';
+};
 export type CustomElementType<C extends Constructable = Constructable> = ResourceType<C, ICustomElementViewModel & (C extends Constructable<infer P> ? P : object), PartialCustomElementDefinition>;
 export type CustomElementKind = IResourceKind & {
     /**

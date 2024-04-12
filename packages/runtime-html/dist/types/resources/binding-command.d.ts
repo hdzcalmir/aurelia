@@ -3,20 +3,15 @@ import { IAttrMapper } from '../compiler/attribute-mapper';
 import { PropertyBindingInstruction } from '../renderer';
 import type { Constructable, IContainer, ResourceType, ResourceDefinition, PartialResourceDefinition, IServiceLocator } from '@aurelia/kernel';
 import type { IInstruction } from '../renderer';
-import { AttrSyntax, IAttributeParser } from './attribute-pattern';
+import { AttrSyntax } from './attribute-pattern';
 import type { BindableDefinition } from '../bindable';
 import type { CustomAttributeDefinition } from './custom-attribute';
 import type { CustomElementDefinition } from './custom-element';
 import { type IResourceKind } from './resources-shared';
-/**
- * Characteristics of a binding command.
- * - `None`: The normal process (check custom attribute -> check bindable -> command.build()) should take place.
- * - `IgnoreAttr`: The binding command wants to take over the processing of an attribute. The template compiler keeps the attribute as is in compilation, instead of executing the normal process.
- */
-export type CommandType = 'None' | 'IgnoreAttr';
-export type PartialBindingCommandDefinition = PartialResourceDefinition<{
-    readonly type?: string | null;
-}>;
+export type PartialBindingCommandDefinition = PartialResourceDefinition;
+export type BindingCommandStaticAuDefinition = PartialBindingCommandDefinition & {
+    type: 'binding-command';
+};
 export interface IPlainAttrCommandInfo {
     readonly node: Element;
     readonly attr: AttrSyntax;
@@ -31,7 +26,12 @@ export interface IBindableCommandInfo {
 }
 export type ICommandBuildInfo = IPlainAttrCommandInfo | IBindableCommandInfo;
 export type BindingCommandInstance<T extends {} = {}> = {
-    type: CommandType;
+    /**
+     * Characteristics of a binding command.
+     * - `false`: The normal process (check custom attribute -> check bindable -> command.build()) should take place.
+     * - `true`: The binding command wants to take over the processing of an attribute. The template compiler keeps the attribute as is in compilation, instead of executing the normal process.
+     */
+    ignoreAttr: boolean;
     build(info: ICommandBuildInfo, parser: IExpressionParser, mapper: IAttrMapper): IInstruction;
 } & T;
 export type BindingCommandType<T extends Constructable = Constructable> = ResourceType<T, BindingCommandInstance, PartialBindingCommandDefinition>;
@@ -51,76 +51,86 @@ export declare class BindingCommandDefinition<T extends Constructable = Construc
     readonly name: string;
     readonly aliases: readonly string[];
     readonly key: string;
-    readonly type: string | null;
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialBindingCommandDefinition, Type: BindingCommandType<T>): BindingCommandDefinition<T>;
     register(container: IContainer, aliasName?: string | undefined): void;
 }
 export declare const BindingCommand: Readonly<BindingCommandKind>;
 export declare class OneTimeBindingCommand implements BindingCommandInstance {
-    get type(): 'None';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class ToViewBindingCommand implements BindingCommandInstance {
-    get type(): 'None';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class FromViewBindingCommand implements BindingCommandInstance {
-    get type(): 'None';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class TwoWayBindingCommand implements BindingCommandInstance {
-    get type(): 'None';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class DefaultBindingCommand implements BindingCommandInstance {
-    get type(): 'None';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): PropertyBindingInstruction;
 }
 export declare class ForBindingCommand implements BindingCommandInstance {
-    get type(): 'None';
-    static get inject(): unknown[];
-    constructor(attrParser: IAttributeParser);
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 export declare class TriggerBindingCommand implements BindingCommandInstance {
-    get type(): 'IgnoreAttr';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 export declare class CaptureBindingCommand implements BindingCommandInstance {
-    get type(): 'IgnoreAttr';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 /**
  * Attr binding command. Compile attr with binding symbol with command `attr` to `AttributeBindingInstruction`
  */
 export declare class AttrBindingCommand implements BindingCommandInstance {
-    get type(): 'IgnoreAttr';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 /**
  * Style binding command. Compile attr with binding symbol with command `style` to `AttributeBindingInstruction`
  */
 export declare class StyleBindingCommand implements BindingCommandInstance {
-    get type(): 'IgnoreAttr';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 /**
  * Class binding command. Compile attr with binding symbol with command `class` to `AttributeBindingInstruction`
  */
 export declare class ClassBindingCommand implements BindingCommandInstance {
-    get type(): 'IgnoreAttr';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 /**
  * Binding command to refer different targets (element, custom element/attribute view models, controller) attached to an element
  */
 export declare class RefBindingCommand implements BindingCommandInstance {
-    get type(): 'IgnoreAttr';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 export declare class SpreadBindingCommand implements BindingCommandInstance {
-    get type(): 'IgnoreAttr';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(_info: ICommandBuildInfo): IInstruction;
 }
 //# sourceMappingURL=binding-command.d.ts.map

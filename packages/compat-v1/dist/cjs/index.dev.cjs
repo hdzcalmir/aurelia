@@ -113,15 +113,12 @@ const ensureExpression = (parser, srcOrExpr, expressionType) => {
 };
 /** @internal */ const etIsFunction = 'IsFunction';
 
-const registeredSymbol = Symbol('.call');
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+const callRegisteredContainer = new WeakSet();
 const callSyntax = {
     register(container) {
-        /* istanbul ignore next */
-        if (!container[registeredSymbol]) {
-            /* istanbul ignore next */
-            container[registeredSymbol] = true;
-            container.register(exports.CallBindingCommand, exports.CallBindingRenderer);
+        if (!callRegisteredContainer.has(container)) {
+            callRegisteredContainer.add(container);
+            container.register(CallBindingCommand, exports.CallBindingRenderer);
         }
     }
 };
@@ -133,18 +130,19 @@ class CallBindingInstruction {
         this.type = instructionType;
     }
 }
-exports.CallBindingCommand = class CallBindingCommand {
-    get type() { return 'None'; }
+class CallBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, exprParser) {
         const target = info.bindable === null
             ? kernel.camelCase(info.attr.target)
             : info.bindable.name;
         return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), target);
     }
+}
+CallBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'call',
 };
-exports.CallBindingCommand = __decorate([
-    runtimeHtml.bindingCommand('call')
-], exports.CallBindingCommand);
 exports.CallBindingRenderer = class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
@@ -222,23 +220,24 @@ const delegateSyntax = {
     register(container) {
         if (!delegateRegisteredContainer.has(container)) {
             delegateRegisteredContainer.add(container);
-            container.register(IEventDelegator, exports.DelegateBindingCommand, exports.ListenerBindingRenderer);
+            container.register(IEventDelegator, DelegateBindingCommand, exports.ListenerBindingRenderer);
         }
     }
 };
-exports.DelegateBindingCommand = class DelegateBindingCommand {
-    get type() { return 'IgnoreAttr'; }
+class DelegateBindingCommand {
+    get ignoreAttr() { return true; }
     build(info, exprParser) {
         return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true);
     }
+}
+DelegateBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'delegate',
 };
-exports.DelegateBindingCommand = __decorate([
-    runtimeHtml.bindingCommand('delegate')
-], exports.DelegateBindingCommand);
 exports.ListenerBindingRenderer = class ListenerBindingRenderer {
-    /** @internal */ static get inject() { return [IEventDelegator]; }
-    constructor(eventDelegator) {
-        this._eventDelegator = eventDelegator;
+    constructor() {
+        /** @internal */
+        this._eventDelegator = kernel.resolve(IEventDelegator);
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
@@ -491,17 +490,8 @@ function enableComposeCompat() {
     if (!addedMetadata) {
         addedMetadata = true;
         const def = runtimeHtml.CustomElement.getDefinition(runtimeHtml.AuCompose);
-        const viewModelBindable = def.bindables.viewModel = runtimeHtml.BindableDefinition.create('viewModel', runtimeHtml.AuCompose);
-        const viewBindable = def.bindables.view = runtimeHtml.BindableDefinition.create('view', runtimeHtml.AuCompose);
-        const bindableInfo = runtimeHtml.BindablesInfo.from(def, false);
-        // when <au-compose/> is used some where before the enable compat call is invoked
-        // BindableInfo of AuCompose definition has already been cached
-        // and thus will not be updated with view/viewmodel information
-        // so need to add it there too
-        if (!('view' in bindableInfo.attrs)) {
-            bindableInfo.attrs.view = bindableInfo.bindables.view = viewBindable;
-            bindableInfo.attrs['view-model'] = bindableInfo.bindables.viewModel = viewModelBindable;
-        }
+        def.bindables.viewModel = runtimeHtml.BindableDefinition.create('viewModel', runtimeHtml.AuCompose);
+        def.bindables.view = runtimeHtml.BindableDefinition.create('view', runtimeHtml.AuCompose);
     }
     defineHiddenProp(prototype, 'viewModelChanged', function (value) {
         this.component = value;
@@ -542,13 +532,6 @@ function disableComposeCompat() {
         const def = runtimeHtml.CustomElement.getDefinition(runtimeHtml.AuCompose);
         delete def.bindables.viewModel;
         delete def.bindables.view;
-        const bindableInfo = runtimeHtml.BindablesInfo.from(def, false);
-        if (('view' in bindableInfo.attrs)) {
-            delete bindableInfo.attrs.view;
-            delete bindableInfo.bindables.view;
-            delete bindableInfo.attrs['view-model'];
-            delete bindableInfo.bindables.viewModel;
-        }
     }
     compatEnabled = false;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -622,7 +605,9 @@ const compatRegistration = {
 
 exports.BindingEngine = BindingEngine;
 exports.CallBinding = CallBinding;
+exports.CallBindingCommand = CallBindingCommand;
 exports.CallBindingInstruction = CallBindingInstruction;
+exports.DelegateBindingCommand = DelegateBindingCommand;
 exports.DelegateBindingInstruction = DelegateBindingInstruction;
 exports.DelegateListenerBinding = DelegateListenerBinding;
 exports.DelegateListenerOptions = DelegateListenerOptions;

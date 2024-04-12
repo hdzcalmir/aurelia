@@ -2,7 +2,9 @@ import { IViewFactory } from '../../templating/view';
 import type { ISyntheticView, ICustomAttributeController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, ControllerVisitor, IHydratableController } from '../../templating/controller';
 import type { IInstruction } from '../../renderer';
 import type { INode } from '../../dom';
+import { CustomAttributeStaticAuDefinition } from '../custom-attribute';
 export declare class If implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     elseFactory?: IViewFactory;
     elseView?: ISyntheticView;
     ifView?: ISyntheticView;
@@ -22,6 +24,7 @@ export declare class If implements ICustomAttributeViewModel {
     accept(visitor: ControllerVisitor): void | true;
 }
 export declare class Else implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     link(controller: IHydratableController, _childController: ICustomAttributeController, _target: INode, _instruction: IInstruction): void;
 }
 //# sourceMappingURL=if.d.ts.map

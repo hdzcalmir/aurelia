@@ -1,8 +1,10 @@
 import { type Scope } from '@aurelia/runtime';
+import { CustomAttributeStaticAuDefinition } from '../custom-attribute';
 import type { ICustomAttributeController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, IHydratableController, ISyntheticView, ControllerVisitor } from '../../templating/controller';
 import type { INode } from '../../dom';
 import type { IInstruction } from '../../renderer';
 export declare class Switch implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     readonly $controller: ICustomAttributeController<this>;
     private view;
     value: unknown;
@@ -23,6 +25,7 @@ export declare class Switch implements ICustomAttributeViewModel {
     accept(visitor: ControllerVisitor): void | true;
 }
 export declare class Case implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     readonly $controller: ICustomAttributeController<this>;
     value: unknown;
     fallThrough: boolean;
@@ -40,6 +43,7 @@ export declare class Case implements ICustomAttributeViewModel {
     accept(visitor: ControllerVisitor): void | true;
 }
 export declare class DefaultCase extends Case {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     protected linkToSwitch($switch: Switch): void;
 }
 //# sourceMappingURL=switch.d.ts.map

@@ -62,6 +62,7 @@ export interface IContainer extends IServiceLocator, IDisposable {
      * This is a semi private API, apps should avoid using it directly
      */
     useResources(container: IContainer): void;
+    find<TResType extends ResourceType>(kind: string, name: string): TResType | null;
     find<TResType extends ResourceType>(key: string): TResType | null;
 }
 export declare class ResolverBuilder<K> {

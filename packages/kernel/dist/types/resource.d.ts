@@ -1,8 +1,12 @@
 import { IContainer } from './di';
 import { Constructable } from './interfaces';
-export type ResourceType<TUserType extends Constructable = Constructable, TResInstance extends {} = {}, TResType extends {} = {}, TUserInstance extends InstanceType<TUserType> = InstanceType<TUserType>> = (new (...args: any[]) => TResInstance & TUserInstance) & {
-    readonly aliases?: readonly string[];
-} & TResType & TUserType;
+export type StaticResourceType<TDef extends object = object> = {
+    readonly aliases?: string[];
+    readonly $au?: PartialResourceDefinition<{
+        type: string;
+    } & TDef>;
+};
+export type ResourceType<TUserType extends Constructable = Constructable, TResInstance extends {} = {}, TResType extends {} = {}, TUserInstance extends InstanceType<TUserType> = InstanceType<TUserType>> = (new (...args: any[]) => TResInstance & TUserInstance) & StaticResourceType & TResType & TUserType;
 export type ResourceDefinition<TUserType extends Constructable = Constructable, TResInstance extends {} = {}, TDef extends {} = {}, TResType extends {} = {}, TUserInstance extends InstanceType<TUserType> = InstanceType<TUserType>> = {
     /**
      * Unique key to identify the resource.
@@ -19,7 +23,7 @@ export type ResourceDefinition<TUserType extends Constructable = Constructable, 
      */
     register(container: IContainer, aliasName?: string): void;
 } & TDef;
-export type PartialResourceDefinition<TDef extends {} = {}> = {
+export type PartialResourceDefinition<TDef extends object = object> = {
     readonly name: string;
     readonly aliases?: readonly string[];
 } & TDef;

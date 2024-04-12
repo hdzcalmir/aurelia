@@ -480,15 +480,15 @@ class VirtualRepeat {
         return view;
     }
 }
-// avoid excessive code generation, if it doesn't affect readability too much
-runtimeHtml.customAttribute({
-    isTemplateController: true,
+VirtualRepeat.$au = {
+    type: 'custom-attribute',
     name: 'virtual-repeat',
+    isTemplateController: true,
     bindables: {
-        local: { name: 'local' },
-        items: { name: 'items', primary: true }
+        local: true,
+        items: { primary: true }
     }
-})(VirtualRepeat);
+};
 class CollectionObservationMediator {
     constructor(repeat, handleCollectionChange) {
         this.repeat = repeat;

@@ -43,7 +43,9 @@ export declare function bindable(target: {}, prop: string): void;
 export declare const Bindable: Readonly<{
     name: string;
     keyFrom: (name: string) => string;
-    from(type: Constructable, ...bindableLists: readonly (BindableDefinition | Record<string, PartialBindableDefinition> | readonly string[] | undefined)[]): Record<string, BindableDefinition>;
+    from(type: Constructable, ...bindableLists: readonly (BindableDefinition | Record<string, Exclude<PartialBindableDefinition, 'name'> | true> | readonly (string | (PartialBindableDefinition & {
+        name: string;
+    }))[] | undefined)[]): Record<string, BindableDefinition>;
     getAll(Type: Constructable): readonly BindableDefinition[];
 }>;
 export declare class BindableDefinition {

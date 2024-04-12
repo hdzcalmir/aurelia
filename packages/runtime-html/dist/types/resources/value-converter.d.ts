@@ -2,6 +2,9 @@ import type { Constructable, IContainer, ResourceDefinition, ResourceType, Parti
 import { ValueConverterInstance } from '@aurelia/runtime';
 import { type IResourceKind } from './resources-shared';
 export type PartialValueConverterDefinition = PartialResourceDefinition;
+export type ValueConverterStaticAuDefinition = PartialValueConverterDefinition & {
+    type: 'value-converter';
+};
 export type ValueConverterType<T extends Constructable = Constructable> = ResourceType<T, ValueConverterInstance>;
 export type ValueConverterKind = IResourceKind & {
     isType<T>(value: T): value is (T extends Constructable ? ValueConverterType<T> : never);

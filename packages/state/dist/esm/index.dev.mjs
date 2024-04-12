@@ -1,6 +1,6 @@
 import { DI, Registration, resolve, optional, all, ILogger, lazy, camelCase, IContainer } from '@aurelia/kernel';
 import { Scope, AccessorType, connectable, astEvaluate, astBind, astUnbind } from '@aurelia/runtime';
-import { IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, bindingBehavior, attributePattern, bindingCommand, renderer, AttrSyntax, AppTask, lifecycleHooks, CustomElement, CustomAttribute, ILifecycleHooks } from '@aurelia/runtime-html';
+import { IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, bindingBehavior, attributePattern, renderer, AttrSyntax, AppTask, lifecycleHooks, CustomElement, CustomAttribute, ILifecycleHooks } from '@aurelia/runtime-html';
 
 /** @internal */
 const createInterface = DI.createInterface;
@@ -496,9 +496,8 @@ let DispatchAttributePattern = class DispatchAttributePattern {
 DispatchAttributePattern = __decorate([
     attributePattern({ pattern: 'PART.dispatch', symbols: '.' })
 ], DispatchAttributePattern);
-let StateBindingCommand = class StateBindingCommand {
-    get type() { return 'None'; }
-    get name() { return 'state'; }
+class StateBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, parser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -519,21 +518,22 @@ let StateBindingCommand = class StateBindingCommand {
         }
         return new StateBindingInstruction(value, target);
     }
+}
+StateBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'state',
 };
-StateBindingCommand = __decorate([
-    bindingCommand('state')
-], StateBindingCommand);
-let DispatchBindingCommand = class DispatchBindingCommand {
-    get type() { return 'IgnoreAttr'; }
-    get name() { return 'dispatch'; }
+class DispatchBindingCommand {
+    get ignoreAttr() { return true; }
     build(info) {
         const attr = info.attr;
         return new DispatchBindingInstruction(attr.target, attr.rawValue);
     }
+}
+DispatchBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'dispatch',
 };
-DispatchBindingCommand = __decorate([
-    bindingCommand('dispatch')
-], DispatchBindingCommand);
 class StateBindingInstruction {
     constructor(from, to) {
         this.from = from;

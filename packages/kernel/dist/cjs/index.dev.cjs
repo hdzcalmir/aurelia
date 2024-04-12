@@ -780,7 +780,28 @@ class Container {
                 def.register(this);
             }
             else if (isClass(current)) {
-                singletonRegistration(current, current).register(this);
+                if (isString((current).$au?.type)) {
+                    const $au = current.$au;
+                    const aliases = (current.aliases ?? emptyArray).concat($au.aliases ?? emptyArray);
+                    let key = `${resourceBaseName}:${$au.type}:${$au.name}`;
+                    if (!this.has(key, false)) {
+                        aliasToRegistration(current, key).register(this);
+                        if (!this.has(current, false)) {
+                            singletonRegistration(current, current).register(this);
+                        }
+                        j = 0;
+                        jj = aliases.length;
+                        for (; j < jj; ++j) {
+                            key = `${resourceBaseName}:${$au.type}:${aliases[j]}`;
+                            if (!this.has(key, false)) {
+                                aliasToRegistration(current, key).register(this);
+                            }
+                        }
+                    }
+                }
+                else {
+                    singletonRegistration(current, current).register(this);
+                }
             }
             else {
                 keys = Object.keys(current);
@@ -1064,7 +1085,8 @@ class Container {
             this.registerResolver(key, res[key]);
         }
     }
-    find(key) {
+    find(keyOrKind, name) {
+        const key = isString(name) ? `${resourceBaseName}:${keyOrKind}:${name}` : keyOrKind;
         let container = this;
         let resolver = container.res[key];
         if (resolver == null) {

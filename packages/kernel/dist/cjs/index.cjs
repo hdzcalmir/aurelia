@@ -458,11 +458,11 @@ ContainerConfiguration.DEFAULT = ContainerConfiguration.from({});
 
 const createContainer = t => new Container(null, ContainerConfiguration.from(t));
 
-const C = new Set("Array ArrayBuffer Boolean DataView Date Error EvalError Float32Array Float64Array Function Int8Array Int16Array Int32Array Map Number Object Promise RangeError ReferenceError RegExp Set SharedArrayBuffer String SyntaxError TypeError Uint8Array Uint8ClampedArray Uint16Array Uint32Array URIError WeakMap WeakSet".split(" "));
+const $ = new Set("Array ArrayBuffer Boolean DataView Date Error EvalError Float32Array Float64Array Function Int8Array Int16Array Int32Array Map Number Object Promise RangeError ReferenceError RegExp Set SharedArrayBuffer String SyntaxError TypeError Uint8Array Uint8ClampedArray Uint16Array Uint32Array URIError WeakMap WeakSet".split(" "));
 
-let b = 0;
+let C = 0;
 
-let $ = null;
+let b = null;
 
 class Container {
     get depth() {
@@ -472,7 +472,7 @@ class Container {
         return this.t;
     }
     constructor(t, e) {
-        this.id = ++b;
+        this.id = ++C;
         this.i = 0;
         this.u = new Map;
         this.t = t;
@@ -517,7 +517,27 @@ class Container {
             } else if ((u = t.Metadata.getOwn(p, r)) != null) {
                 u.register(this);
             } else if (isClass(r)) {
-                singletonRegistration(r, r).register(this);
+                if (isString(r.$au?.type)) {
+                    const t = r.$au;
+                    const e = (r.aliases ?? I).concat(t.aliases ?? I);
+                    let n = `${p}:${t.type}:${t.name}`;
+                    if (!this.has(n, false)) {
+                        aliasToRegistration(r, n).register(this);
+                        if (!this.has(r, false)) {
+                            singletonRegistration(r, r).register(this);
+                        }
+                        o = 0;
+                        i = e.length;
+                        for (;o < i; ++o) {
+                            n = `${p}:${t.type}:${e[o]}`;
+                            if (!this.has(n, false)) {
+                                aliasToRegistration(r, n).register(this);
+                            }
+                        }
+                    }
+                } else {
+                    singletonRegistration(r, r).register(this);
+                }
             } else {
                 n = Object.keys(r);
                 o = 0;
@@ -552,7 +572,7 @@ class Container {
                 }
                 this.res[t] = e;
             }
-        } else if (s instanceof Resolver && s.C === 4) {
+        } else if (s instanceof Resolver && s.$ === 4) {
             s._state.push(e);
         } else {
             n.set(t, new Resolver(t, 4, [ s, e ]));
@@ -582,8 +602,8 @@ class Container {
         if (t.resolve !== void 0) {
             return t;
         }
-        const r = $;
-        let n = $ = this;
+        const r = b;
+        let n = b = this;
         let s;
         let o;
         try {
@@ -593,7 +613,7 @@ class Container {
                     if (n.t == null) {
                         o = isRegisterInRequester(t) ? this : n;
                         if (e) {
-                            return this.$(t, o);
+                            return this.C(t, o);
                         }
                         return null;
                     }
@@ -603,7 +623,7 @@ class Container {
                 }
             }
         } finally {
-            $ = r;
+            b = r;
         }
         return null;
     }
@@ -615,8 +635,8 @@ class Container {
         if (t.$isResolver) {
             return t.resolve(this, this);
         }
-        const e = $;
-        let r = $ = this;
+        const e = b;
+        let r = b = this;
         let n;
         let s;
         try {
@@ -625,7 +645,7 @@ class Container {
                 if (n == null) {
                     if (r.t == null) {
                         s = isRegisterInRequester(t) ? this : r;
-                        n = this.$(t, s);
+                        n = this.C(t, s);
                         return n.resolve(r, this);
                     }
                     r = r.t;
@@ -634,14 +654,14 @@ class Container {
                 }
             }
         } finally {
-            $ = e;
+            b = e;
         }
         throw createMappedError(8, t);
     }
     getAll(t, e = false) {
         validateKey(t);
-        const r = $;
-        const n = $ = this;
+        const r = b;
+        const n = b = this;
         let s = n;
         let o;
         let i = I;
@@ -668,7 +688,7 @@ class Container {
                 }
             }
         } finally {
-            $ = r;
+            b = r;
         }
         return I;
     }
@@ -676,12 +696,12 @@ class Container {
         if (h(t)) {
             throw createMappedError(15, t);
         }
-        const r = $;
-        $ = this;
+        const r = b;
+        b = this;
         try {
             return e === void 0 ? new t(...getDependencies(t).map(containerGetKey, this)) : new t(...getDependencies(t).map(containerGetKey, this), ...e);
         } finally {
-            $ = r;
+            b = r;
         }
     }
     hasFactory(t) {
@@ -729,17 +749,18 @@ class Container {
             this.registerResolver(t, e[t]);
         }
     }
-    find(t) {
-        let e = this;
-        let r = e.res[t];
-        if (r == null) {
-            e = e.root;
-            r = e.res[t];
+    find(t, e) {
+        const r = isString(e) ? `${p}:${t}:${e}` : t;
+        let n = this;
+        let s = n.res[r];
+        if (s == null) {
+            n = n.root;
+            s = n.res[r];
         }
-        if (r == null) {
+        if (s == null) {
             return null;
         }
-        return r.getFactory?.(e)?.Type ?? null;
+        return s.getFactory?.(n)?.Type ?? null;
     }
     dispose() {
         if (this.u.size > 0) {
@@ -751,11 +772,11 @@ class Container {
             this.res = {};
         }
     }
-    $(t, e) {
+    C(t, e) {
         if (!isFunction(t)) {
             throw createMappedError(9, t);
         }
-        if (C.has(t.name)) {
+        if ($.has(t.name)) {
             throw createMappedError(10, t);
         }
         if (isRegistry(t)) {
@@ -785,8 +806,8 @@ class Factory {
         this.transformers = null;
     }
     construct(t, e) {
-        const r = $;
-        $ = t;
+        const r = b;
+        b = t;
         let n;
         try {
             if (e === void 0) {
@@ -799,7 +820,7 @@ class Factory {
             }
             return this.transformers.reduce(transformInstance, n);
         } finally {
-            $ = r;
+            b = r;
         }
     }
     registerTransformer(t) {
@@ -822,14 +843,14 @@ function containerGetKey(t) {
 }
 
 function resolve(...t) {
-    if ($ == null) {
+    if (b == null) {
         throw createMappedError(16, ...t);
     }
-    return t.length === 1 ? $.get(t[0]) : t.map(containerGetKey, $);
+    return t.length === 1 ? b.get(t[0]) : t.map(containerGetKey, b);
 }
 
 const buildAllResponse = (t, e, r) => {
-    if (t instanceof Resolver && t.C === 4) {
+    if (t instanceof Resolver && t.$ === 4) {
         const n = t._state;
         const s = n.length;
         const o = Array(s);
@@ -1091,14 +1112,14 @@ class Resolver {
         this.O = false;
         this.A = null;
         this.k = t;
-        this.C = e;
+        this.$ = e;
         this._state = r;
     }
     register(t, e) {
         return t.registerResolver(e || this.k, this);
     }
     resolve(t, e) {
-        switch (this.C) {
+        switch (this.$) {
           case 0:
             return this._state;
 
@@ -1109,7 +1130,7 @@ class Resolver {
                 }
                 this.O = true;
                 this._state = (this.A = t.getFactory(this._state)).construct(e);
-                this.C = 0;
+                this.$ = 0;
                 this.O = false;
                 return this._state;
             }
@@ -1133,11 +1154,11 @@ class Resolver {
             return e.get(this._state);
 
           default:
-            throw createMappedError(5, this.C);
+            throw createMappedError(5, this.$);
         }
     }
     getFactory(t) {
-        switch (this.C) {
+        switch (this.$) {
           case 1:
           case 2:
             return t.getFactory(this._state);

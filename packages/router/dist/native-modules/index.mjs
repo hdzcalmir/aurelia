@@ -450,7 +450,7 @@ class RouterOptions {
         if (t instanceof Router) {
             t = t.configuration;
         } else {
-            t = t.get(W);
+            t = t.get(J);
         }
         return t.options;
     }
@@ -833,13 +833,14 @@ class InstructionComponent {
             return null;
         }
         const e = t.createChild();
-        const r = this.isType() ? e.invoke(this.type) : e.get(routerComponentResolver(this.name));
-        if (r == null) {
+        const r = this.isType() ? this.type : e.getResolver(u.keyFrom(this.name)).getFactory(e).Type;
+        const o = e.invoke(r);
+        if (o == null) {
             throw new Error(`Failed to create instance when trying to resolve component '${this.name}'!`);
         }
-        const o = l.$el(e, r, s, null);
-        o.parent = i;
-        return r;
+        const h = l.$el(e, o, s, null);
+        h.parent = i;
+        return o;
     }
     same(t, i = false) {
         return i ? this.type === t.type : this.name === t.name;
@@ -850,22 +851,6 @@ class InstructionComponent {
         }
         return this.name;
     }
-}
-
-function routerComponentResolver(t) {
-    const i = u.keyFrom(t);
-    return {
-        $isResolver: true,
-        resolve(t, s) {
-            if (s.has(i, false)) {
-                return s.get(i);
-            }
-            if (s.root.has(i, false)) {
-                return s.root.get(i);
-            }
-            return s.get(i);
-        }
-    };
 }
 
 function arrayRemove(t, i) {
@@ -4707,7 +4692,7 @@ class Router {
         this.navigator = r(_);
         this.viewer = r(F);
         this.store = r(F);
-        this.configuration = r(W);
+        this.configuration = r(J);
         this.handleNavigatorNavigateEvent = t => {
             void this.I(t);
         };
@@ -5616,7 +5601,7 @@ __decorate([ y ], D.prototype, "id", void 0);
 
 D = __decorate([ C("load") ], D);
 
-let Q = class HrefCustomAttribute {
+class HrefCustomAttribute {
     constructor() {
         this.element = r(R);
         this.router = r(H);
@@ -5661,48 +5646,50 @@ let Q = class HrefCustomAttribute {
         const i = t.children;
         return i?.some((t => t.vmKind === "customAttribute" && t.viewModel instanceof D)) ?? false;
     }
+}
+
+HrefCustomAttribute.$au = {
+    type: "custom-attribute",
+    name: "href",
+    noMultiBindings: true,
+    bindables: {
+        value: {
+            mode: L
+        }
+    }
 };
+
+let Q = class ConsideredActiveCustomAttribute {};
 
 __decorate([ y({
     mode: L
 }) ], Q.prototype, "value", void 0);
 
-Q = __decorate([ C({
-    name: "href",
-    noMultiBindings: true
-}) ], Q);
+Q = __decorate([ C("considered-active") ], Q);
 
-let J = class ConsideredActiveCustomAttribute {};
+const J = /*@__PURE__*/ e.createInterface("IRouterConfiguration", (t => t.singleton(RouterConfiguration)));
 
-__decorate([ y({
-    mode: L
-}) ], J.prototype, "value", void 0);
+const W = H;
 
-J = __decorate([ C("considered-active") ], J);
+const G = [ W ];
 
-const W = /*@__PURE__*/ e.createInterface("IRouterConfiguration", (t => t.singleton(RouterConfiguration)));
+const K = B;
 
-const G = H;
+const Z = z;
 
-const K = [ G ];
+const X = D;
 
-const Z = B;
+const Y = HrefCustomAttribute;
 
-const X = z;
-
-const Y = D;
-
-const tt = Q;
-
-const it = [ B, z, D, Q, J ];
+const tt = [ B, z, D, HrefCustomAttribute, Q ];
 
 class RouterConfiguration {
     static register(t) {
-        const i = t.get(W);
+        const i = t.get(J);
         i.options = RouterConfiguration.options;
         i.options.setRouterConfiguration(i);
         RouterConfiguration.options = RouterOptions.create();
-        return t.register(...K, ...it, S.activating(H, RouterConfiguration.configurationCall), S.activated(H, (t => t.initialLoad())), S.deactivated(H, (t => t.stop())));
+        return t.register(...G, ...tt, S.activating(H, RouterConfiguration.configurationCall), S.activated(H, (t => t.initialLoad())), S.deactivated(H, (t => t.stop())));
     }
     static customize(t) {
         if (t === undefined) {
@@ -5725,7 +5712,7 @@ class RouterConfiguration {
         if (t instanceof Router) {
             return t.configuration;
         }
-        return t.get(W);
+        return t.get(J);
     }
     apply(t, i = false) {
         if (i) {
@@ -5750,5 +5737,5 @@ RouterConfiguration.configurationCall = t => {
     t.start();
 };
 
-export { O as ConfigurableRoute, J as ConsideredActiveCustomAttribute, K as DefaultComponents, it as DefaultResources, V as Endpoint, EndpointContent, FoundRoute, Q as HrefCustomAttribute, tt as HrefCustomAttributeRegistration, M as ILinkHandler, H as IRouter, W as IRouterConfiguration, InstructionParameters, LinkHandler, D as LoadCustomAttribute, Y as LoadCustomAttributeRegistration, Navigation, NavigationCoordinator, NavigationFlags, _ as Navigator, x as RecognizedRoute, U as RecognizerEndpoint, Route, T as RouteRecognizer, Router, RouterConfiguration, RouterNavigationCancelEvent, RouterNavigationCompleteEvent, RouterNavigationEndEvent, RouterNavigationErrorEvent, RouterNavigationStartEvent, RouterOptions, G as RouterRegistration, RouterStartEvent, RouterStopEvent, A as Routes, RoutingHook, RoutingInstruction, RoutingScope, Runner, Step, Viewport, ViewportContent, B as ViewportCustomElement, Z as ViewportCustomElementRegistration, ViewportOptions, ViewportScope, ViewportScopeContent, z as ViewportScopeCustomElement, X as ViewportScopeCustomElementRegistration, route, routes };
+export { O as ConfigurableRoute, Q as ConsideredActiveCustomAttribute, G as DefaultComponents, tt as DefaultResources, V as Endpoint, EndpointContent, FoundRoute, HrefCustomAttribute, Y as HrefCustomAttributeRegistration, M as ILinkHandler, H as IRouter, J as IRouterConfiguration, InstructionParameters, LinkHandler, D as LoadCustomAttribute, X as LoadCustomAttributeRegistration, Navigation, NavigationCoordinator, NavigationFlags, _ as Navigator, x as RecognizedRoute, U as RecognizerEndpoint, Route, T as RouteRecognizer, Router, RouterConfiguration, RouterNavigationCancelEvent, RouterNavigationCompleteEvent, RouterNavigationEndEvent, RouterNavigationErrorEvent, RouterNavigationStartEvent, RouterOptions, W as RouterRegistration, RouterStartEvent, RouterStopEvent, A as Routes, RoutingHook, RoutingInstruction, RoutingScope, Runner, Step, Viewport, ViewportContent, B as ViewportCustomElement, K as ViewportCustomElementRegistration, ViewportOptions, ViewportScope, ViewportScopeContent, z as ViewportScopeCustomElement, Z as ViewportScopeCustomElementRegistration, route, routes };
 

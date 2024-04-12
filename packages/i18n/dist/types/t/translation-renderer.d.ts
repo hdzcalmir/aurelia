@@ -14,8 +14,7 @@ export declare class TranslationBindingInstruction {
     constructor(from: IsBindingBehavior, to: string);
 }
 export declare class TranslationBindingCommand implements BindingCommandInstance {
-    readonly type: 'None';
-    get name(): string;
+    readonly ignoreAttr = false;
     build(info: ICommandBuildInfo, parser: IExpressionParser, attrMapper: IAttrMapper): TranslationBindingInstruction;
 }
 export declare class TranslationBindingRenderer implements IRenderer {
@@ -35,8 +34,7 @@ export declare class TranslationBindBindingInstruction {
     constructor(from: IsBindingBehavior, to: string);
 }
 export declare class TranslationBindBindingCommand implements BindingCommandInstance {
-    readonly type: 'None';
-    get name(): string;
+    readonly ignoreAttr = false;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): TranslationBindingInstruction;
 }
 export declare class TranslationBindBindingRenderer implements IRenderer {
