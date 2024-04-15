@@ -1,6 +1,6 @@
 {
   "name": "@aurelia/validation",
-  "version": "2.1.0-dev.202404120945",
+  "version": "2.1.0-dev.202404150648",
   "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.mjs",
   "exports": {
@@ -54,11 +54,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@aurelia/kernel": "2.1.0-dev.202404120945",
-    "@aurelia/metadata": "2.1.0-dev.202404120945",
-    "@aurelia/platform": "2.1.0-dev.202404120945",
-    "@aurelia/runtime": "2.1.0-dev.202404120945",
-    "@aurelia/runtime-html": "2.1.0-dev.202404120945"
+    "@aurelia/kernel": "2.1.0-dev.202404150648",
+    "@aurelia/metadata": "2.1.0-dev.202404150648",
+    "@aurelia/platform": "2.1.0-dev.202404150648",
+    "@aurelia/runtime": "2.1.0-dev.202404150648",
+    "@aurelia/runtime-html": "2.1.0-dev.202404150648"
   },
   "devDependencies": {
     "typescript": "5.4.2"
