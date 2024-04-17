@@ -1,34 +1,33 @@
 import { camelCase, toArray } from '@aurelia/kernel';
 import {
   AccessorType,
-  CustomExpression,
   connectable,
+} from '@aurelia/runtime';
+import {
   astEvaluate,
   astUnbind,
   astBind,
-  IConnectableBinding,
   IAstEvaluator,
-} from '@aurelia/runtime';
-import {
   CustomElement,
   IPlatform,
   type IBindingController,
   mixinAstEvaluator,
   mixingBindingLimited,
   type IHydratableController,
-  type INode
+  type INode,
+  IBinding
 } from '@aurelia/runtime-html';
 import type * as i18next from 'i18next';
 import { I18N } from '../i18n';
 
 import type { ITask, QueueTaskOptions, TaskQueue } from '@aurelia/platform';
 import type { IContainer, IServiceLocator } from '@aurelia/kernel';
+import { IExpressionParser, IsExpression, CustomExpression } from '@aurelia/expression-parser';
 import type {
   Scope,
-  IsExpression,
-  IExpressionParser,
   IObserverLocator,
   IAccessor,
+  IObserverLocatorBasedConnectable,
 } from '@aurelia/runtime';
 import type { TranslationBindBindingInstruction, TranslationBindingInstruction } from './translation-renderer';
 import type { TranslationParametersBindingInstruction } from './translation-parameters-renderer';
@@ -55,7 +54,7 @@ interface ContentValue {
 
 const attributeAliases = new Map([['text', 'textContent'], ['html', 'innerHTML']]);
 
-export interface TranslationBinding extends IAstEvaluator, IConnectableBinding { }
+export interface TranslationBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator { }
 
 const forOpts = { optional: true } as const;
 const taskQueueOpts: QueueTaskOptions = {
@@ -63,7 +62,7 @@ const taskQueueOpts: QueueTaskOptions = {
   preempt: true,
 };
 
-export class TranslationBinding implements IConnectableBinding {
+export class TranslationBinding implements IBinding {
 
   public static create({
     parser,
@@ -81,10 +80,10 @@ export class TranslationBinding implements IConnectableBinding {
       ? parser.parse(instruction.from, etIsProperty)
       : instruction.from;
     if (isParameterContext) {
-      binding.useParameter(expr);
+      binding.useParameter(expr as IsExpression);
     } else {
       const interpolation = expr instanceof CustomExpression ? parser.parse(expr.value as string, etInterpolation) : undefined;
-      binding.ast = interpolation || expr;
+      binding.ast = interpolation || expr as IsExpression;
     }
   }
 
@@ -355,7 +354,7 @@ export class TranslationBinding implements IConnectableBinding {
     }
   }
 }
-connectable(TranslationBinding);
+connectable(TranslationBinding, null!);
 mixinAstEvaluator(true)(TranslationBinding);
 mixingBindingLimited(TranslationBinding, () => 'updateTranslations');
 
@@ -372,9 +371,9 @@ class AccessorUpdateTask {
   }
 }
 
-interface ParameterBinding extends IAstEvaluator, IConnectableBinding {}
+interface ParameterBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator {}
 
-class ParameterBinding {
+class ParameterBinding implements IBinding {
   public isBound: boolean = false;
   public value!: i18next.TOptions;
   /**
@@ -437,5 +436,5 @@ class ParameterBinding {
   }
 }
 
-connectable(ParameterBinding);
+connectable(ParameterBinding, null!);
 mixinAstEvaluator(true)(ParameterBinding);

@@ -2,17 +2,14 @@ import { resolve } from "@aurelia/kernel";
 import type { ITask } from '@aurelia/platform';
 import {
   Scope,
-  BindingIdentifier,
-  IsBindingBehavior,
-  ForOfStatement,
   Collection,
   getCollectionObserver,
   IndexMap,
   BindingContext,
   type IOverrideContext,
-  astEvaluate,
 } from '@aurelia/runtime';
 import {
+  astEvaluate,
   IInstruction,
   IController,
   IViewFactory,
@@ -42,6 +39,7 @@ import type {
   IVirtualRepeater
 } from "./interfaces";
 import { calcOuterHeight, calcScrollerViewportHeight, getDistanceToScroller } from "./utilities-dom";
+import { IsBindingBehavior, ForOfStatement, BindingIdentifier } from '@aurelia/expression-parser';
 
 const noScrollInfo: IScrollerInfo = {
   height: 0,
@@ -50,7 +48,7 @@ const noScrollInfo: IScrollerInfo = {
   width: 0
 };
 
-export interface VirtualRepeat extends ICustomAttributeViewModel {}
+export interface VirtualRepeat extends ICustomAttributeViewModel { }
 
 export class VirtualRepeat implements IScrollerSubscriber, IVirtualRepeater {
   public static readonly $au: CustomAttributeStaticAuDefinition = {
@@ -533,7 +531,7 @@ class CollectionObservationMediator {
   public constructor(
     public repeat: VirtualRepeat,
     public handleCollectionChange: (col: Collection, indexMap: IndexMap) => void,
-  ) {}
+  ) { }
 
   public start(c?: Collection | null): void {
     if (this._collection === c) {
@@ -557,9 +555,9 @@ interface IBufferCalculation {
 }
 
 const enum SizingSignals {
-  none              = 0b0_00000,
-  reset             = 0b0_00001,
-  has_sizing        = 0b0_00010,
+  none = 0b0_00000,
+  reset = 0b0_00001,
+  has_sizing = 0b0_00010,
 }
 
 interface ICalculation {
@@ -578,7 +576,7 @@ class Calculation implements ICalculation {
   private constructor(
     public readonly signals: SizingSignals,
     public readonly minViews: number,
-  ) {}
+  ) { }
 }
 
 interface IRepeaterItemScope extends Scope {

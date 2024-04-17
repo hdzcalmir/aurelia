@@ -1,8 +1,26 @@
 import { camelCase, type IContainer, type IServiceLocator } from '@aurelia/kernel';
-import { astBind, astEvaluate, astUnbind, IAccessor, IAstEvaluator, IBinding, IConnectableBinding, IExpressionParser, IObserverLocator, IsBindingBehavior, Scope } from '@aurelia/runtime';
-import { BindingCommandInstance, ICommandBuildInfo, IController, IHydratableController, IInstruction, IRenderer, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, renderer, IPlatform } from '@aurelia/runtime-html';
+import { IAccessor, IObserverLocator, IObserverLocatorBasedConnectable, Scope } from '@aurelia/runtime';
+import {
+  astBind,
+  astEvaluate,
+  astUnbind,
+  type BindingCommandInstance,
+  ICommandBuildInfo,
+  IController,
+  IHydratableController,
+  IInstruction,
+  IRenderer,
+  mixinAstEvaluator,
+  mixinUseScope,
+  mixingBindingLimited,
+  renderer,
+  IPlatform,
+  type IAstEvaluator,
+  type IBinding,
+} from '@aurelia/runtime-html';
 import { ensureExpression, etIsFunction } from './utilities';
 import { BindingCommandStaticAuDefinition } from '@aurelia/runtime-html/dist/types/resources/binding-command';
+import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 
 const callRegisteredContainer = new WeakSet<IContainer>();
 
@@ -48,7 +66,6 @@ export class CallBindingCommand implements BindingCommandInstance {
   }
 }
 
-@renderer(instructionType)
 export class CallBindingRenderer implements IRenderer {
   public target!: typeof instructionType;
 
@@ -64,6 +81,7 @@ export class CallBindingRenderer implements IRenderer {
     renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
   }
 }
+renderer(instructionType)(CallBindingRenderer, null!);
 
 function getTarget(potentialTarget: object): object {
   if ((potentialTarget as { viewModel?: object }).viewModel != null) {
@@ -75,7 +93,7 @@ function getTarget(potentialTarget: object): object {
 /**
  * A binding for handling .call syntax
  */
-export interface CallBinding extends IAstEvaluator, IConnectableBinding { }
+export interface CallBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator { }
 export class CallBinding implements IBinding {
   public isBound: boolean = false;
 

@@ -1,36 +1,41 @@
 import {
+  connectable
+} from '@aurelia/runtime';
+import {
   IAstEvaluator,
-  IConnectableBinding,
   astBind,
   astEvaluate,
   astUnbind,
-  connectable
-} from '@aurelia/runtime';
+} from '../ast.eval';
 import { activating } from '../templating/controller';
 import { toView } from './interfaces-bindings';
 import type { IServiceLocator } from '@aurelia/kernel';
 import type { ITask, QueueTaskOptions, TaskQueue } from '@aurelia/platform';
 import type {
-  IBinding, ICollectionSubscriber, IObserverLocator,
-  IsExpression, Scope
+  ICollectionSubscriber,
+  IObserverLocator,
+  IObserverLocatorBasedConnectable,
+  ISubscriber,
+  Scope
 } from '@aurelia/runtime';
 import type { IPlatform } from '../platform';
 import { isArray, safeString } from '../utilities';
-import type { BindingMode, IBindingController } from './interfaces-bindings';
+import type { BindingMode, IBinding, IBindingController } from './interfaces-bindings';
 import { mixinUseScope, mixingBindingLimited, mixinAstEvaluator } from './binding-utils';
+import { IsExpression } from '@aurelia/expression-parser';
 
 const queueTaskOptions: QueueTaskOptions = {
   reusable: false,
   preempt: true,
 };
 
-export interface ContentBinding extends IAstEvaluator, IConnectableBinding {}
+export interface ContentBinding extends IAstEvaluator, IServiceLocator, IObserverLocatorBasedConnectable {}
 
 /**
  * A binding for handling the element content interpolation
  */
 
-export class ContentBinding implements IBinding, ICollectionSubscriber {
+export class ContentBinding implements IBinding, ISubscriber, ICollectionSubscriber {
   public isBound: boolean = false;
 
   // at runtime, mode may be overriden by binding behavior
@@ -214,5 +219,5 @@ export class ContentBinding implements IBinding, ICollectionSubscriber {
 
 mixinUseScope(ContentBinding);
 mixingBindingLimited(ContentBinding, () => 'updateTarget');
-connectable()(ContentBinding);
+connectable(ContentBinding, null!);
 mixinAstEvaluator(void 0, false)(ContentBinding);

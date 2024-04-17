@@ -1,7 +1,29 @@
 import { DI, IContainer, resolve } from '@aurelia/kernel';
-import { astBind, astEvaluate, astUnbind, IAstEvaluator, IBinding, IConnectableBinding, IExpressionParser, Scope, type IsBindingBehavior } from '@aurelia/runtime';
-import { AppTask, BindingCommandInstance, ICommandBuildInfo, IEventTarget, IHydratableController, IInstruction, InstructionType, IRenderer, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, renderer, IPlatform, IListenerBindingOptions, BindingCommandStaticAuDefinition } from '@aurelia/runtime-html';
+import { IObserverLocatorBasedConnectable, type Scope } from '@aurelia/runtime';
+import {
+  AppTask,
+  type BindingCommandInstance,
+  type ICommandBuildInfo,
+  IEventTarget,
+  type IHydratableController,
+  IInstruction,
+  InstructionType,
+  IRenderer,
+  mixinAstEvaluator,
+  mixinUseScope,
+  mixingBindingLimited,
+  renderer,
+  IPlatform,
+  IListenerBindingOptions,
+  type BindingCommandStaticAuDefinition,
+  astBind,
+  astEvaluate,
+  astUnbind,
+  type IAstEvaluator,
+  type IBinding,
+} from '@aurelia/runtime-html';
 import { createLookup, ensureExpression, etIsFunction, isFunction } from './utilities';
+import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 
 import type { IDisposable, IServiceLocator } from '@aurelia/kernel';
 
@@ -49,7 +71,6 @@ export class DelegateBindingCommand implements BindingCommandInstance {
   }
 }
 
-@renderer('dl')
 /** @internal */
 export class ListenerBindingRenderer implements IRenderer {
 
@@ -75,6 +96,7 @@ export class ListenerBindingRenderer implements IRenderer {
     ));
   }
 }
+renderer('dl')(ListenerBindingRenderer, null!);
 
 export class DelegateBindingInstruction {
   public readonly type = InstructionType.listenerBinding;
@@ -92,7 +114,7 @@ export class DelegateListenerOptions {
   ) { }
 }
 
-export interface DelegateListenerBinding extends IAstEvaluator, IConnectableBinding { }
+export interface DelegateListenerBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator { }
 /**
  * Listener binding. Handle event binding between view and view model
  */

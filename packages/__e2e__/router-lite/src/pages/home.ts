@@ -1,10 +1,5 @@
-import { customElement } from '@aurelia/runtime-html';
+import { CustomElement } from '@aurelia/runtime-html';
 import template from './home.html';
 
-@customElement({
-  name: 'home',
-  template
-})
-export class Home {
-
-}
+export class Home {}
+CustomElement.define({ name: 'home', template }, Home);

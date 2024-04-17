@@ -1,11 +1,9 @@
 import { camelCase } from '@aurelia/kernel';
 import { TranslationBinding } from './translation-binding';
 import {
-  CustomExpression,
-  IExpressionParser,
   IObserverLocator,
-  type IsBindingBehavior,
 } from '@aurelia/runtime';
+import { IExpressionParser, CustomExpression, IsBindingBehavior } from '@aurelia/expression-parser';
 import {
   IRenderer,
   renderer,
@@ -40,7 +38,7 @@ export class TranslationBindingInstruction {
   public mode: typeof BindingMode.toView = bmToView;
 
   public constructor(
-    public from: IsBindingBehavior,
+    public from: CustomExpression | IsBindingBehavior,
     public to: string,
   ) { }
 }
@@ -58,11 +56,10 @@ export class TranslationBindingCommand implements BindingCommandInstance {
     } else {
       target = info.bindable.name;
     }
-    return new TranslationBindingInstruction(new CustomExpression(info.attr.rawValue) as IsBindingBehavior, target);
+    return new TranslationBindingInstruction(new CustomExpression(info.attr.rawValue), target);
   }
 }
 
-@renderer(TranslationInstructionType)
 export class TranslationBindingRenderer implements IRenderer {
   public target!: typeof TranslationInstructionType;
   public render(
@@ -84,6 +81,7 @@ export class TranslationBindingRenderer implements IRenderer {
     });
   }
 }
+renderer(TranslationInstructionType)(TranslationBindingRenderer, null!);
 
 export const TranslationBindInstructionType = 'tbt';
 
@@ -125,7 +123,6 @@ export class TranslationBindBindingCommand implements BindingCommandInstance {
   }
 }
 
-@renderer(TranslationBindInstructionType)
 export class TranslationBindBindingRenderer implements IRenderer {
   public target!: typeof TranslationBindInstructionType;
   public render(
@@ -147,3 +144,4 @@ export class TranslationBindBindingRenderer implements IRenderer {
     });
   }
 }
+renderer(TranslationBindInstructionType)(TranslationBindBindingRenderer, null!);

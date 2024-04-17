@@ -1,11 +1,11 @@
 import { I18nConfiguration, TranslationBinding, TranslationParametersAttributePattern, TranslationParametersBindingCommand, TranslationParametersBindingInstruction, TranslationParametersBindingRenderer, TranslationParametersInstructionType } from '@aurelia/i18n';
 import { DI } from '@aurelia/kernel';
+import { IExpressionParser } from '@aurelia/expression-parser';
 import {
-  IExpressionParser,
   IObserverLocator,
-  IBinding,
 } from '@aurelia/runtime';
 import {
+  IBinding,
   IRenderer,
   StandardConfiguration,
   IHydratableController,

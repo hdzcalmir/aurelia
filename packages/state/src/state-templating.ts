@@ -1,12 +1,9 @@
 import { camelCase, resolve } from '@aurelia/kernel';
+import { IExpressionParser, ExpressionType, type IsBindingBehavior } from '@aurelia/expression-parser';
 import {
-  type ExpressionType,
-  IExpressionParser,
   IObserverLocator,
-  type IsBindingBehavior,
 } from '@aurelia/runtime';
 import {
-  attributePattern,
   AttrSyntax,
   IAttrMapper,
   IHydratableController,
@@ -22,14 +19,12 @@ import { IStore } from './interfaces';
 import { StateBinding } from './state-binding';
 import { StateDispatchBinding } from './state-dispatch-binding';
 
-@attributePattern({ pattern: 'PART.state', symbols: '.' })
 export class StateAttributePattern {
   public 'PART.state'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax {
     return new AttrSyntax(rawName, rawValue, parts[0], 'state');
   }
 }
 
-@attributePattern({ pattern: 'PART.dispatch', symbols: '.' })
 export class DispatchAttributePattern {
   public 'PART.dispatch'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax {
     return new AttrSyntax(rawName, rawValue, parts[0], 'dispatch');
@@ -94,7 +89,6 @@ export class DispatchBindingInstruction {
   ) {}
 }
 
-@renderer('sb')
 export class StateBindingInstructionRenderer implements IRenderer {
   public readonly target!: 'sb';
 
@@ -120,8 +114,8 @@ export class StateBindingInstructionRenderer implements IRenderer {
     ));
   }
 }
+renderer('sb')(StateBindingInstructionRenderer, null!);
 
-@renderer('sd')
 export class DispatchBindingInstructionRenderer implements IRenderer {
   public readonly target!: 'sd';
   /** @internal */ private readonly _stateContainer = resolve(IStore);
@@ -143,6 +137,7 @@ export class DispatchBindingInstructionRenderer implements IRenderer {
     ));
   }
 }
+renderer('sd')(DispatchBindingInstructionRenderer, null!);
 
 function ensureExpression<TFrom>(parser: IExpressionParser, srcOrExpr: TFrom, expressionType: ExpressionType): Exclude<TFrom, string> {
   if (typeof srcOrExpr === 'string') {

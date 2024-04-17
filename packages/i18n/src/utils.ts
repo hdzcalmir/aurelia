@@ -1,6 +1,6 @@
-import { BindingBehaviorExpression, IBinding, IsValueConverter, ValueConverterExpression } from '@aurelia/runtime';
+import { BindingBehaviorExpression, IsValueConverter, ValueConverterExpression } from '@aurelia/expression-parser';
 import { Writable } from '@aurelia/kernel';
-import { BindingMode, State } from '@aurelia/runtime-html';
+import { IBinding, BindingMode, State } from '@aurelia/runtime-html';
 
 export const Signals = {
   I18N_EA_CHANNEL: 'i18n:locale:changed',

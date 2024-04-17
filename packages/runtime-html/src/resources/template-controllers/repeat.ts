@@ -1,22 +1,26 @@
 import { type IDisposable, onResolve, IIndexable } from '@aurelia/kernel';
 import {
   BindingBehaviorExpression,
+  DestructuringAssignmentExpression,
+  ForOfStatement,
+  type IsBindingBehavior,
+  ValueConverterExpression,
+} from '@aurelia/expression-parser';
+import {
   BindingContext,
   type Collection,
   CollectionObserver,
-  DestructuringAssignmentExpression,
-  ForOfStatement,
   getCollectionObserver,
   type IndexMap,
   type IOverrideContext,
-  type IsBindingBehavior,
   Scope,
-  ValueConverterExpression,
+  createIndexMap,
+} from '@aurelia/runtime';
+import {
   astEvaluate,
   astAssign,
-  createIndexMap,
-  IExpressionParser,
-} from '@aurelia/runtime';
+} from '../../ast.eval';
+import { IExpressionParser } from '@aurelia/expression-parser';
 import { IRenderLocation } from '../../dom';
 import { IViewFactory } from '../../templating/view';
 import { CustomAttributeStaticAuDefinition, attrTypeName } from '../custom-attribute';

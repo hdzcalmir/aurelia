@@ -1,5 +1,6 @@
-import { bindable } from 'aurelia';
+import { CustomElement } from '@aurelia/runtime-html';
 
 export class MyInput {
-    @bindable value = '';
+  value = '';
 }
+CustomElement.define({ name: 'my-input', bindables: ['value'] }, MyInput);
