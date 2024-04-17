@@ -2,9 +2,9 @@ import { ensureEmpty as e, reportTaskQueue as t } from "../../../platform/dist/n
 
 import { noop as n, isArrayIndex as i, DI as r, Registration as a, kebabCase as s, emptyArray as o, EventAggregator as l, ILogger as u } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { IObserverLocator as c, IDirtyChecker as f, INodeObserverLocator as d, Scope as p } from "../../../runtime/dist/native-modules/index.mjs";
+import { IObserverLocator as c, IDirtyChecker as f, INodeObserverLocator as d } from "../../../runtime/dist/native-modules/index.mjs";
 
-import { StandardConfiguration as m, IPlatform as g, ITemplateCompiler as b, CustomElement as v, InstructionType as y, CustomAttribute as x, Aurelia as $, astEvaluate as w, astAssign as E, astBind as k, astUnbind as S } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { StandardConfiguration as p, IPlatform as m, ITemplateCompiler as g, CustomElement as b, InstructionType as v, CustomAttribute as y, Aurelia as x, astEvaluate as $, astAssign as w, astBind as E, astUnbind as k, Scope as S } from "../../../runtime-html/dist/native-modules/index.mjs";
 
 import { BrowserPlatform as C } from "../../../platform-browser/dist/native-modules/index.mjs";
 
@@ -920,9 +920,9 @@ class TestContext {
     get container() {
         if (this.c === void 0) {
             this.c = r.createContainer();
-            m.register(this.c);
+            p.register(this.c);
             this.c.register(a.instance(TestContext, this));
-            if (this.c.has(g, true) === false) {
+            if (this.c.has(m, true) === false) {
                 this.c.register(me);
             }
         }
@@ -930,13 +930,13 @@ class TestContext {
     }
     get platform() {
         if (this.p === void 0) {
-            this.p = this.container.get(g);
+            this.p = this.container.get(m);
         }
         return this.p;
     }
     get templateCompiler() {
         if (this.t === void 0) {
-            this.t = this.container.get(b);
+            this.t = this.container.get(g);
         }
         return this.t;
     }
@@ -989,7 +989,7 @@ let me;
 
 function setPlatform(e) {
     pe = e;
-    me = a.instance(g, e);
+    me = a.instance(m, e);
 }
 
 function createContainer(...e) {
@@ -2243,14 +2243,14 @@ function nextAncestor(e, t) {
 }
 
 function nextNode(e, t) {
-    return v.for(t, {
+    return b.for(t, {
         optional: true
     })?.shadowRoot?.firstChild ?? t.firstChild ?? t.nextSibling ?? nextAncestor(e, t);
 }
 
 function getVisibleText(e, t) {
     let n = "";
-    let i = v.for(e, {
+    let i = b.for(e, {
         optional: true
     })?.shadowRoot?.firstChild ?? e.firstChild;
     while (i !== null) {
@@ -2264,46 +2264,46 @@ function getVisibleText(e, t) {
 
 function instructionTypeName(e) {
     switch (e) {
-      case y.textBinding:
+      case v.textBinding:
         return "textBinding";
 
-      case y.interpolation:
+      case v.interpolation:
         return "interpolation";
 
-      case y.propertyBinding:
+      case v.propertyBinding:
         return "propertyBinding";
 
-      case y.iteratorBinding:
+      case v.iteratorBinding:
         return "iteratorBinding";
 
-      case y.listenerBinding:
+      case v.listenerBinding:
         return "listenerBinding";
 
-      case y.refBinding:
+      case v.refBinding:
         return "refBinding";
 
-      case y.stylePropertyBinding:
+      case v.stylePropertyBinding:
         return "stylePropertyBinding";
 
-      case y.setProperty:
+      case v.setProperty:
         return "setProperty";
 
-      case y.setAttribute:
+      case v.setAttribute:
         return "setAttribute";
 
-      case y.hydrateElement:
+      case v.hydrateElement:
         return "hydrateElement";
 
-      case y.hydrateAttribute:
+      case v.hydrateAttribute:
         return "hydrateAttribute";
 
-      case y.hydrateTemplateController:
+      case v.hydrateTemplateController:
         return "hydrateTemplateController";
 
-      case y.hydrateLetElement:
+      case v.hydrateLetElement:
         return "hydrateLetElement";
 
-      case y.letBinding:
+      case v.letBinding:
         return "letBinding";
 
       default:
@@ -2869,7 +2869,7 @@ function notMatch(e, t, n) {
 }
 
 function isCustomElementType(e, t) {
-    if (!v.isType(e)) {
+    if (!b.isType(e)) {
         innerFail({
             actual: false,
             expected: true,
@@ -2881,7 +2881,7 @@ function isCustomElementType(e, t) {
 }
 
 function isCustomAttributeType(e, t) {
-    if (!x.isType(e)) {
+    if (!y.isType(e)) {
         innerFail({
             actual: false,
             expected: true,
@@ -4329,7 +4329,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
     const {platform: o, observerLocator: l} = r;
     const c = r.doc.body.appendChild(r.createElement("div"));
     const f = c.appendChild(r.createElement("app"));
-    const d = new $(s);
+    const d = new x(s);
     const p = typeof t === "function" ? t : t == null ? class {} : function $Ctor() {
         Object.setPrototypeOf(t, $Ctor.prototype);
         return t;
@@ -4337,20 +4337,20 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
     const m = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
     if (p !== t && t != null) {
         m.forEach((e => {
-            O.define(v.getAnnotation(t, e, null), p, e);
+            O.define(b.getAnnotation(t, e, null), p, e);
         }));
     }
-    const g = v.isType(p) ? v.getDefinition(p) : {};
-    const b = v.define({
+    const g = b.isType(p) ? b.getDefinition(p) : {};
+    const v = b.define({
         ...g,
         name: g.name ?? "app",
         template: e
     }, p);
-    if (s.has(b, true)) {
+    if (s.has(v, true)) {
         throw new Error("Container of the context contains instance of the application root component. " + "Consider using a different class, or context as it will likely cause surprises in tests.");
     }
-    const y = s.get(b);
-    let x = void 0;
+    const y = s.get(v);
+    let $ = void 0;
     function startFixtureApp() {
         if (i) {
             try {
@@ -4359,7 +4359,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
                     component: y,
                     ...a
                 });
-                k.startPromise = x = d.start();
+                k.startPromise = $ = d.start();
             } catch (e) {
                 try {
                     const dispose = () => {
@@ -4557,7 +4557,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
     let E;
     const k = new class Results {
         constructor() {
-            this.startPromise = x;
+            this.startPromise = $;
             this.ctx = r;
             this.container = s;
             this.platform = o;
@@ -4599,8 +4599,8 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
             return w > 0;
         }
         get started() {
-            if (x instanceof Promise) {
-                return Promise.resolve(x).then((() => this));
+            if ($ instanceof Promise) {
+                return Promise.resolve($).then((() => this));
             }
             return Promise.resolve(this);
         }
@@ -4840,19 +4840,19 @@ class MockTracingExpression {
     }
     evaluate(...e) {
         this.trace("evaluate", ...e);
-        return w(this.inner, ...e);
+        return $(this.inner, ...e);
     }
     assign(...e) {
         this.trace("assign", ...e);
-        return E(this.inner, ...e);
+        return w(this.inner, ...e);
     }
     bind(...e) {
         this.trace("bind", ...e);
-        k(this.inner, ...e);
+        E(this.inner, ...e);
     }
     unbind(...e) {
         this.trace("unbind", ...e);
-        S(this.inner, ...e);
+        k(this.inner, ...e);
     }
     accept(...e) {
         this.trace("accept", ...e);
@@ -5298,7 +5298,7 @@ function createObserverLocator(e) {
 }
 
 function createScopeForTest(e = {}, t, n) {
-    return t ? p.fromParent(p.create(t), e) : p.create(e, null, n);
+    return t ? S.fromParent(S.create(t), e) : S.create(e, null, n);
 }
 
 class Call {

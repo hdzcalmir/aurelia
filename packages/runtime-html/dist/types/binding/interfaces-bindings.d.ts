@@ -1,6 +1,6 @@
 import { IDisposable, IServiceLocator } from '@aurelia/kernel';
 import { State } from '../templating/controller';
-import { Scope } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import { TaskQueue } from '@aurelia/platform';
 /**
  * Mode of a binding to operate

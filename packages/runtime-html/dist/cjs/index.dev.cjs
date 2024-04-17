@@ -99,6 +99,8 @@ const errorsMap = {
     [155 /* ErrorNames.value_converter_existed */]: `Value converter {{0}} has already been registered.`,
     [156 /* ErrorNames.binding_behavior_existed */]: `Binding behavior {{0}} has already been registered.`,
     [157 /* ErrorNames.binding_command_existed */]: `Binding command {{0}} has already been registered.`,
+    [203 /* ErrorNames.null_scope */]: `Trying to retrieve a property or build a scope from a null/undefined scope`,
+    [204 /* ErrorNames.create_scope_with_null_context */]: 'Trying to create a scope with null/undefined binding context',
     [227 /* ErrorNames.invalid_bindable_decorator_usage_symbol */]: `@bindable is not supported for properties that uses a symbol for name. Use a string for the property name instead.`,
     [228 /* ErrorNames.invalid_bindable_decorator_usage_class_without_configuration */]: `@bindable cannot be used as a class decorator when no configuration object is supplied.`,
     [229 /* ErrorNames.invalid_bindable_decorator_usage_class_without_property_name_configuration */]: `@bindable cannot be used as a class decorator when no property name is supplied in the configuration object.`,
@@ -268,8 +270,81 @@ function getBindingCommandHelp(name) {
     }
 }
 
+class Scope {
+    constructor(parent, bindingContext, overrideContext, isBoundary) {
+        this.parent = parent;
+        this.bindingContext = bindingContext;
+        this.overrideContext = overrideContext;
+        this.isBoundary = isBoundary;
+    }
+    static getContext(scope, name, ancestor) {
+        if (scope == null) {
+            throw createMappedError(203 /* ErrorNames.null_scope */);
+        }
+        let overrideContext = scope.overrideContext;
+        let currentScope = scope;
+        if (ancestor > 0) {
+            // jump up the required number of ancestor contexts (eg $parent.$parent requires two jumps)
+            while (ancestor > 0) {
+                ancestor--;
+                currentScope = currentScope.parent;
+                if (currentScope == null) {
+                    return void 0;
+                }
+            }
+            overrideContext = currentScope.overrideContext;
+            // Here we are giving benefit of doubt considering the dev has used one or more `$parent` token, and thus should know what s/he is targeting.
+            return name in overrideContext ? overrideContext : currentScope.bindingContext;
+        }
+        // walk the scope hierarchy until
+        // the first scope that has the property in its contexts
+        // or
+        // the closet boundary scope
+        // -------------------------
+        // this behavior is different with v1
+        // where it would fallback to the immediate scope instead of the root one
+        // TODO: maybe avoid immediate loop and return earlier
+        // -------------------------
+        while (currentScope != null
+            && !currentScope.isBoundary
+            && !(name in currentScope.overrideContext)
+            && !(name in currentScope.bindingContext)) {
+            currentScope = currentScope.parent;
+        }
+        if (currentScope == null) {
+            return scope.bindingContext;
+        }
+        overrideContext = currentScope.overrideContext;
+        return name in overrideContext ? overrideContext : currentScope.bindingContext;
+    }
+    static create(bc, oc, isBoundary) {
+        if (bc == null) {
+            throw createMappedError(204 /* ErrorNames.create_scope_with_null_context */);
+        }
+        return new Scope(null, bc, oc ?? new OverrideContext(), isBoundary ?? false);
+    }
+    static fromParent(ps, bc) {
+        if (ps == null) {
+            throw createMappedError(203 /* ErrorNames.null_scope */);
+        }
+        return new Scope(ps, bc, new OverrideContext(), false);
+    }
+}
+/**
+ * A class for creating context in synthetic scope to keep the number of classes of context in scope small
+ */
+class BindingContext {
+    constructor(key, value) {
+        if (key !== void 0) {
+            this[key] = value;
+        }
+    }
+}
+class OverrideContext {
+}
+
 /* eslint-disable no-fallthrough */
-const { astAssign, astEvaluate, astBind, astUnbind } = (() => {
+const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
     const ekAccessThis = 'AccessThis';
     const ekAccessBoundary = 'AccessBoundary';
     const ekAccessGlobal = 'AccessGlobal';
@@ -301,7 +376,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = (() => {
     const ekObjectDestructuring = 'ObjectDestructuring';
     const ekDestructuringAssignmentLeaf = 'DestructuringAssignmentLeaf';
     const ekCustom = 'Custom';
-    const getContext = runtime.Scope.getContext;
+    const getContext = Scope.getContext;
     // eslint-disable-next-line max-lines-per-function
     function astEvaluate(ast, s, e, c) {
         switch (ast.$kind) {
@@ -442,7 +517,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = (() => {
                         }
                         return map;
                     }, {});
-                    const functionScope = runtime.Scope.fromParent(s, context);
+                    const functionScope = Scope.fromParent(s, context);
                     return astEvaluate(ast.body, functionScope, e, c);
                 };
                 return func;
@@ -709,7 +784,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = (() => {
                             if (typeof val !== 'object' || val === null) {
                                 throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
                             }
-                            let source = astEvaluate(item.source, runtime.Scope.create(val), e, null);
+                            let source = astEvaluate(item.source, Scope.create(val), e, null);
                             if (source === void 0 && item.initializer) {
                                 source = astEvaluate(item.initializer, s, e, null);
                             }
@@ -728,7 +803,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = (() => {
                     if (typeof val !== 'object') {
                         throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
                     }
-                    let source = astEvaluate(ast.source, runtime.Scope.create(val), e, null);
+                    let source = astEvaluate(ast.source, Scope.create(val), e, null);
                     if (source === void 0 && ast.initializer) {
                         source = astEvaluate(ast.initializer, s, e, null);
                     }
@@ -1152,7 +1227,7 @@ function registerAliases(aliases, resource, key, container) {
 /** @internal */ const dtElement = 'element';
 /** @internal */ const dtAttribute = 'attribute';
 /** @internal */ const staticResourceDefinitionMetadataKey = '__au_static_resource__';
-const getDefinitionFromStaticAu = (
+/** @internal */ const getDefinitionFromStaticAu = (
 // eslint-disable-next-line @typescript-eslint/ban-types
 Type, typeName, createDef) => {
     let def = getMetadata(staticResourceDefinitionMetadataKey, Type);
@@ -1781,13 +1856,11 @@ const LifecycleHooks = /*@__PURE__*/ (() => {
 })();
 class LifecycleHooksLookupImpl {
 }
-/**
- * Decorator: Indicates that the decorated class is a custom element.
- */
-function lifecycleHooks() {
-    return function decorator(target, _context) {
+function lifecycleHooks(target, context) {
+    function decorator(target, context) {
         return LifecycleHooks.define({}, target);
-    };
+    }
+    return target == null ? decorator : decorator(target);
 }
 
 function valueConverter(nameOrDef) {
@@ -1910,31 +1983,58 @@ class BindingTargetSubscriber {
 /**
  * Implement method `useScope` in a common way for a binding. For internal use only for size saving.
  */
-const mixinUseScope = (target) => {
-    defineHiddenProp(target.prototype, 'useScope', useScope);
-};
+const mixinUseScope = /*@__PURE__*/ (() => {
+    function useScope(scope) {
+        this._scope = scope;
+    }
+    return (target) => {
+        defineHiddenProp(target.prototype, 'useScope', useScope);
+    };
+})();
 /**
  * Turns a class into AST evaluator. For internal use only
  *
  * @param strict - whether the evaluation of AST nodes will be in strict mode
  */
-const mixinAstEvaluator = (strict, strictFnCall = true) => {
-    return (target) => {
-        const proto = target.prototype;
-        // some evaluator may have their strict configurable in some way
-        // undefined to leave the property alone
-        if (strict != null) {
-            def(proto, 'strict', { enumerable: true, get: function () { return strict; } });
+const mixinAstEvaluator = /*@__PURE__*/ (() => {
+    const converterResourceLookupCache = new WeakMap();
+    const behaviorResourceLookupCache = new WeakMap();
+    function evaluatorGet(key) {
+        return this.l.get(key);
+    }
+    function evaluatorGetSignaler() {
+        return this.l.root.get(ISignaler);
+    }
+    function evaluatorGetConverter(name) {
+        let resourceLookup = converterResourceLookupCache.get(this);
+        if (resourceLookup == null) {
+            converterResourceLookupCache.set(this, resourceLookup = new ResourceLookup());
         }
-        def(proto, 'strictFnCall', { enumerable: true, get: function () { return strictFnCall; } });
-        defineHiddenProp(proto, 'get', (evaluatorGet));
-        defineHiddenProp(proto, 'getSignaler', (evaluatorGetSignaler));
-        defineHiddenProp(proto, 'getConverter', (evaluatorGetConverter));
-        defineHiddenProp(proto, 'getBehavior', (evaluatorGetBehavior));
+        return resourceLookup[name] ??= ValueConverter.get(this.l, name);
+    }
+    function evaluatorGetBehavior(name) {
+        let resourceLookup = behaviorResourceLookupCache.get(this);
+        if (resourceLookup == null) {
+            behaviorResourceLookupCache.set(this, resourceLookup = new ResourceLookup());
+        }
+        return resourceLookup[name] ??= BindingBehavior.get(this.l, name);
+    }
+    return (strict, strictFnCall = true) => {
+        return (target) => {
+            const proto = target.prototype;
+            // some evaluator may have their strict configurable in some way
+            // undefined to leave the property alone
+            if (strict != null) {
+                def(proto, 'strict', { enumerable: true, get: function () { return strict; } });
+            }
+            def(proto, 'strictFnCall', { enumerable: true, get: function () { return strictFnCall; } });
+            defineHiddenProp(proto, 'get', (evaluatorGet));
+            defineHiddenProp(proto, 'getSignaler', (evaluatorGetSignaler));
+            defineHiddenProp(proto, 'getConverter', (evaluatorGetConverter));
+            defineHiddenProp(proto, 'getBehavior', (evaluatorGetBehavior));
+        };
     };
-};
-const converterResourceLookupCache = new WeakMap();
-const behaviorResourceLookupCache = new WeakMap();
+})();
 class ResourceLookup {
 }
 const IFlushQueue = /*@__PURE__*/ createInterface('IFlushQueue', x => x.singleton(FlushQueue));
@@ -1966,157 +2066,136 @@ class FlushQueue {
         this._flushing = false;
     }
 }
-function useScope(scope) {
-    this._scope = scope;
-}
-function evaluatorGet(key) {
-    return this.l.get(key);
-}
-function evaluatorGetSignaler() {
-    return this.l.root.get(ISignaler);
-}
-function evaluatorGetConverter(name) {
-    let resourceLookup = converterResourceLookupCache.get(this);
-    if (resourceLookup == null) {
-        converterResourceLookupCache.set(this, resourceLookup = new ResourceLookup());
-    }
-    return resourceLookup[name] ??= ValueConverter.get(this.l, name);
-}
-function evaluatorGetBehavior(name) {
-    let resourceLookup = behaviorResourceLookupCache.get(this);
-    if (resourceLookup == null) {
-        behaviorResourceLookupCache.set(this, resourceLookup = new ResourceLookup());
-    }
-    return resourceLookup[name] ??= BindingBehavior.get(this.l, name);
-}
-function flushItem(item, _, items) {
+const flushItem = function (item, _, items) {
     items.delete(item);
     item.flush();
-}
-const withLimitationBindings = new WeakSet();
+};
 /**
  * A mixing for bindings to implement a set of default behvaviors for rate limiting their calls.
  *
  * For internal use only
  */
-const mixingBindingLimited = (target, getMethodName) => {
-    defineHiddenProp(target.prototype, 'limit', function (opts) {
-        if (withLimitationBindings.has(this)) {
-            throw createMappedError(9996 /* ErrorNames.binding_already_has_rate_limited */);
-        }
-        withLimitationBindings.add(this);
-        const prop = getMethodName(this, opts);
-        const signals = opts.signals;
-        const signaler = signals.length > 0 ? this.get(ISignaler) : null;
-        const originalFn = this[prop];
-        const callOriginal = (...args) => originalFn.call(this, ...args);
-        const limitedFn = opts.type === 'debounce'
-            ? debounced(opts, callOriginal, this)
-            : throttled(opts, callOriginal, this);
-        const signalListener = signaler ? { handleChange: limitedFn.flush } : null;
-        this[prop] = limitedFn;
-        if (signaler) {
-            signals.forEach(s => addSignalListener(signaler, s, signalListener));
-        }
-        return {
-            dispose: () => {
-                if (signaler) {
-                    signals.forEach(s => removeSignalListener(signaler, s, signalListener));
-                }
-                withLimitationBindings.delete(this);
-                limitedFn.dispose();
-                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                delete this[prop];
-            }
-        };
-    });
-};
-/**
- * A helper for creating rated limited functions for binding. For internal use only
- */
-const debounced = (opts, callOriginal, binding) => {
-    let limiterTask;
-    let task;
-    let latestValue;
-    let isPending = false;
-    const taskQueue = opts.queue;
-    const callOriginalCallback = () => callOriginal(latestValue);
-    const fn = (v) => {
-        latestValue = v;
-        if (binding.isBound) {
-            task = limiterTask;
-            limiterTask = taskQueue.queueTask(callOriginalCallback, { delay: opts.delay, reusable: false });
-            task?.cancel();
-        }
-        else {
-            callOriginalCallback();
-        }
-    };
-    const dispose = fn.dispose = () => {
-        task?.cancel();
-        limiterTask?.cancel();
-        task = limiterTask = void 0;
-    };
-    fn.flush = () => {
-        // only call callback when there's actually task being queued
-        isPending = limiterTask?.status === tsPending;
-        dispose();
-        if (isPending) {
-            callOriginalCallback();
-        }
-    };
-    return fn;
-};
-/**
- * A helper for creating rated limited functions for binding. For internal use only
- */
-const throttled = (opts, callOriginal, binding) => {
-    let limiterTask;
-    let task;
-    let last = 0;
-    let elapsed = 0;
-    let latestValue;
-    let isPending = false;
-    const taskQueue = opts.queue;
-    const now = () => opts.now();
-    const callOriginalCallback = () => callOriginal(latestValue);
-    const fn = (v) => {
-        latestValue = v;
-        if (binding.isBound) {
-            elapsed = now() - last;
-            task = limiterTask;
-            if (elapsed > opts.delay) {
-                last = now();
-                callOriginalCallback();
+const mixingBindingLimited = /*@__PURE__*/ (() => {
+    const withLimitationBindings = new WeakSet();
+    /**
+     * A helper for creating rated limited functions for binding. For internal use only
+     */
+    const debounced = (opts, callOriginal, binding) => {
+        let limiterTask;
+        let task;
+        let latestValue;
+        let isPending = false;
+        const taskQueue = opts.queue;
+        const callOriginalCallback = () => callOriginal(latestValue);
+        const fn = (v) => {
+            latestValue = v;
+            if (binding.isBound) {
+                task = limiterTask;
+                limiterTask = taskQueue.queueTask(callOriginalCallback, { delay: opts.delay, reusable: false });
+                task?.cancel();
             }
             else {
-                // Queue the new one before canceling the old one, to prevent early yield
-                limiterTask = taskQueue.queueTask(() => {
+                callOriginalCallback();
+            }
+        };
+        const dispose = fn.dispose = () => {
+            task?.cancel();
+            limiterTask?.cancel();
+            task = limiterTask = void 0;
+        };
+        fn.flush = () => {
+            // only call callback when there's actually task being queued
+            isPending = limiterTask?.status === tsPending;
+            dispose();
+            if (isPending) {
+                callOriginalCallback();
+            }
+        };
+        return fn;
+    };
+    /**
+     * A helper for creating rated limited functions for binding. For internal use only
+     */
+    const throttled = (opts, callOriginal, binding) => {
+        let limiterTask;
+        let task;
+        let last = 0;
+        let elapsed = 0;
+        let latestValue;
+        let isPending = false;
+        const taskQueue = opts.queue;
+        const now = () => opts.now();
+        const callOriginalCallback = () => callOriginal(latestValue);
+        const fn = (v) => {
+            latestValue = v;
+            if (binding.isBound) {
+                elapsed = now() - last;
+                task = limiterTask;
+                if (elapsed > opts.delay) {
                     last = now();
                     callOriginalCallback();
-                }, { delay: opts.delay - elapsed, reusable: false });
+                }
+                else {
+                    // Queue the new one before canceling the old one, to prevent early yield
+                    limiterTask = taskQueue.queueTask(() => {
+                        last = now();
+                        callOriginalCallback();
+                    }, { delay: opts.delay - elapsed, reusable: false });
+                }
+                task?.cancel();
             }
+            else {
+                callOriginalCallback();
+            }
+        };
+        const dispose = fn.dispose = () => {
             task?.cancel();
-        }
-        else {
-            callOriginalCallback();
-        }
+            limiterTask?.cancel();
+            task = limiterTask = void 0;
+        };
+        fn.flush = () => {
+            // only call callback when there's actually task being queued
+            isPending = limiterTask?.status === tsPending;
+            dispose();
+            if (isPending) {
+                callOriginalCallback();
+            }
+        };
+        return fn;
     };
-    const dispose = fn.dispose = () => {
-        task?.cancel();
-        limiterTask?.cancel();
-        task = limiterTask = void 0;
+    return (target, getMethodName) => {
+        defineHiddenProp(target.prototype, 'limit', function (opts) {
+            if (withLimitationBindings.has(this)) {
+                throw createMappedError(9996 /* ErrorNames.binding_already_has_rate_limited */);
+            }
+            withLimitationBindings.add(this);
+            const prop = getMethodName(this, opts);
+            const signals = opts.signals;
+            const signaler = signals.length > 0 ? this.get(ISignaler) : null;
+            const originalFn = this[prop];
+            const callOriginal = (...args) => originalFn.call(this, ...args);
+            const limitedFn = opts.type === 'debounce'
+                ? debounced(opts, callOriginal, this)
+                : throttled(opts, callOriginal, this);
+            const signalListener = signaler ? { handleChange: limitedFn.flush } : null;
+            this[prop] = limitedFn;
+            if (signaler) {
+                signals.forEach(s => addSignalListener(signaler, s, signalListener));
+            }
+            return {
+                dispose: () => {
+                    if (signaler) {
+                        signals.forEach(s => removeSignalListener(signaler, s, signalListener));
+                    }
+                    withLimitationBindings.delete(this);
+                    limitedFn.dispose();
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                    delete this[prop];
+                }
+            };
+        });
     };
-    fn.flush = () => {
-        // only call callback when there's actually task being queued
-        isPending = limiterTask?.status === tsPending;
-        dispose();
-        if (isPending) {
-            callOriginalCallback();
-        }
-    };
-    return fn;
-};
+})();
 
 const taskOptions = {
     reusable: false,
@@ -2243,10 +2322,12 @@ class AttributeBinding {
         this.obs.clearAll();
     }
 }
-mixinUseScope(AttributeBinding);
-mixingBindingLimited(AttributeBinding, () => 'updateTarget');
-runtime.connectable(AttributeBinding, null);
-mixinAstEvaluator(true)(AttributeBinding);
+(() => {
+    mixinUseScope(AttributeBinding);
+    mixingBindingLimited(AttributeBinding, () => 'updateTarget');
+    runtime.connectable(AttributeBinding, null);
+    mixinAstEvaluator(true)(AttributeBinding);
+})();
 
 const queueTaskOptions$1 = {
     reusable: false,
@@ -2424,10 +2505,12 @@ class InterpolationPartBinding {
         this.obs.clearAll();
     }
 }
-mixinUseScope(InterpolationPartBinding);
-mixingBindingLimited(InterpolationPartBinding, () => 'updateTarget');
-runtime.connectable(InterpolationPartBinding, null);
-mixinAstEvaluator(true)(InterpolationPartBinding);
+(() => {
+    mixinUseScope(InterpolationPartBinding);
+    mixingBindingLimited(InterpolationPartBinding, () => 'updateTarget');
+    runtime.connectable(InterpolationPartBinding, null);
+    mixinAstEvaluator(true)(InterpolationPartBinding);
+})();
 
 const queueTaskOptions = {
     reusable: false,
@@ -2567,10 +2650,12 @@ class ContentBinding {
         task?.cancel();
     }
 }
-mixinUseScope(ContentBinding);
-mixingBindingLimited(ContentBinding, () => 'updateTarget');
-runtime.connectable(ContentBinding, null);
-mixinAstEvaluator(void 0, false)(ContentBinding);
+(() => {
+    mixinUseScope(ContentBinding);
+    mixingBindingLimited(ContentBinding, () => 'updateTarget');
+    runtime.connectable(ContentBinding, null);
+    mixinAstEvaluator(void 0, false)(ContentBinding);
+})();
 
 class LetBinding {
     constructor(locator, observerLocator, ast, targetProperty, toBindingContext = false) {
@@ -2629,10 +2714,12 @@ class LetBinding {
         this.obs.clearAll();
     }
 }
-mixinUseScope(LetBinding);
-mixingBindingLimited(LetBinding, () => 'updateTarget');
-runtime.connectable(LetBinding, null);
-mixinAstEvaluator(true)(LetBinding);
+(() => {
+    mixinUseScope(LetBinding);
+    mixingBindingLimited(LetBinding, () => 'updateTarget');
+    runtime.connectable(LetBinding, null);
+    mixinAstEvaluator(true)(LetBinding);
+})();
 
 class PropertyBinding {
     constructor(controller, locator, observerLocator, taskQueue, ast, target, targetProperty, mode) {
@@ -2762,10 +2849,12 @@ class PropertyBinding {
         this._targetSubscriber = subscriber;
     }
 }
-mixinUseScope(PropertyBinding);
-mixingBindingLimited(PropertyBinding, (propBinding) => (propBinding.mode & fromView) ? 'updateSource' : 'updateTarget');
-runtime.connectable(PropertyBinding, null);
-mixinAstEvaluator(true, false)(PropertyBinding);
+(() => {
+    mixinUseScope(PropertyBinding);
+    mixingBindingLimited(PropertyBinding, (propBinding) => (propBinding.mode & fromView) ? 'updateSource' : 'updateTarget');
+    runtime.connectable(PropertyBinding, null);
+    mixinAstEvaluator(true, false)(PropertyBinding);
+})();
 let task = null;
 const updateTaskOpts = {
     reusable: false,
@@ -2808,7 +2897,9 @@ class RefBinding {
         this._scope = void 0;
     }
 }
-mixinAstEvaluator(false)(RefBinding);
+(() => {
+    mixinAstEvaluator(false)(RefBinding);
+})();
 
 class ListenerBindingOptions {
     constructor(prevent, capture = false) {
@@ -2890,9 +2981,11 @@ class ListenerBinding {
         this.target.removeEventListener(this.targetEvent, this, this._options);
     }
 }
-mixinUseScope(ListenerBinding);
-mixingBindingLimited(ListenerBinding, () => 'callSource');
-mixinAstEvaluator(true, true)(ListenerBinding);
+(() => {
+    mixinUseScope(ListenerBinding);
+    mixingBindingLimited(ListenerBinding, () => 'callSource');
+    mixinAstEvaluator(true, true)(ListenerBinding);
+})();
 const IModifiedEventHandlerCreator = /*@__PURE__*/ createInterface('IEventModifier');
 const IKeyMapping = /*@__PURE__*/ createInterface('IKeyMapping', x => x.instance({
     meta: objectFreeze(['ctrl', 'alt', 'shift', 'meta']),
@@ -3245,7 +3338,7 @@ class SlottedLifecycleHooks {
 function slotted(queryOrDef, slotName) {
     if (!mixed$1) {
         mixed$1 = true;
-        runtime.subscriberCollection(AuSlotWatcherBinding);
+        runtime.subscriberCollection(AuSlotWatcherBinding, null);
         lifecycleHooks()(SlottedLifecycleHooks, null);
     }
     const dependenciesKey = getAnnotationKeyFor('dependencies');
@@ -3608,16 +3701,10 @@ class SpreadElementPropBindingInstruction {
 }
 const ITemplateCompiler = /*@__PURE__*/ createInterface('ITemplateCompiler');
 const IRenderer = /*@__PURE__*/ createInterface('IRenderer');
-function renderer(targetType) {
-    return function decorator(target) {
-        def(target.prototype, 'target', {
-            configurable: true,
-            get() { return targetType; }
-        });
-        return kernel.Registrable.define(target, function (container) {
-            singletonRegistration(IRenderer, this).register(container);
-        });
-    };
+function renderer(target, context) {
+    return kernel.Registrable.define(target, function (container) {
+        singletonRegistration(IRenderer, this).register(container);
+    });
 }
 function ensureExpression(parser, srcOrExpr, expressionType) {
     if (isString(srcOrExpr)) {
@@ -3657,8 +3744,10 @@ function getRefTarget(refHost, refTargetName) {
         }
     }
 }
-/** @internal */
-class SetPropertyRenderer {
+const SetPropertyRenderer = /*@__PURE__*/ renderer(class SetPropertyRenderer {
+    constructor() {
+        this.target = setProperty;
+    }
     render(renderingCtrl, target, instruction) {
         const obj = getTarget(target);
         if (obj.$observers?.[instruction.to] !== void 0) {
@@ -3668,12 +3757,11 @@ class SetPropertyRenderer {
             obj[instruction.to] = instruction.value;
         }
     }
-}
-renderer(setProperty)(SetPropertyRenderer, null);
-/** @internal */
-class CustomElementRenderer {
+});
+const CustomElementRenderer = /*@__PURE__*/ renderer(class CustomElementRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
+        this.target = hydrateElement;
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         /* eslint-disable prefer-const */
@@ -3731,12 +3819,11 @@ class CustomElementRenderer {
         renderingCtrl.addChild(childCtrl);
         /* eslint-enable prefer-const */
     }
-}
-renderer(hydrateElement)(CustomElementRenderer, null);
-/** @internal */
-class CustomAttributeRenderer {
+});
+const CustomAttributeRenderer = /*@__PURE__*/ renderer(class CustomAttributeRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
+        this.target = hydrateAttribute;
     }
     render(
     /**
@@ -3790,12 +3877,11 @@ class CustomAttributeRenderer {
         renderingCtrl.addChild(childController);
         /* eslint-enable prefer-const */
     }
-}
-renderer(hydrateAttribute)(CustomAttributeRenderer, null);
-/** @internal */
-class TemplateControllerRenderer {
+});
+const TemplateControllerRenderer = /*@__PURE__*/ renderer(class TemplateControllerRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
+        this.target = hydrateTemplateController;
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         /* eslint-disable prefer-const */
@@ -3854,10 +3940,11 @@ class TemplateControllerRenderer {
         renderingCtrl.addChild(childController);
         /* eslint-enable prefer-const */
     }
-}
-renderer(hydrateTemplateController)(TemplateControllerRenderer, null);
-/** @internal */
-class LetElementRenderer {
+});
+const LetElementRenderer = /*@__PURE__*/ renderer(class LetElementRenderer {
+    constructor() {
+        this.target = hydrateLetElement;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         target.remove();
         const childInstructions = instruction.instructions;
@@ -3874,49 +3961,53 @@ class LetElementRenderer {
             ++i;
         }
     }
-}
-renderer(hydrateLetElement)(LetElementRenderer, null);
-/** @internal */
-class RefBindingRenderer {
+});
+const RefBindingRenderer = /*@__PURE__*/ renderer(class RefBindingRenderer {
+    constructor() {
+        this.target = refBinding;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new RefBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsProperty), getRefTarget(target, instruction.to)));
     }
-}
-renderer(refBinding)(RefBindingRenderer, null);
-/** @internal */
-class InterpolationBindingRenderer {
+});
+const InterpolationBindingRenderer = /*@__PURE__*/ renderer(class InterpolationBindingRenderer {
+    constructor() {
+        this.target = interpolation;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, toView));
     }
-}
-renderer(interpolation)(InterpolationBindingRenderer, null);
-/** @internal */
-class PropertyBindingRenderer {
+});
+const PropertyBindingRenderer = /*@__PURE__*/ renderer(class PropertyBindingRenderer {
+    constructor() {
+        this.target = propertyBinding;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), getTarget(target), instruction.to, instruction.mode));
     }
-}
-renderer(propertyBinding)(PropertyBindingRenderer, null);
-/** @internal */
-class IteratorBindingRenderer {
+});
+const IteratorBindingRenderer = /*@__PURE__*/ renderer(class IteratorBindingRenderer {
+    constructor() {
+        this.target = iteratorBinding;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.forOf, etIsIterator), getTarget(target), instruction.to, toView));
     }
-}
-renderer(iteratorBinding)(IteratorBindingRenderer, null);
-/** @internal */
-class TextBindingRenderer {
+});
+const TextBindingRenderer = /*@__PURE__*/ renderer(class TextBindingRenderer {
+    constructor() {
+        this.target = textBinding;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, platform, ensureExpression(exprParser, instruction.from, etIsProperty), target));
     }
-}
-renderer(textBinding)(TextBindingRenderer, null);
+});
 const IListenerBindingOptions = createInterface('IListenerBindingOptions', x => x.instance({
     prevent: false,
 }));
-/** @internal */
-class ListenerBindingRenderer {
+const ListenerBindingRenderer = /*@__PURE__*/ renderer(class ListenerBindingRenderer {
     constructor() {
+        this.target = listenerBinding;
         /** @internal */
         this._modifierHandler = kernel.resolve(IEventModifier);
         /** @internal */
@@ -3925,27 +4016,31 @@ class ListenerBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(this._defaultOptions.prevent, instruction.capture), this._modifierHandler.getHandler(instruction.to, instruction.modifier)));
     }
-}
-renderer(listenerBinding)(ListenerBindingRenderer, null);
-/** @internal */
-class SetAttributeRenderer {
+});
+const SetAttributeRenderer = /*@__PURE__*/ renderer(class SetAttributeRenderer {
+    constructor() {
+        this.target = setAttribute;
+    }
     render(_, target, instruction) {
         target.setAttribute(instruction.to, instruction.value);
     }
-}
-renderer(setAttribute)(SetAttributeRenderer, null);
-class SetClassAttributeRenderer {
+});
+const SetClassAttributeRenderer = /*@__PURE__*/ renderer(class SetClassAttributeRenderer {
+    constructor() {
+        this.target = setClassAttribute;
+    }
     render(_, target, instruction) {
         addClasses(target.classList, instruction.value);
     }
-}
-renderer(setClassAttribute)(SetClassAttributeRenderer, null);
-class SetStyleAttributeRenderer {
+});
+const SetStyleAttributeRenderer = /*@__PURE__*/ renderer(class SetStyleAttributeRenderer {
+    constructor() {
+        this.target = setStyleAttribute;
+    }
     render(_, target, instruction) {
         target.style.cssText += instruction.value;
     }
-}
-renderer(setStyleAttribute)(SetStyleAttributeRenderer, null);
+});
 /* istanbul ignore next */
 const ambiguousStyles = [
     'height',
@@ -3970,8 +4065,10 @@ const ambiguousStyles = [
     'bottom',
     'left',
 ];
-/** @internal */
-class StylePropertyBindingRenderer {
+const StylePropertyBindingRenderer = /*@__PURE__*/ renderer(class StylePropertyBindingRenderer {
+    constructor() {
+        this.target = stylePropertyBinding;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         {
             /* istanbul ignore next */
@@ -3982,8 +4079,7 @@ class StylePropertyBindingRenderer {
         }
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
     }
-}
-renderer(stylePropertyBinding)(StylePropertyBindingRenderer, null);
+});
 /* istanbul ignore next */
 class DevStylePropertyBinding extends PropertyBinding {
     updateTarget(value) {
@@ -3994,8 +4090,10 @@ class DevStylePropertyBinding extends PropertyBinding {
         return super.updateTarget(value);
     }
 }
-/** @internal */
-class AttributeBindingRenderer {
+const AttributeBindingRenderer = /*@__PURE__*/ renderer(class AttributeBindingRenderer {
+    constructor() {
+        this.target = attributeBinding;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const container = renderingCtrl.container;
         const classMapping = container.has(ICssModulesMapping, false)
@@ -4005,20 +4103,19 @@ class AttributeBindingRenderer {
             ? instruction.to /* targetKey */
             : instruction.to.split(/\s/g).map(c => classMapping[c] ?? c).join(' '), toView));
     }
-}
-renderer(attributeBinding)(AttributeBindingRenderer, null);
-class SpreadRenderer {
+});
+const SpreadRenderer = /*@__PURE__*/ renderer(class SpreadRenderer {
     constructor() {
         /** @internal */ this._compiler = kernel.resolve(ITemplateCompiler);
         /** @internal */ this._rendering = kernel.resolve(IRendering);
+        this.target = spreadBinding;
     }
     render(renderingCtrl, target, _instruction, platform, exprParser, observerLocator) {
         SpreadBinding
             .create(renderingCtrl.container.get(IHydrationContext), target, void 0, this._rendering, this._compiler, platform, exprParser, observerLocator)
             .forEach(b => renderingCtrl.addBinding(b));
     }
-}
-renderer(spreadBinding)(SpreadRenderer, null);
+});
 // http://jsben.ch/7n5Kt
 function addClasses(classList, className) {
     const len = className.length;
@@ -4386,6 +4483,9 @@ class ClassAttributeAccessor {
         }
     }
 }
+(() => {
+    mixinNoopSubscribable(ClassAttributeAccessor);
+})();
 function getClassesToAdd(object) {
     if (isString(object)) {
         return splitClassString(object);
@@ -4393,7 +4493,7 @@ function getClassesToAdd(object) {
     if (typeof object !== 'object') {
         return kernel.emptyArray;
     }
-    if (object instanceof Array) {
+    if (isArray(object)) {
         const len = object.length;
         if (len > 0) {
             const classes = [];
@@ -4431,7 +4531,6 @@ function splitClassString(classString) {
     }
     return matches;
 }
-mixinNoopSubscribable(ClassAttributeAccessor);
 
 /**
  * There are 2 implementations of CSS registry: css module registry and shadow dom registry.
@@ -4653,6 +4752,9 @@ class ComputedWatcher {
         }
     }
 }
+(() => {
+    runtime.connectable(ComputedWatcher, null);
+})();
 class ExpressionWatcher {
     get value() {
         return this._value;
@@ -4703,9 +4805,10 @@ class ExpressionWatcher {
         this._value = void 0;
     }
 }
-runtime.connectable(ComputedWatcher, null);
-runtime.connectable(ExpressionWatcher, null);
-mixinAstEvaluator(true)(ExpressionWatcher);
+(() => {
+    runtime.connectable(ExpressionWatcher, null);
+    mixinAstEvaluator(true)(ExpressionWatcher);
+})();
 
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 class Controller {
@@ -4955,7 +5058,7 @@ class Controller {
         const container = this.container;
         const instance = this._vm;
         const definition = this.definition;
-        this.scope = runtime.Scope.create(instance, null, true);
+        this.scope = Scope.create(instance, null, true);
         if (definition.watches.length > 0) {
             createWatchers(this, container, definition, instance);
         }
@@ -5782,7 +5885,7 @@ function createWatchers(controller, context, definition, instance) {
     const scope = controller.vmKind === vmkCe
         ? controller.scope
         // custom attribute does not have own scope
-        : runtime.Scope.create(instance, null, true);
+        : Scope.create(instance, null, true);
     const ii = watches.length;
     let expression;
     let callback;
@@ -7169,19 +7272,21 @@ const AttributePattern = objectFreeze({
     getPatternDefinitions: getAllPatternDefinitions,
     findAll: (container) => container.root.getAll(IAttributePattern),
 });
-class DotSeparatedAttributePattern {
+const DotSeparatedAttributePattern = /*@__PURE__*/ AttributePattern.define([
+    { pattern: 'PART.PART', symbols: '.' },
+    { pattern: 'PART.PART.PART', symbols: '.' }
+], class DotSeparatedAttributePattern {
     'PART.PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], parts[1]);
     }
     'PART.PART.PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, `${parts[0]}.${parts[1]}`, parts[2]);
     }
-}
-AttributePattern.define([
-    { pattern: 'PART.PART', symbols: '.' },
-    { pattern: 'PART.PART.PART', symbols: '.' }
-], DotSeparatedAttributePattern);
-class RefAttributePattern {
+});
+const RefAttributePattern = /*@__PURE__*/ AttributePattern.define([
+    { pattern: 'ref', symbols: '' },
+    { pattern: 'PART.ref', symbols: '.' }
+], class RefAttributePattern {
     'ref'(rawName, rawValue, _parts) {
         return new AttrSyntax(rawName, rawValue, 'element', 'ref');
     }
@@ -7197,47 +7302,39 @@ class RefAttributePattern {
         }
         return new AttrSyntax(rawName, rawValue, target, 'ref');
     }
-}
-AttributePattern.define([
-    { pattern: 'ref', symbols: '' },
-    { pattern: 'PART.ref', symbols: '.' }
-], RefAttributePattern);
-class EventAttributePattern {
+});
+const EventAttributePattern = /*@__PURE__*/ AttributePattern.define([
+    { pattern: 'PART.trigger:PART', symbols: '.:' },
+    { pattern: 'PART.capture:PART', symbols: '.:' },
+], class EventAttributePattern {
     'PART.trigger:PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', parts);
     }
     'PART.capture:PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'capture', parts);
     }
-}
-AttributePattern.define([
-    { pattern: 'PART.trigger:PART', symbols: '.:' },
-    { pattern: 'PART.capture:PART', symbols: '.:' },
-], EventAttributePattern);
-class ColonPrefixedBindAttributePattern {
+});
+const ColonPrefixedBindAttributePattern = /*@__PURE__*/ AttributePattern.define([{ pattern: ':PART', symbols: ':' }], class ColonPrefixedBindAttributePattern {
     ':PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'bind');
     }
-}
-AttributePattern.define([{ pattern: ':PART', symbols: ':' }], ColonPrefixedBindAttributePattern);
-class AtPrefixedTriggerAttributePattern {
+});
+const AtPrefixedTriggerAttributePattern = /*@__PURE__*/ AttributePattern.define([
+    { pattern: '@PART', symbols: '@' },
+    { pattern: '@PART:PART', symbols: '@:' },
+], class AtPrefixedTriggerAttributePattern {
     '@PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger');
     }
     '@PART:PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', [parts[0], 'trigger', ...parts.slice(1)]);
     }
-}
-AttributePattern.define([
-    { pattern: '@PART', symbols: '@' },
-    { pattern: '@PART:PART', symbols: '@:' },
-], AtPrefixedTriggerAttributePattern);
-class SpreadAttributePattern {
+});
+const SpreadAttributePattern = /*@__PURE__*/ AttributePattern.define([{ pattern: '...$attrs', symbols: '' }], class SpreadAttributePattern {
     '...$attrs'(rawName, rawValue, _parts) {
         return new AttrSyntax(rawName, rawValue, '', '...$attrs');
     }
-}
-AttributePattern.define([{ pattern: '...$attrs', symbols: '' }], SpreadAttributePattern);
+});
 
 function bindingCommand(nameOrDefinition) {
     return function (target, context) {
@@ -7876,7 +7973,9 @@ class AttributeNSAccessor {
         }
     }
 }
-mixinNoopSubscribable(AttributeNSAccessor);
+(() => {
+    mixinNoopSubscribable(AttributeNSAccessor);
+})();
 
 /**
  * Attribute accessor for HTML elements.
@@ -7903,18 +8002,34 @@ class DataAttributeAccessor {
         }
     }
 }
-mixinNoopSubscribable(DataAttributeAccessor);
-const attrAccessor = new DataAttributeAccessor();
+(() => {
+    mixinNoopSubscribable(DataAttributeAccessor);
+})();
+const attrAccessor = /*@__PURE__*/ new DataAttributeAccessor();
 
-const childObserverOptions$1 = {
-    childList: true,
-    subtree: true,
-    characterData: true
-};
-function defaultMatcher$1(a, b) {
-    return a === b;
-}
 class SelectValueObserver {
+    /** @internal */
+    static _getSelectedOptions(options) {
+        const selection = [];
+        if (options.length === 0) {
+            return selection;
+        }
+        const ii = options.length;
+        let i = 0;
+        let option;
+        while (ii > i) {
+            option = options[i];
+            if (option.selected) {
+                selection[selection.length] = hasOwnProperty.call(option, 'model') ? option.model : option.value;
+            }
+            ++i;
+        }
+        return selection;
+    }
+    /** @internal */
+    static _defaultMatcher(a, b) {
+        return a === b;
+    }
     constructor(obj, 
     // deepscan-disable-next-line
     _key, config, observerLocator) {
@@ -7950,7 +8065,7 @@ class SelectValueObserver {
             ? this._value
             : this._el.multiple
                 // todo: maybe avoid double iteration?
-                ? getSelectedOptions(this._el.options)
+                ? SelectValueObserver._getSelectedOptions(this._el.options)
                 : this._el.value;
     }
     setValue(newValue) {
@@ -7976,7 +8091,7 @@ class SelectValueObserver {
         const value = this._value;
         const obj = this._el;
         const $isArray = isArray(value);
-        const matcher = obj.matcher ?? defaultMatcher$1;
+        const matcher = obj.matcher ?? SelectValueObserver._defaultMatcher;
         const options = obj.options;
         let i = options.length;
         while (i-- > 0) {
@@ -8020,7 +8135,7 @@ class SelectValueObserver {
             // multi select
             let option;
             // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-            const matcher = obj.matcher || defaultMatcher$1;
+            const matcher = obj.matcher || SelectValueObserver._defaultMatcher;
             // A.1.b.i
             const values = [];
             while (i < len) {
@@ -8085,7 +8200,11 @@ class SelectValueObserver {
      * @internal
      */
     _start() {
-        (this._nodeObserver = createMutationObserver(this._el, this._handleNodeChange.bind(this))).observe(this._el, childObserverOptions$1);
+        (this._nodeObserver = createMutationObserver(this._el, this._handleNodeChange.bind(this))).observe(this._el, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
         this._observeArray(this._value instanceof Array ? this._value : null);
         this._observing = true;
     }
@@ -8138,33 +8257,15 @@ class SelectValueObserver {
     }
     /** @internal */
     _flush() {
-        oV$2 = this._oldValue;
+        const oV = this._oldValue;
         this._oldValue = this._value;
-        this.subs.notify(this._value, oV$2);
+        this.subs.notify(this._value, oV);
     }
 }
-mixinNodeObserverUseConfig(SelectValueObserver);
-runtime.subscriberCollection(SelectValueObserver);
-function getSelectedOptions(options) {
-    const selection = [];
-    if (options.length === 0) {
-        return selection;
-    }
-    const ii = options.length;
-    let i = 0;
-    let option;
-    while (ii > i) {
-        option = options[i];
-        if (option.selected) {
-            selection[selection.length] = hasOwnProperty.call(option, 'model') ? option.model : option.value;
-        }
-        ++i;
-    }
-    return selection;
-}
-// a shared variable for `.flush()` methods of observers
-// so that there doesn't need to create an env record for every call
-let oV$2 = void 0;
+(() => {
+    mixinNodeObserverUseConfig(SelectValueObserver);
+    runtime.subscriberCollection(SelectValueObserver, null);
+})();
 
 const customPropertyPrefix = '--';
 class StyleAttributeAccessor {
@@ -8315,7 +8416,9 @@ class StyleAttributeAccessor {
         this._value = this._oldValue = this.obj.style.cssText;
     }
 }
-mixinNoopSubscribable(StyleAttributeAccessor);
+(() => {
+    mixinNoopSubscribable(StyleAttributeAccessor);
+})();
 
 /**
  * Observer for non-radio, non-checkbox input.
@@ -8383,16 +8486,15 @@ class ValueAttributeObserver {
     }
     /** @internal */
     _flush() {
-        oV$1 = this._oldValue;
+        const oV = this._oldValue;
         this._oldValue = this._value;
-        this.subs.notify(this._value, oV$1);
+        this.subs.notify(this._value, oV);
     }
 }
-mixinNodeObserverUseConfig(ValueAttributeObserver);
-runtime.subscriberCollection(ValueAttributeObserver);
-// a reusable variable for `.flush()` methods of observers
-// so that there doesn't need to create an env record for every call
-let oV$1 = void 0;
+(() => {
+    mixinNodeObserverUseConfig(ValueAttributeObserver);
+    runtime.subscriberCollection(ValueAttributeObserver, null);
+})();
 
 // https://infra.spec.whatwg.org/#namespaces
 // const htmlNS = 'http://www.w3.org/1999/xhtml';
@@ -8907,8 +9009,10 @@ class CheckedObserver {
         }
     }
 }
-mixinNodeObserverUseConfig(CheckedObserver);
-runtime.subscriberCollection(CheckedObserver);
+(() => {
+    mixinNodeObserverUseConfig(CheckedObserver);
+    runtime.subscriberCollection(CheckedObserver, null);
+})();
 // a reusable variable for `.flush()` methods of observers
 // so that there doesn't need to create an env record for every call
 let oV = void 0;
@@ -9749,10 +9853,10 @@ const getScope = (scopeMap, item, forOf, parentScope, binding, local, hasDestruc
     let scope = scopeMap.get(item);
     if (scope === void 0) {
         if (hasDestructuredLocal) {
-            astAssign(forOf.declaration, scope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext()), binding, item);
+            astAssign(forOf.declaration, scope = Scope.fromParent(parentScope, new BindingContext()), binding, item);
         }
         else {
-            scope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext(local, item));
+            scope = Scope.fromParent(parentScope, new BindingContext(local, item));
         }
         scopeMap.set(item, scope);
     }
@@ -9787,7 +9891,7 @@ class With {
         let scope;
         let i = 0, ii = 0;
         if ($controller.isActive && bindings != null) {
-            scope = runtime.Scope.fromParent($controller.scope, newValue === void 0 ? {} : newValue);
+            scope = Scope.fromParent($controller.scope, newValue === void 0 ? {} : newValue);
             for (ii = bindings.length; ii > i; ++i) {
                 bindings[i].bind(scope);
             }
@@ -9795,7 +9899,7 @@ class With {
     }
     attaching(initiator, _parent) {
         const { $controller, value } = this;
-        const scope = runtime.Scope.fromParent($controller.scope, value === void 0 ? {} : value);
+        const scope = Scope.fromParent($controller.scope, value === void 0 ? {} : value);
         return this.view.activate(initiator, $controller, scope);
     }
     detaching(initiator, _parent) {
@@ -10091,29 +10195,31 @@ class DefaultCase extends Case {
         $switch.defaultCase = this;
     }
 }
-// Notes:
-// - The usage of $au is intentionally avoided here.
-//   Once the 'case' TC is defined, the TC definition is put to the Class[Symbol.metadata], that is implicitly inherited by the 'default-case' TC.
-//   Thus, when resolving the definition, the definition from the 'case' TC is found and used, rendering the $au property not-useful.
-// - The order of the 'case' and 'default-case' TC definitions is important also because of above said reason.
-//   We want to deliberately define the 'case' TC second, so that the 'default-case' cannot inherit the metadata.
-const bindables = [
-    'value',
-    {
-        name: 'fallThrough',
-        mode: oneTime,
-        set(v) {
-            switch (v) {
-                case 'true': return true;
-                case 'false': return false;
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                default: return !!v;
+(() => {
+    // Notes:
+    // - The usage of $au is intentionally avoided here.
+    //   Once the 'case' TC is defined, the TC definition is put to the Class[Symbol.metadata], that is implicitly inherited by the 'default-case' TC.
+    //   Thus, when resolving the definition, the definition from the 'case' TC is found and used, rendering the $au property not-useful.
+    // - The order of the 'case' and 'default-case' TC definitions is important also because of above said reason.
+    //   We want to deliberately define the 'case' TC second, so that the 'default-case' cannot inherit the metadata.
+    const bindables = [
+        'value',
+        {
+            name: 'fallThrough',
+            mode: oneTime,
+            set(v) {
+                switch (v) {
+                    case 'true': return true;
+                    case 'false': return false;
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                    default: return !!v;
+                }
             }
         }
-    }
-];
-defineAttribute({ name: 'default-case', bindables, isTemplateController: true }, DefaultCase);
-defineAttribute({ name: 'case', bindables, isTemplateController: true }, Case);
+    ];
+    defineAttribute({ name: 'default-case', bindables, isTemplateController: true }, DefaultCase);
+    defineAttribute({ name: 'case', bindables, isTemplateController: true }, Case);
+})();
 
 class PromiseTemplateController {
     constructor() {
@@ -10130,7 +10236,7 @@ class PromiseTemplateController {
     attaching(initiator, _parent) {
         const view = this.view;
         const $controller = this.$controller;
-        return kernel.onResolve(view.activate(initiator, $controller, this.viewScope = runtime.Scope.fromParent($controller.scope, {})), () => this.swap(initiator));
+        return kernel.onResolve(view.activate(initiator, $controller, this.viewScope = Scope.fromParent($controller.scope, {})), () => this.swap(initiator));
     }
     valueChanged(_newValue, _oldValue) {
         if (!this.$controller.isActive) {
@@ -10808,7 +10914,7 @@ class AuSlot {
             // - binding context & override context pointing to the outer scope binding & override context respectively
             // - override context has the $host pointing to inner scope binding context
             outerScope = this._hdrContext.controller.scope.parent;
-            (this._outerScope = runtime.Scope.fromParent(outerScope, outerScope.bindingContext))
+            (this._outerScope = Scope.fromParent(outerScope, outerScope.bindingContext))
                 .overrideContext.$host = this.expose ?? this._parentScope.bindingContext;
         }
     }
@@ -11107,8 +11213,8 @@ class AuCompose {
                 const viewFactory = this._rendering.getViewFactory(targetDef, childCtn);
                 const controller = Controller.$view(viewFactory, $controller);
                 const scope = this.scopeBehavior === 'auto'
-                    ? runtime.Scope.fromParent(this.parent.scope, comp)
-                    : runtime.Scope.create(comp);
+                    ? Scope.fromParent(this.parent.scope, comp)
+                    : Scope.create(comp);
                 controller.setHost(compositionHost);
                 if (compositionLocation == null) {
                     // only spread the bindings if there is an actual host
@@ -13299,7 +13405,7 @@ function createConfiguration(optionsProvider) {
 function children(configOrTarget, context) {
     if (!mixed) {
         mixed = true;
-        runtime.subscriberCollection(ChildrenBinding);
+        runtime.subscriberCollection(ChildrenBinding, null);
         lifecycleHooks()(ChildrenLifecycleHooks, null);
     }
     let config;
@@ -13473,6 +13579,7 @@ exports.BindingBehavior = BindingBehavior;
 exports.BindingBehaviorDefinition = BindingBehaviorDefinition;
 exports.BindingCommand = BindingCommand;
 exports.BindingCommandDefinition = BindingCommandDefinition;
+exports.BindingContext = BindingContext;
 exports.BindingMode = BindingMode;
 exports.BindingModeBehavior = BindingModeBehavior;
 exports.BindingTargetSubscriber = BindingTargetSubscriber;
@@ -13595,6 +13702,7 @@ exports.Rendering = Rendering;
 exports.Repeat = Repeat;
 exports.SVGAnalyzer = SVGAnalyzer;
 exports.SanitizeValueConverter = SanitizeValueConverter;
+exports.Scope = Scope;
 exports.SelectValueObserver = SelectValueObserver;
 exports.SelfBindingBehavior = SelfBindingBehavior;
 exports.SetAttributeInstruction = SetAttributeInstruction;

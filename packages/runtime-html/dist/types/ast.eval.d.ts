@@ -1,5 +1,6 @@
 import { CustomExpression, type IsExpressionOrStatement } from '@aurelia/expression-parser';
-import { IConnectable, Scope } from '@aurelia/runtime';
+import { IConnectable } from '@aurelia/runtime';
+import { Scope } from './binding/scope';
 import { ISignaler } from './signaler';
 import { BindingBehaviorInstance } from './resources/binding-behavior';
 import { ValueConverterInstance } from './resources/value-converter';

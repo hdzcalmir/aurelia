@@ -192,7 +192,7 @@ export declare const DI: {
 };
 export declare const IContainer: InterfaceSymbol<IContainer>;
 export declare const IServiceLocator: InterfaceSymbol<IServiceLocator>;
-declare function transientDecorator<T extends Constructable>(target: T & Partial<RegisterSelf<T>>, _context: ClassDecoratorContext): T & RegisterSelf<T>;
+declare function transientDecorator<T extends Constructable>(target: T & Partial<RegisterSelf<T>>, context: ClassDecoratorContext): T & RegisterSelf<T>;
 /**
  * Registers the decorated class as a transient dependency; each time the dependency is resolved
  * a new instance will be created.
@@ -218,7 +218,7 @@ export declare function transient<T extends Constructable>(target: T & Partial<R
 type SingletonOptions = {
     scoped: boolean;
 };
-type SingletonDecorator = <T extends Constructable>(target: T & Partial<RegisterSelf<T>>, _context: ClassDecoratorContext) => T & RegisterSelf<T>;
+type SingletonDecorator = <T extends Constructable>(target: T & Partial<RegisterSelf<T>>, context: ClassDecoratorContext) => T & RegisterSelf<T>;
 /**
  * Registers the decorated class as a singleton dependency; the class will only be created once. Each
  * consecutive time the dependency is resolved, the same instance will be returned.

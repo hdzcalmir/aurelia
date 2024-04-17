@@ -1,6 +1,6 @@
 import { IContainer } from '@aurelia/kernel';
-import { IObserverLocatorBasedConnectable, type Scope } from '@aurelia/runtime';
-import { type BindingCommandInstance, type ICommandBuildInfo, IInstruction, type BindingCommandStaticAuDefinition, type IAstEvaluator, type IBinding } from '@aurelia/runtime-html';
+import { IObserverLocatorBasedConnectable } from '@aurelia/runtime';
+import { type BindingCommandInstance, type ICommandBuildInfo, IInstruction, type BindingCommandStaticAuDefinition, type IAstEvaluator, type IBinding, type Scope } from '@aurelia/runtime-html';
 import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 import type { IDisposable, IServiceLocator } from '@aurelia/kernel';
 export declare const eventPreventDefaultBehavior: {

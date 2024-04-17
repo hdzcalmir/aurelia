@@ -1,6 +1,7 @@
 import { IServiceLocator, Key } from '@aurelia/kernel';
 import { IExpressionParser } from '@aurelia/expression-parser';
-import { IObserverLocator, Scope } from '@aurelia/runtime';
+import { IObserverLocator } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import { CustomElementDefinition } from '../resources/custom-element';
 import { ICustomElementController, IHydrationContext, IController } from '../templating/controller';
 import { IHasController, ITemplateCompiler } from '../renderer';

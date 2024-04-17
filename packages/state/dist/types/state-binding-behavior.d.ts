@@ -1,5 +1,4 @@
-import { Scope } from '@aurelia/runtime';
-import { IBinding } from '@aurelia/runtime-html';
+import { type IBinding, Scope } from '@aurelia/runtime-html';
 export declare class StateBindingBehavior {
     bind(scope: Scope, binding: IBinding): void;
     unbind(scope: Scope, binding: IBinding): void;

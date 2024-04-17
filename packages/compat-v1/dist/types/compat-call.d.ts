@@ -1,12 +1,11 @@
 import { type IContainer, type IServiceLocator } from '@aurelia/kernel';
-import { IAccessor, IObserverLocator, IObserverLocatorBasedConnectable, Scope } from '@aurelia/runtime';
-import { type BindingCommandInstance, ICommandBuildInfo, IController, IHydratableController, IInstruction, IRenderer, IPlatform, type IAstEvaluator, type IBinding } from '@aurelia/runtime-html';
+import { IAccessor, IObserverLocator, IObserverLocatorBasedConnectable } from '@aurelia/runtime';
+import { type BindingCommandInstance, ICommandBuildInfo, IController, IHydratableController, IInstruction, IPlatform, type IAstEvaluator, type IBinding, Scope } from '@aurelia/runtime-html';
 import { BindingCommandStaticAuDefinition } from '@aurelia/runtime-html/dist/types/resources/binding-command';
 import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 export declare const callSyntax: {
     register(container: IContainer): void;
 };
-declare const instructionType = "rh";
 export declare class CallBindingInstruction {
     from: string | IsBindingBehavior;
     to: string;
@@ -18,10 +17,12 @@ export declare class CallBindingCommand implements BindingCommandInstance {
     get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
-export declare class CallBindingRenderer implements IRenderer {
-    target: typeof instructionType;
-    render(renderingCtrl: IHydratableController, target: IController, instruction: CallBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
-}
+export declare const CallBindingRenderer: {
+    new (): {
+        readonly target: "rh";
+        render(renderingCtrl: IHydratableController, target: IController, instruction: CallBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
+    };
+};
 /**
  * A binding for handling .call syntax
  */
@@ -38,5 +39,4 @@ export declare class CallBinding implements IBinding {
     bind(_scope: Scope): void;
     unbind(): void;
 }
-export {};
 //# sourceMappingURL=compat-call.d.ts.map

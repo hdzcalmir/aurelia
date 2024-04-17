@@ -1,6 +1,7 @@
 import { IExpressionParser, type IsBindingBehavior } from '@aurelia/expression-parser';
 import { IObserverLocator } from '@aurelia/runtime';
-import { AttrSyntax, IAttrMapper, IHydratableController, IPlatform, type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, type IRenderer, BindingCommandStaticAuDefinition } from '@aurelia/runtime-html';
+import { AttrSyntax, IAttrMapper, IHydratableController, IPlatform, type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, BindingCommandStaticAuDefinition } from '@aurelia/runtime-html';
+import { IStore } from './interfaces';
 export declare class StateAttributePattern {
     'PART.state'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;
 }
@@ -29,12 +30,18 @@ export declare class DispatchBindingInstruction {
     readonly type = "sd";
     constructor(from: string, ast: string | IsBindingBehavior);
 }
-export declare class StateBindingInstructionRenderer implements IRenderer {
-    readonly target: 'sb';
-    render(renderingCtrl: IHydratableController, target: object, instruction: StateBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
-}
-export declare class DispatchBindingInstructionRenderer implements IRenderer {
-    readonly target: 'sd';
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: DispatchBindingInstruction, platform: IPlatform, exprParser: IExpressionParser): void;
-}
+export declare const StateBindingInstructionRenderer: {
+    new (): {
+        readonly target: "sb";
+        /** @internal */ readonly _stateContainer: IStore<object, unknown>;
+        render(renderingCtrl: IHydratableController, target: object, instruction: StateBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
+    };
+};
+export declare const DispatchBindingInstructionRenderer: {
+    new (): {
+        readonly target: "sd";
+        /** @internal */ readonly _stateContainer: IStore<object, unknown>;
+        render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: DispatchBindingInstruction, platform: IPlatform, exprParser: IExpressionParser): void;
+    };
+};
 //# sourceMappingURL=state-templating.d.ts.map

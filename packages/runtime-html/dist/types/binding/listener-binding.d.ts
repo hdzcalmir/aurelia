@@ -1,6 +1,7 @@
 import { type IsBindingBehavior } from '@aurelia/expression-parser';
 import { type IServiceLocator, IContainer } from '@aurelia/kernel';
-import { ICollectionSubscriber, IObserverLocatorBasedConnectable, ISubscriber, Scope } from '@aurelia/runtime';
+import { ICollectionSubscriber, IObserverLocatorBasedConnectable, ISubscriber } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import { IAstEvaluator } from '../ast.eval';
 import { IBinding } from './interfaces-bindings';
 export declare class ListenerBindingOptions {

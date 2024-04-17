@@ -1,6 +1,6 @@
 import { type IServiceLocator } from '@aurelia/kernel';
-import { Scope, IObserverLocatorBasedConnectable } from '@aurelia/runtime';
-import { IBinding, IAstEvaluator } from '@aurelia/runtime-html';
+import { IObserverLocatorBasedConnectable } from '@aurelia/runtime';
+import { IBinding, IAstEvaluator, type Scope } from '@aurelia/runtime-html';
 import { IStoreSubscriber, type IStore } from './interfaces';
 import { IsBindingBehavior } from '@aurelia/expression-parser';
 /**

@@ -162,9 +162,9 @@ class VirtualRepeat {
         this.itemHeight = 0;
         this.dom.update(0, 0);
     }
-    B(t, s) {
+    B(t, e) {
         const r = this.$controller;
-        const i = s.count;
+        const i = e.count;
         const n = this.views;
         let o = 0;
         let l = n.length;
@@ -219,7 +219,7 @@ class VirtualRepeat {
         let b;
         for (o = 0; a > o; ++o) {
             w = d + o;
-            m = s.item(w);
+            m = e.item(w);
             h = n[o];
             C = n[o - 1];
             if (h.isActive) {
@@ -229,7 +229,7 @@ class VirtualRepeat {
                 b.overrideContext.$length = i;
             } else {
                 h.nodes.insertBefore(C.nodes.firstChild.nextSibling);
-                b = e.Scope.fromParent(r.scope, new e.BindingContext(f, s.item(w)));
+                b = s.Scope.fromParent(r.scope, new s.BindingContext(f, e.item(w)));
                 b.overrideContext.$index = w;
                 b.overrideContext.$length = i;
                 enhanceOverrideContext(b.overrideContext);
@@ -371,15 +371,15 @@ class VirtualRepeat {
     _() {
         const t = this.getOrCreateFirstView();
         if (!t.isActive) {
-            const s = this.$controller;
+            const e = this.$controller;
             const r = this.collectionStrategy;
-            const i = s.scope;
-            const n = e.Scope.fromParent(i, new e.BindingContext(this.local, r.first()));
+            const i = e.scope;
+            const n = s.Scope.fromParent(i, new s.BindingContext(this.local, r.first()));
             n.overrideContext.$index = 0;
             n.overrideContext.$length = r.count;
             enhanceOverrideContext(n.overrideContext);
             t.nodes.insertBefore(this.dom.bottom);
-            void t.activate(t, s, n);
+            void t.activate(t, e, n);
         }
         return t;
     }

@@ -192,8 +192,8 @@ function addValueBatch(t, e, r) {
     }
 }
 
-const R = (() => {
-    function subscriberCollection(t) {
+const R = /*@__PURE__*/ (() => {
+    function subscriberCollection(t, e) {
         return t == null ? subscriberCollectionDeco : subscriberCollectionDeco(t);
     }
     function getSubscriberRecord() {
@@ -206,66 +206,65 @@ const R = (() => {
         return this.subs.remove(t);
     }
     const t = new WeakSet;
-    function subscriberCollectionDeco(e) {
-        if (t.has(e)) {
+    function subscriberCollectionDeco(e, r) {
+        if (!t.has(e)) {
+            t.add(e);
+            const r = e.prototype;
+            u(r, "subs", {
+                get: getSubscriberRecord
+            });
+            ensureProto(r, "subscribe", addSubscriber);
+            ensureProto(r, "unsubscribe", removeSubscriber);
+        }
+        return e;
+    }
+    class SubscriberRecord {
+        constructor() {
+            this.count = 0;
+            this.t = [];
+        }
+        add(t) {
+            if (this.t.includes(t)) {
+                return false;
+            }
+            this.t[this.t.length] = t;
+            ++this.count;
+            return true;
+        }
+        remove(t) {
+            const e = this.t.indexOf(t);
+            if (e !== -1) {
+                this.t.splice(e, 1);
+                --this.count;
+                return true;
+            }
+            return false;
+        }
+        notify(t, e) {
+            if (m) {
+                addValueBatch(this, t, e);
+                return;
+            }
+            const r = this.t.slice(0);
+            const s = r.length;
+            let n = 0;
+            for (;n < s; ++n) {
+                r[n].handleChange(t, e);
+            }
             return;
         }
-        t.add(e);
-        const r = e.prototype;
-        u(r, "subs", {
-            get: getSubscriberRecord
-        });
-        ensureProto(r, "subscribe", addSubscriber);
-        ensureProto(r, "unsubscribe", removeSubscriber);
+        notifyCollection(t, e) {
+            const r = this.t.slice(0);
+            const s = r.length;
+            let n = 0;
+            for (;n < s; ++n) {
+                r[n].handleCollectionChange(t, e);
+            }
+            return;
+        }
     }
     return subscriberCollection;
 })();
-
-class SubscriberRecord {
-    constructor() {
-        this.count = 0;
-        this.t = [];
-    }
-    add(t) {
-        if (this.t.includes(t)) {
-            return false;
-        }
-        this.t[this.t.length] = t;
-        ++this.count;
-        return true;
-    }
-    remove(t) {
-        const e = this.t.indexOf(t);
-        if (e !== -1) {
-            this.t.splice(e, 1);
-            --this.count;
-            return true;
-        }
-        return false;
-    }
-    notify(t, e) {
-        if (m) {
-            addValueBatch(this, t, e);
-            return;
-        }
-        const r = this.t.slice(0);
-        const s = r.length;
-        let n = 0;
-        for (;n < s; ++n) {
-            r[n].handleChange(t, e);
-        }
-        return;
-    }
-    notifyCollection(t, e) {
-        const r = this.t.slice(0);
-        const s = r.length;
-        let n = 0;
-        for (;n < s; ++n) {
-            r[n].handleCollectionChange(t, e);
-        }
-        return;
-    }
-}
 
 const createMappedError = (t, ...e) => new Error(`AUR${d(t).padStart(4, "0")}:${e.map(d)}`);
 
@@ -295,6 +294,10 @@ class CollectionLengthObserver {
     }
 }
 
+(() => {
+    implementLengthObserver(CollectionLengthObserver);
+})();
+
 class CollectionSizeObserver {
     constructor(t) {
         this.owner = t;
@@ -316,11 +319,15 @@ class CollectionSizeObserver {
     }
 }
 
+(() => {
+    implementLengthObserver(CollectionSizeObserver);
+})();
+
 function implementLengthObserver(t) {
     const e = t.prototype;
     ensureProto(e, "subscribe", subscribe);
     ensureProto(e, "unsubscribe", unsubscribe);
-    R(t);
+    return R(t, null);
 }
 
 function subscribe(t) {
@@ -335,13 +342,9 @@ function unsubscribe(t) {
     }
 }
 
-implementLengthObserver(CollectionLengthObserver);
-
-implementLengthObserver(CollectionSizeObserver);
-
 const _ = Symbol.for("__au_arr_obs__");
 
-const x = Array[_] ?? defineHiddenProp(Array, _, new WeakMap);
+const M = Array[_] ?? defineHiddenProp(Array, _, new WeakMap);
 
 function sortCompare(t, e) {
     if (t === e) {
@@ -496,7 +499,7 @@ function quickSort(t, e, r, s, n) {
 
 const P = Array.prototype;
 
-const M = [ "push", "unshift", "pop", "shift", "splice", "reverse", "sort" ];
+const x = [ "push", "unshift", "pop", "shift", "splice", "reverse", "sort" ];
 
 let k;
 
@@ -521,7 +524,7 @@ function overrideArrayPrototypes() {
     };
     k = {
         push: function(...e) {
-            const r = x.get(this);
+            const r = M.get(this);
             if (r === void 0) {
                 return t.apply(this, e);
             }
@@ -541,7 +544,7 @@ function overrideArrayPrototypes() {
             return this.length;
         },
         unshift: function(...t) {
-            const r = x.get(this);
+            const r = M.get(this);
             if (r === void 0) {
                 return e.apply(this, t);
             }
@@ -557,7 +560,7 @@ function overrideArrayPrototypes() {
             return o;
         },
         pop: function() {
-            const t = x.get(this);
+            const t = M.get(this);
             if (t === void 0) {
                 return r.call(this);
             }
@@ -573,7 +576,7 @@ function overrideArrayPrototypes() {
             return s;
         },
         shift: function() {
-            const t = x.get(this);
+            const t = M.get(this);
             if (t === void 0) {
                 return s.call(this);
             }
@@ -590,7 +593,7 @@ function overrideArrayPrototypes() {
         splice: function(...t) {
             const e = t[0];
             const r = t[1];
-            const s = x.get(this);
+            const s = M.get(this);
             if (s === void 0) {
                 return n.apply(this, t);
             }
@@ -629,7 +632,7 @@ function overrideArrayPrototypes() {
             return f;
         },
         reverse: function() {
-            const t = x.get(this);
+            const t = M.get(this);
             if (t === void 0) {
                 i.call(this);
                 return this;
@@ -653,7 +656,7 @@ function overrideArrayPrototypes() {
             return this;
         },
         sort: function(t) {
-            const e = x.get(this);
+            const e = M.get(this);
             if (e === void 0) {
                 o.call(this, t);
                 return this;
@@ -687,7 +690,7 @@ function overrideArrayPrototypes() {
             return this;
         }
     };
-    for (const t of M) {
+    for (const t of x) {
         u(k[t], "observing", {
             value: true,
             writable: false,
@@ -707,7 +710,7 @@ function enableArrayObservation() {
     }
     if (!(b(V, Array) ?? false)) {
         w(true, Array, V);
-        for (const t of M) {
+        for (const t of x) {
             if (P[t].observing !== true) {
                 defineHiddenProp(P, t, k[t]);
             }
@@ -716,7 +719,7 @@ function enableArrayObservation() {
 }
 
 function disableArrayObservation() {
-    for (const t of M) {
+    for (const t of x) {
         if (P[t].observing === true) {
             defineHiddenProp(P, t, I[t]);
         }
@@ -734,7 +737,7 @@ class ArrayObserver {
         this.collection = t;
         this.indexMap = createIndexMap(t.length);
         this.lenObs = void 0;
-        x.set(t, this);
+        M.set(t, this);
     }
     notify() {
         const t = this.subs;
@@ -755,6 +758,10 @@ class ArrayObserver {
         return this.indexObservers[t] ??= new ArrayIndexObserver(this, t);
     }
 }
+
+(() => {
+    R(ArrayObserver, null);
+})();
 
 class ArrayIndexObserver {
     constructor(t, e) {
@@ -804,12 +811,12 @@ class ArrayIndexObserver {
     }
 }
 
-R(ArrayObserver);
-
-R(ArrayIndexObserver);
+(() => {
+    R(ArrayIndexObserver, null);
+})();
 
 function getArrayObserver(t) {
-    let e = x.get(t);
+    let e = M.get(t);
     if (e === void 0) {
         e = new ArrayObserver(t);
     }
@@ -978,7 +985,9 @@ class SetObserver {
     }
 }
 
-R(SetObserver);
+(() => {
+    R(SetObserver, null);
+})();
 
 function getSetObserver(t) {
     let e = N.get(t);
@@ -1164,7 +1173,9 @@ class MapObserver {
     }
 }
 
-R(MapObserver);
+(() => {
+    R(MapObserver, null);
+})();
 
 function getMapObserver(t) {
     let e = U.get(t);
@@ -1174,43 +1185,40 @@ function getMapObserver(t) {
     return e;
 }
 
-class BindingObserverRecord {
-    constructor(t) {
-        this.version = 0;
-        this.count = 0;
-        this.o = new Map;
-        this.b = t;
-    }
-    add(t) {
-        if (!this.o.has(t)) {
-            t.subscribe(this.b);
-            ++this.count;
+const nt = /*@__PURE__*/ (() => {
+    class BindingObserverRecord {
+        constructor(t) {
+            this.version = 0;
+            this.count = 0;
+            this.o = new Map;
+            this.b = t;
         }
-        this.o.set(t, this.version);
+        add(t) {
+            if (!this.o.has(t)) {
+                t.subscribe(this.b);
+                ++this.count;
+            }
+            this.o.set(t, this.version);
+        }
+        clear() {
+            this.o.forEach(unsubscribeStale, this);
+            this.count = this.o.size;
+        }
+        clearAll() {
+            this.o.forEach(unsubscribeAll, this);
+            this.o.clear();
+            this.count = 0;
+        }
     }
-    clear() {
-        this.o.forEach(unsubscribeStale, this);
-        this.count = this.o.size;
-    }
-    clearAll() {
-        this.o.forEach(unsubscribeAll, this);
-        this.o.clear();
-        this.count = 0;
-    }
-}
-
-function unsubscribeAll(t, e) {
-    e.unsubscribe(this.b);
-}
-
-function unsubscribeStale(t, e) {
-    if (this.version !== t) {
+    function unsubscribeAll(t, e) {
         e.unsubscribe(this.b);
-        this.o.delete(e);
     }
-}
-
-const nt = (() => {
+    function unsubscribeStale(t, e) {
+        if (this.version !== t) {
+            e.unsubscribe(this.b);
+            this.o.delete(e);
+        }
+    }
     function getObserverRecord() {
         return defineHiddenProp(this, "obs", new BindingObserverRecord(this));
     }
@@ -1256,63 +1264,6 @@ const nt = (() => {
 function connectable(t, e) {
     return t == null ? nt : nt(t, e);
 }
-
-class BindingContext {
-    constructor(t, e) {
-        if (t !== void 0) {
-            this[t] = e;
-        }
-    }
-}
-
-class Scope {
-    constructor(t, e, r, s) {
-        this.parent = t;
-        this.bindingContext = e;
-        this.overrideContext = r;
-        this.isBoundary = s;
-    }
-    static getContext(t, e, r) {
-        if (t == null) {
-            throw createMappedError(203);
-        }
-        let s = t.overrideContext;
-        let n = t;
-        if (r > 0) {
-            while (r > 0) {
-                r--;
-                n = n.parent;
-                if (n == null) {
-                    return void 0;
-                }
-            }
-            s = n.overrideContext;
-            return e in s ? s : n.bindingContext;
-        }
-        while (n != null && !n.isBoundary && !(e in n.overrideContext) && !(e in n.bindingContext)) {
-            n = n.parent;
-        }
-        if (n == null) {
-            return t.bindingContext;
-        }
-        s = n.overrideContext;
-        return e in s ? s : n.bindingContext;
-    }
-    static create(t, e, r) {
-        if (t == null) {
-            throw createMappedError(204);
-        }
-        return new Scope(null, t, e ?? new OverrideContext, r ?? false);
-    }
-    static fromParent(t, e) {
-        if (t == null) {
-            throw createMappedError(203);
-        }
-        return new Scope(t, e, new OverrideContext, false);
-    }
-}
-
-class OverrideContext {}
 
 let it = null;
 
@@ -1955,9 +1906,10 @@ class ComputedObserver {
     }
 }
 
-connectable(ComputedObserver, null);
-
-R(ComputedObserver);
+(() => {
+    connectable(ComputedObserver, null);
+    R(ComputedObserver, null);
+})();
 
 const yt = /*@__PURE__*/ p("IDirtyChecker", void 0);
 
@@ -2000,7 +1952,7 @@ class DirtyChecker {
                 }
             }
         };
-        R(DirtyCheckProperty);
+        R(DirtyCheckProperty, null);
     }
     createProperty(t, e) {
         if (Ot.throw) {
@@ -2169,7 +2121,9 @@ class SetterObserver {
     }
 }
 
-R(SetterObserver);
+(() => {
+    R(SetterObserver, null);
+})();
 
 let Ct = void 0;
 
@@ -2213,7 +2167,7 @@ class ObserverLocator {
         this.R = [];
         this.A = s(yt);
         this._ = s(mt);
-        this.P = s(Rt);
+        this.M = s(Rt);
     }
     addAdapter(t) {
         this.R.push(t);
@@ -2282,11 +2236,11 @@ class ObserverLocator {
             }
             break;
         }
-        let r = xt(t, e);
+        let r = Mt(t, e);
         if (r === void 0) {
             let s = _t(t);
             while (s !== null) {
-                r = xt(s, e);
+                r = Mt(s, e);
                 if (r === void 0) {
                     s = _t(s);
                 } else {
@@ -2295,15 +2249,15 @@ class ObserverLocator {
             }
         }
         if (r !== void 0 && !a.call(r, "value")) {
-            let s = this.M(t, e, r);
+            let s = this.P(t, e, r);
             if (s == null) {
                 s = (r.get?.getObserver)?.(t);
             }
-            return s == null ? r.configurable ? this.P.getObserver(t, e, r, this) : this.A.createProperty(t, e) : s;
+            return s == null ? r.configurable ? this.M.getObserver(t, e, r, this) : this.A.createProperty(t, e) : s;
         }
         return new SetterObserver(t, e);
     }
-    M(t, e, r) {
+    P(t, e, r) {
         if (this.R.length > 0) {
             for (const s of this.R) {
                 const n = s.getObserver(t, e, r, this);
@@ -2330,7 +2284,7 @@ const getCollectionObserver = t => {
 
 const _t = Object.getPrototypeOf;
 
-const xt = Object.getOwnPropertyDescriptor;
+const Mt = Object.getOwnPropertyDescriptor;
 
 const getObserverLookup = t => {
     let e = t.$observers;
@@ -2439,134 +2393,134 @@ class RunEffect {
     }
 }
 
-connectable(RunEffect, null);
+(() => {
+    connectable(RunEffect, null);
+})();
 
-function getObserversLookup(t) {
-    if (t.$observers === void 0) {
-        u(t, "$observers", {
-            value: {}
-        });
-    }
-    return t.$observers;
-}
-
-const Mt = {};
-
-function observable(t, e) {
-    if (!SetterNotifier.mixed) {
-        SetterNotifier.mixed = true;
-        R(SetterNotifier);
-    }
-    let r = false;
-    let s;
-    if (typeof t === "object") {
-        s = t;
-    } else if (t != null) {
-        s = {
-            name: t
-        };
-        r = true;
-    } else {
-        s = o;
-    }
-    if (arguments.length === 0) {
-        return function(t, e) {
-            if (e.kind !== "field") throw createMappedError(224);
-            return createFieldInitializer(e);
-        };
-    }
-    if (e?.kind === "field") return createFieldInitializer(e);
-    if (r) {
-        return function(t, e) {
-            createDescriptor(t, s.name, (() => Mt), true);
-        };
-    }
-    return function(t, e) {
-        switch (e.kind) {
-          case "field":
-            return createFieldInitializer(e);
-
-          case "class":
-            return createDescriptor(t, s.name, (() => Mt), true);
-
-          default:
-            throw createMappedError(224);
+const xt = /*@__PURE__*/ (() => {
+    function getObserversLookup(t) {
+        if (t.$observers === void 0) {
+            u(t, "$observers", {
+                value: {}
+            });
         }
-    };
-    function createFieldInitializer(t) {
-        let e;
-        t.addInitializer((function() {
-            createDescriptor(this, t.name, (() => e), false);
-        }));
-        return function(t) {
-            return e = t;
-        };
+        return t.$observers;
     }
-    function createDescriptor(t, e, r, n) {
-        const i = s.callback || `${d(e)}Changed`;
-        const o = s.set;
-        const observableGetter = function() {
-            const t = getNotifier(this, e, i, r, o);
-            currentConnectable()?.subscribeTo(t);
-            return t.getValue();
-        };
-        observableGetter.getObserver = function(t) {
-            return getNotifier(t, e, i, r, o);
-        };
-        const c = {
-            enumerable: true,
-            configurable: true,
-            get: observableGetter,
-            set(t) {
-                getNotifier(this, e, i, r, o).setValue(t);
+    const t = {};
+    function observable(e, r) {
+        if (!SetterNotifier.mixed) {
+            SetterNotifier.mixed = true;
+            R(SetterNotifier, null);
+        }
+        let s = false;
+        let n;
+        if (typeof e === "object") {
+            n = e;
+        } else if (e != null) {
+            n = {
+                name: e
+            };
+            s = true;
+        } else {
+            n = o;
+        }
+        if (arguments.length === 0) {
+            return function(t, e) {
+                if (e.kind !== "field") throw createMappedError(224);
+                return createFieldInitializer(e);
+            };
+        }
+        if (r?.kind === "field") return createFieldInitializer(r);
+        if (s) {
+            return function(e, r) {
+                createDescriptor(e, n.name, (() => t), true);
+            };
+        }
+        return function(e, r) {
+            switch (r.kind) {
+              case "field":
+                return createFieldInitializer(r);
+
+              case "class":
+                return createDescriptor(e, n.name, (() => t), true);
+
+              default:
+                throw createMappedError(224);
             }
         };
-        if (n) u(t.prototype, e, c); else u(t, e, c);
-    }
-}
-
-function getNotifier(t, e, r, s, n) {
-    const i = getObserversLookup(t);
-    let o = i[e];
-    if (o == null) {
-        const c = s();
-        o = new SetterNotifier(t, r, n, c === Mt ? void 0 : c);
-        i[e] = o;
-    }
-    return o;
-}
-
-class SetterNotifier {
-    constructor(t, e, r, s) {
-        this.type = y;
-        this.v = void 0;
-        this.ov = void 0;
-        this.o = t;
-        this.S = r;
-        this.hs = isFunction(r);
-        const n = t[e];
-        this.cb = isFunction(n) ? n : void 0;
-        this.v = s;
-    }
-    getValue() {
-        return this.v;
-    }
-    setValue(t) {
-        if (this.hs) {
-            t = this.S(t);
+        function createFieldInitializer(t) {
+            let e;
+            t.addInitializer((function() {
+                createDescriptor(this, t.name, (() => e), false);
+            }));
+            return function(t) {
+                return e = t;
+            };
         }
-        if (!h(t, this.v)) {
-            this.ov = this.v;
-            this.v = t;
-            this.cb?.call(this.o, this.v, this.ov);
-            t = this.ov;
-            this.ov = this.v;
-            this.subs.notify(this.v, t);
+        function createDescriptor(t, e, r, s) {
+            const i = n.callback || `${d(e)}Changed`;
+            const o = n.set;
+            const observableGetter = function() {
+                const t = getNotifier(this, e, i, r, o);
+                currentConnectable()?.subscribeTo(t);
+                return t.getValue();
+            };
+            observableGetter.getObserver = function(t) {
+                return getNotifier(t, e, i, r, o);
+            };
+            const c = {
+                enumerable: true,
+                configurable: true,
+                get: observableGetter,
+                set(t) {
+                    getNotifier(this, e, i, r, o).setValue(t);
+                }
+            };
+            if (s) u(t.prototype, e, c); else u(t, e, c);
         }
     }
-}
-
-SetterNotifier.mixed = false;
+    function getNotifier(e, r, s, n, i) {
+        const o = getObserversLookup(e);
+        let c = o[r];
+        if (c == null) {
+            const a = n();
+            c = new SetterNotifier(e, s, i, a === t ? void 0 : a);
+            o[r] = c;
+        }
+        return c;
+    }
+    class SetterNotifier {
+        constructor(t, e, r, s) {
+            this.type = y;
+            this.v = void 0;
+            this.ov = void 0;
+            this.o = t;
+            this.S = r;
+            this.hs = isFunction(r);
+            const n = t[e];
+            this.cb = isFunction(n) ? n : void 0;
+            this.v = s;
+        }
+        getValue() {
+            return this.v;
+        }
+        setValue(t) {
+            if (this.hs) {
+                t = this.S(t);
+            }
+            if (!h(t, this.v)) {
+                this.ov = this.v;
+                this.v = t;
+                this.cb?.call(this.o, this.v, this.ov);
+                t = this.ov;
+                this.ov = this.v;
+                this.subs.notify(this.v, t);
+            }
+        }
+    }
+    SetterNotifier.mixed = false;
+    return observable;
+})();
 
 function nowrap(t, e) {
     return arguments.length === 0 ? decorator : decorator(t, e);
@@ -2588,5 +2542,5 @@ function nowrap(t, e) {
     }
 }
 
-export { A as AccessorType, ArrayIndexObserver, ArrayObserver, BindingContext, BindingObserverRecord, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, at as ConnectableSwitcher, DirtyCheckProperty, Ot as DirtyCheckSettings, DirtyChecker, v as ICoercionConfiguration, yt as IDirtyChecker, mt as INodeObserverLocator, Pt as IObservation, St as IObserverLocator, MapObserver, Observation, ObserverLocator, PrimitiveObserver, PropertyAccessor, gt as ProxyObservable, Scope, SetObserver, SetterObserver, SubscriberRecord, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, disableArrayObservation, disableMapObservation, disableSetObservation, enableArrayObservation, enableMapObservation, enableSetObservation, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, observable, R as subscriberCollection };
+export { A as AccessorType, ArrayIndexObserver, ArrayObserver, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, at as ConnectableSwitcher, DirtyCheckProperty, Ot as DirtyCheckSettings, DirtyChecker, v as ICoercionConfiguration, Rt as IComputedObserverLocator, yt as IDirtyChecker, mt as INodeObserverLocator, Pt as IObservation, St as IObserverLocator, MapObserver, Observation, ObserverLocator, PrimitiveObserver, PropertyAccessor, gt as ProxyObservable, SetObserver, SetterObserver, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, disableArrayObservation, disableMapObservation, disableSetObservation, enableArrayObservation, enableMapObservation, enableSetObservation, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, xt as observable, R as subscriberCollection };
 

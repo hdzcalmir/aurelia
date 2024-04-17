@@ -1,5 +1,5 @@
 import { type BindingBehaviorInstance, BindingBehaviorStaticAuDefinition } from '../binding-behavior';
-import { type Scope } from '@aurelia/runtime';
+import { type Scope } from '../../binding/scope';
 import { type IBinding } from '../../binding/interfaces-bindings';
 export declare class DebounceBindingBehavior implements BindingBehaviorInstance {
     static readonly $au: BindingBehaviorStaticAuDefinition;

@@ -201,9 +201,8 @@ function addValueBatch(subs, newValue, oldValue) {
     }
 }
 
-/* eslint-disable @typescript-eslint/ban-types */
-const subscriberCollection = (() => {
-    function subscriberCollection(target) {
+const subscriberCollection = /*@__PURE__*/ (() => {
+    function subscriberCollection(target, context) {
         return target == null ? subscriberCollectionDeco : subscriberCollectionDeco(target);
     }
     function getSubscriberRecord() {
@@ -216,74 +215,73 @@ const subscriberCollection = (() => {
         return this.subs.remove(subscriber);
     }
     const decoratedTarget = new WeakSet();
-    function subscriberCollectionDeco(target) {
-        if (decoratedTarget.has(target)) {
-            return;
+    function subscriberCollectionDeco(target, context) {
+        if (!decoratedTarget.has(target)) {
+            decoratedTarget.add(target);
+            const proto = target.prototype;
+            // not configurable, as in devtool, the getter could be invoked on the prototype,
+            // and become permanently broken
+            def(proto, 'subs', { get: getSubscriberRecord });
+            ensureProto(proto, 'subscribe', addSubscriber);
+            ensureProto(proto, 'unsubscribe', removeSubscriber);
         }
-        decoratedTarget.add(target);
-        const proto = target.prototype;
-        // not configurable, as in devtool, the getter could be invoked on the prototype,
-        // and become permanently broken
-        def(proto, 'subs', { get: getSubscriberRecord });
-        ensureProto(proto, 'subscribe', addSubscriber);
-        ensureProto(proto, 'unsubscribe', removeSubscriber);
+        return target;
     }
-    /* eslint-enable @typescript-eslint/ban-types */
-    return subscriberCollection;
-})();
-class SubscriberRecord {
-    constructor() {
-        this.count = 0;
-        /** @internal */
-        this._subs = [];
-    }
-    add(subscriber) {
-        if (this._subs.includes(subscriber)) {
-            return false;
+    class SubscriberRecord {
+        constructor() {
+            this.count = 0;
+            /** @internal */
+            this._subs = [];
         }
-        this._subs[this._subs.length] = subscriber;
-        ++this.count;
-        return true;
-    }
-    remove(subscriber) {
-        const idx = this._subs.indexOf(subscriber);
-        if (idx !== -1) {
-            this._subs.splice(idx, 1);
-            --this.count;
+        add(subscriber) {
+            if (this._subs.includes(subscriber)) {
+                return false;
+            }
+            this._subs[this._subs.length] = subscriber;
+            ++this.count;
             return true;
         }
-        return false;
-    }
-    notify(val, oldVal) {
-        if (batching) {
-            addValueBatch(this, val, oldVal);
+        remove(subscriber) {
+            const idx = this._subs.indexOf(subscriber);
+            if (idx !== -1) {
+                this._subs.splice(idx, 1);
+                --this.count;
+                return true;
+            }
+            return false;
+        }
+        notify(val, oldVal) {
+            if (batching) {
+                addValueBatch(this, val, oldVal);
+                return;
+            }
+            /**
+             * Note: change handlers may have the side-effect of adding/removing subscribers to this collection during this
+             * callSubscribers invocation, so we're caching them all before invoking any.
+             * Subscribers added during this invocation are not invoked (and they shouldn't be).
+             * Subscribers removed during this invocation will still be invoked (and they also shouldn't be,
+             * however this is accounted for via $isBound and similar flags on the subscriber objects)
+             */
+            const _subs = this._subs.slice(0);
+            const len = _subs.length;
+            let i = 0;
+            for (; i < len; ++i) {
+                _subs[i].handleChange(val, oldVal);
+            }
             return;
         }
-        /**
-         * Note: change handlers may have the side-effect of adding/removing subscribers to this collection during this
-         * callSubscribers invocation, so we're caching them all before invoking any.
-         * Subscribers added during this invocation are not invoked (and they shouldn't be).
-         * Subscribers removed during this invocation will still be invoked (and they also shouldn't be,
-         * however this is accounted for via $isBound and similar flags on the subscriber objects)
-         */
-        const _subs = this._subs.slice(0);
-        const len = _subs.length;
-        let i = 0;
-        for (; i < len; ++i) {
-            _subs[i].handleChange(val, oldVal);
+        notifyCollection(collection, indexMap) {
+            const _subs = this._subs.slice(0);
+            const len = _subs.length;
+            let i = 0;
+            for (; i < len; ++i) {
+                _subs[i].handleCollectionChange(collection, indexMap);
+            }
+            return;
         }
-        return;
     }
-    notifyCollection(collection, indexMap) {
-        const _subs = this._subs.slice(0);
-        const len = _subs.length;
-        let i = 0;
-        for (; i < len; ++i) {
-            _subs[i].handleCollectionChange(collection, indexMap);
-        }
-        return;
-    }
-}
+    return subscriberCollection;
+})();
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable prefer-template */
@@ -454,6 +452,9 @@ class CollectionLengthObserver {
         }
     }
 }
+(() => {
+    implementLengthObserver(CollectionLengthObserver);
+})();
 class CollectionSizeObserver {
     constructor(owner) {
         this.owner = owner;
@@ -474,11 +475,14 @@ class CollectionSizeObserver {
         }
     }
 }
+(() => {
+    implementLengthObserver(CollectionSizeObserver);
+})();
 function implementLengthObserver(klass) {
     const proto = klass.prototype;
     ensureProto(proto, 'subscribe', subscribe);
     ensureProto(proto, 'unsubscribe', unsubscribe);
-    subscriberCollection(klass);
+    return subscriberCollection(klass, null);
 }
 function subscribe(subscriber) {
     if (this.subs.add(subscriber) && this.subs.count === 1) {
@@ -490,8 +494,6 @@ function unsubscribe(subscriber) {
         this.owner.subscribe(this);
     }
 }
-implementLengthObserver(CollectionLengthObserver);
-implementLengthObserver(CollectionSizeObserver);
 
 // multiple applications of Aurelia wouldn't have different observers for the same Array object
 const lookupMetadataKey$2 = Symbol.for('__au_arr_obs__');
@@ -911,6 +913,9 @@ class ArrayObserver {
         return this.indexObservers[index] ??= new ArrayIndexObserver(this, index);
     }
 }
+(() => {
+    subscriberCollection(ArrayObserver, null);
+})();
 class ArrayIndexObserver {
     constructor(owner, index) {
         this.owner = owner;
@@ -964,8 +969,9 @@ class ArrayIndexObserver {
         }
     }
 }
-subscriberCollection(ArrayObserver);
-subscriberCollection(ArrayIndexObserver);
+(() => {
+    subscriberCollection(ArrayIndexObserver, null);
+})();
 function getArrayObserver(array) {
     let observer = observerLookup$2.get(array);
     if (observer === void 0) {
@@ -1115,7 +1121,9 @@ class SetObserver {
         return this.lenObs ??= new CollectionSizeObserver(this);
     }
 }
-subscriberCollection(SetObserver);
+(() => {
+    subscriberCollection(SetObserver, null);
+})();
 function getSetObserver(observedSet) {
     let observer = observerLookup$1.get(observedSet);
     if (observer === void 0) {
@@ -1279,7 +1287,9 @@ class MapObserver {
         return this.lenObs ??= new CollectionSizeObserver(this);
     }
 }
-subscriberCollection(MapObserver);
+(() => {
+    subscriberCollection(MapObserver, null);
+})();
 function getMapObserver(map) {
     let observer = observerLookup.get(map);
     if (observer === void 0) {
@@ -1288,50 +1298,50 @@ function getMapObserver(map) {
     return observer;
 }
 
-class BindingObserverRecord {
-    constructor(b) {
-        this.version = 0;
-        this.count = 0;
-        // a map of the observers (subscribables) that the owning binding of this record
-        // is currently subscribing to. The values are the version of the observers,
-        // as the observers version may need to be changed during different evaluation
-        /** @internal */
-        this.o = new Map();
-        this.b = b;
-    }
-    /**
-     * Add, and subscribe to a given observer
-     */
-    add(observer) {
-        if (!this.o.has(observer)) {
-            observer.subscribe(this.b);
-            ++this.count;
+const connectableDecorator = /*@__PURE__*/ (() => {
+    class BindingObserverRecord {
+        constructor(b) {
+            this.version = 0;
+            this.count = 0;
+            // a map of the observers (subscribables) that the owning binding of this record
+            // is currently subscribing to. The values are the version of the observers,
+            // as the observers version may need to be changed during different evaluation
+            /** @internal */
+            this.o = new Map();
+            this.b = b;
         }
-        this.o.set(observer, this.version);
+        /**
+         * Add, and subscribe to a given observer
+         */
+        add(observer) {
+            if (!this.o.has(observer)) {
+                observer.subscribe(this.b);
+                ++this.count;
+            }
+            this.o.set(observer, this.version);
+        }
+        /**
+         * Unsubscribe the observers that are not up to date with the record version
+         */
+        clear() {
+            this.o.forEach(unsubscribeStale, this);
+            this.count = this.o.size;
+        }
+        clearAll() {
+            this.o.forEach(unsubscribeAll, this);
+            this.o.clear();
+            this.count = 0;
+        }
     }
-    /**
-     * Unsubscribe the observers that are not up to date with the record version
-     */
-    clear() {
-        this.o.forEach(unsubscribeStale, this);
-        this.count = this.o.size;
-    }
-    clearAll() {
-        this.o.forEach(unsubscribeAll, this);
-        this.o.clear();
-        this.count = 0;
-    }
-}
-function unsubscribeAll(version, subscribable) {
-    subscribable.unsubscribe(this.b);
-}
-function unsubscribeStale(version, subscribable) {
-    if (this.version !== version) {
+    function unsubscribeAll(version, subscribable) {
         subscribable.unsubscribe(this.b);
-        this.o.delete(subscribable);
     }
-}
-const connectableDecorator = (() => {
+    function unsubscribeStale(version, subscribable) {
+        if (this.version !== version) {
+            subscribable.unsubscribe(this.b);
+            this.o.delete(subscribable);
+        }
+    }
     function getObserverRecord() {
         return defineHiddenProp(this, 'obs', new BindingObserverRecord(this));
     }
@@ -1363,7 +1373,7 @@ const connectableDecorator = (() => {
     function noopHandleCollectionChange() {
         throw createMappedError(99 /* ErrorNames.method_not_implemented */, 'handleCollectionChange');
     }
-    return function connectableDecorator(target, _context) {
+    return function connectableDecorator(target, context) {
         const proto = target.prototype;
         ensureProto(proto, 'observe', observe);
         ensureProto(proto, 'observeCollection', observeCollection);
@@ -1378,79 +1388,6 @@ const connectableDecorator = (() => {
 })();
 function connectable(target, context) {
     return target == null ? connectableDecorator : connectableDecorator(target, context);
-}
-
-/**
- * A class for creating context in synthetic scope to keep the number of classes of context in scope small
- */
-class BindingContext {
-    constructor(key, value) {
-        if (key !== void 0) {
-            this[key] = value;
-        }
-    }
-}
-class Scope {
-    constructor(parent, bindingContext, overrideContext, isBoundary) {
-        this.parent = parent;
-        this.bindingContext = bindingContext;
-        this.overrideContext = overrideContext;
-        this.isBoundary = isBoundary;
-    }
-    static getContext(scope, name, ancestor) {
-        if (scope == null) {
-            throw createMappedError(203 /* ErrorNames.null_scope */);
-        }
-        let overrideContext = scope.overrideContext;
-        let currentScope = scope;
-        if (ancestor > 0) {
-            // jump up the required number of ancestor contexts (eg $parent.$parent requires two jumps)
-            while (ancestor > 0) {
-                ancestor--;
-                currentScope = currentScope.parent;
-                if (currentScope == null) {
-                    return void 0;
-                }
-            }
-            overrideContext = currentScope.overrideContext;
-            // Here we are giving benefit of doubt considering the dev has used one or more `$parent` token, and thus should know what s/he is targeting.
-            return name in overrideContext ? overrideContext : currentScope.bindingContext;
-        }
-        // walk the scope hierarchy until
-        // the first scope that has the property in its contexts
-        // or
-        // the closet boundary scope
-        // -------------------------
-        // this behavior is different with v1
-        // where it would fallback to the immediate scope instead of the root one
-        // TODO: maybe avoid immediate loop and return earlier
-        // -------------------------
-        while (currentScope != null
-            && !currentScope.isBoundary
-            && !(name in currentScope.overrideContext)
-            && !(name in currentScope.bindingContext)) {
-            currentScope = currentScope.parent;
-        }
-        if (currentScope == null) {
-            return scope.bindingContext;
-        }
-        overrideContext = currentScope.overrideContext;
-        return name in overrideContext ? overrideContext : currentScope.bindingContext;
-    }
-    static create(bc, oc, isBoundary) {
-        if (bc == null) {
-            throw createMappedError(204 /* ErrorNames.create_scope_with_null_context */);
-        }
-        return new Scope(null, bc, oc ?? new OverrideContext(), isBoundary ?? false);
-    }
-    static fromParent(ps, bc) {
-        if (ps == null) {
-            throw createMappedError(203 /* ErrorNames.null_scope */);
-        }
-        return new Scope(ps, bc, new OverrideContext(), false);
-    }
-}
-class OverrideContext {
 }
 
 /**
@@ -2046,8 +1983,10 @@ class ComputedObserver {
         }
     }
 }
-connectable(ComputedObserver, null);
-subscriberCollection(ComputedObserver);
+(() => {
+    connectable(ComputedObserver, null);
+    subscriberCollection(ComputedObserver, null);
+})();
 
 const IDirtyChecker = /*@__PURE__*/ createInterface('IDirtyChecker', x => x.callback(() => {
         throw createError('AURxxxx: There is no registration for IDirtyChecker interface. If you want to use your own dirty checker, make sure you register it.');
@@ -2115,7 +2054,7 @@ class DirtyChecker {
                 }
             }
         };
-        subscriberCollection(DirtyCheckProperty);
+        subscriberCollection(DirtyCheckProperty, null);
     }
     createProperty(obj, key) {
         if (DirtyCheckSettings.throw) {
@@ -2300,7 +2239,9 @@ class SetterObserver {
         return this;
     }
 }
-subscriberCollection(SetterObserver);
+(() => {
+    subscriberCollection(SetterObserver, null);
+})();
 // a reusable variable for `.flush()` methods of observers
 // so that there doesn't need to create an env record for every call
 let oV = void 0;
@@ -2594,150 +2535,155 @@ class RunEffect {
         this.obs.clearAll();
     }
 }
-connectable(RunEffect, null);
+(() => {
+    connectable(RunEffect, null);
+})();
 
-function getObserversLookup(obj) {
-    if (obj.$observers === void 0) {
-        def(obj, '$observers', { value: {} });
-        // todo: define in a weakmap
-    }
-    return obj.$observers;
-}
-const noValue = {};
-// impl, wont be seen
-function observable(targetOrConfig, context) {
-    if (!SetterNotifier.mixed) {
-        SetterNotifier.mixed = true;
-        subscriberCollection(SetterNotifier);
-    }
-    let isClassDecorator = false;
-    let config;
-    if (typeof targetOrConfig === 'object') {
-        config = targetOrConfig;
-    }
-    else if (targetOrConfig != null) {
-        config = { name: targetOrConfig };
-        isClassDecorator = true;
-    }
-    else {
-        config = emptyObject;
-    }
-    // case: @observable() prop
-    if (arguments.length === 0) {
-        return function (target, context) {
-            if (context.kind !== 'field')
-                throw createMappedError(224 /* ErrorNames.invalid_observable_decorator_usage */);
-            return createFieldInitializer(context);
-        };
-    }
-    // case: @observable prop
-    if (context?.kind === 'field')
-        return createFieldInitializer(context);
-    // case:  @observable(PropertyKey) class
-    if (isClassDecorator) {
-        return function (target, _context) {
-            createDescriptor(target, config.name, () => noValue, true);
-        };
-    }
-    // case: @observable({...}) class | @observable({...}) prop
-    return function (target, context) {
-        switch (context.kind) {
-            case 'field': return createFieldInitializer(context);
-            case 'class': return createDescriptor(target, config.name, () => noValue, true);
-            default: throw createMappedError(224 /* ErrorNames.invalid_observable_decorator_usage */);
+const observable = /*@__PURE__*/ (() => {
+    function getObserversLookup(obj) {
+        if (obj.$observers === void 0) {
+            def(obj, '$observers', { value: {} });
+            // todo: define in a weakmap
         }
-    };
-    function createFieldInitializer(context) {
-        let $initialValue;
-        context.addInitializer(function () {
-            createDescriptor(this, context.name, () => $initialValue, false);
-        });
-        return function (initialValue) {
-            return $initialValue = initialValue;
-        };
+        return obj.$observers;
     }
-    function createDescriptor(target, property, initialValue, targetIsClass) {
-        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/strict-boolean-expressions
-        const callback = config.callback || `${safeString(property)}Changed`;
-        const $set = config.set;
-        const observableGetter = function () {
-            const notifier = getNotifier(this, property, callback, initialValue, $set);
-            currentConnectable()?.subscribeTo(notifier);
-            return notifier.getValue();
-        };
-        observableGetter.getObserver = function (obj) {
-            return getNotifier(obj, property, callback, initialValue, $set);
-        };
-        const descriptor = {
-            enumerable: true,
-            configurable: true,
-            get: observableGetter,
-            set(newValue) {
-                getNotifier(this, property, callback, initialValue, $set).setValue(newValue);
+    const noValue = {};
+    // impl, wont be seen
+    function observable(targetOrConfig, context) {
+        if (!SetterNotifier.mixed) {
+            SetterNotifier.mixed = true;
+            subscriberCollection(SetterNotifier, null);
+        }
+        let isClassDecorator = false;
+        let config;
+        if (typeof targetOrConfig === 'object') {
+            config = targetOrConfig;
+        }
+        else if (targetOrConfig != null) {
+            config = { name: targetOrConfig };
+            isClassDecorator = true;
+        }
+        else {
+            config = emptyObject;
+        }
+        // case: @observable() prop
+        if (arguments.length === 0) {
+            return function (target, context) {
+                if (context.kind !== 'field')
+                    throw createMappedError(224 /* ErrorNames.invalid_observable_decorator_usage */);
+                return createFieldInitializer(context);
+            };
+        }
+        // case: @observable prop
+        if (context?.kind === 'field')
+            return createFieldInitializer(context);
+        // case:  @observable(PropertyKey) class
+        if (isClassDecorator) {
+            return function (target, context) {
+                createDescriptor(target, config.name, () => noValue, true);
+            };
+        }
+        // case: @observable({...}) class | @observable({...}) prop
+        return function (target, context) {
+            switch (context.kind) {
+                case 'field': return createFieldInitializer(context);
+                case 'class': return createDescriptor(target, config.name, () => noValue, true);
+                default: throw createMappedError(224 /* ErrorNames.invalid_observable_decorator_usage */);
             }
         };
-        if (targetIsClass)
-            def(target.prototype, property, descriptor);
-        else
-            def(target, property, descriptor);
-    }
-}
-function getNotifier(obj, key, callbackKey, initialValue, set) {
-    const lookup = getObserversLookup(obj);
-    let notifier = lookup[key];
-    if (notifier == null) {
-        const $initialValue = initialValue();
-        notifier = new SetterNotifier(obj, callbackKey, set, $initialValue === noValue ? void 0 : $initialValue);
-        lookup[key] = notifier;
-    }
-    return notifier;
-}
-class SetterNotifier {
-    constructor(obj, callbackKey, set, initialValue) {
-        this.type = atObserver;
-        /** @internal */
-        this._value = void 0;
-        /** @internal */
-        this._oldValue = void 0;
-        this._obj = obj;
-        this._setter = set;
-        this._hasSetter = isFunction(set);
-        const callback = obj[callbackKey];
-        this.cb = isFunction(callback) ? callback : void 0;
-        this._value = initialValue;
-    }
-    getValue() {
-        return this._value;
-    }
-    setValue(value) {
-        if (this._hasSetter) {
-            value = this._setter(value);
+        function createFieldInitializer(context) {
+            let $initialValue;
+            context.addInitializer(function () {
+                createDescriptor(this, context.name, () => $initialValue, false);
+            });
+            return function (initialValue) {
+                return $initialValue = initialValue;
+            };
         }
-        if (!areEqual(value, this._value)) {
-            this._oldValue = this._value;
-            this._value = value;
-            this.cb?.call(this._obj, this._value, this._oldValue);
-            // this._value might have been updated during the callback
-            // we only want to notify subscribers with the latest values
-            value = this._oldValue;
-            this._oldValue = this._value;
-            this.subs.notify(this._value, value);
+        function createDescriptor(target, property, initialValue, targetIsClass) {
+            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/strict-boolean-expressions
+            const callback = config.callback || `${safeString(property)}Changed`;
+            const $set = config.set;
+            const observableGetter = function () {
+                const notifier = getNotifier(this, property, callback, initialValue, $set);
+                currentConnectable()?.subscribeTo(notifier);
+                return notifier.getValue();
+            };
+            observableGetter.getObserver = function (obj) {
+                return getNotifier(obj, property, callback, initialValue, $set);
+            };
+            const descriptor = {
+                enumerable: true,
+                configurable: true,
+                get: observableGetter,
+                set(newValue) {
+                    getNotifier(this, property, callback, initialValue, $set).setValue(newValue);
+                }
+            };
+            if (targetIsClass)
+                def(target.prototype, property, descriptor);
+            else
+                def(target, property, descriptor);
         }
     }
-}
-SetterNotifier.mixed = false;
-/*
-          | typescript       | babel
-----------|------------------|-------------------------
-property  | config           | config
-w/parens  | target, key      | target, key, descriptor
-----------|------------------|-------------------------
-property  | target, key      | target, key, descriptor
-no parens | n/a              | n/a
-----------|------------------|-------------------------
-class     | config           | config
-          | target           | target
-*/
+    function getNotifier(obj, key, callbackKey, initialValue, set) {
+        const lookup = getObserversLookup(obj);
+        let notifier = lookup[key];
+        if (notifier == null) {
+            const $initialValue = initialValue();
+            notifier = new SetterNotifier(obj, callbackKey, set, $initialValue === noValue ? void 0 : $initialValue);
+            lookup[key] = notifier;
+        }
+        return notifier;
+    }
+    class SetterNotifier {
+        constructor(obj, callbackKey, set, initialValue) {
+            this.type = atObserver;
+            /** @internal */
+            this._value = void 0;
+            /** @internal */
+            this._oldValue = void 0;
+            this._obj = obj;
+            this._setter = set;
+            this._hasSetter = isFunction(set);
+            const callback = obj[callbackKey];
+            this.cb = isFunction(callback) ? callback : void 0;
+            this._value = initialValue;
+        }
+        getValue() {
+            return this._value;
+        }
+        setValue(value) {
+            if (this._hasSetter) {
+                value = this._setter(value);
+            }
+            if (!areEqual(value, this._value)) {
+                this._oldValue = this._value;
+                this._value = value;
+                this.cb?.call(this._obj, this._value, this._oldValue);
+                // this._value might have been updated during the callback
+                // we only want to notify subscribers with the latest values
+                value = this._oldValue;
+                this._oldValue = this._value;
+                this.subs.notify(this._value, value);
+            }
+        }
+    }
+    SetterNotifier.mixed = false;
+    /*
+              | typescript       | babel
+    ----------|------------------|-------------------------
+    property  | config           | config
+    w/parens  | target, key      | target, key, descriptor
+    ----------|------------------|-------------------------
+    property  | target, key      | target, key, descriptor
+    no parens | n/a              | n/a
+    ----------|------------------|-------------------------
+    class     | config           | config
+              | target           | target
+    */
+    return observable;
+})();
 
 /**
  * A decorator to signal proxy observation shouldn't make an effort to wrap an object
@@ -2763,5 +2709,5 @@ function nowrap(target, context) {
 }
 /* eslint-enable */
 
-export { AccessorType, ArrayIndexObserver, ArrayObserver, BindingContext, BindingObserverRecord, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, ConnectableSwitcher, DirtyCheckProperty, DirtyCheckSettings, DirtyChecker, ICoercionConfiguration, IDirtyChecker, INodeObserverLocator, IObservation, IObserverLocator, MapObserver, Observation, ObserverLocator, PrimitiveObserver, PropertyAccessor, ProxyObservable, Scope, SetObserver, SetterObserver, SubscriberRecord, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, disableArrayObservation, disableMapObservation, disableSetObservation, enableArrayObservation, enableMapObservation, enableSetObservation, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, observable, subscriberCollection };
+export { AccessorType, ArrayIndexObserver, ArrayObserver, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, ConnectableSwitcher, DirtyCheckProperty, DirtyCheckSettings, DirtyChecker, ICoercionConfiguration, IComputedObserverLocator, IDirtyChecker, INodeObserverLocator, IObservation, IObserverLocator, MapObserver, Observation, ObserverLocator, PrimitiveObserver, PropertyAccessor, ProxyObservable, SetObserver, SetterObserver, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, disableArrayObservation, disableMapObservation, disableSetObservation, enableArrayObservation, enableMapObservation, enableSetObservation, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, observable, subscriberCollection };
 //# sourceMappingURL=index.dev.mjs.map

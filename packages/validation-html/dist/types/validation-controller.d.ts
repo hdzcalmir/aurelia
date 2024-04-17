@@ -1,8 +1,7 @@
 import { type IContainer, type IFactory, type Constructable, type Transformer, type Key } from '@aurelia/kernel';
 import { BindingBehaviorExpression } from '@aurelia/expression-parser';
-import { PropertyBinding } from '@aurelia/runtime-html';
+import { PropertyBinding, type Scope } from '@aurelia/runtime-html';
 import { PropertyAccessor, PropertyRule, ValidationResult, IValidator, ValidateInstruction, type IValidateable } from '@aurelia/validation';
-import type { Scope } from '@aurelia/runtime';
 export type BindingWithBehavior = PropertyBinding & {
     ast: BindingBehaviorExpression;
     target: Element | object;

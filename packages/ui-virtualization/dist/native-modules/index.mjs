@@ -1,8 +1,8 @@
 import { DI as t, resolve as s, Registration as e } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { Scope as r, BindingContext as i, getCollectionObserver as n } from "../../../runtime/dist/native-modules/index.mjs";
+import { getCollectionObserver as r } from "../../../runtime/dist/native-modules/index.mjs";
 
-import { IRenderLocation as o, IInstruction as l, IController as h, IViewFactory as c, IPlatform as a, astEvaluate as u } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { IRenderLocation as i, IInstruction as n, IController as o, IViewFactory as l, IPlatform as h, Scope as c, BindingContext as a, astEvaluate as u } from "../../../runtime-html/dist/native-modules/index.mjs";
 
 import { BindingBehaviorExpression as f, ValueConverterExpression as d } from "../../../expression-parser/dist/native-modules/index.mjs";
 
@@ -93,20 +93,20 @@ class VirtualRepeat {
         this.minViewsRequired = 0;
         this.dom = null;
         this.scrollerObserver = null;
-        this.location = s(o);
-        this.instruction = s(l);
-        this.parent = s(h);
-        this.f = s(c);
+        this.location = s(i);
+        this.instruction = s(n);
+        this.parent = s(o);
+        this.f = s(l);
         this.C = s(g);
         this.O = s(m);
         this.scrollerObserverLocator = s(p);
         const t = this.instruction.props[0];
         const e = t.forOf;
         const r = this.iterable = unwrapExpression(e.iterable) ?? e.iterable;
-        const i = this.$ = e.iterable !== r;
-        this.T = new CollectionObservationMediator(this, (() => i ? this.I() : this.L()));
+        const c = this.$ = e.iterable !== r;
+        this.T = new CollectionObservationMediator(this, (() => c ? this.I() : this.L()));
         this.local = e.declaration.name;
-        this.taskQueue = s(a).domWriteQueue;
+        this.taskQueue = s(h).domWriteQueue;
     }
     attaching() {
         this.dom = this.O.render(this.location);
@@ -162,17 +162,17 @@ class VirtualRepeat {
     }
     B(t, s) {
         const e = this.$controller;
-        const n = s.count;
-        const o = this.views;
-        let l = 0;
-        let h = o.length;
-        let c = null;
-        if (n === 0) {
-            for (l = 0; h > l; ++l) {
-                c = o[l];
-                void c.deactivate(c, e);
+        const r = s.count;
+        const i = this.views;
+        let n = 0;
+        let o = i.length;
+        let l = null;
+        if (r === 0) {
+            for (n = 0; o > n; ++n) {
+                l = i[n];
+                void l.deactivate(l, e);
             }
-            o.length = 0;
+            i.length = 0;
             this.R();
             return;
         }
@@ -186,52 +186,52 @@ class VirtualRepeat {
                 return;
             }
         }
-        const a = this.minViewsRequired * 2;
-        const u = Math.min(a, n);
-        if (h > a) {
-            while (h > a) {
-                c = o[h - 1];
-                void c.deactivate(c, e);
-                --h;
+        const h = this.minViewsRequired * 2;
+        const u = Math.min(h, r);
+        if (o > h) {
+            while (o > h) {
+                l = i[o - 1];
+                void l.deactivate(l, e);
+                --o;
             }
-            o.length = h;
+            i.length = o;
         }
-        if (h > n) {
-            while (h > n) {
-                c = o[h - 1];
-                void c.deactivate(c, e);
-                --h;
+        if (o > r) {
+            while (o > r) {
+                l = i[o - 1];
+                void l.deactivate(l, e);
+                --o;
             }
-            o.length = n;
+            i.length = r;
         }
-        h = o.length;
-        for (l = h; l < u; l++) {
-            o.push(this.f.create());
+        o = i.length;
+        for (n = o; n < u; n++) {
+            i.push(this.f.create());
         }
         const f = this.itemHeight;
         const d = this.local;
-        const {firstIndex: m, topCount: p, botCount: g} = this.measureBuffer(this.scrollerObserver.getValue(), o.length, n, f);
+        const {firstIndex: m, topCount: p, botCount: g} = this.measureBuffer(this.scrollerObserver.getValue(), i.length, r, f);
         let w = 0;
         let C;
         let b;
         let v;
-        for (l = 0; u > l; ++l) {
-            w = m + l;
+        for (n = 0; u > n; ++n) {
+            w = m + n;
             C = s.item(w);
-            c = o[l];
-            b = o[l - 1];
-            if (c.isActive) {
-                v = c.scope;
+            l = i[n];
+            b = i[n - 1];
+            if (l.isActive) {
+                v = l.scope;
                 v.bindingContext[d] = C;
                 v.overrideContext.$index = w;
-                v.overrideContext.$length = n;
+                v.overrideContext.$length = r;
             } else {
-                c.nodes.insertBefore(b.nodes.firstChild.nextSibling);
-                v = r.fromParent(e.scope, new i(d, s.item(w)));
+                l.nodes.insertBefore(b.nodes.firstChild.nextSibling);
+                v = c.fromParent(e.scope, new a(d, s.item(w)));
                 v.overrideContext.$index = w;
-                v.overrideContext.$length = n;
+                v.overrideContext.$length = r;
                 enhanceOverrideContext(v.overrideContext);
-                void c.activate(e, e, v);
+                void l.activate(e, e, v);
             }
         }
         this.dom.update(p * f, g * f);
@@ -371,13 +371,13 @@ class VirtualRepeat {
         if (!t.isActive) {
             const s = this.$controller;
             const e = this.collectionStrategy;
-            const n = s.scope;
-            const o = r.fromParent(n, new i(this.local, e.first()));
-            o.overrideContext.$index = 0;
-            o.overrideContext.$length = e.count;
-            enhanceOverrideContext(o.overrideContext);
+            const r = s.scope;
+            const i = c.fromParent(r, new a(this.local, e.first()));
+            i.overrideContext.$index = 0;
+            i.overrideContext.$length = e.count;
+            enhanceOverrideContext(i.overrideContext);
             t.nodes.insertBefore(this.dom.bottom);
-            void t.activate(t, s, o);
+            void t.activate(t, s, i);
         }
         return t;
     }
@@ -415,11 +415,11 @@ class CollectionObservationMediator {
         }
         this.stop();
         if (t != null) {
-            n(this.N = t)?.subscribe(this);
+            r(this.N = t)?.subscribe(this);
         }
     }
     stop() {
-        n(this.N)?.unsubscribe(this);
+        r(this.N)?.unsubscribe(this);
     }
 }
 
@@ -563,7 +563,7 @@ class NullCollectionStrategy {
 
 class ScrollerObserverLocator {
     static get inject() {
-        return [ a ];
+        return [ h ];
     }
     static register(t) {
         return e.singleton(p, this).register(t);
@@ -669,7 +669,7 @@ const getResizeObserverClass = t => t.window.ResizeObserver;
 
 class DefaultDomRenderer {
     static get inject() {
-        return [ a ];
+        return [ h ];
     }
     static register(t) {
         return e.singleton(m, this).register(t);

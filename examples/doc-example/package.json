@@ -4,18 +4,18 @@
   "description": "An Aurelia 2 client application.",
   "version": "0.8.0",
   "dependencies": {
-    "@aurelia/fetch-client": "2.0.1-dev.202404170324",
-    "@aurelia/kernel": "2.0.1-dev.202404170324",
-    "@aurelia/metadata": "2.0.1-dev.202404170324",
-    "@aurelia/platform": "2.0.1-dev.202404170324",
-    "@aurelia/platform-browser": "2.0.1-dev.202404170324",
-    "@aurelia/route-recognizer": "2.0.1-dev.202404170324",
-    "@aurelia/router-lite": "2.0.1-dev.202404170324",
-    "@aurelia/runtime": "2.0.1-dev.202404170324",
-    "@aurelia/runtime-html": "2.0.1-dev.202404170324"
+    "@aurelia/fetch-client": "2.0.1-dev.202404171154",
+    "@aurelia/kernel": "2.0.1-dev.202404171154",
+    "@aurelia/metadata": "2.0.1-dev.202404171154",
+    "@aurelia/platform": "2.0.1-dev.202404171154",
+    "@aurelia/platform-browser": "2.0.1-dev.202404171154",
+    "@aurelia/route-recognizer": "2.0.1-dev.202404171154",
+    "@aurelia/router-lite": "2.0.1-dev.202404171154",
+    "@aurelia/runtime": "2.0.1-dev.202404171154",
+    "@aurelia/runtime-html": "2.0.1-dev.202404171154"
   },
   "devDependencies": {
-    "@aurelia/vite-plugin": "2.0.1-dev.202404170324",
+    "@aurelia/vite-plugin": "2.0.1-dev.202404171154",
     "typescript": "5.4.2"
   },
   "scripts": {

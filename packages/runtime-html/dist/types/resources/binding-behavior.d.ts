@@ -1,5 +1,5 @@
 import { ResourceType } from '@aurelia/kernel';
-import { Scope } from '@aurelia/runtime';
+import { type Scope } from '../binding/scope';
 import type { Constructable, IContainer, IServiceLocator, PartialResourceDefinition, ResourceDefinition } from '@aurelia/kernel';
 import { type IResourceKind } from './resources-shared';
 import { IBinding } from '../binding/interfaces-bindings';

@@ -1551,10 +1551,10 @@ const DI = {
 };
 const IContainer = /*@__PURE__*/ createInterface('IContainer');
 const IServiceLocator = IContainer;
-function transientDecorator(target, _context) {
+function transientDecorator(target, context) {
     return DI.transient(target);
 }
-function transient(target, _context) {
+function transient(target, context) {
     return target == null ? transientDecorator : transientDecorator(target);
 }
 const defaultSingletonOptions = { scoped: false };

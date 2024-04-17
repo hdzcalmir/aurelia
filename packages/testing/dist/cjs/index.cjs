@@ -5299,8 +5299,8 @@ function createObserverLocator(e) {
     return i.get(n.IObserverLocator);
 }
 
-function createScopeForTest(e = {}, t, i) {
-    return t ? n.Scope.fromParent(n.Scope.create(t), e) : n.Scope.create(e, null, i);
+function createScopeForTest(e = {}, t, n) {
+    return t ? i.Scope.fromParent(i.Scope.create(t), e) : i.Scope.create(e, null, n);
 }
 
 class Call {

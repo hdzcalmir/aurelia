@@ -1,6 +1,6 @@
 import { AccessScopeExpression, ForOfStatement, BindingIdentifier } from '@aurelia/expression-parser';
-import { Scope, BindingContext, DirtyChecker } from '@aurelia/runtime';
-import { Repeat, Controller, CustomElementDefinition, PropertyBindingRenderer, TextBindingRenderer, TextBindingInstruction, NodeObserverLocator, IRendering, } from '@aurelia/runtime-html';
+import { DirtyChecker } from '@aurelia/runtime';
+import { Scope, BindingContext, Repeat, Controller, CustomElementDefinition, PropertyBindingRenderer, TextBindingRenderer, TextBindingInstruction, NodeObserverLocator, IRendering, } from '@aurelia/runtime-html';
 import { eachCartesianJoin, assert, PLATFORM, createContainer, } from '@aurelia/testing';
 describe(`3-runtime-html/repeater.unit.spec.ts`, function () {
     function runActivateLifecycle(sut, scope) {

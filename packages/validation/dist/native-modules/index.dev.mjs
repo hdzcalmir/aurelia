@@ -1,8 +1,7 @@
 import { DI, Protocol, toArray, resolve, IServiceLocator, ILogger, Registration, noop } from '../../../kernel/dist/native-modules/index.mjs';
 import * as AST from '../../../expression-parser/dist/native-modules/index.mjs';
 import { IExpressionParser, PrimitiveLiteralExpression } from '../../../expression-parser/dist/native-modules/index.mjs';
-import { Scope } from '../../../runtime/dist/native-modules/index.mjs';
-import { mixinAstEvaluator, astEvaluate } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { mixinAstEvaluator, Scope, astEvaluate } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { Metadata } from '../../../metadata/dist/native-modules/index.mjs';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

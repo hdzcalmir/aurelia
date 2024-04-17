@@ -1,7 +1,7 @@
 import { type IServiceLocator } from '@aurelia/kernel';
 import { TaskQueue } from '@aurelia/platform';
-import { type Scope, type IObserverLocator, type IObserverLocatorBasedConnectable, ISubscriber } from '@aurelia/runtime';
-import { BindingMode, type IBindingController, IAstEvaluator, IBinding } from '@aurelia/runtime-html';
+import { type IObserverLocator, type IObserverLocatorBasedConnectable, ISubscriber } from '@aurelia/runtime';
+import { BindingMode, type Scope, type IBindingController, IAstEvaluator, IBinding } from '@aurelia/runtime-html';
 import { IStore, type IStoreSubscriber } from './interfaces';
 import { IsBindingBehavior } from '@aurelia/expression-parser';
 /**

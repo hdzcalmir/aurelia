@@ -38,7 +38,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
 };
 import { DI, inject, Registration, resolve, singleton, transient, } from '@aurelia/kernel';
 import { _, assert, createSpy } from '@aurelia/testing';
-function decorator() { return (target, _context) => target; }
+function decorator() { return (target, context) => target; }
 describe('1-kernel/di.spec.ts', function () {
     describe(`The DI object`, function () {
         describe(`createContainer()`, function () {

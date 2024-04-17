@@ -120,13 +120,15 @@ CallBindingCommand.$au = {
     type: 'binding-command',
     name: 'call',
 };
-class CallBindingRenderer {
+const CallBindingRenderer = /*@__PURE__*/ runtimeHtml.renderer(class CallBindingRenderer {
+    constructor() {
+        this.target = instructionType;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
-}
-runtimeHtml.renderer(instructionType)(CallBindingRenderer, null);
+}, null);
 function getTarget(potentialTarget) {
     if (potentialTarget.viewModel != null) {
         return potentialTarget.viewModel;
@@ -174,9 +176,11 @@ class CallBinding {
         this.targetObserver.setValue(null, this.target, this.targetProperty);
     }
 }
-runtimeHtml.mixinUseScope(CallBinding);
-runtimeHtml.mixingBindingLimited(CallBinding, () => 'callSource');
-runtimeHtml.mixinAstEvaluator(true)(CallBinding);
+(() => {
+    runtimeHtml.mixinUseScope(CallBinding);
+    runtimeHtml.mixingBindingLimited(CallBinding, () => 'callSource');
+    runtimeHtml.mixinAstEvaluator(true)(CallBinding);
+})();
 
 const preventDefaultRegisteredContainer = new WeakSet();
 const eventPreventDefaultBehavior = {
@@ -210,8 +214,9 @@ DelegateBindingCommand.$au = {
     name: 'delegate',
 };
 /** @internal */
-class ListenerBindingRenderer {
+const ListenerBindingRenderer = /*@__PURE__*/ runtimeHtml.renderer(class ListenerBindingRenderer {
     constructor() {
+        this.target = 'dl';
         /** @internal */
         this._eventDelegator = kernel.resolve(IEventDelegator);
     }
@@ -219,8 +224,7 @@ class ListenerBindingRenderer {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
     }
-}
-runtimeHtml.renderer('dl')(ListenerBindingRenderer, null);
+}, null);
 class DelegateBindingInstruction {
     constructor(from, to, preventDefault) {
         this.from = from;
@@ -294,9 +298,11 @@ class DelegateListenerBinding {
         this.handler = null;
     }
 }
-runtimeHtml.mixinUseScope(DelegateListenerBinding);
-runtimeHtml.mixingBindingLimited(DelegateListenerBinding, () => 'callSource');
-runtimeHtml.mixinAstEvaluator(true, true)(DelegateListenerBinding);
+(() => {
+    runtimeHtml.mixinUseScope(DelegateListenerBinding);
+    runtimeHtml.mixingBindingLimited(DelegateListenerBinding, () => 'callSource');
+    runtimeHtml.mixinAstEvaluator(true, true)(DelegateListenerBinding);
+})();
 const defaultOptions = {
     capture: false,
 };
@@ -549,7 +555,7 @@ class BindingEngine {
         };
     }
     expressionObserver(bindingContext, expression) {
-        const scope = runtime.Scope.create(bindingContext, {}, true);
+        const scope = runtimeHtml.Scope.create(bindingContext, {}, true);
         return {
             subscribe: callback => {
                 const observer = new runtimeHtml.ExpressionWatcher(scope, null, this.observerLocator, this.parser.parse(expression, 'IsProperty'), callback);

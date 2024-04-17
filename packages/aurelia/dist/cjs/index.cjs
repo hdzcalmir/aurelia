@@ -181,6 +181,8 @@ exports.LifecycleHooks = r.LifecycleHooks;
 
 exports.NodeObserverLocator = r.NodeObserverLocator;
 
+exports.Scope = r.Scope;
+
 exports.ShortHandBindingSyntax = r.ShortHandBindingSyntax;
 
 exports.StyleConfiguration = r.StyleConfiguration;

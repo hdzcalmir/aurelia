@@ -111,6 +111,7 @@ exports.ITemplateCompilerHooks = runtimeHtml.ITemplateCompilerHooks;
 exports.IViewFactory = runtimeHtml.IViewFactory;
 exports.LifecycleHooks = runtimeHtml.LifecycleHooks;
 exports.NodeObserverLocator = runtimeHtml.NodeObserverLocator;
+exports.Scope = runtimeHtml.Scope;
 exports.ShortHandBindingSyntax = runtimeHtml.ShortHandBindingSyntax;
 exports.StyleConfiguration = runtimeHtml.StyleConfiguration;
 exports.TemplateCompilerHooks = runtimeHtml.TemplateCompilerHooks;

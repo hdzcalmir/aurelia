@@ -9128,8 +9128,8 @@ function createObserverLocator(containerOrLifecycle) {
 }
 function createScopeForTest(bindingContext = {}, parentBindingContext, isBoundary) {
     return parentBindingContext
-        ? runtime.Scope.fromParent(runtime.Scope.create(parentBindingContext), bindingContext)
-        : runtime.Scope.create(bindingContext, null, isBoundary);
+        ? runtimeHtml.Scope.fromParent(runtimeHtml.Scope.create(parentBindingContext), bindingContext)
+        : runtimeHtml.Scope.create(bindingContext, null, isBoundary);
 }
 // export type CustomAttribute = Writable<IViewModel> & IComponentLifecycleMock;
 // export function createCustomAttribute(nameOrDef: string | PartialCustomAttributeDefinition = 'foo') {
@@ -9284,7 +9284,7 @@ function stopRecordingCalls(ctor) {
     }
 }
 function trace(calls) {
-    return function (ctor, _context) {
+    return function (ctor, context) {
         recordCalls(ctor, calls);
     };
 }

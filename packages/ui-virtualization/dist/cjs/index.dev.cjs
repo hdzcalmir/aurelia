@@ -278,7 +278,7 @@ class VirtualRepeat {
             }
             else {
                 view.nodes.insertBefore(prevView.nodes.firstChild.nextSibling);
-                scope = runtime.Scope.fromParent(repeatController.scope, new runtime.BindingContext(local, collectionStrategy.item(idx)));
+                scope = runtimeHtml.Scope.fromParent(repeatController.scope, new runtimeHtml.BindingContext(local, collectionStrategy.item(idx)));
                 scope.overrideContext.$index = idx;
                 scope.overrideContext.$length = itemCount;
                 enhanceOverrideContext(scope.overrideContext);
@@ -458,7 +458,7 @@ class VirtualRepeat {
             const repeatController = this.$controller;
             const collectionStrategy = this.collectionStrategy;
             const parentScope = repeatController.scope;
-            const itemScope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext(this.local, collectionStrategy.first()));
+            const itemScope = runtimeHtml.Scope.fromParent(parentScope, new runtimeHtml.BindingContext(this.local, collectionStrategy.first()));
             itemScope.overrideContext.$index = 0;
             itemScope.overrideContext.$length = collectionStrategy.count;
             enhanceOverrideContext(itemScope.overrideContext);

@@ -3,8 +3,7 @@ import { AccessKeyedExpression, AccessMemberExpression, AccessScopeExpression, A
 // IsPrimary,
 // IsUnary,
 ObjectLiteralExpression, PrimitiveLiteralExpression, TaggedTemplateExpression, TemplateExpression, UnaryExpression, ValueConverterExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, DestructuringAssignmentExpression, ArrowFunction, BindingIdentifier, Unparser, AccessBoundaryExpression, } from '@aurelia/expression-parser';
-import { Scope } from '@aurelia/runtime';
-import { astAssign, astEvaluate, astBind } from '@aurelia/runtime-html';
+import { astAssign, astEvaluate, astBind, Scope } from '@aurelia/runtime-html';
 const $false = PrimitiveLiteralExpression.$false;
 const $true = PrimitiveLiteralExpression.$true;
 const $null = PrimitiveLiteralExpression.$null;

@@ -1,6 +1,6 @@
 import { DI, resolve, Registration } from '../../../kernel/dist/native-modules/index.mjs';
-import { Scope, BindingContext, getCollectionObserver } from '../../../runtime/dist/native-modules/index.mjs';
-import { IRenderLocation, IInstruction, IController, IViewFactory, IPlatform, astEvaluate } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { getCollectionObserver } from '../../../runtime/dist/native-modules/index.mjs';
+import { IRenderLocation, IInstruction, IController, IViewFactory, IPlatform, Scope, BindingContext, astEvaluate } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { BindingBehaviorExpression, ValueConverterExpression } from '../../../expression-parser/dist/native-modules/index.mjs';
 
 const IDomRenderer = /*@__PURE__*/ DI.createInterface('IDomRenderer');

@@ -1,8 +1,7 @@
 import { DI, Protocol, toArray, resolve, IServiceLocator, ILogger, Registration, noop } from '@aurelia/kernel';
 import * as AST from '@aurelia/expression-parser';
 import { IExpressionParser, PrimitiveLiteralExpression } from '@aurelia/expression-parser';
-import { Scope } from '@aurelia/runtime';
-import { mixinAstEvaluator, astEvaluate } from '@aurelia/runtime-html';
+import { mixinAstEvaluator, Scope, astEvaluate } from '@aurelia/runtime-html';
 import { Metadata } from '@aurelia/metadata';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

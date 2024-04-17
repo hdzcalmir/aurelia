@@ -1,4 +1,5 @@
-import { ICollectionSubscriber, IObserverLocatorBasedConnectable, ISubscriber, type IObservable, type IObserverLocator, type Scope } from '@aurelia/runtime';
+import { ICollectionSubscriber, IObserverLocatorBasedConnectable, ISubscriber, type IObservable, type IObserverLocator } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import { type IAstEvaluator } from '../ast.eval';
 import type { IIndexable, IServiceLocator } from '@aurelia/kernel';
 import { IsExpression } from '@aurelia/expression-parser';
