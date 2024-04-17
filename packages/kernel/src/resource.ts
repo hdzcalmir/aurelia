@@ -1,6 +1,13 @@
 import { IContainer } from './di';
 import { Constructable } from './interfaces';
-import { defineMetadata, getOwnMetadata, objectFreeze } from './utilities';
+import { defineMetadata, getMetadata, objectFreeze } from './utilities';
+
+export type StaticResourceType<TDef extends object = object> = {
+  readonly aliases?: string[];
+  readonly $au?: PartialResourceDefinition<{
+    type: string;
+  } & TDef>;
+};
 
 export type ResourceType<
   TUserType extends Constructable = Constructable,
@@ -10,9 +17,7 @@ export type ResourceType<
 > = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   new (...args: any[]) => TResInstance & TUserInstance
-) & {
-  readonly aliases?: readonly string[];
-} & TResType & TUserType;
+) & StaticResourceType & TResType & TUserType;
 
 export type ResourceDefinition<
   TUserType extends Constructable = Constructable,
@@ -38,7 +43,7 @@ export type ResourceDefinition<
   register(container: IContainer, aliasName?: string): void;
 } & TDef;
 
-export type PartialResourceDefinition<TDef extends {} = {}> = {
+export type PartialResourceDefinition<TDef extends object = object> = {
   readonly name: string;
   readonly aliases?: readonly string[];
 } & TDef;
@@ -60,9 +65,9 @@ export const getAnnotationKeyFor = (name: string, context?: string): string => {
 };
 /** @internal */
 export const appendAnnotation = (target: Constructable, key: string): void => {
-  const keys = getOwnMetadata(annoBaseName, target) as string[];
+  const keys = getMetadata<string[]>(annoBaseName, target);
   if (keys === void 0) {
-    defineMetadata(annoBaseName, [key], target);
+    defineMetadata([key], target, annoBaseName);
   } else {
     keys.push(key);
   }
@@ -72,13 +77,13 @@ const annotation = /*@__PURE__*/ objectFreeze({
   name: 'au:annotation',
   appendTo: appendAnnotation,
   set(target: Constructable, prop: string, value: unknown): void {
-    defineMetadata(getAnnotationKeyFor(prop), value, target);
+    defineMetadata(value, target, getAnnotationKeyFor(prop));
   },
-  get: (target: Constructable, prop: string): unknown => getOwnMetadata(getAnnotationKeyFor(prop), target),
+  get: (target: Constructable, prop: string): unknown => getMetadata(getAnnotationKeyFor(prop), target),
   getKeys(target: Constructable): readonly string[] {
-    let keys = getOwnMetadata(annoBaseName, target) as string[];
+    let keys = getMetadata<string[]>(annoBaseName, target);
     if (keys === void 0) {
-      defineMetadata(annoBaseName, keys = [], target);
+      defineMetadata(keys = [], target, annoBaseName);
     }
     return keys;
   },
@@ -123,7 +128,7 @@ export function fromAnnotationOrDefinitionOrTypeOrDefault<
   Type: Constructable,
   getDefault: () => Required<TDef>[K],
 ): Required<TDef>[K] {
-  let value = getOwnMetadata(getAnnotationKeyFor(name as string), Type) as TDef[K] | undefined;
+  let value = getMetadata<TDef[K] | undefined>(getAnnotationKeyFor(name as string), Type);
   if (value === void 0) {
     value = def[name];
     if (value === void 0) {
@@ -149,7 +154,7 @@ export function fromAnnotationOrTypeOrDefault<T, K extends keyof T, V>(
   Type: T,
   getDefault: () => V,
 ): V {
-  let value = getOwnMetadata(getAnnotationKeyFor(name as string), Type) as V;
+  let value = getMetadata<V>(getAnnotationKeyFor(name as string), Type);
   if (value === void 0) {
     value = Type[name] as unknown as V;
     if (value === void 0 || !hasOwn.call(Type, name)) { // First just check the value (common case is faster), but do make sure it doesn't come from the proto chain

@@ -1,5 +1,6 @@
 import { IContainer, resolve } from '@aurelia/kernel';
-import { IExpressionParser, IObserverLocator } from '@aurelia/runtime';
+import { IExpressionParser } from '@aurelia/expression-parser';
+import { IObserverLocator } from '@aurelia/runtime';
 
 import { FragmentNodeSequence, INode, INodeSequence } from '../dom';
 import { IPlatform } from '../platform';
@@ -57,7 +58,12 @@ export class Rendering {
       const compiler = container.get(ITemplateCompiler);
       let compiled = compiledMap.get(definition);
       if (compiled == null) {
-        compiledMap.set(definition, compiled = compiler.compile(definition, container, compilationInstruction));
+        // const fullDefinition = CustomElementDefinition.getOrCreate(definition);
+        compiledMap.set(definition, compiled = compiler.compile(
+          CustomElementDefinition.getOrCreate(definition),
+          container,
+          compilationInstruction
+        ));
       } else {
         // todo:
         // should only register if the compiled def resolution is string

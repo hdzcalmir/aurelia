@@ -1,15 +1,10 @@
 import { camelCase, resolve } from '@aurelia/kernel';
+import { IExpressionParser, ExpressionType, type IsBindingBehavior } from '@aurelia/expression-parser';
 import {
-  type ExpressionType,
-  IExpressionParser,
   IObserverLocator,
-  type IsBindingBehavior,
 } from '@aurelia/runtime';
 import {
-  attributePattern,
   AttrSyntax,
-  bindingCommand,
-  type CommandType,
   IAttrMapper,
   IHydratableController,
   IPlatform,
@@ -17,30 +12,32 @@ import {
   type BindingCommandInstance,
   type ICommandBuildInfo,
   type IInstruction,
-  type IRenderer
+  type IRenderer,
+  BindingCommandStaticAuDefinition
 } from '@aurelia/runtime-html';
 import { IStore } from './interfaces';
 import { StateBinding } from './state-binding';
 import { StateDispatchBinding } from './state-dispatch-binding';
 
-@attributePattern({ pattern: 'PART.state', symbols: '.' })
 export class StateAttributePattern {
   public 'PART.state'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax {
     return new AttrSyntax(rawName, rawValue, parts[0], 'state');
   }
 }
 
-@attributePattern({ pattern: 'PART.dispatch', symbols: '.' })
 export class DispatchAttributePattern {
   public 'PART.dispatch'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax {
     return new AttrSyntax(rawName, rawValue, parts[0], 'dispatch');
   }
 }
 
-@bindingCommand('state')
 export class StateBindingCommand implements BindingCommandInstance {
-  public get type(): CommandType { return 'None'; }
-  public get name(): string { return 'state'; }
+  public static readonly $au: BindingCommandStaticAuDefinition = {
+    type: 'binding-command',
+    name: 'state',
+  };
+
+  public get ignoreAttr() { return false; }
 
   public build(info: ICommandBuildInfo, parser: IExpressionParser, attrMapper: IAttrMapper): IInstruction {
     const attr = info.attr;
@@ -63,10 +60,12 @@ export class StateBindingCommand implements BindingCommandInstance {
   }
 }
 
-@bindingCommand('dispatch')
 export class DispatchBindingCommand implements BindingCommandInstance {
-  public get type(): CommandType { return 'IgnoreAttr'; }
-  public get name(): string { return 'dispatch'; }
+  public static readonly $au: BindingCommandStaticAuDefinition = {
+    type: 'binding-command',
+    name: 'dispatch',
+  };
+  public get ignoreAttr() { return true; }
 
   public build(info: ICommandBuildInfo): IInstruction {
     const attr = info.attr;
@@ -90,7 +89,6 @@ export class DispatchBindingInstruction {
   ) {}
 }
 
-@renderer('sb')
 export class StateBindingInstructionRenderer implements IRenderer {
   public readonly target!: 'sb';
 
@@ -116,8 +114,8 @@ export class StateBindingInstructionRenderer implements IRenderer {
     ));
   }
 }
+renderer('sb')(StateBindingInstructionRenderer, null!);
 
-@renderer('sd')
 export class DispatchBindingInstructionRenderer implements IRenderer {
   public readonly target!: 'sd';
   /** @internal */ private readonly _stateContainer = resolve(IStore);
@@ -139,6 +137,7 @@ export class DispatchBindingInstructionRenderer implements IRenderer {
     ));
   }
 }
+renderer('sd')(DispatchBindingInstructionRenderer, null!);
 
 function ensureExpression<TFrom>(parser: IExpressionParser, srcOrExpr: TFrom, expressionType: ExpressionType): Exclude<TFrom, string> {
   if (typeof srcOrExpr === 'string') {

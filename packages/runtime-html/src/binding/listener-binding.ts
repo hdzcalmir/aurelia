@@ -1,9 +1,12 @@
+import { type IsBindingBehavior } from '@aurelia/expression-parser';
 import { isArray, isFunction, isString, objectFreeze } from '../utilities';
 import { createInterface, singletonRegistration } from '../utilities-di';
 import { mixinAstEvaluator, mixinUseScope, mixingBindingLimited } from './binding-utils';
 
 import { resolve, type IServiceLocator, all, IContainer } from '@aurelia/kernel';
-import { astBind, astEvaluate, astUnbind, IAstEvaluator, IBinding, IConnectableBinding, Scope, type IsBindingBehavior } from '@aurelia/runtime';
+import { ICollectionSubscriber, IObserverLocatorBasedConnectable, ISubscriber, Scope } from '@aurelia/runtime';
+import { astBind, astEvaluate, astUnbind, IAstEvaluator } from '../ast.eval';
+import { IBinding } from './interfaces-bindings';
 
 export class ListenerBindingOptions {
   public constructor(
@@ -12,11 +15,11 @@ export class ListenerBindingOptions {
   ) {}
 }
 
-export interface ListenerBinding extends IAstEvaluator, IConnectableBinding {}
+export interface ListenerBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator {}
 /**
  * Listener binding. Handle event binding between view and view model
  */
-export class ListenerBinding implements IBinding {
+export class ListenerBinding implements IBinding, ISubscriber, ICollectionSubscriber {
   public isBound: boolean = false;
 
   /** @internal */

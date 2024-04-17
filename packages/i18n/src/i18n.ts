@@ -1,10 +1,12 @@
-import { DI, IEventAggregator } from '@aurelia/kernel';
-import { ISignaler, nowrap } from '@aurelia/runtime';
+import { DI, IEventAggregator, resolve } from '@aurelia/kernel';
+import { nowrap } from '@aurelia/runtime';
+import { ISignaler } from '@aurelia/runtime-html';
 import type * as i18next from 'i18next';
 import { I18nInitOptions } from './i18n-configuration-options';
-import { I18nextWrapper, I18nWrapper } from './i18next-wrapper';
+import { II18nextWrapper } from './i18next-wrapper';
 import { Signals } from './utils';
 
+_START_CONST_ENUM();
 const enum TimeSpan {
   Second = 1000,
   Minute = Second * 60,
@@ -14,6 +16,7 @@ const enum TimeSpan {
   Month = Day * 30,
   Year = Day * 365
 }
+_END_CONST_ENUM();
 
 export class I18nKeyEvaluationResult {
   public key: string;
@@ -117,17 +120,12 @@ export class I18nService implements I18N {
   public readonly initPromise: Promise<void>;
   private options!: I18nInitOptions;
   private readonly _localeSubscribers: Set<ILocalChangeSubscriber> = new Set();
-  private readonly _signaler: ISignaler;
+  private readonly _signaler: ISignaler = resolve(ISignaler);
+  private readonly ea: IEventAggregator = resolve(IEventAggregator);
 
-  public constructor(
-    @I18nWrapper i18nextWrapper: I18nextWrapper,
-    @I18nInitOptions options: I18nInitOptions,
-    @IEventAggregator private readonly ea: IEventAggregator,
-    @ISignaler signaler: ISignaler,
-  ) {
-    this.i18next = i18nextWrapper.i18next;
-    this.initPromise = this._initializeI18next(options);
-    this._signaler = signaler;
+  public constructor() {
+    this.i18next = resolve(II18nextWrapper).i18next;
+    this.initPromise = this._initializeI18next(resolve(I18nInitOptions));
   }
 
   public evaluate(keyExpr: string, options?: i18next.TOptions): I18nKeyEvaluationResult[] {

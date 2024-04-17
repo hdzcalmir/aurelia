@@ -1,20 +1,28 @@
 import { DI, IContainer, IServiceLocator, resolve } from '@aurelia/kernel';
 import { ITask } from '@aurelia/platform';
 import {
-  astEvaluate,
-  BindingBehaviorExpression,
-  BindingBehaviorInstance,
   connectable,
-  IAstEvaluator,
-  IBinding,
-  IConnectable, IConnectableBinding, IObserverLocator, Scope
+  IConnectable,
+  IObserverLocator,
+  IObserverLocatorBasedConnectable,
+  Scope
 } from '@aurelia/runtime';
 import {
-  bindingBehavior, BindingTargetSubscriber,
-  IFlushQueue, IPlatform, mixinAstEvaluator, PropertyBinding, type ICustomElementViewModel
+  type IAstEvaluator,
+  type IBinding,
+  astEvaluate,
+  type BindingBehaviorInstance,
+  BindingBehavior,
+  BindingTargetSubscriber,
+  IFlushQueue,
+  IPlatform,
+  mixinAstEvaluator,
+  PropertyBinding,
+  type ICustomElementViewModel,
 } from '@aurelia/runtime-html';
 import { PropertyRule } from '@aurelia/validation';
 import { BindingInfo, BindingWithBehavior, IValidationController, ValidationController, ValidationEvent, ValidationResultsSubscriber } from './validation-controller';
+import { BindingBehaviorExpression } from '@aurelia/expression-parser';
 
 /**
  * Validation triggers.
@@ -56,7 +64,6 @@ export const IDefaultTrigger = /*@__PURE__*/DI.createInterface<ValidationTrigger
 const validationConnectorMap = new WeakMap<IBinding, ValidatitionConnector>();
 const validationTargetSubscriberMap = new WeakMap<PropertyBinding, WithValidationTargetSubscriber>();
 
-@bindingBehavior('validate')
 export class ValidateBindingBehavior implements BindingBehaviorInstance {
 
   /** @internal */
@@ -100,8 +107,9 @@ export class ValidateBindingBehavior implements BindingBehaviorInstance {
     // there's no need to do anything
   }
 }
+BindingBehavior.define('validate', ValidateBindingBehavior);
 
-interface ValidatitionConnector extends IAstEvaluator, IConnectableBinding {}
+interface ValidatitionConnector extends IAstEvaluator, IObserverLocatorBasedConnectable, IConnectable {}
 /**
  * Binding behavior. Indicates the bound property should be validated.
  */
@@ -351,7 +359,7 @@ class ValidatitionConnector implements ValidationResultsSubscriber {
   }
 }
 
-connectable()(ValidatitionConnector);
+connectable(ValidatitionConnector, null!);
 mixinAstEvaluator(true)(ValidatitionConnector);
 
 class WithValidationTargetSubscriber extends BindingTargetSubscriber {
@@ -397,5 +405,5 @@ export class BindingMediator<K extends string> {
   }
 }
 
-connectable()(BindingMediator);
+connectable(BindingMediator, null!);
 mixinAstEvaluator(true)(BindingMediator);

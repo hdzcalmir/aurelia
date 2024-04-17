@@ -1,27 +1,30 @@
 import { type IDisposable, onResolve, IIndexable } from '@aurelia/kernel';
 import {
   BindingBehaviorExpression,
+  DestructuringAssignmentExpression,
+  ForOfStatement,
+  type IsBindingBehavior,
+  ValueConverterExpression,
+} from '@aurelia/expression-parser';
+import {
   BindingContext,
   type Collection,
   CollectionObserver,
-  DestructuringAssignmentExpression,
-  ForOfStatement,
   getCollectionObserver,
   type IndexMap,
   type IOverrideContext,
-  type IsBindingBehavior,
   Scope,
-  ValueConverterExpression,
+  createIndexMap,
+} from '@aurelia/runtime';
+import {
   astEvaluate,
   astAssign,
-  createIndexMap,
-  IExpressionParser,
-} from '@aurelia/runtime';
+} from '../../ast.eval';
+import { IExpressionParser } from '@aurelia/expression-parser';
 import { IRenderLocation } from '../../dom';
 import { IViewFactory } from '../../templating/view';
-import { templateController } from '../custom-attribute';
+import { CustomAttributeStaticAuDefinition, attrTypeName } from '../custom-attribute';
 import { IController } from '../../templating/controller';
-import { bindable } from '../../bindable';
 import { areEqual, isArray, isPromise, baseObjectPrototype, rethrow, etIsProperty } from '../../utilities';
 import { HydrateTemplateController, IInstruction, IteratorBindingInstruction } from '../../renderer';
 
@@ -41,6 +44,13 @@ const wrappedExprs = [
 ];
 
 export class Repeat<C extends Collection = unknown[]> implements ICustomAttributeViewModel {
+  public static readonly $au: CustomAttributeStaticAuDefinition = {
+    type: attrTypeName,
+    name: 'repeat',
+    isTemplateController: true,
+    bindables: ['items'],
+  };
+
   /** @internal */ protected static inject = [IInstruction, IExpressionParser, IRenderLocation, IController, IViewFactory];
 
   public views: ISyntheticView[] = [];
@@ -51,7 +61,7 @@ export class Repeat<C extends Collection = unknown[]> implements ICustomAttribut
 
   public readonly $controller!: ICustomAttributeController<this>; // This is set by the controller after this instance is constructed
 
-  @bindable public items: Items<C>;
+  public items: Items<C>;
   public key: null | string | IsBindingBehavior = null;
 
   /** @internal */ private readonly _keyMap: Map<unknown, unknown> = new Map();
@@ -368,7 +378,7 @@ export class Repeat<C extends Collection = unknown[]> implements ICustomAttribut
           this._deactivateAndRemoveViewsByKey(indexMap),
           () => {
             // TODO(fkleuver): add logic to the controller that ensures correct handling of race conditions and add a variety of `if` integration tests
-            return this._createAndActivateAndSortViewsByKey(oldLen, indexMap!);
+            return this._createAndActivateAndSortViewsByKey(oldLen, indexMap);
           },
         );
         if (isPromise(ret)) { ret.catch(rethrow); }
@@ -621,7 +631,6 @@ export class Repeat<C extends Collection = unknown[]> implements ICustomAttribut
     }
   }
 }
-templateController('repeat')(Repeat);
 
 let maxLen = 16;
 let prevIndices = new Int32Array(maxLen);

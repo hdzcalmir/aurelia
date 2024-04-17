@@ -12,10 +12,9 @@ import {
   optionalResource,
 } from '@aurelia/kernel';
 import { isObject } from '@aurelia/metadata';
+import { IExpressionParser, IsBindingBehavior, AccessScopeExpression } from '@aurelia/expression-parser';
 import {
-  AccessScopeExpression,
   ICoercionConfiguration,
-  IExpressionParser,
   IObserverLocator,
   Scope,
 } from '@aurelia/runtime';
@@ -39,9 +38,7 @@ import type {
   Writable,
 } from '@aurelia/kernel';
 import type {
-  IBinding,
   IObservable,
-  IsBindingBehavior,
 } from '@aurelia/runtime';
 import type { INode, INodeSequence, IRenderLocation } from '../dom';
 import { ErrorNames, createMappedError } from '../errors';
@@ -52,6 +49,7 @@ import type { IWatchDefinition, IWatcherCallback } from '../watch';
 import type { IAuSlotProjections } from './controller.projection';
 import type { LifecycleHooksLookup } from './lifecycle-hooks';
 import type { IViewFactory } from './view';
+import { IBinding } from '../binding/interfaces-bindings';
 
 export class Controller<C extends IViewModel = IViewModel> implements IController<C> {
 

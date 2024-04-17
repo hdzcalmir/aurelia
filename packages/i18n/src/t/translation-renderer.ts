@@ -1,11 +1,9 @@
 import { camelCase } from '@aurelia/kernel';
 import { TranslationBinding } from './translation-binding';
 import {
-  CustomExpression,
-  IExpressionParser,
   IObserverLocator,
-  type IsBindingBehavior,
 } from '@aurelia/runtime';
+import { IExpressionParser, CustomExpression, IsBindingBehavior } from '@aurelia/expression-parser';
 import {
   IRenderer,
   renderer,
@@ -20,7 +18,7 @@ import type {
   BindingMode,
   BindingCommandInstance,
 } from '@aurelia/runtime-html';
-import { etIsProperty, ctNone, bmToView } from '../utils';
+import { etIsProperty, bmToView } from '../utils';
 
 export const TranslationInstructionType = 'tt';
 
@@ -40,14 +38,13 @@ export class TranslationBindingInstruction {
   public mode: typeof BindingMode.toView = bmToView;
 
   public constructor(
-    public from: IsBindingBehavior,
+    public from: CustomExpression | IsBindingBehavior,
     public to: string,
   ) { }
 }
 
 export class TranslationBindingCommand implements BindingCommandInstance {
-  public readonly type: 'None' = ctNone;
-  public get name() { return 't'; }
+  public readonly ignoreAttr = false;
 
   public build(info: ICommandBuildInfo, parser: IExpressionParser, attrMapper: IAttrMapper): TranslationBindingInstruction {
     let target: string;
@@ -59,11 +56,10 @@ export class TranslationBindingCommand implements BindingCommandInstance {
     } else {
       target = info.bindable.name;
     }
-    return new TranslationBindingInstruction(new CustomExpression(info.attr.rawValue) as IsBindingBehavior, target);
+    return new TranslationBindingInstruction(new CustomExpression(info.attr.rawValue), target);
   }
 }
 
-@renderer(TranslationInstructionType)
 export class TranslationBindingRenderer implements IRenderer {
   public target!: typeof TranslationInstructionType;
   public render(
@@ -85,6 +81,7 @@ export class TranslationBindingRenderer implements IRenderer {
     });
   }
 }
+renderer(TranslationInstructionType)(TranslationBindingRenderer, null!);
 
 export const TranslationBindInstructionType = 'tbt';
 
@@ -110,8 +107,7 @@ export class TranslationBindBindingInstruction {
 }
 
 export class TranslationBindBindingCommand implements BindingCommandInstance {
-  public readonly type: 'None' = ctNone;
-  public get name() { return 't-bind'; }
+  public readonly ignoreAttr = false;
 
   public build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): TranslationBindingInstruction {
     let target: string;
@@ -127,7 +123,6 @@ export class TranslationBindBindingCommand implements BindingCommandInstance {
   }
 }
 
-@renderer(TranslationBindInstructionType)
 export class TranslationBindBindingRenderer implements IRenderer {
   public target!: typeof TranslationBindInstructionType;
   public render(
@@ -149,3 +144,4 @@ export class TranslationBindBindingRenderer implements IRenderer {
     });
   }
 }
+renderer(TranslationBindInstructionType)(TranslationBindBindingRenderer, null!);

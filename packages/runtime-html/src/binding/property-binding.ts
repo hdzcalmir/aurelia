@@ -1,25 +1,27 @@
-import { astAssign, astBind, astEvaluate, astUnbind, connectable, IAstEvaluator, IBinding, IConnectableBinding, ISubscriber } from '@aurelia/runtime';
+import { connectable, ISubscriber } from '@aurelia/runtime';
+import { astAssign, astBind, astEvaluate, astUnbind, IAstEvaluator } from '../ast.eval';
 import { activating } from '../templating/controller';
 import { BindingTargetSubscriber, IFlushQueue, mixinAstEvaluator, mixinUseScope, mixingBindingLimited } from './binding-utils';
-import { fromView, oneTime, toView } from './interfaces-bindings';
+import { IBinding, fromView, oneTime, toView } from './interfaces-bindings';
 
 import type { IServiceLocator } from '@aurelia/kernel';
 import type { ITask, QueueTaskOptions, TaskQueue } from '@aurelia/platform';
 import type {
   AccessorOrObserver,
-  ForOfStatement,
+  ICollectionSubscriber,
   IObserver,
   IObserverLocator,
-  IsBindingBehavior,
+  IObserverLocatorBasedConnectable,
   Scope,
 } from '@aurelia/runtime';
 import type { BindingMode, IBindingController } from './interfaces-bindings';
 import { createMappedError, ErrorNames } from '../errors';
 import { atLayout } from '../utilities';
+import { type IsBindingBehavior, ForOfStatement } from '@aurelia/expression-parser';
 
-export interface PropertyBinding extends IAstEvaluator, IConnectableBinding {}
+export interface PropertyBinding extends IAstEvaluator, IServiceLocator, IObserverLocatorBasedConnectable {}
 
-export class PropertyBinding implements IBinding {
+export class PropertyBinding implements IBinding, ISubscriber, ICollectionSubscriber {
   public isBound: boolean = false;
 
   /** @internal */
@@ -200,7 +202,7 @@ export class PropertyBinding implements IBinding {
 
 mixinUseScope(PropertyBinding);
 mixingBindingLimited(PropertyBinding, (propBinding: PropertyBinding) => (propBinding.mode & fromView) ? 'updateSource' : 'updateTarget');
-connectable(PropertyBinding);
+connectable(PropertyBinding, null!);
 mixinAstEvaluator(true, false)(PropertyBinding);
 
 let task: ITask | null = null;

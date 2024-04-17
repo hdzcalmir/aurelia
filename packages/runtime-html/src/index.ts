@@ -1,4 +1,12 @@
 export {
+  type IAstEvaluator,
+  astAssign,
+  astBind,
+  astEvaluate,
+  astUnbind,
+} from './ast.eval';
+
+export {
   bindable,
   Bindable,
   BindableDefinition,
@@ -11,9 +19,11 @@ export {
   BindingBehavior,
   BindingBehaviorDefinition,
   type PartialBindingBehaviorDefinition,
+  type BindingBehaviorStaticAuDefinition,
   type BindingBehaviorKind,
   type BindingBehaviorDecorator,
   type BindingBehaviorType,
+  type BindingBehaviorInstance,
 } from './resources/binding-behavior';
 
 export {
@@ -76,10 +86,11 @@ export {
   type ICommandBuildInfo,
   BindingCommand ,
   type BindingCommandInstance,
+  type PartialBindingCommandDefinition,
+  type BindingCommandStaticAuDefinition,
   BindingCommandDefinition,
   type BindingCommandKind,
   type BindingCommandType,
-  type CommandType,
   DefaultBindingCommand,
   ForBindingCommand,
   FromViewBindingCommand,
@@ -99,6 +110,8 @@ export {
 export {
   BindingMode,
   type IBindingController,
+  type IBinding,
+  type IRateLimitOptions,
 } from './binding/interfaces-bindings';
 export {
   IFlushQueue,
@@ -242,6 +255,7 @@ export {
   type CustomAttributeKind,
   type CustomAttributeType,
   type PartialCustomAttributeDefinition,
+  type CustomAttributeStaticAuDefinition,
   templateController,
 } from './resources/custom-attribute';
 export {
@@ -285,13 +299,13 @@ export {
   containerless,
   customElement,
   CustomElement,
-  type InjectableToken,
   type CustomElementDecorator,
   type CustomElementKind,
   type CustomElementType,
   CustomElementDefinition,
   type PartialCustomElementDefinition,
   type ProcessContentHook,
+  type CustomElementStaticAuDefinition,
   useShadowDOM,
   processContent,
 } from './resources/custom-element';
@@ -305,9 +319,11 @@ export {
   ValueConverter,
   ValueConverterDefinition,
   type PartialValueConverterDefinition,
+  type ValueConverterStaticAuDefinition,
   type ValueConverterKind,
   type ValueConverterDecorator,
   type ValueConverterType,
+  type ValueConverterInstance,
   valueConverter,
 } from './resources/value-converter';
 
@@ -337,11 +353,13 @@ export {
   ITemplateElementFactory
 } from './compiler/template-element-factory';
 export {
-  BindablesInfo,
   TemplateCompiler,
   ITemplateCompilerHooks,
   TemplateCompilerHooks,
   templateCompilerHooks,
+  type IAttributeBindablesInfo,
+  type IElementBindablesInfo,
+  IBindablesInfoResolver,
 } from './compiler/template-compiler';
 
 export {
@@ -451,6 +469,10 @@ export {
   ComputedWatcher,
   ExpressionWatcher,
 } from './templating/watchers';
+
+export {
+  ISignaler,
+} from './signaler';
 
 export {
   alias,

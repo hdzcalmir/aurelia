@@ -13,6 +13,18 @@ _START_CONST_ENUM();
 export const enum ErrorNames {
   method_not_implemented = 99,
 
+  ast_behavior_not_found = 101,
+  ast_behavior_duplicated = 102,
+  ast_converter_not_found = 103,
+  ast_$host_not_found = 105,
+  ast_no_assign_$host = 106,
+  ast_not_a_function = 107,
+  ast_unknown_binary_operator = 108,
+  ast_unknown_unary_operator = 109,
+  ast_tagged_not_a_function = 110,
+  ast_name_is_not_a_function = 111,
+  ast_destruct_null = 112,
+
   binding_behavior_def_not_found = 151,
   value_converter_def_not_found = 152,
   element_existed = 153,
@@ -20,6 +32,10 @@ export const enum ErrorNames {
   value_converter_existed = 155,
   binding_behavior_existed = 156,
   binding_command_existed = 157,
+
+  invalid_bindable_decorator_usage_symbol = 227,
+  invalid_bindable_decorator_usage_class_without_configuration = 228,
+  invalid_bindable_decorator_usage_class_without_property_name_configuration = 229,
 
   controller_cached_not_found = 500,
   controller_no_shadow_on_containerless = 501,
@@ -124,6 +140,18 @@ _END_CONST_ENUM();
 const errorsMap: Record<ErrorNames, string> = {
   [ErrorNames.method_not_implemented]: 'Method {{0}} not implemented',
 
+  [ErrorNames.ast_behavior_not_found]: `Ast eval error: binding behavior "{{0}}" could not be found. Did you forget to register it as a dependency?`,
+  [ErrorNames.ast_behavior_duplicated]: `Ast eval error: binding behavior "{{0}}" already applied.`,
+  [ErrorNames.ast_converter_not_found]: `Ast eval error: value converter "{{0}}" could not be found. Did you forget to register it as a dependency?`,
+  [ErrorNames.ast_$host_not_found]: `Ast eval error: unable to find $host context. Did you forget [au-slot] attribute?`,
+  [ErrorNames.ast_no_assign_$host]: `Ast eval error: invalid assignment. "$host" is a reserved keyword.`,
+  [ErrorNames.ast_not_a_function]: `Ast eval error: expression is not a function.`,
+  [ErrorNames.ast_unknown_unary_operator]: `Ast eval error: unknown unary operator: "{{0}}"`,
+  [ErrorNames.ast_unknown_binary_operator]: `Ast eval error: unknown binary operator: "{{0}}"`,
+  [ErrorNames.ast_tagged_not_a_function]: `Ast eval error: left-hand side of tagged template expression is not a function.`,
+  [ErrorNames.ast_name_is_not_a_function]: `Ast eval error: expected "{{0}}" to be a function`,
+  [ErrorNames.ast_destruct_null]: `Ast eval error: cannot use non-object value for destructuring assignment.`,
+
   [ErrorNames.binding_behavior_def_not_found]: `No binding behavior definition found for type {{0:name}}`,
   [ErrorNames.value_converter_def_not_found]: `No value converter definition found for type {{0:name}}`,
   [ErrorNames.element_existed]: `Element {{0}} has already been registered.`,
@@ -131,6 +159,10 @@ const errorsMap: Record<ErrorNames, string> = {
   [ErrorNames.value_converter_existed]: `Value converter {{0}} has already been registered.`,
   [ErrorNames.binding_behavior_existed]: `Binding behavior {{0}} has already been registered.`,
   [ErrorNames.binding_command_existed]: `Binding command {{0}} has already been registered.`,
+
+  [ErrorNames.invalid_bindable_decorator_usage_symbol]: `@bindable is not supported for properties that uses a symbol for name. Use a string for the property name instead.`,
+  [ErrorNames.invalid_bindable_decorator_usage_class_without_configuration]: `@bindable cannot be used as a class decorator when no configuration object is supplied.`,
+  [ErrorNames.invalid_bindable_decorator_usage_class_without_property_name_configuration]: `@bindable cannot be used as a class decorator when no property name is supplied in the configuration object.`,
 
   [ErrorNames.controller_cached_not_found]: `There is no cached controller for the provided ViewModel: {{0}}`,
   [ErrorNames.controller_no_shadow_on_containerless]: `Invalid combination: cannot combine the containerless custom element option with Shadow DOM.`,

@@ -100,8 +100,8 @@ const getHmrCode = (className: string): string => {
 
     if (hot.data?.aurelia) {
       const newDefinition = $$CE.getDefinition(currentClassType);
-      $$M.define(newDefinition.name, newDefinition, currentClassType);
-      $$M.define(newDefinition.name, newDefinition, newDefinition);
+      $$M.define(newDefinition, currentClassType, newDefinition.name);
+      $$M.define(newDefinition, newDefinition, newDefinition.name);
       hot.data.aurelia.container.res[$$CE.keyFrom(newDefinition.name)] = newDefinition;
 
       const previousControllers = hot.data.controllers ?? [];

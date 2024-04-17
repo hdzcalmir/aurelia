@@ -1,38 +1,37 @@
 import { camelCase } from '@aurelia/kernel';
 import { TranslationBinding } from './translation-binding';
 import {
-  IExpressionParser,
   IObserverLocator,
-  type IsBindingBehavior,
 } from '@aurelia/runtime';
+import { IExpressionParser, type IsBindingBehavior } from '@aurelia/expression-parser';
 import {
   IHydratableController,
   IRenderer,
   renderer,
-  attributePattern,
   AttrSyntax,
-  bindingCommand,
   IPlatform,
   IAttrMapper,
   ICommandBuildInfo,
+  AttributePattern,
 } from '@aurelia/runtime-html';
 
 import type {
   BindingMode,
   BindingCommandInstance,
+  BindingCommandStaticAuDefinition,
 } from '@aurelia/runtime-html';
-import { bmToView, ctNone, etIsProperty } from '../utils';
+import { bmToView, etIsProperty } from '../utils';
 
 export const TranslationParametersInstructionType = 'tpt';
 // `.bind` part is needed here only for vCurrent compliance
 const attribute = 't-params.bind';
 
-@attributePattern({ pattern: attribute, symbols: '' })
 export class TranslationParametersAttributePattern {
   public [attribute](rawName: string, rawValue: string): AttrSyntax {
     return new AttrSyntax(rawName, rawValue, '', attribute);
   }
 }
+AttributePattern.define([{ pattern: attribute, symbols: '' }], TranslationParametersAttributePattern);
 
 export class TranslationParametersBindingInstruction {
   public readonly type: string = TranslationParametersInstructionType;
@@ -44,10 +43,13 @@ export class TranslationParametersBindingInstruction {
   ) {}
 }
 
-@bindingCommand(attribute)
 export class TranslationParametersBindingCommand implements BindingCommandInstance {
-  public readonly type: 'None' = ctNone;
-  public get name() { return attribute; }
+  public static readonly $au: BindingCommandStaticAuDefinition = {
+    type: 'binding-command',
+    name: attribute,
+  };
+
+  public readonly ignoreAttr = false;
 
   public build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): TranslationParametersBindingInstruction {
     const attr = info.attr;
@@ -64,7 +66,6 @@ export class TranslationParametersBindingCommand implements BindingCommandInstan
   }
 }
 
-@renderer(TranslationParametersInstructionType)
 export class TranslationParametersBindingRenderer implements IRenderer {
   public target!: typeof TranslationParametersInstructionType;
   public render(
@@ -87,3 +88,4 @@ export class TranslationParametersBindingRenderer implements IRenderer {
     });
   }
 }
+renderer(TranslationParametersInstructionType)(TranslationParametersBindingRenderer, null!);

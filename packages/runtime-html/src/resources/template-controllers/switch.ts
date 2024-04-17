@@ -11,9 +11,8 @@ import {
   type Scope,
 } from '@aurelia/runtime';
 import { IRenderLocation } from '../../dom';
-import { templateController } from '../custom-attribute';
+import { attrTypeName, CustomAttributeStaticAuDefinition, defineAttribute } from '../custom-attribute';
 import { IViewFactory } from '../../templating/view';
-import { bindable } from '../../bindable';
 import { oneTime } from '../../binding/interfaces-bindings';
 import { isArray } from '../../utilities';
 
@@ -21,13 +20,20 @@ import type { Controller, ICustomAttributeController, ICustomAttributeViewModel,
 import type { INode } from '../../dom';
 import type { IInstruction } from '../../renderer';
 import { createMappedError, ErrorNames } from '../../errors';
+import { PartialBindableDefinition } from '../../bindable';
 
-@templateController('switch')
 export class Switch implements ICustomAttributeViewModel {
+  public static readonly $au: CustomAttributeStaticAuDefinition = {
+    type: attrTypeName,
+    name: 'switch',
+    isTemplateController: true,
+    bindables: ['value'],
+  };
+
   public readonly $controller!: ICustomAttributeController<this>; // This is set by the controller after this instance is constructed
   private view!: ISyntheticView;
 
-  @bindable public value: unknown;
+  public value: unknown;
 
   /** @internal */
   public readonly cases: Case[] = [];
@@ -233,23 +239,11 @@ export class Switch implements ICustomAttributeViewModel {
 }
 
 let caseId = 0;
-@templateController('case')
 export class Case implements ICustomAttributeViewModel {
   /** @internal */ public readonly id: number = ++caseId;
   public readonly $controller!: ICustomAttributeController<this>; // This is set by the controller after this instance is constructed
 
-  @bindable public value: unknown;
-  @bindable({
-    set: v => {
-      switch (v) {
-        case 'true': return true;
-        case 'false': return false;
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        default: return !!v;
-      }
-    },
-    mode: oneTime
-  })
+  public value: unknown;
   public fallThrough: boolean = false;
 
   public view: ISyntheticView | undefined = void 0;
@@ -309,7 +303,7 @@ export class Case implements ICustomAttributeViewModel {
 
   public activate(initiator: IHydratedController | null, scope: Scope): void | Promise<void> {
     let view = this.view;
-    if(view === void 0) {
+    if (view === void 0) {
       view = this.view = this._factory.create().setLocation(this._location);
     }
     if (view.isActive) { return; }
@@ -347,9 +341,7 @@ export class Case implements ICustomAttributeViewModel {
   }
 }
 
-@templateController('default-case')
 export class DefaultCase extends Case {
-
   protected linkToSwitch($switch: Switch): void {
     if ($switch.defaultCase !== void 0) {
       throw createMappedError(ErrorNames.switch_no_multiple_default);
@@ -357,3 +349,28 @@ export class DefaultCase extends Case {
     $switch.defaultCase = this;
   }
 }
+
+// Notes:
+// - The usage of $au is intentionally avoided here.
+//   Once the 'case' TC is defined, the TC definition is put to the Class[Symbol.metadata], that is implicitly inherited by the 'default-case' TC.
+//   Thus, when resolving the definition, the definition from the 'case' TC is found and used, rendering the $au property not-useful.
+// - The order of the 'case' and 'default-case' TC definitions is important also because of above said reason.
+//   We want to deliberately define the 'case' TC second, so that the 'default-case' cannot inherit the metadata.
+const bindables: (string | PartialBindableDefinition & { name: string })[] = [
+  'value',
+  {
+    name: 'fallThrough',
+    mode: oneTime,
+    set(v: unknown): boolean {
+      switch (v) {
+        case 'true': return true;
+        case 'false': return false;
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        default: return !!v;
+      }
+    }
+  }
+];
+
+defineAttribute({ name: 'default-case', bindables, isTemplateController: true }, DefaultCase);
+defineAttribute({ name: 'case', bindables, isTemplateController: true }, Case);

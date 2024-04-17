@@ -8,14 +8,16 @@ import {
   Registrable,
 } from '@aurelia/kernel';
 import {
-  type ExpressionType,
   IExpressionParser,
-  IObserverLocator,
+  type ExpressionType,
   type Interpolation,
   type IsBindingBehavior,
   type AnyBindingExpression,
-  type IObservable,
   type ForOfStatement,
+} from '@aurelia/expression-parser';
+import {
+  IObserverLocator,
+  type IObservable,
 } from '@aurelia/runtime';
 import { toView, type BindingMode } from './binding/interfaces-bindings';
 import { AttributeBinding } from './binding/attribute';
@@ -171,7 +173,7 @@ export class HydrateElementInstruction<T extends Record<PropertyKey, unknown> = 
     /**
      * Indicates what projections are associated with the element usage
      */
-    public projections: Record<string, CustomElementDefinition> | null,
+    public projections: Record<string, PartialCustomElementDefinition> | null,
     /**
      * Indicates whether the usage of the custom element was with a containerless attribute or not
      */
@@ -332,7 +334,7 @@ export interface ITemplateCompiler {
    */
   resolveResources: boolean;
   compile(
-    partialDefinition: PartialCustomElementDefinition,
+    partialDefinition: CustomElementDefinition,
     context: IContainer,
     compilationInstruction: ICompliationInstruction | null,
   ): CustomElementDefinition;
@@ -346,7 +348,7 @@ export interface ITemplateCompiler {
    * @param host - the host element where the attributes are spreaded on
    */
   compileSpread(
-    requestor: PartialCustomElementDefinition,
+    requestor: CustomElementDefinition,
     attrSyntaxes: AttrSyntax[],
     container: IContainer,
     target: Element,
@@ -387,7 +389,7 @@ export interface IRenderer<TType extends string = string> {
 
 export const IRenderer = /*@__PURE__*/createInterface<IRenderer>('IRenderer');
 
-export function renderer<TType extends string, T extends Constructable<IRenderer<TType>>>(targetType: TType): (target: T) => T {
+export function renderer<TType extends string, T extends Constructable<IRenderer<TType>>>(targetType: TType): (target: T, context: ClassDecoratorContext) => T {
   return function decorator(target) {
     def(target.prototype, 'target', {
       configurable: true,
@@ -399,11 +401,11 @@ export function renderer<TType extends string, T extends Constructable<IRenderer
   };
 }
 
-function ensureExpression<TFrom>(parser: IExpressionParser, srcOrExpr: TFrom, expressionType: ExpressionType): Exclude<TFrom, string> {
+function ensureExpression<TFrom>(parser: IExpressionParser, srcOrExpr: TFrom | string, expressionType: ExpressionType): TFrom {
   if (isString(srcOrExpr)) {
-    return parser.parse(srcOrExpr, expressionType) as unknown as Exclude<TFrom, string>;
+    return parser.parse(srcOrExpr, expressionType) as TFrom;
   }
-  return srcOrExpr as Exclude<TFrom, string>;
+  return srcOrExpr;
 }
 
 function getTarget(potentialTarget: object): object {
@@ -440,7 +442,6 @@ function getRefTarget(refHost: INode, refTargetName: string): object {
   }
 }
 
-@renderer(setProperty)
 /** @internal */
 export class SetPropertyRenderer implements IRenderer {
   public target!: typeof InstructionType.setProperty;
@@ -458,8 +459,8 @@ export class SetPropertyRenderer implements IRenderer {
     }
   }
 }
+renderer(setProperty)(SetPropertyRenderer, null!);
 
-@renderer(hydrateElement)
 /** @internal */
 export class CustomElementRenderer implements IRenderer {
   /** @internal */ private readonly _rendering = resolve(IRendering);
@@ -535,8 +536,8 @@ export class CustomElementRenderer implements IRenderer {
     /* eslint-enable prefer-const */
   }
 }
+renderer(hydrateElement)(CustomElementRenderer, null!);
 
-@renderer(hydrateAttribute)
 /** @internal */
 export class CustomAttributeRenderer implements IRenderer {
   /** @internal */ private readonly _rendering = resolve(IRendering);
@@ -607,8 +608,8 @@ export class CustomAttributeRenderer implements IRenderer {
     /* eslint-enable prefer-const */
   }
 }
+renderer(hydrateAttribute)(CustomAttributeRenderer, null!);
 
-@renderer(hydrateTemplateController)
 /** @internal */
 export class TemplateControllerRenderer implements IRenderer {
   /** @internal */ private readonly _rendering = resolve(IRendering);
@@ -689,8 +690,8 @@ export class TemplateControllerRenderer implements IRenderer {
     /* eslint-enable prefer-const */
   }
 }
+renderer(hydrateTemplateController)(TemplateControllerRenderer, null!);
 
-@renderer(hydrateLetElement)
 /** @internal */
 export class LetElementRenderer implements IRenderer {
   public target!: typeof InstructionType.hydrateLetElement;
@@ -725,8 +726,8 @@ export class LetElementRenderer implements IRenderer {
     }
   }
 }
+renderer(hydrateLetElement)(LetElementRenderer, null!);
 
-@renderer(refBinding)
 /** @internal */
 export class RefBindingRenderer implements IRenderer {
   public target!: typeof InstructionType.refBinding;
@@ -744,8 +745,8 @@ export class RefBindingRenderer implements IRenderer {
     ));
   }
 }
+renderer(refBinding)(RefBindingRenderer, null!);
 
-@renderer(interpolation)
 /** @internal */
 export class InterpolationBindingRenderer implements IRenderer {
   public target!: typeof InstructionType.interpolation;
@@ -769,8 +770,8 @@ export class InterpolationBindingRenderer implements IRenderer {
     ));
   }
 }
+renderer(interpolation)(InterpolationBindingRenderer, null!);
 
-@renderer(propertyBinding)
 /** @internal */
 export class PropertyBindingRenderer implements IRenderer {
   public target!: typeof InstructionType.propertyBinding;
@@ -794,8 +795,8 @@ export class PropertyBindingRenderer implements IRenderer {
     ));
   }
 }
+renderer(propertyBinding)(PropertyBindingRenderer, null!);
 
-@renderer(iteratorBinding)
 /** @internal */
 export class IteratorBindingRenderer implements IRenderer {
   public target!: typeof InstructionType.iteratorBinding;
@@ -819,8 +820,8 @@ export class IteratorBindingRenderer implements IRenderer {
     ));
   }
 }
+renderer(iteratorBinding)(IteratorBindingRenderer, null!);
 
-@renderer(textBinding)
 /** @internal */
 export class TextBindingRenderer implements IRenderer {
   public target!: typeof InstructionType.textBinding;
@@ -843,6 +844,7 @@ export class TextBindingRenderer implements IRenderer {
     ));
   }
 }
+renderer(textBinding)(TextBindingRenderer, null!);
 
 /**
  * An interface describing configuration for listener bindings
@@ -857,7 +859,6 @@ export const IListenerBindingOptions = createInterface<IListenerBindingOptions>(
   prevent: false,
 }));
 
-@renderer(listenerBinding)
 /** @internal */
 export class ListenerBindingRenderer implements IRenderer {
   public target!: typeof InstructionType.listenerBinding;
@@ -884,8 +885,8 @@ export class ListenerBindingRenderer implements IRenderer {
     ));
   }
 }
+renderer(listenerBinding)(ListenerBindingRenderer, null!);
 
-@renderer(setAttribute)
 /** @internal */
 export class SetAttributeRenderer implements IRenderer {
   public target!: typeof InstructionType.setAttribute;
@@ -897,8 +898,8 @@ export class SetAttributeRenderer implements IRenderer {
     target.setAttribute(instruction.to, instruction.value);
   }
 }
+renderer(setAttribute)(SetAttributeRenderer, null!);
 
-@renderer(setClassAttribute)
 export class SetClassAttributeRenderer implements IRenderer {
   public target!: typeof InstructionType.setClassAttribute;
   public render(
@@ -909,8 +910,8 @@ export class SetClassAttributeRenderer implements IRenderer {
     addClasses(target.classList, instruction.value);
   }
 }
+renderer(setClassAttribute)(SetClassAttributeRenderer, null!);
 
-@renderer(setStyleAttribute)
 export class SetStyleAttributeRenderer implements IRenderer {
   public target!: typeof InstructionType.setStyleAttribute;
   public render(
@@ -921,6 +922,7 @@ export class SetStyleAttributeRenderer implements IRenderer {
     target.style.cssText += instruction.value;
   }
 }
+renderer(setStyleAttribute)(SetStyleAttributeRenderer, null!);
 
 /* istanbul ignore next */
 const ambiguousStyles = [
@@ -947,7 +949,6 @@ const ambiguousStyles = [
   'left',
 ];
 
-@renderer(stylePropertyBinding)
 /** @internal */
 export class StylePropertyBindingRenderer implements IRenderer {
   public target!: typeof InstructionType.stylePropertyBinding;
@@ -987,6 +988,7 @@ export class StylePropertyBindingRenderer implements IRenderer {
     ));
   }
 }
+renderer(stylePropertyBinding)(StylePropertyBindingRenderer, null!);
 
 /* istanbul ignore next */
 class DevStylePropertyBinding extends PropertyBinding {
@@ -999,7 +1001,6 @@ class DevStylePropertyBinding extends PropertyBinding {
   }
 }
 
-@renderer(attributeBinding)
 /** @internal */
 export class AttributeBindingRenderer implements IRenderer {
   public target!: typeof InstructionType.attributeBinding;
@@ -1031,8 +1032,8 @@ export class AttributeBindingRenderer implements IRenderer {
     ));
   }
 }
+renderer(attributeBinding)(AttributeBindingRenderer, null!);
 
-@renderer(spreadBinding)
 export class SpreadRenderer implements IRenderer {
 
   /** @internal */ private readonly _compiler = resolve(ITemplateCompiler);
@@ -1062,6 +1063,7 @@ export class SpreadRenderer implements IRenderer {
       .forEach(b => renderingCtrl.addBinding(b));
   }
 }
+renderer(spreadBinding)(SpreadRenderer, null!);
 
 // http://jsben.ch/7n5Kt
 function addClasses(classList: DOMTokenList, className: string): void {

@@ -13,7 +13,7 @@ import {
   BindingIdentifier,
   PrimitiveLiteralExpression,
   IExpressionParser,
-} from '@aurelia/runtime';
+} from '@aurelia/expression-parser';
 import {
   bindable,
   BindingMode,
@@ -62,13 +62,13 @@ type AttrDef<T extends object> = CustomAttributeDefinition<Constructable<T>>;
 describe('3-runtime-html/template-compiler.spec.ts', function () {
   describe('base assertions', function () {
     let ctx: TestContext;
-    let sut: ITemplateCompiler;
+    let sut: IWrappedTemplateCompiler;
     let container: IContainer;
 
     beforeEach(function () {
       ctx = TestContext.create();
       container = ctx.container;
-      sut = ctx.templateCompiler;
+      sut = createCompilerWrapper(ctx.templateCompiler);
       sut.resolveResources = false;
       container.register(CustomAttribute.define('foo', class {}));
     });
@@ -1122,7 +1122,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
     function createFixture(ctx: TestContext, ...globals: any[]) {
       const container = ctx.container;
       container.register(...globals, delegateSyntax);
-      const sut = ctx.templateCompiler;
+      const sut = createCompilerWrapper(ctx.templateCompiler);
       return { container, sut };
     }
 
@@ -1262,10 +1262,10 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         [
           (_ctx) => [undefined, undefined, 'value'],
           (_ctx) => [{}, undefined, 'value'] as any,
-          (_ctx) => [BindableDefinition.create('asdf', class MyClass { }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.oneTime }), BindingMode.oneTime, 'bazBaz'],
-          (_ctx) => [BindableDefinition.create('asdf', class MyClass { }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.fromView }), BindingMode.fromView, 'bazBaz'],
-          (_ctx) => [BindableDefinition.create('asdf', class MyClass { }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.twoWay }), BindingMode.twoWay, 'bazBaz'],
-          (_ctx) => [BindableDefinition.create('asdf', class MyClass { }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.default }), BindingMode.default, 'bazBaz']
+          (_ctx) => [BindableDefinition.create('asdf', { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.oneTime }), BindingMode.oneTime, 'bazBaz'],
+          (_ctx) => [BindableDefinition.create('asdf', { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.fromView }), BindingMode.fromView, 'bazBaz'],
+          (_ctx) => [BindableDefinition.create('asdf', { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.twoWay }), BindingMode.twoWay, 'bazBaz'],
+          (_ctx) => [BindableDefinition.create('asdf', { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.default }), BindingMode.default, 'bazBaz']
         ] as ((ctx: TestContext) => [Record<string, BindableDefinition> | undefined, BindingMode | undefined, string])[],
         [
           (_ctx) => ['foo', '', class Foo1 { }],
@@ -1348,11 +1348,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           (ctx, pdName) => `${pdName}Bar` // descriptor.property is different from the actual property name
         ] as ((ctx: TestContext, $1: string) => string)[],
         [
-          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.default }) }),
-          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.oneTime }) }),
-          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.toView }) }),
-          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.fromView }) }),
-          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.twoWay }) })
+          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.default }) }),
+          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.oneTime }) }),
+          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.toView }) }),
+          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.fromView }) }),
+          (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.twoWay }) })
         ] as ((ctx: TestContext, $1: string, $2: string) => Bindables)[],
         [
           (_ctx) => [``, `''`],
@@ -1689,7 +1689,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
       function compileWith(markup: string | Element, ...extraResources: any[]) {
         const ctx = TestContext.create();
         const container = ctx.container;
-        const sut = ctx.templateCompiler;
+        const sut = createCompilerWrapper(ctx.templateCompiler);
         container.register(...extraResources);
         const templateDefinition: PartialCustomElementDefinition = {
           template: markup,
@@ -1726,11 +1726,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           (ctx, pdName, pdProp) => `${kebabCase(pdProp)}-baz` // descriptor.attribute is different from kebab-cased descriptor.property
         ] as ((ctx: TestContext, $1: string, $2: string) => string)[],
         [
-          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: pdAttr, mode: BindingMode.default }) }),
-          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: pdAttr, mode: BindingMode.oneTime }) }),
-          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: pdAttr, mode: BindingMode.toView }) }),
-          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: pdAttr, mode: BindingMode.fromView }) }),
-          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass { }, { name: pdProp, attribute: pdAttr, mode: BindingMode.twoWay }) })
+          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.default }) }),
+          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.oneTime }) }),
+          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.toView }) }),
+          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.fromView }) }),
+          (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.twoWay }) })
         ] as ((ctx: TestContext, $1: string, $2: string, $3: string) => Bindables)[],
         [
           (_ctx) => [``, `''`],
@@ -2113,11 +2113,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
           primary = bindable;
         }
 
-        attrs[attr] = BindableDefinition.create(prop, def.Type, bindable);
+        attrs[attr] = BindableDefinition.create(prop, bindable);
       }
       if (bindable == null && isAttr) {
         // if no bindables are present, default to "value"
-        primary = attrs.value = BindableDefinition.create('value', def.Type, { mode: defaultBindingMode });
+        primary = attrs.value = BindableDefinition.create('value', { mode: defaultBindingMode });
       }
 
       return new BindablesInfo(attrs, bindables, primary);
@@ -2137,4 +2137,25 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
       expected
     );
   }
+
+  interface IWrappedTemplateCompiler extends ITemplateCompiler {
+    compile(def: PartialCustomElementDefinition, container: IContainer, instruction: any): CustomElementDefinition;
+  }
+
+  function createCompilerWrapper(compiler: ITemplateCompiler): IWrappedTemplateCompiler {
+    return {
+      get resolveResources() { return compiler.resolveResources; },
+      set resolveResources(value: boolean) { compiler.resolveResources = value; },
+      get debug() { return compiler.debug; },
+      set debug(value: boolean) { compiler.debug = value; },
+      compile(definition: PartialCustomElementDefinition, container: IContainer, instruction: any) {
+        return compiler.compile(CustomElementDefinition.create(definition), container, instruction);
+      },
+      compileSpread(...args: any[]) {
+        // eslint-disable-next-line prefer-spread
+        return compiler.compileSpread.apply(compiler, args);
+      }
+    };
+  }
+
 });

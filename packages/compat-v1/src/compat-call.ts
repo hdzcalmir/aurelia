@@ -1,17 +1,33 @@
-import { camelCase, IIndexable, type IContainer, type IServiceLocator } from '@aurelia/kernel';
-import { astBind, astEvaluate, astUnbind, IAccessor, IAstEvaluator, IBinding, IConnectableBinding, IExpressionParser, IObserverLocator, IsBindingBehavior, Scope } from '@aurelia/runtime';
-import { bindingCommand, BindingCommandInstance, ICommandBuildInfo, IController, IHydratableController, IInstruction, IRenderer, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, renderer, IPlatform } from '@aurelia/runtime-html';
+import { camelCase, type IContainer, type IServiceLocator } from '@aurelia/kernel';
+import { IAccessor, IObserverLocator, IObserverLocatorBasedConnectable, Scope } from '@aurelia/runtime';
+import {
+  astBind,
+  astEvaluate,
+  astUnbind,
+  type BindingCommandInstance,
+  ICommandBuildInfo,
+  IController,
+  IHydratableController,
+  IInstruction,
+  IRenderer,
+  mixinAstEvaluator,
+  mixinUseScope,
+  mixingBindingLimited,
+  renderer,
+  IPlatform,
+  type IAstEvaluator,
+  type IBinding,
+} from '@aurelia/runtime-html';
 import { ensureExpression, etIsFunction } from './utilities';
+import { BindingCommandStaticAuDefinition } from '@aurelia/runtime-html/dist/types/resources/binding-command';
+import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 
-const registeredSymbol = Symbol('.call');
+const callRegisteredContainer = new WeakSet<IContainer>();
 
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 export const callSyntax = {
   register(container: IContainer) {
-    /* istanbul ignore next */
-    if (!(container as unknown as IIndexable)[registeredSymbol]) {
-      /* istanbul ignore next */
-      (container as unknown as IIndexable)[registeredSymbol] = true;
+    if (!callRegisteredContainer.has(container)) {
+      callRegisteredContainer.add(container);
       container.register(
         CallBindingCommand,
         CallBindingRenderer,
@@ -31,9 +47,13 @@ export class CallBindingInstruction {
   ) { }
 }
 
-@bindingCommand('call')
 export class CallBindingCommand implements BindingCommandInstance {
-  public get type(): 'None' { return 'None'; }
+  public static readonly $au: BindingCommandStaticAuDefinition = {
+    type: 'binding-command',
+    name: 'call',
+  };
+
+  public get ignoreAttr() { return false; }
 
   public build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction {
     const target = info.bindable === null
@@ -46,7 +66,6 @@ export class CallBindingCommand implements BindingCommandInstance {
   }
 }
 
-@renderer(instructionType)
 export class CallBindingRenderer implements IRenderer {
   public target!: typeof instructionType;
 
@@ -62,6 +81,7 @@ export class CallBindingRenderer implements IRenderer {
     renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
   }
 }
+renderer(instructionType)(CallBindingRenderer, null!);
 
 function getTarget(potentialTarget: object): object {
   if ((potentialTarget as { viewModel?: object }).viewModel != null) {
@@ -73,7 +93,7 @@ function getTarget(potentialTarget: object): object {
 /**
  * A binding for handling .call syntax
  */
-export interface CallBinding extends IAstEvaluator, IConnectableBinding { }
+export interface CallBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator { }
 export class CallBinding implements IBinding {
   public isBound: boolean = false;
 
