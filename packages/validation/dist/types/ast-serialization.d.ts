@@ -1,4 +1,4 @@
-import * as AST from '@aurelia/runtime';
+import * as AST from '@aurelia/expression-parser';
 export interface IExpressionHydrator {
     hydrate(jsonExpr: any): any;
 }
@@ -8,7 +8,7 @@ export declare class Deserializer implements IExpressionHydrator {
     private deserializeExpressions;
 }
 export declare class Serializer implements AST.IVisitor<string> {
-    static serialize(expr: AST.IsExpressionOrStatement): string;
+    static serialize(expr: AST.IsExpressionOrStatement | AST.CustomExpression): string;
     visitAccessMember(expr: AST.AccessMemberExpression): string;
     visitAccessKeyed(expr: AST.AccessKeyedExpression): string;
     visitAccessThis(expr: AST.AccessThisExpression): string;

@@ -1,95 +1,179 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { IServiceLocator, newInstanceForScope } from '@aurelia/kernel';
+import { IServiceLocator, newInstanceForScope, resolve } from '@aurelia/kernel';
 import { Aurelia, CustomElement, IPlatform, customElement } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 import { IValidationRules, PropertyRule, ValidateInstruction, } from '@aurelia/validation';
-import { IValidationController, ValidationController, ValidationHtmlConfiguration, } from '@aurelia/validation-html';
+import { IValidationController, ValidationHtmlConfiguration, } from '@aurelia/validation-html';
 import { createSpecFunction, ToNumberValueConverter } from '../util.js';
 import { Person } from '../validation/_test-resources.js';
 describe('validation-html/validation-controller.spec.ts', function () {
     describe('validation-html/validation-controller.spec.ts/validation controller factory', function () {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({
-                name: 'app',
-                template: `<vc-root></vc-root>`
-            })
-        ], App);
-        let VcRoot = class VcRoot {
-            constructor(controller1, controller2, controller3) {
-                this.controller1 = controller1;
-                this.controller2 = controller2;
-                this.controller3 = controller3;
-            }
-        };
-        VcRoot = __decorate([
-            customElement({
-                name: 'vc-root',
-                template: `
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app',
+                    template: `<vc-root></vc-root>`
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
+        let VcRoot = (() => {
+            let _classDecorators = [customElement({
+                    name: 'vc-root',
+                    template: `
     <custom-stuff1></custom-stuff1>
     <custom-stuff2></custom-stuff2>
     <new-vc-root></new-vc-root>
     `
-            }),
-            __param(0, newInstanceForScope(IValidationController)),
-            __param(1, newInstanceForScope(IValidationController)),
-            __param(2, IValidationController),
-            __metadata("design:paramtypes", [ValidationController,
-                ValidationController,
-                ValidationController])
-        ], VcRoot);
-        let NewVcRoot = class NewVcRoot {
-            constructor(controller) {
-                this.controller = controller;
-            }
-        };
-        NewVcRoot = __decorate([
-            customElement({ name: 'new-vc-root', template: `<custom-stuff3></custom-stuff3>` }),
-            __param(0, newInstanceForScope(IValidationController)),
-            __metadata("design:paramtypes", [ValidationController])
-        ], NewVcRoot);
-        let CustomStuff1 = class CustomStuff1 {
-            constructor(controller) {
-                this.controller = controller;
-            }
-        };
-        CustomStuff1 = __decorate([
-            customElement({ name: 'custom-stuff1', template: `custom stuff1` }),
-            __param(0, IValidationController),
-            __metadata("design:paramtypes", [ValidationController])
-        ], CustomStuff1);
-        let CustomStuff2 = class CustomStuff2 {
-            constructor(controller) {
-                this.controller = controller;
-            }
-        };
-        CustomStuff2 = __decorate([
-            customElement({ name: 'custom-stuff2', template: `custom stuff2` }),
-            __param(0, IValidationController),
-            __metadata("design:paramtypes", [ValidationController])
-        ], CustomStuff2);
-        let CustomStuff3 = class CustomStuff3 {
-            constructor(controller) {
-                this.controller = controller;
-            }
-        };
-        CustomStuff3 = __decorate([
-            customElement({ name: 'custom-stuff3', template: `custom stuff3` }),
-            __param(0, IValidationController),
-            __metadata("design:paramtypes", [ValidationController])
-        ], CustomStuff3);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var VcRoot = _classThis = class {
+                constructor() {
+                    this.controller1 = resolve(newInstanceForScope(IValidationController));
+                    this.controller2 = resolve(newInstanceForScope(IValidationController));
+                    this.controller3 = resolve(IValidationController);
+                }
+            };
+            __setFunctionName(_classThis, "VcRoot");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                VcRoot = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return VcRoot = _classThis;
+        })();
+        let NewVcRoot = (() => {
+            let _classDecorators = [customElement({ name: 'new-vc-root', template: `<custom-stuff3></custom-stuff3>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var NewVcRoot = _classThis = class {
+                constructor() {
+                    this.controller = resolve(newInstanceForScope(IValidationController));
+                }
+            };
+            __setFunctionName(_classThis, "NewVcRoot");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                NewVcRoot = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return NewVcRoot = _classThis;
+        })();
+        let CustomStuff1 = (() => {
+            let _classDecorators = [customElement({ name: 'custom-stuff1', template: `custom stuff1` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CustomStuff1 = _classThis = class {
+                constructor() {
+                    this.controller = resolve(IValidationController);
+                }
+            };
+            __setFunctionName(_classThis, "CustomStuff1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CustomStuff1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CustomStuff1 = _classThis;
+        })();
+        let CustomStuff2 = (() => {
+            let _classDecorators = [customElement({ name: 'custom-stuff2', template: `custom stuff2` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CustomStuff2 = _classThis = class {
+                constructor() {
+                    this.controller = resolve(IValidationController);
+                }
+            };
+            __setFunctionName(_classThis, "CustomStuff2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CustomStuff2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CustomStuff2 = _classThis;
+        })();
+        let CustomStuff3 = (() => {
+            let _classDecorators = [customElement({ name: 'custom-stuff3', template: `custom stuff3` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CustomStuff3 = _classThis = class {
+                constructor() {
+                    this.controller = resolve(IValidationController);
+                }
+            };
+            __setFunctionName(_classThis, "CustomStuff3");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CustomStuff3 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CustomStuff3 = _classThis;
+        })();
         async function runTest(testFunction) {
             const ctx = TestContext.create();
             const container = ctx.container;
@@ -130,13 +214,14 @@ describe('validation-html/validation-controller.spec.ts', function () {
         });
     });
     describe('validation-html/validation-controller.spec.ts/validation-controller', function () {
-        let App = class App {
-            constructor(locator, controller, validationRules) {
-                this.locator = locator;
-                this.controller = controller;
-                this.validationRules = validationRules;
+        class App {
+            constructor() {
                 this.person1 = new Person((void 0), (void 0));
                 this.person2 = new Person((void 0), (void 0));
+                this.locator = resolve(IServiceLocator);
+                this.controller = resolve(newInstanceForScope(IValidationController));
+                this.validationRules = resolve(IValidationRules);
+                const validationRules = this.validationRules;
                 validationRules
                     .on(this.person1)
                     .ensure('name')
@@ -170,13 +255,7 @@ describe('validation-html/validation-controller.spec.ts', function () {
                 assert.equal(controller.bindings.size, 0, 'the bindings should have been removed');
                 assert.equal(controller.objects.size, 0, 'the objects should have been removed');
             }
-        };
-        App = __decorate([
-            __param(0, IServiceLocator),
-            __param(1, newInstanceForScope(IValidationController)),
-            __param(2, IValidationRules),
-            __metadata("design:paramtypes", [Object, ValidationController, Object])
-        ], App);
+        }
         class FooSubscriber {
             constructor() {
                 this.notifications = [];

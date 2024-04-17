@@ -67,34 +67,6 @@ function isStateHistory(history) {
         Array.isArray(history.past);
 }
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-}
-
 const DEFAULT_LOCAL_STORAGE_KEY = "aurelia-store-state";
 exports.MiddlewarePlacement = void 0;
 (function (MiddlewarePlacement) {
@@ -166,7 +138,7 @@ class ActionRegistrationError extends Error {
 }
 class ReducerNoStateError extends Error {
 }
-exports.Store = class Store {
+class Store {
     constructor(initialState, logger, _window, options) {
         this.initialState = initialState;
         this.logger = logger;
@@ -433,13 +405,9 @@ exports.Store = class Store {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.registerAction("jump", jump);
     }
-};
-exports.Store = __decorate([
-    __param(1, kernel.ILogger),
-    __param(2, runtimeHtml.IWindow)
-], exports.Store);
+}
 function dispatchify(action) {
-    const store = STORE.container.get(exports.Store);
+    const store = STORE.container.get(Store);
     return async function (...params) {
         return store.dispatch(action, ...params);
     };
@@ -511,7 +479,7 @@ function connectTo(settings) {
         }));
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return function (target) {
+    return function (target, _context) {
         const originalSetup = typeof settings === 'object' && settings.setup
             ? target.prototype[settings.setup]
             : target.prototype.binding;
@@ -526,8 +494,8 @@ function connectTo(settings) {
                 throw new Error('Provided onChanged handler does not exist on target VM');
             }
             const store = runtimeHtml.Controller.getCached(this)
-                ? runtimeHtml.Controller.getCached(this).container.get(exports.Store)
-                : STORE.container.get(exports.Store); // TODO: need to get rid of this helper for classic unit tests
+                ? runtimeHtml.Controller.getCached(this).container.get(Store)
+                : STORE.container.get(Store); // TODO: need to get rid of this helper for classic unit tests
             this._stateSubscriptions = createSelectors().map(s => getSource(store, s.selector).subscribe((state) => {
                 const lastTargetIdx = s.targets.length - 1;
                 // eslint-disable-next-line default-param-last
@@ -588,7 +556,7 @@ const StoreConfiguration = {
         if (options?.history?.undoable && !isStateHistory(state)) {
             initState = { past: [], present: state, future: [] };
         }
-        kernel.Registration.instance(exports.Store, new exports.Store(initState, logger, window, options)).register(container);
+        kernel.Registration.instance(Store, new Store(initState, logger, window, options)).register(container);
         return container;
     }
 };
@@ -598,6 +566,7 @@ exports.DEFAULT_LOCAL_STORAGE_KEY = DEFAULT_LOCAL_STORAGE_KEY;
 exports.DevToolsRemoteDispatchError = DevToolsRemoteDispatchError;
 exports.ReducerNoStateError = ReducerNoStateError;
 exports.STORE = STORE;
+exports.Store = Store;
 exports.StoreConfiguration = StoreConfiguration;
 exports.UnregisteredActionError = UnregisteredActionError;
 exports.applyLimits = applyLimits;

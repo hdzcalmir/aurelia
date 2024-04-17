@@ -1,7 +1,7 @@
 import { ensureEmpty, reportTaskQueue } from '@aurelia/platform';
 import { noop, isArrayIndex, DI, Registration, kebabCase, emptyArray, EventAggregator, ILogger } from '@aurelia/kernel';
-import { IObserverLocator, astEvaluate, astAssign, astBind, astUnbind, IDirtyChecker, INodeObserverLocator, Scope } from '@aurelia/runtime';
-import { StandardConfiguration, IPlatform, ITemplateCompiler, CustomElement, InstructionType, CustomAttribute, Aurelia, valueConverter, bindable, customElement } from '@aurelia/runtime-html';
+import { IObserverLocator, IDirtyChecker, INodeObserverLocator, Scope } from '@aurelia/runtime';
+import { StandardConfiguration, IPlatform, ITemplateCompiler, CustomElement, InstructionType, CustomAttribute, Aurelia, astEvaluate, astAssign, astBind, astUnbind } from '@aurelia/runtime-html';
 import { BrowserPlatform } from '@aurelia/platform-browser';
 import { Metadata } from '@aurelia/metadata';
 
@@ -7759,7 +7759,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
     const annotations = ['aliases', 'bindables', 'cache', 'capture', 'containerless', 'dependencies', 'enhance'];
     if ($$class !== $class && $class != null) {
         annotations.forEach(anno => {
-            Metadata.define(anno, CustomElement.getAnnotation($class, anno), $$class);
+            Metadata.define(CustomElement.getAnnotation($class, anno, null), $$class, anno);
         });
     }
     const existingDefs = (CustomElement.isType($$class) ? CustomElement.getDefinition($$class) : {});
@@ -8547,84 +8547,6 @@ class SpySubscriber {
     }
 }
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-let SortValueConverter = class SortValueConverter {
-    toView(arr, prop, dir = 'asc') {
-        if (Array.isArray(arr)) {
-            const factor = dir === 'asc' ? 1 : -1;
-            if (prop?.length) {
-                arr.sort((a, b) => a[prop] - b[prop] * factor);
-            }
-            else {
-                arr.sort((a, b) => a - b * factor);
-            }
-        }
-        return arr;
-    }
-};
-SortValueConverter = __decorate([
-    valueConverter('sort')
-], SortValueConverter);
-let JsonValueConverter = class JsonValueConverter {
-    toView(input) {
-        return JSON.stringify(input);
-    }
-    fromView(input) {
-        return JSON.parse(input);
-    }
-};
-JsonValueConverter = __decorate([
-    valueConverter('json')
-], JsonValueConverter);
-let NameTag = class NameTag {
-};
-__decorate([
-    bindable()
-], NameTag.prototype, "name", void 0);
-NameTag = __decorate([
-    customElement({
-        name: 'name-tag',
-        template: `<template>\${name}</template>`,
-        needsCompile: true,
-        dependencies: [],
-        instructions: [],
-        surrogates: []
-    })
-], NameTag);
-const globalResources = [
-    SortValueConverter,
-    JsonValueConverter,
-    NameTag
-];
-const TestConfiguration = {
-    register(container) {
-        container.register(...globalResources);
-    }
-};
-
 /**
  * Template tag function that properly stringifies the template parameters. Currently supports:
  *
@@ -9358,10 +9280,10 @@ function stopRecordingCalls(ctor) {
     }
 }
 function trace(calls) {
-    return function (ctor) {
+    return function (ctor, _context) {
         recordCalls(ctor, calls);
     };
 }
 
-export { CSS_PROPERTIES, Call, CallCollection, ChangeSet, CollectionChangeSet, JsonValueConverter, MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, PLATFORM, PLATFORMRegistration, PSEUDO_ELEMENTS, ProxyChangeSet, SortValueConverter, SpySubscriber, TestConfiguration, TestContext, _, assert, createContainer, createFixture, createObserverLocator, createScopeForTest, createSpy, eachCartesianJoin, eachCartesianJoinAsync, eachCartesianJoinFactory, ensureTaskQueuesEmpty, fail, generateCartesianProduct, getVisibleText, globalAttributeNames, h, hJsx, htmlStringify, inspect, instructionTypeName, jsonStringify, onFixtureCreated, padLeft, padRight, recordCalls, setPlatform, stopRecordingCalls, stringify, trace, trimFull, verifyBindingInstructionsEqual, verifyEqual };
+export { CSS_PROPERTIES, Call, CallCollection, ChangeSet, CollectionChangeSet, MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, PLATFORM, PLATFORMRegistration, PSEUDO_ELEMENTS, ProxyChangeSet, SpySubscriber, TestContext, _, assert, createContainer, createFixture, createObserverLocator, createScopeForTest, createSpy, eachCartesianJoin, eachCartesianJoinAsync, eachCartesianJoinFactory, ensureTaskQueuesEmpty, fail, generateCartesianProduct, getVisibleText, globalAttributeNames, h, hJsx, htmlStringify, inspect, instructionTypeName, jsonStringify, onFixtureCreated, padLeft, padRight, recordCalls, setPlatform, stopRecordingCalls, stringify, trace, trimFull, verifyBindingInstructionsEqual, verifyEqual };
 //# sourceMappingURL=index.dev.mjs.map

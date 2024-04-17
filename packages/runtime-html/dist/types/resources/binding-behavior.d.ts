@@ -1,12 +1,18 @@
 import { ResourceType } from '@aurelia/kernel';
-import { BindingBehaviorInstance } from '@aurelia/runtime';
+import { Scope } from '@aurelia/runtime';
 import type { Constructable, IContainer, IServiceLocator, PartialResourceDefinition, ResourceDefinition } from '@aurelia/kernel';
 import { type IResourceKind } from './resources-shared';
+import { IBinding } from '../binding/interfaces-bindings';
 export type PartialBindingBehaviorDefinition = PartialResourceDefinition;
 export type BindingBehaviorStaticAuDefinition = PartialBindingBehaviorDefinition & {
     type: 'binding-behavior';
 };
 export type BindingBehaviorType<T extends Constructable = Constructable> = ResourceType<T, BindingBehaviorInstance>;
+export type BindingBehaviorInstance<T extends {} = {}> = {
+    type?: 'instance' | 'factory';
+    bind?(scope: Scope, binding: IBinding, ...args: unknown[]): void;
+    unbind?(scope: Scope, binding: IBinding, ...args: unknown[]): void;
+} & T;
 export type BindingBehaviorKind = IResourceKind & {
     isType<T>(value: T): value is (T extends Constructable ? BindingBehaviorType<T> : never);
     define<T extends Constructable>(name: string, Type: T): BindingBehaviorType<T>;
@@ -16,7 +22,7 @@ export type BindingBehaviorKind = IResourceKind & {
     find(container: IContainer, name: string): BindingBehaviorDefinition | null;
     get(container: IServiceLocator, name: string): BindingBehaviorInstance;
 };
-export type BindingBehaviorDecorator = <T extends Constructable>(Type: T) => BindingBehaviorType<T>;
+export type BindingBehaviorDecorator = <T extends Constructable>(Type: T, context: ClassDecoratorContext) => BindingBehaviorType<T>;
 export declare function bindingBehavior(definition: PartialBindingBehaviorDefinition): BindingBehaviorDecorator;
 export declare function bindingBehavior(name: string): BindingBehaviorDecorator;
 export declare function bindingBehavior(nameOrDef: string | PartialBindingBehaviorDefinition): BindingBehaviorDecorator;

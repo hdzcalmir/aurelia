@@ -1,7 +1,8 @@
 import { type IServiceLocator } from '@aurelia/kernel';
-import { type IBinding, type ISubscriberCollection } from '@aurelia/runtime';
+import { type ISubscriberCollection } from '@aurelia/runtime';
 import { type ICustomElementViewModel, type ICustomElementController } from './controller';
 import type { INode } from '../dom';
+import { IBinding } from '../binding/interfaces-bindings';
 export type PartialChildrenDefinition = {
     callback?: PropertyKey;
     name?: PropertyKey;
@@ -15,20 +16,20 @@ export type PartialChildrenDefinition = {
  *
  * @param config - The overrides
  */
-export declare function children(config?: PartialChildrenDefinition): PropertyDecorator;
+export declare function children<TThis, TValue>(config?: PartialChildrenDefinition): (target: undefined, context: ClassFieldDecoratorContext<TThis, TValue>) => void;
 /**
  * Decorator: Specifies an array property on a class that synchronizes its items with child content nodes of the element.
  *
  * @param selector - The CSS element selector for filtering children
  */
-export declare function children(selector: string): PropertyDecorator;
+export declare function children<TThis, TValue>(selector: string): (target: undefined, context: ClassFieldDecoratorContext<TThis, TValue>) => void;
 /**
  * Decorator: Decorator: Specifies an array property that synchronizes its items with child content nodes of the element.
  *
  * @param target - The class
  * @param prop - The property name
  */
-export declare function children(target: {}, prop: string): void;
+export declare function children<TThis, TValue>(target: undefined, context: ClassFieldDecoratorContext<TThis, TValue>): void;
 export interface ChildrenBinding extends ISubscriberCollection {
 }
 /**

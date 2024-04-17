@@ -1,11 +1,13 @@
-import { Scope, type IConnectableBinding } from '@aurelia/runtime';
+import { IServiceLocator } from '@aurelia/kernel';
+import { IObserverLocatorBasedConnectable, Scope } from '@aurelia/runtime';
 import { IStore, type IStoreSubscriber } from './interfaces';
+import { IBinding } from '@aurelia/runtime-html';
 /**
  * A binding that handles the connection of the global state to a property of a target object
  */
-export interface StateGetterBinding extends IConnectableBinding {
+export interface StateGetterBinding extends IObserverLocatorBasedConnectable, IServiceLocator {
 }
-export declare class StateGetterBinding implements IConnectableBinding, IStoreSubscriber<object> {
+export declare class StateGetterBinding implements IBinding, IStoreSubscriber<object> {
     isBound: boolean;
     private readonly $get;
     private readonly target;

@@ -1,6 +1,6 @@
 import { Metadata, isObject } from '../../../metadata/dist/native-modules/index.mjs';
 import { DI, resolve, IEventAggregator, ILogger, emptyArray, onResolve, getResourceKeyFor, onResolveAll, emptyObject, IContainer, Registration, isArrayIndex, IModuleLoader, InstanceProvider, noop } from '../../../kernel/dist/native-modules/index.mjs';
-import { BindingMode, isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, customElement, bindable, customAttribute, INode, getRef, CustomAttribute, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { BindingMode, isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, CustomAttribute, INode, getRef, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { RecognizedRoute, Endpoint, ConfigurableRoute, RESIDUE, RouteRecognizer } from '../../../route-recognizer/dist/native-modules/index.mjs';
 
 /**
@@ -912,14 +912,14 @@ const Route = {
      * Returns `true` if the specified type has any static route configuration (either via static properties or a &#64;route decorator)
      */
     isConfigured(Type) {
-        return Metadata.hasOwn(Route.name, Type);
+        return Metadata.has(Route.name, Type);
     },
     /**
      * Apply the specified configuration to the specified type, overwriting any existing configuration.
      */
     configure(configOrPath, Type) {
         const config = RouteConfig._create(configOrPath, Type);
-        Metadata.define(Route.name, config, Type);
+        Metadata.define(config, Type, Route.name);
         return Type;
     },
     /**
@@ -931,18 +931,21 @@ const Route = {
             // However there might still be static properties, and this API provides a unified way of accessing those.
             Route.configure({}, Type);
         }
-        return Metadata.getOwn(Route.name, Type);
+        return Metadata.get(Route.name, Type);
     },
 };
 function route(configOrPath) {
-    return function (target) {
-        return Route.configure(configOrPath, target);
+    return function (target, context) {
+        context.addInitializer(function () {
+            Route.configure(configOrPath, this);
+        });
+        return target;
     };
 }
 /** @internal */
 function resolveRouteConfiguration(routeable, isChild, parent, routeNode, context) {
     if (isPartialRedirectRouteConfig(routeable))
-        return RouteConfig._create(routeable, null /* , false */);
+        return RouteConfig._create(routeable, null);
     const [instruction, ceDef] = resolveCustomElementDefinition(routeable, context);
     return onResolve(ceDef, $ceDef => {
         const type = $ceDef.Type;
@@ -4698,31 +4701,7 @@ class NavigationRoute {
     }
 }
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-let ViewportCustomElement = class ViewportCustomElement {
+class ViewportCustomElement {
     constructor() {
         this.name = defaultViewportName;
         this.usedBy = '';
@@ -4782,22 +4761,11 @@ let ViewportCustomElement = class ViewportCustomElement {
         }
         return `VP(ctx:'${this._ctx._friendlyPath}',${propStrings.join(',')})`;
     }
-};
-__decorate([
-    bindable
-], ViewportCustomElement.prototype, "name", void 0);
-__decorate([
-    bindable
-], ViewportCustomElement.prototype, "usedBy", void 0);
-__decorate([
-    bindable
-], ViewportCustomElement.prototype, "default", void 0);
-__decorate([
-    bindable
-], ViewportCustomElement.prototype, "fallback", void 0);
-ViewportCustomElement = __decorate([
-    customElement({ name: 'au-viewport' })
-], ViewportCustomElement);
+}
+CustomElement.define({
+    name: 'au-viewport',
+    bindables: ['name', 'usedBy', 'default', 'fallback'],
+}, ViewportCustomElement);
 const props = [
     'name',
     'usedBy',
@@ -4805,7 +4773,7 @@ const props = [
     'fallback',
 ];
 
-let LoadCustomAttribute = class LoadCustomAttribute {
+class LoadCustomAttribute {
     constructor() {
         /** @internal */ this._el = resolve(INode);
         /** @internal */ this._router = resolve(IRouter);
@@ -4899,25 +4867,17 @@ let LoadCustomAttribute = class LoadCustomAttribute {
             }
         }
     }
-};
-__decorate([
-    bindable({ mode: bmToView, primary: true, callback: 'valueChanged' })
-], LoadCustomAttribute.prototype, "route", void 0);
-__decorate([
-    bindable({ mode: bmToView, callback: 'valueChanged' })
-], LoadCustomAttribute.prototype, "params", void 0);
-__decorate([
-    bindable({ mode: bmToView })
-], LoadCustomAttribute.prototype, "attribute", void 0);
-__decorate([
-    bindable({ mode: bmFromView })
-], LoadCustomAttribute.prototype, "active", void 0);
-__decorate([
-    bindable({ mode: bmToView, callback: 'valueChanged' })
-], LoadCustomAttribute.prototype, "context", void 0);
-LoadCustomAttribute = __decorate([
-    customAttribute('load')
-], LoadCustomAttribute);
+}
+CustomAttribute.define({
+    name: 'load',
+    bindables: {
+        route: { mode: bmToView, primary: true, callback: 'valueChanged' },
+        params: { mode: bmToView, callback: 'valueChanged' },
+        attribute: { mode: bmToView },
+        active: { mode: bmFromView },
+        context: { mode: bmToView, callback: 'valueChanged' }
+    }
+}, LoadCustomAttribute);
 
 /*
  * Note: Intentionally, there is no bindable `context` here.

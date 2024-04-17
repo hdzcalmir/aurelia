@@ -6,7 +6,6 @@ export { createFixture, type IFixture, onFixtureCreated, } from './startup';
 export { TestContext, PLATFORM, PLATFORMRegistration, setPlatform, createContainer, } from './test-context';
 export { inspect, } from './inspect';
 export { MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, CollectionChangeSet, ChangeSet, ProxyChangeSet, SpySubscriber, } from './mocks';
-export { SortValueConverter, JsonValueConverter, TestConfiguration, } from './resources';
 export { ensureTaskQueuesEmpty, } from './scheduler';
 export { verifyBindingInstructionsEqual, verifyEqual, getVisibleText, instructionTypeName, } from './specialized-assertions';
 export { _, stringify, htmlStringify, jsonStringify, padLeft, padRight, } from './string-manipulation';

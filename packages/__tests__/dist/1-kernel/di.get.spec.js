@@ -1,16 +1,42 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { all, DI, factory, inject, resolve, lazy, newInstanceForScope, newInstanceOf, optional, Registration, singleton, transient } from '@aurelia/kernel';
+import { all, DI, factory, resolve, lazy, newInstanceForScope, newInstanceOf, optional, Registration, singleton, transient } from '@aurelia/kernel';
 import { assert } from '@aurelia/testing';
 describe('1-kernel/di.get.spec.ts', function () {
     let container;
@@ -24,15 +50,11 @@ describe('1-kernel/di.get.spec.ts', function () {
     describe('@lazy', function () {
         class Bar {
         }
-        let Foo = class Foo {
-            constructor(provider) {
-                this.provider = provider;
+        class Foo {
+            constructor() {
+                this.provider = resolve(lazy(Bar));
             }
-        };
-        Foo = __decorate([
-            __param(0, lazy(Bar)),
-            __metadata("design:paramtypes", [Function])
-        ], Foo);
+        }
         it('@singleton', function () {
             const bar0 = container.get(Foo).provider();
             const bar1 = container.get(Foo).provider();
@@ -47,11 +69,23 @@ describe('1-kernel/di.get.spec.ts', function () {
     });
     describe('@scoped', function () {
         describe("true", function () {
-            let ScopedFoo = class ScopedFoo {
-            };
-            ScopedFoo = __decorate([
-                singleton({ scoped: true })
-            ], ScopedFoo);
+            let ScopedFoo = (() => {
+                let _classDecorators = [singleton({ scoped: true })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var ScopedFoo = _classThis = class {
+                };
+                __setFunctionName(_classThis, "ScopedFoo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    ScopedFoo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return ScopedFoo = _classThis;
+            })();
             describe('Foo', function () {
                 const constructor = ScopedFoo;
                 it('children', function () {
@@ -83,11 +117,23 @@ describe('1-kernel/di.get.spec.ts', function () {
             });
         });
         describe('false', function () {
-            let ScopedFoo = class ScopedFoo {
-            };
-            ScopedFoo = __decorate([
-                singleton({ scoped: false })
-            ], ScopedFoo);
+            let ScopedFoo = (() => {
+                let _classDecorators = [singleton({ scoped: false })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var ScopedFoo = _classThis = class {
+                };
+                __setFunctionName(_classThis, "ScopedFoo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    ScopedFoo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return ScopedFoo = _classThis;
+            })();
             describe('Foo', function () {
                 const constructor = ScopedFoo;
                 it('children', function () {
@@ -105,11 +151,23 @@ describe('1-kernel/di.get.spec.ts', function () {
                 });
             });
             describe('default', function () {
-                let DefaultFoo = class DefaultFoo {
-                };
-                DefaultFoo = __decorate([
-                    singleton
-                ], DefaultFoo);
+                let DefaultFoo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var DefaultFoo = _classThis = class {
+                    };
+                    __setFunctionName(_classThis, "DefaultFoo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        DefaultFoo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return DefaultFoo = _classThis;
+                })();
                 const constructor = DefaultFoo;
                 it('children', function () {
                     const root = DI.createContainer();
@@ -129,568 +187,947 @@ describe('1-kernel/di.get.spec.ts', function () {
     });
     describe('@optional', function () {
         it('with default', function () {
-            let Foo = class Foo {
-                constructor(test = 'hello') {
-                    this.test = test;
+            class Foo {
+                constructor() {
+                    this.test = resolve(optional('key')) ?? 'hello';
                 }
-            };
-            Foo = __decorate([
-                __param(0, optional('key')),
-                __metadata("design:paramtypes", [String])
-            ], Foo);
+            }
             assert.strictEqual(container.get(Foo).test, 'hello');
         });
         it('no default, but param allows undefined', function () {
-            let Foo = class Foo {
-                constructor(test) {
-                    this.test = test;
+            class Foo {
+                constructor() {
+                    this.test = resolve(optional('key'));
                 }
-            };
-            Foo = __decorate([
-                __param(0, optional('key')),
-                __metadata("design:paramtypes", [String])
-            ], Foo);
+            }
             assert.strictEqual(container.get(Foo).test, undefined);
         });
         it('no default, param does not allow undefind', function () {
-            let Foo = class Foo {
-                constructor(test) {
-                    this.test = test;
+            class Foo {
+                constructor() {
+                    this.test = resolve(optional('key'));
                 }
-            };
-            Foo = __decorate([
-                __param(0, optional('key')),
-                __metadata("design:paramtypes", [String])
-            ], Foo);
+            }
             assert.strictEqual(container.get(Foo).test, undefined);
         });
         it('interface with default', function () {
             const Strings = DI.createInterface(x => x.instance([]));
-            let Foo = class Foo {
-                constructor(test) {
-                    this.test = test;
+            class Foo {
+                constructor() {
+                    this.test = resolve(optional(Strings));
                 }
-            };
-            Foo = __decorate([
-                __param(0, optional(Strings)),
-                __metadata("design:paramtypes", [Array])
-            ], Foo);
+            }
             assert.deepStrictEqual(container.get(Foo).test, undefined);
         });
         it('interface with default and default in constructor', function () {
             const MyStr = DI.createInterface(x => x.instance('hello'));
-            let Foo = class Foo {
-                constructor(test = 'test') {
-                    this.test = test;
+            class Foo {
+                constructor() {
+                    this.test = resolve(optional(MyStr)) ?? 'test';
                 }
-            };
-            Foo = __decorate([
-                __param(0, optional(MyStr)),
-                __metadata("design:paramtypes", [String])
-            ], Foo);
+            }
             assert.deepStrictEqual(container.get(Foo).test, 'test');
         });
         it('interface with default registered and default in constructor', function () {
             const MyStr = DI.createInterface(x => x.instance('hello'));
             container.register(MyStr);
-            let Foo = class Foo {
-                constructor(test = 'test') {
-                    this.test = test;
+            class Foo {
+                constructor() {
+                    this.test = resolve(optional(MyStr)) ?? 'test';
                 }
-            };
-            Foo = __decorate([
-                __param(0, optional(MyStr)),
-                __metadata("design:paramtypes", [String])
-            ], Foo);
+            }
             assert.deepStrictEqual(container.get(Foo).test, 'hello');
         });
     });
     describe('intrinsic', function () {
-        describe('bad', function () {
+        // TODO: Enable those tests once the decorator metadata is emitted by TS.
+        // The tests are disabled because TS with TC39 decorators (non-legacy), does not emit the decorator metadata as of now.
+        // The following tests are dependent on that and hence cannot be successfully run.
+        // Refer: https://github.com/microsoft/TypeScript/issues/55788
+        describe.skip('bad', function () {
             it('Array', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Array])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('ArrayBuffer', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [ArrayBuffer])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Boolean', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Boolean])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('boolean', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Boolean])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('DataView', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [DataView])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Date', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Date])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Error', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Error])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('EvalError', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [EvalError])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Float32Array', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Float32Array])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Float64Array', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Float64Array])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Function', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Function])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Int8Array', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Int8Array])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Int16Array', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Int16Array])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Int32Array', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Int16Array])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Map', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Map])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Number', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Number])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('number', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Number])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Object', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Object])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('object', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Object])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Promise', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Promise])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('RangeError', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [RangeError])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('ReferenceError', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [ReferenceError])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('RegExp', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [RegExp])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            it('Set', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Set])
-                ], Foo);
-                assert.throws(() => container.get(Foo));
-            });
-            if (typeof SharedArrayBuffer !== 'undefined') {
-                it('SharedArrayBuffer', function () {
-                    let Foo = class Foo {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
                         constructor(test) {
                             this.test = test;
                         }
                     };
-                    Foo = __decorate([
-                        singleton,
-                        __metadata("design:paramtypes", [SharedArrayBuffer])
-                    ], Foo);
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => console.log(container.get(Foo)));
+            });
+            it('ArrayBuffer', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Boolean', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('boolean', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('DataView', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Date', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Error', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('EvalError', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Float32Array', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Float64Array', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Function', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Int8Array', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Int16Array', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Int32Array', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Map', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Number', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('number', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Object', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('object', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Promise', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('RangeError', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('ReferenceError', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('RegExp', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            it('Set', function () {
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
+                assert.throws(() => container.get(Foo));
+            });
+            if (typeof SharedArrayBuffer !== 'undefined') {
+                it('SharedArrayBuffer', function () {
+                    let Foo = (() => {
+                        let _classDecorators = [singleton];
+                        let _classDescriptor;
+                        let _classExtraInitializers = [];
+                        let _classThis;
+                        var Foo = _classThis = class {
+                            constructor(test) {
+                                this.test = test;
+                            }
+                        };
+                        __setFunctionName(_classThis, "Foo");
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                            Foo = _classThis = _classDescriptor.value;
+                            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                            __runInitializers(_classThis, _classExtraInitializers);
+                        })();
+                        return Foo = _classThis;
+                    })();
                     assert.throws(() => container.get(Foo));
                 });
             }
             it('String', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [String])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('string', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [String])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('SyntaxError', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [SyntaxError])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('TypeError', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [TypeError])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('Uint8Array', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Uint8Array])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('Uint8ClampedArray', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Uint8ClampedArray])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('Uint16Array', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Uint16Array])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('Uint32Array', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [Uint32Array])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('UriError', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [URIError])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('WeakMap', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [WeakMap])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
             it('WeakSet', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [WeakSet])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.throws(() => container.get(Foo));
             });
         });
         describe('good', function () {
             it('@all()', function () {
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
+                class Foo {
+                    constructor() {
+                        this.test = resolve(all('test'));
                     }
-                };
-                Foo = __decorate([
-                    __param(0, all('test')),
-                    __metadata("design:paramtypes", [Array])
-                ], Foo);
+                }
                 assert.deepStrictEqual(container.get(Foo).test, []);
             });
             it('@optional()', function () {
-                let Foo = class Foo {
-                    constructor(test = null) {
-                        this.test = test;
+                class Foo {
+                    constructor() {
+                        this.test = (resolve(optional('test')) ?? null);
                     }
-                };
-                Foo = __decorate([
-                    __param(0, optional('test')),
-                    __metadata("design:paramtypes", [String])
-                ], Foo);
+                }
                 assert.strictEqual(container.get(Foo).test, null);
             });
             it('undef instance, with constructor default', function () {
                 container.register(Registration.instance('test', undefined));
-                let Foo = class Foo {
-                    constructor(test = []) {
-                        this.test = test;
+                class Foo {
+                    constructor() {
+                        this.test = resolve('test') ?? [];
                     }
-                };
-                Foo = __decorate([
-                    __param(0, inject('test')),
-                    __metadata("design:paramtypes", [Array])
-                ], Foo);
+                }
                 assert.deepStrictEqual(container.get(Foo).test, []);
             });
-            it('can inject if registered', function () {
+            // TODO: Enable those tests once the decorator metadata is emitted by TS.
+            // The tests are disabled because TS with TC39 decorators (non-legacy), does not emit the decorator metadata as of now.
+            // The following tests are dependent on that and hence cannot be successfully run.
+            // Refer: https://github.com/microsoft/TypeScript/issues/55788
+            it.skip('can inject if registered', function () {
                 container.register(Registration.instance(String, 'test'));
-                let Foo = class Foo {
-                    constructor(test) {
-                        this.test = test;
-                    }
-                };
-                Foo = __decorate([
-                    singleton,
-                    __metadata("design:paramtypes", [String])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [singleton];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(test) {
+                            this.test = test;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 assert.deepStrictEqual(container.get(Foo).test, 'test');
             });
         });
@@ -895,18 +1332,14 @@ describe('1-kernel/di.get.spec.ts', function () {
                     callCount++;
                 }
             }
-            let MyClassBuilder = class MyClassBuilder {
-                constructor(myClassFactory) {
-                    this.myClassFactory = myClassFactory;
+            class MyClassBuilder {
+                constructor() {
+                    this.myClassFactory = resolve(factory(MyClass));
                 }
                 build() {
                     return this.myClassFactory();
                 }
-            };
-            MyClassBuilder = __decorate([
-                __param(0, factory(MyClass)),
-                __metadata("design:paramtypes", [Function])
-            ], MyClassBuilder);
+            }
             let callCount = 0;
             const builder = container.get(MyClassBuilder);
             const instance1 = builder.build();
@@ -922,18 +1355,14 @@ describe('1-kernel/di.get.spec.ts', function () {
                     this.params = params;
                 }
             }
-            let MyClassBuilder = class MyClassBuilder {
-                constructor(myClassFactory) {
-                    this.myClassFactory = myClassFactory;
+            class MyClassBuilder {
+                constructor() {
+                    this.myClassFactory = resolve(factory(MyClass));
                 }
                 build(...args) {
                     return this.myClassFactory(...args);
                 }
-            };
-            MyClassBuilder = __decorate([
-                __param(0, factory(MyClass)),
-                __metadata("design:paramtypes", [Function])
-            ], MyClassBuilder);
+            }
             let callCount = 0;
             const builder = container.get(MyClassBuilder);
             const instance1 = builder.build(1, 2, { a: 1, b: 2 });
@@ -997,8 +1426,8 @@ describe('1-kernel/di.get.spec.ts', function () {
             }
             const { a, b } = container.get(class A {
                 constructor() {
-                    this.a = resolve(transient(Model));
-                    this.b = resolve(transient(Model));
+                    this.a = resolve(transient(Model, null));
+                    this.b = resolve(transient(Model, null));
                 }
             });
             assert.deepStrictEqual([a.id, b.id], [1, 2]);

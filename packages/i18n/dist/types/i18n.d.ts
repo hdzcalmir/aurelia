@@ -1,8 +1,4 @@
-import { IEventAggregator } from '@aurelia/kernel';
-import { ISignaler } from '@aurelia/runtime';
 import type * as i18next from 'i18next';
-import { I18nInitOptions } from './i18n-configuration-options';
-import { I18nextWrapper } from './i18next-wrapper';
 export declare class I18nKeyEvaluationResult {
     key: string;
     value: string;
@@ -85,7 +81,6 @@ export interface ILocalChangeSubscriber {
  * Translation service class.
  */
 export declare class I18nService implements I18N {
-    private readonly ea;
     i18next: i18next.i18n;
     /**
      * This is used for i18next initialization and awaited for before the bind phase.
@@ -95,7 +90,8 @@ export declare class I18nService implements I18N {
     private options;
     private readonly _localeSubscribers;
     private readonly _signaler;
-    constructor(i18nextWrapper: I18nextWrapper, options: I18nInitOptions, ea: IEventAggregator, signaler: ISignaler);
+    private readonly ea;
+    constructor();
     evaluate(keyExpr: string, options?: i18next.TOptions): I18nKeyEvaluationResult[];
     tr(key: string | string[], options?: i18next.TOptions): string;
     getLocale(): string;

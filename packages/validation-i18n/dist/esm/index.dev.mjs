@@ -1,62 +1,26 @@
-import { Signals, I18N } from '@aurelia/i18n';
-import { DI, IServiceLocator, IEventAggregator, ILogger, Registration, noop } from '@aurelia/kernel';
-import { IExpressionParser } from '@aurelia/runtime';
+import { I18N, Signals } from '@aurelia/i18n';
+import { DI, resolve, IEventAggregator, Registration, noop } from '@aurelia/kernel';
 import { IPlatform } from '@aurelia/runtime-html';
-import { ValidationMessageProvider, IValidator } from '@aurelia/validation';
+import { ValidationMessageProvider } from '@aurelia/validation';
 import { ValidationController, ValidationControllerFactory, getDefaultValidationHtmlConfiguration, ValidationHtmlConfiguration } from '@aurelia/validation-html';
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-}
 
 const I18N_VALIDATION_EA_CHANNEL = 'i18n:locale:changed:validation';
 const I18nKeyConfiguration = /*@__PURE__*/ DI.createInterface('I18nKeyConfiguration');
-let LocalizedValidationController = class LocalizedValidationController extends ValidationController {
-    constructor(locator, ea, validator, parser, platform) {
-        super(validator, parser, platform, locator);
+class LocalizedValidationController extends ValidationController {
+    constructor(ea = resolve(IEventAggregator), platform = resolve(IPlatform)) {
+        super();
         this.localeChangeSubscription = ea.subscribe(I18N_VALIDATION_EA_CHANNEL, () => { platform.domReadQueue.queueTask(async () => { await this.revalidateErrors(); }); });
     }
-};
-LocalizedValidationController = __decorate([
-    __param(0, IServiceLocator),
-    __param(1, IEventAggregator),
-    __param(2, IValidator),
-    __param(3, IExpressionParser),
-    __param(4, IPlatform)
-], LocalizedValidationController);
+}
 class LocalizedValidationControllerFactory extends ValidationControllerFactory {
     construct(container, _dynamicDependencies) {
         return container.invoke(LocalizedValidationController, _dynamicDependencies);
     }
 }
-let LocalizedValidationMessageProvider = class LocalizedValidationMessageProvider extends ValidationMessageProvider {
-    constructor(keyConfiguration, i18n, ea, parser, logger) {
-        super(parser, logger, []);
-        this.i18n = i18n;
+class LocalizedValidationMessageProvider extends ValidationMessageProvider {
+    constructor(keyConfiguration = resolve(I18nKeyConfiguration), ea = resolve(IEventAggregator)) {
+        super(undefined, []);
+        this.i18n = resolve(I18N);
         const namespace = keyConfiguration.DefaultNamespace;
         const prefix = keyConfiguration.DefaultKeyPrefix;
         if (namespace !== void 0 || prefix !== void 0) {
@@ -89,14 +53,7 @@ let LocalizedValidationMessageProvider = class LocalizedValidationMessageProvide
         const keyPrefix = this.keyPrefix;
         return keyPrefix !== void 0 ? `${keyPrefix}${key}` : key;
     }
-};
-LocalizedValidationMessageProvider = __decorate([
-    __param(0, I18nKeyConfiguration),
-    __param(1, I18N),
-    __param(2, IEventAggregator),
-    __param(3, IExpressionParser),
-    __param(4, ILogger)
-], LocalizedValidationMessageProvider);
+}
 
 function createConfiguration(optionsProvider) {
     return {

@@ -33,7 +33,7 @@ export declare const Route: {
     getConfig(Type: RouteType): RouteConfig;
 };
 export type RouteType<T extends Constructable = Constructable> = ResourceType<T, InstanceType<T>, IRouteConfig>;
-export type RouteDecorator = <T extends Constructable>(Type: T) => T;
+export type RouteDecorator = <T extends Constructable>(Type: T, context: ClassDecoratorContext<T>) => T;
 /**
  * Associate a static route configuration with this type.
  *

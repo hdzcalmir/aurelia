@@ -1,8 +1,10 @@
 import { eachCartesianJoin, eachCartesianJoinFactory, createScopeForTest, MockTracingExpression, MockBinding, assert } from '@aurelia/testing';
-import { AccessKeyedExpression, AccessMemberExpression, AccessScopeExpression, AccessThisExpression, ArrayLiteralExpression, AssignExpression, BinaryExpression, BindingBehaviorExpression, CallFunctionExpression, CallMemberExpression, CallScopeExpression, ConditionalExpression, Scope, 
+import { AccessKeyedExpression, AccessMemberExpression, AccessScopeExpression, AccessThisExpression, ArrayLiteralExpression, AssignExpression, BinaryExpression, BindingBehaviorExpression, CallFunctionExpression, CallMemberExpression, CallScopeExpression, ConditionalExpression, 
 // IsPrimary,
 // IsUnary,
-ObjectLiteralExpression, PrimitiveLiteralExpression, TaggedTemplateExpression, TemplateExpression, UnaryExpression, ValueConverterExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, DestructuringAssignmentExpression, ArrowFunction, BindingIdentifier, Unparser, astEvaluate, astAssign, astBind, AccessBoundaryExpression, } from '@aurelia/runtime';
+ObjectLiteralExpression, PrimitiveLiteralExpression, TaggedTemplateExpression, TemplateExpression, UnaryExpression, ValueConverterExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, DestructuringAssignmentExpression, ArrowFunction, BindingIdentifier, Unparser, AccessBoundaryExpression, } from '@aurelia/expression-parser';
+import { Scope } from '@aurelia/runtime';
+import { astAssign, astEvaluate, astBind } from '@aurelia/runtime-html';
 const $false = PrimitiveLiteralExpression.$false;
 const $true = PrimitiveLiteralExpression.$true;
 const $null = PrimitiveLiteralExpression.$null;

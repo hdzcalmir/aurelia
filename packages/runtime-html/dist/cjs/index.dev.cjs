@@ -2,35 +2,12 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+var expressionParser = require('@aurelia/expression-parser');
 var kernel = require('@aurelia/kernel');
-var metadata = require('@aurelia/metadata');
 var runtime = require('@aurelia/runtime');
+var metadata = require('@aurelia/metadata');
 var platformBrowser = require('@aurelia/platform-browser');
 var platform = require('@aurelia/platform');
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
 
 const O = Object;
 /** @internal */ const safeString = String;
@@ -62,7 +39,9 @@ const IsDataAttribute = /*@__PURE__*/ createLookup();
 /** @internal */ const isArray = (v) => v instanceof Array;
 // eslint-disable-next-line @typescript-eslint/ban-types
 /** @internal */ const isFunction = (v) => typeof v === 'function';
+/** @internal */ const isObject = (v) => v instanceof O;
 /** @internal */ const isString = (v) => typeof v === 'string';
+/** @internal */ const isSymbol = (v) => typeof v === 'symbol';
 /** @internal */ const rethrow = (err) => { throw err; };
 /** @internal */ const areEqual = O.is;
 /** @internal */
@@ -94,227 +73,6 @@ const removeSignalListener = (signaler, signal, listener) => signaler.removeSign
 /** @internal */ const atNode = runtime.AccessorType.Node;
 /** @internal */ const atLayout = runtime.AccessorType.Layout;
 
-// Note: the oneTime binding now has a non-zero value for 2 reasons:
-//  - plays nicer with bitwise operations (more consistent code, more explicit settings)
-//  - allows for potentially having something like BindingMode.oneTime | BindingMode.fromView, where an initial value is set once to the view but updates from the view also propagate back to the view model
-//
-// Furthermore, the "default" mode would be for simple ".bind" expressions to make it explicit for our logic that the default is being used.
-// This essentially adds extra information which binding could use to do smarter things and allows bindingBehaviors that add a mode instead of simply overwriting it
-/** @internal */ const oneTime = 0b0001;
-/** @internal */ const toView = 0b0010;
-/** @internal */ const fromView = 0b0100;
-/** @internal */ const twoWay = 0b0110;
-/** @internal */ const defaultMode = 0b1000;
-/**
- * Mode of a binding to operate
- * - 1 / one time - bindings should only update the target once
- * - 2 / to view - bindings should update the target and observe the source for changes to update again
- * - 3 / from view - bindings should update the source and observe the target for changes to update again
- * - 6 / two way - bindings should observe both target and source for changes to update the other side
- * - 8 / default - undecided mode, bindings, depends on the circumstance, may decide what to do accordingly
- */
-const BindingMode = /*@__PURE__*/ objectFreeze({
-    oneTime,
-    toView,
-    fromView,
-    twoWay,
-    /**
-     * Unspecified mode, bindings may act differently with this mode
-     */
-    default: defaultMode,
-});
-
-/** @internal */ const getOwnMetadata = metadata.Metadata.getOwn;
-/** @internal */ const hasOwnMetadata = metadata.Metadata.hasOwn;
-/** @internal */ const defineMetadata = metadata.Metadata.define;
-const { annotation } = kernel.Protocol;
-/** @internal */ const getAnnotationKeyFor = annotation.keyFor;
-/** @internal */ const appendAnnotationKey = annotation.appendTo;
-/** @internal */ const getAllAnnotations = annotation.getKeys;
-
-function bindable(configOrTarget, prop) {
-    let config;
-    function decorator($target, $prop) {
-        if (arguments.length > 1) {
-            // Non invocation:
-            // - @bindable
-            // Invocation with or w/o opts:
-            // - @bindable()
-            // - @bindable({...opts})
-            config.name = $prop;
-        }
-        defineMetadata(baseName, BindableDefinition.create($prop, $target, config), $target.constructor, $prop);
-        appendAnnotationKey($target.constructor, Bindable.keyFrom($prop));
-    }
-    if (arguments.length > 1) {
-        // Non invocation:
-        // - @bindable
-        config = {};
-        decorator(configOrTarget, prop);
-        return;
-    }
-    else if (isString(configOrTarget)) {
-        // ClassDecorator
-        // - @bindable('bar')
-        // Direct call:
-        // - @bindable('bar')(Foo)
-        config = {};
-        return decorator;
-    }
-    // Invocation with or w/o opts:
-    // - @bindable()
-    // - @bindable({...opts})
-    config = configOrTarget === void 0 ? {} : configOrTarget;
-    return decorator;
-}
-function isBindableAnnotation(key) {
-    return key.startsWith(baseName);
-}
-const baseName = /*@__PURE__*/ getAnnotationKeyFor('bindable');
-const Bindable = objectFreeze({
-    name: baseName,
-    keyFrom: (name) => `${baseName}:${name}`,
-    from(type, ...bindableLists) {
-        const bindables = {};
-        const isArray = Array.isArray;
-        function addName(name) {
-            bindables[name] = BindableDefinition.create(name, type);
-        }
-        function addDescription(name, def) {
-            bindables[name] = def instanceof BindableDefinition
-                ? def
-                : BindableDefinition.create(name, type, def === true ? {} : def);
-        }
-        function addList(maybeList) {
-            if (isArray(maybeList)) {
-                maybeList.forEach(nameOrDef => isString(nameOrDef) ? addName(nameOrDef) : addDescription(nameOrDef.name, nameOrDef));
-            }
-            else if (maybeList instanceof BindableDefinition) {
-                bindables[maybeList.name] = maybeList;
-            }
-            else if (maybeList !== void 0) {
-                objectKeys(maybeList).forEach(name => addDescription(name, maybeList[name]));
-            }
-        }
-        bindableLists.forEach(addList);
-        return bindables;
-    },
-    getAll(Type) {
-        const propStart = baseName.length + 1;
-        const defs = [];
-        const prototypeChain = kernel.getPrototypeChain(Type);
-        let iProto = prototypeChain.length;
-        let iDefs = 0;
-        let keys;
-        let keysLen;
-        let Class;
-        let i;
-        while (--iProto >= 0) {
-            Class = prototypeChain[iProto];
-            keys = getAllAnnotations(Class).filter(isBindableAnnotation);
-            keysLen = keys.length;
-            for (i = 0; i < keysLen; ++i) {
-                defs[iDefs++] = getOwnMetadata(baseName, Class, keys[i].slice(propStart));
-            }
-        }
-        return defs;
-    },
-});
-class BindableDefinition {
-    constructor(attribute, callback, mode, primary, name, set) {
-        this.attribute = attribute;
-        this.callback = callback;
-        this.mode = mode;
-        this.primary = primary;
-        this.name = name;
-        this.set = set;
-    }
-    static create(prop, target, def = {}) {
-        return new BindableDefinition(def.attribute ?? kernel.kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? toView, def.primary ?? false, def.name ?? prop, def.set ?? getInterceptor(prop, target, def));
-    }
-}
-/* eslint-enable @typescript-eslint/no-unused-vars,spaced-comment */
-function coercer(target, property, _descriptor) {
-    Coercer.define(target, property);
-}
-const Coercer = {
-    key: /*@__PURE__*/ getAnnotationKeyFor('coercer'),
-    define(target, property) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-        defineMetadata(Coercer.key, target[property].bind(target), target);
-    },
-    for(target) {
-        return getOwnMetadata(Coercer.key, target);
-    }
-};
-function getInterceptor(prop, target, def = {}) {
-    const type = def.type ?? metadata.Metadata.get('design:type', target, prop) ?? null;
-    if (type == null) {
-        return kernel.noop;
-    }
-    let coercer;
-    switch (type) {
-        case Number:
-        case Boolean:
-        case String:
-        case BigInt:
-            coercer = type;
-            break;
-        default: {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-            const $coercer = type.coerce;
-            coercer = typeof $coercer === 'function'
-                ? $coercer.bind(type)
-                : (Coercer.for(type) ?? kernel.noop);
-            break;
-        }
-    }
-    return coercer === kernel.noop
-        ? coercer
-        : createCoercer(coercer, def.nullable);
-}
-function createCoercer(coercer, nullable) {
-    return function (value, coercionConfiguration) {
-        if (!coercionConfiguration?.enableCoercion)
-            return value;
-        return ((nullable ?? ((coercionConfiguration?.coerceNullish ?? false) ? false : true)) && value == null)
-            ? value
-            : coercer(value, coercionConfiguration);
-    };
-}
-
-/** @internal */
-const createInterface = kernel.DI.createInterface;
-/** @internal */
-const singletonRegistration = kernel.Registration.singleton;
-/** @internal */
-const aliasRegistration = kernel.Registration.aliasTo;
-/** @internal */
-const instanceRegistration = kernel.Registration.instance;
-/** @internal */
-kernel.Registration.callback;
-/** @internal */
-kernel.Registration.transient;
-/** @internal */
-const registerResolver = (ctn, key, resolver) => ctn.registerResolver(key, resolver);
-function alias(...aliases) {
-    return function (target) {
-        const key = getAnnotationKeyFor('aliases');
-        const existing = getOwnMetadata(key, target);
-        if (existing === void 0) {
-            defineMetadata(key, aliases, target);
-        }
-        else {
-            existing.push(...aliases);
-        }
-    };
-}
-function registerAliases(aliases, resource, key, container) {
-    for (let i = 0, ii = aliases.length; i < ii; ++i) {
-        kernel.Registration.aliasTo(key, resource.keyFrom(aliases[i])).register(container);
-    }
-}
-
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable prefer-template */
 /** @internal */
@@ -323,6 +81,17 @@ const createMappedError = (code, ...details) => new Error(`AUR${safeString(code)
 
 const errorsMap = {
     [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
+    [101 /* ErrorNames.ast_behavior_not_found */]: `Ast eval error: binding behavior "{{0}}" could not be found. Did you forget to register it as a dependency?`,
+    [102 /* ErrorNames.ast_behavior_duplicated */]: `Ast eval error: binding behavior "{{0}}" already applied.`,
+    [103 /* ErrorNames.ast_converter_not_found */]: `Ast eval error: value converter "{{0}}" could not be found. Did you forget to register it as a dependency?`,
+    [105 /* ErrorNames.ast_$host_not_found */]: `Ast eval error: unable to find $host context. Did you forget [au-slot] attribute?`,
+    [106 /* ErrorNames.ast_no_assign_$host */]: `Ast eval error: invalid assignment. "$host" is a reserved keyword.`,
+    [107 /* ErrorNames.ast_not_a_function */]: `Ast eval error: expression is not a function.`,
+    [109 /* ErrorNames.ast_unknown_unary_operator */]: `Ast eval error: unknown unary operator: "{{0}}"`,
+    [108 /* ErrorNames.ast_unknown_binary_operator */]: `Ast eval error: unknown binary operator: "{{0}}"`,
+    [110 /* ErrorNames.ast_tagged_not_a_function */]: `Ast eval error: left-hand side of tagged template expression is not a function.`,
+    [111 /* ErrorNames.ast_name_is_not_a_function */]: `Ast eval error: expected "{{0}}" to be a function`,
+    [112 /* ErrorNames.ast_destruct_null */]: `Ast eval error: cannot use non-object value for destructuring assignment.`,
     [151 /* ErrorNames.binding_behavior_def_not_found */]: `No binding behavior definition found for type {{0:name}}`,
     [152 /* ErrorNames.value_converter_def_not_found */]: `No value converter definition found for type {{0:name}}`,
     [153 /* ErrorNames.element_existed */]: `Element {{0}} has already been registered.`,
@@ -330,6 +99,9 @@ const errorsMap = {
     [155 /* ErrorNames.value_converter_existed */]: `Value converter {{0}} has already been registered.`,
     [156 /* ErrorNames.binding_behavior_existed */]: `Binding behavior {{0}} has already been registered.`,
     [157 /* ErrorNames.binding_command_existed */]: `Binding command {{0}} has already been registered.`,
+    [227 /* ErrorNames.invalid_bindable_decorator_usage_symbol */]: `@bindable is not supported for properties that uses a symbol for name. Use a string for the property name instead.`,
+    [228 /* ErrorNames.invalid_bindable_decorator_usage_class_without_configuration */]: `@bindable cannot be used as a class decorator when no configuration object is supplied.`,
+    [229 /* ErrorNames.invalid_bindable_decorator_usage_class_without_property_name_configuration */]: `@bindable cannot be used as a class decorator when no property name is supplied in the configuration object.`,
     [500 /* ErrorNames.controller_cached_not_found */]: `There is no cached controller for the provided ViewModel: {{0}}`,
     [501 /* ErrorNames.controller_no_shadow_on_containerless */]: `Invalid combination: cannot combine the containerless custom element option with Shadow DOM.`,
     [502 /* ErrorNames.controller_activating_disposed */]: `Trying to activate a disposed controller: {{0}}.`,
@@ -496,25 +268,909 @@ function getBindingCommandHelp(name) {
     }
 }
 
+/* eslint-disable no-fallthrough */
+const { astAssign, astEvaluate, astBind, astUnbind } = (() => {
+    const ekAccessThis = 'AccessThis';
+    const ekAccessBoundary = 'AccessBoundary';
+    const ekAccessGlobal = 'AccessGlobal';
+    const ekAccessScope = 'AccessScope';
+    const ekArrayLiteral = 'ArrayLiteral';
+    const ekObjectLiteral = 'ObjectLiteral';
+    const ekPrimitiveLiteral = 'PrimitiveLiteral';
+    const ekTemplate = 'Template';
+    const ekUnary = 'Unary';
+    const ekCallScope = 'CallScope';
+    const ekCallMember = 'CallMember';
+    const ekCallFunction = 'CallFunction';
+    const ekCallGlobal = 'CallGlobal';
+    const ekAccessMember = 'AccessMember';
+    const ekAccessKeyed = 'AccessKeyed';
+    const ekTaggedTemplate = 'TaggedTemplate';
+    const ekBinary = 'Binary';
+    const ekConditional = 'Conditional';
+    const ekAssign = 'Assign';
+    const ekArrowFunction = 'ArrowFunction';
+    const ekValueConverter = 'ValueConverter';
+    const ekBindingBehavior = 'BindingBehavior';
+    const ekArrayBindingPattern = 'ArrayBindingPattern';
+    const ekObjectBindingPattern = 'ObjectBindingPattern';
+    const ekBindingIdentifier = 'BindingIdentifier';
+    const ekForOfStatement = 'ForOfStatement';
+    const ekInterpolation = 'Interpolation';
+    const ekArrayDestructuring = 'ArrayDestructuring';
+    const ekObjectDestructuring = 'ObjectDestructuring';
+    const ekDestructuringAssignmentLeaf = 'DestructuringAssignmentLeaf';
+    const ekCustom = 'Custom';
+    const getContext = runtime.Scope.getContext;
+    // eslint-disable-next-line max-lines-per-function
+    function astEvaluate(ast, s, e, c) {
+        switch (ast.$kind) {
+            case ekAccessThis: {
+                let oc = s.overrideContext;
+                let currentScope = s;
+                let i = ast.ancestor;
+                while (i-- && oc) {
+                    currentScope = currentScope.parent;
+                    oc = currentScope?.overrideContext ?? null;
+                }
+                return i < 1 && currentScope ? currentScope.bindingContext : void 0;
+            }
+            case ekAccessBoundary: {
+                let currentScope = s;
+                while (currentScope != null
+                    && !currentScope.isBoundary) {
+                    currentScope = currentScope.parent;
+                }
+                return currentScope ? currentScope.bindingContext : void 0;
+            }
+            case ekAccessScope: {
+                const obj = getContext(s, ast.name, ast.ancestor);
+                if (c !== null) {
+                    c.observe(obj, ast.name);
+                }
+                const evaluatedValue = obj[ast.name];
+                if (evaluatedValue == null && ast.name === '$host') {
+                    throw createMappedError(105 /* ErrorNames.ast_$host_not_found */);
+                }
+                if (e?.strict) {
+                    // return evaluatedValue;
+                    return e?.boundFn && isFunction(evaluatedValue)
+                        ? evaluatedValue.bind(obj)
+                        : evaluatedValue;
+                }
+                return evaluatedValue == null
+                    ? ''
+                    : e?.boundFn && isFunction(evaluatedValue)
+                        ? evaluatedValue.bind(obj)
+                        : evaluatedValue;
+            }
+            case ekAccessGlobal:
+                return globalThis[ast.name];
+            case ekCallGlobal: {
+                const func = globalThis[ast.name];
+                if (isFunction(func)) {
+                    return func(...ast.args.map(a => astEvaluate(a, s, e, c)));
+                }
+                /* istanbul-ignore-next */
+                if (!e?.strictFnCall && func == null) {
+                    return void 0;
+                }
+                throw createMappedError(107 /* ErrorNames.ast_not_a_function */);
+            }
+            case ekArrayLiteral:
+                return ast.elements.map(expr => astEvaluate(expr, s, e, c));
+            case ekObjectLiteral: {
+                const instance = {};
+                for (let i = 0; i < ast.keys.length; ++i) {
+                    instance[ast.keys[i]] = astEvaluate(ast.values[i], s, e, c);
+                }
+                return instance;
+            }
+            case ekPrimitiveLiteral:
+                return ast.value;
+            case ekTemplate: {
+                let result = ast.cooked[0];
+                for (let i = 0; i < ast.expressions.length; ++i) {
+                    result += String(astEvaluate(ast.expressions[i], s, e, c));
+                    result += ast.cooked[i + 1];
+                }
+                return result;
+            }
+            case ekUnary:
+                switch (ast.operation) {
+                    case 'void':
+                        return void astEvaluate(ast.expression, s, e, c);
+                    case 'typeof':
+                        return typeof astEvaluate(ast.expression, s, e, c);
+                    case '!':
+                        return !astEvaluate(ast.expression, s, e, c);
+                    case '-':
+                        return -astEvaluate(ast.expression, s, e, c);
+                    case '+':
+                        return +astEvaluate(ast.expression, s, e, c);
+                    default:
+                        throw createMappedError(109 /* ErrorNames.ast_unknown_unary_operator */, ast.operation);
+                }
+            case ekCallScope: {
+                const args = ast.args.map(a => astEvaluate(a, s, e, c));
+                const context = getContext(s, ast.name, ast.ancestor);
+                // ideally, should observe property represents by ast.name as well
+                // because it could be changed
+                // todo: did it ever surprise anyone?
+                const func = getFunction(e?.strictFnCall, context, ast.name);
+                if (func) {
+                    return func.apply(context, args);
+                }
+                return void 0;
+            }
+            case ekCallMember: {
+                const instance = astEvaluate(ast.object, s, e, c);
+                const args = ast.args.map(a => astEvaluate(a, s, e, c));
+                const func = getFunction(e?.strictFnCall, instance, ast.name);
+                let ret;
+                if (func) {
+                    ret = func.apply(instance, args);
+                    // todo(doc): investigate & document in engineering doc the difference
+                    //            between observing before/after func.apply
+                    if (isArray(instance) && autoObserveArrayMethods.includes(ast.name)) {
+                        c?.observeCollection(instance);
+                    }
+                }
+                return ret;
+            }
+            case ekCallFunction: {
+                const func = astEvaluate(ast.func, s, e, c);
+                if (isFunction(func)) {
+                    return func(...ast.args.map(a => astEvaluate(a, s, e, c)));
+                }
+                if (!e?.strictFnCall && func == null) {
+                    return void 0;
+                }
+                throw createMappedError(107 /* ErrorNames.ast_not_a_function */);
+            }
+            case ekArrowFunction: {
+                const func = (...args) => {
+                    const params = ast.args;
+                    const rest = ast.rest;
+                    const lastIdx = params.length - 1;
+                    const context = params.reduce((map, param, i) => {
+                        if (rest && i === lastIdx) {
+                            map[param.name] = args.slice(i);
+                        }
+                        else {
+                            map[param.name] = args[i];
+                        }
+                        return map;
+                    }, {});
+                    const functionScope = runtime.Scope.fromParent(s, context);
+                    return astEvaluate(ast.body, functionScope, e, c);
+                };
+                return func;
+            }
+            case ekAccessMember: {
+                const instance = astEvaluate(ast.object, s, e, c);
+                let ret;
+                if (e?.strict) {
+                    if (instance == null) {
+                        return undefined;
+                    }
+                    if (c !== null && !ast.accessGlobal) {
+                        c.observe(instance, ast.name);
+                    }
+                    ret = instance[ast.name];
+                    if (e?.boundFn && isFunction(ret)) {
+                        return ret.bind(instance);
+                    }
+                    return ret;
+                }
+                if (c !== null && isObject(instance) && !ast.accessGlobal) {
+                    c.observe(instance, ast.name);
+                }
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                if (instance) {
+                    ret = instance[ast.name];
+                    if (e?.boundFn && isFunction(ret)) {
+                        return ret.bind(instance);
+                    }
+                    return ret;
+                }
+                return '';
+            }
+            case ekAccessKeyed: {
+                const instance = astEvaluate(ast.object, s, e, c);
+                const key = astEvaluate(ast.key, s, e, c);
+                if (isObject(instance)) {
+                    if (c !== null && !ast.accessGlobal) {
+                        c.observe(instance, key);
+                    }
+                    return instance[key];
+                }
+                return instance == null
+                    ? void 0
+                    : instance[key];
+            }
+            case ekTaggedTemplate: {
+                const results = ast.expressions.map(expr => astEvaluate(expr, s, e, c));
+                const func = astEvaluate(ast.func, s, e, c);
+                if (!isFunction(func)) {
+                    throw createMappedError(110 /* ErrorNames.ast_tagged_not_a_function */);
+                }
+                return func(ast.cooked, ...results);
+            }
+            case ekBinary: {
+                const left = ast.left;
+                const right = ast.right;
+                switch (ast.operation) {
+                    case '&&':
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                        return astEvaluate(left, s, e, c) && astEvaluate(right, s, e, c);
+                    case '||':
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                        return astEvaluate(left, s, e, c) || astEvaluate(right, s, e, c);
+                    case '??':
+                        return astEvaluate(left, s, e, c) ?? astEvaluate(right, s, e, c);
+                    case '==':
+                        // eslint-disable-next-line eqeqeq
+                        return astEvaluate(left, s, e, c) == astEvaluate(right, s, e, c);
+                    case '===':
+                        return astEvaluate(left, s, e, c) === astEvaluate(right, s, e, c);
+                    case '!=':
+                        // eslint-disable-next-line eqeqeq
+                        return astEvaluate(left, s, e, c) != astEvaluate(right, s, e, c);
+                    case '!==':
+                        return astEvaluate(left, s, e, c) !== astEvaluate(right, s, e, c);
+                    case 'instanceof': {
+                        const $right = astEvaluate(right, s, e, c);
+                        if (isFunction($right)) {
+                            return astEvaluate(left, s, e, c) instanceof $right;
+                        }
+                        return false;
+                    }
+                    case 'in': {
+                        const $right = astEvaluate(right, s, e, c);
+                        if (isObject($right)) {
+                            return astEvaluate(left, s, e, c) in $right;
+                        }
+                        return false;
+                    }
+                    // note: autoConvertAdd (and the null check) is removed because the default spec behavior is already largely similar
+                    // and where it isn't, you kind of want it to behave like the spec anyway (e.g. return NaN when adding a number to undefined)
+                    // ast makes bugs in user code easier to track down for end users
+                    // also, skipping these checks and leaving it to the runtime is a nice little perf boost and simplifies our code
+                    case '+': {
+                        const $left = astEvaluate(left, s, e, c);
+                        const $right = astEvaluate(right, s, e, c);
+                        if (e?.strict) {
+                            return $left + $right;
+                        }
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                        if (!$left || !$right) {
+                            if (isNumberOrBigInt($left) || isNumberOrBigInt($right)) {
+                                return ($left || 0) + ($right || 0);
+                            }
+                            if (isStringOrDate($left) || isStringOrDate($right)) {
+                                return ($left || '') + ($right || '');
+                            }
+                        }
+                        return $left + $right;
+                    }
+                    case '-':
+                        return astEvaluate(left, s, e, c) - astEvaluate(right, s, e, c);
+                    case '*':
+                        return astEvaluate(left, s, e, c) * astEvaluate(right, s, e, c);
+                    case '/':
+                        return astEvaluate(left, s, e, c) / astEvaluate(right, s, e, c);
+                    case '%':
+                        return astEvaluate(left, s, e, c) % astEvaluate(right, s, e, c);
+                    case '<':
+                        return astEvaluate(left, s, e, c) < astEvaluate(right, s, e, c);
+                    case '>':
+                        return astEvaluate(left, s, e, c) > astEvaluate(right, s, e, c);
+                    case '<=':
+                        return astEvaluate(left, s, e, c) <= astEvaluate(right, s, e, c);
+                    case '>=':
+                        return astEvaluate(left, s, e, c) >= astEvaluate(right, s, e, c);
+                    default:
+                        throw createMappedError(108 /* ErrorNames.ast_unknown_binary_operator */, ast.operation);
+                }
+            }
+            case ekConditional:
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                return astEvaluate(ast.condition, s, e, c) ? astEvaluate(ast.yes, s, e, c) : astEvaluate(ast.no, s, e, c);
+            case ekAssign:
+                return astAssign(ast.target, s, e, astEvaluate(ast.value, s, e, c));
+            case ekValueConverter: {
+                const vc = e?.getConverter?.(ast.name);
+                if (vc == null) {
+                    throw createMappedError(103 /* ErrorNames.ast_converter_not_found */, ast.name);
+                }
+                if ('toView' in vc) {
+                    return vc.toView(astEvaluate(ast.expression, s, e, c), ...ast.args.map(a => astEvaluate(a, s, e, c)));
+                }
+                return astEvaluate(ast.expression, s, e, c);
+            }
+            case ekBindingBehavior:
+                return astEvaluate(ast.expression, s, e, c);
+            case ekBindingIdentifier:
+                return ast.name;
+            case ekForOfStatement:
+                return astEvaluate(ast.iterable, s, e, c);
+            case ekInterpolation:
+                if (ast.isMulti) {
+                    let result = ast.parts[0];
+                    let i = 0;
+                    for (; i < ast.expressions.length; ++i) {
+                        result += safeString(astEvaluate(ast.expressions[i], s, e, c));
+                        result += ast.parts[i + 1];
+                    }
+                    return result;
+                }
+                else {
+                    return `${ast.parts[0]}${astEvaluate(ast.firstExpression, s, e, c)}${ast.parts[1]}`;
+                }
+            case ekDestructuringAssignmentLeaf:
+                return astEvaluate(ast.target, s, e, c);
+            case ekArrayDestructuring: {
+                return ast.list.map(x => astEvaluate(x, s, e, c));
+            }
+            // TODO: this should come after batch
+            // as a destructuring expression like [x, y] = value
+            //
+            // should only trigger change only once:
+            // batch(() => {
+            //   object.x = value[0]
+            //   object.y = value[1]
+            // })
+            //
+            // instead of twice:
+            // object.x = value[0]
+            // object.y = value[1]
+            case ekArrayBindingPattern:
+            // TODO
+            // similar to array binding ast, this should only come after batch
+            // for a single notification per destructing,
+            // regardless number of property assignments on the scope binding context
+            case ekObjectBindingPattern:
+            case ekObjectDestructuring:
+            default:
+                return void 0;
+            case ekCustom:
+                return ast.evaluate(s, e, c);
+        }
+    }
+    function astAssign(ast, s, e, val) {
+        switch (ast.$kind) {
+            case ekAccessScope: {
+                if (ast.name === '$host') {
+                    throw createMappedError(106 /* ErrorNames.ast_no_assign_$host */);
+                }
+                const obj = getContext(s, ast.name, ast.ancestor);
+                return obj[ast.name] = val;
+            }
+            case ekAccessMember: {
+                const obj = astEvaluate(ast.object, s, e, null);
+                if (isObject(obj)) {
+                    if (ast.name === 'length' && isArray(obj) && !isNaN(val)) {
+                        obj.splice(val);
+                    }
+                    else {
+                        obj[ast.name] = val;
+                    }
+                }
+                else {
+                    astAssign(ast.object, s, e, { [ast.name]: val });
+                }
+                return val;
+            }
+            case ekAccessKeyed: {
+                const instance = astEvaluate(ast.object, s, e, null);
+                const key = astEvaluate(ast.key, s, e, null);
+                if (isArray(instance)) {
+                    if (key === 'length' && !isNaN(val)) {
+                        instance.splice(val);
+                        return val;
+                    }
+                    if (kernel.isArrayIndex(key)) {
+                        instance.splice(key, 1, val);
+                        return val;
+                    }
+                }
+                return instance[key] = val;
+            }
+            case ekAssign:
+                astAssign(ast.value, s, e, val);
+                return astAssign(ast.target, s, e, val);
+            case ekValueConverter: {
+                const vc = e?.getConverter?.(ast.name);
+                if (vc == null) {
+                    throw createMappedError(103 /* ErrorNames.ast_converter_not_found */, ast.name);
+                }
+                if ('fromView' in vc) {
+                    val = vc.fromView(val, ...ast.args.map(a => astEvaluate(a, s, e, null)));
+                }
+                return astAssign(ast.expression, s, e, val);
+            }
+            case ekBindingBehavior:
+                return astAssign(ast.expression, s, e, val);
+            case ekArrayDestructuring:
+            case ekObjectDestructuring: {
+                const list = ast.list;
+                const len = list.length;
+                let i;
+                let item;
+                for (i = 0; i < len; i++) {
+                    item = list[i];
+                    switch (item.$kind) {
+                        case ekDestructuringAssignmentLeaf:
+                            astAssign(item, s, e, val);
+                            break;
+                        case ekArrayDestructuring:
+                        case ekObjectDestructuring: {
+                            if (typeof val !== 'object' || val === null) {
+                                throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
+                            }
+                            let source = astEvaluate(item.source, runtime.Scope.create(val), e, null);
+                            if (source === void 0 && item.initializer) {
+                                source = astEvaluate(item.initializer, s, e, null);
+                            }
+                            astAssign(item, s, e, source);
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+            case ekDestructuringAssignmentLeaf: {
+                if (ast instanceof expressionParser.DestructuringAssignmentSingleExpression) {
+                    if (val == null) {
+                        return;
+                    }
+                    if (typeof val !== 'object') {
+                        throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
+                    }
+                    let source = astEvaluate(ast.source, runtime.Scope.create(val), e, null);
+                    if (source === void 0 && ast.initializer) {
+                        source = astEvaluate(ast.initializer, s, e, null);
+                    }
+                    astAssign(ast.target, s, e, source);
+                }
+                else {
+                    if (val == null) {
+                        return;
+                    }
+                    if (typeof val !== 'object') {
+                        throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
+                    }
+                    const indexOrProperties = ast.indexOrProperties;
+                    let restValue;
+                    if (kernel.isArrayIndex(indexOrProperties)) {
+                        if (!Array.isArray(val)) {
+                            throw createMappedError(112 /* ErrorNames.ast_destruct_null */);
+                        }
+                        restValue = val.slice(indexOrProperties);
+                    }
+                    else {
+                        restValue = Object
+                            .entries(val)
+                            .reduce((acc, [k, v]) => {
+                            if (!indexOrProperties.includes(k)) {
+                                acc[k] = v;
+                            }
+                            return acc;
+                            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                        }, {});
+                    }
+                    astAssign(ast.target, s, e, restValue);
+                }
+                break;
+            }
+            case ekCustom:
+                return ast.assign(s, e, val);
+            default:
+                return void 0;
+        }
+    }
+    function astBind(ast, s, b) {
+        switch (ast.$kind) {
+            case ekBindingBehavior: {
+                const name = ast.name;
+                const key = ast.key;
+                const behavior = b.getBehavior?.(name);
+                if (behavior == null) {
+                    throw createMappedError(101 /* ErrorNames.ast_behavior_not_found */, name);
+                }
+                if (b[key] === void 0) {
+                    b[key] = behavior;
+                    behavior.bind?.(s, b, ...ast.args.map(a => astEvaluate(a, s, b, null)));
+                }
+                else {
+                    throw createMappedError(102 /* ErrorNames.ast_behavior_duplicated */, name);
+                }
+                astBind(ast.expression, s, b);
+                return;
+            }
+            case ekValueConverter: {
+                const name = ast.name;
+                const vc = b.getConverter?.(name);
+                if (vc == null) {
+                    throw createMappedError(103 /* ErrorNames.ast_converter_not_found */, name);
+                }
+                // note: the cast is expected. To connect, it just needs to be a IConnectable
+                // though to work with signal, it needs to have `handleChange`
+                // so having `handleChange` as a guard in the connectable as a safe measure is needed
+                // to make sure signaler works
+                const signals = vc.signals;
+                if (signals != null) {
+                    const signaler = b.getSignaler?.();
+                    const ii = signals.length;
+                    let i = 0;
+                    for (; i < ii; ++i) {
+                        signaler?.addSignalListener(signals[i], b);
+                    }
+                }
+                astBind(ast.expression, s, b);
+                return;
+            }
+            case ekForOfStatement: {
+                astBind(ast.iterable, s, b);
+                break;
+            }
+            case ekCustom: {
+                ast.bind?.(s, b);
+            }
+        }
+    }
+    function astUnbind(ast, s, b) {
+        switch (ast.$kind) {
+            case ekBindingBehavior: {
+                const key = ast.key;
+                const $b = b;
+                if ($b[key] !== void 0) {
+                    $b[key].unbind?.(s, b);
+                    $b[key] = void 0;
+                }
+                astUnbind(ast.expression, s, b);
+                break;
+            }
+            case ekValueConverter: {
+                const vc = b.getConverter?.(ast.name);
+                if (vc?.signals === void 0) {
+                    return;
+                }
+                const signaler = b.getSignaler?.();
+                let i = 0;
+                for (; i < vc.signals.length; ++i) {
+                    signaler?.removeSignalListener(vc.signals[i], b);
+                }
+                astUnbind(ast.expression, s, b);
+                break;
+            }
+            case ekForOfStatement: {
+                astUnbind(ast.iterable, s, b);
+                break;
+            }
+            case ekCustom: {
+                ast.unbind?.(s, b);
+            }
+        }
+    }
+    const getFunction = (mustEvaluate, obj, name) => {
+        const func = obj == null ? null : obj[name];
+        if (isFunction(func)) {
+            return func;
+        }
+        if (!mustEvaluate && func == null) {
+            return null;
+        }
+        throw createMappedError(111 /* ErrorNames.ast_name_is_not_a_function */, name);
+    };
+    /**
+     * Determines if the value passed is a number or bigint for parsing purposes
+     *
+     * @param value - Value to evaluate
+     */
+    const isNumberOrBigInt = (value) => {
+        switch (typeof value) {
+            case 'number':
+            case 'bigint':
+                return true;
+            default:
+                return false;
+        }
+    };
+    /**
+     * Determines if the value passed is a string or Date for parsing purposes
+     *
+     * @param value - Value to evaluate
+     */
+    const isStringOrDate = (value) => {
+        switch (typeof value) {
+            case 'string':
+                return true;
+            case 'object':
+                return value instanceof Date;
+            default:
+                return false;
+        }
+    };
+    const autoObserveArrayMethods = 'at map filter includes indexOf lastIndexOf findIndex find flat flatMap join reduce reduceRight slice every some sort'.split(' ');
+    // sort,      // bad supported, self mutation + unclear dependency
+    // push,      // not supported, self mutation + unclear dependency
+    // pop,       // not supported, self mutation + unclear dependency
+    // shift,     // not supported, self mutation + unclear dependency
+    // splice,    // not supported, self mutation + unclear dependency
+    // unshift,   // not supported, self mutation + unclear dependency
+    // reverse,   // not supported, self mutation + unclear dependency
+    // keys,    // not meaningful in template
+    // values,  // not meaningful in template
+    // entries, // not meaningful in template
+    return {
+        astEvaluate,
+        astAssign,
+        astBind,
+        astUnbind,
+    };
+})();
+
+// Note: the oneTime binding now has a non-zero value for 2 reasons:
+//  - plays nicer with bitwise operations (more consistent code, more explicit settings)
+//  - allows for potentially having something like BindingMode.oneTime | BindingMode.fromView, where an initial value is set once to the view but updates from the view also propagate back to the view model
+//
+// Furthermore, the "default" mode would be for simple ".bind" expressions to make it explicit for our logic that the default is being used.
+// This essentially adds extra information which binding could use to do smarter things and allows bindingBehaviors that add a mode instead of simply overwriting it
+/** @internal */ const oneTime = 0b0001;
+/** @internal */ const toView = 0b0010;
+/** @internal */ const fromView = 0b0100;
+/** @internal */ const twoWay = 0b0110;
+/** @internal */ const defaultMode = 0b1000;
+/**
+ * Mode of a binding to operate
+ * - 1 / one time - bindings should only update the target once
+ * - 2 / to view - bindings should update the target and observe the source for changes to update again
+ * - 3 / from view - bindings should update the source and observe the target for changes to update again
+ * - 6 / two way - bindings should observe both target and source for changes to update the other side
+ * - 8 / default - undecided mode, bindings, depends on the circumstance, may decide what to do accordingly
+ */
+const BindingMode = /*@__PURE__*/ objectFreeze({
+    oneTime,
+    toView,
+    fromView,
+    twoWay,
+    /**
+     * Unspecified mode, bindings may act differently with this mode
+     */
+    default: defaultMode,
+});
+
+/** @internal */ const getMetadata = metadata.Metadata.get;
+/** @internal */ const hasMetadata = metadata.Metadata.has;
+/** @internal */ const defineMetadata = metadata.Metadata.define;
+const { annotation } = kernel.Protocol;
+/** @internal */ const getAnnotationKeyFor = annotation.keyFor;
+
+function bindable(configOrPropOrTarget, context) {
+    let configOrProp = void 0;
+    function decorator(_target, context) {
+        let $prop;
+        switch (context.kind) {
+            case 'getter':
+            case 'field': {
+                const prop = context.name;
+                // We are not supporting a bindable that uses a symbol for name.
+                // Maybe we can later have a binding command like foo.sym="bar" that creates bindable instruction for `Symbol.for('sym')`, as target property.
+                if (typeof prop !== 'string')
+                    throw createMappedError(227 /* ErrorNames.invalid_bindable_decorator_usage_symbol */);
+                $prop = prop;
+                break;
+            }
+            case 'class':
+                if (configOrProp == null)
+                    throw createMappedError(228 /* ErrorNames.invalid_bindable_decorator_usage_class_without_configuration */);
+                if (typeof configOrProp == 'string') {
+                    $prop = configOrProp;
+                }
+                else {
+                    const prop = configOrProp.name;
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                    if (!prop)
+                        throw createMappedError(229 /* ErrorNames.invalid_bindable_decorator_usage_class_without_property_name_configuration */);
+                    if (typeof prop !== 'string')
+                        throw createMappedError(227 /* ErrorNames.invalid_bindable_decorator_usage_symbol */);
+                    $prop = prop;
+                }
+                break;
+        }
+        const config = configOrProp == null || typeof configOrProp === 'string'
+            ? { name: $prop }
+            : configOrProp;
+        const metadata = (context.metadata[baseName] ??= createLookup());
+        metadata[$prop] = BindableDefinition.create($prop, config);
+    }
+    if (arguments.length > 1) {
+        // Non invocation:
+        // - @bindable
+        configOrProp = {};
+        decorator(configOrPropOrTarget, context);
+        return;
+    }
+    else if (isString(configOrPropOrTarget)) {
+        // ClassDecorator
+        // - @bindable('bar')
+        // Direct call:
+        // - @bindable('bar')(Foo)
+        configOrProp = configOrPropOrTarget;
+        return decorator;
+    }
+    // Invocation with or w/o opts:
+    // - @bindable()
+    // - @bindable({...opts})
+    configOrProp = configOrPropOrTarget === void 0 ? {} : configOrPropOrTarget;
+    return decorator;
+}
+const baseName = /*@__PURE__*/ getAnnotationKeyFor('bindables');
+const Bindable = objectFreeze({
+    name: baseName,
+    keyFrom: (name) => `${baseName}:${name}`,
+    from(...bindableLists) {
+        const bindables = {};
+        const isArray = Array.isArray;
+        function addName(name) {
+            bindables[name] = BindableDefinition.create(name);
+        }
+        function addDescription(name, def) {
+            bindables[name] = def instanceof BindableDefinition ? def : BindableDefinition.create(name, def === true ? {} : def);
+        }
+        function addList(maybeList) {
+            if (isArray(maybeList)) {
+                maybeList.forEach(nameOrDef => isString(nameOrDef) ? addName(nameOrDef) : addDescription(nameOrDef.name, nameOrDef));
+            }
+            else if (maybeList instanceof BindableDefinition) {
+                bindables[maybeList.name] = maybeList;
+            }
+            else if (maybeList !== void 0) {
+                objectKeys(maybeList).forEach(name => addDescription(name, maybeList[name]));
+            }
+        }
+        bindableLists.forEach(addList);
+        return bindables;
+    },
+    getAll(Type) {
+        const defs = [];
+        const prototypeChain = kernel.getPrototypeChain(Type);
+        let iProto = prototypeChain.length;
+        let Class;
+        while (--iProto >= 0) {
+            Class = prototypeChain[iProto];
+            const bindableMetadata = getMetadata(baseName, Class);
+            if (bindableMetadata == null)
+                continue;
+            defs.push(...Object.values(bindableMetadata));
+        }
+        return defs;
+    },
+});
+class BindableDefinition {
+    constructor(attribute, callback, mode, primary, name, set) {
+        this.attribute = attribute;
+        this.callback = callback;
+        this.mode = mode;
+        this.primary = primary;
+        this.name = name;
+        this.set = set;
+    }
+    static create(prop, def = {}) {
+        return new BindableDefinition(def.attribute ?? kernel.kebabCase(prop), def.callback ?? `${prop}Changed`, def.mode ?? toView, def.primary ?? false, def.name ?? prop, def.set ?? getInterceptor(def));
+    }
+}
+function coercer(target, context) {
+    context.addInitializer(function () {
+        Coercer.define(this, context.name);
+    });
+}
+const Coercer = {
+    key: /*@__PURE__*/ getAnnotationKeyFor('coercer'),
+    define(target, property) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        defineMetadata(target[property].bind(target), target, Coercer.key);
+    },
+    for(target) {
+        return getMetadata(Coercer.key, target);
+    }
+};
+function getInterceptor(def = {}) {
+    // TS5.x does not emit design:type metadata any longer for the new TC39 decorator proposal implementation.
+    // Hence, we needs to be solely reliant on the user-provided type in the bindable definition.
+    const type = def.type ?? null;
+    if (type == null) {
+        return kernel.noop;
+    }
+    let coercer;
+    switch (type) {
+        case Number:
+        case Boolean:
+        case String:
+        case BigInt:
+            coercer = type;
+            break;
+        default: {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+            const $coercer = type.coerce;
+            coercer = typeof $coercer === 'function'
+                ? $coercer.bind(type)
+                : (Coercer.for(type) ?? kernel.noop);
+            break;
+        }
+    }
+    return coercer === kernel.noop
+        ? coercer
+        : createCoercer(coercer, def.nullable);
+}
+function createCoercer(coercer, nullable) {
+    return function (value, coercionConfiguration) {
+        if (!coercionConfiguration?.enableCoercion)
+            return value;
+        return ((nullable ?? ((coercionConfiguration?.coerceNullish ?? false) ? false : true)) && value == null)
+            ? value
+            : coercer(value, coercionConfiguration);
+    };
+}
+
+/** @internal */
+const createInterface = kernel.DI.createInterface;
+/** @internal */
+const singletonRegistration = kernel.Registration.singleton;
+/** @internal */
+const aliasRegistration = kernel.Registration.aliasTo;
+/** @internal */
+const instanceRegistration = kernel.Registration.instance;
+/** @internal */
+kernel.Registration.callback;
+/** @internal */
+kernel.Registration.transient;
+/** @internal */
+const registerResolver = (ctn, key, resolver) => ctn.registerResolver(key, resolver);
+function alias(...aliases) {
+    return function (target, context) {
+        context.addInitializer(function () {
+            const key = getAnnotationKeyFor('aliases');
+            const existing = getMetadata(key, this);
+            if (existing === void 0) {
+                defineMetadata(aliases, this, key);
+            }
+            else {
+                existing.push(...aliases);
+            }
+        });
+    };
+}
+function registerAliases(aliases, resource, key, container) {
+    for (let i = 0, ii = aliases.length; i < ii; ++i) {
+        kernel.Registration.aliasTo(key, resource.keyFrom(aliases[i])).register(container);
+    }
+}
+
 /** @internal */ const dtElement = 'element';
 /** @internal */ const dtAttribute = 'attribute';
 /** @internal */ const staticResourceDefinitionMetadataKey = '__au_static_resource__';
 const getDefinitionFromStaticAu = (
 // eslint-disable-next-line @typescript-eslint/ban-types
 Type, typeName, createDef) => {
-    let def = getOwnMetadata(staticResourceDefinitionMetadataKey, Type);
+    let def = getMetadata(staticResourceDefinitionMetadataKey, Type);
     if (def == null) {
         if (Type.$au?.type === typeName) {
             def = createDef(Type.$au, Type);
-            defineMetadata(staticResourceDefinitionMetadataKey, def, Type);
+            defineMetadata(def, Type, staticResourceDefinitionMetadataKey);
         }
     }
     return def;
 };
 
 function bindingBehavior(nameOrDef) {
-    return function (target) {
-        return BindingBehavior.define(nameOrDef, target);
+    return function (target, context) {
+        context.addInitializer(function () {
+            BindingBehavior.define(nameOrDef, this);
+        });
+        return target;
     };
 }
 class BindingBehaviorDefinition {
@@ -552,24 +1208,23 @@ class BindingBehaviorDefinition {
 }
 /** @internal */ const behaviorTypeName = 'binding-behavior';
 const bbBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(behaviorTypeName);
-const getBehaviorAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const getBehaviorAnnotation = (Type, prop) => getMetadata(getAnnotationKeyFor(prop), Type);
 const getBindingBehaviorKeyFrom = (name) => `${bbBaseName}:${name}`;
 const BindingBehavior = objectFreeze({
     name: bbBaseName,
     keyFrom: getBindingBehaviorKeyFrom,
     isType(value) {
-        return isFunction(value) && (hasOwnMetadata(bbBaseName, value) || value.$au?.type === behaviorTypeName);
+        return isFunction(value) && (hasMetadata(bbBaseName, value) || value.$au?.type === behaviorTypeName);
     },
     define(nameOrDef, Type) {
         const definition = BindingBehaviorDefinition.create(nameOrDef, Type);
         const $Type = definition.Type;
-        defineMetadata(bbBaseName, definition, $Type);
-        // a requirement for the resource system in kernel
-        defineMetadata(kernel.resourceBaseName, definition, $Type);
+        // registration of resource name is a requirement for the resource system in kernel (module-loader)
+        defineMetadata(definition, $Type, bbBaseName, kernel.resourceBaseName);
         return $Type;
     },
     getDefinition(Type) {
-        const def = getOwnMetadata(bbBaseName, Type)
+        const def = getMetadata(bbBaseName, Type)
             ?? getDefinitionFromStaticAu(Type, behaviorTypeName, BindingBehaviorDefinition.create);
         if (def === void 0) {
             throw createMappedError(151 /* ErrorNames.binding_behavior_def_not_found */, Type);
@@ -580,7 +1235,7 @@ const BindingBehavior = objectFreeze({
         const Type = container.find(behaviorTypeName, name);
         return Type == null
             ? null
-            : getOwnMetadata(bbBaseName, Type) ?? getDefinitionFromStaticAu(Type, behaviorTypeName, BindingBehaviorDefinition.create) ?? null;
+            : getMetadata(bbBaseName, Type) ?? getDefinitionFromStaticAu(Type, behaviorTypeName, BindingBehaviorDefinition.create) ?? null;
     },
     get(container, name) {
         {
@@ -663,12 +1318,35 @@ DebounceBindingBehavior.$au = {
     name: 'debounce',
 };
 
+const ISignaler = /*@__PURE__*/ createInterface('ISignaler', x => x.singleton(Signaler));
+class Signaler {
+    constructor() {
+        this.signals = createLookup();
+    }
+    dispatchSignal(name) {
+        const listeners = this.signals[name];
+        if (listeners === undefined) {
+            return;
+        }
+        let listener;
+        for (listener of listeners.keys()) {
+            listener.handleChange(undefined, undefined);
+        }
+    }
+    addSignalListener(name, listener) {
+        (this.signals[name] ??= new Set()).add(listener);
+    }
+    removeSignalListener(name, listener) {
+        this.signals[name]?.delete(listener);
+    }
+}
+
 class SignalBindingBehavior {
     constructor() {
         /** @internal */
         this._lookup = new Map();
         /** @internal */
-        this._signaler = kernel.resolve(runtime.ISignaler);
+        this._signaler = kernel.resolve(ISignaler);
     }
     bind(scope, binding, ...names) {
         if (!('handleChange' in binding)) {
@@ -807,36 +1485,46 @@ function watch(expressionOrPropertyAccessFn, changeHandlerOrCallback) {
     if (expressionOrPropertyAccessFn == null) {
         throw createMappedError(772 /* ErrorNames.watch_null_config */);
     }
-    return function decorator(target, key, descriptor) {
-        const isClassDecorator = key == null;
-        const Type = isClassDecorator ? target : target.constructor;
-        const watchDef = new WatchDefinition(expressionOrPropertyAccessFn, isClassDecorator ? changeHandlerOrCallback : descriptor.value);
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    return function decorator(target, context) {
+        const isClassDecorator = context.kind === 'class';
         // basic validation
         if (isClassDecorator) {
             if (!isFunction(changeHandlerOrCallback)
-                && (changeHandlerOrCallback == null || !(changeHandlerOrCallback in Type.prototype))) {
-                throw createMappedError(773 /* ErrorNames.watch_invalid_change_handler */, `${safeString(changeHandlerOrCallback)}@${Type.name}}`);
+                && (changeHandlerOrCallback == null || !(changeHandlerOrCallback in target.prototype))) {
+                throw createMappedError(773 /* ErrorNames.watch_invalid_change_handler */, `${safeString(changeHandlerOrCallback)}@${target.name}}`);
             }
         }
-        else if (!isFunction(descriptor?.value)) {
-            throw createMappedError(774 /* ErrorNames.watch_non_method_decorator_usage */, key);
+        else if (!isFunction(target)) {
+            throw createMappedError(774 /* ErrorNames.watch_non_method_decorator_usage */, context.name);
         }
-        Watch.add(Type, watchDef);
-        // if the code looks like this:
-        // @watch(...)
-        // @customAttribute(...)
-        // class Abc {}
-        //
-        // then @watch is called after @customAttribute
-        // which means the attribute definition won't have the watch definition
-        //
-        // temporarily works around this order sensitivity by manually add the watch def
-        // manual
-        if (isAttributeType(Type)) {
-            getAttributeDefinition(Type).watches.push(watchDef);
+        const watchDef = new WatchDefinition(expressionOrPropertyAccessFn, (isClassDecorator ? changeHandlerOrCallback : target));
+        if (isClassDecorator) {
+            addDefinition(target);
         }
-        if (isElementType(Type)) {
-            getElementDefinition(Type).watches.push(watchDef);
+        else {
+            context.addInitializer(function () {
+                addDefinition(this.constructor);
+            });
+        }
+        function addDefinition(type) {
+            Watch.add(type, watchDef);
+            // if the code looks like this:
+            // @watch(...)
+            // @customAttribute(...)
+            // class Abc {}
+            //
+            // then @watch is called after @customAttribute
+            // which means the attribute definition won't have the watch definition
+            //
+            // temporarily works around this order sensitivity by manually add the watch def
+            // manual
+            if (isAttributeType(type)) {
+                getAttributeDefinition(type).watches.push(watchDef);
+            }
+            if (isElementType(type)) {
+                getElementDefinition(type).watches.push(watchDef);
+            }
         }
     };
 }
@@ -863,15 +1551,21 @@ const Watch = /*@__PURE__*/ (() => {
 })();
 
 function customAttribute(nameOrDef) {
-    return function (target) {
-        return defineAttribute(nameOrDef, target);
+    return function (target, context) {
+        context.addInitializer(function () {
+            defineAttribute(nameOrDef, this);
+        });
+        return target;
     };
 }
 function templateController(nameOrDef) {
-    return function (target) {
-        return defineAttribute(isString(nameOrDef)
-            ? { isTemplateController: true, name: nameOrDef }
-            : { isTemplateController: true, ...nameOrDef }, target);
+    return function (target, context) {
+        context.addInitializer(function () {
+            defineAttribute(isString(nameOrDef)
+                ? { isTemplateController: true, name: nameOrDef }
+                : { isTemplateController: true, ...nameOrDef }, this);
+        });
+        return target;
     };
 }
 class CustomAttributeDefinition {
@@ -901,7 +1595,7 @@ class CustomAttributeDefinition {
             name = nameOrDef.name;
             def = nameOrDef;
         }
-        return new CustomAttributeDefinition(Type, kernel.firstDefined(getAttributeAnnotation(Type, 'name'), name), kernel.mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), kernel.firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, toView), kernel.firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(Type, ...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), kernel.firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), kernel.mergeArrays(Watch.getDefinitions(Type), Type.watches), kernel.mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies), kernel.firstDefined(getAttributeAnnotation(Type, 'containerStrategy'), def.containerStrategy, Type.containerStrategy, 'reuse'));
+        return new CustomAttributeDefinition(Type, kernel.firstDefined(getAttributeAnnotation(Type, 'name'), name), kernel.mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), kernel.firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, toView), kernel.firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), kernel.firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), kernel.mergeArrays(Watch.getDefinitions(Type), Type.watches), kernel.mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies), kernel.firstDefined(getAttributeAnnotation(Type, 'containerStrategy'), def.containerStrategy, Type.containerStrategy, 'reuse'));
     }
     register(container, aliasName) {
         const $Type = this.Type;
@@ -922,10 +1616,10 @@ class CustomAttributeDefinition {
 /** @internal */ const attrTypeName = 'custom-attribute';
 const attributeBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(attrTypeName);
 const getAttributeKeyFrom = (name) => `${attributeBaseName}:${name}`;
-const getAttributeAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const getAttributeAnnotation = (Type, prop) => getMetadata(getAnnotationKeyFor(prop), Type);
 /** @internal */
 const isAttributeType = (value) => {
-    return isFunction(value) && (hasOwnMetadata(attributeBaseName, value)
+    return isFunction(value) && (hasMetadata(attributeBaseName, value)
         || value.$au?.type === attrTypeName);
 };
 /** @internal */
@@ -936,15 +1630,13 @@ const findAttributeControllerFor = (node, name) => {
 const defineAttribute = (nameOrDef, Type) => {
     const definition = CustomAttributeDefinition.create(nameOrDef, Type);
     const $Type = definition.Type;
-    defineMetadata(attributeBaseName, definition, $Type);
-    // a requirement for the resource system in kernel
-    defineMetadata(kernel.resourceBaseName, definition, $Type);
+    defineMetadata(definition, $Type, attributeBaseName, kernel.resourceBaseName);
     return $Type;
 };
 /** @internal */
 // eslint-disable-next-line @typescript-eslint/ban-types
 const getAttributeDefinition = (Type) => {
-    const def = getOwnMetadata(attributeBaseName, Type)
+    const def = getMetadata(attributeBaseName, Type)
         ?? getDefinitionFromStaticAu(Type, attrTypeName, CustomAttributeDefinition.create);
     if (def === void 0) {
         throw createMappedError(759 /* ErrorNames.attribute_def_not_found */, Type);
@@ -982,14 +1674,16 @@ const CustomAttribute = objectFreeze({
     define: defineAttribute,
     getDefinition: getAttributeDefinition,
     annotate(Type, prop, value) {
-        defineMetadata(getAnnotationKeyFor(prop), value, Type);
+        defineMetadata(value, Type, getAnnotationKeyFor(prop));
     },
     getAnnotation: getAttributeAnnotation,
     find(c, name) {
         const Type = c.find(attrTypeName, name);
         return Type === null
             ? null
-            : getOwnMetadata(attributeBaseName, Type) ?? getDefinitionFromStaticAu(Type, attrTypeName, CustomAttributeDefinition.create) ?? null;
+            : getMetadata(attributeBaseName, Type)
+                ?? getDefinitionFromStaticAu(Type, attrTypeName, CustomAttributeDefinition.create)
+                ?? null;
     },
 });
 
@@ -1091,14 +1785,17 @@ class LifecycleHooksLookupImpl {
  * Decorator: Indicates that the decorated class is a custom element.
  */
 function lifecycleHooks() {
-    return function decorator(target) {
+    return function decorator(target, _context) {
         return LifecycleHooks.define({}, target);
     };
 }
 
 function valueConverter(nameOrDef) {
-    return function (target) {
-        return ValueConverter.define(nameOrDef, target);
+    return function (target, context) {
+        context.addInitializer(function () {
+            ValueConverter.define(nameOrDef, this);
+        });
+        return target;
     };
 }
 class ValueConverterDefinition {
@@ -1136,39 +1833,38 @@ class ValueConverterDefinition {
 }
 /** @internal */ const converterTypeName = 'value-converter';
 const vcBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(converterTypeName);
-const getConverterAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const getConverterAnnotation = (Type, prop) => getMetadata(getAnnotationKeyFor(prop), Type);
 const getValueConverterKeyFrom = (name) => `${vcBaseName}:${name}`;
 const ValueConverter = objectFreeze({
     name: vcBaseName,
     keyFrom: getValueConverterKeyFrom,
     isType(value) {
         return isFunction(value)
-            && (hasOwnMetadata(vcBaseName, value) || value.$au?.type === converterTypeName);
+            && (hasMetadata(vcBaseName, value) || value.$au?.type === converterTypeName);
     },
     define(nameOrDef, Type) {
         const definition = ValueConverterDefinition.create(nameOrDef, Type);
         const $Type = definition.Type;
-        defineMetadata(vcBaseName, definition, $Type);
-        // a requirement for the resource system in kernel
-        defineMetadata(kernel.resourceBaseName, definition, $Type);
+        // registration of resource name is a requirement for the resource system in kernel (module-loader)
+        defineMetadata(definition, $Type, vcBaseName, kernel.resourceBaseName);
         return $Type;
     },
     getDefinition(Type) {
-        const def = getOwnMetadata(vcBaseName, Type) ?? getDefinitionFromStaticAu(Type, converterTypeName, ValueConverterDefinition.create);
+        const def = getMetadata(vcBaseName, Type) ?? getDefinitionFromStaticAu(Type, converterTypeName, ValueConverterDefinition.create);
         if (def === void 0) {
             throw createMappedError(152 /* ErrorNames.value_converter_def_not_found */, Type);
         }
         return def;
     },
     annotate(Type, prop, value) {
-        defineMetadata(getAnnotationKeyFor(prop), value, Type);
+        defineMetadata(value, Type, getAnnotationKeyFor(prop));
     },
     getAnnotation: getConverterAnnotation,
     find(container, name) {
         const Type = container.find(converterTypeName, name);
         return Type == null
             ? null
-            : getOwnMetadata(vcBaseName, Type) ?? getDefinitionFromStaticAu(Type, converterTypeName, ValueConverterDefinition.create) ?? null;
+            : getMetadata(vcBaseName, Type) ?? getDefinitionFromStaticAu(Type, converterTypeName, ValueConverterDefinition.create) ?? null;
     },
     get(container, name) {
         {
@@ -1205,7 +1901,7 @@ class BindingTargetSubscriber {
     // deepscan-disable-next-line
     handleChange(value, _) {
         const b = this.b;
-        if (value !== runtime.astEvaluate(b.ast, b._scope, b, null)) {
+        if (value !== astEvaluate(b.ast, b._scope, b, null)) {
             this._value = value;
             this._flushQueue.add(this);
         }
@@ -1277,7 +1973,7 @@ function evaluatorGet(key) {
     return this.l.get(key);
 }
 function evaluatorGetSignaler() {
-    return this.l.root.get(runtime.ISignaler);
+    return this.l.root.get(ISignaler);
 }
 function evaluatorGetConverter(name) {
     let resourceLookup = converterResourceLookupCache.get(this);
@@ -1311,7 +2007,7 @@ const mixingBindingLimited = (target, getMethodName) => {
         withLimitationBindings.add(this);
         const prop = getMethodName(this, opts);
         const signals = opts.signals;
-        const signaler = signals.length > 0 ? this.get(runtime.ISignaler) : null;
+        const signaler = signals.length > 0 ? this.get(ISignaler) : null;
         const originalFn = this[prop];
         const callOriginal = (...args) => originalFn.call(this, ...args);
         const limitedFn = opts.type === 'debounce'
@@ -1493,7 +2189,7 @@ class AttributeBinding {
         }
         let task;
         this.obs.version++;
-        const newValue = runtime.astEvaluate(this.ast, this._scope, this, 
+        const newValue = astEvaluate(this.ast, this._scope, this, 
         // should observe?
         (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
@@ -1527,9 +2223,9 @@ class AttributeBinding {
             this.unbind();
         }
         this._scope = _scope;
-        runtime.astBind(this.ast, _scope, this);
+        astBind(this.ast, _scope, this);
         if (this.mode & (toView | oneTime)) {
-            this.updateTarget(this._value = runtime.astEvaluate(this.ast, _scope, this, /* should connect? */ (this.mode & toView) > 0 ? this : null));
+            this.updateTarget(this._value = astEvaluate(this.ast, _scope, this, /* should connect? */ (this.mode & toView) > 0 ? this : null));
         }
         this.isBound = true;
     }
@@ -1539,7 +2235,7 @@ class AttributeBinding {
             return;
         }
         this.isBound = false;
-        runtime.astUnbind(this.ast, this._scope, this);
+        astUnbind(this.ast, this._scope, this);
         this._scope = void 0;
         this._value = void 0;
         this._task?.cancel();
@@ -1549,7 +2245,7 @@ class AttributeBinding {
 }
 mixinUseScope(AttributeBinding);
 mixingBindingLimited(AttributeBinding, () => 'updateTarget');
-runtime.connectable(AttributeBinding);
+runtime.connectable(AttributeBinding, null);
 mixinAstEvaluator(true)(AttributeBinding);
 
 const queueTaskOptions$1 = {
@@ -1684,7 +2380,7 @@ class InterpolationPartBinding {
             return;
         }
         this.obs.version++;
-        const newValue = runtime.astEvaluate(this.ast, this._scope, this, 
+        const newValue = astEvaluate(this.ast, this._scope, this, 
         // should observe?
         (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
@@ -1710,8 +2406,8 @@ class InterpolationPartBinding {
             this.unbind();
         }
         this._scope = _scope;
-        runtime.astBind(this.ast, _scope, this);
-        this._value = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
+        astBind(this.ast, _scope, this);
+        this._value = astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
         if (isArray(this._value)) {
             this.observeCollection(this._value);
         }
@@ -1723,14 +2419,14 @@ class InterpolationPartBinding {
             return;
         }
         this.isBound = false;
-        runtime.astUnbind(this.ast, this._scope, this);
+        astUnbind(this.ast, this._scope, this);
         this._scope = void 0;
         this.obs.clearAll();
     }
 }
 mixinUseScope(InterpolationPartBinding);
 mixingBindingLimited(InterpolationPartBinding, () => 'updateTarget');
-runtime.connectable(InterpolationPartBinding);
+runtime.connectable(InterpolationPartBinding, null);
 mixinAstEvaluator(true)(InterpolationPartBinding);
 
 const queueTaskOptions = {
@@ -1786,7 +2482,7 @@ class ContentBinding {
             return;
         }
         this.obs.version++;
-        const newValue = runtime.astEvaluate(this.ast, this._scope, this, 
+        const newValue = astEvaluate(this.ast, this._scope, this, 
         // should observe?
         (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
@@ -1812,7 +2508,7 @@ class ContentBinding {
             return;
         }
         this.obs.version++;
-        const v = this._value = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
+        const v = this._value = astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
         if (isArray(v)) {
             this.observeCollection(v);
@@ -1834,8 +2530,8 @@ class ContentBinding {
             this.unbind();
         }
         this._scope = _scope;
-        runtime.astBind(this.ast, _scope, this);
-        const v = this._value = runtime.astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
+        astBind(this.ast, _scope, this);
+        const v = this._value = astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
         if (isArray(v)) {
             this.observeCollection(v);
         }
@@ -1848,7 +2544,7 @@ class ContentBinding {
             return;
         }
         this.isBound = false;
-        runtime.astUnbind(this.ast, this._scope, this);
+        astUnbind(this.ast, this._scope, this);
         if (this._needsRemoveNode) {
             this._value.parentNode?.removeChild(this._value);
         }
@@ -1873,7 +2569,7 @@ class ContentBinding {
 }
 mixinUseScope(ContentBinding);
 mixingBindingLimited(ContentBinding, () => 'updateTarget');
-runtime.connectable()(ContentBinding);
+runtime.connectable(ContentBinding, null);
 mixinAstEvaluator(void 0, false)(ContentBinding);
 
 class LetBinding {
@@ -1900,7 +2596,7 @@ class LetBinding {
             return;
         }
         this.obs.version++;
-        this._value = runtime.astEvaluate(this.ast, this._scope, this, this);
+        this._value = astEvaluate(this.ast, this._scope, this, this);
         this.obs.clear();
         this.updateTarget();
     }
@@ -1917,8 +2613,8 @@ class LetBinding {
         }
         this._scope = _scope;
         this.target = (this._toBindingContext ? _scope.bindingContext : _scope.overrideContext);
-        runtime.astBind(this.ast, _scope, this);
-        this._value = runtime.astEvaluate(this.ast, this._scope, this, this);
+        astBind(this.ast, _scope, this);
+        this._value = astEvaluate(this.ast, this._scope, this, this);
         this.updateTarget();
         this.isBound = true;
     }
@@ -1928,14 +2624,14 @@ class LetBinding {
             return;
         }
         this.isBound = false;
-        runtime.astUnbind(this.ast, this._scope, this);
+        astUnbind(this.ast, this._scope, this);
         this._scope = void 0;
         this.obs.clearAll();
     }
 }
 mixinUseScope(LetBinding);
 mixingBindingLimited(LetBinding, () => 'updateTarget');
-runtime.connectable(LetBinding);
+runtime.connectable(LetBinding, null);
 mixinAstEvaluator(true)(LetBinding);
 
 class PropertyBinding {
@@ -1965,7 +2661,7 @@ class PropertyBinding {
         this._targetObserver.setValue(value, this.target, this.targetProperty);
     }
     updateSource(value) {
-        runtime.astAssign(this.ast, this._scope, this, value);
+        astAssign(this.ast, this._scope, this, value);
     }
     handleChange() {
         if (!this.isBound) {
@@ -1973,7 +2669,7 @@ class PropertyBinding {
             return;
         }
         this.obs.version++;
-        const newValue = runtime.astEvaluate(this.ast, this._scope, this, 
+        const newValue = astEvaluate(this.ast, this._scope, this, 
         // should observe?
         (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
@@ -2005,7 +2701,7 @@ class PropertyBinding {
             this.unbind();
         }
         this._scope = scope;
-        runtime.astBind(this.ast, scope, this);
+        astBind(this.ast, scope, this);
         const observerLocator = this.oL;
         const $mode = this.mode;
         let targetObserver = this._targetObserver;
@@ -2020,7 +2716,7 @@ class PropertyBinding {
         }
         const shouldConnect = ($mode & toView) > 0;
         if ($mode & (toView | oneTime)) {
-            this.updateTarget(runtime.astEvaluate(this.ast, this._scope, this, shouldConnect ? this : null));
+            this.updateTarget(astEvaluate(this.ast, this._scope, this, shouldConnect ? this : null));
         }
         if ($mode & fromView) {
             targetObserver.subscribe(this._targetSubscriber ??= new BindingTargetSubscriber(this, this.l.get(IFlushQueue)));
@@ -2036,7 +2732,7 @@ class PropertyBinding {
             return;
         }
         this.isBound = false;
-        runtime.astUnbind(this.ast, this._scope, this);
+        astUnbind(this.ast, this._scope, this);
         this._scope = void 0;
         if (this._targetSubscriber) {
             this._targetObserver.unsubscribe(this._targetSubscriber);
@@ -2068,7 +2764,7 @@ class PropertyBinding {
 }
 mixinUseScope(PropertyBinding);
 mixingBindingLimited(PropertyBinding, (propBinding) => (propBinding.mode & fromView) ? 'updateSource' : 'updateTarget');
-runtime.connectable(PropertyBinding);
+runtime.connectable(PropertyBinding, null);
 mixinAstEvaluator(true, false)(PropertyBinding);
 let task = null;
 const updateTaskOpts = {
@@ -2094,8 +2790,8 @@ class RefBinding {
             this.unbind();
         }
         this._scope = _scope;
-        runtime.astBind(this.ast, _scope, this);
-        runtime.astAssign(this.ast, this._scope, this, this.target);
+        astBind(this.ast, _scope, this);
+        astAssign(this.ast, this._scope, this, this.target);
         // add isBound flag and remove isBinding flag
         this.isBound = true;
     }
@@ -2105,10 +2801,10 @@ class RefBinding {
             return;
         }
         this.isBound = false;
-        if (runtime.astEvaluate(this.ast, this._scope, this, null) === this.target) {
-            runtime.astAssign(this.ast, this._scope, this, null);
+        if (astEvaluate(this.ast, this._scope, this, null) === this.target) {
+            astAssign(this.ast, this._scope, this, null);
         }
-        runtime.astUnbind(this.ast, this._scope, this);
+        astUnbind(this.ast, this._scope, this);
         this._scope = void 0;
     }
 }
@@ -2149,7 +2845,7 @@ class ListenerBinding {
     callSource(event) {
         const overrideContext = this._scope.overrideContext;
         overrideContext.$event = event;
-        let result = runtime.astEvaluate(this.ast, this._scope, this, null);
+        let result = astEvaluate(this.ast, this._scope, this, null);
         delete overrideContext.$event;
         if (isFunction(result)) {
             result = result(event);
@@ -2179,7 +2875,7 @@ class ListenerBinding {
             this.unbind();
         }
         this._scope = scope;
-        runtime.astBind(this.ast, scope, this);
+        astBind(this.ast, scope, this);
         this.target.addEventListener(this.targetEvent, this, this._options);
         this.isBound = true;
     }
@@ -2189,7 +2885,7 @@ class ListenerBinding {
             return;
         }
         this.isBound = false;
-        runtime.astUnbind(this.ast, this._scope, this);
+        astUnbind(this.ast, this._scope, this);
         this._scope = void 0;
         this.target.removeEventListener(this.targetEvent, this, this._options);
     }
@@ -2550,10 +3246,13 @@ function slotted(queryOrDef, slotName) {
     if (!mixed$1) {
         mixed$1 = true;
         runtime.subscriberCollection(AuSlotWatcherBinding);
-        lifecycleHooks()(SlottedLifecycleHooks);
+        lifecycleHooks()(SlottedLifecycleHooks, null);
     }
-    const dependenciesKey = 'dependencies';
-    function decorator($target, $prop, desc) {
+    const dependenciesKey = getAnnotationKeyFor('dependencies');
+    // function decorator($target: {}, $prop: symbol | string, desc?: PropertyDecorator): void {
+    function decorator(_, context) {
+        if (context.kind !== 'field')
+            throw createMappedError(9990 /* ErrorNames.slotted_decorator_invalid_usage */);
         const config = (typeof queryOrDef === 'object'
             ? queryOrDef
             : {
@@ -2561,15 +3260,8 @@ function slotted(queryOrDef, slotName) {
                 slotName,
                 name: ''
             });
-        config.name = $prop;
-        if (typeof $target === 'function' || typeof desc?.value !== 'undefined') {
-            throw createMappedError(9990 /* ErrorNames.slotted_decorator_invalid_usage */);
-        }
-        const target = $target.constructor;
-        let dependencies = CustomElement.getAnnotation(target, dependenciesKey);
-        if (dependencies == null) {
-            CustomElement.annotate(target, dependenciesKey, dependencies = []);
-        }
+        config.name = context.name;
+        const dependencies = (context.metadata[dependenciesKey] ??= []);
         dependencies.push(new SlottedLifecycleHooks(config));
     }
     return decorator;
@@ -2965,7 +3657,8 @@ function getRefTarget(refHost, refTargetName) {
         }
     }
 }
-exports.SetPropertyRenderer = class SetPropertyRenderer {
+/** @internal */
+class SetPropertyRenderer {
     render(renderingCtrl, target, instruction) {
         const obj = getTarget(target);
         if (obj.$observers?.[instruction.to] !== void 0) {
@@ -2975,12 +3668,10 @@ exports.SetPropertyRenderer = class SetPropertyRenderer {
             obj[instruction.to] = instruction.value;
         }
     }
-};
-exports.SetPropertyRenderer = __decorate([
-    renderer(setProperty)
-    /** @internal */
-], exports.SetPropertyRenderer);
-exports.CustomElementRenderer = class CustomElementRenderer {
+}
+renderer(setProperty)(SetPropertyRenderer, null);
+/** @internal */
+class CustomElementRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
     }
@@ -3040,12 +3731,10 @@ exports.CustomElementRenderer = class CustomElementRenderer {
         renderingCtrl.addChild(childCtrl);
         /* eslint-enable prefer-const */
     }
-};
-exports.CustomElementRenderer = __decorate([
-    renderer(hydrateElement)
-    /** @internal */
-], exports.CustomElementRenderer);
-exports.CustomAttributeRenderer = class CustomAttributeRenderer {
+}
+renderer(hydrateElement)(CustomElementRenderer, null);
+/** @internal */
+class CustomAttributeRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
     }
@@ -3101,12 +3790,10 @@ exports.CustomAttributeRenderer = class CustomAttributeRenderer {
         renderingCtrl.addChild(childController);
         /* eslint-enable prefer-const */
     }
-};
-exports.CustomAttributeRenderer = __decorate([
-    renderer(hydrateAttribute)
-    /** @internal */
-], exports.CustomAttributeRenderer);
-exports.TemplateControllerRenderer = class TemplateControllerRenderer {
+}
+renderer(hydrateAttribute)(CustomAttributeRenderer, null);
+/** @internal */
+class TemplateControllerRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
     }
@@ -3167,12 +3854,10 @@ exports.TemplateControllerRenderer = class TemplateControllerRenderer {
         renderingCtrl.addChild(childController);
         /* eslint-enable prefer-const */
     }
-};
-exports.TemplateControllerRenderer = __decorate([
-    renderer(hydrateTemplateController)
-    /** @internal */
-], exports.TemplateControllerRenderer);
-exports.LetElementRenderer = class LetElementRenderer {
+}
+renderer(hydrateTemplateController)(TemplateControllerRenderer, null);
+/** @internal */
+class LetElementRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         target.remove();
         const childInstructions = instruction.instructions;
@@ -3189,60 +3874,48 @@ exports.LetElementRenderer = class LetElementRenderer {
             ++i;
         }
     }
-};
-exports.LetElementRenderer = __decorate([
-    renderer(hydrateLetElement)
-    /** @internal */
-], exports.LetElementRenderer);
-exports.RefBindingRenderer = class RefBindingRenderer {
+}
+renderer(hydrateLetElement)(LetElementRenderer, null);
+/** @internal */
+class RefBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new RefBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsProperty), getRefTarget(target, instruction.to)));
     }
-};
-exports.RefBindingRenderer = __decorate([
-    renderer(refBinding)
-    /** @internal */
-], exports.RefBindingRenderer);
-exports.InterpolationBindingRenderer = class InterpolationBindingRenderer {
+}
+renderer(refBinding)(RefBindingRenderer, null);
+/** @internal */
+class InterpolationBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, toView));
     }
-};
-exports.InterpolationBindingRenderer = __decorate([
-    renderer(interpolation)
-    /** @internal */
-], exports.InterpolationBindingRenderer);
-exports.PropertyBindingRenderer = class PropertyBindingRenderer {
+}
+renderer(interpolation)(InterpolationBindingRenderer, null);
+/** @internal */
+class PropertyBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), getTarget(target), instruction.to, instruction.mode));
     }
-};
-exports.PropertyBindingRenderer = __decorate([
-    renderer(propertyBinding)
-    /** @internal */
-], exports.PropertyBindingRenderer);
-exports.IteratorBindingRenderer = class IteratorBindingRenderer {
+}
+renderer(propertyBinding)(PropertyBindingRenderer, null);
+/** @internal */
+class IteratorBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.forOf, etIsIterator), getTarget(target), instruction.to, toView));
     }
-};
-exports.IteratorBindingRenderer = __decorate([
-    renderer(iteratorBinding)
-    /** @internal */
-], exports.IteratorBindingRenderer);
-exports.TextBindingRenderer = class TextBindingRenderer {
+}
+renderer(iteratorBinding)(IteratorBindingRenderer, null);
+/** @internal */
+class TextBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, platform, ensureExpression(exprParser, instruction.from, etIsProperty), target));
     }
-};
-exports.TextBindingRenderer = __decorate([
-    renderer(textBinding)
-    /** @internal */
-], exports.TextBindingRenderer);
+}
+renderer(textBinding)(TextBindingRenderer, null);
 const IListenerBindingOptions = createInterface('IListenerBindingOptions', x => x.instance({
     prevent: false,
 }));
-exports.ListenerBindingRenderer = class ListenerBindingRenderer {
+/** @internal */
+class ListenerBindingRenderer {
     constructor() {
         /** @internal */
         this._modifierHandler = kernel.resolve(IEventModifier);
@@ -3252,36 +3925,27 @@ exports.ListenerBindingRenderer = class ListenerBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(this._defaultOptions.prevent, instruction.capture), this._modifierHandler.getHandler(instruction.to, instruction.modifier)));
     }
-};
-exports.ListenerBindingRenderer = __decorate([
-    renderer(listenerBinding)
-    /** @internal */
-], exports.ListenerBindingRenderer);
-exports.SetAttributeRenderer = class SetAttributeRenderer {
+}
+renderer(listenerBinding)(ListenerBindingRenderer, null);
+/** @internal */
+class SetAttributeRenderer {
     render(_, target, instruction) {
         target.setAttribute(instruction.to, instruction.value);
     }
-};
-exports.SetAttributeRenderer = __decorate([
-    renderer(setAttribute)
-    /** @internal */
-], exports.SetAttributeRenderer);
-exports.SetClassAttributeRenderer = class SetClassAttributeRenderer {
+}
+renderer(setAttribute)(SetAttributeRenderer, null);
+class SetClassAttributeRenderer {
     render(_, target, instruction) {
         addClasses(target.classList, instruction.value);
     }
-};
-exports.SetClassAttributeRenderer = __decorate([
-    renderer(setClassAttribute)
-], exports.SetClassAttributeRenderer);
-exports.SetStyleAttributeRenderer = class SetStyleAttributeRenderer {
+}
+renderer(setClassAttribute)(SetClassAttributeRenderer, null);
+class SetStyleAttributeRenderer {
     render(_, target, instruction) {
         target.style.cssText += instruction.value;
     }
-};
-exports.SetStyleAttributeRenderer = __decorate([
-    renderer(setStyleAttribute)
-], exports.SetStyleAttributeRenderer);
+}
+renderer(setStyleAttribute)(SetStyleAttributeRenderer, null);
 /* istanbul ignore next */
 const ambiguousStyles = [
     'height',
@@ -3306,7 +3970,8 @@ const ambiguousStyles = [
     'bottom',
     'left',
 ];
-exports.StylePropertyBindingRenderer = class StylePropertyBindingRenderer {
+/** @internal */
+class StylePropertyBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         {
             /* istanbul ignore next */
@@ -3317,11 +3982,8 @@ exports.StylePropertyBindingRenderer = class StylePropertyBindingRenderer {
         }
         renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
     }
-};
-exports.StylePropertyBindingRenderer = __decorate([
-    renderer(stylePropertyBinding)
-    /** @internal */
-], exports.StylePropertyBindingRenderer);
+}
+renderer(stylePropertyBinding)(StylePropertyBindingRenderer, null);
 /* istanbul ignore next */
 class DevStylePropertyBinding extends PropertyBinding {
     updateTarget(value) {
@@ -3332,7 +3994,8 @@ class DevStylePropertyBinding extends PropertyBinding {
         return super.updateTarget(value);
     }
 }
-exports.AttributeBindingRenderer = class AttributeBindingRenderer {
+/** @internal */
+class AttributeBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const container = renderingCtrl.container;
         const classMapping = container.has(ICssModulesMapping, false)
@@ -3342,12 +4005,9 @@ exports.AttributeBindingRenderer = class AttributeBindingRenderer {
             ? instruction.to /* targetKey */
             : instruction.to.split(/\s/g).map(c => classMapping[c] ?? c).join(' '), toView));
     }
-};
-exports.AttributeBindingRenderer = __decorate([
-    renderer(attributeBinding)
-    /** @internal */
-], exports.AttributeBindingRenderer);
-exports.SpreadRenderer = class SpreadRenderer {
+}
+renderer(attributeBinding)(AttributeBindingRenderer, null);
+class SpreadRenderer {
     constructor() {
         /** @internal */ this._compiler = kernel.resolve(ITemplateCompiler);
         /** @internal */ this._rendering = kernel.resolve(IRendering);
@@ -3357,10 +4017,8 @@ exports.SpreadRenderer = class SpreadRenderer {
             .create(renderingCtrl.container.get(IHydrationContext), target, void 0, this._rendering, this._compiler, platform, exprParser, observerLocator)
             .forEach(b => renderingCtrl.addBinding(b));
     }
-};
-exports.SpreadRenderer = __decorate([
-    renderer(spreadBinding)
-], exports.SpreadRenderer);
+}
+renderer(spreadBinding)(SpreadRenderer, null);
 // http://jsben.ch/7n5Kt
 function addClasses(classList, className) {
     const len = className.length;
@@ -3466,7 +4124,7 @@ class Rendering {
         this._fragmentCache = new WeakMap();
         const ctn = this._ctn = kernel.resolve(kernel.IContainer).root;
         this._platform = ctn.get(IPlatform);
-        this._exprParser = ctn.get(runtime.IExpressionParser);
+        this._exprParser = ctn.get(expressionParser.IExpressionParser);
         this._observerLocator = ctn.get(runtime.IObserverLocator);
         this._empty = new FragmentNodeSequence(this._platform, this._platform.document.createDocumentFragment());
     }
@@ -4018,7 +4676,7 @@ class ExpressionWatcher {
         const canOptimize = expr.$kind === 'AccessScope' && this.obs.count === 1;
         if (!canOptimize) {
             this.obs.version++;
-            value = runtime.astEvaluate(expr, this.scope, this, this);
+            value = astEvaluate(expr, this.scope, this, this);
             this.obs.clear();
         }
         if (!areEqual(value, oldValue)) {
@@ -4032,7 +4690,7 @@ class ExpressionWatcher {
             return;
         }
         this.obs.version++;
-        this._value = runtime.astEvaluate(this._expression, this.scope, this, this);
+        this._value = astEvaluate(this._expression, this.scope, this, this);
         this.obs.clear();
         this.isBound = true;
     }
@@ -4045,8 +4703,8 @@ class ExpressionWatcher {
         this._value = void 0;
     }
 }
-runtime.connectable(ComputedWatcher);
-runtime.connectable(ExpressionWatcher);
+runtime.connectable(ComputedWatcher, null);
+runtime.connectable(ExpressionWatcher, null);
 mixinAstEvaluator(true)(ExpressionWatcher);
 
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
@@ -5112,14 +5770,14 @@ const AccessScopeAstMap = new Map();
 const getAccessScopeAst = (key) => {
     let ast = AccessScopeAstMap.get(key);
     if (ast == null) {
-        ast = new runtime.AccessScopeExpression(key, 0);
+        ast = new expressionParser.AccessScopeExpression(key, 0);
         AccessScopeAstMap.set(key, ast);
     }
     return ast;
 };
 function createWatchers(controller, context, definition, instance) {
     const observerLocator = context.get(runtime.IObserverLocator);
-    const expressionParser = context.get(runtime.IExpressionParser);
+    const expressionParser$1 = context.get(expressionParser.IExpressionParser);
     const watches = definition.watches;
     const scope = controller.vmKind === vmkCe
         ? controller.scope
@@ -5143,7 +5801,7 @@ function createWatchers(controller, context, definition, instance) {
         }
         else {
             ast = isString(expression)
-                ? expressionParser.parse(expression, etIsProperty)
+                ? expressionParser$1.parse(expression, etIsProperty)
                 : getAccessScopeAst(expression);
             controller.addBinding(new ExpressionWatcher(scope, context, observerLocator, ast, callback));
         }
@@ -5527,34 +6185,47 @@ const registerHostNode = (container, platform, host) => {
 };
 
 function customElement(nameOrDef) {
-    return function (target) {
-        return defineElement(nameOrDef, target);
+    return function (target, context) {
+        context.addInitializer(function () {
+            defineElement(nameOrDef, this);
+        });
+        return target;
     };
 }
-function useShadowDOM(targetOrOptions) {
+function useShadowDOM(targetOrOptions, context) {
     if (targetOrOptions === void 0) {
-        return function ($target) {
-            annotateElementMetadata($target, 'shadowOptions', { mode: 'open' });
+        return function ($target, context) {
+            context.addInitializer(function () {
+                annotateElementMetadata(this, 'shadowOptions', { mode: 'open' });
+            });
         };
     }
     if (!isFunction(targetOrOptions)) {
-        return function ($target) {
-            annotateElementMetadata($target, 'shadowOptions', targetOrOptions);
+        return function ($target, context) {
+            context.addInitializer(function () {
+                annotateElementMetadata(this, 'shadowOptions', targetOrOptions);
+            });
         };
     }
-    annotateElementMetadata(targetOrOptions, 'shadowOptions', { mode: 'open' });
+    context.addInitializer(function () {
+        annotateElementMetadata(this, 'shadowOptions', { mode: 'open' });
+    });
 }
-function containerless(target) {
+function containerless(target, context) {
     if (target === void 0) {
-        return function ($target) {
-            markContainerless($target);
+        return function ($target, $context) {
+            $context.addInitializer(function () {
+                markContainerless($target);
+            });
         };
     }
-    markContainerless(target);
+    context.addInitializer(function () {
+        markContainerless(target);
+    });
 }
 /** Manipulates the `containerless` property of the custom element definition for the type, when present else it annotates the type. */
 function markContainerless(target) {
-    const def = getOwnMetadata(elementBaseName, target);
+    const def = getMetadata(elementBaseName, target);
     if (def === void 0) {
         annotateElementMetadata(target, 'containerless', true);
         return;
@@ -5590,6 +6261,7 @@ class CustomElementDefinition {
         this.processContent = processContent;
     }
     static create(nameOrDef, Type = null) {
+        // TODO(Sayan): aggregate the info from decorator metadata instead of using the Reflect API
         if (Type === null) {
             const def = nameOrDef;
             if (isString(def)) {
@@ -5605,19 +6277,19 @@ class CustomElementDefinition {
             else {
                 Type = generateElementType(kernel.pascalCase(name));
             }
-            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromDefinitionOrDefault('capture', def, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(Type, def.bindables), kernel.fromDefinitionOrDefault('containerless', def, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, name, kernel.mergeArrays(def.aliases), kernel.fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), kernel.fromDefinitionOrDefault('cache', def, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', def, Type, returnFalse), kernel.fromDefinitionOrDefault('template', def, returnNull), kernel.mergeArrays(def.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), def.dependencies), kernel.fromDefinitionOrDefault('injectable', def, returnNull), kernel.fromDefinitionOrDefault('needsCompile', def, returnTrue), kernel.mergeArrays(def.surrogates), Bindable.from(getElementAnnotation(Type, 'bindables'), def.bindables), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', def, Type, returnFalse), kernel.fromDefinitionOrDefault('shadowOptions', def, returnNull), kernel.fromDefinitionOrDefault('hasSlots', def, returnFalse), kernel.fromDefinitionOrDefault('enhance', def, returnFalse), kernel.fromDefinitionOrDefault('watches', def, returnEmptyArray), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // If a type is passed in, we ignore the Type property on the definition if it exists.
         // TODO: document this behavior
         if (isString(nameOrDef)) {
-            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getDefinitions(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('cache', Type, returnZero), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getDefinitions(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // This is the typical default behavior, e.g. from regular CustomElement.define invocations or from @customElement deco
         // The ViewValueConverter also uses this signature and passes in a definition where everything except for the 'hooks'
         // property needs to be copied. So we have that exception for 'hooks', but we may need to revisit that default behavior
         // if this turns out to be too opinionated.
         const name = kernel.fromDefinitionOrDefault('name', nameOrDef, generateElementName);
-        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(Type, ...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getDefinitions(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
+        return new CustomElementDefinition(Type, name, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), kernel.mergeArrays(nameOrDef.watches, Watch.getDefinitions(Type), Type.watches), kernel.fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
     }
     static getOrCreate(partialDefinition) {
         if (partialDefinition instanceof CustomElementDefinition) {
@@ -5629,7 +6301,7 @@ class CustomElementDefinition {
         const definition = CustomElementDefinition.create(partialDefinition);
         definitionLookup.set(partialDefinition, definition);
         // Make sure the full definition can be retrieved from dynamically created classes as well
-        defineMetadata(elementBaseName, definition, definition.Type);
+        defineMetadata(definition, definition.Type, elementBaseName);
         return definition;
     }
     register(container, aliasName) {
@@ -5666,21 +6338,21 @@ const getElementKeyFrom = (name) => `${elementBaseName}:${name}`;
 /** @internal */
 const generateElementName = /*@__PURE__*/ (id => () => `unnamed-${++id}`)(0);
 const annotateElementMetadata = (Type, prop, value) => {
-    defineMetadata(getAnnotationKeyFor(prop), value, Type);
+    defineMetadata(value, Type, getAnnotationKeyFor(prop));
 };
 /** @internal */
 const defineElement = (nameOrDef, Type) => {
     const definition = CustomElementDefinition.create(nameOrDef, Type);
     const $Type = definition.Type;
-    defineMetadata(elementBaseName, definition, $Type);
-    // a requirement for the resource system in kernel
-    defineMetadata(kernel.resourceBaseName, definition, $Type);
+    // this is the case, where the APi is invoked directly without a decorator
+    // registration of resource name is a requirement for the resource system in kernel (module-loader)
+    defineMetadata(definition, $Type, elementBaseName, kernel.resourceBaseName);
     return $Type;
 };
 /** @internal */
 const isElementType = (value) => {
     return isFunction(value)
-        && (hasOwnMetadata(elementBaseName, value)
+        && (hasMetadata(elementBaseName, value)
             || value.$au?.type === elementTypeName);
 };
 /** @internal */
@@ -5733,11 +6405,11 @@ const findElementControllerFor = (node, opts = defaultForOpts) => {
     }
     throw createMappedError(765 /* ErrorNames.node_is_not_part_of_aurelia_app2 */, node);
 };
-const getElementAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const getElementAnnotation = (Type, prop) => getMetadata(getAnnotationKeyFor(prop), Type);
 /** @internal */
 // eslint-disable-next-line @typescript-eslint/ban-types
 const getElementDefinition = (Type) => {
-    const def = getOwnMetadata(elementBaseName, Type)
+    const def = getMetadata(elementBaseName, Type)
         ?? getDefinitionFromStaticAu(Type, elementTypeName, CustomElementDefinition.create);
     if (def == null) {
         throw createMappedError(760 /* ErrorNames.element_def_not_found */, Type);
@@ -5746,23 +6418,28 @@ const getElementDefinition = (Type) => {
 };
 /** @internal */
 const createElementInjectable = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const $injectable = function (target, property, index) {
-        const annotationParamtypes = kernel.DI.getOrCreateAnnotationParamTypes(target);
-        annotationParamtypes[index] = $injectable;
-        return target;
-    };
-    $injectable.register = () => ({
-        $isResolver: true,
-        resolve(container, requestor) {
-            if (requestor.has($injectable, true)) {
-                return requestor.get($injectable);
-            }
-            else {
-                return null;
-            }
+    const $injectable = {
+        // Old code is kept around. Needs to be refactored when TC39 supports argument decorator.
+        // function(target: Injectable | AbstractInjectable, property: string | symbol | undefined, index?: number): Injectable | AbstractInjectable {
+        //   const annotationParamtypes = DI.getOrCreateAnnotationParamTypes(target as Constructable);
+        //   annotationParamtypes[index!] = $injectable;
+        //   return target;
+        // },
+        $isInterface: false,
+        register() {
+            return {
+                $isResolver: true,
+                resolve(container, requestor) {
+                    if (requestor.has($injectable, true)) {
+                        return requestor.get($injectable);
+                    }
+                    else {
+                        return null;
+                    }
+                }
+            };
         }
-    });
+    };
     return $injectable;
 };
 /** @internal */
@@ -5806,45 +6483,51 @@ const CustomElement = objectFreeze({
         const Type = c.find(elementTypeName, name);
         return Type == null
             ? null
-            : getOwnMetadata(elementBaseName, Type) ?? getDefinitionFromStaticAu(Type, elementTypeName, CustomElementDefinition.create) ?? null;
+            : getMetadata(elementBaseName, Type) ?? getDefinitionFromStaticAu(Type, elementTypeName, CustomElementDefinition.create) ?? null;
     }
 });
 const pcHookMetadataProperty = /*@__PURE__*/ getAnnotationKeyFor('processContent');
 function processContent(hook) {
     return hook === void 0
-        ? function (target, propertyKey, _descriptor) {
-            defineMetadata(pcHookMetadataProperty, ensureHook(target, propertyKey), target);
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        ? function (target, context) {
+            if (!context.static || context.kind !== 'method')
+                throw createMappedError(766 /* ErrorNames.invalid_process_content_hook */, target);
+            // As the method is ensured to be static, the following initializer will be invoked in static fashion, before executing the initializers added via a class decorator.
+            // Refer: https://tinyurl.com/ts-static-method-deco
+            context.addInitializer(function () {
+                defineMetadata(target, this, pcHookMetadataProperty);
+            });
         }
-        : function (target) {
-            hook = ensureHook(target, hook);
-            const def = getOwnMetadata(elementBaseName, target);
-            if (def !== void 0) {
-                def.processContent = hook;
-            }
-            else {
-                defineMetadata(pcHookMetadataProperty, hook, target);
-            }
+        : function (target, context) {
+            context.addInitializer(function () {
+                if (isString(hook) || isSymbol(hook)) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-explicit-any
+                    hook = this[hook];
+                }
+                if (!isFunction(hook))
+                    throw createMappedError(766 /* ErrorNames.invalid_process_content_hook */, hook);
+                const def = getMetadata(elementBaseName, this);
+                if (def !== void 0) {
+                    def.processContent = hook;
+                }
+                else {
+                    defineMetadata(hook, this, pcHookMetadataProperty);
+                }
+            });
             return target;
         };
 }
-function ensureHook(target, hook) {
-    if (isString(hook)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-explicit-any
-        hook = target[hook];
-    }
-    if (!isFunction(hook)) {
-        throw createMappedError(766 /* ErrorNames.invalid_process_content_hook */, hook);
-    }
-    return hook;
-}
 function capture(targetOrFilter) {
-    return function ($target) {
+    return function ($target, context) {
         const value = isFunction(targetOrFilter) ? targetOrFilter : true;
-        annotateElementMetadata($target, 'capture', value);
-        // also do this to make order of the decorator irrelevant
-        if (isElementType($target)) {
-            getElementDefinition($target).capture = value;
-        }
+        context.addInitializer(function () {
+            annotateElementMetadata(this, 'capture', value);
+            // also do this to make order of the decorator irrelevant
+            if (isElementType(this)) {
+                getElementDefinition(this).capture = value;
+            }
+        });
     };
 }
 
@@ -6486,18 +7169,19 @@ const AttributePattern = objectFreeze({
     getPatternDefinitions: getAllPatternDefinitions,
     findAll: (container) => container.root.getAll(IAttributePattern),
 });
-exports.DotSeparatedAttributePattern = class DotSeparatedAttributePattern {
+class DotSeparatedAttributePattern {
     'PART.PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], parts[1]);
     }
     'PART.PART.PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, `${parts[0]}.${parts[1]}`, parts[2]);
     }
-};
-exports.DotSeparatedAttributePattern = __decorate([
-    attributePattern({ pattern: 'PART.PART', symbols: '.' }, { pattern: 'PART.PART.PART', symbols: '.' })
-], exports.DotSeparatedAttributePattern);
-exports.RefAttributePattern = class RefAttributePattern {
+}
+AttributePattern.define([
+    { pattern: 'PART.PART', symbols: '.' },
+    { pattern: 'PART.PART.PART', symbols: '.' }
+], DotSeparatedAttributePattern);
+class RefAttributePattern {
     'ref'(rawName, rawValue, _parts) {
         return new AttrSyntax(rawName, rawValue, 'element', 'ref');
     }
@@ -6513,52 +7197,54 @@ exports.RefAttributePattern = class RefAttributePattern {
         }
         return new AttrSyntax(rawName, rawValue, target, 'ref');
     }
-};
-exports.RefAttributePattern = __decorate([
-    attributePattern({ pattern: 'ref', symbols: '' }, { pattern: 'PART.ref', symbols: '.' })
-], exports.RefAttributePattern);
-let EventAttributePattern = class EventAttributePattern {
+}
+AttributePattern.define([
+    { pattern: 'ref', symbols: '' },
+    { pattern: 'PART.ref', symbols: '.' }
+], RefAttributePattern);
+class EventAttributePattern {
     'PART.trigger:PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', parts);
     }
     'PART.capture:PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'capture', parts);
     }
-};
-EventAttributePattern = __decorate([
-    attributePattern({ pattern: 'PART.trigger:PART', symbols: '.:' }, { pattern: 'PART.capture:PART', symbols: '.:' })
+}
+AttributePattern.define([
+    { pattern: 'PART.trigger:PART', symbols: '.:' },
+    { pattern: 'PART.capture:PART', symbols: '.:' },
 ], EventAttributePattern);
-exports.ColonPrefixedBindAttributePattern = class ColonPrefixedBindAttributePattern {
+class ColonPrefixedBindAttributePattern {
     ':PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'bind');
     }
-};
-exports.ColonPrefixedBindAttributePattern = __decorate([
-    attributePattern({ pattern: ':PART', symbols: ':' })
-], exports.ColonPrefixedBindAttributePattern);
-exports.AtPrefixedTriggerAttributePattern = class AtPrefixedTriggerAttributePattern {
+}
+AttributePattern.define([{ pattern: ':PART', symbols: ':' }], ColonPrefixedBindAttributePattern);
+class AtPrefixedTriggerAttributePattern {
     '@PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger');
     }
     '@PART:PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', [parts[0], 'trigger', ...parts.slice(1)]);
     }
-};
-exports.AtPrefixedTriggerAttributePattern = __decorate([
-    attributePattern({ pattern: '@PART', symbols: '@' }, { pattern: '@PART:PART', symbols: '@:' })
-], exports.AtPrefixedTriggerAttributePattern);
-let SpreadAttributePattern = class SpreadAttributePattern {
+}
+AttributePattern.define([
+    { pattern: '@PART', symbols: '@' },
+    { pattern: '@PART:PART', symbols: '@:' },
+], AtPrefixedTriggerAttributePattern);
+class SpreadAttributePattern {
     '...$attrs'(rawName, rawValue, _parts) {
         return new AttrSyntax(rawName, rawValue, '', '...$attrs');
     }
-};
-SpreadAttributePattern = __decorate([
-    attributePattern({ pattern: '...$attrs', symbols: '' })
-], SpreadAttributePattern);
+}
+AttributePattern.define([{ pattern: '...$attrs', symbols: '' }], SpreadAttributePattern);
 
 function bindingCommand(nameOrDefinition) {
-    return function (target) {
-        return BindingCommand.define(nameOrDefinition, target);
+    return function (target, context) {
+        context.addInitializer(function () {
+            BindingCommand.define(nameOrDefinition, target);
+        });
+        return target;
     };
 }
 class BindingCommandDefinition {
@@ -6597,7 +7283,7 @@ class BindingCommandDefinition {
 const bindingCommandTypeName = 'binding-command';
 const cmdBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(bindingCommandTypeName);
 const getCommandKeyFrom = (name) => `${cmdBaseName}:${name}`;
-const getCommandAnnotation = (Type, prop) => getOwnMetadata(getAnnotationKeyFor(prop), Type);
+const getCommandAnnotation = (Type, prop) => getMetadata(getAnnotationKeyFor(prop), Type);
 const BindingCommand = objectFreeze({
     name: cmdBaseName,
     keyFrom: getCommandKeyFrom,
@@ -6607,9 +7293,8 @@ const BindingCommand = objectFreeze({
     define(nameOrDef, Type) {
         const definition = BindingCommandDefinition.create(nameOrDef, Type);
         const $Type = definition.Type;
-        defineMetadata(cmdBaseName, definition, $Type);
-        // a requirement for the resource system in kernel
-        defineMetadata(kernel.resourceBaseName, definition, $Type);
+        // registration of resource name is a requirement for the resource system in kernel (module-loader)
+        defineMetadata(definition, $Type, cmdBaseName, kernel.resourceBaseName);
         return $Type;
     },
     getAnnotation: getCommandAnnotation,
@@ -6617,7 +7302,7 @@ const BindingCommand = objectFreeze({
         const Type = container.find(bindingCommandTypeName, name);
         return Type == null
             ? null
-            : getOwnMetadata(cmdBaseName, Type) ?? getDefinitionFromStaticAu(Type, bindingCommandTypeName, BindingCommandDefinition.create) ?? null;
+            : getMetadata(cmdBaseName, Type) ?? getDefinitionFromStaticAu(Type, bindingCommandTypeName, BindingCommandDefinition.create) ?? null;
     },
     get(container, name) {
         {
@@ -8417,7 +9102,6 @@ Else.$au = {
     name: 'else',
     isTemplateController: true,
 };
-// templateController({ name: 'else' })(Else);
 
 function dispose(disposable) {
     disposable.dispose();
@@ -8484,7 +9168,7 @@ class Repeat {
         this._refreshCollectionObserver();
         const dec = forOf.declaration;
         if (!(this._hasDestructuredLocal = dec.$kind === 'ArrayDestructuring' || dec.$kind === 'ObjectDestructuring')) {
-            this.local = runtime.astEvaluate(dec, this.$controller.scope, binding, null);
+            this.local = astEvaluate(dec, this.$controller.scope, binding, null);
         }
     }
     attaching(initiator, _parent) {
@@ -8518,7 +9202,7 @@ class Repeat {
                 return;
             }
             this._reevaluating = true;
-            this.items = runtime.astEvaluate(this.forOf.iterable, $controller.scope, this._forOfBinding, null);
+            this.items = astEvaluate(this.forOf.iterable, $controller.scope, this._forOfBinding, null);
             this._reevaluating = false;
             return;
         }
@@ -8553,7 +9237,7 @@ class Repeat {
                 if (hasDestructuredLocal) {
                     for (i = 0; i < oldLen; ++i) {
                         indexMap.deletedIndices.push(i);
-                        indexMap.deletedItems.push(runtime.astEvaluate(dec, oldViews[i].scope, binding, null));
+                        indexMap.deletedItems.push(astEvaluate(dec, oldViews[i].scope, binding, null));
                     }
                 }
                 else {
@@ -8567,7 +9251,7 @@ class Repeat {
                 const oldItems = Array(oldLen);
                 if (hasDestructuredLocal) {
                     for (i = 0; i < oldLen; ++i) {
-                        oldItems[i] = runtime.astEvaluate(dec, oldViews[i].scope, binding, null);
+                        oldItems[i] = astEvaluate(dec, oldViews[i].scope, binding, null);
                     }
                 }
                 else {
@@ -8719,7 +9403,7 @@ class Repeat {
         let observingInnerItems = this._observingInnerItems;
         let newObserver;
         if (observingInnerItems) {
-            innerItems = this._innerItems = runtime.astEvaluate(this._innerItemsExpression, scope, this._forOfBinding, null) ?? null;
+            innerItems = this._innerItems = astEvaluate(this._innerItemsExpression, scope, this._forOfBinding, null) ?? null;
             observingInnerItems = this._observingInnerItems = !areEqual(this.items, innerItems);
         }
         const oldObserver = this._observer;
@@ -8873,7 +9557,7 @@ class Repeat {
             }
             else if (j < 0 || seqLen === 1 || i !== seq[j]) {
                 if (_hasDestructuredLocal) {
-                    runtime.astAssign(dec, view.scope, _forOfBinding, _normalizedItems[i]);
+                    astAssign(dec, view.scope, _forOfBinding, _normalizedItems[i]);
                 }
                 else {
                     view.scope.bindingContext[local] = _normalizedItems[i];
@@ -8883,7 +9567,7 @@ class Repeat {
             }
             else {
                 if (_hasDestructuredLocal) {
-                    runtime.astAssign(dec, view.scope, _forOfBinding, _normalizedItems[i]);
+                    astAssign(dec, view.scope, _forOfBinding, _normalizedItems[i]);
                 }
                 else {
                     view.scope.bindingContext[local] = _normalizedItems[i];
@@ -8921,7 +9605,7 @@ Repeat.$au = {
     isTemplateController: true,
     bindables: ['items'],
 };
-/** @internal */ Repeat.inject = [IInstruction, runtime.IExpressionParser, IRenderLocation, IController, IViewFactory];
+/** @internal */ Repeat.inject = [IInstruction, expressionParser.IExpressionParser, IRenderLocation, IController, IViewFactory];
 let maxLen = 16;
 let prevIndices = new Int32Array(maxLen);
 let tailIndices = new Int32Array(maxLen);
@@ -9055,7 +9739,7 @@ const getKeyValue = (keyMap, key, item, scope, binding) => {
             value = item[key];
         }
         else {
-            value = runtime.astEvaluate(key, scope, binding, null);
+            value = astEvaluate(key, scope, binding, null);
         }
         keyMap.set(item, value);
     }
@@ -9065,7 +9749,7 @@ const getScope = (scopeMap, item, forOf, parentScope, binding, local, hasDestruc
     let scope = scopeMap.get(item);
     if (scope === void 0) {
         if (hasDestructuredLocal) {
-            runtime.astAssign(forOf.declaration, scope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext()), binding, item);
+            astAssign(forOf.declaration, scope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext()), binding, item);
         }
         else {
             scope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext(local, item));
@@ -9134,7 +9818,6 @@ With.$au = {
     bindables: ['value'],
 };
 
-var _a, _b;
 class Switch {
     constructor() {
         /** @internal */
@@ -9400,20 +10083,7 @@ class Case {
         return this.view?.accept(visitor);
     }
 }
-Case.$au = {
-    type: 'custom-attribute',
-    name: 'case',
-    isTemplateController: true,
-    bindables: ['value', { name: 'fallThrough', mode: oneTime, set(v) {
-                switch (v) {
-                    case 'true': return true;
-                    case 'false': return false;
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    default: return !!v;
-                }
-            } }]
-};
-class DefaultCase extends (_b = Case) {
+class DefaultCase extends Case {
     linkToSwitch($switch) {
         if ($switch.defaultCase !== void 0) {
             throw createMappedError(816 /* ErrorNames.switch_no_multiple_default */);
@@ -9421,12 +10091,29 @@ class DefaultCase extends (_b = Case) {
         $switch.defaultCase = this;
     }
 }
-_a = DefaultCase;
-DefaultCase.$au = {
-    ...Reflect.get(_b, "$au", _a),
-    name: 'default-case',
-    bindables: ['value']
-};
+// Notes:
+// - The usage of $au is intentionally avoided here.
+//   Once the 'case' TC is defined, the TC definition is put to the Class[Symbol.metadata], that is implicitly inherited by the 'default-case' TC.
+//   Thus, when resolving the definition, the definition from the 'case' TC is found and used, rendering the $au property not-useful.
+// - The order of the 'case' and 'default-case' TC definitions is important also because of above said reason.
+//   We want to deliberately define the 'case' TC second, so that the 'default-case' cannot inherit the metadata.
+const bindables = [
+    'value',
+    {
+        name: 'fallThrough',
+        mode: oneTime,
+        set(v) {
+            switch (v) {
+                case 'true': return true;
+                case 'false': return false;
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                default: return !!v;
+            }
+        }
+    }
+];
+defineAttribute({ name: 'default-case', bindables, isTemplateController: true }, DefaultCase);
+defineAttribute({ name: 'case', bindables, isTemplateController: true }, Case);
 
 class PromiseTemplateController {
     constructor() {
@@ -9569,7 +10256,7 @@ class PendingTemplateController {
     }
 }
 PendingTemplateController.$au = {
-    type: 'custom-attribute',
+    type: attrTypeName,
     name: 'pending',
     isTemplateController: true,
     bindables: {
@@ -9612,7 +10299,7 @@ class FulfilledTemplateController {
     }
 }
 FulfilledTemplateController.$au = {
-    type: 'custom-attribute',
+    type: attrTypeName,
     name: 'then',
     isTemplateController: true,
     bindables: {
@@ -9655,7 +10342,7 @@ class RejectedTemplateController {
     }
 }
 RejectedTemplateController.$au = {
-    type: 'custom-attribute',
+    type: attrTypeName,
     name: 'catch',
     isTemplateController: true,
     bindables: {
@@ -9670,30 +10357,24 @@ function getPromiseController(controller) {
     }
     throw createMappedError(813 /* ErrorNames.promise_invalid_usage */);
 }
-let PromiseAttributePattern = class PromiseAttributePattern {
+class PromiseAttributePattern {
     'promise.resolve'(name, value) {
         return new AttrSyntax(name, value, 'promise', 'bind');
     }
-};
-PromiseAttributePattern = __decorate([
-    attributePattern({ pattern: 'promise.resolve', symbols: '' })
-], PromiseAttributePattern);
-let FulfilledAttributePattern = class FulfilledAttributePattern {
+}
+AttributePattern.define([{ pattern: 'promise.resolve', symbols: '' }], PromiseAttributePattern);
+class FulfilledAttributePattern {
     'then'(name, value) {
         return new AttrSyntax(name, value, 'then', 'from-view');
     }
-};
-FulfilledAttributePattern = __decorate([
-    attributePattern({ pattern: 'then', symbols: '' })
-], FulfilledAttributePattern);
-let RejectedAttributePattern = class RejectedAttributePattern {
+}
+AttributePattern.define([{ pattern: 'then', symbols: '' }], FulfilledAttributePattern);
+class RejectedAttributePattern {
     'catch'(name, value) {
         return new AttrSyntax(name, value, 'catch', 'from-view');
     }
-};
-RejectedAttributePattern = __decorate([
-    attributePattern({ pattern: 'catch', symbols: '' })
-], RejectedAttributePattern);
+}
+AttributePattern.define([{ pattern: 'catch', symbols: '' }], RejectedAttributePattern);
 
 /**
  * Focus attribute for element focus binding
@@ -10016,7 +10697,6 @@ Portal.$au = {
     //   strict: true
     // }
 };
-// templateController('portal')(Portal);
 
 let emptyTemplate;
 class AuSlot {
@@ -10245,7 +10925,6 @@ const isMutationWithinLocation = (location, records) => {
 // Desired usage:
 // <au-component template.bind="Promise<string>" component.bind="" model.bind="" />
 // <au-component template.bind="<string>" model.bind="" />
-//
 class AuCompose {
     constructor() {
         /**
@@ -10271,10 +10950,10 @@ class AuCompose {
         /** @internal */ this._platform = kernel.resolve(IPlatform);
         /** @internal */ this._rendering = kernel.resolve(IRendering);
         /** @internal */ this._instruction = kernel.resolve(IInstruction);
-        /** @internal */ this._contextFactory = kernel.resolve(kernel.transient(CompositionContextFactory));
+        /** @internal */ this._contextFactory = kernel.resolve(kernel.transient(CompositionContextFactory, null));
         /** @internal */ this._compiler = kernel.resolve(ITemplateCompiler);
         /** @internal */ this._hydrationContext = kernel.resolve(IHydrationContext);
-        /** @internal */ this._exprParser = kernel.resolve(runtime.IExpressionParser);
+        /** @internal */ this._exprParser = kernel.resolve(expressionParser.IExpressionParser);
         /** @internal */ this._observerLocator = kernel.resolve(runtime.IObserverLocator);
     }
     get composing() {
@@ -10485,8 +11164,8 @@ class AuCompose {
         const Ctor = (isFunction(component)
             ? component
             : component?.constructor);
-        return CustomElement.isType(Ctor)
-            ? CustomElement.getDefinition(Ctor)
+        return CustomElement.isType(Ctor, void 0)
+            ? CustomElement.getDefinition(Ctor, null)
             : null;
     }
     /** @internal */
@@ -11153,7 +11832,7 @@ class TemplateCompiler {
                         `Did you mean ${realAttrTarget}.bind="${realAttrValue}"?`);
                 }
             }
-            letInstructions.push(new LetBindingInstruction(expr === null ? new runtime.PrimitiveLiteralExpression(realAttrValue) : expr, kernel.camelCase(realAttrTarget)));
+            letInstructions.push(new LetBindingInstruction(expr === null ? new expressionParser.PrimitiveLiteralExpression(realAttrValue) : expr, kernel.camelCase(realAttrTarget)));
         }
         context.rows.push([new HydrateLetElementInstruction(letInstructions, toBindingContext)]);
         // probably no need to replace
@@ -12123,7 +12802,7 @@ class CompilationContext {
         this._templateFactory = hasParent ? parent._templateFactory : container.get(ITemplateElementFactory);
         // todo: attr parser should be retrieved based in resource semantic (current leaf + root + ignore parent)
         this._attrParser = hasParent ? parent._attrParser : container.get(IAttributeParser);
-        this._exprParser = hasParent ? parent._exprParser : container.get(runtime.IExpressionParser);
+        this._exprParser = hasParent ? parent._exprParser : container.get(expressionParser.IExpressionParser);
         this._attrMapper = hasParent ? parent._attrMapper : container.get(IAttrMapper);
         this._logger = hasParent ? parent._logger : container.get(kernel.ILogger);
         this.p = hasParent ? parent.p : container.get(IPlatform);
@@ -12172,11 +12851,6 @@ class CompilationContext {
     _createChild(instructions) {
         return new CompilationContext(this.def, this.c, this.ci, this, this.root, instructions);
     }
-    // // todo: ideally binding command shouldn't have to be cached
-    // // it can just be a singleton where it' retrieved
-    // // the resources semantic should be defined by the resource itself,
-    // // rather than baked in the container
-    // private readonly _commands: Record<string, BindingCommandInstance | null | undefined> = createLookup();
     /**
      * Retrieve a binding command resource instance.
      *
@@ -12190,23 +12864,6 @@ class CompilationContext {
             return null;
         }
         return this._resourceResolver.command(this.c, name);
-        //   if (this.root !== this) {
-        //     return this.root._createCommand(syntax);
-        //   }
-        //   const name = syntax.command;
-        //   if (name === null) {
-        //     return null;
-        //   }
-        //   let result = this._commands[name];
-        //   let commandDef: BindingCommandDefinition | null;
-        //   if (result === void 0) {
-        //     commandDef = BindingCommand.find(this.c, name);
-        //     if (commandDef == null) {
-        //       throw createMappedError(ErrorNames.compiler_unknown_binding_command, name);
-        //     }
-        //     this._commands[name] = result = BindingCommand.get(this.c, name);
-        //   }
-        //   return result;
     }
 }
 const hasInlineBindings = (rawValue) => {
@@ -12287,11 +12944,11 @@ const IBindablesInfoResolver = /*@__PURE__*/ createInterface('IBindablesInfoReso
                     else if (!hasPrimary && primary == null) {
                         primary = bindable;
                     }
-                    attrs[attr] = BindableDefinition.create(prop, def.Type, bindable);
+                    attrs[attr] = BindableDefinition.create(prop, bindable);
                 }
                 if (bindable == null && def.kind === 'attribute') {
                     // if no bindables are present, default to "value"
-                    primary = attrs.value = BindableDefinition.create('value', def.Type, { mode: def.defaultBindingMode != null ? def.defaultBindingMode : defaultMode });
+                    primary = attrs.value = BindableDefinition.create('value', { mode: def.defaultBindingMode != null ? def.defaultBindingMode : defaultMode });
                 }
                 this._cache.set(def, info = new BindablesInfo(attrs, bindables, primary ?? null));
             }
@@ -12415,7 +13072,7 @@ const TemplateCompilerHooks = objectFreeze({
  */
 /* eslint-disable */
 // deepscan-disable-next-line
-const templateCompilerHooks = (target) => {
+const templateCompilerHooks = (target, _context) => {
     return target === void 0 ? decorator : decorator(target);
     function decorator(t) {
         return TemplateCompilerHooks.define(t);
@@ -12496,8 +13153,8 @@ const DefaultComponents = [
  * - `target.command` (dot-separated)
  */
 const DefaultBindingSyntax = [
-    exports.RefAttributePattern,
-    exports.DotSeparatedAttributePattern,
+    RefAttributePattern,
+    DotSeparatedAttributePattern,
     SpreadAttributePattern,
     EventAttributePattern,
     EventModifierRegistration,
@@ -12508,8 +13165,8 @@ const DefaultBindingSyntax = [
  * - `:target` (short-hand for `target.bind`)
  */
 const ShortHandBindingSyntax = [
-    exports.AtPrefixedTriggerAttributePattern,
-    exports.ColonPrefixedBindAttributePattern
+    AtPrefixedTriggerAttributePattern,
+    ColonPrefixedBindAttributePattern
 ];
 /**
  * Default HTML-specific (but environment-agnostic) binding commands:
@@ -12591,23 +13248,23 @@ const DefaultResources = [
  * - TextBinding: `${}`
  */
 const DefaultRenderers = [
-    exports.PropertyBindingRenderer,
-    exports.IteratorBindingRenderer,
-    exports.RefBindingRenderer,
-    exports.InterpolationBindingRenderer,
-    exports.SetPropertyRenderer,
-    exports.CustomElementRenderer,
-    exports.CustomAttributeRenderer,
-    exports.TemplateControllerRenderer,
-    exports.LetElementRenderer,
-    exports.ListenerBindingRenderer,
-    exports.AttributeBindingRenderer,
-    exports.SetAttributeRenderer,
-    exports.SetClassAttributeRenderer,
-    exports.SetStyleAttributeRenderer,
-    exports.StylePropertyBindingRenderer,
-    exports.TextBindingRenderer,
-    exports.SpreadRenderer,
+    PropertyBindingRenderer,
+    IteratorBindingRenderer,
+    RefBindingRenderer,
+    InterpolationBindingRenderer,
+    SetPropertyRenderer,
+    CustomElementRenderer,
+    CustomAttributeRenderer,
+    TemplateControllerRenderer,
+    LetElementRenderer,
+    ListenerBindingRenderer,
+    AttributeBindingRenderer,
+    SetAttributeRenderer,
+    SetClassAttributeRenderer,
+    SetStyleAttributeRenderer,
+    StylePropertyBindingRenderer,
+    TextBindingRenderer,
+    SpreadRenderer,
 ];
 const StandardConfiguration = /*@__PURE__*/ createConfiguration(kernel.noop);
 function createConfiguration(optionsProvider) {
@@ -12639,38 +13296,28 @@ function createConfiguration(optionsProvider) {
     };
 }
 
-function children(configOrTarget, prop) {
+function children(configOrTarget, context) {
     if (!mixed) {
         mixed = true;
         runtime.subscriberCollection(ChildrenBinding);
-        lifecycleHooks()(ChildrenLifecycleHooks);
+        lifecycleHooks()(ChildrenLifecycleHooks, null);
     }
     let config;
-    const dependenciesKey = 'dependencies';
-    function decorator($target, $prop, desc) {
-        if (arguments.length > 1) {
-            // Non invocation:
-            // - @children
-            // Invocation with or w/o opts:
-            // - @children()
-            // - @children({...opts})
-            config.name = $prop;
+    const dependenciesKey = getAnnotationKeyFor('dependencies');
+    function decorator(_target, context) {
+        switch (context.kind) {
+            case 'field':
+                config.name = context.name;
+                break;
         }
-        if (typeof $target === 'function' || typeof desc?.value !== 'undefined') {
-            throw createMappedError(9991 /* ErrorNames.children_decorator_invalid_usage */);
-        }
-        const target = $target.constructor;
-        let dependencies = CustomElement.getAnnotation(target, dependenciesKey);
-        if (dependencies == null) {
-            CustomElement.annotate(target, dependenciesKey, dependencies = []);
-        }
+        const dependencies = (context.metadata[dependenciesKey] ??= []);
         dependencies.push(new ChildrenLifecycleHooks(config));
     }
     if (arguments.length > 1) {
         // Non invocation:
         // - @children
         config = {};
-        decorator(configOrTarget, prop);
+        decorator(configOrTarget, context);
         return;
     }
     else if (isString(configOrTarget)) {
@@ -12807,11 +13454,13 @@ let mixed = false;
 exports.AdoptedStyleSheetsStyles = AdoptedStyleSheetsStyles;
 exports.AppRoot = AppRoot;
 exports.AppTask = AppTask;
+exports.AtPrefixedTriggerAttributePattern = AtPrefixedTriggerAttributePattern;
 exports.AttrBindingBehavior = AttrBindingBehavior;
 exports.AttrBindingCommand = AttrBindingCommand;
 exports.AttrSyntax = AttrSyntax;
 exports.AttributeBinding = AttributeBinding;
 exports.AttributeBindingInstruction = AttributeBindingInstruction;
+exports.AttributeBindingRenderer = AttributeBindingRenderer;
 exports.AttributeNSAccessor = AttributeNSAccessor;
 exports.AttributePattern = AttributePattern;
 exports.AuCompose = AuCompose;
@@ -12834,13 +13483,16 @@ exports.CheckedObserver = CheckedObserver;
 exports.ChildrenBinding = ChildrenBinding;
 exports.ClassAttributeAccessor = ClassAttributeAccessor;
 exports.ClassBindingCommand = ClassBindingCommand;
+exports.ColonPrefixedBindAttributePattern = ColonPrefixedBindAttributePattern;
 exports.ComputedWatcher = ComputedWatcher;
 exports.ContentBinding = ContentBinding;
 exports.Controller = Controller;
 exports.CustomAttribute = CustomAttribute;
 exports.CustomAttributeDefinition = CustomAttributeDefinition;
+exports.CustomAttributeRenderer = CustomAttributeRenderer;
 exports.CustomElement = CustomElement;
 exports.CustomElementDefinition = CustomElementDefinition;
+exports.CustomElementRenderer = CustomElementRenderer;
 exports.DataAttributeAccessor = DataAttributeAccessor;
 exports.DebounceBindingBehavior = DebounceBindingBehavior;
 exports.DefaultBindingCommand = DefaultBindingCommand;
@@ -12850,6 +13502,7 @@ exports.DefaultCase = DefaultCase;
 exports.DefaultComponents = DefaultComponents;
 exports.DefaultRenderers = DefaultRenderers;
 exports.DefaultResources = DefaultResources;
+exports.DotSeparatedAttributePattern = DotSeparatedAttributePattern;
 exports.Else = Else;
 exports.EventModifier = EventModifier;
 exports.EventModifierRegistration = EventModifierRegistration;
@@ -12896,6 +13549,7 @@ exports.ISanitizer = ISanitizer;
 exports.IShadowDOMGlobalStyles = IShadowDOMGlobalStyles;
 exports.IShadowDOMStyleFactory = IShadowDOMStyleFactory;
 exports.IShadowDOMStyles = IShadowDOMStyles;
+exports.ISignaler = ISignaler;
 exports.ISyntaxInterpreter = ISyntaxInterpreter;
 exports.ITemplateCompiler = ITemplateCompiler;
 exports.ITemplateCompilerHooks = ITemplateCompilerHooks;
@@ -12905,18 +13559,22 @@ exports.IWindow = IWindow;
 exports.If = If;
 exports.InstructionType = InstructionType;
 exports.InterpolationBinding = InterpolationBinding;
+exports.InterpolationBindingRenderer = InterpolationBindingRenderer;
 exports.InterpolationInstruction = InterpolationInstruction;
 exports.InterpolationPartBinding = InterpolationPartBinding;
 exports.Interpretation = Interpretation;
 exports.IteratorBindingInstruction = IteratorBindingInstruction;
+exports.IteratorBindingRenderer = IteratorBindingRenderer;
 exports.LetBinding = LetBinding;
 exports.LetBindingInstruction = LetBindingInstruction;
+exports.LetElementRenderer = LetElementRenderer;
 exports.LifecycleHooks = LifecycleHooks;
 exports.LifecycleHooksDefinition = LifecycleHooksDefinition;
 exports.LifecycleHooksEntry = LifecycleHooksEntry;
 exports.ListenerBinding = ListenerBinding;
 exports.ListenerBindingInstruction = ListenerBindingInstruction;
 exports.ListenerBindingOptions = ListenerBindingOptions;
+exports.ListenerBindingRenderer = ListenerBindingRenderer;
 exports.MultiAttrInstruction = MultiAttrInstruction;
 exports.NodeObserverLocator = NodeObserverLocator;
 exports.NoopSVGAnalyzer = NoopSVGAnalyzer;
@@ -12927,8 +13585,11 @@ exports.Portal = Portal;
 exports.PromiseTemplateController = PromiseTemplateController;
 exports.PropertyBinding = PropertyBinding;
 exports.PropertyBindingInstruction = PropertyBindingInstruction;
+exports.PropertyBindingRenderer = PropertyBindingRenderer;
+exports.RefAttributePattern = RefAttributePattern;
 exports.RefBinding = RefBinding;
 exports.RefBindingInstruction = RefBindingInstruction;
+exports.RefBindingRenderer = RefBindingRenderer;
 exports.RejectedTemplateController = RejectedTemplateController;
 exports.Rendering = Rendering;
 exports.Repeat = Repeat;
@@ -12937,14 +13598,19 @@ exports.SanitizeValueConverter = SanitizeValueConverter;
 exports.SelectValueObserver = SelectValueObserver;
 exports.SelfBindingBehavior = SelfBindingBehavior;
 exports.SetAttributeInstruction = SetAttributeInstruction;
+exports.SetAttributeRenderer = SetAttributeRenderer;
 exports.SetClassAttributeInstruction = SetClassAttributeInstruction;
+exports.SetClassAttributeRenderer = SetClassAttributeRenderer;
 exports.SetPropertyInstruction = SetPropertyInstruction;
+exports.SetPropertyRenderer = SetPropertyRenderer;
 exports.SetStyleAttributeInstruction = SetStyleAttributeInstruction;
+exports.SetStyleAttributeRenderer = SetStyleAttributeRenderer;
 exports.ShadowDOMRegistry = ShadowDOMRegistry;
 exports.ShortHandBindingSyntax = ShortHandBindingSyntax;
 exports.SignalBindingBehavior = SignalBindingBehavior;
 exports.SpreadBindingInstruction = SpreadBindingInstruction;
 exports.SpreadElementPropBindingInstruction = SpreadElementPropBindingInstruction;
+exports.SpreadRenderer = SpreadRenderer;
 exports.StandardConfiguration = StandardConfiguration;
 exports.State = State;
 exports.StyleAttributeAccessor = StyleAttributeAccessor;
@@ -12952,10 +13618,13 @@ exports.StyleBindingCommand = StyleBindingCommand;
 exports.StyleConfiguration = StyleConfiguration;
 exports.StyleElementStyles = StyleElementStyles;
 exports.StylePropertyBindingInstruction = StylePropertyBindingInstruction;
+exports.StylePropertyBindingRenderer = StylePropertyBindingRenderer;
 exports.Switch = Switch;
 exports.TemplateCompiler = TemplateCompiler;
 exports.TemplateCompilerHooks = TemplateCompilerHooks;
+exports.TemplateControllerRenderer = TemplateControllerRenderer;
 exports.TextBindingInstruction = TextBindingInstruction;
+exports.TextBindingRenderer = TextBindingRenderer;
 exports.ThrottleBindingBehavior = ThrottleBindingBehavior;
 exports.ToViewBindingBehavior = ToViewBindingBehavior;
 exports.ToViewBindingCommand = ToViewBindingCommand;
@@ -12970,6 +13639,10 @@ exports.ViewFactory = ViewFactory;
 exports.Watch = Watch;
 exports.With = With;
 exports.alias = alias;
+exports.astAssign = astAssign;
+exports.astBind = astBind;
+exports.astEvaluate = astEvaluate;
+exports.astUnbind = astUnbind;
 exports.attributePattern = attributePattern;
 exports.bindable = bindable;
 exports.bindingBehavior = bindingBehavior;

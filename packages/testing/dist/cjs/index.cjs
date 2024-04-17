@@ -1000,24 +1000,24 @@ function createContainer(...e) {
 
 let W;
 
-let J;
+let K;
 
 function isStackOverflowError(e) {
-    if (J === undefined) {
+    if (K === undefined) {
         try {
             function overflowStack() {
                 overflowStack();
             }
             overflowStack();
         } catch (e) {
-            J = e.message;
+            K = e.message;
             W = e.name;
         }
     }
-    return e.name === W && e.message === J;
+    return e.name === W && e.message === K;
 }
 
-const K = g({
+const J = g({
     showHidden: false,
     depth: 2,
     colors: true,
@@ -1032,7 +1032,7 @@ const K = g({
     stylize: stylizeWithColor
 });
 
-const G = p(K);
+const G = p(J);
 
 function getUserOptions(e) {
     const t = {};
@@ -1047,7 +1047,7 @@ function getUserOptions(e) {
 
 function getInspectContext(e) {
     const t = {
-        ...K,
+        ...J,
         budget: {},
         indentationLvl: 0,
         seen: [],
@@ -4339,7 +4339,7 @@ function createFixture(e, n, r = [], s = true, o = TestContext.create(), l = {})
     const b = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
     if (g !== n && n != null) {
         b.forEach((e => {
-            a.Metadata.define(e, i.CustomElement.getAnnotation(n, e), g);
+            a.Metadata.define(i.CustomElement.getAnnotation(n, e, null), g, e);
         }));
     }
     const v = i.CustomElement.isType(g) ? i.CustomElement.getDefinition(g) : {};
@@ -4842,19 +4842,19 @@ class MockTracingExpression {
     }
     evaluate(...e) {
         this.trace("evaluate", ...e);
-        return n.astEvaluate(this.inner, ...e);
+        return i.astEvaluate(this.inner, ...e);
     }
     assign(...e) {
         this.trace("assign", ...e);
-        return n.astAssign(this.inner, ...e);
+        return i.astAssign(this.inner, ...e);
     }
     bind(...e) {
         this.trace("bind", ...e);
-        n.astBind(this.inner, ...e);
+        i.astBind(this.inner, ...e);
     }
     unbind(...e) {
         this.trace("unbind", ...e);
-        n.astUnbind(this.inner, ...e);
+        i.astUnbind(this.inner, ...e);
     }
     accept(...e) {
         this.trace("accept", ...e);
@@ -5121,60 +5121,6 @@ class SpySubscriber {
     }
 }
 
-function __decorate(e, t, n, i) {
-    var r = arguments.length, a = r < 3 ? t : i === null ? i = Object.getOwnPropertyDescriptor(t, n) : i, s;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") a = Reflect.decorate(e, t, n, i); else for (var o = e.length - 1; o >= 0; o--) if (s = e[o]) a = (r < 3 ? s(a) : r > 3 ? s(t, n, a) : s(t, n)) || a;
-    return r > 3 && a && Object.defineProperty(t, n, a), a;
-}
-
-exports.SortValueConverter = class SortValueConverter {
-    toView(e, t, n = "asc") {
-        if (Array.isArray(e)) {
-            const i = n === "asc" ? 1 : -1;
-            if (t?.length) {
-                e.sort(((e, n) => e[t] - n[t] * i));
-            } else {
-                e.sort(((e, t) => e - t * i));
-            }
-        }
-        return e;
-    }
-};
-
-exports.SortValueConverter = __decorate([ i.valueConverter("sort") ], exports.SortValueConverter);
-
-exports.JsonValueConverter = class JsonValueConverter {
-    toView(e) {
-        return JSON.stringify(e);
-    }
-    fromView(e) {
-        return JSON.parse(e);
-    }
-};
-
-exports.JsonValueConverter = __decorate([ i.valueConverter("json") ], exports.JsonValueConverter);
-
-let Ce = class NameTag {};
-
-__decorate([ i.bindable() ], Ce.prototype, "name", void 0);
-
-Ce = __decorate([ i.customElement({
-    name: "name-tag",
-    template: `<template>\${name}</template>`,
-    needsCompile: true,
-    dependencies: [],
-    instructions: [],
-    surrogates: []
-}) ], Ce);
-
-const Oe = [ exports.SortValueConverter, exports.JsonValueConverter, Ce ];
-
-const qe = {
-    register(e) {
-        e.register(...Oe);
-    }
-};
-
 function _(e, ...t) {
     const n = {
         result: ""
@@ -5186,14 +5132,14 @@ function _(e, ...t) {
     return n.result + e[i];
 }
 
-const je = /\r?\n/g;
+const Ce = /\r?\n/g;
 
-const Ae = /\s+/g;
+const Oe = /\s+/g;
 
-const Te = Object.prototype.toString;
+const qe = Object.prototype.toString;
 
 function stringify(e, t) {
-    const n = Te.call(e);
+    const n = qe.call(e);
     switch (n) {
       case "[object Undefined]":
         return "undefined";
@@ -5227,7 +5173,7 @@ function stringify(e, t) {
         if (e.name && e.name.length) {
             return `class ${e.name}`;
         }
-        return e.toString().replace(Ae, "");
+        return e.toString().replace(Oe, "");
 
       default:
         return jsonStringify(e, t);
@@ -5267,7 +5213,7 @@ function jsonStringify(e, t) {
             return r;
         }));
         n = void 0;
-        let a = r.replace(je, "");
+        let a = r.replace(Ce, "");
         if (a.length > 25) {
             const e = a.length;
             a = `${a.slice(0, 25)}...(+${e - 25})`;
@@ -5290,7 +5236,7 @@ function htmlStringify(e, t) {
         return "undefined";
     }
     if (e.textContent != null && e.textContent.length || e.nodeType === 3 || e.nodeType === 8) {
-        const t = e.textContent.replace(je, "");
+        const t = e.textContent.replace(Ce, "");
         if (t.length > 10) {
             const e = t.length;
             return `${t.slice(0, 10)}...(+${e - 10})`;
@@ -5299,7 +5245,7 @@ function htmlStringify(e, t) {
     }
     if (e.nodeType === 1) {
         if (e.innerHTML.length) {
-            const t = e.innerHTML.replace(je, "");
+            const t = e.innerHTML.replace(Ce, "");
             if (t.length > 10) {
                 const e = t.length;
                 return `${t.slice(0, 10)}...(+${e - 10})`;
@@ -5460,7 +5406,7 @@ function stopRecordingCalls(e) {
 }
 
 function trace(e) {
-    return function(t) {
+    return function(t, n) {
         recordCalls(t, e);
     };
 }
@@ -5498,8 +5444,6 @@ exports.PSEUDO_ELEMENTS = xe;
 exports.ProxyChangeSet = ProxyChangeSet;
 
 exports.SpySubscriber = SpySubscriber;
-
-exports.TestConfiguration = qe;
 
 exports.TestContext = TestContext;
 

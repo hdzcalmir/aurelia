@@ -72,18 +72,6 @@ function isStateHistory(t) {
     return typeof t.present !== "undefined" && typeof t.future !== "undefined" && typeof t.past !== "undefined" && Array.isArray(t.future) && Array.isArray(t.past);
 }
 
-function __decorate(t, e, r, i) {
-    var s = arguments.length, n = s < 3 ? e : i === null ? i = Object.getOwnPropertyDescriptor(e, r) : i, o;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") n = Reflect.decorate(t, e, r, i); else for (var a = t.length - 1; a >= 0; a--) if (o = t[a]) n = (s < 3 ? o(n) : s > 3 ? o(e, r, n) : o(e, r)) || n;
-    return s > 3 && n && Object.defineProperty(e, r, n), n;
-}
-
-function __param(t, e) {
-    return function(r, i) {
-        e(r, i, t);
-    };
-}
-
 const f = "aurelia-store-state";
 
 var d;
@@ -162,7 +150,7 @@ class ActionRegistrationError extends Error {}
 
 class ReducerNoStateError extends Error {}
 
-let g = class Store {
+class Store {
     constructor(t, e, r, i) {
         this.initialState = t;
         this.logger = e;
@@ -428,12 +416,10 @@ let g = class Store {
     registerHistoryMethods() {
         this.registerAction("jump", jump);
     }
-};
-
-g = __decorate([ __param(1, e), __param(2, i) ], g);
+}
 
 function dispatchify(t) {
-    const e = y.container.get(g);
+    const e = y.container.get(Store);
     return async function(...r) {
         return e.dispatch(t, ...r);
     };
@@ -500,14 +486,14 @@ function connectTo(t) {
             }
         })));
     }
-    return function(e) {
-        const r = typeof t === "object" && t.setup ? e.prototype[t.setup] : e.prototype.binding;
-        const i = typeof t === "object" && t.teardown ? e.prototype[t.teardown] : e.prototype.unbinding;
+    return function(e, r) {
+        const i = typeof t === "object" && t.setup ? e.prototype[t.setup] : e.prototype.binding;
+        const n = typeof t === "object" && t.teardown ? e.prototype[t.teardown] : e.prototype.unbinding;
         e.prototype[typeof t === "object" && t.setup !== undefined ? t.setup : "binding"] = function() {
             if (typeof t === "object" && typeof t.onChanged === "string" && !(t.onChanged in this)) {
                 throw new Error("Provided onChanged handler does not exist on target VM");
             }
-            const e = s.getCached(this) ? s.getCached(this).container.get(g) : y.container.get(g);
+            const e = s.getCached(this) ? s.getCached(this).container.get(Store) : y.container.get(Store);
             this._stateSubscriptions = createSelectors().map((t => getSource(e, t.selector).subscribe((e => {
                 const r = t.targets.length - 1;
                 const i = t.targets.reduce(((t = {}, e) => t[e]), this);
@@ -521,8 +507,8 @@ function connectTo(t) {
                     return t[i];
                 }), this);
             }))));
-            if (r) {
-                return r.apply(this, arguments);
+            if (i) {
+                return i.apply(this, arguments);
             }
         };
         e.prototype[typeof t === "object" && t.teardown ? t.teardown : "unbinding"] = function() {
@@ -533,14 +519,14 @@ function connectTo(t) {
                     }
                 }));
             }
-            if (i) {
-                return i.apply(this, arguments);
+            if (n) {
+                return n.apply(this, arguments);
             }
         };
     };
 }
 
-const w = {
+const g = {
     withInitialState(t) {
         Reflect.set(this, "state", t);
         return this;
@@ -566,10 +552,10 @@ const w = {
                 future: []
             };
         }
-        r.instance(g, new g(c, o, a, n)).register(t);
+        r.instance(Store, new Store(c, o, a, n)).register(t);
         return t;
     }
 };
 
-export { ActionRegistrationError, f as DEFAULT_LOCAL_STORAGE_KEY, DevToolsRemoteDispatchError, p as LogLevel, d as MiddlewarePlacement, l as PerformanceMeasurement, ReducerNoStateError, y as STORE, g as Store, w as StoreConfiguration, UnregisteredActionError, applyLimits, connectTo, dispatchify, executeSteps, getLogType, isStateHistory, jump, localStorageMiddleware, logMiddleware, nextStateHistory, rehydrateFromLocalStorage };
+export { ActionRegistrationError, f as DEFAULT_LOCAL_STORAGE_KEY, DevToolsRemoteDispatchError, p as LogLevel, d as MiddlewarePlacement, l as PerformanceMeasurement, ReducerNoStateError, y as STORE, Store, g as StoreConfiguration, UnregisteredActionError, applyLimits, connectTo, dispatchify, executeSteps, getLogType, isStateHistory, jump, localStorageMiddleware, logMiddleware, nextStateHistory, rehydrateFromLocalStorage };
 

@@ -1,5 +1,7 @@
 import { i18n } from 'i18next';
-export declare const I18nWrapper: import("@aurelia/kernel").InterfaceSymbol<I18nextWrapper>;
+export interface II18nextWrapper extends I18nextWrapper {
+}
+export declare const II18nextWrapper: import("@aurelia/kernel").InterfaceSymbol<II18nextWrapper>;
 /**
  * A wrapper class over i18next to facilitate the easy testing and DI.
  */

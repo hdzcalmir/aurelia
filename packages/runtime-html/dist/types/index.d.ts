@@ -1,5 +1,6 @@
+export { type IAstEvaluator, astAssign, astBind, astEvaluate, astUnbind, } from './ast.eval';
 export { bindable, Bindable, BindableDefinition, type PartialBindableDefinition, coercer, } from './bindable';
-export { bindingBehavior, BindingBehavior, BindingBehaviorDefinition, type PartialBindingBehaviorDefinition, type BindingBehaviorStaticAuDefinition, type BindingBehaviorKind, type BindingBehaviorDecorator, type BindingBehaviorType, } from './resources/binding-behavior';
+export { bindingBehavior, BindingBehavior, BindingBehaviorDefinition, type PartialBindingBehaviorDefinition, type BindingBehaviorStaticAuDefinition, type BindingBehaviorKind, type BindingBehaviorDecorator, type BindingBehaviorType, type BindingBehaviorInstance, } from './resources/binding-behavior';
 export { BindingModeBehavior, OneTimeBindingBehavior, ToViewBindingBehavior, FromViewBindingBehavior, TwoWayBindingBehavior, } from './resources/binding-behaviors/binding-mode';
 export { DebounceBindingBehavior, } from './resources/binding-behaviors/debounce';
 export { SignalBindingBehavior, } from './resources/binding-behaviors/signals';
@@ -15,7 +16,7 @@ export { type TaskSlot, AppTask, IAppTask, type AppTaskCallback, type AppTaskCal
 export { AttrSyntax, IAttributeParser, attributePattern, type AttributePatternDefinition, IAttributePattern, type AttributePatternKind, AttributePattern, Interpretation, ISyntaxInterpreter, AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, DotSeparatedAttributePattern, RefAttributePattern, } from './resources/attribute-pattern';
 export { bindingCommand, type ICommandBuildInfo, BindingCommand, type BindingCommandInstance, type PartialBindingCommandDefinition, type BindingCommandStaticAuDefinition, BindingCommandDefinition, type BindingCommandKind, type BindingCommandType, DefaultBindingCommand, ForBindingCommand, FromViewBindingCommand, OneTimeBindingCommand, ToViewBindingCommand, TwoWayBindingCommand, TriggerBindingCommand, CaptureBindingCommand, AttrBindingCommand, ClassBindingCommand, StyleBindingCommand, } from './resources/binding-command';
 export { IAttrMapper, type IsTwoWayPredicate, } from './compiler/attribute-mapper';
-export { BindingMode, type IBindingController, } from './binding/interfaces-bindings';
+export { BindingMode, type IBindingController, type IBinding, type IRateLimitOptions, } from './binding/interfaces-bindings';
 export { IFlushQueue, FlushQueue, type IFlushable, BindingTargetSubscriber, mixinAstEvaluator, mixingBindingLimited, mixinUseScope, } from './binding/binding-utils';
 export { ListenerBinding, ListenerBindingOptions, type IModifiedEventHandler, IEventModifier, EventModifier, EventModifierRegistration, IModifiedEventHandlerCreator, IKeyMapping, } from './binding/listener-binding';
 export { AttributeBinding, } from './binding/attribute';
@@ -46,9 +47,9 @@ export { PromiseTemplateController, FulfilledTemplateController, PendingTemplate
 export { Focus, } from './resources/custom-attributes/focus';
 export { Portal, type PortalTarget, type PortalLifecycleCallback, } from './resources/template-controllers/portal';
 export { AuSlot, } from './resources/custom-elements/au-slot';
-export { capture, containerless, customElement, CustomElement, type InjectableToken, type CustomElementDecorator, type CustomElementKind, type CustomElementType, CustomElementDefinition, type PartialCustomElementDefinition, type ProcessContentHook, type CustomElementStaticAuDefinition, useShadowDOM, processContent, } from './resources/custom-element';
+export { capture, containerless, customElement, CustomElement, type CustomElementDecorator, type CustomElementKind, type CustomElementType, CustomElementDefinition, type PartialCustomElementDefinition, type ProcessContentHook, type CustomElementStaticAuDefinition, useShadowDOM, processContent, } from './resources/custom-element';
 export { AuCompose, type IDynamicComponentActivate, } from './resources/custom-elements/au-compose';
-export { ValueConverter, ValueConverterDefinition, type PartialValueConverterDefinition, type ValueConverterStaticAuDefinition, type ValueConverterKind, type ValueConverterDecorator, type ValueConverterType, valueConverter, } from './resources/value-converter';
+export { ValueConverter, ValueConverterDefinition, type PartialValueConverterDefinition, type ValueConverterStaticAuDefinition, type ValueConverterKind, type ValueConverterDecorator, type ValueConverterType, type ValueConverterInstance, valueConverter, } from './resources/value-converter';
 export { ISanitizer, SanitizeValueConverter, } from './resources/value-converters/sanitize';
 export { type ConfigurationOptionsProvider, DefaultComponents, DefaultBindingSyntax, ShortHandBindingSyntax, DefaultBindingLanguage, DefaultResources, DefaultRenderers, StandardConfiguration, } from './configuration';
 export { ITemplateElementFactory } from './compiler/template-element-factory';
@@ -64,5 +65,6 @@ export { IPlatform, } from './platform';
 export { CSSModulesProcessorRegistry, cssModules, ShadowDOMRegistry, shadowCSS, StyleConfiguration, IShadowDOMStyleFactory, type IShadowDOMConfiguration, AdoptedStyleSheetsStyles, StyleElementStyles, IShadowDOMStyles, IShadowDOMGlobalStyles, } from './templating/styles';
 export { Watch, watch, type IWatchDefinition, type IWatcherCallback, type IDepCollectionFn, } from './watch';
 export { ComputedWatcher, ExpressionWatcher, } from './templating/watchers';
+export { ISignaler, } from './signaler';
 export { alias, registerAliases, } from './utilities-di';
 //# sourceMappingURL=index.d.ts.map

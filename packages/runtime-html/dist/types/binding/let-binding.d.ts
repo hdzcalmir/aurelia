@@ -1,8 +1,11 @@
-import { type IAstEvaluator, type IBinding, type IConnectableBinding, type IObservable, type IObserverLocator, type IsExpression, type Scope } from '@aurelia/runtime';
+import { ICollectionSubscriber, IObserverLocatorBasedConnectable, ISubscriber, type IObservable, type IObserverLocator, type Scope } from '@aurelia/runtime';
+import { type IAstEvaluator } from '../ast.eval';
 import type { IIndexable, IServiceLocator } from '@aurelia/kernel';
-export interface LetBinding extends IAstEvaluator, IConnectableBinding {
+import { IsExpression } from '@aurelia/expression-parser';
+import { IBinding } from './interfaces-bindings';
+export interface LetBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator {
 }
-export declare class LetBinding implements IBinding {
+export declare class LetBinding implements IBinding, ISubscriber, ICollectionSubscriber {
     ast: IsExpression;
     targetProperty: string;
     isBound: boolean;

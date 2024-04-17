@@ -5,6 +5,6 @@ export declare class SpecsViewer {
     binding(): void;
 }
 export declare class ViewerValueConverter {
-    toView(thing: Thing): typeof ThingViewer;
+    toView(thing: unknown): typeof ThingViewer;
 }
 //# sourceMappingURL=specs-viewer.d.ts.map

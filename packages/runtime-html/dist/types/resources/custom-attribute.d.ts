@@ -51,13 +51,13 @@ export type CustomAttributeKind = IResourceKind & {
     define<T extends Constructable>(name: string, Type: T): CustomAttributeType<T>;
     define<T extends Constructable>(def: PartialCustomAttributeDefinition, Type: T): CustomAttributeType<T>;
     define<T extends Constructable>(nameOrDef: string | PartialCustomAttributeDefinition, Type: T): CustomAttributeType<T>;
-    getDefinition<T extends Constructable>(Type: T): CustomAttributeDefinition<T>;
-    getDefinition<T extends Constructable>(Type: Function): CustomAttributeDefinition<T>;
+    getDefinition<T extends Constructable>(Type: T, context?: DecoratorContext | null): CustomAttributeDefinition<T>;
+    getDefinition<T extends Constructable>(Type: Function, context?: DecoratorContext | null): CustomAttributeDefinition<T>;
     annotate<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K, value: PartialCustomAttributeDefinition[K]): void;
-    getAnnotation<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K): PartialCustomAttributeDefinition[K];
+    getAnnotation<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K, context: DecoratorContext | undefined | null): PartialCustomAttributeDefinition[K] | undefined;
     find(c: IContainer, name: string): CustomAttributeDefinition | null;
 };
-export type CustomAttributeDecorator = <T extends Constructable>(Type: T) => CustomAttributeType<T>;
+export type CustomAttributeDecorator = <T extends Constructable>(Type: T, context: ClassDecoratorContext) => CustomAttributeType<T>;
 /**
  * Decorator: Indicates that the decorated class is a custom attribute.
  */

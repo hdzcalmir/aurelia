@@ -1,5 +1,5 @@
 import { Class } from '@aurelia/kernel';
-import { IsBindingBehavior, IExpressionParser } from '@aurelia/runtime';
+import { type IsBindingBehavior, IExpressionParser } from '@aurelia/expression-parser';
 import { Deserializer } from './ast-serialization';
 import { IValidationRules } from './rule-provider';
 import { IValidationMessageProvider } from './rules';

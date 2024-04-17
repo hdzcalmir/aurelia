@@ -2,7 +2,12 @@ import { Constructable, IDisposable } from './interfaces';
 import { ResourceType } from './resource';
 import type { IAllResolver, ICallableResolver, IFactoryResolver, ILazyResolver, INewInstanceResolver, IOptionalResolver, IResolvedFactory, IResolvedLazy } from './di.resolvers';
 export type ResolveCallback<T = any> = (handler: IContainer, requestor: IContainer, resolver: IResolver<T>) => T;
-export type InterfaceSymbol<K = any> = (target: Injectable | AbstractInjectable, property: string | symbol | undefined, index?: number) => void;
+export interface InterfaceSymbol<K = any> {
+    $isInterface: boolean;
+    friendlyName?: string;
+    register?(container: IContainer, key?: K): IResolver<K>;
+    toString?(): string;
+}
 interface IResolverLike<C, K = any> {
     readonly $isResolver: true;
     resolve(handler: C, requestor: C): Resolved<K>;
@@ -99,12 +104,10 @@ export interface IContainerConfiguration {
     inheritParentResources?: boolean;
     defaultResolver?(key: Key, handler: IContainer): IResolver;
 }
-export declare const inject: (...dependencies: Key[]) => (target: Injectable, key?: string | number, descriptor?: PropertyDescriptor | number) => void;
+export declare const inject: (...dependencies: Key[]) => (decorated: unknown, context: DecoratorContext) => void;
 export declare const DI: {
     createContainer: (config?: Partial<IContainerConfiguration> | undefined) => IContainer;
     getDesignParamtypes: (Type: Constructable | Injectable) => readonly Key[] | undefined;
-    getAnnotationParamtypes: (Type: Constructable | Injectable) => readonly Key[] | undefined;
-    getOrCreateAnnotationParamTypes: (Type: Constructable | Injectable) => Key[];
     getDependencies: (Type: Constructable | Injectable) => Key[];
     /**
      * creates a decorator that also matches an interface and can be used as a {@linkcode Key}.
@@ -148,7 +151,7 @@ export declare const DI: {
      * - @param configureOrName - supply a string to improve error messaging
      */
     createInterface: <K extends Key>(configureOrName?: string | ((builder: ResolverBuilder<K>) => IResolver<K>) | undefined, configuror?: ((builder: ResolverBuilder<K>) => IResolver<K>) | undefined) => InterfaceSymbol<K>;
-    inject: (...dependencies: Key[]) => (target: Injectable, key?: string | number, descriptor?: PropertyDescriptor | number) => void;
+    inject: (...dependencies: Key[]) => (decorated: unknown, context: DecoratorContext) => void;
     /**
      * Registers the `target` class as a transient dependency; each time the dependency is resolved
      * a new instance will be created.
@@ -189,7 +192,7 @@ export declare const DI: {
 };
 export declare const IContainer: InterfaceSymbol<IContainer>;
 export declare const IServiceLocator: InterfaceSymbol<IServiceLocator>;
-declare function transientDecorator<T extends Constructable>(target: T & Partial<RegisterSelf<T>>): T & RegisterSelf<T>;
+declare function transientDecorator<T extends Constructable>(target: T & Partial<RegisterSelf<T>>, _context: ClassDecoratorContext): T & RegisterSelf<T>;
 /**
  * Registers the decorated class as a transient dependency; each time the dependency is resolved
  * a new instance will be created.
@@ -211,11 +214,11 @@ export declare function transient<T extends Constructable>(): typeof transientDe
  * class Foo { }
  * ```
  */
-export declare function transient<T extends Constructable>(target: T & Partial<RegisterSelf<T>>): T & RegisterSelf<T>;
+export declare function transient<T extends Constructable>(target: T & Partial<RegisterSelf<T>>, context: ClassDecoratorContext): T & RegisterSelf<T>;
 type SingletonOptions = {
     scoped: boolean;
 };
-declare const singletonDecorator: <T extends Constructable>(target: T & Partial<RegisterSelf<T>>) => T & RegisterSelf<T>;
+type SingletonDecorator = <T extends Constructable>(target: T & Partial<RegisterSelf<T>>, _context: ClassDecoratorContext) => T & RegisterSelf<T>;
 /**
  * Registers the decorated class as a singleton dependency; the class will only be created once. Each
  * consecutive time the dependency is resolved, the same instance will be returned.
@@ -225,8 +228,8 @@ declare const singletonDecorator: <T extends Constructable>(target: T & Partial<
  * class Foo { }
  * ```
  */
-export declare function singleton<T extends Constructable>(): typeof singletonDecorator;
-export declare function singleton<T extends Constructable>(options?: SingletonOptions): typeof singletonDecorator;
+export declare function singleton<T extends Constructable>(): SingletonDecorator;
+export declare function singleton<T extends Constructable>(options?: SingletonOptions): SingletonDecorator;
 /**
  * Registers the `target` class as a singleton dependency; the class will only be created once. Each
  * consecutive time the dependency is resolved, the same instance will be returned.
@@ -238,7 +241,7 @@ export declare function singleton<T extends Constructable>(options?: SingletonOp
  * class Foo { }
  * ```
  */
-export declare function singleton<T extends Constructable>(target: T & Partial<RegisterSelf<T>>): T & RegisterSelf<T>;
+export declare function singleton<T extends Constructable>(target: T & Partial<RegisterSelf<T>>, context: ClassDecoratorContext): T & RegisterSelf<T>;
 export declare class InstanceProvider<K extends Key> implements IDisposableResolver<K | null> {
     get friendlyName(): string | undefined;
     constructor(name?: string, 

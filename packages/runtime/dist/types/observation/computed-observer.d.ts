@@ -1,11 +1,11 @@
 import { ICoercionConfiguration, IObserver, InterceptorFunc } from '../observation';
 import type { AccessorType, ISubscriber, ICollectionSubscriber, ISubscriberCollection, IConnectable } from '../observation';
-import type { IConnectableBinding } from '../binding/connectable';
+import type { IObserverLocatorBasedConnectable } from './connectable';
 import type { IObserverLocator } from './observer-locator';
 export type ComputedGetterFn<T = any, R = any> = (this: T, obj: T, observer: IConnectable) => R;
-export interface ComputedObserver<T extends object> extends IConnectableBinding, ISubscriberCollection {
+export interface ComputedObserver<T extends object> extends IObserverLocatorBasedConnectable, ISubscriberCollection {
 }
-export declare class ComputedObserver<T extends object> implements IObserver, IConnectableBinding, ISubscriber, ICollectionSubscriber, ISubscriberCollection {
+export declare class ComputedObserver<T extends object> implements IObserver, IObserverLocatorBasedConnectable, ISubscriber, ICollectionSubscriber, ISubscriberCollection {
     type: AccessorType;
     /**
      * The getter this observer is wrapping

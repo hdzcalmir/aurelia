@@ -161,15 +161,39 @@ PERFORMANCE OF THIS SOFTWARE.
 /* global Reflect, Promise */
 
 
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 }
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+function __runInitializers(thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 }
 
 class StartOutput {
@@ -319,106 +343,110 @@ class HttpContext {
     }
 }
 
-let HttpServer = class HttpServer {
-    constructor(logger, opts, container, handlers) {
-        this.logger = logger;
-        this.opts = opts;
-        this.container = container;
-        this.handlers = handlers;
-        this.server = null;
-        this.logger = logger.root.scopeTo('HttpServer');
-    }
-    async start() {
-        this.logger.debug(`start()`);
-        const { hostName, port, useHttps, key, cert } = this.opts;
-        const server = this.server = (useHttps
-            ? https__namespace.createServer({ key: fs.readFileSync(key), cert: fs.readFileSync(cert) }, this.handleRequest)
-            : http.createServer(this.handleRequest)).listen(port, hostName);
-        await new Promise(resolve => server.on('listening', resolve));
-        const { address, port: realPort } = this.server.address();
-        this.logger.info(`Now listening on ${address}:${realPort} (configured: ${hostName}:${port})`);
-        return new StartOutput(realPort);
-    }
-    async stop() {
-        this.logger.debug(`stop()`);
-        await new Promise(resolve => this.server.close(resolve));
-    }
-    async handleRequest(req, res) {
-        this.logger.debug(`handleRequest(url=${req.url})`);
-        try {
-            const buffer = await readBuffer(req);
-            const context = new HttpContext(this.container, req, res, buffer);
-            for (const handler of this.handlers) {
-                // TODO: we need to identify here if the request is handled, if yes then break. Contextually, if the request is not handled by any handlers, we should panic, throw error and cause mayhem.
-                // eslint-disable-next-line no-await-in-loop
-                await handler.handleRequest(context);
+let HttpServer = (() => {
+    var _a;
+    let _instanceExtraInitializers = [];
+    let _handleRequest_decorators;
+    return _a = class HttpServer {
+            constructor() {
+                this.server = (__runInitializers(this, _instanceExtraInitializers), null);
+                this.logger = kernel.resolve(kernel.ILogger).root.scopeTo('HttpServer');
+                this.opts = kernel.resolve(IHttpServerOptions);
+                this.container = kernel.resolve(kernel.IContainer);
+                this.handlers = kernel.resolve(kernel.all(IRequestHandler));
             }
-        }
-        catch (err) {
-            this.logger.error(`handleRequest Error: ${err.message}\n${err.stack}`);
-            res.statusCode = HTTPStatusCode.InternalServerError;
-            res.end();
-        }
-    }
-};
-__decorate([
-    kernel.bound
-], HttpServer.prototype, "handleRequest", null);
-HttpServer = __decorate([
-    __param(0, kernel.ILogger),
-    __param(1, IHttpServerOptions),
-    __param(2, kernel.IContainer),
-    __param(3, kernel.all(IRequestHandler))
-], HttpServer);
-let Http2Server = class Http2Server {
-    constructor(logger, opts, container, http2FileServer) {
-        this.logger = logger;
-        this.opts = opts;
-        this.container = container;
-        this.http2FileServer = http2FileServer;
-        this.server = null;
-        this.logger = logger.root.scopeTo('Http2Server');
-    }
-    async start() {
-        this.logger.debug(`start()`);
-        const { hostName, port, cert, key } = this.opts;
-        const server = this.server = http2.createSecureServer({
-            key: fs.readFileSync(key),
-            cert: fs.readFileSync(cert)
-        }, this.handleRequest // Do we need this at all?
-        ).listen(port, hostName);
-        await new Promise(resolve => server.on('listening', resolve));
-        const { address, port: realPort } = server.address();
-        this.logger.info(`Now listening on ${address}:${realPort} (configured: ${hostName}:${port})`);
-        return new StartOutput(realPort);
-    }
-    async stop() {
-        this.logger.debug(`stop()`);
-        await new Promise(resolve => this.server.close(resolve));
-    }
-    handleRequest(req, res) {
-        this.logger.info(`handleRequest(url=${req.url})`);
-        try {
-            // const buffer = await readBuffer(req); // TODO handle this later
-            const context = new HttpContext(this.container, req, res, null);
-            this.http2FileServer.handleRequest(context);
-        }
-        catch (err) {
-            this.logger.error(`handleRequest Error: ${err.message}\n${err.stack}`);
-            res.statusCode = HTTPStatusCode.InternalServerError;
-            res.end();
-        }
-    }
-};
-__decorate([
-    kernel.bound
-], Http2Server.prototype, "handleRequest", null);
-Http2Server = __decorate([
-    __param(0, kernel.ILogger),
-    __param(1, IHttpServerOptions),
-    __param(2, kernel.IContainer),
-    __param(3, IHttp2FileServer)
-], Http2Server);
+            async start() {
+                this.logger.debug(`start()`);
+                const { hostName, port, useHttps, key, cert } = this.opts;
+                const server = this.server = (useHttps
+                    ? https__namespace.createServer({ key: fs.readFileSync(key), cert: fs.readFileSync(cert) }, this.handleRequest)
+                    : http.createServer(this.handleRequest)).listen(port, hostName);
+                await new Promise(resolve => server.on('listening', resolve));
+                const { address, port: realPort } = this.server.address();
+                this.logger.info(`Now listening on ${address}:${realPort} (configured: ${hostName}:${port})`);
+                return new StartOutput(realPort);
+            }
+            async stop() {
+                this.logger.debug(`stop()`);
+                await new Promise(resolve => this.server.close(resolve));
+            }
+            async handleRequest(req, res) {
+                this.logger.debug(`handleRequest(url=${req.url})`);
+                try {
+                    const buffer = await readBuffer(req);
+                    const context = new HttpContext(this.container, req, res, buffer);
+                    for (const handler of this.handlers) {
+                        // TODO: we need to identify here if the request is handled, if yes then break. Contextually, if the request is not handled by any handlers, we should panic, throw error and cause mayhem.
+                        // eslint-disable-next-line no-await-in-loop
+                        await handler.handleRequest(context);
+                    }
+                }
+                catch (err) {
+                    this.logger.error(`handleRequest Error: ${err.message}\n${err.stack}`);
+                    res.statusCode = HTTPStatusCode.InternalServerError;
+                    res.end();
+                }
+            }
+        },
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            _handleRequest_decorators = [kernel.bound];
+            __esDecorate(_a, null, _handleRequest_decorators, { kind: "method", name: "handleRequest", static: false, private: false, access: { has: obj => "handleRequest" in obj, get: obj => obj.handleRequest }, metadata: _metadata }, null, _instanceExtraInitializers);
+            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+        })(),
+        _a;
+})();
+let Http2Server = (() => {
+    var _a;
+    let _instanceExtraInitializers = [];
+    let _handleRequest_decorators;
+    return _a = class Http2Server {
+            constructor() {
+                this.server = (__runInitializers(this, _instanceExtraInitializers), null);
+                this.logger = kernel.resolve(kernel.ILogger).root.scopeTo('Http2Server');
+                this.opts = kernel.resolve(IHttpServerOptions);
+                this.container = kernel.resolve(kernel.IContainer);
+                this.http2FileServer = kernel.resolve(IHttp2FileServer);
+            }
+            async start() {
+                this.logger.debug(`start()`);
+                const { hostName, port, cert, key } = this.opts;
+                const server = this.server = http2.createSecureServer({
+                    key: fs.readFileSync(key),
+                    cert: fs.readFileSync(cert)
+                }, this.handleRequest // Do we need this at all?
+                ).listen(port, hostName);
+                await new Promise(resolve => server.on('listening', resolve));
+                const { address, port: realPort } = server.address();
+                this.logger.info(`Now listening on ${address}:${realPort} (configured: ${hostName}:${port})`);
+                return new StartOutput(realPort);
+            }
+            async stop() {
+                this.logger.debug(`stop()`);
+                await new Promise(resolve => this.server.close(resolve));
+            }
+            handleRequest(req, res) {
+                this.logger.info(`handleRequest(url=${req.url})`);
+                try {
+                    // const buffer = await readBuffer(req); // TODO handle this later
+                    const context = new HttpContext(this.container, req, res, null);
+                    this.http2FileServer.handleRequest(context);
+                }
+                catch (err) {
+                    this.logger.error(`handleRequest Error: ${err.message}\n${err.stack}`);
+                    res.statusCode = HTTPStatusCode.InternalServerError;
+                    res.end();
+                }
+            }
+        },
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            _handleRequest_decorators = [kernel.bound];
+            __esDecorate(_a, null, _handleRequest_decorators, { kind: "method", name: "handleRequest", static: false, private: false, access: { has: obj => "handleRequest" in obj, get: obj => obj.handleRequest }, metadata: _metadata }, null, _instanceExtraInitializers);
+            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+        })(),
+        _a;
+})();
 
 async function readFile(path, options) {
     return new Promise(function (resolve, reject) {
@@ -450,14 +478,13 @@ const contentEncodingExtensionMap = {
     compress: '.lzw'
 };
 const compressedFileExtensions = new Set(Object.values(contentEncodingExtensionMap));
-let FileServer = class FileServer {
-    constructor(opts, logger) {
+class FileServer {
+    constructor() {
         var _a;
-        this.opts = opts;
-        this.logger = logger;
+        this.opts = kernel.resolve(IHttpServerOptions);
+        this.logger = kernel.resolve(kernel.ILogger).root.scopeTo('FileServer');
         this.cacheControlDirective = (_a = this.opts.responseCacheControl) !== null && _a !== void 0 ? _a : 'max-age=3600';
-        this.logger = logger.root.scopeTo('FileServer');
-        this.root = path.resolve(opts.root);
+        this.root = path.resolve(this.opts.root);
         this.logger.debug(`Now serving files from: "${this.root}"`);
     }
     async handleRequest(context) {
@@ -506,23 +533,18 @@ let FileServer = class FileServer {
         }
         context.state = 'end';
     }
-};
-FileServer = __decorate([
-    __param(0, IHttpServerOptions),
-    __param(1, kernel.ILogger)
-], FileServer);
+}
 /**
  * File server with HTTP/2 push support
  */
-let Http2FileServer = class Http2FileServer {
-    constructor(opts, logger) {
+class Http2FileServer {
+    constructor() {
         var _a;
-        this.opts = opts;
-        this.logger = logger;
         this.filePushMap = new Map();
+        this.opts = kernel.resolve(IHttpServerOptions);
+        this.logger = kernel.resolve(kernel.ILogger).root.scopeTo('Http2FileServer');
         this.cacheControlDirective = (_a = this.opts.responseCacheControl) !== null && _a !== void 0 ? _a : 'max-age=3600';
-        this.logger = logger.root.scopeTo('Http2FileServer');
-        this.root = path.resolve(opts.root);
+        this.root = path.resolve(this.opts.root);
         this.prepare();
         this.logger.debug(`Now serving files from: "${this.root}"`);
     }
@@ -593,11 +615,7 @@ let Http2FileServer = class Http2FileServer {
         // handles 'identity' and 'deflate' (as no specific extension is known, and on-the-fly compression might be expensive)
         return this.filePushMap.get(path);
     }
-};
-Http2FileServer = __decorate([
-    __param(0, IHttpServerOptions),
-    __param(1, kernel.ILogger)
-], Http2FileServer);
+}
 class PushInfo {
     static create(path, cacheControlDirective) {
         const stat = fs.statSync(path);

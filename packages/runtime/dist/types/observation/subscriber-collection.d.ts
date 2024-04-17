@@ -1,7 +1,10 @@
+import { $ClassDecorator } from '../utilities';
 import type { Collection, ICollectionSubscriber, IndexMap, ISubscriber, ISubscriberRecord } from '../observation';
 export type IAnySubscriber = ISubscriber | ICollectionSubscriber;
-export declare function subscriberCollection(): ClassDecorator;
-export declare function subscriberCollection(target: Function): void;
+export declare const subscriberCollection: {
+    (): $ClassDecorator;
+    (target: Function): void;
+};
 export declare class SubscriberRecord<T extends IAnySubscriber> implements ISubscriberRecord<T> {
     count: number;
     add(subscriber: T): boolean;

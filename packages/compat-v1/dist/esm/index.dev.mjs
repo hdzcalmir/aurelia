@@ -1,6 +1,7 @@
-import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astEvaluate, astAssign, astVisit, astBind, astUnbind, Unparser, IExpressionParser, IObserverLocator, getCollectionObserver, Scope } from '@aurelia/runtime';
-import { renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, IListenerBindingOptions, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, ExpressionWatcher } from '@aurelia/runtime-html';
+import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astVisit, Unparser, IExpressionParser } from '@aurelia/expression-parser';
+import { astEvaluate, astAssign, astBind, astUnbind, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, IListenerBindingOptions, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, ExpressionWatcher } from '@aurelia/runtime-html';
 import { camelCase, resolve, DI } from '@aurelia/kernel';
+import { IObserverLocator, getCollectionObserver, Scope } from '@aurelia/runtime';
 
 let defined$1 = false;
 function defineAstMethods() {
@@ -56,30 +57,6 @@ function defineAstMethods() {
     });
     console.warn('"evaluate"/"assign"/"accept"/"visit"/"bind"/"unbind" are only valid on AST with ast $kind "Custom".'
         + ' Or import and use astEvaluate/astAssign/astVisit/astBind/astUnbind accordingly.');
-}
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
 
 /** @internal */ const createLookup = () => Object.create(null);
@@ -139,15 +116,13 @@ CallBindingCommand.$au = {
     type: 'binding-command',
     name: 'call',
 };
-let CallBindingRenderer = class CallBindingRenderer {
+class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
-};
-CallBindingRenderer = __decorate([
-    renderer(instructionType)
-], CallBindingRenderer);
+}
+renderer(instructionType)(CallBindingRenderer, null);
 function getTarget(potentialTarget) {
     if (potentialTarget.viewModel != null) {
         return potentialTarget.viewModel;
@@ -230,7 +205,8 @@ DelegateBindingCommand.$au = {
     type: 'binding-command',
     name: 'delegate',
 };
-let ListenerBindingRenderer = class ListenerBindingRenderer {
+/** @internal */
+class ListenerBindingRenderer {
     constructor() {
         /** @internal */
         this._eventDelegator = resolve(IEventDelegator);
@@ -239,11 +215,8 @@ let ListenerBindingRenderer = class ListenerBindingRenderer {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
     }
-};
-ListenerBindingRenderer = __decorate([
-    renderer('dl')
-    /** @internal */
-], ListenerBindingRenderer);
+}
+renderer('dl')(ListenerBindingRenderer, null);
 class DelegateBindingInstruction {
     constructor(from, to, preventDefault) {
         this.from = from;
@@ -460,7 +433,7 @@ const defineBindingMethods = () => {
             }
         });
     });
-    const getMessage = (name, ast) => console.warn(`@deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${Unparser.unparse(ast)}"`);
+    const getMessage = (name, ast) => console.warn(`[DEV:aurelia] @deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${Unparser.unparse(ast)}"`);
 };
 
 let compatEnabled = false;
@@ -486,8 +459,8 @@ function enableComposeCompat() {
     if (!addedMetadata) {
         addedMetadata = true;
         const def = CustomElement.getDefinition(AuCompose);
-        def.bindables.viewModel = BindableDefinition.create('viewModel', AuCompose);
-        def.bindables.view = BindableDefinition.create('view', AuCompose);
+        def.bindables.viewModel = BindableDefinition.create('viewModel');
+        def.bindables.view = BindableDefinition.create('view');
     }
     defineHiddenProp(prototype, 'viewModelChanged', function (value) {
         this.component = value;

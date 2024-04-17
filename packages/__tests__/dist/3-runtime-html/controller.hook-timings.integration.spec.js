@@ -1,16 +1,42 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { Registration, DI } from '@aurelia/kernel';
+import { Registration, DI, resolve } from '@aurelia/kernel';
 import { Aurelia, customElement, IPlatform, } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 function createFixture() {
@@ -698,20 +724,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
         for (const { app, a1, expected } of syncLikeSpecs) {
             it(`app ${app}, a-1 ${a1}`, async function () {
                 const { mgr, p, au, host } = createFixture();
-                let A1 = class A1 extends TestVM {
-                    constructor() { super(mgr, p, a1); }
-                };
-                A1 = __decorate([
-                    customElement({ name: 'a-1', template: null }),
-                    __metadata("design:paramtypes", [])
-                ], A1);
-                let App = class App extends TestVM {
-                    constructor() { super(mgr, p, app); }
-                };
-                App = __decorate([
-                    customElement({ name: 'app', template: '<a-1></a-1>', dependencies: [A1] }),
-                    __metadata("design:paramtypes", [])
-                ], App);
+                let A1 = (() => {
+                    let _classDecorators = [customElement({ name: 'a-1', template: null })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var A1 = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, a1); }
+                    };
+                    __setFunctionName(_classThis, "A1");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        A1 = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return A1 = _classThis;
+                })();
+                let App = (() => {
+                    let _classDecorators = [customElement({ name: 'app', template: '<a-1></a-1>', dependencies: [A1] })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var App = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, app); }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 au.app({ host, component: App });
                 mgr.setPrefix('start');
                 await au.start();
@@ -721,20 +771,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             });
             it(`app ${app}, a-1 if.bind ${a1}`, async function () {
                 const { mgr, p, au, host } = createFixture();
-                let A1 = class A1 extends TestVM {
-                    constructor() { super(mgr, p, a1); }
-                };
-                A1 = __decorate([
-                    customElement({ name: 'a-1', template: null }),
-                    __metadata("design:paramtypes", [])
-                ], A1);
-                let App = class App extends TestVM {
-                    constructor() { super(mgr, p, app); }
-                };
-                App = __decorate([
-                    customElement({ name: 'app', template: '<a-1 if.bind="true"></a-1>', dependencies: [A1] }),
-                    __metadata("design:paramtypes", [])
-                ], App);
+                let A1 = (() => {
+                    let _classDecorators = [customElement({ name: 'a-1', template: null })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var A1 = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, a1); }
+                    };
+                    __setFunctionName(_classThis, "A1");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        A1 = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return A1 = _classThis;
+                })();
+                let App = (() => {
+                    let _classDecorators = [customElement({ name: 'app', template: '<a-1 if.bind="true"></a-1>', dependencies: [A1] })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var App = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, app); }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 au.app({ host, component: App });
                 mgr.setPrefix('start');
                 await au.start();
@@ -744,20 +818,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             });
             it(`app ${app}, a-1 else ${a1}`, async function () {
                 const { mgr, p, au, host } = createFixture();
-                let A1 = class A1 extends TestVM {
-                    constructor() { super(mgr, p, a1); }
-                };
-                A1 = __decorate([
-                    customElement({ name: 'a-1', template: null }),
-                    __metadata("design:paramtypes", [])
-                ], A1);
-                let App = class App extends TestVM {
-                    constructor() { super(mgr, p, app); }
-                };
-                App = __decorate([
-                    customElement({ name: 'app', template: '<a-1 if.bind="false"></a-1><a-1 else></a-1>', dependencies: [A1] }),
-                    __metadata("design:paramtypes", [])
-                ], App);
+                let A1 = (() => {
+                    let _classDecorators = [customElement({ name: 'a-1', template: null })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var A1 = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, a1); }
+                    };
+                    __setFunctionName(_classThis, "A1");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        A1 = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return A1 = _classThis;
+                })();
+                let App = (() => {
+                    let _classDecorators = [customElement({ name: 'app', template: '<a-1 if.bind="false"></a-1><a-1 else></a-1>', dependencies: [A1] })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var App = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, app); }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 au.app({ host, component: App });
                 mgr.setPrefix('start');
                 await au.start();
@@ -767,20 +865,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             });
             it(`app ${app}, a-1 with ${a1}`, async function () {
                 const { mgr, p, au, host } = createFixture();
-                let A1 = class A1 extends TestVM {
-                    constructor() { super(mgr, p, a1); }
-                };
-                A1 = __decorate([
-                    customElement({ name: 'a-1', template: null }),
-                    __metadata("design:paramtypes", [])
-                ], A1);
-                let App = class App extends TestVM {
-                    constructor() { super(mgr, p, app); }
-                };
-                App = __decorate([
-                    customElement({ name: 'app', template: '<a-1 with.bind="{}"></a-1>', dependencies: [A1] }),
-                    __metadata("design:paramtypes", [])
-                ], App);
+                let A1 = (() => {
+                    let _classDecorators = [customElement({ name: 'a-1', template: null })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var A1 = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, a1); }
+                    };
+                    __setFunctionName(_classThis, "A1");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        A1 = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return A1 = _classThis;
+                })();
+                let App = (() => {
+                    let _classDecorators = [customElement({ name: 'app', template: '<a-1 with.bind="{}"></a-1>', dependencies: [A1] })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var App = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, app); }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 au.app({ host, component: App });
                 mgr.setPrefix('start');
                 await au.start();
@@ -790,20 +912,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             });
             it(`app ${app}, a-1 repeat.for ${a1}`, async function () {
                 const { mgr, p, au, host } = createFixture();
-                let A1 = class A1 extends TestVM {
-                    constructor() { super(mgr, p, a1); }
-                };
-                A1 = __decorate([
-                    customElement({ name: 'a-1', template: null }),
-                    __metadata("design:paramtypes", [])
-                ], A1);
-                let App = class App extends TestVM {
-                    constructor() { super(mgr, p, app); }
-                };
-                App = __decorate([
-                    customElement({ name: 'app', template: '<a-1 repeat.for="i of 1"></a-1>', dependencies: [A1] }),
-                    __metadata("design:paramtypes", [])
-                ], App);
+                let A1 = (() => {
+                    let _classDecorators = [customElement({ name: 'a-1', template: null })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var A1 = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, a1); }
+                    };
+                    __setFunctionName(_classThis, "A1");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        A1 = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return A1 = _classThis;
+                })();
+                let App = (() => {
+                    let _classDecorators = [customElement({ name: 'app', template: '<a-1 repeat.for="i of 1"></a-1>', dependencies: [A1] })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var App = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, app); }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 au.app({ host, component: App });
                 mgr.setPrefix('start');
                 await au.start();
@@ -813,20 +959,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             });
             it(`app ${app}, a-1 switch.bind case.bind ${a1}`, async function () {
                 const { mgr, p, au, host } = createFixture();
-                let A1 = class A1 extends TestVM {
-                    constructor() { super(mgr, p, a1); }
-                };
-                A1 = __decorate([
-                    customElement({ name: 'a-1', template: null }),
-                    __metadata("design:paramtypes", [])
-                ], A1);
-                let App = class App extends TestVM {
-                    constructor() { super(mgr, p, app); }
-                };
-                App = __decorate([
-                    customElement({ name: 'app', template: '<a-1 switch.bind="1" case.bind="1"></a-1>', dependencies: [A1] }),
-                    __metadata("design:paramtypes", [])
-                ], App);
+                let A1 = (() => {
+                    let _classDecorators = [customElement({ name: 'a-1', template: null })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var A1 = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, a1); }
+                    };
+                    __setFunctionName(_classThis, "A1");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        A1 = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return A1 = _classThis;
+                })();
+                let App = (() => {
+                    let _classDecorators = [customElement({ name: 'app', template: '<a-1 switch.bind="1" case.bind="1"></a-1>', dependencies: [A1] })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var App = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, app); }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 au.app({ host, component: App });
                 mgr.setPrefix('start');
                 await au.start();
@@ -836,20 +1006,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             });
             it(`app ${app}, a-1 switch.bind default-case ${a1}`, async function () {
                 const { mgr, p, au, host } = createFixture();
-                let A1 = class A1 extends TestVM {
-                    constructor() { super(mgr, p, a1); }
-                };
-                A1 = __decorate([
-                    customElement({ name: 'a-1', template: null }),
-                    __metadata("design:paramtypes", [])
-                ], A1);
-                let App = class App extends TestVM {
-                    constructor() { super(mgr, p, app); }
-                };
-                App = __decorate([
-                    customElement({ name: 'app', template: '<a-1 switch.bind="1" default-case></a-1>', dependencies: [A1] }),
-                    __metadata("design:paramtypes", [])
-                ], App);
+                let A1 = (() => {
+                    let _classDecorators = [customElement({ name: 'a-1', template: null })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var A1 = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, a1); }
+                    };
+                    __setFunctionName(_classThis, "A1");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        A1 = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return A1 = _classThis;
+                })();
+                let App = (() => {
+                    let _classDecorators = [customElement({ name: 'app', template: '<a-1 switch.bind="1" default-case></a-1>', dependencies: [A1] })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var App = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, app); }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 au.app({ host, component: App });
                 mgr.setPrefix('start');
                 await au.start();
@@ -859,20 +1053,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             });
             it(`app ${app}, a-1 flags ${a1}`, async function () {
                 const { mgr, p, au, host } = createFixture();
-                let A1 = class A1 extends TestVM {
-                    constructor() { super(mgr, p, a1); }
-                };
-                A1 = __decorate([
-                    customElement({ name: 'a-1', template: null }),
-                    __metadata("design:paramtypes", [])
-                ], A1);
-                let App = class App extends TestVM {
-                    constructor() { super(mgr, p, app); }
-                };
-                App = __decorate([
-                    customElement({ name: 'app', template: '<a-1 flags></a-1>', dependencies: [A1] }),
-                    __metadata("design:paramtypes", [])
-                ], App);
+                let A1 = (() => {
+                    let _classDecorators = [customElement({ name: 'a-1', template: null })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var A1 = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, a1); }
+                    };
+                    __setFunctionName(_classThis, "A1");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        A1 = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return A1 = _classThis;
+                })();
+                let App = (() => {
+                    let _classDecorators = [customElement({ name: 'app', template: '<a-1 flags></a-1>', dependencies: [A1] })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var App = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, app); }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 au.app({ host, component: App });
                 mgr.setPrefix('start');
                 await au.start();
@@ -882,20 +1100,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             });
             it(`app ${app}, a-1 portal ${a1}`, async function () {
                 const { mgr, p, au, host } = createFixture();
-                let A1 = class A1 extends TestVM {
-                    constructor() { super(mgr, p, a1); }
-                };
-                A1 = __decorate([
-                    customElement({ name: 'a-1', template: null }),
-                    __metadata("design:paramtypes", [])
-                ], A1);
-                let App = class App extends TestVM {
-                    constructor() { super(mgr, p, app); }
-                };
-                App = __decorate([
-                    customElement({ name: 'app', template: '<a-1 portal></a-1>', dependencies: [A1] }),
-                    __metadata("design:paramtypes", [])
-                ], App);
+                let A1 = (() => {
+                    let _classDecorators = [customElement({ name: 'a-1', template: null })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var A1 = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, a1); }
+                    };
+                    __setFunctionName(_classThis, "A1");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        A1 = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return A1 = _classThis;
+                })();
+                let App = (() => {
+                    let _classDecorators = [customElement({ name: 'app', template: '<a-1 portal></a-1>', dependencies: [A1] })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _classSuper = TestVM;
+                    var App = _classThis = class extends _classSuper {
+                        constructor() { super(mgr, p, app); }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 au.app({ host, component: App });
                 mgr.setPrefix('start');
                 await au.start();
@@ -922,27 +1164,63 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             const childSpec = {
                 ...allSyncSpecs,
             };
-            let C1 = class C1 extends TestVM {
-                constructor() { super(mgr, p, childSpec); }
-            };
-            C1 = __decorate([
-                customElement({ name: 'c-1', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C1);
-            let P1 = class P1 extends TestVM {
-                constructor() { super(mgr, p, parentSpec); }
-            };
-            P1 = __decorate([
-                customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] }),
-                __metadata("design:paramtypes", [])
-            ], P1);
-            let App = class App extends TestVM {
-                constructor() { super(mgr, p, appSpec); }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<p-1></p-1>', dependencies: [P1] }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let C1 = (() => {
+                let _classDecorators = [customElement({ name: 'c-1', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, childSpec); }
+                };
+                __setFunctionName(_classThis, "C1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C1 = _classThis;
+            })();
+            let P1 = (() => {
+                let _classDecorators = [customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var P1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, parentSpec); }
+                };
+                __setFunctionName(_classThis, "P1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    P1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return P1 = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<p-1></p-1>', dependencies: [P1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var App = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, appSpec); }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             au.app({ host, component: App });
             mgr.setPrefix('start');
             await au.start();
@@ -1006,20 +1284,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
                 attaching: () => DelayedInvoker.attaching(mgr, p, 1),
                 attached: () => DelayedInvoker.attached(mgr, p, 1),
             };
-            let C1 = class C1 extends TestVM {
-                constructor() { super(mgr, p, childSpec); }
-            };
-            C1 = __decorate([
-                customElement({ name: 'c-1', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C1);
-            let App = class App extends TestVM {
-                constructor() { super(mgr, p, appSpec); }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<c-1></c-1>', dependencies: [C1] }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let C1 = (() => {
+                let _classDecorators = [customElement({ name: 'c-1', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, childSpec); }
+                };
+                __setFunctionName(_classThis, "C1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C1 = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<c-1></c-1>', dependencies: [C1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var App = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, appSpec); }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             au.app({ host, component: App });
             mgr.setPrefix('start');
             await au.start();
@@ -1065,20 +1367,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
                 ...allSyncSpecs,
                 attaching: () => DelayedInvoker.attaching(mgr, p, 2),
             };
-            let C1 = class C1 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            C1 = __decorate([
-                customElement({ name: 'c-1', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C1);
-            let App = class App extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<c-1></c-1>', dependencies: [C1] }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let C1 = (() => {
+                let _classDecorators = [customElement({ name: 'c-1', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "C1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C1 = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<c-1></c-1>', dependencies: [C1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var App = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             au.app({ host, component: App });
             mgr.setPrefix('start');
             await au.start();
@@ -1127,20 +1453,44 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
                 binding: () => DelayedInvoker.binding(mgr, p, 1),
                 bound: () => DelayedInvoker.bound(mgr, p, 1),
             };
-            let C1 = class C1 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            C1 = __decorate([
-                customElement({ name: 'c-1', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C1);
-            let App = class App extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<c-1></c-1>', dependencies: [C1] }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let C1 = (() => {
+                let _classDecorators = [customElement({ name: 'c-1', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "C1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C1 = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<c-1></c-1>', dependencies: [C1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var App = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             au.app({ host, component: App });
             mgr.setPrefix('start');
             await au.start();
@@ -1189,27 +1539,63 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
                 detaching: () => DelayedInvoker.detaching(mgr, p, 2),
                 unbinding: () => DelayedInvoker.unbinding(mgr, p, 2),
             };
-            let C1 = class C1 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            C1 = __decorate([
-                customElement({ name: 'c-1', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C1);
-            let P1 = class P1 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            P1 = __decorate([
-                customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] }),
-                __metadata("design:paramtypes", [])
-            ], P1);
-            let App = class App extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<p-1></p-1>', dependencies: [P1] }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let C1 = (() => {
+                let _classDecorators = [customElement({ name: 'c-1', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "C1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C1 = _classThis;
+            })();
+            let P1 = (() => {
+                let _classDecorators = [customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var P1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "P1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    P1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return P1 = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<p-1></p-1>', dependencies: [P1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var App = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             au.app({ host, component: App });
             mgr.setPrefix('start');
             await au.start();
@@ -1280,41 +1666,101 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             const hookSpec = {
                 ...getAllAsyncSpecs(1),
             };
-            let C1 = class C1 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            C1 = __decorate([
-                customElement({ name: 'c-1', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C1);
-            let C2 = class C2 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            C2 = __decorate([
-                customElement({ name: 'c-2', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C2);
-            let P1 = class P1 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            P1 = __decorate([
-                customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] }),
-                __metadata("design:paramtypes", [])
-            ], P1);
-            let P2 = class P2 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            P2 = __decorate([
-                customElement({ name: 'p-2', template: '<c-2></c-2>', dependencies: [C2] }),
-                __metadata("design:paramtypes", [])
-            ], P2);
-            let App = class App extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<p-1></p-1><p-2></p-2>', dependencies: [P1, P2] }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let C1 = (() => {
+                let _classDecorators = [customElement({ name: 'c-1', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "C1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C1 = _classThis;
+            })();
+            let C2 = (() => {
+                let _classDecorators = [customElement({ name: 'c-2', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C2 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "C2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C2 = _classThis;
+            })();
+            let P1 = (() => {
+                let _classDecorators = [customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var P1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "P1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    P1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return P1 = _classThis;
+            })();
+            let P2 = (() => {
+                let _classDecorators = [customElement({ name: 'p-2', template: '<c-2></c-2>', dependencies: [C2] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var P2 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "P2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    P2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return P2 = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<p-1></p-1><p-2></p-2>', dependencies: [P1, P2] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var App = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             au.app({ host, component: App });
             mgr.setPrefix('start');
             await au.start();
@@ -1439,41 +1885,101 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
                 attaching: () => DelayedInvoker.attaching(mgr, p, 10),
                 attached: () => DelayedInvoker.attached(mgr, p, 1),
             };
-            let C1 = class C1 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            C1 = __decorate([
-                customElement({ name: 'c-1', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C1);
-            let C2 = class C2 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            C2 = __decorate([
-                customElement({ name: 'c-2', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C2);
-            let P1 = class P1 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            P1 = __decorate([
-                customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] }),
-                __metadata("design:paramtypes", [])
-            ], P1);
-            let P2 = class P2 extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            P2 = __decorate([
-                customElement({ name: 'p-2', template: '<c-2></c-2>', dependencies: [C2] }),
-                __metadata("design:paramtypes", [])
-            ], P2);
-            let App = class App extends TestVM {
-                constructor() { super(mgr, p, hookSpec); }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<p-1></p-1><p-2></p-2>', dependencies: [P1, P2] }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let C1 = (() => {
+                let _classDecorators = [customElement({ name: 'c-1', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "C1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C1 = _classThis;
+            })();
+            let C2 = (() => {
+                let _classDecorators = [customElement({ name: 'c-2', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C2 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "C2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C2 = _classThis;
+            })();
+            let P1 = (() => {
+                let _classDecorators = [customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var P1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "P1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    P1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return P1 = _classThis;
+            })();
+            let P2 = (() => {
+                let _classDecorators = [customElement({ name: 'p-2', template: '<c-2></c-2>', dependencies: [C2] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var P2 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "P2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    P2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return P2 = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<p-1></p-1><p-2></p-2>', dependencies: [P1, P2] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var App = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, hookSpec); }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             au.app({ host, component: App });
             mgr.setPrefix('start');
             await au.start();
@@ -1642,44 +2148,104 @@ describe('3-runtime-html/controller.hook-timings.integration.spec.ts', function 
             const appSpec = {
                 ...allSyncSpecs,
             };
-            let C1 = class C1 extends TestVM {
-                constructor() { super(mgr, p, componentSpec); }
-            };
-            C1 = __decorate([
-                customElement({ name: 'c-1', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C1);
-            let C2 = class C2 extends TestVM {
-                constructor() { super(mgr, p, componentSpec); }
-            };
-            C2 = __decorate([
-                customElement({ name: 'c-2', template: null }),
-                __metadata("design:paramtypes", [])
-            ], C2);
-            let P1 = class P1 extends TestVM {
-                constructor() { super(mgr, p, componentSpec); }
-            };
-            P1 = __decorate([
-                customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] }),
-                __metadata("design:paramtypes", [])
-            ], P1);
-            let P2 = class P2 extends TestVM {
-                constructor() { super(mgr, p, componentSpec); }
-            };
-            P2 = __decorate([
-                customElement({ name: 'p-2', template: '<c-2></c-2>', dependencies: [C2] }),
-                __metadata("design:paramtypes", [])
-            ], P2);
-            let App = class App extends TestVM {
-                constructor() {
-                    super(mgr, p, appSpec);
-                    this.n = 1;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<p-1 if.bind="n===1"></p-1><p-2 if.bind="n===2"></p-2>', dependencies: [P1, P2] }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let C1 = (() => {
+                let _classDecorators = [customElement({ name: 'c-1', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, componentSpec); }
+                };
+                __setFunctionName(_classThis, "C1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C1 = _classThis;
+            })();
+            let C2 = (() => {
+                let _classDecorators = [customElement({ name: 'c-2', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var C2 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, componentSpec); }
+                };
+                __setFunctionName(_classThis, "C2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    C2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return C2 = _classThis;
+            })();
+            let P1 = (() => {
+                let _classDecorators = [customElement({ name: 'p-1', template: '<c-1></c-1>', dependencies: [C1] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var P1 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, componentSpec); }
+                };
+                __setFunctionName(_classThis, "P1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    P1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return P1 = _classThis;
+            })();
+            let P2 = (() => {
+                let _classDecorators = [customElement({ name: 'p-2', template: '<c-2></c-2>', dependencies: [C2] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var P2 = _classThis = class extends _classSuper {
+                    constructor() { super(mgr, p, componentSpec); }
+                };
+                __setFunctionName(_classThis, "P2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    P2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return P2 = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<p-1 if.bind="n===1"></p-1><p-2 if.bind="n===2"></p-2>', dependencies: [P1, P2] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = TestVM;
+                var App = _classThis = class extends _classSuper {
+                    constructor() {
+                        super(mgr, p, appSpec);
+                        this.n = 1;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             au.app({ host, component: App });
             const app = au.root.controller.viewModel;
             mgr.setPrefix('start');
@@ -1866,12 +2432,12 @@ class NotifierConfig {
     }
 }
 const INotifierManager = DI.createInterface('INotifierManager', x => x.singleton(NotifierManager));
-let NotifierManager = class NotifierManager {
-    constructor(p) {
-        this.p = p;
+class NotifierManager {
+    constructor() {
         this.entryNotifyHistory = [];
         this.fullNotifyHistory = [];
         this.prefix = '';
+        this.p = resolve(IPlatform);
         this.binding = new Notifier(this, 'binding');
         this.bound = new Notifier(this, 'bound');
         this.attaching = new Notifier(this, 'attaching');
@@ -1915,11 +2481,7 @@ let NotifierManager = class NotifierManager {
         this.unbinding = void 0;
         this.$dispose = void 0;
     }
-};
-NotifierManager = __decorate([
-    __param(0, IPlatform),
-    __metadata("design:paramtypes", [Object])
-], NotifierManager);
+}
 class DelayedInvoker {
     constructor(mgr, p, name, ticks) {
         this.mgr = mgr;

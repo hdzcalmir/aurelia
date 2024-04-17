@@ -9,19 +9,45 @@
  * Note that an extensive tests of the hooks are already done in the `hook-tests.spec.ts`.
  * However, that misses the `@lifeCycleHooks`. Hence, this spec focuses on that.
  */
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { DI, ILogger, ISink, LogLevel, Registration, } from '@aurelia/kernel';
+import { DI, ILogger, ISink, LogLevel, Registration, resolve, } from '@aurelia/kernel';
 import { IRouter, route, RouteNode, RouterConfiguration } from '@aurelia/router-lite';
 import { Aurelia, CustomElement, customElement, lifecycleHooks, StandardConfiguration } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
@@ -29,10 +55,10 @@ import { TestRouterConfiguration } from './_shared/configuration.js';
 import { start } from './_shared/create-fixture.js';
 describe('router-lite/lifecycle-hooks.spec.ts', function () {
     const IKnownScopes = DI.createInterface();
-    let EventLog = class EventLog {
-        constructor(scopes) {
-            this.scopes = scopes;
+    class EventLog {
+        constructor() {
             this.log = [];
+            this.scopes = resolve(IKnownScopes);
         }
         handleEvent(event) {
             if (!event.scope.some(x => this.scopes.includes(x)))
@@ -63,11 +89,7 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
                 throw new Error('Event log is not found');
             return eventLog;
         }
-    };
-    EventLog = __decorate([
-        __param(0, IKnownScopes),
-        __metadata("design:paramtypes", [Array])
-    ], EventLog);
+    }
     async function createFixture(rootComponent, ...registrations) {
         const ctx = TestContext.create();
         const { container } = ctx;
@@ -92,7 +114,10 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         }
         logger.trace(`${hookName} - end ${component}`);
     }
-    let AsyncBaseHook = class AsyncBaseHook {
+    class AsyncBaseHook {
+        constructor() {
+            this.logger = resolve(ILogger).scopeTo(this.constructor.name);
+        }
         get waitMs() { return null; }
         getWaitTime(hook) {
             const val = this.waitMs;
@@ -101,10 +126,6 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
             if (typeof val === 'number')
                 return val;
             return val[hook] ?? null;
-        }
-        constructor(logger) {
-            this.logger = logger;
-            this.logger = logger.scopeTo(this.constructor.name);
         }
         async canLoad(_vm, _params, next, _current) {
             await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
@@ -120,15 +141,10 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         async unloading(vm, rn, current) {
             await log('unloading', current ?? rn, this.getWaitTime('unloading'), this.logger);
         }
-    };
-    AsyncBaseHook = __decorate([
-        __param(0, ILogger),
-        __metadata("design:paramtypes", [Object])
-    ], AsyncBaseHook);
-    let BaseHook = class BaseHook {
-        constructor(logger) {
-            this.logger = logger;
-            this.logger = logger.scopeTo(this.constructor.name);
+    }
+    class BaseHook {
+        constructor() {
+            this.logger = resolve(ILogger).scopeTo(this.constructor.name);
         }
         canLoad(_vm, _params, next, _current) {
             this.logger.trace(`canLoad ${next.instruction.component}`);
@@ -144,12 +160,11 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         unloading(vm, rn, current) {
             this.logger.trace(`unloading ${(current ?? rn).instruction.component}`);
         }
-    };
-    BaseHook = __decorate([
-        __param(0, ILogger),
-        __metadata("design:paramtypes", [Object])
-    ], BaseHook);
-    let AsyncBaseViewModel = class AsyncBaseViewModel {
+    }
+    class AsyncBaseViewModel {
+        constructor() {
+            this.logger = resolve(ILogger).scopeTo(this.constructor.name);
+        }
         get waitMs() { return null; }
         getWaitTime(hook) {
             const val = this.waitMs;
@@ -158,10 +173,6 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
             if (typeof val === 'number')
                 return val;
             return val[hook] ?? null;
-        }
-        constructor(logger) {
-            this.logger = logger;
-            this.logger = logger.scopeTo(this.constructor.name);
         }
         async canLoad(_params, next, _current) {
             await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
@@ -177,23 +188,18 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         async unloading(rn, current) {
             await log('unloading', current ?? rn, this.getWaitTime('unloading'), this.logger);
         }
-    };
-    AsyncBaseViewModel = __decorate([
-        __param(0, ILogger),
-        __metadata("design:paramtypes", [Object])
-    ], AsyncBaseViewModel);
+    }
     function createHookTimingConfiguration(option = {}) {
         return { canLoad: 1, loading: 1, canUnload: 1, unloading: 1, ...option };
     }
-    let AsyncBaseViewModelWithAllHooks = class AsyncBaseViewModelWithAllHooks {
+    class AsyncBaseViewModelWithAllHooks {
         get ceName() {
             return this._ceName ??= CustomElement.getDefinition(this.constructor).name;
         }
-        constructor(logger, ticks) {
-            this.logger = logger;
+        constructor(ticks) {
             this.ticks = ticks;
             this._ceName = null;
-            this.logger = logger.scopeTo(this.constructor.name);
+            this.logger = resolve(ILogger).scopeTo(this.constructor.name);
         }
         binding(_initiator, _parent) {
             return log('binding', this.ceName, this.ticks, this.logger);
@@ -230,11 +236,7 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         async unloading(_rn, _current) {
             await log('unloading', this.ceName, this.ticks, this.logger);
         }
-    };
-    AsyncBaseViewModelWithAllHooks = __decorate([
-        __param(0, ILogger),
-        __metadata("design:paramtypes", [Object, Number])
-    ], AsyncBaseViewModelWithAllHooks);
+    }
     // the simplified textbook example of authorization hook
     it('single global (auth) hook', async function () {
         const IAuthenticationService = DI.createInterface('IAuthenticationService', x => x.singleton(AuthenticationService));
@@ -243,62 +245,129 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
                 return type === 'read' && value === 'foo';
             }
         }
-        let AuthorizationHook = class AuthorizationHook {
-            constructor(authService, logger) {
-                this.authService = authService;
-                this.logger = logger;
-                this.logger = logger.scopeTo('AuthHook');
-            }
-            canLoad(_vm, _params, next, _current) {
-                this.logger.trace(`canLoad ${next.instruction.component}`);
-                const claim = next.data.claim ?? null;
-                if (claim === null)
-                    return true;
-                return this.authService.hasClaim(claim.type, claim.value)
-                    ? true
-                    : 'forbidden';
-            }
-        };
-        AuthorizationHook = __decorate([
-            lifecycleHooks(),
-            __param(0, IAuthenticationService),
-            __param(1, ILogger),
-            __metadata("design:paramtypes", [Object, Object])
-        ], AuthorizationHook);
-        let Forbidden = class Forbidden {
-        };
-        Forbidden = __decorate([
-            customElement({ name: 'for-bidden', template: 'You shall not pass!' })
-        ], Forbidden);
-        let Home = class Home {
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let FooList = class FooList {
-        };
-        FooList = __decorate([
-            customElement({ name: 'foo-list', template: 'foo list' })
-        ], FooList);
-        let FooEdit = class FooEdit {
-        };
-        FooEdit = __decorate([
-            customElement({ name: 'foo-edit', template: 'foo edit' })
-        ], FooEdit);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: FooList, data: { claim: { type: 'read', value: 'foo' } } },
-                    { path: 'foo/:id', component: FooEdit, data: { claim: { type: 'edit', value: 'foo' } } },
-                    { path: 'forbidden', component: Forbidden }
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let AuthorizationHook = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var AuthorizationHook = _classThis = class {
+                constructor() {
+                    this.logger = resolve(ILogger).scopeTo('AuthHook');
+                    this.authService = resolve(IAuthenticationService);
+                }
+                canLoad(_vm, _params, next, _current) {
+                    this.logger.trace(`canLoad ${next.instruction.component}`);
+                    const claim = next.data.claim ?? null;
+                    if (claim === null)
+                        return true;
+                    return this.authService.hasClaim(claim.type, claim.value)
+                        ? true
+                        : 'forbidden';
+                }
+            };
+            __setFunctionName(_classThis, "AuthorizationHook");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                AuthorizationHook = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return AuthorizationHook = _classThis;
+        })();
+        let Forbidden = (() => {
+            let _classDecorators = [customElement({ name: 'for-bidden', template: 'You shall not pass!' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Forbidden = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Forbidden");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Forbidden = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Forbidden = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Home = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let FooList = (() => {
+            let _classDecorators = [customElement({ name: 'foo-list', template: 'foo list' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var FooList = _classThis = class {
+            };
+            __setFunctionName(_classThis, "FooList");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                FooList = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return FooList = _classThis;
+        })();
+        let FooEdit = (() => {
+            let _classDecorators = [customElement({ name: 'foo-edit', template: 'foo edit' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var FooEdit = _classThis = class {
+            };
+            __setFunctionName(_classThis, "FooEdit");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                FooEdit = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return FooEdit = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: FooList, data: { claim: { type: 'read', value: 'foo' } } },
+                        { path: 'foo/:id', component: FooEdit, data: { claim: { type: 'edit', value: 'foo' } } },
+                        { path: 'forbidden', component: Forbidden }
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Forbidden, FooList, FooEdit, IAuthenticationService, AuthorizationHook, Registration.instance(IKnownScopes, ['AuthHook']));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -317,38 +386,101 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple synchronous hooks - without preemption', async function () {
-        let Hook1 = class Hook1 extends BaseHook {
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends BaseHook {
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends BaseHook {
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends BaseHook {
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = BaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = BaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = BaseHook;
+            var Home = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = BaseHook;
+            var Foo = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -382,38 +514,101 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - same timing - without preemption', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -465,42 +660,105 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - varied timing monotonically increasing - without preemption', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return 2; }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 3; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 3; }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return 2; }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 3; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 3; }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -552,42 +810,105 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - varied timing monotonically decreasing - without preemption', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return 3; }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return 2; }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return 3; }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return 2; }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -646,46 +967,109 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     });
     // #region - preemption - first preemption always wins
     it('multiple asynchronous hooks - first canLoad hook preempts with false', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
-            async canLoad(vm, _params, next, _current) {
-                await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
-                return !(vm instanceof Foo);
-            }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
+                async canLoad(vm, _params, next, _current) {
+                    await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
+                    return !(vm instanceof Foo);
+                }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -723,46 +1107,109 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - second canLoad hook preempts with false', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
-            async canLoad(vm, _params, next, _current) {
-                await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
-                return !(vm instanceof Foo);
-            }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
+                async canLoad(vm, _params, next, _current) {
+                    await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
+                    return !(vm instanceof Foo);
+                }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -802,46 +1249,109 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - view-model canLoad hook preempts with false', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-            async canLoad(params, next, _current) {
-                await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
-                return !Number.isNaN(Number(params.id));
-            }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo/:id', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+                async canLoad(params, next, _current) {
+                    await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
+                    return !Number.isNaN(Number(params.id));
+                }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo/:id', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -917,57 +1427,133 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - first canLoad hook preempts with navigation instruction', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
-            async canLoad(vm, _params, next, _current) {
-                await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
-                return vm instanceof Foo ? 'bar' : true;
-            }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-            async canLoad(vm, _params, next, _current) {
-                await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
-                return vm instanceof Foo ? 'home' : true;
-            }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Bar = class Bar extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Bar = __decorate([
-            customElement({ name: 'ba-r', template: 'bar' })
-        ], Bar);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                    { path: 'bar', component: Bar },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
+                async canLoad(vm, _params, next, _current) {
+                    await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
+                    return vm instanceof Foo ? 'bar' : true;
+                }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+                async canLoad(vm, _params, next, _current) {
+                    await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
+                    return vm instanceof Foo ? 'home' : true;
+                }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Bar = (() => {
+            let _classDecorators = [customElement({ name: 'ba-r', template: 'bar' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Bar = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Bar");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Bar = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Bar = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                        { path: 'bar', component: Bar },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Bar, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name, Bar.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -1032,53 +1618,129 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - second canLoad hook preempts with navigation instruction', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
-            async canLoad(vm, _params, next, _current) {
-                await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
-                return vm instanceof Foo ? 'bar' : true;
-            }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Bar = class Bar extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Bar = __decorate([
-            customElement({ name: 'ba-r', template: 'bar' })
-        ], Bar);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                    { path: 'bar', component: Bar },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
+                async canLoad(vm, _params, next, _current) {
+                    await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
+                    return vm instanceof Foo ? 'bar' : true;
+                }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Bar = (() => {
+            let _classDecorators = [customElement({ name: 'ba-r', template: 'bar' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Bar = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Bar");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Bar = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Bar = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                        { path: 'bar', component: Bar },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Bar, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name, Bar.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -1145,53 +1807,129 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - view-model canLoad hook preempts with navigation instruction', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-            async canLoad(params, next, _current) {
-                await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
-                return Number.isNaN(Number(params.id)) ? 'bar' : true;
-            }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Bar = class Bar extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Bar = __decorate([
-            customElement({ name: 'ba-r', template: 'bar' })
-        ], Bar);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo/:id', component: Foo },
-                    { path: 'bar', component: Bar },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+                async canLoad(params, next, _current) {
+                    await log('canLoad', next, this.getWaitTime('canLoad'), this.logger);
+                    return Number.isNaN(Number(params.id)) ? 'bar' : true;
+                }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Bar = (() => {
+            let _classDecorators = [customElement({ name: 'ba-r', template: 'bar' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Bar = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Bar");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Bar = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Bar = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo/:id', component: Foo },
+                        { path: 'bar', component: Bar },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Bar, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name, Bar.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -1295,46 +2033,109 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - first canUnload hook preempts with false', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
-            async canUnload(vm, _next, current) {
-                await log('canUnload', current, this.getWaitTime('canUnload'), this.logger);
-                return !(vm instanceof Home);
-            }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
+                async canUnload(vm, _next, current) {
+                    await log('canUnload', current, this.getWaitTime('canUnload'), this.logger);
+                    return !(vm instanceof Home);
+                }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -1366,46 +2167,109 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - second canUnload hook preempts with false', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
-            async canUnload(vm, _next, current) {
-                await log('canUnload', current, this.getWaitTime('canUnload'), this.logger);
-                return !(vm instanceof Home);
-            }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return createHookTimingConfiguration({ canLoad: 2 }); }
+                async canUnload(vm, _next, current) {
+                    await log('canUnload', current, this.getWaitTime('canUnload'), this.logger);
+                    return !(vm instanceof Home);
+                }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -1439,46 +2303,109 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple asynchronous hooks - view-model canUnload hook preempts with false', async function () {
-        let Hook1 = class Hook1 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends AsyncBaseHook {
-            get waitMs() { return 1; }
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Home = class Home extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-            async canUnload(_next, current) {
-                await log('canUnload', current, this.getWaitTime('canUnload'), this.logger);
-                return false;
-            }
-        };
-        Home = __decorate([
-            customElement({ name: 'ho-me', template: 'home' })
-        ], Home);
-        let Foo = class Foo extends AsyncBaseViewModel {
-            get waitMs() { return 1; }
-        };
-        Foo = __decorate([
-            customElement({ name: 'fo-o', template: 'foo' })
-        ], Foo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { path: '', redirectTo: 'home' },
-                    { path: 'home', component: Home },
-                    { path: 'foo', component: Foo },
-                ]
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Home = (() => {
+            let _classDecorators = [customElement({ name: 'ho-me', template: 'home' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Home = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+                async canUnload(_next, current) {
+                    await log('canUnload', current, this.getWaitTime('canUnload'), this.logger);
+                    return false;
+                }
+            };
+            __setFunctionName(_classThis, "Home");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Home = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Home = _classThis;
+        })();
+        let Foo = (() => {
+            let _classDecorators = [customElement({ name: 'fo-o', template: 'foo' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModel;
+            var Foo = _classThis = class extends _classSuper {
+                get waitMs() { return 1; }
+            };
+            __setFunctionName(_classThis, "Foo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Foo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Foo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', redirectTo: 'home' },
+                        { path: 'home', component: Home },
+                        { path: 'foo', component: Foo },
+                    ]
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Home, Hook1, Hook2, Home, Foo, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -1622,43 +2549,104 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     }
     for (const { name, a1, a2, b1, b2, assertLog } of getHookTestData()) {
         it(`parentsiblings-childsiblings - hook of one of the component takes significantly more time than others - no preemption - ${name}`, async function () {
-            let A2 = class A2 extends AsyncBaseViewModel {
-                get waitMs() { return a2; }
-            };
-            A2 = __decorate([
-                customElement({ name: 'a2', template: null })
-            ], A2);
-            let A1 = class A1 extends AsyncBaseViewModel {
-                get waitMs() { return a1; }
-            };
-            A1 = __decorate([
-                route({ routes: [{ path: 'a2', component: A2 }] }),
-                customElement({ name: 'a1', template: '<au-viewport></au-viewport>' })
-            ], A1);
-            let B2 = class B2 extends AsyncBaseViewModel {
-                get waitMs() { return b2; }
-            };
-            B2 = __decorate([
-                customElement({ name: 'b2', template: null })
-            ], B2);
-            let B1 = class B1 extends AsyncBaseViewModel {
-                get waitMs() { return b1; }
-            };
-            B1 = __decorate([
-                route({ routes: [{ path: 'b2', component: B2 }] }),
-                customElement({ name: 'b1', template: '<au-viewport></au-viewport>' })
-            ], B1);
-            let Root = class Root {
-            };
-            Root = __decorate([
-                route({
-                    routes: [
-                        { path: 'a1', component: A1 },
-                        { path: 'b1', component: B1 },
-                    ]
-                }),
-                customElement({ name: 'root', template: '<au-viewport name="$0"></au-viewport><au-viewport name="$1"></au-viewport>' })
-            ], Root);
+            let A2 = (() => {
+                let _classDecorators = [customElement({ name: 'a2', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = AsyncBaseViewModel;
+                var A2 = _classThis = class extends _classSuper {
+                    get waitMs() { return a2; }
+                };
+                __setFunctionName(_classThis, "A2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    A2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return A2 = _classThis;
+            })();
+            let A1 = (() => {
+                let _classDecorators = [route({ routes: [{ path: 'a2', component: A2 }] }), customElement({ name: 'a1', template: '<au-viewport></au-viewport>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = AsyncBaseViewModel;
+                var A1 = _classThis = class extends _classSuper {
+                    get waitMs() { return a1; }
+                };
+                __setFunctionName(_classThis, "A1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    A1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return A1 = _classThis;
+            })();
+            let B2 = (() => {
+                let _classDecorators = [customElement({ name: 'b2', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = AsyncBaseViewModel;
+                var B2 = _classThis = class extends _classSuper {
+                    get waitMs() { return b2; }
+                };
+                __setFunctionName(_classThis, "B2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    B2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return B2 = _classThis;
+            })();
+            let B1 = (() => {
+                let _classDecorators = [route({ routes: [{ path: 'b2', component: B2 }] }), customElement({ name: 'b1', template: '<au-viewport></au-viewport>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = AsyncBaseViewModel;
+                var B1 = _classThis = class extends _classSuper {
+                    get waitMs() { return b1; }
+                };
+                __setFunctionName(_classThis, "B1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    B1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return B1 = _classThis;
+            })();
+            let Root = (() => {
+                let _classDecorators = [route({
+                        routes: [
+                            { path: 'a1', component: A1 },
+                            { path: 'b1', component: B1 },
+                        ]
+                    }), customElement({ name: 'root', template: '<au-viewport name="$0"></au-viewport><au-viewport name="$1"></au-viewport>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Root = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Root");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Root = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Root = _classThis;
+            })();
             const { au, container } = await createFixture(Root, A1, A2, B1, B2, Registration.instance(IKnownScopes, [A1.name, A2.name, B1.name, B2.name]));
             const router = container.get(IRouter);
             const eventLog = EventLog.getInstance(container);
@@ -1680,48 +2668,108 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     }
     function* getSiblingHookTestData() {
         function createRoot(ticks) {
-            let Base = class Base extends AsyncBaseViewModelWithAllHooks {
-                constructor(logger) {
-                    super(logger, ticks);
+            class Base extends AsyncBaseViewModelWithAllHooks {
+                constructor() {
+                    super(ticks);
                 }
-            };
-            Base = __decorate([
-                __param(0, ILogger),
-                __metadata("design:paramtypes", [Object])
-            ], Base);
-            let A01 = class A01 extends Base {
-            };
-            A01 = __decorate([
-                customElement({ name: 'a01', template: null })
-            ], A01);
-            let A02 = class A02 extends Base {
-            };
-            A02 = __decorate([
-                customElement({ name: 'a02', template: null })
-            ], A02);
-            let A03 = class A03 extends Base {
-            };
-            A03 = __decorate([
-                customElement({ name: 'a03', template: null })
-            ], A03);
-            let A04 = class A04 extends Base {
-            };
-            A04 = __decorate([
-                customElement({ name: 'a04', template: null })
-            ], A04);
-            let Root = class Root extends Base {
-            };
-            Root = __decorate([
-                route({
-                    routes: [
-                        { path: 'a01', component: A01 },
-                        { path: 'a02', component: A02 },
-                        { path: 'a03', component: A03 },
-                        { path: 'a04', component: A04 },
-                    ]
-                }),
-                customElement({ name: 'ro-ot', template: '<au-viewport name="$0"></au-viewport><au-viewport name="$1"></au-viewport>' })
-            ], Root);
+            }
+            let A01 = (() => {
+                let _classDecorators = [customElement({ name: 'a01', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = Base;
+                var A01 = _classThis = class extends _classSuper {
+                };
+                __setFunctionName(_classThis, "A01");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    A01 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return A01 = _classThis;
+            })();
+            let A02 = (() => {
+                let _classDecorators = [customElement({ name: 'a02', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = Base;
+                var A02 = _classThis = class extends _classSuper {
+                };
+                __setFunctionName(_classThis, "A02");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    A02 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return A02 = _classThis;
+            })();
+            let A03 = (() => {
+                let _classDecorators = [customElement({ name: 'a03', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = Base;
+                var A03 = _classThis = class extends _classSuper {
+                };
+                __setFunctionName(_classThis, "A03");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    A03 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return A03 = _classThis;
+            })();
+            let A04 = (() => {
+                let _classDecorators = [customElement({ name: 'a04', template: null })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = Base;
+                var A04 = _classThis = class extends _classSuper {
+                };
+                __setFunctionName(_classThis, "A04");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    A04 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return A04 = _classThis;
+            })();
+            let Root = (() => {
+                let _classDecorators = [route({
+                        routes: [
+                            { path: 'a01', component: A01 },
+                            { path: 'a02', component: A02 },
+                            { path: 'a03', component: A03 },
+                            { path: 'a04', component: A04 },
+                        ]
+                    }), customElement({ name: 'ro-ot', template: '<au-viewport name="$0"></au-viewport><au-viewport name="$1"></au-viewport>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = Base;
+                var Root = _classThis = class extends _classSuper {
+                };
+                __setFunctionName(_classThis, "Root");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Root = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Root = _classThis;
+            })();
             return [Root, [Root.name, A01.name, A02.name, A03.name, A04.name]];
         }
         function assertStartLog(eventLog) {
@@ -5589,63 +6637,105 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     }
     it('multi-level hierarchical configuration -> navigation to sibling route from child -> parent is not replaced (transitionPlan: replace)', async function () {
         const ticks = 0;
-        let L121 = class L121 extends AsyncBaseViewModelWithAllHooks {
-            constructor(logger) {
-                super(logger, ticks);
-            }
-        };
-        L121 = __decorate([
-            customElement({ name: 'l-121', template: `l-121 <a load="../l122/1"></a><a load="../l122/2"></a>` }),
-            __param(0, ILogger),
-            __metadata("design:paramtypes", [Object])
-        ], L121);
-        let L122 = class L122 extends AsyncBaseViewModelWithAllHooks {
-            constructor(logger) {
-                super(logger, ticks);
-            }
-            async canLoad(params, _next, _current) {
-                await super.canLoad(params, _next, _current);
-                this.id = params.id;
-                return true;
-            }
-        };
-        L122 = __decorate([
-            customElement({ name: 'l-122', template: `l-122 \${id} <a load="../../l1"></a>` }),
-            __param(0, ILogger),
-            __metadata("design:paramtypes", [Object])
-        ], L122);
-        let L1 = class L1 extends AsyncBaseViewModelWithAllHooks {
-            constructor(logger) {
-                super(logger, ticks);
-            }
-        };
-        L1 = __decorate([
-            route({
-                routes: [
-                    { path: '', component: L121 },
-                    { path: 'l122/:id', component: L122 },
-                ]
-            }),
-            customElement({ name: 'l-1', template: `<au-viewport></au-viewport>` }),
-            __param(0, ILogger),
-            __metadata("design:paramtypes", [Object])
-        ], L1);
-        let Root = class Root extends AsyncBaseViewModelWithAllHooks {
-            constructor(logger) {
-                super(logger, ticks);
-            }
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    { id: 'l1', path: ['', 'l1'], component: L1 },
-                ],
-                transitionPlan: 'replace',
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport name="root"></au-viewport>' }),
-            __param(0, ILogger),
-            __metadata("design:paramtypes", [Object])
-        ], Root);
+        let L121 = (() => {
+            let _classDecorators = [customElement({ name: 'l-121', template: `l-121 <a load="../l122/1"></a><a load="../l122/2"></a>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModelWithAllHooks;
+            var L121 = _classThis = class extends _classSuper {
+                constructor() {
+                    super(ticks);
+                }
+            };
+            __setFunctionName(_classThis, "L121");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                L121 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return L121 = _classThis;
+        })();
+        let L122 = (() => {
+            let _classDecorators = [customElement({ name: 'l-122', template: `l-122 \${id} <a load="../../l1"></a>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModelWithAllHooks;
+            var L122 = _classThis = class extends _classSuper {
+                constructor() {
+                    super(ticks);
+                }
+                async canLoad(params, _next, _current) {
+                    await super.canLoad(params, _next, _current);
+                    this.id = params.id;
+                    return true;
+                }
+            };
+            __setFunctionName(_classThis, "L122");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                L122 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return L122 = _classThis;
+        })();
+        let L1 = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { path: '', component: L121 },
+                        { path: 'l122/:id', component: L122 },
+                    ]
+                }), customElement({ name: 'l-1', template: `<au-viewport></au-viewport>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModelWithAllHooks;
+            var L1 = _classThis = class extends _classSuper {
+                constructor() {
+                    super(ticks);
+                }
+            };
+            __setFunctionName(_classThis, "L1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                L1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return L1 = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        { id: 'l1', path: ['', 'l1'], component: L1 },
+                    ],
+                    transitionPlan: 'replace',
+                }), customElement({ name: 'ro-ot', template: '<au-viewport name="root"></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = AsyncBaseViewModelWithAllHooks;
+            var Root = _classThis = class extends _classSuper {
+                constructor() {
+                    super(ticks);
+                }
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, host, container } = await createFixture(Root, Registration.instance(IKnownScopes, [Root.name, L1.name, L121.name, L122.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);
@@ -5739,49 +6829,84 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     });
     // #endregion
     it('navigate away -> false from canUnload -> navigate away with same path', async function () {
-        let ChildOne = class ChildOne {
-            constructor() {
-                this.allowUnload = false;
-                this.canUnloadCalled = 0;
-            }
-            canUnload() {
-                this.canUnloadCalled++;
-                return this.allowUnload;
-            }
-        };
-        ChildOne = __decorate([
-            customElement({ name: 'c-one', template: `c1` })
-        ], ChildOne);
-        let ChildTwo = class ChildTwo {
-            constructor() {
-                this.allowUnload = false;
-                this.canUnloadCalled = 0;
-            }
-            canUnload() {
-                this.canUnloadCalled++;
-                return this.allowUnload;
-            }
-        };
-        ChildTwo = __decorate([
-            customElement({ name: 'c-two', template: `c2` })
-        ], ChildTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        path: ['c1/:id?'],
-                        component: ChildOne,
-                    },
-                    {
-                        path: ['', 'c2/:id?'],
-                        component: ChildTwo,
-                    },
-                ],
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let ChildOne = (() => {
+            let _classDecorators = [customElement({ name: 'c-one', template: `c1` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var ChildOne = _classThis = class {
+                constructor() {
+                    this.allowUnload = false;
+                    this.canUnloadCalled = 0;
+                }
+                canUnload() {
+                    this.canUnloadCalled++;
+                    return this.allowUnload;
+                }
+            };
+            __setFunctionName(_classThis, "ChildOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                ChildOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return ChildOne = _classThis;
+        })();
+        let ChildTwo = (() => {
+            let _classDecorators = [customElement({ name: 'c-two', template: `c2` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var ChildTwo = _classThis = class {
+                constructor() {
+                    this.allowUnload = false;
+                    this.canUnloadCalled = 0;
+                }
+                canUnload() {
+                    this.canUnloadCalled++;
+                    return this.allowUnload;
+                }
+            };
+            __setFunctionName(_classThis, "ChildTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                ChildTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return ChildTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: ['c1/:id?'],
+                            component: ChildOne,
+                        },
+                        {
+                            path: ['', 'c2/:id?'],
+                            component: ChildTwo,
+                        },
+                    ],
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root });
         const router = container.get(IRouter);
         assert.html.textContent(host, 'c2', 'content 1');
@@ -5817,48 +6942,122 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
         await au.stop(true);
     });
     it('lifecycle hooks as dependencies are supported', async function () {
-        let Hook1 = class Hook1 extends BaseHook {
-        };
-        Hook1 = __decorate([
-            lifecycleHooks()
-        ], Hook1);
-        let Hook2 = class Hook2 extends BaseHook {
-        };
-        Hook2 = __decorate([
-            lifecycleHooks()
-        ], Hook2);
-        let Hook3 = class Hook3 extends BaseHook {
-        };
-        Hook3 = __decorate([
-            lifecycleHooks()
-        ], Hook3);
-        let ChildOne = class ChildOne {
-        };
-        ChildOne = __decorate([
-            customElement({ name: 'c-one', template: `c1`, dependencies: [Hook1, Hook3] })
-        ], ChildOne);
-        let ChildTwo = class ChildTwo {
-        };
-        ChildTwo = __decorate([
-            customElement({ name: 'c-two', template: `c2`, dependencies: [Hook2] })
-        ], ChildTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        path: ['c1'],
-                        component: ChildOne,
-                    },
-                    {
-                        path: ['c2'],
-                        component: ChildTwo,
-                    },
-                ],
-            }),
-            customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })
-        ], Root);
+        let Hook1 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = BaseHook;
+            var Hook1 = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Hook1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook1 = _classThis;
+        })();
+        let Hook2 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = BaseHook;
+            var Hook2 = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Hook2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook2 = _classThis;
+        })();
+        let Hook3 = (() => {
+            let _classDecorators = [lifecycleHooks()];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _classSuper = BaseHook;
+            var Hook3 = _classThis = class extends _classSuper {
+            };
+            __setFunctionName(_classThis, "Hook3");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Hook3 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Hook3 = _classThis;
+        })();
+        let ChildOne = (() => {
+            let _classDecorators = [customElement({ name: 'c-one', template: `c1`, dependencies: [Hook1, Hook3] })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var ChildOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "ChildOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                ChildOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return ChildOne = _classThis;
+        })();
+        let ChildTwo = (() => {
+            let _classDecorators = [customElement({ name: 'c-two', template: `c2`, dependencies: [Hook2] })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var ChildTwo = _classThis = class {
+            };
+            __setFunctionName(_classThis, "ChildTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                ChildTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return ChildTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: ['c1'],
+                            component: ChildOne,
+                        },
+                        {
+                            path: ['c2'],
+                            component: ChildTwo,
+                        },
+                    ],
+                }), customElement({ name: 'ro-ot', template: '<au-viewport></au-viewport>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await createFixture(Root, Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Hook3.name]));
         const router = container.get(IRouter);
         const eventLog = EventLog.getInstance(container);

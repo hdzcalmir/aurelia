@@ -1,4 +1,6 @@
-import { type Collection, ForOfStatement, type IndexMap, type IsBindingBehavior, IExpressionParser } from '@aurelia/runtime';
+import { ForOfStatement, type IsBindingBehavior } from '@aurelia/expression-parser';
+import { type Collection, type IndexMap } from '@aurelia/runtime';
+import { IExpressionParser } from '@aurelia/expression-parser';
 import { IRenderLocation } from '../../dom';
 import { IViewFactory } from '../../templating/view';
 import { CustomAttributeStaticAuDefinition } from '../custom-attribute';

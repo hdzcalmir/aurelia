@@ -1,14 +1,43 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { noop, toArray } from '@aurelia/kernel';
-import { Aurelia, BindingMode, bindable, CustomElement, customElement, INode, IPlatform, processContent } from '@aurelia/runtime-html';
+import { Aurelia, BindingMode, bindable, CustomElement, customElement, IPlatform, processContent } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 import { createSpecFunction } from '../util.js';
 describe('3-runtime-html/process-content.spec.ts', function () {
@@ -104,39 +133,110 @@ describe('3-runtime-html/process-content.spec.ts', function () {
                 assert.strictEqual(MyElement.hookInvoked, true);
             });
         }
+        // The following tests don't work. Refer: https://github.com/microsoft/TypeScript/issues/57366
+        // {
+        //   @processContent(MyElement.processContent)
+        //   @customElement({
+        //     name: 'my-element',
+        //     template: `<div><au-slot></au-slot></div>`,
+        //   })
+        //   class MyElement {
+        //     public static hookInvoked: boolean = false;
+        //     public static processContent(_node: INode, _p: IPlatform) {
+        //       this.hookInvoked = true;
+        //     }
+        //   }
+        //   yield new TestData(
+        //     'processContent hook can be configured using class-level decorator - function - order 1',
+        //     `<my-element normal="foo" bold="bar"></my-element>`,
+        //     [MyElement],
+        //     {},
+        //     () => {
+        //       assert.strictEqual(MyElement.hookInvoked, true);
+        //     }
+        //   );
+        // }
+        // {
+        //   @customElement({
+        //     name: 'my-element',
+        //     template: `<div><au-slot></au-slot></div>`,
+        //   })
+        //   @processContent(MyElement.processContent)
+        //   class MyElement {
+        //     public static hookInvoked: boolean = false;
+        //     public static processContent(_node: INode, _p: IPlatform) {
+        //       this.hookInvoked = true;
+        //     }
+        //   }
+        //   yield new TestData(
+        //     'processContent hook can be configured using class-level decorator - function - order 2',
+        //     `<my-element normal="foo" bold="bar"></my-element>`,
+        //     [MyElement],
+        //     {},
+        //     () => {
+        //       assert.strictEqual(MyElement.hookInvoked, true);
+        //     }
+        //   );
+        // }
         {
-            let MyElement = class MyElement {
-                static processContent(_node, _p) {
-                    this.hookInvoked = true;
-                }
-            };
-            MyElement.hookInvoked = false;
-            MyElement = __decorate([
-                processContent(MyElement.processContent),
-                customElement({
-                    name: 'my-element',
-                    template: `<div><au-slot></au-slot></div>`,
-                })
-            ], MyElement);
-            yield new TestData('processContent hook can be configured using class-level decorator - function - order 1', `<my-element normal="foo" bold="bar"></my-element>`, [MyElement], {}, () => {
+            let MyElement = (() => {
+                let _classDecorators = [processContent('processContent'), customElement({
+                        name: 'my-element',
+                        template: `<div><au-slot></au-slot></div>`,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyElement = _classThis = class {
+                    static processContent(_node, _p) {
+                        this.hookInvoked = true;
+                    }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.hookInvoked = false;
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
+            yield new TestData('processContent hook can be configured using class-level decorator - function name - order 1', `<my-element normal="foo" bold="bar"></my-element>`, [MyElement], {}, () => {
                 assert.strictEqual(MyElement.hookInvoked, true);
             });
         }
         {
-            let MyElement = class MyElement {
-                static processContent(_node, _p) {
-                    this.hookInvoked = true;
-                }
-            };
-            MyElement.hookInvoked = false;
-            MyElement = __decorate([
-                customElement({
-                    name: 'my-element',
-                    template: `<div><au-slot></au-slot></div>`,
-                }),
-                processContent(MyElement.processContent)
-            ], MyElement);
-            yield new TestData('processContent hook can be configured using class-level decorator - function - order 2', `<my-element normal="foo" bold="bar"></my-element>`, [MyElement], {}, () => {
+            let MyElement = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-element',
+                        template: `<div><au-slot></au-slot></div>`,
+                    }), processContent('processContent')];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyElement = _classThis = class {
+                    static processContent(_node, _p) {
+                        this.hookInvoked = true;
+                    }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.hookInvoked = false;
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
+            yield new TestData('processContent hook can be configured using class-level decorator - function name - order 2', `<my-element normal="foo" bold="bar"></my-element>`, [MyElement], {}, () => {
                 assert.strictEqual(MyElement.hookInvoked, true);
             });
         }
@@ -144,39 +244,64 @@ describe('3-runtime-html/process-content.spec.ts', function () {
             function processContent1(_node, _p) {
                 this.hookInvoked = true;
             }
-            let MyElement = class MyElement {
-            };
-            MyElement.hookInvoked = false;
-            MyElement = __decorate([
-                processContent(processContent1),
-                customElement({
-                    name: 'my-element',
-                    template: `<div><au-slot></au-slot></div>`,
-                })
-            ], MyElement);
+            let MyElement = (() => {
+                let _classDecorators = [processContent(processContent1), customElement({
+                        name: 'my-element',
+                        template: `<div><au-slot></au-slot></div>`,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyElement = _classThis = class {
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.hookInvoked = false;
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
             yield new TestData('processContent hook can be configured using class-level decorator - standalone function', `<my-element normal="foo" bold="bar"></my-element>`, [MyElement], {}, () => {
                 assert.strictEqual(MyElement.hookInvoked, true);
             });
         }
         {
-            let MyElement = class MyElement {
-                static processContent(_node, _p) {
-                    this.hookInvoked = true;
-                }
-            };
-            MyElement.hookInvoked = false;
-            __decorate([
-                processContent(),
-                __metadata("design:type", Function),
-                __metadata("design:paramtypes", [Object, Object]),
-                __metadata("design:returntype", void 0)
-            ], MyElement, "processContent", null);
-            MyElement = __decorate([
-                customElement({
-                    name: 'my-element',
-                    template: `<div><au-slot></au-slot></div>`,
-                })
-            ], MyElement);
+            let MyElement = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-element',
+                        template: `<div><au-slot></au-slot></div>`,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _staticExtraInitializers = [];
+                let _static_processContent_decorators;
+                var MyElement = _classThis = class {
+                    static processContent(_node, _p, _data) {
+                        this.hookInvoked = true;
+                    }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _static_processContent_decorators = [processContent()];
+                    __esDecorate(_classThis, null, _static_processContent_decorators, { kind: "method", name: "processContent", static: true, private: false, access: { has: obj => "processContent" in obj, get: obj => obj.processContent }, metadata: _metadata }, null, _staticExtraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.hookInvoked = (__runInitializers(_classThis, _staticExtraInitializers), false);
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
             yield new TestData('processContent hook can be configured using method-level decorator', `<my-element normal="foo" bold="bar"></my-element>`, [MyElement], {}, () => {
                 assert.strictEqual(MyElement.hookInvoked, true);
             });
@@ -415,47 +540,69 @@ describe('3-runtime-html/process-content.spec.ts', function () {
     }
     // A semi-real-life example
     {
-        let Tabs = class Tabs {
-            showTab(tabId) {
-                this.activeTabId = tabId;
-            }
-            static processTabs(node, p) {
-                const el = node;
-                const headerTemplate = p.document.createElement('template');
-                headerTemplate.setAttribute('au-slot', 'header');
-                const contentTemplate = p.document.createElement('template');
-                contentTemplate.setAttribute('au-slot', 'content');
-                const tabs = toArray(el.querySelectorAll('tab'));
-                for (let i = 0; i < tabs.length; i++) {
-                    const tab = tabs[i];
-                    // add header
-                    const header = p.document.createElement('button');
-                    header.setAttribute('class.bind', `$host.activeTabId=='${i}'?'active':''`);
-                    header.setAttribute('click.trigger', `$host.showTab('${i}')`);
-                    header.appendChild(p.document.createTextNode(tab.getAttribute('header')));
-                    headerTemplate.content.appendChild(header);
-                    // add content
-                    const content = p.document.createElement('div');
-                    content.setAttribute('if.bind', `$host.activeTabId=='${i}'`);
-                    content.append(...toArray(tab.childNodes));
-                    contentTemplate.content.appendChild(content);
-                    el.removeChild(tab);
+        let Tabs = (() => {
+            let _classDecorators = [customElement({
+                    name: 'tabs',
+                    template: '<div class="header"><au-slot name="header"></au-slot></div><div class="content"><au-slot name="content"></au-slot></div>',
+                    // processContent: Tabs.processTabs // <- this won't work; refer: https://github.com/microsoft/TypeScript/issues/57366
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _staticExtraInitializers = [];
+            let _static_processTabs_decorators;
+            let _activeTabId_decorators;
+            let _activeTabId_initializers = [];
+            let _activeTabId_extraInitializers = [];
+            var Tabs = _classThis = class {
+                showTab(tabId) {
+                    this.activeTabId = tabId;
                 }
-                el.setAttribute('active-tab-id', '0');
-                el.append(headerTemplate, contentTemplate);
-            }
-        };
-        __decorate([
-            bindable,
-            __metadata("design:type", String)
-        ], Tabs.prototype, "activeTabId", void 0);
-        Tabs = __decorate([
-            customElement({
-                name: 'tabs',
-                template: '<div class="header"><au-slot name="header"></au-slot></div><div class="content"><au-slot name="content"></au-slot></div>',
-                processContent: Tabs.processTabs
-            })
-        ], Tabs);
+                static processTabs(node, p) {
+                    const el = node;
+                    const headerTemplate = p.document.createElement('template');
+                    headerTemplate.setAttribute('au-slot', 'header');
+                    const contentTemplate = p.document.createElement('template');
+                    contentTemplate.setAttribute('au-slot', 'content');
+                    const tabs = toArray(el.querySelectorAll('tab'));
+                    for (let i = 0; i < tabs.length; i++) {
+                        const tab = tabs[i];
+                        // add header
+                        const header = p.document.createElement('button');
+                        header.setAttribute('class.bind', `$host.activeTabId=='${i}'?'active':''`);
+                        header.setAttribute('click.trigger', `$host.showTab('${i}')`);
+                        header.appendChild(p.document.createTextNode(tab.getAttribute('header')));
+                        headerTemplate.content.appendChild(header);
+                        // add content
+                        const content = p.document.createElement('div');
+                        content.setAttribute('if.bind', `$host.activeTabId=='${i}'`);
+                        content.append(...toArray(tab.childNodes));
+                        contentTemplate.content.appendChild(content);
+                        el.removeChild(tab);
+                    }
+                    el.setAttribute('active-tab-id', '0');
+                    el.append(headerTemplate, contentTemplate);
+                }
+                constructor() {
+                    this.activeTabId = __runInitializers(this, _activeTabId_initializers, void 0);
+                    __runInitializers(this, _activeTabId_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "Tabs");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _activeTabId_decorators = [bindable];
+                _static_processTabs_decorators = [processContent()];
+                __esDecorate(_classThis, null, _static_processTabs_decorators, { kind: "method", name: "processTabs", static: true, private: false, access: { has: obj => "processTabs" in obj, get: obj => obj.processTabs }, metadata: _metadata }, null, _staticExtraInitializers);
+                __esDecorate(null, null, _activeTabId_decorators, { kind: "field", name: "activeTabId", static: false, private: false, access: { has: obj => "activeTabId" in obj, get: obj => obj.activeTabId, set: (obj, value) => { obj.activeTabId = value; } }, metadata: _metadata }, _activeTabId_initializers, _activeTabId_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Tabs = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _staticExtraInitializers);
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Tabs = _classThis;
+        })();
         $it('semi-real-life example with tabs', async function (ctx) {
             const platform = ctx.platform;
             const host = ctx.host;

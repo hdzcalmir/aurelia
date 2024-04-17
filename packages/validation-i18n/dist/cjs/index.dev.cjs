@@ -4,63 +4,27 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var i18n = require('@aurelia/i18n');
 var kernel = require('@aurelia/kernel');
-var runtime = require('@aurelia/runtime');
 var runtimeHtml = require('@aurelia/runtime-html');
 var validation = require('@aurelia/validation');
 var validationHtml = require('@aurelia/validation-html');
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-}
-
 const I18N_VALIDATION_EA_CHANNEL = 'i18n:locale:changed:validation';
 const I18nKeyConfiguration = /*@__PURE__*/ kernel.DI.createInterface('I18nKeyConfiguration');
-exports.LocalizedValidationController = class LocalizedValidationController extends validationHtml.ValidationController {
-    constructor(locator, ea, validator, parser, platform) {
-        super(validator, parser, platform, locator);
+class LocalizedValidationController extends validationHtml.ValidationController {
+    constructor(ea = kernel.resolve(kernel.IEventAggregator), platform = kernel.resolve(runtimeHtml.IPlatform)) {
+        super();
         this.localeChangeSubscription = ea.subscribe(I18N_VALIDATION_EA_CHANNEL, () => { platform.domReadQueue.queueTask(async () => { await this.revalidateErrors(); }); });
     }
-};
-exports.LocalizedValidationController = __decorate([
-    __param(0, kernel.IServiceLocator),
-    __param(1, kernel.IEventAggregator),
-    __param(2, validation.IValidator),
-    __param(3, runtime.IExpressionParser),
-    __param(4, runtimeHtml.IPlatform)
-], exports.LocalizedValidationController);
+}
 class LocalizedValidationControllerFactory extends validationHtml.ValidationControllerFactory {
     construct(container, _dynamicDependencies) {
-        return container.invoke(exports.LocalizedValidationController, _dynamicDependencies);
+        return container.invoke(LocalizedValidationController, _dynamicDependencies);
     }
 }
-exports.LocalizedValidationMessageProvider = class LocalizedValidationMessageProvider extends validation.ValidationMessageProvider {
-    constructor(keyConfiguration, i18n$1, ea, parser, logger) {
-        super(parser, logger, []);
-        this.i18n = i18n$1;
+class LocalizedValidationMessageProvider extends validation.ValidationMessageProvider {
+    constructor(keyConfiguration = kernel.resolve(I18nKeyConfiguration), ea = kernel.resolve(kernel.IEventAggregator)) {
+        super(undefined, []);
+        this.i18n = kernel.resolve(i18n.I18N);
         const namespace = keyConfiguration.DefaultNamespace;
         const prefix = keyConfiguration.DefaultKeyPrefix;
         if (namespace !== void 0 || prefix !== void 0) {
@@ -93,14 +57,7 @@ exports.LocalizedValidationMessageProvider = class LocalizedValidationMessagePro
         const keyPrefix = this.keyPrefix;
         return keyPrefix !== void 0 ? `${keyPrefix}${key}` : key;
     }
-};
-exports.LocalizedValidationMessageProvider = __decorate([
-    __param(0, I18nKeyConfiguration),
-    __param(1, i18n.I18N),
-    __param(2, kernel.IEventAggregator),
-    __param(3, runtime.IExpressionParser),
-    __param(4, kernel.ILogger)
-], exports.LocalizedValidationMessageProvider);
+}
 
 function createConfiguration(optionsProvider) {
     return {
@@ -108,7 +65,7 @@ function createConfiguration(optionsProvider) {
         register(container) {
             const options = {
                 ...validationHtml.getDefaultValidationHtmlConfiguration(),
-                MessageProviderType: exports.LocalizedValidationMessageProvider,
+                MessageProviderType: LocalizedValidationMessageProvider,
                 ValidationControllerFactoryType: LocalizedValidationControllerFactory,
                 DefaultNamespace: void 0,
                 DefaultKeyPrefix: void 0,
@@ -135,6 +92,8 @@ function createConfiguration(optionsProvider) {
 const ValidationI18nConfiguration = createConfiguration(kernel.noop);
 
 exports.I18nKeyConfiguration = I18nKeyConfiguration;
+exports.LocalizedValidationController = LocalizedValidationController;
 exports.LocalizedValidationControllerFactory = LocalizedValidationControllerFactory;
+exports.LocalizedValidationMessageProvider = LocalizedValidationMessageProvider;
 exports.ValidationI18nConfiguration = ValidationI18nConfiguration;
 //# sourceMappingURL=index.dev.cjs.map

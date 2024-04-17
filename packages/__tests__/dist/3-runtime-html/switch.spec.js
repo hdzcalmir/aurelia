@@ -1,16 +1,42 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { DI, ILogger, LoggerConfiguration, LogLevel, pascalCase, Registration, sink, } from '@aurelia/kernel';
+import { DI, ILogger, LoggerConfiguration, LogLevel, pascalCase, Registration, resolve, sink, } from '@aurelia/kernel';
 import { bindingBehavior, customElement, CustomElement, Switch, Aurelia, IPlatform, bindable, INode, valueConverter, } from '@aurelia/runtime-html';
 import { assert, createFixture, TestContext, } from '@aurelia/testing';
 import { createSpecFunction, } from '../util.js';
@@ -45,66 +71,76 @@ describe('3-runtime-html/switch.spec.ts', function () {
     }
     const IConfig = DI.createInterface('Config', x => x.singleton(Config));
     function createComponentType(name, template, bindables = []) {
-        let Component = class Component {
-            constructor(config, $logger, node) {
-                this.config = config;
-                this.$logger = $logger;
-                this.ceId = null;
-                const ceId = node.dataset.ceId;
-                if (ceId) {
-                    (this.logger = $logger.scopeTo(`${name}-${ceId}`)).debug('ctor');
-                    delete node.dataset.ceId;
+        let Component = (() => {
+            let _classDecorators = [customElement({ name, template, bindables })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _ceId_decorators;
+            let _ceId_initializers = [];
+            let _ceId_extraInitializers = [];
+            var Component = _classThis = class {
+                constructor() {
+                    this.ceId = __runInitializers(this, _ceId_initializers, null);
+                    this.config = (__runInitializers(this, _ceId_extraInitializers), resolve(IConfig));
+                    this.$logger = resolve(ILogger);
+                    const node = resolve(INode);
+                    const ceId = node.dataset.ceId;
+                    if (ceId) {
+                        (this.logger = resolve(ILogger).scopeTo(`${name}-${ceId}`)).debug('ctor');
+                        delete node.dataset.ceId;
+                    }
                 }
-            }
-            async binding() {
-                this.logger ??= this.ceId === null ? this.$logger.scopeTo(name) : this.$logger.scopeTo(`${name}-${this.ceId}`);
-                if (this.config.hasPromise) {
-                    await this.config.wait();
+                async binding() {
+                    this.logger ??= this.ceId === null ? this.$logger.scopeTo(name) : this.$logger.scopeTo(`${name}-${this.ceId}`);
+                    if (this.config.hasPromise) {
+                        await this.config.wait();
+                    }
+                    this.logger.debug('binding');
                 }
-                this.logger.debug('binding');
-            }
-            async bound() {
-                if (this.config.hasPromise) {
-                    await this.config.wait();
+                async bound() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait();
+                    }
+                    this.logger.debug('bound');
                 }
-                this.logger.debug('bound');
-            }
-            async attaching() {
-                if (this.config.hasPromise) {
-                    await this.config.wait();
+                async attaching() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait();
+                    }
+                    this.logger.debug('attaching');
                 }
-                this.logger.debug('attaching');
-            }
-            async attached() {
-                if (this.config.hasPromise) {
-                    await this.config.wait();
+                async attached() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait();
+                    }
+                    this.logger.debug('attached');
                 }
-                this.logger.debug('attached');
-            }
-            async detaching() {
-                if (this.config.hasPromise) {
-                    await this.config.wait();
+                async detaching() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait();
+                    }
+                    this.logger.debug('detaching');
                 }
-                this.logger.debug('detaching');
-            }
-            async unbinding() {
-                if (this.config.hasPromise) {
-                    await this.config.wait();
+                async unbinding() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait();
+                    }
+                    this.logger.debug('unbinding');
                 }
-                this.logger.debug('unbinding');
-            }
-        };
-        __decorate([
-            bindable,
-            __metadata("design:type", Object)
-        ], Component.prototype, "ceId", void 0);
-        Component = __decorate([
-            customElement({ name, template, bindables }),
-            __param(0, IConfig),
-            __param(1, ILogger),
-            __param(2, INode),
-            __metadata("design:paramtypes", [Config, Object, Object])
-        ], Component);
+            };
+            __setFunctionName(_classThis, "Component");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _ceId_decorators = [bindable];
+                __esDecorate(null, null, _ceId_decorators, { kind: "field", name: "ceId", static: false, private: false, access: { has: obj => "ceId" in obj, get: obj => obj.ceId, set: (obj, value) => { obj.ceId = value; } }, metadata: _metadata }, _ceId_initializers, _ceId_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Component = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Component = _classThis;
+        })();
         Reflect.defineProperty(Component, 'name', {
             writable: false,
             enumerable: false,
@@ -113,20 +149,32 @@ describe('3-runtime-html/switch.spec.ts', function () {
         });
         return Component;
     }
-    let DebugLog = class DebugLog {
-        constructor() {
-            this.log = [];
-        }
-        handleEvent(event) {
-            this.log.push(`${event.scope.join('.')}.${event.message}`);
-        }
-        clear() {
-            this.log.length = 0;
-        }
-    };
-    DebugLog = __decorate([
-        sink({ handles: [LogLevel.debug] })
-    ], DebugLog);
+    let DebugLog = (() => {
+        let _classDecorators = [sink({ handles: [LogLevel.debug] })];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var DebugLog = _classThis = class {
+            constructor() {
+                this.log = [];
+            }
+            handleEvent(event) {
+                this.log.push(`${event.scope.join('.')}.${event.message}`);
+            }
+            clear() {
+                this.log.length = 0;
+            }
+        };
+        __setFunctionName(_classThis, "DebugLog");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            DebugLog = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return DebugLog = _classThis;
+    })();
     class SwitchTestExecutionContext {
         constructor(ctx, container, host, app, controller, error) {
             this.ctx = ctx;
@@ -224,50 +272,69 @@ describe('3-runtime-html/switch.spec.ts', function () {
         ctx.doc.body.removeChild(host);
     }
     const $it = createSpecFunction(testSwitch);
-    let ToStatusStringValueConverter = class ToStatusStringValueConverter {
-        toView(value) {
-            switch (value) {
-                case 1 /* StatusNum.received */:
-                    return "received" /* Status.received */;
-                case 2 /* StatusNum.processing */:
-                    return "processing" /* Status.processing */;
-                case 3 /* StatusNum.dispatched */:
-                    return "dispatched" /* Status.dispatched */;
-                case 4 /* StatusNum.delivered */:
-                    return "delivered" /* Status.delivered */;
-                case 0 /* StatusNum.unknown */:
-                    return "unknown" /* Status.unknown */;
+    let ToStatusStringValueConverter = (() => {
+        let _classDecorators = [valueConverter('toStatusString')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var ToStatusStringValueConverter = _classThis = class {
+            toView(value) {
+                switch (value) {
+                    case 1 /* StatusNum.received */:
+                        return "received" /* Status.received */;
+                    case 2 /* StatusNum.processing */:
+                        return "processing" /* Status.processing */;
+                    case 3 /* StatusNum.dispatched */:
+                        return "dispatched" /* Status.dispatched */;
+                    case 4 /* StatusNum.delivered */:
+                        return "delivered" /* Status.delivered */;
+                    case 0 /* StatusNum.unknown */:
+                        return "unknown" /* Status.unknown */;
+                }
             }
-        }
-    };
-    ToStatusStringValueConverter = __decorate([
-        valueConverter('toStatusString')
-    ], ToStatusStringValueConverter);
-    let NoopBindingBehavior = class NoopBindingBehavior {
-        bind(_scope, _binding) {
-            return;
-        }
-        unbind(_scope, _binding) {
-            return;
-        }
-    };
-    NoopBindingBehavior = __decorate([
-        bindingBehavior('noop')
-    ], NoopBindingBehavior);
-    let App = class App {
-        constructor(status, statusNum) {
-            this.status = status;
-            this.statusNum = statusNum;
+        };
+        __setFunctionName(_classThis, "ToStatusStringValueConverter");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            ToStatusStringValueConverter = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return ToStatusStringValueConverter = _classThis;
+    })();
+    let NoopBindingBehavior = (() => {
+        let _classDecorators = [bindingBehavior('noop')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var NoopBindingBehavior = _classThis = class {
+            bind(_scope, _binding) {
+                return;
+            }
+            unbind(_scope, _binding) {
+                return;
+            }
+        };
+        __setFunctionName(_classThis, "NoopBindingBehavior");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            NoopBindingBehavior = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return NoopBindingBehavior = _classThis;
+    })();
+    class App {
+        constructor() {
             this.status1 = "received" /* Status.received */;
             this.status2 = "processing" /* Status.processing */;
             this.statuses = ["received" /* Status.received */, "processing" /* Status.processing */];
+            this.status = resolve(InitialStatus);
+            this.statusNum = resolve(InitialStatusNum);
         }
-    };
-    App = __decorate([
-        __param(0, InitialStatus),
-        __param(1, InitialStatusNum),
-        __metadata("design:paramtypes", [String, Number])
-    ], App);
+    }
     function getActivationSequenceFor(name, withCtor = false) {
         return typeof name === 'string'
             ? [...(withCtor ? [`${name}.ctor`] : []), `${name}.binding`, `${name}.bound`, `${name}.attaching`, `${name}.attached`]

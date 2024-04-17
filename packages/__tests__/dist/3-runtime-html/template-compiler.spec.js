@@ -1,15 +1,44 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { kebabCase, camelCase, } from '@aurelia/kernel';
-import { ForOfStatement, Interpolation, parseExpression, AccessScopeExpression, BindingIdentifier, PrimitiveLiteralExpression, IExpressionParser, } from '@aurelia/runtime';
+import { ForOfStatement, Interpolation, parseExpression, AccessScopeExpression, BindingIdentifier, PrimitiveLiteralExpression, IExpressionParser, } from '@aurelia/expression-parser';
 import { bindable, BindingMode, BindableDefinition, customAttribute, CustomAttribute, customElement, CustomElement, CustomElementDefinition, InstructionType as HTT, InstructionType as TT, IAttributeParser, HydrateAttributeInstruction, AttrSyntax, If, attributePattern, PropertyBindingInstruction, InterpolationInstruction, InstructionType, DefaultBindingSyntax, TemplateCompilerHooks, } from '@aurelia/runtime-html';
 import { assert, eachCartesianJoinFactory, TestContext, verifyBindingInstructionsEqual, } from '@aurelia/testing';
 export function createAttribute(name, value) {
@@ -128,28 +157,61 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     });
                 });
                 it('understands attr precendence: element prop > custom attr', function () {
-                    let El = class El {
-                    };
-                    __decorate([
-                        bindable(),
-                        __metadata("design:type", String)
-                    ], El.prototype, "prop1", void 0);
-                    __decorate([
-                        bindable(),
-                        __metadata("design:type", String)
-                    ], El.prototype, "prop2", void 0);
-                    __decorate([
-                        bindable(),
-                        __metadata("design:type", String)
-                    ], El.prototype, "prop3", void 0);
-                    El = __decorate([
-                        customElement('el')
-                    ], El);
-                    let Prop3 = class Prop3 {
-                    };
-                    Prop3 = __decorate([
-                        customAttribute('prop3')
-                    ], Prop3);
+                    let El = (() => {
+                        let _classDecorators = [customElement('el')];
+                        let _classDescriptor;
+                        let _classExtraInitializers = [];
+                        let _classThis;
+                        let _prop1_decorators;
+                        let _prop1_initializers = [];
+                        let _prop1_extraInitializers = [];
+                        let _prop2_decorators;
+                        let _prop2_initializers = [];
+                        let _prop2_extraInitializers = [];
+                        let _prop3_decorators;
+                        let _prop3_initializers = [];
+                        let _prop3_extraInitializers = [];
+                        var El = _classThis = class {
+                            constructor() {
+                                this.prop1 = __runInitializers(this, _prop1_initializers, void 0);
+                                this.prop2 = (__runInitializers(this, _prop1_extraInitializers), __runInitializers(this, _prop2_initializers, void 0));
+                                this.prop3 = (__runInitializers(this, _prop2_extraInitializers), __runInitializers(this, _prop3_initializers, void 0));
+                                __runInitializers(this, _prop3_extraInitializers);
+                            }
+                        };
+                        __setFunctionName(_classThis, "El");
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            _prop1_decorators = [bindable()];
+                            _prop2_decorators = [bindable()];
+                            _prop3_decorators = [bindable()];
+                            __esDecorate(null, null, _prop1_decorators, { kind: "field", name: "prop1", static: false, private: false, access: { has: obj => "prop1" in obj, get: obj => obj.prop1, set: (obj, value) => { obj.prop1 = value; } }, metadata: _metadata }, _prop1_initializers, _prop1_extraInitializers);
+                            __esDecorate(null, null, _prop2_decorators, { kind: "field", name: "prop2", static: false, private: false, access: { has: obj => "prop2" in obj, get: obj => obj.prop2, set: (obj, value) => { obj.prop2 = value; } }, metadata: _metadata }, _prop2_initializers, _prop2_extraInitializers);
+                            __esDecorate(null, null, _prop3_decorators, { kind: "field", name: "prop3", static: false, private: false, access: { has: obj => "prop3" in obj, get: obj => obj.prop3, set: (obj, value) => { obj.prop3 = value; } }, metadata: _metadata }, _prop3_initializers, _prop3_extraInitializers);
+                            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                            El = _classThis = _classDescriptor.value;
+                            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                            __runInitializers(_classThis, _classExtraInitializers);
+                        })();
+                        return El = _classThis;
+                    })();
+                    let Prop3 = (() => {
+                        let _classDecorators = [customAttribute('prop3')];
+                        let _classDescriptor;
+                        let _classExtraInitializers = [];
+                        let _classThis;
+                        var Prop3 = _classThis = class {
+                        };
+                        __setFunctionName(_classThis, "Prop3");
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                            Prop3 = _classThis = _classDescriptor.value;
+                            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                            __runInitializers(_classThis, _classExtraInitializers);
+                        })();
+                        return Prop3 = _classThis;
+                    })();
                     const actual = compileWith(`<template>
             <el prop1.bind="p" prop2.bind="p" prop3.bind="t" prop3="t"></el>
           </template>`, [El, Prop3]);
@@ -167,15 +229,32 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     verifyInstructions(rootInstructions, expectedRootInstructions);
                 });
                 it('distinguishes element properties / normal attributes', function () {
-                    let El = class El {
-                    };
-                    __decorate([
-                        bindable(),
-                        __metadata("design:type", String)
-                    ], El.prototype, "name", void 0);
-                    El = __decorate([
-                        customElement('el')
-                    ], El);
+                    let El = (() => {
+                        let _classDecorators = [customElement('el')];
+                        let _classDescriptor;
+                        let _classExtraInitializers = [];
+                        let _classThis;
+                        let _name_decorators;
+                        let _name_initializers = [];
+                        let _name_extraInitializers = [];
+                        var El = _classThis = class {
+                            constructor() {
+                                this.name = __runInitializers(this, _name_initializers, void 0);
+                                __runInitializers(this, _name_extraInitializers);
+                            }
+                        };
+                        __setFunctionName(_classThis, "El");
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            _name_decorators = [bindable()];
+                            __esDecorate(null, null, _name_decorators, { kind: "field", name: "name", static: false, private: false, access: { has: obj => "name" in obj, get: obj => obj.name, set: (obj, value) => { obj.name = value; } }, metadata: _metadata }, _name_initializers, _name_extraInitializers);
+                            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                            El = _classThis = _classDescriptor.value;
+                            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                            __runInitializers(_classThis, _classExtraInitializers);
+                        })();
+                        return El = _classThis;
+                    })();
                     const actual = compileWith(`<template>
             <el name="name" name2="label"></el>
           </template>`, [El]);
@@ -190,15 +269,32 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     verifyInstructions(rootInstructions[0].props, expectedElInstructions);
                 });
                 it('understands element property casing', function () {
-                    let El = class El {
-                    };
-                    __decorate([
-                        bindable(),
-                        __metadata("design:type", String)
-                    ], El.prototype, "backgroundColor", void 0);
-                    El = __decorate([
-                        customElement('el')
-                    ], El);
+                    let El = (() => {
+                        let _classDecorators = [customElement('el')];
+                        let _classDescriptor;
+                        let _classExtraInitializers = [];
+                        let _classThis;
+                        let _backgroundColor_decorators;
+                        let _backgroundColor_initializers = [];
+                        let _backgroundColor_extraInitializers = [];
+                        var El = _classThis = class {
+                            constructor() {
+                                this.backgroundColor = __runInitializers(this, _backgroundColor_initializers, void 0);
+                                __runInitializers(this, _backgroundColor_extraInitializers);
+                            }
+                        };
+                        __setFunctionName(_classThis, "El");
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            _backgroundColor_decorators = [bindable()];
+                            __esDecorate(null, null, _backgroundColor_decorators, { kind: "field", name: "backgroundColor", static: false, private: false, access: { has: obj => "backgroundColor" in obj, get: obj => obj.backgroundColor, set: (obj, value) => { obj.backgroundColor = value; } }, metadata: _metadata }, _backgroundColor_initializers, _backgroundColor_extraInitializers);
+                            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                            El = _classThis = _classDescriptor.value;
+                            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                            __runInitializers(_classThis, _classExtraInitializers);
+                        })();
+                        return El = _classThis;
+                    })();
                     const actual = compileWith(`<template>
             <el background-color="label"></el>
           </template>`, [El]);
@@ -209,31 +305,56 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     verifyInstructions(rootInstructions[0].props, expectedElInstructions);
                 });
                 it('understands binding commands', function () {
-                    let El = class El {
-                    };
-                    __decorate([
-                        bindable({ mode: BindingMode.twoWay }),
-                        __metadata("design:type", String)
-                    ], El.prototype, "propProp1", void 0);
-                    __decorate([
-                        bindable(),
-                        __metadata("design:type", String)
-                    ], El.prototype, "prop2", void 0);
-                    __decorate([
-                        bindable(),
-                        __metadata("design:type", String)
-                    ], El.prototype, "propProp3", void 0);
-                    __decorate([
-                        bindable(),
-                        __metadata("design:type", String)
-                    ], El.prototype, "prop4", void 0);
-                    __decorate([
-                        bindable(),
-                        __metadata("design:type", String)
-                    ], El.prototype, "propProp5", void 0);
-                    El = __decorate([
-                        customElement('el')
-                    ], El);
+                    let El = (() => {
+                        let _classDecorators = [customElement('el')];
+                        let _classDescriptor;
+                        let _classExtraInitializers = [];
+                        let _classThis;
+                        let _propProp1_decorators;
+                        let _propProp1_initializers = [];
+                        let _propProp1_extraInitializers = [];
+                        let _prop2_decorators;
+                        let _prop2_initializers = [];
+                        let _prop2_extraInitializers = [];
+                        let _propProp3_decorators;
+                        let _propProp3_initializers = [];
+                        let _propProp3_extraInitializers = [];
+                        let _prop4_decorators;
+                        let _prop4_initializers = [];
+                        let _prop4_extraInitializers = [];
+                        let _propProp5_decorators;
+                        let _propProp5_initializers = [];
+                        let _propProp5_extraInitializers = [];
+                        var El = _classThis = class {
+                            constructor() {
+                                this.propProp1 = __runInitializers(this, _propProp1_initializers, void 0);
+                                this.prop2 = (__runInitializers(this, _propProp1_extraInitializers), __runInitializers(this, _prop2_initializers, void 0));
+                                this.propProp3 = (__runInitializers(this, _prop2_extraInitializers), __runInitializers(this, _propProp3_initializers, void 0));
+                                this.prop4 = (__runInitializers(this, _propProp3_extraInitializers), __runInitializers(this, _prop4_initializers, void 0));
+                                this.propProp5 = (__runInitializers(this, _prop4_extraInitializers), __runInitializers(this, _propProp5_initializers, void 0));
+                                __runInitializers(this, _propProp5_extraInitializers);
+                            }
+                        };
+                        __setFunctionName(_classThis, "El");
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            _propProp1_decorators = [bindable({ mode: BindingMode.twoWay })];
+                            _prop2_decorators = [bindable()];
+                            _propProp3_decorators = [bindable()];
+                            _prop4_decorators = [bindable()];
+                            _propProp5_decorators = [bindable()];
+                            __esDecorate(null, null, _propProp1_decorators, { kind: "field", name: "propProp1", static: false, private: false, access: { has: obj => "propProp1" in obj, get: obj => obj.propProp1, set: (obj, value) => { obj.propProp1 = value; } }, metadata: _metadata }, _propProp1_initializers, _propProp1_extraInitializers);
+                            __esDecorate(null, null, _prop2_decorators, { kind: "field", name: "prop2", static: false, private: false, access: { has: obj => "prop2" in obj, get: obj => obj.prop2, set: (obj, value) => { obj.prop2 = value; } }, metadata: _metadata }, _prop2_initializers, _prop2_extraInitializers);
+                            __esDecorate(null, null, _propProp3_decorators, { kind: "field", name: "propProp3", static: false, private: false, access: { has: obj => "propProp3" in obj, get: obj => obj.propProp3, set: (obj, value) => { obj.propProp3 = value; } }, metadata: _metadata }, _propProp3_initializers, _propProp3_extraInitializers);
+                            __esDecorate(null, null, _prop4_decorators, { kind: "field", name: "prop4", static: false, private: false, access: { has: obj => "prop4" in obj, get: obj => obj.prop4, set: (obj, value) => { obj.prop4 = value; } }, metadata: _metadata }, _prop4_initializers, _prop4_extraInitializers);
+                            __esDecorate(null, null, _propProp5_decorators, { kind: "field", name: "propProp5", static: false, private: false, access: { has: obj => "propProp5" in obj, get: obj => obj.propProp5, set: (obj, value) => { obj.propProp5 = value; } }, metadata: _metadata }, _propProp5_initializers, _propProp5_extraInitializers);
+                            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                            El = _classThis = _classDescriptor.value;
+                            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                            __runInitializers(_classThis, _classExtraInitializers);
+                        })();
+                        return El = _classThis;
+                    })();
                     const actual = compileWith(`<template>
             <el
               prop-prop1.bind="prop1"
@@ -271,28 +392,52 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 });
                 describe('with template controller', function () {
                     it('compiles', function () {
-                        let Prop = class Prop {
-                        };
-                        Prop = __decorate([
-                            customAttribute({
-                                name: 'prop',
-                                isTemplateController: true
-                            })
-                        ], Prop);
+                        let Prop = (() => {
+                            let _classDecorators = [customAttribute({
+                                    name: 'prop',
+                                    isTemplateController: true
+                                })];
+                            let _classDescriptor;
+                            let _classExtraInitializers = [];
+                            let _classThis;
+                            var Prop = _classThis = class {
+                            };
+                            __setFunctionName(_classThis, "Prop");
+                            (() => {
+                                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                                Prop = _classThis = _classDescriptor.value;
+                                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                                __runInitializers(_classThis, _classExtraInitializers);
+                            })();
+                            return Prop = _classThis;
+                        })();
                         const { template, instructions } = compileWith(`<template><el prop.bind="p"></el></template>`, [Prop]);
                         assert.strictEqual(template.outerHTML, '<template><!--au*--><!--au-start--><!--au-end--></template>', `(template as HTMLTemplateElement).outerHTML`);
                         const [hydratePropAttrInstruction] = instructions[0];
                         assert.strictEqual(hydratePropAttrInstruction.def.template.outerHTML, '<template><el></el></template>', `(hydratePropAttrInstruction.def.template as HTMLTemplateElement).outerHTML`);
                     });
                     it('moves attrbiutes instructions before the template controller into it', function () {
-                        let Prop = class Prop {
-                        };
-                        Prop = __decorate([
-                            customAttribute({
-                                name: 'prop',
-                                isTemplateController: true
-                            })
-                        ], Prop);
+                        let Prop = (() => {
+                            let _classDecorators = [customAttribute({
+                                    name: 'prop',
+                                    isTemplateController: true
+                                })];
+                            let _classDescriptor;
+                            let _classExtraInitializers = [];
+                            let _classThis;
+                            var Prop = _classThis = class {
+                            };
+                            __setFunctionName(_classThis, "Prop");
+                            (() => {
+                                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                                Prop = _classThis = _classDescriptor.value;
+                                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                                __runInitializers(_classThis, _classExtraInitializers);
+                            })();
+                            return Prop = _classThis;
+                        })();
                         const { template, instructions } = compileWith(`<template><el name.bind="name" title.bind="title" prop.bind="p"></el></template>`, [Prop]);
                         assert.strictEqual(template.outerHTML, '<template><!--au*--><!--au-start--><!--au-end--></template>', `(template as HTMLTemplateElement).outerHTML`);
                         const [hydratePropAttrInstruction] = instructions[0];
@@ -315,11 +460,23 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     });
                     describe('[as-element]', function () {
                         it('understands [as-element]', function () {
-                            let NotDiv = class NotDiv {
-                            };
-                            NotDiv = __decorate([
-                                customElement('not-div')
-                            ], NotDiv);
+                            let NotDiv = (() => {
+                                let _classDecorators = [customElement('not-div')];
+                                let _classDescriptor;
+                                let _classExtraInitializers = [];
+                                let _classThis;
+                                var NotDiv = _classThis = class {
+                                };
+                                __setFunctionName(_classThis, "NotDiv");
+                                (() => {
+                                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                                    NotDiv = _classThis = _classDescriptor.value;
+                                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                                    __runInitializers(_classThis, _classExtraInitializers);
+                                })();
+                                return NotDiv = _classThis;
+                            })();
                             const { instructions } = compileWith('<template><div as-element="not-div"></div></template>', [NotDiv]);
                             verifyInstructions(instructions[0], [
                                 {
@@ -334,11 +491,23 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         });
                         describe('with template controller', function () {
                             it('compiles', function () {
-                                let NotDiv = class NotDiv {
-                                };
-                                NotDiv = __decorate([
-                                    customElement('not-div')
-                                ], NotDiv);
+                                let NotDiv = (() => {
+                                    let _classDecorators = [customElement('not-div')];
+                                    let _classDescriptor;
+                                    let _classExtraInitializers = [];
+                                    let _classThis;
+                                    var NotDiv = _classThis = class {
+                                    };
+                                    __setFunctionName(_classThis, "NotDiv");
+                                    (() => {
+                                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                                        NotDiv = _classThis = _classDescriptor.value;
+                                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                                        __runInitializers(_classThis, _classExtraInitializers);
+                                    })();
+                                    return NotDiv = _classThis;
+                                })();
                                 const { instructions } = compileWith('<template><div if.bind="value" as-element="not-div"></div></template>', [NotDiv]);
                                 verifyInstructions(instructions[0], [
                                     {
@@ -376,11 +545,23 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                         assert.strictEqual(instructions[0][0].instructions.length, 0, `(instructions[0][0]).instructions.length`);
                     });
                     it('ignores custom element resource', function () {
-                        let Let = class Let {
-                        };
-                        Let = __decorate([
-                            customElement('let')
-                        ], Let);
+                        let Let = (() => {
+                            let _classDecorators = [customElement('let')];
+                            let _classDescriptor;
+                            let _classExtraInitializers = [];
+                            let _classThis;
+                            var Let = _classThis = class {
+                            };
+                            __setFunctionName(_classThis, "Let");
+                            (() => {
+                                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                                Let = _classThis = _classDescriptor.value;
+                                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                                __runInitializers(_classThis, _classExtraInitializers);
+                            })();
+                            return Let = _classThis;
+                        })();
                         const { instructions } = compileWith(`<template><let></let></template>`, [Let]);
                         verifyInstructions(instructions[0], [
                             { toVerify: ['type'], type: TT.hydrateLetElement }
@@ -464,11 +645,23 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         });
         describe('compileSpread', function () {
             it('throws when spreading a template controller', function () {
-                let Bar = class Bar {
-                };
-                Bar = __decorate([
-                    customAttribute({ name: 'bar', isTemplateController: true })
-                ], Bar);
+                let Bar = (() => {
+                    let _classDecorators = [customAttribute({ name: 'bar', isTemplateController: true })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Bar = _classThis = class {
+                    };
+                    __setFunctionName(_classThis, "Bar");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Bar = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Bar = _classThis;
+                })();
                 container.register(Bar);
                 assert.throws(() => sut.compileSpread(CustomElementDefinition.create({ name: 'el', template: '<template></template>' }), [
                     { command: null, target: 'bar', rawValue: '', parts: [], rawName: 'bar' }
@@ -1069,14 +1262,10 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 [
                     (_ctx) => [undefined, undefined, 'value'],
                     (_ctx) => [{}, undefined, 'value'],
-                    (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.oneTime }), BindingMode.oneTime, 'bazBaz'],
-                    (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.fromView }), BindingMode.fromView, 'bazBaz'],
-                    (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.twoWay }), BindingMode.twoWay, 'bazBaz'],
-                    (_ctx) => [BindableDefinition.create('asdf', class MyClass {
-                        }, { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.default }), BindingMode.default, 'bazBaz']
+                    (_ctx) => [BindableDefinition.create('asdf', { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.oneTime }), BindingMode.oneTime, 'bazBaz'],
+                    (_ctx) => [BindableDefinition.create('asdf', { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.fromView }), BindingMode.fromView, 'bazBaz'],
+                    (_ctx) => [BindableDefinition.create('asdf', { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.twoWay }), BindingMode.twoWay, 'bazBaz'],
+                    (_ctx) => [BindableDefinition.create('asdf', { attribute: 'bazBaz', name: 'bazBaz', mode: BindingMode.default }), BindingMode.default, 'bazBaz']
                 ],
                 [
                     (_ctx) => ['foo', '', class Foo1 {
@@ -1158,16 +1347,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     (ctx, pdName) => `${pdName}Bar` // descriptor.property is different from the actual property name
                 ],
                 [
-                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.default }) }),
-                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.oneTime }) }),
-                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.toView }) }),
-                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.fromView }) }),
-                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.twoWay }) })
+                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.default }) }),
+                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.oneTime }) }),
+                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.toView }) }),
+                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.fromView }) }),
+                    (ctx, pdName, pdProp) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: kebabCase(pdProp), mode: BindingMode.twoWay }) })
                 ],
                 [
                     (_ctx) => [``, `''`],
@@ -1501,16 +1685,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     (ctx, pdName, pdProp) => `${kebabCase(pdProp)}-baz` // descriptor.attribute is different from kebab-cased descriptor.property
                 ],
                 [
-                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.default }) }),
-                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.oneTime }) }),
-                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.toView }) }),
-                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.fromView }) }),
-                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, class MyClass {
-                        }, { name: pdProp, attribute: pdAttr, mode: BindingMode.twoWay }) })
+                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.default }) }),
+                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.oneTime }) }),
+                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.toView }) }),
+                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.fromView }) }),
+                    (ctx, pdName, pdProp, pdAttr) => ({ [pdName]: BindableDefinition.create(pdName, { name: pdProp, attribute: pdAttr, mode: BindingMode.twoWay }) })
                 ],
                 [
                     (_ctx) => [``, `''`],
@@ -1697,14 +1876,26 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             // all tests are using pattern that is `my-attr`
             // and the template will have an element with an attribute `my-attr`
             const createPattern = (createSyntax) => {
-                let MyAttrPattern = class MyAttrPattern {
-                    'my-attr'(rawName, rawValue, parts) {
-                        return createSyntax(rawName, rawValue, parts);
-                    }
-                };
-                MyAttrPattern = __decorate([
-                    attributePattern({ pattern: 'my-attr', symbols: '' })
-                ], MyAttrPattern);
+                let MyAttrPattern = (() => {
+                    let _classDecorators = [attributePattern({ pattern: 'my-attr', symbols: '' })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var MyAttrPattern = _classThis = class {
+                        'my-attr'(rawName, rawValue, parts) {
+                            return createSyntax(rawName, rawValue, parts);
+                        }
+                    };
+                    __setFunctionName(_classThis, "MyAttrPattern");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        MyAttrPattern = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return MyAttrPattern = _classThis;
+                })();
                 return MyAttrPattern;
             };
             const compileWithPattern = (Pattern, extras = []) => {
@@ -1739,13 +1930,25 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 [new PropertyBindingInstruction(new AccessScopeExpression('bb'), 'id', BindingMode.toView)]);
             });
             it('works with pattern returning custom attribute + command', function () {
-                let MyAttr = class MyAttr {
-                };
-                MyAttr = __decorate([
-                    customAttribute({
-                        name: 'my-attr'
-                    })
-                ], MyAttr);
+                let MyAttr = (() => {
+                    let _classDecorators = [customAttribute({
+                            name: 'my-attr'
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var MyAttr = _classThis = class {
+                    };
+                    __setFunctionName(_classThis, "MyAttr");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        MyAttr = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return MyAttr = _classThis;
+                })();
                 const MyPattern = createPattern((name, _val, _parts) => new AttrSyntax(name, 'bb', 'my-attr', 'bind'));
                 const { definition } = compileWithPattern(MyPattern, [MyAttr]);
                 assert.deepStrictEqual(definition.instructions[0], [new HydrateAttributeInstruction(CustomAttribute.getDefinition(MyAttr), undefined, [
@@ -1753,13 +1956,25 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     ])]);
             });
             it('works with pattern returning custom attribute + multi bindings', function () {
-                let MyAttr = class MyAttr {
-                };
-                MyAttr = __decorate([
-                    customAttribute({
-                        name: 'my-attr'
-                    })
-                ], MyAttr);
+                let MyAttr = (() => {
+                    let _classDecorators = [customAttribute({
+                            name: 'my-attr'
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var MyAttr = _classThis = class {
+                    };
+                    __setFunctionName(_classThis, "MyAttr");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        MyAttr = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return MyAttr = _classThis;
+                })();
                 const MyPattern = createPattern((name, _val, _parts) => new AttrSyntax(name, 'value.bind: bb', 'my-attr', null));
                 const { definition } = compileWithPattern(MyPattern, [MyAttr]);
                 assert.deepStrictEqual(definition.instructions[0], [new HydrateAttributeInstruction(CustomAttribute.getDefinition(MyAttr), undefined, [
@@ -1767,13 +1982,25 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     ])]);
             });
             it('works with pattern returning custom attribute + interpolation', function () {
-                let MyAttr = class MyAttr {
-                };
-                MyAttr = __decorate([
-                    customAttribute({
-                        name: 'my-attr'
-                    })
-                ], MyAttr);
+                let MyAttr = (() => {
+                    let _classDecorators = [customAttribute({
+                            name: 'my-attr'
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var MyAttr = _classThis = class {
+                    };
+                    __setFunctionName(_classThis, "MyAttr");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        MyAttr = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return MyAttr = _classThis;
+                })();
                 const MyPattern = createPattern((name, _val, _parts) => new AttrSyntax(name, `\${bb}`, 'my-attr', null));
                 const { definition } = compileWithPattern(MyPattern, [MyAttr]);
                 assert.deepStrictEqual(definition.instructions[0], [new HydrateAttributeInstruction(CustomAttribute.getDefinition(MyAttr), undefined, [
@@ -1812,11 +2039,11 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 else if (!hasPrimary && primary == null) {
                     primary = bindable;
                 }
-                attrs[attr] = BindableDefinition.create(prop, def.Type, bindable);
+                attrs[attr] = BindableDefinition.create(prop, bindable);
             }
             if (bindable == null && isAttr) {
                 // if no bindables are present, default to "value"
-                primary = attrs.value = BindableDefinition.create('value', def.Type, { mode: defaultBindingMode });
+                primary = attrs.value = BindableDefinition.create('value', { mode: defaultBindingMode });
             }
             return new BindablesInfo(attrs, bindables, primary);
         }

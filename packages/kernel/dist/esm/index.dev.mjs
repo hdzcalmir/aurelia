@@ -1,10 +1,10 @@
-import { Metadata, isObject, applyMetadataPolyfill } from '@aurelia/metadata';
+import { Metadata, isObject, initializeTC39Metadata } from '@aurelia/metadata';
 
 /** @internal */ const objectFreeze = Object.freeze;
 /** @internal */ const objectAssign = Object.assign;
 /** @internal */ const safeString = String;
-/** @internal */ const getOwnMetadata = Metadata.getOwn;
-/** @internal */ Metadata.hasOwn;
+/** @internal */ const getMetadata = Metadata.get;
+/** @internal */ Metadata.has;
 /** @internal */ const defineMetadata = Metadata.define;
 // eslint-disable-next-line @typescript-eslint/ban-types
 /** @internal */ const isFunction = (v) => typeof v === 'function';
@@ -41,6 +41,7 @@ const errorsMap = {
     [20 /* ErrorNames.first_defined_no_value */]: `No defined value found when calling firstDefined()`,
     [21 /* ErrorNames.invalid_module_transform_input */]: `Invalid module transform input: {{0}}. Expected Promise or Object.`,
     // [ErrorNames.module_loader_received_null]: `Module loader received null/undefined input. Expected Object.`,
+    [22 /* ErrorNames.invalid_inject_decorator_usage */]: `The @inject decorator on the target ('{{0}}') type '{{1}}' is not supported.`,
 };
 const getMessageByCode = (name, ...details) => {
     let cooked = errorsMap[name];
@@ -256,22 +257,16 @@ const toArray = (input) => {
 /**
  * Decorator. (lazily) bind the method to the class instance on first call.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-const bound = (target, key, descriptor) => {
-    return {
-        configurable: true,
-        enumerable: descriptor.enumerable,
-        get() {
-            const boundFn = descriptor.value.bind(this);
-            Reflect.defineProperty(this, key, {
-                value: boundFn,
-                writable: true,
-                configurable: true,
-                enumerable: descriptor.enumerable,
-            });
-            return boundFn;
-        },
-    };
+const bound = (originalMethod, context) => {
+    const methodName = context.name;
+    context.addInitializer(function () {
+        Reflect.defineProperty(this, methodName, {
+            value: originalMethod.bind(this),
+            writable: true,
+            configurable: true,
+            enumerable: false,
+        });
+    });
 };
 const mergeArrays = (...arrays) => {
     const result = [];
@@ -435,110 +430,6 @@ const onResolveAll = (...maybePromises) => {
 };
 const charCodeAt = (str, index) => str.charCodeAt(index);
 
-const annoBaseName = 'au:annotation';
-/** @internal */
-const getAnnotationKeyFor = (name, context) => {
-    if (context === void 0) {
-        return `${annoBaseName}:${name}`;
-    }
-    return `${annoBaseName}:${name}:${context}`;
-};
-/** @internal */
-const appendAnnotation = (target, key) => {
-    const keys = getOwnMetadata(annoBaseName, target);
-    if (keys === void 0) {
-        defineMetadata(annoBaseName, [key], target);
-    }
-    else {
-        keys.push(key);
-    }
-};
-const annotation = /*@__PURE__*/ objectFreeze({
-    name: 'au:annotation',
-    appendTo: appendAnnotation,
-    set(target, prop, value) {
-        defineMetadata(getAnnotationKeyFor(prop), value, target);
-    },
-    get: (target, prop) => getOwnMetadata(getAnnotationKeyFor(prop), target),
-    getKeys(target) {
-        let keys = getOwnMetadata(annoBaseName, target);
-        if (keys === void 0) {
-            defineMetadata(annoBaseName, keys = [], target);
-        }
-        return keys;
-    },
-    isKey: (key) => key.startsWith(annoBaseName),
-    keyFor: getAnnotationKeyFor,
-});
-const resourceBaseName = 'au:resource';
-/**
- * Builds a resource key from the provided parts.
- */
-const getResourceKeyFor = (type, name, context) => {
-    if (name == null) {
-        return `${resourceBaseName}:${type}`;
-    }
-    if (context == null) {
-        return `${resourceBaseName}:${type}:${name}`;
-    }
-    return `${resourceBaseName}:${type}:${name}:${context}`;
-};
-const Protocol = {
-    annotation,
-};
-const hasOwn = Object.prototype.hasOwnProperty;
-/**
- * The order in which the values are checked:
- * 1. Annotations (usually set by decorators) have the highest priority; they override the definition as well as static properties on the type.
- * 2. Definition properties (usually set by the customElement decorator object literal) come next. They override static properties on the type.
- * 3. Static properties on the type come last. Note that this does not look up the prototype chain (bindables are an exception here, but we do that differently anyway)
- * 4. The default property that is provided last. The function is only called if the default property is needed
- */
-function fromAnnotationOrDefinitionOrTypeOrDefault(name, def, Type, getDefault) {
-    let value = getOwnMetadata(getAnnotationKeyFor(name), Type);
-    if (value === void 0) {
-        value = def[name];
-        if (value === void 0) {
-            value = Type[name];
-            if (value === void 0 || !hasOwn.call(Type, name)) { // First just check the value (common case is faster), but do make sure it doesn't come from the proto chain
-                return getDefault();
-            }
-            return value;
-        }
-        return value;
-    }
-    return value;
-}
-/**
- * The order in which the values are checked:
- * 1. Annotations (usually set by decorators) have the highest priority; they override static properties on the type.
- * 2. Static properties on the typ. Note that this does not look up the prototype chain (bindables are an exception here, but we do that differently anyway)
- * 3. The default property that is provided last. The function is only called if the default property is needed
- */
-function fromAnnotationOrTypeOrDefault(name, Type, getDefault) {
-    let value = getOwnMetadata(getAnnotationKeyFor(name), Type);
-    if (value === void 0) {
-        value = Type[name];
-        if (value === void 0 || !hasOwn.call(Type, name)) { // First just check the value (common case is faster), but do make sure it doesn't come from the proto chain
-            return getDefault();
-        }
-        return value;
-    }
-    return value;
-}
-/**
- * The order in which the values are checked:
- * 1. Definition properties.
- * 2. The default property that is provided last. The function is only called if the default property is needed
- */
-function fromDefinitionOrDefault(name, def, getDefault) {
-    const value = def[name];
-    if (value === void 0) {
-        return getDefault();
-    }
-    return value;
-}
-
 /** @internal */
 const instanceRegistration = (key, value) => new Resolver(key, 0 /* ResolverStrategy.instance */, value);
 /** @internal */
@@ -662,6 +553,110 @@ const Registration = {
     defer: deferRegistration,
 };
 
+const annoBaseName = 'au:annotation';
+/** @internal */
+const getAnnotationKeyFor = (name, context) => {
+    if (context === void 0) {
+        return `${annoBaseName}:${name}`;
+    }
+    return `${annoBaseName}:${name}:${context}`;
+};
+/** @internal */
+const appendAnnotation = (target, key) => {
+    const keys = getMetadata(annoBaseName, target);
+    if (keys === void 0) {
+        defineMetadata([key], target, annoBaseName);
+    }
+    else {
+        keys.push(key);
+    }
+};
+const annotation = /*@__PURE__*/ objectFreeze({
+    name: 'au:annotation',
+    appendTo: appendAnnotation,
+    set(target, prop, value) {
+        defineMetadata(value, target, getAnnotationKeyFor(prop));
+    },
+    get: (target, prop) => getMetadata(getAnnotationKeyFor(prop), target),
+    getKeys(target) {
+        let keys = getMetadata(annoBaseName, target);
+        if (keys === void 0) {
+            defineMetadata(keys = [], target, annoBaseName);
+        }
+        return keys;
+    },
+    isKey: (key) => key.startsWith(annoBaseName),
+    keyFor: getAnnotationKeyFor,
+});
+const resourceBaseName = 'au:resource';
+/**
+ * Builds a resource key from the provided parts.
+ */
+const getResourceKeyFor = (type, name, context) => {
+    if (name == null) {
+        return `${resourceBaseName}:${type}`;
+    }
+    if (context == null) {
+        return `${resourceBaseName}:${type}:${name}`;
+    }
+    return `${resourceBaseName}:${type}:${name}:${context}`;
+};
+const Protocol = {
+    annotation,
+};
+const hasOwn = Object.prototype.hasOwnProperty;
+/**
+ * The order in which the values are checked:
+ * 1. Annotations (usually set by decorators) have the highest priority; they override the definition as well as static properties on the type.
+ * 2. Definition properties (usually set by the customElement decorator object literal) come next. They override static properties on the type.
+ * 3. Static properties on the type come last. Note that this does not look up the prototype chain (bindables are an exception here, but we do that differently anyway)
+ * 4. The default property that is provided last. The function is only called if the default property is needed
+ */
+function fromAnnotationOrDefinitionOrTypeOrDefault(name, def, Type, getDefault) {
+    let value = getMetadata(getAnnotationKeyFor(name), Type);
+    if (value === void 0) {
+        value = def[name];
+        if (value === void 0) {
+            value = Type[name];
+            if (value === void 0 || !hasOwn.call(Type, name)) { // First just check the value (common case is faster), but do make sure it doesn't come from the proto chain
+                return getDefault();
+            }
+            return value;
+        }
+        return value;
+    }
+    return value;
+}
+/**
+ * The order in which the values are checked:
+ * 1. Annotations (usually set by decorators) have the highest priority; they override static properties on the type.
+ * 2. Static properties on the typ. Note that this does not look up the prototype chain (bindables are an exception here, but we do that differently anyway)
+ * 3. The default property that is provided last. The function is only called if the default property is needed
+ */
+function fromAnnotationOrTypeOrDefault(name, Type, getDefault) {
+    let value = getMetadata(getAnnotationKeyFor(name), Type);
+    if (value === void 0) {
+        value = Type[name];
+        if (value === void 0 || !hasOwn.call(Type, name)) { // First just check the value (common case is faster), but do make sure it doesn't come from the proto chain
+            return getDefault();
+        }
+        return value;
+    }
+    return value;
+}
+/**
+ * The order in which the values are checked:
+ * 1. Definition properties.
+ * 2. The default property that is provided last. The function is only called if the default property is needed
+ */
+function fromDefinitionOrDefault(name, def, getDefault) {
+    const value = def[name];
+    if (value === void 0) {
+        return getDefault();
+    }
+    return value;
+}
+
 /* eslint-disable @typescript-eslint/no-this-alias */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 const Registrable = /*@__PURE__*/ (() => {
@@ -772,7 +767,7 @@ class Container {
             else if (Registrable.has(current)) {
                 Registrable.get(current).call(current, this);
             }
-            else if ((def = Metadata.getOwn(resourceBaseName, current)) != null) {
+            else if ((def = getMetadata(resourceBaseName, current)) != null) {
                 def.register(this);
             }
             else if (isClass(current)) {
@@ -1106,13 +1101,14 @@ class Container {
     }
     /** @internal */
     _jitRegister(keyAsValue, handler) {
-        if (!isFunction(keyAsValue)) {
+        const $isRegistry = isRegistry(keyAsValue);
+        if (!isFunction(keyAsValue) && !$isRegistry) {
             throw createMappedError(9 /* ErrorNames.unable_jit_non_constructor */, keyAsValue);
         }
         if (InstrinsicTypeNames.has(keyAsValue.name)) {
             throw createMappedError(10 /* ErrorNames.no_jit_intrinsic_type */, keyAsValue);
         }
-        if (isRegistry(keyAsValue)) {
+        if ($isRegistry) {
             const registrationResolver = keyAsValue.register(handler, keyAsValue);
             if (!(registrationResolver instanceof Object) || registrationResolver.resolve == null) {
                 const newResolver = handler._resolvers.get(keyAsValue);
@@ -1123,6 +1119,7 @@ class Container {
             }
             return registrationResolver;
         }
+        // TODO(sayan): remove potential dead code
         if (keyAsValue.$isInterface) {
             throw createMappedError(12 /* ErrorNames.no_jit_interface */, keyAsValue.friendlyName);
         }
@@ -1264,7 +1261,7 @@ const isResourceKey = (key) => isString(key) && key.indexOf(':') > 0;
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-applyMetadataPolyfill(Reflect, false, false);
+initializeTC39Metadata();
 class ResolverBuilder {
     constructor(
     /** @internal */ _container, 
@@ -1310,19 +1307,13 @@ const cloneArrayWithPossibleProps = (source) => {
     }
     return clone;
 };
+const diParamTypesKeys = getAnnotationKeyFor('di:paramtypes');
 const getAnnotationParamtypes = (Type) => {
-    const key = getAnnotationKeyFor('di:paramtypes');
-    return getOwnMetadata(key, Type);
+    return getMetadata(diParamTypesKeys, Type);
 };
-const getDesignParamtypes = (Type) => getOwnMetadata('design:paramtypes', Type);
-const getOrCreateAnnotationParamTypes = (Type) => {
-    const key = getAnnotationKeyFor('di:paramtypes');
-    let annotationParamtypes = getOwnMetadata(key, Type);
-    if (annotationParamtypes === void 0) {
-        defineMetadata(key, annotationParamtypes = [], Type);
-        appendAnnotation(Type, key);
-    }
-    return annotationParamtypes;
+const getDesignParamtypes = (Type) => getMetadata('design:paramtypes', Type);
+const getOrCreateAnnotationParamTypes = (context) => {
+    return (context.metadata[diParamTypesKeys] ??= []);
 };
 /** @internal */
 const getDependencies = (Type) => {
@@ -1330,7 +1321,7 @@ const getDependencies = (Type) => {
     // so be careful with making changes here as it can have a huge impact on complex end user apps.
     // Preferably, only make changes to the dependency resolution process via a RFC.
     const key = getAnnotationKeyFor('di:dependencies');
-    let dependencies = getOwnMetadata(key, Type);
+    let dependencies = getMetadata(key, Type);
     if (dependencies === void 0) {
         // Type.length is the number of constructor parameters. If this is 0, it could mean the class has an empty constructor
         // but it could also mean the class has no constructor at all (in which case it inherits the constructor from the prototype).
@@ -1391,8 +1382,7 @@ const getDependencies = (Type) => {
             // Ignore paramtypes if we have static inject
             dependencies = cloneArrayWithPossibleProps(inject);
         }
-        defineMetadata(key, dependencies, Type);
-        appendAnnotation(Type, key);
+        defineMetadata(dependencies, Type, key);
     }
     return dependencies;
 };
@@ -1404,67 +1394,61 @@ const getDependencies = (Type) => {
 const createInterface = (configureOrName, configuror) => {
     const configure = isFunction(configureOrName) ? configureOrName : configuror;
     const friendlyName = (isString(configureOrName) ? configureOrName : undefined) ?? '(anonymous)';
-    const Interface = function (target, property, index) {
-        if (target == null || new.target !== undefined) {
-            throw createMappedError(1 /* ErrorNames.no_registration_for_interface */, friendlyName);
-        }
-        const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
-        annotationParamtypes[index] = Interface;
+    const Interface = {
+        // Old code kept with the hope that the argument decorator proposal will be standardized by TC39 (https://github.com/tc39/proposal-class-method-parameter-decorators)
+        // function(_target: Injectable | AbstractInjectable, _property: string | symbol | undefined, _index: number | undefined): void {
+        //    if (target == null || new.target !== undefined) {
+        //     throw createMappedError(ErrorNames.no_registration_for_interface, friendlyName);
+        //    }
+        //    const annotationParamtypes = getOrCreateAnnotationParamTypes(target as Injectable);
+        //    annotationParamtypes[index!] = Interface;
+        // },
+        $isInterface: true,
+        friendlyName: friendlyName,
+        toString: () => `InterfaceSymbol<${friendlyName}>`,
+        register: configure != null
+            ? (container, key) => configure(new ResolverBuilder(container, key ?? Interface))
+            : void 0,
     };
-    Interface.$isInterface = true;
-    Interface.friendlyName = friendlyName;
-    if (configure != null) {
-        Interface.register = (container, key) => configure(new ResolverBuilder(container, key ?? Interface));
-    }
-    Interface.toString = () => `InterfaceSymbol<${friendlyName}>`;
     return Interface;
 };
 const inject = (...dependencies) => {
-    return (target, key, descriptor) => {
-        if (typeof descriptor === 'number') { // It's a parameter decorator.
-            const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
-            const dep = dependencies[0];
-            if (dep !== void 0) {
-                annotationParamtypes[descriptor] = dep;
-            }
-        }
-        else if (key) { // It's a property decorator. Not supported by the container without plugins.
-            const annotationParamtypes = getOrCreateAnnotationParamTypes(target.constructor);
-            const dep = dependencies[0];
-            if (dep !== void 0) {
-                annotationParamtypes[key] = dep;
-            }
-        }
-        else if (descriptor) { // It's a function decorator (not a Class constructor)
-            const fn = descriptor.value;
-            const annotationParamtypes = getOrCreateAnnotationParamTypes(fn);
-            let dep;
-            let i = 0;
-            for (; i < dependencies.length; ++i) {
-                dep = dependencies[i];
-                if (dep !== void 0) {
-                    annotationParamtypes[i] = dep;
+    return (decorated, context) => {
+        switch (context.kind) {
+            case 'class': {
+                const annotationParamtypes = getOrCreateAnnotationParamTypes(context);
+                let dep;
+                let i = 0;
+                for (; i < dependencies.length; ++i) {
+                    dep = dependencies[i];
+                    if (dep !== void 0) {
+                        annotationParamtypes[i] = dep;
+                    }
                 }
+                break;
             }
-        }
-        else { // It's a class decorator.
-            const annotationParamtypes = getOrCreateAnnotationParamTypes(target);
-            let dep;
-            let i = 0;
-            for (; i < dependencies.length; ++i) {
-                dep = dependencies[i];
+            case 'field': {
+                const annotationParamtypes = getOrCreateAnnotationParamTypes(context);
+                const dep = dependencies[0];
                 if (dep !== void 0) {
-                    annotationParamtypes[i] = dep;
+                    annotationParamtypes[context.name] = dep;
                 }
+                break;
             }
+            // TODO(sayan): support getter injection - new feature
+            // TODO:
+            //    support method parameter injection when the class-method-parameter-decorators proposal (https://github.com/tc39/proposal-class-method-parameter-decorators)
+            //    reaches stage 4 and/or implemented by TS.
+            default:
+                throw createMappedError(22 /* ErrorNames.invalid_inject_decorator_usage */, String(context.name), context.kind);
         }
     };
 };
 const DI = {
     createContainer,
     getDesignParamtypes,
-    getAnnotationParamtypes,
-    getOrCreateAnnotationParamTypes,
+    // getAnnotationParamtypes,
+    // getOrCreateAnnotationParamTypes,
     getDependencies: getDependencies,
     /**
      * creates a decorator that also matches an interface and can be used as a {@linkcode Key}.
@@ -1563,21 +1547,21 @@ const DI = {
 };
 const IContainer = /*@__PURE__*/ createInterface('IContainer');
 const IServiceLocator = IContainer;
-function transientDecorator(target) {
+function transientDecorator(target, _context) {
     return DI.transient(target);
 }
-function transient(target) {
+function transient(target, _context) {
     return target == null ? transientDecorator : transientDecorator(target);
 }
 const defaultSingletonOptions = { scoped: false };
 const decorateSingleton = DI.singleton;
-function singleton(targetOrOptions) {
-    if (isFunction(targetOrOptions)) {
-        return decorateSingleton(targetOrOptions);
-    }
-    return function ($target) {
-        return decorateSingleton($target, targetOrOptions);
-    };
+function singleton(targetOrOptions, _context) {
+    return isFunction(targetOrOptions)
+        // The decorator is applied without options. Example: `@singleton()` or `@singleton`
+        ? decorateSingleton(targetOrOptions)
+        : function ($target, _ctx) {
+            return decorateSingleton($target, targetOrOptions);
+        };
 }
 
 /** @internal */
@@ -1713,8 +1697,8 @@ const IPlatform = /*@__PURE__*/ createInterface('IPlatform');
  */
 function createResolver(getter) {
     return function (key) {
-        function Resolver(target, property, descriptor) {
-            inject(Resolver)(target, property, descriptor);
+        function Resolver(target, context) {
+            inject(Resolver)(target, context);
         }
         Resolver.$isResolver = true;
         Resolver.resolve = function (handler, requestor) {
@@ -1727,8 +1711,8 @@ function createResolver(getter) {
  * Create a resolver that will resolve all values of a key from resolving container
  */
 const all = (key, searchAncestors = false) => {
-    function resolver(target, property, descriptor) {
-        inject(resolver)(target, property, descriptor);
+    function resolver(decorated, context) {
+        inject(resolver)(decorated, context);
     }
     resolver.$isResolver = true;
     resolver.resolve = (handler, requestor) => requestor.getAll(key, searchAncestors);
@@ -1797,8 +1781,8 @@ const optional = /*@__PURE__*/ createResolver((key, handler, requestor) => {
 /**
  * ignore tells the container not to try to inject a dependency
  */
-const ignore = /*@__PURE__*/ objectAssign((target, property, descriptor) => {
-    inject(ignore)(target, property, descriptor);
+const ignore = /*@__PURE__*/ objectAssign((decorated, context) => {
+    inject(ignore)(decorated, context);
 }, { $isResolver: true, resolve: () => void 0 });
 /**
  * Inject a function that will return a resolved instance of the [[key]] given.
@@ -1913,8 +1897,7 @@ const createNewInstance = (key, handler, requestor) => {
     // 3. jit factory, in case of newInstanceOf(SomeClass)
     return handler.getFactory(key).construct(requestor);
 };
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-const isInterface = (key) => isFunction(key) && key.$isInterface === true;
+const isInterface = (key) => key?.$isInterface === true;
 let newInstanceContainer;
 
 /******************************************************************************
@@ -1934,11 +1917,39 @@ PERFORMANCE OF THIS SOFTWARE.
 /* global Reflect, Promise */
 
 
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
+}
+function __runInitializers(thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 }
 
 /** @internal */ const trace = 0;
@@ -1988,15 +1999,16 @@ const ILogScopes = /*@__PURE__*/ createInterface('ILogScope');
 const LoggerSink = /*@__PURE__*/ objectFreeze({
     key: getAnnotationKeyFor('logger-sink-handles'),
     define(target, definition) {
-        defineMetadata(this.key, definition.handles, target.prototype);
-        return target;
+        defineMetadata(definition.handles, target, this.key);
     },
     getHandles(target) {
-        return Metadata.get(this.key, target);
+        return getMetadata(this.key, target.constructor);
     },
 });
 const sink = (definition) => {
-    return (target) => LoggerSink.define(target, definition);
+    return (_target, context) => context.addInitializer(function () {
+        LoggerSink.define(this, definition);
+    });
 };
 // http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
 const format = toLookup({
@@ -2155,163 +2167,172 @@ class ConsoleSink {
         };
     }
 }
-class DefaultLogger {
-    /* eslint-disable default-param-last */
-    constructor(
-    /**
-     * The global logger configuration.
-     */
-    config = resolve(ILogConfig), factory = resolve(ILogEventFactory), sinks = resolve(all(ISink)), 
-    /**
-     * The scopes that this logger was created for, if any.
-     */
-    scope = resolve(optional(ILogScopes)) ?? [], parent = null) {
-        this.scope = scope;
-        /** @internal */
-        this._scopedLoggers = createObject();
-        /* eslint-enable default-param-last */
-        let traceSinks;
-        let debugSinks;
-        let infoSinks;
-        let warnSinks;
-        let errorSinks;
-        let fatalSinks;
-        this.config = config;
-        this._factory = factory;
-        this.sinks = sinks;
-        if (parent === null) {
-            this.root = this;
-            this.parent = this;
-            traceSinks = this._traceSinks = [];
-            debugSinks = this._debugSinks = [];
-            infoSinks = this._infoSinks = [];
-            warnSinks = this._warnSinks = [];
-            errorSinks = this._errorSinks = [];
-            fatalSinks = this._fatalSinks = [];
-            for (const $sink of sinks) {
-                const handles = LoggerSink.getHandles($sink);
-                if (handles?.includes(trace) ?? true) {
-                    traceSinks.push($sink);
+let DefaultLogger = (() => {
+    var _a;
+    let _instanceExtraInitializers = [];
+    let _trace_decorators;
+    let _debug_decorators;
+    let _info_decorators;
+    let _warn_decorators;
+    let _error_decorators;
+    let _fatal_decorators;
+    return _a = class DefaultLogger {
+            /* eslint-disable default-param-last */
+            constructor(
+            /**
+             * The global logger configuration.
+             */
+            config = resolve(ILogConfig), factory = resolve(ILogEventFactory), sinks = resolve(all(ISink)), 
+            /**
+             * The scopes that this logger was created for, if any.
+             */
+            scope = resolve(optional(ILogScopes)) ?? [], parent = null) {
+                this.scope = (__runInitializers(this, _instanceExtraInitializers), scope);
+                /** @internal */
+                this._scopedLoggers = createObject();
+                /* eslint-enable default-param-last */
+                let traceSinks;
+                let debugSinks;
+                let infoSinks;
+                let warnSinks;
+                let errorSinks;
+                let fatalSinks;
+                this.config = config;
+                this._factory = factory;
+                this.sinks = sinks;
+                if (parent === null) {
+                    this.root = this;
+                    this.parent = this;
+                    traceSinks = this._traceSinks = [];
+                    debugSinks = this._debugSinks = [];
+                    infoSinks = this._infoSinks = [];
+                    warnSinks = this._warnSinks = [];
+                    errorSinks = this._errorSinks = [];
+                    fatalSinks = this._fatalSinks = [];
+                    for (const $sink of sinks) {
+                        const handles = LoggerSink.getHandles($sink);
+                        if (handles?.includes(trace) ?? true) {
+                            traceSinks.push($sink);
+                        }
+                        if (handles?.includes(debug) ?? true) {
+                            debugSinks.push($sink);
+                        }
+                        if (handles?.includes(info) ?? true) {
+                            infoSinks.push($sink);
+                        }
+                        if (handles?.includes(warn) ?? true) {
+                            warnSinks.push($sink);
+                        }
+                        if (handles?.includes(error) ?? true) {
+                            errorSinks.push($sink);
+                        }
+                        if (handles?.includes(fatal) ?? true) {
+                            fatalSinks.push($sink);
+                        }
+                    }
                 }
-                if (handles?.includes(debug) ?? true) {
-                    debugSinks.push($sink);
-                }
-                if (handles?.includes(info) ?? true) {
-                    infoSinks.push($sink);
-                }
-                if (handles?.includes(warn) ?? true) {
-                    warnSinks.push($sink);
-                }
-                if (handles?.includes(error) ?? true) {
-                    errorSinks.push($sink);
-                }
-                if (handles?.includes(fatal) ?? true) {
-                    fatalSinks.push($sink);
+                else {
+                    this.root = parent.root;
+                    this.parent = parent;
+                    traceSinks = this._traceSinks = parent._traceSinks;
+                    debugSinks = this._debugSinks = parent._debugSinks;
+                    infoSinks = this._infoSinks = parent._infoSinks;
+                    warnSinks = this._warnSinks = parent._warnSinks;
+                    errorSinks = this._errorSinks = parent._errorSinks;
+                    fatalSinks = this._fatalSinks = parent._fatalSinks;
                 }
             }
-        }
-        else {
-            this.root = parent.root;
-            this.parent = parent;
-            traceSinks = this._traceSinks = parent._traceSinks;
-            debugSinks = this._debugSinks = parent._debugSinks;
-            infoSinks = this._infoSinks = parent._infoSinks;
-            warnSinks = this._warnSinks = parent._warnSinks;
-            errorSinks = this._errorSinks = parent._errorSinks;
-            fatalSinks = this._fatalSinks = parent._fatalSinks;
-        }
-    }
-    trace(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= trace) {
-            this._emit(this._traceSinks, trace, messageOrGetMessage, optionalParams);
-        }
-    }
-    debug(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= debug) {
-            this._emit(this._debugSinks, debug, messageOrGetMessage, optionalParams);
-        }
-    }
-    info(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= info) {
-            this._emit(this._infoSinks, info, messageOrGetMessage, optionalParams);
-        }
-    }
-    warn(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= warn) {
-            this._emit(this._warnSinks, warn, messageOrGetMessage, optionalParams);
-        }
-    }
-    error(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= error) {
-            this._emit(this._errorSinks, error, messageOrGetMessage, optionalParams);
-        }
-    }
-    fatal(messageOrGetMessage, ...optionalParams) {
-        if (this.config.level <= fatal) {
-            this._emit(this._fatalSinks, fatal, messageOrGetMessage, optionalParams);
-        }
-    }
-    /**
-     * Create a new logger with an additional permanent prefix added to the logging outputs.
-     * When chained, multiple scopes are separated by a dot.
-     *
-     * This is preliminary API and subject to change before alpha release.
-     *
-     * @example
-     *
-     * ```ts
-     * export class MyComponent {
-     *   constructor(@ILogger private logger: ILogger) {
-     *     this.logger.debug('before scoping');
-     *     // console output: '[DBG] before scoping'
-     *     this.logger = logger.scopeTo('MyComponent');
-     *     this.logger.debug('after scoping');
-     *     // console output: '[DBG MyComponent] after scoping'
-     *   }
-     *
-     *   public doStuff(): void {
-     *     const logger = this.logger.scopeTo('doStuff()');
-     *     logger.debug('doing stuff');
-     *     // console output: '[DBG MyComponent.doStuff()] doing stuff'
-     *   }
-     * }
-     * ```
-     */
-    scopeTo(name) {
-        const scopedLoggers = this._scopedLoggers;
-        let scopedLogger = scopedLoggers[name];
-        if (scopedLogger === void 0) {
-            scopedLogger = scopedLoggers[name] = new DefaultLogger(this.config, this._factory, null, this.scope.concat(name), this);
-        }
-        return scopedLogger;
-    }
-    /** @internal */
-    _emit(sinks, level, msgOrGetMsg, optionalParams) {
-        const message = (isFunction(msgOrGetMsg) ? msgOrGetMsg() : msgOrGetMsg);
-        const event = this._factory.createLogEvent(this, level, message, optionalParams);
-        for (let i = 0, ii = sinks.length; i < ii; ++i) {
-            sinks[i].handleEvent(event);
-        }
-    }
-}
-__decorate([
-    bound
-], DefaultLogger.prototype, "trace", null);
-__decorate([
-    bound
-], DefaultLogger.prototype, "debug", null);
-__decorate([
-    bound
-], DefaultLogger.prototype, "info", null);
-__decorate([
-    bound
-], DefaultLogger.prototype, "warn", null);
-__decorate([
-    bound
-], DefaultLogger.prototype, "error", null);
-__decorate([
-    bound
-], DefaultLogger.prototype, "fatal", null);
+            trace(messageOrGetMessage, ...optionalParams) {
+                if (this.config.level <= trace) {
+                    this._emit(this._traceSinks, trace, messageOrGetMessage, optionalParams);
+                }
+            }
+            debug(messageOrGetMessage, ...optionalParams) {
+                if (this.config.level <= debug) {
+                    this._emit(this._debugSinks, debug, messageOrGetMessage, optionalParams);
+                }
+            }
+            info(messageOrGetMessage, ...optionalParams) {
+                if (this.config.level <= info) {
+                    this._emit(this._infoSinks, info, messageOrGetMessage, optionalParams);
+                }
+            }
+            warn(messageOrGetMessage, ...optionalParams) {
+                if (this.config.level <= warn) {
+                    this._emit(this._warnSinks, warn, messageOrGetMessage, optionalParams);
+                }
+            }
+            error(messageOrGetMessage, ...optionalParams) {
+                if (this.config.level <= error) {
+                    this._emit(this._errorSinks, error, messageOrGetMessage, optionalParams);
+                }
+            }
+            fatal(messageOrGetMessage, ...optionalParams) {
+                if (this.config.level <= fatal) {
+                    this._emit(this._fatalSinks, fatal, messageOrGetMessage, optionalParams);
+                }
+            }
+            /**
+             * Create a new logger with an additional permanent prefix added to the logging outputs.
+             * When chained, multiple scopes are separated by a dot.
+             *
+             * This is preliminary API and subject to change before alpha release.
+             *
+             * @example
+             *
+             * ```ts
+             * export class MyComponent {
+             *   constructor(@ILogger private logger: ILogger) {
+             *     this.logger.debug('before scoping');
+             *     // console output: '[DBG] before scoping'
+             *     this.logger = logger.scopeTo('MyComponent');
+             *     this.logger.debug('after scoping');
+             *     // console output: '[DBG MyComponent] after scoping'
+             *   }
+             *
+             *   public doStuff(): void {
+             *     const logger = this.logger.scopeTo('doStuff()');
+             *     logger.debug('doing stuff');
+             *     // console output: '[DBG MyComponent.doStuff()] doing stuff'
+             *   }
+             * }
+             * ```
+             */
+            scopeTo(name) {
+                const scopedLoggers = this._scopedLoggers;
+                let scopedLogger = scopedLoggers[name];
+                if (scopedLogger === void 0) {
+                    scopedLogger = scopedLoggers[name] = new _a(this.config, this._factory, null, this.scope.concat(name), this);
+                }
+                return scopedLogger;
+            }
+            /** @internal */
+            _emit(sinks, level, msgOrGetMsg, optionalParams) {
+                const message = (isFunction(msgOrGetMsg) ? msgOrGetMsg() : msgOrGetMsg);
+                const event = this._factory.createLogEvent(this, level, message, optionalParams);
+                for (let i = 0, ii = sinks.length; i < ii; ++i) {
+                    sinks[i].handleEvent(event);
+                }
+            }
+        },
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            _trace_decorators = [bound];
+            _debug_decorators = [bound];
+            _info_decorators = [bound];
+            _warn_decorators = [bound];
+            _error_decorators = [bound];
+            _fatal_decorators = [bound];
+            __esDecorate(_a, null, _trace_decorators, { kind: "method", name: "trace", static: false, private: false, access: { has: obj => "trace" in obj, get: obj => obj.trace }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(_a, null, _debug_decorators, { kind: "method", name: "debug", static: false, private: false, access: { has: obj => "debug" in obj, get: obj => obj.debug }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(_a, null, _info_decorators, { kind: "method", name: "info", static: false, private: false, access: { has: obj => "info" in obj, get: obj => obj.info }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(_a, null, _warn_decorators, { kind: "method", name: "warn", static: false, private: false, access: { has: obj => "warn" in obj, get: obj => obj.warn }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(_a, null, _error_decorators, { kind: "method", name: "error", static: false, private: false, access: { has: obj => "error" in obj, get: obj => obj.error }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(_a, null, _fatal_decorators, { kind: "method", name: "fatal", static: false, private: false, access: { has: obj => "fatal" in obj, get: obj => obj.fatal }, metadata: _metadata }, null, _instanceExtraInitializers);
+            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+        })(),
+        _a;
+})();
 /**
  * A basic `ILogger` configuration that configures a single `console` sink based on provided options.
  *
@@ -2424,7 +2445,7 @@ class ModuleTransformer {
                 case 'function':
                     isRegistry = isFunction(value.register);
                     isConstructable = value.prototype !== void 0;
-                    definition = getOwnMetadata(resourceBaseName, value) ?? null;
+                    definition = getMetadata(resourceBaseName, value) ?? null;
                     break;
                 default:
                     continue;

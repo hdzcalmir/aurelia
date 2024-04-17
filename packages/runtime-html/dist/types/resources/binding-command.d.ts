@@ -1,4 +1,4 @@
-import { IExpressionParser } from '@aurelia/runtime';
+import { IExpressionParser } from '@aurelia/expression-parser';
 import { IAttrMapper } from '../compiler/attribute-mapper';
 import { PropertyBindingInstruction } from '../renderer';
 import type { Constructable, IContainer, ResourceType, ResourceDefinition, PartialResourceDefinition, IServiceLocator } from '@aurelia/kernel';
@@ -39,11 +39,11 @@ export type BindingCommandKind = IResourceKind & {
     define<T extends Constructable>(name: string, Type: T): BindingCommandType<T>;
     define<T extends Constructable>(def: PartialBindingCommandDefinition, Type: T): BindingCommandType<T>;
     define<T extends Constructable>(nameOrDef: string | PartialBindingCommandDefinition, Type: T): BindingCommandType<T>;
-    getAnnotation<K extends keyof PartialBindingCommandDefinition>(Type: Constructable, prop: K): PartialBindingCommandDefinition[K];
+    getAnnotation<K extends keyof PartialBindingCommandDefinition>(Type: Constructable, prop: K): PartialBindingCommandDefinition[K] | undefined;
     find(container: IContainer, name: string): BindingCommandDefinition | null;
     get(container: IServiceLocator, name: string): BindingCommandInstance;
 };
-export type BindingCommandDecorator = <T extends Constructable>(Type: T) => BindingCommandType<T>;
+export type BindingCommandDecorator = <T extends Constructable>(Type: T, context: ClassDecoratorContext) => BindingCommandType<T>;
 export declare function bindingCommand(name: string): BindingCommandDecorator;
 export declare function bindingCommand(definition: PartialBindingCommandDefinition): BindingCommandDecorator;
 export declare class BindingCommandDefinition<T extends Constructable = Constructable> implements ResourceDefinition<T, BindingCommandInstance> {

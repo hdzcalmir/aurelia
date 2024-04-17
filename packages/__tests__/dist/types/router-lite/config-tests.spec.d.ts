@@ -9,9 +9,8 @@ export interface IComponentSpec {
     hookSpecs: HookSpecs;
 }
 export declare abstract class SimpleActivityTrackingVMBase {
-    readonly tracker: IActivityTracker;
     readonly $controller: ICustomElementController;
-    constructor(tracker: IActivityTracker);
+    readonly tracker: IActivityTracker;
     attached(): void;
     setNonActive(): void;
 }

@@ -1,35 +1,61 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { Registration, toArray, newInstanceForScope, DI } from '@aurelia/kernel';
+import { Registration, toArray, newInstanceForScope, DI, resolve } from '@aurelia/kernel';
 import { IPlatform, CustomElement, customElement, Aurelia } from '@aurelia/runtime-html';
 import { PLATFORM, assert, TestContext, createSpy, getVisibleText } from '@aurelia/testing';
 import { IValidationRules, } from '@aurelia/validation';
-import { IValidationController, ValidationController, ValidationHtmlConfiguration, ValidationResultPresenterService, IValidationResultPresenterService as $IValidationResultPresenterService, } from '@aurelia/validation-html';
+import { IValidationController, ValidationHtmlConfiguration, ValidationResultPresenterService, IValidationResultPresenterService as $IValidationResultPresenterService, } from '@aurelia/validation-html';
 import { Person } from '../../validation/_test-resources.js';
 import { ToNumberValueConverter, createSpecFunction } from '../../util.js';
 describe('validation-html/subscribers/validation-result-presenter-service.spec.ts', function () {
     describe('validation-result-presenter-service', function () {
         const IValidationResultPresenterService = DI.createInterface('ValidationResultPresenterService');
-        let App = class App {
-            constructor(platform, controller, presenterService, validationRules) {
-                this.platform = platform;
-                this.controller = controller;
-                this.presenterService = presenterService;
-                this.validationRules = validationRules;
+        class App {
+            constructor() {
                 this.person = new Person((void 0), (void 0));
-                this.controllerValidateSpy = createSpy(controller, 'validate', true);
-                controller.addSubscriber(presenterService);
-                validationRules
+                this.platform = resolve(IPlatform);
+                this.controller = resolve(newInstanceForScope(IValidationController));
+                this.presenterService = resolve(IValidationResultPresenterService);
+                this.validationRules = resolve(IValidationRules);
+                this.controllerValidateSpy = createSpy(this.controller, 'validate', true);
+                this.controller.addSubscriber(this.presenterService);
+                this.validationRules
                     .on(this.person)
                     .ensure('name')
                     .displayName('Name')
@@ -53,23 +79,15 @@ describe('validation-html/subscribers/validation-result-presenter-service.spec.t
                 assert.equal(controller.objects.size, 0, 'the objects should have been removed');
                 assert.equal(controller.subscribers.size, 0, 'the subscribers should have been removed');
             }
-        };
-        App = __decorate([
-            __param(0, IPlatform),
-            __param(1, newInstanceForScope(IValidationController)),
-            __param(2, IValidationResultPresenterService),
-            __param(3, IValidationRules),
-            __metadata("design:paramtypes", [Object, ValidationController,
-                ValidationResultPresenterService, Object])
-        ], App);
-        async function runTest(testFunction, { template, presenterService }) {
+        }
+        async function runTest(testFunction, { template, presenterServiceFactory }) {
             const ctx = TestContext.create();
             const container = ctx.container;
             const host = ctx.createElement('app');
             ctx.doc.body.appendChild(host);
             const au = new Aurelia(container);
             await au
-                .register(ValidationHtmlConfiguration, ToNumberValueConverter, CustomValidationContainer, Registration.cachedCallback(IValidationResultPresenterService, (x) => presenterService ?? x.get($IValidationResultPresenterService)))
+                .register(Registration.instance(IPlatform, PLATFORM), ValidationHtmlConfiguration, ToNumberValueConverter, CustomValidationContainer, Registration.cachedCallback(IValidationResultPresenterService, (x) => presenterServiceFactory?.(x) ?? x.get($IValidationResultPresenterService)))
                 .app({
                 host,
                 component: CustomElement.define({ name: 'app', template }, App)
@@ -119,15 +137,27 @@ describe('validation-html/subscribers/validation-result-presenter-service.spec.t
             }
         }
         CustomPresenterService.markerProperty = 'validation-result-id';
-        let CustomValidationContainer = class CustomValidationContainer {
-        };
-        CustomValidationContainer = __decorate([
-            customElement({
-                name: 'custom-validation-container',
-                template: `<au-slot></au-slot><small class='validation-placeholder'></small>`,
-                shadowOptions: { mode: 'open' }
-            })
-        ], CustomValidationContainer);
+        let CustomValidationContainer = (() => {
+            let _classDecorators = [customElement({
+                    name: 'custom-validation-container',
+                    template: `<au-slot></au-slot><small class='validation-placeholder'></small>`,
+                    shadowOptions: { mode: 'open' }
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CustomValidationContainer = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CustomValidationContainer");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CustomValidationContainer = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CustomValidationContainer = _classThis;
+        })();
         $it('shows the errors for the associated validation targets', async function ({ host, platform, app, ctx }) {
             const div1 = host.querySelector('div');
             const div2 = host.querySelector('div:nth-of-type(2)');
@@ -296,7 +326,7 @@ describe('validation-html/subscribers/validation-result-presenter-service.spec.t
             assert.equal(getVisibleText(validationContainer1.shadowRoot.querySelector('small'), true), nameError);
             assert.equal(getVisibleText(validationContainer2.shadowRoot.querySelector('small'), true), '');
         }, {
-            presenterService: new CustomPresenterService(PLATFORM),
+            presenterServiceFactory(x) { return x.invoke(CustomPresenterService); },
             template: `
         <custom-validation-container>
           <input id="target1" type="text" value.two-way="person.name & validate">
@@ -348,9 +378,11 @@ describe('validation-html/subscribers/validation-result-presenter-service.spec.t
             assert.equal(removeResultsArgs.length, 0);
             assert.equal(showResultsArgs.length, 0);
         }, {
-            presenterService: new (class extends ValidationResultPresenterService {
-                getValidationMessageContainer() { return null; }
-            })(PLATFORM),
+            presenterServiceFactory(x) {
+                return x.invoke(class extends ValidationResultPresenterService {
+                    getValidationMessageContainer() { return null; }
+                });
+            },
             template: `
         <div>
           <input id="target1" type="text" value.two-way="person.name & validate">

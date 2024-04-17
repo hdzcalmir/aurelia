@@ -2,9 +2,10 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var runtime = require('@aurelia/runtime');
+var expressionParser = require('@aurelia/expression-parser');
 var runtimeHtml = require('@aurelia/runtime-html');
 var kernel = require('@aurelia/kernel');
+var runtime = require('@aurelia/runtime');
 
 let defined$1 = false;
 function defineAstMethods() {
@@ -14,76 +15,52 @@ function defineAstMethods() {
     defined$1 = true;
     const def = (Klass, name, value) => Object.defineProperty(Klass.prototype, name, { configurable: true, enumerable: false, writable: true, value });
     [
-        runtime.BindingBehaviorExpression,
-        runtime.ValueConverterExpression,
-        runtime.AssignExpression,
-        runtime.ConditionalExpression,
-        runtime.AccessThisExpression,
-        runtime.AccessScopeExpression,
-        runtime.AccessMemberExpression,
-        runtime.AccessKeyedExpression,
-        runtime.CallScopeExpression,
-        runtime.CallMemberExpression,
-        runtime.CallFunctionExpression,
-        runtime.BinaryExpression,
-        runtime.UnaryExpression,
-        runtime.PrimitiveLiteralExpression,
-        runtime.ArrayLiteralExpression,
-        runtime.ObjectLiteralExpression,
-        runtime.TemplateExpression,
-        runtime.TaggedTemplateExpression,
-        runtime.ArrayBindingPattern,
-        runtime.ObjectBindingPattern,
-        runtime.BindingIdentifier,
-        runtime.ForOfStatement,
-        runtime.Interpolation,
-        runtime.DestructuringAssignmentExpression,
-        runtime.DestructuringAssignmentSingleExpression,
-        runtime.DestructuringAssignmentRestExpression,
-        runtime.ArrowFunction,
+        expressionParser.BindingBehaviorExpression,
+        expressionParser.ValueConverterExpression,
+        expressionParser.AssignExpression,
+        expressionParser.ConditionalExpression,
+        expressionParser.AccessThisExpression,
+        expressionParser.AccessScopeExpression,
+        expressionParser.AccessMemberExpression,
+        expressionParser.AccessKeyedExpression,
+        expressionParser.CallScopeExpression,
+        expressionParser.CallMemberExpression,
+        expressionParser.CallFunctionExpression,
+        expressionParser.BinaryExpression,
+        expressionParser.UnaryExpression,
+        expressionParser.PrimitiveLiteralExpression,
+        expressionParser.ArrayLiteralExpression,
+        expressionParser.ObjectLiteralExpression,
+        expressionParser.TemplateExpression,
+        expressionParser.TaggedTemplateExpression,
+        expressionParser.ArrayBindingPattern,
+        expressionParser.ObjectBindingPattern,
+        expressionParser.BindingIdentifier,
+        expressionParser.ForOfStatement,
+        expressionParser.Interpolation,
+        expressionParser.DestructuringAssignmentExpression,
+        expressionParser.DestructuringAssignmentSingleExpression,
+        expressionParser.DestructuringAssignmentRestExpression,
+        expressionParser.ArrowFunction,
     ].forEach(ast => {
         def(ast, 'evaluate', function (...args) {
-            return runtime.astEvaluate(this, ...args);
+            return runtimeHtml.astEvaluate(this, ...args);
         });
         def(ast, 'assign', function (...args) {
-            return runtime.astAssign(this, ...args);
+            return runtimeHtml.astAssign(this, ...args);
         });
         def(ast, 'accept', function (...args) {
-            return runtime.astVisit(this, ...args);
+            return expressionParser.astVisit(this, ...args);
         });
         def(ast, 'bind', function (...args) {
-            return runtime.astBind(this, ...args);
+            return runtimeHtml.astBind(this, ...args);
         });
         def(ast, 'unbind', function (...args) {
-            return runtime.astUnbind(this, ...args);
+            return runtimeHtml.astUnbind(this, ...args);
         });
     });
     console.warn('"evaluate"/"assign"/"accept"/"visit"/"bind"/"unbind" are only valid on AST with ast $kind "Custom".'
         + ' Or import and use astEvaluate/astAssign/astVisit/astBind/astUnbind accordingly.');
-}
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
 
 /** @internal */ const createLookup = () => Object.create(null);
@@ -118,7 +95,7 @@ const callSyntax = {
     register(container) {
         if (!callRegisteredContainer.has(container)) {
             callRegisteredContainer.add(container);
-            container.register(CallBindingCommand, exports.CallBindingRenderer);
+            container.register(CallBindingCommand, CallBindingRenderer);
         }
     }
 };
@@ -143,15 +120,13 @@ CallBindingCommand.$au = {
     type: 'binding-command',
     name: 'call',
 };
-exports.CallBindingRenderer = class CallBindingRenderer {
+class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
-};
-exports.CallBindingRenderer = __decorate([
-    runtimeHtml.renderer(instructionType)
-], exports.CallBindingRenderer);
+}
+runtimeHtml.renderer(instructionType)(CallBindingRenderer, null);
 function getTarget(potentialTarget) {
     if (potentialTarget.viewModel != null) {
         return potentialTarget.viewModel;
@@ -173,7 +148,7 @@ class CallBinding {
     callSource(args) {
         const overrideContext = this._scope.overrideContext;
         overrideContext.$event = args;
-        const result = runtime.astEvaluate(this.ast, this._scope, this, null);
+        const result = runtimeHtml.astEvaluate(this.ast, this._scope, this, null);
         Reflect.deleteProperty(overrideContext, '$event');
         return result;
     }
@@ -185,7 +160,7 @@ class CallBinding {
             this.unbind();
         }
         this._scope = _scope;
-        runtime.astBind(this.ast, _scope, this);
+        runtimeHtml.astBind(this.ast, _scope, this);
         this.targetObserver.setValue(($args) => this.callSource($args), this.target, this.targetProperty);
         this.isBound = true;
     }
@@ -194,7 +169,7 @@ class CallBinding {
             return;
         }
         this.isBound = false;
-        runtime.astUnbind(this.ast, this._scope, this);
+        runtimeHtml.astUnbind(this.ast, this._scope, this);
         this._scope = void 0;
         this.targetObserver.setValue(null, this.target, this.targetProperty);
     }
@@ -220,7 +195,7 @@ const delegateSyntax = {
     register(container) {
         if (!delegateRegisteredContainer.has(container)) {
             delegateRegisteredContainer.add(container);
-            container.register(IEventDelegator, DelegateBindingCommand, exports.ListenerBindingRenderer);
+            container.register(IEventDelegator, DelegateBindingCommand, ListenerBindingRenderer);
         }
     }
 };
@@ -234,7 +209,8 @@ DelegateBindingCommand.$au = {
     type: 'binding-command',
     name: 'delegate',
 };
-exports.ListenerBindingRenderer = class ListenerBindingRenderer {
+/** @internal */
+class ListenerBindingRenderer {
     constructor() {
         /** @internal */
         this._eventDelegator = kernel.resolve(IEventDelegator);
@@ -243,11 +219,8 @@ exports.ListenerBindingRenderer = class ListenerBindingRenderer {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
     }
-};
-exports.ListenerBindingRenderer = __decorate([
-    runtimeHtml.renderer('dl')
-    /** @internal */
-], exports.ListenerBindingRenderer);
+}
+runtimeHtml.renderer('dl')(ListenerBindingRenderer, null);
 class DelegateBindingInstruction {
     constructor(from, to, preventDefault) {
         this.from = from;
@@ -285,7 +258,7 @@ class DelegateListenerBinding {
     callSource(event) {
         const overrideContext = this._scope.overrideContext;
         overrideContext.$event = event;
-        let result = runtime.astEvaluate(this.ast, this._scope, this, null);
+        let result = runtimeHtml.astEvaluate(this.ast, this._scope, this, null);
         delete overrideContext.$event;
         if (isFunction(result)) {
             result = result(event);
@@ -306,7 +279,7 @@ class DelegateListenerBinding {
             this.unbind();
         }
         this._scope = _scope;
-        runtime.astBind(this.ast, _scope, this);
+        runtimeHtml.astBind(this.ast, _scope, this);
         this.handler = this.eventDelegator.addEventListener(this.l.get(runtimeHtml.IEventTarget), this.target, this.targetEvent, this);
         this.isBound = true;
     }
@@ -315,7 +288,7 @@ class DelegateListenerBinding {
             return;
         }
         this.isBound = false;
-        runtime.astUnbind(this.ast, this._scope, this);
+        runtimeHtml.astUnbind(this.ast, this._scope, this);
         this._scope = void 0;
         this.handler.dispose();
         this.handler = null;
@@ -464,7 +437,7 @@ const defineBindingMethods = () => {
             }
         });
     });
-    const getMessage = (name, ast) => console.warn(`@deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${runtime.Unparser.unparse(ast)}"`);
+    const getMessage = (name, ast) => console.warn(`[DEV:aurelia] @deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${expressionParser.Unparser.unparse(ast)}"`);
 };
 
 let compatEnabled = false;
@@ -490,8 +463,8 @@ function enableComposeCompat() {
     if (!addedMetadata) {
         addedMetadata = true;
         const def = runtimeHtml.CustomElement.getDefinition(runtimeHtml.AuCompose);
-        def.bindables.viewModel = runtimeHtml.BindableDefinition.create('viewModel', runtimeHtml.AuCompose);
-        def.bindables.view = runtimeHtml.BindableDefinition.create('view', runtimeHtml.AuCompose);
+        def.bindables.viewModel = runtimeHtml.BindableDefinition.create('viewModel');
+        def.bindables.view = runtimeHtml.BindableDefinition.create('view');
     }
     defineHiddenProp(prototype, 'viewModelChanged', function (value) {
         this.component = value;
@@ -544,7 +517,7 @@ function disableComposeCompat() {
 
 class BindingEngine {
     constructor() {
-        this.parser = kernel.resolve(runtime.IExpressionParser);
+        this.parser = kernel.resolve(expressionParser.IExpressionParser);
         this.observerLocator = kernel.resolve(runtime.IObserverLocator);
     }
     propertyObserver(object, prop) {
@@ -607,12 +580,14 @@ exports.BindingEngine = BindingEngine;
 exports.CallBinding = CallBinding;
 exports.CallBindingCommand = CallBindingCommand;
 exports.CallBindingInstruction = CallBindingInstruction;
+exports.CallBindingRenderer = CallBindingRenderer;
 exports.DelegateBindingCommand = DelegateBindingCommand;
 exports.DelegateBindingInstruction = DelegateBindingInstruction;
 exports.DelegateListenerBinding = DelegateListenerBinding;
 exports.DelegateListenerOptions = DelegateListenerOptions;
 exports.EventDelegator = EventDelegator;
 exports.IEventDelegator = IEventDelegator;
+exports.ListenerBindingRenderer = ListenerBindingRenderer;
 exports.callSyntax = callSyntax;
 exports.compatRegistration = compatRegistration;
 exports.delegateSyntax = delegateSyntax;

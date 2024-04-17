@@ -1,4 +1,4 @@
-import { IExpressionParser } from '@aurelia/runtime';
+import { IExpressionParser } from '@aurelia/expression-parser';
 import { BindingMode, AuSlot, CustomElement, CustomElementDefinition, InstructionType, DefaultBindingSyntax, PropertyBindingInstruction, TextBindingInstruction, } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 export function createAttribute(name, value) {

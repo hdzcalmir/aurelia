@@ -1,4 +1,5 @@
-import { BindingBehaviorExpression, IBinding } from '@aurelia/runtime';
+import { BindingBehaviorExpression } from '@aurelia/expression-parser';
+import { IBinding } from '@aurelia/runtime-html';
 export declare const Signals: {
     readonly I18N_EA_CHANNEL: "i18n:locale:changed";
     readonly I18N_SIGNAL: "aurelia-translation-signal";

@@ -1,11 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { resolve } from '@aurelia/kernel';
 import { CustomElement, customElement, INode, IRenderLocation, bindable, } from '@aurelia/runtime-html';
@@ -317,19 +346,32 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
     // The tests below shouldn't dictate the direction of <au-compose/>
     describe('host/renderlocation injection', function () {
         it('injects newly created host when composing custom element', function () {
-            let El = class El {
-                constructor(node) {
-                    this.node = node;
-                }
-            };
-            El.inject = [INode];
-            El = __decorate([
-                customElement({
-                    name: 'el',
-                    template: '<div>Hello world from El</div>'
-                }),
-                __metadata("design:paramtypes", [Object])
-            ], El);
+            let El = (() => {
+                let _classDecorators = [customElement({
+                        name: 'el',
+                        template: '<div>Hello world from El</div>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var El = _classThis = class {
+                    constructor(node) {
+                        this.node = node;
+                    }
+                };
+                __setFunctionName(_classThis, "El");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.inject = [INode];
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El = _classThis;
+            })();
             const { appHost } = createFixture(`<au-compose component.bind="El" model.bind="{ index: 0 }" containerless>`, class App {
                 constructor() {
                     this.El = El;
@@ -341,32 +383,58 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.strictEqual(el.node, appHost.querySelector('el'));
         });
         it('injects newly created host when composing different custom element', function () {
-            let Child = class Child {
-                constructor(node) {
-                    this.node = node;
-                }
-            };
-            Child.inject = [INode];
-            Child = __decorate([
-                customElement({
-                    name: 'child',
-                    template: '<div>Hello world from Child</div>'
-                }),
-                __metadata("design:paramtypes", [Object])
-            ], Child);
-            let Parent = class Parent {
-                constructor(node) {
-                    this.node = node;
-                }
-            };
-            Parent.inject = [INode];
-            Parent = __decorate([
-                customElement({
-                    name: 'parent',
-                    template: '<div>Hello world from Parent</div>'
-                }),
-                __metadata("design:paramtypes", [Object])
-            ], Parent);
+            let Child = (() => {
+                let _classDecorators = [customElement({
+                        name: 'child',
+                        template: '<div>Hello world from Child</div>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Child = _classThis = class {
+                    constructor(node) {
+                        this.node = node;
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.inject = [INode];
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let Parent = (() => {
+                let _classDecorators = [customElement({
+                        name: 'parent',
+                        template: '<div>Hello world from Parent</div>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Parent = _classThis = class {
+                    constructor(node) {
+                        this.node = node;
+                    }
+                };
+                __setFunctionName(_classThis, "Parent");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Parent = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.inject = [INode];
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Parent = _classThis;
+            })();
             const { ctx, appHost, component } = createFixture(`<au-compose component.bind="El" model.bind="{ index: 0 }" containerless>`, class App {
                 constructor() {
                     this.El = Child;
@@ -440,14 +508,26 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
         });
         it('ignores tag binding change when composing custom element', function () {
             let compositionCount = 0;
-            let El = class El {
-            };
-            El = __decorate([
-                customElement({
-                    name: 'el',
-                    template: '<div>Hello world from El</div>'
-                })
-            ], El);
+            let El = (() => {
+                let _classDecorators = [customElement({
+                        name: 'el',
+                        template: '<div>Hello world from El</div>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var El = _classThis = class {
+                };
+                __setFunctionName(_classThis, "El");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El = _classThis;
+            })();
             const { component, assertHtml, assertText } = createFixture(`<au-compose tag.bind="i ? 'h2' : 'h1'" component.bind="El" model.bind="{ index: 0 }" containerless composition.bind="composed">`, class App {
                 constructor() {
                     this.i = 0;
@@ -501,14 +581,26 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             await tearDown();
         });
         it('works with containerless composing custom element', async function () {
-            let El = class El {
-            };
-            El = __decorate([
-                customElement({
-                    name: 'el',
-                    template: '<div>Hello world from El</div>'
-                })
-            ], El);
+            let El = (() => {
+                let _classDecorators = [customElement({
+                        name: 'el',
+                        template: '<div>Hello world from El</div>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var El = _classThis = class {
+                };
+                __setFunctionName(_classThis, "El");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El = _classThis;
+            })();
             const { appHost, startPromise, tearDown } = createFixture(`<au-compose component.bind="El" model.bind="{ index: 0 }" containerless>`, class App {
                 constructor() {
                     this.El = El;
@@ -520,22 +612,46 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             await tearDown();
         });
         it('composes custom element mutiple times', async function () {
-            let Child = class Child {
-            };
-            Child = __decorate([
-                customElement({
-                    name: 'child',
-                    template: '<div>Hello world from Child</div>'
-                })
-            ], Child);
-            let Parent = class Parent {
-            };
-            Parent = __decorate([
-                customElement({
-                    name: 'parent',
-                    template: '<div>Hello world from Parent</div>'
-                })
-            ], Parent);
+            let Child = (() => {
+                let _classDecorators = [customElement({
+                        name: 'child',
+                        template: '<div>Hello world from Child</div>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Child = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let Parent = (() => {
+                let _classDecorators = [customElement({
+                        name: 'parent',
+                        template: '<div>Hello world from Parent</div>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Parent = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Parent");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Parent = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Parent = _classThis;
+            })();
             const { appHost, ctx, component, startPromise, tearDown } = createFixture(`<au-compose component.bind="El" model.bind="{ index: 0 }" containerless>`, class App {
                 constructor() {
                     this.El = Child;
@@ -551,22 +667,46 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             await tearDown();
         });
         it('switches POJO -> custom element -> POJO', async function () {
-            let Child = class Child {
-            };
-            Child = __decorate([
-                customElement({
-                    name: 'child',
-                    template: '<div>Hello world from Child</div>'
-                })
-            ], Child);
-            let Parent = class Parent {
-            };
-            Parent = __decorate([
-                customElement({
-                    name: 'parent',
-                    template: '<div>Hello world from Parent</div>'
-                })
-            ], Parent);
+            let Child = (() => {
+                let _classDecorators = [customElement({
+                        name: 'child',
+                        template: '<div>Hello world from Child</div>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Child = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let Parent = (() => {
+                let _classDecorators = [customElement({
+                        name: 'parent',
+                        template: '<div>Hello world from Parent</div>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Parent = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Parent");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Parent = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Parent = _classThis;
+            })();
             const { appHost, ctx, component, startPromise, tearDown } = createFixture(`<au-compose component.bind="El" template.bind="view" model.bind="{ index: 0 }">`, class App {
                 constructor() {
                     this.message = 'app';
@@ -623,21 +763,57 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assertHtml('<el>from string</el>', { compact: true });
         });
         it('does not find element beside local or global registries', function () {
-            let El1 = class El1 {
-            };
-            El1 = __decorate([
-                customElement({ name: 'el1', template: '<au-compose component="el2">' })
-            ], El1);
-            let El2 = class El2 {
-            };
-            El2 = __decorate([
-                customElement({ name: 'el2', template: 'el2 <el1>' })
-            ], El2);
-            let El3 = class El3 {
-            };
-            El3 = __decorate([
-                customElement({ name: 'el3', template: 'el3 <el2>', dependencies: [El1, El2] })
-            ], El3);
+            let El1 = (() => {
+                let _classDecorators = [customElement({ name: 'el1', template: '<au-compose component="el2">' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var El1 = _classThis = class {
+                };
+                __setFunctionName(_classThis, "El1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El1 = _classThis;
+            })();
+            let El2 = (() => {
+                let _classDecorators = [customElement({ name: 'el2', template: 'el2 <el1>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var El2 = _classThis = class {
+                };
+                __setFunctionName(_classThis, "El2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El2 = _classThis;
+            })();
+            let El3 = (() => {
+                let _classDecorators = [customElement({ name: 'el3', template: 'el3 <el2>', dependencies: [El1, El2] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var El3 = _classThis = class {
+                };
+                __setFunctionName(_classThis, "El3");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El3 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El3 = _classThis;
+            })();
             assert.throws(() => createFixture('<el3></el3>', class {
             }, [El1, El3]));
         });
@@ -654,24 +830,49 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assertHtml('<my-el>Hello world from ce</my-el>', { compact: true });
         });
         it('switches from CE -> string (in local registry)', function () {
-            var Child_1;
-            let Child = Child_1 = class Child {
-                constructor() {
-                    this.id = ++Child_1.id;
-                }
-            };
-            Child.id = 0;
-            Child = Child_1 = __decorate([
-                customElement({ name: 'child', template: 'Hello world from child ${id}' })
-            ], Child);
-            let Parent = class Parent {
-                constructor() {
-                    this.c = Child;
-                }
-            };
-            Parent = __decorate([
-                customElement({ name: 'parent', template: '<au-compose component.bind="c">', dependencies: [Child] })
-            ], Parent);
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: 'Hello world from child ${id}' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Child = _classThis = class {
+                    constructor() {
+                        this.id = ++Child.id;
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.id = 0;
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let Parent = (() => {
+                let _classDecorators = [customElement({ name: 'parent', template: '<au-compose component.bind="c">', dependencies: [Child] })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Parent = _classThis = class {
+                    constructor() {
+                        this.c = Child;
+                    }
+                };
+                __setFunctionName(_classThis, "Parent");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Parent = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Parent = _classThis;
+            })();
             const { assertHtml, component } = createFixture(`<parent component.ref=parent>`, class App {
             }, [Parent]);
             assertHtml('<parent><child>Hello world from child 1</child></parent>', { compact: true });
@@ -986,11 +1187,23 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
     });
     describe('pass through props', function () {
         it('passes plain attributes', function () {
-            let El = class El {
-            };
-            El = __decorate([
-                customElement('el')
-            ], El);
+            let El = (() => {
+                let _classDecorators = [customElement('el')];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var El = _classThis = class {
+                };
+                __setFunctionName(_classThis, "El");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El = _classThis;
+            })();
             const { assertAttr } = createFixture('<au-compose style="width: 20%" component.bind="comp" component.ref="el">', class {
                 constructor() {
                     this.comp = El;
@@ -1004,11 +1217,23 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assertAttr('p', 'style', 'width: 20%;');
         });
         it('passes through ref binding', function () {
-            let El = class El {
-            };
-            El = __decorate([
-                customElement('el')
-            ], El);
+            let El = (() => {
+                let _classDecorators = [customElement('el')];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var El = _classThis = class {
+                };
+                __setFunctionName(_classThis, "El");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El = _classThis;
+            })();
             const { component } = createFixture('<au-compose component.bind="comp" component.ref="el">', class {
                 constructor() {
                     this.comp = El;
@@ -1017,18 +1242,35 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.instanceOf(component.el, El);
         });
         it('passes through attribute as bindable', function () {
-            let El = class El {
-            };
-            __decorate([
-                bindable(),
-                __metadata("design:type", Object)
-            ], El.prototype, "message", void 0);
-            El = __decorate([
-                customElement({
-                    name: 'el',
-                    template: '${message}'
-                })
-            ], El);
+            let El = (() => {
+                let _classDecorators = [customElement({
+                        name: 'el',
+                        template: '${message}'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _message_decorators;
+                let _message_initializers = [];
+                let _message_extraInitializers = [];
+                var El = _classThis = class {
+                    constructor() {
+                        this.message = __runInitializers(this, _message_initializers, void 0);
+                        __runInitializers(this, _message_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "El");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _message_decorators = [bindable()];
+                    __esDecorate(null, null, _message_decorators, { kind: "field", name: "message", static: false, private: false, access: { has: obj => "message" in obj, get: obj => obj.message, set: (obj, value) => { obj.message = value; } }, metadata: _metadata }, _message_initializers, _message_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El = _classThis;
+            })();
             const { assertText, assertHtml } = createFixture('<au-compose component.bind="comp" message.bind="msg">', class {
                 constructor() {
                     this.comp = El;
@@ -1039,18 +1281,35 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assertHtml('<!--au-start--><el>hello world</el><!--au-end-->');
         });
         it('passes through combination of normal and bindable attrs', function () {
-            let El = class El {
-            };
-            __decorate([
-                bindable(),
-                __metadata("design:type", Object)
-            ], El.prototype, "message", void 0);
-            El = __decorate([
-                customElement({
-                    name: 'el',
-                    template: '${message}'
-                })
-            ], El);
+            let El = (() => {
+                let _classDecorators = [customElement({
+                        name: 'el',
+                        template: '${message}'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _message_decorators;
+                let _message_initializers = [];
+                let _message_extraInitializers = [];
+                var El = _classThis = class {
+                    constructor() {
+                        this.message = __runInitializers(this, _message_initializers, void 0);
+                        __runInitializers(this, _message_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "El");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _message_decorators = [bindable()];
+                    __esDecorate(null, null, _message_decorators, { kind: "field", name: "message", static: false, private: false, access: { has: obj => "message" in obj, get: obj => obj.message, set: (obj, value) => { obj.message = value; } }, metadata: _metadata }, _message_initializers, _message_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El = _classThis;
+            })();
             const { assertText, assertHtml } = createFixture('<au-compose component.bind="comp" id.bind="1" message.bind="msg" class="el">', class {
                 constructor() {
                     this.comp = El;
@@ -1064,37 +1323,73 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
         });
         it('switches & cleans up after switching custom element view model', function () {
             let el1MessageCount = 0;
-            let El1 = class El1 {
-                messageChanged() {
-                    el1MessageCount++;
-                }
-            };
-            __decorate([
-                bindable(),
-                __metadata("design:type", Object)
-            ], El1.prototype, "message", void 0);
-            El1 = __decorate([
-                customElement({
-                    name: 'el-1',
-                    template: '${message}'
-                })
-            ], El1);
-            let El2 = class El2 {
-            };
-            __decorate([
-                bindable(),
-                __metadata("design:type", Object)
-            ], El2.prototype, "message", void 0);
-            __decorate([
-                bindable,
-                __metadata("design:type", Object)
-            ], El2.prototype, "id", void 0);
-            El2 = __decorate([
-                customElement({
-                    name: 'el-2',
-                    template: '${id} hey there ${message}'
-                })
-            ], El2);
+            let El1 = (() => {
+                let _classDecorators = [customElement({
+                        name: 'el-1',
+                        template: '${message}'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _message_decorators;
+                let _message_initializers = [];
+                let _message_extraInitializers = [];
+                var El1 = _classThis = class {
+                    messageChanged() {
+                        el1MessageCount++;
+                    }
+                    constructor() {
+                        this.message = __runInitializers(this, _message_initializers, void 0);
+                        __runInitializers(this, _message_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "El1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _message_decorators = [bindable()];
+                    __esDecorate(null, null, _message_decorators, { kind: "field", name: "message", static: false, private: false, access: { has: obj => "message" in obj, get: obj => obj.message, set: (obj, value) => { obj.message = value; } }, metadata: _metadata }, _message_initializers, _message_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El1 = _classThis;
+            })();
+            let El2 = (() => {
+                let _classDecorators = [customElement({
+                        name: 'el-2',
+                        template: '${id} hey there ${message}'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _message_decorators;
+                let _message_initializers = [];
+                let _message_extraInitializers = [];
+                let _id_decorators;
+                let _id_initializers = [];
+                let _id_extraInitializers = [];
+                var El2 = _classThis = class {
+                    constructor() {
+                        this.message = __runInitializers(this, _message_initializers, void 0);
+                        this.id = (__runInitializers(this, _message_extraInitializers), __runInitializers(this, _id_initializers, void 0));
+                        __runInitializers(this, _id_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "El2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _message_decorators = [bindable()];
+                    _id_decorators = [bindable];
+                    __esDecorate(null, null, _message_decorators, { kind: "field", name: "message", static: false, private: false, access: { has: obj => "message" in obj, get: obj => obj.message, set: (obj, value) => { obj.message = value; } }, metadata: _metadata }, _message_initializers, _message_extraInitializers);
+                    __esDecorate(null, null, _id_decorators, { kind: "field", name: "id", static: false, private: false, access: { has: obj => "id" in obj, get: obj => obj.id, set: (obj, value) => { obj.id = value; } }, metadata: _metadata }, _id_initializers, _id_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El2 = _classThis;
+            })();
             const { component, assertText, assertHtml } = createFixture('<au-compose component.bind="comp" id.bind="1" message.bind="msg" class="el">', class {
                 constructor() {
                     this.comp = El1;
@@ -1164,15 +1459,27 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             });
         }
         it('passes attributes into ...$attrs', function () {
-            let MyInput = class MyInput {
-            };
-            MyInput = __decorate([
-                customElement({
-                    name: 'my-input',
-                    capture: true,
-                    template: '<input ...$attrs />'
-                })
-            ], MyInput);
+            let MyInput = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-input',
+                        capture: true,
+                        template: '<input ...$attrs />'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyInput = _classThis = class {
+                };
+                __setFunctionName(_classThis, "MyInput");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyInput = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyInput = _classThis;
+            })();
             const { assertValue } = createFixture('<au-compose component.bind="comp" value.bind="message" />', class {
                 constructor() {
                     this.comp = MyInput;
@@ -1182,27 +1489,51 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assertValue('input', 'hello world');
         });
         it('passes ...$attrs on <au-compose>', function () {
-            let MyInput = class MyInput {
-            };
-            MyInput = __decorate([
-                customElement({
-                    name: 'my-input',
-                    capture: true,
-                    template: '<input ...$attrs />'
-                })
-            ], MyInput);
-            let Field = class Field {
-                constructor() {
-                    this.comp = MyInput;
-                }
-            };
-            Field = __decorate([
-                customElement({
-                    name: 'field',
-                    capture: true,
-                    template: '<au-compose component.bind="comp" ...$attrs >'
-                })
-            ], Field);
+            let MyInput = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-input',
+                        capture: true,
+                        template: '<input ...$attrs />'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyInput = _classThis = class {
+                };
+                __setFunctionName(_classThis, "MyInput");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyInput = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyInput = _classThis;
+            })();
+            let Field = (() => {
+                let _classDecorators = [customElement({
+                        name: 'field',
+                        capture: true,
+                        template: '<au-compose component.bind="comp" ...$attrs >'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Field = _classThis = class {
+                    constructor() {
+                        this.comp = MyInput;
+                    }
+                };
+                __setFunctionName(_classThis, "Field");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Field = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Field = _classThis;
+            })();
             const { assertValue, component, type } = createFixture('<field value.bind="message" />', class {
                 constructor() {
                     this.message = 'hello world';
@@ -1213,25 +1544,49 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assert.strictEqual(component.message, 'hey');
         });
         it('transfers through ...$attrs', function () {
-            let MyInput = class MyInput {
-            };
-            MyInput = __decorate([
-                customElement({
-                    name: 'my-input',
-                    capture: true,
-                    template: '<input ...$attrs />'
-                })
-            ], MyInput);
-            let Field = class Field {
-            };
-            Field = __decorate([
-                customElement({
-                    name: 'field',
-                    capture: true,
-                    template: '<my-input ...$attrs />',
-                    dependencies: [MyInput]
-                })
-            ], Field);
+            let MyInput = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-input',
+                        capture: true,
+                        template: '<input ...$attrs />'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyInput = _classThis = class {
+                };
+                __setFunctionName(_classThis, "MyInput");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyInput = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyInput = _classThis;
+            })();
+            let Field = (() => {
+                let _classDecorators = [customElement({
+                        name: 'field',
+                        capture: true,
+                        template: '<my-input ...$attrs />',
+                        dependencies: [MyInput]
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Field = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Field");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Field = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Field = _classThis;
+            })();
             const { assertAttr, assertValue, component, type } = createFixture('<au-compose component.bind="comp" value.bind="message" id="i1" >', class {
                 constructor() {
                     this.comp = Field;
@@ -1246,18 +1601,35 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
     });
     describe('comparison with normal rendering', function () {
         it('renders similar output', function () {
-            let El = class El {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Object)
-            ], El.prototype, "v", void 0);
-            El = __decorate([
-                customElement({
-                    name: 'my-el',
-                    template: '<p>hey ${v}</p>'
-                })
-            ], El);
+            let El = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-el',
+                        template: '<p>hey ${v}</p>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _v_decorators;
+                let _v_initializers = [];
+                let _v_extraInitializers = [];
+                var El = _classThis = class {
+                    constructor() {
+                        this.v = __runInitializers(this, _v_initializers, void 0);
+                        __runInitializers(this, _v_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "El");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _v_decorators = [bindable];
+                    __esDecorate(null, null, _v_decorators, { kind: "field", name: "v", static: false, private: false, access: { has: obj => "v" in obj, get: obj => obj.v, set: (obj, value) => { obj.v = value; } }, metadata: _metadata }, _v_initializers, _v_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El = _classThis;
+            })();
             const { assertHtml } = createFixture(`<div id=d1>
           <au-compose component.bind="el" style="width: 20%;" v="aurelia"></au-compose>
         </div>
@@ -1277,19 +1649,36 @@ describe('3-runtime-html/au-compose.spec.ts', function () {
             assertHtml('#d3', '<my-el style="width: 20%;"><p>hey aurelia</p></my-el>', { compact: true });
         });
         it('renders similar output for containerless element', function () {
-            let El = class El {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Object)
-            ], El.prototype, "v", void 0);
-            El = __decorate([
-                customElement({
-                    name: 'my-el',
-                    template: '<p>hey ${v}</p>',
-                    containerless: true,
-                })
-            ], El);
+            let El = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-el',
+                        template: '<p>hey ${v}</p>',
+                        containerless: true,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _v_decorators;
+                let _v_initializers = [];
+                let _v_extraInitializers = [];
+                var El = _classThis = class {
+                    constructor() {
+                        this.v = __runInitializers(this, _v_initializers, void 0);
+                        __runInitializers(this, _v_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "El");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _v_decorators = [bindable];
+                    __esDecorate(null, null, _v_decorators, { kind: "field", name: "v", static: false, private: false, access: { has: obj => "v" in obj, get: obj => obj.v, set: (obj, value) => { obj.v = value; } }, metadata: _metadata }, _v_initializers, _v_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    El = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return El = _classThis;
+            })();
             const { assertHtml } = createFixture(`<div id=d1>
           <au-compose component.bind="el" style="width: 20%;" v="aurelia"></au-compose>
         </div>

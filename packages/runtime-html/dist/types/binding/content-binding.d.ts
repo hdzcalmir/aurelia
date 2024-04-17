@@ -1,15 +1,16 @@
-import { IAstEvaluator, IConnectableBinding } from '@aurelia/runtime';
+import { IAstEvaluator } from '../ast.eval';
 import type { IServiceLocator } from '@aurelia/kernel';
 import type { TaskQueue } from '@aurelia/platform';
-import type { IBinding, ICollectionSubscriber, IObserverLocator, IsExpression, Scope } from '@aurelia/runtime';
+import type { ICollectionSubscriber, IObserverLocator, IObserverLocatorBasedConnectable, ISubscriber, Scope } from '@aurelia/runtime';
 import type { IPlatform } from '../platform';
-import type { BindingMode, IBindingController } from './interfaces-bindings';
-export interface ContentBinding extends IAstEvaluator, IConnectableBinding {
+import type { BindingMode, IBinding, IBindingController } from './interfaces-bindings';
+import { IsExpression } from '@aurelia/expression-parser';
+export interface ContentBinding extends IAstEvaluator, IServiceLocator, IObserverLocatorBasedConnectable {
 }
 /**
  * A binding for handling the element content interpolation
  */
-export declare class ContentBinding implements IBinding, ICollectionSubscriber {
+export declare class ContentBinding implements IBinding, ISubscriber, ICollectionSubscriber {
     private readonly p;
     readonly ast: IsExpression;
     readonly target: Text;

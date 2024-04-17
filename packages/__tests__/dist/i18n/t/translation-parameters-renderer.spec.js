@@ -1,6 +1,7 @@
 import { I18nConfiguration, TranslationBinding, TranslationParametersAttributePattern, TranslationParametersBindingCommand, TranslationParametersBindingInstruction, TranslationParametersBindingRenderer, TranslationParametersInstructionType } from '@aurelia/i18n';
 import { DI } from '@aurelia/kernel';
-import { IExpressionParser, IObserverLocator, } from '@aurelia/runtime';
+import { IExpressionParser } from '@aurelia/expression-parser';
+import { IObserverLocator, } from '@aurelia/runtime';
 import { StandardConfiguration, BindingCommand, IAttributePattern, IPlatform, IAttrMapper, InstructionType, BindingMode, } from '@aurelia/runtime-html';
 import { assert, PLATFORM, TestContext } from '@aurelia/testing';
 const noopLocator = {};

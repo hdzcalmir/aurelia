@@ -49,7 +49,7 @@ export declare const toArray: <T = unknown>(input: ArrayLike<T>) => T[];
 /**
  * Decorator. (lazily) bind the method to the class instance on first call.
  */
-export declare const bound: <T extends Function>(target: Object, key: string | symbol, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T>;
+export declare const bound: <TThis extends object, TArgs extends unknown[], TReturn>(originalMethod: (this: TThis, ...args: TArgs) => TReturn, context: ClassMethodDecoratorContext<TThis, (this: TThis, ...args: TArgs) => TReturn>) => void;
 export declare const mergeArrays: <T>(...arrays: (readonly T[] | undefined)[]) => T[];
 export declare const firstDefined: <T>(...values: readonly (T | undefined)[]) => T;
 /**

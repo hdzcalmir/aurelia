@@ -1,24 +1,23 @@
-import { ILogger } from '@aurelia/kernel';
-import { IRequestHandler, IHttpServerOptions, IHttp2FileServer } from '../interfaces';
+import { IRequestHandler, IHttp2FileServer } from '../interfaces';
 import { IHttpContext } from '../http-context';
 export declare class FileServer implements IRequestHandler {
-    private readonly opts;
-    private readonly logger;
     private readonly root;
     private readonly cacheControlDirective;
-    constructor(opts: IHttpServerOptions, logger: ILogger);
+    private readonly opts;
+    private readonly logger;
+    constructor();
     handleRequest(context: IHttpContext): Promise<void>;
 }
 /**
  * File server with HTTP/2 push support
  */
 export declare class Http2FileServer implements IHttp2FileServer {
-    private readonly opts;
-    private readonly logger;
     private readonly cacheControlDirective;
     private readonly root;
     private readonly filePushMap;
-    constructor(opts: IHttpServerOptions, logger: ILogger);
+    private readonly opts;
+    private readonly logger;
+    constructor();
     handleRequest(context: IHttpContext): void;
     private pushAll;
     private push;

@@ -17,7 +17,7 @@ export declare class DialogController implements IDialogController {
      * The dom structure created to support the dialog associated with this controller
      */
     private dom;
-    protected static get inject(): import("@aurelia/kernel").InterfaceSymbol<IPlatform>[];
+    protected static get inject(): (import("@aurelia/kernel").InterfaceSymbol<IPlatform> | import("@aurelia/kernel").InterfaceSymbol<IContainer>)[];
     constructor(p: IPlatform, container: IContainer);
     /**
      * Closes the dialog with a successful output.

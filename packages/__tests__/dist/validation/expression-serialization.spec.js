@@ -1,5 +1,5 @@
 /* eslint-disable mocha/no-sibling-hooks */
-import { IExpressionParser, Interpolation, PrimitiveLiteralExpression, UnaryExpression, BinaryExpression, ConditionalExpression, ValueConverterExpression, BindingBehaviorExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, AccessThisExpression, ForOfStatement, ArrayLiteralExpression, ObjectLiteralExpression, CallFunctionExpression, CallScopeExpression, CallMemberExpression, TemplateExpression, TaggedTemplateExpression, AssignExpression, AccessBoundaryExpression, } from '@aurelia/runtime';
+import { IExpressionParser, Interpolation, PrimitiveLiteralExpression, UnaryExpression, BinaryExpression, ConditionalExpression, ValueConverterExpression, BindingBehaviorExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, AccessThisExpression, ForOfStatement, ArrayLiteralExpression, ObjectLiteralExpression, CallFunctionExpression, CallScopeExpression, CallMemberExpression, TemplateExpression, TaggedTemplateExpression, AssignExpression, AccessBoundaryExpression, } from '@aurelia/expression-parser';
 import { TestContext, assert } from '@aurelia/testing';
 import { Deserializer, Serializer } from '@aurelia/validation';
 describe('validation/expression-serialization.spec.ts', function () {

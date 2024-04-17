@@ -1,11 +1,12 @@
-import { IAstEvaluator, IConnectableBinding } from '@aurelia/runtime';
+import { IAstEvaluator } from '../ast.eval';
 import type { IServiceLocator } from '@aurelia/kernel';
 import type { ITask, TaskQueue } from '@aurelia/platform';
-import type { IBinding, ICollectionSubscriber, Interpolation, IObserverLocator, IsExpression, Scope } from '@aurelia/runtime';
-import type { BindingMode, IBindingController } from './interfaces-bindings';
-export interface InterpolationBinding extends IBinding {
+import type { ICollectionSubscriber, IObserverLocator, IObserverLocatorBasedConnectable, ISubscriber, Scope } from '@aurelia/runtime';
+import type { IBinding, BindingMode, IBindingController } from './interfaces-bindings';
+import { type Interpolation, IsExpression } from '@aurelia/expression-parser';
+export interface InterpolationBinding extends IObserverLocatorBasedConnectable, IAstEvaluator, IServiceLocator {
 }
-export declare class InterpolationBinding implements IBinding {
+export declare class InterpolationBinding implements IBinding, ISubscriber, ICollectionSubscriber {
     ast: Interpolation;
     target: object;
     targetProperty: string;
@@ -17,7 +18,7 @@ export declare class InterpolationBinding implements IBinding {
     bind(_scope: Scope): void;
     unbind(): void;
 }
-export interface InterpolationPartBinding extends IAstEvaluator, IConnectableBinding {
+export interface InterpolationPartBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator {
 }
 export declare class InterpolationPartBinding implements IBinding, ICollectionSubscriber {
     readonly ast: IsExpression;

@@ -1,4 +1,5 @@
-import { IExpressionParser, IObserverLocator, type IsBindingBehavior } from '@aurelia/runtime';
+import { IExpressionParser, type IsBindingBehavior } from '@aurelia/expression-parser';
+import { IObserverLocator } from '@aurelia/runtime';
 import { AttrSyntax, IAttrMapper, IHydratableController, IPlatform, type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, type IRenderer, BindingCommandStaticAuDefinition } from '@aurelia/runtime-html';
 export declare class StateAttributePattern {
     'PART.state'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;

@@ -1,8 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
+};
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { valueConverter, bindingBehavior, Aurelia, CustomElement, IPlatform } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
@@ -57,49 +89,109 @@ describe('3-runtime-html/repeat.vc.bb.spec.ts', function () {
         }
         getArr() { return this.arr; }
     }
-    let IdentityValueConverter = class IdentityValueConverter {
-        toView(value) {
-            return value;
-        }
-    };
-    IdentityValueConverter = __decorate([
-        valueConverter('identity')
-    ], IdentityValueConverter);
-    let OddEvenValueConverter = class OddEvenValueConverter {
-        toView(value, even) {
-            return (value instanceof Set ? Array.from(value) : value).filter((v) => v % 2 === (even ? 0 : 1));
-        }
-    };
-    OddEvenValueConverter = __decorate([
-        valueConverter('oddEven')
-    ], OddEvenValueConverter);
-    let MapOddEvenValueConverter = class MapOddEvenValueConverter {
-        toView(value, even) {
-            const map = new Map();
-            for (const [k, v] of value) {
-                if (v % 2 === (even ? 0 : 1)) {
-                    map.set(k, v);
-                }
+    let IdentityValueConverter = (() => {
+        let _classDecorators = [valueConverter('identity')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var IdentityValueConverter = _classThis = class {
+            toView(value) {
+                return value;
             }
-            return map;
-        }
-    };
-    MapOddEvenValueConverter = __decorate([
-        valueConverter('mapOddEven')
-    ], MapOddEvenValueConverter);
-    let MultipleOfValueConverter = class MultipleOfValueConverter {
-        toView(value, n) {
-            return value.filter((v) => v % n === 0);
-        }
-    };
-    MultipleOfValueConverter = __decorate([
-        valueConverter('multipleOf')
-    ], MultipleOfValueConverter);
-    let NoopBindingBehavior = class NoopBindingBehavior {
-    };
-    NoopBindingBehavior = __decorate([
-        bindingBehavior('noop')
-    ], NoopBindingBehavior);
+        };
+        __setFunctionName(_classThis, "IdentityValueConverter");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            IdentityValueConverter = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return IdentityValueConverter = _classThis;
+    })();
+    let OddEvenValueConverter = (() => {
+        let _classDecorators = [valueConverter('oddEven')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var OddEvenValueConverter = _classThis = class {
+            toView(value, even) {
+                return (value instanceof Set ? Array.from(value) : value).filter((v) => v % 2 === (even ? 0 : 1));
+            }
+        };
+        __setFunctionName(_classThis, "OddEvenValueConverter");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            OddEvenValueConverter = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return OddEvenValueConverter = _classThis;
+    })();
+    let MapOddEvenValueConverter = (() => {
+        let _classDecorators = [valueConverter('mapOddEven')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var MapOddEvenValueConverter = _classThis = class {
+            toView(value, even) {
+                const map = new Map();
+                for (const [k, v] of value) {
+                    if (v % 2 === (even ? 0 : 1)) {
+                        map.set(k, v);
+                    }
+                }
+                return map;
+            }
+        };
+        __setFunctionName(_classThis, "MapOddEvenValueConverter");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            MapOddEvenValueConverter = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return MapOddEvenValueConverter = _classThis;
+    })();
+    let MultipleOfValueConverter = (() => {
+        let _classDecorators = [valueConverter('multipleOf')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var MultipleOfValueConverter = _classThis = class {
+            toView(value, n) {
+                return value.filter((v) => v % n === 0);
+            }
+        };
+        __setFunctionName(_classThis, "MultipleOfValueConverter");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            MultipleOfValueConverter = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return MultipleOfValueConverter = _classThis;
+    })();
+    let NoopBindingBehavior = (() => {
+        let _classDecorators = [bindingBehavior('noop')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var NoopBindingBehavior = _classThis = class {
+        };
+        __setFunctionName(_classThis, "NoopBindingBehavior");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            NoopBindingBehavior = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return NoopBindingBehavior = _classThis;
+    })();
     const identityExpected = Array.from({ length: 10 }, (_, i) => `<span>${i + 1}</span>`).join('');
     const oddExpected = Array.from({ length: 10 }, (_, i) => i % 2 === 0 ? `<span>${i + 1}</span>` : '').join('');
     const evenExpected = Array.from({ length: 10 }, (_, i) => i % 2 === 1 ? `<span>${i + 1}</span>` : '').join('');

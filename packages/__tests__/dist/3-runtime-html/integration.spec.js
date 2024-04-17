@@ -1,11 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { BindingMode, Aurelia, CustomElement, customElement, IPlatform, bindable, } from '@aurelia/runtime-html';
 import { assert, TestContext, } from '@aurelia/testing';
@@ -61,32 +90,67 @@ describe('3-runtime-html/integration.spec.ts', function () {
         }
     }
     function* getTestData() {
-        var Child_1;
         {
-            let App = class App {
-                constructor() {
-                    this.container = void 0;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<div ref="container" id="cr">1</div><child ref="child" id="child"></child><div ref="container2" id="cr2">11</div>' })
-            ], App);
-            let Child = class Child {
-                constructor() {
-                    this.container = void 0;
-                }
-            };
-            Child = __decorate([
-                customElement({ name: 'child', template: '<div ref="container" id="cc">2</div><grand-child ref="grandChild" id="grandChild"></grand-child><div ref="container2" id="cc2">22</div>' })
-            ], Child);
-            let GrandChild = class GrandChild {
-                constructor() {
-                    this.container = void 0;
-                }
-            };
-            GrandChild = __decorate([
-                customElement({ name: 'grand-child', template: '<div ref="container" id="cgc">3</div><div ref="container2" id="cgc2">33</div>' })
-            ], GrandChild);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<div ref="container" id="cr">1</div><child ref="child" id="child"></child><div ref="container2" id="cr2">11</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.container = void 0;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: '<div ref="container" id="cc">2</div><grand-child ref="grandChild" id="grandChild"></grand-child><div ref="container2" id="cc2">22</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Child = _classThis = class {
+                    constructor() {
+                        this.container = void 0;
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let GrandChild = (() => {
+                let _classDecorators = [customElement({ name: 'grand-child', template: '<div ref="container" id="cgc">3</div><div ref="container2" id="cgc2">33</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var GrandChild = _classThis = class {
+                    constructor() {
+                        this.container = void 0;
+                    }
+                };
+                __setFunctionName(_classThis, "GrandChild");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    GrandChild = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return GrandChild = _classThis;
+            })();
             yield new TestData(
             // depending on TS config, explicitly uninitialized, and non-defined properties might or might not be same.
             'ref-binding with initialized, uninitialized, and non-defined properties', App, [Child, GrandChild], function (ctx) {
@@ -113,29 +177,55 @@ describe('3-runtime-html/integration.spec.ts', function () {
             });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.c1 = void 0;
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `
         <child component.ref="c1" id="c1"></child>
         <child component.ref="c2" id="c2"></child>
         <child component.ref="c3" id="c3"></child>`
-                })
-            ], App);
-            let Child = Child_1 = class Child {
-                constructor() {
-                    this.id = Child_1.id++;
-                }
-            };
-            Child.id = 1;
-            Child = Child_1 = __decorate([
-                customElement({ name: 'child', template: '' })
-            ], Child);
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.c1 = void 0;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: '' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Child = _classThis = class {
+                    constructor() {
+                        this.id = Child.id++;
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.id = 1;
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
             yield new TestData(
             // depending on TS config, explicitly uninitialized, and non-defined properties might or might not be same.
             'view-model.ref-binding with initialized, uninitialized, and non-defined properties', App, [Child], function (ctx) {
@@ -152,35 +242,78 @@ describe('3-runtime-html/integration.spec.ts', function () {
             });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.value = 1;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<child value.from-view="value"></child><div id="cr">${value}</div>' })
-            ], App);
-            let Child = class Child {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Number)
-            ], Child.prototype, "value", void 0);
-            Child = __decorate([
-                customElement({ name: 'child', template: '<grand-child value.from-view="value"></grand-child><div id="cc">${value}</div>' })
-            ], Child);
-            let GrandChild = class GrandChild {
-                constructor() {
-                    this.value = 3;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Number)
-            ], GrandChild.prototype, "value", void 0);
-            GrandChild = __decorate([
-                customElement({ name: 'grand-child', template: '<div id="cgc">${value}</div>' })
-            ], GrandChild);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<child value.from-view="value"></child><div id="cr">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = 1;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: '<grand-child value.from-view="value"></grand-child><div id="cc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var Child = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, void 0);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let GrandChild = (() => {
+                let _classDecorators = [customElement({ name: 'grand-child', template: '<div id="cgc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var GrandChild = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, 3);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "GrandChild");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    GrandChild = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return GrandChild = _classThis;
+            })();
             yield new TestData('from-view with change', App, [Child, GrandChild], async function (ctx) {
                 const app = ctx.app;
                 const host = ctx.host;
@@ -204,35 +337,78 @@ describe('3-runtime-html/integration.spec.ts', function () {
             });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.value = 1;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<child value.to-view="value"></child><div id="cr">${value}</div>' })
-            ], App);
-            let Child = class Child {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Number)
-            ], Child.prototype, "value", void 0);
-            Child = __decorate([
-                customElement({ name: 'child', template: '<grand-child value.to-view="value"></grand-child><div id="cc">${value}</div>' })
-            ], Child);
-            let GrandChild = class GrandChild {
-                constructor() {
-                    this.value = 3;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Number)
-            ], GrandChild.prototype, "value", void 0);
-            GrandChild = __decorate([
-                customElement({ name: 'grand-child', template: '<div id="cgc">${value}</div>' })
-            ], GrandChild);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<child value.to-view="value"></child><div id="cr">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = 1;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: '<grand-child value.to-view="value"></grand-child><div id="cc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var Child = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, void 0);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let GrandChild = (() => {
+                let _classDecorators = [customElement({ name: 'grand-child', template: '<div id="cgc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var GrandChild = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, 3);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "GrandChild");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    GrandChild = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return GrandChild = _classThis;
+            })();
             yield new TestData('to-view with change', App, [Child, GrandChild], async function (ctx) {
                 const app = ctx.app;
                 const host = ctx.host;
@@ -256,35 +432,78 @@ describe('3-runtime-html/integration.spec.ts', function () {
             });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.value = 1;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<child value.two-way="value"></child><div id="cr">${value}</div>' })
-            ], App);
-            let Child = class Child {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Number)
-            ], Child.prototype, "value", void 0);
-            Child = __decorate([
-                customElement({ name: 'child', template: '<grand-child value.two-way="value"></grand-child><div id="cc">${value}</div>' })
-            ], Child);
-            let GrandChild = class GrandChild {
-                constructor() {
-                    this.value = 3;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Number)
-            ], GrandChild.prototype, "value", void 0);
-            GrandChild = __decorate([
-                customElement({ name: 'grand-child', template: '<div id="cgc">${value}</div>' })
-            ], GrandChild);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<child value.two-way="value"></child><div id="cr">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = 1;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: '<grand-child value.two-way="value"></grand-child><div id="cc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var Child = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, void 0);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let GrandChild = (() => {
+                let _classDecorators = [customElement({ name: 'grand-child', template: '<div id="cgc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var GrandChild = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, 3);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "GrandChild");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    GrandChild = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return GrandChild = _classThis;
+            })();
             yield new TestData('two-way with change', App, [Child, GrandChild], async function (ctx) {
                 const app = ctx.app;
                 const host = ctx.host;
@@ -315,23 +534,52 @@ describe('3-runtime-html/integration.spec.ts', function () {
             });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.value = 1;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<child value.to-view="value"></child><div id="cr">${value}</div>' })
-            ], App);
-            let Child = class Child {
-            };
-            __decorate([
-                bindable({ mode: BindingMode.fromView }),
-                __metadata("design:type", Number)
-            ], Child.prototype, "value", void 0);
-            Child = __decorate([
-                customElement({ name: 'child', template: '<div id="cc">${value}</div>' })
-            ], Child);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<child value.to-view="value"></child><div id="cr">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = 1;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: '<div id="cc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var Child = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, void 0);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable({ mode: BindingMode.fromView })];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
             yield new TestData('to-view (root) -> from-view (child)', App, [Child], async function (ctx) {
                 const app = ctx.app;
                 const host = ctx.host;
@@ -354,23 +602,49 @@ describe('3-runtime-html/integration.spec.ts', function () {
             });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<child value.from-view="value"></child><div id="cr">${value}</div>' })
-            ], App);
-            let Child = class Child {
-                constructor() {
-                    this.value = 2;
-                }
-            };
-            __decorate([
-                bindable({ mode: BindingMode.toView }),
-                __metadata("design:type", Number)
-            ], Child.prototype, "value", void 0);
-            Child = __decorate([
-                customElement({ name: 'child', template: '<div id="cc">${value}</div>' })
-            ], Child);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<child value.from-view="value"></child><div id="cr">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: '<div id="cc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var Child = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, 2);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable({ mode: BindingMode.toView })];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
             yield new TestData('to-view (child) -> from-view (root)', App, [Child], async function (ctx) {
                 const app = ctx.app;
                 const host = ctx.host;
@@ -393,38 +667,78 @@ describe('3-runtime-html/integration.spec.ts', function () {
             });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.value = 1;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: '<child value.two-way="value"></child><div id="cr">${value}</div>' })
-            ], App);
-            let Child = class Child {
-                constructor() {
-                    this.condition = false;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Number)
-            ], Child.prototype, "value", void 0);
-            Child = __decorate([
-                customElement({ name: 'child', template: '<grand-child if.bind="condition" value.two-way="value"></grand-child><div id="cc">${value}</div>' })
-            ], Child);
-            let GrandChild = class GrandChild {
-                constructor() {
-                    this.value = 3;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Number)
-            ], GrandChild.prototype, "value", void 0);
-            GrandChild = __decorate([
-                customElement({ name: 'grand-child', template: '<div id="cgc">${value}</div>' })
-            ], GrandChild);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<child value.two-way="value"></child><div id="cr">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = 1;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: '<grand-child if.bind="condition" value.two-way="value"></grand-child><div id="cc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var Child = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, void 0);
+                        this.condition = (__runInitializers(this, _value_extraInitializers), false);
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let GrandChild = (() => {
+                let _classDecorators = [customElement({ name: 'grand-child', template: '<div id="cgc">${value}</div>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var GrandChild = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, 3);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "GrandChild");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    GrandChild = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return GrandChild = _classThis;
+            })();
             yield new TestData('property-binding with `if` + change', App, [Child, GrandChild], async function (ctx) {
                 const app = ctx.app;
                 const host = ctx.host;
@@ -505,14 +819,26 @@ describe('3-runtime-html/integration.spec.ts', function () {
             //   </template>`,
         ];
         for (let i = 0, ii = templates.length; i < ii; i++) {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: templates[i]
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: templates[i]
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             yield new TestData(`repeater + $parent - #${i + 1}`, App, [], function (ctx) {
                 const host = ctx.host;
                 assert.html.textContent(host, '0 1 2 1 2 3 2 3 4 1 2 3 2 3 4 3 4 5 2 3 4 3 4 5 4 5 6');

@@ -1,49 +1,76 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { callSyntax, delegateSyntax } from '@aurelia/compat-v1';
-import { DI, IServiceLocator, newInstanceForScope, newInstanceOf, Registration } from '@aurelia/kernel';
-import { ArrayObserver, IObserverLocator, Unparser, } from '@aurelia/runtime';
+import { DI, IServiceLocator, newInstanceForScope, newInstanceOf, Registration, resolve } from '@aurelia/kernel';
+import { Unparser } from '@aurelia/expression-parser';
+import { ArrayObserver, IObserverLocator, } from '@aurelia/runtime';
 import { bindable, bindingBehavior, customAttribute, valueConverter, CustomElement, customElement, IPlatform, INode, Aurelia, } from '@aurelia/runtime-html';
 import { assert, createFixture, createSpy, TestContext } from '@aurelia/testing';
 import { IValidationRules, PropertyRule, RangeRule, RequiredRule } from '@aurelia/validation';
-import { IValidationController, ValidationController, ValidationHtmlConfiguration, ValidationTrigger, BindingMediator, } from '@aurelia/validation-html';
+import { IValidationController, ValidationHtmlConfiguration, ValidationTrigger, BindingMediator, } from '@aurelia/validation-html';
 import { createSpecFunction, ToNumberValueConverter } from '../util.js';
 import { Organization, Person } from '../validation/_test-resources.js';
 describe('validation-html/validate-binding-behavior.spec.ts', function () {
     describe('validate-binding-behavior', function () {
-        var FooBar_1;
         const $atob = typeof atob === 'function' ? atob : (b64) => Buffer.from(b64, 'base64').toString();
         const $btoa = typeof btoa === 'function' ? btoa : (plainText) => Buffer.from(plainText).toString('base64');
         const IObserveCollection = DI.createInterface('IObserveCollection');
-        let App = class App {
-            constructor(controller, controller2, platform, validationRules, observerLocator, serviceLocator, observeCollection = false) {
-                this.controller = controller;
-                this.controller2 = controller2;
-                this.platform = platform;
-                this.validationRules = validationRules;
+        class App {
+            constructor(observerLocator = resolve(IObserverLocator), serviceLocator = resolve(IServiceLocator), observeCollection = resolve(IObserveCollection) ?? false) {
                 this.validatableProp = (void 0);
                 this.person = new Person((void 0), (void 0));
                 this.trigger = ValidationTrigger.change;
                 this.tempAgeRule = (void 0);
                 this.org = new Organization([], void 0);
-                this.controllerRegisterBindingSpy = createSpy(controller, 'registerBinding', true);
-                this.controllerUnregisterBindingSpy = createSpy(controller, 'unregisterBinding', true);
-                this.controllerValidateBindingSpy = createSpy(controller, 'validateBinding', true);
-                this.controllerValidateSpy = createSpy(controller, 'validate', true);
-                this.controller2RegisterBindingSpy = createSpy(controller2, 'registerBinding', true);
-                this.controller2UnregisterBindingSpy = createSpy(controller2, 'unregisterBinding', true);
-                this.controller2ValidateBindingSpy = createSpy(controller2, 'validateBinding', true);
-                this.controller2ValidateSpy = createSpy(controller2, 'validate', true);
+                this.controller = resolve(newInstanceForScope(IValidationController));
+                this.controller2 = resolve(newInstanceOf(IValidationController));
+                this.platform = resolve(IPlatform);
+                this.validationRules = resolve(IValidationRules);
+                this.controllerRegisterBindingSpy = createSpy(this.controller, 'registerBinding', true);
+                this.controllerUnregisterBindingSpy = createSpy(this.controller, 'unregisterBinding', true);
+                this.controllerValidateBindingSpy = createSpy(this.controller, 'validateBinding', true);
+                this.controllerValidateSpy = createSpy(this.controller, 'validate', true);
+                this.controller2RegisterBindingSpy = createSpy(this.controller2, 'registerBinding', true);
+                this.controller2UnregisterBindingSpy = createSpy(this.controller2, 'unregisterBinding', true);
+                this.controller2ValidateBindingSpy = createSpy(this.controller2, 'validateBinding', true);
+                this.controller2ValidateSpy = createSpy(this.controller2, 'validate', true);
+                const validationRules = this.validationRules;
                 const rules = validationRules
                     .on(this.person)
                     .ensure('name')
@@ -99,151 +126,231 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
                 this.controller2ValidateBindingSpy.calls.splice(0);
                 this.controller2ValidateSpy.calls.splice(0);
             }
-        };
-        App = __decorate([
-            __param(0, newInstanceForScope(IValidationController)),
-            __param(1, newInstanceOf(IValidationController)),
-            __param(2, IPlatform),
-            __param(3, IValidationRules),
-            __param(4, IObserverLocator),
-            __param(5, IServiceLocator),
-            __param(6, IObserveCollection),
-            __metadata("design:paramtypes", [ValidationController,
-                ValidationController, Object, Object, Object, Object, Object])
-        ], App);
-        let TextBox = class TextBox {
-        };
-        __decorate([
-            bindable,
-            __metadata("design:type", Object)
-        ], TextBox.prototype, "value", void 0);
-        TextBox = __decorate([
-            customElement({ name: 'text-box', template: `<input value.two-way="value"/>` })
-        ], TextBox);
-        let EmployeeList = class EmployeeList {
-            constructor() {
-                this.names = [
-                    'Brigida Brayboy',
-                    'Anya Dinapoli',
-                    'Warren Asberry',
-                    'Rudy Melone',
-                    'Alexis Kinnaird',
-                    'Lisa Goines',
-                    'Carson Boyce',
-                    'Carolann Rosales',
-                    'Fabiola Jacome',
-                    'Leoma Metro',
-                ];
-            }
-            createPerson() {
-                const age = Math.floor(Math.random() * this.names.length);
-                return new Person(this.names[age], age);
-            }
-            hireInPlace() {
-                this.employees.push(this.createPerson());
-            }
-            hireReplace() {
-                this.employees = [...this.employees, this.createPerson()];
-            }
-            fireInPlace() {
-                this.employees.pop();
-            }
-            fireReplace() {
-                const clone = this.employees.splice(0);
-                clone.pop();
-                this.employees = clone;
-            }
-        };
-        __decorate([
-            bindable,
-            __metadata("design:type", Array)
-        ], EmployeeList.prototype, "employees", void 0);
-        EmployeeList = __decorate([
-            customElement({
-                name: 'employee-list',
-                template: `
+        }
+        let TextBox = (() => {
+            let _classDecorators = [customElement({ name: 'text-box', template: `<input value.two-way="value"/>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _value_decorators;
+            let _value_initializers = [];
+            let _value_extraInitializers = [];
+            var TextBox = _classThis = class {
+                constructor() {
+                    this.value = __runInitializers(this, _value_initializers, void 0);
+                    __runInitializers(this, _value_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "TextBox");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _value_decorators = [bindable];
+                __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                TextBox = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return TextBox = _classThis;
+        })();
+        let EmployeeList = (() => {
+            let _classDecorators = [customElement({
+                    name: 'employee-list',
+                    template: `
       <button id="hire-replace" click.delegate="hireReplace()">hire</button>
       <button id="fire-replace" click.delegate="fireReplace()">fire</button>
       <button id="hire-in-place" click.delegate="hireInPlace()">hire</button>
       <button id="fire-in-place" click.delegate="fireInPlace()">fire</button>
       <span repeat.for="employee of employees" style="display: block">\${$index}. \${employee.name}</span>
       `
-            })
-        ], EmployeeList);
-        let FooBar = FooBar_1 = class FooBar {
-            constructor(node) {
-                this.node = node;
-            }
-            binding() {
-                for (const event of this.triggeringEvents) {
-                    this.node.addEventListener(event, this);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _employees_decorators;
+            let _employees_initializers = [];
+            let _employees_extraInitializers = [];
+            var EmployeeList = _classThis = class {
+                constructor() {
+                    this.employees = __runInitializers(this, _employees_initializers, void 0);
+                    this.names = (__runInitializers(this, _employees_extraInitializers), [
+                        'Brigida Brayboy',
+                        'Anya Dinapoli',
+                        'Warren Asberry',
+                        'Rudy Melone',
+                        'Alexis Kinnaird',
+                        'Lisa Goines',
+                        'Carson Boyce',
+                        'Carolann Rosales',
+                        'Fabiola Jacome',
+                        'Leoma Metro',
+                    ]);
                 }
-            }
-            handleEvent(_event) {
-                this.value = FooBar_1.staticText;
-            }
-        };
-        FooBar.staticText = 'from foo-bar ca';
-        __decorate([
-            bindable,
-            __metadata("design:type", Object)
-        ], FooBar.prototype, "value", void 0);
-        __decorate([
-            bindable,
-            __metadata("design:type", Array)
-        ], FooBar.prototype, "triggeringEvents", void 0);
-        FooBar = FooBar_1 = __decorate([
-            customAttribute({ name: 'foo-bar' }),
-            __param(0, INode),
-            __metadata("design:paramtypes", [Object])
-        ], FooBar);
-        let B64ToPlainTextValueConverter = class B64ToPlainTextValueConverter {
-            fromView(b64) { return $atob(b64); }
-        };
-        B64ToPlainTextValueConverter = __decorate([
-            valueConverter('b64ToPlainText')
-        ], B64ToPlainTextValueConverter);
-        let VanillaBindingBehavior = class VanillaBindingBehavior {
-            bind(_scope, _binding) {
-                return;
-            }
-            unbind(_scope, _binding) {
-                return;
-            }
-        };
-        VanillaBindingBehavior = __decorate([
-            bindingBehavior('vanilla')
-        ], VanillaBindingBehavior);
-        let Editor = class Editor {
-            constructor(validationRules) {
-                this.person = new Person(void 0, void 0);
-                validationRules
-                    .on(this.person)
-                    .ensure('name')
-                    .satisfies((name) => name === 'foo')
-                    .withMessage('Not foo');
-            }
-        };
-        Editor = __decorate([
-            customElement({ name: 'editor', template: `<au-slot name="content"></au-slot><div>static content</div>` }),
-            __param(0, IValidationRules),
-            __metadata("design:paramtypes", [Object])
-        ], Editor);
-        let Editor1 = class Editor1 {
-            constructor(validationRules) {
-                this.person = new Person(void 0, void 0);
-                validationRules
-                    .on(this.person)
-                    .ensure('name')
-                    .satisfies((name) => name === 'foo')
-                    .withMessage('Not foo');
-            }
-        };
-        Editor1 = __decorate([
-            customElement({ name: 'editor1', template: `<au-slot name="content"><input id="target" value.bind="person.name & validate"></au-slot>` }),
-            __param(0, IValidationRules),
-            __metadata("design:paramtypes", [Object])
-        ], Editor1);
+                createPerson() {
+                    const age = Math.floor(Math.random() * this.names.length);
+                    return new Person(this.names[age], age);
+                }
+                hireInPlace() {
+                    this.employees.push(this.createPerson());
+                }
+                hireReplace() {
+                    this.employees = [...this.employees, this.createPerson()];
+                }
+                fireInPlace() {
+                    this.employees.pop();
+                }
+                fireReplace() {
+                    const clone = this.employees.splice(0);
+                    clone.pop();
+                    this.employees = clone;
+                }
+            };
+            __setFunctionName(_classThis, "EmployeeList");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _employees_decorators = [bindable];
+                __esDecorate(null, null, _employees_decorators, { kind: "field", name: "employees", static: false, private: false, access: { has: obj => "employees" in obj, get: obj => obj.employees, set: (obj, value) => { obj.employees = value; } }, metadata: _metadata }, _employees_initializers, _employees_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                EmployeeList = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return EmployeeList = _classThis;
+        })();
+        let FooBar = (() => {
+            let _classDecorators = [customAttribute({ name: 'foo-bar' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _value_decorators;
+            let _value_initializers = [];
+            let _value_extraInitializers = [];
+            let _triggeringEvents_decorators;
+            let _triggeringEvents_initializers = [];
+            let _triggeringEvents_extraInitializers = [];
+            var FooBar = _classThis = class {
+                constructor() {
+                    this.value = __runInitializers(this, _value_initializers, void 0);
+                    this.triggeringEvents = (__runInitializers(this, _value_extraInitializers), __runInitializers(this, _triggeringEvents_initializers, void 0));
+                    this.node = (__runInitializers(this, _triggeringEvents_extraInitializers), resolve(INode));
+                }
+                binding() {
+                    for (const event of this.triggeringEvents) {
+                        this.node.addEventListener(event, this);
+                    }
+                }
+                handleEvent(_event) {
+                    this.value = FooBar.staticText;
+                }
+            };
+            __setFunctionName(_classThis, "FooBar");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _value_decorators = [bindable];
+                _triggeringEvents_decorators = [bindable];
+                __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                __esDecorate(null, null, _triggeringEvents_decorators, { kind: "field", name: "triggeringEvents", static: false, private: false, access: { has: obj => "triggeringEvents" in obj, get: obj => obj.triggeringEvents, set: (obj, value) => { obj.triggeringEvents = value; } }, metadata: _metadata }, _triggeringEvents_initializers, _triggeringEvents_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                FooBar = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            })();
+            _classThis.staticText = 'from foo-bar ca';
+            (() => {
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return FooBar = _classThis;
+        })();
+        let B64ToPlainTextValueConverter = (() => {
+            let _classDecorators = [valueConverter('b64ToPlainText')];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var B64ToPlainTextValueConverter = _classThis = class {
+                fromView(b64) { return $atob(b64); }
+            };
+            __setFunctionName(_classThis, "B64ToPlainTextValueConverter");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                B64ToPlainTextValueConverter = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return B64ToPlainTextValueConverter = _classThis;
+        })();
+        let VanillaBindingBehavior = (() => {
+            let _classDecorators = [bindingBehavior('vanilla')];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var VanillaBindingBehavior = _classThis = class {
+                bind(_scope, _binding) {
+                    return;
+                }
+                unbind(_scope, _binding) {
+                    return;
+                }
+            };
+            __setFunctionName(_classThis, "VanillaBindingBehavior");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                VanillaBindingBehavior = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return VanillaBindingBehavior = _classThis;
+        })();
+        let Editor = (() => {
+            let _classDecorators = [customElement({ name: 'editor', template: `<au-slot name="content"></au-slot><div>static content</div>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Editor = _classThis = class {
+                constructor(validationRules = resolve(IValidationRules)) {
+                    this.person = new Person(void 0, void 0);
+                    validationRules
+                        .on(this.person)
+                        .ensure('name')
+                        .satisfies((name) => name === 'foo')
+                        .withMessage('Not foo');
+                }
+            };
+            __setFunctionName(_classThis, "Editor");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Editor = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Editor = _classThis;
+        })();
+        let Editor1 = (() => {
+            let _classDecorators = [customElement({ name: 'editor1', template: `<au-slot name="content"><input id="target" value.bind="person.name & validate"></au-slot>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Editor1 = _classThis = class {
+                constructor(validationRules = resolve(IValidationRules)) {
+                    this.person = new Person(void 0, void 0);
+                    validationRules
+                        .on(this.person)
+                        .ensure('name')
+                        .satisfies((name) => name === 'foo')
+                        .withMessage('Not foo');
+                }
+            };
+            __setFunctionName(_classThis, "Editor1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Editor1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Editor1 = _classThis;
+        })();
         async function runTest(testFunction, { template, customDefaultTrigger, observeCollection }) {
             const ctx = TestContext.create();
             const container = ctx.container;
@@ -1061,36 +1168,45 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             });
         }
         it('can be used without any available registration for scoped controller', async function () {
-            let App1 = class App1 {
-                constructor(controller, validationRules) {
-                    this.controller = controller;
-                    this.validationRules = validationRules;
-                    this.person = new Person((void 0), (void 0));
-                    this.controllerRegisterBindingSpy = createSpy(controller, 'registerBinding', true);
-                    this.controllerUnregisterBindingSpy = createSpy(controller, 'unregisterBinding', true);
-                    this.controllerValidateBindingSpy = createSpy(controller, 'validateBinding', true);
-                    this.controllerValidateSpy = createSpy(controller, 'validate', true);
-                    validationRules
-                        .on(this.person)
-                        .ensure('name')
-                        .required();
-                }
-                unbinding() {
-                    this.validationRules.off();
-                }
-                clearControllerCalls() {
-                    this.controllerRegisterBindingSpy.calls.splice(0);
-                    this.controllerUnregisterBindingSpy.calls.splice(0);
-                    this.controllerValidateBindingSpy.calls.splice(0);
-                    this.controllerValidateSpy.calls.splice(0);
-                }
-            };
-            App1 = __decorate([
-                customElement({ name: 'app', template: '<input id="target" type="text" value.two-way="person.name & validate:undefined:controller">' }),
-                __param(0, newInstanceOf(IValidationController)),
-                __param(1, IValidationRules),
-                __metadata("design:paramtypes", [ValidationController, Object])
-            ], App1);
+            let App1 = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: '<input id="target" type="text" value.two-way="person.name & validate:undefined:controller">' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App1 = _classThis = class {
+                    constructor() {
+                        this.person = new Person((void 0), (void 0));
+                        this.controller = resolve(newInstanceOf(IValidationController));
+                        this.validationRules = resolve(IValidationRules);
+                        this.controllerRegisterBindingSpy = createSpy(this.controller, 'registerBinding', true);
+                        this.controllerUnregisterBindingSpy = createSpy(this.controller, 'unregisterBinding', true);
+                        this.controllerValidateBindingSpy = createSpy(this.controller, 'validateBinding', true);
+                        this.controllerValidateSpy = createSpy(this.controller, 'validate', true);
+                        this.validationRules
+                            .on(this.person)
+                            .ensure('name')
+                            .required();
+                    }
+                    unbinding() {
+                        this.validationRules.off();
+                    }
+                    clearControllerCalls() {
+                        this.controllerRegisterBindingSpy.calls.splice(0);
+                        this.controllerUnregisterBindingSpy.calls.splice(0);
+                        this.controllerValidateBindingSpy.calls.splice(0);
+                        this.controllerValidateSpy.calls.splice(0);
+                    }
+                };
+                __setFunctionName(_classThis, "App1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App1 = _classThis;
+            })();
             const ctx = TestContext.create();
             const container = ctx.container;
             const host = ctx.doc.createElement('app');
@@ -1116,12 +1232,12 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             au.dispose();
         });
         it('tagged rules works with binding behavior', async function () {
-            let App = class App {
-                constructor(controller, validationRules) {
-                    this.controller = controller;
-                    this.validationRules = validationRules;
+            class App {
+                constructor() {
                     this.person = new Person((void 0), (void 0));
-                    validationRules
+                    this.controller = resolve(newInstanceOf(IValidationController));
+                    this.validationRules = resolve(IValidationRules);
+                    this.validationRules
                         .on(this.person)
                         .ensure('name')
                         .required()
@@ -1133,12 +1249,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
                 unbinding() {
                     this.validationRules.off();
                 }
-            };
-            App = __decorate([
-                __param(0, newInstanceOf(IValidationController)),
-                __param(1, IValidationRules),
-                __metadata("design:paramtypes", [ValidationController, Object])
-            ], App);
+            }
             const { startPromise, stop, component } = createFixture('<input id="target-name" type="text" value.two-way="person.name & validate:undefined:controller"><input id="target-age" type="text" value.two-way="person.age & validate:undefined:controller">', App, [ValidationHtmlConfiguration]);
             await startPromise;
             const controller = component.controller;

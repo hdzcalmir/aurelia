@@ -916,14 +916,14 @@ const Route = {
      * Returns `true` if the specified type has any static route configuration (either via static properties or a &#64;route decorator)
      */
     isConfigured(Type) {
-        return metadata.Metadata.hasOwn(Route.name, Type);
+        return metadata.Metadata.has(Route.name, Type);
     },
     /**
      * Apply the specified configuration to the specified type, overwriting any existing configuration.
      */
     configure(configOrPath, Type) {
         const config = RouteConfig._create(configOrPath, Type);
-        metadata.Metadata.define(Route.name, config, Type);
+        metadata.Metadata.define(config, Type, Route.name);
         return Type;
     },
     /**
@@ -935,18 +935,21 @@ const Route = {
             // However there might still be static properties, and this API provides a unified way of accessing those.
             Route.configure({}, Type);
         }
-        return metadata.Metadata.getOwn(Route.name, Type);
+        return metadata.Metadata.get(Route.name, Type);
     },
 };
 function route(configOrPath) {
-    return function (target) {
-        return Route.configure(configOrPath, target);
+    return function (target, context) {
+        context.addInitializer(function () {
+            Route.configure(configOrPath, this);
+        });
+        return target;
     };
 }
 /** @internal */
 function resolveRouteConfiguration(routeable, isChild, parent, routeNode, context) {
     if (isPartialRedirectRouteConfig(routeable))
-        return RouteConfig._create(routeable, null /* , false */);
+        return RouteConfig._create(routeable, null);
     const [instruction, ceDef] = resolveCustomElementDefinition(routeable, context);
     return kernel.onResolve(ceDef, $ceDef => {
         const type = $ceDef.Type;
@@ -4702,31 +4705,7 @@ class NavigationRoute {
     }
 }
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-exports.ViewportCustomElement = class ViewportCustomElement {
+class ViewportCustomElement {
     constructor() {
         this.name = defaultViewportName;
         this.usedBy = '';
@@ -4786,22 +4765,11 @@ exports.ViewportCustomElement = class ViewportCustomElement {
         }
         return `VP(ctx:'${this._ctx._friendlyPath}',${propStrings.join(',')})`;
     }
-};
-__decorate([
-    runtimeHtml.bindable
-], exports.ViewportCustomElement.prototype, "name", void 0);
-__decorate([
-    runtimeHtml.bindable
-], exports.ViewportCustomElement.prototype, "usedBy", void 0);
-__decorate([
-    runtimeHtml.bindable
-], exports.ViewportCustomElement.prototype, "default", void 0);
-__decorate([
-    runtimeHtml.bindable
-], exports.ViewportCustomElement.prototype, "fallback", void 0);
-exports.ViewportCustomElement = __decorate([
-    runtimeHtml.customElement({ name: 'au-viewport' })
-], exports.ViewportCustomElement);
+}
+runtimeHtml.CustomElement.define({
+    name: 'au-viewport',
+    bindables: ['name', 'usedBy', 'default', 'fallback'],
+}, ViewportCustomElement);
 const props = [
     'name',
     'usedBy',
@@ -4809,7 +4777,7 @@ const props = [
     'fallback',
 ];
 
-exports.LoadCustomAttribute = class LoadCustomAttribute {
+class LoadCustomAttribute {
     constructor() {
         /** @internal */ this._el = kernel.resolve(runtimeHtml.INode);
         /** @internal */ this._router = kernel.resolve(IRouter);
@@ -4903,25 +4871,17 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
             }
         }
     }
-};
-__decorate([
-    runtimeHtml.bindable({ mode: bmToView, primary: true, callback: 'valueChanged' })
-], exports.LoadCustomAttribute.prototype, "route", void 0);
-__decorate([
-    runtimeHtml.bindable({ mode: bmToView, callback: 'valueChanged' })
-], exports.LoadCustomAttribute.prototype, "params", void 0);
-__decorate([
-    runtimeHtml.bindable({ mode: bmToView })
-], exports.LoadCustomAttribute.prototype, "attribute", void 0);
-__decorate([
-    runtimeHtml.bindable({ mode: bmFromView })
-], exports.LoadCustomAttribute.prototype, "active", void 0);
-__decorate([
-    runtimeHtml.bindable({ mode: bmToView, callback: 'valueChanged' })
-], exports.LoadCustomAttribute.prototype, "context", void 0);
-exports.LoadCustomAttribute = __decorate([
-    runtimeHtml.customAttribute('load')
-], exports.LoadCustomAttribute);
+}
+runtimeHtml.CustomAttribute.define({
+    name: 'load',
+    bindables: {
+        route: { mode: bmToView, primary: true, callback: 'valueChanged' },
+        params: { mode: bmToView, callback: 'valueChanged' },
+        attribute: { mode: bmToView },
+        active: { mode: bmFromView },
+        context: { mode: bmToView, callback: 'valueChanged' }
+    }
+}, LoadCustomAttribute);
 
 /*
  * Note: Intentionally, there is no bindable `context` here.
@@ -4968,7 +4928,7 @@ class HrefCustomAttribute {
     binding() {
         if (!this._isInitialized) {
             this._isInitialized = true;
-            this._isEnabled = this._isEnabled && runtimeHtml.getRef(this._el, runtimeHtml.CustomAttribute.getDefinition(exports.LoadCustomAttribute).key) === null;
+            this._isEnabled = this._isEnabled && runtimeHtml.getRef(this._el, runtimeHtml.CustomAttribute.getDefinition(LoadCustomAttribute).key) === null;
         }
         this.valueChanged(this.value);
         this._el.addEventListener('click', this);
@@ -5029,8 +4989,8 @@ const RouterRegistration = IRouter;
 const DefaultComponents = [
     RouterRegistration,
 ];
-const ViewportCustomElementRegistration = exports.ViewportCustomElement;
-const LoadCustomAttributeRegistration = exports.LoadCustomAttribute;
+const ViewportCustomElementRegistration = ViewportCustomElement;
+const LoadCustomAttributeRegistration = LoadCustomAttribute;
 const HrefCustomAttributeRegistration = HrefCustomAttribute;
 /**
  * Default router resources:
@@ -5038,8 +4998,8 @@ const HrefCustomAttributeRegistration = HrefCustomAttribute;
  * - Custom Attributes: `load`, `href`
  */
 const DefaultResources = [
-    exports.ViewportCustomElement,
-    exports.LoadCustomAttribute,
+    ViewportCustomElement,
+    LoadCustomAttribute,
     HrefCustomAttribute,
 ];
 function configure(container, options) {
@@ -5150,6 +5110,7 @@ exports.IRouter = IRouter;
 exports.IRouterEvents = IRouterEvents;
 exports.IRouterOptions = IRouterOptions;
 exports.IStateManager = IStateManager;
+exports.LoadCustomAttribute = LoadCustomAttribute;
 exports.LoadCustomAttributeRegistration = LoadCustomAttributeRegistration;
 exports.LocationChangeEvent = LocationChangeEvent;
 exports.NavigationCancelEvent = NavigationCancelEvent;
@@ -5174,6 +5135,7 @@ exports.SegmentExpression = SegmentExpression;
 exports.SegmentGroupExpression = SegmentGroupExpression;
 exports.Transition = Transition;
 exports.ViewportAgent = ViewportAgent;
+exports.ViewportCustomElement = ViewportCustomElement;
 exports.ViewportCustomElementRegistration = ViewportCustomElementRegistration;
 exports.ViewportExpression = ViewportExpression;
 exports.fragmentUrlParser = fragmentUrlParser;

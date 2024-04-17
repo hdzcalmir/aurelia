@@ -1,16 +1,44 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { TestContext, assert, createFixture } from '@aurelia/testing';
-import { BindingMode, customElement, bindable, Aurelia } from '@aurelia/runtime-html';
+import { BindingMode, customElement, bindable, Aurelia, ISignaler } from '@aurelia/runtime-html';
 import { delegateSyntax } from '@aurelia/compat-v1';
-import { ISignaler } from '@aurelia/runtime';
 async function wait(ms) {
     await new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -73,17 +101,29 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
         //   au.dispose();
         // });
         it('works without parameters', async function () {
-            let App = class App {
-                constructor() {
-                    this.value = '0';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `<input ref="receiver" value.bind="value & debounce">`,
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `<input ref="receiver" value.bind="value & debounce">`,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = '0';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             const { au, host, ctx } = $createFixture();
             const component = new App();
             au.app({ component, host });
@@ -99,17 +139,29 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
             au.dispose();
         });
         it('works with toView bindings to [elements]', async function () {
-            let App = class App {
-                constructor() {
-                    this.value = '0';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `<input ref="receiver" value.to-view="value & debounce:25">`,
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `<input ref="receiver" value.to-view="value & debounce:25">`,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = '0';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             const { au, host, ctx } = $createFixture();
             const component = new App();
             au.app({ component, host });
@@ -137,17 +189,29 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
             au.dispose();
         });
         it('works with special toView bindings ([selected.class="...."]) to elements', async function () {
-            let App = class App {
-                constructor() {
-                    this.value = 0;
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `<div ref="receiver" selected.class="value & debounce:25">`,
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `<div ref="receiver" selected.class="value & debounce:25">`,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = 0;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             const { au, host, ctx } = $createFixture();
             const component = new App();
             au.app({ component, host });
@@ -182,33 +246,59 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
             au.dispose();
         });
         it('works with toView bindings to other [components]', async function () {
-            let Receiver = class Receiver {
-                constructor() {
-                    this.value = '0';
-                }
-            };
-            __decorate([
-                bindable({ mode: BindingMode.toView }),
-                __metadata("design:type", String)
-            ], Receiver.prototype, "value", void 0);
-            Receiver = __decorate([
-                customElement({
-                    name: 'au-receiver',
-                    template: null,
-                })
-            ], Receiver);
-            let App = class App {
-                constructor() {
-                    this.value = '0';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `<au-receiver component.ref="receiver" value.bind="value & debounce:25"></au-receiver>`,
-                    dependencies: [Receiver],
-                })
-            ], App);
+            let Receiver = (() => {
+                let _classDecorators = [customElement({
+                        name: 'au-receiver',
+                        template: null,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var Receiver = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, '0');
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "Receiver");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable({ mode: BindingMode.toView })];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Receiver = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Receiver = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `<au-receiver component.ref="receiver" value.bind="value & debounce:25"></au-receiver>`,
+                        dependencies: [Receiver],
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = '0';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             const { au, host, ctx } = $createFixture();
             const component = new App();
             au.app({ component, host });
@@ -232,33 +322,59 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
             assert.strictEqual(receiver.value, '3');
         });
         it('works with twoWay bindings to other components', async function () {
-            let Receiver = class Receiver {
-                constructor() {
-                    this.value = '0';
-                }
-            };
-            __decorate([
-                bindable({ mode: BindingMode.twoWay }),
-                __metadata("design:type", String)
-            ], Receiver.prototype, "value", void 0);
-            Receiver = __decorate([
-                customElement({
-                    name: 'au-receiver',
-                    template: null,
-                })
-            ], Receiver);
-            let App = class App {
-                constructor() {
-                    this.value = '0';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `<au-receiver component.ref="receiver" value.bind="value & debounce:25"></au-receiver>`,
-                    dependencies: [Receiver],
-                })
-            ], App);
+            let Receiver = (() => {
+                let _classDecorators = [customElement({
+                        name: 'au-receiver',
+                        template: null,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var Receiver = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, '0');
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "Receiver");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable({ mode: BindingMode.twoWay })];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Receiver = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Receiver = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `<au-receiver component.ref="receiver" value.bind="value & debounce:25"></au-receiver>`,
+                        dependencies: [Receiver],
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = '0';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             const { au, host } = $createFixture();
             const component = new App();
             au.app({ component, host });
@@ -290,20 +406,32 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
         });
         for (const command of ['trigger', 'capture', 'delegate']) {
             it(`works with ${command} bindings`, async function () {
-                let App = class App {
-                    constructor() {
-                        this.events = [];
-                    }
-                    handleClick($event) {
-                        this.events.push($event);
-                    }
-                };
-                App = __decorate([
-                    customElement({
-                        name: 'app',
-                        template: `<div ref="receiver" click.${command}="handleClick($event) & debounce:25"></div>`,
-                    })
-                ], App);
+                let App = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'app',
+                            template: `<div ref="receiver" click.${command}="handleClick($event) & debounce:25"></div>`,
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var App = _classThis = class {
+                        constructor() {
+                            this.events = [];
+                        }
+                        handleClick($event) {
+                            this.events.push($event);
+                        }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 const { au, host, ctx } = $createFixture();
                 const component = new App();
                 ctx.container.register(delegateSyntax);
@@ -411,17 +539,29 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
         // - throttle source -> target in 1 way
         // ============================================
         it('works with [oneWay] binding to elements', async function () {
-            let App = class App {
-                constructor() {
-                    this.value = '0';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `<input ref="receiver" value.to-view="value & throttle:25">`,
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `<input ref="receiver" value.to-view="value & throttle:25">`,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.value = '0';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             const { component, flush } = createFixture('<input ref="receiver" value.to-view="value & throttle:25">', App);
             const receiver = component.receiver;
             component.value = '1';
@@ -444,21 +584,35 @@ describe('3-runtime-html/binding-commands.throttle-debounce.spec.ts', function (
             assert.strictEqual(receiver.value, '3', 'target value pre #3 + wait(10) (total wait 30 > 25)');
         });
         it('works with [twoWay] bindings to other components', async function () {
-            let Receiver = class Receiver {
-                constructor() {
-                    this.value = '0';
-                }
-            };
-            __decorate([
-                bindable({ mode: BindingMode.twoWay }),
-                __metadata("design:type", String)
-            ], Receiver.prototype, "value", void 0);
-            Receiver = __decorate([
-                customElement({
-                    name: 'au-receiver',
-                    template: null,
-                })
-            ], Receiver);
+            let Receiver = (() => {
+                let _classDecorators = [customElement({
+                        name: 'au-receiver',
+                        template: null,
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var Receiver = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, '0');
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "Receiver");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable({ mode: BindingMode.twoWay })];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Receiver = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Receiver = _classThis;
+            })();
             class App {
                 constructor() {
                     this.value = '0';

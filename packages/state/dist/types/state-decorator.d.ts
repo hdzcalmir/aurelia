@@ -9,5 +9,5 @@
  * }
  * ```
  */
-export declare function fromState<T, K = unknown>(getValue: (state: T) => K): PropertyDecorator;
+export declare function fromState<T, K = unknown>(getValue: (state: T) => K): ((target: unknown, context: ClassFieldDecoratorContext<unknown, K> | ClassSetterDecoratorContext<unknown, K>) => void);
 //# sourceMappingURL=state-decorator.d.ts.map

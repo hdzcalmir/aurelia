@@ -1,15 +1,3 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
 import { all, DI, resolve, newInstanceOf, Registration } from '@aurelia/kernel';
 import { assert } from '@aurelia/testing';
 describe('1-kernel/di.getAll.spec.ts', function () {
@@ -24,15 +12,11 @@ describe('1-kernel/di.getAll.spec.ts', function () {
                 for (const regInParent of [true, false]) {
                     // eslint-enable
                     it(`@all(_, ${searchAncestors}) + [child ${regInChild}] + [parent ${regInParent}]`, function () {
-                        let Foo = class Foo {
-                            constructor(test) {
-                                this.test = test;
+                        class Foo {
+                            constructor() {
+                                this.test = resolve(all('test', searchAncestors));
                             }
-                        };
-                        Foo = __decorate([
-                            __param(0, all('test', searchAncestors)),
-                            __metadata("design:paramtypes", [Array])
-                        ], Foo);
+                        }
                         const child = container.createChild();
                         if (regInParent) {
                             container.register(Registration.instance('test', 'test1'));
@@ -56,18 +40,14 @@ describe('1-kernel/di.getAll.spec.ts', function () {
                 for (const regInParent of [true, false]) {
                     // eslint-enable
                     it(`@all(IAttrPattern, ${searchAncestors}) + [child ${regInChild}] + [parent ${regInParent}]`, function () {
-                        let Foo = class Foo {
-                            constructor(attrPatterns) {
-                                this.attrPatterns = attrPatterns;
+                        class Foo {
+                            constructor() {
+                                this.attrPatterns = resolve(all(IAttrPattern, searchAncestors));
                             }
                             patterns() {
                                 return this.attrPatterns.map(ap => ap.id);
                             }
-                        };
-                        Foo = __decorate([
-                            __param(0, all(IAttrPattern, searchAncestors)),
-                            __metadata("design:paramtypes", [Array])
-                        ], Foo);
+                        }
                         const child = container.createChild();
                         if (regInParent) {
                             Array

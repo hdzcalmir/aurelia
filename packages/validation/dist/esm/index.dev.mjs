@@ -1,50 +1,30 @@
-import { DI, Protocol, toArray, IServiceLocator, ILogger, Registration, noop } from '@aurelia/kernel';
+import { DI, Protocol, toArray, resolve, IServiceLocator, ILogger, Registration, noop } from '@aurelia/kernel';
+import * as AST from '@aurelia/expression-parser';
+import { IExpressionParser, PrimitiveLiteralExpression } from '@aurelia/expression-parser';
+import { Scope } from '@aurelia/runtime';
+import { mixinAstEvaluator, astEvaluate } from '@aurelia/runtime-html';
 import { Metadata } from '@aurelia/metadata';
-import * as AST from '@aurelia/runtime';
-import { Scope, astEvaluate, PrimitiveLiteralExpression, IExpressionParser } from '@aurelia/runtime';
-import { mixinAstEvaluator } from '@aurelia/runtime-html';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const IValidationExpressionHydrator = /*@__PURE__*/ DI.createInterface('IValidationExpressionHydrator');
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
+/** @internal */ const getMetadata = Metadata.get;
+/** @internal */ const defineMetadata = Metadata.define;
+/** @internal */ const deleteMetadata = Metadata.delete;
+const { annotation } = Protocol;
+/** @internal */ const getAnnotationKeyFor = annotation.keyFor;
 
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-}
-
+// import { Metadata } from '@aurelia/metadata';
+// import { Constructable, Protocol, Class, DI, toArray } from '@aurelia/kernel';
 const IValidationMessageProvider = /*@__PURE__*/ DI.createInterface('IValidationMessageProvider');
 const ValidationRuleAliasMessage = Object.freeze({
-    aliasKey: Protocol.annotation.keyFor('validation-rule-alias-message'),
-    define(target, definition) {
-        ValidationRuleAliasMessage.setDefaultMessage(target, definition);
-        return target;
+    aliasKey: getAnnotationKeyFor('validation-rule-alias-message'),
+    define(target, definition, append) {
+        this.setDefaultMessage(target, definition, append);
     },
-    setDefaultMessage(rule, { aliases }, append = true) {
+    setDefaultMessage(rule, { aliases }, append) {
         // conditionally merge
-        const defaultMessages = append ? Metadata.getOwn(this.aliasKey, rule.prototype) : void 0;
+        const defaultMessages = append ? getMetadata(this.aliasKey, rule) : void 0;
         if (defaultMessages !== void 0) {
             // TODO: have polyfill for `Object.fromEntries` as IE does not yet support it
             const allMessages = {
@@ -53,21 +33,24 @@ const ValidationRuleAliasMessage = Object.freeze({
             };
             aliases = toArray(Object.entries(allMessages)).map(([name, defaultMessage]) => ({ name, defaultMessage }));
         }
-        Metadata.define(ValidationRuleAliasMessage.aliasKey, aliases, rule instanceof Function ? rule.prototype : rule);
+        defineMetadata(aliases, rule instanceof Function ? rule : rule.constructor, this.aliasKey);
     },
     getDefaultMessages(rule) {
-        return Metadata.get(this.aliasKey, rule instanceof Function ? rule.prototype : rule);
+        return getMetadata(this.aliasKey, rule instanceof Function ? rule : rule.constructor);
     }
 });
 function validationRule(definition) {
-    return function (target) {
-        return ValidationRuleAliasMessage.define(target, definition);
+    return function (target, context) {
+        context.addInitializer(function () {
+            ValidationRuleAliasMessage.define(this, definition, false);
+        });
+        return target;
     };
 }
 /**
  * Abstract validation rule.
  */
-let BaseValidationRule = class BaseValidationRule {
+class BaseValidationRule {
     constructor(messageKey = (void 0)) {
         this.messageKey = messageKey;
         this.tag = (void 0);
@@ -79,18 +62,15 @@ let BaseValidationRule = class BaseValidationRule {
     accept(_visitor) {
         throw new Error('No base implementation of accept. Did you forget to implement the accept method?'); // TODO: reporter
     }
-};
+}
 BaseValidationRule.$TYPE = '';
-BaseValidationRule = __decorate([
-    validationRule({ aliases: [{ name: (void 0), defaultMessage: `\${$displayName} is invalid.` }] })
-], BaseValidationRule);
 /**
  * Passes the validation if the value is not `null`, and not `undefined`.
  * In case of string, it must not be empty.
  *
  * @see PropertyRule#required
  */
-let RequiredRule = class RequiredRule extends BaseValidationRule {
+class RequiredRule extends BaseValidationRule {
     constructor() { super('required'); }
     execute(value) {
         return value !== null
@@ -100,11 +80,8 @@ let RequiredRule = class RequiredRule extends BaseValidationRule {
     accept(visitor) {
         return visitor.visitRequiredRule(this);
     }
-};
+}
 RequiredRule.$TYPE = 'RequiredRule';
-RequiredRule = __decorate([
-    validationRule({ aliases: [{ name: 'required', defaultMessage: `\${$displayName} is required.` }] })
-], RequiredRule);
 /**
  * Passes the validation if the non-`null`, non-`undefined`, and non-empty string value matches the given pattern described by a regular expression.
  * There are 2 aliases: 'matches' (any random regex), and 'email' (with email regex).
@@ -112,7 +89,7 @@ RequiredRule = __decorate([
  * @see PropertyRule#matches
  * @see PropertyRule#email
  */
-let RegexRule = class RegexRule extends BaseValidationRule {
+class RegexRule extends BaseValidationRule {
     constructor(pattern, messageKey = 'matches') {
         super(messageKey);
         this.pattern = pattern;
@@ -126,16 +103,8 @@ let RegexRule = class RegexRule extends BaseValidationRule {
     accept(visitor) {
         return visitor.visitRegexRule(this);
     }
-};
+}
 RegexRule.$TYPE = 'RegexRule';
-RegexRule = __decorate([
-    validationRule({
-        aliases: [
-            { name: 'matches', defaultMessage: `\${$displayName} is not correctly formatted.` },
-            { name: 'email', defaultMessage: `\${$displayName} is not a valid email.` },
-        ]
-    })
-], RegexRule);
 /**
  * Passes the validation if the non-`null`, non-`undefined`, and non-empty string value matches the given length constraint.
  * There are 2 aliases: 'minLength', and 'maxLength'.
@@ -143,7 +112,7 @@ RegexRule = __decorate([
  * @see PropertyRule#minLength
  * @see PropertyRule#maxLength
  */
-let LengthRule = class LengthRule extends BaseValidationRule {
+class LengthRule extends BaseValidationRule {
     constructor(length, isMax) {
         super(isMax ? 'maxLength' : 'minLength');
         this.length = length;
@@ -158,16 +127,8 @@ let LengthRule = class LengthRule extends BaseValidationRule {
     accept(visitor) {
         return visitor.visitLengthRule(this);
     }
-};
+}
 LengthRule.$TYPE = 'LengthRule';
-LengthRule = __decorate([
-    validationRule({
-        aliases: [
-            { name: 'minLength', defaultMessage: `\${$displayName} must be at least \${$rule.length} character\${$rule.length === 1 ? '' : 's'}.` },
-            { name: 'maxLength', defaultMessage: `\${$displayName} cannot be longer than \${$rule.length} character\${$rule.length === 1 ? '' : 's'}.` },
-        ]
-    })
-], LengthRule);
 /**
  * Passes the validation if the non-`null`, and non-`undefined` array value matches the given count constraint.
  * There are 2 aliases: 'minItems', and 'maxItems'.
@@ -175,7 +136,7 @@ LengthRule = __decorate([
  * @see PropertyRule#minItems
  * @see PropertyRule#maxItems
  */
-let SizeRule = class SizeRule extends BaseValidationRule {
+class SizeRule extends BaseValidationRule {
     constructor(count, isMax) {
         super(isMax ? 'maxItems' : 'minItems');
         this.count = count;
@@ -189,16 +150,8 @@ let SizeRule = class SizeRule extends BaseValidationRule {
     accept(visitor) {
         return visitor.visitSizeRule(this);
     }
-};
+}
 SizeRule.$TYPE = 'SizeRule';
-SizeRule = __decorate([
-    validationRule({
-        aliases: [
-            { name: 'minItems', defaultMessage: `\${$displayName} must contain at least \${$rule.count} item\${$rule.count === 1 ? '' : 's'}.` },
-            { name: 'maxItems', defaultMessage: `\${$displayName} cannot contain more than \${$rule.count} item\${$rule.count === 1 ? '' : 's'}.` },
-        ]
-    })
-], SizeRule);
 /**
  * Passes the validation if the non-`null`, and non-`undefined` numeric value matches the given interval constraint.
  * There are 2 aliases: 'min' (`[min,]`), 'max' (`[, max]`), range (`[min, max]`), and 'between' (`(min, max)`).
@@ -208,7 +161,7 @@ SizeRule = __decorate([
  * @see PropertyRule#range
  * @see PropertyRule#between
  */
-let RangeRule = class RangeRule extends BaseValidationRule {
+class RangeRule extends BaseValidationRule {
     constructor(isInclusive, { min, max }) {
         super(min !== void 0 && max !== void 0
             ? (isInclusive ? 'range' : 'between')
@@ -229,24 +182,14 @@ let RangeRule = class RangeRule extends BaseValidationRule {
     accept(visitor) {
         return visitor.visitRangeRule(this);
     }
-};
+}
 RangeRule.$TYPE = 'RangeRule';
-RangeRule = __decorate([
-    validationRule({
-        aliases: [
-            { name: 'min', defaultMessage: `\${$displayName} must be at least \${$rule.min}.` },
-            { name: 'max', defaultMessage: `\${$displayName} must be at most \${$rule.max}.` },
-            { name: 'range', defaultMessage: `\${$displayName} must be between or equal to \${$rule.min} and \${$rule.max}.` },
-            { name: 'between', defaultMessage: `\${$displayName} must be between but not equal to \${$rule.min} and \${$rule.max}.` },
-        ]
-    })
-], RangeRule);
 /**
  * Passes the validation if the the non-`null`, non-`undefined`, non-empty value matches given expected value.
  *
  * @see PropertyRule#equals
  */
-let EqualsRule = class EqualsRule extends BaseValidationRule {
+class EqualsRule extends BaseValidationRule {
     constructor(expectedValue) {
         super('equals');
         this.expectedValue = expectedValue;
@@ -260,17 +203,52 @@ let EqualsRule = class EqualsRule extends BaseValidationRule {
     accept(visitor) {
         return visitor.visitEqualsRule(this);
     }
-};
+}
 EqualsRule.$TYPE = 'EqualsRule';
-EqualsRule = __decorate([
-    validationRule({
-        aliases: [
-            { name: 'equals', defaultMessage: `\${$displayName} must be \${$rule.expectedValue}.` },
-        ]
-    })
-], EqualsRule);
+// #region definitions
+ValidationRuleAliasMessage.define(EqualsRule, {
+    aliases: [
+        { name: 'equals', defaultMessage: `\${$displayName} must be \${$rule.expectedValue}.` },
+    ]
+}, false);
+ValidationRuleAliasMessage.define(RangeRule, {
+    aliases: [
+        { name: 'min', defaultMessage: `\${$displayName} must be at least \${$rule.min}.` },
+        { name: 'max', defaultMessage: `\${$displayName} must be at most \${$rule.max}.` },
+        { name: 'range', defaultMessage: `\${$displayName} must be between or equal to \${$rule.min} and \${$rule.max}.` },
+        { name: 'between', defaultMessage: `\${$displayName} must be between but not equal to \${$rule.min} and \${$rule.max}.` },
+    ]
+}, false);
+ValidationRuleAliasMessage.define(SizeRule, {
+    aliases: [
+        { name: 'minItems', defaultMessage: `\${$displayName} must contain at least \${$rule.count} item\${$rule.count === 1 ? '' : 's'}.` },
+        { name: 'maxItems', defaultMessage: `\${$displayName} cannot contain more than \${$rule.count} item\${$rule.count === 1 ? '' : 's'}.` },
+    ]
+}, false);
+ValidationRuleAliasMessage.define(LengthRule, {
+    aliases: [
+        { name: 'minLength', defaultMessage: `\${$displayName} must be at least \${$rule.length} character\${$rule.length === 1 ? '' : 's'}.` },
+        { name: 'maxLength', defaultMessage: `\${$displayName} cannot be longer than \${$rule.length} character\${$rule.length === 1 ? '' : 's'}.` },
+    ]
+}, false);
+ValidationRuleAliasMessage.define(RegexRule, {
+    aliases: [
+        { name: 'matches', defaultMessage: `\${$displayName} is not correctly formatted.` },
+        { name: 'email', defaultMessage: `\${$displayName} is not a valid email.` },
+    ]
+}, false);
+ValidationRuleAliasMessage.define(RequiredRule, {
+    aliases: [
+        { name: 'required', defaultMessage: `\${$displayName} is required.` },
+    ]
+}, false);
+ValidationRuleAliasMessage.define(BaseValidationRule, {
+    aliases: [
+        { name: (void 0), defaultMessage: `\${$displayName} is invalid.` }
+    ]
+}, false);
+// #endregion
 
-var ValidationMessageProvider_1;
 /* @internal */
 const ICustomMessages = /*@__PURE__*/ DI.createInterface('ICustomMessages');
 class RuleProperty {
@@ -285,30 +263,32 @@ class RuleProperty {
 }
 RuleProperty.$TYPE = 'RuleProperty';
 const validationRulesRegistrar = Object.freeze({
+    allRulesAnnotations: getAnnotationKeyFor('validation-rules-annotations'),
     name: 'validation-rules',
     defaultRuleSetName: '__default',
     set(target, rules, tag) {
         const key = `${validationRulesRegistrar.name}:${tag ?? validationRulesRegistrar.defaultRuleSetName}`;
-        Metadata.define(Protocol.annotation.keyFor(key), rules, target);
-        const keys = Metadata.getOwn(Protocol.annotation.name, target);
+        defineMetadata(rules, target, getAnnotationKeyFor(key));
+        const keys = getMetadata(this.allRulesAnnotations, target);
         if (keys === void 0) {
-            Metadata.define(Protocol.annotation.name, [key], target);
+            defineMetadata([key], target, this.allRulesAnnotations);
         }
         else {
             keys.push(key);
         }
     },
     get(target, tag) {
-        const key = Protocol.annotation.keyFor(validationRulesRegistrar.name, tag ?? validationRulesRegistrar.defaultRuleSetName);
-        return Metadata.get(key, target) ?? Metadata.getOwn(key, target.constructor);
+        const key = getAnnotationKeyFor(validationRulesRegistrar.name, tag ?? validationRulesRegistrar.defaultRuleSetName);
+        return getMetadata(key, target) ?? getMetadata(key, target.constructor);
     },
     unset(target, tag) {
-        const keys = Metadata.getOwn(Protocol.annotation.name, target);
+        // const keys: string | string[] = Metadata.getOwn(Protocol.annotation.name, target);
+        const keys = getMetadata(this.allRulesAnnotations, target);
         if (!Array.isArray(keys))
             return;
         for (const key of keys.slice(0)) {
             if (key.startsWith(validationRulesRegistrar.name) && (tag === void 0 || key.endsWith(tag))) {
-                Metadata.delete(Protocol.annotation.keyFor(key), target);
+                deleteMetadata(getAnnotationKeyFor(key), target);
                 const index = keys.indexOf(key);
                 if (index > -1) {
                     keys.splice(index, 1);
@@ -317,7 +297,7 @@ const validationRulesRegistrar = Object.freeze({
         }
     },
     isValidationRulesSet(target) {
-        const keys = Metadata.getOwn(Protocol.annotation.name, target);
+        const keys = getMetadata(this.allRulesAnnotations, target);
         return keys !== void 0 && keys.some((key) => key.startsWith(validationRulesRegistrar.name));
     }
 });
@@ -592,14 +572,14 @@ class ModelBasedRule {
     }
 }
 const IValidationRules = /*@__PURE__*/ DI.createInterface('IValidationRules');
-let ValidationRules = class ValidationRules {
-    constructor(locator, parser, messageProvider, deserializer) {
-        this.locator = locator;
-        this.parser = parser;
-        this.messageProvider = messageProvider;
-        this.deserializer = deserializer;
+class ValidationRules {
+    constructor() {
         this.rules = [];
         this.targets = new Set();
+        this.locator = resolve(IServiceLocator);
+        this.parser = resolve(IExpressionParser);
+        this.messageProvider = resolve(IValidationMessageProvider);
+        this.deserializer = resolve(IValidationExpressionHydrator);
     }
     ensure(property) {
         const [name, expression] = parsePropertyName(property, this.parser);
@@ -647,13 +627,7 @@ let ValidationRules = class ValidationRules {
             tags.add(tag);
         }
     }
-};
-ValidationRules = __decorate([
-    __param(0, IServiceLocator),
-    __param(1, IExpressionParser),
-    __param(2, IValidationMessageProvider),
-    __param(3, IValidationExpressionHydrator)
-], ValidationRules);
+}
 // eslint-disable-next-line no-useless-escape
 const classicAccessorPattern = /^(?:function)?\s*\(?[$_\w\d]+\)?\s*(?:=>)?\s*\{(?:\s*["']{1}use strict["']{1};)?(?:[$_\s\w\d\/\*.['"\]+;\(\)]+)?\s*return\s+[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)\s*;?\s*\}$/;
 const arrowAccessorPattern = /^\(?[$_\w\d]+\)?\s*=>\s*[$_\w\d]+((\.[$_\w\d]+|\[['"$_\w\d]+\])+)$/;
@@ -712,13 +686,13 @@ const contextualProperties = new Set([
     'config',
     'getDisplayName'
 ]);
-let ValidationMessageProvider = ValidationMessageProvider_1 = class ValidationMessageProvider {
-    constructor(parser, logger, customMessages) {
-        this.parser = parser;
+class ValidationMessageProvider {
+    constructor(logger = resolve(ILogger), customMessages = resolve(ICustomMessages)) {
         this.registeredMessages = new WeakMap();
-        this.logger = logger.scopeTo(ValidationMessageProvider_1.name);
+        this.parser = resolve(IExpressionParser);
+        this.logger = logger.scopeTo(ValidationMessageProvider.name);
         for (const { rule, aliases } of customMessages) {
-            ValidationRuleAliasMessage.setDefaultMessage(rule, { aliases });
+            ValidationRuleAliasMessage.setDefaultMessage(rule, { aliases }, true);
         }
     }
     getMessage(rule) {
@@ -774,12 +748,7 @@ let ValidationMessageProvider = ValidationMessageProvider_1 = class ValidationMe
         // capitalize first letter.
         return words.charAt(0).toUpperCase() + words.slice(1);
     }
-};
-ValidationMessageProvider = ValidationMessageProvider_1 = __decorate([
-    __param(0, IExpressionParser),
-    __param(1, ILogger),
-    __param(2, ICustomMessages)
-], ValidationMessageProvider);
+}
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -971,6 +940,7 @@ class Serializer {
     visitAccessThis(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.AccessThisExpression}","ancestor":${expr.ancestor}}`;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     visitAccessBoundary(expr) {
         return `{"$TYPE":"${ASTExpressionTypes.AccessBoundaryExpression}"}`;
     }
@@ -1119,7 +1089,7 @@ function deserializePrimitive(value) {
     }
 }
 
-var ValidationDeserializer_1;
+/* eslint-disable @typescript-eslint/no-explicit-any */
 class ValidationSerializer {
     static serialize(object) {
         if (object == null || typeof object.accept !== 'function') {
@@ -1174,18 +1144,19 @@ class ValidationSerializer {
         return `[${ruleset.map((rules) => `[${rules.map((rule) => rule.accept(this)).join(',')}]`).join(',')}]`;
     }
 }
-let ValidationDeserializer = ValidationDeserializer_1 = class ValidationDeserializer {
+class ValidationDeserializer {
     static register(container) {
         this.container = container;
     }
     static deserialize(json, validationRules) {
         const messageProvider = this.container.get(IValidationMessageProvider);
         const parser = this.container.get(IExpressionParser);
-        const deserializer = new ValidationDeserializer_1(this.container, messageProvider, parser);
+        const deserializer = new ValidationDeserializer(this.container, messageProvider, parser);
         const raw = JSON.parse(json);
         return deserializer.hydrate(raw, validationRules);
     }
-    constructor(locator, messageProvider, parser) {
+    // we need here optional parameters as the ctor is used by the static deserialize method.
+    constructor(locator = resolve(IServiceLocator), messageProvider = resolve(IValidationMessageProvider), parser = resolve(IExpressionParser)) {
         this.locator = locator;
         this.messageProvider = messageProvider;
         this.parser = parser;
@@ -1269,18 +1240,13 @@ let ValidationDeserializer = ValidationDeserializer_1 = class ValidationDeserial
         }
         return ruleset.map(($rule) => this.hydrate($rule, validationRules));
     }
-};
-ValidationDeserializer = ValidationDeserializer_1 = __decorate([
-    __param(0, IServiceLocator),
-    __param(1, IValidationMessageProvider),
-    __param(2, IExpressionParser)
-], ValidationDeserializer);
-let ModelValidationExpressionHydrator = class ModelValidationExpressionHydrator {
-    constructor(l, messageProvider, parser) {
-        this.l = l;
-        this.messageProvider = messageProvider;
-        this.parser = parser;
+}
+class ModelValidationExpressionHydrator {
+    constructor() {
         this.astDeserializer = new Deserializer();
+        this.l = resolve(IServiceLocator);
+        this.messageProvider = resolve(IValidationMessageProvider);
+        this.parser = resolve(IExpressionParser);
     }
     hydrate(_raw, _validationRules) {
         throw new Error('Method not implemented.');
@@ -1391,12 +1357,7 @@ let ModelValidationExpressionHydrator = class ModelValidationExpressionHydrator 
         const [name, expression] = parsePropertyName(rawName, this.parser);
         return new RuleProperty(expression, name, raw.displayName);
     }
-};
-ModelValidationExpressionHydrator = __decorate([
-    __param(0, IServiceLocator),
-    __param(1, IValidationMessageProvider),
-    __param(2, IExpressionParser)
-], ModelValidationExpressionHydrator);
+}
 mixinAstEvaluator()(ModelValidationExpressionHydrator);
 
 /**

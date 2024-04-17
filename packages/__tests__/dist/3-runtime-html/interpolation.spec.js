@@ -1,5 +1,5 @@
 import { assert, createContainer, createFixture, createObserverLocator, createScopeForTest, } from '@aurelia/testing';
-import { Interpolation, ConditionalExpression, AccessScopeExpression } from '@aurelia/runtime';
+import { Interpolation, ConditionalExpression, AccessScopeExpression } from '@aurelia/expression-parser';
 import { BindingMode, CustomElement, InterpolationBinding, SVGAnalyzer, IPlatform, ValueConverter, } from '@aurelia/runtime-html';
 import { resolve } from '@aurelia/kernel';
 const testDateString = new Date('Sat Feb 02 2002 00:00:00 GMT+0000 (Coordinated Universal Time)').toString();

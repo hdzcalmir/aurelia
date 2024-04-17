@@ -1,5 +1,5 @@
 /* eslint-disable mocha/no-sibling-hooks */
-import { IExpressionParser } from '@aurelia/runtime';
+import { IExpressionParser } from '@aurelia/expression-parser';
 import { assert, TestContext } from '@aurelia/testing';
 import { EqualsRule, IValidationMessageProvider, IValidationRules, LengthRule, PropertyRule, RangeRule, RegexRule, RequiredRule, SizeRule, ValidationConfiguration, parsePropertyName, ValidationSerializer, RuleProperty, ValidationDeserializer, ModelBasedRule, IValidator, ValidateInstruction, IValidationExpressionHydrator } from '@aurelia/validation';
 import { Person } from './_test-resources.js';

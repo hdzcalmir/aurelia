@@ -1,18 +1,45 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-import { I18nService, Signals } from '@aurelia/i18n';
+import { I18N, Signals } from '@aurelia/i18n';
 import { EventAggregator } from '@aurelia/kernel';
 import { nowrap } from '@aurelia/runtime';
-import { assert, MockSignaler, createFixture } from '@aurelia/testing';
+import { assert, createFixture } from '@aurelia/testing';
+import { ISignaler } from '@aurelia/runtime-html';
 import i18next from 'i18next';
 import { Spy } from '../Spy.js';
+import { createI18NContainer } from './util.js';
 const translation = {
     simple: {
         text: 'simple text',
@@ -23,11 +50,15 @@ describe('i18n/i18n.spec.ts', function () {
     async function $createFixture(options = {}) {
         const i18nextSpy = new Spy();
         const eaSpy = new Spy();
-        const mockSignaler = new MockSignaler();
-        const sut = new I18nService({ i18next: i18nextSpy.getMock(i18next) }, options, eaSpy.getMock(new EventAggregator()), mockSignaler);
+        const container = createI18NContainer({
+            ea: eaSpy.getMock(new EventAggregator()),
+            i18nextWrapper: { i18next: i18nextSpy.getMock(i18next) },
+            initOptions: options,
+        });
+        const sut = container.get(I18N);
         await sut.initPromise;
         await sut.setLocale('en');
-        return { i18nextSpy, sut, eaSpy, mockSignaler };
+        return { i18nextSpy, sut, eaSpy, mockSignaler: container.get(ISignaler) };
     }
     it('initializes i18next with default options on instantiation', async function () {
         const { i18nextSpy } = await $createFixture();
@@ -300,48 +331,58 @@ describe('i18n/i18n.spec.ts', function () {
     });
     it('does not track i18n property gh - 1614 https://github.com/aurelia/aurelia/issues/1614', async function () {
         let count = 0;
-        class MyEl {
-            constructor() {
-                this.i = i18next.createInstance({
-                    fallbackLng: 'en',
-                    defaultNS: 'namespace1',
-                    resources: {
-                        en: {
-                            namespace1: {
-                                key: 'k',
-                                key2: 'k2'
-                            },
-                        },
+        let MyEl = (() => {
+            var _a;
+            let _i_decorators;
+            let _i_initializers = [];
+            let _i_extraInitializers = [];
+            return _a = class MyEl {
+                    constructor() {
+                        this.i = __runInitializers(this, _i_initializers, i18next.createInstance({
+                            fallbackLng: 'en',
+                            defaultNS: 'namespace1',
+                            resources: {
+                                en: {
+                                    namespace1: {
+                                        key: 'k',
+                                        key2: 'k2'
+                                    },
+                                },
+                            }
+                        }));
+                        __runInitializers(this, _i_extraInitializers);
+                        void this.i.init();
                     }
-                });
-                void this.i.init();
-            }
-            tr(key) {
-                // this is where the main issue is
-                // because inside i18next.t call
-                // there's a write during a read call
-                // so it causes a lot of upgrades for previously done bindings
-                // without nowrap, it will be greater than 3
-                if (count++ > 3) {
-                    throw new Error(`count++: ${count}`);
-                }
-                return this.i.t(key);
-            }
-            get c1() {
-                return this.tr('key2');
-            }
-            get data() {
-                return [
-                    this.c1,
-                    this.tr('key2'),
-                    this.tr('key'),
-                ];
-            }
-        }
-        __decorate([
-            nowrap,
-            __metadata("design:type", Object)
-        ], MyEl.prototype, "i", void 0);
+                    tr(key) {
+                        // this is where the main issue is
+                        // because inside i18next.t call
+                        // there's a write during a read call
+                        // so it causes a lot of upgrades for previously done bindings
+                        // without nowrap, it will be greater than 3
+                        if (count++ > 3) {
+                            throw new Error(`count++: ${count}`);
+                        }
+                        return this.i.t(key);
+                    }
+                    get c1() {
+                        return this.tr('key2');
+                    }
+                    get data() {
+                        return [
+                            this.c1,
+                            this.tr('key2'),
+                            this.tr('key'),
+                        ];
+                    }
+                },
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _i_decorators = [nowrap];
+                    __esDecorate(null, null, _i_decorators, { kind: "field", name: "i", static: false, private: false, access: { has: obj => "i" in obj, get: obj => obj.i, set: (obj, value) => { obj.i = value; } }, metadata: _metadata }, _i_initializers, _i_extraInitializers);
+                    if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })(),
+                _a;
+        })();
         const { assertText } = await createFixture
             .html('${tr(`key`)} ${data}')
             .component(MyEl)

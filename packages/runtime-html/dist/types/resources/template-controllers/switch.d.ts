@@ -25,7 +25,6 @@ export declare class Switch implements ICustomAttributeViewModel {
     accept(visitor: ControllerVisitor): void | true;
 }
 export declare class Case implements ICustomAttributeViewModel {
-    static readonly $au: CustomAttributeStaticAuDefinition;
     readonly $controller: ICustomAttributeController<this>;
     value: unknown;
     fallThrough: boolean;
@@ -43,7 +42,6 @@ export declare class Case implements ICustomAttributeViewModel {
     accept(visitor: ControllerVisitor): void | true;
 }
 export declare class DefaultCase extends Case {
-    static readonly $au: CustomAttributeStaticAuDefinition;
     protected linkToSwitch($switch: Switch): void;
 }
 //# sourceMappingURL=switch.d.ts.map

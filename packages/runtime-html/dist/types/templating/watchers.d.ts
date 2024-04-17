@@ -1,9 +1,11 @@
 import type { IServiceLocator } from '@aurelia/kernel';
-import type { ICollectionSubscriber, IConnectable, IConnectableBinding, IObservable, IObserverLocator, IsBindingBehavior, ISubscriber, Scope } from '@aurelia/runtime';
+import type { ICollectionSubscriber, IConnectable, IObservable, IObserverLocator, IObserverLocatorBasedConnectable, ISubscriber, Scope } from '@aurelia/runtime';
 import type { IWatcherCallback } from '../watch';
-export interface ComputedWatcher extends IConnectableBinding {
+import { IsBindingBehavior } from '@aurelia/expression-parser';
+import { IBinding } from '../binding/interfaces-bindings';
+export interface ComputedWatcher extends IObserverLocatorBasedConnectable, IServiceLocator {
 }
-export declare class ComputedWatcher implements IConnectableBinding, ISubscriber, ICollectionSubscriber {
+export declare class ComputedWatcher implements IBinding, ISubscriber, ICollectionSubscriber {
     readonly obj: IObservable;
     readonly $get: (obj: object, watcher: IConnectable) => unknown;
     readonly useProxy: boolean;
@@ -18,9 +20,9 @@ export declare class ComputedWatcher implements IConnectableBinding, ISubscriber
     private run;
     private compute;
 }
-export interface ExpressionWatcher extends IConnectableBinding {
+export interface ExpressionWatcher extends IObserverLocatorBasedConnectable, /* a hack, but it's only for internal */ IServiceLocator {
 }
-export declare class ExpressionWatcher implements IConnectableBinding {
+export declare class ExpressionWatcher implements IBinding, IObserverLocatorBasedConnectable {
     scope: Scope;
     l: IServiceLocator;
     oL: IObserverLocator;

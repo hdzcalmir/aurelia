@@ -14,15 +14,15 @@ export interface INodeObserverLocator {
     getAccessor(obj: object, key: PropertyKey, requestor: IObserverLocator): IAccessor | IObserver;
 }
 export declare const INodeObserverLocator: import("@aurelia/kernel").InterfaceSymbol<INodeObserverLocator>;
+export interface IComputedObserverLocator {
+    getObserver(obj: object, key: PropertyKey, pd: ExtendedPropertyDescriptor, requestor: IObserverLocator): IObserver;
+}
+export declare const IComputedObserverLocator: import("@aurelia/kernel").InterfaceSymbol<IComputedObserverLocator>;
 export type ExtendedPropertyDescriptor = PropertyDescriptor & {
     get?: ObservableGetter;
-    set?: ObservableSetter;
 };
 export type ObservableGetter = PropertyDescriptor['get'] & {
-    getObserver?(obj: unknown, requestor: IObserverLocator): IObserver;
-};
-export type ObservableSetter = PropertyDescriptor['set'] & {
-    getObserver?(obj: unknown, requestor: IObserverLocator): IObserver;
+    getObserver?(obj: unknown): IObserver;
 };
 export declare class ObserverLocator {
     addAdapter(adapter: IObjectObservationAdapter): void;

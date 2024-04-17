@@ -1,22 +1,5 @@
-import { IDisposable, IIndexable, IServiceLocator } from '@aurelia/kernel';
-import type { Scope } from './observation/scope';
+import { IIndexable } from '@aurelia/kernel';
 import type { CollectionLengthObserver, CollectionSizeObserver } from './observation/collection-length-observer';
-import { TaskQueue } from '@aurelia/platform';
-export interface IBinding {
-    readonly isBound: boolean;
-    bind(scope: Scope): void;
-    unbind(): void;
-    get: IServiceLocator['get'];
-    useScope?(scope: Scope): void;
-    limit?(opts: IRateLimitOptions): IDisposable;
-}
-export interface IRateLimitOptions {
-    type: 'throttle' | 'debounce';
-    delay: number;
-    queue: TaskQueue;
-    now: () => number;
-    signals: string[];
-}
 export declare const ICoercionConfiguration: import("@aurelia/kernel").InterfaceSymbol<ICoercionConfiguration>;
 export interface ICoercionConfiguration {
     /** When set to `true`, enables the automatic type-coercion for bindables globally. */

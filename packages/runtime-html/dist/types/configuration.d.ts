@@ -8,6 +8,7 @@ import { DebounceBindingBehavior } from './resources/binding-behaviors/debounce'
 import { SignalBindingBehavior } from './resources/binding-behaviors/signals';
 import { ThrottleBindingBehavior } from './resources/binding-behaviors/throttle';
 import { AttrBindingBehavior } from './resources/binding-behaviors/attr';
+import { SelfBindingBehavior } from './resources/binding-behaviors/self';
 import { UpdateTriggerBindingBehavior } from './resources/binding-behaviors/update-trigger';
 import { Focus } from './resources/custom-attributes/focus';
 import { Show } from './resources/custom-attributes/show';
@@ -57,7 +58,7 @@ export declare const DefaultBindingLanguage: (typeof OneTimeBindingCommand | typ
  * - Template controllers: `if`/`else`, `repeat`, `with`
  * - Value Converters: `sanitize`
  */
-export declare const DefaultResources: (typeof DebounceBindingBehavior | typeof SignalBindingBehavior | typeof ThrottleBindingBehavior | typeof AttrBindingBehavior | typeof UpdateTriggerBindingBehavior | typeof Focus | typeof Show | typeof Portal | typeof If | typeof Else | typeof Repeat | typeof With | typeof Switch | typeof Case | typeof PromiseTemplateController | typeof PendingTemplateController | typeof FulfilledTemplateController | typeof RejectedTemplateController | typeof PromiseAttributePattern | typeof FulfilledAttributePattern | typeof RejectedAttributePattern | typeof AuCompose | typeof AuSlot | typeof SanitizeValueConverter)[];
+export declare const DefaultResources: (typeof DebounceBindingBehavior | typeof SignalBindingBehavior | typeof ThrottleBindingBehavior | typeof AttrBindingBehavior | typeof SelfBindingBehavior | typeof UpdateTriggerBindingBehavior | typeof Focus | typeof Show | typeof Portal | typeof If | typeof Else | typeof Repeat | typeof With | typeof Switch | typeof Case | typeof PromiseTemplateController | typeof PendingTemplateController | typeof FulfilledTemplateController | typeof RejectedTemplateController | typeof PromiseAttributePattern | typeof FulfilledAttributePattern | typeof RejectedAttributePattern | typeof AuCompose | typeof AuSlot | typeof SanitizeValueConverter)[];
 /**
  * Default renderers for:
  * - PropertyBinding: `bind`, `one-time`, `to-view`, `from-view`, `two-way`

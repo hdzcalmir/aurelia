@@ -6,22 +6,24 @@ var e = require("@aurelia/runtime");
 
 var s = require("@aurelia/runtime-html");
 
-const r = /*@__PURE__*/ t.DI.createInterface("IDomRenderer");
+var r = require("@aurelia/expression-parser");
 
-const i = /*@__PURE__*/ t.DI.createInterface("IScrollerObsererLocator");
+const i = /*@__PURE__*/ t.DI.createInterface("IDomRenderer");
 
-const n = /*@__PURE__*/ t.DI.createInterface("ICollectionStrategyLocator");
+const n = /*@__PURE__*/ t.DI.createInterface("IScrollerObsererLocator");
+
+const o = /*@__PURE__*/ t.DI.createInterface("ICollectionStrategyLocator");
 
 function unwrapExpression(t) {
-    let s = false;
-    while (t instanceof e.BindingBehaviorExpression) {
+    let e = false;
+    while (t instanceof r.BindingBehaviorExpression) {
         t = t.expression;
     }
-    while (t instanceof e.ValueConverterExpression) {
+    while (t instanceof r.ValueConverterExpression) {
         t = t.expression;
-        s = true;
+        e = true;
     }
-    return s ? t : null;
+    return e ? t : null;
 }
 
 const getScrollerElement = t => {
@@ -75,7 +77,7 @@ const getDistanceToScroller = (t, e) => {
     return r + getDistanceToScroller(s, e);
 };
 
-const o = {
+const l = {
     height: 0,
     scrollTop: 0,
     scroller: null,
@@ -87,7 +89,7 @@ class VirtualRepeat {
         this.items = void 0;
         this.views = [];
         this.task = null;
-        this.i = o;
+        this.i = l;
         this.u = true;
         this.itemHeight = 0;
         this.minViewsRequired = 0;
@@ -97,15 +99,15 @@ class VirtualRepeat {
         this.instruction = t.resolve(s.IInstruction);
         this.parent = t.resolve(s.IController);
         this.f = t.resolve(s.IViewFactory);
-        this.C = t.resolve(n);
-        this.O = t.resolve(r);
-        this.scrollerObserverLocator = t.resolve(i);
+        this.C = t.resolve(o);
+        this.O = t.resolve(i);
+        this.scrollerObserverLocator = t.resolve(n);
         const e = this.instruction.props[0];
-        const l = e.forOf;
-        const h = this.iterable = unwrapExpression(l.iterable) ?? l.iterable;
-        const c = this.$ = l.iterable !== h;
+        const r = e.forOf;
+        const h = this.iterable = unwrapExpression(r.iterable) ?? r.iterable;
+        const c = this.$ = r.iterable !== h;
         this.T = new CollectionObservationMediator(this, (() => c ? this.I() : this.L()));
-        this.local = l.declaration.name;
+        this.local = r.declaration.name;
         this.taskQueue = t.resolve(s.IPlatform).domWriteQueue;
     }
     attaching() {
@@ -349,12 +351,12 @@ class VirtualRepeat {
         this.A();
     }
     I() {
-        const t = e.astEvaluate(this.iterable, this.parent.scope, {
+        const t = s.astEvaluate(this.iterable, this.parent.scope, {
             strict: true
         }, null);
-        const s = this.items;
+        const e = this.items;
         this.items = t;
-        if (t === s) {
+        if (t === e) {
             this.A();
         }
     }
@@ -423,13 +425,13 @@ class CollectionObservationMediator {
     }
 }
 
-var l;
+var h;
 
 (function(t) {
     t[t["none"] = 0] = "none";
     t[t["reset"] = 1] = "reset";
     t[t["has_sizing"] = 2] = "has_sizing";
-})(l || (l = {}));
+})(h || (h = {}));
 
 class Calculation {
     static from(t, e) {
@@ -445,11 +447,11 @@ Calculation.reset = new Calculation(1, 0);
 
 Calculation.none = new Calculation(0, 0);
 
-const h = new WeakSet;
+const c = new WeakSet;
 
 function enhanceOverrideContext(t) {
     const e = t;
-    if (h.has(e)) {
+    if (c.has(e)) {
         return;
     }
     Object.defineProperties(e, {
@@ -491,7 +493,7 @@ function $middle() {
 
 class CollectionStrategyLocator {
     static register(e) {
-        return t.Registration.singleton(n, this).register(e);
+        return t.Registration.singleton(o, this).register(e);
     }
     getStrategy(t) {
         if (t == null) {
@@ -566,7 +568,7 @@ class ScrollerObserverLocator {
         return [ s.IPlatform ];
     }
     static register(e) {
-        return t.Registration.singleton(i, this).register(e);
+        return t.Registration.singleton(n, this).register(e);
     }
     constructor(t) {
         this.cache = new WeakMap;
@@ -672,7 +674,7 @@ class DefaultDomRenderer {
         return [ s.IPlatform ];
     }
     static register(e) {
-        return t.Registration.singleton(r, this).register(e);
+        return t.Registration.singleton(i, this).register(e);
     }
     constructor(t) {
         this.p = t;
@@ -753,7 +755,7 @@ function insertBefore(t, e, s) {
     return [ r.insertBefore(t.createElement(e), s), r.insertBefore(t.createElement(e), s) ];
 }
 
-const c = {
+const a = {
     register(t) {
         return t.register(ScrollerObserverLocator, CollectionStrategyLocator, DefaultDomRenderer, VirtualRepeat);
     }
@@ -763,13 +765,13 @@ exports.CollectionStrategyLocator = CollectionStrategyLocator;
 
 exports.DefaultDomRenderer = DefaultDomRenderer;
 
-exports.DefaultVirtualizationConfiguration = c;
+exports.DefaultVirtualizationConfiguration = a;
 
-exports.ICollectionStrategyLocator = n;
+exports.ICollectionStrategyLocator = o;
 
-exports.IDomRenderer = r;
+exports.IDomRenderer = i;
 
-exports.IScrollerObsererLocator = i;
+exports.IScrollerObsererLocator = n;
 
 exports.ScrollerObserver = ScrollerObserver;
 

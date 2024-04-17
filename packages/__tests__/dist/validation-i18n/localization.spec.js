@@ -2,7 +2,7 @@ import { I18N, I18nConfiguration } from '@aurelia/i18n';
 import { Registration } from '@aurelia/kernel';
 import { assert, TestContext } from '@aurelia/testing';
 import { IValidationMessageProvider, IValidationRules, IValidator, StandardValidator, ValidationMessageProvider, } from '@aurelia/validation';
-import { Unparser } from '@aurelia/runtime';
+import { Unparser } from '@aurelia/expression-parser';
 import { CustomElement, Aurelia, IPlatform } from '@aurelia/runtime-html';
 import { IValidationController, } from '@aurelia/validation-html';
 import { LocalizedValidationController, LocalizedValidationControllerFactory, LocalizedValidationMessageProvider, ValidationI18nConfiguration } from '@aurelia/validation-i18n';
