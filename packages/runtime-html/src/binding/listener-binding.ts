@@ -4,7 +4,8 @@ import { createInterface, singletonRegistration } from '../utilities-di';
 import { mixinAstEvaluator, mixinUseScope, mixingBindingLimited } from './binding-utils';
 
 import { resolve, type IServiceLocator, all, IContainer } from '@aurelia/kernel';
-import { ICollectionSubscriber, IObserverLocatorBasedConnectable, ISubscriber, Scope } from '@aurelia/runtime';
+import { ICollectionSubscriber, IObserverLocatorBasedConnectable, ISubscriber, } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import { astBind, astEvaluate, astUnbind, IAstEvaluator } from '../ast.eval';
 import { IBinding } from './interfaces-bindings';
 
@@ -20,6 +21,12 @@ export interface ListenerBinding extends IAstEvaluator, IObserverLocatorBasedCon
  * Listener binding. Handle event binding between view and view model
  */
 export class ListenerBinding implements IBinding, ISubscriber, ICollectionSubscriber {
+  static {
+    mixinUseScope(ListenerBinding);
+    mixingBindingLimited(ListenerBinding, () => 'callSource');
+    mixinAstEvaluator(true, true)(ListenerBinding);
+  }
+
   public isBound: boolean = false;
 
   /** @internal */
@@ -121,10 +128,6 @@ export class ListenerBinding implements IBinding, ISubscriber, ICollectionSubscr
     this.target.removeEventListener(this.targetEvent, this, this._options);
   }
 }
-
-mixinUseScope(ListenerBinding);
-mixingBindingLimited(ListenerBinding, () => 'callSource');
-mixinAstEvaluator(true, true)(ListenerBinding);
 
 export type IModifiedEventHandler = (event: Event) => boolean;
 

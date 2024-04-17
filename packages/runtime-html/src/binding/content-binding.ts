@@ -16,8 +16,8 @@ import type {
   IObserverLocator,
   IObserverLocatorBasedConnectable,
   ISubscriber,
-  Scope
 } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import type { IPlatform } from '../platform';
 import { isArray, safeString } from '../utilities';
 import type { BindingMode, IBinding, IBindingController } from './interfaces-bindings';
@@ -36,6 +36,13 @@ export interface ContentBinding extends IAstEvaluator, IServiceLocator, IObserve
  */
 
 export class ContentBinding implements IBinding, ISubscriber, ICollectionSubscriber {
+  static {
+    mixinUseScope(ContentBinding);
+    mixingBindingLimited(ContentBinding, () => 'updateTarget');
+    connectable(ContentBinding, null!);
+    mixinAstEvaluator(void 0, false)(ContentBinding);
+  }
+
   public isBound: boolean = false;
 
   // at runtime, mode may be overriden by binding behavior
@@ -216,8 +223,3 @@ export class ContentBinding implements IBinding, ISubscriber, ICollectionSubscri
     task?.cancel();
   }
 }
-
-mixinUseScope(ContentBinding);
-mixingBindingLimited(ContentBinding, () => 'updateTarget');
-connectable(ContentBinding, null!);
-mixinAstEvaluator(void 0, false)(ContentBinding);
