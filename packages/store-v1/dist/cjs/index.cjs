@@ -74,18 +74,6 @@ function isStateHistory(t) {
     return typeof t.present !== "undefined" && typeof t.future !== "undefined" && typeof t.past !== "undefined" && Array.isArray(t.future) && Array.isArray(t.past);
 }
 
-function __decorate(t, e, r, s) {
-    var i = arguments.length, o = i < 3 ? e : s === null ? s = Object.getOwnPropertyDescriptor(e, r) : s, n;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") o = Reflect.decorate(t, e, r, s); else for (var a = t.length - 1; a >= 0; a--) if (n = t[a]) o = (i < 3 ? n(o) : i > 3 ? n(e, r, o) : n(e, r)) || o;
-    return i > 3 && o && Object.defineProperty(e, r, o), o;
-}
-
-function __param(t, e) {
-    return function(r, s) {
-        e(r, s, t);
-    };
-}
-
 const i = "aurelia-store-state";
 
 exports.MiddlewarePlacement = void 0;
@@ -164,7 +152,7 @@ class ActionRegistrationError extends Error {}
 
 class ReducerNoStateError extends Error {}
 
-exports.Store = class Store {
+class Store {
     constructor(t, e, s, i) {
         this.initialState = t;
         this.logger = e;
@@ -430,12 +418,10 @@ exports.Store = class Store {
     registerHistoryMethods() {
         this.registerAction("jump", jump);
     }
-};
-
-exports.Store = __decorate([ __param(1, t.ILogger), __param(2, e.IWindow) ], exports.Store);
+}
 
 function dispatchify(t) {
-    const e = o.container.get(exports.Store);
+    const e = o.container.get(Store);
     return async function(...r) {
         return e.dispatch(t, ...r);
     };
@@ -502,14 +488,14 @@ function connectTo(t) {
             }
         })));
     }
-    return function(s) {
-        const i = typeof t === "object" && t.setup ? s.prototype[t.setup] : s.prototype.binding;
-        const n = typeof t === "object" && t.teardown ? s.prototype[t.teardown] : s.prototype.unbinding;
+    return function(s, i) {
+        const n = typeof t === "object" && t.setup ? s.prototype[t.setup] : s.prototype.binding;
+        const a = typeof t === "object" && t.teardown ? s.prototype[t.teardown] : s.prototype.unbinding;
         s.prototype[typeof t === "object" && t.setup !== undefined ? t.setup : "binding"] = function() {
             if (typeof t === "object" && typeof t.onChanged === "string" && !(t.onChanged in this)) {
                 throw new Error("Provided onChanged handler does not exist on target VM");
             }
-            const r = e.Controller.getCached(this) ? e.Controller.getCached(this).container.get(exports.Store) : o.container.get(exports.Store);
+            const r = e.Controller.getCached(this) ? e.Controller.getCached(this).container.get(Store) : o.container.get(Store);
             this._stateSubscriptions = createSelectors().map((t => getSource(r, t.selector).subscribe((e => {
                 const r = t.targets.length - 1;
                 const s = t.targets.reduce(((t = {}, e) => t[e]), this);
@@ -523,8 +509,8 @@ function connectTo(t) {
                     return t[s];
                 }), this);
             }))));
-            if (i) {
-                return i.apply(this, arguments);
+            if (n) {
+                return n.apply(this, arguments);
             }
         };
         s.prototype[typeof t === "object" && t.teardown ? t.teardown : "unbinding"] = function() {
@@ -535,8 +521,8 @@ function connectTo(t) {
                     }
                 }));
             }
-            if (n) {
-                return n.apply(this, arguments);
+            if (a) {
+                return a.apply(this, arguments);
             }
         };
     };
@@ -568,7 +554,7 @@ const n = {
                 future: []
             };
         }
-        t.Registration.instance(exports.Store, new exports.Store(c, n, a, i)).register(r);
+        t.Registration.instance(Store, new Store(c, n, a, i)).register(r);
         return r;
     }
 };
@@ -582,6 +568,8 @@ exports.DevToolsRemoteDispatchError = DevToolsRemoteDispatchError;
 exports.ReducerNoStateError = ReducerNoStateError;
 
 exports.STORE = o;
+
+exports.Store = Store;
 
 exports.StoreConfiguration = n;
 

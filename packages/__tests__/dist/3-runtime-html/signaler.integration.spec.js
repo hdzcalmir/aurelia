@@ -1,18 +1,43 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { ConsoleSink, LoggerConfiguration, LogLevel } from '@aurelia/kernel';
-import { ISignaler } from '@aurelia/runtime';
-import { customElement, valueConverter, Aurelia, ValueConverter } from '@aurelia/runtime-html';
+import { ConsoleSink, LoggerConfiguration, LogLevel, resolve } from '@aurelia/kernel';
+import { ISignaler, customElement, valueConverter, Aurelia, ValueConverter } from '@aurelia/runtime-html';
 import { assert, createFixture, TestContext } from '@aurelia/testing';
 describe('3-runtime-html/signaler.integration.spec.ts', function () {
     it('1 non-observed input and 2 observed inputs - toView', async function () {
@@ -22,33 +47,55 @@ describe('3-runtime-html/signaler.integration.spec.ts', function () {
         const au = new Aurelia(ctx.container);
         const host = ctx.createElement('div');
         let counter = 0;
-        let AddValueConverter = class AddValueConverter {
-            toView(input, factor) {
-                return input + (++counter * factor);
-            }
-        };
-        AddValueConverter = __decorate([
-            valueConverter({ name: 'add' })
-        ], AddValueConverter);
-        let App = class App {
-            constructor(signaler) {
-                this.signaler = signaler;
-                this.input = 0;
-                this.factor = 1;
-            }
-            increment() {
-                this.signaler.dispatchSignal('increment');
-            }
-        };
-        App = __decorate([
-            customElement({
-                name: 'app',
-                template: `\${input | add:factor & signal:'increment'}`,
-                dependencies: [AddValueConverter],
-            }),
-            __param(0, ISignaler),
-            __metadata("design:paramtypes", [Object])
-        ], App);
+        let AddValueConverter = (() => {
+            let _classDecorators = [valueConverter({ name: 'add' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var AddValueConverter = _classThis = class {
+                toView(input, factor) {
+                    return input + (++counter * factor);
+                }
+            };
+            __setFunctionName(_classThis, "AddValueConverter");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                AddValueConverter = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return AddValueConverter = _classThis;
+        })();
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app',
+                    template: `\${input | add:factor & signal:'increment'}`,
+                    dependencies: [AddValueConverter],
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.input = 0;
+                    this.factor = 1;
+                    this.signaler = resolve(ISignaler);
+                }
+                increment() {
+                    this.signaler.dispatchSignal('increment');
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         const component = au.container.get(App);
         au.app({ host, component });
         await au.start();
@@ -89,23 +136,33 @@ describe('3-runtime-html/signaler.integration.spec.ts', function () {
                 const au = new Aurelia(ctx.container);
                 const host = ctx.createElement('div');
                 const items = [0, 1, 2];
-                let App = class App {
-                    constructor(signaler) {
-                        this.signaler = signaler;
-                        this.items = items;
-                    }
-                    updateItem() {
-                        this.signaler.dispatchSignal('updateItem');
-                    }
-                };
-                App = __decorate([
-                    customElement({
-                        name: 'app',
-                        template: `<div repeat.for="i of 3">\${items[i] ${expr}}</div>`,
-                    }),
-                    __param(0, ISignaler),
-                    __metadata("design:paramtypes", [Object])
-                ], App);
+                let App = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'app',
+                            template: `<div repeat.for="i of 3">\${items[i] ${expr}}</div>`,
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var App = _classThis = class {
+                        constructor() {
+                            this.items = items;
+                            this.signaler = resolve(ISignaler);
+                        }
+                        updateItem() {
+                            this.signaler.dispatchSignal('updateItem');
+                        }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 const component = au.container.get(App);
                 au.app({ host, component });
                 await au.start();

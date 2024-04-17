@@ -1,14 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { inject, newInstanceForScope, resolve } from '@aurelia/kernel';
@@ -86,16 +112,12 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
     function* getTestData() {
         var _a, _b, _c;
         const createMyElement = (template, containerless = false) => {
-            let MyElement = class MyElement {
-                constructor(slots) {
-                    this.slots = slots;
-                    assert.instanceOf(slots, AuSlotsInfo);
+            class MyElement {
+                constructor() {
+                    this.slots = resolve(IAuSlotsInfo);
+                    assert.instanceOf(this.slots, AuSlotsInfo);
                 }
-            };
-            MyElement = __decorate([
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], MyElement);
+            }
             return CustomElement.define({ name: 'my-element', template, bindables: { people: { mode: BindingMode.default } }, containerless }, MyElement);
         };
         // #region simple templating
@@ -142,33 +164,25 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             createMyElement(`static <au-slot>default</au-slot> <au-slot name="s1">s1</au-slot> <au-slot name="s2">s2</au-slot>`),
         ], { 'my-element': [`static default p11root rootp21`, new AuSlotsInfo(['s2', 's1'])] });
         {
-            let MyElement = class MyElement {
-                constructor(slots) {
-                    this.slots = slots;
+            class MyElement {
+                constructor() {
                     this.message = 'inner';
-                    assert.instanceOf(slots, AuSlotsInfo);
+                    this.slots = resolve(IAuSlotsInfo);
+                    assert.instanceOf(this.slots, AuSlotsInfo);
                 }
-            };
-            MyElement = __decorate([
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], MyElement);
+            }
             yield new TestData('supports accessing inner scope with $host', `<my-element> <div au-slot="s2">\${message}</div><div au-slot="s1">\${$host.message}</div> </my-element>`, [
                 CustomElement.define({ name: 'my-element', template: `<au-slot name="s1">s1</au-slot> <au-slot name="s2">s2</au-slot>` }, MyElement),
             ], { 'my-element': [`<div>inner</div> <div>root</div>`, new AuSlotsInfo(['s2', 's1'])] });
         }
         {
-            let MyElement = class MyElement {
-                constructor(slots) {
-                    this.slots = slots;
+            class MyElement {
+                constructor() {
                     this.message = 'inner';
-                    assert.instanceOf(slots, AuSlotsInfo);
+                    this.slots = resolve(IAuSlotsInfo);
+                    assert.instanceOf(this.slots, AuSlotsInfo);
                 }
-            };
-            MyElement = __decorate([
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], MyElement);
+            }
             yield new TestData('uses inner scope by default if no projection is provided', `<my-element> <div au-slot="s2">\${message}</div> </my-element>`, [
                 CustomElement.define({ name: 'my-element', template: `<au-slot name="s1">\${message}</au-slot> <au-slot name="s2">s2</au-slot>` }, MyElement),
             ], { 'my-element': [`inner <div>root</div>`, new AuSlotsInfo(['s2'])] });
@@ -176,21 +190,32 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         // #endregion
         // #region template controllers
         {
-            let MyElement = class MyElement {
-                constructor(slots) {
-                    this.slots = slots;
-                    this.showS1 = true;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Boolean)
-            ], MyElement.prototype, "showS1", void 0);
-            MyElement = __decorate([
-                customElement({ name: 'my-element', template: `static <au-slot>default</au-slot> <au-slot name="s1" if.bind="showS1">s1</au-slot> <au-slot name="s2">s2</au-slot>` }),
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], MyElement);
+            let MyElement = (() => {
+                let _classDecorators = [customElement({ name: 'my-element', template: `static <au-slot>default</au-slot> <au-slot name="s1" if.bind="showS1">s1</au-slot> <au-slot name="s2">s2</au-slot>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _showS1_decorators;
+                let _showS1_initializers = [];
+                let _showS1_extraInitializers = [];
+                var MyElement = _classThis = class {
+                    constructor() {
+                        this.showS1 = __runInitializers(this, _showS1_initializers, true);
+                        this.slots = (__runInitializers(this, _showS1_extraInitializers), resolve(IAuSlotsInfo));
+                    }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _showS1_decorators = [bindable];
+                    __esDecorate(null, null, _showS1_decorators, { kind: "field", name: "showS1", static: false, private: false, access: { has: obj => "showS1" in obj, get: obj => obj.showS1, set: (obj, value) => { obj.showS1 = value; } }, metadata: _metadata }, _showS1_initializers, _showS1_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
             yield new TestData('works with template controller - if', `<my-element show-s1.bind="false"> <div au-slot="s2">p20</div> <div au-slot="s1">p11</div> <div au-slot="s2">p21</div> <div au-slot="s1">p12</div> </my-element>`, [
                 MyElement,
             ], { 'my-element': [`static default <div>p20</div><div>p21</div>`, new AuSlotsInfo(['s2', 's1'])] }, async function ({ host, platform }) {
@@ -202,21 +227,32 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             });
         }
         {
-            let MyElement = class MyElement {
-                constructor(slots) {
-                    this.slots = slots;
-                    this.showS1 = true;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Boolean)
-            ], MyElement.prototype, "showS1", void 0);
-            MyElement = __decorate([
-                customElement({ name: 'my-element', template: `static <au-slot>default</au-slot> <au-slot name="s1" if.bind="showS1">s1</au-slot> <au-slot else name="s2">s2</au-slot>` }),
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], MyElement);
+            let MyElement = (() => {
+                let _classDecorators = [customElement({ name: 'my-element', template: `static <au-slot>default</au-slot> <au-slot name="s1" if.bind="showS1">s1</au-slot> <au-slot else name="s2">s2</au-slot>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _showS1_decorators;
+                let _showS1_initializers = [];
+                let _showS1_extraInitializers = [];
+                var MyElement = _classThis = class {
+                    constructor() {
+                        this.showS1 = __runInitializers(this, _showS1_initializers, true);
+                        this.slots = (__runInitializers(this, _showS1_extraInitializers), resolve(IAuSlotsInfo));
+                    }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _showS1_decorators = [bindable];
+                    __esDecorate(null, null, _showS1_decorators, { kind: "field", name: "showS1", static: false, private: false, access: { has: obj => "showS1" in obj, get: obj => obj.showS1, set: (obj, value) => { obj.showS1 = value; } }, metadata: _metadata }, _showS1_initializers, _showS1_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
             yield new TestData('works with template controller - if-else', `
         <my-element show-s1.bind="false"> <div au-slot="s2">p21</div> <div au-slot="s1">p11</div> </my-element>
         <my-element show-s1.bind="true" > <div au-slot="s2">p22</div> <div au-slot="s1">p12</div> </my-element>
@@ -235,21 +271,32 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             });
         }
         {
-            let MyElement = class MyElement {
-                constructor(slots) {
-                    this.slots = slots;
-                    this.someCondition = true;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Boolean)
-            ], MyElement.prototype, "someCondition", void 0);
-            MyElement = __decorate([
-                customElement({ name: 'my-element', template: `<ul if.bind="someCondition"><au-slot></au-slot></ul> <div else><au-slot></au-slot></div>` }),
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], MyElement);
+            let MyElement = (() => {
+                let _classDecorators = [customElement({ name: 'my-element', template: `<ul if.bind="someCondition"><au-slot></au-slot></ul> <div else><au-slot></au-slot></div>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _someCondition_decorators;
+                let _someCondition_initializers = [];
+                let _someCondition_extraInitializers = [];
+                var MyElement = _classThis = class {
+                    constructor() {
+                        this.someCondition = __runInitializers(this, _someCondition_initializers, true);
+                        this.slots = (__runInitializers(this, _someCondition_extraInitializers), resolve(IAuSlotsInfo));
+                    }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _someCondition_decorators = [bindable];
+                    __esDecorate(null, null, _someCondition_decorators, { kind: "field", name: "someCondition", static: false, private: false, access: { has: obj => "someCondition" in obj, get: obj => obj.someCondition, set: (obj, value) => { obj.someCondition = value; } }, metadata: _metadata }, _someCondition_initializers, _someCondition_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
             yield new TestData('works with template controller - if-else - same slot name', `
         <my-element some-condition.bind="true"> <template au-slot><li>1</li><li>2</li></template> </my-element>
         <my-element some-condition.bind="false"> <template au-slot><span>1</span><span>2</span></template> </my-element>
@@ -319,18 +366,9 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         // #endregion
         // #region `repeat.for`
         {
-            let MyElement = class MyElement {
-                constructor(slots) {
-                    this.slots = slots;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Array)
-            ], MyElement.prototype, "people", void 0);
-            MyElement = __decorate([
-                customElement({
-                    name: 'my-element', template: `
+            let MyElement = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-element', template: `
       <au-slot name="grid">
         <au-slot name="header">
           <h4>First Name</h4>
@@ -343,10 +381,31 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
           </au-slot>
         </template>
       </au-slot>`
-                }),
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], MyElement);
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _people_decorators;
+                let _people_initializers = [];
+                let _people_extraInitializers = [];
+                var MyElement = _classThis = class {
+                    constructor() {
+                        this.people = __runInitializers(this, _people_initializers, void 0);
+                        this.slots = (__runInitializers(this, _people_extraInitializers), resolve(IAuSlotsInfo));
+                    }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _people_decorators = [bindable];
+                    __esDecorate(null, null, _people_decorators, { kind: "field", name: "people", static: false, private: false, access: { has: obj => "people" in obj, get: obj => obj.people, set: (obj, value) => { obj.people = value; } }, metadata: _metadata }, _people_initializers, _people_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
             yield new TestData('works with template controller - repeater', `<my-element people.bind="people"></my-element>`, [
                 MyElement,
             ], { 'my-element': [`<h4>First Name</h4><h4>Last Name</h4> <div>John</div><div>Doe</div> <div>Max</div><div>Mustermann</div>`, new AuSlotsInfo([])] }, async function ({ app, host, platform }) {
@@ -429,18 +488,9 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                 'my-element+my-element': [`S<div>1<div>Second</div></div><div>2<div>Second</div></div>E`, new AuSlotsInfo(['bar'])],
             });
             {
-                let MyElement = class MyElement {
-                    constructor(slots) {
-                        this.slots = slots;
-                    }
-                };
-                __decorate([
-                    bindable,
-                    __metadata("design:type", Array)
-                ], MyElement.prototype, "people", void 0);
-                MyElement = __decorate([
-                    customElement({
-                        name: 'my-element', template: `
+                let MyElement = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'my-element', template: `
         <au-slot name="grid">
           <au-slot name="header">
             <h4>First Name</h4>
@@ -453,10 +503,31 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             </au-slot>
           </template>
         </au-slot>`
-                    }),
-                    __param(0, IAuSlotsInfo),
-                    __metadata("design:paramtypes", [Object])
-                ], MyElement);
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _people_decorators;
+                    let _people_initializers = [];
+                    let _people_extraInitializers = [];
+                    var MyElement = _classThis = class {
+                        constructor() {
+                            this.people = __runInitializers(this, _people_initializers, void 0);
+                            this.slots = (__runInitializers(this, _people_extraInitializers), resolve(IAuSlotsInfo));
+                        }
+                    };
+                    __setFunctionName(_classThis, "MyElement");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _people_decorators = [bindable];
+                        __esDecorate(null, null, _people_decorators, { kind: "field", name: "people", static: false, private: false, access: { has: obj => "people" in obj, get: obj => obj.people, set: (obj, value) => { obj.people = value; } }, metadata: _metadata }, _people_initializers, _people_extraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        MyElement = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return MyElement = _classThis;
+                })();
                 yield new TestData('works when <au-slot/> re-defines properties', `<my-element people.bind="people">
             <template au-slot="header">
               <h4>Meta</h4>
@@ -469,21 +540,19 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             </template>
           </my-element>`, [
                     MyElement,
-                ], { 'my-element': [
+                ], {
+                    'my-element': [
                         `<h4>Meta</h4> <h4>Surname</h4> <h4>Given name</h4> <div>index: 0 </div> <div>Doe</div> <div>John</div> <div>index: 1 </div> <div>Mustermann</div> <div>Max</div>`,
                         new AuSlotsInfo(['header', 'content'])
-                    ] });
+                    ]
+                });
             }
             {
-                let MyElement = class MyElement {
-                    constructor(slots) {
-                        this.slots = slots;
+                class MyElement {
+                    constructor() {
+                        this.slots = resolve(IAuSlotsInfo);
                     }
-                };
-                MyElement = __decorate([
-                    __param(0, IAuSlotsInfo),
-                    __metadata("design:paramtypes", [Object])
-                ], MyElement);
+                }
                 yield new TestData('works with table', `<my-element items.bind="[{p1: 1, p2: 2}, {p1: 11, p2: 22}]"><template au-slot="header"><th>p1</th><th>p2</th></template><template au-slot="content"><td>\${$host.item.p1}</td><td>\${$host.item.p2}</td></template></my-element>`, [
                     CustomElement.define({
                         name: 'my-element',
@@ -633,42 +702,83 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                 ], expected);
             }
             {
-                let ListBox = class ListBox {
-                };
-                __decorate([
-                    bindable,
-                    __metadata("design:type", Object)
-                ], ListBox.prototype, "value", void 0);
-                ListBox = __decorate([
-                    customElement({
-                        name: 'list-box',
-                        template: `<div><au-slot></au-slot></div>`
-                    })
-                ], ListBox);
+                let ListBox = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'list-box',
+                            template: `<div><au-slot></au-slot></div>`
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _value_decorators;
+                    let _value_initializers = [];
+                    let _value_extraInitializers = [];
+                    var ListBox = _classThis = class {
+                        constructor() {
+                            this.value = __runInitializers(this, _value_initializers, void 0);
+                            __runInitializers(this, _value_extraInitializers);
+                        }
+                    };
+                    __setFunctionName(_classThis, "ListBox");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _value_decorators = [bindable];
+                        __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        ListBox = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return ListBox = _classThis;
+                })();
                 let i = 0;
-                let Assignee = class Assignee {
-                    binding() {
-                        this.value = i++;
-                    }
-                };
-                Assignee = __decorate([
-                    customElement({
-                        name: 'assignee',
-                        template: `<list-box value.two-way="value">
+                let Assignee = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'assignee',
+                            template: `<list-box value.two-way="value">
           <template au-slot>
             \${value}
           </template>
         </list-box>`
-                    })
-                ], Assignee);
-                let ItemRow = class ItemRow {
-                };
-                ItemRow = __decorate([
-                    customElement({
-                        name: 'item-row',
-                        template: `<div><assignee></assignee></div>`
-                    })
-                ], ItemRow);
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Assignee = _classThis = class {
+                        binding() {
+                            this.value = i++;
+                        }
+                    };
+                    __setFunctionName(_classThis, "Assignee");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Assignee = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Assignee = _classThis;
+                })();
+                let ItemRow = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'item-row',
+                            template: `<div><assignee></assignee></div>`
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var ItemRow = _classThis = class {
+                    };
+                    __setFunctionName(_classThis, "ItemRow");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        ItemRow = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return ItemRow = _classThis;
+                })();
                 yield new TestData('coping works correctly in conjunction with repeat.for', `<item-row repeat.for="_ of 3"></item-row>`, [
                     ListBox, Assignee, ItemRow
                 ], {
@@ -722,27 +832,35 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         // #endregion
         // #region complex templating
         {
-            let CollVwr = class CollVwr {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Array)
-            ], CollVwr.prototype, "collection", void 0);
-            CollVwr = __decorate([
-                customElement({ name: 'coll-vwr', template: `<au-slot name="colleslawt"><div repeat.for="item of collection">\${item}</div></au-slot>` })
-            ], CollVwr);
-            let MyElement = class MyElement {
-                constructor(slots) {
-                    this.slots = slots;
-                }
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Array)
-            ], MyElement.prototype, "people", void 0);
-            MyElement = __decorate([
-                customElement({
-                    name: 'my-element', template: `
+            let CollVwr = (() => {
+                let _classDecorators = [customElement({ name: 'coll-vwr', template: `<au-slot name="colleslawt"><div repeat.for="item of collection">\${item}</div></au-slot>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _collection_decorators;
+                let _collection_initializers = [];
+                let _collection_extraInitializers = [];
+                var CollVwr = _classThis = class {
+                    constructor() {
+                        this.collection = __runInitializers(this, _collection_initializers, void 0);
+                        __runInitializers(this, _collection_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "CollVwr");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _collection_decorators = [bindable];
+                    __esDecorate(null, null, _collection_decorators, { kind: "field", name: "collection", static: false, private: false, access: { has: obj => "collection" in obj, get: obj => obj.collection, set: (obj, value) => { obj.collection = value; } }, metadata: _metadata }, _collection_initializers, _collection_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CollVwr = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CollVwr = _classThis;
+            })();
+            let MyElement = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-element', template: `
       <au-slot name="grid">
         <au-slot name="header">
           <h4>First Name</h4>
@@ -757,10 +875,31 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
           </au-slot>
         </template>
       </au-slot>`
-                }),
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], MyElement);
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _people_decorators;
+                let _people_initializers = [];
+                let _people_extraInitializers = [];
+                var MyElement = _classThis = class {
+                    constructor() {
+                        this.people = __runInitializers(this, _people_initializers, void 0);
+                        this.slots = (__runInitializers(this, _people_extraInitializers), resolve(IAuSlotsInfo));
+                    }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _people_decorators = [bindable];
+                    __esDecorate(null, null, _people_decorators, { kind: "field", name: "people", static: false, private: false, access: { has: obj => "people" in obj, get: obj => obj.people, set: (obj, value) => { obj.people = value; } }, metadata: _metadata }, _people_initializers, _people_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
             yield new TestData('simple nesting', `<my-element people.bind="people"></my-element>`, [
                 CollVwr,
                 MyElement,
@@ -856,16 +995,12 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                 }),
             ], { 'my-element': ['<foo-bar>root</foo-bar>', new AuSlotsInfo(['s1'])] });
             {
-                let MyElement = class MyElement {
-                    constructor(slots) {
-                        this.slots = slots;
+                class MyElement {
+                    constructor() {
                         this.message = 'inner';
+                        this.slots = resolve(IAuSlotsInfo);
                     }
-                };
-                MyElement = __decorate([
-                    __param(0, IAuSlotsInfo),
-                    __metadata("design:paramtypes", [Object])
-                ], MyElement);
+                }
                 yield new TestData('CE[au-slot] works - $host', `<my-element>
           <foo-bar au-slot="s1" foo.bind="$host.message"></foo-bar>
         </my-element>`, [
@@ -1020,15 +1155,11 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                     }
                     return content;
                 };
-                let MyElement = class MyElement {
-                    constructor(slots) {
-                        this.slots = slots;
+                class MyElement {
+                    constructor() {
+                        this.slots = resolve(IAuSlotsInfo);
                     }
-                };
-                MyElement = __decorate([
-                    __param(0, IAuSlotsInfo),
-                    __metadata("design:paramtypes", [Object])
-                ], MyElement);
+                }
                 for (let i = 1; i < 11; i++) {
                     yield new TestData(`projection works for deeply nested <au-slot>; nesting level: ${i}`, `<my-element><template au-slot="s${i}">p</template></my-element>`, [
                         CustomElement.define({ name: 'my-element', template: createAuSlot(i) }, MyElement),
@@ -1072,105 +1203,187 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                     return [content, new AuSlotsInfo(slots)];
                 };
                 for (let i = 1; i < 11; i++) {
-                    let MyElement = class MyElement {
-                        constructor(slots) {
-                            this.slots = slots;
+                    class MyElement {
+                        constructor() {
+                            this.slots = resolve(IAuSlotsInfo);
                         }
-                    };
-                    MyElement = __decorate([
-                        __param(0, IAuSlotsInfo),
-                        __metadata("design:paramtypes", [Object])
-                    ], MyElement);
+                    }
                     yield new TestData(`projection works for all non-nested <au-slot>; count: ${i}`, `<my-element>${buildProjection(i)}</my-element>`, [
                         CustomElement.define({ name: 'my-element', template: createAuSlot(i) }, MyElement),
                     ], { 'my-element': buildExpectation(i) });
                 }
             }
             {
-                let Elem = class Elem {
-                };
-                __decorate([
-                    bindable,
-                    __metadata("design:type", String)
-                ], Elem.prototype, "text", void 0);
-                Elem = __decorate([
-                    customElement({
-                        name: 'elem',
-                        template: `Parent \${text}
+                let Elem = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'elem',
+                            template: `Parent \${text}
           <notch>
             <child au-slot text.bind="text" view-model.ref="child"></child>
           </notch>
           \${child.id}`,
-                    })
-                ], Elem);
-                let Notch = class Notch {
-                };
-                Notch = __decorate([
-                    customElement({
-                        name: 'notch',
-                        template: `Notch <au-slot></au-slot>`,
-                    })
-                ], Notch);
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _text_decorators;
+                    let _text_initializers = [];
+                    let _text_extraInitializers = [];
+                    var Elem = _classThis = class {
+                        constructor() {
+                            this.text = __runInitializers(this, _text_initializers, void 0);
+                            __runInitializers(this, _text_extraInitializers);
+                        }
+                    };
+                    __setFunctionName(_classThis, "Elem");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _text_decorators = [bindable];
+                        __esDecorate(null, null, _text_decorators, { kind: "field", name: "text", static: false, private: false, access: { has: obj => "text" in obj, get: obj => obj.text, set: (obj, value) => { obj.text = value; } }, metadata: _metadata }, _text_initializers, _text_extraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Elem = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Elem = _classThis;
+                })();
+                let Notch = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'notch',
+                            template: `Notch <au-slot></au-slot>`,
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Notch = _classThis = class {
+                    };
+                    __setFunctionName(_classThis, "Notch");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Notch = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Notch = _classThis;
+                })();
                 let id = 0;
-                let Child = class Child {
-                    constructor() {
-                        this.id = id++;
-                    }
-                };
-                __decorate([
-                    bindable,
-                    __metadata("design:type", String)
-                ], Child.prototype, "text", void 0);
-                Child = __decorate([
-                    customElement({
-                        name: 'child',
-                        template: `Id: \${id}. Child \${text}`,
-                    })
-                ], Child);
+                let Child = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'child',
+                            template: `Id: \${id}. Child \${text}`,
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _text_decorators;
+                    let _text_initializers = [];
+                    let _text_extraInitializers = [];
+                    var Child = _classThis = class {
+                        constructor() {
+                            this.text = __runInitializers(this, _text_initializers, void 0);
+                            this.id = (__runInitializers(this, _text_extraInitializers), id++);
+                        }
+                    };
+                    __setFunctionName(_classThis, "Child");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _text_decorators = [bindable];
+                        __esDecorate(null, null, _text_decorators, { kind: "field", name: "text", static: false, private: false, access: { has: obj => "text" in obj, get: obj => obj.text, set: (obj, value) => { obj.text = value; } }, metadata: _metadata }, _text_initializers, _text_extraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Child = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Child = _classThis;
+                })();
                 yield new TestData('multiple usage of slotted custom element', `<elem text="1"></elem><elem text="2"></elem>`, [Elem, Notch, Child], {
                     'elem': ['Parent 1 <notch>Notch <child>Id: 0. Child 1</child></notch> 0', null],
                     'elem+elem': ['Parent 2 <notch>Notch <child>Id: 1. Child 2</child></notch> 1', null],
                 });
             }
             {
-                let TabBar = class TabBar {
-                };
-                TabBar = __decorate([
-                    customElement({ name: 'tab-bar', template: '<au-slot></au-slot>' })
-                ], TabBar);
-                let MyTab = class MyTab {
-                };
-                __decorate([
-                    bindable,
-                    __metadata("design:type", Boolean)
-                ], MyTab.prototype, "active", void 0);
-                __decorate([
-                    bindable,
-                    __metadata("design:type", String)
-                ], MyTab.prototype, "label", void 0);
-                MyTab = __decorate([
-                    customElement({
-                        name: 'my-tab',
-                        template: `<button active.class="active">\${label}</button>`
-                    })
-                ], MyTab);
-                let Parent = class Parent {
-                    constructor() {
-                        this.tabs = ['tab 1', 'tab 2'];
-                        this.selected = 'tab 1';
-                    }
-                };
-                Parent = __decorate([
-                    customElement({
-                        name: 'parent',
-                        template: `<tab-bar>
+                let TabBar = (() => {
+                    let _classDecorators = [customElement({ name: 'tab-bar', template: '<au-slot></au-slot>' })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var TabBar = _classThis = class {
+                    };
+                    __setFunctionName(_classThis, "TabBar");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        TabBar = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return TabBar = _classThis;
+                })();
+                let MyTab = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'my-tab',
+                            template: `<button active.class="active">\${label}</button>`
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _active_decorators;
+                    let _active_initializers = [];
+                    let _active_extraInitializers = [];
+                    let _label_decorators;
+                    let _label_initializers = [];
+                    let _label_extraInitializers = [];
+                    var MyTab = _classThis = class {
+                        constructor() {
+                            this.active = __runInitializers(this, _active_initializers, void 0);
+                            this.label = (__runInitializers(this, _active_extraInitializers), __runInitializers(this, _label_initializers, void 0));
+                            __runInitializers(this, _label_extraInitializers);
+                        }
+                    };
+                    __setFunctionName(_classThis, "MyTab");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _active_decorators = [bindable];
+                        _label_decorators = [bindable];
+                        __esDecorate(null, null, _active_decorators, { kind: "field", name: "active", static: false, private: false, access: { has: obj => "active" in obj, get: obj => obj.active, set: (obj, value) => { obj.active = value; } }, metadata: _metadata }, _active_initializers, _active_extraInitializers);
+                        __esDecorate(null, null, _label_decorators, { kind: "field", name: "label", static: false, private: false, access: { has: obj => "label" in obj, get: obj => obj.label, set: (obj, value) => { obj.label = value; } }, metadata: _metadata }, _label_initializers, _label_extraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        MyTab = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return MyTab = _classThis;
+                })();
+                let Parent = (() => {
+                    let _classDecorators = [customElement({
+                            name: 'parent',
+                            template: `<tab-bar>
               <template au-slot>
                 <my-tab repeat.for="t of tabs" label.bind="t" active.bind="selected===t"
                         click.trigger="selected=t"></my-tab>
               </template>
             </tab-bar>`
-                    })
-                ], Parent);
+                        })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Parent = _classThis = class {
+                        constructor() {
+                            this.tabs = ['tab 1', 'tab 2'];
+                            this.selected = 'tab 1';
+                        }
+                    };
+                    __setFunctionName(_classThis, "Parent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Parent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Parent = _classThis;
+                })();
                 yield new TestData('tab-bar', `<parent></parent><parent></parent>`, [MyTab, TabBar, Parent], {}, async ({ host, platform }) => {
                     const myTabs = Array.from(host.querySelectorAll('button'));
                     assert.strictEqual(myTabs.length, 4, 'there should be 4 tabs');
@@ -1189,16 +1402,12 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         // #endregion
         // #region data binding
         {
-            let MyElement = class MyElement {
-                constructor(slots) {
-                    this.slots = slots;
+            class MyElement {
+                constructor() {
                     this.foo = "foo";
+                    this.slots = resolve(IAuSlotsInfo);
                 }
-            };
-            MyElement = __decorate([
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], MyElement);
+            }
             yield new TestData('works with input value binding - $host', `<my-element>
         <input au-slot type="text" value.two-way="$host.foo">
       </my-element>`, [CustomElement.define({ name: 'my-element', template: `<au-slot></au-slot>` }, MyElement)], { 'my-element': ['<input type="text">', new AuSlotsInfo(['default'])] }, async function ({ host, platform }) {
@@ -1223,14 +1432,26 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         });
         {
             const fooValue = '42';
-            let MyElementUser = class MyElementUser {
-                attached() {
-                    this.foo = fooValue;
-                }
-            };
-            MyElementUser = __decorate([
-                customElement({ name: 'my-element-user', template: `<my-element><div au-slot>\${foo}</div></my-element>` })
-            ], MyElementUser);
+            let MyElementUser = (() => {
+                let _classDecorators = [customElement({ name: 'my-element-user', template: `<my-element><div au-slot>\${foo}</div></my-element>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyElementUser = _classThis = class {
+                    attached() {
+                        this.foo = fooValue;
+                    }
+                };
+                __setFunctionName(_classThis, "MyElementUser");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElementUser = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElementUser = _classThis;
+            })();
             yield new TestData('works with non-strictly-initialized property - non $host', '<my-element-user></my-element-user>', [MyElementUser, createMyElement('<au-slot></au-slot>')], {}, async function ({ host, platform }) {
                 platform.domWriteQueue.flush();
                 const meu = host.querySelector('my-element-user');
@@ -1246,19 +1467,43 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         }
         {
             const fooValue = '42';
-            let MyElement = class MyElement {
-                attached() {
-                    this.foo = fooValue;
-                }
-            };
-            MyElement = __decorate([
-                customElement({ name: 'my-element', template: `<au-slot></au-slot>` })
-            ], MyElement);
-            let MyElementUser = class MyElementUser {
-            };
-            MyElementUser = __decorate([
-                customElement({ name: 'my-element-user', template: `<my-element><div au-slot>\${$host.foo}</div></my-element>` })
-            ], MyElementUser);
+            let MyElement = (() => {
+                let _classDecorators = [customElement({ name: 'my-element', template: `<au-slot></au-slot>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyElement = _classThis = class {
+                    attached() {
+                        this.foo = fooValue;
+                    }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
+            let MyElementUser = (() => {
+                let _classDecorators = [customElement({ name: 'my-element-user', template: `<my-element><div au-slot>\${$host.foo}</div></my-element>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyElementUser = _classThis = class {
+                };
+                __setFunctionName(_classThis, "MyElementUser");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElementUser = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElementUser = _classThis;
+            })();
             yield new TestData('works with non-strictly-initialized property - $host', '<my-element-user></my-element-user>', [MyElementUser, MyElement], {}, async function ({ host, platform }) {
                 platform.domWriteQueue.flush();
                 const meu = host.querySelector('my-element-user');
@@ -1281,79 +1526,131 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
       </template>
       `, [], { '': ['<ce-with-au-slot> <div>p</div> </ce-with-au-slot>', null] });
         {
-            let Base = class Base {
-                constructor(slots) {
-                    this.slots = slots;
+            class Base {
+                constructor() {
+                    this.slots = resolve(IAuSlotsInfo);
                 }
-            };
-            Base = __decorate([
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], Base);
-            let MyElement1 = class MyElement1 extends Base {
-            };
-            MyElement1 = __decorate([
-                customElement({
-                    name: 'my-element',
-                    template: '<au-slot>dfb</au-slot><au-slot name="s1">s1fb</au-slot>'
-                })
-            ], MyElement1);
+            }
+            let MyElement1 = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-element',
+                        template: '<au-slot>dfb</au-slot><au-slot name="s1">s1fb</au-slot>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = Base;
+                var MyElement1 = _classThis = class extends _classSuper {
+                };
+                __setFunctionName(_classThis, "MyElement1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement1 = _classThis;
+            })();
             yield new TestData('@ISlotsInfo works with inheritance - #1', '<my-element><div au-slot="s1">s1p</div></my-element>', [MyElement1], { 'my-element': ['dfb<div>s1p</div>', new AuSlotsInfo(['s1'])] });
             class Base2 extends Base {
             }
-            let MyElement2 = class MyElement2 extends Base2 {
-            };
-            MyElement2 = __decorate([
-                customElement({
-                    name: 'my-element',
-                    template: '<au-slot>dfb</au-slot><au-slot name="s1">s1fb</au-slot>'
-                })
-            ], MyElement2);
+            let MyElement2 = (() => {
+                let _classDecorators = [customElement({
+                        name: 'my-element',
+                        template: '<au-slot>dfb</au-slot><au-slot name="s1">s1fb</au-slot>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = Base2;
+                var MyElement2 = _classThis = class extends _classSuper {
+                };
+                __setFunctionName(_classThis, "MyElement2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement2 = _classThis;
+            })();
             yield new TestData('@ISlotsInfo works with inheritance - #2', '<my-element><div au-slot="s1">s1p</div></my-element>', [MyElement2], { 'my-element': ['dfb<div>s1p</div>', new AuSlotsInfo(['s1'])] });
         }
         {
-            let CeOne = class CeOne {
-                constructor(slots) {
-                    this.slots = slots;
-                    assert.instanceOf(slots, AuSlotsInfo);
-                }
-            };
-            CeOne = __decorate([
-                customElement({
-                    name: 'ce-one',
-                    template: '<au-slot>dfb</au-slot><au-slot name="s1">s1fb</au-slot>',
-                }),
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], CeOne);
-            let CeTwo = class CeTwo {
-                constructor(slots) {
-                    this.slots = slots;
-                    assert.instanceOf(slots, AuSlotsInfo);
-                }
-            };
-            CeTwo = __decorate([
-                customElement({
-                    name: 'ce-two',
-                    template: 'ce two',
-                }),
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], CeTwo);
-            let CeThree = class CeThree {
-                constructor(slots) {
-                    this.slots = slots;
-                    assert.instanceOf(slots, AuSlotsInfo);
-                }
-            };
-            CeThree = __decorate([
-                customElement({
-                    name: 'ce-three',
-                    template: '<au-slot name="s1">s1fb</au-slot><ce-one><span au-slot>dp</span></ce-one><ce-two></ce-two>',
-                }),
-                __param(0, IAuSlotsInfo),
-                __metadata("design:paramtypes", [Object])
-            ], CeThree);
+            let CeOne = (() => {
+                let _classDecorators = [customElement({
+                        name: 'ce-one',
+                        template: '<au-slot>dfb</au-slot><au-slot name="s1">s1fb</au-slot>',
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var CeOne = _classThis = class {
+                    constructor() {
+                        this.slots = resolve(IAuSlotsInfo);
+                        assert.instanceOf(this.slots, AuSlotsInfo);
+                    }
+                };
+                __setFunctionName(_classThis, "CeOne");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeOne = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeOne = _classThis;
+            })();
+            let CeTwo = (() => {
+                let _classDecorators = [customElement({
+                        name: 'ce-two',
+                        template: 'ce two',
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var CeTwo = _classThis = class {
+                    constructor() {
+                        this.slots = resolve(IAuSlotsInfo);
+                        assert.instanceOf(this.slots, AuSlotsInfo);
+                    }
+                };
+                __setFunctionName(_classThis, "CeTwo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeTwo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeTwo = _classThis;
+            })();
+            let CeThree = (() => {
+                let _classDecorators = [customElement({
+                        name: 'ce-three',
+                        template: '<au-slot name="s1">s1fb</au-slot><ce-one><span au-slot>dp</span></ce-one><ce-two></ce-two>',
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var CeThree = _classThis = class {
+                    constructor() {
+                        this.slots = resolve(IAuSlotsInfo);
+                        assert.instanceOf(this.slots, AuSlotsInfo);
+                    }
+                };
+                __setFunctionName(_classThis, "CeThree");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeThree = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeThree = _classThis;
+            })();
             yield new TestData('@ISlotsInfo works correctly with element nesting', '<ce-one><span au-slot="s1">s1p</span></ce-one><ce-two></ce-two><ce-three><div au-slot="s1">s1p</div></ce-three>', [CeOne, CeTwo, CeThree], {
                 'ce-one': ['dfb<span>s1p</span>', new AuSlotsInfo(['s1'])],
                 'ce-two': ['ce two', new AuSlotsInfo([])],
@@ -1410,7 +1707,8 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         }
         {
             yield new TestData('works with 3 layers of slot[default] pass through, no projections', `<mdc></mdc><mdc></mdc>`, [
-                CustomElement.define({ name: 'mdc', template: `<mdc-tab-bar
+                CustomElement.define({
+                    name: 'mdc', template: `<mdc-tab-bar
             ><template au-slot
               ><mdc-tab id="mdc-\${id}" click.trigger="increase()">\${count}</mdc-tab>`
                 }, (_a = class Mdc {
@@ -1443,7 +1741,8 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         }
         {
             yield new TestData('works with 3 layers of slot[default] pass through + template controller', `<mdc></mdc><mdc></mdc>`, [
-                CustomElement.define({ name: 'mdc', template: `<mdc-tab-bar
+                CustomElement.define({
+                    name: 'mdc', template: `<mdc-tab-bar
             ><mdc-tab au-slot repeat.for="i of 3" id="mdc-\${id}-\${i}" click.trigger="increase()">\${count + i}</mdc-tab>`
                 }, (_b = class Mdc {
                         constructor() {
@@ -1540,15 +1839,27 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
     }
     for (const listener of ['capture', 'trigger', 'delegate']) {
         describe(listener, function () {
-            let MyElement = class MyElement {
-                constructor() {
-                    this.callCount = 0;
-                }
-                fn() { this.callCount++; }
-            };
-            MyElement = __decorate([
-                customElement({ name: 'my-element', template: `<au-slot><button click.${listener}="fn()">Click</button></au-slot>` })
-            ], MyElement);
+            let MyElement = (() => {
+                let _classDecorators = [customElement({ name: 'my-element', template: `<au-slot><button click.${listener}="fn()">Click</button></au-slot>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var MyElement = _classThis = class {
+                    constructor() {
+                        this.callCount = 0;
+                    }
+                    fn() { this.callCount++; }
+                };
+                __setFunctionName(_classThis, "MyElement");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyElement = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyElement = _classThis;
+            })();
             $it('w/o projection', async function ({ host, platform, app }) {
                 const ce = host.querySelector('my-element');
                 const button = ce.querySelector('button');
@@ -1575,14 +1886,26 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             }, { template: `<my-element><button au-slot="default" click.${listener}="fn()">Click</button></my-element>`, registrations: [MyElement] });
         });
     }
-    let El = class El {
-    };
-    El = __decorate([
-        customElement({
-            name: 'my-el',
-            template: '<p>my-el content: <au-slot></au-slot></p>'
-        })
-    ], El);
+    let El = (() => {
+        let _classDecorators = [customElement({
+                name: 'my-el',
+                template: '<p>my-el content: <au-slot></au-slot></p>'
+            })];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var El = _classThis = class {
+        };
+        __setFunctionName(_classThis, "El");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            El = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return El = _classThis;
+    })();
     it('treats CE content without slot as default slotting', async function () {
         const { assertText } = await createFixture
             .html `<my-el>hello</my-el>`
@@ -1661,30 +1984,52 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
     describe('with dependency injection', function () {
         it('injects the right parent component', async function () {
             let id = 0;
-            let Parent = class Parent {
-                constructor() {
-                    this.id = ++id;
-                }
-            };
-            Parent = __decorate([
-                customElement({
-                    name: 'parent',
-                    template: '<au-slot>'
-                })
-            ], Parent);
+            let Parent = (() => {
+                let _classDecorators = [customElement({
+                        name: 'parent',
+                        template: '<au-slot>'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Parent = _classThis = class {
+                    constructor() {
+                        this.id = ++id;
+                    }
+                };
+                __setFunctionName(_classThis, "Parent");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Parent = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Parent = _classThis;
+            })();
             let parent = null;
-            let Child = class Child {
-                constructor($parent) {
-                    parent = $parent;
-                }
-            };
-            Child = __decorate([
-                inject(Parent),
-                customElement({
-                    name: 'child'
-                }),
-                __metadata("design:paramtypes", [Parent])
-            ], Child);
+            let Child = (() => {
+                let _classDecorators = [inject(Parent), customElement({
+                        name: 'child'
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Child = _classThis = class {
+                    constructor($parent) {
+                        parent = $parent;
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
             createFixture('<parent view-model.ref=parent><child>', class App {
             }, [Parent, Child]);
             assert.instanceOf(parent, Parent);
@@ -1732,32 +2077,68 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             let l1Id = 0;
             let l2Id = 0;
             let l3Id = 0;
-            let CeL1 = class CeL1 {
-                constructor() {
-                    this.id = ++l1Id;
-                }
-            };
-            CeL1 = __decorate([
-                customElement({ name: 'ce-l1', template: '<au-slot>' })
-            ], CeL1);
-            let CeL2 = class CeL2 {
-                constructor() {
-                    this.id = ++l2Id;
-                }
-            };
-            CeL2 = __decorate([
-                customElement({ name: 'ce-l2', template: '<au-slot>' })
-            ], CeL2);
-            let CeL3 = class CeL3 {
-                constructor() {
-                    this.l1 = resolve(CeL1);
-                    this.l2 = resolve(CeL2);
-                    this.id = ++l3Id;
-                }
-            };
-            CeL3 = __decorate([
-                customElement({ name: 'ce-l3', template: 'id: ${l1.id}-${l2.id}' })
-            ], CeL3);
+            let CeL1 = (() => {
+                let _classDecorators = [customElement({ name: 'ce-l1', template: '<au-slot>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var CeL1 = _classThis = class {
+                    constructor() {
+                        this.id = ++l1Id;
+                    }
+                };
+                __setFunctionName(_classThis, "CeL1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeL1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeL1 = _classThis;
+            })();
+            let CeL2 = (() => {
+                let _classDecorators = [customElement({ name: 'ce-l2', template: '<au-slot>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var CeL2 = _classThis = class {
+                    constructor() {
+                        this.id = ++l2Id;
+                    }
+                };
+                __setFunctionName(_classThis, "CeL2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeL2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeL2 = _classThis;
+            })();
+            let CeL3 = (() => {
+                let _classDecorators = [customElement({ name: 'ce-l3', template: 'id: ${l1.id}-${l2.id}' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var CeL3 = _classThis = class {
+                    constructor() {
+                        this.l1 = resolve(CeL1);
+                        this.l2 = resolve(CeL2);
+                        this.id = ++l3Id;
+                    }
+                };
+                __setFunctionName(_classThis, "CeL3");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeL3 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeL3 = _classThis;
+            })();
             const { assertTextContain } = createFixture(`<ce-l1><span au-slot>foo</span></ce-l1> <!-- ce-l1#1 -->
         <ce-l1> <!-- ce-l1#2 -->
           <template au-slot>
@@ -1819,22 +2200,46 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
                 }
             }
             Foo.id = 0;
-            let CeL1 = class CeL1 {
-                constructor() {
-                    this.foo = resolve(newInstanceForScope(Foo));
-                }
-            };
-            CeL1 = __decorate([
-                customElement({ name: 'ce-l1', template: 'ce foo: ${foo.id} <br><au-slot></au-slot>' })
-            ], CeL1);
-            let CeL2 = class CeL2 {
-                constructor() {
-                    this.foo = resolve(Foo);
-                }
-            };
-            CeL2 = __decorate([
-                customElement({ name: 'ce-l2', template: 'ce2 foo: ${foo.id}' })
-            ], CeL2);
+            let CeL1 = (() => {
+                let _classDecorators = [customElement({ name: 'ce-l1', template: 'ce foo: ${foo.id} <br><au-slot></au-slot>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var CeL1 = _classThis = class {
+                    constructor() {
+                        this.foo = resolve(newInstanceForScope(Foo));
+                    }
+                };
+                __setFunctionName(_classThis, "CeL1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeL1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeL1 = _classThis;
+            })();
+            let CeL2 = (() => {
+                let _classDecorators = [customElement({ name: 'ce-l2', template: 'ce2 foo: ${foo.id}' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var CeL2 = _classThis = class {
+                    constructor() {
+                        this.foo = resolve(Foo);
+                    }
+                };
+                __setFunctionName(_classThis, "CeL2");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeL2 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeL2 = _classThis;
+            })();
             const { assertTextContain } = createFixture(`app foo: \${foo.id}
         <ce-l1>
           <ce-l2 au-slot>

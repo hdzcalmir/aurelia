@@ -147,18 +147,6 @@ class FoundRoute {
     }
 }
 
-function __decorate(t, i, s, e) {
-    var n = arguments.length, r = n < 3 ? i : e === null ? e = Object.getOwnPropertyDescriptor(i, s) : e, o;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(t, i, s, e); else for (var h = t.length - 1; h >= 0; h--) if (o = t[h]) r = (n < 3 ? o(r) : n > 3 ? o(i, s, r) : o(i, s)) || r;
-    return n > 3 && r && Object.defineProperty(i, s, r), r;
-}
-
-function __param(t, i) {
-    return function(s, e) {
-        i(s, e, t);
-    };
-}
-
 class InstructionParser {
     static parse(t, i, s, e) {
         if (!i) {
@@ -452,7 +440,7 @@ class RouterOptions {
         if (t instanceof Router) {
             t = t.configuration;
         } else {
-            t = t.get(v);
+            t = t.get(g);
         }
         return t.options;
     }
@@ -835,13 +823,14 @@ class InstructionComponent {
             return null;
         }
         const r = t.createChild();
-        const o = this.isType() ? r.invoke(this.type) : r.get(routerComponentResolver(this.name));
-        if (o == null) {
+        const o = this.isType() ? this.type : r.getResolver(i.CustomElement.keyFrom(this.name)).getFactory(r).Type;
+        const h = r.invoke(o);
+        if (h == null) {
             throw new Error(`Failed to create instance when trying to resolve component '${this.name}'!`);
         }
-        const h = i.Controller.$el(r, o, e, null);
-        h.parent = s;
-        return o;
+        const u = i.Controller.$el(r, h, e, null);
+        u.parent = s;
+        return h;
     }
     same(t, i = false) {
         return i ? this.type === t.type : this.name === t.name;
@@ -852,22 +841,6 @@ class InstructionComponent {
         }
         return this.name;
     }
-}
-
-function routerComponentResolver(t) {
-    const s = i.CustomElement.keyFrom(t);
-    return {
-        $isResolver: true,
-        resolve(t, i) {
-            if (i.has(s, false)) {
-                return i.get(s);
-            }
-            if (i.root.has(s, false)) {
-                return i.root.get(s);
-            }
-            return i.get(s);
-        }
-    };
 }
 
 function arrayRemove(t, i) {
@@ -1282,16 +1255,13 @@ class Route {
         this.reloadBehavior = o;
         this.data = h;
     }
-    static isConfigured(t) {
-        return s.Metadata.hasOwn(Route.resourceKey, t) || "parameters" in t || "title" in t;
-    }
     static configure(t, i) {
         const e = Route.create(t, i);
-        s.Metadata.define(Route.resourceKey, e, i);
+        s.Metadata.define(e, i, Route.resourceKey);
         return i;
     }
     static getConfiguration(t) {
-        const i = s.Metadata.getOwn(Route.resourceKey, t) ?? {};
+        const i = s.Metadata.get(Route.resourceKey, t) ?? {};
         if (Array.isArray(t.parameters)) {
             i.parameters = t.parameters;
         }
@@ -1366,17 +1336,17 @@ Route.resourceKey = t.getResourceKeyFor("route");
 const r = {
     name: /*@__PURE__*/ t.getResourceKeyFor("routes"),
     isConfigured(t) {
-        return s.Metadata.hasOwn(r.name, t) || "routes" in t;
+        return s.Metadata.has(r.name, t) || "routes" in t;
     },
     configure(t, i) {
         const e = t.map((t => Route.create(t)));
-        s.Metadata.define(r.name, e, i);
+        s.Metadata.define(e, i, r.name);
         return i;
     },
     getConfiguration(t) {
         const i = t;
         const e = [];
-        const n = s.Metadata.getOwn(r.name, t);
+        const n = s.Metadata.get(r.name, t);
         if (Array.isArray(n)) {
             e.push(...n);
         }
@@ -1388,8 +1358,11 @@ const r = {
 };
 
 function routes(t) {
-    return function(i) {
-        return r.configure(t, i);
+    return function(i, s) {
+        s.addInitializer((function() {
+            r.configure(t, this);
+        }));
+        return i;
     };
 }
 
@@ -2958,10 +2931,8 @@ class NavigatorNavigateEvent {
 
 NavigatorNavigateEvent.eventName = "au:router:navigation-navigate";
 
-exports.Navigator = class Navigator {
-    constructor(t, i) {
-        this.ea = t;
-        this.container = i;
+class Navigator {
+    constructor() {
         this.lastNavigationIndex = -1;
         this.navigations = [];
         this.options = {
@@ -2974,7 +2945,8 @@ exports.Navigator = class Navigator {
             index: 0,
             completed: true
         });
-        this.lastNavigationIndex = -1;
+        this.ea = t.resolve(t.IEventAggregator);
+        this.container = t.resolve(t.IContainer);
     }
     start(t) {
         if (this.isActive) {
@@ -3191,9 +3163,7 @@ exports.Navigator = class Navigator {
             }
         }
     }
-};
-
-exports.Navigator = __decorate([ __param(0, t.IEventAggregator), __param(1, t.IContainer) ], exports.Navigator);
+}
 
 const o = e.RouteRecognizer;
 
@@ -4103,14 +4073,10 @@ class TaskQueue {
     }
 }
 
-let l = class BrowserViewerStore {
-    constructor(t, i, s, e, n) {
-        this.platform = t;
-        this.window = i;
-        this.history = s;
-        this.location = e;
-        this.ea = n;
+class BrowserViewerStore {
+    constructor() {
         this.allowedExecutionCostWithinTick = 2;
+        this.pendingCalls = new TaskQueue;
         this.isActive = false;
         this.options = {
             useUrlFragmentHash: true
@@ -4119,7 +4085,11 @@ let l = class BrowserViewerStore {
             eventTask: null,
             suppressPopstate: false
         };
-        this.pendingCalls = new TaskQueue;
+        this.platform = t.resolve(i.IPlatform);
+        this.window = t.resolve(i.IWindow);
+        this.history = t.resolve(i.IHistory);
+        this.location = t.resolve(i.ILocation);
+        this.ea = t.resolve(t.IEventAggregator);
     }
     start(t) {
         if (this.isActive) {
@@ -4270,9 +4240,7 @@ let l = class BrowserViewerStore {
             throw new Error(`Failed to ${i} state, probably due to unserializable data and/or parameters: ${t}${s}`);
         }
     }
-};
-
-l = __decorate([ __param(0, i.IPlatform), __param(1, i.IWindow), __param(2, i.IHistory), __param(3, i.ILocation), __param(4, t.IEventAggregator) ], l);
+}
 
 class NavigatorViewerState {
     constructor(t, i, s, e) {
@@ -4692,7 +4660,7 @@ class Title {
     }
 }
 
-const c = /*@__PURE__*/ t.DI.createInterface("IRouter", (t => t.singleton(Router)));
+const l = /*@__PURE__*/ t.DI.createInterface("IRouter", (t => t.singleton(Router)));
 
 class Router {
     constructor() {
@@ -4706,10 +4674,10 @@ class Router {
         this.R = t.resolve(t.ILogger);
         this.container = t.resolve(t.IContainer);
         this.ea = t.resolve(t.IEventAggregator);
-        this.navigator = t.resolve(exports.Navigator);
-        this.viewer = t.resolve(l);
-        this.store = t.resolve(l);
-        this.configuration = t.resolve(v);
+        this.navigator = t.resolve(Navigator);
+        this.viewer = t.resolve(BrowserViewerStore);
+        this.store = t.resolve(BrowserViewerStore);
+        this.configuration = t.resolve(g);
         this.handleNavigatorNavigateEvent = t => {
             void this.I(t);
         };
@@ -5174,12 +5142,12 @@ class RouterNavigationErrorEvent extends RouterNavigationEvent {
 
 RouterNavigationErrorEvent.eventName = "au:router:navigation-error";
 
-const f = /*@__PURE__*/ t.DI.createInterface("ILinkHandler", (t => t.singleton(LinkHandler)));
+const c = /*@__PURE__*/ t.DI.createInterface("ILinkHandler", (t => t.singleton(LinkHandler)));
 
 class LinkHandler {
     constructor() {
         this.window = t.resolve(i.IWindow);
-        this.router = t.resolve(c);
+        this.router = t.resolve(l);
     }
     handleEvent(t) {
         this.handleClick(t);
@@ -5219,8 +5187,11 @@ class LinkHandler {
 }
 
 function route(t) {
-    return function(i) {
-        return Route.configure(t, i);
+    return function(i, s) {
+        s.addInitializer((function() {
+            Route.configure(t, i);
+        }));
+        return i;
     };
 }
 
@@ -5280,11 +5251,11 @@ function getLoadIndicator(t) {
     return i;
 }
 
-const d = i.BindingMode.toView;
+const f = i.BindingMode.toView;
 
-const p = i.CustomElement.createInjectable();
+const d = i.CustomElement.createInjectable();
 
-exports.ViewportCustomElement = class ViewportCustomElement {
+class ViewportCustomElement {
     constructor() {
         this.name = "default";
         this.usedBy = "";
@@ -5300,11 +5271,11 @@ exports.ViewportCustomElement = class ViewportCustomElement {
         this.pendingChildren = [];
         this.pendingPromise = null;
         this.isBound = false;
-        this.router = t.resolve(c);
+        this.router = t.resolve(l);
         this.element = t.resolve(i.INode);
         this.container = t.resolve(t.IContainer);
         this.ea = t.resolve(t.IEventAggregator);
-        this.parentViewport = t.resolve(p);
+        this.parentViewport = t.resolve(d);
         this.instruction = t.resolve(i.IInstruction);
     }
     hydrated(t) {
@@ -5397,36 +5368,17 @@ exports.ViewportCustomElement = class ViewportCustomElement {
             }
         }
     }
-};
+}
 
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "name", void 0);
-
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "usedBy", void 0);
-
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "default", void 0);
-
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "fallback", void 0);
-
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "fallbackAction", void 0);
-
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "noScope", void 0);
-
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "noLink", void 0);
-
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "noTitle", void 0);
-
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "noHistory", void 0);
-
-__decorate([ i.bindable ], exports.ViewportCustomElement.prototype, "stateful", void 0);
-
-exports.ViewportCustomElement = __decorate([ i.customElement({
+i.CustomElement.define({
     name: "au-viewport",
-    injectable: p
-}) ], exports.ViewportCustomElement);
+    injectable: d,
+    bindables: [ "name", "usedBy", "default", "fallback", "fallbackAction", "noScope", "noLink", "noTitle", "noHistory", "stateful" ]
+}, ViewportCustomElement);
 
-const g = i.CustomElement.createInjectable();
+const p = i.CustomElement.createInjectable();
 
-exports.ViewportScopeCustomElement = class ViewportScopeCustomElement {
+class ViewportScopeCustomElement {
     constructor() {
         this.name = "default";
         this.catches = "";
@@ -5434,10 +5386,10 @@ exports.ViewportScopeCustomElement = class ViewportScopeCustomElement {
         this.source = null;
         this.viewportScope = null;
         this.isBound = false;
-        this.router = t.resolve(c);
+        this.router = t.resolve(l);
         this.element = t.resolve(i.INode);
         this.container = t.resolve(t.IContainer);
-        this.parent = t.resolve(g);
+        this.parent = t.resolve(p);
         this.parentController = t.resolve(i.IController);
     }
     hydrated(t) {
@@ -5497,30 +5449,23 @@ exports.ViewportScopeCustomElement = class ViewportScopeCustomElement {
         }
         return void 0;
     }
-};
+}
 
-__decorate([ i.bindable ], exports.ViewportScopeCustomElement.prototype, "name", void 0);
-
-__decorate([ i.bindable ], exports.ViewportScopeCustomElement.prototype, "catches", void 0);
-
-__decorate([ i.bindable ], exports.ViewportScopeCustomElement.prototype, "collection", void 0);
-
-__decorate([ i.bindable ], exports.ViewportScopeCustomElement.prototype, "source", void 0);
-
-exports.ViewportScopeCustomElement = __decorate([ i.customElement({
+i.CustomElement.define({
     name: "au-viewport-scope",
     template: "<template></template>",
     containerless: false,
-    injectable: g
-}) ], exports.ViewportScopeCustomElement);
+    injectable: p,
+    bindables: [ "name", "catches", "collection", "source" ]
+}, ViewportScopeCustomElement);
 
-exports.LoadCustomAttribute = class LoadCustomAttribute {
+class LoadCustomAttribute {
     constructor() {
         this.P = false;
         this.hasHref = null;
         this.element = t.resolve(i.INode);
-        this.router = t.resolve(c);
-        this.linkHandler = t.resolve(f);
+        this.router = t.resolve(l);
+        this.linkHandler = t.resolve(c);
         this.ea = t.resolve(t.IEventAggregator);
         this.activeClass = this.router.configuration.options.indicators.loadActive;
         this.navigationEndHandler = t => {
@@ -5602,27 +5547,26 @@ exports.LoadCustomAttribute = class LoadCustomAttribute {
         }
         return new FoundRoute;
     }
-};
+}
 
-__decorate([ i.bindable({
-    mode: d
-}) ], exports.LoadCustomAttribute.prototype, "value", void 0);
+i.CustomAttribute.define({
+    name: "load",
+    bindables: {
+        value: {
+            mode: f
+        },
+        component: {},
+        parameters: {},
+        viewport: {},
+        id: {}
+    }
+}, LoadCustomAttribute);
 
-__decorate([ i.bindable ], exports.LoadCustomAttribute.prototype, "component", void 0);
-
-__decorate([ i.bindable ], exports.LoadCustomAttribute.prototype, "parameters", void 0);
-
-__decorate([ i.bindable ], exports.LoadCustomAttribute.prototype, "viewport", void 0);
-
-__decorate([ i.bindable ], exports.LoadCustomAttribute.prototype, "id", void 0);
-
-exports.LoadCustomAttribute = __decorate([ i.customAttribute("load") ], exports.LoadCustomAttribute);
-
-exports.HrefCustomAttribute = class HrefCustomAttribute {
+class HrefCustomAttribute {
     constructor() {
         this.element = t.resolve(i.INode);
-        this.router = t.resolve(c);
-        this.linkHandler = t.resolve(f);
+        this.router = t.resolve(l);
+        this.linkHandler = t.resolve(c);
         this.ea = t.resolve(t.IEventAggregator);
         this.activeClass = this.router.configuration.options.indicators.loadActive;
         this.navigationEndHandler = t => {
@@ -5661,50 +5605,55 @@ exports.HrefCustomAttribute = class HrefCustomAttribute {
     hasLoad() {
         const t = this.$controller.parent;
         const i = t.children;
-        return i?.some((t => t.vmKind === "customAttribute" && t.viewModel instanceof exports.LoadCustomAttribute)) ?? false;
+        return i?.some((t => t.vmKind === "customAttribute" && t.viewModel instanceof LoadCustomAttribute)) ?? false;
+    }
+}
+
+HrefCustomAttribute.$au = {
+    type: "custom-attribute",
+    name: "href",
+    noMultiBindings: true,
+    bindables: {
+        value: {
+            mode: f
+        }
     }
 };
 
-__decorate([ i.bindable({
-    mode: d
-}) ], exports.HrefCustomAttribute.prototype, "value", void 0);
+class ConsideredActiveCustomAttribute {}
 
-exports.HrefCustomAttribute = __decorate([ i.customAttribute({
-    name: "href",
-    noMultiBindings: true
-}) ], exports.HrefCustomAttribute);
+i.CustomAttribute.define({
+    name: "considered-active",
+    bindables: {
+        value: {
+            mode: f
+        }
+    }
+}, ConsideredActiveCustomAttribute);
 
-exports.ConsideredActiveCustomAttribute = class ConsideredActiveCustomAttribute {};
+const g = /*@__PURE__*/ t.DI.createInterface("IRouterConfiguration", (t => t.singleton(RouterConfiguration)));
 
-__decorate([ i.bindable({
-    mode: d
-}) ], exports.ConsideredActiveCustomAttribute.prototype, "value", void 0);
+const v = l;
 
-exports.ConsideredActiveCustomAttribute = __decorate([ i.customAttribute("considered-active") ], exports.ConsideredActiveCustomAttribute);
+const m = [ v ];
 
-const v = /*@__PURE__*/ t.DI.createInterface("IRouterConfiguration", (t => t.singleton(RouterConfiguration)));
+const w = ViewportCustomElement;
 
-const m = c;
+const R = ViewportScopeCustomElement;
 
-const w = [ m ];
+const I = LoadCustomAttribute;
 
-const R = exports.ViewportCustomElement;
+const C = HrefCustomAttribute;
 
-const I = exports.ViewportScopeCustomElement;
-
-const y = exports.LoadCustomAttribute;
-
-const E = exports.HrefCustomAttribute;
-
-const C = [ exports.ViewportCustomElement, exports.ViewportScopeCustomElement, exports.LoadCustomAttribute, exports.HrefCustomAttribute, exports.ConsideredActiveCustomAttribute ];
+const y = [ ViewportCustomElement, ViewportScopeCustomElement, LoadCustomAttribute, HrefCustomAttribute, ConsideredActiveCustomAttribute ];
 
 class RouterConfiguration {
     static register(t) {
-        const s = t.get(v);
+        const s = t.get(g);
         s.options = RouterConfiguration.options;
         s.options.setRouterConfiguration(s);
         RouterConfiguration.options = RouterOptions.create();
-        return t.register(...w, ...C, i.AppTask.activating(c, RouterConfiguration.configurationCall), i.AppTask.activated(c, (t => t.initialLoad())), i.AppTask.deactivated(c, (t => t.stop())));
+        return t.register(...m, ...y, i.AppTask.activating(l, RouterConfiguration.configurationCall), i.AppTask.activated(l, (t => t.initialLoad())), i.AppTask.deactivated(l, (t => t.stop())));
     }
     static customize(t) {
         if (t === undefined) {
@@ -5727,7 +5676,7 @@ class RouterConfiguration {
         if (t instanceof Router) {
             return t.configuration;
         }
-        return t.get(v);
+        return t.get(g);
     }
     apply(t, i = false) {
         if (i) {
@@ -5754,9 +5703,11 @@ RouterConfiguration.configurationCall = t => {
 
 exports.ConfigurableRoute = h;
 
-exports.DefaultComponents = w;
+exports.ConsideredActiveCustomAttribute = ConsideredActiveCustomAttribute;
 
-exports.DefaultResources = C;
+exports.DefaultComponents = m;
+
+exports.DefaultResources = y;
 
 exports.Endpoint = n;
 
@@ -5764,25 +5715,31 @@ exports.EndpointContent = EndpointContent;
 
 exports.FoundRoute = FoundRoute;
 
-exports.HrefCustomAttributeRegistration = E;
+exports.HrefCustomAttribute = HrefCustomAttribute;
 
-exports.ILinkHandler = f;
+exports.HrefCustomAttributeRegistration = C;
 
-exports.IRouter = c;
+exports.ILinkHandler = c;
 
-exports.IRouterConfiguration = v;
+exports.IRouter = l;
+
+exports.IRouterConfiguration = g;
 
 exports.InstructionParameters = InstructionParameters;
 
 exports.LinkHandler = LinkHandler;
 
-exports.LoadCustomAttributeRegistration = y;
+exports.LoadCustomAttribute = LoadCustomAttribute;
+
+exports.LoadCustomAttributeRegistration = I;
 
 exports.Navigation = Navigation;
 
 exports.NavigationCoordinator = NavigationCoordinator;
 
 exports.NavigationFlags = NavigationFlags;
+
+exports.Navigator = Navigator;
 
 exports.RecognizedRoute = u;
 
@@ -5808,7 +5765,7 @@ exports.RouterNavigationStartEvent = RouterNavigationStartEvent;
 
 exports.RouterOptions = RouterOptions;
 
-exports.RouterRegistration = m;
+exports.RouterRegistration = v;
 
 exports.RouterStartEvent = RouterStartEvent;
 
@@ -5830,7 +5787,9 @@ exports.Viewport = Viewport;
 
 exports.ViewportContent = ViewportContent;
 
-exports.ViewportCustomElementRegistration = R;
+exports.ViewportCustomElement = ViewportCustomElement;
+
+exports.ViewportCustomElementRegistration = w;
 
 exports.ViewportOptions = ViewportOptions;
 
@@ -5838,7 +5797,9 @@ exports.ViewportScope = ViewportScope;
 
 exports.ViewportScopeContent = ViewportScopeContent;
 
-exports.ViewportScopeCustomElementRegistration = I;
+exports.ViewportScopeCustomElement = ViewportScopeCustomElement;
+
+exports.ViewportScopeCustomElementRegistration = R;
 
 exports.route = route;
 

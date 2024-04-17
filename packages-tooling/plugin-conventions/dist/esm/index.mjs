@@ -40,27 +40,22 @@ const modifyCode = (typeof $modifyCode__default === 'function'
             ? $modifyCode
             : $modifyCode.default);
 
-const { createSourceFile, ScriptTarget, isImportDeclaration, isStringLiteral, isNamedImports, isClassDeclaration, canHaveModifiers, getModifiers, SyntaxKind, canHaveDecorators, getDecorators, isCallExpression, isIdentifier } = pkg;
+const { createSourceFile, ScriptTarget, isImportDeclaration, isStringLiteral, isNamedImports, isClassDeclaration, canHaveModifiers, getModifiers, SyntaxKind, canHaveDecorators, getDecorators, isCallExpression, isIdentifier, visitEachChild, visitNode, isExpressionStatement, isObjectLiteralExpression, transform, createPrinter, isPropertyDeclaration, getCombinedModifierFlags, ModifierFlags, isPropertyAccessExpression, factory: { createSpreadAssignment, createIdentifier, createObjectLiteralExpression, updateCallExpression, updateExpressionStatement, createPropertyAssignment, updateClassDeclaration, updatePropertyDeclaration, } } = pkg;
 function preprocessResource(unit, options) {
     const expectedResourceName = resourceName(unit.path);
     const sf = createSourceFile(unit.path, unit.contents, ScriptTarget.Latest);
     let exportedClassName;
     let auImport = { names: [], start: 0, end: 0 };
     let runtimeImport = { names: [], start: 0, end: 0 };
-    let metadataImport = { names: [], start: 0, end: 0 };
     let implicitElement;
-    let customElementName;
+    let customElementDecorator;
+    let defineElementInformation;
     const localDeps = [];
-    const conventionalDecorators = [];
+    const definitions = [];
     sf.statements.forEach(s => {
         const au = captureImport(s, 'aurelia', unit.contents);
         if (au) {
             auImport = au;
-            return;
-        }
-        const metadata = captureImport(s, '@aurelia/metadata', unit.contents);
-        if (metadata) {
-            metadataImport = metadata;
             return;
         }
         const runtime = captureImport(s, '@aurelia/runtime-html', unit.contents);
@@ -68,34 +63,30 @@ function preprocessResource(unit, options) {
             runtimeImport = runtime;
             return;
         }
-        const resource = findResource(s, expectedResourceName, unit.filePair, unit.isViewPair, unit.contents);
+        const resource = findResource(s, expectedResourceName, unit.filePair, unit.contents);
         if (!resource)
             return;
-        const { className, localDep, needDecorator, implicitStatement, runtimeImportName, customName } = resource;
+        const { className, localDep, needDefinition, implicitStatement, runtimeImportName, customElementDecorator: customName, defineElementInformation: $defineElementInformation, } = resource;
         if (localDep)
             localDeps.push(localDep);
-        if (needDecorator)
-            conventionalDecorators.push(needDecorator);
+        if (needDefinition)
+            definitions.push(needDefinition);
         if (implicitStatement)
             implicitElement = implicitStatement;
         if (runtimeImportName && !auImport.names.includes(runtimeImportName)) {
             ensureTypeIsExported(runtimeImport.names, runtimeImportName);
         }
-        if (className && options.hmr && process.env.NODE_ENV !== 'production') {
+        if (className) {
             exportedClassName = className;
         }
         if (customName)
-            customElementName = customName;
+            customElementDecorator = customName;
+        if ($defineElementInformation)
+            defineElementInformation = $defineElementInformation;
     });
     let m = modifyCode(unit.contents, unit.path);
     const hmrEnabled = options.hmr && exportedClassName && process.env.NODE_ENV !== 'production';
     if (options.enableConventions || hmrEnabled) {
-        if (hmrEnabled && metadataImport.names.length) {
-            let metadataImportStatement = `import { ${metadataImport.names.join(', ')} } from '@aurelia/metadata';`;
-            if (metadataImport.end === metadataImport.start)
-                metadataImportStatement += '\n';
-            m.replace(metadataImport.start, metadataImport.end, metadataImportStatement);
-        }
         if (runtimeImport.names.length) {
             let runtimeImportStatement = `import { ${runtimeImport.names.join(', ')} } from '@aurelia/runtime-html';`;
             if (runtimeImport.end === runtimeImport.start)
@@ -105,14 +96,13 @@ function preprocessResource(unit, options) {
     }
     if (options.enableConventions) {
         m = modifyResource(unit, m, {
-            runtimeImport,
-            metadataImport,
             exportedClassName,
             implicitElement,
             localDeps,
-            conventionalDecorators,
-            customElementName,
+            definitions: definitions,
+            customElementDecorator,
             transformHtmlImportSpecifier: options.transformHtmlImportSpecifier,
+            defineElementInformation,
         });
     }
     if (options.hmr && exportedClassName && process.env.NODE_ENV !== 'production') {
@@ -123,34 +113,48 @@ function preprocessResource(unit, options) {
     return m.transform();
 }
 function modifyResource(unit, m, options) {
-    const { implicitElement, localDeps, conventionalDecorators, customElementName, transformHtmlImportSpecifier = s => s, } = options;
+    const { implicitElement, localDeps, definitions, customElementDecorator, transformHtmlImportSpecifier = s => s, exportedClassName, defineElementInformation, } = options;
     if (implicitElement && unit.filePair) {
-        const dec = unit.isViewPair ? 'view' : 'customElement';
         const viewDef = '__au2ViewDef';
         m.prepend(`import * as ${viewDef} from './${transformHtmlImportSpecifier(unit.filePair)}';\n`);
-        if (localDeps.length) {
-            const elementStatement = unit.contents.slice(implicitElement.pos, implicitElement.end);
-            m.replace(implicitElement.pos, implicitElement.end, '');
-            if (customElementName) {
-                const name = unit.contents.slice(customElementName.pos, customElementName.end);
-                m.append(`\n${elementStatement.substring(0, customElementName.pos - implicitElement.pos)}{ ...${viewDef}, name: ${name}, dependencies: [ ...${viewDef}.dependencies, ${localDeps.join(', ')} ] }${elementStatement.substring(customElementName.end - implicitElement.pos)}\n`);
-            }
-            else {
-                m.append(`\n@${dec}({ ...${viewDef}, dependencies: [ ...${viewDef}.dependencies, ${localDeps.join(', ')} ] })\n${elementStatement}\n`);
-            }
+        if (defineElementInformation) {
+            m.replace(defineElementInformation.position.pos, defineElementInformation.position.end, defineElementInformation.modifiedContent);
         }
         else {
-            if (customElementName) {
-                const name = unit.contents.slice(customElementName.pos, customElementName.end);
-                m.replace(customElementName.pos, customElementName.end, `{ ...${viewDef}, name: ${name} }`);
+            const elementStatement = unit.contents.slice(implicitElement.pos, implicitElement.end);
+            if (elementStatement.includes('$au')) {
+                const sf = createSourceFile('temp.ts', elementStatement, ScriptTarget.Latest);
+                const result = transform(sf, [createAuResourceTransformer()]);
+                const modified = createPrinter().printFile(result.transformed[0]);
+                m.replace(implicitElement.pos, implicitElement.end, modified);
+            }
+            else if (localDeps.length) {
+                if (customElementDecorator) {
+                    const elementStatement = unit.contents.slice(customElementDecorator.position.end, implicitElement.end);
+                    m.replace(implicitElement.pos, implicitElement.end, '');
+                    const name = unit.contents.slice(customElementDecorator.namePosition.pos, customElementDecorator.namePosition.end);
+                    m.append(`\n${elementStatement}\nCustomElement.define({ ...${viewDef}, name: ${name}, dependencies: [ ...${viewDef}.dependencies, ${localDeps.join(', ')} ] }, ${exportedClassName});\n`);
+                }
+                else {
+                    const elementStatement = unit.contents.slice(implicitElement.pos, implicitElement.end);
+                    m.replace(implicitElement.pos, implicitElement.end, '');
+                    m.append(`\n${elementStatement}\nCustomElement.define({ ...${viewDef}, dependencies: [ ...${viewDef}.dependencies, ${localDeps.join(', ')} ] }, ${exportedClassName});\n`);
+                }
             }
             else {
-                conventionalDecorators.push([implicitElement.pos, `@${dec}(${viewDef})\n`]);
+                if (customElementDecorator) {
+                    const name = unit.contents.slice(customElementDecorator.namePosition.pos, customElementDecorator.namePosition.end);
+                    m.replace(customElementDecorator.position.pos - 1, customElementDecorator.position.end, '');
+                    m.insert(implicitElement.end, `\nCustomElement.define({ ...${viewDef}, name: ${name} }, ${exportedClassName});\n`);
+                }
+                else {
+                    m.insert(implicitElement.end, `\nCustomElement.define(${viewDef}, ${exportedClassName});\n`);
+                }
             }
         }
     }
-    if (conventionalDecorators.length) {
-        conventionalDecorators.forEach(([pos, str]) => m.insert(pos, str));
+    if (definitions.length) {
+        definitions.forEach(([pos, str]) => m.insert(pos, str));
     }
     return m;
 }
@@ -215,7 +219,91 @@ function findDecoratedResourceType(node) {
 function isKindOfSame(name1, name2) {
     return name1.replace(/-/g, '') === name2.replace(/-/g, '');
 }
-function findResource(node, expectedResourceName, filePair, isViewPair, code) {
+function createDefineElementTransformer() {
+    return function factory(context) {
+        function visit(node) {
+            if (isExpressionStatement(node))
+                return visitExpression(node);
+            return visitEachChild(node, visit, context);
+        }
+        return (node => visitNode(node, visit));
+    };
+    function visitExpression(node) {
+        const callExpression = node.expression;
+        if (!isCallExpression(callExpression))
+            return node;
+        const propertyAccessExpression = callExpression.expression;
+        if (!isPropertyAccessExpression(propertyAccessExpression)
+            || !(isIdentifier(propertyAccessExpression.expression) && propertyAccessExpression.expression.escapedText === 'CustomElement')
+            || !(isIdentifier(propertyAccessExpression.name) && propertyAccessExpression.name.escapedText === 'define'))
+            return node;
+        const $arguments = callExpression.arguments;
+        if ($arguments.length !== 2)
+            return node;
+        const [definitionExpression, className] = $arguments;
+        if (!isIdentifier(className))
+            return node;
+        if (!isStringLiteral(definitionExpression) && !isObjectLiteralExpression(definitionExpression))
+            return node;
+        const spreadAssignment = createSpreadAssignment(createIdentifier('__au2ViewDef'));
+        const newDefinition = isStringLiteral(definitionExpression)
+            ? createObjectLiteralExpression([
+                spreadAssignment,
+                createPropertyAssignment('name', definitionExpression),
+            ])
+            : createObjectLiteralExpression([
+                spreadAssignment,
+                ...definitionExpression.properties,
+            ]);
+        const newCallExpression = updateCallExpression(callExpression, propertyAccessExpression, undefined, [newDefinition, className]);
+        return updateExpressionStatement(node, newCallExpression);
+    }
+}
+function createAuResourceTransformer() {
+    return function factory(context) {
+        function visit(node) {
+            if (isClassDeclaration(node))
+                return visitClass(node);
+            return visitEachChild(node, visit, context);
+        }
+        return (node => visitNode(node, visit));
+    };
+    function visitClass(node) {
+        const newMembers = node.members.map(member => {
+            if (!isPropertyDeclaration(member))
+                return member;
+            const name = member.name.escapedText;
+            if (name !== '$au')
+                return member;
+            const modifiers = getCombinedModifierFlags(member);
+            if ((modifiers & ModifierFlags.Static) === 0)
+                return member;
+            const initializer = member.initializer;
+            if (initializer == null || !isObjectLiteralExpression(initializer))
+                return member;
+            const spreadAssignment = createSpreadAssignment(createIdentifier('__au2ViewDef'));
+            const newInitializer = createObjectLiteralExpression([spreadAssignment, ...initializer.properties]);
+            return updatePropertyDeclaration(member, member.modifiers, member.name, member.questionToken, member.type, newInitializer);
+        });
+        return updateClassDeclaration(node, node.modifiers, node.name, node.typeParameters, node.heritageClauses, newMembers);
+    }
+}
+function findResource(node, expectedResourceName, filePair, code) {
+    if (isExpressionStatement(node)) {
+        const pos = ensureTokenStart(node.pos, code);
+        const statement = code.slice(pos, node.end);
+        if (!statement.startsWith('CustomElement.define'))
+            return;
+        const sf = createSourceFile('temp.ts', statement, ScriptTarget.Latest);
+        const result = transform(sf, [createDefineElementTransformer()]);
+        const modifiedContent = createPrinter().printFile(result.transformed[0]);
+        return {
+            defineElementInformation: {
+                position: { pos, end: node.end },
+                modifiedContent
+            }
+        };
+    }
     if (!isClassDeclaration(node))
         return;
     if (!node.name)
@@ -229,10 +317,8 @@ function findResource(node, expectedResourceName, filePair, isViewPair, code) {
     const foundType = findDecoratedResourceType(node);
     if (foundType) {
         if (!isImplicitResource &&
-            foundType.type !== 'customElement' &&
-            foundType.type !== 'view') {
+            foundType.type !== 'customElement') {
             return {
-                className,
                 localDep: className
             };
         }
@@ -240,16 +326,18 @@ function findResource(node, expectedResourceName, filePair, isViewPair, code) {
             foundType.type === 'customElement' &&
             foundType.expression.arguments.length === 1 &&
             isStringLiteral(foundType.expression.arguments[0])) {
-            const customName = foundType.expression.arguments[0];
+            const decorator = foundType.expression;
+            const customName = decorator.arguments[0];
             return {
                 className,
                 implicitStatement: { pos: pos, end: node.end },
-                customName: { pos: ensureTokenStart(customName.pos, code), end: customName.end }
+                customElementDecorator: {
+                    position: { pos: ensureTokenStart(decorator.pos, code), end: decorator.end },
+                    namePosition: { pos: ensureTokenStart(customName.pos, code), end: customName.end }
+                },
+                runtimeImportName: filePair ? 'CustomElement' : undefined
             };
         }
-        return {
-            className,
-        };
     }
     else {
         if (type === 'customElement') {
@@ -257,17 +345,42 @@ function findResource(node, expectedResourceName, filePair, isViewPair, code) {
                 return {
                     className,
                     implicitStatement: { pos: pos, end: node.end },
-                    runtimeImportName: isViewPair ? 'view' : 'customElement'
+                    runtimeImportName: 'CustomElement'
                 };
             }
         }
         else {
+            let resourceDefinitionStatement;
+            let runtimeImportName;
+            switch (type) {
+                case 'customAttribute':
+                    resourceDefinitionStatement = `\nCustomAttribute.define('${name}', ${className});\n`;
+                    runtimeImportName = 'CustomAttribute';
+                    break;
+                case 'templateController':
+                    resourceDefinitionStatement = `\nCustomAttribute.define({ name: '${name}', isTemplateController: true }, ${className});\n`;
+                    runtimeImportName = 'CustomAttribute';
+                    break;
+                case 'valueConverter':
+                    resourceDefinitionStatement = `\nValueConverter.define('${name}', ${className});\n`;
+                    runtimeImportName = 'ValueConverter';
+                    break;
+                case 'bindingBehavior':
+                    resourceDefinitionStatement = `\nBindingBehavior.define('${name}', ${className});\n`;
+                    runtimeImportName = 'BindingBehavior';
+                    break;
+                case 'bindingCommand':
+                    resourceDefinitionStatement = `\nBindingCommand.define('${name}', ${className});\n`;
+                    runtimeImportName = 'BindingCommand';
+                    break;
+            }
             const result = {
-                className,
-                needDecorator: [pos, `@${type}('${name}')\n`],
+                needDefinition: resourceDefinitionStatement ? [node.end, resourceDefinitionStatement] : void 0,
                 localDep: className,
             };
-            result.runtimeImportName = type;
+            if (runtimeImportName) {
+                result.runtimeImportName = runtimeImportName;
+            }
             return result;
         }
     }

@@ -1,11 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { customElement, bindable } from '@aurelia/runtime-html';
 import template from './tri-state-boolean.html';
@@ -14,26 +43,49 @@ import template from './tri-state-boolean.html';
  * - `@aurelia/runtime-html`
  *   - `checked-observer` for boolean
  */
-let TriStateBoolean = class TriStateBoolean {
-};
-__decorate([
-    bindable,
-    __metadata("design:type", String)
-], TriStateBoolean.prototype, "noValueDisplay", void 0);
-__decorate([
-    bindable,
-    __metadata("design:type", String)
-], TriStateBoolean.prototype, "trueDisplay", void 0);
-__decorate([
-    bindable,
-    __metadata("design:type", String)
-], TriStateBoolean.prototype, "falseDisplay", void 0);
-__decorate([
-    bindable,
-    __metadata("design:type", Boolean)
-], TriStateBoolean.prototype, "value", void 0);
-TriStateBoolean = __decorate([
-    customElement({ name: 'tri-state-boolean', template })
-], TriStateBoolean);
+let TriStateBoolean = (() => {
+    let _classDecorators = [customElement({ name: 'tri-state-boolean', template })];
+    let _classDescriptor;
+    let _classExtraInitializers = [];
+    let _classThis;
+    let _noValueDisplay_decorators;
+    let _noValueDisplay_initializers = [];
+    let _noValueDisplay_extraInitializers = [];
+    let _trueDisplay_decorators;
+    let _trueDisplay_initializers = [];
+    let _trueDisplay_extraInitializers = [];
+    let _falseDisplay_decorators;
+    let _falseDisplay_initializers = [];
+    let _falseDisplay_extraInitializers = [];
+    let _value_decorators;
+    let _value_initializers = [];
+    let _value_extraInitializers = [];
+    var TriStateBoolean = _classThis = class {
+        constructor() {
+            this.noValueDisplay = __runInitializers(this, _noValueDisplay_initializers, void 0);
+            this.trueDisplay = (__runInitializers(this, _noValueDisplay_extraInitializers), __runInitializers(this, _trueDisplay_initializers, void 0));
+            this.falseDisplay = (__runInitializers(this, _trueDisplay_extraInitializers), __runInitializers(this, _falseDisplay_initializers, void 0));
+            this.value = (__runInitializers(this, _falseDisplay_extraInitializers), __runInitializers(this, _value_initializers, void 0));
+            __runInitializers(this, _value_extraInitializers);
+        }
+    };
+    __setFunctionName(_classThis, "TriStateBoolean");
+    (() => {
+        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+        _noValueDisplay_decorators = [bindable];
+        _trueDisplay_decorators = [bindable];
+        _falseDisplay_decorators = [bindable];
+        _value_decorators = [bindable];
+        __esDecorate(null, null, _noValueDisplay_decorators, { kind: "field", name: "noValueDisplay", static: false, private: false, access: { has: obj => "noValueDisplay" in obj, get: obj => obj.noValueDisplay, set: (obj, value) => { obj.noValueDisplay = value; } }, metadata: _metadata }, _noValueDisplay_initializers, _noValueDisplay_extraInitializers);
+        __esDecorate(null, null, _trueDisplay_decorators, { kind: "field", name: "trueDisplay", static: false, private: false, access: { has: obj => "trueDisplay" in obj, get: obj => obj.trueDisplay, set: (obj, value) => { obj.trueDisplay = value; } }, metadata: _metadata }, _trueDisplay_initializers, _trueDisplay_extraInitializers);
+        __esDecorate(null, null, _falseDisplay_decorators, { kind: "field", name: "falseDisplay", static: false, private: false, access: { has: obj => "falseDisplay" in obj, get: obj => obj.falseDisplay, set: (obj, value) => { obj.falseDisplay = value; } }, metadata: _metadata }, _falseDisplay_initializers, _falseDisplay_extraInitializers);
+        __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+        TriStateBoolean = _classThis = _classDescriptor.value;
+        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+        __runInitializers(_classThis, _classExtraInitializers);
+    })();
+    return TriStateBoolean = _classThis;
+})();
 export { TriStateBoolean };
 //# sourceMappingURL=tri-state-boolean.js.map

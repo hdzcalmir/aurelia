@@ -1,120 +1,102 @@
-import { Signals as t, I18N as e } from "../../../i18n/dist/native-modules/index.mjs";
+import { I18N as i, Signals as t } from "../../../i18n/dist/native-modules/index.mjs";
 
-import { DI as r, IServiceLocator as a, IEventAggregator as i, ILogger as o, Registration as n, noop as c } from "../../../kernel/dist/native-modules/index.mjs";
+import { DI as e, resolve as o, IEventAggregator as r, Registration as a, noop as n } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { IExpressionParser as s } from "../../../runtime/dist/native-modules/index.mjs";
+import { IPlatform as s } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-import { IPlatform as l } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { ValidationMessageProvider as l } from "../../../validation/dist/native-modules/index.mjs";
 
-import { ValidationMessageProvider as u, IValidator as f } from "../../../validation/dist/native-modules/index.mjs";
-
-import { ValidationController as d, ValidationControllerFactory as m, getDefaultValidationHtmlConfiguration as p, ValidationHtmlConfiguration as _ } from "../../../validation-html/dist/native-modules/index.mjs";
-
-function __decorate(t, e, r, a) {
-    var i = arguments.length, o = i < 3 ? e : a === null ? a = Object.getOwnPropertyDescriptor(e, r) : a, n;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") o = Reflect.decorate(t, e, r, a); else for (var c = t.length - 1; c >= 0; c--) if (n = t[c]) o = (i < 3 ? n(o) : i > 3 ? n(e, r, o) : n(e, r)) || o;
-    return i > 3 && o && Object.defineProperty(e, r, o), o;
-}
-
-function __param(t, e) {
-    return function(r, a) {
-        e(r, a, t);
-    };
-}
+import { ValidationController as c, ValidationControllerFactory as d, getDefaultValidationHtmlConfiguration as u, ValidationHtmlConfiguration as f } from "../../../validation-html/dist/native-modules/index.mjs";
 
 const h = "i18n:locale:changed:validation";
 
-const v = /*@__PURE__*/ r.createInterface("I18nKeyConfiguration");
+const m = /*@__PURE__*/ e.createInterface("I18nKeyConfiguration");
 
-let y = class LocalizedValidationController extends d {
-    constructor(t, e, r, a, i) {
-        super(r, a, i, t);
-        this.localeChangeSubscription = e.subscribe(h, (() => {
-            i.domReadQueue.queueTask((async () => {
+class LocalizedValidationController extends c {
+    constructor(i = o(r), t = o(s)) {
+        super();
+        this.localeChangeSubscription = i.subscribe(h, (() => {
+            t.domReadQueue.queueTask((async () => {
                 await this.revalidateErrors();
             }));
         }));
     }
-};
+}
 
-y = __decorate([ __param(0, a), __param(1, i), __param(2, f), __param(3, s), __param(4, l) ], y);
-
-class LocalizedValidationControllerFactory extends m {
-    construct(t, e) {
-        return t.invoke(y, e);
+class LocalizedValidationControllerFactory extends d {
+    construct(i, t) {
+        return i.invoke(LocalizedValidationController, t);
     }
 }
 
-let g = class LocalizedValidationMessageProvider extends u {
-    constructor(e, r, a, i, o) {
-        super(i, o, []);
-        this.i18n = r;
+class LocalizedValidationMessageProvider extends l {
+    constructor(e = o(m), a = o(r)) {
+        super(undefined, []);
+        this.i18n = o(i);
         const n = e.DefaultNamespace;
-        const c = e.DefaultKeyPrefix;
-        if (n !== void 0 || c !== void 0) {
+        const s = e.DefaultKeyPrefix;
+        if (n !== void 0 || s !== void 0) {
             this.keyPrefix = n !== void 0 ? `${n}:` : "";
-            this.keyPrefix = c !== void 0 ? `${this.keyPrefix}${c}.` : this.keyPrefix;
+            this.keyPrefix = s !== void 0 ? `${this.keyPrefix}${s}.` : this.keyPrefix;
         }
         a.subscribe(t.I18N_EA_CHANNEL, (() => {
             this.registeredMessages = new WeakMap;
             a.publish(h);
         }));
     }
-    getMessage(t) {
-        const e = this.registeredMessages.get(t);
-        if (e !== void 0) {
-            return e;
+    getMessage(i) {
+        const t = this.registeredMessages.get(i);
+        if (t !== void 0) {
+            return t;
         }
-        return this.setMessage(t, this.i18n.tr(this.getKey(t.messageKey)));
+        return this.setMessage(i, this.i18n.tr(this.getKey(i.messageKey)));
     }
-    getDisplayName(t, e) {
-        if (e !== null && e !== undefined) {
-            return e instanceof Function ? e() : e;
+    getDisplayName(i, t) {
+        if (t !== null && t !== undefined) {
+            return t instanceof Function ? t() : t;
         }
-        if (t === void 0) {
+        if (i === void 0) {
             return;
         }
-        return this.i18n.tr(this.getKey(t));
+        return this.i18n.tr(this.getKey(i));
     }
-    getKey(t) {
-        const e = this.keyPrefix;
-        return e !== void 0 ? `${e}${t}` : t;
+    getKey(i) {
+        const t = this.keyPrefix;
+        return t !== void 0 ? `${t}${i}` : i;
     }
-};
+}
 
-g = __decorate([ __param(0, v), __param(1, e), __param(2, i), __param(3, s), __param(4, o) ], g);
-
-function createConfiguration(t) {
+function createConfiguration(i) {
     return {
-        optionsProvider: t,
-        register(e) {
-            const r = {
-                ...p(),
-                MessageProviderType: g,
+        optionsProvider: i,
+        register(t) {
+            const e = {
+                ...u(),
+                MessageProviderType: LocalizedValidationMessageProvider,
                 ValidationControllerFactoryType: LocalizedValidationControllerFactory,
                 DefaultNamespace: void 0,
                 DefaultKeyPrefix: void 0
             };
-            t(r);
-            const a = {
-                DefaultNamespace: r.DefaultNamespace,
-                DefaultKeyPrefix: r.DefaultKeyPrefix
+            i(e);
+            const o = {
+                DefaultNamespace: e.DefaultNamespace,
+                DefaultKeyPrefix: e.DefaultKeyPrefix
             };
-            return e.register(_.customize((t => {
-                for (const e of Object.keys(t)) {
-                    if (e in r) {
-                        t[e] = r[e];
+            return t.register(f.customize((i => {
+                for (const t of Object.keys(i)) {
+                    if (t in e) {
+                        i[t] = e[t];
                     }
                 }
-            })), n.callback(v, (() => a)));
+            })), a.callback(m, (() => o)));
         },
-        customize(e) {
-            return createConfiguration(e ?? t);
+        customize(t) {
+            return createConfiguration(t ?? i);
         }
     };
 }
 
-const C = createConfiguration(c);
+const v = createConfiguration(n);
 
-export { v as I18nKeyConfiguration, y as LocalizedValidationController, LocalizedValidationControllerFactory, g as LocalizedValidationMessageProvider, C as ValidationI18nConfiguration };
+export { m as I18nKeyConfiguration, LocalizedValidationController, LocalizedValidationControllerFactory, LocalizedValidationMessageProvider, v as ValidationI18nConfiguration };
 

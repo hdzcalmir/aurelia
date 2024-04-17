@@ -5,10 +5,12 @@ import type { BindableDefinition, PartialBindableDefinition } from '../bindable'
 import type { ICustomAttributeViewModel, ICustomAttributeController } from '../templating/controller';
 import type { IWatchDefinition } from '../watch';
 import { type IResourceKind } from './resources-shared';
-export type PartialCustomAttributeDefinition = PartialResourceDefinition<{
+export type PartialCustomAttributeDefinition<TBindables extends string = string> = PartialResourceDefinition<{
     readonly defaultBindingMode?: BindingMode;
     readonly isTemplateController?: boolean;
-    readonly bindables?: Record<string, PartialBindableDefinition> | readonly string[];
+    readonly bindables?: (Record<TBindables, true | Omit<PartialBindableDefinition, 'name'>>) | (TBindables | PartialBindableDefinition & {
+        name: TBindables;
+    })[];
     /**
      * A config that can be used by template compliler to change attr value parsing mode
      * `true` to always parse as a single value, mostly will be string in URL scenario
@@ -37,6 +39,9 @@ export type PartialCustomAttributeDefinition = PartialResourceDefinition<{
      */
     readonly containerStrategy?: 'reuse' | 'new';
 }>;
+export type CustomAttributeStaticAuDefinition<TBindables extends string = string> = PartialCustomAttributeDefinition<TBindables> & {
+    type: 'custom-attribute';
+};
 export type CustomAttributeType<T extends Constructable = Constructable> = ResourceType<T, ICustomAttributeViewModel, PartialCustomAttributeDefinition>;
 export type CustomAttributeKind = IResourceKind & {
     for<C extends ICustomAttributeViewModel = ICustomAttributeViewModel>(node: Node, name: string): ICustomAttributeController<C> | undefined;
@@ -46,13 +51,13 @@ export type CustomAttributeKind = IResourceKind & {
     define<T extends Constructable>(name: string, Type: T): CustomAttributeType<T>;
     define<T extends Constructable>(def: PartialCustomAttributeDefinition, Type: T): CustomAttributeType<T>;
     define<T extends Constructable>(nameOrDef: string | PartialCustomAttributeDefinition, Type: T): CustomAttributeType<T>;
-    getDefinition<T extends Constructable>(Type: T): CustomAttributeDefinition<T>;
-    getDefinition<T extends Constructable>(Type: Function): CustomAttributeDefinition<T>;
+    getDefinition<T extends Constructable>(Type: T, context?: DecoratorContext | null): CustomAttributeDefinition<T>;
+    getDefinition<T extends Constructable>(Type: Function, context?: DecoratorContext | null): CustomAttributeDefinition<T>;
     annotate<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K, value: PartialCustomAttributeDefinition[K]): void;
-    getAnnotation<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K): PartialCustomAttributeDefinition[K];
+    getAnnotation<K extends keyof PartialCustomAttributeDefinition>(Type: Constructable, prop: K, context: DecoratorContext | undefined | null): PartialCustomAttributeDefinition[K] | undefined;
     find(c: IContainer, name: string): CustomAttributeDefinition | null;
 };
-export type CustomAttributeDecorator = <T extends Constructable>(Type: T) => CustomAttributeType<T>;
+export type CustomAttributeDecorator = <T extends Constructable>(Type: T, context: ClassDecoratorContext) => CustomAttributeType<T>;
 /**
  * Decorator: Indicates that the decorated class is a custom attribute.
  */

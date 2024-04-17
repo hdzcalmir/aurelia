@@ -1,7 +1,8 @@
+import { IExpressionParser } from '@aurelia/expression-parser';
 import { IDisposable } from '@aurelia/kernel';
-import { Collection, IExpressionParser, IndexMap, IObserverLocator } from '@aurelia/runtime';
+import { Collection, IndexMap, IObserverLocator } from '@aurelia/runtime';
 export declare class BindingEngine {
-    readonly parser: IExpressionParser;
+    readonly parser: IExpressionParser<import("@aurelia/expression-parser").CustomExpression>;
     readonly observerLocator: IObserverLocator;
     propertyObserver(object: {}, prop: PropertyKey): IBindingEnginePropertyObserver;
     collectionObserver(collection: Collection): IBindingEngineCollectionObserver;

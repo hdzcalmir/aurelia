@@ -5,6 +5,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var validation = require('@aurelia/validation');
 var runtimeHtml = require('@aurelia/runtime-html');
+var expressionParser = require('@aurelia/expression-parser');
 var runtime = require('@aurelia/runtime');
 
 /******************************************************************************
@@ -24,15 +25,39 @@ PERFORMANCE OF THIS SOFTWARE.
 /* global Reflect, Promise */
 
 
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 }
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+function __runInitializers(thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 }
 
 /**
@@ -129,7 +154,7 @@ function getPropertyInfo(binding, info) {
                     toCachePropertyName = keyExpr.$kind === 'PrimitiveLiteral';
                 }
                 // eslint-disable-next-line
-                memberName = `[${runtime.astEvaluate(keyExpr, scope, binding, null).toString()}]`;
+                memberName = `[${runtimeHtml.astEvaluate(keyExpr, scope, binding, null).toString()}]`;
                 break;
             }
             default:
@@ -149,7 +174,7 @@ function getPropertyInfo(binding, info) {
         object = scope.bindingContext;
     }
     else {
-        object = runtime.astEvaluate(expression, scope, binding, null);
+        object = runtimeHtml.astEvaluate(expression, scope, binding, null);
     }
     if (object === null || object === void 0) {
         return (void 0);
@@ -161,12 +186,8 @@ function getPropertyInfo(binding, info) {
     return propertyInfo;
 }
 const IValidationController = /*@__PURE__*/ kernel.DI.createInterface('IValidationController');
-exports.ValidationController = class ValidationController {
-    constructor(validator, parser, platform, locator) {
-        this.validator = validator;
-        this.parser = parser;
-        this.platform = platform;
-        this.locator = locator;
+class ValidationController {
+    constructor() {
         this.bindings = new Map();
         this.subscribers = new Set();
         this.results = [];
@@ -179,6 +200,10 @@ exports.ValidationController = class ValidationController {
          */
         this.elements = new WeakMap();
         this.objects = new Map();
+        this.validator = kernel.resolve(validation.IValidator);
+        this.parser = kernel.resolve(expressionParser.IExpressionParser);
+        this.platform = kernel.resolve(runtimeHtml.IPlatform);
+        this.locator = kernel.resolve(kernel.IServiceLocator);
     }
     addObject(object, rules) {
         this.objects.set(object, rules);
@@ -377,13 +402,7 @@ exports.ValidationController = class ValidationController {
             subscriber.handleValidationEvent(eventData);
         }
     }
-};
-exports.ValidationController = __decorate([
-    __param(0, validation.IValidator),
-    __param(1, runtime.IExpressionParser),
-    __param(2, runtimeHtml.IPlatform),
-    __param(3, kernel.IServiceLocator)
-], exports.ValidationController);
+}
 class ValidationControllerFactory {
     constructor() {
         this.Type = (void 0);
@@ -392,7 +411,7 @@ class ValidationControllerFactory {
         return false;
     }
     construct(container, _dynamicDependencies) {
-        return container.invoke(exports.ValidationController, _dynamicDependencies);
+        return container.invoke(ValidationController, _dynamicDependencies);
     }
 }
 
@@ -420,53 +439,62 @@ const defaultContainerDefinition = {
     shadowOptions: { mode: 'open' },
     hasSlots: true,
 };
-exports.ValidationContainerCustomElement = class ValidationContainerCustomElement {
-    constructor(host, scopedController) {
-        this.host = host;
-        this.scopedController = scopedController;
-        this.errors = [];
-    }
-    handleValidationEvent(event) {
-        for (const { result } of event.removedResults) {
-            const index = this.errors.findIndex(x => x.result === result);
-            if (index !== -1) {
-                this.errors.splice(index, 1);
+let ValidationContainerCustomElement = (() => {
+    var _a;
+    let _controller_decorators;
+    let _controller_initializers = [];
+    let _controller_extraInitializers = [];
+    let _errors_decorators;
+    let _errors_initializers = [];
+    let _errors_extraInitializers = [];
+    return _a = class ValidationContainerCustomElement {
+            constructor() {
+                this.controller = __runInitializers(this, _controller_initializers, void 0);
+                this.errors = (__runInitializers(this, _controller_extraInitializers), __runInitializers(this, _errors_initializers, []));
+                this.host = (__runInitializers(this, _errors_extraInitializers), kernel.resolve(runtimeHtml.INode));
+                this.scopedController = kernel.resolve(kernel.optional(IValidationController));
             }
-        }
-        for (const { result, targets: elements } of event.addedResults) {
-            if (result.valid) {
-                continue;
+            handleValidationEvent(event) {
+                for (const { result } of event.removedResults) {
+                    const index = this.errors.findIndex(x => x.result === result);
+                    if (index !== -1) {
+                        this.errors.splice(index, 1);
+                    }
+                }
+                for (const { result, targets: elements } of event.addedResults) {
+                    if (result.valid) {
+                        continue;
+                    }
+                    const targets = elements.filter(e => this.host.contains(e));
+                    if (targets.length > 0) {
+                        this.errors.push(new ValidationResultTarget(result, targets));
+                    }
+                }
+                this.errors.sort((a, b) => {
+                    if (a.targets[0] === b.targets[0]) {
+                        return 0;
+                    }
+                    return compareDocumentPositionFlat(a.targets[0], b.targets[0]);
+                });
             }
-            const targets = elements.filter(e => this.host.contains(e));
-            if (targets.length > 0) {
-                this.errors.push(new ValidationResultTarget(result, targets));
+            binding() {
+                this.controller = this.controller ?? this.scopedController;
+                this.controller.addSubscriber(this);
             }
-        }
-        this.errors.sort((a, b) => {
-            if (a.targets[0] === b.targets[0]) {
-                return 0;
+            unbinding() {
+                this.controller.removeSubscriber(this);
             }
-            return compareDocumentPositionFlat(a.targets[0], b.targets[0]);
-        });
-    }
-    binding() {
-        this.controller = this.controller ?? this.scopedController;
-        this.controller.addSubscriber(this);
-    }
-    unbinding() {
-        this.controller.removeSubscriber(this);
-    }
-};
-__decorate([
-    runtimeHtml.bindable
-], exports.ValidationContainerCustomElement.prototype, "controller", void 0);
-__decorate([
-    runtimeHtml.bindable
-], exports.ValidationContainerCustomElement.prototype, "errors", void 0);
-exports.ValidationContainerCustomElement = __decorate([
-    __param(0, runtimeHtml.INode),
-    __param(1, kernel.optional(IValidationController))
-], exports.ValidationContainerCustomElement);
+        },
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            _controller_decorators = [runtimeHtml.bindable];
+            _errors_decorators = [runtimeHtml.bindable];
+            __esDecorate(null, null, _controller_decorators, { kind: "field", name: "controller", static: false, private: false, access: { has: obj => "controller" in obj, get: obj => obj.controller, set: (obj, value) => { obj.controller = value; } }, metadata: _metadata }, _controller_initializers, _controller_extraInitializers);
+            __esDecorate(null, null, _errors_decorators, { kind: "field", name: "errors", static: false, private: false, access: { has: obj => "errors" in obj, get: obj => obj.errors, set: (obj, value) => { obj.errors = value; } }, metadata: _metadata }, _errors_initializers, _errors_extraInitializers);
+            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+        })(),
+        _a;
+})();
 
 /**
  * A validation errors subscriber in form of a custom attribute.
@@ -486,12 +514,12 @@ exports.ValidationContainerCustomElement = __decorate([
  * </div>
  * ```
  */
-exports.ValidationErrorsCustomAttribute = class ValidationErrorsCustomAttribute {
-    constructor(host, scopedController) {
-        this.host = host;
-        this.scopedController = scopedController;
+class ValidationErrorsCustomAttribute {
+    constructor() {
         this.errors = [];
         this.errorsInternal = [];
+        this.host = kernel.resolve(runtimeHtml.INode);
+        this.scopedController = kernel.resolve(kernel.optional(IValidationController));
     }
     handleValidationEvent(event) {
         for (const { result } of event.removedResults) {
@@ -524,18 +552,8 @@ exports.ValidationErrorsCustomAttribute = class ValidationErrorsCustomAttribute 
     unbinding() {
         this.controller.removeSubscriber(this);
     }
-};
-__decorate([
-    runtimeHtml.bindable
-], exports.ValidationErrorsCustomAttribute.prototype, "controller", void 0);
-__decorate([
-    runtimeHtml.bindable({ primary: true, mode: runtimeHtml.BindingMode.twoWay })
-], exports.ValidationErrorsCustomAttribute.prototype, "errors", void 0);
-exports.ValidationErrorsCustomAttribute = __decorate([
-    runtimeHtml.customAttribute('validation-errors'),
-    __param(0, runtimeHtml.INode),
-    __param(1, kernel.optional(IValidationController))
-], exports.ValidationErrorsCustomAttribute);
+}
+runtimeHtml.CustomAttribute.define({ name: 'validation-errors', bindables: { controller: {}, errors: { primary: true, mode: runtimeHtml.BindingMode.twoWay } } }, ValidationErrorsCustomAttribute);
 
 /**
  * Validation triggers.
@@ -570,7 +588,7 @@ exports.ValidationTrigger = void 0;
 const IDefaultTrigger = /*@__PURE__*/ kernel.DI.createInterface('IDefaultTrigger');
 const validationConnectorMap = new WeakMap();
 const validationTargetSubscriberMap = new WeakMap();
-exports.ValidateBindingBehavior = class ValidateBindingBehavior {
+class ValidateBindingBehavior {
     constructor() {
         /** @internal */
         this._platform = kernel.resolve(runtimeHtml.IPlatform);
@@ -599,10 +617,8 @@ exports.ValidateBindingBehavior = class ValidateBindingBehavior {
         // targetSubscriber is automatically unsubscribed by the binding
         // there's no need to do anything
     }
-};
-exports.ValidateBindingBehavior = __decorate([
-    runtimeHtml.bindingBehavior('validate')
-], exports.ValidateBindingBehavior);
+}
+runtimeHtml.BindingBehavior.define('validate', ValidateBindingBehavior);
 /**
  * Binding behavior. Indicates the bound property should be validated.
  */
@@ -694,16 +710,16 @@ class ValidatitionConnector {
             const arg = args[i];
             switch (i) {
                 case 0:
-                    trigger = this._ensureTrigger(runtime.astEvaluate(arg, scope, this, this._triggerMediator));
+                    trigger = this._ensureTrigger(runtimeHtml.astEvaluate(arg, scope, this, this._triggerMediator));
                     break;
                 case 1:
-                    controller = this._ensureController(runtime.astEvaluate(arg, scope, this, this._controllerMediator));
+                    controller = this._ensureController(runtimeHtml.astEvaluate(arg, scope, this, this._controllerMediator));
                     break;
                 case 2:
-                    rules = this._ensureRules(runtime.astEvaluate(arg, scope, this, this._rulesMediator));
+                    rules = this._ensureRules(runtimeHtml.astEvaluate(arg, scope, this, this._rulesMediator));
                     break;
                 default:
-                    throw new Error(`Unconsumed argument#${i + 1} for validate binding behavior: ${runtime.astEvaluate(arg, scope, this, null)}`);
+                    throw new Error(`Unconsumed argument#${i + 1} for validate binding behavior: ${runtimeHtml.astEvaluate(arg, scope, this, null)}`);
             }
         }
         return new ValidateArgumentsDelta(this._ensureController(controller), this._ensureTrigger(trigger), rules);
@@ -763,7 +779,7 @@ class ValidatitionConnector {
         if (controller === (void 0) || controller === null) {
             controller = this.scopedController;
         }
-        else if (!(controller instanceof exports.ValidationController)) {
+        else if (!(controller instanceof ValidationController)) {
             throw new Error(`${controller} is not of type ValidationController`); // TODO: use reporter
         }
         return controller;
@@ -808,7 +824,7 @@ class ValidatitionConnector {
         return this.bindingInfo = new BindingInfo(this.target, this.scope, rules);
     }
 }
-runtime.connectable()(ValidatitionConnector);
+runtime.connectable(ValidatitionConnector, null);
 runtimeHtml.mixinAstEvaluator(true)(ValidatitionConnector);
 class WithValidationTargetSubscriber extends runtimeHtml.BindingTargetSubscriber {
     constructor(_validationSubscriber, binding, flushQueue) {
@@ -838,7 +854,7 @@ class BindingMediator {
         this.binding[this.key](newValue, previousValue);
     }
 }
-runtime.connectable()(BindingMediator);
+runtime.connectable(BindingMediator, null);
 runtimeHtml.mixinAstEvaluator(true)(BindingMediator);
 
 function getDefaultValidationHtmlConfiguration() {
@@ -864,13 +880,13 @@ function createConfiguration(optionsProvider) {
                         opt[optKey] = options[optKey]; // TS cannot infer that the value of the same key is being copied from A to B, and rejects the assignment due to type broadening
                     }
                 }
-            }), kernel.Registration.instance(IDefaultTrigger, options.DefaultTrigger), exports.ValidateBindingBehavior);
+            }), kernel.Registration.instance(IDefaultTrigger, options.DefaultTrigger), ValidateBindingBehavior);
             if (options.UseSubscriberCustomAttribute) {
-                container.register(exports.ValidationErrorsCustomAttribute);
+                container.register(ValidationErrorsCustomAttribute);
             }
             const template = options.SubscriberCustomElementTemplate;
             if (template) { // we need the boolean coercion here to ignore null, undefined, and ''
-                container.register(runtimeHtml.CustomElement.define({ ...defaultContainerDefinition, template }, exports.ValidationContainerCustomElement));
+                container.register(runtimeHtml.CustomElement.define({ ...defaultContainerDefinition, template }, ValidationContainerCustomElement));
             }
             return container;
         },
@@ -883,10 +899,10 @@ const ValidationHtmlConfiguration = createConfiguration(kernel.noop);
 
 const resultIdAttribute = 'validation-result-id';
 const resultContainerAttribute = 'validation-result-container';
-const IValidationResultPresenterService = /*@__PURE__*/ kernel.DI.createInterface('IValidationResultPresenterService', (x) => x.transient(exports.ValidationResultPresenterService));
-exports.ValidationResultPresenterService = class ValidationResultPresenterService {
-    constructor(platform) {
-        this.platform = platform;
+const IValidationResultPresenterService = /*@__PURE__*/ kernel.DI.createInterface('IValidationResultPresenterService', (x) => x.transient(ValidationResultPresenterService));
+class ValidationResultPresenterService {
+    constructor() {
+        this.platform = kernel.resolve(runtimeHtml.IPlatform);
     }
     handleValidationEvent(event) {
         for (const [target, results] of this.reverseMap(event.removedResults)) {
@@ -954,10 +970,7 @@ exports.ValidationResultPresenterService = class ValidationResultPresenterServic
         }
         return map;
     }
-};
-exports.ValidationResultPresenterService = __decorate([
-    __param(0, runtimeHtml.IPlatform)
-], exports.ValidationResultPresenterService);
+}
 
 exports.BindingInfo = BindingInfo;
 exports.BindingMediator = BindingMediator;
@@ -965,9 +978,14 @@ exports.ControllerValidateResult = ControllerValidateResult;
 exports.IDefaultTrigger = IDefaultTrigger;
 exports.IValidationController = IValidationController;
 exports.IValidationResultPresenterService = IValidationResultPresenterService;
+exports.ValidateBindingBehavior = ValidateBindingBehavior;
+exports.ValidationContainerCustomElement = ValidationContainerCustomElement;
+exports.ValidationController = ValidationController;
 exports.ValidationControllerFactory = ValidationControllerFactory;
+exports.ValidationErrorsCustomAttribute = ValidationErrorsCustomAttribute;
 exports.ValidationEvent = ValidationEvent;
 exports.ValidationHtmlConfiguration = ValidationHtmlConfiguration;
+exports.ValidationResultPresenterService = ValidationResultPresenterService;
 exports.ValidationResultTarget = ValidationResultTarget;
 exports.defaultContainerDefinition = defaultContainerDefinition;
 exports.defaultContainerTemplate = defaultContainerTemplate;

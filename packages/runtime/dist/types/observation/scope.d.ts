@@ -1,4 +1,4 @@
-import type { IBinding, IBindingContext, IOverrideContext } from '../observation';
+import type { IBindingContext, IOverrideContext } from '../observation';
 /**
  * A class for creating context in synthetic scope to keep the number of classes of context in scope small
  */
@@ -13,7 +13,7 @@ export declare class Scope {
     overrideContext: IOverrideContext;
     readonly isBoundary: boolean;
     private constructor();
-    static getContext(scope: Scope, name: string, ancestor: number): IBindingContext | IOverrideContext | IBinding | undefined | null;
+    static getContext(scope: Scope, name: string, ancestor: number): IBindingContext | IOverrideContext | undefined | null;
     /**
      * Create a new `Scope` backed by the provided `BindingContext` and a new standalone `OverrideContext`.
      *

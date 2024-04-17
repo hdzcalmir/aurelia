@@ -1,8 +1,8 @@
-import { I18N } from '../i18n';
-export declare class DateFormatValueConverter {
-    private readonly i18n;
+import { type ValueConverterInstance, type ValueConverterStaticAuDefinition } from '@aurelia/runtime-html';
+export declare class DateFormatValueConverter implements ValueConverterInstance {
+    static readonly $au: ValueConverterStaticAuDefinition;
     readonly signals: string[];
-    constructor(i18n: I18N);
+    private readonly i18n;
     toView(value: string | number | Date, options?: Intl.DateTimeFormatOptions, locale?: string): string | number;
 }
 //# sourceMappingURL=date-format-value-converter.d.ts.map

@@ -4,8 +4,49 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var kernel = require('@aurelia/kernel');
 var runtimeHtml = require('@aurelia/runtime-html');
+var expressionParser = require('@aurelia/expression-parser');
 var runtime = require('@aurelia/runtime');
 var i18next = require('i18next');
+
+const Signals = {
+    I18N_EA_CHANNEL: 'i18n:locale:changed',
+    I18N_SIGNAL: 'aurelia-translation-signal',
+    RT_SIGNAL: 'aurelia-relativetime-signal'
+};
+/** @internal */
+var ValueConverters;
+(function (ValueConverters) {
+    ValueConverters["translationValueConverterName"] = "t";
+    ValueConverters["dateFormatValueConverterName"] = "df";
+    ValueConverters["numberFormatValueConverterName"] = "nf";
+    ValueConverters["relativeTimeValueConverterName"] = "rt";
+})(ValueConverters || (ValueConverters = {}));
+function createIntlFormatValueConverterExpression(name, binding) {
+    const expression = binding.ast.expression;
+    if (!(expression instanceof expressionParser.ValueConverterExpression)) {
+        const vcExpression = new expressionParser.ValueConverterExpression(expression, name, binding.ast.args);
+        binding.ast.expression = vcExpression;
+    }
+}
+/** ExpressionType */
+/** @internal */ const etInterpolation = 'Interpolation';
+/** @internal */ const etIsProperty = 'IsProperty';
+/** BindingMode */
+/** @internal */ const bmToView = runtimeHtml.BindingMode.toView;
+/** State */
+/** @internal */ const stateActivating = runtimeHtml.State.activating;
+/** @internal */ const behaviorTypeName = 'binding-behavior';
+/** @internal */ const valueConverterTypeName = 'value-converter';
+
+class DateFormatBindingBehavior {
+    bind(_scope, binding) {
+        createIntlFormatValueConverterExpression("df" /* ValueConverters.dateFormatValueConverterName */, binding);
+    }
+}
+DateFormatBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: "df" /* ValueConverters.dateFormatValueConverterName */,
+};
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -24,59 +65,44 @@ PERFORMANCE OF THIS SOFTWARE.
 /* global Reflect, Promise */
 
 
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-}
-
-const Signals = {
-    I18N_EA_CHANNEL: 'i18n:locale:changed',
-    I18N_SIGNAL: 'aurelia-translation-signal',
-    RT_SIGNAL: 'aurelia-relativetime-signal'
-};
-/** @internal */
-var ValueConverters;
-(function (ValueConverters) {
-    ValueConverters["translationValueConverterName"] = "t";
-    ValueConverters["dateFormatValueConverterName"] = "df";
-    ValueConverters["numberFormatValueConverterName"] = "nf";
-    ValueConverters["relativeTimeValueConverterName"] = "rt";
-})(ValueConverters || (ValueConverters = {}));
-function createIntlFormatValueConverterExpression(name, binding) {
-    const expression = binding.ast.expression;
-    if (!(expression instanceof runtime.ValueConverterExpression)) {
-        const vcExpression = new runtime.ValueConverterExpression(expression, name, binding.ast.args);
-        binding.ast.expression = vcExpression;
+function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
     }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 }
-/** ExpressionType */
-/** @internal */ const etInterpolation = 'Interpolation';
-/** @internal */ const etIsProperty = 'IsProperty';
-/** CommandType */
-/** @internal */ const ctNone = 'None';
-/** BindingMode */
-/** @internal */ const bmToView = runtimeHtml.BindingMode.toView;
-/** State */
-/** @internal */ const stateActivating = runtimeHtml.State.activating;
-
-exports.DateFormatBindingBehavior = class DateFormatBindingBehavior {
-    bind(_scope, binding) {
-        createIntlFormatValueConverterExpression("df" /* ValueConverters.dateFormatValueConverterName */, binding);
+function __runInitializers(thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
     }
-};
-exports.DateFormatBindingBehavior = __decorate([
-    runtimeHtml.bindingBehavior("df" /* ValueConverters.dateFormatValueConverterName */)
-], exports.DateFormatBindingBehavior);
+    return useValue ? value : void 0;
+}
 
 const I18nInitOptions = /*@__PURE__*/ kernel.DI.createInterface('I18nInitOptions');
 
-const I18nWrapper = /*@__PURE__*/ kernel.DI.createInterface('I18nextWrapper');
+const II18nextWrapper = /*@__PURE__*/ kernel.DI.createInterface('II18nextWrapper');
 /**
  * A wrapper class over i18next to facilitate the easy testing and DI.
  */
@@ -86,16 +112,6 @@ class I18nextWrapper {
     }
 }
 
-var TimeSpan;
-(function (TimeSpan) {
-    TimeSpan[TimeSpan["Second"] = 1000] = "Second";
-    TimeSpan[TimeSpan["Minute"] = 60000] = "Minute";
-    TimeSpan[TimeSpan["Hour"] = 3600000] = "Hour";
-    TimeSpan[TimeSpan["Day"] = 86400000] = "Day";
-    TimeSpan[TimeSpan["Week"] = 604800000] = "Week";
-    TimeSpan[TimeSpan["Month"] = 2592000000] = "Month";
-    TimeSpan[TimeSpan["Year"] = 31536000000] = "Year";
-})(TimeSpan || (TimeSpan = {}));
 class I18nKeyEvaluationResult {
     constructor(keyExpr) {
         this.value = (void 0);
@@ -114,155 +130,165 @@ const I18N = /*@__PURE__*/ kernel.DI.createInterface('I18N');
 /**
  * Translation service class.
  */
-exports.I18nService = class I18nService {
-    constructor(i18nextWrapper, options, ea, signaler) {
-        this.ea = ea;
-        this._localeSubscribers = new Set();
-        this.i18next = i18nextWrapper.i18next;
-        this.initPromise = this._initializeI18next(options);
-        this._signaler = signaler;
-    }
-    evaluate(keyExpr, options) {
-        const parts = keyExpr.split(';');
-        const results = [];
-        for (const part of parts) {
-            const result = new I18nKeyEvaluationResult(part);
-            const key = result.key;
-            const translation = this.tr(key, options);
-            if (this.options.skipTranslationOnMissingKey && translation === key) {
-                // TODO change this once the logging infra is there.
-                // eslint-disable-next-line no-console
-                console.warn(`Couldn't find translation for key: ${key}`);
+let I18nService = (() => {
+    var _a;
+    let _i18next_decorators;
+    let _i18next_initializers = [];
+    let _i18next_extraInitializers = [];
+    return _a = class I18nService {
+            constructor() {
+                this.i18next = __runInitializers(this, _i18next_initializers, void 0);
+                /**
+                 * This is used for i18next initialization and awaited for before the bind phase.
+                 * If need be (usually there is none), this can be awaited for explicitly in client code.
+                 */
+                this.initPromise = __runInitializers(this, _i18next_extraInitializers);
+                this._localeSubscribers = new Set();
+                this._signaler = kernel.resolve(runtimeHtml.ISignaler);
+                this.ea = kernel.resolve(kernel.IEventAggregator);
+                this.i18next = kernel.resolve(II18nextWrapper).i18next;
+                this.initPromise = this._initializeI18next(kernel.resolve(I18nInitOptions));
             }
-            else {
-                result.value = translation;
-                results.push(result);
+            evaluate(keyExpr, options) {
+                const parts = keyExpr.split(';');
+                const results = [];
+                for (const part of parts) {
+                    const result = new I18nKeyEvaluationResult(part);
+                    const key = result.key;
+                    const translation = this.tr(key, options);
+                    if (this.options.skipTranslationOnMissingKey && translation === key) {
+                        // TODO change this once the logging infra is there.
+                        // eslint-disable-next-line no-console
+                        console.warn(`Couldn't find translation for key: ${key}`);
+                    }
+                    else {
+                        result.value = translation;
+                        results.push(result);
+                    }
+                }
+                return results;
             }
-        }
-        return results;
-    }
-    tr(key, options) {
-        return this.i18next.t(key, options);
-    }
-    getLocale() {
-        return this.i18next.language;
-    }
-    async setLocale(newLocale) {
-        const oldLocale = this.getLocale();
-        const locales = { oldLocale, newLocale };
-        await this.i18next.changeLanguage(newLocale);
-        this.ea.publish(Signals.I18N_EA_CHANNEL, locales);
-        this._localeSubscribers.forEach(sub => sub.handleLocaleChange(locales));
-        this._signaler.dispatchSignal(Signals.I18N_SIGNAL);
-    }
-    createNumberFormat(options, locales) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return Intl.NumberFormat(locales || this.getLocale(), options);
-    }
-    nf(input, options, locales) {
-        return this.createNumberFormat(options, locales).format(input);
-    }
-    createDateTimeFormat(options, locales) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return Intl.DateTimeFormat(locales || this.getLocale(), options);
-    }
-    df(input, options, locales) {
-        return this.createDateTimeFormat(options, locales).format(input);
-    }
-    uf(numberLike, locale) {
-        // Unfortunately the Intl specs does not specify a way to get the thousand and decimal separators for a given locale.
-        // Only straightforward way would be to include the CLDR data and query for the separators, which certainly is a overkill.
-        const comparer = this.nf(10000 / 3, undefined, locale);
-        let thousandSeparator = comparer[1];
-        const decimalSeparator = comparer[5];
-        if (thousandSeparator === '.') {
-            thousandSeparator = '\\.';
-        }
-        // remove all thousand separators
-        const result = numberLike.replace(new RegExp(thousandSeparator, 'g'), '')
-            // remove non-numeric signs except -> , .
-            .replace(/[^\d.,-]/g, '')
-            // replace original decimalSeparator with english one
-            .replace(decimalSeparator, '.');
-        // return real number
-        return Number(result);
-    }
-    createRelativeTimeFormat(options, locales) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return new Intl.RelativeTimeFormat(locales || this.getLocale(), options);
-    }
-    rt(input, options, locales) {
-        let difference = input.getTime() - this.now();
-        const epsilon = this.options.rtEpsilon * (difference > 0 ? 1 : 0);
-        const formatter = this.createRelativeTimeFormat(options, locales);
-        let value = difference / 31536000000 /* TimeSpan.Year */;
-        if (Math.abs(value + epsilon) >= 1) {
-            return formatter.format(Math.round(value), 'year');
-        }
-        value = difference / 2592000000 /* TimeSpan.Month */;
-        if (Math.abs(value + epsilon) >= 1) {
-            return formatter.format(Math.round(value), 'month');
-        }
-        value = difference / 604800000 /* TimeSpan.Week */;
-        if (Math.abs(value + epsilon) >= 1) {
-            return formatter.format(Math.round(value), 'week');
-        }
-        value = difference / 86400000 /* TimeSpan.Day */;
-        if (Math.abs(value + epsilon) >= 1) {
-            return formatter.format(Math.round(value), 'day');
-        }
-        value = difference / 3600000 /* TimeSpan.Hour */;
-        if (Math.abs(value + epsilon) >= 1) {
-            return formatter.format(Math.round(value), 'hour');
-        }
-        value = difference / 60000 /* TimeSpan.Minute */;
-        if (Math.abs(value + epsilon) >= 1) {
-            return formatter.format(Math.round(value), 'minute');
-        }
-        difference = Math.abs(difference) < 1000 /* TimeSpan.Second */ ? 1000 /* TimeSpan.Second */ : difference;
-        value = difference / 1000 /* TimeSpan.Second */;
-        return formatter.format(Math.round(value), 'second');
-    }
-    subscribeLocaleChange(subscriber) {
-        this._localeSubscribers.add(subscriber);
-    }
-    unsubscribeLocaleChange(subscriber) {
-        this._localeSubscribers.delete(subscriber);
-    }
-    now() {
-        return new Date().getTime();
-    }
-    /** @internal */
-    async _initializeI18next(options) {
-        const defaultOptions = {
-            lng: 'en',
-            fallbackLng: ['en'],
-            debug: false,
-            plugins: [],
-            rtEpsilon: 0.01,
-            skipTranslationOnMissingKey: false,
-        };
-        this.options = { ...defaultOptions, ...options };
-        for (const plugin of this.options.plugins) {
-            this.i18next.use(plugin);
-        }
-        await this.i18next.init(this.options);
-    }
-};
-__decorate([
-    runtime.nowrap
-], exports.I18nService.prototype, "i18next", void 0);
-exports.I18nService = __decorate([
-    __param(0, I18nWrapper),
-    __param(1, I18nInitOptions),
-    __param(2, kernel.IEventAggregator),
-    __param(3, runtime.ISignaler)
-], exports.I18nService);
+            tr(key, options) {
+                return this.i18next.t(key, options);
+            }
+            getLocale() {
+                return this.i18next.language;
+            }
+            async setLocale(newLocale) {
+                const oldLocale = this.getLocale();
+                const locales = { oldLocale, newLocale };
+                await this.i18next.changeLanguage(newLocale);
+                this.ea.publish(Signals.I18N_EA_CHANNEL, locales);
+                this._localeSubscribers.forEach(sub => sub.handleLocaleChange(locales));
+                this._signaler.dispatchSignal(Signals.I18N_SIGNAL);
+            }
+            createNumberFormat(options, locales) {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                return Intl.NumberFormat(locales || this.getLocale(), options);
+            }
+            nf(input, options, locales) {
+                return this.createNumberFormat(options, locales).format(input);
+            }
+            createDateTimeFormat(options, locales) {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                return Intl.DateTimeFormat(locales || this.getLocale(), options);
+            }
+            df(input, options, locales) {
+                return this.createDateTimeFormat(options, locales).format(input);
+            }
+            uf(numberLike, locale) {
+                // Unfortunately the Intl specs does not specify a way to get the thousand and decimal separators for a given locale.
+                // Only straightforward way would be to include the CLDR data and query for the separators, which certainly is a overkill.
+                const comparer = this.nf(10000 / 3, undefined, locale);
+                let thousandSeparator = comparer[1];
+                const decimalSeparator = comparer[5];
+                if (thousandSeparator === '.') {
+                    thousandSeparator = '\\.';
+                }
+                // remove all thousand separators
+                const result = numberLike.replace(new RegExp(thousandSeparator, 'g'), '')
+                    // remove non-numeric signs except -> , .
+                    .replace(/[^\d.,-]/g, '')
+                    // replace original decimalSeparator with english one
+                    .replace(decimalSeparator, '.');
+                // return real number
+                return Number(result);
+            }
+            createRelativeTimeFormat(options, locales) {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                return new Intl.RelativeTimeFormat(locales || this.getLocale(), options);
+            }
+            rt(input, options, locales) {
+                let difference = input.getTime() - this.now();
+                const epsilon = this.options.rtEpsilon * (difference > 0 ? 1 : 0);
+                const formatter = this.createRelativeTimeFormat(options, locales);
+                let value = difference / 31536000000 /* TimeSpan.Year */;
+                if (Math.abs(value + epsilon) >= 1) {
+                    return formatter.format(Math.round(value), 'year');
+                }
+                value = difference / 2592000000 /* TimeSpan.Month */;
+                if (Math.abs(value + epsilon) >= 1) {
+                    return formatter.format(Math.round(value), 'month');
+                }
+                value = difference / 604800000 /* TimeSpan.Week */;
+                if (Math.abs(value + epsilon) >= 1) {
+                    return formatter.format(Math.round(value), 'week');
+                }
+                value = difference / 86400000 /* TimeSpan.Day */;
+                if (Math.abs(value + epsilon) >= 1) {
+                    return formatter.format(Math.round(value), 'day');
+                }
+                value = difference / 3600000 /* TimeSpan.Hour */;
+                if (Math.abs(value + epsilon) >= 1) {
+                    return formatter.format(Math.round(value), 'hour');
+                }
+                value = difference / 60000 /* TimeSpan.Minute */;
+                if (Math.abs(value + epsilon) >= 1) {
+                    return formatter.format(Math.round(value), 'minute');
+                }
+                difference = Math.abs(difference) < 1000 /* TimeSpan.Second */ ? 1000 /* TimeSpan.Second */ : difference;
+                value = difference / 1000 /* TimeSpan.Second */;
+                return formatter.format(Math.round(value), 'second');
+            }
+            subscribeLocaleChange(subscriber) {
+                this._localeSubscribers.add(subscriber);
+            }
+            unsubscribeLocaleChange(subscriber) {
+                this._localeSubscribers.delete(subscriber);
+            }
+            now() {
+                return new Date().getTime();
+            }
+            /** @internal */
+            async _initializeI18next(options) {
+                const defaultOptions = {
+                    lng: 'en',
+                    fallbackLng: ['en'],
+                    debug: false,
+                    plugins: [],
+                    rtEpsilon: 0.01,
+                    skipTranslationOnMissingKey: false,
+                };
+                this.options = { ...defaultOptions, ...options };
+                for (const plugin of this.options.plugins) {
+                    this.i18next.use(plugin);
+                }
+                await this.i18next.init(this.options);
+            }
+        },
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            _i18next_decorators = [runtime.nowrap];
+            __esDecorate(null, null, _i18next_decorators, { kind: "field", name: "i18next", static: false, private: false, access: { has: obj => "i18next" in obj, get: obj => obj.i18next, set: (obj, value) => { obj.i18next = value; } }, metadata: _metadata }, _i18next_initializers, _i18next_extraInitializers);
+            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+        })(),
+        _a;
+})();
 
-exports.DateFormatValueConverter = class DateFormatValueConverter {
-    constructor(i18n) {
-        this.i18n = i18n;
+class DateFormatValueConverter {
+    constructor() {
         this.signals = [Signals.I18N_SIGNAL];
+        this.i18n = kernel.resolve(I18N);
     }
     toView(value, options, locale) {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -280,25 +306,26 @@ exports.DateFormatValueConverter = class DateFormatValueConverter {
         }
         return this.i18n.df(value, options, locale);
     }
+}
+DateFormatValueConverter.$au = {
+    type: valueConverterTypeName,
+    name: "df" /* ValueConverters.dateFormatValueConverterName */,
 };
-exports.DateFormatValueConverter = __decorate([
-    runtimeHtml.valueConverter("df" /* ValueConverters.dateFormatValueConverterName */),
-    __param(0, I18N)
-], exports.DateFormatValueConverter);
 
-exports.NumberFormatBindingBehavior = class NumberFormatBindingBehavior {
+class NumberFormatBindingBehavior {
     bind(_scope, binding) {
         createIntlFormatValueConverterExpression("nf" /* ValueConverters.numberFormatValueConverterName */, binding);
     }
+}
+NumberFormatBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: "nf" /* ValueConverters.numberFormatValueConverterName */,
 };
-exports.NumberFormatBindingBehavior = __decorate([
-    runtimeHtml.bindingBehavior("nf" /* ValueConverters.numberFormatValueConverterName */)
-], exports.NumberFormatBindingBehavior);
 
-exports.NumberFormatValueConverter = class NumberFormatValueConverter {
-    constructor(i18n) {
-        this.i18n = i18n;
+class NumberFormatValueConverter {
+    constructor() {
         this.signals = [Signals.I18N_SIGNAL];
+        this.i18n = kernel.resolve(I18N);
     }
     toView(value, options, locale) {
         if (typeof value !== 'number') {
@@ -306,25 +333,26 @@ exports.NumberFormatValueConverter = class NumberFormatValueConverter {
         }
         return this.i18n.nf(value, options, locale);
     }
+}
+NumberFormatValueConverter.$au = {
+    type: valueConverterTypeName,
+    name: "nf" /* ValueConverters.numberFormatValueConverterName */,
 };
-exports.NumberFormatValueConverter = __decorate([
-    runtimeHtml.valueConverter("nf" /* ValueConverters.numberFormatValueConverterName */),
-    __param(0, I18N)
-], exports.NumberFormatValueConverter);
 
-exports.RelativeTimeBindingBehavior = class RelativeTimeBindingBehavior {
+class RelativeTimeBindingBehavior {
     bind(_scope, binding) {
         createIntlFormatValueConverterExpression("rt" /* ValueConverters.relativeTimeValueConverterName */, binding);
     }
+}
+RelativeTimeBindingBehavior.$au = {
+    type: behaviorTypeName,
+    name: "rt" /* ValueConverters.relativeTimeValueConverterName */,
 };
-exports.RelativeTimeBindingBehavior = __decorate([
-    runtimeHtml.bindingBehavior("rt" /* ValueConverters.relativeTimeValueConverterName */)
-], exports.RelativeTimeBindingBehavior);
 
-exports.RelativeTimeValueConverter = class RelativeTimeValueConverter {
-    constructor(i18n) {
-        this.i18n = i18n;
+class RelativeTimeValueConverter {
+    constructor() {
         this.signals = [Signals.I18N_SIGNAL, Signals.RT_SIGNAL];
+        this.i18n = kernel.resolve(I18N);
     }
     toView(value, options, locale) {
         if (!(value instanceof Date)) {
@@ -332,24 +360,22 @@ exports.RelativeTimeValueConverter = class RelativeTimeValueConverter {
         }
         return this.i18n.rt(value, options, locale);
     }
+}
+RelativeTimeValueConverter.$au = {
+    type: valueConverterTypeName,
+    name: "rt" /* ValueConverters.relativeTimeValueConverterName */,
 };
-exports.RelativeTimeValueConverter = __decorate([
-    runtimeHtml.valueConverter("rt" /* ValueConverters.relativeTimeValueConverterName */),
-    __param(0, I18N)
-], exports.RelativeTimeValueConverter);
 
-exports.TranslationBindingBehavior = class TranslationBindingBehavior {
+class TranslationBindingBehavior {
     bind(_scope, binding) {
         const expression = binding.ast.expression;
-        if (!(expression instanceof runtime.ValueConverterExpression)) {
-            const vcExpression = new runtime.ValueConverterExpression(expression, "t" /* ValueConverters.translationValueConverterName */, binding.ast.args);
+        if (!(expression instanceof expressionParser.ValueConverterExpression)) {
+            const vcExpression = new expressionParser.ValueConverterExpression(expression, "t" /* ValueConverters.translationValueConverterName */, binding.ast.args);
             binding.ast.expression = vcExpression;
         }
     }
-};
-exports.TranslationBindingBehavior = __decorate([
-    runtimeHtml.bindingBehavior("t" /* ValueConverters.translationValueConverterName */)
-], exports.TranslationBindingBehavior);
+}
+runtimeHtml.BindingBehavior.define("t" /* ValueConverters.translationValueConverterName */, TranslationBindingBehavior);
 
 const contentAttributes = ['textContent', 'innerHTML', 'prepend', 'append'];
 const attributeAliases = new Map([['text', 'textContent'], ['html', 'innerHTML']]);
@@ -369,7 +395,7 @@ class TranslationBinding {
             binding.useParameter(expr);
         }
         else {
-            const interpolation = expr instanceof runtime.CustomExpression ? parser.parse(expr.value, etInterpolation) : undefined;
+            const interpolation = expr instanceof expressionParser.CustomExpression ? parser.parse(expr.value, etInterpolation) : undefined;
             binding.ast = interpolation || expr;
         }
     }
@@ -411,7 +437,7 @@ class TranslationBinding {
         }
         this._scope = _scope;
         this.i18n.subscribeLocaleChange(this);
-        this._keyExpression = runtime.astEvaluate(ast, _scope, this, this);
+        this._keyExpression = runtimeHtml.astEvaluate(ast, _scope, this, this);
         this._ensureKeyExpression();
         this.parameter?.bind(_scope);
         this.updateTranslations();
@@ -422,7 +448,7 @@ class TranslationBinding {
             return;
         }
         this.i18n.unsubscribeLocaleChange(this);
-        runtime.astUnbind(this.ast, this._scope, this);
+        runtimeHtml.astUnbind(this.ast, this._scope, this);
         this.parameter?.unbind();
         this._targetAccessors.clear();
         if (this._task !== null) {
@@ -434,7 +460,7 @@ class TranslationBinding {
     }
     handleChange(_newValue, _previousValue) {
         this.obs.version++;
-        this._keyExpression = runtime.astEvaluate(this.ast, this._scope, this, this);
+        this._keyExpression = runtimeHtml.astEvaluate(this.ast, this._scope, this, this);
         this.obs.clear();
         this._ensureKeyExpression();
         this.updateTranslations();
@@ -573,7 +599,7 @@ class TranslationBinding {
         }
     }
 }
-runtime.connectable(TranslationBinding);
+runtime.connectable(TranslationBinding, null);
 runtimeHtml.mixinAstEvaluator(true)(TranslationBinding);
 runtimeHtml.mixingBindingLimited(TranslationBinding, () => 'updateTranslations');
 class AccessorUpdateTask {
@@ -606,7 +632,7 @@ class ParameterBinding {
             return;
         }
         this.obs.version++;
-        this.value = runtime.astEvaluate(this.ast, this._scope, this, this);
+        this.value = runtimeHtml.astEvaluate(this.ast, this._scope, this, this);
         this.obs.clear();
         this.updater();
     }
@@ -615,33 +641,31 @@ class ParameterBinding {
             return;
         }
         this._scope = _scope;
-        runtime.astBind(this.ast, _scope, this);
-        this.value = runtime.astEvaluate(this.ast, _scope, this, this);
+        runtimeHtml.astBind(this.ast, _scope, this);
+        this.value = runtimeHtml.astEvaluate(this.ast, _scope, this, this);
         this.isBound = true;
     }
     unbind() {
         if (!this.isBound) {
             return;
         }
-        runtime.astUnbind(this.ast, this._scope, this);
+        runtimeHtml.astUnbind(this.ast, this._scope, this);
         this._scope = (void 0);
         this.obs.clearAll();
     }
 }
-runtime.connectable(ParameterBinding);
+runtime.connectable(ParameterBinding, null);
 runtimeHtml.mixinAstEvaluator(true)(ParameterBinding);
 
 const TranslationParametersInstructionType = 'tpt';
 // `.bind` part is needed here only for vCurrent compliance
 const attribute = 't-params.bind';
-exports.TranslationParametersAttributePattern = class TranslationParametersAttributePattern {
+class TranslationParametersAttributePattern {
     [attribute](rawName, rawValue) {
         return new runtimeHtml.AttrSyntax(rawName, rawValue, '', attribute);
     }
-};
-exports.TranslationParametersAttributePattern = __decorate([
-    runtimeHtml.attributePattern({ pattern: attribute, symbols: '' })
-], exports.TranslationParametersAttributePattern);
+}
+runtimeHtml.AttributePattern.define([{ pattern: attribute, symbols: '' }], TranslationParametersAttributePattern);
 class TranslationParametersBindingInstruction {
     constructor(from, to) {
         this.from = from;
@@ -650,11 +674,10 @@ class TranslationParametersBindingInstruction {
         this.mode = bmToView;
     }
 }
-exports.TranslationParametersBindingCommand = class TranslationParametersBindingCommand {
+class TranslationParametersBindingCommand {
     constructor() {
-        this.type = ctNone;
+        this.ignoreAttr = false;
     }
-    get name() { return attribute; }
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -669,11 +692,12 @@ exports.TranslationParametersBindingCommand = class TranslationParametersBinding
         }
         return new TranslationParametersBindingInstruction(exprParser.parse(attr.rawValue, etIsProperty), target);
     }
+}
+TranslationParametersBindingCommand.$au = {
+    type: 'binding-command',
+    name: attribute,
 };
-exports.TranslationParametersBindingCommand = __decorate([
-    runtimeHtml.bindingCommand(attribute)
-], exports.TranslationParametersBindingCommand);
-exports.TranslationParametersBindingRenderer = class TranslationParametersBindingRenderer {
+class TranslationParametersBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
             parser: exprParser,
@@ -686,10 +710,8 @@ exports.TranslationParametersBindingRenderer = class TranslationParametersBindin
             platform,
         });
     }
-};
-exports.TranslationParametersBindingRenderer = __decorate([
-    runtimeHtml.renderer(TranslationParametersInstructionType)
-], exports.TranslationParametersBindingRenderer);
+}
+runtimeHtml.renderer(TranslationParametersInstructionType)(TranslationParametersBindingRenderer, null);
 
 const TranslationInstructionType = 'tt';
 class TranslationAttributePattern {
@@ -710,9 +732,8 @@ class TranslationBindingInstruction {
 }
 class TranslationBindingCommand {
     constructor() {
-        this.type = ctNone;
+        this.ignoreAttr = false;
     }
-    get name() { return 't'; }
     build(info, parser, attrMapper) {
         let target;
         if (info.bindable == null) {
@@ -724,10 +745,10 @@ class TranslationBindingCommand {
         else {
             target = info.bindable.name;
         }
-        return new TranslationBindingInstruction(new runtime.CustomExpression(info.attr.rawValue), target);
+        return new TranslationBindingInstruction(new expressionParser.CustomExpression(info.attr.rawValue), target);
     }
 }
-exports.TranslationBindingRenderer = class TranslationBindingRenderer {
+class TranslationBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
             parser: exprParser,
@@ -739,10 +760,8 @@ exports.TranslationBindingRenderer = class TranslationBindingRenderer {
             platform,
         });
     }
-};
-exports.TranslationBindingRenderer = __decorate([
-    runtimeHtml.renderer(TranslationInstructionType)
-], exports.TranslationBindingRenderer);
+}
+runtimeHtml.renderer(TranslationInstructionType)(TranslationBindingRenderer, null);
 const TranslationBindInstructionType = 'tbt';
 class TranslationBindAttributePattern {
     static registerAlias(alias) {
@@ -762,9 +781,8 @@ class TranslationBindBindingInstruction {
 }
 class TranslationBindBindingCommand {
     constructor() {
-        this.type = ctNone;
+        this.ignoreAttr = false;
     }
-    get name() { return 't-bind'; }
     build(info, exprParser, attrMapper) {
         let target;
         if (info.bindable == null) {
@@ -779,7 +797,7 @@ class TranslationBindBindingCommand {
         return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, etIsProperty), target);
     }
 }
-exports.TranslationBindBindingRenderer = class TranslationBindBindingRenderer {
+class TranslationBindBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
             parser: exprParser,
@@ -791,28 +809,23 @@ exports.TranslationBindBindingRenderer = class TranslationBindBindingRenderer {
             platform
         });
     }
-};
-exports.TranslationBindBindingRenderer = __decorate([
-    runtimeHtml.renderer(TranslationBindInstructionType)
-], exports.TranslationBindBindingRenderer);
+}
+runtimeHtml.renderer(TranslationBindInstructionType)(TranslationBindBindingRenderer, null);
 
-exports.TranslationValueConverter = class TranslationValueConverter {
-    constructor(i18n) {
-        this.i18n = i18n;
+class TranslationValueConverter {
+    constructor() {
         this.signals = [Signals.I18N_SIGNAL];
+        this.i18n = kernel.resolve(I18N);
     }
     toView(value, options) {
         return this.i18n.tr(value, options);
     }
-};
-exports.TranslationValueConverter = __decorate([
-    runtimeHtml.valueConverter("t" /* ValueConverters.translationValueConverterName */),
-    __param(0, I18N)
-], exports.TranslationValueConverter);
+}
+runtimeHtml.ValueConverter.define("t" /* ValueConverters.translationValueConverterName */, TranslationValueConverter);
 
 const translation = [
-    exports.TranslationValueConverter,
-    exports.TranslationBindingBehavior,
+    TranslationValueConverter,
+    TranslationBindingBehavior,
 ];
 function coreComponents(options) {
     const configuredAliases = options.translationAttributeAliases;
@@ -835,31 +848,34 @@ function coreComponents(options) {
     const renderers = [
         runtimeHtml.AttributePattern.define(patterns, TranslationAttributePattern),
         runtimeHtml.BindingCommand.define({ name: 't', aliases: commandAliases }, TranslationBindingCommand),
-        exports.TranslationBindingRenderer,
+        TranslationBindingRenderer,
         runtimeHtml.AttributePattern.define(bindPatterns, TranslationBindAttributePattern),
         runtimeHtml.BindingCommand.define({ name: 't.bind', aliases: bindCommandAliases }, TranslationBindBindingCommand),
-        exports.TranslationBindBindingRenderer,
-        exports.TranslationParametersAttributePattern,
-        exports.TranslationParametersBindingCommand,
-        exports.TranslationParametersBindingRenderer
+        TranslationBindBindingRenderer,
+        TranslationParametersAttributePattern,
+        TranslationParametersBindingCommand,
+        TranslationParametersBindingRenderer
     ];
     return {
         register(container) {
-            return container.register(kernel.Registration.callback(I18nInitOptions, () => options.initOptions), runtimeHtml.AppTask.activating(I18N, i18n => i18n.initPromise), kernel.Registration.singleton(I18nWrapper, I18nextWrapper), kernel.Registration.singleton(I18N, exports.I18nService), ...renderers, ...translation);
+            const wrapperRegistration = options.i18nextWrapper != null && typeof options.i18nextWrapper === 'object'
+                ? kernel.Registration.instance(II18nextWrapper, options.i18nextWrapper)
+                : kernel.Registration.singleton(II18nextWrapper, I18nextWrapper);
+            return container.register(kernel.Registration.callback(I18nInitOptions, () => options.initOptions), runtimeHtml.AppTask.activating(I18N, i18n => i18n.initPromise), wrapperRegistration, kernel.Registration.singleton(I18N, I18nService), ...renderers, ...translation);
         }
     };
 }
 const dateFormat = [
-    exports.DateFormatValueConverter,
-    exports.DateFormatBindingBehavior,
+    DateFormatValueConverter,
+    DateFormatBindingBehavior,
 ];
 const numberFormat = [
-    exports.NumberFormatValueConverter,
-    exports.NumberFormatBindingBehavior,
+    NumberFormatValueConverter,
+    NumberFormatBindingBehavior,
 ];
 const relativeTimeFormat = [
-    exports.RelativeTimeValueConverter,
-    exports.RelativeTimeBindingBehavior,
+    RelativeTimeValueConverter,
+    RelativeTimeBindingBehavior,
 ];
 function createI18nConfiguration(optionsProvider) {
     return {
@@ -876,20 +892,35 @@ function createI18nConfiguration(optionsProvider) {
 }
 const I18nConfiguration = createI18nConfiguration(() => { });
 
+exports.DateFormatBindingBehavior = DateFormatBindingBehavior;
+exports.DateFormatValueConverter = DateFormatValueConverter;
 exports.I18N = I18N;
 exports.I18nConfiguration = I18nConfiguration;
 exports.I18nInitOptions = I18nInitOptions;
 exports.I18nKeyEvaluationResult = I18nKeyEvaluationResult;
+exports.I18nService = I18nService;
+exports.II18nextWrapper = II18nextWrapper;
+exports.NumberFormatBindingBehavior = NumberFormatBindingBehavior;
+exports.NumberFormatValueConverter = NumberFormatValueConverter;
+exports.RelativeTimeBindingBehavior = RelativeTimeBindingBehavior;
+exports.RelativeTimeValueConverter = RelativeTimeValueConverter;
 exports.Signals = Signals;
 exports.TranslationAttributePattern = TranslationAttributePattern;
 exports.TranslationBindAttributePattern = TranslationBindAttributePattern;
 exports.TranslationBindBindingCommand = TranslationBindBindingCommand;
 exports.TranslationBindBindingInstruction = TranslationBindBindingInstruction;
+exports.TranslationBindBindingRenderer = TranslationBindBindingRenderer;
 exports.TranslationBindInstructionType = TranslationBindInstructionType;
 exports.TranslationBinding = TranslationBinding;
+exports.TranslationBindingBehavior = TranslationBindingBehavior;
 exports.TranslationBindingCommand = TranslationBindingCommand;
 exports.TranslationBindingInstruction = TranslationBindingInstruction;
+exports.TranslationBindingRenderer = TranslationBindingRenderer;
 exports.TranslationInstructionType = TranslationInstructionType;
+exports.TranslationParametersAttributePattern = TranslationParametersAttributePattern;
+exports.TranslationParametersBindingCommand = TranslationParametersBindingCommand;
 exports.TranslationParametersBindingInstruction = TranslationParametersBindingInstruction;
+exports.TranslationParametersBindingRenderer = TranslationParametersBindingRenderer;
 exports.TranslationParametersInstructionType = TranslationParametersInstructionType;
+exports.TranslationValueConverter = TranslationValueConverter;
 //# sourceMappingURL=index.dev.cjs.map

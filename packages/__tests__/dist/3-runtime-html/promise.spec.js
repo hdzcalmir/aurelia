@@ -1,17 +1,43 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { reportTaskQueue, } from '@aurelia/platform';
-import { DI, IContainer, ILogger, LoggerConfiguration, LogLevel, pascalCase, Registration, sink, optional, } from '@aurelia/kernel';
+import { DI, IContainer, ILogger, LoggerConfiguration, LogLevel, pascalCase, Registration, sink, optional, resolve, } from '@aurelia/kernel';
 import { valueConverter, bindingBehavior, ValueConverter, customElement, CustomElement, Switch, Aurelia, IPlatform, PromiseTemplateController, If, bindable, INode, } from '@aurelia/runtime-html';
 import { assert, TestContext, } from '@aurelia/testing';
 import { createSpecFunction, } from '../util.js';
@@ -30,70 +56,80 @@ describe('3-runtime-html/promise.spec.ts', function () {
     }
     const configLookup = DI.createInterface();
     function createComponentType(name, template = '', bindables = []) {
-        let Component = class Component {
-            constructor(config, $logger, container, node) {
-                this.config = config;
-                this.$logger = $logger;
-                this.ceId = null;
-                if (node.dataset.logCtor !== void 0) {
-                    (this.logger = $logger.scopeTo(name)).debug('ctor');
-                    delete node.dataset.logCtor;
+        let Component = (() => {
+            let _classDecorators = [customElement({ name, template, bindables })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _ceId_decorators;
+            let _ceId_initializers = [];
+            let _ceId_extraInitializers = [];
+            var Component = _classThis = class {
+                constructor() {
+                    this.ceId = __runInitializers(this, _ceId_initializers, null);
+                    this.config = (__runInitializers(this, _ceId_extraInitializers), resolve(optional(Config)));
+                    const $logger = this.$logger = resolve(ILogger);
+                    const container = resolve(IContainer);
+                    const node = resolve(INode);
+                    if (node.dataset.logCtor !== void 0) {
+                        (this.logger = $logger.scopeTo(name)).debug('ctor');
+                        delete node.dataset.logCtor;
+                    }
+                    if (this.config == null) {
+                        const lookup = container.get(configLookup);
+                        this.config = lookup.get(name);
+                    }
                 }
-                if (config == null) {
-                    const lookup = container.get(configLookup);
-                    this.config = lookup.get(name);
+                async binding() {
+                    this.logger = this.ceId === null ? this.$logger.scopeTo(name) : this.$logger.scopeTo(`${name}-${this.ceId}`);
+                    if (this.config.hasPromise) {
+                        await this.config.wait('binding');
+                    }
+                    this.logger.debug('binding');
                 }
-            }
-            async binding() {
-                this.logger = this.ceId === null ? this.$logger.scopeTo(name) : this.$logger.scopeTo(`${name}-${this.ceId}`);
-                if (this.config.hasPromise) {
-                    await this.config.wait('binding');
+                async bound() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait('bound');
+                    }
+                    this.logger.debug('bound');
                 }
-                this.logger.debug('binding');
-            }
-            async bound() {
-                if (this.config.hasPromise) {
-                    await this.config.wait('bound');
+                async attaching() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait('attaching');
+                    }
+                    this.logger.debug('attaching');
                 }
-                this.logger.debug('bound');
-            }
-            async attaching() {
-                if (this.config.hasPromise) {
-                    await this.config.wait('attaching');
+                async attached() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait('attached');
+                    }
+                    this.logger.debug('attached');
                 }
-                this.logger.debug('attaching');
-            }
-            async attached() {
-                if (this.config.hasPromise) {
-                    await this.config.wait('attached');
+                async detaching() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait('detaching');
+                    }
+                    this.logger.debug('detaching');
                 }
-                this.logger.debug('attached');
-            }
-            async detaching() {
-                if (this.config.hasPromise) {
-                    await this.config.wait('detaching');
+                async unbinding() {
+                    if (this.config.hasPromise) {
+                        await this.config.wait('unbinding');
+                    }
+                    this.logger.debug('unbinding');
                 }
-                this.logger.debug('detaching');
-            }
-            async unbinding() {
-                if (this.config.hasPromise) {
-                    await this.config.wait('unbinding');
-                }
-                this.logger.debug('unbinding');
-            }
-        };
-        __decorate([
-            bindable,
-            __metadata("design:type", Object)
-        ], Component.prototype, "ceId", void 0);
-        Component = __decorate([
-            customElement({ name, template, bindables }),
-            __param(0, optional(Config)),
-            __param(1, ILogger),
-            __param(2, IContainer),
-            __param(3, INode),
-            __metadata("design:paramtypes", [Config, Object, Object, Object])
-        ], Component);
+            };
+            __setFunctionName(_classThis, "Component");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _ceId_decorators = [bindable];
+                __esDecorate(null, null, _ceId_decorators, { kind: "field", name: "ceId", static: false, private: false, access: { has: obj => "ceId" in obj, get: obj => obj.ceId, set: (obj, value) => { obj.ceId = value; } }, metadata: _metadata }, _ceId_initializers, _ceId_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Component = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Component = _classThis;
+        })();
         Reflect.defineProperty(Component, 'name', {
             writable: false,
             enumerable: false,
@@ -102,23 +138,35 @@ describe('3-runtime-html/promise.spec.ts', function () {
         });
         return Component;
     }
-    let DebugLog = class DebugLog {
-        constructor() {
-            this.log = [];
-        }
-        handleEvent(event) {
-            const scope = event.scope.join('.');
-            if (scope.includes('-host')) {
-                this.log.push(`${scope}.${event.message}`);
+    let DebugLog = (() => {
+        let _classDecorators = [sink({ handles: [LogLevel.debug] })];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var DebugLog = _classThis = class {
+            constructor() {
+                this.log = [];
             }
-        }
-        clear() {
-            this.log.length = 0;
-        }
-    };
-    DebugLog = __decorate([
-        sink({ handles: [LogLevel.debug] })
-    ], DebugLog);
+            handleEvent(event) {
+                const scope = event.scope.join('.');
+                if (scope.includes('-host')) {
+                    this.log.push(`${scope}.${event.message}`);
+                }
+            }
+            clear() {
+                this.log.length = 0;
+            }
+        };
+        __setFunctionName(_classThis, "DebugLog");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            DebugLog = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return DebugLog = _classThis;
+    })();
     class PromiseTestExecutionContext {
         constructor(ctx, container, host, app, controller, error) {
             this.ctx = ctx;
@@ -192,43 +240,79 @@ describe('3-runtime-html/promise.spec.ts', function () {
         ctx.doc.body.removeChild(host);
     }
     const $it = createSpecFunction(testPromise);
-    let Promisify = class Promisify {
-        toView(value, resolve = true, ticks = 0) {
-            if (ticks === 0) {
-                return Object.assign(resolve ? Promise.resolve(value) : Promise.reject(new Error(String(value))), { id: 0 });
+    let Promisify = (() => {
+        let _classDecorators = [valueConverter('promisify')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var Promisify = _classThis = class {
+            toView(value, resolve = true, ticks = 0) {
+                if (ticks === 0) {
+                    return Object.assign(resolve ? Promise.resolve(value) : Promise.reject(new Error(String(value))), { id: 0 });
+                }
+                return Object.assign(createMultiTickPromise(ticks, () => resolve ? Promise.resolve(value) : Promise.reject(new Error(String(value))))(), { id: 0 });
             }
-            return Object.assign(createMultiTickPromise(ticks, () => resolve ? Promise.resolve(value) : Promise.reject(new Error(String(value))))(), { id: 0 });
-        }
-    };
-    Promisify = __decorate([
-        valueConverter('promisify')
-    ], Promisify);
-    let Double = class Double {
-        fromView(value) {
-            return value instanceof Error
-                ? (value.message = `${value.message} ${value.message}`, value)
-                : `${value} ${value}`;
-        }
-    };
-    Double = __decorate([
-        valueConverter('double')
-    ], Double);
-    let NoopBindingBehavior = class NoopBindingBehavior {
-        bind(_scope, _binding) {
-            return;
-        }
-        unbind(_scope, _binding) {
-            return;
-        }
-    };
-    NoopBindingBehavior = __decorate([
-        bindingBehavior('noop')
-    ], NoopBindingBehavior);
-    let App = class App {
-        constructor(container, delaySeedPromise) {
-            this.container = container;
-            this.delaySeedPromise = delaySeedPromise;
-            if (delaySeedPromise === null) {
+        };
+        __setFunctionName(_classThis, "Promisify");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            Promisify = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return Promisify = _classThis;
+    })();
+    let Double = (() => {
+        let _classDecorators = [valueConverter('double')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var Double = _classThis = class {
+            fromView(value) {
+                return value instanceof Error
+                    ? (value.message = `${value.message} ${value.message}`, value)
+                    : `${value} ${value}`;
+            }
+        };
+        __setFunctionName(_classThis, "Double");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            Double = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return Double = _classThis;
+    })();
+    let NoopBindingBehavior = (() => {
+        let _classDecorators = [bindingBehavior('noop')];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        var NoopBindingBehavior = _classThis = class {
+            bind(_scope, _binding) {
+                return;
+            }
+            unbind(_scope, _binding) {
+                return;
+            }
+        };
+        __setFunctionName(_classThis, "NoopBindingBehavior");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            NoopBindingBehavior = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return NoopBindingBehavior = _classThis;
+    })();
+    class App {
+        constructor() {
+            this.container = resolve(IContainer);
+            this.delaySeedPromise = resolve(delaySeedPromise);
+            if (this.delaySeedPromise === null) {
                 this.init();
             }
         }
@@ -245,12 +329,7 @@ describe('3-runtime-html/promise.spec.ts', function () {
             err.message += '1';
             return err;
         }
-    };
-    App = __decorate([
-        __param(0, IContainer),
-        __param(1, delaySeedPromise),
-        __metadata("design:paramtypes", [Object, String])
-    ], App);
+    }
     function getActivationSequenceFor(name, withCtor = false) {
         return typeof name === 'string'
             ? [...(withCtor ? [`${name}.ctor`] : []), `${name}.binding`, `${name}.bound`, `${name}.attaching`, `${name}.attached`]

@@ -2,25 +2,38 @@ import { ITemplateCompiler } from '../renderer';
 import { BindableDefinition } from '../bindable';
 import { AttrSyntax } from '../resources/attribute-pattern';
 import { CustomElementDefinition } from '../resources/custom-element';
+import { BindingCommandInstance } from '../resources/binding-command';
 import type { IContainer, Constructable } from '@aurelia/kernel';
 import type { CustomAttributeDefinition } from '../resources/custom-attribute';
-import type { PartialCustomElementDefinition } from '../resources/custom-element';
 import type { ICompliationInstruction, IInstruction } from '../renderer';
 export declare class TemplateCompiler implements ITemplateCompiler {
     static register(container: IContainer): void;
     debug: boolean;
     resolveResources: boolean;
-    compile(partialDefinition: PartialCustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;
+    compile(definition: CustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;
     compileSpread(requestor: CustomElementDefinition, attrSyntaxs: AttrSyntax[], container: IContainer, target: Element, targetDef?: CustomElementDefinition): IInstruction[];
 }
-export declare class BindablesInfo<T extends 0 | 1 = 0> {
+export interface IAttributeBindablesInfo {
     readonly attrs: Record<string, BindableDefinition>;
     readonly bindables: Record<string, BindableDefinition>;
-    readonly primary: T extends 1 ? BindableDefinition : BindableDefinition | undefined;
-    static from(def: CustomAttributeDefinition, isAttr: true): BindablesInfo<1>;
-    static from(def: CustomElementDefinition, isAttr: false): BindablesInfo<0>;
-    protected constructor(attrs: Record<string, BindableDefinition>, bindables: Record<string, BindableDefinition>, primary: T extends 1 ? BindableDefinition : BindableDefinition | undefined);
+    readonly primary: BindableDefinition;
 }
+export interface IElementBindablesInfo {
+    readonly attrs: Record<string, BindableDefinition>;
+    readonly bindables: Record<string, BindableDefinition>;
+    readonly primary: null;
+}
+export interface IBindablesInfoResolver {
+    get(def: CustomAttributeDefinition): IAttributeBindablesInfo;
+    get(def: CustomElementDefinition): IElementBindablesInfo;
+}
+export declare const IBindablesInfoResolver: import("@aurelia/kernel").InterfaceSymbol<IBindablesInfoResolver>;
+export interface IResourceResolver {
+    el(c: IContainer, name: string): CustomElementDefinition | null;
+    attr(c: IContainer, name: string): CustomAttributeDefinition | null;
+    command(c: IContainer, name: string): BindingCommandInstance | null;
+}
+export declare const IResourceResolver: import("@aurelia/kernel").InterfaceSymbol<IResourceResolver>;
 /**
  * An interface describing the hooks a compilation process should invoke.
  *
@@ -44,5 +57,5 @@ export declare const TemplateCompilerHooks: Readonly<{
  * An instance of this class will be created and appropriate compilation hooks will be invoked
  * at different phases of the default compiler.
  */
-export declare const templateCompilerHooks: <T extends Constructable>(target?: T) => any;
+export declare const templateCompilerHooks: <T extends Constructable>(target?: T, _context?: ClassDecoratorContext) => any;
 //# sourceMappingURL=template-compiler.d.ts.map

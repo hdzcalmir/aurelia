@@ -1,11 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { ProxyObservable } from '@aurelia/runtime';
 import { bindable, ComputedWatcher, customAttribute, customElement, watch, } from '@aurelia/runtime-html';
@@ -13,52 +42,55 @@ import { assert, createFixture } from '@aurelia/testing';
 describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
     it('typings work', function () {
         const symbolMethod = Symbol();
-        let App = class App {
-            someMethod(_n, _o, _app) { }
-            [symbolMethod](_n, _o, _app) { }
-            5(_n, _o, _app) { }
-        };
-        __decorate([
-            watch(app => app.col.has(Symbol)),
-            watch((app) => app.col.has(Symbol)),
-            watch('some.expression'),
-            watch(Symbol()),
-            watch(5),
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", [Object, Object, App]),
-            __metadata("design:returntype", void 0)
-        ], App.prototype, "someMethod", null);
-        App = __decorate([
-            watch(app => app.col.has(Symbol), 5),
-            watch(app => app.col.has(Symbol), 'someMethod'),
-            watch(app => app.col.has(Symbol), symbolMethod),
-            watch(app => app.col.has(Symbol), (v, o, a) => a.someMethod(v, o, a)),
-            watch((app) => app.col.has(Symbol), 5),
-            watch((app) => app.col.has(Symbol), 'someMethod'),
-            watch((app) => app.col.has(Symbol), symbolMethod),
-            watch((app) => app.col.has(Symbol), (v, o, a) => a.someMethod(v, o, a)),
-            watch('some.expression', 5),
-            watch('some.expression', 'someMethod'),
-            watch('some.expression', symbolMethod),
-            watch('some.expression', (v, o, a) => a.someMethod(v, o, a)),
-            watch('some.expression', function (v, o, a) { a.someMethod(v, o, a); }),
-            watch(Symbol(), 5),
-            watch(Symbol(), 'someMethod'),
-            watch(Symbol(), symbolMethod),
-            watch(Symbol(), (v, o, a) => a.someMethod(v, o, a)),
-            watch(Symbol(), function (v, o, a) { a.someMethod(v, o, a); })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [watch(app => app.col.has(Symbol), 5), watch(app => app.col.has(Symbol), 'someMethod'), watch(app => app.col.has(Symbol), symbolMethod), watch(app => app.col.has(Symbol), (v, o, a) => a.someMethod(v, o, a)), watch((app) => app.col.has(Symbol), 5), watch((app) => app.col.has(Symbol), 'someMethod'), watch((app) => app.col.has(Symbol), symbolMethod), watch((app) => app.col.has(Symbol), (v, o, a) => a.someMethod(v, o, a)), watch('some.expression', 5), watch('some.expression', 'someMethod'), watch('some.expression', symbolMethod), watch('some.expression', (v, o, a) => a.someMethod(v, o, a)), watch('some.expression', function (v, o, a) { a.someMethod(v, o, a); }), watch(Symbol(), 5), watch(Symbol(), 'someMethod'), watch(Symbol(), symbolMethod), watch(Symbol(), (v, o, a) => a.someMethod(v, o, a)), watch(Symbol(), function (v, o, a) { a.someMethod(v, o, a); })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _instanceExtraInitializers = [];
+            let _someMethod_decorators;
+            var App = _classThis = class {
+                constructor() {
+                    this.col = __runInitializers(this, _instanceExtraInitializers);
+                }
+                someMethod(_n, _o, _app) { }
+                [(_someMethod_decorators = [watch(app => app.col.has(Symbol)), watch((app) => app.col.has(Symbol)), watch('some.expression'), watch(Symbol()), watch(5)], symbolMethod)](_n, _o, _app) { }
+                5(_n, _o, _app) { }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(_classThis, null, _someMethod_decorators, { kind: "method", name: "someMethod", static: false, private: false, access: { has: obj => "someMethod" in obj, get: obj => obj.someMethod }, metadata: _metadata }, null, _instanceExtraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         const app = new App();
         assert.strictEqual(app.col, undefined);
     });
     for (const methodName of [Symbol('method'), 'bla', 5]) {
         it(`validates method "${String(methodName)}" not found when decorating on class`, function () {
             assert.throws(() => {
-                let App = class App {
-                };
-                App = __decorate([
-                    watch('..', methodName)
-                ], App);
+                let App = (() => {
+                    let _classDecorators = [watch('..', methodName)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var App = _classThis = class {
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 return new App();
             }, 
             // /Invalid change handler config/
@@ -67,27 +99,33 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
     }
     it('works in basic scenario', function () {
         let callCount = 0;
-        class App {
-            constructor() {
-                this.person = {
-                    first: 'bi',
-                    last: 'go',
-                    phone: '0134',
-                    address: '1/34'
-                };
-                this.name = '';
-            }
-            phoneChanged(phoneValue) {
-                callCount++;
-                this.name = phoneValue;
-            }
-        }
-        __decorate([
-            watch((test) => test.person.phone),
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", [String]),
-            __metadata("design:returntype", void 0)
-        ], App.prototype, "phoneChanged", null);
+        let App = (() => {
+            var _a;
+            let _instanceExtraInitializers = [];
+            let _phoneChanged_decorators;
+            return _a = class App {
+                    constructor() {
+                        this.person = (__runInitializers(this, _instanceExtraInitializers), {
+                            first: 'bi',
+                            last: 'go',
+                            phone: '0134',
+                            address: '1/34'
+                        });
+                        this.name = '';
+                    }
+                    phoneChanged(phoneValue) {
+                        callCount++;
+                        this.name = phoneValue;
+                    }
+                },
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _phoneChanged_decorators = [watch((test) => test.person.phone)];
+                    __esDecorate(_a, null, _phoneChanged_decorators, { kind: "method", name: "phoneChanged", static: false, private: false, access: { has: obj => "phoneChanged" in obj, get: obj => obj.phoneChanged }, metadata: _metadata }, null, _instanceExtraInitializers);
+                    if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })(),
+                _a;
+        })();
         const { ctx, component, appHost, tearDown } = createFixture(`\${name}`, App);
         // with TS, initialization of class field are in constructor
         assert.strictEqual(callCount, 0);
@@ -104,40 +142,46 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
     });
     it('watches deep', function () {
         let callCount = 0;
-        class App {
-            constructor() {
-                this.person = {
-                    first: 'bi',
-                    last: 'go',
-                    phone: '0134',
-                    addresses: [
-                        {
-                            primary: false,
-                            number: 3,
-                            strName: 'Aus',
-                            state: 'ACT'
-                        },
-                        {
-                            primary: true,
-                            number: 3,
-                            strName: 'Aus',
-                            state: 'VIC'
-                        }
-                    ]
-                };
-                this.name = '';
-            }
-            phoneChanged(strName) {
-                callCount++;
-                this.name = strName;
-            }
-        }
-        __decorate([
-            watch((app) => app.person.addresses.find(addr => addr.primary).strName),
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", [String]),
-            __metadata("design:returntype", void 0)
-        ], App.prototype, "phoneChanged", null);
+        let App = (() => {
+            var _a;
+            let _instanceExtraInitializers = [];
+            let _phoneChanged_decorators;
+            return _a = class App {
+                    constructor() {
+                        this.person = (__runInitializers(this, _instanceExtraInitializers), {
+                            first: 'bi',
+                            last: 'go',
+                            phone: '0134',
+                            addresses: [
+                                {
+                                    primary: false,
+                                    number: 3,
+                                    strName: 'Aus',
+                                    state: 'ACT'
+                                },
+                                {
+                                    primary: true,
+                                    number: 3,
+                                    strName: 'Aus',
+                                    state: 'VIC'
+                                }
+                            ]
+                        });
+                        this.name = '';
+                    }
+                    phoneChanged(strName) {
+                        callCount++;
+                        this.name = strName;
+                    }
+                },
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _phoneChanged_decorators = [watch((app) => app.person.addresses.find(addr => addr.primary).strName)];
+                    __esDecorate(_a, null, _phoneChanged_decorators, { kind: "method", name: "phoneChanged", static: false, private: false, access: { has: obj => "phoneChanged" in obj, get: obj => obj.phoneChanged }, metadata: _metadata }, null, _instanceExtraInitializers);
+                    if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })(),
+                _a;
+        })();
         const { ctx, component, appHost, tearDown } = createFixture(`<div>\${name}</div>`, App);
         const textNode = appHost.querySelector('div');
         // with TS, initialization of class field are in constructor
@@ -163,91 +207,110 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
             let appBindingCallCount = 0;
             let appBoundCallCount = 0;
             let appUnbindingCallCount = 0;
-            let Child = class Child {
-                constructor() {
-                    this.prop = 0;
-                    this.logCallCount = 0;
-                }
-                log() {
-                    this.logCallCount++;
-                }
-                binding() {
-                    childBindingCallCount++;
-                    assert.strictEqual(this.logCallCount, 0);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 0);
-                }
-                bound() {
-                    childBoundCallCount++;
-                    assert.strictEqual(this.logCallCount, 0);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 1);
-                }
-                unbinding() {
-                    childUnbindingCallCount++;
-                    // test body prop changed, callCount++
-                    assert.strictEqual(this.logCallCount, 2);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 3);
-                }
-            };
-            __decorate([
-                bindable(),
-                __metadata("design:type", Object)
-            ], Child.prototype, "prop", void 0);
-            __decorate([
-                watch((child) => child.prop),
-                __metadata("design:type", Function),
-                __metadata("design:paramtypes", []),
-                __metadata("design:returntype", void 0)
-            ], Child.prototype, "log", null);
-            Child = __decorate([
-                customElement({ name: 'child', template: `\${prop}` })
-            ], Child);
-            class App {
-                constructor() {
-                    this.prop = 1;
-                    this.logCallCount = 0;
-                }
-                log() {
-                    this.logCallCount++;
-                }
-                binding() {
-                    appBindingCallCount++;
-                    assert.strictEqual(this.logCallCount, 0);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 0);
-                }
-                bound() {
-                    appBoundCallCount++;
-                    assert.strictEqual(this.logCallCount, 0);
-                    assert.strictEqual(this.child.logCallCount, 0);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 1);
-                    // child bound hasn't been called yet,
-                    // so watcher won't be activated and thus, no log call
-                    assert.strictEqual(this.child.logCallCount, 0);
-                }
-                unbinding() {
-                    appUnbindingCallCount++;
-                    // already got the modification in the code below, so it starts at 2
-                    assert.strictEqual(this.logCallCount, 2);
-                    // child unbinding is called before app unbinding
-                    assert.strictEqual(this.child.logCallCount, 3);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 3);
-                }
-            }
-            __decorate([
-                bindable(),
-                __metadata("design:type", Object)
-            ], App.prototype, "prop", void 0);
-            __decorate([
-                watch((child) => child.prop),
-                __metadata("design:type", Function),
-                __metadata("design:paramtypes", []),
-                __metadata("design:returntype", void 0)
-            ], App.prototype, "log", null);
+            let Child = (() => {
+                let _classDecorators = [customElement({ name: 'child', template: `\${prop}` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _instanceExtraInitializers = [];
+                let _prop_decorators;
+                let _prop_initializers = [];
+                let _prop_extraInitializers = [];
+                let _log_decorators;
+                var Child = _classThis = class {
+                    constructor() {
+                        this.prop = (__runInitializers(this, _instanceExtraInitializers), __runInitializers(this, _prop_initializers, 0));
+                        this.logCallCount = (__runInitializers(this, _prop_extraInitializers), 0);
+                    }
+                    log() {
+                        this.logCallCount++;
+                    }
+                    binding() {
+                        childBindingCallCount++;
+                        assert.strictEqual(this.logCallCount, 0);
+                        this.prop++;
+                        assert.strictEqual(this.logCallCount, 0);
+                    }
+                    bound() {
+                        childBoundCallCount++;
+                        assert.strictEqual(this.logCallCount, 0);
+                        this.prop++;
+                        assert.strictEqual(this.logCallCount, 1);
+                    }
+                    unbinding() {
+                        childUnbindingCallCount++;
+                        // test body prop changed, callCount++
+                        assert.strictEqual(this.logCallCount, 2);
+                        this.prop++;
+                        assert.strictEqual(this.logCallCount, 3);
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _prop_decorators = [bindable()];
+                    _log_decorators = [watch((child) => child.prop)];
+                    __esDecorate(_classThis, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                    __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let App = (() => {
+                var _a;
+                let _instanceExtraInitializers = [];
+                let _prop_decorators;
+                let _prop_initializers = [];
+                let _prop_extraInitializers = [];
+                let _log_decorators;
+                return _a = class App {
+                        constructor() {
+                            this.child = __runInitializers(this, _instanceExtraInitializers);
+                            this.prop = __runInitializers(this, _prop_initializers, 1);
+                            this.logCallCount = (__runInitializers(this, _prop_extraInitializers), 0);
+                        }
+                        log() {
+                            this.logCallCount++;
+                        }
+                        binding() {
+                            appBindingCallCount++;
+                            assert.strictEqual(this.logCallCount, 0);
+                            this.prop++;
+                            assert.strictEqual(this.logCallCount, 0);
+                        }
+                        bound() {
+                            appBoundCallCount++;
+                            assert.strictEqual(this.logCallCount, 0);
+                            assert.strictEqual(this.child.logCallCount, 0);
+                            this.prop++;
+                            assert.strictEqual(this.logCallCount, 1);
+                            // child bound hasn't been called yet,
+                            // so watcher won't be activated and thus, no log call
+                            assert.strictEqual(this.child.logCallCount, 0);
+                        }
+                        unbinding() {
+                            appUnbindingCallCount++;
+                            // already got the modification in the code below, so it starts at 2
+                            assert.strictEqual(this.logCallCount, 2);
+                            // child unbinding is called before app unbinding
+                            assert.strictEqual(this.child.logCallCount, 3);
+                            this.prop++;
+                            assert.strictEqual(this.logCallCount, 3);
+                        }
+                    },
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _prop_decorators = [bindable()];
+                        _log_decorators = [watch((child) => child.prop)];
+                        __esDecorate(_a, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                        __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                        if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    })(),
+                    _a;
+            })();
             const { component, startPromise, tearDown } = createFixture('<child component.ref="child" prop.bind=prop>', App, [Child]);
             await startPromise;
             assert.strictEqual(appBindingCallCount, 1);
@@ -289,91 +352,110 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
             let appBindingCallCount = 0;
             let appBoundCallCount = 0;
             let appUnbindingCallCount = 0;
-            let Child = class Child {
-                constructor() {
-                    this.prop = 0;
-                    this.logCallCount = 0;
-                }
-                log() {
-                    this.logCallCount++;
-                }
-                binding() {
-                    childBindingCallCount++;
-                    assert.strictEqual(this.logCallCount, 0);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 0);
-                }
-                bound() {
-                    childBoundCallCount++;
-                    assert.strictEqual(this.logCallCount, 0);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 1);
-                }
-                unbinding() {
-                    childUnbindingCallCount++;
-                    // test body prop changed, callCount++
-                    assert.strictEqual(this.logCallCount, 2);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 3);
-                }
-            };
-            __decorate([
-                bindable(),
-                __metadata("design:type", Object)
-            ], Child.prototype, "prop", void 0);
-            __decorate([
-                watch((child) => child.prop),
-                __metadata("design:type", Function),
-                __metadata("design:paramtypes", []),
-                __metadata("design:returntype", void 0)
-            ], Child.prototype, "log", null);
-            Child = __decorate([
-                customAttribute({ name: 'child' })
-            ], Child);
-            class App {
-                constructor() {
-                    this.prop = 1;
-                    this.logCallCount = 0;
-                }
-                log() {
-                    this.logCallCount++;
-                }
-                binding() {
-                    appBindingCallCount++;
-                    assert.strictEqual(this.logCallCount, 0);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 0);
-                }
-                bound() {
-                    appBoundCallCount++;
-                    assert.strictEqual(this.logCallCount, 0);
-                    assert.strictEqual(this.child.logCallCount, 0);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 1);
-                    // child after bind hasn't been called yet,
-                    // so watcher won't be activated and thus, no log call
-                    assert.strictEqual(this.child.logCallCount, 0);
-                }
-                unbinding() {
-                    appUnbindingCallCount++;
-                    // already got the modification in the code below, so it starts at 2
-                    assert.strictEqual(this.logCallCount, 2);
-                    // child unbinding is aclled before this unbinding
-                    assert.strictEqual(this.child.logCallCount, 3);
-                    this.prop++;
-                    assert.strictEqual(this.logCallCount, 3);
-                }
-            }
-            __decorate([
-                bindable(),
-                __metadata("design:type", Object)
-            ], App.prototype, "prop", void 0);
-            __decorate([
-                watch((child) => child.prop),
-                __metadata("design:type", Function),
-                __metadata("design:paramtypes", []),
-                __metadata("design:returntype", void 0)
-            ], App.prototype, "log", null);
+            let Child = (() => {
+                let _classDecorators = [customAttribute({ name: 'child' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _instanceExtraInitializers = [];
+                let _prop_decorators;
+                let _prop_initializers = [];
+                let _prop_extraInitializers = [];
+                let _log_decorators;
+                var Child = _classThis = class {
+                    constructor() {
+                        this.prop = (__runInitializers(this, _instanceExtraInitializers), __runInitializers(this, _prop_initializers, 0));
+                        this.logCallCount = (__runInitializers(this, _prop_extraInitializers), 0);
+                    }
+                    log() {
+                        this.logCallCount++;
+                    }
+                    binding() {
+                        childBindingCallCount++;
+                        assert.strictEqual(this.logCallCount, 0);
+                        this.prop++;
+                        assert.strictEqual(this.logCallCount, 0);
+                    }
+                    bound() {
+                        childBoundCallCount++;
+                        assert.strictEqual(this.logCallCount, 0);
+                        this.prop++;
+                        assert.strictEqual(this.logCallCount, 1);
+                    }
+                    unbinding() {
+                        childUnbindingCallCount++;
+                        // test body prop changed, callCount++
+                        assert.strictEqual(this.logCallCount, 2);
+                        this.prop++;
+                        assert.strictEqual(this.logCallCount, 3);
+                    }
+                };
+                __setFunctionName(_classThis, "Child");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _prop_decorators = [bindable()];
+                    _log_decorators = [watch((child) => child.prop)];
+                    __esDecorate(_classThis, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                    __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Child = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Child = _classThis;
+            })();
+            let App = (() => {
+                var _a;
+                let _instanceExtraInitializers = [];
+                let _prop_decorators;
+                let _prop_initializers = [];
+                let _prop_extraInitializers = [];
+                let _log_decorators;
+                return _a = class App {
+                        constructor() {
+                            this.child = __runInitializers(this, _instanceExtraInitializers);
+                            this.prop = __runInitializers(this, _prop_initializers, 1);
+                            this.logCallCount = (__runInitializers(this, _prop_extraInitializers), 0);
+                        }
+                        log() {
+                            this.logCallCount++;
+                        }
+                        binding() {
+                            appBindingCallCount++;
+                            assert.strictEqual(this.logCallCount, 0);
+                            this.prop++;
+                            assert.strictEqual(this.logCallCount, 0);
+                        }
+                        bound() {
+                            appBoundCallCount++;
+                            assert.strictEqual(this.logCallCount, 0);
+                            assert.strictEqual(this.child.logCallCount, 0);
+                            this.prop++;
+                            assert.strictEqual(this.logCallCount, 1);
+                            // child after bind hasn't been called yet,
+                            // so watcher won't be activated and thus, no log call
+                            assert.strictEqual(this.child.logCallCount, 0);
+                        }
+                        unbinding() {
+                            appUnbindingCallCount++;
+                            // already got the modification in the code below, so it starts at 2
+                            assert.strictEqual(this.logCallCount, 2);
+                            // child unbinding is aclled before this unbinding
+                            assert.strictEqual(this.child.logCallCount, 3);
+                            this.prop++;
+                            assert.strictEqual(this.logCallCount, 3);
+                        }
+                    },
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _prop_decorators = [bindable()];
+                        _log_decorators = [watch((child) => child.prop)];
+                        __esDecorate(_a, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                        __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                        if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    })(),
+                    _a;
+            })();
             const { component, startPromise, tearDown } = createFixture('<div child.bind="prop" child.ref="child">', App, [Child]);
             await startPromise;
             assert.strictEqual(appBindingCallCount, 1);
@@ -411,40 +493,46 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
     });
     it('observes collection', function () {
         let callCount = 0;
-        class PostOffice {
-            constructor() {
-                this.storage = [
-                    { id: 1, name: 'box', delivered: false },
-                    { id: 2, name: 'toy', delivered: true },
-                    { id: 3, name: 'letter', delivered: false },
-                ];
-                (this.deliveries = [this.storage[1]]).toString = function () {
-                    return json(this);
-                };
-            }
-            newDelivery(delivery) {
-                this.storage.push(delivery);
-            }
-            delivered(id) {
-                const delivery = this.storage.find(delivery => delivery.id === id);
-                if (delivery != null) {
-                    delivery.delivered = true;
-                }
-            }
-            onDelivered(deliveries) {
-                callCount++;
-                deliveries.toString = function () {
-                    return json(this);
-                };
-                this.deliveries = deliveries;
-            }
-        }
-        __decorate([
-            watch((postOffice) => postOffice.storage.filter(d => d.delivered)),
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", [Array]),
-            __metadata("design:returntype", void 0)
-        ], PostOffice.prototype, "onDelivered", null);
+        let PostOffice = (() => {
+            var _a;
+            let _instanceExtraInitializers = [];
+            let _onDelivered_decorators;
+            return _a = class PostOffice {
+                    constructor() {
+                        this.storage = (__runInitializers(this, _instanceExtraInitializers), [
+                            { id: 1, name: 'box', delivered: false },
+                            { id: 2, name: 'toy', delivered: true },
+                            { id: 3, name: 'letter', delivered: false },
+                        ]);
+                        (this.deliveries = [this.storage[1]]).toString = function () {
+                            return json(this);
+                        };
+                    }
+                    newDelivery(delivery) {
+                        this.storage.push(delivery);
+                    }
+                    delivered(id) {
+                        const delivery = this.storage.find(delivery => delivery.id === id);
+                        if (delivery != null) {
+                            delivery.delivered = true;
+                        }
+                    }
+                    onDelivered(deliveries) {
+                        callCount++;
+                        deliveries.toString = function () {
+                            return json(this);
+                        };
+                        this.deliveries = deliveries;
+                    }
+                },
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _onDelivered_decorators = [watch((postOffice) => postOffice.storage.filter(d => d.delivered))];
+                    __esDecorate(_a, null, _onDelivered_decorators, { kind: "method", name: "onDelivered", static: false, private: false, access: { has: obj => "onDelivered" in obj, get: obj => obj.onDelivered }, metadata: _metadata }, null, _instanceExtraInitializers);
+                    if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })(),
+                _a;
+        })();
         const { ctx, component, appHost, tearDown } = createFixture(`<div>\${deliveries}</div>`, PostOffice);
         const textNode = appHost.querySelector('div');
         assert.strictEqual(callCount, 0);
@@ -478,39 +566,45 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
     });
     it('observes chain lighting', function () {
         let callCount = 0;
-        class PostOffice {
-            constructor() {
-                this.storage = [
-                    { id: 1, name: 'box', delivered: false },
-                    { id: 2, name: 'toy', delivered: true },
-                    { id: 3, name: 'letter', delivered: false },
-                ];
-                this.deliveries = 0;
-            }
-            newDelivery(delivery) {
-                this.storage.push(delivery);
-            }
-            delivered(id) {
-                const delivery = this.storage.find(delivery => delivery.id === id);
-                if (delivery != null) {
-                    delivery.delivered = true;
-                }
-            }
-            boxDelivered(deliveries) {
-                callCount++;
-                this.deliveries = deliveries;
-            }
-        }
-        __decorate([
-            watch((postOffice) => postOffice
-                .storage
-                .filter(d => d.delivered)
-                .filter(d => d.name === 'box')
-                .length),
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", [Number]),
-            __metadata("design:returntype", void 0)
-        ], PostOffice.prototype, "boxDelivered", null);
+        let PostOffice = (() => {
+            var _a;
+            let _instanceExtraInitializers = [];
+            let _boxDelivered_decorators;
+            return _a = class PostOffice {
+                    constructor() {
+                        this.storage = (__runInitializers(this, _instanceExtraInitializers), [
+                            { id: 1, name: 'box', delivered: false },
+                            { id: 2, name: 'toy', delivered: true },
+                            { id: 3, name: 'letter', delivered: false },
+                        ]);
+                        this.deliveries = 0;
+                    }
+                    newDelivery(delivery) {
+                        this.storage.push(delivery);
+                    }
+                    delivered(id) {
+                        const delivery = this.storage.find(delivery => delivery.id === id);
+                        if (delivery != null) {
+                            delivery.delivered = true;
+                        }
+                    }
+                    boxDelivered(deliveries) {
+                        callCount++;
+                        this.deliveries = deliveries;
+                    }
+                },
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _boxDelivered_decorators = [watch((postOffice) => postOffice
+                            .storage
+                            .filter(d => d.delivered)
+                            .filter(d => d.name === 'box')
+                            .length)];
+                    __esDecorate(_a, null, _boxDelivered_decorators, { kind: "method", name: "boxDelivered", static: false, private: false, access: { has: obj => "boxDelivered" in obj, get: obj => obj.boxDelivered }, metadata: _metadata }, null, _instanceExtraInitializers);
+                    if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })(),
+                _a;
+        })();
         const { ctx, component, appHost, tearDown } = createFixture(`<div>\${deliveries}</div>`, PostOffice);
         const textNode = appHost.querySelector('div');
         assert.strictEqual(callCount, 0);
@@ -794,35 +888,47 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
         for (const { title, only, init, get, created, disposed } of testCases) {
             const $it = only ? it.only : it;
             $it(`${title} on class`, async function () {
-                let App = class App {
-                    constructor() {
-                        this.decoratorCount = 1;
-                        this.packages = init?.() ?? [];
-                        this.counter = 0;
-                        this.callCount = 0;
-                    }
-                    delivered(id) {
-                        const p = this.packages.find(p => p.id === id);
-                        if (p) {
-                            p.delivered = true;
+                let App = (() => {
+                    let _classDecorators = [watch(get, 'log')];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var App = _classThis = class {
+                        constructor() {
+                            this.decoratorCount = 1;
+                            this.packages = init?.() ?? [];
+                            this.counter = 0;
+                            this.callCount = 0;
                         }
-                    }
-                    undelivered(id) {
-                        const p = this.packages.find(p => p.id === id);
-                        if (p) {
-                            p.delivered = false;
+                        delivered(id) {
+                            const p = this.packages.find(p => p.id === id);
+                            if (p) {
+                                p.delivered = true;
+                            }
                         }
-                    }
-                    newDelivery(id, name, delivered = false) {
-                        this.packages.push({ id, name, delivered });
-                    }
-                    log() {
-                        this.callCount++;
-                    }
-                };
-                App = __decorate([
-                    watch(get, 'log')
-                ], App);
+                        undelivered(id) {
+                            const p = this.packages.find(p => p.id === id);
+                            if (p) {
+                                p.delivered = false;
+                            }
+                        }
+                        newDelivery(id, name, delivered = false) {
+                            this.packages.push({ id, name, delivered });
+                        }
+                        log() {
+                            this.callCount++;
+                        }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 const { component, ctx, startPromise, tearDown } = createFixture('', App);
                 await startPromise;
                 created(component, ctx, 1);
@@ -830,38 +936,44 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
                 disposed?.(component, ctx, 1);
             });
             $it(`${title} on method`, async function () {
-                class App {
-                    constructor() {
-                        this.decoratorCount = 1;
-                        this.packages = init?.() ?? [];
-                        this.counter = 0;
-                        this.callCount = 0;
-                    }
-                    delivered(id) {
-                        const p = this.packages.find(p => p.id === id);
-                        if (p) {
-                            p.delivered = true;
-                        }
-                    }
-                    undelivered(id) {
-                        const p = this.packages.find(p => p.id === id);
-                        if (p) {
-                            p.delivered = false;
-                        }
-                    }
-                    newDelivery(id, name, delivered = false) {
-                        this.packages.push({ id, name, delivered });
-                    }
-                    log() {
-                        this.callCount++;
-                    }
-                }
-                __decorate([
-                    watch(get),
-                    __metadata("design:type", Function),
-                    __metadata("design:paramtypes", []),
-                    __metadata("design:returntype", void 0)
-                ], App.prototype, "log", null);
+                let App = (() => {
+                    var _a;
+                    let _instanceExtraInitializers = [];
+                    let _log_decorators;
+                    return _a = class App {
+                            constructor() {
+                                this.decoratorCount = (__runInitializers(this, _instanceExtraInitializers), 1);
+                                this.packages = init?.() ?? [];
+                                this.counter = 0;
+                                this.callCount = 0;
+                            }
+                            delivered(id) {
+                                const p = this.packages.find(p => p.id === id);
+                                if (p) {
+                                    p.delivered = true;
+                                }
+                            }
+                            undelivered(id) {
+                                const p = this.packages.find(p => p.id === id);
+                                if (p) {
+                                    p.delivered = false;
+                                }
+                            }
+                            newDelivery(id, name, delivered = false) {
+                                this.packages.push({ id, name, delivered });
+                            }
+                            log() {
+                                this.callCount++;
+                            }
+                        },
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            _log_decorators = [watch(get)];
+                            __esDecorate(_a, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        })(),
+                        _a;
+                })();
                 const { component, ctx, startPromise, tearDown } = createFixture('', App);
                 await startPromise;
                 created(component, ctx, 1);
@@ -869,41 +981,51 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
                 disposed?.(component, ctx, 1);
             });
             $it(`${title} on both class and method`, async function () {
-                let App = class App {
-                    constructor() {
-                        this.decoratorCount = 2;
-                        this.packages = init?.() ?? [];
-                        this.counter = 0;
-                        this.callCount = 0;
-                    }
-                    delivered(id) {
-                        const p = this.packages.find(p => p.id === id);
-                        if (p) {
-                            p.delivered = true;
+                let App = (() => {
+                    let _classDecorators = [watch(get, 'log')];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _instanceExtraInitializers = [];
+                    let _log_decorators;
+                    var App = _classThis = class {
+                        constructor() {
+                            this.decoratorCount = (__runInitializers(this, _instanceExtraInitializers), 2);
+                            this.packages = init?.() ?? [];
+                            this.counter = 0;
+                            this.callCount = 0;
                         }
-                    }
-                    undelivered(id) {
-                        const p = this.packages.find(p => p.id === id);
-                        if (p) {
-                            p.delivered = false;
+                        delivered(id) {
+                            const p = this.packages.find(p => p.id === id);
+                            if (p) {
+                                p.delivered = true;
+                            }
                         }
-                    }
-                    newDelivery(id, name, delivered = false) {
-                        this.packages.push({ id, name, delivered });
-                    }
-                    log() {
-                        this.callCount++;
-                    }
-                };
-                __decorate([
-                    watch(get),
-                    __metadata("design:type", Function),
-                    __metadata("design:paramtypes", []),
-                    __metadata("design:returntype", void 0)
-                ], App.prototype, "log", null);
-                App = __decorate([
-                    watch(get, 'log')
-                ], App);
+                        undelivered(id) {
+                            const p = this.packages.find(p => p.id === id);
+                            if (p) {
+                                p.delivered = false;
+                            }
+                        }
+                        newDelivery(id, name, delivered = false) {
+                            this.packages.push({ id, name, delivered });
+                        }
+                        log() {
+                            this.callCount++;
+                        }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _log_decorators = [watch(get)];
+                        __esDecorate(_classThis, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 const { component, ctx, startPromise, tearDown } = createFixture('', App);
                 await startPromise;
                 created(component, ctx, 1);
@@ -1134,25 +1256,31 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
         for (const { title, only = false, get, created, disposed } of testCases) {
             const $it = only ? it.only : it;
             $it(`${title} on method`, async function () {
-                class App {
-                    constructor() {
-                        this.started = false;
-                        this.decoratorCount = 1;
-                        this.map = new Map();
-                        this.selectedItem = void 0;
-                        this.counter = 0;
-                        this.callCount = 0;
-                    }
-                    log() {
-                        this.callCount++;
-                    }
-                }
-                __decorate([
-                    watch(get),
-                    __metadata("design:type", Function),
-                    __metadata("design:paramtypes", []),
-                    __metadata("design:returntype", void 0)
-                ], App.prototype, "log", null);
+                let App = (() => {
+                    var _a;
+                    let _instanceExtraInitializers = [];
+                    let _log_decorators;
+                    return _a = class App {
+                            constructor() {
+                                this.started = (__runInitializers(this, _instanceExtraInitializers), false);
+                                this.decoratorCount = 1;
+                                this.map = new Map();
+                                this.selectedItem = void 0;
+                                this.counter = 0;
+                                this.callCount = 0;
+                            }
+                            log() {
+                                this.callCount++;
+                            }
+                        },
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            _log_decorators = [watch(get)];
+                            __esDecorate(_a, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        })(),
+                        _a;
+                })();
                 const { ctx, component, startPromise, tearDown } = createFixture('', App);
                 await startPromise;
                 created(component, ctx, 1);
@@ -1160,21 +1288,33 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
                 disposed?.(component, ctx, 1);
             });
             $it(`${title} on class`, async function () {
-                let App = class App {
-                    constructor() {
-                        this.started = false;
-                        this.decoratorCount = 1;
-                        this.map = new Map();
-                        this.counter = 0;
-                        this.callCount = 0;
-                    }
-                    log() {
-                        this.callCount++;
-                    }
-                };
-                App = __decorate([
-                    watch(get, (_v, _o, a) => a.log())
-                ], App);
+                let App = (() => {
+                    let _classDecorators = [watch(get, (_v, _o, a) => a.log())];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var App = _classThis = class {
+                        constructor() {
+                            this.started = false;
+                            this.decoratorCount = 1;
+                            this.map = new Map();
+                            this.counter = 0;
+                            this.callCount = 0;
+                        }
+                        log() {
+                            this.callCount++;
+                        }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 const { ctx, component, tearDown, startPromise } = createFixture('', App);
                 await startPromise;
                 created(component, ctx, 1);
@@ -1182,27 +1322,37 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
                 disposed?.(component, ctx, 1);
             });
             $it(`${title} on both class and method`, async function () {
-                let App = class App {
-                    constructor() {
-                        this.started = false;
-                        this.decoratorCount = 2;
-                        this.map = new Map();
-                        this.counter = 0;
-                        this.callCount = 0;
-                    }
-                    log() {
-                        this.callCount++;
-                    }
-                };
-                __decorate([
-                    watch(get),
-                    __metadata("design:type", Function),
-                    __metadata("design:paramtypes", []),
-                    __metadata("design:returntype", void 0)
-                ], App.prototype, "log", null);
-                App = __decorate([
-                    watch(get, (_v, _o, a) => a.log())
-                ], App);
+                let App = (() => {
+                    let _classDecorators = [watch(get, (_v, _o, a) => a.log())];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _instanceExtraInitializers = [];
+                    let _log_decorators;
+                    var App = _classThis = class {
+                        constructor() {
+                            this.started = (__runInitializers(this, _instanceExtraInitializers), false);
+                            this.decoratorCount = 2;
+                            this.map = new Map();
+                            this.counter = 0;
+                            this.callCount = 0;
+                        }
+                        log() {
+                            this.callCount++;
+                        }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _log_decorators = [watch(get)];
+                        __esDecorate(_classThis, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 const { ctx, component, startPromise, tearDown } = createFixture('', App);
                 await startPromise;
                 created(component, ctx, 2);
@@ -1424,25 +1574,31 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
         for (const { title, only = false, get, created, disposed } of testCases) {
             const $it = only ? it.only : it;
             $it(`${title} on method`, async function () {
-                class App {
-                    constructor() {
-                        this.started = false;
-                        this.decoratorCount = 1;
-                        this.set = new Set();
-                        this.selectedItem = void 0;
-                        this.counter = 0;
-                        this.callCount = 0;
-                    }
-                    log() {
-                        this.callCount++;
-                    }
-                }
-                __decorate([
-                    watch(get),
-                    __metadata("design:type", Function),
-                    __metadata("design:paramtypes", []),
-                    __metadata("design:returntype", void 0)
-                ], App.prototype, "log", null);
+                let App = (() => {
+                    var _a;
+                    let _instanceExtraInitializers = [];
+                    let _log_decorators;
+                    return _a = class App {
+                            constructor() {
+                                this.started = (__runInitializers(this, _instanceExtraInitializers), false);
+                                this.decoratorCount = 1;
+                                this.set = new Set();
+                                this.selectedItem = void 0;
+                                this.counter = 0;
+                                this.callCount = 0;
+                            }
+                            log() {
+                                this.callCount++;
+                            }
+                        },
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            _log_decorators = [watch(get)];
+                            __esDecorate(_a, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        })(),
+                        _a;
+                })();
                 const { ctx, component, startPromise, tearDown } = createFixture('', App);
                 try {
                     await startPromise;
@@ -1454,21 +1610,33 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
                 }
             });
             $it(`${title} on class`, async function () {
-                let App = class App {
-                    constructor() {
-                        this.started = false;
-                        this.decoratorCount = 1;
-                        this.set = new Set();
-                        this.counter = 0;
-                        this.callCount = 0;
-                    }
-                    log() {
-                        this.callCount++;
-                    }
-                };
-                App = __decorate([
-                    watch(get, (_v, _o, a) => a.log())
-                ], App);
+                let App = (() => {
+                    let _classDecorators = [watch(get, (_v, _o, a) => a.log())];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var App = _classThis = class {
+                        constructor() {
+                            this.started = false;
+                            this.decoratorCount = 1;
+                            this.set = new Set();
+                            this.counter = 0;
+                            this.callCount = 0;
+                        }
+                        log() {
+                            this.callCount++;
+                        }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 const { ctx, component, tearDown, startPromise } = createFixture('', App);
                 try {
                     await startPromise;
@@ -1480,27 +1648,37 @@ describe('3-runtime-html/decorator-watch.computed.spec.ts', function () {
                 }
             });
             $it(`${title} on both class and method`, async function () {
-                let App = class App {
-                    constructor() {
-                        this.started = false;
-                        this.decoratorCount = 2;
-                        this.set = new Set();
-                        this.counter = 0;
-                        this.callCount = 0;
-                    }
-                    log() {
-                        this.callCount++;
-                    }
-                };
-                __decorate([
-                    watch(get),
-                    __metadata("design:type", Function),
-                    __metadata("design:paramtypes", []),
-                    __metadata("design:returntype", void 0)
-                ], App.prototype, "log", null);
-                App = __decorate([
-                    watch(get, (_v, _o, a) => a.log())
-                ], App);
+                let App = (() => {
+                    let _classDecorators = [watch(get, (_v, _o, a) => a.log())];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _instanceExtraInitializers = [];
+                    let _log_decorators;
+                    var App = _classThis = class {
+                        constructor() {
+                            this.started = (__runInitializers(this, _instanceExtraInitializers), false);
+                            this.decoratorCount = 2;
+                            this.set = new Set();
+                            this.counter = 0;
+                            this.callCount = 0;
+                        }
+                        log() {
+                            this.callCount++;
+                        }
+                    };
+                    __setFunctionName(_classThis, "App");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _log_decorators = [watch(get)];
+                        __esDecorate(_classThis, null, _log_decorators, { kind: "method", name: "log", static: false, private: false, access: { has: obj => "log" in obj, get: obj => obj.log }, metadata: _metadata }, null, _instanceExtraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        App = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return App = _classThis;
+                })();
                 const { ctx, component, startPromise, tearDown } = createFixture('', App);
                 try {
                     await startPromise;

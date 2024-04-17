@@ -1,14 +1,16 @@
-import { type IBinding, IAstEvaluator, IConnectableBinding, type ForOfStatement, type IObserverLocator, type IsBindingBehavior, type Scope } from '@aurelia/runtime';
+import { type IObserverLocator, type Scope, IObserverLocatorBasedConnectable, ISubscriber, ICollectionSubscriber } from '@aurelia/runtime';
+import { IAstEvaluator } from '../ast.eval';
 import type { TaskQueue } from '@aurelia/platform';
 import type { IServiceLocator } from '@aurelia/kernel';
 import type { INode } from '../dom';
-import type { BindingMode, IBindingController } from './interfaces-bindings';
-export interface AttributeBinding extends IAstEvaluator, IConnectableBinding {
+import type { IBinding, BindingMode, IBindingController } from './interfaces-bindings';
+import { ForOfStatement, IsBindingBehavior } from '@aurelia/expression-parser';
+export interface AttributeBinding extends IAstEvaluator, IServiceLocator, IObserverLocatorBasedConnectable {
 }
 /**
  * Attribute binding. Handle attribute binding betwen view/view model. Understand Html special attributes
  */
-export declare class AttributeBinding implements IBinding {
+export declare class AttributeBinding implements IBinding, ISubscriber, ICollectionSubscriber {
     targetAttribute: string;
     targetProperty: string;
     mode: BindingMode;

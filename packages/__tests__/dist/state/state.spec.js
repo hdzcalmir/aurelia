@@ -1,11 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { ValueConverter, customAttribute, customElement, IWindow } from '@aurelia/runtime-html';
 import { StateDefaultConfiguration, fromState } from '@aurelia/state';
@@ -284,36 +313,67 @@ describe('state/state.spec.ts', function () {
     });
     describe('@state decorator', function () {
         it('works on custom element', async function () {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                fromState(s => s.text),
-                __metadata("design:type", String)
-            ], MyEl.prototype, "text", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: `<input value.bind="text">` })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: `<input value.bind="text">` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _text_decorators;
+                let _text_initializers = [];
+                let _text_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.text = __runInitializers(this, _text_initializers, void 0);
+                        __runInitializers(this, _text_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _text_decorators = [fromState(s => s.text)];
+                    __esDecorate(null, null, _text_decorators, { kind: "field", name: "text", static: false, private: false, access: { has: obj => "text" in obj, get: obj => obj.text, set: (obj, value) => { obj.text = value; } }, metadata: _metadata }, _text_initializers, _text_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             const state = { text: '1' };
             const { getBy } = await createFixture
                 .html `<my-el>`
                 .deps(MyEl, StateDefaultConfiguration.init(state))
                 .build().started;
-            assert.strictEqual(getBy('input').value, '1');
+            assert.strictEqual(getBy('input').value, '1', 'text-input value');
         });
         it('works on custom attribute', async function () {
-            let MyAttr = class MyAttr {
-                set text(v) {
-                    this.$controller.host.setAttribute('hello', 'world');
-                }
-            };
-            __decorate([
-                fromState(s => s.text),
-                __metadata("design:type", String),
-                __metadata("design:paramtypes", [String])
-            ], MyAttr.prototype, "text", null);
-            MyAttr = __decorate([
-                customAttribute('myattr')
-            ], MyAttr);
+            let MyAttr = (() => {
+                let _classDecorators = [customAttribute('myattr')];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _instanceExtraInitializers = [];
+                let _set_text_decorators;
+                var MyAttr = _classThis = class {
+                    constructor() {
+                        this.$controller = __runInitializers(this, _instanceExtraInitializers);
+                    }
+                    set text(v) {
+                        this.$controller.host.setAttribute('hello', 'world');
+                    }
+                };
+                __setFunctionName(_classThis, "MyAttr");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _set_text_decorators = [fromState(s => s.text)];
+                    __esDecorate(_classThis, null, _set_text_decorators, { kind: "setter", name: "text", static: false, private: false, access: { has: obj => "text" in obj, set: (obj, value) => { obj.text = value; } }, metadata: _metadata }, null, _instanceExtraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyAttr = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyAttr = _classThis;
+            })();
             const state = { text: '1' };
             const { queryBy } = await createFixture
                 .html `<div myattr>`
@@ -322,15 +382,32 @@ describe('state/state.spec.ts', function () {
             assert.notStrictEqual(queryBy('div[hello=world]'), null);
         });
         it('updates when state changed', async function () {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                fromState(s => s.text),
-                __metadata("design:type", String)
-            ], MyEl.prototype, "text", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: `<input value.bind="text" input.dispatch="{ type: 'input', v: $event.target.value }">` })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: `<input value.bind="text" input.dispatch="{ type: 'input', v: $event.target.value }">` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _text_decorators;
+                let _text_initializers = [];
+                let _text_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.text = __runInitializers(this, _text_initializers, void 0);
+                        __runInitializers(this, _text_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _text_decorators = [fromState(s => s.text)];
+                    __esDecorate(null, null, _text_decorators, { kind: "field", name: "text", static: false, private: false, access: { has: obj => "text" in obj, get: obj => obj.text, set: (obj, value) => { obj.text = value; } }, metadata: _metadata }, _text_initializers, _text_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             const state = { text: '1' };
             const { trigger, flush, getBy } = await createFixture
                 .html `<my-el>`
@@ -341,19 +418,33 @@ describe('state/state.spec.ts', function () {
             assert.strictEqual(getBy('input').value, '11');
         });
         it('updates custom attribute prop when state changes', async function () {
-            let MyAttr = class MyAttr {
-                set text(v) {
-                    this.$controller.host.setAttribute('hello', v);
-                }
-            };
-            __decorate([
-                fromState(s => s.text),
-                __metadata("design:type", String),
-                __metadata("design:paramtypes", [String])
-            ], MyAttr.prototype, "text", null);
-            MyAttr = __decorate([
-                customAttribute('myattr')
-            ], MyAttr);
+            let MyAttr = (() => {
+                let _classDecorators = [customAttribute('myattr')];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _instanceExtraInitializers = [];
+                let _set_text_decorators;
+                var MyAttr = _classThis = class {
+                    constructor() {
+                        this.$controller = __runInitializers(this, _instanceExtraInitializers);
+                    }
+                    set text(v) {
+                        this.$controller.host.setAttribute('hello', v);
+                    }
+                };
+                __setFunctionName(_classThis, "MyAttr");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _set_text_decorators = [fromState(s => s.text)];
+                    __esDecorate(_classThis, null, _set_text_decorators, { kind: "setter", name: "text", static: false, private: false, access: { has: obj => "text" in obj, set: (obj, value) => { obj.text = value; } }, metadata: _metadata }, null, _instanceExtraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyAttr = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyAttr = _classThis;
+            })();
             const state = { text: '1' };
             const { trigger, queryBy } = await createFixture
                 .html `<div myattr click.dispatch="{ type: '' }">`

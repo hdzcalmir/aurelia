@@ -8,7 +8,7 @@ export declare const Routes: {
     configure<T extends CustomElementType>(configurationsOrTypes: (IRoute | RouteableComponentType)[], Type: T): T;
     getConfiguration<T extends CustomElementType>(Type: T): Route[];
 };
-export type RoutesDecorator = <T extends Constructable>(Type: T) => T;
+export type RoutesDecorator = <T extends Constructable>(Type: T, context: ClassDecoratorContext<T>) => T;
 /**
  * Associate a static routes configuration with this type.
  *

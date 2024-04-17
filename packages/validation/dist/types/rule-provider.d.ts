@@ -1,7 +1,9 @@
 import { Class, ILogger, IServiceLocator } from '@aurelia/kernel';
-import { IExpressionParser, Interpolation, IsBindingBehavior, PrimitiveLiteralExpression, Scope, IAstEvaluator } from '@aurelia/runtime';
+import { IExpressionParser, Interpolation, type IsBindingBehavior, PrimitiveLiteralExpression } from '@aurelia/expression-parser';
+import { Scope } from '@aurelia/runtime';
+import { type IAstEvaluator } from '@aurelia/runtime-html';
 import { ValidationRuleAlias, IValidationMessageProvider } from './rules';
-import { IValidateable, ValidationRuleExecutionPredicate, IValidationVisitor, ValidationDisplayNameAccessor, IRuleProperty, IPropertyRule, IValidationExpressionHydrator, IValidationRule } from './rule-interfaces';
+import { IValidateable, ValidationRuleExecutionPredicate, IValidationVisitor, ValidationDisplayNameAccessor, IRuleProperty, IPropertyRule, IValidationRule } from './rule-interfaces';
 /**
  * Contract to register the custom messages for rules, during plugin registration.
  */
@@ -19,10 +21,11 @@ export declare class RuleProperty implements IRuleProperty {
 }
 export type RuleCondition<TObject extends IValidateable = IValidateable, TValue = any> = (value: TValue, object?: TObject) => boolean | Promise<boolean>;
 export declare const validationRulesRegistrar: Readonly<{
+    allRulesAnnotations: string;
     name: "validation-rules";
     defaultRuleSetName: "__default";
     set(target: IValidateable, rules: IPropertyRule[], tag?: string): void;
-    get(target: IValidateable, tag?: string): PropertyRule[];
+    get(target: IValidateable, tag?: string): PropertyRule[] | undefined;
     unset(target: IValidateable, tag?: string): void;
     isValidationRulesSet(target: IValidateable): boolean;
 }>;
@@ -197,13 +200,12 @@ export interface IValidationRules<TObject extends IValidateable = IValidateable>
 }
 export declare const IValidationRules: import("@aurelia/kernel").InterfaceSymbol<IValidationRules<IValidateable>>;
 export declare class ValidationRules<TObject extends IValidateable = IValidateable> implements IValidationRules<TObject> {
+    rules: PropertyRule[];
+    private readonly targets;
     private readonly locator;
     private readonly parser;
     private readonly messageProvider;
     private readonly deserializer;
-    rules: PropertyRule[];
-    private readonly targets;
-    constructor(locator: IServiceLocator, parser: IExpressionParser, messageProvider: IValidationMessageProvider, deserializer: IValidationExpressionHydrator);
     ensure<TValue>(property: keyof TObject | string | PropertyAccessor): PropertyRule;
     ensureObject(): PropertyRule;
     on(target: IValidateable, tag?: string): this;
@@ -242,10 +244,10 @@ export declare class ValidationResult<TRule extends IValidationRule = IValidatio
     toString(): string | undefined;
 }
 export declare class ValidationMessageProvider implements IValidationMessageProvider {
-    parser: IExpressionParser;
     private readonly logger;
     protected registeredMessages: WeakMap<IValidationRule, Interpolation | PrimitiveLiteralExpression>;
-    constructor(parser: IExpressionParser, logger: ILogger, customMessages: ICustomMessage[]);
+    parser: IExpressionParser;
+    constructor(logger?: ILogger, customMessages?: ICustomMessage[]);
     getMessage(rule: IValidationRule): Interpolation | PrimitiveLiteralExpression;
     setMessage(rule: IValidationRule, message: string): Interpolation | PrimitiveLiteralExpression;
     parseMessage(message: string): Interpolation | PrimitiveLiteralExpression;

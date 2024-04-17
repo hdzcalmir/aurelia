@@ -1,4 +1,4 @@
-import { AccessScopeExpression, ConditionalExpression, } from '@aurelia/runtime';
+import { AccessScopeExpression, ConditionalExpression, } from '@aurelia/expression-parser';
 import { BindingMode, IPlatform, LetBinding, PropertyBinding, } from '@aurelia/runtime-html';
 import { assert, createContainer, createFixture, createObserverLocator, createScopeForTest, } from '@aurelia/testing';
 describe('2-runtime/ast.integration.spec.ts', function () {

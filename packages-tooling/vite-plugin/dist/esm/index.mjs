@@ -32,6 +32,7 @@ function au(options = {}) {
                 'route-recognizer',
                 'compat-v1',
                 'dialog',
+                'expression-parser',
                 'runtime',
                 'runtime-html',
                 'router-lite',
@@ -65,6 +66,7 @@ function au(options = {}) {
                         ? s
                         : s.replace(/\.html$/, '.$au.ts');
                 },
+                stringModuleWrap: (id) => `${id}?inline`,
                 ...additionalOptions
             });
             return result;
@@ -87,7 +89,9 @@ function au(options = {}) {
                 contents: code,
             }, {
                 hmrModule: 'import.meta',
-                transformHtmlImportSpecifier: s => s.replace(/\.html$/, '.$au.ts')
+                transformHtmlImportSpecifier: s => s.replace(/\.html$/, '.$au.ts'),
+                stringModuleWrap: (id) => `${id}?inline`,
+                ...additionalOptions
             });
             return result.code;
         }
@@ -147,8 +151,8 @@ if (${moduleText}.hot) {
 
   if (${moduleText}.hot.data?.aurelia) {
     const newDefinition = $$CE.getDefinition(currentClassType);
-    $$M.define(newDefinition.name, newDefinition, currentClassType);
-    $$M.define(newDefinition.name, newDefinition, newDefinition);
+    $$M.define(newDefinition, currentClassType, newDefinition.name);
+    $$M.define(newDefinition, newDefinition, newDefinition.name);
     ${moduleText}.hot.data.aurelia.container.res[$$CE.keyFrom(newDefinition.name)] = newDefinition;
 
     const previousControllers = ${moduleText}.hot.data.controllers;

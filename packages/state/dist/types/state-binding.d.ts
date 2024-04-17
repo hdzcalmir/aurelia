@@ -1,14 +1,15 @@
 import { type IServiceLocator } from '@aurelia/kernel';
 import { TaskQueue } from '@aurelia/platform';
-import { IAstEvaluator, IBinding, IConnectableBinding, Scope, type IObserverLocator, type IsBindingBehavior } from '@aurelia/runtime';
-import { BindingMode, type IBindingController } from '@aurelia/runtime-html';
+import { type Scope, type IObserverLocator, type IObserverLocatorBasedConnectable, ISubscriber } from '@aurelia/runtime';
+import { BindingMode, type IBindingController, IAstEvaluator, IBinding } from '@aurelia/runtime-html';
 import { IStore, type IStoreSubscriber } from './interfaces';
+import { IsBindingBehavior } from '@aurelia/expression-parser';
 /**
  * A binding that handles the connection of the global state to a property of a target object
  */
-export interface StateBinding extends IAstEvaluator, IConnectableBinding {
+export interface StateBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator {
 }
-export declare class StateBinding implements IBinding, IStoreSubscriber<object> {
+export declare class StateBinding implements IBinding, ISubscriber, IStoreSubscriber<object> {
     isBound: boolean;
     ast: IsBindingBehavior;
     private readonly target;

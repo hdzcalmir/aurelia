@@ -1,17 +1,18 @@
 import { AccessorType, IAccessor, ISubscriberCollection } from '../observation';
-import type { Constructable } from '@aurelia/kernel';
+import { type Constructable } from '@aurelia/kernel';
 import type { InterceptorFunc } from '../observation';
 export interface IObservableDefinition {
     name?: PropertyKey;
     callback?: PropertyKey;
     set?: InterceptorFunc;
 }
-export declare function observable(target: object, key: PropertyKey, descriptor?: PropertyDescriptor & {
-    initializer?: () => unknown;
-}): void;
-export declare function observable(config: IObservableDefinition): (target: Constructable | object, ...args: unknown[]) => void;
-export declare function observable(key: PropertyKey): ClassDecorator;
-export declare function observable(): PropertyDecorator;
+type FieldInitializer<TFThis, TValue> = (this: TFThis, initialValue: TValue) => TValue;
+type ObservableFieldDecorator<TFThis, TValue> = (target: undefined, context: ClassFieldDecoratorContext<TFThis, TValue>) => FieldInitializer<TFThis, TValue>;
+type ObservableClassDecorator<TCThis extends Constructable> = (target: TCThis, context: ClassDecoratorContext<TCThis>) => void;
+export declare function observable<TFThis, TValue>(target: undefined, context: ClassFieldDecoratorContext<TFThis, TValue>): FieldInitializer<TFThis, TValue>;
+export declare function observable<TCThis extends Constructable, TFThis, TValue>(config: IObservableDefinition): (target: TCThis | undefined, context: ClassDecoratorContext<TCThis> | ClassFieldDecoratorContext<TFThis, TValue>) => FieldInitializer<TFThis, TValue> | void;
+export declare function observable<TCThis extends Constructable>(key: PropertyKey): ObservableClassDecorator<TCThis>;
+export declare function observable<TFThis, TValue>(): ObservableFieldDecorator<TFThis, TValue>;
 export interface SetterNotifier extends IAccessor, ISubscriberCollection {
 }
 export declare class SetterNotifier implements IAccessor {
@@ -21,4 +22,5 @@ export declare class SetterNotifier implements IAccessor {
     getValue(): unknown;
     setValue(value: unknown): void;
 }
+export {};
 //# sourceMappingURL=observable.d.ts.map

@@ -1,10 +1,14 @@
-import { type Collection, ForOfStatement, type IndexMap, type IsBindingBehavior, IExpressionParser } from '@aurelia/runtime';
+import { ForOfStatement, type IsBindingBehavior } from '@aurelia/expression-parser';
+import { type Collection, type IndexMap } from '@aurelia/runtime';
+import { IExpressionParser } from '@aurelia/expression-parser';
 import { IRenderLocation } from '../../dom';
 import { IViewFactory } from '../../templating/view';
+import { CustomAttributeStaticAuDefinition } from '../custom-attribute';
 import { HydrateTemplateController } from '../../renderer';
 import type { ISyntheticView, ICustomAttributeController, IHydratableController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, ControllerVisitor } from '../../templating/controller';
 type Items<C extends Collection = unknown[]> = C | undefined;
 export declare class Repeat<C extends Collection = unknown[]> implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     views: ISyntheticView[];
     private _oldViews;
     forOf: ForOfStatement;

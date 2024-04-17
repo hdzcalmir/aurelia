@@ -1,7 +1,9 @@
 /* eslint-disable no-constant-condition, mocha/no-sibling-hooks */
 import { Metadata } from '@aurelia/metadata';
 import { DI, ISink, LogLevel, Protocol, Registration } from '@aurelia/kernel';
-import { Interpolation, PrimitiveLiteralExpression, IExpressionParser, Scope, astEvaluate } from '@aurelia/runtime';
+import { Interpolation, PrimitiveLiteralExpression, IExpressionParser, } from '@aurelia/expression-parser';
+import { Scope, } from '@aurelia/runtime';
+import { astEvaluate } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 import { EqualsRule, IValidationMessageProvider, IValidationRules, LengthRule, PropertyRule, RangeRule, RegexRule, RequiredRule, SizeRule, ValidationConfiguration, BaseValidationRule, parsePropertyName, ValidationRuleAliasMessage, validationRulesRegistrar, rootObjectSymbol, } from '@aurelia/validation';
 import { Person } from './_test-resources.js';
@@ -555,7 +557,7 @@ describe('validation/rule-provider.spec.ts', function () {
                 const actual = astEvaluate(sut.getMessage($rule), scope, null, null);
                 assert.equal(actual, messages[i]);
             });
-            it(`rule.message returns the default message the registered key is not found - ${title}`, function () {
+            it(`rule.message returns the default message if the registered key is not found - ${title}`, function () {
                 const { sut } = setup();
                 const $rule = getRule();
                 $rule.messageKey = 'foobar';
@@ -621,7 +623,7 @@ describe('validation/rule-provider.spec.ts', function () {
             }
             // reset the messages
             for (const { rule, aliases } of originalMessages) {
-                ValidationRuleAliasMessage.setDefaultMessage(rule, { aliases });
+                ValidationRuleAliasMessage.setDefaultMessage(rule, { aliases }, null);
             }
         });
         it('appending new custom key and messages is also possible', function () {

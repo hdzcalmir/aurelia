@@ -1,11 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { DI, inject, Registration, singleton } from '@aurelia/kernel';
 import { assert, createSpy } from '@aurelia/testing';
@@ -29,32 +58,58 @@ describe('1-kernel/di.integration.spec.ts', function () {
             assert.notStrictEqual(foo1, foo2);
         });
     });
-    describe('DI.getDependencies', function () {
+    // TODO: Enable those tests once the decorator metadata is emitted by TS.
+    // The tests are disabled because TS with TC39 decorators (non-legacy), does not emit the decorator metadata as of now.
+    // The following tests are dependent on that and hence cannot be successfully run.
+    // Refer: https://github.com/microsoft/TypeScript/issues/55788
+    describe.skip('DI.getDependencies', function () {
         it('string param', function () {
-            let Foo = class Foo {
-                constructor(test) {
-                    this.test = test;
-                }
-            };
-            Foo = __decorate([
-                singleton,
-                __metadata("design:paramtypes", [String])
-            ], Foo);
+            let Foo = (() => {
+                let _classDecorators = [singleton];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Foo = _classThis = class {
+                    constructor(test) {
+                        this.test = test;
+                    }
+                };
+                __setFunctionName(_classThis, "Foo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Foo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Foo = _classThis;
+            })();
             const actual = DI.getDependencies(Foo);
             assert.deepStrictEqual(actual, [String]);
         });
         it('class param', function () {
             class Bar {
             }
-            let Foo = class Foo {
-                constructor(test) {
-                    this.test = test;
-                }
-            };
-            Foo = __decorate([
-                singleton,
-                __metadata("design:paramtypes", [Bar])
-            ], Foo);
+            let Foo = (() => {
+                let _classDecorators = [singleton];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Foo = _classThis = class {
+                    constructor(test) {
+                        this.test = test;
+                    }
+                };
+                __setFunctionName(_classThis, "Foo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Foo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Foo = _classThis;
+            })();
             const actual = DI.getDependencies(Foo);
             assert.deepStrictEqual(actual, [Bar]);
         });
@@ -371,15 +426,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ITransientParent = DI.createInterface('ITransientParent', x => x.transient(cls));
             }
             it(`transient child registration returns a new instance each time`, function () {
-                let TransientParent = class TransientParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                TransientParent = __decorate([
-                    inject(ITransient),
-                    __metadata("design:paramtypes", [Object])
-                ], TransientParent);
+                let TransientParent = (() => {
+                    let _classDecorators = [inject(ITransient)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var TransientParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "TransientParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        TransientParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return TransientParent = _classThis;
+                })();
                 register(TransientParent);
                 const actual1 = container.get(ITransientParent);
                 assert.instanceOf(actual1, TransientParent, `actual1`);
@@ -397,15 +463,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ], `get.calls`);
             });
             it(`singleton child registration returns the same instance each time`, function () {
-                let TransientParent = class TransientParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                TransientParent = __decorate([
-                    inject(ISingleton),
-                    __metadata("design:paramtypes", [Object])
-                ], TransientParent);
+                let TransientParent = (() => {
+                    let _classDecorators = [inject(ISingleton)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var TransientParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "TransientParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        TransientParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return TransientParent = _classThis;
+                })();
                 register(TransientParent);
                 const actual1 = container.get(ITransientParent);
                 assert.instanceOf(actual1, TransientParent, `actual1`);
@@ -423,15 +500,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ], `get.calls`);
             });
             it(`instance child registration returns the same instance each time`, function () {
-                let TransientParent = class TransientParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                TransientParent = __decorate([
-                    inject(IInstance),
-                    __metadata("design:paramtypes", [Object])
-                ], TransientParent);
+                let TransientParent = (() => {
+                    let _classDecorators = [inject(IInstance)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var TransientParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "TransientParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        TransientParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return TransientParent = _classThis;
+                })();
                 register(TransientParent);
                 const actual1 = container.get(ITransientParent);
                 assert.instanceOf(actual1, TransientParent, `actual1`);
@@ -449,15 +537,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ], `get.calls`);
             });
             it(`callback child registration is invoked each time`, function () {
-                let TransientParent = class TransientParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                TransientParent = __decorate([
-                    inject(ICallback),
-                    __metadata("design:paramtypes", [Object])
-                ], TransientParent);
+                let TransientParent = (() => {
+                    let _classDecorators = [inject(ICallback)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var TransientParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "TransientParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        TransientParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return TransientParent = _classThis;
+                })();
                 register(TransientParent);
                 const actual1 = container.get(ITransientParent);
                 assert.instanceOf(actual1, TransientParent, `actual1`);
@@ -485,15 +584,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ISingletonParent = DI.createInterface('ISingletonParent', x => x.singleton(cls));
             }
             it(`transient child registration is reused by the singleton parent`, function () {
-                let SingletonParent = class SingletonParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                SingletonParent = __decorate([
-                    inject(ITransient),
-                    __metadata("design:paramtypes", [Object])
-                ], SingletonParent);
+                let SingletonParent = (() => {
+                    let _classDecorators = [inject(ITransient)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var SingletonParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "SingletonParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        SingletonParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return SingletonParent = _classThis;
+                })();
                 register(SingletonParent);
                 const actual1 = container.get(ISingletonParent);
                 assert.instanceOf(actual1, SingletonParent, `actual1`);
@@ -510,15 +620,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ], `get.calls`);
             });
             it(`singleton registration is reused by the singleton parent`, function () {
-                let SingletonParent = class SingletonParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                SingletonParent = __decorate([
-                    inject(ISingleton),
-                    __metadata("design:paramtypes", [Object])
-                ], SingletonParent);
+                let SingletonParent = (() => {
+                    let _classDecorators = [inject(ISingleton)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var SingletonParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "SingletonParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        SingletonParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return SingletonParent = _classThis;
+                })();
                 register(SingletonParent);
                 const actual1 = container.get(ISingletonParent);
                 assert.instanceOf(actual1, SingletonParent, `actual1`);
@@ -535,15 +656,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ], `get.calls`);
             });
             it(`instance registration is reused by the singleton parent`, function () {
-                let SingletonParent = class SingletonParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                SingletonParent = __decorate([
-                    inject(IInstance),
-                    __metadata("design:paramtypes", [Object])
-                ], SingletonParent);
+                let SingletonParent = (() => {
+                    let _classDecorators = [inject(IInstance)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var SingletonParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "SingletonParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        SingletonParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return SingletonParent = _classThis;
+                })();
                 register(SingletonParent);
                 const actual1 = container.get(ISingletonParent);
                 assert.instanceOf(actual1, SingletonParent, `actual1`);
@@ -560,15 +692,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ], `get.calls`);
             });
             it(`callback registration is reused by the singleton parent`, function () {
-                let SingletonParent = class SingletonParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                SingletonParent = __decorate([
-                    inject(ICallback),
-                    __metadata("design:paramtypes", [Object])
-                ], SingletonParent);
+                let SingletonParent = (() => {
+                    let _classDecorators = [inject(ICallback)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var SingletonParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "SingletonParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        SingletonParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return SingletonParent = _classThis;
+                })();
                 register(SingletonParent);
                 const actual1 = container.get(ISingletonParent);
                 assert.instanceOf(actual1, SingletonParent, `actual1`);
@@ -597,15 +740,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 IInstanceParent = DI.createInterface('IInstanceParent', x => x.instance(instanceParent));
             }
             it(`transient registration is reused by the instance parent`, function () {
-                let InstanceParent = class InstanceParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                InstanceParent = __decorate([
-                    inject(ITransient),
-                    __metadata("design:paramtypes", [Object])
-                ], InstanceParent);
+                let InstanceParent = (() => {
+                    let _classDecorators = [inject(ITransient)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var InstanceParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "InstanceParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        InstanceParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return InstanceParent = _classThis;
+                })();
                 register(InstanceParent);
                 const actual1 = container.get(IInstanceParent);
                 assert.instanceOf(actual1, InstanceParent, `actual1`);
@@ -621,15 +775,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ], `get.calls`);
             });
             it(`singleton registration is reused by the instance parent`, function () {
-                let InstanceParent = class InstanceParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                InstanceParent = __decorate([
-                    inject(ISingleton),
-                    __metadata("design:paramtypes", [Object])
-                ], InstanceParent);
+                let InstanceParent = (() => {
+                    let _classDecorators = [inject(ISingleton)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var InstanceParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "InstanceParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        InstanceParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return InstanceParent = _classThis;
+                })();
                 register(InstanceParent);
                 const actual1 = container.get(IInstanceParent);
                 assert.instanceOf(actual1, InstanceParent, `actual1`);
@@ -645,15 +810,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ], `get.calls`);
             });
             it(`instance registration is reused by the instance parent`, function () {
-                let InstanceParent = class InstanceParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                InstanceParent = __decorate([
-                    inject(IInstance),
-                    __metadata("design:paramtypes", [Object])
-                ], InstanceParent);
+                let InstanceParent = (() => {
+                    let _classDecorators = [inject(IInstance)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var InstanceParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "InstanceParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        InstanceParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return InstanceParent = _classThis;
+                })();
                 register(InstanceParent);
                 const actual1 = container.get(IInstanceParent);
                 assert.instanceOf(actual1, InstanceParent, `actual1`);
@@ -669,15 +845,26 @@ describe('1-kernel/di.integration.spec.ts', function () {
                 ], `get.calls`);
             });
             it(`callback registration is reused by the instance parent`, function () {
-                let InstanceParent = class InstanceParent {
-                    constructor(dep) {
-                        this.dep = dep;
-                    }
-                };
-                InstanceParent = __decorate([
-                    inject(ICallback),
-                    __metadata("design:paramtypes", [Object])
-                ], InstanceParent);
+                let InstanceParent = (() => {
+                    let _classDecorators = [inject(ICallback)];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var InstanceParent = _classThis = class {
+                        constructor(dep) {
+                            this.dep = dep;
+                        }
+                    };
+                    __setFunctionName(_classThis, "InstanceParent");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        InstanceParent = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return InstanceParent = _classThis;
+                })();
                 register(InstanceParent);
                 const actual1 = container.get(IInstanceParent);
                 assert.instanceOf(actual1, InstanceParent, `actual1`);

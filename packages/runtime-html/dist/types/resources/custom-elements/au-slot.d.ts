@@ -1,6 +1,8 @@
+import { CustomElementStaticAuDefinition } from '../custom-element';
 import type { ControllerVisitor, ICustomElementViewModel, IHydratedController, IHydratedParentController, ISyntheticView } from '../../templating/controller';
 import { type IAuSlot, type IAuSlotSubscriber } from '../../templating/controller.projection';
 export declare class AuSlot implements ICustomElementViewModel, IAuSlot {
+    static readonly $au: CustomElementStaticAuDefinition;
     readonly view: ISyntheticView;
     /**
      * The binding context that will be exposed to slotted content

@@ -1,6 +1,6 @@
-import { DI, Registration, resolve, optional, all, ILogger, lazy, camelCase, IContainer } from '../../../kernel/dist/native-modules/index.mjs';
-import { Scope, AccessorType, connectable, astEvaluate, astBind, astUnbind } from '../../../runtime/dist/native-modules/index.mjs';
-import { IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, bindingBehavior, attributePattern, bindingCommand, renderer, AttrSyntax, AppTask, lifecycleHooks, CustomElement, CustomAttribute, ILifecycleHooks } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { DI, Registration, resolve, optional, all, ILogger, lazy, camelCase, IContainer, Protocol } from '../../../kernel/dist/native-modules/index.mjs';
+import { Scope, AccessorType, connectable } from '../../../runtime/dist/native-modules/index.mjs';
+import { IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, astEvaluate, BindingBehavior, astBind, astUnbind, renderer, AttrSyntax, AppTask, LifecycleHooks, ILifecycleHooks } from '../../../runtime-html/dist/native-modules/index.mjs';
 
 /** @internal */
 const createInterface = DI.createInterface;
@@ -207,30 +207,6 @@ function tryParseJson(str) {
     }
 }
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
 const atLayout = AccessorType.Layout;
 const stateActivating = State$1.activating;
 class StateBinding {
@@ -375,12 +351,12 @@ const updateTaskOpts = {
     reusable: false,
     preempt: true,
 };
-connectable(StateBinding);
+connectable(StateBinding, null);
 mixinAstEvaluator(true)(StateBinding);
 mixingBindingLimited(StateBinding, () => 'updateTarget');
 
 const bindingStateSubscriberMap = new WeakMap();
-let StateBindingBehavior = class StateBindingBehavior {
+class StateBindingBehavior {
     constructor() {
         /** @internal */ this._store = resolve(IStore);
     }
@@ -411,10 +387,8 @@ let StateBindingBehavior = class StateBindingBehavior {
             bindingStateSubscriberMap.delete(binding);
         }
     }
-};
-StateBindingBehavior = __decorate([
-    bindingBehavior('state')
-], StateBindingBehavior);
+}
+BindingBehavior.define('state', StateBindingBehavior);
 class StateSubscriber {
     constructor(_binding, _wrappedScope) {
         this._binding = _binding;
@@ -476,29 +450,22 @@ class StateDispatchBinding {
         scope.bindingContext = overrideContext.bindingContext = state;
     }
 }
-connectable(StateDispatchBinding);
+connectable(StateDispatchBinding, null);
 mixinAstEvaluator(true)(StateDispatchBinding);
 mixingBindingLimited(StateDispatchBinding, () => 'callSource');
 
-let StateAttributePattern = class StateAttributePattern {
+class StateAttributePattern {
     'PART.state'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'state');
     }
-};
-StateAttributePattern = __decorate([
-    attributePattern({ pattern: 'PART.state', symbols: '.' })
-], StateAttributePattern);
-let DispatchAttributePattern = class DispatchAttributePattern {
+}
+class DispatchAttributePattern {
     'PART.dispatch'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'dispatch');
     }
-};
-DispatchAttributePattern = __decorate([
-    attributePattern({ pattern: 'PART.dispatch', symbols: '.' })
-], DispatchAttributePattern);
-let StateBindingCommand = class StateBindingCommand {
-    get type() { return 'None'; }
-    get name() { return 'state'; }
+}
+class StateBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, parser, attrMapper) {
         const attr = info.attr;
         let target = attr.target;
@@ -519,21 +486,22 @@ let StateBindingCommand = class StateBindingCommand {
         }
         return new StateBindingInstruction(value, target);
     }
+}
+StateBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'state',
 };
-StateBindingCommand = __decorate([
-    bindingCommand('state')
-], StateBindingCommand);
-let DispatchBindingCommand = class DispatchBindingCommand {
-    get type() { return 'IgnoreAttr'; }
-    get name() { return 'dispatch'; }
+class DispatchBindingCommand {
+    get ignoreAttr() { return true; }
     build(info) {
         const attr = info.attr;
         return new DispatchBindingInstruction(attr.target, attr.rawValue);
     }
+}
+DispatchBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'dispatch',
 };
-DispatchBindingCommand = __decorate([
-    bindingCommand('dispatch')
-], DispatchBindingCommand);
 class StateBindingInstruction {
     constructor(from, to) {
         this.from = from;
@@ -548,18 +516,16 @@ class DispatchBindingInstruction {
         this.type = 'sd';
     }
 }
-let StateBindingInstructionRenderer = class StateBindingInstructionRenderer {
+class StateBindingInstructionRenderer {
     constructor() {
         /** @internal */ this._stateContainer = resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
     }
-};
-StateBindingInstructionRenderer = __decorate([
-    renderer('sb')
-], StateBindingInstructionRenderer);
-let DispatchBindingInstructionRenderer = class DispatchBindingInstructionRenderer {
+}
+renderer('sb')(StateBindingInstructionRenderer, null);
+class DispatchBindingInstructionRenderer {
     constructor() {
         /** @internal */ this._stateContainer = resolve(IStore);
     }
@@ -567,10 +533,8 @@ let DispatchBindingInstructionRenderer = class DispatchBindingInstructionRendere
         const expr = ensureExpression(exprParser, instruction.ast, 'IsProperty');
         renderingCtrl.addBinding(new StateDispatchBinding(renderingCtrl.container, expr, target, instruction.from, this._stateContainer));
     }
-};
-DispatchBindingInstructionRenderer = __decorate([
-    renderer('sd')
-], DispatchBindingInstructionRenderer);
+}
+renderer('sd')(DispatchBindingInstructionRenderer, null);
 function ensureExpression(parser, srcOrExpr, expressionType) {
     if (typeof srcOrExpr === 'string') {
         return parser.parse(srcOrExpr, expressionType);
@@ -611,7 +575,7 @@ const createConfiguration = (initialState, actionHandlers, options = {}) => {
 };
 const StateDefaultConfiguration = /*@__PURE__*/ createConfiguration({}, []);
 
-let StateGetterBinding = class StateGetterBinding {
+class StateGetterBinding {
     constructor(target, prop, store, getValue) {
         this.isBound = false;
         /** @internal */ this._value = void 0;
@@ -689,10 +653,8 @@ let StateGetterBinding = class StateGetterBinding {
         }
         this._sub = void 0;
     }
-};
-StateGetterBinding = __decorate([
-    connectable()
-], StateGetterBinding);
+}
+connectable(StateGetterBinding, null);
 
 /**
  * A decorator for component properties whose values derived from global state
@@ -706,28 +668,20 @@ StateGetterBinding = __decorate([
  * ```
  */
 function fromState(getValue) {
-    return function (target, key, desc) {
-        if (typeof target === 'function') {
-            throw new Error(`Invalid usage. @state can only be used on a field`);
+    return function (target, context) {
+        if (!((target === void 0 && context.kind === 'field') || (typeof target === 'function' && context.kind === 'setter'))) {
+            throw new Error(`Invalid usage. @state can only be used on a field ${target} - ${context.kind}`);
         }
-        if (typeof desc?.value !== 'undefined') {
-            throw new Error(`Invalid usage. @state can only be used on a field`);
-        }
-        target = target.constructor;
-        let dependencies = CustomElement.getAnnotation(target, dependenciesKey);
-        if (dependencies == null) {
-            CustomElement.annotate(target, dependenciesKey, dependencies = []);
-        }
-        dependencies.push(new HydratingLifecycleHooks(getValue, key));
-        dependencies = CustomAttribute.getAnnotation(target, dependenciesKey);
-        if (dependencies == null) {
-            CustomElement.annotate(target, dependenciesKey, dependencies = []);
-        }
-        dependencies.push(new CreatedLifecycleHooks(getValue, key));
+        const key = context.name;
+        const dependencies = context.metadata[dependenciesKey] ??= [];
+        // As we don't have a way to grab the constructor function here, we add both the hooks as dependencies.
+        // However, the hooks checks how the component is used and adds only a single binding.
+        // Improvement idea: add a way to declare the target types for the hooks and lazily create the hooks only for those types (sort of hook factory?).
+        dependencies.push(new HydratingLifecycleHooks(getValue, key), new CreatedLifecycleHooks(getValue, key));
     };
 }
-const dependenciesKey = 'dependencies';
-let HydratingLifecycleHooks = class HydratingLifecycleHooks {
+const dependenciesKey = Protocol.annotation.keyFor('dependencies');
+class HydratingLifecycleHooks {
     constructor($get, key) {
         this.$get = $get;
         this.key = key;
@@ -737,13 +691,13 @@ let HydratingLifecycleHooks = class HydratingLifecycleHooks {
     }
     hydrating(vm, controller) {
         const container = controller.container;
+        if (controller.vmKind !== 'customElement')
+            return;
         controller.addBinding(new StateGetterBinding(vm, this.key, container.get(IStore), this.$get));
     }
-};
-HydratingLifecycleHooks = __decorate([
-    lifecycleHooks()
-], HydratingLifecycleHooks);
-let CreatedLifecycleHooks = class CreatedLifecycleHooks {
+}
+LifecycleHooks.define({}, HydratingLifecycleHooks);
+class CreatedLifecycleHooks {
     constructor($get, key) {
         this.$get = $get;
         this.key = key;
@@ -753,12 +707,12 @@ let CreatedLifecycleHooks = class CreatedLifecycleHooks {
     }
     created(vm, controller) {
         const container = controller.container;
+        if (controller.vmKind !== 'customAttribute')
+            return;
         controller.addBinding(new StateGetterBinding(vm, this.key, container.get(IStore), this.$get));
     }
-};
-CreatedLifecycleHooks = __decorate([
-    lifecycleHooks()
-], CreatedLifecycleHooks);
+}
+LifecycleHooks.define({}, CreatedLifecycleHooks);
 
 export { ActionHandler, DispatchAttributePattern, DispatchBindingCommand, DispatchBindingInstruction, DispatchBindingInstructionRenderer, IActionHandler, IState, IStore, StateAttributePattern, StateBinding, StateBindingBehavior, StateBindingCommand, StateBindingInstruction, StateBindingInstructionRenderer, StateDefaultConfiguration, StateDispatchBinding, fromState };
 //# sourceMappingURL=index.dev.mjs.map

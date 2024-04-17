@@ -1,7 +1,9 @@
+import { CustomAttributeStaticAuDefinition } from '../custom-attribute';
 import type { ControllerVisitor, ICustomAttributeController, ICustomAttributeViewModel, IHydratedController, ISyntheticView } from '../../templating/controller';
 export type PortalTarget = string | Element | null | undefined;
 export type PortalLifecycleCallback = (target: PortalTarget, view: ISyntheticView) => void | Promise<void>;
 export declare class Portal implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition<keyof Pick<Portal, 'target' | 'position' | 'renderContext' | 'strict' | 'deactivating' | 'deactivated' | 'activated' | 'activating' | 'callbackContext'>>;
     readonly $controller: ICustomAttributeController<this>;
     target: PortalTarget;
     position: InsertPosition;

@@ -105,10 +105,6 @@ export declare class Route {
      */
     data: unknown);
     /**
-     * Returns `true` if the specified type has any static route configuration (either via static properties or a &#64;route decorator)
-     */
-    static isConfigured(Type: RouteType): boolean;
-    /**
      * Apply the specified configuration to the specified type, overwriting any existing configuration.
      */
     static configure<T extends RouteType>(configOrPath: IRoute | string | undefined, Type: T): T;

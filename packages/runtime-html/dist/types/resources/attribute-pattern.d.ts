@@ -70,7 +70,7 @@ export interface AttributePatternKind {
     getPatternDefinitions(Type: Constructable): AttributePatternDefinition[];
     findAll(container: IContainer): readonly IAttributePattern[];
 }
-export declare function attributePattern<const K extends AttributePatternDefinition>(...patternDefs: K[]): <T extends Constructable<IAttributePattern<K['pattern']>>>(target: T) => T;
+export declare function attributePattern<const K extends AttributePatternDefinition>(...patternDefs: K[]): <T extends Constructable<IAttributePattern<K['pattern']>>>(target: T, context: ClassDecoratorContext) => T;
 export declare const AttributePattern: Readonly<AttributePatternKind>;
 export declare class DotSeparatedAttributePattern {
     'PART.PART'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;

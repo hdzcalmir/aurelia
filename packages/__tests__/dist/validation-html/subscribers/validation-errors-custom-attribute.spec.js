@@ -1,36 +1,62 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { newInstanceForScope, newInstanceOf, toArray } from '@aurelia/kernel';
+import { newInstanceForScope, newInstanceOf, resolve, toArray } from '@aurelia/kernel';
 import { assert, createSpy, getVisibleText, TestContext } from '@aurelia/testing';
 import { IValidationRules } from '@aurelia/validation';
 import { CustomAttribute, CustomElement, customElement, IPlatform, Aurelia } from '@aurelia/runtime-html';
-import { IValidationController, ValidationController, ValidationHtmlConfiguration, } from '@aurelia/validation-html';
+import { IValidationController, ValidationHtmlConfiguration, } from '@aurelia/validation-html';
 import { createSpecFunction, ToNumberValueConverter } from '../../util.js';
 import { Person } from '../../validation/_test-resources.js';
 describe('validation-html/subscribers/validation-errors-custom-attribute.spec.ts', function () {
     describe('validation-errors-custom-attribute', function () {
-        let App = class App {
-            constructor(platform, controller, controller2, validationRules) {
-                this.platform = platform;
-                this.controller = controller;
-                this.controller2 = controller2;
-                this.validationRules = validationRules;
+        class App {
+            constructor() {
                 this.person = new Person((void 0), (void 0));
-                this.controllerValidateSpy = createSpy(controller, 'validate', true);
-                this.controllerRemoveSubscriberSpy = createSpy(controller, 'removeSubscriber', true);
-                this.controller2ValidateSpy = createSpy(controller2, 'validate', true);
-                this.controller2RemoveSubscriberSpy = createSpy(controller2, 'removeSubscriber', true);
-                validationRules
+                this.platform = resolve(IPlatform);
+                this.controller = resolve(newInstanceForScope(IValidationController));
+                this.controller2 = resolve(newInstanceOf(IValidationController));
+                this.validationRules = resolve(IValidationRules);
+                this.controllerValidateSpy = createSpy(this.controller, 'validate', true);
+                this.controllerRemoveSubscriberSpy = createSpy(this.controller, 'removeSubscriber', true);
+                this.controller2ValidateSpy = createSpy(this.controller2, 'validate', true);
+                this.controller2RemoveSubscriberSpy = createSpy(this.controller2, 'removeSubscriber', true);
+                this.validationRules
                     .on(this.person)
                     .ensure('name')
                     .displayName('Name')
@@ -52,15 +78,7 @@ describe('validation-html/subscribers/validation-errors-custom-attribute.spec.ts
                 assert.equal(controller.bindings.size, 0, 'the bindings should have been removed');
                 assert.equal(controller.objects.size, 0, 'the objects should have been removed');
             }
-        };
-        App = __decorate([
-            __param(0, IPlatform),
-            __param(1, newInstanceForScope(IValidationController)),
-            __param(2, newInstanceOf(IValidationController)),
-            __param(3, IValidationRules),
-            __metadata("design:paramtypes", [Object, ValidationController,
-                ValidationController, Object])
-        ], App);
+        }
         async function runTest(testFunction, { template, removeSubscriberSpies }) {
             const ctx = TestContext.create();
             const container = ctx.container;
@@ -143,11 +161,11 @@ describe('validation-html/subscribers/validation-errors-custom-attribute.spec.ts
             await platform.domReadQueue.yield();
             await assertEventHandler(target2, platform, controllerValidateSpy, spy2, ctx);
             errors1 = ca1.errors;
-            assert.equal(errors1.length, 0);
-            assert.equal(div1.querySelectorAll('span.error').length, 0);
+            assert.equal(errors1.length, 0, 'errors1.length');
+            assert.equal(div1.querySelectorAll('span.error').length, 0, 'div1.querySelectorAll(span.error).length');
             errors2 = ca2.errors;
-            assert.equal(errors2.length, 0);
-            assert.equal(div2.querySelectorAll('span.error').length, 0);
+            assert.equal(errors2.length, 0, 'errors2.length');
+            assert.equal(div2.querySelectorAll('span.error').length, 0, 'div2.querySelectorAll(span.error).length');
         }, {
             template: `
       <div id="div1" validation-errors.bind="nameErrors">
@@ -284,25 +302,10 @@ describe('validation-html/subscribers/validation-errors-custom-attribute.spec.ts
       `
         });
         it('can be used without any available registration for scoped controller', async function () {
-            let App1 = class App1 {
-                constructor(controller, validationRules) {
-                    this.controller = controller;
-                    this.validationRules = validationRules;
-                    this.person = new Person((void 0), (void 0));
-                    this.controllerValidateSpy = createSpy(controller, 'validate', true);
-                    validationRules
-                        .on(this.person)
-                        .ensure('name')
-                        .required();
-                }
-                unbinding() {
-                    this.validationRules.off();
-                }
-            };
-            App1 = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `
+            let App1 = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `
       <div id="div1" validation-errors="errors.bind: nameErrors; controller.bind: controller;">
         <input id="target1" type="text" value.two-way="person.name & validate:undefined:controller">
         <span class="error" repeat.for="errorInfo of nameErrors">
@@ -310,11 +313,35 @@ describe('validation-html/subscribers/validation-errors-custom-attribute.spec.ts
         </span>
       </div>
       `
-                }),
-                __param(0, newInstanceOf(IValidationController)),
-                __param(1, IValidationRules),
-                __metadata("design:paramtypes", [ValidationController, Object])
-            ], App1);
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App1 = _classThis = class {
+                    constructor() {
+                        this.person = new Person((void 0), (void 0));
+                        this.controller = resolve(newInstanceOf(IValidationController));
+                        this.validationRules = resolve(IValidationRules);
+                        this.controllerValidateSpy = createSpy(this.controller, 'validate', true);
+                        this.validationRules
+                            .on(this.person)
+                            .ensure('name')
+                            .required();
+                    }
+                    unbinding() {
+                        this.validationRules.off();
+                    }
+                };
+                __setFunctionName(_classThis, "App1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App1 = _classThis;
+            })();
             const ctx = TestContext.create();
             const container = ctx.container;
             const host = ctx.doc.createElement('app');

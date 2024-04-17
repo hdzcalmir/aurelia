@@ -1,49 +1,130 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { I18N, I18nConfiguration, Signals } from '@aurelia/i18n';
-import { ISignaler } from '@aurelia/runtime';
-import { Aurelia, bindable, customElement, IPlatform } from '@aurelia/runtime-html';
+import { ISignaler, Aurelia, bindable, customElement, IPlatform } from '@aurelia/runtime-html';
 import { assert, PLATFORM, TestContext } from '@aurelia/testing';
 import { createSpecFunction } from '../../util.js';
 describe('i18n/t/translation-integration.spec.ts', function () {
-    let CustomMessage = class CustomMessage {
-    };
-    __decorate([
-        bindable,
-        __metadata("design:type", String)
-    ], CustomMessage.prototype, "message", void 0);
-    CustomMessage = __decorate([
-        customElement({ name: 'custom-message', template: `<div>\${message}</div>` })
-    ], CustomMessage);
-    let CeWithCamelCaseBindable = class CeWithCamelCaseBindable {
-    };
-    __decorate([
-        bindable,
-        __metadata("design:type", String)
-    ], CeWithCamelCaseBindable.prototype, "someMessage", void 0);
-    CeWithCamelCaseBindable = __decorate([
-        customElement({ name: 'camel-ce', template: `<div>\${someMessage}</div>` })
-    ], CeWithCamelCaseBindable);
-    let FooBar = class FooBar {
-    };
-    __decorate([
-        bindable,
-        __metadata("design:type", String)
-    ], FooBar.prototype, "status", void 0);
-    __decorate([
-        bindable,
-        __metadata("design:type", String)
-    ], FooBar.prototype, "date", void 0);
-    FooBar = __decorate([
-        customElement({ name: 'foo-bar', template: `<au-slot><span t="status" t-params.bind="{context: status, date: date}"></span></au-slot>` })
-    ], FooBar);
+    let CustomMessage = (() => {
+        let _classDecorators = [customElement({ name: 'custom-message', template: `<div>\${message}</div>` })];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _message_decorators;
+        let _message_initializers = [];
+        let _message_extraInitializers = [];
+        var CustomMessage = _classThis = class {
+            constructor() {
+                this.message = __runInitializers(this, _message_initializers, void 0);
+                __runInitializers(this, _message_extraInitializers);
+            }
+        };
+        __setFunctionName(_classThis, "CustomMessage");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            _message_decorators = [bindable];
+            __esDecorate(null, null, _message_decorators, { kind: "field", name: "message", static: false, private: false, access: { has: obj => "message" in obj, get: obj => obj.message, set: (obj, value) => { obj.message = value; } }, metadata: _metadata }, _message_initializers, _message_extraInitializers);
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            CustomMessage = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return CustomMessage = _classThis;
+    })();
+    let CeWithCamelCaseBindable = (() => {
+        let _classDecorators = [customElement({ name: 'camel-ce', template: `<div>\${someMessage}</div>` })];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _someMessage_decorators;
+        let _someMessage_initializers = [];
+        let _someMessage_extraInitializers = [];
+        var CeWithCamelCaseBindable = _classThis = class {
+            constructor() {
+                this.someMessage = __runInitializers(this, _someMessage_initializers, void 0);
+                __runInitializers(this, _someMessage_extraInitializers);
+            }
+        };
+        __setFunctionName(_classThis, "CeWithCamelCaseBindable");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            _someMessage_decorators = [bindable];
+            __esDecorate(null, null, _someMessage_decorators, { kind: "field", name: "someMessage", static: false, private: false, access: { has: obj => "someMessage" in obj, get: obj => obj.someMessage, set: (obj, value) => { obj.someMessage = value; } }, metadata: _metadata }, _someMessage_initializers, _someMessage_extraInitializers);
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            CeWithCamelCaseBindable = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return CeWithCamelCaseBindable = _classThis;
+    })();
+    let FooBar = (() => {
+        let _classDecorators = [customElement({ name: 'foo-bar', template: `<au-slot><span t="status" t-params.bind="{context: status, date: date}"></span></au-slot>` })];
+        let _classDescriptor;
+        let _classExtraInitializers = [];
+        let _classThis;
+        let _status_decorators;
+        let _status_initializers = [];
+        let _status_extraInitializers = [];
+        let _date_decorators;
+        let _date_initializers = [];
+        let _date_extraInitializers = [];
+        var FooBar = _classThis = class {
+            constructor() {
+                this.status = __runInitializers(this, _status_initializers, void 0);
+                this.date = (__runInitializers(this, _status_extraInitializers), __runInitializers(this, _date_initializers, void 0));
+                __runInitializers(this, _date_extraInitializers);
+            }
+        };
+        __setFunctionName(_classThis, "FooBar");
+        (() => {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            _status_decorators = [bindable];
+            _date_decorators = [bindable];
+            __esDecorate(null, null, _status_decorators, { kind: "field", name: "status", static: false, private: false, access: { has: obj => "status" in obj, get: obj => obj.status, set: (obj, value) => { obj.status = value; } }, metadata: _metadata }, _status_initializers, _status_extraInitializers);
+            __esDecorate(null, null, _date_decorators, { kind: "field", name: "date", static: false, private: false, access: { has: obj => "date" in obj, get: obj => obj.date, set: (obj, value) => { obj.date = value; } }, metadata: _metadata }, _date_initializers, _date_extraInitializers);
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            FooBar = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        })();
+        return FooBar = _classThis;
+    })();
     class I18nIntegrationTestContext {
         constructor(en, de, ctx, au, i18n, host, error) {
             this.en = en;
@@ -141,85 +222,133 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         assert.equal(host.querySelector(selector).textContent, translation, message);
     }
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<span t='simple.text'></span>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<span t='simple.text'></span>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works for simple string literal key', function ({ host, en: translation }) {
             assertTextContent(host, 'span', translation.simple.text);
         }, { component: App });
     }
     {
-        let App = class App {
-            constructor() {
-                this.nullul = null;
-                this.undef = undefined;
-                // private readonly zero: 0 = 0;
-            }
-        };
-        App = __decorate([
-            customElement({
-                name: 'app',
-                template: `<p t.bind="undef" id="undefined">
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app',
+                    template: `<p t.bind="undef" id="undefined">
         Undefined value
       </p>
       <p t.bind="nullul" id="null">
         Null value
       </p>`,
-            })
-        ], App);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.nullul = null;
+                    this.undef = undefined;
+                    // private readonly zero: 0 = 0;
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works for null/undefined bound values', function ({ host }) {
             assertTextContent(host, '#undefined', '');
             assertTextContent(host, '#null', '');
         }, { component: App });
     }
     {
-        let App = class App {
-            constructor() {
-                this.nullul = null;
-                this.undef = undefined;
-                // private readonly zero: 0 = 0;
-            }
-        };
-        App = __decorate([
-            customElement({
-                name: 'app',
-                template: `<p t.bind="undef" id="undefined" t-params.bind="{defaultValue:'foo'}">
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app',
+                    template: `<p t.bind="undef" id="undefined" t-params.bind="{defaultValue:'foo'}">
       Undefined value
     </p>
     <p t.bind="nullul" id="null" t-params.bind="{defaultValue:'bar'}">
       Null value
     </p>`,
-            })
-        ], App);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.nullul = null;
+                    this.undef = undefined;
+                    // private readonly zero: 0 = 0;
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works for null/undefined bound values - default value', function ({ host }) {
             assertTextContent(host, '#undefined', 'foo');
             assertTextContent(host, '#null', 'bar');
         }, { component: App });
     }
     {
-        let App = class App {
-            constructor() {
-                this.nullul = 'simple.text';
-                this.undef = 'simple.text';
-            }
-            changeKey() {
-                this.nullul = null;
-                this.undef = undefined;
-            }
-        };
-        App = __decorate([
-            customElement({
-                name: 'app',
-                template: `<p t.bind="undef" id="undefined">
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app',
+                    template: `<p t.bind="undef" id="undefined">
       Undefined value
     </p>
     <p t.bind="nullul" id="null">
       Null value
     </p>`,
-            })
-        ], App);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.nullul = 'simple.text';
+                    this.undef = 'simple.text';
+                }
+                changeKey() {
+                    this.nullul = null;
+                    this.undef = undefined;
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works if the keyExpression is changed to null/undefined', function ({ host, app, ctx }) {
             app.changeKey();
             assertTextContent(host, '#undefined', 'simple text', 'changeKey(), before flush');
@@ -233,27 +362,39 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         }, { component: App });
     }
     {
-        let App = class App {
-            constructor() {
-                this.nullul = 'simple.text';
-                this.undef = 'simple.text';
-            }
-            changeKey() {
-                this.nullul = null;
-                this.undef = undefined;
-            }
-        };
-        App = __decorate([
-            customElement({
-                name: 'app',
-                template: `<p t.bind="undef" id="undefined" t-params.bind="{defaultValue:'foo'}">
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app',
+                    template: `<p t.bind="undef" id="undefined" t-params.bind="{defaultValue:'foo'}">
         Undefined value
       </p>
       <p t.bind="nullul" id="null" t-params.bind="{defaultValue:'bar'}">
         Null value
       </p>`,
-            })
-        ], App);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.nullul = 'simple.text';
+                    this.undef = 'simple.text';
+                }
+                changeKey() {
+                    this.nullul = null;
+                    this.undef = undefined;
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works if the keyExpression is changed to null/undefined - default value', function ({ host, app, ctx }) {
             app.changeKey();
             assertTextContent(host, '#undefined', 'simple text', 'changeKey(), before flush');
@@ -264,33 +405,57 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         }, { component: App });
     }
     for (const value of [true, false, 0]) {
-        let App = class App {
-            constructor() {
-                this.key = value;
-            }
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<p t.bind="key" id="undefined"></p>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<p t.bind="key" id="undefined"></p>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.key = value;
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it(`throws error if the key expression is evaluated to ${value}`, function ({ error }) {
             assert.match(error?.message, new RegExp(`Expected the i18n key to be a string, but got ${value} of type (boolean|number)`));
         }, { component: App });
     }
     for (const value of [true, false, 0]) {
-        let App = class App {
-            constructor() {
-                this.key = 'simple.text';
-            }
-            changeKey() {
-                this.key = value;
-            }
-        };
-        App = __decorate([
-            customElement({
-                name: 'app',
-                template: `<p t.bind="key" id="undefined"></p>`,
-            })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app',
+                    template: `<p t.bind="key" id="undefined"></p>`,
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.key = 'simple.text';
+                }
+                changeKey() {
+                    this.key = value;
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it(`throws error if the key expression is changed to ${value}`, function ({ app }) {
             try {
                 app.changeKey();
@@ -301,30 +466,54 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         }, { component: App });
     }
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<span t='simple.text' t='simple.attr'></span>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<span t='simple.text' t='simple.attr'></span>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('with multiple `t` attribute only the first one is considered', function ({ host, en: translation }) {
             assertTextContent(host, 'span', translation.simple.text);
         }, { component: App });
     }
     {
-        let App = class App {
-            constructor() {
-                this.key = 'simple.text';
-            }
-        };
-        App = __decorate([
-            customElement({
-                name: 'app', template: `
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app', template: `
     <span id='t' t='simple.text'></span>
     <span id='i18n' i18n='simple.text'></span>
     <span id='i18n-bind' i18n.bind='key'></span>
     `
-            })
-        ], App);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.key = 'simple.text';
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works with aliases', function ({ host, en: translation }) {
             assertTextContent(host, 'span#t', translation.simple.text);
             assertTextContent(host, 'span#i18n', translation.simple.text);
@@ -332,42 +521,57 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         }, { component: App, aliases: ['t', 'i18n'] });
     }
     {
-        let App = class App {
-            constructor() {
-                this.obj = { key: 'simple.text' };
-            }
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<span t.bind='obj.key'></span>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<span t.bind='obj.key'></span>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.obj = { key: 'simple.text' };
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works for bound key', function ({ host, en: translation }) {
             assertTextContent(host, 'span', translation.simple.text);
         }, { component: App });
     }
     describe('translation can be manipulated by using t-params', function () {
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span t-params.bind="{context: 'dispatched'}"></span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span t-params.bind="{context: 'dispatched'}"></span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('throws error if used without `t` attribute', function ({ error }) {
                 assert.equal(error?.message, 'key expression is missing');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dispatchedOn = new Date(2020, 1, 10, 5, 15);
-                    this.deliveredOn = new Date(2021, 1, 10, 5, 15);
-                    this.tParams = { context: 'dispatched', date: this.dispatchedOn };
-                    this.name = 'john';
-                    this.nameParams = { name: this.name };
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `
     <span id="i18n-ctx-vm" t="status" t-params.bind="tParams"></span><br>
     <span id="i18n-ctx-dispatched" t="status" t-params.bind="{context: 'dispatched', date: dispatchedOn}"></span><br>
     <span id="i18n-ctx-delivered" t="status" t-params.bind="{context: 'delivered', date: deliveredOn}"></span><br>
@@ -381,8 +585,29 @@ describe('i18n/t/translation-integration.spec.ts', function () {
     <span id="i18n-items-plural-0"  t="itemWithCount" t-params.bind="{count: 0}"></span>
     <span id="i18n-items-plural-1"  t="itemWithCount" t-params.bind="{count: 1}"></span>
     <span id="i18n-items-plural-10" t="itemWithCount" t-params.bind="{count: 10}"></span>`
-                })
-            ], App);
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dispatchedOn = new Date(2020, 1, 10, 5, 15);
+                        this.deliveredOn = new Date(2021, 1, 10, 5, 15);
+                        this.tParams = { context: 'dispatched', date: this.dispatchedOn };
+                        this.name = 'john';
+                        this.nameParams = { name: this.name };
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works when a vm property is bound as t-params', function ({ host, en: translation, app }) {
                 assertTextContent(host, '#i18n-ctx-vm', translation.status_dispatched.replace('{{date}}', app.dispatchedOn.toString()));
             }, { component: App });
@@ -431,72 +656,144 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         }
     });
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<img t='imgPath'></img>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<img t='imgPath'></img>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('`src` attribute of img element is translated by default', function ({ host, en: translation }) {
             assert.equal(host.querySelector('img').src.endsWith(translation.imgPath), true);
         }, { component: App });
     }
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<span t='[title]simple.attr'></span>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<span t='[title]simple.attr'></span>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('can translate attributes - t=\'[title]simple.attr\'', function ({ host, en: translation }) {
             assertTextContent(host, `span[title='${translation.simple.attr}']`, '');
         }, { component: App });
     }
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<span t='[title]simple.attr;[title]simple.text'></span>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<span t='[title]simple.attr;[title]simple.text'></span>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('value of last key takes effect if multiple keys target same attribute - t=\'[title]simple.attr;[title]simple.text\'', function ({ host, en: translation }) {
             assertTextContent(host, `span[title='${translation.simple.text}']`, '');
         }, { component: App });
     }
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<span t='[title]simple.attr;simple.text'></span>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<span t='[title]simple.attr;simple.text'></span>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works for a mixture of attribute targeted key and textContent targeted key - t=\'[title]simple.attr;simple.text\'', function ({ host, en: translation }) {
             assertTextContent(host, `span[title='${translation.simple.attr}']`, translation.simple.text);
         }, { component: App });
     }
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<span t='[title,data-foo]simple.attr;simple.text'></span>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<span t='[title,data-foo]simple.attr;simple.text'></span>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works when multiple attributes are targeted by the same key - `t="[title,data-foo]simple.attr;simple.text"`', function ({ host, en: translation }) {
             assertTextContent(host, `span[title='${translation.simple.attr}'][data-foo='${translation.simple.attr}']`, translation.simple.text);
         }, { component: App });
     }
     {
-        let App = class App {
-            constructor() {
-                this.obj = { key1: 'simple.text', key2: 'simple.attr' };
-                this.status = 'dispatched';
-            }
-        };
-        App = __decorate([
-            customElement({
-                name: 'app', template: `
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app', template: `
     <span id='a' t='\${obj.key1}'></span>
     <span id='b' t='[title]\${obj.key2};simple.text'></span>
     <span id='c' t='[title]\${obj.key2};\${obj.key1}'></span>
     <span id='d' t='status_\${status}'></span>
     `
-            })
-        ], App);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.obj = { key1: 'simple.text', key2: 'simple.attr' };
+                    this.status = 'dispatched';
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it(`works for interpolated keys are used - t="\${obj.key1}"`, function ({ host, en: translation }) {
             assertTextContent(host, `span#a`, translation.simple.text);
             assertTextContent(host, `span#b[title='${translation.simple.attr}']`, translation.simple.text);
@@ -510,250 +807,490 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         }, { component: App });
     }
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({ name: 'app', template: `<span t="$t(simple.text) $t(simple.attr)"></span>` })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({ name: 'app', template: `<span t="$t(simple.text) $t(simple.attr)"></span>` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works nested key - t="$t(simple.text) $t(simple.attr)"', function ({ host, en: translation }) {
             assertTextContent(host, `span`, `${translation.simple.text} ${translation.simple.attr}`);
         }, { component: App });
     }
     {
-        let App = class App {
-            constructor() {
-                this.part = 'text';
-            }
-        };
-        App = __decorate([
-            customElement({
-                name: 'app', template: `
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app', template: `
     <span id='a' t.bind='"simple."+"text"'></span>
     <span id='b' t.bind='"simple."+part'></span>
     `
-            })
-        ], App);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+                constructor() {
+                    this.part = 'text';
+                }
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works for explicit concatenation expression as key - `t.bind="string+string"`', function ({ host, en: translation }) {
             assertTextContent(host, `span#a`, translation.simple.text);
             assertTextContent(host, `span#b`, translation.simple.text);
         }, { component: App });
     }
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({
-                name: 'app', template: `<span id='a' t='[text]simple.text'></span>`
-            })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app', template: `<span id='a' t='[text]simple.text'></span>`
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works for textContent replacement with explicit [text] attribute - `t="[text]key"`', function ({ host, en: translation }) {
             assertTextContent(host, 'span', translation.simple.text);
         }, { component: App });
     }
     {
-        let App = class App {
-        };
-        App = __decorate([
-            customElement({
-                name: 'app', template: `<span id='a' t='[html]html'></span>`
-            })
-        ], App);
+        let App = (() => {
+            let _classDecorators = [customElement({
+                    name: 'app', template: `<span id='a' t='[html]html'></span>`
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var App = _classThis = class {
+            };
+            __setFunctionName(_classThis, "App");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                App = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return App = _classThis;
+        })();
         $it('works for innerHTML replacement - `t="[html]key"`', function ({ host, en: translation }) {
             assert.equal(host.querySelector('span').innerHTML, translation.html);
         }, { component: App });
     }
     describe('prepends/appends the translated value to the element content - `t="[prepend]key1;[append]key2"`', function () {
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]pre'>tac</span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]pre'>tac</span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for [prepend] only', function ({ host }) {
                 assertTextContent(host, 'span', 'tic tac');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]pre;mid'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]pre;mid'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for [prepend] + textContent', function ({ host }) {
                 assertTextContent(host, 'span', 'tic tac');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]pre;[html]midHtml'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]pre;[html]midHtml'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for [prepend] + html', function ({ host }) {
                 assert.equal(host.querySelector('span').innerHTML, 'tic <i>tac</i>');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]preHtml;[html]mid'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]preHtml;[html]mid'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for html content for [prepend] + textContent', function ({ host }) {
                 assert.equal(host.querySelector('span').innerHTML, '<b>tic</b><span>foo</span> tac');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]preHtml;[html]midHtml'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]preHtml;[html]midHtml'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for html content for [prepend] + innerHtml', function ({ host }) {
                 assert.equal(host.querySelector('span').innerHTML, '<b>tic</b><span>foo</span> <i>tac</i>');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[append]post'>tac</span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[append]post'>tac</span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for [append] only', function ({ host }) {
                 assertTextContent(host, 'span', 'tac toe');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[append]post;mid'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[append]post;mid'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for [append] + textContent', function ({ host }) {
                 assertTextContent(host, 'span', 'tac toe');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[append]post;[html]midHtml'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[append]post;[html]midHtml'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for [append] + html', function ({ host }) {
                 assert.equal(host.querySelector('span').innerHTML, '<i>tac</i> toe');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[append]postHtml;[html]mid'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[append]postHtml;[html]mid'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for html content for [append] + textContent', function ({ host }) {
                 assert.equal(host.querySelector('span').innerHTML, 'tac <b>toe</b><span>bar</span>');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[append]postHtml;[html]midHtml'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[append]postHtml;[html]midHtml'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for html content for [append]', function ({ host }) {
                 assert.equal(host.querySelector('span').innerHTML, '<i>tac</i> <b>toe</b><span>bar</span>');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]pre;[append]post'>tac</span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]pre;[append]post'>tac</span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for [prepend] and [append]', function ({ host }) {
                 assertTextContent(host, 'span', 'tic tac toe');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]pre;[append]post;mid'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]pre;[append]post;mid'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for [prepend] + [append] + textContent', function ({ host }) {
                 assertTextContent(host, 'span', 'tic tac toe');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]pre;[append]post;[html]midHtml'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]pre;[append]post;[html]midHtml'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for [prepend] + [append] + innerHtml', function ({ host }) {
                 assert.equal(host.querySelector('span').innerHTML, 'tic <i>tac</i> toe');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]preHtml;[append]postHtml;mid'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]preHtml;[append]postHtml;mid'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for html resource for [prepend] and [append] + textContent', function ({ host }) {
                 assert.equal(host.querySelector('span').innerHTML, '<b>tic</b><span>foo</span> tac <b>toe</b><span>bar</span>');
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='[prepend]preHtml;[append]postHtml;[html]midHtml'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='[prepend]preHtml;[append]postHtml;[html]midHtml'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for html resource for [prepend] and [append] + innerHtml', function ({ host }) {
                 assert.equal(host.querySelector('span').innerHTML, '<b>tic</b><span>foo</span> <i>tac</i> <b>toe</b><span>bar</span>');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.keyExpr = '[prepend]preHtml;[append]postHtml';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.keyExpr = '[prepend]preHtml;[append]postHtml';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works correctly for html with the change of both [prepend], and [append] - textContent', function ({ host, app, platform }) {
                 assert.equal(host.querySelector('span').innerHTML, '<b>tic</b><span>foo</span> tac <b>toe</b><span>bar</span>');
                 app.keyExpr = '[prepend]pre;[append]post';
@@ -765,16 +1302,28 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.keyExpr = '[prepend]pre;[append]post';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.keyExpr = '[prepend]pre;[append]post';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works correctly with the change of both [prepend], and [append] - textContent', function ({ host, app, platform }) {
                 assert.equal(host.querySelector('span').innerHTML, 'tic tac toe');
                 app.keyExpr = '[prepend]preHtml;[append]postHtml';
@@ -783,16 +1332,28 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.keyExpr = '[prepend]preHtml;[append]postHtml';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.keyExpr = '[prepend]preHtml;[append]postHtml';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works correctly with the removal of [append]', function ({ host, app, platform }) {
                 assert.equal(host.querySelector('span').innerHTML, '<b>tic</b><span>foo</span> tac <b>toe</b><span>bar</span>');
                 app.keyExpr = '[prepend]preHtml';
@@ -801,16 +1362,28 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.keyExpr = '[prepend]preHtml;[append]postHtml';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.keyExpr = '[prepend]preHtml;[append]postHtml';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works correctly with the removal of [prepend]', function ({ host, app, platform }) {
                 assert.equal(host.querySelector('span').innerHTML, '<b>tic</b><span>foo</span> tac <b>toe</b><span>bar</span>');
                 app.keyExpr = '[append]postHtml';
@@ -819,16 +1392,28 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.keyExpr = '[prepend]preHtml;[append]postHtml';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t.bind='keyExpr'>tac</span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.keyExpr = '[prepend]preHtml;[append]postHtml';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works correctly with the removal of both [prepend] and [append]', function ({ host, app, platform }) {
                 assert.equal(host.querySelector('span').innerHTML, '<b>tic</b><span>foo</span> tac <b>toe</b><span>bar</span>');
                 app.keyExpr = '[html]midHtml';
@@ -839,16 +1424,28 @@ describe('i18n/t/translation-integration.spec.ts', function () {
     });
     describe('updates translation', function () {
         {
-            let App = class App {
-                constructor() {
-                    this.obj = { key: 'simple.text' };
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='\${obj.key}'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='\${obj.key}'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.obj = { key: 'simple.text' };
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the key expression changed - interpolation', function ({ host, en: translation, app, ctx }) {
                 app.obj.key = 'simple.attr';
                 ctx.platform.domWriteQueue.flush();
@@ -856,16 +1453,28 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.obj = { base: 'simple.', key: 'text' };
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t='\${obj.base}\${obj.key}'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t='\${obj.base}\${obj.key}'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.obj = { base: 'simple.', key: 'text' };
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the key expression changed - multi-interpolation', function ({ ctx, host, en: translation, app }) {
                 const currText = translation.simple.text;
                 assertTextContent(host, `span`, currText);
@@ -877,16 +1486,28 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.obj = { key: 'simple.text' };
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t.bind='obj.key'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t.bind='obj.key'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.obj = { key: 'simple.text' };
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the key expression changed - access-member', function ({ ctx, host, en: translation, app }) {
                 app.obj.key = 'simple.attr';
                 ctx.platform.domWriteQueue.flush();
@@ -894,16 +1515,28 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.key = 'simple.text';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t.bind='key'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t.bind='key'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.key = 'simple.text';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the key expression changed - property', function ({ ctx, host, en: translation, app }) {
                 app.key = 'simple.attr';
                 ctx.platform.domWriteQueue.flush();
@@ -917,27 +1550,56 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let MyCe = class MyCe {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", String)
-            ], MyCe.prototype, "value", void 0);
-            MyCe = __decorate([
-                customElement({ name: 'my-ce', template: '${value}' })
-            ], MyCe);
-            let App = class App {
-                constructor() {
-                    this.key = 'simple.text';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `<my-ce t.bind='"[value]"+key'></my-ce>`,
-                    dependencies: [MyCe]
-                })
-            ], App);
+            let MyCe = (() => {
+                let _classDecorators = [customElement({ name: 'my-ce', template: '${value}' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _value_decorators;
+                let _value_initializers = [];
+                let _value_extraInitializers = [];
+                var MyCe = _classThis = class {
+                    constructor() {
+                        this.value = __runInitializers(this, _value_initializers, void 0);
+                        __runInitializers(this, _value_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyCe");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _value_decorators = [bindable];
+                    __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyCe = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyCe = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `<my-ce t.bind='"[value]"+key'></my-ce>`,
+                        dependencies: [MyCe]
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.key = 'simple.text';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the key expression changed - property - custom element', function ({ ctx, host, en: translation, app }) {
                 app.key = 'simple.attr';
                 ctx.platform.domWriteQueue.flush();
@@ -951,16 +1613,28 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.key = 'simple.text';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t.bind='"[data-foo]"+key'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t.bind='"[data-foo]"+key'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.key = 'simple.text';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the key expression changed - property - DOM Element attribute', function ({ ctx, host, en: translation, app }) {
                 const span = host.querySelector('span');
                 assert.strictEqual(span.dataset.foo, translation.simple.text);
@@ -976,32 +1650,63 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let MyCe = class MyCe {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", String)
-            ], MyCe.prototype, "foo", void 0);
-            __decorate([
-                bindable,
-                __metadata("design:type", String)
-            ], MyCe.prototype, "bar", void 0);
-            MyCe = __decorate([
-                customElement({ name: 'my-ce', template: '${foo} ${bar}' })
-            ], MyCe);
-            let App = class App {
-                constructor() {
-                    this.key1 = 'simple.text';
-                    this.key2 = 'simple.attr';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app',
-                    template: `<my-ce t.bind='"[foo]"+key1+";[bar]"+key2'></my-ce>`,
-                    dependencies: [MyCe]
-                })
-            ], App);
+            let MyCe = (() => {
+                let _classDecorators = [customElement({ name: 'my-ce', template: '${foo} ${bar}' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _foo_decorators;
+                let _foo_initializers = [];
+                let _foo_extraInitializers = [];
+                let _bar_decorators;
+                let _bar_initializers = [];
+                let _bar_extraInitializers = [];
+                var MyCe = _classThis = class {
+                    constructor() {
+                        this.foo = __runInitializers(this, _foo_initializers, void 0);
+                        this.bar = (__runInitializers(this, _foo_extraInitializers), __runInitializers(this, _bar_initializers, void 0));
+                        __runInitializers(this, _bar_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyCe");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _foo_decorators = [bindable];
+                    _bar_decorators = [bindable];
+                    __esDecorate(null, null, _foo_decorators, { kind: "field", name: "foo", static: false, private: false, access: { has: obj => "foo" in obj, get: obj => obj.foo, set: (obj, value) => { obj.foo = value; } }, metadata: _metadata }, _foo_initializers, _foo_extraInitializers);
+                    __esDecorate(null, null, _bar_decorators, { kind: "field", name: "bar", static: false, private: false, access: { has: obj => "bar" in obj, get: obj => obj.bar, set: (obj, value) => { obj.bar = value; } }, metadata: _metadata }, _bar_initializers, _bar_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyCe = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyCe = _classThis;
+            })();
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app',
+                        template: `<my-ce t.bind='"[foo]"+key1+";[bar]"+key2'></my-ce>`,
+                        dependencies: [MyCe]
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.key1 = 'simple.text';
+                        this.key2 = 'simple.attr';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the key expression changed - property - custom element - multiple bindables', function ({ ctx, host, en: translation, app }) {
                 const r = translation.simple;
                 assertTextContent(host, `my-ce`, `${r.text} ${r.attr}`);
@@ -1017,17 +1722,29 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.key1 = 'simple.text';
-                    this.key2 = 'simple.attr';
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t.bind='"[data-foo]"+key1+";[bar]"+key2'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t.bind='"[data-foo]"+key1+";[bar]"+key2'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.key1 = 'simple.text';
+                        this.key2 = 'simple.attr';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the key expression changed - property - multiple DOM Element attributes', function ({ ctx, host, en: translation, app }) {
                 const r = translation.simple;
                 const span = host.querySelector('span');
@@ -1048,17 +1765,29 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.deliveredOn = new Date(2021, 1, 10, 5, 15);
-                    this.params = { context: 'delivered', date: this.deliveredOn };
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span t="status" t-params.bind="params"></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span t="status" t-params.bind="params"></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.deliveredOn = new Date(2021, 1, 10, 5, 15);
+                        this.params = { context: 'delivered', date: this.deliveredOn };
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the translation parameters changed', function ({ ctx, host, en: translation, app }) {
                 app.params = { ...app.params, context: 'dispatched' };
                 ctx.platform.domWriteQueue.flush();
@@ -1066,13 +1795,25 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<span id='a' t='simple.text'></span>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<span id='a' t='simple.text'></span>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('when the locale is changed', async function ({ ctx, host, de, i18n }) {
                 await i18n.setLocale('de');
                 ctx.platform.domWriteQueue.flush();
@@ -1082,28 +1823,52 @@ describe('i18n/t/translation-integration.spec.ts', function () {
     });
     describe('works with custom elements', function () {
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<custom-message t="[message]simple.text"></custom-message>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<custom-message t="[message]simple.text"></custom-message>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('can bind to custom elements attributes', function ({ host, en }) {
                 assertTextContent(host, 'custom-message div', en.simple.text);
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.count = 0;
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<custom-message component.ref="cm" t="[message]itemWithCount" t-params.bind="{count}">`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<custom-message component.ref="cm" t="[message]itemWithCount" t-params.bind="{count}">`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.count = 0;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('should support params', function ({ app, host, en, ctx }) {
                 assertTextContent(host, 'custom-message div', en.itemWithCount_other.replace('{{count}}', '0'));
                 app.count = 10;
@@ -1114,13 +1879,25 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<custom-message t="[message]simple.text"></custom-message>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<custom-message t="[message]simple.text"></custom-message>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('should support locale changes', async function ({ host, de, i18n, platform }) {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
@@ -1128,28 +1905,52 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<camel-ce some-message="ignored" t="[some-message]simple.text"></camel-ce>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<camel-ce some-message="ignored" t="[some-message]simple.text"></camel-ce>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('can bind to custom elements attributes with camelCased bindable', function ({ host, en }) {
                 assertTextContent(host, 'camel-ce div', en.simple.text);
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.count = 0;
-                }
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<camel-ce component.ref="cm" t="[some-message]itemWithCount" t-params.bind="{count}">`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<camel-ce component.ref="cm" t="[some-message]itemWithCount" t-params.bind="{count}">`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.count = 0;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('should support params', function ({ app, host, en, ctx }) {
                 assertTextContent(host, 'camel-ce div', en.itemWithCount_other.replace('{{count}}', '0'));
                 app.count = 10;
@@ -1160,13 +1961,25 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `<camel-ce some-message="ignored" t="[some-message]simple.text"></camel-ce>`
-                })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `<camel-ce some-message="ignored" t="[some-message]simple.text"></camel-ce>`
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('should support locale changes with camelCased bindable', async function ({ host, de, i18n, platform }) {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
@@ -1176,50 +1989,98 @@ describe('i18n/t/translation-integration.spec.ts', function () {
     });
     describe('`t` value-converter works for', function () {
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${'simple.text' | t}</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${'simple.text' | t}</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('key as string literal', function ({ host, en: translation }) {
                 assertTextContent(host, 'span', translation.simple.text);
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.key = 'simple.text';
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${key | t}</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${key | t}</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.key = 'simple.text';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('key bound from vm property', function ({ host, en: translation }) {
                 assertTextContent(host, 'span', translation.simple.text);
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${'itemWithCount' | t: {count:10}}</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${'itemWithCount' | t: {count:10}}</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('with `t-params`', function ({ host, en: translation }) {
                 assertTextContent(host, 'span', translation.itemWithCount_other.replace('{{count}}', '10'));
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `
       <span id="a" title.bind="'simple.text' | t">t-vc-attr-target</span>
       <span id="b" title="\${'simple.text' | t}">t-vc-attr-target</span>
       <span id="c" title.bind="'itemWithCount' | t : {count:10}">t-vc-attr-target</span>
       `
-                })
-            ], App);
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('attribute translation', function ({ host, en: translation }) {
                 assertTextContent(host, `span#a[title='${translation.simple.text}']`, 't-vc-attr-target');
                 assertTextContent(host, `span#b[title='${translation.simple.text}']`, 't-vc-attr-target');
@@ -1227,11 +2088,23 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${'simple.text' | t}</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${'simple.text' | t}</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('change of locale', async function ({ host, de, platform, i18n }) {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
@@ -1241,50 +2114,98 @@ describe('i18n/t/translation-integration.spec.ts', function () {
     });
     describe('`t` binding-behavior works for', function () {
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${'simple.text' & t}</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${'simple.text' & t}</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('key as string literal', function ({ host, en: translation }) {
                 assertTextContent(host, 'span', translation.simple.text);
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.key = 'simple.text';
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${key & t}</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${key & t}</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.key = 'simple.text';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('key bound from vm property', function ({ host, en: translation }) {
                 assertTextContent(host, 'span', translation.simple.text);
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${'itemWithCount' & t : {count:10}}</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${'itemWithCount' & t : {count:10}}</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('with `t-params`', function ({ host, en: translation }) {
                 assertTextContent(host, 'span', translation.itemWithCount_other.replace('{{count}}', '10'));
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({
-                    name: 'app', template: `
+            let App = (() => {
+                let _classDecorators = [customElement({
+                        name: 'app', template: `
       <span id="a" title.bind="'simple.text' & t">t-vc-attr-target</span>
       <span id="b" title="\${'simple.text' & t}">t-vc-attr-target</span>
       <span id="c" title.bind="'itemWithCount' & t : {count:10}">t-vc-attr-target</span>
       `
-                })
-            ], App);
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('attribute translation', function ({ host, en: translation }) {
                 assertTextContent(host, `span#a[title='${translation.simple.text}']`, 't-vc-attr-target');
                 assertTextContent(host, `span#b[title='${translation.simple.text}']`, 't-vc-attr-target');
@@ -1292,11 +2213,23 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${'simple.text' & t}</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${'simple.text' & t}</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('change of locale', async function ({ host, de, platform, i18n }) {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
@@ -1318,51 +2251,99 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         ];
         for (const { name, input, output } of cases) {
             const baseDef = { name: `app`, template: `<span>\${ dt | df }</span>` };
-            let App = class App {
-                constructor() {
-                    this.dt = input;
-                }
-            };
-            App = __decorate([
-                customElement(baseDef)
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement(baseDef)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = input;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it(`${name} STRICT`, function ({ host }) {
                 assertTextContent(host, 'span', `${output ?? ''}`);
             }, { component: App });
-            let App1 = class App1 {
-                constructor() {
-                    this.dt = input;
-                }
-            };
-            App1 = __decorate([
-                customElement({ ...baseDef })
-            ], App1);
+            let App1 = (() => {
+                let _classDecorators = [customElement({ ...baseDef })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App1 = _classThis = class {
+                    constructor() {
+                        this.dt = input;
+                    }
+                };
+                __setFunctionName(_classThis, "App1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App1 = _classThis;
+            })();
             $it(name, function ({ host }) {
                 assertTextContent(host, 'span', (output ?? '').toString());
             }, { component: App1 });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date(2019, 7, 20);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt | df : {year:'2-digit', month:'2-digit', day:'2-digit'} : 'de' }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt | df : {year:'2-digit', month:'2-digit', day:'2-digit'} : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date(2019, 7, 20);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('respects provided locale and formatting options', function ({ host }) {
                 assertTextContent(host, 'span', '20.08.19');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date(2019, 7, 20);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt | df }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt | df }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date(2019, 7, 20);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for change of locale', async function ({ host, i18n, platform }) {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
@@ -1389,51 +2370,99 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         ];
         for (const { name, input, output } of cases) {
             const baseDef = { name: 'app', template: `<span>\${ dt & df }</span>` };
-            let App = class App {
-                constructor() {
-                    this.dt = input;
-                }
-            };
-            App = __decorate([
-                customElement(baseDef)
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement(baseDef)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = input;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it(`${name} STRICT`, function ({ host }) {
                 assertTextContent(host, 'span', `${output ?? ''}`);
             }, { component: App });
-            let App1 = class App1 {
-                constructor() {
-                    this.dt = input;
-                }
-            };
-            App1 = __decorate([
-                customElement({ ...baseDef })
-            ], App1);
+            let App1 = (() => {
+                let _classDecorators = [customElement({ ...baseDef })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App1 = _classThis = class {
+                    constructor() {
+                        this.dt = input;
+                    }
+                };
+                __setFunctionName(_classThis, "App1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App1 = _classThis;
+            })();
             $it(name, function ({ host }) {
                 assertTextContent(host, 'span', (output ?? '').toString());
             }, { component: App1 });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date(2019, 7, 20);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt & df : {year:'2-digit', month:'2-digit', day:'2-digit'} : 'de' }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt & df : {year:'2-digit', month:'2-digit', day:'2-digit'} : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date(2019, 7, 20);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('respects provided locale and formatting options', function ({ host }) {
                 assertTextContent(host, 'span', '20.08.19');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date(2019, 7, 20);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt & df }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt & df }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date(2019, 7, 20);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for change of locale', async function ({ host, i18n, platform }) {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
@@ -1441,14 +2470,26 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date(2019, 7, 20);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt & df }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt & df }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date(2019, 7, 20);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for change of source value', function ({ host, platform, app }) {
                 app.dt = new Date(2019, 7, 21);
                 platform.domWriteQueue.flush();
@@ -1460,38 +2501,74 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         const def = { name: 'app', template: `<span>\${ num | nf }</span>` };
         const strictDef = { ...def };
         for (const value of [undefined, null, 'chaos', new Date(), true]) {
-            let App = class App {
-                constructor() {
-                    this.num = value;
-                }
-            };
-            App = __decorate([
-                customElement(strictDef)
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement(strictDef)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = value;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it(`returns the value itself if the value is not a number STRICT binding, for example: ${value}`, function ({ host }) {
                 assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App });
-            let App1 = class App1 {
-                constructor() {
-                    this.num = value;
-                }
-            };
-            App1 = __decorate([
-                customElement(def)
-            ], App1);
+            let App1 = (() => {
+                let _classDecorators = [customElement(def)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App1 = _classThis = class {
+                    constructor() {
+                        this.num = value;
+                    }
+                };
+                __setFunctionName(_classThis, "App1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App1 = _classThis;
+            })();
             $it(`returns the value itself if the value is not a number, for example: ${value}`, function ({ host }) {
                 assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App1 });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num | nf }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num | nf }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats number by default as per current locale and default formatting options', function ({ host }) {
                 assertTextContent(host, 'span', '123,456,789.12');
             }, { component: App });
@@ -1507,40 +2584,76 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num | nf : { style: 'currency', currency: 'EUR' } }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num | nf : { style: 'currency', currency: 'EUR' } }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given formatting options', function ({ host }) {
                 assertTextContent(host, 'span', '€123,456,789.12');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num | nf : undefined : 'de' }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num | nf : undefined : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given locale', function ({ host }) {
                 assertTextContent(host, 'span', '123.456.789,12');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num | nf : { style: 'currency', currency: 'EUR' } : 'de' }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num | nf : { style: 'currency', currency: 'EUR' } : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given locale and formatting options', function ({ host }) {
                 assertTextContent(host, 'span', '123.456.789,12\u00A0€');
             }, { component: App });
@@ -1550,90 +2663,174 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         const def = { name: 'app', template: `<span>\${ num & nf }</span>` };
         const strictDef = { ...def };
         for (const value of [undefined, null, 'chaos', new Date(), true]) {
-            let App = class App {
-                constructor() {
-                    this.num = value;
-                }
-            };
-            App = __decorate([
-                customElement(strictDef)
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement(strictDef)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = value;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it(`returns the value itself if the value is not a number STRICT binding, for example: ${value}`, function ({ host }) {
                 assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App });
-            let App1 = class App1 {
-                constructor() {
-                    this.num = value;
-                }
-            };
-            App1 = __decorate([
-                customElement(def)
-            ], App1);
+            let App1 = (() => {
+                let _classDecorators = [customElement(def)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App1 = _classThis = class {
+                    constructor() {
+                        this.num = value;
+                    }
+                };
+                __setFunctionName(_classThis, "App1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App1 = _classThis;
+            })();
             $it(`returns the value itself if the value is not a number, for example: ${value}`, function ({ host }) {
                 assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App1 });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num & nf }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num & nf }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats number by default as per current locale and default formatting options', function ({ host }) {
                 assertTextContent(host, 'span', '123,456,789.12');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num & nf : { style: 'currency', currency: 'EUR' } }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num & nf : { style: 'currency', currency: 'EUR' } }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given formatting options', function ({ host }) {
                 assertTextContent(host, 'span', '€123,456,789.12');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num & nf : undefined : 'de' }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num & nf : undefined : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given locale', function ({ host }) {
                 assertTextContent(host, 'span', '123.456.789,12');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num & nf : { style: 'currency', currency: 'EUR' } : 'de' }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num & nf : { style: 'currency', currency: 'EUR' } : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given locale and formating options', function ({ host }) {
                 assertTextContent(host, 'span', '123.456.789,12\u00A0€');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num & nf }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num & nf }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for change of locale', async function ({ host, i18n, platform }) {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
@@ -1641,14 +2838,26 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.num = 123456789.12;
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ num & nf }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ num & nf }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.num = 123456789.12;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for change of source value', function ({ host, app, platform }) {
                 app.num = 123456789.21;
                 platform.domWriteQueue.flush();
@@ -1660,85 +2869,153 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         for (const value of [undefined, null, 'chaos', 123, true]) {
             const def = { name: 'app', template: `<span>\${ dt | rt }</span>` };
             const strictDef = { ...def };
-            let App = class App {
-                constructor() {
-                    this.dt = value;
-                }
-            };
-            App = __decorate([
-                customElement(strictDef)
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement(strictDef)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = value;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it(`returns the value itself if the value is not a number STRICT, for example: ${value}`, function ({ host }) {
                 assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App });
-            let App1 = class App1 {
-                constructor() {
-                    this.dt = value;
-                }
-            };
-            App1 = __decorate([
-                customElement(def)
-            ], App1);
+            let App1 = (() => {
+                let _classDecorators = [customElement(def)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App1 = _classThis = class {
+                    constructor() {
+                        this.dt = value;
+                    }
+                };
+                __setFunctionName(_classThis, "App1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App1 = _classThis;
+            })();
             $it(`returns the value itself if the value is not a number, for example: ${value}`, function ({ host }) {
                 assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App1 });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt | rt }</span>` }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt | rt }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats date by default as per current locale and default formatting options', function ({ host }) {
                 assertTextContent(host, 'span', '2 hours ago');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt | rt : undefined : 'de' }</span>` }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt | rt : undefined : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given locale', function ({ host }) {
                 assertTextContent(host, 'span', 'vor 2 Stunden');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt | rt : { style: 'short' } : 'de' }</span>` }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt | rt : { style: 'short' } : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given locale and formating options', function ({ host }) {
                 assertTextContent(host, 'span', 'vor 2 Std.');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt | rt }</span>` }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt | rt }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for change of locale', async function ({ host, i18n, platform }) {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
@@ -1746,16 +3023,27 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt | rt }</span>` }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt | rt }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for change of source value', function ({ host, platform, app }) {
                 app.dt = new Date(app.dt.setHours(app.dt.getHours() - 3));
                 platform.domWriteQueue.flush();
@@ -1765,14 +3053,26 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         it('updates formatted value if rt_signal', async function () {
             this.timeout(10000);
             const offset = 2000; // reduce the amount of time the test takes to run
-            let App = class App {
-                constructor() {
-                    this.dt = new Date(Date.now() - offset);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt | rt }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt | rt }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date(Date.now() - offset);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             await runTest(async function ({ platform, host, container }) {
                 await platform.taskQueue.queueTask(delta => {
                     container.get(ISignaler).dispatchSignal(Signals.RT_SIGNAL);
@@ -1786,85 +3086,153 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         const def = { name: 'app', template: `<span>\${ dt & rt }</span>` };
         const strictDef = { ...def };
         for (const value of [undefined, null, 'chaos', 123, true]) {
-            let App = class App {
-                constructor() {
-                    this.dt = value;
-                }
-            };
-            App = __decorate([
-                customElement(strictDef)
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement(strictDef)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = value;
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it(`returns the value itself if the value is not a number STRICT binding, for example: ${value}`, function ({ host }) {
                 assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App });
-            let App1 = class App1 {
-                constructor() {
-                    this.dt = value;
-                }
-            };
-            App1 = __decorate([
-                customElement(def)
-            ], App1);
+            let App1 = (() => {
+                let _classDecorators = [customElement(def)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App1 = _classThis = class {
+                    constructor() {
+                        this.dt = value;
+                    }
+                };
+                __setFunctionName(_classThis, "App1");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App1 = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App1 = _classThis;
+            })();
             $it(`returns the value itself if the value is not a number, for example: ${value}`, function ({ host }) {
                 assertTextContent(host, 'span', `${value ?? ''}`);
             }, { component: App1 });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement(def),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement(def)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats date by default as per current locale and default formatting options', function ({ host }) {
                 assertTextContent(host, 'span', '2 hours ago');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt & rt : undefined : 'de' }</span>` }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt & rt : undefined : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given locale', function ({ host }) {
                 assertTextContent(host, 'span', 'vor 2 Stunden');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt & rt : { style: 'short' } : 'de' }</span>` }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt & rt : { style: 'short' } : 'de' }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('formats a given number as per given locale and formating options', function ({ host }) {
                 assertTextContent(host, 'span', 'vor 2 Std.');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt & rt }</span>` }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt & rt }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for change of locale', async function ({ host, i18n, platform }) {
                 await i18n.setLocale('de');
                 platform.domWriteQueue.flush();
@@ -1872,16 +3240,27 @@ describe('i18n/t/translation-integration.spec.ts', function () {
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.dt = new Date();
-                    this.dt.setHours(this.dt.getHours() - 2);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt & rt }</span>` }),
-                __metadata("design:paramtypes", [])
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt & rt }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date();
+                        this.dt.setHours(this.dt.getHours() - 2);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('works for change of source value', function ({ host, platform, app }) {
                 app.dt = new Date(app.dt.setHours(app.dt.getHours() - 3));
                 platform.domWriteQueue.flush();
@@ -1891,14 +3270,26 @@ describe('i18n/t/translation-integration.spec.ts', function () {
         it('updates formatted value if rt_signal', async function () {
             this.timeout(10000);
             const offset = 2000; // reduce the amount of time the test takes to run
-            let App = class App {
-                constructor() {
-                    this.dt = new Date(Date.now() - offset);
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span>\${ dt & rt }</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span>\${ dt & rt }</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.dt = new Date(Date.now() - offset);
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             await runTest(async function ({ host, platform, container }) {
                 await platform.taskQueue.queueTask(delta => {
                     container.get(ISignaler).dispatchSignal(Signals.RT_SIGNAL);
@@ -1911,22 +3302,46 @@ describe('i18n/t/translation-integration.spec.ts', function () {
     describe('`skipTranslationOnMissingKey`', function () {
         {
             const key = 'lost-in-translation';
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span t='${key}'></span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span t='${key}'></span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('is disabled by default, and the given key is rendered if the key is missing from i18next resource', function ({ host }) {
                 assertTextContent(host, 'span', key);
             }, { component: App });
         }
         {
             const key = 'lost-in-translation', text = 'untranslated text';
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<span t='${key}'>${text}</span>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<span t='${key}'>${text}</span>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('enables skipping translation when set', function ({ host }) {
                 assertTextContent(host, 'span', text);
             }, { component: App, skipTranslationOnMissingKey: true });
@@ -1934,39 +3349,75 @@ describe('i18n/t/translation-integration.spec.ts', function () {
     });
     describe('works with au-slot', function () {
         {
-            let App = class App {
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<foo-bar status="delivered" date="1971-12-25"></foo-bar>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<foo-bar status="delivered" date="1971-12-25"></foo-bar>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('w/o projection', function ({ host }) {
                 assertTextContent(host, 'span', 'delivered on 1971-12-25');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.status = 'dispatched';
-                    this.date = '1972-12-26';
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<foo-bar status="delivered" date="1971-12-25"><div au-slot t="status" t-params.bind="{context: status, date: date}"></div></foo-bar>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<foo-bar status="delivered" date="1971-12-25"><div au-slot t="status" t-params.bind="{context: status, date: date}"></div></foo-bar>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.status = 'dispatched';
+                        this.date = '1972-12-26';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('with projection', function ({ host }) {
                 assertTextContent(host, 'div', 'dispatched on 1972-12-26');
             }, { component: App });
         }
         {
-            let App = class App {
-                constructor() {
-                    this.status = 'dispatched';
-                    this.date = '1972-12-26';
-                }
-            };
-            App = __decorate([
-                customElement({ name: 'app', template: `<foo-bar status="delivered" date="1971-12-25"><div au-slot t="status" t-params.bind="{context: status, date: $host.date}"></div></foo-bar>` })
-            ], App);
+            let App = (() => {
+                let _classDecorators = [customElement({ name: 'app', template: `<foo-bar status="delivered" date="1971-12-25"><div au-slot t="status" t-params.bind="{context: status, date: $host.date}"></div></foo-bar>` })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var App = _classThis = class {
+                    constructor() {
+                        this.status = 'dispatched';
+                        this.date = '1972-12-26';
+                    }
+                };
+                __setFunctionName(_classThis, "App");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    App = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return App = _classThis;
+            })();
             $it('with projection - mixed', function ({ host }) {
                 assertTextContent(host, 'div', 'dispatched on 1971-12-25');
             }, { component: App });

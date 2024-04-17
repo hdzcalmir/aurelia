@@ -29,11 +29,10 @@ export declare const IHookInvocationAggregator: import("@aurelia/kernel").Interf
 export interface IHookInvocationAggregator extends HookInvocationAggregator {
 }
 export declare class HookInvocationAggregator {
-    readonly platform: IPlatform;
-    readonly config: IHIAConfig;
     readonly notifyHistory: string[];
     phase: string;
-    constructor(platform: IPlatform, config: IHIAConfig);
+    readonly platform: IPlatform;
+    readonly config: IHIAConfig;
     readonly binding: HookInvocationTracker;
     readonly bound: HookInvocationTracker;
     readonly attaching: HookInvocationTracker;

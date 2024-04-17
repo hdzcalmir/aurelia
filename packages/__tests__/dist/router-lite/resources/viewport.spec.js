@@ -1,8 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
+};
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { IRouter, route } from '@aurelia/router-lite';
 import { CustomElement, customElement, IPlatform } from '@aurelia/runtime-html';
@@ -15,39 +47,74 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         }
     }
     it('sibling viewports with non-default routes are supported by binding the default property to null', async function () {
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            customElement({ name: 'ce-one', template: 'ce1' })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-        };
-        CeTwo = __decorate([
-            customElement({ name: 'ce-two', template: 'ce2' })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        path: ['', 'ce-one'],
-                        component: CeOne,
-                    },
-                    {
-                        path: 'ce-two',
-                        component: CeTwo,
-                    },
-                ]
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+        let CeOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-one', template: 'ce1' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [customElement({ name: 'ce-two', template: 'ce2' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: ['', 'ce-one'],
+                            component: CeOne,
+                        },
+                        {
+                            path: 'ce-two',
+                            component: CeTwo,
+                        },
+                    ]
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport name="$1"></au-viewport>
                 <au-viewport name="$2" default.bind="null"></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);
@@ -74,73 +141,130 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await au.stop(true);
     });
     it('sibling viewports in children with non-default routes are supported by binding the default property to null', async function () {
-        let CeOneOne = class CeOneOne {
-        };
-        CeOneOne = __decorate([
-            customElement({ name: 'ce-11', template: `ce11` })
-        ], CeOneOne);
-        let CeTwoOne = class CeTwoOne {
-        };
-        CeTwoOne = __decorate([
-            customElement({ name: 'ce-21', template: `ce21` })
-        ], CeTwoOne);
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            route({
-                routes: [
-                    {
-                        path: ['', 'ce-11'],
-                        component: CeOneOne,
-                    }
-                ]
-            }),
-            customElement({
-                name: 'ce-one', template: `ce1
+        let CeOneOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-11', template: `ce11` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOneOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOneOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOneOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOneOne = _classThis;
+        })();
+        let CeTwoOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-21', template: `ce21` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwoOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeTwoOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwoOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwoOne = _classThis;
+        })();
+        let CeOne = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: ['', 'ce-11'],
+                            component: CeOneOne,
+                        }
+                    ]
+                }), customElement({
+                    name: 'ce-one', template: `ce1
         <au-viewport name="$1"></au-viewport>
         <au-viewport name="$2" default.bind="null"></au-viewport>`
-            })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-        };
-        CeTwo = __decorate([
-            route({
-                routes: [
-                    {
-                        path: ['', 'ce-21'],
-                        component: CeTwoOne,
-                    }
-                ]
-            }),
-            customElement({
-                name: 'ce-two', template: `ce2
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: ['', 'ce-21'],
+                            component: CeTwoOne,
+                        }
+                    ]
+                }), customElement({
+                    name: 'ce-two', template: `ce2
     <au-viewport name="$1"></au-viewport>
     <au-viewport name="$2" default.bind="null"></au-viewport>`
-            })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        path: ['', 'ce-one'],
-                        component: CeOne,
-                    },
-                    {
-                        path: 'ce-two',
-                        component: CeTwo,
-                    },
-                ]
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: ['', 'ce-one'],
+                            component: CeOne,
+                        },
+                        {
+                            path: 'ce-two',
+                            component: CeTwo,
+                        },
+                    ]
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport name="$1"></au-viewport>
                 <au-viewport name="$2" default.bind="null"></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);
@@ -158,59 +282,105 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await au.stop(true);
     });
     it('sibling viewports in children with non-default routes are supported by binding the default property to null - transition plan: invoke-lifecycle', async function () {
-        let CeTwoOne = class CeTwoOne {
-        };
-        CeTwoOne = __decorate([
-            customElement({ name: 'ce-21', template: `ce21` })
-        ], CeTwoOne);
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            customElement({
-                name: 'ce-one', template: `ce1`
-            })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-        };
-        CeTwo = __decorate([
-            route({
-                routes: [
-                    {
-                        path: ['', 'ce-21'],
-                        component: CeTwoOne,
-                    }
-                ]
-            }),
-            customElement({
-                name: 'ce-two', template: `ce2
+        let CeTwoOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-21', template: `ce21` })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwoOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeTwoOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwoOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwoOne = _classThis;
+        })();
+        let CeOne = (() => {
+            let _classDecorators = [customElement({
+                    name: 'ce-one', template: `ce1`
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: ['', 'ce-21'],
+                            component: CeTwoOne,
+                        }
+                    ]
+                }), customElement({
+                    name: 'ce-two', template: `ce2
     <au-viewport name="$1"></au-viewport>
     <au-viewport name="$2" default.bind="null"></au-viewport>`
-            })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        path: ['', 'ce-one'],
-                        component: CeOne,
-                    },
-                    {
-                        path: 'ce-two',
-                        component: CeTwo,
-                    },
-                ],
-                transitionPlan() { return 'invoke-lifecycles'; }
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: ['', 'ce-one'],
+                            component: CeOne,
+                        },
+                        {
+                            path: 'ce-two',
+                            component: CeTwo,
+                        },
+                    ],
+                    transitionPlan() { return 'invoke-lifecycles'; }
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport name="$1"></au-viewport>
                 <au-viewport name="$2" default.bind="null"></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);
@@ -233,43 +403,78 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await au.stop(true);
     });
     it('sibling viewports - load non-empty-route@non-default-vp+empty-alias-route@default-vp', async function () {
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            customElement({ name: 'ce-one', template: 'ce1' })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-            canLoad(params) {
-                this.id = params.id;
-                return true;
-            }
-        };
-        CeTwo = __decorate([
-            customElement({ name: 'ce-two', template: 'ce2 ${id}' })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        path: ['', 'ce-one'],
-                        component: CeOne,
-                    },
-                    {
-                        path: 'ce-two/:id',
-                        component: CeTwo,
-                    },
-                ]
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+        let CeOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-one', template: 'ce1' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [customElement({ name: 'ce-two', template: 'ce2 ${id}' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+                canLoad(params) {
+                    this.id = params.id;
+                    return true;
+                }
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: ['', 'ce-one'],
+                            component: CeOne,
+                        },
+                        {
+                            path: 'ce-two/:id',
+                            component: CeTwo,
+                        },
+                    ]
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport name="$1"></au-viewport>
                 <au-viewport name="$2" default.bind="null"></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);
@@ -284,46 +489,81 @@ describe('router-lite/resources/viewport.spec.ts', function () {
     // action: components are attempted to be loaded into named viewports
     // expectation: components are loaded into named viewports
     it('targeted components can be loaded into named viewports even when default viewports are present', async function () {
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            customElement({ name: 'ce-one', template: 'ce1' })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-            canLoad(params) {
-                this.id = params.id;
-                return true;
-            }
-        };
-        CeTwo = __decorate([
-            customElement({ name: 'ce-two', template: 'ce2 ${id}' })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        path: 'ce-one',
-                        component: CeOne,
-                    },
-                    {
-                        path: 'ce-two/:id',
-                        component: CeTwo,
-                    },
-                ]
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+        let CeOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-one', template: 'ce1' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [customElement({ name: 'ce-two', template: 'ce2 ${id}' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+                canLoad(params) {
+                    this.id = params.id;
+                    return true;
+                }
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: 'ce-one',
+                            component: CeOne,
+                        },
+                        {
+                            path: 'ce-two/:id',
+                            component: CeTwo,
+                        },
+                    ]
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport></au-viewport>
                 <au-viewport name="$1"></au-viewport>
                 <au-viewport></au-viewport>
                 <au-viewport name="$2"></au-viewport>
                 <au-viewport></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);
@@ -343,48 +583,83 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await au.stop(true);
     });
     it('viewport configuration for route is respected', async function () {
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            customElement({ name: 'ce-one', template: 'ce1' })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-            canLoad(params) {
-                this.id = params.id;
-                return true;
-            }
-        };
-        CeTwo = __decorate([
-            customElement({ name: 'ce-two', template: 'ce2 ${id}' })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        path: 'ce-one',
-                        component: CeOne,
-                        viewport: '$2',
-                    },
-                    {
-                        path: 'ce-two/:id',
-                        component: CeTwo,
-                        viewport: '$1',
-                    },
-                ]
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+        let CeOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-one', template: 'ce1' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [customElement({ name: 'ce-two', template: 'ce2 ${id}' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+                canLoad(params) {
+                    this.id = params.id;
+                    return true;
+                }
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: 'ce-one',
+                            component: CeOne,
+                            viewport: '$2',
+                        },
+                        {
+                            path: 'ce-two/:id',
+                            component: CeTwo,
+                            viewport: '$1',
+                        },
+                    ]
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport></au-viewport>
                 <au-viewport name="$1"></au-viewport>
                 <au-viewport></au-viewport>
                 <au-viewport name="$2"></au-viewport>
                 <au-viewport></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);
@@ -415,45 +690,80 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await au.stop(true);
     });
     it('multiple routes can use the same viewport', async function () {
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            customElement({ name: 'ce-one', template: 'ce1' })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-            canLoad(params) {
-                this.id = params.id;
-                return true;
-            }
-        };
-        CeTwo = __decorate([
-            customElement({ name: 'ce-two', template: 'ce2 ${id}' })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        path: 'ce-one',
-                        component: CeOne,
-                        viewport: '$1',
-                    },
-                    {
-                        path: 'ce-two/:id',
-                        component: CeTwo,
-                        viewport: '$1',
-                    },
-                ]
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+        let CeOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-one', template: 'ce1' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [customElement({ name: 'ce-two', template: 'ce2 ${id}' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+                canLoad(params) {
+                    this.id = params.id;
+                    return true;
+                }
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            path: 'ce-one',
+                            component: CeOne,
+                            viewport: '$1',
+                        },
+                        {
+                            path: 'ce-two/:id',
+                            component: CeTwo,
+                            viewport: '$1',
+                        },
+                    ]
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport></au-viewport>
                 <au-viewport name="$1"></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);
@@ -477,47 +787,82 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await au.stop(true);
     });
     it('used-by is respected', async function () {
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            customElement({ name: 'ce-one', template: 'ce1' })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-            canLoad(params) {
-                this.id1 = params.id1;
-                this.id2 = params.id2;
-                return true;
-            }
-        };
-        CeTwo = __decorate([
-            customElement({ name: 'ce-two', template: '${id1} ce2 ${id2}' })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        id: 'ce1',
-                        path: 'ce-one',
-                        component: CeOne,
-                    },
-                    {
-                        id: 'ce2',
-                        path: ':id1/foo/:id2',
-                        component: CeTwo,
-                    },
-                ]
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+        let CeOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-one', template: 'ce1' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [customElement({ name: 'ce-two', template: '${id1} ce2 ${id2}' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+                canLoad(params) {
+                    this.id1 = params.id1;
+                    this.id2 = params.id2;
+                    return true;
+                }
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            id: 'ce1',
+                            path: 'ce-one',
+                            component: CeOne,
+                        },
+                        {
+                            id: 'ce2',
+                            path: ':id1/foo/:id2',
+                            component: CeTwo,
+                        },
+                    ]
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport used-by="whatever"></au-viewport>
                 <au-viewport used-by="ce-two"></au-viewport>
                 <au-viewport used-by="ce-one"></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);
@@ -535,47 +880,82 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await au.stop(true);
     });
     it('comma-separated used-by is respected', async function () {
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            customElement({ name: 'ce-one', template: 'ce1' })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-            canLoad(params) {
-                this.id1 = params.id1;
-                this.id2 = params.id2;
-                return true;
-            }
-        };
-        CeTwo = __decorate([
-            customElement({ name: 'ce-two', template: '${id1} ce2 ${id2}' })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        id: 'ce1',
-                        path: 'ce-one',
-                        component: CeOne,
-                    },
-                    {
-                        id: 'ce2',
-                        path: ':id1/foo/:id2',
-                        component: CeTwo,
-                    },
-                ]
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+        let CeOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-one', template: 'ce1' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [customElement({ name: 'ce-two', template: '${id1} ce2 ${id2}' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+                canLoad(params) {
+                    this.id1 = params.id1;
+                    this.id2 = params.id2;
+                    return true;
+                }
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            id: 'ce1',
+                            path: 'ce-one',
+                            component: CeOne,
+                        },
+                        {
+                            id: 'ce2',
+                            path: ':id1/foo/:id2',
+                            component: CeTwo,
+                        },
+                    ]
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport used-by="whatever"></au-viewport>
                 <au-viewport used-by="ce-one,ce-two"></au-viewport>
                 <au-viewport used-by="ce-one"></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);
@@ -600,46 +980,81 @@ describe('router-lite/resources/viewport.spec.ts', function () {
         await au.stop(true);
     });
     it('a preceding default (without used-by) can load components', async function () {
-        let CeOne = class CeOne {
-        };
-        CeOne = __decorate([
-            customElement({ name: 'ce-one', template: 'ce1' })
-        ], CeOne);
-        let CeTwo = class CeTwo {
-            canLoad(params) {
-                this.id1 = params.id1;
-                this.id2 = params.id2;
-                return true;
-            }
-        };
-        CeTwo = __decorate([
-            customElement({ name: 'ce-two', template: '${id1} ce2 ${id2}' })
-        ], CeTwo);
-        let Root = class Root {
-        };
-        Root = __decorate([
-            route({
-                routes: [
-                    {
-                        id: 'ce1',
-                        path: 'ce-one',
-                        component: CeOne,
-                    },
-                    {
-                        id: 'ce2',
-                        path: ':id1/foo/:id2',
-                        component: CeTwo,
-                    },
-                ]
-            }),
-            customElement({
-                name: 'ro-ot',
-                template: `
+        let CeOne = (() => {
+            let _classDecorators = [customElement({ name: 'ce-one', template: 'ce1' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeOne = _classThis = class {
+            };
+            __setFunctionName(_classThis, "CeOne");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeOne = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeOne = _classThis;
+        })();
+        let CeTwo = (() => {
+            let _classDecorators = [customElement({ name: 'ce-two', template: '${id1} ce2 ${id2}' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var CeTwo = _classThis = class {
+                canLoad(params) {
+                    this.id1 = params.id1;
+                    this.id2 = params.id2;
+                    return true;
+                }
+            };
+            __setFunctionName(_classThis, "CeTwo");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                CeTwo = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return CeTwo = _classThis;
+        })();
+        let Root = (() => {
+            let _classDecorators = [route({
+                    routes: [
+                        {
+                            id: 'ce1',
+                            path: 'ce-one',
+                            component: CeOne,
+                        },
+                        {
+                            id: 'ce2',
+                            path: ':id1/foo/:id2',
+                            component: CeTwo,
+                        },
+                    ]
+                }), customElement({
+                    name: 'ro-ot',
+                    template: `
                 <au-viewport></au-viewport>
                 <au-viewport used-by="ce-one,ce-two"></au-viewport>
             `
-            })
-        ], Root);
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Root = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Root");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Root = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Root = _classThis;
+        })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
         const queue = container.get(IPlatform).domWriteQueue;
         const router = container.get(IRouter);

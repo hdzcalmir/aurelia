@@ -3,7 +3,9 @@ import { INode } from '../../dom';
 import { IInstruction } from '../../renderer';
 import { ICustomAttributeController, ICustomAttributeViewModel, IHydratableController, IHydratedController, IHydratedParentController, ISyntheticView } from '../../templating/controller';
 import { AttrSyntax } from '../attribute-pattern';
+import { CustomAttributeStaticAuDefinition } from '../custom-attribute';
 export declare class PromiseTemplateController implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     readonly $controller: ICustomAttributeController<this>;
     private view;
     value: Promise<unknown>;
@@ -22,6 +24,7 @@ export declare class PromiseTemplateController implements ICustomAttributeViewMo
     dispose(): void;
 }
 export declare class PendingTemplateController implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     readonly $controller: ICustomAttributeController<this>;
     value: Promise<unknown>;
     view: ISyntheticView | undefined;
@@ -32,6 +35,7 @@ export declare class PendingTemplateController implements ICustomAttributeViewMo
     dispose(): void;
 }
 export declare class FulfilledTemplateController implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     readonly $controller: ICustomAttributeController<this>;
     value: unknown;
     view: ISyntheticView | undefined;
@@ -42,6 +46,7 @@ export declare class FulfilledTemplateController implements ICustomAttributeView
     dispose(): void;
 }
 export declare class RejectedTemplateController implements ICustomAttributeViewModel {
+    static readonly $au: CustomAttributeStaticAuDefinition;
     readonly $controller: ICustomAttributeController<this>;
     value: unknown;
     view: ISyntheticView | undefined;

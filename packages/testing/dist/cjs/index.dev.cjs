@@ -7763,7 +7763,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
     const annotations = ['aliases', 'bindables', 'cache', 'capture', 'containerless', 'dependencies', 'enhance'];
     if ($$class !== $class && $class != null) {
         annotations.forEach(anno => {
-            metadata.Metadata.define(anno, runtimeHtml.CustomElement.getAnnotation($class, anno), $$class);
+            metadata.Metadata.define(runtimeHtml.CustomElement.getAnnotation($class, anno, null), $$class, anno);
         });
     }
     const existingDefs = (runtimeHtml.CustomElement.isType($$class) ? runtimeHtml.CustomElement.getDefinition($$class) : {});
@@ -8267,19 +8267,19 @@ class MockTracingExpression {
     }
     evaluate(...args) {
         this.trace('evaluate', ...args);
-        return runtime.astEvaluate(this.inner, ...args);
+        return runtimeHtml.astEvaluate(this.inner, ...args);
     }
     assign(...args) {
         this.trace('assign', ...args);
-        return runtime.astAssign(this.inner, ...args);
+        return runtimeHtml.astAssign(this.inner, ...args);
     }
     bind(...args) {
         this.trace('bind', ...args);
-        runtime.astBind(this.inner, ...args);
+        runtimeHtml.astBind(this.inner, ...args);
     }
     unbind(...args) {
         this.trace('unbind', ...args);
-        runtime.astUnbind(this.inner, ...args);
+        runtimeHtml.astUnbind(this.inner, ...args);
     }
     accept(...args) {
         this.trace('accept', ...args);
@@ -8550,84 +8550,6 @@ class SpySubscriber {
         this._callCount = 0;
     }
 }
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-exports.SortValueConverter = class SortValueConverter {
-    toView(arr, prop, dir = 'asc') {
-        if (Array.isArray(arr)) {
-            const factor = dir === 'asc' ? 1 : -1;
-            if (prop?.length) {
-                arr.sort((a, b) => a[prop] - b[prop] * factor);
-            }
-            else {
-                arr.sort((a, b) => a - b * factor);
-            }
-        }
-        return arr;
-    }
-};
-exports.SortValueConverter = __decorate([
-    runtimeHtml.valueConverter('sort')
-], exports.SortValueConverter);
-exports.JsonValueConverter = class JsonValueConverter {
-    toView(input) {
-        return JSON.stringify(input);
-    }
-    fromView(input) {
-        return JSON.parse(input);
-    }
-};
-exports.JsonValueConverter = __decorate([
-    runtimeHtml.valueConverter('json')
-], exports.JsonValueConverter);
-let NameTag = class NameTag {
-};
-__decorate([
-    runtimeHtml.bindable()
-], NameTag.prototype, "name", void 0);
-NameTag = __decorate([
-    runtimeHtml.customElement({
-        name: 'name-tag',
-        template: `<template>\${name}</template>`,
-        needsCompile: true,
-        dependencies: [],
-        instructions: [],
-        surrogates: []
-    })
-], NameTag);
-const globalResources = [
-    exports.SortValueConverter,
-    exports.JsonValueConverter,
-    NameTag
-];
-const TestConfiguration = {
-    register(container) {
-        container.register(...globalResources);
-    }
-};
 
 /**
  * Template tag function that properly stringifies the template parameters. Currently supports:
@@ -9362,7 +9284,7 @@ function stopRecordingCalls(ctor) {
     }
 }
 function trace(calls) {
-    return function (ctor) {
+    return function (ctor, _context) {
         recordCalls(ctor, calls);
     };
 }
@@ -9384,7 +9306,6 @@ exports.MockValueConverter = MockValueConverter;
 exports.PSEUDO_ELEMENTS = PSEUDO_ELEMENTS;
 exports.ProxyChangeSet = ProxyChangeSet;
 exports.SpySubscriber = SpySubscriber;
-exports.TestConfiguration = TestConfiguration;
 exports.TestContext = TestContext;
 exports._ = _;
 exports.assert = assert;

@@ -1,6 +1,8 @@
 import { type IContainer, type IServiceLocator } from '@aurelia/kernel';
-import { IAccessor, IAstEvaluator, IBinding, IConnectableBinding, IExpressionParser, IObserverLocator, IsBindingBehavior, Scope } from '@aurelia/runtime';
-import { BindingCommandInstance, ICommandBuildInfo, IController, IHydratableController, IInstruction, IRenderer, IPlatform } from '@aurelia/runtime-html';
+import { IAccessor, IObserverLocator, IObserverLocatorBasedConnectable, Scope } from '@aurelia/runtime';
+import { type BindingCommandInstance, ICommandBuildInfo, IController, IHydratableController, IInstruction, IRenderer, IPlatform, type IAstEvaluator, type IBinding } from '@aurelia/runtime-html';
+import { BindingCommandStaticAuDefinition } from '@aurelia/runtime-html/dist/types/resources/binding-command';
+import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 export declare const callSyntax: {
     register(container: IContainer): void;
 };
@@ -12,7 +14,8 @@ export declare class CallBindingInstruction {
     constructor(from: string | IsBindingBehavior, to: string);
 }
 export declare class CallBindingCommand implements BindingCommandInstance {
-    get type(): 'None';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
 export declare class CallBindingRenderer implements IRenderer {
@@ -22,7 +25,7 @@ export declare class CallBindingRenderer implements IRenderer {
 /**
  * A binding for handling .call syntax
  */
-export interface CallBinding extends IAstEvaluator, IConnectableBinding {
+export interface CallBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator {
 }
 export declare class CallBinding implements IBinding {
     ast: IsBindingBehavior;

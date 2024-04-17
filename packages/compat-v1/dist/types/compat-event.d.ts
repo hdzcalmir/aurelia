@@ -1,6 +1,7 @@
 import { IContainer } from '@aurelia/kernel';
-import { IAstEvaluator, IBinding, IConnectableBinding, IExpressionParser, Scope, type IsBindingBehavior } from '@aurelia/runtime';
-import { BindingCommandInstance, ICommandBuildInfo, IHydratableController, IInstruction, IRenderer, IPlatform } from '@aurelia/runtime-html';
+import { IObserverLocatorBasedConnectable, type Scope } from '@aurelia/runtime';
+import { type BindingCommandInstance, type ICommandBuildInfo, IInstruction, type BindingCommandStaticAuDefinition, type IAstEvaluator, type IBinding } from '@aurelia/runtime-html';
+import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 import type { IDisposable, IServiceLocator } from '@aurelia/kernel';
 export declare const eventPreventDefaultBehavior: {
     register(container: IContainer): void;
@@ -9,13 +10,9 @@ export declare const delegateSyntax: {
     register(container: IContainer): void;
 };
 export declare class DelegateBindingCommand implements BindingCommandInstance {
-    get type(): 'IgnoreAttr';
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
-}
-export declare class ListenerBindingRenderer implements IRenderer {
-    readonly target: 'dl';
-    constructor(eventDelegator: IEventDelegator);
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: DelegateBindingInstruction, platform: IPlatform, exprParser: IExpressionParser): void;
 }
 export declare class DelegateBindingInstruction {
     from: string | IsBindingBehavior;
@@ -28,7 +25,7 @@ export declare class DelegateListenerOptions {
     readonly prevent: boolean;
     constructor(prevent: boolean);
 }
-export interface DelegateListenerBinding extends IAstEvaluator, IConnectableBinding {
+export interface DelegateListenerBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator {
 }
 /**
  * Listener binding. Handle event binding between view and view model

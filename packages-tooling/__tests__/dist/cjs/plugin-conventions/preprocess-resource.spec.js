@@ -23,11 +23,12 @@ describe('preprocessResource', function () {
     });
     it('injects customElement decorator', function () {
         const code = `\nexport class FooBar {}\n`;
-        const expected = `import { customElement } from '@aurelia/runtime-html';
+        const expected = `import { CustomElement } from '@aurelia/runtime-html';
 import * as __au2ViewDef from './foo-bar.html';
 
-@customElement(__au2ViewDef)
 export class FooBar {}
+CustomElement.define(__au2ViewDef, FooBar);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.js'),
@@ -38,10 +39,11 @@ export class FooBar {}
     });
     it('injects customElement decorator for loosely equal class name', function () {
         const code = `export class UAFooBarCustomElement {}\n`;
-        const expected = `import { customElement } from '@aurelia/runtime-html';
+        const expected = `import { CustomElement } from '@aurelia/runtime-html';
 import * as __au2ViewDef from './ua-foo-bar.html';
-@customElement(__au2ViewDef)
 export class UAFooBarCustomElement {}
+CustomElement.define(__au2ViewDef, UAFooBarCustomElement);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'ua-foo-bar.js'),
@@ -50,62 +52,18 @@ export class UAFooBarCustomElement {}
         }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
         testing_1.assert.equal(result.code, expected);
     });
-    it('injects view decorator', function () {
-        const code = `export class FooBar {}\n`;
-        const expected = `import { view } from '@aurelia/runtime-html';
-import * as __au2ViewDef from './foo-bar-view.html';
-@view(__au2ViewDef)
-export class FooBar {}
-`;
-        const result = (0, plugin_conventions_1.preprocessResource)({
-            path: path.join('bar', 'foo-bar.js'),
-            contents: code,
-            filePair: 'foo-bar-view.html',
-            isViewPair: true
-        }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
-        testing_1.assert.equal(result.code, expected);
-    });
-    it('injects view decorator for loosely equal class name', function () {
-        const code = `export class UAFooBar {}\n`;
-        const expected = `import { view } from '@aurelia/runtime-html';
-import * as __au2ViewDef from './ua-foo-bar-view.html';
-@view(__au2ViewDef)
-export class UAFooBar {}
-`;
-        const result = (0, plugin_conventions_1.preprocessResource)({
-            path: path.join('bar', 'ua-foo-bar.js'),
-            contents: code,
-            filePair: 'ua-foo-bar-view.html',
-            isViewPair: true
-        }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
-        testing_1.assert.equal(result.code, expected);
-    });
     it('injects customElement decorator for non-kebab case file name', function () {
         const code = `export class FooBar {}\n`;
-        const expected = `import { customElement } from '@aurelia/runtime-html';
+        const expected = `import { CustomElement } from '@aurelia/runtime-html';
 import * as __au2ViewDef from './FooBar.html';
-@customElement(__au2ViewDef)
 export class FooBar {}
+CustomElement.define(__au2ViewDef, FooBar);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'FooBar.js'),
             contents: code,
             filePair: 'FooBar.html'
-        }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
-        testing_1.assert.equal(result.code, expected);
-    });
-    it('injects view decorator for non-kebab case file name', function () {
-        const code = `export class FooBar {}\n`;
-        const expected = `import { view } from '@aurelia/runtime-html';
-import * as __au2ViewDef from './FooBarView.html';
-@view(__au2ViewDef)
-export class FooBar {}
-`;
-        const result = (0, plugin_conventions_1.preprocessResource)({
-            path: path.join('bar', 'FooBar.js'),
-            contents: code,
-            filePair: 'FooBarView.html',
-            isViewPair: true
         }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
         testing_1.assert.equal(result.code, expected);
     });
@@ -119,12 +77,13 @@ export class FooBar {}
 function b() {}
 `;
         const expected = `import * as __au2ViewDef from './foo-bar.html';
-import { containerless, customElement } from '@aurelia/runtime-html';
+import { containerless, CustomElement } from '@aurelia/runtime-html';
 
 const A = 0;
-@customElement(__au2ViewDef)
 @containerless()
 export class FooBar {}
+CustomElement.define(__au2ViewDef, FooBar);
+
 
 function b() {}
 `;
@@ -162,10 +121,12 @@ export class FooBar {}
 export class FooBar {}
 `;
         const expected = `import * as __au2ViewDef from './foo-bar.html';
-import { customElement } from '@aurelia/runtime-html';
+import { customElement, CustomElement } from '@aurelia/runtime-html';
 
-@customElement({ ...__au2ViewDef, name: 'lorem' })
+
 export class FooBar {}
+CustomElement.define({ ...__au2ViewDef, name: 'lorem' }, FooBar);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.js'),
@@ -191,58 +152,12 @@ export class FooBar {}
         }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
         testing_1.assert.equal(result.code, expected);
     });
-    it('injects view decorator with existing runtime import', function () {
-        const code = `import { containerless } from '@aurelia/runtime-html';
-
-const A = 0;
-@containerless()
-export class FooBar {}
-
-function b() {}
-`;
-        const expected = `import * as __au2ViewDef from './foo-bar-view.html';
-import { containerless, view } from '@aurelia/runtime-html';
-
-const A = 0;
-@view(__au2ViewDef)
-@containerless()
-export class FooBar {}
-
-function b() {}
-`;
-        const result = (0, plugin_conventions_1.preprocessResource)({
-            path: path.join('bar', 'foo-bar.js'),
-            contents: code,
-            filePair: 'foo-bar-view.html',
-            isViewPair: true
-        }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
-        testing_1.assert.equal(result.code, expected);
-    });
-    it('does not inject view decorator for decorated resource', function () {
-        const code = `import { view } from '@aurelia/runtime-html';
-import * as lorem from './lorem.html';
-
-@view(lorem)
-export class FooBar {}
-`;
-        const expected = `import { view } from '@aurelia/runtime-html';
-import * as lorem from './lorem.html';
-
-@view(lorem)
-export class FooBar {}
-`;
-        const result = (0, plugin_conventions_1.preprocessResource)({
-            path: path.join('bar', 'foo-bar.js'),
-            contents: code,
-            filePair: 'foo-bar-view.html'
-        }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
-        testing_1.assert.equal(result.code, expected);
-    });
     it('injects customAttribute decorator', function () {
         const code = `export class FooBarCustomAttribute {}\n`;
-        const expected = `import { customAttribute } from '@aurelia/runtime-html';
-@customAttribute('foo-bar')
+        const expected = `import { CustomAttribute } from '@aurelia/runtime-html';
 export class FooBarCustomAttribute {}
+CustomAttribute.define('foo-bar', FooBarCustomAttribute);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.js'),
@@ -252,9 +167,10 @@ export class FooBarCustomAttribute {}
     });
     it('injects customAttribute decorator for non-kebab case file name', function () {
         const code = `export class FooBarCustomAttribute {}\n`;
-        const expected = `import { customAttribute } from '@aurelia/runtime-html';
-@customAttribute('foo-bar')
+        const expected = `import { CustomAttribute } from '@aurelia/runtime-html';
 export class FooBarCustomAttribute {}
+CustomAttribute.define('foo-bar', FooBarCustomAttribute);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'FooBar.js'),
@@ -281,9 +197,10 @@ export class FooBar {}
     });
     it('injects templateController decorator', function () {
         const code = `export class FooBarTemplateController {}\n`;
-        const expected = `import { templateController } from '@aurelia/runtime-html';
-@templateController('foo-bar')
+        const expected = `import { CustomAttribute } from '@aurelia/runtime-html';
 export class FooBarTemplateController {}
+CustomAttribute.define({ name: 'foo-bar', isTemplateController: true }, FooBarTemplateController);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.js'),
@@ -293,9 +210,10 @@ export class FooBarTemplateController {}
     });
     it('injects templateController decorator for non-kebab case file name', function () {
         const code = `export class FooBarTemplateController {}\n`;
-        const expected = `import { templateController } from '@aurelia/runtime-html';
-@templateController('foo-bar')
+        const expected = `import { CustomAttribute } from '@aurelia/runtime-html';
 export class FooBarTemplateController {}
+CustomAttribute.define({ name: 'foo-bar', isTemplateController: true }, FooBarTemplateController);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'FooBar.js'),
@@ -322,9 +240,10 @@ export class FooBarCustomAttribute {}
     });
     it('injects valueConverter decorator', function () {
         const code = `export class FooBarValueConverter {}\n`;
-        const expected = `import { valueConverter } from '@aurelia/runtime-html';
-@valueConverter('fooBar')
+        const expected = `import { ValueConverter } from '@aurelia/runtime-html';
 export class FooBarValueConverter {}
+ValueConverter.define('fooBar', FooBarValueConverter);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.js'),
@@ -334,9 +253,10 @@ export class FooBarValueConverter {}
     });
     it('injects valueConverter decorator for non-kebab case file name', function () {
         const code = `export class FooBarValueConverter {}\n`;
-        const expected = `import { valueConverter } from '@aurelia/runtime-html';
-@valueConverter('fooBar')
+        const expected = `import { ValueConverter } from '@aurelia/runtime-html';
 export class FooBarValueConverter {}
+ValueConverter.define('fooBar', FooBarValueConverter);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'FooBar.js'),
@@ -363,9 +283,10 @@ export class FooBar {}
     });
     it('injects bindingBehavior decorator', function () {
         const code = `export class FooBarBindingBehavior {}\n`;
-        const expected = `import { bindingBehavior } from '@aurelia/runtime-html';
-@bindingBehavior('fooBar')
+        const expected = `import { BindingBehavior } from '@aurelia/runtime-html';
 export class FooBarBindingBehavior {}
+BindingBehavior.define('fooBar', FooBarBindingBehavior);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.js'),
@@ -375,9 +296,10 @@ export class FooBarBindingBehavior {}
     });
     it('injects bindingBehavior decorator for non-kebab case file name', function () {
         const code = `export class FooBarBindingBehavior {}\n`;
-        const expected = `import { bindingBehavior } from '@aurelia/runtime-html';
-@bindingBehavior('fooBar')
+        const expected = `import { BindingBehavior } from '@aurelia/runtime-html';
 export class FooBarBindingBehavior {}
+BindingBehavior.define('fooBar', FooBarBindingBehavior);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'FooBar.js'),
@@ -404,9 +326,10 @@ export class FooBar {}
     });
     it('injects bindingCommand decorator', function () {
         const code = `export class FooBarBindingCommand {}\n`;
-        const expected = `import { bindingCommand } from '@aurelia/runtime-html';
-@bindingCommand('foo-bar')
+        const expected = `import { BindingCommand } from '@aurelia/runtime-html';
 export class FooBarBindingCommand {}
+BindingCommand.define('foo-bar', FooBarBindingCommand);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.js'),
@@ -416,9 +339,10 @@ export class FooBarBindingCommand {}
     });
     it('injects bindingCommand decorator for non-kebab case file name', function () {
         const code = `export class FooBarBindingCommand {}\n`;
-        const expected = `import { bindingCommand } from '@aurelia/runtime-html';
-@bindingCommand('foo-bar')
+        const expected = `import { BindingCommand } from '@aurelia/runtime-html';
 export class FooBarBindingCommand {}
+BindingCommand.define('foo-bar', FooBarBindingCommand);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'FooBar.js'),
@@ -440,6 +364,47 @@ export class FooBarBindingCommand {}
             path: path.join('bar', 'FooBar.js'),
             contents: code,
             filePair: 'FooBar.html'
+        }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        testing_1.assert.equal(result.code, expected);
+    });
+    it('merges CustomElement.define', function () {
+        const code = `import { CustomElement } from '@aurelia/runtime-html'
+export class FooBar {}
+CustomElement.define({ name: 'lorem', bindables: ['value'] }, FooBar);
+`;
+        const expected = `import * as __au2ViewDef from './foo-bar.html';
+import { CustomElement } from '@aurelia/runtime-html';
+export class FooBar {}
+CustomElement.define({ ...__au2ViewDef, name: "lorem", bindables: ["value"] }, FooBar);
+
+`;
+        const result = (0, plugin_conventions_1.preprocessResource)({
+            path: path.join('bar', 'foo-bar.js'),
+            contents: code,
+            filePair: 'foo-bar.html'
+        }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
+        testing_1.assert.equal(result.code, expected);
+    });
+    it('merges $au - custom element', function () {
+        const code = `
+export class FooBar {
+  static $au = { type: 'custom-element', name: 'foo-bar', bindables: ['x'] };
+  x: string;
+}
+`;
+        const expected = `import { CustomElement } from '@aurelia/runtime-html';
+import * as __au2ViewDef from './foo-bar.html';
+
+export class FooBar {
+    static $au = { ...__au2ViewDef, type: "custom-element", name: "foo-bar", bindables: ["x"] };
+    x: string;
+}
+
+`;
+        const result = (0, plugin_conventions_1.preprocessResource)({
+            path: path.join('bar', 'foo-bar.js'),
+            contents: code,
+            filePair: 'foo-bar.html'
         }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
         testing_1.assert.equal(result.code, expected);
     });
@@ -476,16 +441,17 @@ export class AbcBindingCommand {
 
 }
 `;
-        const expected = `import { customAttribute, bindingBehavior, bindingCommand } from '@aurelia/runtime-html';
+        const expected = `import { CustomAttribute, ValueConverter, BindingBehavior, BindingCommand } from '@aurelia/runtime-html';
 import {Foo} from './foo.js';
 import Aurelia, { valueConverter } from 'aurelia';
 
 export class LeaveMeAlone {}
 
-@customAttribute('lorem')
 export class LoremCustomAttribute {
 
 }
+CustomAttribute.define('lorem', LoremCustomAttribute);
+
 
 @valueConverter('one')
 export class ForOne {
@@ -494,22 +460,25 @@ export class ForOne {
   }
 }
 
-@valueConverter('theSecond')
 export class TheSecondValueConverter {
   toView(value) {
     return value;
   }
 }
+ValueConverter.define('theSecond', TheSecondValueConverter);
 
-@bindingBehavior('some')
+
 export class SomeBindingBehavior {
 
 }
+BindingBehavior.define('some', SomeBindingBehavior);
 
-@bindingCommand('abc')
+
 export class AbcBindingCommand {
 
 }
+BindingCommand.define('abc', AbcBindingCommand);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.js'),
@@ -550,40 +519,44 @@ export class AbcBindingCommand {
 `;
         const expected = `import * as __au2ViewDef from './foo-bar.html';
 import {Foo} from './foo.js';
-import { templateController, other, customElement, customAttribute, valueConverter, bindingBehavior, bindingCommand } from '@aurelia/runtime-html';
+import { templateController, other, CustomElement, CustomAttribute, ValueConverter, BindingBehavior, BindingCommand } from '@aurelia/runtime-html';
 
 export class LeaveMeAlone {}
 
 
 
-@customAttribute('lorem')
 export class LoremCustomAttribute {
 
 }
+CustomAttribute.define('lorem', LoremCustomAttribute);
+
 
 @templateController('one')
 export class ForOne {
 }
 
-@valueConverter('theSecond')
 export class TheSecondValueConverter {
   toView(value: string): string {
     return value;
   }
 }
+ValueConverter.define('theSecond', TheSecondValueConverter);
 
-@bindingBehavior('some')
+
 export class SomeBindingBehavior {
 
 }
+BindingBehavior.define('some', SomeBindingBehavior);
 
-@bindingCommand('abc')
+
 export class AbcBindingCommand {
 
 }
+BindingCommand.define('abc', AbcBindingCommand);
 
-@customElement({ ...__au2ViewDef, dependencies: [ ...__au2ViewDef.dependencies, LoremCustomAttribute, ForOne, TheSecondValueConverter, SomeBindingBehavior, AbcBindingCommand ] })
+
 export class FooBar {}
+CustomElement.define({ ...__au2ViewDef, dependencies: [ ...__au2ViewDef.dependencies, LoremCustomAttribute, ForOne, TheSecondValueConverter, SomeBindingBehavior, AbcBindingCommand ] }, FooBar);
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.ts'),
@@ -625,40 +598,45 @@ export class AbcBindingCommand {
 `;
         const expected = `import * as __au2ViewDef from './foo-bar.html';
 import {Foo} from './foo.js';
-import { templateController, customElement, other, customAttribute, valueConverter, bindingBehavior, bindingCommand } from '@aurelia/runtime-html';
+import { templateController, customElement, other, CustomElement, CustomAttribute, ValueConverter, BindingBehavior, BindingCommand } from '@aurelia/runtime-html';
 
 export class LeaveMeAlone {}
 
 
 
-@customAttribute('lorem')
 export class LoremCustomAttribute {
 
 }
+CustomAttribute.define('lorem', LoremCustomAttribute);
+
 
 @templateController('one')
 export class ForOne {
 }
 
-@valueConverter('theSecond')
 export class TheSecondValueConverter {
   toView(value: string): string {
     return value;
   }
 }
+ValueConverter.define('theSecond', TheSecondValueConverter);
 
-@bindingBehavior('some')
+
 export class SomeBindingBehavior {
 
 }
+BindingBehavior.define('some', SomeBindingBehavior);
 
-@bindingCommand('abc')
+
 export class AbcBindingCommand {
 
 }
+BindingCommand.define('abc', AbcBindingCommand);
 
-@customElement({ ...__au2ViewDef, name: 'lorem', dependencies: [ ...__au2ViewDef.dependencies, LoremCustomAttribute, ForOne, TheSecondValueConverter, SomeBindingBehavior, AbcBindingCommand ] })
+
+
 export class FooBar {}
+CustomElement.define({ ...__au2ViewDef, name: 'lorem', dependencies: [ ...__au2ViewDef.dependencies, LoremCustomAttribute, ForOne, TheSecondValueConverter, SomeBindingBehavior, AbcBindingCommand ] }, FooBar);
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.ts'),
@@ -676,19 +654,20 @@ export class SomeValueConverter {
   }
 }
 `;
-        const expected = `import { customElement, valueConverter } from '@aurelia/runtime-html';
+        const expected = `import { CustomElement, ValueConverter } from '@aurelia/runtime-html';
 import * as __au2ViewDef from './foo-bar.html';
 
 
-@valueConverter('some')
 export class SomeValueConverter {
   toView(value: string): string {
     return value;
   }
 }
+ValueConverter.define('some', SomeValueConverter);
 
-@customElement({ ...__au2ViewDef, dependencies: [ ...__au2ViewDef.dependencies, SomeValueConverter ] })
+
 export class FooBar {}
+CustomElement.define({ ...__au2ViewDef, dependencies: [ ...__au2ViewDef.dependencies, SomeValueConverter ] }, FooBar);
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.ts'),
@@ -710,20 +689,21 @@ export class SomeValueConverter {
 }
 `;
         const expected = `import * as __au2ViewDef from './foo-bar.html';
-import { something, customElement, valueConverter } from '@aurelia/runtime-html';
+import { something, CustomElement, ValueConverter } from '@aurelia/runtime-html';
 
 
-@valueConverter('some')
 @something()
 export class SomeValueConverter {
   toView(value: string): string {
     return value;
   }
 }
+ValueConverter.define('some', SomeValueConverter);
 
-@customElement({ ...__au2ViewDef, dependencies: [ ...__au2ViewDef.dependencies, SomeValueConverter ] })
+
 @something
 export class FooBar {}
+CustomElement.define({ ...__au2ViewDef, dependencies: [ ...__au2ViewDef.dependencies, SomeValueConverter ] }, FooBar);
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar.ts'),
@@ -734,11 +714,12 @@ export class FooBar {}
     });
     it('injects customElement decorator with index file', function () {
         const code = `\nexport class FooBar {}\n`;
-        const expected = `import { customElement } from '@aurelia/runtime-html';
+        const expected = `import { CustomElement } from '@aurelia/runtime-html';
 import * as __au2ViewDef from './index.html';
 
-@customElement(__au2ViewDef)
 export class FooBar {}
+CustomElement.define(__au2ViewDef, FooBar);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'foo-bar', 'index.js'),
@@ -749,45 +730,16 @@ export class FooBar {}
     });
     it('injects customElement decorator for loosely equal class name with index file', function () {
         const code = `export class UAFooBarCustomElement {}\n`;
-        const expected = `import { customElement } from '@aurelia/runtime-html';
+        const expected = `import { CustomElement } from '@aurelia/runtime-html';
 import * as __au2ViewDef from './index.html';
-@customElement(__au2ViewDef)
 export class UAFooBarCustomElement {}
+CustomElement.define(__au2ViewDef, UAFooBarCustomElement);
+
 `;
         const result = (0, plugin_conventions_1.preprocessResource)({
             path: path.join('bar', 'ua-foo-bar', 'index.js'),
             contents: code,
             filePair: 'index.html'
-        }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
-        testing_1.assert.equal(result.code, expected);
-    });
-    it('injects view decorator with index file', function () {
-        const code = `export class FooBar {}\n`;
-        const expected = `import { view } from '@aurelia/runtime-html';
-import * as __au2ViewDef from './index-view.html';
-@view(__au2ViewDef)
-export class FooBar {}
-`;
-        const result = (0, plugin_conventions_1.preprocessResource)({
-            path: path.join('bar', 'foo-bar', 'index.js'),
-            contents: code,
-            filePair: 'index-view.html',
-            isViewPair: true
-        }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
-        testing_1.assert.equal(result.code, expected);
-    });
-    it('injects view decorator for loosely equal class name with index file', function () {
-        const code = `export class UAFooBar {}\n`;
-        const expected = `import { view } from '@aurelia/runtime-html';
-import * as __au2ViewDef from './index-view.html';
-@view(__au2ViewDef)
-export class UAFooBar {}
-`;
-        const result = (0, plugin_conventions_1.preprocessResource)({
-            path: path.join('bar', 'ua-foo-bar', 'index.js'),
-            contents: code,
-            filePair: 'index-view.html',
-            isViewPair: true
         }, (0, plugin_conventions_1.preprocessOptions)({ hmr: false }));
         testing_1.assert.equal(result.code, expected);
     });

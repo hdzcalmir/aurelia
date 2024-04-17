@@ -1,20 +1,25 @@
-import type { Constructable, IContainer, ResourceType, PartialResourceDefinition, Key, ResourceDefinition } from '@aurelia/kernel';
+import type { Constructable, IContainer, ResourceType, PartialResourceDefinition, Key, ResourceDefinition, InterfaceSymbol } from '@aurelia/kernel';
 import type { BindableDefinition, PartialBindableDefinition } from '../bindable';
 import type { ICustomElementViewModel, ICustomElementController } from '../templating/controller';
 import type { IPlatform } from '../platform';
 import type { IInstruction } from '../renderer';
 import type { IWatchDefinition } from '../watch';
 import { type IResourceKind } from './resources-shared';
-export type PartialCustomElementDefinition = PartialResourceDefinition<{
+export type PartialCustomElementDefinition<TBindables extends string = string> = PartialResourceDefinition<{
     readonly cache?: '*' | number;
     readonly capture?: boolean | ((attr: string) => boolean);
     readonly template?: null | string | Node;
     readonly instructions?: readonly (readonly IInstruction[])[];
     readonly dependencies?: readonly Key[];
-    readonly injectable?: InjectableToken | null;
+    /**
+     * An semi internal property used to signal the rendering process not to try to compile the template again
+     */
+    readonly injectable?: InterfaceSymbol | null;
     readonly needsCompile?: boolean;
     readonly surrogates?: readonly IInstruction[];
-    readonly bindables?: Record<string, PartialBindableDefinition> | readonly string[];
+    readonly bindables?: Record<TBindables, true | Omit<PartialBindableDefinition, 'name'>> | (TBindables | PartialBindableDefinition & {
+        name: TBindables;
+    })[];
     readonly containerless?: boolean;
     readonly shadowOptions?: {
         mode: 'open' | 'closed';
@@ -24,6 +29,9 @@ export type PartialCustomElementDefinition = PartialResourceDefinition<{
     readonly watches?: IWatchDefinition[];
     readonly processContent?: ProcessContentHook | null;
 }>;
+export type CustomElementStaticAuDefinition<TBindables extends string = string> = PartialCustomElementDefinition<TBindables> & {
+    type: 'custom-element';
+};
 export type CustomElementType<C extends Constructable = Constructable> = ResourceType<C, ICustomElementViewModel & (C extends Constructable<infer P> ? P : object), PartialCustomElementDefinition>;
 export type CustomElementKind = IResourceKind & {
     /**
@@ -82,21 +90,21 @@ export type CustomElementKind = IResourceKind & {
     for<C extends ICustomElementViewModel = ICustomElementViewModel>(node: Node, opts: {
         optional: true;
     }): ICustomElementController<C> | null;
-    isType<C>(value: C): value is (C extends Constructable ? CustomElementType<C> : never);
+    isType<C>(value: C, context?: DecoratorContext): value is (C extends Constructable ? CustomElementType<C> : never);
     define<C extends Constructable>(name: string, Type: C): CustomElementType<C>;
     define<C extends Constructable>(def: PartialCustomElementDefinition, Type: C): CustomElementType<C>;
     define<C extends Constructable>(def: PartialCustomElementDefinition, Type?: null): CustomElementType<C>;
     define<C extends Constructable>(nameOrDef: string | PartialCustomElementDefinition, Type: C): CustomElementType<C>;
-    getDefinition<C extends Constructable>(Type: C): CustomElementDefinition<C>;
-    getDefinition<C extends Constructable>(Type: Function): CustomElementDefinition<C>;
-    annotate<K extends keyof PartialCustomElementDefinition>(Type: Constructable, prop: K, value: PartialCustomElementDefinition[K]): void;
-    getAnnotation<K extends keyof PartialCustomElementDefinition>(Type: Constructable, prop: K): PartialCustomElementDefinition[K];
+    getDefinition<C extends Constructable>(Type: C, context?: DecoratorContext | null): CustomElementDefinition<C>;
+    getDefinition<C extends Constructable>(Type: Function, context?: DecoratorContext | null): CustomElementDefinition<C>;
+    annotate<K extends keyof PartialCustomElementDefinition>(Type: Constructable, prop: K, value: PartialCustomElementDefinition[K], context: DecoratorContext): void;
+    getAnnotation<K extends keyof PartialCustomElementDefinition>(Type: Constructable, prop: K, context: DecoratorContext | null): PartialCustomElementDefinition[K] | undefined;
     generateName(): string;
-    createInjectable<T extends Key = Key>(): InjectableToken<T>;
+    createInjectable<T extends Key = Key>(): InterfaceSymbol<T>;
     generateType<P extends {} = {}>(name: string, proto?: P): CustomElementType<Constructable<P>>;
     find(container: IContainer, name: string): CustomElementDefinition | null;
 };
-export type CustomElementDecorator = <T extends Constructable>(Type: T) => CustomElementType<T>;
+export type CustomElementDecorator = <T extends Constructable>(Type: T, context: ClassDecoratorContext) => CustomElementType<T>;
 /**
  * Decorator: Indicates that the decorated class is a custom element.
  */
@@ -115,11 +123,11 @@ export declare function useShadowDOM(target: Constructable): void;
 /**
  * Decorator: Indicates that the custom element should be rendered without its element container.
  */
-export declare function containerless(target: Constructable): void;
+export declare function containerless(target: Constructable, context: ClassDecoratorContext): void;
 /**
  * Decorator: Indicates that the custom element should be rendered without its element container.
  */
-export declare function containerless(): (target: Constructable) => void;
+export declare function containerless(): (target: Constructable, context: ClassDecoratorContext) => void;
 export declare class CustomElementDefinition<C extends Constructable = Constructable> implements ResourceDefinition<C, ICustomElementViewModel, PartialCustomElementDefinition> {
     readonly Type: CustomElementType<C>;
     readonly name: string;
@@ -130,7 +138,7 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     readonly template: null | string | Node;
     readonly instructions: readonly (readonly IInstruction[])[];
     readonly dependencies: readonly Key[];
-    readonly injectable: InjectableToken<C> | null;
+    readonly injectable: InterfaceSymbol<C> | null;
     readonly needsCompile: boolean;
     readonly surrogates: readonly IInstruction[];
     readonly bindables: Record<string, BindableDefinition>;
@@ -154,21 +162,18 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     register(container: IContainer, aliasName?: string | undefined): void;
     toString(): string;
 }
-export type InjectableToken<K = any> = ((target: Constructable, property: string | symbol | undefined, index: number) => void) & {
-    readonly __resolved__: K | null;
-};
 export declare const CustomElement: Readonly<CustomElementKind>;
-type DecoratorFactoryMethod<TClass> = (target: Constructable<TClass>, propertyKey: string, descriptor: PropertyDescriptor) => void;
+type DecoratorFactoryMethod = (target: Function, context: ClassMethodDecoratorContext) => void;
 export type ProcessContentHook = (node: HTMLElement, platform: IPlatform, data: Record<PropertyKey, unknown>) => boolean | void;
-export declare function processContent(hook: ProcessContentHook): CustomElementDecorator;
-export declare function processContent<TClass>(): DecoratorFactoryMethod<TClass>;
+export declare function processContent(hook: ProcessContentHook | string | symbol): CustomElementDecorator;
+export declare function processContent(): DecoratorFactoryMethod;
 /**
  * Decorator: Indicates that the custom element should capture all attributes and bindings that are not template controllers or bindables
  */
-export declare function capture(filter: (attr: string) => boolean): ((target: Constructable) => void);
+export declare function capture(filter: (attr: string) => boolean): (target: Constructable, context: ClassDecoratorContext) => void;
 /**
  * Decorator: Indicates that the custom element should be rendered with the strict binding option. undefined/null -> 0 or '' based on type
  */
-export declare function capture(): (target: Constructable) => void;
+export declare function capture(): (target: Constructable, context: ClassDecoratorContext) => void;
 export {};
 //# sourceMappingURL=custom-element.d.ts.map

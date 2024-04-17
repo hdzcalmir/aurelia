@@ -1,5 +1,5 @@
 import { CustomElement, Aurelia, } from '@aurelia/runtime-html';
-import { eachCartesianJoin, TestContext, TestConfiguration, trimFull, assert, createFixture, } from '@aurelia/testing';
+import { eachCartesianJoin, TestContext, trimFull, assert, createFixture, } from '@aurelia/testing';
 describe('3-runtime-html/repeater-if-else.spec.ts', function () {
     const behaviorsSpecs = [
         {
@@ -486,7 +486,7 @@ describe('3-runtime-html/repeater-if-else.spec.ts', function () {
             });
             const host = ctx.createElement('div');
             const au = new Aurelia(container);
-            void au.register(TestConfiguration)
+            void au
                 .app({ host, component: Component })
                 .start();
             const component = au.root.controller.viewModel;

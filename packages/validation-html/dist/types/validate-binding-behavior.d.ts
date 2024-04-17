@@ -1,5 +1,6 @@
 import { IServiceLocator } from '@aurelia/kernel';
-import { BindingBehaviorInstance, IAstEvaluator, IBinding, IConnectable, IObserverLocator, Scope } from '@aurelia/runtime';
+import { IConnectable, IObserverLocator, Scope } from '@aurelia/runtime';
+import { type IAstEvaluator, type IBinding, type BindingBehaviorInstance } from '@aurelia/runtime-html';
 /**
  * Validation triggers.
  */

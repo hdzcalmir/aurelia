@@ -1,1 +1,1 @@
-{"version":3,"file":"i18next-wrapper.d.ts","sourceRoot":"","sources":["../../src/i18next-wrapper.ts"],"names":[],"mappings":"AACA,OAAgB,EAAE,IAAI,EAAE,MAAM,SAAS,CAAC;AAExC,eAAO,MAAM,WAAW,2DAAoE,CAAC;AAE7F;;GAEG;AACH,qBAAa,cAAc;IAClB,OAAO,EAAE,IAAI,CAAW;CAChC"}
+{"version":3,"file":"i18next-wrapper.d.ts","sourceRoot":"","sources":["../../src/i18next-wrapper.ts"],"names":[],"mappings":"AACA,OAAgB,EAAE,IAAI,EAAE,MAAM,SAAS,CAAC;AAExC,MAAM,WAAW,eAAgB,SAAQ,cAAc;CAAG;AAC1D,eAAO,MAAM,eAAe,4DAAsE,CAAC;AAEnG;;GAEG;AACH,qBAAa,cAAc;IAClB,OAAO,EAAE,IAAI,CAAW;CAChC"}

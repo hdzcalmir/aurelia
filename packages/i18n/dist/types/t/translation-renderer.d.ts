@@ -1,4 +1,5 @@
-import { IExpressionParser, IObserverLocator, type IsBindingBehavior } from '@aurelia/runtime';
+import { IObserverLocator } from '@aurelia/runtime';
+import { IExpressionParser, CustomExpression, IsBindingBehavior } from '@aurelia/expression-parser';
 import { IRenderer, IHydratableController, AttrSyntax, IPlatform, IAttrMapper, ICommandBuildInfo } from '@aurelia/runtime-html';
 import type { BindingMode, BindingCommandInstance } from '@aurelia/runtime-html';
 export declare const TranslationInstructionType = "tt";
@@ -7,15 +8,14 @@ export declare class TranslationAttributePattern {
     static registerAlias(alias: string): void;
 }
 export declare class TranslationBindingInstruction {
-    from: IsBindingBehavior;
+    from: CustomExpression | IsBindingBehavior;
     to: string;
     readonly type: string;
     mode: typeof BindingMode.toView;
-    constructor(from: IsBindingBehavior, to: string);
+    constructor(from: CustomExpression | IsBindingBehavior, to: string);
 }
 export declare class TranslationBindingCommand implements BindingCommandInstance {
-    readonly type: 'None';
-    get name(): string;
+    readonly ignoreAttr = false;
     build(info: ICommandBuildInfo, parser: IExpressionParser, attrMapper: IAttrMapper): TranslationBindingInstruction;
 }
 export declare class TranslationBindingRenderer implements IRenderer {
@@ -35,8 +35,7 @@ export declare class TranslationBindBindingInstruction {
     constructor(from: IsBindingBehavior, to: string);
 }
 export declare class TranslationBindBindingCommand implements BindingCommandInstance {
-    readonly type: 'None';
-    get name(): string;
+    readonly ignoreAttr = false;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): TranslationBindingInstruction;
 }
 export declare class TranslationBindBindingRenderer implements IRenderer {

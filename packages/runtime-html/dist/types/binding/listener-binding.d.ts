@@ -1,16 +1,19 @@
+import { type IsBindingBehavior } from '@aurelia/expression-parser';
 import { type IServiceLocator, IContainer } from '@aurelia/kernel';
-import { IAstEvaluator, IBinding, IConnectableBinding, Scope, type IsBindingBehavior } from '@aurelia/runtime';
+import { ICollectionSubscriber, IObserverLocatorBasedConnectable, ISubscriber, Scope } from '@aurelia/runtime';
+import { IAstEvaluator } from '../ast.eval';
+import { IBinding } from './interfaces-bindings';
 export declare class ListenerBindingOptions {
     readonly prevent: boolean;
     readonly capture: boolean;
     constructor(prevent: boolean, capture?: boolean);
 }
-export interface ListenerBinding extends IAstEvaluator, IConnectableBinding {
+export interface ListenerBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator {
 }
 /**
  * Listener binding. Handle event binding between view and view model
  */
-export declare class ListenerBinding implements IBinding {
+export declare class ListenerBinding implements IBinding, ISubscriber, ICollectionSubscriber {
     ast: IsBindingBehavior;
     target: Node;
     targetEvent: string;

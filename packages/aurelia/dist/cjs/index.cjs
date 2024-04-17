@@ -10,9 +10,9 @@ var r = require("@aurelia/runtime-html");
 
 var t = require("@aurelia/platform-browser");
 
-var s = require("@aurelia/metadata");
+var s = require("@aurelia/platform");
 
-var o = require("@aurelia/platform");
+var o = require("@aurelia/expression-parser");
 
 var p = require("@aurelia/runtime");
 
@@ -169,6 +169,8 @@ exports.IPlatform = r.IPlatform;
 
 exports.IRenderLocation = r.IRenderLocation;
 
+exports.ISignaler = r.ISignaler;
+
 exports.ITemplateCompiler = r.ITemplateCompiler;
 
 exports.ITemplateCompilerHooks = r.ITemplateCompilerHooks;
@@ -235,21 +237,21 @@ exports.valueConverter = r.valueConverter;
 
 exports.watch = r.watch;
 
-exports.Metadata = s.Metadata;
+exports.Platform = s.Platform;
 
-exports.Platform = o.Platform;
+exports.Task = s.Task;
 
-exports.Task = o.Task;
+exports.TaskAbortError = s.TaskAbortError;
 
-exports.TaskAbortError = o.TaskAbortError;
+exports.TaskQueue = s.TaskQueue;
 
-exports.TaskQueue = o.TaskQueue;
+exports.CustomExpression = o.CustomExpression;
+
+exports.IExpressionParser = o.IExpressionParser;
 
 exports.ComputedObserver = p.ComputedObserver;
 
 exports.IObserverLocator = p.IObserverLocator;
-
-exports.ISignaler = p.ISignaler;
 
 exports.batch = p.batch;
 

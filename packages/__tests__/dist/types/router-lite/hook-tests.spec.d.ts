@@ -82,11 +82,10 @@ declare const INotifierManager: import("@aurelia/kernel").InterfaceSymbol<INotif
 interface INotifierManager extends NotifierManager {
 }
 declare class NotifierManager {
-    readonly p: IPlatform;
     readonly entryNotifyHistory: string[];
     readonly fullNotifyHistory: string[];
     prefix: string;
-    constructor(p: IPlatform);
+    readonly p: IPlatform;
     readonly binding: Notifier;
     readonly bound: Notifier;
     readonly attaching: Notifier;

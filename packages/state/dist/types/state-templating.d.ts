@@ -1,5 +1,6 @@
-import { IExpressionParser, IObserverLocator, type IsBindingBehavior } from '@aurelia/runtime';
-import { AttrSyntax, type CommandType, IAttrMapper, IHydratableController, IPlatform, type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, type IRenderer } from '@aurelia/runtime-html';
+import { IExpressionParser, type IsBindingBehavior } from '@aurelia/expression-parser';
+import { IObserverLocator } from '@aurelia/runtime';
+import { AttrSyntax, IAttrMapper, IHydratableController, IPlatform, type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, type IRenderer, BindingCommandStaticAuDefinition } from '@aurelia/runtime-html';
 export declare class StateAttributePattern {
     'PART.state'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;
 }
@@ -7,13 +8,13 @@ export declare class DispatchAttributePattern {
     'PART.dispatch'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;
 }
 export declare class StateBindingCommand implements BindingCommandInstance {
-    get type(): CommandType;
-    get name(): string;
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, parser: IExpressionParser, attrMapper: IAttrMapper): IInstruction;
 }
 export declare class DispatchBindingCommand implements BindingCommandInstance {
-    get type(): CommandType;
-    get name(): string;
+    static readonly $au: BindingCommandStaticAuDefinition;
+    get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo): IInstruction;
 }
 export declare class StateBindingInstruction {

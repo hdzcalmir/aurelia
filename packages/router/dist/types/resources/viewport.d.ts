@@ -80,7 +80,7 @@ export declare class ViewportCustomElement implements ICustomElementViewModel {
     readonly element: HTMLElement;
     readonly container: IContainer;
     private readonly ea;
-    readonly parentViewport: ViewportCustomElement | null;
+    readonly parentViewport: ViewportCustomElement;
     private readonly instruction;
     hydrated(controller: ICompiledCustomElementController): void | Promise<void>;
     binding(initiator: IHydratedController, _parent: IHydratedParentController | null): void | Promise<void>;

@@ -1,11 +1,40 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
+};
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { DI, noop, Registration } from '@aurelia/kernel';
 import { Aurelia, bindable, customElement, CustomElement, IPlatform, coercer, customAttribute, CustomAttribute, StandardConfiguration } from '@aurelia/runtime-html';
@@ -43,17 +72,36 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
     function getTypeSpecification(type) {
         return type === undefined ? 'implicit type from TS metadata' : 'explicit type';
     }
-    for (const type of [undefined, Number]) {
+    // Implicit type from TS metadata won't work, because with TC39 decorator proposal, TS does not emit the design metadata.
+    // Refer: https://github.com/microsoft/TypeScript/issues/55788
+    for (const type of [/* undefined, */ Number]) {
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ type }),
-                __metadata("design:type", Number)
-            ], MyEl.prototype, "num", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _num_decorators;
+                let _num_initializers = [];
+                let _num_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.num = __runInitializers(this, _num_initializers, void 0);
+                        __runInitializers(this, _num_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _num_decorators = [bindable({ type })];
+                    __esDecorate(null, null, _num_decorators, { kind: "field", name: "num", static: false, private: false, access: { has: obj => "num" in obj, get: obj => obj.num, set: (obj, value) => { obj.num = value; } }, metadata: _metadata }, _num_initializers, _num_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
             }
             $it(`number - numeric string literal - ${getTypeSpecification(type)}`, function (ctx) {
@@ -109,15 +157,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
             }, { app: App, template: `<my-el component.ref="myEl" num.bind="prop"></my-el>`, registrations: [MyEl] });
         }
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ nullable: false, type }),
-                __metadata("design:type", Number)
-            ], MyEl.prototype, "num", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _num_decorators;
+                let _num_initializers = [];
+                let _num_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.num = __runInitializers(this, _num_initializers, void 0);
+                        __runInitializers(this, _num_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _num_decorators = [bindable({ nullable: false, type })];
+                    __esDecorate(null, null, _num_decorators, { kind: "field", name: "num", static: false, private: false, access: { has: obj => "num" in obj, get: obj => obj.num, set: (obj, value) => { obj.num = value; } }, metadata: _metadata }, _num_initializers, _num_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
             }
             $it(`not-nullable number - bound property - ${getTypeSpecification(type)}`, async function (ctx) {
@@ -133,17 +198,36 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
             }, { app: App, template: `<my-el component.ref="myEl" num.bind="prop"></my-el>`, registrations: [MyEl] });
         }
     }
-    for (const type of [undefined, String]) {
+    // Implicit type from TS metadata won't work, because with TC39 decorator proposal, TS does not emit the design metadata.
+    // Refer: https://github.com/microsoft/TypeScript/issues/55788
+    for (const type of [/* undefined,  */ String]) {
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ type }),
-                __metadata("design:type", String)
-            ], MyEl.prototype, "str", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _str_decorators;
+                let _str_initializers = [];
+                let _str_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.str = __runInitializers(this, _str_initializers, void 0);
+                        __runInitializers(this, _str_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _str_decorators = [bindable({ type })];
+                    __esDecorate(null, null, _str_decorators, { kind: "field", name: "str", static: false, private: false, access: { has: obj => "str" in obj, get: obj => obj.str, set: (obj, value) => { obj.str = value; } }, metadata: _metadata }, _str_initializers, _str_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
             }
             $it(`string - string literal - ${getTypeSpecification(type)}`, function (ctx) {
@@ -193,15 +277,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
             }, { app: App, template: `<my-el component.ref="myEl" str.bind="prop"></my-el>`, registrations: [MyEl] });
         }
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ nullable: false, type }),
-                __metadata("design:type", String)
-            ], MyEl.prototype, "str", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _str_decorators;
+                let _str_initializers = [];
+                let _str_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.str = __runInitializers(this, _str_initializers, void 0);
+                        __runInitializers(this, _str_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _str_decorators = [bindable({ nullable: false, type })];
+                    __esDecorate(null, null, _str_decorators, { kind: "field", name: "str", static: false, private: false, access: { has: obj => "str" in obj, get: obj => obj.str, set: (obj, value) => { obj.str = value; } }, metadata: _metadata }, _str_initializers, _str_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
             }
             $it(`not-nullable string - bound property - ${getTypeSpecification(type)}`, async function (ctx) {
@@ -217,17 +318,36 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
             }, { app: App, template: `<my-el component.ref="myEl" str.bind="prop"></my-el>`, registrations: [MyEl] });
         }
     }
-    for (const type of [undefined, Boolean]) {
+    // Implicit type from TS metadata won't work, because with TC39 decorator proposal, TS does not emit the design metadata.
+    // Refer: https://github.com/microsoft/TypeScript/issues/55788
+    for (const type of [/* undefined,  */ Boolean]) {
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ type }),
-                __metadata("design:type", Boolean)
-            ], MyEl.prototype, "bool", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _bool_decorators;
+                let _bool_initializers = [];
+                let _bool_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.bool = __runInitializers(this, _bool_initializers, void 0);
+                        __runInitializers(this, _bool_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _bool_decorators = [bindable({ type })];
+                    __esDecorate(null, null, _bool_decorators, { kind: "field", name: "bool", static: false, private: false, access: { has: obj => "bool" in obj, get: obj => obj.bool, set: (obj, value) => { obj.bool = value; } }, metadata: _metadata }, _bool_initializers, _bool_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
             }
             $it(`string - boolean true string literal - ${getTypeSpecification(type)}`, function (ctx) {
@@ -297,15 +417,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
             }, { app: App, template: `<my-el component.ref="myEl" bool.bind="prop"></my-el>`, registrations: [MyEl] });
         }
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ nullable: false, type }),
-                __metadata("design:type", Boolean)
-            ], MyEl.prototype, "bool", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _bool_decorators;
+                let _bool_initializers = [];
+                let _bool_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.bool = __runInitializers(this, _bool_initializers, void 0);
+                        __runInitializers(this, _bool_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _bool_decorators = [bindable({ nullable: false, type })];
+                    __esDecorate(null, null, _bool_decorators, { kind: "field", name: "bool", static: false, private: false, access: { has: obj => "bool" in obj, get: obj => obj.bool, set: (obj, value) => { obj.bool = value; } }, metadata: _metadata }, _bool_initializers, _bool_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
             }
             $it(`not-nullable boolean - bound property - ${getTypeSpecification(type)}`, async function (ctx) {
@@ -321,17 +458,36 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
             }, { app: App, template: `<my-el component.ref="myEl" bool.bind="prop"></my-el>`, registrations: [MyEl] });
         }
     }
-    for (const type of [undefined, BigInt]) {
+    // Implicit type from TS metadata won't work, because with TC39 decorator proposal, TS does not emit the design metadata.
+    // Refer: https://github.com/microsoft/TypeScript/issues/55788
+    for (const type of [/* undefined, */ BigInt]) {
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ type }),
-                __metadata("design:type", BigInt)
-            ], MyEl.prototype, "num", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _num_decorators;
+                let _num_initializers = [];
+                let _num_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.num = __runInitializers(this, _num_initializers, void 0);
+                        __runInitializers(this, _num_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _num_decorators = [bindable({ type })];
+                    __esDecorate(null, null, _num_decorators, { kind: "field", name: "num", static: false, private: false, access: { has: obj => "num" in obj, get: obj => obj.num, set: (obj, value) => { obj.num = value; } }, metadata: _metadata }, _num_initializers, _num_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
             }
             $it(`bigint - numeric string literal - ${getTypeSpecification(type)}`, function (ctx) {
@@ -380,15 +536,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
             }, { app: App, template: `<my-el component.ref="myEl" num.bind="prop"></my-el>`, registrations: [MyEl] });
         }
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ nullable: false, type }),
-                __metadata("design:type", BigInt)
-            ], MyEl.prototype, "num", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _num_decorators;
+                let _num_initializers = [];
+                let _num_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.num = __runInitializers(this, _num_initializers, void 0);
+                        __runInitializers(this, _num_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _num_decorators = [bindable({ nullable: false, type })];
+                    __esDecorate(null, null, _num_decorators, { kind: "field", name: "num", static: false, private: false, access: { has: obj => "num" in obj, get: obj => obj.num, set: (obj, value) => { obj.num = value; } }, metadata: _metadata }, _num_initializers, _num_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
                 constructor() {
                     this.prop = 42;
@@ -442,16 +615,35 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
         class Person1 extends Person {
         }
         Person1.coerce = createPerson.bind(Person1);
-        for (const type of [undefined, Person1]) {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ type }),
-                __metadata("design:type", Person1)
-            ], MyEl.prototype, "person", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+        // Implicit type from TS metadata won't work, because with TC39 decorator proposal, TS does not emit the design metadata.
+        // Refer: https://github.com/microsoft/TypeScript/issues/55788
+        for (const type of [/* undefined,  */ Person1]) {
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _person_decorators;
+                let _person_initializers = [];
+                let _person_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.person = __runInitializers(this, _person_initializers, void 0);
+                        __runInitializers(this, _person_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _person_decorators = [bindable({ type })];
+                    __esDecorate(null, null, _person_decorators, { kind: "field", name: "person", static: false, private: false, access: { has: obj => "person" in obj, get: obj => obj.person, set: (obj, value) => { obj.person = value; } }, metadata: _metadata }, _person_initializers, _person_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             {
                 class App {
                 }
@@ -499,15 +691,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
                 }, { app: App, template: `<my-el component.ref="myEl" person.bind="prop"></my-el>`, registrations: [MyEl] });
             }
             {
-                let MyEl = class MyEl {
-                };
-                __decorate([
-                    bindable({ nullable: false, type }),
-                    __metadata("design:type", Person1)
-                ], MyEl.prototype, "person", void 0);
-                MyEl = __decorate([
-                    customElement({ name: 'my-el', template: 'irrelevant' })
-                ], MyEl);
+                let MyEl = (() => {
+                    let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _person_decorators;
+                    let _person_initializers = [];
+                    let _person_extraInitializers = [];
+                    var MyEl = _classThis = class {
+                        constructor() {
+                            this.person = __runInitializers(this, _person_initializers, void 0);
+                            __runInitializers(this, _person_extraInitializers);
+                        }
+                    };
+                    __setFunctionName(_classThis, "MyEl");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _person_decorators = [bindable({ nullable: false, type })];
+                        __esDecorate(null, null, _person_decorators, { kind: "field", name: "person", static: false, private: false, access: { has: obj => "person" in obj, get: obj => obj.person, set: (obj, value) => { obj.person = value; } }, metadata: _metadata }, _person_initializers, _person_extraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        MyEl = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return MyEl = _classThis;
+                })();
                 class App {
                 }
                 $it(`not-nullable - class with static coercer - bound property - ${getTypeSpecification(type)}`, async function (ctx) {
@@ -524,25 +733,52 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
     }
     {
         beforeEach(function () { Person2.coerced = 0; });
-        class Person2 extends Person {
-            static createPerson(value) { return createPerson.bind(Person2)(value); }
-        }
-        __decorate([
-            coercer,
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", [Object]),
-            __metadata("design:returntype", void 0)
-        ], Person2, "createPerson", null);
-        for (const type of [undefined, Person2]) {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable({ type }),
-                __metadata("design:type", Person2)
-            ], MyEl.prototype, "person", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+        let Person2 = (() => {
+            var _a;
+            let _classSuper = Person;
+            let _staticExtraInitializers = [];
+            let _static_createPerson_decorators;
+            return _a = class Person2 extends _classSuper {
+                    static createPerson(value) { return createPerson.bind(_a)(value); }
+                },
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    _static_createPerson_decorators = [coercer];
+                    __esDecorate(_a, null, _static_createPerson_decorators, { kind: "method", name: "createPerson", static: true, private: false, access: { has: obj => "createPerson" in obj, get: obj => obj.createPerson }, metadata: _metadata }, null, _staticExtraInitializers);
+                    if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_a, _staticExtraInitializers);
+                })(),
+                _a;
+        })();
+        // Implicit type from TS metadata won't work, because with TC39 decorator proposal, TS does not emit the design metadata.
+        // Refer: https://github.com/microsoft/TypeScript/issues/55788
+        for (const type of [/* undefined, */ Person2]) {
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _person_decorators;
+                let _person_initializers = [];
+                let _person_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.person = __runInitializers(this, _person_initializers, void 0);
+                        __runInitializers(this, _person_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _person_decorators = [bindable({ type })];
+                    __esDecorate(null, null, _person_decorators, { kind: "field", name: "person", static: false, private: false, access: { has: obj => "person" in obj, get: obj => obj.person, set: (obj, value) => { obj.person = value; } }, metadata: _metadata }, _person_initializers, _person_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             {
                 class App {
                 }
@@ -590,15 +826,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
                 }, { app: App, template: `<my-el component.ref="myEl" person.bind="prop"></my-el>`, registrations: [MyEl] });
             }
             {
-                let MyEl = class MyEl {
-                };
-                __decorate([
-                    bindable({ nullable: false, type }),
-                    __metadata("design:type", Person2)
-                ], MyEl.prototype, "person", void 0);
-                MyEl = __decorate([
-                    customElement({ name: 'my-el', template: 'irrelevant' })
-                ], MyEl);
+                let MyEl = (() => {
+                    let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    let _person_decorators;
+                    let _person_initializers = [];
+                    let _person_extraInitializers = [];
+                    var MyEl = _classThis = class {
+                        constructor() {
+                            this.person = __runInitializers(this, _person_initializers, void 0);
+                            __runInitializers(this, _person_extraInitializers);
+                        }
+                    };
+                    __setFunctionName(_classThis, "MyEl");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _person_decorators = [bindable({ nullable: false, type })];
+                        __esDecorate(null, null, _person_decorators, { kind: "field", name: "person", static: false, private: false, access: { has: obj => "person" in obj, get: obj => obj.person, set: (obj, value) => { obj.person = value; } }, metadata: _metadata }, _person_initializers, _person_extraInitializers);
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        MyEl = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return MyEl = _classThis;
+                })();
                 class App {
                 }
                 $it(`not-nullable - class with coercer decorator - bound property - ${getTypeSpecification(type)}`, async function (ctx) {
@@ -613,15 +866,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
             }
         }
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Person2)
-            ], MyEl.prototype, "person", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _person_decorators;
+                let _person_initializers = [];
+                let _person_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.person = __runInitializers(this, _person_initializers, void 0);
+                        __runInitializers(this, _person_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _person_decorators = [bindable({ type: Person2 })];
+                    __esDecorate(null, null, _person_decorators, { kind: "field", name: "person", static: false, private: false, access: { has: obj => "person" in obj, get: obj => obj.person, set: (obj, value) => { obj.person = value; } }, metadata: _metadata }, _person_initializers, _person_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
                 constructor() {
                     this.prop = { name: 'john', age: 42 };
@@ -644,15 +914,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
             }, { app: App, template: `<my-el component.ref="myEl" person.bind="prop"></my-el>`, registrations: [MyEl] });
         }
         {
-            let MyEl = class MyEl {
-            };
-            __decorate([
-                bindable,
-                __metadata("design:type", Person2)
-            ], MyEl.prototype, "person", void 0);
-            MyEl = __decorate([
-                customElement({ name: 'my-el', template: 'irrelevant' })
-            ], MyEl);
+            let MyEl = (() => {
+                let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _person_decorators;
+                let _person_initializers = [];
+                let _person_extraInitializers = [];
+                var MyEl = _classThis = class {
+                    constructor() {
+                        this.person = __runInitializers(this, _person_initializers, void 0);
+                        __runInitializers(this, _person_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "MyEl");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _person_decorators = [bindable({ type: Person2 })];
+                    __esDecorate(null, null, _person_decorators, { kind: "field", name: "person", static: false, private: false, access: { has: obj => "person" in obj, get: obj => obj.person, set: (obj, value) => { obj.person = value; } }, metadata: _metadata }, _person_initializers, _person_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    MyEl = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return MyEl = _classThis;
+            })();
             class App {
                 constructor() {
                     this.prop = { name: 'john', age: 42 };
@@ -671,15 +958,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
     }
     /* eslint-enable no-useless-escape */
     {
-        let MyEl = class MyEl {
-        };
-        __decorate([
-            bindable,
-            __metadata("design:type", Object)
-        ], MyEl.prototype, "prop", void 0);
-        MyEl = __decorate([
-            customElement({ name: 'my-el', template: 'irrelevant' })
-        ], MyEl);
+        let MyEl = (() => {
+            let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _prop_decorators;
+            let _prop_initializers = [];
+            let _prop_extraInitializers = [];
+            var MyEl = _classThis = class {
+                constructor() {
+                    this.prop = __runInitializers(this, _prop_initializers, void 0);
+                    __runInitializers(this, _prop_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "MyEl");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _prop_decorators = [bindable];
+                __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MyEl = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MyEl = _classThis;
+        })();
         class App {
         }
         $it('auto-coercing does not work for type union', async function (ctx) {
@@ -687,15 +991,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
         }, { app: App, template: `<my-el component.ref="myEl" prop.bind="true"></my-el>`, registrations: [MyEl] });
     }
     {
-        let MyEl = class MyEl {
-        };
-        __decorate([
-            bindable({ type: Number }),
-            __metadata("design:type", Object)
-        ], MyEl.prototype, "prop", void 0);
-        MyEl = __decorate([
-            customElement({ name: 'my-el', template: 'irrelevant' })
-        ], MyEl);
+        let MyEl = (() => {
+            let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _prop_decorators;
+            let _prop_initializers = [];
+            let _prop_extraInitializers = [];
+            var MyEl = _classThis = class {
+                constructor() {
+                    this.prop = __runInitializers(this, _prop_initializers, void 0);
+                    __runInitializers(this, _prop_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "MyEl");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _prop_decorators = [bindable({ type: Number })];
+                __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MyEl = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MyEl = _classThis;
+        })();
         class App {
         }
         $it('auto-coercing can be coerced with explicit type for type union', async function (ctx) {
@@ -703,15 +1024,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
         }, { app: App, template: `<my-el component.ref="myEl" prop.bind="true"></my-el>`, registrations: [MyEl] });
     }
     {
-        let MyEl = class MyEl {
-        };
-        __decorate([
-            bindable({ type: Object }),
-            __metadata("design:type", Number)
-        ], MyEl.prototype, "prop", void 0);
-        MyEl = __decorate([
-            customElement({ name: 'my-el', template: 'irrelevant' })
-        ], MyEl);
+        let MyEl = (() => {
+            let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _prop_decorators;
+            let _prop_initializers = [];
+            let _prop_extraInitializers = [];
+            var MyEl = _classThis = class {
+                constructor() {
+                    this.prop = __runInitializers(this, _prop_initializers, void 0);
+                    __runInitializers(this, _prop_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "MyEl");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _prop_decorators = [bindable({ type: Object })];
+                __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MyEl = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MyEl = _classThis;
+        })();
         class App {
         }
         $it('auto-coercing can be disabled with explicit Object type', async function (ctx) {
@@ -719,15 +1057,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
         }, { app: App, template: `<my-el component.ref="myEl" prop.bind="true"></my-el>`, registrations: [MyEl] });
     }
     {
-        let MyEl = class MyEl {
-        };
-        __decorate([
-            bindable({ set: noop }),
-            __metadata("design:type", Number)
-        ], MyEl.prototype, "prop", void 0);
-        MyEl = __decorate([
-            customElement({ name: 'my-el', template: 'irrelevant' })
-        ], MyEl);
+        let MyEl = (() => {
+            let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _prop_decorators;
+            let _prop_initializers = [];
+            let _prop_extraInitializers = [];
+            var MyEl = _classThis = class {
+                constructor() {
+                    this.prop = __runInitializers(this, _prop_initializers, void 0);
+                    __runInitializers(this, _prop_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "MyEl");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _prop_decorators = [bindable({ set: noop })];
+                __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MyEl = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MyEl = _classThis;
+        })();
         class App {
         }
         $it('auto-coercing can be disabled with explicit noop set interceptor function', async function (ctx) {
@@ -735,15 +1090,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
         }, { app: App, template: `<my-el component.ref="myEl" prop.bind="true"></my-el>`, registrations: [MyEl] });
     }
     {
-        let MyEl = class MyEl {
-        };
-        __decorate([
-            bindable({ type: Number }),
-            __metadata("design:type", Number)
-        ], MyEl.prototype, "prop", void 0);
-        MyEl = __decorate([
-            customElement({ name: 'my-el', template: 'irrelevant' })
-        ], MyEl);
+        let MyEl = (() => {
+            let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _prop_decorators;
+            let _prop_initializers = [];
+            let _prop_extraInitializers = [];
+            var MyEl = _classThis = class {
+                constructor() {
+                    this.prop = __runInitializers(this, _prop_initializers, void 0);
+                    __runInitializers(this, _prop_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "MyEl");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _prop_decorators = [bindable({ type: Number })];
+                __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MyEl = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MyEl = _classThis;
+        })();
         class App {
         }
         $it('auto-coercion can be disabled globally', async function (ctx) {
@@ -751,15 +1123,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
         }, { app: App, template: '<my-el component.ref="myEl" prop.bind="true"></my-el>', registrations: [MyEl], enableCoercion: false });
     }
     {
-        let MyEl = class MyEl {
-        };
-        __decorate([
-            bindable({ type: Number }),
-            __metadata("design:type", Number)
-        ], MyEl.prototype, "prop", void 0);
-        MyEl = __decorate([
-            customElement({ name: 'my-el', template: 'irrelevant' })
-        ], MyEl);
+        let MyEl = (() => {
+            let _classDecorators = [customElement({ name: 'my-el', template: 'irrelevant' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _prop_decorators;
+            let _prop_initializers = [];
+            let _prop_extraInitializers = [];
+            var MyEl = _classThis = class {
+                constructor() {
+                    this.prop = __runInitializers(this, _prop_initializers, void 0);
+                    __runInitializers(this, _prop_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "MyEl");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _prop_decorators = [bindable({ type: Number })];
+                __esDecorate(null, null, _prop_decorators, { kind: "field", name: "prop", static: false, private: false, access: { has: obj => "prop" in obj, get: obj => obj.prop, set: (obj, value) => { obj.prop = value; } }, metadata: _metadata }, _prop_initializers, _prop_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MyEl = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MyEl = _classThis;
+        })();
         class App {
         }
         $it('auto-coercion of null-like values can be enforced globally', async function (ctx) {
@@ -767,15 +1156,32 @@ describe('3-runtime-html/bindable-coercer.spec.ts', function () {
         }, { app: App, template: '<my-el component.ref="myEl" prop.bind="null"></my-el>', registrations: [MyEl], coerceNullish: true });
     }
     {
-        let MyAttr = class MyAttr {
-        };
-        __decorate([
-            bindable,
-            __metadata("design:type", Number)
-        ], MyAttr.prototype, "value", void 0);
-        MyAttr = __decorate([
-            customAttribute({ name: 'my-attr' })
-        ], MyAttr);
+        let MyAttr = (() => {
+            let _classDecorators = [customAttribute({ name: 'my-attr' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _value_decorators;
+            let _value_initializers = [];
+            let _value_extraInitializers = [];
+            var MyAttr = _classThis = class {
+                constructor() {
+                    this.value = __runInitializers(this, _value_initializers, void 0);
+                    __runInitializers(this, _value_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "MyAttr");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _value_decorators = [bindable({ type: Number })];
+                __esDecorate(null, null, _value_decorators, { kind: "field", name: "value", static: false, private: false, access: { has: obj => "value" in obj, get: obj => obj.value, set: (obj, value) => { obj.value = value; } }, metadata: _metadata }, _value_initializers, _value_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MyAttr = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MyAttr = _classThis;
+        })();
         class App {
         }
         $it('auto-coercion works for custom element', async function (ctx) {

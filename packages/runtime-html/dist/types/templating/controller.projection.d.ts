@@ -1,11 +1,11 @@
-import { type CustomElementDefinition } from '../resources/custom-element';
 import { type ISubscribable } from '@aurelia/runtime';
+import { PartialCustomElementDefinition } from '../resources/custom-element';
 export type PartialSlottedDefinition = {
     callback?: PropertyKey;
     slotName?: string;
     query?: string;
 };
-export type IAuSlotProjections = Record<string, CustomElementDefinition>;
+export type IAuSlotProjections = Record<string, PartialCustomElementDefinition>;
 export interface IAuSlotsInfo {
     /**
      * Name of the slots to which content are projected.
@@ -43,17 +43,18 @@ export interface IAuSlotWatcher extends ISubscribable {
     unwatch(slot: IAuSlot): void;
 }
 export declare const IAuSlotWatcher: import("@aurelia/kernel").InterfaceSymbol<IAuSlotWatcher>;
+type Tc39PropertyDecorator = (target: undefined, context: ClassFieldDecoratorContext) => (initialValue: unknown) => unknown;
 /**
  * Decorate a property of a class to get updates from the projection of the decorated custom element
  */
-export declare function slotted(): PropertyDecorator;
+export declare function slotted(): Tc39PropertyDecorator;
 /**
  * Decorate a property of a class to get updates from the projection of the decorated custom element
  *
  * @param query - the query select used to match each slotted node of the corresponding <au-slot>
  * If * is provided, then it'll get all nodes (including text nodes)
  */
-export declare function slotted(query: string): PropertyDecorator;
+export declare function slotted(query: string): Tc39PropertyDecorator;
 /**
  * Decorate a property of a class to get updates from the projection of the decorated custom element
  *
@@ -62,12 +63,13 @@ export declare function slotted(query: string): PropertyDecorator;
  * @param slotName - the name of the <au-slot> this slotted decorator is targeting.
  * If * is provided, then it'll get all nodes from all <au-slot>
  */
-export declare function slotted(query: string, slotName: string): PropertyDecorator;
+export declare function slotted(query: string, slotName: string): Tc39PropertyDecorator;
 /**
  * Decorate a property of a class to get updates from the projection of the decorated custom element
  *
  * @param def - The configuration of the slotted decorator.
  */
-export declare function slotted(def: PartialSlottedDefinition): PropertyDecorator;
-export declare function slotted(queryOrDef?: string | PartialSlottedDefinition, slotName?: string): PropertyDecorator;
+export declare function slotted(def: PartialSlottedDefinition): Tc39PropertyDecorator;
+export declare function slotted(queryOrDef?: string | PartialSlottedDefinition, slotName?: string): Tc39PropertyDecorator;
+export {};
 //# sourceMappingURL=controller.projection.d.ts.map

@@ -1,4 +1,4 @@
-import { BindingMode, ITemplateCompiler, InstructionType as TT, } from '@aurelia/runtime-html';
+import { BindingMode, ITemplateCompiler, InstructionType as TT, CustomElementDefinition, } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 describe('3-runtime-html/template-compiler.convention.spec.ts', function () {
     const bindToTwoWayCombos = [
@@ -27,7 +27,7 @@ describe('3-runtime-html/template-compiler.convention.spec.ts', function () {
             const ctx = TestContext.create();
             const compiler = ctx.container.get(ITemplateCompiler);
             const template = `<${el} ${bindingAttr}.bind="value" ${elAttrsStr}></${el}>`;
-            const { instructions: rootInstructions } = compiler.compile({ name: '', template, surrogates: [], instructions: [] }, ctx.container, null);
+            const { instructions: rootInstructions } = compiler.compile(CustomElementDefinition.create({ name: '', template, surrogates: [], instructions: [] }), ctx.container, null);
             const expectedElInstructions = [
                 { toVerify: ['type', 'mode', 'to'], mode: BindingMode.twoWay, to: bindingProp, type: TT.propertyBinding }
             ];
@@ -65,7 +65,7 @@ describe('3-runtime-html/template-compiler.convention.spec.ts', function () {
             const ctx = TestContext.create();
             const compiler = ctx.container.get(ITemplateCompiler);
             const template = `<${el} ${bindingAttr}.bind="value" ${elAttrsStr}></${el}>`;
-            const { instructions: rootInstructions } = compiler.compile({ name: '', template, surrogates: [], instructions: [] }, ctx.container, null);
+            const { instructions: rootInstructions } = compiler.compile(CustomElementDefinition.create({ name: '', template, surrogates: [], instructions: [] }), ctx.container, null);
             const expectedElInstructions = [
                 { toVerify: ['type', 'mode', 'to'], mode: BindingMode.toView, to: bindingProp, type: TT.propertyBinding }
             ];

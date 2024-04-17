@@ -1,18 +1,44 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+    var _, done = false;
+    for (var i = decorators.length - 1; i >= 0; i--) {
+        var context = {};
+        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+        if (kind === "accessor") {
+            if (result === void 0) continue;
+            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+            if (_ = accept(result.get)) descriptor.get = _;
+            if (_ = accept(result.set)) descriptor.set = _;
+            if (_ = accept(result.init)) initializers.unshift(_);
+        }
+        else if (_ = accept(result)) {
+            if (kind === "field") initializers.unshift(_);
+            else descriptor[key] = _;
+        }
+    }
+    if (target) Object.defineProperty(target, contextIn.name, descriptor);
+    done = true;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
+    var useValue = arguments.length > 2;
+    for (var i = 0; i < initializers.length; i++) {
+        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+    }
+    return useValue ? value : void 0;
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { DI, inject, Registration, singleton, transient, } from '@aurelia/kernel';
+import { DI, inject, Registration, resolve, singleton, transient, } from '@aurelia/kernel';
 import { _, assert, createSpy } from '@aurelia/testing';
-function decorator() { return (target) => target; }
+function decorator() { return (target, _context) => target; }
 describe('1-kernel/di.spec.ts', function () {
     describe(`The DI object`, function () {
         describe(`createContainer()`, function () {
@@ -255,32 +281,58 @@ describe('1-kernel/di.spec.ts', function () {
             afterEach(function () {
                 getDesignParamtypes.restore();
             });
-            it(`uses getDesignParamtypes() if the static inject property does not exist`, function () {
+            // TODO: Enable those tests once the decorator metadata is emitted by TS.
+            // The tests are disabled because TS with TC39 decorators (non-legacy), does not emit the decorator metadata as of now.
+            // The following tests are dependent on that and hence cannot be successfully run.
+            // Refer: https://github.com/microsoft/TypeScript/issues/55788
+            it.skip(`uses getDesignParamtypes() if the static inject property does not exist`, function () {
                 class Bar {
                 }
-                let Foo = class Foo {
-                    constructor(_bar) { }
-                };
-                Foo = __decorate([
-                    decorator()
-                    // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-                    ,
-                    __metadata("design:paramtypes", [Bar])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [decorator()];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(_bar) { }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 DI.getDependencies(Foo);
             });
-            it(`uses getDesignParamtypes() if the static inject property is undefined`, function () {
+            // TODO: Enable those tests once the decorator metadata is emitted by TS.
+            // The tests are disabled because TS with TC39 decorators (non-legacy), does not emit the decorator metadata as of now.
+            // The following tests are dependent on that and hence cannot be successfully run.
+            // Refer: https://github.com/microsoft/TypeScript/issues/55788
+            it.skip(`uses getDesignParamtypes() if the static inject property is undefined`, function () {
                 class Bar {
                 }
-                let Foo = class Foo {
-                    constructor(_bar) { }
-                };
-                Foo = __decorate([
-                    decorator()
-                    // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-                    ,
-                    __metadata("design:paramtypes", [Bar])
-                ], Foo);
+                let Foo = (() => {
+                    let _classDecorators = [decorator()];
+                    let _classDescriptor;
+                    let _classExtraInitializers = [];
+                    let _classThis;
+                    var Foo = _classThis = class {
+                        constructor(_bar) { }
+                    };
+                    __setFunctionName(_classThis, "Foo");
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                        Foo = _classThis = _classDescriptor.value;
+                        if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        __runInitializers(_classThis, _classExtraInitializers);
+                    })();
+                    return Foo = _classThis;
+                })();
                 DI.getDependencies(Foo);
             });
             it(`throws when inject is not an array`, function () {
@@ -385,11 +437,23 @@ describe('1-kernel/di.spec.ts', function () {
         class Dep3 {
         }
         it(`can decorate classes with explicit dependencies`, function () {
-            let Foo = class Foo {
-            };
-            Foo = __decorate([
-                inject(Dep1, Dep2, Dep3)
-            ], Foo);
+            let Foo = (() => {
+                let _classDecorators = [inject(Dep1, Dep2, Dep3)];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Foo = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Foo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Foo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Foo = _classThis;
+            })();
             assert.deepStrictEqual(DI.getDependencies(Foo), [Dep1, Dep2, Dep3], `Foo['inject']`);
         });
         // it(`can decorate classes with implicit dependencies`, function () {
@@ -397,16 +461,15 @@ describe('1-kernel/di.spec.ts', function () {
         //   class Foo { constructor(dep1: Dep1, dep2: Dep2, dep3: Dep3) { return; } }
         //   assert.deepStrictEqual(Foo['inject'], [Dep1, Dep2, Dep3], `Foo['inject']`);
         // });
-        it(`can decorate constructor parameters explicitly`, function () {
-            let Foo = class Foo {
-                constructor(_dep1, _dep2, _dep3) { }
-            };
-            Foo = __decorate([
-                __param(0, inject(Dep1)),
-                __param(1, inject(Dep2)),
-                __param(2, inject(Dep3)),
-                __metadata("design:paramtypes", [Object, Object, Object])
-            ], Foo);
+        // TODO: Enable those tests once the decorator metadata is emitted by TS.
+        // The tests are disabled because TS with TC39 decorators (non-legacy), does not emit the decorator metadata as of now.
+        // The following tests are dependent on that and hence cannot be successfully run.
+        // Refer: https://github.com/microsoft/TypeScript/issues/55788
+        it.skip(`can decorate constructor parameters explicitly`, function () {
+            class Foo {
+                // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+                constructor(_dep1 = resolve(Dep1), _dep2 = resolve(Dep2), _dep3 = resolve(Dep3)) { }
+            }
             assert.deepStrictEqual(DI.getDependencies(Foo), [Dep1, Dep2, Dep3], `Foo['inject']`);
         });
         // it(`can decorate constructor parameters implicitly`, function () {
@@ -416,41 +479,80 @@ describe('1-kernel/di.spec.ts', function () {
         it(`can decorate properties explicitly`, function () {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            class Foo {
-            }
-            __decorate([
-                inject(Dep1),
-                __metadata("design:type", Object)
-            ], Foo.prototype, "dep1", void 0);
-            __decorate([
-                inject(Dep2),
-                __metadata("design:type", Object)
-            ], Foo.prototype, "dep2", void 0);
-            __decorate([
-                inject(Dep3),
-                __metadata("design:type", Object)
-            ], Foo.prototype, "dep3", void 0);
-            assert.strictEqual(DI.getDependencies(Foo)['dep1'], Dep1, `Foo['inject'].dep1`);
-            assert.strictEqual(DI.getDependencies(Foo)['dep2'], Dep2, `Foo['inject'].dep2`);
-            assert.strictEqual(DI.getDependencies(Foo)['dep3'], Dep3, `Foo['inject'].dep3`);
+            let Foo = (() => {
+                var _a;
+                let _dep1_decorators;
+                let _dep1_initializers = [];
+                let _dep1_extraInitializers = [];
+                let _dep2_decorators;
+                let _dep2_initializers = [];
+                let _dep2_extraInitializers = [];
+                let _dep3_decorators;
+                let _dep3_initializers = [];
+                let _dep3_extraInitializers = [];
+                return _a = class Foo {
+                        constructor() {
+                            this.dep1 = __runInitializers(this, _dep1_initializers, void 0);
+                            this.dep2 = (__runInitializers(this, _dep1_extraInitializers), __runInitializers(this, _dep2_initializers, void 0));
+                            this.dep3 = (__runInitializers(this, _dep2_extraInitializers), __runInitializers(this, _dep3_initializers, void 0));
+                            __runInitializers(this, _dep3_extraInitializers);
+                        }
+                    },
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _dep1_decorators = [inject(Dep1)];
+                        _dep2_decorators = [inject(Dep2)];
+                        _dep3_decorators = [inject(Dep3)];
+                        __esDecorate(null, null, _dep1_decorators, { kind: "field", name: "dep1", static: false, private: false, access: { has: obj => "dep1" in obj, get: obj => obj.dep1, set: (obj, value) => { obj.dep1 = value; } }, metadata: _metadata }, _dep1_initializers, _dep1_extraInitializers);
+                        __esDecorate(null, null, _dep2_decorators, { kind: "field", name: "dep2", static: false, private: false, access: { has: obj => "dep2" in obj, get: obj => obj.dep2, set: (obj, value) => { obj.dep2 = value; } }, metadata: _metadata }, _dep2_initializers, _dep2_extraInitializers);
+                        __esDecorate(null, null, _dep3_decorators, { kind: "field", name: "dep3", static: false, private: false, access: { has: obj => "dep3" in obj, get: obj => obj.dep3, set: (obj, value) => { obj.dep3 = value; } }, metadata: _metadata }, _dep3_initializers, _dep3_extraInitializers);
+                        if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    })(),
+                    _a;
+            })();
+            const metadata = Foo[Symbol.metadata]['au:annotation:di:paramtypes'];
+            assert.strictEqual(metadata['dep1'], Dep1, `Foo['inject'].dep1`);
+            assert.strictEqual(metadata['dep2'], Dep2, `Foo['inject'].dep2`);
+            assert.strictEqual(metadata['dep3'], Dep3, `Foo['inject'].dep3`);
         });
-        it(`cannot decorate properties implicitly`, function () {
+        // TODO: Enable those tests once the decorator metadata is emitted by TS.
+        // The tests are disabled because TS with TC39 decorators (non-legacy), does not emit the decorator metadata as of now.
+        // The following tests are dependent on that and hence cannot be successfully run.
+        // Refer: https://github.com/microsoft/TypeScript/issues/55788
+        it.skip(`cannot decorate properties implicitly`, function () {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            class Foo {
-            }
-            __decorate([
-                inject(),
-                __metadata("design:type", Dep1)
-            ], Foo.prototype, "dep1", void 0);
-            __decorate([
-                inject(),
-                __metadata("design:type", Dep2)
-            ], Foo.prototype, "dep2", void 0);
-            __decorate([
-                inject(),
-                __metadata("design:type", Dep3)
-            ], Foo.prototype, "dep3", void 0);
+            let Foo = (() => {
+                var _a;
+                let _dep1_decorators;
+                let _dep1_initializers = [];
+                let _dep1_extraInitializers = [];
+                let _dep2_decorators;
+                let _dep2_initializers = [];
+                let _dep2_extraInitializers = [];
+                let _dep3_decorators;
+                let _dep3_initializers = [];
+                let _dep3_extraInitializers = [];
+                return _a = class Foo {
+                        constructor() {
+                            this.dep1 = __runInitializers(this, _dep1_initializers, void 0);
+                            this.dep2 = (__runInitializers(this, _dep1_extraInitializers), __runInitializers(this, _dep2_initializers, void 0));
+                            this.dep3 = (__runInitializers(this, _dep2_extraInitializers), __runInitializers(this, _dep3_initializers, void 0));
+                            __runInitializers(this, _dep3_extraInitializers);
+                        }
+                    },
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _dep1_decorators = [inject()];
+                        _dep2_decorators = [inject()];
+                        _dep3_decorators = [inject()];
+                        __esDecorate(null, null, _dep1_decorators, { kind: "field", name: "dep1", static: false, private: false, access: { has: obj => "dep1" in obj, get: obj => obj.dep1, set: (obj, value) => { obj.dep1 = value; } }, metadata: _metadata }, _dep1_initializers, _dep1_extraInitializers);
+                        __esDecorate(null, null, _dep2_decorators, { kind: "field", name: "dep2", static: false, private: false, access: { has: obj => "dep2" in obj, get: obj => obj.dep2, set: (obj, value) => { obj.dep2 = value; } }, metadata: _metadata }, _dep2_initializers, _dep2_extraInitializers);
+                        __esDecorate(null, null, _dep3_decorators, { kind: "field", name: "dep3", static: false, private: false, access: { has: obj => "dep3" in obj, get: obj => obj.dep3, set: (obj, value) => { obj.dep3 = value; } }, metadata: _metadata }, _dep3_initializers, _dep3_extraInitializers);
+                        if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    })(),
+                    _a;
+            })();
             assert.strictEqual(DI.getDependencies(Foo)['dep1'], undefined, `Foo['inject'].dep1`);
             assert.strictEqual(DI.getDependencies(Foo)['dep2'], undefined, `Foo['inject'].dep2`);
             assert.strictEqual(DI.getDependencies(Foo)['dep3'], undefined, `Foo['inject'].dep3`);
@@ -458,11 +560,23 @@ describe('1-kernel/di.spec.ts', function () {
     });
     describe(`The transient decorator`, function () {
         it(`works as a plain decorator`, function () {
-            let Foo = class Foo {
-            };
-            Foo = __decorate([
-                transient
-            ], Foo);
+            let Foo = (() => {
+                let _classDecorators = [transient];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Foo = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Foo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Foo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Foo = _classThis;
+            })();
             assert.instanceOf(Foo['register'], Function, `Foo['register']`);
             const container = DI.createContainer();
             const foo1 = container.get(Foo);
@@ -470,11 +584,23 @@ describe('1-kernel/di.spec.ts', function () {
             assert.notStrictEqual(foo1, foo2, `foo1`);
         });
         it(`works as an invocation`, function () {
-            let Foo = class Foo {
-            };
-            Foo = __decorate([
-                transient()
-            ], Foo);
+            let Foo = (() => {
+                let _classDecorators = [transient()];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Foo = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Foo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Foo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Foo = _classThis;
+            })();
             assert.instanceOf(Foo['register'], Function, `Foo['register']`);
             const container = DI.createContainer();
             const foo1 = container.get(Foo);
@@ -484,11 +610,23 @@ describe('1-kernel/di.spec.ts', function () {
     });
     describe(`The singleton decorator`, function () {
         it(`works as a plain decorator`, function () {
-            let Foo = class Foo {
-            };
-            Foo = __decorate([
-                singleton
-            ], Foo);
+            let Foo = (() => {
+                let _classDecorators = [singleton];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Foo = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Foo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Foo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Foo = _classThis;
+            })();
             assert.instanceOf(Foo['register'], Function, `Foo['register']`);
             const container = DI.createContainer();
             const foo1 = container.get(Foo);
@@ -496,11 +634,23 @@ describe('1-kernel/di.spec.ts', function () {
             assert.strictEqual(foo1, foo2, `foo1`);
         });
         it(`works as an invocation`, function () {
-            let Foo = class Foo {
-            };
-            Foo = __decorate([
-                singleton()
-            ], Foo);
+            let Foo = (() => {
+                let _classDecorators = [singleton()];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Foo = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Foo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Foo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Foo = _classThis;
+            })();
             assert.instanceOf(Foo['register'], Function, `Foo['register']`);
             const container = DI.createContainer();
             const foo1 = container.get(Foo);

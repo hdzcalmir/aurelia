@@ -1,4 +1,3 @@
-import { IPlatform } from '@aurelia/runtime-html';
 import { ValidationResult } from '@aurelia/validation';
 import { ValidationEvent, ValidationResultsSubscriber } from '../validation-controller';
 export interface IValidationResultPresenterService extends ValidationResultPresenterService {
@@ -6,7 +5,6 @@ export interface IValidationResultPresenterService extends ValidationResultPrese
 export declare const IValidationResultPresenterService: import("@aurelia/kernel").InterfaceSymbol<IValidationResultPresenterService>;
 export declare class ValidationResultPresenterService implements ValidationResultsSubscriber {
     private readonly platform;
-    constructor(platform: IPlatform);
     handleValidationEvent(event: ValidationEvent): void;
     remove(target: Element, results: ValidationResult[]): void;
     add(target: Element, results: ValidationResult[]): void;

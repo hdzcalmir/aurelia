@@ -5,6 +5,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var runtime = require('@aurelia/runtime');
 var runtimeHtml = require('@aurelia/runtime-html');
+var expressionParser = require('@aurelia/expression-parser');
 
 const IDomRenderer = /*@__PURE__*/ kernel.DI.createInterface('IDomRenderer');
 const IScrollerObsererLocator = /*@__PURE__*/ kernel.DI.createInterface('IScrollerObsererLocator');
@@ -12,10 +13,10 @@ const ICollectionStrategyLocator = /*@__PURE__*/ kernel.DI.createInterface('ICol
 
 function unwrapExpression(expression) {
     let unwrapped = false;
-    while (expression instanceof runtime.BindingBehaviorExpression) {
+    while (expression instanceof expressionParser.BindingBehaviorExpression) {
         expression = expression.expression;
     }
-    while (expression instanceof runtime.ValueConverterExpression) {
+    while (expression instanceof expressionParser.ValueConverterExpression) {
         expression = expression.expression;
         unwrapped = true;
     }
@@ -432,7 +433,7 @@ class VirtualRepeat {
      * @internal
      */
     _handleInnerCollectionChange() {
-        const newItems = runtime.astEvaluate(this.iterable, this.parent.scope, { strict: true }, null);
+        const newItems = runtimeHtml.astEvaluate(this.iterable, this.parent.scope, { strict: true }, null);
         const oldItems = this.items;
         this.items = newItems;
         if (newItems === oldItems) {
@@ -480,15 +481,15 @@ class VirtualRepeat {
         return view;
     }
 }
-// avoid excessive code generation, if it doesn't affect readability too much
-runtimeHtml.customAttribute({
-    isTemplateController: true,
+VirtualRepeat.$au = {
+    type: 'custom-attribute',
     name: 'virtual-repeat',
+    isTemplateController: true,
     bindables: {
-        local: { name: 'local' },
-        items: { name: 'items', primary: true }
+        local: true,
+        items: { primary: true }
     }
-})(VirtualRepeat);
+};
 class CollectionObservationMediator {
     constructor(repeat, handleCollectionChange) {
         this.repeat = repeat;

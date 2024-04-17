@@ -1,10 +1,12 @@
 import { IServiceLocator, Key } from '@aurelia/kernel';
-import { IBinding, IExpressionParser, IObserverLocator, Scope } from '@aurelia/runtime';
+import { IExpressionParser } from '@aurelia/expression-parser';
+import { IObserverLocator, Scope } from '@aurelia/runtime';
 import { CustomElementDefinition } from '../resources/custom-element';
 import { ICustomElementController, IHydrationContext, IController } from '../templating/controller';
 import { IHasController, ITemplateCompiler } from '../renderer';
 import { IRendering } from '../templating/rendering';
 import { IPlatform } from '../platform';
+import { IBinding } from './interfaces-bindings';
 /**
  * The public methods of this binding emulates the necessary of an IHydratableController,
  * which mainly is the addBinding method since a spread binding

@@ -1,5 +1,5 @@
-import { IExpressionParser } from '@aurelia/runtime';
-import { BindingMode, AuSlot, CustomElement, CustomElementDefinition, InstructionType, DefaultBindingSyntax, PropertyBindingInstruction, TextBindingInstruction } from '@aurelia/runtime-html';
+import { IExpressionParser } from '@aurelia/expression-parser';
+import { BindingMode, AuSlot, CustomElement, CustomElementDefinition, InstructionType, DefaultBindingSyntax, PropertyBindingInstruction, TextBindingInstruction, } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 export function createAttribute(name, value) {
     const attr = document.createAttribute(name);
@@ -205,7 +205,7 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
                 const actualProjections = elementInstruction.projections;
                 for (const slotName in projections) {
                     const def = actualProjections[slotName];
-                    assert.instanceOf(def, CustomElementDefinition);
+                    // assert.instanceOf(def, CustomElementDefinition);
                     assert.deepStrictEqual(def.template.outerHTML, `<template>${projections[slotName]}</template>`, 'content');
                     assert.deepStrictEqual(def.needsCompile, false, 'needsCompile');
                 }
@@ -215,13 +215,13 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
     function compileWith(template, ...registrations) {
         const { container, sut } = createFixture();
         container.register(DefaultBindingSyntax, ...registrations);
-        const templateDefinition = {
+        const templateDefinition = CustomElementDefinition.create({
             name: 'ano',
             template,
             instructions: [],
             surrogates: [],
             shadowOptions: { mode: 'open' },
-        };
+        });
         const parser = container.get(IExpressionParser);
         return {
             ...sut.compile(templateDefinition, container, { projections: null }),

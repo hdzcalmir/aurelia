@@ -1,6 +1,6 @@
-import { IServiceLocator, type IContainer, type IFactory, type Constructable, type Transformer, type Key } from '@aurelia/kernel';
-import { BindingBehaviorExpression, IExpressionParser } from '@aurelia/runtime';
-import { IPlatform, PropertyBinding } from '@aurelia/runtime-html';
+import { type IContainer, type IFactory, type Constructable, type Transformer, type Key } from '@aurelia/kernel';
+import { BindingBehaviorExpression } from '@aurelia/expression-parser';
+import { PropertyBinding } from '@aurelia/runtime-html';
 import { PropertyAccessor, PropertyRule, ValidationResult, IValidator, ValidateInstruction, type IValidateable } from '@aurelia/validation';
 import type { Scope } from '@aurelia/runtime';
 export type BindingWithBehavior = PropertyBinding & {
@@ -172,10 +172,6 @@ export interface IValidationController {
 }
 export declare const IValidationController: import("@aurelia/kernel").InterfaceSymbol<IValidationController>;
 export declare class ValidationController implements IValidationController {
-    readonly validator: IValidator;
-    private readonly parser;
-    private readonly platform;
-    private readonly locator;
     readonly bindings: Map<BindingWithBehavior, BindingInfo>;
     readonly subscribers: Set<ValidationResultsSubscriber>;
     readonly results: ValidationResult[];
@@ -188,7 +184,10 @@ export declare class ValidationController implements IValidationController {
      */
     private readonly elements;
     readonly objects: Map<IValidateable, PropertyRule[] | undefined>;
-    constructor(validator: IValidator, parser: IExpressionParser, platform: IPlatform, locator: IServiceLocator);
+    readonly validator: IValidator;
+    private readonly parser;
+    private readonly platform;
+    private readonly locator;
     addObject(object: IValidateable, rules?: PropertyRule[]): void;
     removeObject(object: IValidateable): void;
     addError<TObject extends IValidateable>(message: string, object: TObject, propertyName?: string | PropertyAccessor): ValidationResult;

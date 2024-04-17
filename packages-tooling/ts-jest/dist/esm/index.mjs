@@ -8,7 +8,7 @@ const $createTransformer = (typeof tsJest.createTransformer === 'function'
     : typeof ((_a = tsJest.default) === null || _a === void 0 ? void 0 : _a.createTransformer) === 'function'
         ? tsJest.default.createTransformer
         : (() => { throw new Error('Unable to import createTransformer from "ts-jest"'); }));
-const tsTransformer = $createTransformer();
+const tsTransformer = $createTransformer({ isolatedModules: true });
 function _createTransformer(conventionsOptions = {}, _preprocess = preprocess, _tsProcess = tsTransformer.process.bind(tsTransformer)) {
     const au2Options = preprocessOptions(conventionsOptions);
     function getCacheKey(fileData, filePath, options) {

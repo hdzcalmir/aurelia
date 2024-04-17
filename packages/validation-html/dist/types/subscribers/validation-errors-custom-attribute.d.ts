@@ -1,4 +1,3 @@
-import { INode } from '@aurelia/runtime-html';
 import { IValidationController, ValidationResultsSubscriber, ValidationEvent, ValidationResultTarget } from '../validation-controller';
 /**
  * A validation errors subscriber in form of a custom attribute.
@@ -19,12 +18,11 @@ import { IValidationController, ValidationResultsSubscriber, ValidationEvent, Va
  * ```
  */
 export declare class ValidationErrorsCustomAttribute implements ValidationResultsSubscriber {
-    private readonly host;
-    private readonly scopedController;
     controller?: IValidationController;
     errors: ValidationResultTarget[];
     private readonly errorsInternal;
-    constructor(host: INode<HTMLElement>, scopedController: IValidationController);
+    private readonly host;
+    private readonly scopedController;
     handleValidationEvent(event: ValidationEvent): void;
     binding(): void;
     unbinding(): void;

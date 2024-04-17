@@ -1,5 +1,6 @@
 import { IContainer, IServiceLocator } from '@aurelia/kernel';
-import { IExpressionParser, IAstEvaluator } from '@aurelia/runtime';
+import { IExpressionParser } from '@aurelia/expression-parser';
+import { type IAstEvaluator } from '@aurelia/runtime-html';
 import { Deserializer } from './ast-serialization';
 import { IPropertyRule, IRuleProperty, IValidationExpressionHydrator, IValidationRule, IValidationVisitor, IValidateable } from './rule-interfaces';
 import { IValidationRules, PropertyRule, RuleProperty } from './rule-provider';
@@ -28,19 +29,17 @@ export declare class ValidationDeserializer implements IValidationExpressionHydr
     static register(container: IContainer): void;
     static deserialize(json: string, validationRules: IValidationRules): IValidationRule | IRuleProperty | IPropertyRule;
     readonly astDeserializer: Deserializer;
-    constructor(locator: IServiceLocator, messageProvider: IValidationMessageProvider, parser: IExpressionParser);
+    constructor(locator?: IServiceLocator, messageProvider?: IValidationMessageProvider, parser?: IExpressionParser);
     hydrate(raw: any, validationRules: IValidationRules): any;
     hydrateRuleset(ruleset: any[], validationRules: IValidationRules): PropertyRule[];
 }
 export interface ModelValidationExpressionHydrator extends IAstEvaluator {
 }
 export declare class ModelValidationExpressionHydrator implements IValidationExpressionHydrator {
+    readonly astDeserializer: Deserializer;
+    readonly l: IServiceLocator;
     readonly messageProvider: IValidationMessageProvider;
     readonly parser: IExpressionParser;
-    readonly astDeserializer: Deserializer;
-    constructor(
-    /** @internal */
-    l: IServiceLocator, messageProvider: IValidationMessageProvider, parser: IExpressionParser);
     hydrate(_raw: any, _validationRules: IValidationRules): void;
     hydrateRuleset(ruleset: Record<string, any>, validationRules: IValidationRules): any[];
     protected hydrateRule(ruleName: string, ruleConfig: any): IValidationRule;

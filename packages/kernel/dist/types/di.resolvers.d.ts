@@ -10,10 +10,7 @@ export declare function createResolver<T extends Key>(getter: (key: T, handler: 
  * Create a resolver that will resolve all values of a key from resolving container
  */
 export declare const all: <T extends Key>(key: T, searchAncestors?: boolean) => IAllResolver<T>;
-export type IAllResolver<T> = IResolver<Resolved<T>[]> & {
-    __isAll: undefined;
-    (...args: unknown[]): any;
-};
+export type IAllResolver<T> = IResolver<readonly Resolved<T>[]> & ((decorated: unknown, context: DecoratorContext) => any);
 /**
  * Lazily inject a dependency depending on whether the [[`Key`]] is present at the time of function call.
  *

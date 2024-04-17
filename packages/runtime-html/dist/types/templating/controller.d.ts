@@ -2,7 +2,6 @@ import { ICoercionConfiguration, Scope } from '@aurelia/runtime';
 import { CustomAttributeDefinition } from '../resources/custom-attribute';
 import { CustomElementDefinition } from '../resources/custom-element';
 import type { IContainer, IDisposable, Writable } from '@aurelia/kernel';
-import type { IBinding } from '@aurelia/runtime';
 import type { INode, INodeSequence, IRenderLocation } from '../dom';
 import type { IInstruction } from '../renderer';
 import type { AttrSyntax } from '../resources/attribute-pattern';
@@ -10,6 +9,7 @@ import type { PartialCustomElementDefinition } from '../resources/custom-element
 import type { IAuSlotProjections } from './controller.projection';
 import type { LifecycleHooksLookup } from './lifecycle-hooks';
 import type { IViewFactory } from './view';
+import { IBinding } from '../binding/interfaces-bindings';
 export declare class Controller<C extends IViewModel = IViewModel> implements IController<C> {
     container: IContainer;
     readonly vmKind: ViewModelKind;

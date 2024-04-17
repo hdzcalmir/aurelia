@@ -1,5 +1,6 @@
 import { type IServiceLocator, type Constructable } from '@aurelia/kernel';
-import { IBinding, IRateLimitOptions, Scope, type ISubscriber } from '@aurelia/runtime';
+import { Scope, type ISubscriber } from '@aurelia/runtime';
+import { type IBinding, type IRateLimitOptions } from './interfaces-bindings';
 import { PropertyBinding } from './property-binding';
 /**
  * A subscriber that is used for subcribing to target observer & invoking `updateSource` on a binding

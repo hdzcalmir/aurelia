@@ -1,6 +1,7 @@
-import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astEvaluate, astAssign, astVisit, astBind, astUnbind, Unparser, IExpressionParser, IObserverLocator, getCollectionObserver, Scope } from '@aurelia/runtime';
-import { bindingCommand, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, IListenerBindingOptions, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, BindablesInfo, ExpressionWatcher } from '@aurelia/runtime-html';
-import { camelCase, DI, resolve } from '@aurelia/kernel';
+import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astVisit, Unparser, IExpressionParser } from '@aurelia/expression-parser';
+import { astEvaluate, astAssign, astBind, astUnbind, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, IListenerBindingOptions, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, ExpressionWatcher } from '@aurelia/runtime-html';
+import { camelCase, resolve, DI } from '@aurelia/kernel';
+import { IObserverLocator, getCollectionObserver, Scope } from '@aurelia/runtime';
 
 let defined$1 = false;
 function defineAstMethods() {
@@ -58,30 +59,6 @@ function defineAstMethods() {
         + ' Or import and use astEvaluate/astAssign/astVisit/astBind/astUnbind accordingly.');
 }
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
 /** @internal */ const createLookup = () => Object.create(null);
 // eslint-disable-next-line @typescript-eslint/ban-types
 /** @internal */ const isFunction = (v) => typeof v === 'function';
@@ -109,14 +86,11 @@ const ensureExpression = (parser, srcOrExpr, expressionType) => {
 };
 /** @internal */ const etIsFunction = 'IsFunction';
 
-const registeredSymbol = Symbol('.call');
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+const callRegisteredContainer = new WeakSet();
 const callSyntax = {
     register(container) {
-        /* istanbul ignore next */
-        if (!container[registeredSymbol]) {
-            /* istanbul ignore next */
-            container[registeredSymbol] = true;
+        if (!callRegisteredContainer.has(container)) {
+            callRegisteredContainer.add(container);
             container.register(CallBindingCommand, CallBindingRenderer);
         }
     }
@@ -129,27 +103,26 @@ class CallBindingInstruction {
         this.type = instructionType;
     }
 }
-let CallBindingCommand = class CallBindingCommand {
-    get type() { return 'None'; }
+class CallBindingCommand {
+    get ignoreAttr() { return false; }
     build(info, exprParser) {
         const target = info.bindable === null
             ? camelCase(info.attr.target)
             : info.bindable.name;
         return new CallBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), target);
     }
+}
+CallBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'call',
 };
-CallBindingCommand = __decorate([
-    bindingCommand('call')
-], CallBindingCommand);
-let CallBindingRenderer = class CallBindingRenderer {
+class CallBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
-};
-CallBindingRenderer = __decorate([
-    renderer(instructionType)
-], CallBindingRenderer);
+}
+renderer(instructionType)(CallBindingRenderer, null);
 function getTarget(potentialTarget) {
     if (potentialTarget.viewModel != null) {
         return potentialTarget.viewModel;
@@ -222,29 +195,28 @@ const delegateSyntax = {
         }
     }
 };
-let DelegateBindingCommand = class DelegateBindingCommand {
-    get type() { return 'IgnoreAttr'; }
+class DelegateBindingCommand {
+    get ignoreAttr() { return true; }
     build(info, exprParser) {
         return new DelegateBindingInstruction(exprParser.parse(info.attr.rawValue, etIsFunction), info.attr.target, true);
     }
+}
+DelegateBindingCommand.$au = {
+    type: 'binding-command',
+    name: 'delegate',
 };
-DelegateBindingCommand = __decorate([
-    bindingCommand('delegate')
-], DelegateBindingCommand);
-let ListenerBindingRenderer = class ListenerBindingRenderer {
-    /** @internal */ static get inject() { return [IEventDelegator]; }
-    constructor(eventDelegator) {
-        this._eventDelegator = eventDelegator;
+/** @internal */
+class ListenerBindingRenderer {
+    constructor() {
+        /** @internal */
+        this._eventDelegator = resolve(IEventDelegator);
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
     }
-};
-ListenerBindingRenderer = __decorate([
-    renderer('dl')
-    /** @internal */
-], ListenerBindingRenderer);
+}
+renderer('dl')(ListenerBindingRenderer, null);
 class DelegateBindingInstruction {
     constructor(from, to, preventDefault) {
         this.from = from;
@@ -461,7 +433,7 @@ const defineBindingMethods = () => {
             }
         });
     });
-    const getMessage = (name, ast) => console.warn(`@deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${Unparser.unparse(ast)}"`);
+    const getMessage = (name, ast) => console.warn(`[DEV:aurelia] @deprecated "sourceExpression" property for expression on ${name}. It has been renamed to "ast". expression: "${Unparser.unparse(ast)}"`);
 };
 
 let compatEnabled = false;
@@ -487,17 +459,8 @@ function enableComposeCompat() {
     if (!addedMetadata) {
         addedMetadata = true;
         const def = CustomElement.getDefinition(AuCompose);
-        const viewModelBindable = def.bindables.viewModel = BindableDefinition.create('viewModel', AuCompose);
-        const viewBindable = def.bindables.view = BindableDefinition.create('view', AuCompose);
-        const bindableInfo = BindablesInfo.from(def, false);
-        // when <au-compose/> is used some where before the enable compat call is invoked
-        // BindableInfo of AuCompose definition has already been cached
-        // and thus will not be updated with view/viewmodel information
-        // so need to add it there too
-        if (!('view' in bindableInfo.attrs)) {
-            bindableInfo.attrs.view = bindableInfo.bindables.view = viewBindable;
-            bindableInfo.attrs['view-model'] = bindableInfo.bindables.viewModel = viewModelBindable;
-        }
+        def.bindables.viewModel = BindableDefinition.create('viewModel');
+        def.bindables.view = BindableDefinition.create('view');
     }
     defineHiddenProp(prototype, 'viewModelChanged', function (value) {
         this.component = value;
@@ -538,13 +501,6 @@ function disableComposeCompat() {
         const def = CustomElement.getDefinition(AuCompose);
         delete def.bindables.viewModel;
         delete def.bindables.view;
-        const bindableInfo = BindablesInfo.from(def, false);
-        if (('view' in bindableInfo.attrs)) {
-            delete bindableInfo.attrs.view;
-            delete bindableInfo.bindables.view;
-            delete bindableInfo.attrs['view-model'];
-            delete bindableInfo.bindables.viewModel;
-        }
     }
     compatEnabled = false;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

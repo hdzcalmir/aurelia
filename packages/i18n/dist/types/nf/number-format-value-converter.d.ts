@@ -1,8 +1,8 @@
-import { I18N } from '../i18n';
-export declare class NumberFormatValueConverter {
-    private readonly i18n;
+import { type ValueConverterInstance, type ValueConverterStaticAuDefinition } from '@aurelia/runtime-html';
+export declare class NumberFormatValueConverter implements ValueConverterInstance {
+    static readonly $au: ValueConverterStaticAuDefinition;
     readonly signals: string[];
-    constructor(i18n: I18N);
+    private readonly i18n;
     toView(value: unknown, options?: Intl.NumberFormatOptions, locale?: string): unknown;
 }
 //# sourceMappingURL=number-format-value-converter.d.ts.map
