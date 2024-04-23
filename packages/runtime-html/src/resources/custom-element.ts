@@ -55,6 +55,7 @@ export type PartialCustomElementDefinition<TBindables extends string = string> =
   readonly enhance?: boolean;
   readonly watches?: IWatchDefinition[];
   readonly processContent?: ProcessContentHook | null;
+  readonly Type?: Constructable;
 }>;
 
 export type CustomElementStaticAuDefinition<TBindables extends string = string> = PartialCustomElementDefinition<TBindables> & {
@@ -151,7 +152,7 @@ type ShadowOptions = Pick<PartialCustomElementDefinition, 'shadowOptions'>['shad
 /**
  * Decorator: Indicates that the custom element should render its view in ShadowDOM.
  */
-export function useShadowDOM(options?: ShadowOptions): (target: Constructable) => void;
+export function useShadowDOM(options?: ShadowOptions): (target: Constructable, context: ClassDecoratorContext) => void;
 /**
  * Decorator: Indicates that the custom element should render its view in ShadowDOM.
  */
