@@ -5,12 +5,17 @@ import { CustomElementDefinition, PartialCustomElementDefinition } from '../reso
 import { IViewFactory } from './view';
 import type { IHydratableController } from './controller';
 export declare const IRendering: import("@aurelia/kernel").InterfaceSymbol<IRendering>;
-export interface IRendering extends Rendering {
+export interface IRendering {
+    get renderers(): Record<string, IRenderer>;
+    compile(definition: CustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;
+    getViewFactory(definition: PartialCustomElementDefinition, container: IContainer): IViewFactory;
+    createNodes(definition: CustomElementDefinition): INodeSequence;
+    render(controller: IHydratableController, targets: ArrayLike<INode>, definition: CustomElementDefinition, host: INode | null | undefined): void;
 }
-export declare class Rendering {
+export declare class Rendering implements IRendering {
     get renderers(): Record<string, IRenderer>;
     constructor();
-    compile(definition: PartialCustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;
+    compile(definition: CustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;
     getViewFactory(definition: PartialCustomElementDefinition, container: IContainer): IViewFactory;
     createNodes(definition: CustomElementDefinition): INodeSequence;
     render(controller: IHydratableController, targets: ArrayLike<INode>, definition: CustomElementDefinition, host: INode | null | undefined): void;

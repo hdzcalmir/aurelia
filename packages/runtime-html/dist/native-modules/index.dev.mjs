@@ -989,18 +989,18 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
 //
 // Furthermore, the "default" mode would be for simple ".bind" expressions to make it explicit for our logic that the default is being used.
 // This essentially adds extra information which binding could use to do smarter things and allows bindingBehaviors that add a mode instead of simply overwriting it
+/** @internal */ const defaultMode = 0b0000;
 /** @internal */ const oneTime = 0b0001;
 /** @internal */ const toView = 0b0010;
 /** @internal */ const fromView = 0b0100;
 /** @internal */ const twoWay = 0b0110;
-/** @internal */ const defaultMode = 0b1000;
 /**
  * Mode of a binding to operate
  * - 1 / one time - bindings should only update the target once
  * - 2 / to view - bindings should update the target and observe the source for changes to update again
  * - 3 / from view - bindings should update the source and observe the target for changes to update again
  * - 6 / two way - bindings should observe both target and source for changes to update the other side
- * - 8 / default - undecided mode, bindings, depends on the circumstance, may decide what to do accordingly
+ * - 0 / default - undecided mode, bindings, depends on the circumstance, may decide what to do accordingly
  */
 const BindingMode = /*@__PURE__*/ objectFreeze({
     oneTime,
@@ -4222,13 +4222,12 @@ class Rendering {
         this._empty = new FragmentNodeSequence(this._platform, this._platform.document.createDocumentFragment());
     }
     compile(definition, container, compilationInstruction) {
+        const compiler = container.get(ITemplateCompiler);
+        const compiledMap = this._compilationCache;
+        let compiled = compiledMap.get(definition);
         if (definition.needsCompile !== false) {
-            const compiledMap = this._compilationCache;
-            const compiler = container.get(ITemplateCompiler);
-            let compiled = compiledMap.get(definition);
             if (compiled == null) {
-                // const fullDefinition = CustomElementDefinition.getOrCreate(definition);
-                compiledMap.set(definition, compiled = compiler.compile(CustomElementDefinition.getOrCreate(definition), container, compilationInstruction));
+                compiledMap.set(definition, compiled = CustomElementDefinition.create(compiler.compile(definition, container, compilationInstruction)));
             }
             else {
                 // todo:
@@ -4258,7 +4257,7 @@ class Rendering {
         else {
             const template = definition.template;
             let tpl;
-            if (template === null) {
+            if (template == null) {
                 fragment = null;
             }
             else if (template instanceof p.Node) {
@@ -11521,7 +11520,7 @@ class TemplateCompiler {
         }
         this._compileLocalElement(content, context);
         this._compileNode(content, context);
-        const compiledDef = CustomElementDefinition.create({
+        const compiledDef = {
             ...definition,
             name: definition.name || generateElementName(),
             dependencies: (definition.dependencies ?? emptyArray).concat(context.deps ?? emptyArray),
@@ -11532,7 +11531,7 @@ class TemplateCompiler {
             template,
             hasSlots: context.hasSlot,
             needsCompile: false,
-        });
+        };
         if (context.deps != null) {
             // if we have a template like this
             //
@@ -11543,7 +11542,7 @@ class TemplateCompiler {
             // <template as-custom-element="le-2">...</template>
             //
             // without registering dependencies properly, <le-1> will not see <le-2> as a custom element
-            const allDepsForLocalElements = [compiledDef.Type, ...compiledDef.dependencies, ...context.deps];
+            const allDepsForLocalElements = [compiledDef.Type, ...compiledDef.dependencies ?? [], ...context.deps].filter(d => d);
             for (const localElementType of context.deps) {
                 getElementDefinition(localElementType).dependencies.push(...allDepsForLocalElements.filter(d => d !== localElementType));
             }
@@ -12393,12 +12392,12 @@ class TemplateCompiler {
                     // also, it wouldn't have any real uses
                     projectionCompilationContext = context._createChild();
                     this._compileNode(template.content, projectionCompilationContext);
-                    projections[targetSlot] = CustomElementDefinition.create({
+                    projections[targetSlot] = {
                         name: generateElementName(),
                         template,
                         instructions: projectionCompilationContext.rows,
                         needsCompile: false,
-                    });
+                    };
                 }
                 elementInstruction.projections = projections;
             }
@@ -12428,12 +12427,12 @@ class TemplateCompiler {
                     }
                 }
             }
-            tcInstruction.def = CustomElementDefinition.create({
+            tcInstruction.def = {
                 name: generateElementName(),
                 template: mostInnerTemplate,
                 instructions: childContext.rows,
                 needsCompile: false,
-            });
+            };
             // 4.1.2.
             //  Start processing other Template controllers by walking the TC list (list 1) RIGHT -> LEFT
             while (i-- > 0) {
@@ -12458,12 +12457,12 @@ class TemplateCompiler {
                     context._comment(auStartComment),
                     context._comment(auEndComment),
                 ]);
-                tcInstruction.def = CustomElementDefinition.create({
+                tcInstruction.def = {
                     name: generateElementName(),
                     template,
                     needsCompile: false,
                     instructions: [[tcInstructions[i + 1]]],
-                });
+                };
             }
             // the most outer template controller should be
             // the only instruction for peek instruction of the current context
@@ -12576,12 +12575,12 @@ class TemplateCompiler {
                     // compile it
                     projectionCompilationContext = context._createChild();
                     this._compileNode(template.content, projectionCompilationContext);
-                    projections[targetSlot] = CustomElementDefinition.create({
+                    projections[targetSlot] = {
                         name: generateElementName(),
                         template,
                         instructions: projectionCompilationContext.rows,
                         needsCompile: false,
-                    });
+                    };
                 }
                 elementInstruction.projections = projections;
             }

@@ -1,7 +1,7 @@
 import { ITemplateCompiler } from '../renderer';
 import { BindableDefinition } from '../bindable';
 import { AttrSyntax } from '../resources/attribute-pattern';
-import { CustomElementDefinition } from '../resources/custom-element';
+import { CustomElementDefinition, PartialCustomElementDefinition } from '../resources/custom-element';
 import { BindingCommandInstance } from '../resources/binding-command';
 import type { IContainer, Constructable } from '@aurelia/kernel';
 import type { CustomAttributeDefinition } from '../resources/custom-attribute';
@@ -10,7 +10,7 @@ export declare class TemplateCompiler implements ITemplateCompiler {
     static register(container: IContainer): void;
     debug: boolean;
     resolveResources: boolean;
-    compile(definition: CustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;
+    compile(definition: PartialCustomElementDefinition, container: IContainer, compilationInstruction: ICompliationInstruction | null): PartialCustomElementDefinition;
     compileSpread(requestor: CustomElementDefinition, attrSyntaxs: AttrSyntax[], container: IContainer, target: Element, targetDef?: CustomElementDefinition): IInstruction[];
 }
 export interface IAttributeBindablesInfo {

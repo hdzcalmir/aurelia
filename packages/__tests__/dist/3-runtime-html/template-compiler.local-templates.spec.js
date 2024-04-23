@@ -231,7 +231,7 @@ function $$createFixture() {
             ctx.templateCompiler.resolveResources = v;
         },
         compile(def, container, instruction) {
-            return ctx.templateCompiler.compile(CustomElementDefinition.create(def), container, instruction);
+            return CustomElementDefinition.getOrCreate(ctx.templateCompiler.compile(CustomElementDefinition.create(def), container, instruction));
         }
     };
     return { ctx, container, sut };

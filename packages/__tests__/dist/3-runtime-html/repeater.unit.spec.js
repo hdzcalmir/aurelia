@@ -1,7 +1,8 @@
 import { AccessScopeExpression, ForOfStatement, BindingIdentifier } from '@aurelia/expression-parser';
 import { DirtyChecker } from '@aurelia/runtime';
-import { Scope, BindingContext, Repeat, Controller, CustomElementDefinition, PropertyBindingRenderer, TextBindingRenderer, TextBindingInstruction, NodeObserverLocator, IRendering, } from '@aurelia/runtime-html';
+import { Scope, BindingContext, Repeat, Controller, CustomElementDefinition, PropertyBindingRenderer, TextBindingRenderer, TextBindingInstruction, NodeObserverLocator, IRendering, ITemplateCompiler, } from '@aurelia/runtime-html';
 import { eachCartesianJoin, assert, PLATFORM, createContainer, } from '@aurelia/testing';
+import { Registration } from '@aurelia/kernel';
 describe(`3-runtime-html/repeater.unit.spec.ts`, function () {
     function runActivateLifecycle(sut, scope) {
         void sut.$controller.activate(sut.$controller, null, scope);
@@ -421,7 +422,7 @@ describe(`3-runtime-html/repeater.unit.spec.ts`, function () {
                 { op: 'push', items: ['m', 'n', 'o', 'p', 'q', 'r'] }
             ] }
     ];
-    const container = createContainer().register(DirtyChecker, NodeObserverLocator, PropertyBindingRenderer, TextBindingRenderer);
+    const container = createContainer().register(DirtyChecker, NodeObserverLocator, PropertyBindingRenderer, TextBindingRenderer, Registration.instance(ITemplateCompiler, { compile: (d) => d }));
     const createStartLocation = () => PLATFORM.document.createComment('au-start');
     const createEndLocation = () => PLATFORM.document.createComment('au-end');
     const marker = PLATFORM.document.createComment('au*');

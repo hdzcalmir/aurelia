@@ -251,7 +251,7 @@ export interface ITemplateCompiler {
      * with resolved resources constructor during compilation, instead of name
      */
     resolveResources: boolean;
-    compile(partialDefinition: CustomElementDefinition, context: IContainer, compilationInstruction: ICompliationInstruction | null): CustomElementDefinition;
+    compile(partialDefinition: PartialCustomElementDefinition, context: IContainer, compilationInstruction: ICompliationInstruction | null): PartialCustomElementDefinition;
     /**
      * Compile a list of captured attributes as if they are declared in a template
      *
