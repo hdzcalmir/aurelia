@@ -5,6 +5,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var runtimeHtml = require('@aurelia/runtime-html');
 var runtime = require('@aurelia/runtime');
+var templateCompiler = require('@aurelia/template-compiler');
 
 /** @internal */
 const createInterface = kernel.DI.createInterface;
@@ -460,12 +461,12 @@ runtimeHtml.mixingBindingLimited(StateDispatchBinding, () => 'callSource');
 
 class StateAttributePattern {
     'PART.state'(rawName, rawValue, parts) {
-        return new runtimeHtml.AttrSyntax(rawName, rawValue, parts[0], 'state');
+        return new templateCompiler.AttrSyntax(rawName, rawValue, parts[0], 'state');
     }
 }
 class DispatchAttributePattern {
     'PART.dispatch'(rawName, rawValue, parts) {
-        return new runtimeHtml.AttrSyntax(rawName, rawValue, parts[0], 'dispatch');
+        return new templateCompiler.AttrSyntax(rawName, rawValue, parts[0], 'dispatch');
     }
 }
 class StateBindingCommand {
@@ -483,7 +484,7 @@ class StateBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.kind === 'element') {
+            if (value === '' && info.def.type === 'custom-element') {
                 value = kernel.camelCase(target);
             }
             target = info.bindable.name;

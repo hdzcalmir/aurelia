@@ -1,7 +1,8 @@
 import { getResourceKeyFor, resolve, IEventAggregator, IContainer, Protocol, DI, ILogger, Registration } from '@aurelia/kernel';
-import { CustomElement, isCustomElementViewModel, Controller, IPlatform, IWindow, IHistory, ILocation, IAppRoot, CustomAttribute, BindingMode, INode, IInstruction, IController, AppTask } from '@aurelia/runtime-html';
+import { CustomElement, isCustomElementViewModel, Controller, IPlatform, IWindow, IHistory, ILocation, IAppRoot, CustomAttribute, BindingMode, INode, IController, AppTask } from '@aurelia/runtime-html';
 import { Metadata } from '@aurelia/metadata';
 import { RouteRecognizer as RouteRecognizer$1, ConfigurableRoute as ConfigurableRoute$1, RecognizedRoute as RecognizedRoute$1, Endpoint as Endpoint$2 } from '@aurelia/route-recognizer';
+import { IInstruction } from '@aurelia/template-compiler';
 
 let Endpoint$1 = class Endpoint {
     constructor(router, 

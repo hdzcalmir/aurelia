@@ -5,6 +5,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var runtime = require('@aurelia/runtime');
 var runtimeHtml = require('@aurelia/runtime-html');
+var templateCompiler = require('@aurelia/template-compiler');
 var expressionParser = require('@aurelia/expression-parser');
 
 const IDomRenderer = /*@__PURE__*/ kernel.DI.createInterface('IDomRenderer');
@@ -115,7 +116,7 @@ class VirtualRepeat {
         this.dom = null;
         this.scrollerObserver = null;
         this.location = kernel.resolve(runtimeHtml.IRenderLocation);
-        this.instruction = kernel.resolve(runtimeHtml.IInstruction);
+        this.instruction = kernel.resolve(templateCompiler.IInstruction);
         this.parent = kernel.resolve(runtimeHtml.IController);
         /** @internal */ this._factory = kernel.resolve(runtimeHtml.IViewFactory);
         /** @internal */ this._strategyLocator = kernel.resolve(ICollectionStrategyLocator);

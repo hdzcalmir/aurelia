@@ -216,11 +216,11 @@ const p = /*@__PURE__*/ e.renderer(class ListenerBindingRenderer {
 }, null);
 
 class DelegateBindingInstruction {
-    constructor(t, i, s) {
+    constructor(t, e, i) {
         this.from = t;
-        this.to = i;
-        this.preventDefault = s;
-        this.type = e.InstructionType.listenerBinding;
+        this.to = e;
+        this.preventDefault = i;
+        this.type = "dl";
     }
 }
 
@@ -239,6 +239,7 @@ class DelegateListenerBinding {
         this.isBound = false;
         this.handler = null;
         this.boundFn = true;
+        this.self = false;
         this.l = t;
         this.i = r;
     }
@@ -256,6 +257,11 @@ class DelegateListenerBinding {
         return s;
     }
     handleEvent(t) {
+        if (this.self) {
+            if (this.target !== t.composedPath()[0]) {
+                return;
+            }
+        }
         this.callSource(t);
     }
     bind(t) {

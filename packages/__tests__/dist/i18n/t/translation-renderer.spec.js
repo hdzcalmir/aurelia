@@ -1,6 +1,8 @@
 import { I18nConfiguration, TranslationAttributePattern, TranslationBindAttributePattern, TranslationBindBindingCommand, TranslationBindBindingInstruction, TranslationBindBindingRenderer, TranslationBinding, TranslationBindingCommand, TranslationBindingInstruction, TranslationBindingRenderer, TranslationBindInstructionType, TranslationInstructionType, } from '@aurelia/i18n';
+import { Registration } from '@aurelia/kernel';
 import { IExpressionParser } from '@aurelia/expression-parser';
-import { AttributePattern, BindingCommand, StandardConfiguration, IAttributePattern, IPlatform, IAttrMapper, InstructionType, BindingMode, } from '@aurelia/runtime-html';
+import { StandardConfiguration, IPlatform, BindingMode, AttrMapper, } from '@aurelia/runtime-html';
+import { AttributePattern, BindingCommand, IAttributePattern, IAttrMapper, InstructionType, } from '@aurelia/template-compiler';
 import { assert, PLATFORM, createContainer } from '@aurelia/testing';
 const noopLocator = {};
 describe('i18n/t/translation-renderer.spec.ts', function () {
@@ -134,7 +136,7 @@ describe('i18n/t/translation-renderer.spec.ts', function () {
         function createFixture(aliases) {
             aliases = aliases || [];
             aliases = aliases.map(alias => `${alias}.bind`);
-            const container = createContainer().register(BindingCommand.define({ name: 't.bind', aliases }, TranslationBindBindingCommand));
+            const container = createContainer().register(BindingCommand.define({ name: 't.bind', aliases }, TranslationBindBindingCommand), Registration.singleton(IAttrMapper, AttrMapper));
             if (!aliases.includes('t.bind')) {
                 aliases.push('t.bind');
             }

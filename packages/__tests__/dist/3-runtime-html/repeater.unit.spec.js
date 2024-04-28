@@ -1,6 +1,7 @@
 import { AccessScopeExpression, ForOfStatement, BindingIdentifier } from '@aurelia/expression-parser';
 import { DirtyChecker } from '@aurelia/runtime';
-import { Scope, BindingContext, Repeat, Controller, CustomElementDefinition, PropertyBindingRenderer, TextBindingRenderer, TextBindingInstruction, NodeObserverLocator, IRendering, ITemplateCompiler, } from '@aurelia/runtime-html';
+import { Scope, BindingContext, Repeat, Controller, CustomElementDefinition, PropertyBindingRenderer, TextBindingRenderer, NodeObserverLocator, IRendering, } from '@aurelia/runtime-html';
+import { TextBindingInstruction, ITemplateCompiler, } from '@aurelia/template-compiler';
 import { eachCartesianJoin, assert, PLATFORM, createContainer, } from '@aurelia/testing';
 import { Registration } from '@aurelia/kernel';
 describe(`3-runtime-html/repeater.unit.spec.ts`, function () {

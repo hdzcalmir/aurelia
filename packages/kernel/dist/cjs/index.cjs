@@ -328,6 +328,12 @@ const d = {
     defer: deferRegistration
 };
 
+const createImplementationRegister = function(t) {
+    return function register(e) {
+        e.register(singletonRegistration(this, this), aliasToRegistration(this, t));
+    };
+};
+
 const p = "au:annotation";
 
 const getAnnotationKeyFor = (t, e) => {
@@ -735,7 +741,7 @@ class Container {
         let r;
         let n;
         for ([n, r] of e.entries()) {
-            r.dispose();
+            r.dispose?.();
             t.delete(n);
         }
         e.clear();
@@ -2017,6 +2023,8 @@ exports.allResources = z;
 exports.bound = bound;
 
 exports.camelCase = c;
+
+exports.createImplementationRegister = createImplementationRegister;
 
 exports.createResolver = createResolver;
 

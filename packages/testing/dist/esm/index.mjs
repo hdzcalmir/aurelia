@@ -4,7 +4,9 @@ import { noop as n, isArrayIndex as i, DI as r, Registration as a, kebabCase as 
 
 import { IObserverLocator as c, IDirtyChecker as f, INodeObserverLocator as d } from "@aurelia/runtime";
 
-import { StandardConfiguration as p, IPlatform as m, ITemplateCompiler as g, CustomElement as b, InstructionType as v, CustomAttribute as y, Aurelia as x, astEvaluate as $, astAssign as w, astBind as E, astUnbind as k, Scope as S } from "@aurelia/runtime-html";
+import { StandardConfiguration as p, IPlatform as m, CustomElement as g, CustomAttribute as b, Aurelia as v, astEvaluate as y, astAssign as x, astBind as $, astUnbind as w, Scope as E } from "@aurelia/runtime-html";
+
+import { ITemplateCompiler as k, InstructionType as S } from "@aurelia/template-compiler";
 
 import { BrowserPlatform as C } from "@aurelia/platform-browser";
 
@@ -936,7 +938,7 @@ class TestContext {
     }
     get templateCompiler() {
         if (this.t === void 0) {
-            this.t = this.container.get(g);
+            this.t = this.container.get(k);
         }
         return this.t;
     }
@@ -2243,14 +2245,14 @@ function nextAncestor(e, t) {
 }
 
 function nextNode(e, t) {
-    return b.for(t, {
+    return g.for(t, {
         optional: true
     })?.shadowRoot?.firstChild ?? t.firstChild ?? t.nextSibling ?? nextAncestor(e, t);
 }
 
 function getVisibleText(e, t) {
     let n = "";
-    let i = b.for(e, {
+    let i = g.for(e, {
         optional: true
     })?.shadowRoot?.firstChild ?? e.firstChild;
     while (i !== null) {
@@ -2264,46 +2266,46 @@ function getVisibleText(e, t) {
 
 function instructionTypeName(e) {
     switch (e) {
-      case v.textBinding:
+      case S.textBinding:
         return "textBinding";
 
-      case v.interpolation:
+      case S.interpolation:
         return "interpolation";
 
-      case v.propertyBinding:
+      case S.propertyBinding:
         return "propertyBinding";
 
-      case v.iteratorBinding:
+      case S.iteratorBinding:
         return "iteratorBinding";
 
-      case v.listenerBinding:
+      case S.listenerBinding:
         return "listenerBinding";
 
-      case v.refBinding:
+      case S.refBinding:
         return "refBinding";
 
-      case v.stylePropertyBinding:
+      case S.stylePropertyBinding:
         return "stylePropertyBinding";
 
-      case v.setProperty:
+      case S.setProperty:
         return "setProperty";
 
-      case v.setAttribute:
+      case S.setAttribute:
         return "setAttribute";
 
-      case v.hydrateElement:
+      case S.hydrateElement:
         return "hydrateElement";
 
-      case v.hydrateAttribute:
+      case S.hydrateAttribute:
         return "hydrateAttribute";
 
-      case v.hydrateTemplateController:
+      case S.hydrateTemplateController:
         return "hydrateTemplateController";
 
-      case v.hydrateLetElement:
+      case S.hydrateLetElement:
         return "hydrateLetElement";
 
-      case v.letBinding:
+      case S.letBinding:
         return "letBinding";
 
       default:
@@ -2869,7 +2871,7 @@ function notMatch(e, t, n) {
 }
 
 function isCustomElementType(e, t) {
-    if (!b.isType(e)) {
+    if (!g.isType(e)) {
         innerFail({
             actual: false,
             expected: true,
@@ -2881,7 +2883,7 @@ function isCustomElementType(e, t) {
 }
 
 function isCustomAttributeType(e, t) {
-    if (!y.isType(e)) {
+    if (!b.isType(e)) {
         innerFail({
             actual: false,
             expected: true,
@@ -4329,7 +4331,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
     const {platform: o, observerLocator: l} = r;
     const c = r.doc.body.appendChild(r.createElement("div"));
     const f = c.appendChild(r.createElement("app"));
-    const d = new x(s);
+    const d = new v(s);
     const p = typeof t === "function" ? t : t == null ? class {} : function $Ctor() {
         Object.setPrototypeOf(t, $Ctor.prototype);
         return t;
@@ -4337,26 +4339,26 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
     const m = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
     if (p !== t && t != null) {
         m.forEach((e => {
-            O.define(b.getAnnotation(t, e, null), p, e);
+            O.define(g.getAnnotation(t, e, null), p, e);
         }));
     }
-    const g = b.isType(p) ? b.getDefinition(p) : {};
-    const v = b.define({
-        ...g,
-        name: g.name ?? "app",
+    const b = g.isType(p) ? g.getDefinition(p) : {};
+    const y = g.define({
+        ...b,
+        name: b.name ?? "app",
         template: e
     }, p);
-    if (s.has(v, true)) {
+    if (s.has(y, true)) {
         throw new Error("Container of the context contains instance of the application root component. " + "Consider using a different class, or context as it will likely cause surprises in tests.");
     }
-    const y = s.get(v);
+    const x = s.get(y);
     let $ = void 0;
     function startFixtureApp() {
         if (i) {
             try {
                 d.app({
                     host: f,
-                    component: y,
+                    component: x,
                     ...a
                 });
                 k.startPromise = $ = d.start();
@@ -4564,7 +4566,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
             this.testHost = c;
             this.appHost = f;
             this.au = d;
-            this.component = y;
+            this.component = x;
             this.observerLocator = l;
             this.logger = s.get(u);
             this.hJsx = hJsx.bind(r.doc);
@@ -4589,7 +4591,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
         start() {
             return (E ??= d.app({
                 host: f,
-                component: y
+                component: x
             })).start();
         }
         tearDown() {
@@ -4840,19 +4842,19 @@ class MockTracingExpression {
     }
     evaluate(...e) {
         this.trace("evaluate", ...e);
-        return $(this.inner, ...e);
+        return y(this.inner, ...e);
     }
     assign(...e) {
         this.trace("assign", ...e);
-        return w(this.inner, ...e);
+        return x(this.inner, ...e);
     }
     bind(...e) {
         this.trace("bind", ...e);
-        E(this.inner, ...e);
+        $(this.inner, ...e);
     }
     unbind(...e) {
         this.trace("unbind", ...e);
-        k(this.inner, ...e);
+        w(this.inner, ...e);
     }
     accept(...e) {
         this.trace("accept", ...e);
@@ -5298,7 +5300,7 @@ function createObserverLocator(e) {
 }
 
 function createScopeForTest(e = {}, t, n) {
-    return t ? S.fromParent(S.create(t), e) : S.create(e, null, n);
+    return t ? E.fromParent(E.create(t), e) : E.create(e, null, n);
 }
 
 class Call {

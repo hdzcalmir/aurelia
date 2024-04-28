@@ -552,6 +552,11 @@ const Registration = {
      */
     defer: deferRegistration,
 };
+const createImplementationRegister = function (key) {
+    return function register(container) {
+        container.register(singletonRegistration(this, this), aliasToRegistration(this, key));
+    };
+};
 
 const annoBaseName = 'au:annotation';
 /** @internal */
@@ -1065,7 +1070,7 @@ class Container {
         let disposable;
         let key;
         for ([key, disposable] of disposableResolvers.entries()) {
-            disposable.dispose();
+            disposable.dispose?.();
             resolvers.delete(key);
         }
         disposableResolvers.clear();
@@ -2649,5 +2654,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ConsoleSink, ContainerConfiguration, DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, DefaultResolver, EventAggregator, IContainer, IEventAggregator, ILogConfig, ILogEventFactory, ILogger, IModuleLoader, IPlatform, IServiceLocator, ISink, InstanceProvider, LogConfig, LogLevel, LoggerConfiguration, ModuleItem, Protocol, Registrable, Registration, aliasedResourcesRegistry, all, allResources, bound, camelCase, createResolver, emptyArray, emptyObject, factory, firstDefined, format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, getPrototypeChain, getResourceKeyFor, ignore, inject, isArrayIndex, isNativeFunction, kebabCase, lazy, mergeArrays, newInstanceForScope, newInstanceOf, noop, onResolve, onResolveAll, optional, optionalResource, own, pascalCase, resolve, resource, resourceBaseName, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, DefaultResolver, EventAggregator, IContainer, IEventAggregator, ILogConfig, ILogEventFactory, ILogger, IModuleLoader, IPlatform, IServiceLocator, ISink, InstanceProvider, LogConfig, LogLevel, LoggerConfiguration, ModuleItem, Protocol, Registrable, Registration, aliasedResourcesRegistry, all, allResources, bound, camelCase, createImplementationRegister, createResolver, emptyArray, emptyObject, factory, firstDefined, format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, getPrototypeChain, getResourceKeyFor, ignore, inject, isArrayIndex, isNativeFunction, kebabCase, lazy, mergeArrays, newInstanceForScope, newInstanceOf, noop, onResolve, onResolveAll, optional, optionalResource, own, pascalCase, resolve, resource, resourceBaseName, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.dev.mjs.map

@@ -230,7 +230,7 @@ class DelegateBindingInstruction {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
-        this.type = runtimeHtml.InstructionType.listenerBinding;
+        this.type = 'dl';
     }
 }
 class DelegateListenerOptions {
@@ -256,6 +256,7 @@ class DelegateListenerBinding {
          * @internal
          */
         this.boundFn = true;
+        this.self = false;
         this.l = locator;
         this._options = options;
     }
@@ -273,6 +274,12 @@ class DelegateListenerBinding {
         return result;
     }
     handleEvent(event) {
+        if (this.self) {
+            /* istanbul ignore next */
+            if (this.target !== event.composedPath()[0]) {
+                return;
+            }
+        }
         this.callSource(event);
     }
     bind(_scope) {

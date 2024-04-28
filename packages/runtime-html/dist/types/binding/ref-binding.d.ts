@@ -9,6 +9,7 @@ export interface RefBinding extends IAstEvaluator, IObserverLocatorBasedConnecta
 export declare class RefBinding implements IBinding, ISubscriber, ICollectionSubscriber {
     ast: IsBindingBehavior;
     target: object;
+    static mix: <T extends import("@aurelia/kernel").Constructable<IBinding>>(this: T) => void;
     isBound: boolean;
     constructor(locator: IServiceLocator, ast: IsBindingBehavior, target: object);
     bind(_scope: Scope): void;

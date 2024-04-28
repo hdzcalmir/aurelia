@@ -1,6 +1,7 @@
 import { DI, resolve, Registration } from '@aurelia/kernel';
 import { getCollectionObserver } from '@aurelia/runtime';
-import { IRenderLocation, IInstruction, IController, IViewFactory, IPlatform, Scope, BindingContext, astEvaluate } from '@aurelia/runtime-html';
+import { IRenderLocation, IController, IViewFactory, IPlatform, Scope, BindingContext, astEvaluate } from '@aurelia/runtime-html';
+import { IInstruction } from '@aurelia/template-compiler';
 import { BindingBehaviorExpression, ValueConverterExpression } from '@aurelia/expression-parser';
 
 const IDomRenderer = /*@__PURE__*/ DI.createInterface('IDomRenderer');

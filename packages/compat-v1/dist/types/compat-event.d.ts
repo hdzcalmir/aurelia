@@ -1,6 +1,7 @@
 import { IContainer } from '@aurelia/kernel';
 import { IObserverLocatorBasedConnectable } from '@aurelia/runtime';
-import { type BindingCommandInstance, type ICommandBuildInfo, IInstruction, type BindingCommandStaticAuDefinition, type IAstEvaluator, type IBinding, type Scope } from '@aurelia/runtime-html';
+import { type IAstEvaluator, type IBinding, type Scope } from '@aurelia/runtime-html';
+import { type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, type BindingCommandStaticAuDefinition } from '@aurelia/template-compiler';
 import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 import type { IDisposable, IServiceLocator } from '@aurelia/kernel';
 export declare const eventPreventDefaultBehavior: {
@@ -14,11 +15,11 @@ export declare class DelegateBindingCommand implements BindingCommandInstance {
     get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
-export declare class DelegateBindingInstruction {
+export declare class DelegateBindingInstruction implements IInstruction {
     from: string | IsBindingBehavior;
     to: string;
     preventDefault: boolean;
-    readonly type: "hb";
+    readonly type = "dl";
     constructor(from: string | IsBindingBehavior, to: string, preventDefault: boolean);
 }
 export declare class DelegateListenerOptions {
@@ -37,6 +38,7 @@ export declare class DelegateListenerBinding implements IBinding {
     eventDelegator: IEventDelegator;
     isBound: boolean;
     private handler;
+    self: boolean;
     constructor(locator: IServiceLocator, ast: IsBindingBehavior, target: Node, targetEvent: string, eventDelegator: IEventDelegator, options: DelegateListenerOptions);
     callSource(event: Event): unknown;
     handleEvent(event: Event): void;

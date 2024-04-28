@@ -1,5 +1,6 @@
 import { DI, resolve, IEventAggregator, camelCase, toArray, Registration } from '../../../kernel/dist/native-modules/index.mjs';
-import { BindingMode, State, ISignaler, BindingBehavior, mixinAstEvaluator, mixingBindingLimited, astEvaluate, astUnbind, CustomElement, astBind, AttributePattern, AttrSyntax, renderer, ValueConverter, BindingCommand, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { BindingMode, State, ISignaler, BindingBehavior, mixinAstEvaluator, mixingBindingLimited, astEvaluate, astUnbind, CustomElement, astBind, renderer, ValueConverter, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { AttributePattern, AttrSyntax, BindingCommand } from '../../../template-compiler/dist/native-modules/index.mjs';
 import { ValueConverterExpression, CustomExpression } from '../../../expression-parser/dist/native-modules/index.mjs';
 import { nowrap, connectable, AccessorType } from '../../../runtime/dist/native-modules/index.mjs';
 import i18next from 'i18next';

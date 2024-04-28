@@ -1,5 +1,6 @@
 import { DI, resolve, IEventAggregator, camelCase, toArray, Registration } from '@aurelia/kernel';
-import { BindingMode, State, ISignaler, BindingBehavior, mixinAstEvaluator, mixingBindingLimited, astEvaluate, astUnbind, CustomElement, astBind, AttributePattern, AttrSyntax, renderer, ValueConverter, BindingCommand, AppTask } from '@aurelia/runtime-html';
+import { BindingMode, State, ISignaler, BindingBehavior, mixinAstEvaluator, mixingBindingLimited, astEvaluate, astUnbind, CustomElement, astBind, renderer, ValueConverter, AppTask } from '@aurelia/runtime-html';
+import { AttributePattern, AttrSyntax, BindingCommand } from '@aurelia/template-compiler';
 import { ValueConverterExpression, CustomExpression } from '@aurelia/expression-parser';
 import { nowrap, connectable, AccessorType } from '@aurelia/runtime';
 import i18next from 'i18next';

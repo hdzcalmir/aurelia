@@ -13,20 +13,19 @@ export { Aurelia, IAurelia, type IEnhancementConfig,
 type ISinglePageAppConfig as ISinglePageApp, type ISinglePageAppConfig, } from './aurelia';
 export { type IAppRootConfig, AppRoot, IAppRoot, } from './app-root';
 export { type TaskSlot, AppTask, IAppTask, type AppTaskCallback, type AppTaskCallbackNoArg, } from './app-task';
-export { AttrSyntax, IAttributeParser, attributePattern, type AttributePatternDefinition, IAttributePattern, type AttributePatternKind, AttributePattern, Interpretation, ISyntaxInterpreter, AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, DotSeparatedAttributePattern, RefAttributePattern, } from './resources/attribute-pattern';
-export { bindingCommand, type ICommandBuildInfo, BindingCommand, type BindingCommandInstance, type PartialBindingCommandDefinition, type BindingCommandStaticAuDefinition, BindingCommandDefinition, type BindingCommandKind, type BindingCommandType, DefaultBindingCommand, ForBindingCommand, FromViewBindingCommand, OneTimeBindingCommand, ToViewBindingCommand, TwoWayBindingCommand, TriggerBindingCommand, CaptureBindingCommand, AttrBindingCommand, ClassBindingCommand, StyleBindingCommand, } from './resources/binding-command';
-export { IAttrMapper, type IsTwoWayPredicate, } from './compiler/attribute-mapper';
 export { BindingMode, type IBindingController, type IBinding, type IRateLimitOptions, } from './binding/interfaces-bindings';
 export { IFlushQueue, FlushQueue, type IFlushable, BindingTargetSubscriber, mixinAstEvaluator, mixingBindingLimited, mixinUseScope, } from './binding/binding-utils';
 export { ListenerBinding, ListenerBindingOptions, type IModifiedEventHandler, IEventModifier, EventModifier, EventModifierRegistration, IModifiedEventHandlerCreator, IKeyMapping, } from './binding/listener-binding';
-export { AttributeBinding, } from './binding/attribute';
+export { AttributeBinding, } from './binding/attribute-binding';
 export { InterpolationBinding, InterpolationPartBinding, } from './binding/interpolation-binding';
 export { ContentBinding, } from './binding/content-binding';
 export { LetBinding, } from './binding/let-binding';
 export { PropertyBinding, } from './binding/property-binding';
 export { RefBinding, } from './binding/ref-binding';
 export { Scope, BindingContext, type IBindingContext, type IOverrideContext } from './binding/scope';
-export { IRenderer, ITemplateCompiler, type ICompliationInstruction, renderer, HydrateAttributeInstruction, HydrateElementInstruction, HydrateTemplateController, InterpolationInstruction, IteratorBindingInstruction, LetBindingInstruction, HydrateLetElementInstruction, RefBindingInstruction, SetPropertyInstruction, AttributeBindingInstruction, ListenerBindingInstruction, PropertyBindingInstruction, SetAttributeInstruction, SetClassAttributeInstruction, SetStyleAttributeInstruction, StylePropertyBindingInstruction, TextBindingInstruction, SpreadBindingInstruction, SpreadElementPropBindingInstruction, isInstruction, IInstruction, InstructionType, PropertyBindingRenderer, TextBindingRenderer, ListenerBindingRenderer, IListenerBindingOptions, LetElementRenderer, TemplateControllerRenderer, AttributeBindingRenderer, CustomAttributeRenderer, CustomElementRenderer, InterpolationBindingRenderer, IteratorBindingRenderer, MultiAttrInstruction, RefBindingRenderer, SetAttributeRenderer, SetClassAttributeRenderer, SetPropertyRenderer, SetStyleAttributeRenderer, SpreadRenderer, StylePropertyBindingRenderer, } from './renderer';
+export { IRenderer, renderer, PropertyBindingRenderer, TextBindingRenderer, ListenerBindingRenderer, IListenerBindingOptions, LetElementRenderer, TemplateControllerRenderer, AttributeBindingRenderer, CustomAttributeRenderer, CustomElementRenderer, InterpolationBindingRenderer, IteratorBindingRenderer, RefBindingRenderer, SetAttributeRenderer, SetClassAttributeRenderer, SetPropertyRenderer, SetStyleAttributeRenderer, SpreadRenderer, StylePropertyBindingRenderer, } from './renderer';
+export { AttrMapper, } from './compiler/attribute-mapper';
+export { RuntimeTemplateCompilerImplementation, } from './compiler/template-compiler';
 export { AttributeNSAccessor, } from './observation/attribute-ns-accessor';
 export { type IInputElement, CheckedObserver, } from './observation/checked-observer';
 export { ClassAttributeAccessor, } from './observation/class-attribute-accessor';
@@ -48,13 +47,14 @@ export { PromiseTemplateController, FulfilledTemplateController, PendingTemplate
 export { Focus, } from './resources/custom-attributes/focus';
 export { Portal, type PortalTarget, type PortalLifecycleCallback, } from './resources/template-controllers/portal';
 export { AuSlot, } from './resources/custom-elements/au-slot';
-export { capture, containerless, customElement, CustomElement, type CustomElementDecorator, type CustomElementKind, type CustomElementType, CustomElementDefinition, type PartialCustomElementDefinition, type ProcessContentHook, type CustomElementStaticAuDefinition, useShadowDOM, processContent, } from './resources/custom-element';
+export { capture, containerless, customElement, CustomElement, type CustomElementDecorator, type CustomElementKind, type CustomElementType, CustomElementDefinition, type PartialCustomElementDefinition, type CustomElementStaticAuDefinition, useShadowDOM, processContent, } from './resources/custom-element';
 export { AuCompose, type IDynamicComponentActivate, } from './resources/custom-elements/au-compose';
 export { ValueConverter, ValueConverterDefinition, type PartialValueConverterDefinition, type ValueConverterStaticAuDefinition, type ValueConverterKind, type ValueConverterDecorator, type ValueConverterType, type ValueConverterInstance, valueConverter, } from './resources/value-converter';
 export { ISanitizer, SanitizeValueConverter, } from './resources/value-converters/sanitize';
 export { type ConfigurationOptionsProvider, DefaultComponents, DefaultBindingSyntax, ShortHandBindingSyntax, DefaultBindingLanguage, DefaultResources, DefaultRenderers, StandardConfiguration, } from './configuration';
-export { ITemplateElementFactory } from './compiler/template-element-factory';
-export { TemplateCompiler, ITemplateCompilerHooks, TemplateCompilerHooks, templateCompilerHooks, type IAttributeBindablesInfo, type IElementBindablesInfo, IBindablesInfoResolver, } from './compiler/template-compiler';
+export { 
+/** @deprecated - Should be imported directly from `aurelia` or `@aurelia/template-compiler` package */
+BindingCommand, } from '@aurelia/template-compiler';
 export { type PartialChildrenDefinition, children, ChildrenBinding, } from './templating/children';
 export { Controller, isCustomElementController, isCustomElementViewModel, type ViewModelKind, State, type ControllerVisitor, type IViewModel, IController, type IComponentController, type IContextualCustomElementController, type IControllerElementHydrationInstruction, type IHydratableController, IHydrationContext, type IDryCustomElementController, type ICustomAttributeController, type IHydratedController, type IHydratedComponentController, type IHydratedParentController, type ICompiledCustomElementController, type ICustomElementController, type ICustomElementViewModel, type ICustomAttributeViewModel, type IHydratedCustomElementViewModel, type IHydratedCustomAttributeViewModel, type ISyntheticView, } from './templating/controller';
 export { type IAuSlotProjections, type IAuSlot, type IAuSlotSubscriber, IAuSlotWatcher, IAuSlotsInfo, type PartialSlottedDefinition, AuSlotsInfo, slotted, } from './templating/controller.projection';

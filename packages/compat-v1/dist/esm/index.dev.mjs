@@ -1,5 +1,5 @@
 import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astVisit, Unparser, IExpressionParser } from '@aurelia/expression-parser';
-import { astEvaluate, astAssign, astBind, astUnbind, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, renderer, IListenerBindingOptions, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, Scope, ExpressionWatcher } from '@aurelia/runtime-html';
+import { astEvaluate, astAssign, astBind, astUnbind, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, renderer, IListenerBindingOptions, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, Scope, ExpressionWatcher } from '@aurelia/runtime-html';
 import { camelCase, resolve, DI } from '@aurelia/kernel';
 import { IObserverLocator, getCollectionObserver } from '@aurelia/runtime';
 
@@ -226,7 +226,7 @@ class DelegateBindingInstruction {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
-        this.type = InstructionType.listenerBinding;
+        this.type = 'dl';
     }
 }
 class DelegateListenerOptions {
@@ -252,6 +252,7 @@ class DelegateListenerBinding {
          * @internal
          */
         this.boundFn = true;
+        this.self = false;
         this.l = locator;
         this._options = options;
     }
@@ -269,6 +270,12 @@ class DelegateListenerBinding {
         return result;
     }
     handleEvent(event) {
+        if (this.self) {
+            /* istanbul ignore next */
+            if (this.target !== event.composedPath()[0]) {
+                return;
+            }
+        }
         this.callSource(event);
     }
     bind(_scope) {

@@ -1,6 +1,7 @@
 import { DI, Registration, resolve, optional, all, ILogger, lazy, camelCase, IContainer, Protocol } from '../../../kernel/dist/native-modules/index.mjs';
-import { Scope, IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, astEvaluate, BindingBehavior, astBind, astUnbind, AttrSyntax, renderer, AppTask, LifecycleHooks, ILifecycleHooks } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { Scope, IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, astEvaluate, BindingBehavior, astBind, astUnbind, renderer, AppTask, LifecycleHooks, ILifecycleHooks } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { AccessorType, connectable } from '../../../runtime/dist/native-modules/index.mjs';
+import { AttrSyntax } from '../../../template-compiler/dist/native-modules/index.mjs';
 
 /** @internal */
 const createInterface = DI.createInterface;
@@ -479,7 +480,7 @@ class StateBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.kind === 'element') {
+            if (value === '' && info.def.type === 'custom-element') {
                 value = camelCase(target);
             }
             target = info.bindable.name;

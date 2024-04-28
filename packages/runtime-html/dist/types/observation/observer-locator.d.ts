@@ -1,6 +1,5 @@
 import { IServiceLocator } from '@aurelia/kernel';
 import { INodeObserverLocator, IObserverLocator } from '@aurelia/runtime';
-import type { IContainer } from '@aurelia/kernel';
 import type { IAccessor, IObserver, ICollectionObserver, CollectionKind } from '@aurelia/runtime';
 import type { INode } from '../dom';
 export interface INodeObserverConfigBase {
@@ -45,7 +44,7 @@ export interface INodeObserverConfig {
     readonly default?: unknown;
 }
 export declare class NodeObserverLocator implements INodeObserverLocator {
-    static register(container: IContainer): void;
+    static register: <C extends import("@aurelia/kernel").Constructable>(this: C, container: import("@aurelia/kernel").IContainer) => void;
     /**
      * Indicates whether the node observer will be allowed to use dirty checking for a property it doesn't know how to observe
      */

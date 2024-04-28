@@ -1,5 +1,6 @@
 import { IExpressionParser } from '@aurelia/expression-parser';
-import { BindingMode, AuSlot, CustomElement, CustomElementDefinition, InstructionType, DefaultBindingSyntax, PropertyBindingInstruction, TextBindingInstruction, } from '@aurelia/runtime-html';
+import { BindingMode, AuSlot, CustomElement, CustomElementDefinition, DefaultBindingSyntax, } from '@aurelia/runtime-html';
+import { InstructionType, PropertyBindingInstruction, TextBindingInstruction, } from '@aurelia/template-compiler';
 import { assert, TestContext } from '@aurelia/testing';
 export function createAttribute(name, value) {
     const attr = document.createAttribute(name);
@@ -180,7 +181,7 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
             const { sut, container } = createFixture();
             container.register(AuSlot, ...customElements);
             const compiledDefinition = sut.compile(CustomElementDefinition.create({ name: 'my-ce', template }, class MyCe {
-            }), container, { projections: null });
+            }), container);
             const allInstructions = compiledDefinition.instructions.flat();
             for (const expectedSlotInfo of expectedSlotInfos) {
                 const actualInstruction = allInstructions.find((i) => i.type === InstructionType.hydrateElement
@@ -224,7 +225,7 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
         });
         const parser = container.get(IExpressionParser);
         return {
-            ...sut.compile(templateDefinition, container, { projections: null }),
+            ...sut.compile(templateDefinition, container),
             createProp: ({ from, to, mode = BindingMode.toView }) => new PropertyBindingInstruction(parser.parse(from, 'IsProperty'), to, mode),
             createTextInterpolation: ({ from }) => new TextBindingInstruction(parser.parse(from, 'IsProperty')),
         };

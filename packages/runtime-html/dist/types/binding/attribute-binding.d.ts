@@ -25,4 +25,4 @@ export declare class AttributeBinding implements IBinding, ISubscriber, ICollect
     bind(_scope: Scope): void;
     unbind(): void;
 }
-//# sourceMappingURL=attribute.d.ts.map
+//# sourceMappingURL=attribute-binding.d.ts.map

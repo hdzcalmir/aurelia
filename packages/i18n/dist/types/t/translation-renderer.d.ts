@@ -1,7 +1,8 @@
 import { IObserverLocator } from '@aurelia/runtime';
 import { IExpressionParser, CustomExpression, IsBindingBehavior } from '@aurelia/expression-parser';
-import { IHydratableController, AttrSyntax, IPlatform, IAttrMapper, ICommandBuildInfo } from '@aurelia/runtime-html';
-import type { BindingMode, BindingCommandInstance } from '@aurelia/runtime-html';
+import { IHydratableController, IPlatform } from '@aurelia/runtime-html';
+import { AttrSyntax, type IAttrMapper, type ICommandBuildInfo, type BindingCommandInstance } from '@aurelia/template-compiler';
+import type { BindingMode } from '@aurelia/runtime-html';
 export declare const TranslationInstructionType = "tt";
 export declare class TranslationAttributePattern {
     [key: string]: ((rawName: string, rawValue: string, parts: readonly string[]) => AttrSyntax);

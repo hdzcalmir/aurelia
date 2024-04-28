@@ -6,6 +6,7 @@ var kernel = require('@aurelia/kernel');
 var runtimeHtml = require('@aurelia/runtime-html');
 var metadata = require('@aurelia/metadata');
 var routeRecognizer = require('@aurelia/route-recognizer');
+var templateCompiler = require('@aurelia/template-compiler');
 
 let Endpoint$1 = class Endpoint {
     constructor(router, 
@@ -8296,7 +8297,7 @@ class ViewportCustomElement {
         this.container = kernel.resolve(kernel.IContainer);
         this.ea = kernel.resolve(kernel.IEventAggregator);
         this.parentViewport = kernel.resolve(ParentViewport);
-        this.instruction = kernel.resolve(runtimeHtml.IInstruction);
+        this.instruction = kernel.resolve(templateCompiler.IInstruction);
     }
     hydrated(controller) {
         this.controller = controller;

@@ -1,7 +1,7 @@
 import { type IContainer, type IServiceLocator } from '@aurelia/kernel';
 import { IAccessor, IObserverLocator, IObserverLocatorBasedConnectable } from '@aurelia/runtime';
-import { type BindingCommandInstance, ICommandBuildInfo, IController, IHydratableController, IInstruction, IPlatform, type IAstEvaluator, type IBinding, Scope } from '@aurelia/runtime-html';
-import { BindingCommandStaticAuDefinition } from '@aurelia/runtime-html/dist/types/resources/binding-command';
+import { IController, IHydratableController, IPlatform, type IAstEvaluator, type IBinding, Scope } from '@aurelia/runtime-html';
+import { type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, type BindingCommandStaticAuDefinition } from '@aurelia/template-compiler';
 import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 export declare const callSyntax: {
     register(container: IContainer): void;

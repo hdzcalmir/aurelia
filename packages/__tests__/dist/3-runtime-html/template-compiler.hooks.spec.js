@@ -37,7 +37,8 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { Registration } from '@aurelia/kernel';
-import { CustomElement, CustomElementDefinition, ITemplateCompilerHooks, templateCompilerHooks, TemplateCompilerHooks, } from '@aurelia/runtime-html';
+import { CustomElement, CustomElementDefinition, } from '@aurelia/runtime-html';
+import { ITemplateCompilerHooks, templateCompilerHooks, TemplateCompilerHooks, } from '@aurelia/template-compiler';
 import { assert, createFixture, TestContext } from '@aurelia/testing';
 describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
     it('compiles with child hooks', async function () {
@@ -342,7 +343,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
                     template.setAttribute('data-hello', 'world');
                 }
             }));
-            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), container, null);
+            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), container);
             assert.strictEqual(hookCallCount, 1);
             assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
         });
@@ -362,7 +363,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
                     template.setAttribute('data-world', 'hello');
                 }
             }));
-            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), container, null);
+            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), container);
             assert.strictEqual(hookCallCount, 2);
             assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
             assert.strictEqual(definition.template.getAttribute('data-world'), 'hello');
@@ -371,7 +372,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
             const template = `<template></template>`;
             const { container, sut } = createFixture();
             container.register(Registration.instance(ITemplateCompilerHooks, {}));
-            assert.doesNotThrow(() => sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), container, null));
+            assert.doesNotThrow(() => sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), container));
         });
         it('invokes hooks with resources semantic - only leaf', function () {
             const template = `<template></template>`;
@@ -387,7 +388,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
             const leafContainer = middleContainer.createChild();
             middleContainer.register(createResolver());
             leafContainer.register(createResolver());
-            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), leafContainer, null);
+            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), leafContainer);
             assert.strictEqual(hookCallCount, 1);
             assert.strictEqual(definition.template.getAttribute('data-hello'), 'world');
         });
@@ -406,7 +407,7 @@ describe('3-runtime-html/template-compiler.hooks.spec.ts', function () {
             container.register(createResolver('root'));
             middleContainer.register(createResolver('middle'));
             leafContainer.register(createResolver('leaf'));
-            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), leafContainer, null);
+            const definition = sut.compile(CustomElementDefinition.create({ name: 'lorem-ipsum', template }), leafContainer);
             assert.strictEqual(hookCallCount, 2);
             assert.strictEqual(definition.template.getAttribute('data-root'), 'root');
             assert.strictEqual(definition.template.getAttribute('data-middle'), null);

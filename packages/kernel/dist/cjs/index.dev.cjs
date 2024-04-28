@@ -556,6 +556,11 @@ const Registration = {
      */
     defer: deferRegistration,
 };
+const createImplementationRegister = function (key) {
+    return function register(container) {
+        container.register(singletonRegistration(this, this), aliasToRegistration(this, key));
+    };
+};
 
 const annoBaseName = 'au:annotation';
 /** @internal */
@@ -1069,7 +1074,7 @@ class Container {
         let disposable;
         let key;
         for ([key, disposable] of disposableResolvers.entries()) {
-            disposable.dispose();
+            disposable.dispose?.();
             resolvers.delete(key);
         }
         disposableResolvers.clear();
@@ -2684,6 +2689,7 @@ exports.all = all;
 exports.allResources = allResources;
 exports.bound = bound;
 exports.camelCase = camelCase;
+exports.createImplementationRegister = createImplementationRegister;
 exports.createResolver = createResolver;
 exports.emptyArray = emptyArray;
 exports.emptyObject = emptyObject;

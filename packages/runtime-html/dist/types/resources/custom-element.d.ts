@@ -1,34 +1,17 @@
 import type { Constructable, IContainer, ResourceType, PartialResourceDefinition, Key, ResourceDefinition, InterfaceSymbol } from '@aurelia/kernel';
-import type { BindableDefinition, PartialBindableDefinition } from '../bindable';
+import type { BindableDefinition } from '../bindable';
 import type { ICustomElementViewModel, ICustomElementController } from '../templating/controller';
-import type { IPlatform } from '../platform';
-import type { IInstruction } from '../renderer';
+import { ProcessContentHook, type IElementComponentDefinition, IInstruction } from '@aurelia/template-compiler';
 import type { IWatchDefinition } from '../watch';
 import { type IResourceKind } from './resources-shared';
-export type PartialCustomElementDefinition<TBindables extends string = string> = PartialResourceDefinition<{
-    readonly cache?: '*' | number;
-    readonly capture?: boolean | ((attr: string) => boolean);
-    readonly template?: null | string | Node;
-    readonly instructions?: readonly (readonly IInstruction[])[];
-    readonly dependencies?: readonly Key[];
+export type PartialCustomElementDefinition<TBindables extends string = string> = PartialResourceDefinition<Omit<IElementComponentDefinition<TBindables>, 'type'> & {
+    readonly cache?: number | '*';
     /**
      * An semi internal property used to signal the rendering process not to try to compile the template again
      */
     readonly injectable?: InterfaceSymbol | null;
-    readonly needsCompile?: boolean;
-    readonly surrogates?: readonly IInstruction[];
-    readonly bindables?: Record<TBindables, true | Omit<PartialBindableDefinition, 'name'>> | (TBindables | PartialBindableDefinition & {
-        name: TBindables;
-    })[];
-    readonly containerless?: boolean;
-    readonly shadowOptions?: {
-        mode: 'open' | 'closed';
-    } | null;
-    readonly hasSlots?: boolean;
     readonly enhance?: boolean;
     readonly watches?: IWatchDefinition[];
-    readonly processContent?: ProcessContentHook | null;
-    readonly Type?: Constructable;
 }>;
 export type CustomElementStaticAuDefinition<TBindables extends string = string> = PartialCustomElementDefinition<TBindables> & {
     type: 'custom-element';
@@ -112,7 +95,7 @@ export type CustomElementDecorator = <T extends Constructable>(Type: T, context:
 export declare function customElement(definition: PartialCustomElementDefinition): CustomElementDecorator;
 export declare function customElement(name: string): CustomElementDecorator;
 export declare function customElement(nameOrDef: string | PartialCustomElementDefinition): CustomElementDecorator;
-type ShadowOptions = Pick<PartialCustomElementDefinition, 'shadowOptions'>['shadowOptions'];
+type ShadowOptions = PartialCustomElementDefinition['shadowOptions'];
 /**
  * Decorator: Indicates that the custom element should render its view in ShadowDOM.
  */
@@ -137,8 +120,8 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     readonly cache: '*' | number;
     readonly capture: boolean | ((attr: string) => boolean);
     readonly template: null | string | Node;
-    readonly instructions: readonly (readonly IInstruction[])[];
-    readonly dependencies: readonly Key[];
+    readonly instructions: readonly IInstruction[][];
+    readonly dependencies: Key[];
     readonly injectable: InterfaceSymbol<C> | null;
     readonly needsCompile: boolean;
     readonly surrogates: readonly IInstruction[];
@@ -154,7 +137,7 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     readonly enhance: boolean;
     readonly watches: IWatchDefinition[];
     readonly processContent: ProcessContentHook | null;
-    get kind(): 'element';
+    get type(): 'custom-element';
     private constructor();
     static create(def: PartialCustomElementDefinition, Type?: null): CustomElementDefinition;
     static create(name: string, Type: CustomElementType): CustomElementDefinition;
@@ -165,7 +148,6 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
 }
 export declare const CustomElement: Readonly<CustomElementKind>;
 type DecoratorFactoryMethod = (target: Function, context: ClassMethodDecoratorContext) => void;
-export type ProcessContentHook = (node: HTMLElement, platform: IPlatform, data: Record<PropertyKey, unknown>) => boolean | void;
 export declare function processContent(hook: ProcessContentHook | string | symbol): CustomElementDecorator;
 export declare function processContent(): DecoratorFactoryMethod;
 /**

@@ -44,4 +44,5 @@ export declare class FlushQueue implements IFlushQueue {
  * For internal use only
  */
 export declare const mixingBindingLimited: <T extends IBinding>(target: Constructable<T>, getMethodName: (binding: T, opts: IRateLimitOptions) => keyof T) => void;
+export declare const createPrototypeMixer: (mixer: () => void) => <T extends Constructable<IBinding>>(this: T) => void;
 //# sourceMappingURL=binding-utils.d.ts.map
