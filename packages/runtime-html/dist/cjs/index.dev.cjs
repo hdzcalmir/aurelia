@@ -3975,19 +3975,12 @@ class Rendering {
         const compiler = container.get(templateCompiler.ITemplateCompiler);
         const compiledMap = this._compilationCache;
         let compiled = compiledMap.get(definition);
-        if (definition.needsCompile !== false) {
-            if (compiled == null) {
-                compiledMap.set(definition, compiled = CustomElementDefinition.create(compiler.compile(definition, container)));
-            }
-            else {
-                // todo:
-                // should only register if the compiled def resolution is string
-                // instead of direct resources
-                container.register(...compiled.dependencies);
-            }
-            return compiled;
+        if (compiled == null) {
+            compiledMap.set(definition, compiled = CustomElementDefinition.create(definition.needsCompile
+                ? compiler.compile(definition, container)
+                : definition));
         }
-        return definition;
+        return compiled;
     }
     getViewFactory(definition, container) {
         return new ViewFactory(container, CustomElementDefinition.getOrCreate(definition));
@@ -4698,8 +4691,8 @@ class Controller {
                     definition = getElementDefinition(viewModel.constructor);
                 }
                 catch (ex) {
-                    // eslint-disable-next-line no-console
-                    console.error(`[DEV:aurelia] Custom element definition not found for creating a controller with host: <${host.nodeName} /> and component ${JSON.stringify(viewModel)}`);
+                    // eslint-disable-next-line
+                    console.error(`[DEV:aurelia] Custom element definition not found for creating a controller with host: <${host.nodeName} /> and component ${viewModel.constructor.name || '(Anonymous) class'}`);
                     throw ex;
                 }
             }
@@ -6156,14 +6149,13 @@ class CustomElementDefinition {
         const $Type = this.Type;
         const key = typeof aliasName === 'string' ? getElementKeyFrom(aliasName) : this.key;
         const aliases = this.aliases;
-        // todo: warn if alreay has key
-        if (!container.has(key, false)) {
-            container.register(container.has($Type, false) ? null : singletonRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getElementKeyFrom(alias))));
-        } /* istanbul ignore next */
-        else {
+        /* istanbul ignore next */
+        if (container.has(key, false)) {
             // eslint-disable-next-line no-console
-            console.warn(`[DEV:aurelia] ${createMappedError(153 /* ErrorNames.element_existed */, this.name)}`);
+            console.warn(createMappedError(153 /* ErrorNames.element_existed */, this.name));
+            return;
         }
+        container.register(container.has($Type, false) ? null : singletonRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getElementKeyFrom(alias))));
     }
     toString() {
         return `au:ce:${this.name}`;

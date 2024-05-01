@@ -2,7 +2,7 @@ import { I18nConfiguration, TranslationBinding, TranslationParametersAttributePa
 import { DI, Registration } from '@aurelia/kernel';
 import { IExpressionParser } from '@aurelia/expression-parser';
 import { IObserverLocator, } from '@aurelia/runtime';
-import { StandardConfiguration, IPlatform, BindingMode, AttrMapper, } from '@aurelia/runtime-html';
+import { IPlatform, BindingMode, AttrMapper, } from '@aurelia/runtime-html';
 import { BindingCommand, IAttributePattern, IAttrMapper, InstructionType, } from '@aurelia/template-compiler';
 import { assert, PLATFORM, TestContext } from '@aurelia/testing';
 const noopLocator = {};
@@ -53,7 +53,7 @@ describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
     describe('TranslationParametersBindingRenderer', function () {
         function createFixture() {
             const { container } = TestContext.create();
-            container.register(StandardConfiguration, I18nConfiguration);
+            container.register(I18nConfiguration);
             return container;
         }
         it('instantiated with instruction type', function () {

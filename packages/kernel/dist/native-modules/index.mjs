@@ -522,19 +522,21 @@ class Container {
                     const t = n.$au;
                     const e = (n.aliases ?? M).concat(t.aliases ?? M);
                     let r = `${p}:${t.type}:${t.name}`;
-                    if (!this.has(r, false)) {
+                    if (this.has(r, false)) {
+                        continue;
+                    }
+                    aliasToRegistration(n, r).register(this);
+                    if (!this.has(n, false)) {
+                        singletonRegistration(n, n).register(this);
+                    }
+                    i = 0;
+                    l = e.length;
+                    for (;i < l; ++i) {
+                        r = `${p}:${t.type}:${e[i]}`;
+                        if (this.has(r, false)) {
+                            continue;
+                        }
                         aliasToRegistration(n, r).register(this);
-                        if (!this.has(n, false)) {
-                            singletonRegistration(n, n).register(this);
-                        }
-                        i = 0;
-                        l = e.length;
-                        for (;i < l; ++i) {
-                            r = `${p}:${t.type}:${e[i]}`;
-                            if (!this.has(r, false)) {
-                                aliasToRegistration(n, r).register(this);
-                            }
-                        }
                     }
                 } else {
                     singletonRegistration(n, n).register(this);

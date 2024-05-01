@@ -46,6 +46,7 @@ const errorsMap = {
     [21 /* ErrorNames.invalid_module_transform_input */]: `Invalid module transform input: {{0}}. Expected Promise or Object.`,
     // [ErrorNames.module_loader_received_null]: `Module loader received null/undefined input. Expected Object.`,
     [22 /* ErrorNames.invalid_inject_decorator_usage */]: `The @inject decorator on the target ('{{0}}') type '{{1}}' is not supported.`,
+    [23 /* ErrorNames.resource_key_already_registered */]: `Resource key '{{0}}' has already been registered.`,
 };
 const getMessageByCode = (name, ...details) => {
     let cooked = errorsMap[name];
@@ -784,19 +785,29 @@ class Container {
                     const $au = current.$au;
                     const aliases = (current.aliases ?? emptyArray).concat($au.aliases ?? emptyArray);
                     let key = `${resourceBaseName}:${$au.type}:${$au.name}`;
-                    if (!this.has(key, false)) {
-                        aliasToRegistration(current, key).register(this);
-                        if (!this.has(current, false)) {
-                            singletonRegistration(current, current).register(this);
+                    if (this.has(key, false)) {
+                        {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                            globalThis.console?.warn(createMappedError(7 /* ErrorNames.resource_already_exists */, key));
                         }
-                        j = 0;
-                        jj = aliases.length;
-                        for (; j < jj; ++j) {
-                            key = `${resourceBaseName}:${$au.type}:${aliases[j]}`;
-                            if (!this.has(key, false)) {
-                                aliasToRegistration(current, key).register(this);
+                        continue;
+                    }
+                    aliasToRegistration(current, key).register(this);
+                    if (!this.has(current, false)) {
+                        singletonRegistration(current, current).register(this);
+                    }
+                    j = 0;
+                    jj = aliases.length;
+                    for (; j < jj; ++j) {
+                        key = `${resourceBaseName}:${$au.type}:${aliases[j]}`;
+                        if (this.has(key, false)) {
+                            {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                                globalThis.console?.warn(createMappedError(7 /* ErrorNames.resource_already_exists */, key));
                             }
+                            continue;
                         }
+                        aliasToRegistration(current, key).register(this);
                     }
                 }
                 else {

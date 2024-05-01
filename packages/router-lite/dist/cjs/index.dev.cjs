@@ -3943,7 +3943,7 @@ class ComponentAgent {
         this._routeNode = _routeNode;
         this._ctx = _ctx;
         this._routerOptions = _routerOptions;
-        this._logger = _ctx.container.get(kernel.ILogger).scopeTo(`ComponentAgent<${_ctx._friendlyPath}>`);
+        this._logger = _controller.container.get(kernel.ILogger).scopeTo(`ComponentAgent<${_ctx._friendlyPath}>`);
         trace(this._logger, 3050 /* Events.caCreated */);
         const lifecycleHooks = _controller.lifecycleHooks;
         this._canLoadHooks = (lifecycleHooks.canLoad ?? []).map(x => x.instance);
@@ -4369,7 +4369,7 @@ class RouteContext {
     _createComponentAgent(hostController, routeNode) {
         trace(this._logger, 3159 /* Events.rcCreateCa */, routeNode);
         this._hostControllerProvider.prepare(hostController);
-        const container = this.container;
+        const container = this.container.createChild({ inheritParentResources: true });
         const componentInstance = container.invoke(routeNode.component.Type);
         // this is the point where we can load the delayed (non-static) child route configuration by calling the getRouteConfig
         const task = this._childRoutesConfigured

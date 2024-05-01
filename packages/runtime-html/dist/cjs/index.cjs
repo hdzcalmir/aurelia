@@ -3446,15 +3446,10 @@ class Rendering {
         const s = e.get(i.ITemplateCompiler);
         const n = this.nt;
         let r = n.get(t);
-        if (t.needsCompile !== false) {
-            if (r == null) {
-                n.set(t, r = CustomElementDefinition.create(s.compile(t, e)));
-            } else {
-                e.register(...r.dependencies);
-            }
-            return r;
+        if (r == null) {
+            n.set(t, r = CustomElementDefinition.create(t.needsCompile ? s.compile(t, e) : t));
         }
-        return t;
+        return r;
     }
     getViewFactory(t, e) {
         return new ViewFactory(e, CustomElementDefinition.getOrCreate(t));
@@ -5323,9 +5318,11 @@ class CustomElementDefinition {
         const s = this.Type;
         const i = typeof e === "string" ? getElementKeyFrom(e) : this.key;
         const n = this.aliases;
-        if (!t.has(i, false)) {
-            t.register(t.has(s, false) ? null : z(s, s), G(s, i), ...n.map((t => G(s, getElementKeyFrom(t)))));
+        if (t.has(i, false)) {
+            console.warn(createMappedError(153, this.name));
+            return;
         }
+        t.register(t.has(s, false) ? null : z(s, s), G(s, i), ...n.map((t => G(s, getElementKeyFrom(t)))));
     }
     toString() {
         return `au:ce:${this.name}`;

@@ -39,7 +39,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { kebabCase, } from '@aurelia/kernel';
 import { Interpolation, AccessScopeExpression, PrimitiveLiteralExpression, IExpressionParser, } from '@aurelia/expression-parser';
-import { bindable, BindingMode, customAttribute, CustomAttribute, customElement, CustomElement, CustomElementDefinition, If, DefaultBindingSyntax, } from '@aurelia/runtime-html';
+import { bindable, BindingMode, customAttribute, CustomAttribute, customElement, CustomElement, CustomElementDefinition, DefaultBindingSyntax, } from '@aurelia/runtime-html';
 import { TemplateCompilerHooks, HydrateElementInstruction, InstructionType as HTT, InstructionType as TT, HydrateAttributeInstruction, AttrSyntax, attributePattern, PropertyBindingInstruction, InterpolationInstruction, InstructionType, IteratorBindingInstruction, RefBindingInstruction, AttributeBindingInstruction, SetPropertyInstruction, } from '@aurelia/template-compiler';
 import { assert, TestContext, verifyBindingInstructionsEqual, } from '@aurelia/testing';
 describe('3-runtime-html/template-compiler.spec.ts', function () {
@@ -1601,7 +1601,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 assert.deepStrictEqual(definition.instructions[0][0].captures, [new AttrSyntax('...$attrs', '', '', '...$attrs')]);
             });
             it('does not capture template controller', function () {
-                const { sut, container } = createFixture(TestContext.create(), MyElement, If);
+                const { sut, container } = createFixture(TestContext.create(), MyElement);
                 const definition = sut.compile({
                     name: 'rando',
                     template: '<my-element if.bind>',

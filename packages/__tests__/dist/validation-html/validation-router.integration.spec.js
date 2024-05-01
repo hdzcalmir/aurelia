@@ -39,7 +39,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { newInstanceForScope, Registration, resolve } from '@aurelia/kernel';
 import { IRouter, route, RouterConfiguration } from '@aurelia/router-lite';
-import { Aurelia, CustomAttribute, CustomElement, customElement, IHistory, ILocation, IPlatform, StandardConfiguration } from '@aurelia/runtime-html';
+import { Aurelia, CustomAttribute, CustomElement, customElement, IHistory, ILocation, IPlatform, } from '@aurelia/runtime-html';
 import { assert, MockBrowserHistoryLocation, TestContext } from '@aurelia/testing';
 import { IValidationRules } from '@aurelia/validation';
 import { IValidationController, ValidationHtmlConfiguration } from '@aurelia/validation-html';
@@ -149,7 +149,7 @@ describe('validation-html/validation-router.integration.spec.ts', function () {
             const au = new Aurelia(container);
             const mockBrowserHistoryLocation = new MockBrowserHistoryLocation();
             await au
-                .register(StandardConfiguration, Registration.instance(IHistory, mockBrowserHistoryLocation), Registration.instance(ILocation, mockBrowserHistoryLocation), RouterConfiguration, ValidationHtmlConfiguration, delegateSyntax, ViewWithValidation, RedirectingView)
+                .register(Registration.instance(IHistory, mockBrowserHistoryLocation), Registration.instance(ILocation, mockBrowserHistoryLocation), RouterConfiguration, ValidationHtmlConfiguration, delegateSyntax, ViewWithValidation, RedirectingView)
                 .app({ host, component: App })
                 .start();
             await testFunction({ app: void 0, container, host, platform: container.get(IPlatform), ctx });
