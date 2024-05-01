@@ -23,7 +23,7 @@ import {
   resolve,
 } from '@aurelia/kernel';
 import { IRouter, IRouteViewModel, IViewportInstruction, NavigationInstruction, Params, route, RouteNode, RouterConfiguration } from '@aurelia/router-lite';
-import { Aurelia, CustomElement, customElement, IHydratedController, ILifecycleHooks, lifecycleHooks, StandardConfiguration } from '@aurelia/runtime-html';
+import { Aurelia, CustomElement, customElement, IHydratedController, ILifecycleHooks, lifecycleHooks } from '@aurelia/runtime-html';
 import { assert, TestContext } from '@aurelia/testing';
 import { TestRouterConfiguration } from './_shared/configuration.js';
 import { start } from './_shared/create-fixture.js';
@@ -74,7 +74,6 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     const { container } = ctx;
 
     container.register(
-      StandardConfiguration,
       TestRouterConfiguration.for(
         LogLevel.trace,
         [
@@ -329,11 +328,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -393,11 +389,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -479,11 +472,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -565,11 +555,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -661,11 +648,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -737,11 +721,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -811,11 +792,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -936,12 +914,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
-      Bar,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name, Bar.name])
     );
     const router = container.get(IRouter);
@@ -1045,12 +1019,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
-      Bar,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name, Bar.name])
     );
     const router = container.get(IRouter);
@@ -1152,12 +1122,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
-      Bar,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name, Bar.name])
     );
     const router = container.get(IRouter);
@@ -1298,11 +1264,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -1367,11 +1330,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -1436,11 +1396,8 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
     class Root { }
 
     const { au, container, host } = await createFixture(Root,
-      Home,
       Hook1,
       Hook2,
-      Home,
-      Foo,
       Registration.instance(IKnownScopes, [Hook1.name, Hook2.name, Home.name, Foo.name])
     );
     const router = container.get(IRouter);
@@ -1615,10 +1572,6 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
       class Root { }
 
       const { au, container } = await createFixture(Root,
-        A1,
-        A2,
-        B1,
-        B2,
         Registration.instance(IKnownScopes, [A1.name, A2.name, B1.name, B2.name])
       );
       const router = container.get(IRouter);
