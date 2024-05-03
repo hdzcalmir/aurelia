@@ -1,5 +1,5 @@
 import { firstDefined, getResourceKeyFor, mergeArrays, resource, resourceBaseName, ResourceType } from '@aurelia/kernel';
-import { Scope } from '@aurelia/runtime';
+import { type Scope } from '../binding/scope';
 import { isFunction, isString, objectFreeze } from '../utilities';
 import { aliasRegistration, singletonRegistration } from '../utilities-di';
 import { defineMetadata, getAnnotationKeyFor, getMetadata, hasMetadata } from '../utilities-metadata';
@@ -104,7 +104,7 @@ const getBehaviorAnnotation = <K extends keyof PartialBindingBehaviorDefinition>
 
 const getBindingBehaviorKeyFrom = (name: string): string => `${bbBaseName}:${name}`;
 
-export const BindingBehavior = objectFreeze<BindingBehaviorKind>({
+export const BindingBehavior = /*@__PURE__*/ objectFreeze<BindingBehaviorKind>({
   name: bbBaseName,
   keyFrom: getBindingBehaviorKeyFrom,
   isType<T>(value: T): value is (T extends Constructable ? BindingBehaviorType<T> : never) {

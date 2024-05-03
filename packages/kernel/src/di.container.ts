@@ -8,7 +8,6 @@ import {
   ResolverStrategy,
   getDependencies,
   type IContainerConfiguration,
-  type IDisposableResolver,
   type IFactory,
   type IRegistry,
   type IResolver,
@@ -29,7 +28,7 @@ import type {
 } from './di.resolvers';
 import { ErrorNames, createMappedError, logError, logWarn } from './errors';
 import { isNativeFunction } from './functions';
-import { type Class, type Constructable, type IDisposable } from './interfaces';
+import { type Class, type Constructable } from './interfaces';
 import { emptyArray } from './platform';
 import { ResourceDefinition, StaticResourceType, resourceBaseName, type ResourceType } from './resource';
 import { getMetadata, isFunction, isString, objectFreeze } from './utilities';
@@ -111,7 +110,7 @@ export class Container implements IContainer {
    *
    * @internal
    */
-  private readonly _resolvers: Map<Key, IResolver | IDisposableResolver>;
+  private readonly _resolvers: Map<Key, IResolver>;
   /**
    * A map of Factory per Constructor (Type) of this container tree.
    *
@@ -124,10 +123,10 @@ export class Container implements IContainer {
   /**
    * A map of all resources resolver by their key
    */
-  private res: Record<string, IResolver | IDisposableResolver | undefined>;
+  private res: Record<string, IResolver | undefined>;
 
   /** @internal */
-  private readonly _disposableResolvers: Map<Key, IDisposableResolver> = new Map<Key, IDisposableResolver>();
+  private readonly _disposableResolvers = new Map<Key, IResolver>();
 
   public get parent(): IContainer | null {
     return this._parent as (IContainer | null);
@@ -198,21 +197,29 @@ export class Container implements IContainer {
           const $au = current.$au;
           const aliases = (current.aliases ?? emptyArray).concat($au.aliases ?? emptyArray);
           let key = `${resourceBaseName}:${$au.type}:${$au.name}`;
-          if (!this.has(key, false)) {
-            aliasToRegistration(current, key).register(this);
-            if (!this.has(current, false)) {
-              singletonRegistration(current, current).register(this);
+          if (this.has(key, false)) {
+            if (__DEV__) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+              (globalThis as any).console?.warn(createMappedError(ErrorNames.resource_already_exists, key));
             }
-            j = 0;
-            jj = aliases.length;
-            for (; j < jj; ++j) {
-              key = `${resourceBaseName}:${$au.type}:${aliases[j]}`;
-              if (!this.has(key, false)) {
-                aliasToRegistration(current, key).register(this);
+            continue;
+          }
+          aliasToRegistration(current, key).register(this);
+          if (!this.has(current, false)) {
+            singletonRegistration(current, current).register(this);
+          }
+          j = 0;
+          jj = aliases.length;
+          for (; j < jj; ++j) {
+            key = `${resourceBaseName}:${$au.type}:${aliases[j]}`;
+            if (this.has(key, false)) {
+              if (__DEV__) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                (globalThis as any).console?.warn(createMappedError(ErrorNames.resource_already_exists, key));
               }
+              continue;
             }
-          } else {
-            // dev message for registering static resources that the key already registered
+            aliasToRegistration(current, key).register(this);
           }
         } else {
           singletonRegistration(current, current as Constructable).register(this);
@@ -242,7 +249,7 @@ export class Container implements IContainer {
     return this;
   }
 
-  public registerResolver<K extends Key, T = K>(key: K, resolver: IResolver<T>, isDisposable: boolean = false): IResolver<T> {
+  public registerResolver<K extends Key, T extends IResolver<K>>(key: K, resolver: T, isDisposable: boolean = false): T {
     validateKey(key);
 
     const resolvers = this._resolvers;
@@ -259,11 +266,11 @@ export class Container implements IContainer {
     } else if (result instanceof Resolver && result._strategy === ResolverStrategy.array) {
       (result._state as IResolver[]).push(resolver);
     } else {
-      resolvers.set(key, new Resolver(key, ResolverStrategy.array, [result, resolver]));
+      resolvers.set(key, new Resolver(key, ResolverStrategy.array, [result, resolver]) as IResolver<K>);
     }
 
     if (isDisposable) {
-      this._disposableResolvers.set(key, resolver as IDisposableResolver<T>);
+      this._disposableResolvers.set(key, resolver);
     }
 
     return resolver;
@@ -514,11 +521,11 @@ export class Container implements IContainer {
     const resolvers = this._resolvers;
     const disposableResolvers = this._disposableResolvers;
 
-    let disposable: IDisposable;
+    let disposable: IResolver;
     let key: Key;
 
     for ([key, disposable] of disposableResolvers.entries()) {
-      disposable.dispose();
+      disposable.dispose?.();
       resolvers.delete(key);
     }
     disposableResolvers.clear();

@@ -16,8 +16,8 @@ import { IExpressionParser, IsBindingBehavior, AccessScopeExpression } from '@au
 import {
   ICoercionConfiguration,
   IObserverLocator,
-  Scope,
 } from '@aurelia/runtime';
+import { Scope } from '../binding/scope';
 import { convertToRenderLocation, setRef } from '../dom';
 import { IPlatform } from '../platform';
 import { CustomAttributeDefinition, getAttributeDefinition } from '../resources/custom-attribute';
@@ -42,11 +42,9 @@ import type {
 } from '@aurelia/runtime';
 import type { INode, INodeSequence, IRenderLocation } from '../dom';
 import { ErrorNames, createMappedError } from '../errors';
-import type { IInstruction } from '../renderer';
-import type { AttrSyntax } from '../resources/attribute-pattern';
+import type { IInstruction, AttrSyntax } from '@aurelia/template-compiler';
 import type { PartialCustomElementDefinition } from '../resources/custom-element';
 import type { IWatchDefinition, IWatcherCallback } from '../watch';
-import type { IAuSlotProjections } from './controller.projection';
 import type { LifecycleHooksLookup } from './lifecycle-hooks';
 import type { IViewFactory } from './view';
 import { IBinding } from '../binding/interfaces-bindings';
@@ -125,11 +123,11 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
   public _vmHooks: HooksDefinition;
 
   /** @internal */
-  public _vm: BindingContext<C> | null;
-  public get viewModel(): BindingContext<C> | null {
+  public _vm: ControllerBindingContext<C> | null;
+  public get viewModel(): ControllerBindingContext<C> | null {
     return this._vm;
   }
-  public set viewModel(v: BindingContext<C> | null) {
+  public set viewModel(v: ControllerBindingContext<C> | null) {
     this._vm = v;
     this._vmHooks = v == null || this.vmKind === vmkSynth ? HooksDefinition.none : new HooksDefinition(v);
   }
@@ -147,7 +145,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
     /**
      * The backing viewModel. Only present for custom attributes and elements.
      */
-    viewModel: BindingContext<C> | null,
+    viewModel: ControllerBindingContext<C> | null,
     /**
      * The physical host dom node.
      *
@@ -215,8 +213,8 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
         try {
           definition = getElementDefinition(viewModel.constructor as Constructable);
         } catch (ex) {
-          // eslint-disable-next-line no-console
-          console.error(`[DEV:aurelia] Custom element definition not found for creating a controller with host: <${host.nodeName} /> and component ${JSON.stringify(viewModel)}`);
+          // eslint-disable-next-line
+          console.error(`[DEV:aurelia] Custom element definition not found for creating a controller with host: <${host.nodeName} /> and component ${viewModel.constructor.name || '(Anonymous) class'}`);
           throw ex;
         }
       }
@@ -230,7 +228,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
       /* vmKind         */vmkCe,
       /* definition     */definition,
       /* viewFactory    */null,
-      /* viewModel      */viewModel as BindingContext<C>,
+      /* viewModel      */viewModel as ControllerBindingContext<C>,
       /* host           */host,
       /* location       */location,
     );
@@ -291,7 +289,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
       /* vmKind         */vmkCa,
       /* definition     */definition,
       /* viewFactory    */null,
-      /* viewModel      */viewModel as BindingContext<C>,
+      /* viewModel      */viewModel as ControllerBindingContext<C>,
       /* host           */host,
       /* location       */null
     );
@@ -386,13 +384,13 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
     // - Controller.compileChildren
     // This keeps hydration synchronous while still allowing the composition root compile hooks to do async work.
     if (hydrationInst == null || hydrationInst.hydrate !== false) {
-      this._hydrate(hydrationInst);
+      this._hydrate();
       this._hydrateChildren();
     }
   }
 
   /** @internal */
-  public _hydrate(hydrationInst: IControllerElementHydrationInstruction | null): void {
+  public _hydrate(): void {
     if (this._lifecycleHooks!.hydrating != null) {
       this._lifecycleHooks!.hydrating.forEach(callHydratingHook, this);
     }
@@ -403,7 +401,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
     }
 
     const definition = this.definition!;
-    const compiledDef = this._compiledDef = this._rendering.compile(definition as CustomElementDefinition, this.container, hydrationInst);
+    const compiledDef = this._compiledDef = this._rendering.compile(definition as CustomElementDefinition, this.container);
     const shadowOptions = compiledDef.shadowOptions;
     const hasSlots = compiledDef.hasSlots;
     const containerless = compiledDef.containerless;
@@ -492,7 +490,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
 
   /** @internal */
   private _hydrateSynthetic(): void {
-    this._compiledDef = this._rendering.compile(this.viewFactory!.def!, this.container, null);
+    this._compiledDef = this._rendering.compile(this.viewFactory!.def, this.container);
     this._rendering.render(
       /* controller */this as ISyntheticView,
       /* targets    */(this.nodes = this._rendering.createNodes(this._compiledDef)).findTargets(),
@@ -1214,7 +1212,7 @@ export class Controller<C extends IViewModel = IViewModel> implements IControlle
 
 const controllerLookup: WeakMap<object, Controller> = new WeakMap();
 
-export type BindingContext<C extends IViewModel> = Required<ICompileHooks> & Required<IActivationHooks<IHydratedController | null>> & C;
+export type ControllerBindingContext<C extends IViewModel> = Required<ICompileHooks> & Required<IActivationHooks<IHydratedController | null>> & C;
 
 const targetNone = 0;
 const targetHost = 1;
@@ -1840,7 +1838,7 @@ export interface IControllerElementHydrationInstruction {
    * @internal
    */
   readonly hydrate?: boolean;
-  readonly projections: IAuSlotProjections | null;
+  readonly projections: Record<string, PartialCustomElementDefinition> | null;
   /**
    * A list of captured attributes/binding in raw format
    */

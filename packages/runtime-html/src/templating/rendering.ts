@@ -4,18 +4,37 @@ import { IObserverLocator } from '@aurelia/runtime';
 
 import { FragmentNodeSequence, INode, INodeSequence } from '../dom';
 import { IPlatform } from '../platform';
-import { ICompliationInstruction, IInstruction, IRenderer, ITemplateCompiler } from '../renderer';
+import { IRenderer } from '../renderer';
 import { CustomElementDefinition, PartialCustomElementDefinition } from '../resources/custom-element';
 import { createLookup, isString } from '../utilities';
 import { IViewFactory, ViewFactory } from './view';
 import type { IHydratableController } from './controller';
 import { createInterface } from '../utilities-di';
 import { ErrorNames, createMappedError } from '../errors';
+import { IInstruction, ITemplateCompiler } from '@aurelia/template-compiler';
 
 export const IRendering = /*@__PURE__*/createInterface<IRendering>('IRendering', x => x.singleton(Rendering));
-export interface IRendering extends Rendering { }
+export interface IRendering {
+  get renderers(): Record<string, IRenderer>;
 
-export class Rendering {
+  compile(
+    definition: CustomElementDefinition,
+    container: IContainer,
+  ): CustomElementDefinition;
+
+  getViewFactory(definition: PartialCustomElementDefinition, container: IContainer): IViewFactory;
+
+  createNodes(definition: CustomElementDefinition): INodeSequence;
+
+  render(
+    controller: IHydratableController,
+    targets: ArrayLike<INode>,
+    definition: CustomElementDefinition,
+    host: INode | null | undefined,
+  ): void;
+}
+
+export class Rendering implements IRendering {
   /** @internal */
   private readonly _ctn: IContainer;
   /** @internal */
@@ -35,7 +54,13 @@ export class Rendering {
 
   public get renderers(): Record<string, IRenderer> {
     return this._renderers ??= this._ctn.getAll(IRenderer, false).reduce((all, r) => {
-      all[r.target] = r;
+      if (__DEV__) {
+        if (all[r.target] !== void 0) {
+          // eslint-disable-next-line no-console
+          console.warn(`[DEV:aurelia] Renderer for target ${r.target} already exists.`);
+        }
+      }
+      all[r.target] ??= r;
       return all;
     }, createLookup<IRenderer>());
   }
@@ -49,31 +74,23 @@ export class Rendering {
   }
 
   public compile(
-    definition: PartialCustomElementDefinition,
+    definition: CustomElementDefinition,
     container: IContainer,
-    compilationInstruction: ICompliationInstruction | null,
   ): CustomElementDefinition {
-    if (definition.needsCompile !== false) {
-      const compiledMap = this._compilationCache;
-      const compiler = container.get(ITemplateCompiler);
-      let compiled = compiledMap.get(definition);
-      if (compiled == null) {
-        // const fullDefinition = CustomElementDefinition.getOrCreate(definition);
-        compiledMap.set(definition, compiled = compiler.compile(
-          CustomElementDefinition.getOrCreate(definition),
-          container,
-          compilationInstruction
-        ));
-      } else {
-        // todo:
-        // should only register if the compiled def resolution is string
-        // instead of direct resources
-        container.register(...compiled.dependencies);
-      }
-      return compiled;
+    const compiler = container.get(ITemplateCompiler);
+    const compiledMap = this._compilationCache;
+    let compiled = compiledMap.get(definition);
+    if (compiled == null) {
+      compiledMap.set(definition, compiled = CustomElementDefinition.create(
+        definition.needsCompile
+          ? compiler.compile(
+            definition,
+            container,
+          )
+          : definition
+      ));
     }
-
-    return definition as CustomElementDefinition;
+    return compiled;
   }
 
   public getViewFactory(definition: PartialCustomElementDefinition, container: IContainer): IViewFactory {
@@ -94,7 +111,7 @@ export class Rendering {
     } else {
       const template = definition.template;
       let tpl: HTMLTemplateElement;
-      if (template === null) {
+      if (template == null) {
         fragment = null;
       } else if (template instanceof p.Node) {
         if (template.nodeName === 'TEMPLATE') {

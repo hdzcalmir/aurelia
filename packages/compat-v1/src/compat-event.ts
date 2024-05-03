@@ -1,13 +1,9 @@
 import { DI, IContainer, resolve } from '@aurelia/kernel';
-import { IObserverLocatorBasedConnectable, type Scope } from '@aurelia/runtime';
+import { IObserverLocatorBasedConnectable } from '@aurelia/runtime';
 import {
   AppTask,
-  type BindingCommandInstance,
-  type ICommandBuildInfo,
   IEventTarget,
   type IHydratableController,
-  IInstruction,
-  InstructionType,
   IRenderer,
   mixinAstEvaluator,
   mixinUseScope,
@@ -15,13 +11,19 @@ import {
   renderer,
   IPlatform,
   IListenerBindingOptions,
-  type BindingCommandStaticAuDefinition,
   astBind,
   astEvaluate,
   astUnbind,
   type IAstEvaluator,
   type IBinding,
+  type Scope,
 } from '@aurelia/runtime-html';
+import {
+  type BindingCommandInstance,
+  type ICommandBuildInfo,
+  type IInstruction,
+  type BindingCommandStaticAuDefinition,
+} from '@aurelia/template-compiler';
 import { createLookup, ensureExpression, etIsFunction, isFunction } from './utilities';
 import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 
@@ -72,9 +74,9 @@ export class DelegateBindingCommand implements BindingCommandInstance {
 }
 
 /** @internal */
-export class ListenerBindingRenderer implements IRenderer {
+export const ListenerBindingRenderer = /*@__PURE__*/ renderer(class ListenerBindingRenderer implements IRenderer {
 
-  public readonly target!: 'dl';
+  public readonly target = 'dl';
   /** @internal */
   private readonly _eventDelegator = resolve(IEventDelegator);
 
@@ -95,11 +97,10 @@ export class ListenerBindingRenderer implements IRenderer {
       new DelegateListenerOptions(instruction.preventDefault),
     ));
   }
-}
-renderer('dl')(ListenerBindingRenderer, null!);
+}, null!);
 
-export class DelegateBindingInstruction {
-  public readonly type = InstructionType.listenerBinding;
+export class DelegateBindingInstruction implements IInstruction {
+  public readonly type = 'dl';
 
   public constructor(
     public from: string | IsBindingBehavior,
@@ -119,6 +120,12 @@ export interface DelegateListenerBinding extends IAstEvaluator, IObserverLocator
  * Listener binding. Handle event binding between view and view model
  */
 export class DelegateListenerBinding implements IBinding {
+  static {
+    mixinUseScope(DelegateListenerBinding);
+    mixingBindingLimited(DelegateListenerBinding, () => 'callSource');
+    mixinAstEvaluator(true, true)(DelegateListenerBinding);
+  }
+
   public isBound: boolean = false;
 
   /** @internal */
@@ -138,6 +145,8 @@ export class DelegateListenerBinding implements IBinding {
    * @internal
    */
   public readonly boundFn = true;
+
+  public self: boolean = false;
 
   public constructor(
     locator: IServiceLocator,
@@ -171,6 +180,12 @@ export class DelegateListenerBinding implements IBinding {
   }
 
   public handleEvent(event: Event): void {
+    if (this.self) {
+      /* istanbul ignore next */
+      if (this.target !== event.composedPath()[0]) {
+        return;
+      }
+    }
     this.callSource(event);
   }
 
@@ -208,10 +223,6 @@ export class DelegateListenerBinding implements IBinding {
     this.handler = null!;
   }
 }
-
-mixinUseScope(DelegateListenerBinding);
-mixingBindingLimited(DelegateListenerBinding, () => 'callSource');
-mixinAstEvaluator(true, true)(DelegateListenerBinding);
 
 const defaultOptions: AddEventListenerOptions = {
   capture: false,

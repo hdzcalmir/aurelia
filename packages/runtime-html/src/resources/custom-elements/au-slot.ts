@@ -1,16 +1,15 @@
-import { Scope } from '@aurelia/runtime';
+import { Scope } from '../../binding/scope';
 import { IRenderLocation } from '../../dom';
 import { CustomElementDefinition, CustomElementStaticAuDefinition, elementTypeName } from '../custom-element';
-import { IInstruction } from '../../renderer';
 import { IHydrationContext } from '../../templating/controller';
 import { IRendering } from '../../templating/rendering';
 import { registerResolver } from '../../utilities-di';
 import { createMutationObserver, isElement } from '../../utilities-dom';
 
+import { IInstruction, type HydrateElementInstruction } from '@aurelia/template-compiler';
 import { IContainer, InstanceProvider, Writable, emptyArray, onResolve, resolve } from '@aurelia/kernel';
 import type { ControllerVisitor, ICustomElementController, ICustomElementViewModel, IHydratedController, IHydratedParentController, ISyntheticView } from '../../templating/controller';
 import type { IViewFactory } from '../../templating/view';
-import type { HydrateElementInstruction } from '../../renderer';
 import { type IAuSlot, type IAuSlotSubscriber, IAuSlotWatcher, defaultSlotName, auslotAttr } from '../../templating/controller.projection';
 
 let emptyTemplate: CustomElementDefinition;
@@ -165,9 +164,20 @@ export class AuSlot implements ICustomElementViewModel, IAuSlot {
 
   public binding(
     _initiator: IHydratedController,
-    _parent: IHydratedParentController,
+    parent: IHydratedParentController,
   ): void | Promise<void> {
-    this._parentScope = this.$controller.scope.parent!;
+    // if this <au-slot> was created by another au slot, the controller hierarchy will be like this:
+    // C(au-slot)#1 --> C(synthetic)#1 --> C(au-slot)#2 --> C(synthetic)#2
+    //
+    // C(synthetic)#2 is what will provide the content for C(au-slot)#1
+    // but C(au-slot)#1 is what will provide the $host value for the content of C(au-slot)#2
+    //
+    // because of this structure, walk 2 level of controller at once to find the right parent scope for $host value
+    while (parent.vmKind === 'synthetic' && parent.parent?.viewModel instanceof AuSlot) {
+      parent = parent.parent.parent as IHydratedParentController;
+    }
+    this._parentScope = parent.scope;
+
     let outerScope: Scope;
     if (this._hasProjection) {
       // if there is a projection,

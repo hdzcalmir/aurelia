@@ -16,12 +16,12 @@ import type {
   IObserverLocator,
   IObserverLocatorBasedConnectable,
   ISubscriber,
-  Scope
 } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import type { IPlatform } from '../platform';
 import { isArray, safeString } from '../utilities';
 import type { BindingMode, IBinding, IBindingController } from './interfaces-bindings';
-import { mixinUseScope, mixingBindingLimited, mixinAstEvaluator } from './binding-utils';
+import { mixinUseScope, mixingBindingLimited, mixinAstEvaluator, createPrototypeMixer } from './binding-utils';
 import { IsExpression } from '@aurelia/expression-parser';
 
 const queueTaskOptions: QueueTaskOptions = {
@@ -36,6 +36,14 @@ export interface ContentBinding extends IAstEvaluator, IServiceLocator, IObserve
  */
 
 export class ContentBinding implements IBinding, ISubscriber, ICollectionSubscriber {
+  /** @internal */
+  public static mix = /*@__PURE__*/ createPrototypeMixer(() => {
+    mixinUseScope(ContentBinding);
+    mixingBindingLimited(ContentBinding, () => 'updateTarget');
+    connectable(ContentBinding, null!);
+    mixinAstEvaluator(void 0, false)(ContentBinding);
+  });
+
   public isBound: boolean = false;
 
   // at runtime, mode may be overriden by binding behavior
@@ -216,8 +224,3 @@ export class ContentBinding implements IBinding, ISubscriber, ICollectionSubscri
     task?.cancel();
   }
 }
-
-mixinUseScope(ContentBinding);
-mixingBindingLimited(ContentBinding, () => 'updateTarget');
-connectable(ContentBinding, null!);
-mixinAstEvaluator(void 0, false)(ContentBinding);

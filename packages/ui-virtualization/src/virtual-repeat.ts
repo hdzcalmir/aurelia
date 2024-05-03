@@ -1,27 +1,29 @@
 import { resolve } from "@aurelia/kernel";
 import type { ITask } from '@aurelia/platform';
 import {
-  Scope,
   Collection,
   getCollectionObserver,
   IndexMap,
-  BindingContext,
-  type IOverrideContext,
 } from '@aurelia/runtime';
 import {
   astEvaluate,
-  IInstruction,
+  Scope,
+  type IOverrideContext,
+  BindingContext,
   IController,
   IViewFactory,
-  HydrateTemplateController,
   IHydratedComponentController,
-  IteratorBindingInstruction,
   ICustomAttributeViewModel,
   ISyntheticView,
   IRenderLocation,
   IPlatform,
-  CustomAttributeStaticAuDefinition,
+  type CustomAttributeStaticAuDefinition,
 } from '@aurelia/runtime-html';
+import {
+  IInstruction,
+  HydrateTemplateController,
+  IteratorBindingInstruction,
+} from '@aurelia/template-compiler';
 import {
   unwrapExpression,
 } from "./utilities-repeat";

@@ -1,7 +1,7 @@
 import { connectable, ISubscriber } from '@aurelia/runtime';
 import { astAssign, astBind, astEvaluate, astUnbind, IAstEvaluator } from '../ast.eval';
 import { activating } from '../templating/controller';
-import { BindingTargetSubscriber, IFlushQueue, mixinAstEvaluator, mixinUseScope, mixingBindingLimited } from './binding-utils';
+import { BindingTargetSubscriber, IFlushQueue, createPrototypeMixer, mixinAstEvaluator, mixinUseScope, mixingBindingLimited } from './binding-utils';
 import { IBinding, fromView, oneTime, toView } from './interfaces-bindings';
 
 import type { IServiceLocator } from '@aurelia/kernel';
@@ -12,8 +12,8 @@ import type {
   IObserver,
   IObserverLocator,
   IObserverLocatorBasedConnectable,
-  Scope,
 } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import type { BindingMode, IBindingController } from './interfaces-bindings';
 import { createMappedError, ErrorNames } from '../errors';
 import { atLayout } from '../utilities';
@@ -22,6 +22,14 @@ import { type IsBindingBehavior, ForOfStatement } from '@aurelia/expression-pars
 export interface PropertyBinding extends IAstEvaluator, IServiceLocator, IObserverLocatorBasedConnectable {}
 
 export class PropertyBinding implements IBinding, ISubscriber, ICollectionSubscriber {
+  /** @internal */
+  public static mix = /*@__PURE__*/ createPrototypeMixer(() => {
+    mixinUseScope(PropertyBinding);
+    mixingBindingLimited(PropertyBinding, (propBinding: PropertyBinding) => (propBinding.mode & fromView) ? 'updateSource' : 'updateTarget');
+    connectable(PropertyBinding, null!);
+    mixinAstEvaluator(true, false)(PropertyBinding);
+  });
+
   public isBound: boolean = false;
 
   /** @internal */
@@ -199,11 +207,6 @@ export class PropertyBinding implements IBinding, ISubscriber, ICollectionSubscr
     this._targetSubscriber = subscriber;
   }
 }
-
-mixinUseScope(PropertyBinding);
-mixingBindingLimited(PropertyBinding, (propBinding: PropertyBinding) => (propBinding.mode & fromView) ? 'updateSource' : 'updateTarget');
-connectable(PropertyBinding, null!);
-mixinAstEvaluator(true, false)(PropertyBinding);
 
 let task: ITask | null = null;
 
