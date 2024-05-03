@@ -1981,6 +1981,242 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             assertText('0-0-0', { compact: true });
         });
     });
+    // bug discorverd by @MaxB on Discord
+    // https://discord.com/channels/448698263508615178/448699089513611266/1234665951467929666
+    it('passes $host value through 1 layer of <au-slot>', function () {
+        var _a;
+        let MdcFilter = (() => {
+            let _classDecorators = [customElement({
+                    name: 'mdc-filter',
+                    template: 
+                    // '<mdc-lookup><au-slot>mdc-filter ${$host | json:"mdc-lookup"}</au-slot></mdc-lookup>',
+                    '<mdc-lookup><template au-slot><au-slot>mdc-filter ${$host.option}</au-slot></template></mdc-lookup>',
+                    dependencies: [],
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var MdcFilter = _classThis = class {
+            };
+            __setFunctionName(_classThis, "MdcFilter");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MdcFilter = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MdcFilter = _classThis;
+        })();
+        let MdcLookup = (() => {
+            let _classDecorators = [customElement({
+                    name: 'mdc-lookup',
+                    template: `<au-slot repeat.for="option of options">mdc-lookup $\{option}</au-slot>`
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var MdcLookup = _classThis = class {
+                constructor() {
+                    this.options = ['option1'];
+                }
+            };
+            __setFunctionName(_classThis, "MdcLookup");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MdcLookup = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MdcLookup = _classThis;
+        })();
+        let MdcOption = (() => {
+            let _classDecorators = [customElement({ name: 'mdc-option', template: '<au-slot></au-slot>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var MdcOption = _classThis = class {
+            };
+            __setFunctionName(_classThis, "MdcOption");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MdcOption = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MdcOption = _classThis;
+        })();
+        const { assertHtml } = createFixture(`<mdc-filter>
+        <template au-slot>my-app>mdc-filter \${$host.option | json:'app'}</template>
+      </mdc-filter>`, class MyApp {
+        }, [MdcLookup, MdcFilter, MdcOption, (_a = class {
+                    constructor() {
+                        this.toView = (v, tag = '') => { console.log({ ctor: `${tag}:${v?.constructor.name ?? '<undefined>'}` }); return v; };
+                    }
+                },
+                _a.$au = { type: 'value-converter', name: 'json' },
+                _a)]);
+        assertHtml(`<mdc-filter><mdc-lookup>my-app&gt;mdc-filter option1</mdc-lookup></mdc-filter>`, { compact: true });
+    });
+    it('passes $host value through 2 layers of <au-slot>', function () {
+        let Layer0 = (() => {
+            let _classDecorators = [customElement({
+                    name: 'layer0',
+                    template: '<layer1><au-slot>layer0 ${$host.value}</au-slot></layer2>',
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Layer0 = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Layer0");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Layer0 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Layer0 = _classThis;
+        })();
+        let Layer1 = (() => {
+            let _classDecorators = [customElement({
+                    name: 'layer1',
+                    template: '<layer2><au-slot>layer1 ${$host.value}</au-slot></layer2>',
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Layer1 = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Layer1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Layer1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Layer1 = _classThis;
+        })();
+        let Layer2 = (() => {
+            let _classDecorators = [customElement({
+                    name: 'layer2',
+                    template: `<au-slot repeat.for="value of options">layer2 $\{value}</au-slot>`
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Layer2 = _classThis = class {
+                constructor() {
+                    this.options = ['option1'];
+                }
+            };
+            __setFunctionName(_classThis, "Layer2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Layer2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Layer2 = _classThis;
+        })();
+        const { assertHtml } = createFixture(`<layer0>
+        my-app>layer0 \${$host.value}
+      </layer0>`, class MyApp {
+        }, [Layer0, Layer1, Layer2]);
+        assertHtml(`<layer0><layer1><layer2> my-app&gt;layer0 option1 </layer2></layer1></layer0>`, { compact: true });
+    });
+    it('passes $host value through 3 layers of <au-slot>', function () {
+        let Layer0 = (() => {
+            let _classDecorators = [customElement({
+                    name: 'layer0',
+                    template: '<layer1><au-slot>layer0 ${$host.value}</au-slot></layer2>',
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Layer0 = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Layer0");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Layer0 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Layer0 = _classThis;
+        })();
+        let Layer1 = (() => {
+            let _classDecorators = [customElement({
+                    name: 'layer1',
+                    template: '<layer2><au-slot>layer1 ${$host.value}</au-slot></layer2>',
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Layer1 = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Layer1");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Layer1 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Layer1 = _classThis;
+        })();
+        let Layer2 = (() => {
+            let _classDecorators = [customElement({
+                    name: 'layer2',
+                    template: '<layer3><au-slot>layer 2 ${host.value}</au-slot></layer3>'
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Layer2 = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Layer2");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Layer2 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Layer2 = _classThis;
+        })();
+        let Layer3 = (() => {
+            let _classDecorators = [customElement({
+                    name: 'layer3',
+                    template: `<au-slot repeat.for="value of [1]">layer3 $\{value}</au-slot>`
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var Layer3 = _classThis = class {
+            };
+            __setFunctionName(_classThis, "Layer3");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                Layer3 = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return Layer3 = _classThis;
+        })();
+        const { assertHtml } = createFixture(`<layer0>
+        my-app>layer0 \${$host.value}
+      </layer0>`, class MyApp {
+        }, [Layer0, Layer1, Layer2, Layer3]);
+        assertHtml(`<layer0><layer1><layer2><layer3> my-app&gt;layer0 1 </layer3></layer2></layer1></layer0>`, { compact: true });
+    });
     describe('with dependency injection', function () {
         it('injects the right parent component', async function () {
             let id = 0;

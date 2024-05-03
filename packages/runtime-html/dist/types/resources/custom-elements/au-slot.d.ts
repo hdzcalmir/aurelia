@@ -17,7 +17,7 @@ export declare class AuSlot implements ICustomElementViewModel, IAuSlot {
     get nodes(): ChildNode[];
     subscribe(subscriber: IAuSlotSubscriber): void;
     unsubscribe(subscriber: IAuSlotSubscriber): void;
-    binding(_initiator: IHydratedController, _parent: IHydratedParentController): void | Promise<void>;
+    binding(_initiator: IHydratedController, parent: IHydratedParentController): void | Promise<void>;
     attaching(initiator: IHydratedController, _parent: IHydratedParentController): void | Promise<void>;
     detaching(initiator: IHydratedController, _parent: IHydratedParentController): void | Promise<void>;
     exposeChanged(v: object): void;

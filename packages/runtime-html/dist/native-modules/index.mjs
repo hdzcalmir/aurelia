@@ -8622,7 +8622,10 @@ class AuSlot {
         this.Us.delete(t);
     }
     binding(t, e) {
-        this.js = this.$controller.scope.parent;
+        while (e.vmKind === "synthetic" && e.parent?.viewModel instanceof AuSlot) {
+            e = e.parent.parent;
+        }
+        this.js = e.scope;
         let s;
         if (this.zs) {
             s = this.Xs.controller.scope.parent;

@@ -9926,8 +9926,18 @@ class AuSlot {
     unsubscribe(subscriber) {
         this._subs.delete(subscriber);
     }
-    binding(_initiator, _parent) {
-        this._parentScope = this.$controller.scope.parent;
+    binding(_initiator, parent) {
+        // if this <au-slot> was created by another au slot, the controller hierarchy will be like this:
+        // C(au-slot)#1 --> C(synthetic)#1 --> C(au-slot)#2 --> C(synthetic)#2
+        //
+        // C(synthetic)#2 is what will provide the content for C(au-slot)#1
+        // but C(au-slot)#1 is what will provide the $host value for the content of C(au-slot)#2
+        //
+        // because of this structure, walk 2 level of controller at once to find the right parent scope for $host value
+        while (parent.vmKind === 'synthetic' && parent.parent?.viewModel instanceof AuSlot) {
+            parent = parent.parent.parent;
+        }
+        this._parentScope = parent.scope;
         let outerScope;
         if (this._hasProjection) {
             // if there is a projection,
