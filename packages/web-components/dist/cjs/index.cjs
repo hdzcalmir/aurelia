@@ -35,8 +35,8 @@ class WcCustomElementRegistry {
         const o = i?.extends ? this.p.document.createElement(i.extends).constructor : this.p.HTMLElement;
         const r = this.ctn;
         const c = this.r;
-        const u = l.bindables;
-        const a = this.p;
+        const a = l.bindables;
+        const u = this.p;
         class CustomElementClass extends o {
             auInit() {
                 if (this.auInited) {
@@ -44,10 +44,8 @@ class WcCustomElementRegistry {
                 }
                 this.auInited = true;
                 const e = r.createChild();
-                registerResolver(e, a.HTMLElement, registerResolver(e, a.Element, registerResolver(e, s.INode, new t.InstanceProvider("ElementProvider", this))));
-                const n = c.compile(l, e, {
-                    projections: null
-                });
+                registerResolver(e, u.HTMLElement, registerResolver(e, u.Element, registerResolver(e, s.INode, new t.InstanceProvider("ElementProvider", this))));
+                const n = c.compile(l, e);
                 const i = e.invoke(n.Type);
                 const o = this.auCtrl = s.Controller.$el(e, i, this, null, n);
                 s.setRef(this, n.key, o);
@@ -67,8 +65,8 @@ class WcCustomElementRegistry {
                 this.auCtrl.viewModel[t] = e;
             }
         }
-        CustomElementClass.observedAttributes = Object.keys(u);
-        for (const t in u) {
+        CustomElementClass.observedAttributes = Object.keys(a);
+        for (const t in a) {
             Object.defineProperty(CustomElementClass.prototype, t, {
                 configurable: true,
                 enumerable: false,

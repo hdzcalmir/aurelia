@@ -42,6 +42,7 @@ const errorsMap = {
     [21 /* ErrorNames.invalid_module_transform_input */]: `Invalid module transform input: {{0}}. Expected Promise or Object.`,
     // [ErrorNames.module_loader_received_null]: `Module loader received null/undefined input. Expected Object.`,
     [22 /* ErrorNames.invalid_inject_decorator_usage */]: `The @inject decorator on the target ('{{0}}') type '{{1}}' is not supported.`,
+    [23 /* ErrorNames.resource_key_already_registered */]: `Resource key '{{0}}' has already been registered.`,
 };
 const getMessageByCode = (name, ...details) => {
     let cooked = errorsMap[name];
@@ -552,6 +553,11 @@ const Registration = {
      */
     defer: deferRegistration,
 };
+const createImplementationRegister = function (key) {
+    return function register(container) {
+        container.register(singletonRegistration(this, this), aliasToRegistration(this, key));
+    };
+};
 
 const annoBaseName = 'au:annotation';
 /** @internal */
@@ -775,19 +781,29 @@ class Container {
                     const $au = current.$au;
                     const aliases = (current.aliases ?? emptyArray).concat($au.aliases ?? emptyArray);
                     let key = `${resourceBaseName}:${$au.type}:${$au.name}`;
-                    if (!this.has(key, false)) {
-                        aliasToRegistration(current, key).register(this);
-                        if (!this.has(current, false)) {
-                            singletonRegistration(current, current).register(this);
+                    if (this.has(key, false)) {
+                        {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                            globalThis.console?.warn(createMappedError(7 /* ErrorNames.resource_already_exists */, key));
                         }
-                        j = 0;
-                        jj = aliases.length;
-                        for (; j < jj; ++j) {
-                            key = `${resourceBaseName}:${$au.type}:${aliases[j]}`;
-                            if (!this.has(key, false)) {
-                                aliasToRegistration(current, key).register(this);
+                        continue;
+                    }
+                    aliasToRegistration(current, key).register(this);
+                    if (!this.has(current, false)) {
+                        singletonRegistration(current, current).register(this);
+                    }
+                    j = 0;
+                    jj = aliases.length;
+                    for (; j < jj; ++j) {
+                        key = `${resourceBaseName}:${$au.type}:${aliases[j]}`;
+                        if (this.has(key, false)) {
+                            {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                                globalThis.console?.warn(createMappedError(7 /* ErrorNames.resource_already_exists */, key));
                             }
+                            continue;
                         }
+                        aliasToRegistration(current, key).register(this);
                     }
                 }
                 else {
@@ -1065,7 +1081,7 @@ class Container {
         let disposable;
         let key;
         for ([key, disposable] of disposableResolvers.entries()) {
-            disposable.dispose();
+            disposable.dispose?.();
             resolvers.delete(key);
         }
         disposableResolvers.clear();
@@ -1547,10 +1563,10 @@ const DI = {
 };
 const IContainer = /*@__PURE__*/ createInterface('IContainer');
 const IServiceLocator = IContainer;
-function transientDecorator(target, _context) {
+function transientDecorator(target, context) {
     return DI.transient(target);
 }
-function transient(target, _context) {
+function transient(target, context) {
     return target == null ? transientDecorator : transientDecorator(target);
 }
 const defaultSingletonOptions = { scoped: false };
@@ -2649,5 +2665,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ConsoleSink, ContainerConfiguration, DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, DefaultResolver, EventAggregator, IContainer, IEventAggregator, ILogConfig, ILogEventFactory, ILogger, IModuleLoader, IPlatform, IServiceLocator, ISink, InstanceProvider, LogConfig, LogLevel, LoggerConfiguration, ModuleItem, Protocol, Registrable, Registration, aliasedResourcesRegistry, all, allResources, bound, camelCase, createResolver, emptyArray, emptyObject, factory, firstDefined, format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, getPrototypeChain, getResourceKeyFor, ignore, inject, isArrayIndex, isNativeFunction, kebabCase, lazy, mergeArrays, newInstanceForScope, newInstanceOf, noop, onResolve, onResolveAll, optional, optionalResource, own, pascalCase, resolve, resource, resourceBaseName, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, DefaultResolver, EventAggregator, IContainer, IEventAggregator, ILogConfig, ILogEventFactory, ILogger, IModuleLoader, IPlatform, IServiceLocator, ISink, InstanceProvider, LogConfig, LogLevel, LoggerConfiguration, ModuleItem, Protocol, Registrable, Registration, aliasedResourcesRegistry, all, allResources, bound, camelCase, createImplementationRegister, createResolver, emptyArray, emptyObject, factory, firstDefined, format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, getPrototypeChain, getResourceKeyFor, ignore, inject, isArrayIndex, isNativeFunction, kebabCase, lazy, mergeArrays, newInstanceForScope, newInstanceOf, noop, onResolve, onResolveAll, optional, optionalResource, own, pascalCase, resolve, resource, resourceBaseName, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.dev.mjs.map

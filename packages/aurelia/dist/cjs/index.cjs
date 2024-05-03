@@ -16,10 +16,12 @@ var o = require("@aurelia/expression-parser");
 
 var p = require("@aurelia/runtime");
 
-const x = t.BrowserPlatform.getOrCreate(globalThis);
+var x = require("@aurelia/template-compiler");
+
+const a = t.BrowserPlatform.getOrCreate(globalThis);
 
 function createContainer() {
-    return e.DI.createContainer().register(e.Registration.instance(r.IPlatform, x), r.StandardConfiguration);
+    return e.DI.createContainer().register(e.Registration.instance(r.IPlatform, a), r.StandardConfiguration);
 }
 
 class Aurelia extends r.Aurelia {
@@ -139,10 +141,6 @@ exports.FlushQueue = r.FlushQueue;
 
 exports.IAppRoot = r.IAppRoot;
 
-exports.IAttrMapper = r.IAttrMapper;
-
-exports.IAttributePattern = r.IAttributePattern;
-
 exports.IAuSlotWatcher = r.IAuSlotWatcher;
 
 exports.IAuSlotsInfo = r.IAuSlotsInfo;
@@ -171,21 +169,19 @@ exports.IRenderLocation = r.IRenderLocation;
 
 exports.ISignaler = r.ISignaler;
 
-exports.ITemplateCompiler = r.ITemplateCompiler;
-
-exports.ITemplateCompilerHooks = r.ITemplateCompilerHooks;
-
 exports.IViewFactory = r.IViewFactory;
 
 exports.LifecycleHooks = r.LifecycleHooks;
 
 exports.NodeObserverLocator = r.NodeObserverLocator;
 
+exports.RuntimeTemplateCompilerImplementation = r.RuntimeTemplateCompilerImplementation;
+
+exports.Scope = r.Scope;
+
 exports.ShortHandBindingSyntax = r.ShortHandBindingSyntax;
 
 exports.StyleConfiguration = r.StyleConfiguration;
-
-exports.TemplateCompilerHooks = r.TemplateCompilerHooks;
 
 exports.ValueConverter = r.ValueConverter;
 
@@ -193,13 +189,9 @@ exports.ViewFactory = r.ViewFactory;
 
 exports.alias = r.alias;
 
-exports.attributePattern = r.attributePattern;
-
 exports.bindable = r.bindable;
 
 exports.bindingBehavior = r.bindingBehavior;
-
-exports.bindingCommand = r.bindingCommand;
 
 exports.capture = r.capture;
 
@@ -226,8 +218,6 @@ exports.renderer = r.renderer;
 exports.shadowCSS = r.shadowCSS;
 
 exports.slotted = r.slotted;
-
-exports.templateCompilerHooks = r.templateCompilerHooks;
 
 exports.templateController = r.templateController;
 
@@ -259,9 +249,33 @@ exports.observable = p.observable;
 
 exports.subscriberCollection = p.subscriberCollection;
 
+exports.AttributePattern = x.AttributePattern;
+
+exports.BindingCommand = x.BindingCommand;
+
+exports.IAttrMapper = x.IAttrMapper;
+
+exports.IAttributeParser = x.IAttributeParser;
+
+exports.IAttributePattern = x.IAttributePattern;
+
+exports.ITemplateCompiler = x.ITemplateCompiler;
+
+exports.ITemplateCompilerHooks = x.ITemplateCompilerHooks;
+
+exports.ITemplateElementFactory = x.ITemplateElementFactory;
+
+exports.TemplateCompilerHooks = x.TemplateCompilerHooks;
+
+exports.attributePattern = x.attributePattern;
+
+exports.bindingCommand = x.bindingCommand;
+
+exports.templateCompilerHooks = x.templateCompilerHooks;
+
 exports.Aurelia = Aurelia;
 
-exports.PLATFORM = x;
+exports.PLATFORM = a;
 
 exports.default = Aurelia;
 //# sourceMappingURL=index.cjs.map

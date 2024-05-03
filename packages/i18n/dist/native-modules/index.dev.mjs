@@ -1,5 +1,6 @@
 import { DI, resolve, IEventAggregator, camelCase, toArray, Registration } from '../../../kernel/dist/native-modules/index.mjs';
-import { BindingMode, State, ISignaler, BindingBehavior, mixinAstEvaluator, mixingBindingLimited, astEvaluate, astUnbind, CustomElement, astBind, AttributePattern, renderer, AttrSyntax, ValueConverter, BindingCommand, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { BindingMode, State, ISignaler, BindingBehavior, mixinAstEvaluator, mixingBindingLimited, astEvaluate, astUnbind, CustomElement, astBind, renderer, ValueConverter, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { AttributePattern, AttrSyntax, BindingCommand } from '../../../template-compiler/dist/native-modules/index.mjs';
 import { ValueConverterExpression, CustomExpression } from '../../../expression-parser/dist/native-modules/index.mjs';
 import { nowrap, connectable, AccessorType } from '../../../runtime/dist/native-modules/index.mjs';
 import i18next from 'i18next';
@@ -656,12 +657,11 @@ mixinAstEvaluator(true)(ParameterBinding);
 const TranslationParametersInstructionType = 'tpt';
 // `.bind` part is needed here only for vCurrent compliance
 const attribute = 't-params.bind';
-class TranslationParametersAttributePattern {
+const TranslationParametersAttributePattern = AttributePattern.define([{ pattern: attribute, symbols: '' }], class TranslationParametersAttributePattern {
     [attribute](rawName, rawValue) {
         return new AttrSyntax(rawName, rawValue, '', attribute);
     }
-}
-AttributePattern.define([{ pattern: attribute, symbols: '' }], TranslationParametersAttributePattern);
+});
 class TranslationParametersBindingInstruction {
     constructor(from, to) {
         this.from = from;
@@ -693,7 +693,10 @@ TranslationParametersBindingCommand.$au = {
     type: 'binding-command',
     name: attribute,
 };
-class TranslationParametersBindingRenderer {
+const TranslationParametersBindingRenderer = /*@__PURE__*/ renderer(class TranslationParametersBindingRenderer {
+    constructor() {
+        this.target = TranslationParametersInstructionType;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
             parser: exprParser,
@@ -706,8 +709,7 @@ class TranslationParametersBindingRenderer {
             platform,
         });
     }
-}
-renderer(TranslationParametersInstructionType)(TranslationParametersBindingRenderer, null);
+}, null);
 
 const TranslationInstructionType = 'tt';
 class TranslationAttributePattern {
@@ -744,7 +746,10 @@ class TranslationBindingCommand {
         return new TranslationBindingInstruction(new CustomExpression(info.attr.rawValue), target);
     }
 }
-class TranslationBindingRenderer {
+const TranslationBindingRenderer = /*@__PURE__*/ renderer(class TranslationBindingRenderer {
+    constructor() {
+        this.target = TranslationInstructionType;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
             parser: exprParser,
@@ -756,8 +761,7 @@ class TranslationBindingRenderer {
             platform,
         });
     }
-}
-renderer(TranslationInstructionType)(TranslationBindingRenderer, null);
+}, null);
 const TranslationBindInstructionType = 'tbt';
 class TranslationBindAttributePattern {
     static registerAlias(alias) {
@@ -793,7 +797,10 @@ class TranslationBindBindingCommand {
         return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, etIsProperty), target);
     }
 }
-class TranslationBindBindingRenderer {
+const TranslationBindBindingRenderer = /*@__PURE__*/ renderer(class TranslationBindBindingRenderer {
+    constructor() {
+        this.target = TranslationBindInstructionType;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
             parser: exprParser,
@@ -805,8 +812,7 @@ class TranslationBindBindingRenderer {
             platform
         });
     }
-}
-renderer(TranslationBindInstructionType)(TranslationBindBindingRenderer, null);
+}, null);
 
 class TranslationValueConverter {
     constructor() {

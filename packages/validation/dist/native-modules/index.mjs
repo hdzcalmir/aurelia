@@ -4,9 +4,7 @@ import * as u from "../../../expression-parser/dist/native-modules/index.mjs";
 
 import { IExpressionParser as l, PrimitiveLiteralExpression as c } from "../../../expression-parser/dist/native-modules/index.mjs";
 
-import { Scope as h } from "../../../runtime/dist/native-modules/index.mjs";
-
-import { mixinAstEvaluator as d, astEvaluate as $ } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { mixinAstEvaluator as h, Scope as d, astEvaluate as $ } from "../../../runtime-html/dist/native-modules/index.mjs";
 
 import { Metadata as m } from "../../../metadata/dist/native-modules/index.mjs";
 
@@ -325,7 +323,7 @@ class PropertyRule {
     }
     async validate(e, t, s) {
         if (s === void 0) {
-            s = h.create({
+            s = d.create({
                 [M]: e
             });
         }
@@ -347,7 +345,7 @@ class PropertyRule {
                 const {displayName: i, name: a} = this.property;
                 let o;
                 if (!s) {
-                    const s = h.create(new ValidationMessageEvaluationContext(this.messageProvider, this.messageProvider.getDisplayName(a, i), a, r, t, e));
+                    const s = d.create(new ValidationMessageEvaluationContext(this.messageProvider, this.messageProvider.getDisplayName(a, i), a, r, t, e));
                     o = $(this.messageProvider.getMessage(t), s, this, null);
                 }
                 return new ValidationResult(s, o, a, e, t, this);
@@ -478,7 +476,7 @@ class PropertyRule {
 
 PropertyRule.$TYPE = "PropertyRule";
 
-d()(PropertyRule);
+h()(PropertyRule);
 
 class ModelBasedRule {
     constructor(e, t = E.defaultRuleSetName) {
@@ -1324,7 +1322,7 @@ class ModelValidationExpressionHydrator {
         if (i) {
             if (typeof i === "string") {
                 const e = this.parser.parse(i, "None");
-                t.canExecute = t => $(e, h.create({
+                t.canExecute = t => $(e, d.create({
                     $object: t
                 }), this, null);
             } else if (typeof i === "function") {
@@ -1379,7 +1377,7 @@ class ModelValidationExpressionHydrator {
     }
 }
 
-d()(ModelValidationExpressionHydrator);
+h()(ModelValidationExpressionHydrator);
 
 class ValidateInstruction {
     constructor(e = void 0, t = void 0, s = void 0, i = void 0, r = void 0) {
@@ -1399,7 +1397,7 @@ class StandardValidator {
         const s = e.propertyName;
         const i = e.propertyTag;
         const r = e.rules ?? E.get(t, e.objectTag) ?? [];
-        const n = h.create({
+        const n = d.create({
             [M]: t
         });
         if (s !== void 0) {

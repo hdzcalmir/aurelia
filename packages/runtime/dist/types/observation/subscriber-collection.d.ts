@@ -1,15 +1,8 @@
-import { $ClassDecorator } from '../utilities';
-import type { Collection, ICollectionSubscriber, IndexMap, ISubscriber, ISubscriberRecord } from '../observation';
+import type { ICollectionSubscriber, ISubscriber } from '../observation';
+import { Constructable } from '@aurelia/kernel';
 export type IAnySubscriber = ISubscriber | ICollectionSubscriber;
 export declare const subscriberCollection: {
-    (): $ClassDecorator;
-    (target: Function): void;
+    (): <T extends Constructable>(value: T, context: ClassDecoratorContext) => T;
+    <T_1 extends Constructable>(target: T_1, context: ClassDecoratorContext): T_1;
 };
-export declare class SubscriberRecord<T extends IAnySubscriber> implements ISubscriberRecord<T> {
-    count: number;
-    add(subscriber: T): boolean;
-    remove(subscriber: T): boolean;
-    notify(val: unknown, oldVal: unknown): void;
-    notifyCollection(collection: Collection, indexMap: IndexMap): void;
-}
 //# sourceMappingURL=subscriber-collection.d.ts.map

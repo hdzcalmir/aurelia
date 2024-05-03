@@ -3,15 +3,16 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 var kernel = require('@aurelia/kernel');
-var runtime = require('@aurelia/runtime');
 var runtimeHtml = require('@aurelia/runtime-html');
+var runtime = require('@aurelia/runtime');
+var templateCompiler = require('@aurelia/template-compiler');
 
 /** @internal */
 const createInterface = kernel.DI.createInterface;
 /** @internal */
 function createStateBindingScope(state, scope) {
     const overrideContext = { bindingContext: state };
-    const stateScope = runtime.Scope.create(state, overrideContext, true);
+    const stateScope = runtimeHtml.Scope.create(state, overrideContext, true);
     stateScope.parent = scope;
     return stateScope;
 }
@@ -460,12 +461,12 @@ runtimeHtml.mixingBindingLimited(StateDispatchBinding, () => 'callSource');
 
 class StateAttributePattern {
     'PART.state'(rawName, rawValue, parts) {
-        return new runtimeHtml.AttrSyntax(rawName, rawValue, parts[0], 'state');
+        return new templateCompiler.AttrSyntax(rawName, rawValue, parts[0], 'state');
     }
 }
 class DispatchAttributePattern {
     'PART.dispatch'(rawName, rawValue, parts) {
-        return new runtimeHtml.AttrSyntax(rawName, rawValue, parts[0], 'dispatch');
+        return new templateCompiler.AttrSyntax(rawName, rawValue, parts[0], 'dispatch');
     }
 }
 class StateBindingCommand {
@@ -483,7 +484,7 @@ class StateBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.kind === 'element') {
+            if (value === '' && info.def.type === 'custom-element') {
                 value = kernel.camelCase(target);
             }
             target = info.bindable.name;
@@ -520,25 +521,25 @@ class DispatchBindingInstruction {
         this.type = 'sd';
     }
 }
-class StateBindingInstructionRenderer {
+const StateBindingInstructionRenderer = /*@__PURE__*/ runtimeHtml.renderer(class StateBindingInstructionRenderer {
     constructor() {
+        this.target = 'sb';
         /** @internal */ this._stateContainer = kernel.resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
     }
-}
-runtimeHtml.renderer('sb')(StateBindingInstructionRenderer, null);
-class DispatchBindingInstructionRenderer {
+}, null);
+const DispatchBindingInstructionRenderer = /*@__PURE__*/ runtimeHtml.renderer(class DispatchBindingInstructionRenderer {
     constructor() {
+        this.target = 'sd';
         /** @internal */ this._stateContainer = kernel.resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
         const expr = ensureExpression(exprParser, instruction.ast, 'IsProperty');
         renderingCtrl.addBinding(new StateDispatchBinding(renderingCtrl.container, expr, target, instruction.from, this._stateContainer));
     }
-}
-runtimeHtml.renderer('sd')(DispatchBindingInstructionRenderer, null);
+}, null);
 function ensureExpression(parser, srcOrExpr, expressionType) {
     if (typeof srcOrExpr === 'string') {
         return parser.parse(srcOrExpr, expressionType);

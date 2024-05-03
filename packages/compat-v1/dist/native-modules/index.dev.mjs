@@ -1,7 +1,7 @@
 import { BindingBehaviorExpression, ValueConverterExpression, AssignExpression, ConditionalExpression, AccessThisExpression, AccessScopeExpression, AccessMemberExpression, AccessKeyedExpression, CallScopeExpression, CallMemberExpression, CallFunctionExpression, BinaryExpression, UnaryExpression, PrimitiveLiteralExpression, ArrayLiteralExpression, ObjectLiteralExpression, TemplateExpression, TaggedTemplateExpression, ArrayBindingPattern, ObjectBindingPattern, BindingIdentifier, ForOfStatement, Interpolation, DestructuringAssignmentExpression, DestructuringAssignmentSingleExpression, DestructuringAssignmentRestExpression, ArrowFunction, astVisit, Unparser, IExpressionParser } from '../../../expression-parser/dist/native-modules/index.mjs';
-import { astEvaluate, astAssign, astBind, astUnbind, renderer, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, IListenerBindingOptions, InstructionType, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, ExpressionWatcher } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { astEvaluate, astAssign, astBind, astUnbind, mixinUseScope, mixingBindingLimited, mixinAstEvaluator, renderer, IListenerBindingOptions, IEventTarget, AppTask, PropertyBinding, AttributeBinding, ListenerBinding, LetBinding, InterpolationPartBinding, ContentBinding, RefBinding, AuCompose, CustomElement, BindableDefinition, Scope, ExpressionWatcher } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { camelCase, resolve, DI } from '../../../kernel/dist/native-modules/index.mjs';
-import { IObserverLocator, getCollectionObserver, Scope } from '../../../runtime/dist/native-modules/index.mjs';
+import { IObserverLocator, getCollectionObserver } from '../../../runtime/dist/native-modules/index.mjs';
 
 let defined$1 = false;
 function defineAstMethods() {
@@ -116,13 +116,15 @@ CallBindingCommand.$au = {
     type: 'binding-command',
     name: 'call',
 };
-class CallBindingRenderer {
+const CallBindingRenderer = /*@__PURE__*/ renderer(class CallBindingRenderer {
+    constructor() {
+        this.target = instructionType;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new CallBinding(renderingCtrl.container, observerLocator, expr, getTarget(target), instruction.to));
     }
-}
-renderer(instructionType)(CallBindingRenderer, null);
+}, null);
 function getTarget(potentialTarget) {
     if (potentialTarget.viewModel != null) {
         return potentialTarget.viewModel;
@@ -170,9 +172,11 @@ class CallBinding {
         this.targetObserver.setValue(null, this.target, this.targetProperty);
     }
 }
-mixinUseScope(CallBinding);
-mixingBindingLimited(CallBinding, () => 'callSource');
-mixinAstEvaluator(true)(CallBinding);
+(() => {
+    mixinUseScope(CallBinding);
+    mixingBindingLimited(CallBinding, () => 'callSource');
+    mixinAstEvaluator(true)(CallBinding);
+})();
 
 const preventDefaultRegisteredContainer = new WeakSet();
 const eventPreventDefaultBehavior = {
@@ -206,8 +210,9 @@ DelegateBindingCommand.$au = {
     name: 'delegate',
 };
 /** @internal */
-class ListenerBindingRenderer {
+const ListenerBindingRenderer = /*@__PURE__*/ renderer(class ListenerBindingRenderer {
     constructor() {
+        this.target = 'dl';
         /** @internal */
         this._eventDelegator = resolve(IEventDelegator);
     }
@@ -215,14 +220,13 @@ class ListenerBindingRenderer {
         const expr = ensureExpression(exprParser, instruction.from, etIsFunction);
         renderingCtrl.addBinding(new DelegateListenerBinding(renderingCtrl.container, expr, target, instruction.to, this._eventDelegator, new DelegateListenerOptions(instruction.preventDefault)));
     }
-}
-renderer('dl')(ListenerBindingRenderer, null);
+}, null);
 class DelegateBindingInstruction {
     constructor(from, to, preventDefault) {
         this.from = from;
         this.to = to;
         this.preventDefault = preventDefault;
-        this.type = InstructionType.listenerBinding;
+        this.type = 'dl';
     }
 }
 class DelegateListenerOptions {
@@ -248,6 +252,7 @@ class DelegateListenerBinding {
          * @internal
          */
         this.boundFn = true;
+        this.self = false;
         this.l = locator;
         this._options = options;
     }
@@ -265,6 +270,12 @@ class DelegateListenerBinding {
         return result;
     }
     handleEvent(event) {
+        if (this.self) {
+            /* istanbul ignore next */
+            if (this.target !== event.composedPath()[0]) {
+                return;
+            }
+        }
         this.callSource(event);
     }
     bind(_scope) {
@@ -290,9 +301,11 @@ class DelegateListenerBinding {
         this.handler = null;
     }
 }
-mixinUseScope(DelegateListenerBinding);
-mixingBindingLimited(DelegateListenerBinding, () => 'callSource');
-mixinAstEvaluator(true, true)(DelegateListenerBinding);
+(() => {
+    mixinUseScope(DelegateListenerBinding);
+    mixingBindingLimited(DelegateListenerBinding, () => 'callSource');
+    mixinAstEvaluator(true, true)(DelegateListenerBinding);
+})();
 const defaultOptions = {
     capture: false,
 };

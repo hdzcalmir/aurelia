@@ -1,9 +1,6 @@
 import { IContainer } from '@aurelia/kernel';
-import { DirtyChecker, ICoercionConfiguration } from '@aurelia/runtime';
-import { AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, SpreadAttributePattern, DotSeparatedAttributePattern, RefAttributePattern, EventAttributePattern } from './resources/attribute-pattern';
-import { OneTimeBindingCommand, TriggerBindingCommand } from './resources/binding-command';
-import { TemplateCompiler } from './compiler/template-compiler';
-import { CustomAttributeRenderer, CustomElementRenderer, InterpolationBindingRenderer, IteratorBindingRenderer, LetElementRenderer, PropertyBindingRenderer, RefBindingRenderer, SetPropertyRenderer, TemplateControllerRenderer, AttributeBindingRenderer, ListenerBindingRenderer, SetAttributeRenderer, StylePropertyBindingRenderer, TextBindingRenderer, SetClassAttributeRenderer, SetStyleAttributeRenderer, SpreadRenderer } from './renderer';
+import { ICoercionConfiguration } from '@aurelia/runtime';
+import { DefaultBindingCommand, ForBindingCommand } from '@aurelia/template-compiler';
 import { DebounceBindingBehavior } from './resources/binding-behaviors/debounce';
 import { SignalBindingBehavior } from './resources/binding-behaviors/signals';
 import { ThrottleBindingBehavior } from './resources/binding-behaviors/throttle';
@@ -21,14 +18,13 @@ import { PromiseTemplateController, PendingTemplateController, FulfilledTemplate
 import { AuCompose } from './resources/custom-elements/au-compose';
 import { AuSlot } from './resources/custom-elements/au-slot';
 import { SanitizeValueConverter } from './resources/value-converters/sanitize';
-import { NodeObserverLocator } from './observation/observer-locator';
 /**
  * Default HTML-specific (but environment-agnostic) implementations for the following interfaces:
  * - `ITemplateCompiler`
  * - `ITargetAccessorLocator`
  * - `ITargetObserverLocator`
  */
-export declare const DefaultComponents: (typeof NodeObserverLocator | typeof TemplateCompiler | typeof DirtyChecker)[];
+export declare const DefaultComponents: import("@aurelia/kernel").IRegistry[];
 /**
  * Default binding syntax for the following attribute name patterns:
  * - `ref`
@@ -36,20 +32,36 @@ export declare const DefaultComponents: (typeof NodeObserverLocator | typeof Tem
  */
 export declare const DefaultBindingSyntax: ({
     register(c: IContainer): void;
-} | typeof DotSeparatedAttributePattern | typeof RefAttributePattern | typeof EventAttributePattern | typeof SpreadAttributePattern)[];
+} | (new () => {
+    ref(rawName: string, rawValue: string, _parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+    'PART.ref'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+}) | (new () => {
+    'PART.PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+    'PART.PART.PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+}) | (new () => {
+    '...$attrs'(rawName: string, rawValue: string, _parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+}) | (new () => {
+    'PART.trigger:PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+    'PART.capture:PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+}))[];
 /**
  * Binding syntax for short-hand attribute name patterns:
  * - `@target` (short-hand for `target.trigger`)
  * - `:target` (short-hand for `target.bind`)
  */
-export declare const ShortHandBindingSyntax: (typeof ColonPrefixedBindAttributePattern | typeof AtPrefixedTriggerAttributePattern)[];
+export declare const ShortHandBindingSyntax: ((new () => {
+    '@PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+    '@PART:PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+}) | (new () => {
+    ':PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
+}))[];
 /**
  * Default HTML-specific (but environment-agnostic) binding commands:
  * - Property observation: `.bind`, `.one-time`, `.from-view`, `.to-view`, `.two-way
  * - Collection observation: `.for`
  * - Event listeners: `.trigger`, `.capture`
  */
-export declare const DefaultBindingLanguage: (typeof OneTimeBindingCommand | typeof TriggerBindingCommand)[];
+export declare const DefaultBindingLanguage: (typeof DefaultBindingCommand | typeof ForBindingCommand)[];
 /**
  * Default HTML-specific (but environment-agnostic) resources:
  * - Binding Behaviors: `oneTime`, `toView`, `fromView`, `twoWay`, `signal`, `debounce`, `throttle`, `attr`, `self`, `updateTrigger`
@@ -76,7 +88,99 @@ export declare const DefaultResources: (typeof DebounceBindingBehavior | typeof 
  * - StyleProperty: `style`, `css`
  * - TextBinding: `${}`
  */
-export declare const DefaultRenderers: (typeof SetPropertyRenderer | typeof CustomElementRenderer | typeof CustomAttributeRenderer | typeof TemplateControllerRenderer | typeof LetElementRenderer | typeof RefBindingRenderer | typeof InterpolationBindingRenderer | typeof PropertyBindingRenderer | typeof IteratorBindingRenderer | typeof TextBindingRenderer | typeof ListenerBindingRenderer | typeof SetAttributeRenderer | typeof SetClassAttributeRenderer | typeof SetStyleAttributeRenderer | typeof StylePropertyBindingRenderer | typeof AttributeBindingRenderer | typeof SpreadRenderer)[];
+export declare const DefaultRenderers: ({
+    new (): {
+        readonly target: "re";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: import(".").IController<import(".").IViewModel>, instruction: import("@aurelia/template-compiler").SetPropertyInstruction): void;
+    };
+} | {
+    new (): {
+        readonly _rendering: import(".").IRendering;
+        readonly target: "ra";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").HydrateElementInstruction<Record<PropertyKey, unknown>, import(".").CustomElementDefinition<import("@aurelia/kernel").Constructable>>, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly _rendering: import(".").IRendering;
+        readonly target: "rb";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").HydrateAttributeInstruction<import(".").CustomAttributeDefinition<import("@aurelia/kernel").Constructable>>, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly _rendering: import(".").IRendering;
+        readonly target: "rc";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").HydrateTemplateController<import(".").CustomAttributeDefinition<import("@aurelia/kernel").Constructable>>, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly target: "rd";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: Node & ChildNode, instruction: import("@aurelia/template-compiler").HydrateLetElementInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly target: "rj";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: import("./dom").INode, instruction: import("@aurelia/template-compiler").RefBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>): void;
+    };
+} | {
+    new (): {
+        readonly target: "rf";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: import(".").IController<import(".").IViewModel>, instruction: import("@aurelia/template-compiler").InterpolationInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly target: "rg";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: import(".").IController<import(".").IViewModel>, instruction: import("@aurelia/template-compiler").PropertyBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly target: "rk";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: import(".").IController<import(".").IViewModel>, instruction: import("@aurelia/template-compiler").IteratorBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly target: "ha";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: ChildNode, instruction: import("@aurelia/template-compiler").TextBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly target: "hb";
+        readonly _modifierHandler: import("./binding/listener-binding").IEventModifier;
+        readonly _defaultOptions: import("./renderer").IListenerBindingOptions;
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").ListenerBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>): void;
+    };
+} | {
+    new (): {
+        readonly target: "he";
+        render(_: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").SetAttributeInstruction): void;
+    };
+} | {
+    new (): {
+        readonly target: "hf";
+        render(_: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").SetClassAttributeInstruction): void;
+    };
+} | {
+    new (): {
+        readonly target: "hg";
+        render(_: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").SetStyleAttributeInstruction): void;
+    };
+} | {
+    new (): {
+        readonly target: "hd";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").StylePropertyBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly target: "hc";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").AttributeBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly _compiler: import("@aurelia/template-compiler").ITemplateCompiler;
+        readonly _rendering: import(".").IRendering;
+        readonly target: "hs";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, _instruction: import("@aurelia/template-compiler").SpreadBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+})[];
 export declare const StandardConfiguration: {
     optionsProvider: ConfigurationOptionsProvider;
     /**

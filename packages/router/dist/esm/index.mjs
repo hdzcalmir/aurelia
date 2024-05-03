@@ -1,10 +1,12 @@
 import { getResourceKeyFor as t, resolve as i, IEventAggregator as s, IContainer as n, Protocol as e, DI as r, ILogger as o, Registration as h } from "@aurelia/kernel";
 
-import { CustomElement as u, isCustomElementViewModel as a, Controller as l, IPlatform as c, IWindow as f, IHistory as d, ILocation as p, IAppRoot as g, CustomAttribute as v, BindingMode as m, INode as w, IInstruction as R, IController as I, AppTask as C } from "@aurelia/runtime-html";
+import { CustomElement as u, isCustomElementViewModel as a, Controller as l, IPlatform as c, IWindow as f, IHistory as d, ILocation as p, IAppRoot as g, CustomAttribute as v, BindingMode as m, INode as w, IController as R, AppTask as I } from "@aurelia/runtime-html";
 
-import { Metadata as y } from "@aurelia/metadata";
+import { Metadata as C } from "@aurelia/metadata";
 
-import { RouteRecognizer as E, ConfigurableRoute as S, RecognizedRoute as N, Endpoint as b } from "@aurelia/route-recognizer";
+import { RouteRecognizer as y, ConfigurableRoute as E, RecognizedRoute as S, Endpoint as N } from "@aurelia/route-recognizer";
+
+import { IInstruction as b } from "@aurelia/template-compiler";
 
 let k = class Endpoint {
     constructor(t, i, s, n = {}) {
@@ -1255,11 +1257,11 @@ class Route {
     }
     static configure(t, i) {
         const s = Route.create(t, i);
-        y.define(s, i, Route.resourceKey);
+        C.define(s, i, Route.resourceKey);
         return i;
     }
     static getConfiguration(t) {
-        const i = y.get(Route.resourceKey, t) ?? {};
+        const i = C.get(Route.resourceKey, t) ?? {};
         if (Array.isArray(t.parameters)) {
             i.parameters = t.parameters;
         }
@@ -1334,17 +1336,17 @@ Route.resourceKey = t("route");
 const $ = {
     name: /*@__PURE__*/ t("routes"),
     isConfigured(t) {
-        return y.has($.name, t) || "routes" in t;
+        return C.has($.name, t) || "routes" in t;
     },
     configure(t, i) {
         const s = t.map((t => Route.create(t)));
-        y.define(s, i, $.name);
+        C.define(s, i, $.name);
         return i;
     },
     getConfiguration(t) {
         const i = t;
         const s = [];
-        const n = y.get($.name, t);
+        const n = C.get($.name, t);
         if (Array.isArray(n)) {
             s.push(...n);
         }
@@ -3163,13 +3165,13 @@ class Navigator {
     }
 }
 
-const P = E;
+const P = y;
 
-const V = S;
+const V = E;
 
-const A = N;
+const A = S;
 
-const T = b;
+const T = N;
 
 class Collection extends Array {
     constructor() {
@@ -5274,7 +5276,7 @@ class ViewportCustomElement {
         this.container = i(n);
         this.ea = i(s);
         this.parentViewport = i(F);
-        this.instruction = i(R);
+        this.instruction = i(b);
     }
     hydrated(t) {
         this.controller = t;
@@ -5388,7 +5390,7 @@ class ViewportScopeCustomElement {
         this.element = i(w);
         this.container = i(n);
         this.parent = i(H);
-        this.parentController = i(I);
+        this.parentController = i(R);
     }
     hydrated(t) {
         this.controller = t;
@@ -5651,7 +5653,7 @@ class RouterConfiguration {
         i.options = RouterConfiguration.options;
         i.options.setRouterConfiguration(i);
         RouterConfiguration.options = RouterOptions.create();
-        return t.register(...j, ...Q, C.activating(O, RouterConfiguration.configurationCall), C.activated(O, (t => t.initialLoad())), C.deactivated(O, (t => t.stop())));
+        return t.register(...j, ...Q, I.activating(O, RouterConfiguration.configurationCall), I.activated(O, (t => t.initialLoad())), I.deactivated(O, (t => t.stop())));
     }
     static customize(t) {
         if (t === undefined) {

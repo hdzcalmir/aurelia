@@ -136,12 +136,6 @@ export interface ICollectionObserver<T extends CollectionKind> extends ICollecti
     notify(): void;
 }
 export type CollectionObserver = ICollectionObserver<CollectionKind>;
-export interface IBindingContext {
-    [key: PropertyKey]: any;
-}
-export interface IOverrideContext {
-    [key: PropertyKey]: any;
-}
 export type IObservable<T = IIndexable> = T & {
     $observers?: IIndexable<{}, AccessorOrObserver>;
 };

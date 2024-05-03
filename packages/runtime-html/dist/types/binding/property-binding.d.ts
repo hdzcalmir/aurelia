@@ -3,7 +3,8 @@ import { IAstEvaluator } from '../ast.eval';
 import { IBinding } from './interfaces-bindings';
 import type { IServiceLocator } from '@aurelia/kernel';
 import type { TaskQueue } from '@aurelia/platform';
-import type { ICollectionSubscriber, IObserver, IObserverLocator, IObserverLocatorBasedConnectable, Scope } from '@aurelia/runtime';
+import type { ICollectionSubscriber, IObserver, IObserverLocator, IObserverLocatorBasedConnectable } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import type { BindingMode, IBindingController } from './interfaces-bindings';
 import { type IsBindingBehavior, ForOfStatement } from '@aurelia/expression-parser';
 export interface PropertyBinding extends IAstEvaluator, IServiceLocator, IObserverLocatorBasedConnectable {

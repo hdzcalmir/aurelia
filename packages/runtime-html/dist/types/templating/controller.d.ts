@@ -1,12 +1,11 @@
-import { ICoercionConfiguration, Scope } from '@aurelia/runtime';
+import { ICoercionConfiguration } from '@aurelia/runtime';
+import { Scope } from '../binding/scope';
 import { CustomAttributeDefinition } from '../resources/custom-attribute';
 import { CustomElementDefinition } from '../resources/custom-element';
 import type { IContainer, IDisposable, Writable } from '@aurelia/kernel';
 import type { INode, INodeSequence, IRenderLocation } from '../dom';
-import type { IInstruction } from '../renderer';
-import type { AttrSyntax } from '../resources/attribute-pattern';
+import type { IInstruction, AttrSyntax } from '@aurelia/template-compiler';
 import type { PartialCustomElementDefinition } from '../resources/custom-element';
-import type { IAuSlotProjections } from './controller.projection';
 import type { LifecycleHooksLookup } from './lifecycle-hooks';
 import type { IViewFactory } from './view';
 import { IBinding } from '../binding/interfaces-bindings';
@@ -46,8 +45,8 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
     get name(): string;
     private logger;
     private debug;
-    get viewModel(): BindingContext<C> | null;
-    set viewModel(v: BindingContext<C> | null);
+    get viewModel(): ControllerBindingContext<C> | null;
+    set viewModel(v: ControllerBindingContext<C> | null);
     coercion: ICoercionConfiguration | undefined;
     constructor(container: IContainer, vmKind: ViewModelKind, definition: CustomElementDefinition | CustomAttributeDefinition | null, 
     /**
@@ -57,7 +56,7 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
     /**
      * The backing viewModel. Only present for custom attributes and elements.
      */
-    viewModel: BindingContext<C> | null, 
+    viewModel: ControllerBindingContext<C> | null, 
     /**
      * The physical host dom node.
      *
@@ -128,7 +127,7 @@ export declare class Controller<C extends IViewModel = IViewModel> implements IC
     dispose(): void;
     accept(visitor: ControllerVisitor): void | true;
 }
-export type BindingContext<C extends IViewModel> = Required<ICompileHooks> & Required<IActivationHooks<IHydratedController | null>> & C;
+export type ControllerBindingContext<C extends IViewModel> = Required<ICompileHooks> & Required<IActivationHooks<IHydratedController | null>> & C;
 /**
  * Describes the type of the host node/location of a controller
  * - `none` / 1:       no host
@@ -455,7 +454,7 @@ export interface IHydratedCustomAttributeViewModel extends ICustomAttributeViewM
     readonly $controller: ICustomAttributeController<this>;
 }
 export interface IControllerElementHydrationInstruction {
-    readonly projections: IAuSlotProjections | null;
+    readonly projections: Record<string, PartialCustomElementDefinition> | null;
     /**
      * A list of captured attributes/binding in raw format
      */

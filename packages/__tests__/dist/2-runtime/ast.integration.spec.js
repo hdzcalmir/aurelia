@@ -2,6 +2,9 @@ import { AccessScopeExpression, ConditionalExpression, } from '@aurelia/expressi
 import { BindingMode, IPlatform, LetBinding, PropertyBinding, } from '@aurelia/runtime-html';
 import { assert, createContainer, createFixture, createObserverLocator, createScopeForTest, } from '@aurelia/testing';
 describe('2-runtime/ast.integration.spec.ts', function () {
+    // well maybe should just delete these tests
+    PropertyBinding.mix();
+    LetBinding.mix();
     describe('[[AccessScope]]', function () {
         describe('PropertyBinding', function () {
             it('auto connects when evaluates', function () {

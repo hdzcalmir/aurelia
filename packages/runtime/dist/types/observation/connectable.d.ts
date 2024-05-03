@@ -1,4 +1,4 @@
-import type { Class } from '@aurelia/kernel';
+import { type Constructable } from '@aurelia/kernel';
 import type { IConnectable, ISubscribable, ISubscriber, ICollectionSubscriber, ICollectionSubscribable } from '../observation';
 import type { IObserverLocator } from './observer-locator';
 export interface IObserverLocatorBasedConnectable extends IConnectable, ISubscriber, ICollectionSubscriber {
@@ -6,29 +6,18 @@ export interface IObserverLocatorBasedConnectable extends IConnectable, ISubscri
     /**
      * A record storing observers that are currently subscribed to by this binding
      */
-    obs: BindingObserverRecord;
+    obs: IObserverRecord;
 }
-export declare class BindingObserverRecord {
+export interface IObserverRecord {
     version: number;
     count: number;
-    constructor(b: IObserverLocatorBasedConnectable);
-    /**
-     * Add, and subscribe to a given observer
-     */
     add(observer: ISubscribable | ICollectionSubscribable): void;
-    /**
-     * Unsubscribe the observers that are not up to date with the record version
-     */
     clear(): void;
     clearAll(): void;
 }
-type Connectable = {
-    oL: IObserverLocator;
-} & IConnectable & Partial<ISubscriber & ICollectionSubscriber>;
-type DecoratableConnectable<TProto, TClass> = Class<TProto & Connectable, TClass>;
-type DecoratedConnectable<TProto, TClass> = Class<TProto & Connectable, TClass>;
-declare const connectableDecorator: <TProto, TClass>(target: DecoratableConnectable<TProto, TClass>, _context: ClassDecoratorContext<DecoratableConnectable<TProto, TClass>>) => DecoratedConnectable<TProto, TClass>;
+export type DecoratedConnectable<T extends Partial<IConnectable>> = Constructable<T & IConnectable & ISubscriber & ICollectionSubscriber>;
+declare const connectableDecorator: <T extends Partial<IConnectable>, C extends Constructable<T>>(target: C, context: ClassDecoratorContext<C>) => DecoratedConnectable<T>;
 export declare function connectable(): typeof connectableDecorator;
-export declare function connectable<TProto, TClass>(target: DecoratableConnectable<TProto, TClass>, context: ClassDecoratorContext<DecoratableConnectable<TProto, TClass>>): DecoratedConnectable<TProto, TClass>;
+export declare function connectable<T extends Partial<IConnectable>, C extends Constructable<T>>(target: C, context: ClassDecoratorContext<C>): DecoratedConnectable<T>;
 export {};
 //# sourceMappingURL=connectable.d.ts.map

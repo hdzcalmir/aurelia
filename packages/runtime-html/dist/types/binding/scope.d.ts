@@ -1,11 +1,8 @@
-import type { IBindingContext, IOverrideContext } from '../observation';
-/**
- * A class for creating context in synthetic scope to keep the number of classes of context in scope small
- */
-export declare class BindingContext implements IBindingContext {
-    [key: PropertyKey]: unknown;
-    constructor();
-    constructor(key: PropertyKey, value: unknown);
+export interface IBindingContext {
+    [key: PropertyKey]: any;
+}
+export interface IOverrideContext {
+    [key: PropertyKey]: any;
 }
 export declare class Scope {
     parent: Scope | null;
@@ -44,5 +41,13 @@ export declare class Scope {
      */
     static create(bc: object, oc: null, isBoundary?: boolean): Scope;
     static fromParent(ps: Scope | null, bc: object): Scope;
+}
+/**
+ * A class for creating context in synthetic scope to keep the number of classes of context in scope small
+ */
+export declare class BindingContext implements IBindingContext {
+    [key: PropertyKey]: unknown;
+    constructor();
+    constructor(key: PropertyKey, value: unknown);
 }
 //# sourceMappingURL=scope.d.ts.map

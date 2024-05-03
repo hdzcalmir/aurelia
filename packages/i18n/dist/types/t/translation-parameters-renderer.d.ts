@@ -1,12 +1,14 @@
 import { IObserverLocator } from '@aurelia/runtime';
 import { IExpressionParser, type IsBindingBehavior } from '@aurelia/expression-parser';
-import { IHydratableController, IRenderer, AttrSyntax, IPlatform, IAttrMapper, ICommandBuildInfo } from '@aurelia/runtime-html';
-import type { BindingMode, BindingCommandInstance, BindingCommandStaticAuDefinition } from '@aurelia/runtime-html';
+import { IHydratableController, IPlatform } from '@aurelia/runtime-html';
+import { AttrSyntax, type IAttrMapper, type ICommandBuildInfo, type BindingCommandInstance, type BindingCommandStaticAuDefinition } from '@aurelia/template-compiler';
+import type { BindingMode } from '@aurelia/runtime-html';
 export declare const TranslationParametersInstructionType = "tpt";
-declare const attribute = "t-params.bind";
-export declare class TranslationParametersAttributePattern {
-    [attribute](rawName: string, rawValue: string): AttrSyntax;
-}
+export declare const TranslationParametersAttributePattern: {
+    new (): {
+        "t-params.bind"(rawName: string, rawValue: string): AttrSyntax;
+    };
+};
 export declare class TranslationParametersBindingInstruction {
     from: IsBindingBehavior;
     to: string;
@@ -19,9 +21,10 @@ export declare class TranslationParametersBindingCommand implements BindingComma
     readonly ignoreAttr = false;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): TranslationParametersBindingInstruction;
 }
-export declare class TranslationParametersBindingRenderer implements IRenderer {
-    target: typeof TranslationParametersInstructionType;
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: TranslationParametersBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
-}
-export {};
+export declare const TranslationParametersBindingRenderer: {
+    new (): {
+        readonly target: "tpt";
+        render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: TranslationParametersBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
+    };
+};
 //# sourceMappingURL=translation-parameters-renderer.d.ts.map

@@ -41,4 +41,5 @@ export declare const LifecycleHooks: Readonly<{
  * Decorator: Indicates that the decorated class is a custom element.
  */
 export declare function lifecycleHooks(): <T extends Constructable>(target: T, context: ClassDecoratorContext) => T;
+export declare function lifecycleHooks<T extends Constructable>(target: T, context: ClassDecoratorContext): T;
 //# sourceMappingURL=lifecycle-hooks.d.ts.map

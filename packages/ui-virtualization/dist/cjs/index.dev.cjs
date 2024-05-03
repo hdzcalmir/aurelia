@@ -5,6 +5,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var runtime = require('@aurelia/runtime');
 var runtimeHtml = require('@aurelia/runtime-html');
+var templateCompiler = require('@aurelia/template-compiler');
 var expressionParser = require('@aurelia/expression-parser');
 
 const IDomRenderer = /*@__PURE__*/ kernel.DI.createInterface('IDomRenderer');
@@ -115,7 +116,7 @@ class VirtualRepeat {
         this.dom = null;
         this.scrollerObserver = null;
         this.location = kernel.resolve(runtimeHtml.IRenderLocation);
-        this.instruction = kernel.resolve(runtimeHtml.IInstruction);
+        this.instruction = kernel.resolve(templateCompiler.IInstruction);
         this.parent = kernel.resolve(runtimeHtml.IController);
         /** @internal */ this._factory = kernel.resolve(runtimeHtml.IViewFactory);
         /** @internal */ this._strategyLocator = kernel.resolve(ICollectionStrategyLocator);
@@ -278,7 +279,7 @@ class VirtualRepeat {
             }
             else {
                 view.nodes.insertBefore(prevView.nodes.firstChild.nextSibling);
-                scope = runtime.Scope.fromParent(repeatController.scope, new runtime.BindingContext(local, collectionStrategy.item(idx)));
+                scope = runtimeHtml.Scope.fromParent(repeatController.scope, new runtimeHtml.BindingContext(local, collectionStrategy.item(idx)));
                 scope.overrideContext.$index = idx;
                 scope.overrideContext.$length = itemCount;
                 enhanceOverrideContext(scope.overrideContext);
@@ -458,7 +459,7 @@ class VirtualRepeat {
             const repeatController = this.$controller;
             const collectionStrategy = this.collectionStrategy;
             const parentScope = repeatController.scope;
-            const itemScope = runtime.Scope.fromParent(parentScope, new runtime.BindingContext(this.local, collectionStrategy.first()));
+            const itemScope = runtimeHtml.Scope.fromParent(parentScope, new runtimeHtml.BindingContext(this.local, collectionStrategy.first()));
             itemScope.overrideContext.$index = 0;
             itemScope.overrideContext.$length = collectionStrategy.count;
             enhanceOverrideContext(itemScope.overrideContext);

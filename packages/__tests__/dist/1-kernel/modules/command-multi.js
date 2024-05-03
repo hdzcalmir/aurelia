@@ -36,7 +36,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { bindingCommand } from '@aurelia/runtime-html';
+import { bindingCommand } from '@aurelia/template-compiler';
 let Cmd = (() => {
     let _classDecorators = [bindingCommand('cmd')];
     let _classDescriptor;

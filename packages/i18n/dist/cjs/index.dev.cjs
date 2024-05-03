@@ -4,6 +4,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var kernel = require('@aurelia/kernel');
 var runtimeHtml = require('@aurelia/runtime-html');
+var templateCompiler = require('@aurelia/template-compiler');
 var expressionParser = require('@aurelia/expression-parser');
 var runtime = require('@aurelia/runtime');
 var i18next = require('i18next');
@@ -660,12 +661,11 @@ runtimeHtml.mixinAstEvaluator(true)(ParameterBinding);
 const TranslationParametersInstructionType = 'tpt';
 // `.bind` part is needed here only for vCurrent compliance
 const attribute = 't-params.bind';
-class TranslationParametersAttributePattern {
+const TranslationParametersAttributePattern = templateCompiler.AttributePattern.define([{ pattern: attribute, symbols: '' }], class TranslationParametersAttributePattern {
     [attribute](rawName, rawValue) {
-        return new runtimeHtml.AttrSyntax(rawName, rawValue, '', attribute);
+        return new templateCompiler.AttrSyntax(rawName, rawValue, '', attribute);
     }
-}
-runtimeHtml.AttributePattern.define([{ pattern: attribute, symbols: '' }], TranslationParametersAttributePattern);
+});
 class TranslationParametersBindingInstruction {
     constructor(from, to) {
         this.from = from;
@@ -697,7 +697,10 @@ TranslationParametersBindingCommand.$au = {
     type: 'binding-command',
     name: attribute,
 };
-class TranslationParametersBindingRenderer {
+const TranslationParametersBindingRenderer = /*@__PURE__*/ runtimeHtml.renderer(class TranslationParametersBindingRenderer {
+    constructor() {
+        this.target = TranslationParametersInstructionType;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
             parser: exprParser,
@@ -710,15 +713,14 @@ class TranslationParametersBindingRenderer {
             platform,
         });
     }
-}
-runtimeHtml.renderer(TranslationParametersInstructionType)(TranslationParametersBindingRenderer, null);
+}, null);
 
 const TranslationInstructionType = 'tt';
 class TranslationAttributePattern {
     static registerAlias(alias) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         this.prototype[alias] = function (rawName, rawValue, parts) {
-            return new runtimeHtml.AttrSyntax(rawName, rawValue, '', alias);
+            return new templateCompiler.AttrSyntax(rawName, rawValue, '', alias);
         };
     }
 }
@@ -748,7 +750,10 @@ class TranslationBindingCommand {
         return new TranslationBindingInstruction(new expressionParser.CustomExpression(info.attr.rawValue), target);
     }
 }
-class TranslationBindingRenderer {
+const TranslationBindingRenderer = /*@__PURE__*/ runtimeHtml.renderer(class TranslationBindingRenderer {
+    constructor() {
+        this.target = TranslationInstructionType;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
             parser: exprParser,
@@ -760,14 +765,13 @@ class TranslationBindingRenderer {
             platform,
         });
     }
-}
-runtimeHtml.renderer(TranslationInstructionType)(TranslationBindingRenderer, null);
+}, null);
 const TranslationBindInstructionType = 'tbt';
 class TranslationBindAttributePattern {
     static registerAlias(alias) {
         const bindPattern = `${alias}.bind`;
         this.prototype[bindPattern] = function (rawName, rawValue, parts) {
-            return new runtimeHtml.AttrSyntax(rawName, rawValue, parts[1], bindPattern);
+            return new templateCompiler.AttrSyntax(rawName, rawValue, parts[1], bindPattern);
         };
     }
 }
@@ -797,7 +801,10 @@ class TranslationBindBindingCommand {
         return new TranslationBindBindingInstruction(exprParser.parse(info.attr.rawValue, etIsProperty), target);
     }
 }
-class TranslationBindBindingRenderer {
+const TranslationBindBindingRenderer = /*@__PURE__*/ runtimeHtml.renderer(class TranslationBindBindingRenderer {
+    constructor() {
+        this.target = TranslationBindInstructionType;
+    }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         TranslationBinding.create({
             parser: exprParser,
@@ -809,8 +816,7 @@ class TranslationBindBindingRenderer {
             platform
         });
     }
-}
-runtimeHtml.renderer(TranslationBindInstructionType)(TranslationBindBindingRenderer, null);
+}, null);
 
 class TranslationValueConverter {
     constructor() {
@@ -846,11 +852,11 @@ function coreComponents(options) {
         }
     }
     const renderers = [
-        runtimeHtml.AttributePattern.define(patterns, TranslationAttributePattern),
-        runtimeHtml.BindingCommand.define({ name: 't', aliases: commandAliases }, TranslationBindingCommand),
+        templateCompiler.AttributePattern.define(patterns, TranslationAttributePattern),
+        templateCompiler.BindingCommand.define({ name: 't', aliases: commandAliases }, TranslationBindingCommand),
         TranslationBindingRenderer,
-        runtimeHtml.AttributePattern.define(bindPatterns, TranslationBindAttributePattern),
-        runtimeHtml.BindingCommand.define({ name: 't.bind', aliases: bindCommandAliases }, TranslationBindBindingCommand),
+        templateCompiler.AttributePattern.define(bindPatterns, TranslationBindAttributePattern),
+        templateCompiler.BindingCommand.define({ name: 't.bind', aliases: bindCommandAliases }, TranslationBindBindingCommand),
         TranslationBindBindingRenderer,
         TranslationParametersAttributePattern,
         TranslationParametersBindingCommand,

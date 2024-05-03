@@ -1,6 +1,7 @@
 import { DI, Registration, resolve, optional, all, ILogger, lazy, camelCase, IContainer, Protocol } from '@aurelia/kernel';
-import { Scope, AccessorType, connectable } from '@aurelia/runtime';
-import { IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, astEvaluate, BindingBehavior, astBind, astUnbind, renderer, AttrSyntax, AppTask, LifecycleHooks, ILifecycleHooks } from '@aurelia/runtime-html';
+import { Scope, IWindow, State as State$1, mixinAstEvaluator, mixingBindingLimited, BindingMode, astEvaluate, BindingBehavior, astBind, astUnbind, renderer, AppTask, LifecycleHooks, ILifecycleHooks } from '@aurelia/runtime-html';
+import { AccessorType, connectable } from '@aurelia/runtime';
+import { AttrSyntax } from '@aurelia/template-compiler';
 
 /** @internal */
 const createInterface = DI.createInterface;
@@ -479,7 +480,7 @@ class StateBindingCommand {
         else {
             // if it looks like: <my-el value.bind>
             // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.kind === 'element') {
+            if (value === '' && info.def.type === 'custom-element') {
                 value = camelCase(target);
             }
             target = info.bindable.name;
@@ -516,25 +517,25 @@ class DispatchBindingInstruction {
         this.type = 'sd';
     }
 }
-class StateBindingInstructionRenderer {
+const StateBindingInstructionRenderer = /*@__PURE__*/ renderer(class StateBindingInstructionRenderer {
     constructor() {
+        this.target = 'sb';
         /** @internal */ this._stateContainer = resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
     }
-}
-renderer('sb')(StateBindingInstructionRenderer, null);
-class DispatchBindingInstructionRenderer {
+}, null);
+const DispatchBindingInstructionRenderer = /*@__PURE__*/ renderer(class DispatchBindingInstructionRenderer {
     constructor() {
+        this.target = 'sd';
         /** @internal */ this._stateContainer = resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser) {
         const expr = ensureExpression(exprParser, instruction.ast, 'IsProperty');
         renderingCtrl.addBinding(new StateDispatchBinding(renderingCtrl.container, expr, target, instruction.from, this._stateContainer));
     }
-}
-renderer('sd')(DispatchBindingInstructionRenderer, null);
+}, null);
 function ensureExpression(parser, srcOrExpr, expressionType) {
     if (typeof srcOrExpr === 'string') {
         return parser.parse(srcOrExpr, expressionType);

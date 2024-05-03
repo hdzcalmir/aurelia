@@ -1,7 +1,8 @@
 import { ensureEmpty, reportTaskQueue } from '@aurelia/platform';
 import { noop, isArrayIndex, DI, Registration, kebabCase, emptyArray, EventAggregator, ILogger } from '@aurelia/kernel';
-import { IObserverLocator, IDirtyChecker, INodeObserverLocator, Scope } from '@aurelia/runtime';
-import { StandardConfiguration, IPlatform, ITemplateCompiler, CustomElement, InstructionType, CustomAttribute, Aurelia, astEvaluate, astAssign, astBind, astUnbind } from '@aurelia/runtime-html';
+import { IObserverLocator, IDirtyChecker, INodeObserverLocator } from '@aurelia/runtime';
+import { StandardConfiguration, IPlatform, CustomElement, CustomAttribute, Aurelia, astEvaluate, astAssign, astBind, astUnbind, Scope } from '@aurelia/runtime-html';
+import { ITemplateCompiler, InstructionType } from '@aurelia/template-compiler';
 import { BrowserPlatform } from '@aurelia/platform-browser';
 import { Metadata } from '@aurelia/metadata';
 
@@ -9280,7 +9281,7 @@ function stopRecordingCalls(ctor) {
     }
 }
 function trace(calls) {
-    return function (ctor, _context) {
+    return function (ctor, context) {
         recordCalls(ctor, calls);
     };
 }

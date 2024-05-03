@@ -51,10 +51,7 @@ class WcCustomElementRegistry {
                 this.auInited = true;
                 const childCtn = container.createChild();
                 registerResolver(childCtn, p.HTMLElement, registerResolver(childCtn, p.Element, registerResolver(childCtn, INode, new InstanceProvider('ElementProvider', this))));
-                const compiledDef = rendering.compile(elDef, childCtn, 
-                // todo: compile existing child element with [au-slot] into here
-                //       complication: what are the scope for the [au-slot] view?
-                { projections: null });
+                const compiledDef = rendering.compile(elDef, childCtn);
                 const viewModel = childCtn.invoke(compiledDef.Type);
                 const controller = this.auCtrl = Controller.$el(childCtn, viewModel, this, null, compiledDef);
                 setRef(this, compiledDef.key, controller);

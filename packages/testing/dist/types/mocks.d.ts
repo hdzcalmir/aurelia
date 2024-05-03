@@ -1,7 +1,7 @@
 import { Key } from '@aurelia/kernel';
-import { type ISignaler, type IRateLimitOptions, type IBinding } from '@aurelia/runtime-html';
+import { type ISignaler, type IRateLimitOptions, type IBinding, type Scope } from '@aurelia/runtime-html';
 import type { IContainer, IDisposable, IIndexable, IServiceLocator } from '@aurelia/kernel';
-import type { Scope, IndexMap, IObserverLocator, BindingObserverRecord, Collection, ISubscribable, ICollectionSubscribable, IObserverLocatorBasedConnectable } from '@aurelia/runtime';
+import type { IndexMap, IObserverLocator, Collection, ISubscribable, ICollectionSubscribable, IObserverLocatorBasedConnectable, IObserverRecord } from '@aurelia/runtime';
 export declare class MockBinding implements IBinding, IObserverLocatorBasedConnectable {
     observerSlots: number;
     version: number;
@@ -10,7 +10,7 @@ export declare class MockBinding implements IBinding, IObserverLocatorBasedConne
     scope?: Scope | undefined;
     isBound: boolean;
     value: unknown;
-    obs: BindingObserverRecord;
+    obs: IObserverRecord;
     calls: [keyof MockBinding, ...any[]][];
     get(key: Key): never;
     updateTarget(value: unknown): void;

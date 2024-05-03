@@ -1,5 +1,6 @@
 import { Collection } from '@aurelia/runtime';
-import { HydrateTemplateController, IHydratedComponentController, ICustomAttributeViewModel, ISyntheticView, IRenderLocation, CustomAttributeStaticAuDefinition } from '@aurelia/runtime-html';
+import { IHydratedComponentController, ICustomAttributeViewModel, ISyntheticView, IRenderLocation, type CustomAttributeStaticAuDefinition } from '@aurelia/runtime-html';
+import { HydrateTemplateController } from '@aurelia/template-compiler';
 import type { IScrollerInfo, IScrollerSubscriber, IVirtualRepeater } from "./interfaces";
 export interface VirtualRepeat extends ICustomAttributeViewModel {
 }
@@ -13,7 +14,7 @@ export declare class VirtualRepeat implements IScrollerSubscriber, IVirtualRepea
     private dom;
     private scrollerObserver;
     readonly location: IRenderLocation<ChildNode>;
-    readonly instruction: HydrateTemplateController;
+    readonly instruction: HydrateTemplateController<import("@aurelia/template-compiler").IAttributeComponentDefinition<string>>;
     readonly parent: IHydratedComponentController;
     constructor();
     handleScrollerChange(scrollerInfo: IScrollerInfo): void;

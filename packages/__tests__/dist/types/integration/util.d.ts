@@ -4,11 +4,11 @@ export declare function createTestFunction(testFunction: (ctx: TestExecutionCont
 export declare function $it(title: string, testFunction: (ctx: TestExecutionContext) => Promise<void> | void, startupConfiguration?: StartupConfiguration): void;
 export declare namespace $it {
     var skip: (title: string, testFunction: (ctx: TestExecutionContext) => void | Promise<void>, startupConfiguration?: Partial<import("./app/molecules/index.js").MolecularConfiguration & {
-        method: "app" | "enhance";
+        method: "enhance" | "app";
         componentMode: import("./app/startup.js").ComponentMode;
     }>) => void;
     var only: (title: string, testFunction: (ctx: TestExecutionContext) => void | Promise<void>, startupConfiguration?: Partial<import("./app/molecules/index.js").MolecularConfiguration & {
-        method: "app" | "enhance";
+        method: "enhance" | "app";
         componentMode: import("./app/startup.js").ComponentMode;
     }>) => void;
 }

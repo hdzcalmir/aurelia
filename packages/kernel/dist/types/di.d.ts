@@ -11,14 +11,14 @@ export interface InterfaceSymbol<K = any> {
 interface IResolverLike<C, K = any> {
     readonly $isResolver: true;
     resolve(handler: C, requestor: C): Resolved<K>;
-    getFactory?(container: C): (K extends Constructable ? IFactory<K> : never) | null;
+    getFactory?<T extends K extends Constructable ? IFactory<K> : IFactory<Constructable>>(container: C): T | null;
 }
-export interface IResolver<K = any> extends IResolverLike<IContainer, K> {
+export interface IResolver<K = any> extends IResolverLike<IContainer, K>, Partial<IDisposable> {
 }
 export interface IDisposableResolver<K = any> extends IResolver<K> {
     dispose(): void;
 }
-export interface IRegistration<K = any> {
+export interface IRegistration<K = any> extends IResolver<K> {
     register(container: IContainer, key?: Key): IResolver<K>;
 }
 export type Transformer<K> = (instance: Resolved<K>) => Resolved<K>;
@@ -52,7 +52,7 @@ export interface IContainer extends IServiceLocator, IDisposable {
     readonly root: IContainer;
     readonly parent: IContainer | null;
     register(...params: any[]): IContainer;
-    registerResolver<K extends Key, T = K>(key: K, resolver: IResolver<T>, isDisposable?: boolean): IResolver<T>;
+    registerResolver<K extends Key, T extends IResolver<K>>(key: K, resolver: T, isDisposable?: boolean): T;
     registerTransformer<K extends Key, T = K>(key: K, transformer: Transformer<T>): boolean;
     getResolver<K extends Key, T = K>(key: K | Key, autoRegister?: boolean): IResolver<T> | null;
     registerFactory<T extends Constructable>(key: T, factory: IFactory<T>): void;
@@ -192,7 +192,7 @@ export declare const DI: {
 };
 export declare const IContainer: InterfaceSymbol<IContainer>;
 export declare const IServiceLocator: InterfaceSymbol<IServiceLocator>;
-declare function transientDecorator<T extends Constructable>(target: T & Partial<RegisterSelf<T>>, _context: ClassDecoratorContext): T & RegisterSelf<T>;
+declare function transientDecorator<T extends Constructable>(target: T & Partial<RegisterSelf<T>>, context: ClassDecoratorContext): T & RegisterSelf<T>;
 /**
  * Registers the decorated class as a transient dependency; each time the dependency is resolved
  * a new instance will be created.
@@ -218,7 +218,7 @@ export declare function transient<T extends Constructable>(target: T & Partial<R
 type SingletonOptions = {
     scoped: boolean;
 };
-type SingletonDecorator = <T extends Constructable>(target: T & Partial<RegisterSelf<T>>, _context: ClassDecoratorContext) => T & RegisterSelf<T>;
+type SingletonDecorator = <T extends Constructable>(target: T & Partial<RegisterSelf<T>>, context: ClassDecoratorContext) => T & RegisterSelf<T>;
 /**
  * Registers the decorated class as a singleton dependency; the class will only be created once. Each
  * consecutive time the dependency is resolved, the same instance will be returned.
@@ -242,7 +242,7 @@ export declare function singleton<T extends Constructable>(options?: SingletonOp
  * ```
  */
 export declare function singleton<T extends Constructable>(target: T & Partial<RegisterSelf<T>>, context: ClassDecoratorContext): T & RegisterSelf<T>;
-export declare class InstanceProvider<K extends Key> implements IDisposableResolver<K | null> {
+export declare class InstanceProvider<K extends Key> implements IDisposableResolver<K> {
     get friendlyName(): string | undefined;
     constructor(name?: string, 
     /**
@@ -252,8 +252,8 @@ export declare class InstanceProvider<K extends Key> implements IDisposableResol
     instance?: Resolved<K> | null, Type?: Constructable | null);
     prepare(instance: Resolved<K>): void;
     get $isResolver(): true;
-    resolve(): Resolved<K> | null;
-    getFactory(container: IContainer): (K extends Constructable ? IFactory<K> : never) | null;
+    resolve(): Resolved<K>;
+    getFactory<T extends K extends Constructable ? IFactory<K> : IFactory<Constructable>>(container: IContainer): T | null;
     dispose(): void;
 }
 /**

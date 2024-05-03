@@ -1,8 +1,7 @@
-import { Scope } from '@aurelia/runtime';
+import { Scope } from '../../binding/scope';
 import { INode } from '../../dom';
-import { IInstruction } from '../../renderer';
 import { ICustomAttributeController, ICustomAttributeViewModel, IHydratableController, IHydratedController, IHydratedParentController, ISyntheticView } from '../../templating/controller';
-import { AttrSyntax } from '../attribute-pattern';
+import { IInstruction, AttrSyntax } from '@aurelia/template-compiler';
 import { CustomAttributeStaticAuDefinition } from '../custom-attribute';
 export declare class PromiseTemplateController implements ICustomAttributeViewModel {
     static readonly $au: CustomAttributeStaticAuDefinition;

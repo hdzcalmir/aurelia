@@ -37,7 +37,8 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { DI } from '@aurelia/kernel';
-import { alias, bindingCommand, OneTimeBindingCommand, BindingCommand, } from '@aurelia/runtime-html';
+import { alias, } from '@aurelia/runtime-html';
+import { bindingCommand, OneTimeBindingCommand, BindingCommand, } from '@aurelia/template-compiler';
 import { assert, createFixture } from '@aurelia/testing';
 describe('3-runtime-html/binding-commands.spec.ts', function () {
     describe('registration & resolution', function () {

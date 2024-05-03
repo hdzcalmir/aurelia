@@ -43,9 +43,7 @@ class WcCustomElementRegistry {
                 this.auInited = true;
                 const t = h.createChild();
                 registerResolver(t, d.HTMLElement, registerResolver(t, d.Element, registerResolver(t, r, new n("ElementProvider", this))));
-                const s = m.compile(i, t, {
-                    projections: null
-                });
+                const s = m.compile(i, t);
                 const e = t.invoke(s.Type);
                 const o = this.auCtrl = a.$el(t, e, this, null, s);
                 u(this, s.key, o);

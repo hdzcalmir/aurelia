@@ -43,7 +43,7 @@ export interface IAuSlotWatcher extends ISubscribable {
     unwatch(slot: IAuSlot): void;
 }
 export declare const IAuSlotWatcher: import("@aurelia/kernel").InterfaceSymbol<IAuSlotWatcher>;
-type Tc39PropertyDecorator = (target: undefined, context: ClassFieldDecoratorContext) => (initialValue: unknown) => unknown;
+type Tc39PropertyDecorator = (target: undefined, context: ClassFieldDecoratorContext) => (initialValue: any) => any;
 /**
  * Decorate a property of a class to get updates from the projection of the decorated custom element
  */

@@ -1,4 +1,4 @@
-import { AttrSyntax } from '@aurelia/runtime-html';
+import { AttrSyntax } from '@aurelia/template-compiler';
 /**
  * Attribute syntax pattern recognizer, helping Aurelia understand template:
  * ```html

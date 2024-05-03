@@ -1,7 +1,8 @@
 import { ensureEmpty, reportTaskQueue } from '../../../platform/dist/native-modules/index.mjs';
 import { noop, isArrayIndex, DI, Registration, kebabCase, emptyArray, EventAggregator, ILogger } from '../../../kernel/dist/native-modules/index.mjs';
-import { IObserverLocator, IDirtyChecker, INodeObserverLocator, Scope } from '../../../runtime/dist/native-modules/index.mjs';
-import { StandardConfiguration, IPlatform, ITemplateCompiler, CustomElement, InstructionType, CustomAttribute, Aurelia, astEvaluate, astAssign, astBind, astUnbind } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { IObserverLocator, IDirtyChecker, INodeObserverLocator } from '../../../runtime/dist/native-modules/index.mjs';
+import { StandardConfiguration, IPlatform, CustomElement, CustomAttribute, Aurelia, astEvaluate, astAssign, astBind, astUnbind, Scope } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { ITemplateCompiler, InstructionType } from '../../../template-compiler/dist/native-modules/index.mjs';
 import { BrowserPlatform } from '../../../platform-browser/dist/native-modules/index.mjs';
 import { Metadata } from '../../../metadata/dist/native-modules/index.mjs';
 
@@ -9280,7 +9281,7 @@ function stopRecordingCalls(ctor) {
     }
 }
 function trace(calls) {
-    return function (ctor, _context) {
+    return function (ctor, context) {
         recordCalls(ctor, calls);
     };
 }

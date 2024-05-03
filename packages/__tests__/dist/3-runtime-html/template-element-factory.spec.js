@@ -1,4 +1,4 @@
-import { ITemplateElementFactory } from '@aurelia/runtime-html';
+import { ITemplateElementFactory } from '@aurelia/template-compiler';
 import { TestContext, assert } from '@aurelia/testing';
 describe('3-runtime-html/template-element-factory.spec.ts', function () {
     let sut;

@@ -1,4 +1,4 @@
-import { type Key, IRegistration, type ResolveCallback, type Resolved, type IRegistry } from './di';
+import { type Key, IRegistration, type ResolveCallback, type Resolved, type IRegistry, type IContainer, InterfaceSymbol } from './di';
 import { Constructable } from './interfaces';
 /**
  * you can use the resulting {@linkcode IRegistration} of any of the factory methods
@@ -92,4 +92,5 @@ export declare const Registration: {
      */
     defer: (key: Key, ...params: unknown[]) => IRegistry;
 };
+export declare const createImplementationRegister: <T extends Key>(key: InterfaceSymbol<T>) => <C extends Constructable>(this: C, container: IContainer) => void;
 //# sourceMappingURL=di.registration.d.ts.map

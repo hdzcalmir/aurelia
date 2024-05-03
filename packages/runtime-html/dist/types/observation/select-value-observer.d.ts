@@ -1,10 +1,9 @@
 import { type AccessorType, type IObserverLocator, type ISubscriberCollection } from '@aurelia/runtime';
 import type { INode } from '../dom';
 import { INodeObserver, INodeObserverConfigBase } from './observer-locator';
-declare function defaultMatcher(a: unknown, b: unknown): boolean;
 export interface ISelectElement extends HTMLSelectElement {
     options: HTMLCollectionOf<IOptionElement> & Pick<HTMLOptionsCollection, 'length' | 'selectedIndex' | 'add' | 'remove'>;
-    matcher?: typeof defaultMatcher;
+    matcher?: (a: unknown, b: unknown) => boolean;
 }
 export interface IOptionElement extends HTMLOptionElement {
     model?: unknown;
@@ -25,5 +24,4 @@ export declare class SelectValueObserver implements INodeObserver {
     syncValue(): boolean;
     handleEvent(): void;
 }
-export {};
 //# sourceMappingURL=select-value-observer.d.ts.map

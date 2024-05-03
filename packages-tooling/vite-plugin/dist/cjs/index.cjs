@@ -39,6 +39,7 @@ function au(options = {}) {
                 'dialog',
                 'expression-parser',
                 'runtime',
+                'template-compiler',
                 'runtime-html',
                 'router-lite',
             ].reduce((aliases, pkg) => {

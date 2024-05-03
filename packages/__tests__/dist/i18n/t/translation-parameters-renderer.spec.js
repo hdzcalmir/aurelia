@@ -1,8 +1,9 @@
 import { I18nConfiguration, TranslationBinding, TranslationParametersAttributePattern, TranslationParametersBindingCommand, TranslationParametersBindingInstruction, TranslationParametersBindingRenderer, TranslationParametersInstructionType } from '@aurelia/i18n';
-import { DI } from '@aurelia/kernel';
+import { DI, Registration } from '@aurelia/kernel';
 import { IExpressionParser } from '@aurelia/expression-parser';
 import { IObserverLocator, } from '@aurelia/runtime';
-import { StandardConfiguration, BindingCommand, IAttributePattern, IPlatform, IAttrMapper, InstructionType, BindingMode, } from '@aurelia/runtime-html';
+import { IPlatform, BindingMode, AttrMapper, } from '@aurelia/runtime-html';
+import { BindingCommand, IAttributePattern, IAttrMapper, InstructionType, } from '@aurelia/template-compiler';
 import { assert, PLATFORM, TestContext } from '@aurelia/testing';
 const noopLocator = {};
 describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
@@ -26,7 +27,7 @@ describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
     describe('TranslationParametersBindingCommand', function () {
         function createFixture() {
             const container = DI.createContainer();
-            container.register(TranslationParametersBindingCommand);
+            container.register(TranslationParametersBindingCommand, Registration.singleton(IAttrMapper, AttrMapper));
             return {
                 sut: container.get(BindingCommand.keyFrom(`t-params.bind`)),
                 parser: container.get(IExpressionParser),
@@ -52,7 +53,7 @@ describe('i18n/t/translation-parameters-renderer.spec.ts', function () {
     describe('TranslationParametersBindingRenderer', function () {
         function createFixture() {
             const { container } = TestContext.create();
-            container.register(StandardConfiguration, I18nConfiguration);
+            container.register(I18nConfiguration);
             return container;
         }
         it('instantiated with instruction type', function () {

@@ -3155,7 +3155,7 @@ class ComponentAgent {
         this.Zt = i;
         this.we = n;
         this.Le = r;
-        this.L = n.container.get(e.ILogger).scopeTo(`ComponentAgent<${n.At}>`);
+        this.L = s.container.get(e.ILogger).scopeTo(`ComponentAgent<${n.At}>`);
         const o = s.lifecycleHooks;
         this.Ue = (o.canLoad ?? []).map((t => t.instance));
         this.ze = (o.loading ?? []).map((t => t.instance));
@@ -3487,7 +3487,9 @@ class RouteContext {
     }
     Ft(t, i) {
         this.ss.prepare(t);
-        const n = this.container;
+        const n = this.container.createChild({
+            inheritParentResources: true
+        });
         const r = n.invoke(i.component.Type);
         const o = this.ts ? void 0 : e.onResolve(resolveRouteConfiguration(r, false, this.config, i, null), (t => this.os(t)));
         return e.onResolve(o, (() => {

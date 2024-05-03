@@ -1,12 +1,13 @@
 import { Key } from '@aurelia/kernel';
-import { type BindingMode } from '../binding/interfaces-bindings';
+import { BindingMode } from '../binding/interfaces-bindings';
 import type { Constructable, IContainer, ResourceDefinition, PartialResourceDefinition, ResourceType } from '@aurelia/kernel';
 import type { BindableDefinition, PartialBindableDefinition } from '../bindable';
 import type { ICustomAttributeViewModel, ICustomAttributeController } from '../templating/controller';
 import type { IWatchDefinition } from '../watch';
 import { type IResourceKind } from './resources-shared';
-export type PartialCustomAttributeDefinition<TBindables extends string = string> = PartialResourceDefinition<{
-    readonly defaultBindingMode?: BindingMode;
+import { IAttributeComponentDefinition } from '@aurelia/template-compiler';
+export type PartialCustomAttributeDefinition<TBindables extends string = string> = PartialResourceDefinition<Omit<IAttributeComponentDefinition, 'type'> & {
+    readonly defaultBindingMode?: string | number;
     readonly isTemplateController?: boolean;
     readonly bindables?: (Record<TBindables, true | Omit<PartialBindableDefinition, 'name'>>) | (TBindables | PartialBindableDefinition & {
         name: TBindables;
@@ -69,9 +70,9 @@ export declare function customAttribute(nameOrDef: string | PartialCustomAttribu
  * attribute is placed on should be converted into a template and that this
  * attribute controls the instantiation of the template.
  */
-export declare function templateController(definition: Omit<PartialCustomAttributeDefinition, 'isTemplateController'>): CustomAttributeDecorator;
+export declare function templateController(definition: Omit<PartialCustomAttributeDefinition, 'isTemplateController' | 'type'>): CustomAttributeDecorator;
 export declare function templateController(name: string): CustomAttributeDecorator;
-export declare function templateController(nameOrDef: string | Omit<PartialCustomAttributeDefinition, 'isTemplateController'>): CustomAttributeDecorator;
+export declare function templateController(nameOrDef: string | Omit<PartialCustomAttributeDefinition, 'isTemplateController' | 'type'>): CustomAttributeDecorator;
 export declare class CustomAttributeDefinition<T extends Constructable = Constructable> implements ResourceDefinition<T, ICustomAttributeViewModel, PartialCustomAttributeDefinition> {
     readonly Type: CustomAttributeType<T>;
     readonly name: string;
@@ -84,7 +85,7 @@ export declare class CustomAttributeDefinition<T extends Constructable = Constru
     readonly watches: IWatchDefinition[];
     readonly dependencies: Key[];
     readonly containerStrategy: 'reuse' | 'new';
-    get kind(): 'attribute';
+    get type(): 'custom-attribute';
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialCustomAttributeDefinition, Type: CustomAttributeType<T>): CustomAttributeDefinition<T>;
     register(container: IContainer, aliasName?: string | undefined): void;

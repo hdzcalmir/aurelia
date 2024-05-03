@@ -1,7 +1,8 @@
 import { getResourceKeyFor, resolve, IEventAggregator, IContainer, Protocol, DI, ILogger, Registration } from '../../../kernel/dist/native-modules/index.mjs';
-import { CustomElement, isCustomElementViewModel, Controller, IPlatform, IWindow, IHistory, ILocation, IAppRoot, CustomAttribute, BindingMode, INode, IInstruction, IController, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { CustomElement, isCustomElementViewModel, Controller, IPlatform, IWindow, IHistory, ILocation, IAppRoot, CustomAttribute, BindingMode, INode, IController, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { Metadata } from '../../../metadata/dist/native-modules/index.mjs';
 import { RouteRecognizer as RouteRecognizer$1, ConfigurableRoute as ConfigurableRoute$1, RecognizedRoute as RecognizedRoute$1, Endpoint as Endpoint$2 } from '../../../route-recognizer/dist/native-modules/index.mjs';
+import { IInstruction } from '../../../template-compiler/dist/native-modules/index.mjs';
 
 let Endpoint$1 = class Endpoint {
     constructor(router, 

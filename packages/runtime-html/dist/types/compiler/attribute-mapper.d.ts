@@ -1,8 +1,6 @@
-export interface IAttrMapper extends AttrMapper {
-}
-export declare const IAttrMapper: import("@aurelia/kernel").InterfaceSymbol<IAttrMapper>;
-export type IsTwoWayPredicate = (element: Element, attribute: string) => boolean;
-export declare class AttrMapper {
+import { IAttrMapper, IsTwoWayPredicate } from '@aurelia/template-compiler';
+export declare class AttrMapper implements IAttrMapper {
+    static register: <C extends import("@aurelia/kernel").Constructable>(this: C, container: import("@aurelia/kernel").IContainer) => void;
     private readonly svg;
     constructor();
     /**

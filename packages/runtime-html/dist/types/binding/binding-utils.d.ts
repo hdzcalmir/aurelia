@@ -1,7 +1,8 @@
 import { type IServiceLocator, type Constructable } from '@aurelia/kernel';
-import { Scope, type ISubscriber } from '@aurelia/runtime';
+import { type ISubscriber } from '@aurelia/runtime';
 import { type IBinding, type IRateLimitOptions } from './interfaces-bindings';
 import { PropertyBinding } from './property-binding';
+import { type Scope } from './scope';
 /**
  * A subscriber that is used for subcribing to target observer & invoking `updateSource` on a binding
  */
@@ -43,4 +44,5 @@ export declare class FlushQueue implements IFlushQueue {
  * For internal use only
  */
 export declare const mixingBindingLimited: <T extends IBinding>(target: Constructable<T>, getMethodName: (binding: T, opts: IRateLimitOptions) => keyof T) => void;
+export declare const createPrototypeMixer: (mixer: () => void) => <T extends Constructable<IBinding>>(this: T) => void;
 //# sourceMappingURL=binding-utils.d.ts.map

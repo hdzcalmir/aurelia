@@ -1,13 +1,10 @@
 import { IExpressionParser } from '@aurelia/expression-parser';
-import { IAttrMapper } from '../compiler/attribute-mapper';
-import { PropertyBindingInstruction } from '../renderer';
-import type { Constructable, IContainer, ResourceType, ResourceDefinition, PartialResourceDefinition, IServiceLocator } from '@aurelia/kernel';
-import type { IInstruction } from '../renderer';
+import { IAttrMapper } from './attribute-mapper';
+import { PropertyBindingInstruction } from './instructions';
+import type { Constructable, IContainer, IServiceLocator, PartialResourceDefinition, ResourceDefinition, ResourceType } from '@aurelia/kernel';
 import { AttrSyntax } from './attribute-pattern';
-import type { BindableDefinition } from '../bindable';
-import type { CustomAttributeDefinition } from './custom-attribute';
-import type { CustomElementDefinition } from './custom-element';
-import { type IResourceKind } from './resources-shared';
+import { IAttributeComponentDefinition, IElementComponentDefinition, IComponentBindablePropDefinition } from './interfaces-template-compiler';
+import type { IInstruction } from './instructions';
 export type PartialBindingCommandDefinition = PartialResourceDefinition;
 export type BindingCommandStaticAuDefinition = PartialBindingCommandDefinition & {
     type: 'binding-command';
@@ -21,8 +18,8 @@ export interface IPlainAttrCommandInfo {
 export interface IBindableCommandInfo {
     readonly node: Element;
     readonly attr: AttrSyntax;
-    readonly bindable: BindableDefinition;
-    readonly def: CustomAttributeDefinition | CustomElementDefinition;
+    readonly bindable: IComponentBindablePropDefinition;
+    readonly def: IAttributeComponentDefinition | IElementComponentDefinition;
 }
 export type ICommandBuildInfo = IPlainAttrCommandInfo | IBindableCommandInfo;
 export type BindingCommandInstance<T extends {} = {}> = {
@@ -35,7 +32,9 @@ export type BindingCommandInstance<T extends {} = {}> = {
     build(info: ICommandBuildInfo, parser: IExpressionParser, mapper: IAttrMapper): IInstruction;
 } & T;
 export type BindingCommandType<T extends Constructable = Constructable> = ResourceType<T, BindingCommandInstance, PartialBindingCommandDefinition>;
-export type BindingCommandKind = IResourceKind & {
+export type BindingCommandKind = {
+    readonly name: string;
+    keyFrom(name: string): string;
     define<T extends Constructable>(name: string, Type: T): BindingCommandType<T>;
     define<T extends Constructable>(def: PartialBindingCommandDefinition, Type: T): BindingCommandType<T>;
     define<T extends Constructable>(nameOrDef: string | PartialBindingCommandDefinition, Type: T): BindingCommandType<T>;
@@ -44,6 +43,9 @@ export type BindingCommandKind = IResourceKind & {
     get(container: IServiceLocator, name: string): BindingCommandInstance;
 };
 export type BindingCommandDecorator = <T extends Constructable>(Type: T, context: ClassDecoratorContext) => BindingCommandType<T>;
+/**
+ * Decorator to describe a class as a binding command resource
+ */
 export declare function bindingCommand(name: string): BindingCommandDecorator;
 export declare function bindingCommand(definition: PartialBindingCommandDefinition): BindingCommandDecorator;
 export declare class BindingCommandDefinition<T extends Constructable = Constructable> implements ResourceDefinition<T, BindingCommandInstance> {

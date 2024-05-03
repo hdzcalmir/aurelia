@@ -36,7 +36,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { attributePattern, AttrSyntax } from '@aurelia/runtime-html';
+import { attributePattern, AttrSyntax } from '@aurelia/template-compiler';
 /**
  * Attribute syntax pattern recognizer, helping Aurelia understand template:
  * ```html

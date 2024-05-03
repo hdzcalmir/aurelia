@@ -19,5 +19,5 @@ export interface MultipleSelector<T, R = T> {
 export declare function connectTo<T, R = any>(settings?: ((store: Store<T>) => Observable<R>) | ConnectToSettings<T, R>): <TClass extends {
     new (...args: any[]): unknown;
     readonly prototype: unknown;
-}>(target: any, _context: ClassDecoratorContext<TClass>) => void;
+}>(target: any, context: ClassDecoratorContext<TClass>) => void;
 //# sourceMappingURL=decorator.d.ts.map

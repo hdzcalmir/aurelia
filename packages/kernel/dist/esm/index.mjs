@@ -326,6 +326,12 @@ const w = {
     defer: deferRegistration
 };
 
+const createImplementationRegister = function(t) {
+    return function register(e) {
+        e.register(singletonRegistration(this, this), aliasToRegistration(this, t));
+    };
+};
+
 const m = "au:annotation";
 
 const getAnnotationKeyFor = (t, e) => {
@@ -516,19 +522,21 @@ class Container {
                     const t = n.$au;
                     const e = (n.aliases ?? M).concat(t.aliases ?? M);
                     let r = `${p}:${t.type}:${t.name}`;
-                    if (!this.has(r, false)) {
+                    if (this.has(r, false)) {
+                        continue;
+                    }
+                    aliasToRegistration(n, r).register(this);
+                    if (!this.has(n, false)) {
+                        singletonRegistration(n, n).register(this);
+                    }
+                    i = 0;
+                    l = e.length;
+                    for (;i < l; ++i) {
+                        r = `${p}:${t.type}:${e[i]}`;
+                        if (this.has(r, false)) {
+                            continue;
+                        }
                         aliasToRegistration(n, r).register(this);
-                        if (!this.has(n, false)) {
-                            singletonRegistration(n, n).register(this);
-                        }
-                        i = 0;
-                        l = e.length;
-                        for (;i < l; ++i) {
-                            r = `${p}:${t.type}:${e[i]}`;
-                            if (!this.has(r, false)) {
-                                aliasToRegistration(n, r).register(this);
-                            }
-                        }
                     }
                 } else {
                     singletonRegistration(n, n).register(this);
@@ -733,7 +741,7 @@ class Container {
         let n;
         let r;
         for ([r, n] of e.entries()) {
-            n.dispose();
+            n.dispose?.();
             t.delete(r);
         }
         e.clear();
@@ -1954,5 +1962,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ConsoleSink, ContainerConfiguration, L as DI, DefaultLogEvent, DefaultLogEventFactory, ut as DefaultLogger, C as DefaultResolver, EventAggregator, A as IContainer, dt as IEventAggregator, nt as ILogConfig, st as ILogEventFactory, it as ILogger, ht as IModuleLoader, S as IPlatform, F as IServiceLocator, rt as ISink, InstanceProvider, LogConfig, et as LogLevel, ft as LoggerConfiguration, ModuleItem, R as Protocol, $ as Registrable, w as Registration, aliasedResourcesRegistry, all, Q as allResources, bound, u as camelCase, createResolver, M as emptyArray, T as emptyObject, W as factory, firstDefined, ct as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, d as getPrototypeChain, getResourceKeyFor, N as ignore, inject, c as isArrayIndex, v as isNativeFunction, h as kebabCase, P as lazy, mergeArrays, U as newInstanceForScope, x as newInstanceOf, noop, onResolve, onResolveAll, K as optional, B as optionalResource, z as own, f as pascalCase, resolve, G as resource, p as resourceBaseName, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, L as DI, DefaultLogEvent, DefaultLogEventFactory, ut as DefaultLogger, C as DefaultResolver, EventAggregator, A as IContainer, dt as IEventAggregator, nt as ILogConfig, st as ILogEventFactory, it as ILogger, ht as IModuleLoader, S as IPlatform, F as IServiceLocator, rt as ISink, InstanceProvider, LogConfig, et as LogLevel, ft as LoggerConfiguration, ModuleItem, R as Protocol, $ as Registrable, w as Registration, aliasedResourcesRegistry, all, Q as allResources, bound, u as camelCase, createImplementationRegister, createResolver, M as emptyArray, T as emptyObject, W as factory, firstDefined, ct as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, d as getPrototypeChain, getResourceKeyFor, N as ignore, inject, c as isArrayIndex, v as isNativeFunction, h as kebabCase, P as lazy, mergeArrays, U as newInstanceForScope, x as newInstanceOf, noop, onResolve, onResolveAll, K as optional, B as optionalResource, z as own, f as pascalCase, resolve, G as resource, p as resourceBaseName, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.mjs.map

@@ -1,9 +1,11 @@
 import { IServiceLocator, Key } from '@aurelia/kernel';
 import { IExpressionParser } from '@aurelia/expression-parser';
-import { IObserverLocator, Scope } from '@aurelia/runtime';
+import { IObserverLocator } from '@aurelia/runtime';
+import { type Scope } from './scope';
 import { CustomElementDefinition } from '../resources/custom-element';
 import { ICustomElementController, IHydrationContext, IController } from '../templating/controller';
-import { IHasController, ITemplateCompiler } from '../renderer';
+import { IHasController } from '../renderer';
+import { ITemplateCompiler } from '@aurelia/template-compiler';
 import { IRendering } from '../templating/rendering';
 import { IPlatform } from '../platform';
 import { IBinding } from './interfaces-bindings';

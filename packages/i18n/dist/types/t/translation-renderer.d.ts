@@ -1,7 +1,8 @@
 import { IObserverLocator } from '@aurelia/runtime';
 import { IExpressionParser, CustomExpression, IsBindingBehavior } from '@aurelia/expression-parser';
-import { IRenderer, IHydratableController, AttrSyntax, IPlatform, IAttrMapper, ICommandBuildInfo } from '@aurelia/runtime-html';
-import type { BindingMode, BindingCommandInstance } from '@aurelia/runtime-html';
+import { IHydratableController, IPlatform } from '@aurelia/runtime-html';
+import { AttrSyntax, type IAttrMapper, type ICommandBuildInfo, type BindingCommandInstance } from '@aurelia/template-compiler';
+import type { BindingMode } from '@aurelia/runtime-html';
 export declare const TranslationInstructionType = "tt";
 export declare class TranslationAttributePattern {
     [key: string]: ((rawName: string, rawValue: string, parts: readonly string[]) => AttrSyntax);
@@ -18,10 +19,12 @@ export declare class TranslationBindingCommand implements BindingCommandInstance
     readonly ignoreAttr = false;
     build(info: ICommandBuildInfo, parser: IExpressionParser, attrMapper: IAttrMapper): TranslationBindingInstruction;
 }
-export declare class TranslationBindingRenderer implements IRenderer {
-    target: typeof TranslationInstructionType;
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: TranslationBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
-}
+export declare const TranslationBindingRenderer: {
+    new (): {
+        readonly target: "tt";
+        render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: TranslationBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
+    };
+};
 export declare const TranslationBindInstructionType = "tbt";
 export declare class TranslationBindAttributePattern {
     [key: string]: ((rawName: string, rawValue: string, parts: readonly string[]) => AttrSyntax);
@@ -38,8 +41,10 @@ export declare class TranslationBindBindingCommand implements BindingCommandInst
     readonly ignoreAttr = false;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser, attrMapper: IAttrMapper): TranslationBindingInstruction;
 }
-export declare class TranslationBindBindingRenderer implements IRenderer {
-    target: typeof TranslationBindInstructionType;
-    render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: TranslationBindBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
-}
+export declare const TranslationBindBindingRenderer: {
+    new (): {
+        target: string;
+        render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: TranslationBindBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
+    };
+};
 //# sourceMappingURL=translation-renderer.d.ts.map

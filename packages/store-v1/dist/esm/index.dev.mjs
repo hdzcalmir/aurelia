@@ -475,7 +475,7 @@ function connectTo(settings) {
         }));
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return function (target, _context) {
+    return function (target, context) {
         const originalSetup = typeof settings === 'object' && settings.setup
             ? target.prototype[settings.setup]
             : target.prototype.binding;

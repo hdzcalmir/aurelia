@@ -1,16 +1,13 @@
 import { Class } from '@aurelia/kernel';
-import { type BindingMode } from './binding/interfaces-bindings';
 import type { Constructable } from '@aurelia/kernel';
 import type { InterceptorFunc } from '@aurelia/runtime';
+import { BindingMode, IComponentBindablePropDefinition } from '@aurelia/template-compiler';
 type PropertyType = typeof Number | typeof String | typeof Boolean | typeof BigInt | {
     coercer: InterceptorFunc;
 } | Class<unknown>;
-export type PartialBindableDefinition = {
-    mode?: BindingMode;
+export type PartialBindableDefinition = Omit<IComponentBindablePropDefinition, 'name'> & {
     callback?: string;
-    attribute?: string;
     name?: string;
-    primary?: boolean;
     set?: InterceptorFunc;
     type?: PropertyType;
     /**
@@ -20,14 +17,13 @@ export type PartialBindableDefinition = {
      */
     nullable?: boolean;
 };
-type PartialBindableDefinitionPropertyOmitted = Omit<PartialBindableDefinition, 'name'>;
 /**
  * Decorator: Specifies custom behavior for a bindable property.
  * This can be either be a property decorator or a class decorator.
  *
  * @param config - The overrides
  */
-export declare function bindable(config?: PartialBindableDefinitionPropertyOmitted): (target: unknown, context: ClassDecoratorContext | ClassFieldDecoratorContext | ClassGetterDecoratorContext) => void;
+export declare function bindable(config?: Omit<PartialBindableDefinition, 'name'>): (target: unknown, context: ClassDecoratorContext | ClassFieldDecoratorContext | ClassGetterDecoratorContext) => void;
 /**
  * Decorator: Specifies a bindable property on a class.
  *

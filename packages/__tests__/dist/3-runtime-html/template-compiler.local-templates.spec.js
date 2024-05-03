@@ -37,7 +37,8 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { DefaultLogger, kebabCase, LoggerConfiguration, LogLevel } from '@aurelia/kernel';
-import { BindingMode, Aurelia, bindable, customElement, CustomElement, CustomElementDefinition, HydrateElementInstruction, } from '@aurelia/runtime-html';
+import { BindingMode, Aurelia, bindable, customElement, CustomElement, CustomElementDefinition, } from '@aurelia/runtime-html';
+import { HydrateElementInstruction } from '@aurelia/template-compiler';
 import { assert, generateCartesianProduct, TestContext, } from '@aurelia/testing';
 export function createAttribute(name, value) {
     const attr = document.createAttribute(name);
@@ -230,8 +231,8 @@ function $$createFixture() {
         set resolveResources(v) {
             ctx.templateCompiler.resolveResources = v;
         },
-        compile(def, container, instruction) {
-            return ctx.templateCompiler.compile(CustomElementDefinition.create(def), container, instruction);
+        compile(def, container) {
+            return CustomElementDefinition.getOrCreate(ctx.templateCompiler.compile(CustomElementDefinition.create(def), container));
         }
     };
     return { ctx, container, sut };
@@ -310,7 +311,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
             it(template, function () {
                 const { container, sut } = $$createFixture();
                 sut.resolveResources = false;
-                const definition = sut.compile({ name: 'lorem-ipsum', template }, container, null);
+                const definition = sut.compile({ name: 'lorem-ipsum', template }, container);
                 verifyDefinition(definition, container);
             });
             if (template.includes(`mode="fromView"`)) {
@@ -333,7 +334,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
         it('throws error if a root template is a local template', function () {
             const template = `<template as-custom-element="foo-bar">I have local root!</template>`;
             const { container, sut } = $$createFixture();
-            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container, null), 'The root cannot be a local template itself.');
+            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container), 'The root cannot be a local template itself.');
         });
         it('throws error if the custom element has only local templates', function () {
             const template = `
@@ -341,22 +342,22 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
       <template as-custom-element="fiz-baz">Of course not!</template>
       `;
             const { container, sut } = $$createFixture();
-            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container, null), 'The custom element does not have any content other than local template(s).');
+            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container), 'The custom element does not have any content other than local template(s).');
         });
         it('throws error if a local template is not under root', function () {
             const template = `<div><template as-custom-element="foo-bar">Can I hide here?</template></div>`;
             const { container, sut } = $$createFixture();
-            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container, null), 'Local templates needs to be defined directly under root.');
+            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container), 'Local templates needs to be defined directly under root.');
         });
         it('throws error if a local template does not have name', function () {
             const template = `<template as-custom-element="">foo-bar</template><div></div>`;
             const { container, sut } = $$createFixture();
-            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container, null), 'The value of "as-custom-element" attribute cannot be empty for local template');
+            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container), 'The value of "as-custom-element" attribute cannot be empty for local template');
         });
         it('throws error if a duplicate local templates are found', function () {
             const template = `<template as-custom-element="foo-bar">foo-bar1</template><template as-custom-element="foo-bar">foo-bar2</template><div></div>`;
             const { container, sut } = $$createFixture();
-            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container, null), 'Duplicate definition of the local template named foo-bar');
+            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container), 'Duplicate definition of the local template named foo-bar');
         });
         it('throws error if bindable is not under root', function () {
             const template = `<template as-custom-element="foo-bar">
@@ -366,7 +367,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
       </template>
       <div></div>`;
             const { container, sut } = $$createFixture();
-            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container, null), 'Bindable properties of local templates needs to be defined directly under root.');
+            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container), 'Bindable properties of local templates needs to be defined directly under root.');
         });
         it('throws error if bindable property is missing', function () {
             const template = `<template as-custom-element="foo-bar">
@@ -374,7 +375,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
       </template>
       <div></div>`;
             const { container, sut } = $$createFixture();
-            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container, null), 'The attribute \'property\' is missing in <bindable attribute="prop"></bindable>');
+            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container), 'The attribute \'property\' is missing in <bindable attribute="prop"></bindable>');
         });
         it('throws error if duplicate bindable properties are found', function () {
             const template = `<template as-custom-element="foo-bar">
@@ -383,7 +384,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
       </template>
       <div></div>`;
             const { container, sut } = $$createFixture();
-            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container, null), 'Bindable property and attribute needs to be unique; found property: prop, attribute: ');
+            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container), 'Bindable property and attribute needs to be unique; found property: prop, attribute: ');
         });
         it('throws error if duplicate bindable attributes are found', function () {
             const template = `<template as-custom-element="foo-bar">
@@ -392,7 +393,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
       </template>
       <div></div>`;
             const { container, sut } = $$createFixture();
-            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container, null), 'Bindable property and attribute needs to be unique; found property: prop2, attribute: bar');
+            assert.throws(() => sut.compile({ name: 'lorem-ipsum', template }, container), 'Bindable property and attribute needs to be unique; found property: prop2, attribute: bar');
         });
         for (const attr of ['if.bind="true"', 'if.bind="false"', 'else', 'repeat.for="item of items"', 'with.bind="{a:1}"', 'switch.bind="cond"', 'case="case1"']) {
             it(`throws error if local-template surrogate has template controller - ${attr}`, function () {
@@ -412,7 +413,7 @@ describe('3-runtime-html/template-compiler.local-templates.spec.ts', function ()
       </template>
       <div></div>`;
             const { container, sut } = $$createFixture();
-            sut.compile({ name: 'lorem-ipsum', template }, container, null);
+            sut.compile({ name: 'lorem-ipsum', template }, container);
             if (__DEV__) {
                 const sinks = container.get(DefaultLogger).sinks;
                 const eventLog = sinks.find((s) => s instanceof EventLog);

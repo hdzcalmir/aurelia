@@ -328,6 +328,12 @@ const d = {
     defer: deferRegistration
 };
 
+const createImplementationRegister = function(t) {
+    return function register(e) {
+        e.register(singletonRegistration(this, this), aliasToRegistration(this, t));
+    };
+};
+
 const p = "au:annotation";
 
 const getAnnotationKeyFor = (t, e) => {
@@ -518,19 +524,21 @@ class Container {
                     const t = r.$au;
                     const e = (r.aliases ?? F).concat(t.aliases ?? F);
                     let n = `${w}:${t.type}:${t.name}`;
-                    if (!this.has(n, false)) {
+                    if (this.has(n, false)) {
+                        continue;
+                    }
+                    aliasToRegistration(r, n).register(this);
+                    if (!this.has(r, false)) {
+                        singletonRegistration(r, r).register(this);
+                    }
+                    i = 0;
+                    l = e.length;
+                    for (;i < l; ++i) {
+                        n = `${w}:${t.type}:${e[i]}`;
+                        if (this.has(n, false)) {
+                            continue;
+                        }
                         aliasToRegistration(r, n).register(this);
-                        if (!this.has(r, false)) {
-                            singletonRegistration(r, r).register(this);
-                        }
-                        i = 0;
-                        l = e.length;
-                        for (;i < l; ++i) {
-                            n = `${w}:${t.type}:${e[i]}`;
-                            if (!this.has(n, false)) {
-                                aliasToRegistration(r, n).register(this);
-                            }
-                        }
                     }
                 } else {
                     singletonRegistration(r, r).register(this);
@@ -735,7 +743,7 @@ class Container {
         let r;
         let n;
         for ([n, r] of e.entries()) {
-            r.dispose();
+            r.dispose?.();
             t.delete(n);
         }
         e.clear();
@@ -2017,6 +2025,8 @@ exports.allResources = z;
 exports.bound = bound;
 
 exports.camelCase = c;
+
+exports.createImplementationRegister = createImplementationRegister;
 
 exports.createResolver = createResolver;
 

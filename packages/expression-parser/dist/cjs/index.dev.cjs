@@ -2097,7 +2097,7 @@ const TokenValues = [
     2163760 /* Token.TemplateTail */, 2163761 /* Token.TemplateContinuation */,
     'of', '=>'
 ];
-const KeywordLookup = Object.assign(createLookup(), {
+const KeywordLookup = /*@__PURE__*/ Object.assign(createLookup(), {
     true: 8193 /* Token.TrueKeyword */,
     null: 8194 /* Token.NullKeyword */,
     false: 8192 /* Token.FalseKeyword */,
@@ -2151,131 +2151,133 @@ const returnToken = (token) => () => {
     nextChar();
     return token;
 };
-// ASCII IdentifierPart lookup
-const AsciiIdParts = new Set();
-decompress(null, AsciiIdParts, codes.AsciiIdPart, true);
 // IdentifierPart lookup
-const IdParts = new Uint8Array(0xFFFF);
-decompress(IdParts, null, codes.IdStart, 1);
-decompress(IdParts, null, codes.Digit, 1);
+const IdParts = /*@__PURE__*/ ((IdParts) => {
+    decompress(IdParts, null, codes.IdStart, 1);
+    decompress(IdParts, null, codes.Digit, 1);
+    return IdParts;
+})(new Uint8Array(0xFFFF));
 // Character scanning function lookup
-const CharScanners = new Array(0xFFFF);
-CharScanners.fill(unexpectedCharacter, 0, 0xFFFF);
-decompress(CharScanners, null, codes.Skip, () => {
-    nextChar();
-    return null;
-});
-decompress(CharScanners, null, codes.IdStart, scanIdentifier);
-decompress(CharScanners, null, codes.Digit, () => scanNumber(false));
-CharScanners[34 /* Char.DoubleQuote */] =
-    CharScanners[39 /* Char.SingleQuote */] = () => {
-        return scanString();
+const CharScanners = /*@__PURE__*/ (() => {
+    const CharScanners = new Array(0xFFFF);
+    CharScanners.fill(unexpectedCharacter, 0, 0xFFFF);
+    decompress(CharScanners, null, codes.Skip, () => {
+        nextChar();
+        return null;
+    });
+    decompress(CharScanners, null, codes.IdStart, scanIdentifier);
+    decompress(CharScanners, null, codes.Digit, () => scanNumber(false));
+    CharScanners[34 /* Char.DoubleQuote */] =
+        CharScanners[39 /* Char.SingleQuote */] = () => {
+            return scanString();
+        };
+    CharScanners[96 /* Char.Backtick */] = () => {
+        return scanTemplate();
     };
-CharScanners[96 /* Char.Backtick */] = () => {
-    return scanTemplate();
-};
-// !, !=, !==
-CharScanners[33 /* Char.Exclamation */] = () => {
-    if (nextChar() !== 61 /* Char.Equals */) {
-        return 131119 /* Token.Exclamation */;
-    }
-    if (nextChar() !== 61 /* Char.Equals */) {
-        return 6553950 /* Token.ExclamationEquals */;
-    }
-    nextChar();
-    return 6553952 /* Token.ExclamationEqualsEquals */;
-};
-// =, ==, ===, =>
-CharScanners[61 /* Char.Equals */] = () => {
-    if (nextChar() === 62 /* Char.GreaterThan */) {
+    // !, !=, !==
+    CharScanners[33 /* Char.Exclamation */] = () => {
+        if (nextChar() !== 61 /* Char.Equals */) {
+            return 131119 /* Token.Exclamation */;
+        }
+        if (nextChar() !== 61 /* Char.Equals */) {
+            return 6553950 /* Token.ExclamationEquals */;
+        }
         nextChar();
-        return 51 /* Token.Arrow */;
-    }
-    if ($currentChar !== 61 /* Char.Equals */) {
-        return 4194350 /* Token.Equals */;
-    }
-    if (nextChar() !== 61 /* Char.Equals */) {
-        return 6553949 /* Token.EqualsEquals */;
-    }
-    nextChar();
-    return 6553951 /* Token.EqualsEqualsEquals */;
-};
-// &, &&
-CharScanners[38 /* Char.Ampersand */] = () => {
-    if (nextChar() !== 38 /* Char.Ampersand */) {
-        return 6291480 /* Token.Ampersand */;
-    }
-    nextChar();
-    return 6553884 /* Token.AmpersandAmpersand */;
-};
-// |, ||
-CharScanners[124 /* Char.Bar */] = () => {
-    if (nextChar() !== 124 /* Char.Bar */) {
-        return 6291481 /* Token.Bar */;
-    }
-    nextChar();
-    return 6553819 /* Token.BarBar */;
-};
-// ?, ??, ?.
-CharScanners[63 /* Char.Question */] = () => {
-    if (nextChar() === 46 /* Char.Dot */) {
-        const peek = $charCodeAt($index + 1);
-        if (peek <= 48 /* Char.Zero */ || peek >= 57 /* Char.Nine */) {
+        return 6553952 /* Token.ExclamationEqualsEquals */;
+    };
+    // =, ==, ===, =>
+    CharScanners[61 /* Char.Equals */] = () => {
+        if (nextChar() === 62 /* Char.GreaterThan */) {
             nextChar();
-            return 2162701 /* Token.QuestionDot */;
+            return 51 /* Token.Arrow */;
         }
-        return 6291479 /* Token.Question */;
-    }
-    if ($currentChar !== 63 /* Char.Question */) {
-        return 6291479 /* Token.Question */;
-    }
-    nextChar();
-    return 6553754 /* Token.QuestionQuestion */;
-};
-// ., ...
-CharScanners[46 /* Char.Dot */] = () => {
-    if (nextChar() <= 57 /* Char.Nine */ && $currentChar >= 48 /* Char.Zero */) {
-        return scanNumber(true);
-    }
-    if ($currentChar === 46 /* Char.Dot */) {
-        if (nextChar() !== 46 /* Char.Dot */) {
-            return 11 /* Token.DotDot */;
+        if ($currentChar !== 61 /* Char.Equals */) {
+            return 4194350 /* Token.Equals */;
+        }
+        if (nextChar() !== 61 /* Char.Equals */) {
+            return 6553949 /* Token.EqualsEquals */;
         }
         nextChar();
-        return 12 /* Token.DotDotDot */;
-    }
-    return 65546 /* Token.Dot */;
-};
-// <, <=
-CharScanners[60 /* Char.LessThan */] = () => {
-    if (nextChar() !== 61 /* Char.Equals */) {
-        return 6554017 /* Token.LessThan */;
-    }
-    nextChar();
-    return 6554019 /* Token.LessThanEquals */;
-};
-// >, >=
-CharScanners[62 /* Char.GreaterThan */] = () => {
-    if (nextChar() !== 61 /* Char.Equals */) {
-        return 6554018 /* Token.GreaterThan */;
-    }
-    nextChar();
-    return 6554020 /* Token.GreaterThanEquals */;
-};
-CharScanners[37 /* Char.Percent */] = returnToken(6554156 /* Token.Percent */);
-CharScanners[40 /* Char.OpenParen */] = returnToken(2688008 /* Token.OpenParen */);
-CharScanners[41 /* Char.CloseParen */] = returnToken(7340047 /* Token.CloseParen */);
-CharScanners[42 /* Char.Asterisk */] = returnToken(6554155 /* Token.Asterisk */);
-CharScanners[43 /* Char.Plus */] = returnToken(2490855 /* Token.Plus */);
-CharScanners[44 /* Char.Comma */] = returnToken(6291472 /* Token.Comma */);
-CharScanners[45 /* Char.Minus */] = returnToken(2490856 /* Token.Minus */);
-CharScanners[47 /* Char.Slash */] = returnToken(6554157 /* Token.Slash */);
-CharScanners[58 /* Char.Colon */] = returnToken(6291477 /* Token.Colon */);
-CharScanners[59 /* Char.Semicolon */] = returnToken(6291478 /* Token.Semicolon */);
-CharScanners[91 /* Char.OpenBracket */] = returnToken(2688019 /* Token.OpenBracket */);
-CharScanners[93 /* Char.CloseBracket */] = returnToken(7340052 /* Token.CloseBracket */);
-CharScanners[123 /* Char.OpenBrace */] = returnToken(524297 /* Token.OpenBrace */);
-CharScanners[125 /* Char.CloseBrace */] = returnToken(7340046 /* Token.CloseBrace */);
+        return 6553951 /* Token.EqualsEqualsEquals */;
+    };
+    // &, &&
+    CharScanners[38 /* Char.Ampersand */] = () => {
+        if (nextChar() !== 38 /* Char.Ampersand */) {
+            return 6291480 /* Token.Ampersand */;
+        }
+        nextChar();
+        return 6553884 /* Token.AmpersandAmpersand */;
+    };
+    // |, ||
+    CharScanners[124 /* Char.Bar */] = () => {
+        if (nextChar() !== 124 /* Char.Bar */) {
+            return 6291481 /* Token.Bar */;
+        }
+        nextChar();
+        return 6553819 /* Token.BarBar */;
+    };
+    // ?, ??, ?.
+    CharScanners[63 /* Char.Question */] = () => {
+        if (nextChar() === 46 /* Char.Dot */) {
+            const peek = $charCodeAt($index + 1);
+            if (peek <= 48 /* Char.Zero */ || peek >= 57 /* Char.Nine */) {
+                nextChar();
+                return 2162701 /* Token.QuestionDot */;
+            }
+            return 6291479 /* Token.Question */;
+        }
+        if ($currentChar !== 63 /* Char.Question */) {
+            return 6291479 /* Token.Question */;
+        }
+        nextChar();
+        return 6553754 /* Token.QuestionQuestion */;
+    };
+    // ., ...
+    CharScanners[46 /* Char.Dot */] = () => {
+        if (nextChar() <= 57 /* Char.Nine */ && $currentChar >= 48 /* Char.Zero */) {
+            return scanNumber(true);
+        }
+        if ($currentChar === 46 /* Char.Dot */) {
+            if (nextChar() !== 46 /* Char.Dot */) {
+                return 11 /* Token.DotDot */;
+            }
+            nextChar();
+            return 12 /* Token.DotDotDot */;
+        }
+        return 65546 /* Token.Dot */;
+    };
+    // <, <=
+    CharScanners[60 /* Char.LessThan */] = () => {
+        if (nextChar() !== 61 /* Char.Equals */) {
+            return 6554017 /* Token.LessThan */;
+        }
+        nextChar();
+        return 6554019 /* Token.LessThanEquals */;
+    };
+    // >, >=
+    CharScanners[62 /* Char.GreaterThan */] = () => {
+        if (nextChar() !== 61 /* Char.Equals */) {
+            return 6554018 /* Token.GreaterThan */;
+        }
+        nextChar();
+        return 6554020 /* Token.GreaterThanEquals */;
+    };
+    CharScanners[37 /* Char.Percent */] = returnToken(6554156 /* Token.Percent */);
+    CharScanners[40 /* Char.OpenParen */] = returnToken(2688008 /* Token.OpenParen */);
+    CharScanners[41 /* Char.CloseParen */] = returnToken(7340047 /* Token.CloseParen */);
+    CharScanners[42 /* Char.Asterisk */] = returnToken(6554155 /* Token.Asterisk */);
+    CharScanners[43 /* Char.Plus */] = returnToken(2490855 /* Token.Plus */);
+    CharScanners[44 /* Char.Comma */] = returnToken(6291472 /* Token.Comma */);
+    CharScanners[45 /* Char.Minus */] = returnToken(2490856 /* Token.Minus */);
+    CharScanners[47 /* Char.Slash */] = returnToken(6554157 /* Token.Slash */);
+    CharScanners[58 /* Char.Colon */] = returnToken(6291477 /* Token.Colon */);
+    CharScanners[59 /* Char.Semicolon */] = returnToken(6291478 /* Token.Semicolon */);
+    CharScanners[91 /* Char.OpenBracket */] = returnToken(2688019 /* Token.OpenBracket */);
+    CharScanners[93 /* Char.CloseBracket */] = returnToken(7340052 /* Token.CloseBracket */);
+    CharScanners[123 /* Char.OpenBrace */] = returnToken(524297 /* Token.OpenBrace */);
+    CharScanners[125 /* Char.CloseBrace */] = returnToken(7340046 /* Token.CloseBrace */);
+    return CharScanners;
+})();
 
 exports.AccessBoundaryExpression = AccessBoundaryExpression;
 exports.AccessGlobalExpression = AccessGlobalExpression;

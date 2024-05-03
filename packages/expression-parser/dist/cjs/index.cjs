@@ -1740,7 +1740,7 @@ function createTemplateTail(e) {
 function nextToken() {
     while (Q < W) {
         Y = Q;
-        if ((Z = fe[se]()) != null) {
+        if ((Z = xe[se]()) != null) {
             return;
         }
     }
@@ -1752,7 +1752,7 @@ function nextChar() {
 }
 
 function scanIdentifier() {
-    while (xe[nextChar()]) ;
+    while (pe[nextChar()]) ;
     const e = le[ee = $tokenRaw()];
     return e === undefined ? 4096 : e;
 }
@@ -1925,7 +1925,7 @@ const unexpectedDoubleDot = () => createMappedError(179, q);
 
 const he = [ F, M, j, D, "this", "$this", null, "$parent", "(", "{", ".", "..", "...", "?.", "}", ")", ",", "[", "]", ":", ";", "?", "'", '"', "&", "|", "??", "||", "&&", "==", "!=", "===", "!==", "<", ">", "<=", ">=", "in", "instanceof", "+", "-", "typeof", "void", "*", "%", "/", "=", "!", 2163760, 2163761, "of", "=>" ];
 
-const le = Object.assign(createLookup(), {
+const le = /*@__PURE__*/ Object.assign(createLookup(), {
     true: 8193,
     null: 8194,
     false: 8192,
@@ -1969,148 +1969,119 @@ const returnToken = e => () => {
     return e;
 };
 
-const pe = new Set;
+const pe = /*@__PURE__*/ (e => {
+    decompress(e, null, ue.IdStart, 1);
+    decompress(e, null, ue.Digit, 1);
+    return e;
+})(new Uint8Array(65535));
 
-decompress(null, pe, ue.AsciiIdPart, true);
-
-const xe = new Uint8Array(65535);
-
-decompress(xe, null, ue.IdStart, 1);
-
-decompress(xe, null, ue.Digit, 1);
-
-const fe = new Array(65535);
-
-fe.fill(unexpectedCharacter, 0, 65535);
-
-decompress(fe, null, ue.Skip, (() => {
-    nextChar();
-    return null;
-}));
-
-decompress(fe, null, ue.IdStart, scanIdentifier);
-
-decompress(fe, null, ue.Digit, (() => scanNumber(false)));
-
-fe[34] = fe[39] = () => scanString();
-
-fe[96] = () => scanTemplate();
-
-fe[33] = () => {
-    if (nextChar() !== 61) {
-        return 131119;
-    }
-    if (nextChar() !== 61) {
-        return 6553950;
-    }
-    nextChar();
-    return 6553952;
-};
-
-fe[61] = () => {
-    if (nextChar() === 62) {
+const xe = /*@__PURE__*/ (() => {
+    const e = new Array(65535);
+    e.fill(unexpectedCharacter, 0, 65535);
+    decompress(e, null, ue.Skip, (() => {
         nextChar();
-        return 51;
-    }
-    if (se !== 61) {
-        return 4194350;
-    }
-    if (nextChar() !== 61) {
-        return 6553949;
-    }
-    nextChar();
-    return 6553951;
-};
-
-fe[38] = () => {
-    if (nextChar() !== 38) {
-        return 6291480;
-    }
-    nextChar();
-    return 6553884;
-};
-
-fe[124] = () => {
-    if (nextChar() !== 124) {
-        return 6291481;
-    }
-    nextChar();
-    return 6553819;
-};
-
-fe[63] = () => {
-    if (nextChar() === 46) {
-        const e = $charCodeAt(Q + 1);
-        if (e <= 48 || e >= 57) {
+        return null;
+    }));
+    decompress(e, null, ue.IdStart, scanIdentifier);
+    decompress(e, null, ue.Digit, (() => scanNumber(false)));
+    e[34] = e[39] = () => scanString();
+    e[96] = () => scanTemplate();
+    e[33] = () => {
+        if (nextChar() !== 61) {
+            return 131119;
+        }
+        if (nextChar() !== 61) {
+            return 6553950;
+        }
+        nextChar();
+        return 6553952;
+    };
+    e[61] = () => {
+        if (nextChar() === 62) {
             nextChar();
-            return 2162701;
+            return 51;
         }
-        return 6291479;
-    }
-    if (se !== 63) {
-        return 6291479;
-    }
-    nextChar();
-    return 6553754;
-};
-
-fe[46] = () => {
-    if (nextChar() <= 57 && se >= 48) {
-        return scanNumber(true);
-    }
-    if (se === 46) {
-        if (nextChar() !== 46) {
-            return 11;
+        if (se !== 61) {
+            return 4194350;
+        }
+        if (nextChar() !== 61) {
+            return 6553949;
         }
         nextChar();
-        return 12;
-    }
-    return 65546;
-};
-
-fe[60] = () => {
-    if (nextChar() !== 61) {
-        return 6554017;
-    }
-    nextChar();
-    return 6554019;
-};
-
-fe[62] = () => {
-    if (nextChar() !== 61) {
-        return 6554018;
-    }
-    nextChar();
-    return 6554020;
-};
-
-fe[37] = returnToken(6554156);
-
-fe[40] = returnToken(2688008);
-
-fe[41] = returnToken(7340047);
-
-fe[42] = returnToken(6554155);
-
-fe[43] = returnToken(2490855);
-
-fe[44] = returnToken(6291472);
-
-fe[45] = returnToken(2490856);
-
-fe[47] = returnToken(6554157);
-
-fe[58] = returnToken(6291477);
-
-fe[59] = returnToken(6291478);
-
-fe[91] = returnToken(2688019);
-
-fe[93] = returnToken(7340052);
-
-fe[123] = returnToken(524297);
-
-fe[125] = returnToken(7340046);
+        return 6553951;
+    };
+    e[38] = () => {
+        if (nextChar() !== 38) {
+            return 6291480;
+        }
+        nextChar();
+        return 6553884;
+    };
+    e[124] = () => {
+        if (nextChar() !== 124) {
+            return 6291481;
+        }
+        nextChar();
+        return 6553819;
+    };
+    e[63] = () => {
+        if (nextChar() === 46) {
+            const e = $charCodeAt(Q + 1);
+            if (e <= 48 || e >= 57) {
+                nextChar();
+                return 2162701;
+            }
+            return 6291479;
+        }
+        if (se !== 63) {
+            return 6291479;
+        }
+        nextChar();
+        return 6553754;
+    };
+    e[46] = () => {
+        if (nextChar() <= 57 && se >= 48) {
+            return scanNumber(true);
+        }
+        if (se === 46) {
+            if (nextChar() !== 46) {
+                return 11;
+            }
+            nextChar();
+            return 12;
+        }
+        return 65546;
+    };
+    e[60] = () => {
+        if (nextChar() !== 61) {
+            return 6554017;
+        }
+        nextChar();
+        return 6554019;
+    };
+    e[62] = () => {
+        if (nextChar() !== 61) {
+            return 6554018;
+        }
+        nextChar();
+        return 6554020;
+    };
+    e[37] = returnToken(6554156);
+    e[40] = returnToken(2688008);
+    e[41] = returnToken(7340047);
+    e[42] = returnToken(6554155);
+    e[43] = returnToken(2490855);
+    e[44] = returnToken(6291472);
+    e[45] = returnToken(2490856);
+    e[47] = returnToken(6554157);
+    e[58] = returnToken(6291477);
+    e[59] = returnToken(6291478);
+    e[91] = returnToken(2688019);
+    e[93] = returnToken(7340052);
+    e[123] = returnToken(524297);
+    e[125] = returnToken(7340046);
+    return e;
+})();
 
 exports.AccessBoundaryExpression = AccessBoundaryExpression;
 

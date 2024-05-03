@@ -1,7 +1,6 @@
 import { Class, ILogger, IServiceLocator } from '@aurelia/kernel';
 import { IExpressionParser, Interpolation, type IsBindingBehavior, PrimitiveLiteralExpression } from '@aurelia/expression-parser';
-import { Scope } from '@aurelia/runtime';
-import { type IAstEvaluator } from '@aurelia/runtime-html';
+import { Scope, type IAstEvaluator } from '@aurelia/runtime-html';
 import { ValidationRuleAlias, IValidationMessageProvider } from './rules';
 import { IValidateable, ValidationRuleExecutionPredicate, IValidationVisitor, ValidationDisplayNameAccessor, IRuleProperty, IPropertyRule, IValidationRule } from './rule-interfaces';
 /**

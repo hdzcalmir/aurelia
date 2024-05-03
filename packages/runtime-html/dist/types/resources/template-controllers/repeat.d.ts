@@ -4,7 +4,7 @@ import { IExpressionParser } from '@aurelia/expression-parser';
 import { IRenderLocation } from '../../dom';
 import { IViewFactory } from '../../templating/view';
 import { CustomAttributeStaticAuDefinition } from '../custom-attribute';
-import { HydrateTemplateController } from '../../renderer';
+import { HydrateTemplateController } from '@aurelia/template-compiler';
 import type { ISyntheticView, ICustomAttributeController, IHydratableController, ICustomAttributeViewModel, IHydratedController, IHydratedParentController, ControllerVisitor } from '../../templating/controller';
 type Items<C extends Collection = unknown[]> = C | undefined;
 export declare class Repeat<C extends Collection = unknown[]> implements ICustomAttributeViewModel {

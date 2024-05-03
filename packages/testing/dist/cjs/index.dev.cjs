@@ -6,6 +6,7 @@ var platform = require('@aurelia/platform');
 var kernel = require('@aurelia/kernel');
 var runtime = require('@aurelia/runtime');
 var runtimeHtml = require('@aurelia/runtime-html');
+var templateCompiler = require('@aurelia/template-compiler');
 var platformBrowser = require('@aurelia/platform-browser');
 var metadata = require('@aurelia/metadata');
 
@@ -902,7 +903,7 @@ class TestContext {
     }
     get templateCompiler() {
         if (this._templateCompiler === void 0) {
-            this._templateCompiler = this.container.get(runtimeHtml.ITemplateCompiler);
+            this._templateCompiler = this.container.get(templateCompiler.ITemplateCompiler);
         }
         return this._templateCompiler;
     }
@@ -2421,33 +2422,33 @@ function getVisibleText(host, removeWhiteSpace) {
 }
 function instructionTypeName(type) {
     switch (type) {
-        case runtimeHtml.InstructionType.textBinding:
+        case templateCompiler.InstructionType.textBinding:
             return 'textBinding';
-        case runtimeHtml.InstructionType.interpolation:
+        case templateCompiler.InstructionType.interpolation:
             return 'interpolation';
-        case runtimeHtml.InstructionType.propertyBinding:
+        case templateCompiler.InstructionType.propertyBinding:
             return 'propertyBinding';
-        case runtimeHtml.InstructionType.iteratorBinding:
+        case templateCompiler.InstructionType.iteratorBinding:
             return 'iteratorBinding';
-        case runtimeHtml.InstructionType.listenerBinding:
+        case templateCompiler.InstructionType.listenerBinding:
             return 'listenerBinding';
-        case runtimeHtml.InstructionType.refBinding:
+        case templateCompiler.InstructionType.refBinding:
             return 'refBinding';
-        case runtimeHtml.InstructionType.stylePropertyBinding:
+        case templateCompiler.InstructionType.stylePropertyBinding:
             return 'stylePropertyBinding';
-        case runtimeHtml.InstructionType.setProperty:
+        case templateCompiler.InstructionType.setProperty:
             return 'setProperty';
-        case runtimeHtml.InstructionType.setAttribute:
+        case templateCompiler.InstructionType.setAttribute:
             return 'setAttribute';
-        case runtimeHtml.InstructionType.hydrateElement:
+        case templateCompiler.InstructionType.hydrateElement:
             return 'hydrateElement';
-        case runtimeHtml.InstructionType.hydrateAttribute:
+        case templateCompiler.InstructionType.hydrateAttribute:
             return 'hydrateAttribute';
-        case runtimeHtml.InstructionType.hydrateTemplateController:
+        case templateCompiler.InstructionType.hydrateTemplateController:
             return 'hydrateTemplateController';
-        case runtimeHtml.InstructionType.hydrateLetElement:
+        case templateCompiler.InstructionType.hydrateLetElement:
             return 'hydrateLetElement';
-        case runtimeHtml.InstructionType.letBinding:
+        case templateCompiler.InstructionType.letBinding:
             return 'letBinding';
         default:
             return type;
@@ -9128,8 +9129,8 @@ function createObserverLocator(containerOrLifecycle) {
 }
 function createScopeForTest(bindingContext = {}, parentBindingContext, isBoundary) {
     return parentBindingContext
-        ? runtime.Scope.fromParent(runtime.Scope.create(parentBindingContext), bindingContext)
-        : runtime.Scope.create(bindingContext, null, isBoundary);
+        ? runtimeHtml.Scope.fromParent(runtimeHtml.Scope.create(parentBindingContext), bindingContext)
+        : runtimeHtml.Scope.create(bindingContext, null, isBoundary);
 }
 // export type CustomAttribute = Writable<IViewModel> & IComponentLifecycleMock;
 // export function createCustomAttribute(nameOrDef: string | PartialCustomAttributeDefinition = 'foo') {
@@ -9284,7 +9285,7 @@ function stopRecordingCalls(ctor) {
     }
 }
 function trace(calls) {
-    return function (ctor, _context) {
+    return function (ctor, context) {
         recordCalls(ctor, calls);
     };
 }
