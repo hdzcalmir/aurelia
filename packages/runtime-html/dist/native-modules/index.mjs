@@ -5261,26 +5261,25 @@ class CustomElementDefinition {
     get type() {
         return xe;
     }
-    constructor(t, e, s, i, n, r, l, a, h, c, u, f, d, m, g, p, v, x, b) {
+    constructor(t, e, s, i, n, r, l, a, h, c, u, f, d, m, g, p, v, x) {
         this.Type = t;
         this.name = e;
         this.aliases = s;
         this.key = i;
-        this.cache = n;
-        this.capture = r;
-        this.template = l;
-        this.instructions = a;
-        this.dependencies = h;
-        this.injectable = c;
-        this.needsCompile = u;
-        this.surrogates = f;
-        this.bindables = d;
-        this.containerless = m;
-        this.shadowOptions = g;
-        this.hasSlots = p;
-        this.enhance = v;
-        this.watches = x;
-        this.processContent = b;
+        this.capture = n;
+        this.template = r;
+        this.instructions = l;
+        this.dependencies = a;
+        this.injectable = h;
+        this.needsCompile = c;
+        this.surrogates = u;
+        this.bindables = f;
+        this.containerless = d;
+        this.shadowOptions = m;
+        this.hasSlots = g;
+        this.enhance = p;
+        this.watches = v;
+        this.processContent = x;
     }
     static create(t, e = null) {
         if (e === null) {
@@ -5294,13 +5293,13 @@ class CustomElementDefinition {
             } else {
                 e = Ti(R(i));
             }
-            return new CustomElementDefinition(e, i, f(s.aliases), E("key", s, (() => getElementKeyFrom(i))), E("cache", s, returnZero), T("capture", s, e, returnFalse), E("template", s, returnNull), f(s.instructions), f(getElementAnnotation(e, "dependencies"), s.dependencies), E("injectable", s, returnNull), E("needsCompile", s, returnTrue), f(s.surrogates), fe.from(getElementAnnotation(e, "bindables"), s.bindables), T("containerless", s, e, returnFalse), E("shadowOptions", s, returnNull), E("hasSlots", s, returnFalse), E("enhance", s, returnFalse), E("watches", s, returnEmptyArray), L("processContent", e, returnNull));
+            return new CustomElementDefinition(e, i, f(s.aliases), E("key", s, (() => getElementKeyFrom(i))), T("capture", s, e, returnFalse), E("template", s, returnNull), f(s.instructions), f(getElementAnnotation(e, "dependencies"), s.dependencies), E("injectable", s, returnNull), E("needsCompile", s, returnTrue), f(s.surrogates), fe.from(getElementAnnotation(e, "bindables"), s.bindables), T("containerless", s, e, returnFalse), E("shadowOptions", s, returnNull), E("hasSlots", s, returnFalse), E("enhance", s, returnFalse), E("watches", s, returnEmptyArray), L("processContent", e, returnNull));
         }
         if (isString(t)) {
-            return new CustomElementDefinition(e, t, f(getElementAnnotation(e, "aliases"), e.aliases), getElementKeyFrom(t), L("cache", e, returnZero), L("capture", e, returnFalse), L("template", e, returnNull), f(getElementAnnotation(e, "instructions"), e.instructions), f(getElementAnnotation(e, "dependencies"), e.dependencies), L("injectable", e, returnNull), L("needsCompile", e, returnTrue), f(getElementAnnotation(e, "surrogates"), e.surrogates), fe.from(...fe.getAll(e), getElementAnnotation(e, "bindables"), e.bindables), L("containerless", e, returnFalse), L("shadowOptions", e, returnNull), L("hasSlots", e, returnFalse), L("enhance", e, returnFalse), f(De.getDefinitions(e), e.watches), L("processContent", e, returnNull));
+            return new CustomElementDefinition(e, t, f(getElementAnnotation(e, "aliases"), e.aliases), getElementKeyFrom(t), L("capture", e, returnFalse), L("template", e, returnNull), f(getElementAnnotation(e, "instructions"), e.instructions), f(getElementAnnotation(e, "dependencies"), e.dependencies), L("injectable", e, returnNull), L("needsCompile", e, returnTrue), f(getElementAnnotation(e, "surrogates"), e.surrogates), fe.from(...fe.getAll(e), getElementAnnotation(e, "bindables"), e.bindables), L("containerless", e, returnFalse), L("shadowOptions", e, returnNull), L("hasSlots", e, returnFalse), L("enhance", e, returnFalse), f(De.getDefinitions(e), e.watches), L("processContent", e, returnNull));
         }
         const s = E("name", t, Ri);
-        return new CustomElementDefinition(e, s, f(getElementAnnotation(e, "aliases"), t.aliases, e.aliases), getElementKeyFrom(s), T("cache", t, e, returnZero), T("capture", t, e, returnFalse), T("template", t, e, returnNull), f(getElementAnnotation(e, "instructions"), t.instructions, e.instructions), f(getElementAnnotation(e, "dependencies"), t.dependencies, e.dependencies), T("injectable", t, e, returnNull), T("needsCompile", t, e, returnTrue), f(getElementAnnotation(e, "surrogates"), t.surrogates, e.surrogates), fe.from(...fe.getAll(e), getElementAnnotation(e, "bindables"), e.bindables, t.bindables), T("containerless", t, e, returnFalse), T("shadowOptions", t, e, returnNull), T("hasSlots", t, e, returnFalse), T("enhance", t, e, returnFalse), f(t.watches, De.getDefinitions(e), e.watches), T("processContent", t, e, returnNull));
+        return new CustomElementDefinition(e, s, f(getElementAnnotation(e, "aliases"), t.aliases, e.aliases), getElementKeyFrom(s), T("capture", t, e, returnFalse), T("template", t, e, returnNull), f(getElementAnnotation(e, "instructions"), t.instructions, e.instructions), f(getElementAnnotation(e, "dependencies"), t.dependencies, e.dependencies), T("injectable", t, e, returnNull), T("needsCompile", t, e, returnTrue), f(getElementAnnotation(e, "surrogates"), t.surrogates, e.surrogates), fe.from(...fe.getAll(e), getElementAnnotation(e, "bindables"), e.bindables, t.bindables), T("containerless", t, e, returnFalse), T("shadowOptions", t, e, returnNull), T("hasSlots", t, e, returnFalse), T("enhance", t, e, returnFalse), f(t.watches, De.getDefinitions(e), e.watches), T("processContent", t, e, returnNull));
     }
     static getOrCreate(t) {
         if (t instanceof CustomElementDefinition) {
@@ -5334,8 +5333,6 @@ const Ai = {
     searchParents: false,
     optional: false
 };
-
-const returnZero = () => 0;
 
 const returnNull = () => null;
 

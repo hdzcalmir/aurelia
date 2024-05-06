@@ -4336,7 +4336,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
         Object.setPrototypeOf(t, $Ctor.prototype);
         return t;
     };
-    const m = [ "aliases", "bindables", "cache", "capture", "containerless", "dependencies", "enhance" ];
+    const m = [ "aliases", "bindables", "capture", "containerless", "dependencies", "enhance" ];
     if (p !== t && t != null) {
         m.forEach((e => {
             O.define(g.getAnnotation(t, e, null), p, e);
