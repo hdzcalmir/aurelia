@@ -26,8 +26,9 @@ import { BindingMode } from './binding-mode';
 /** @internal */ export const setAttribute = 'he';
 /** @internal */ export const setClassAttribute = 'hf';
 /** @internal */ export const setStyleAttribute = 'hg';
-/** @internal */ export const spreadBinding = 'hs';
+/** @internal */ export const spreadTransferedBinding = 'hs';
 /** @internal */ export const spreadElementProp = 'hp';
+/** @internal */ export const spreadValueBinding = 'svb';
 
 export const InstructionType = /*@__PURE__*/ objectFreeze({
   hydrateElement,
@@ -48,8 +49,9 @@ export const InstructionType = /*@__PURE__*/ objectFreeze({
   setAttribute,
   setClassAttribute,
   setStyleAttribute,
-  spreadBinding,
+  spreadTransferedBinding,
   spreadElementProp,
+  spreadValueBinding,
 });
 export type InstructionType = typeof InstructionType[keyof typeof InstructionType];
 
@@ -276,13 +278,26 @@ export class AttributeBindingInstruction {
   ) {}
 }
 
-export class SpreadBindingInstruction {
-  public readonly type = spreadBinding;
+export class SpreadTransferedBindingInstruction {
+  public readonly type = spreadTransferedBinding;
 }
 
+/**
+ * When spreading any attribute bindings onto an element,
+ * it's possible that some attributes will be targeting the bindable properties of a custom element
+ * This instruction is used to express that
+ */
 export class SpreadElementPropBindingInstruction {
   public readonly type = spreadElementProp;
   public constructor(
-    public readonly instructions: IInstruction,
+    public readonly instruction: IInstruction,
+  ) {}
+}
+
+export class SpreadValueBindingInstruction {
+  public readonly type = spreadValueBinding;
+  public constructor(
+    public target: '$bindables' | '$element',
+    public from: string,
   ) {}
 }
