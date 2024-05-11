@@ -34,7 +34,6 @@ export {
   DotSeparatedAttributePattern,
   EventAttributePattern,
   RefAttributePattern,
-  SpreadAttributePattern,
   attributePattern,
 } from './attribute-pattern';
 
@@ -58,7 +57,7 @@ export {
   FromViewBindingCommand,
   OneTimeBindingCommand,
   RefBindingCommand,
-  SpreadBindingCommand,
+  SpreadValueBindingCommand,
   StyleBindingCommand,
   ToViewBindingCommand,
   TriggerBindingCommand,
@@ -68,13 +67,14 @@ export {
 
 export {
   IResourceResolver,
-  IBindablesInfoResolver,
+  IBindingCommandResolver,
   type IElementBindablesInfo,
   type IAttributeBindablesInfo,
   ITemplateCompilerHooks,
   TemplateCompiler,
   TemplateCompilerHooks,
   templateCompilerHooks,
+  generateElementName,
 } from './template-compiler';
 
 export {
@@ -100,8 +100,9 @@ export {
   SetClassAttributeInstruction,
   SetPropertyInstruction,
   SetStyleAttributeInstruction,
-  SpreadBindingInstruction,
+  SpreadTransferedBindingInstruction,
   SpreadElementPropBindingInstruction,
+  SpreadValueBindingInstruction,
   StylePropertyBindingInstruction,
   TextBindingInstruction
 } from './instructions';
