@@ -1929,6 +1929,57 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
         assertText('p', 'my-el content: hello');
         assertHtml('p > a', 'hello');
     });
+    // bug reported by @MaxB on Discord
+    // https://discord.com/channels/448698263508615178/1236855768058302526
+    it('rightly chooses the scope for projected content', function () {
+        let MdcLookup = (() => {
+            let _classDecorators = [customElement({
+                    name: 'mdc-lookup',
+                    template: '<div repeat.for="option of options">' +
+                        '<mdc-option>' +
+                        '<au-slot>${$parent.option} -- ${option}</au-slot>' +
+                        '</mdc-option>' +
+                        '</div>',
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var MdcLookup = _classThis = class {
+                constructor() {
+                    this.options = ['option1'];
+                }
+            };
+            __setFunctionName(_classThis, "MdcLookup");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MdcLookup = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MdcLookup = _classThis;
+        })();
+        let MdcOption = (() => {
+            let _classDecorators = [customElement({ name: 'mdc-option', template: '<au-slot></au-slot>' })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            var MdcOption = _classThis = class {
+            };
+            __setFunctionName(_classThis, "MdcOption");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                MdcOption = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return MdcOption = _classThis;
+        })();
+        const { assertHtml } = createFixture('<mdc-lookup></mdc-lookup>', class {
+        }, [MdcLookup, MdcOption]);
+        assertHtml('<mdc-lookup><div><mdc-option>option1 -- option1</mdc-option></div></mdc-lookup>', { compact: true });
+    });
     describe('with multi layers of repeaters', function () {
         // au-slot creates a layer of scope
         // making $parent from the inner repeater not reaching to the outer repeater
@@ -1981,7 +2032,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
             assertText('0-0-0', { compact: true });
         });
     });
-    // bug discorverd by @MaxB on Discord
+    // bug discorvered by @MaxB on Discord
     // https://discord.com/channels/448698263508615178/448699089513611266/1234665951467929666
     it('passes $host value through 1 layer of <au-slot>', function () {
         var _a;
@@ -2053,7 +2104,7 @@ describe('3-runtime-html/au-slot.spec.tsx', function () {
       </mdc-filter>`, class MyApp {
         }, [MdcLookup, MdcFilter, MdcOption, (_a = class {
                     constructor() {
-                        this.toView = (v, tag = '') => { console.log({ ctor: `${tag}:${v?.constructor.name ?? '<undefined>'}` }); return v; };
+                        this.toView = (v) => v;
                     }
                 },
                 _a.$au = { type: 'value-converter', name: 'json' },

@@ -41,7 +41,7 @@ const getScrollerElement = t => {
 
 const hasOverflowScroll = t => {
     const e = window.getComputedStyle(t);
-    return e && (e.overflowY === "scroll" || e.overflow === "scroll" || e.overflowY === "auto" || e.overflow === "auto");
+    return e != null && (e.overflowY === "scroll" || e.overflow === "scroll" || e.overflowY === "auto" || e.overflow === "auto");
 };
 
 const getStyleValues = (t, ...e) => {

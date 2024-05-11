@@ -121,6 +121,8 @@ exports.transient = e.transient;
 
 exports.AppTask = r.AppTask;
 
+exports.ArrayLikeHandler = r.ArrayLikeHandler;
+
 exports.AuSlotsInfo = r.AuSlotsInfo;
 
 exports.Bindable = r.Bindable;
@@ -166,6 +168,10 @@ exports.INode = r.INode;
 exports.IPlatform = r.IPlatform;
 
 exports.IRenderLocation = r.IRenderLocation;
+
+exports.IRepeatableHandler = r.IRepeatableHandler;
+
+exports.IRepeatableHandlerResolver = r.IRepeatableHandlerResolver;
 
 exports.ISignaler = r.ISignaler;
 

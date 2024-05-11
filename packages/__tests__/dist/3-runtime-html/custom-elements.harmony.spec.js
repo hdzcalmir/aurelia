@@ -302,7 +302,7 @@ describe('3-runtime-html/custom-elements.harmony.spec.ts', function () {
         });
     });
     it('gives priority to custom element bindable over custom attribute with the same name', function () {
-        const { assertStyles, printHtml } = createFixture(`<square size.bind="width"></square>`, { width: 10 }, [
+        const { assertStyles } = createFixture(`<square size.bind="width"></square>`, { width: 10 }, [
             CustomElement.define({ name: 'square', bindables: ['size'] }, class Square {
                 constructor() {
                     this.host = resolve(INode);
@@ -320,7 +320,6 @@ describe('3-runtime-html/custom-elements.harmony.spec.ts', function () {
                 }
             })
         ]);
-        printHtml();
         assertStyles('square', { width: '10px' });
     });
 });

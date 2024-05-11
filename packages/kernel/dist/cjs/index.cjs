@@ -886,8 +886,6 @@ const isClass = t => t.prototype !== void 0;
 
 const isResourceKey = t => isString(t) && t.indexOf(":") > 0;
 
-t.initializeTC39Metadata();
-
 class ResolverBuilder {
     constructor(t, e) {
         this.c = t;
@@ -1034,29 +1032,32 @@ const inject = (...t) => (e, r) => {
     }
 };
 
-const O = {
-    createContainer: createContainer,
-    getDesignParamtypes: getDesignParamtypes,
-    getDependencies: getDependencies,
-    createInterface: createInterface,
-    inject: inject,
-    transient(t) {
-        t.register = function(e) {
-            const r = transientRegistation(t, t);
-            return r.register(e, t);
-        };
-        t.registerInRequestor = false;
-        return t;
-    },
-    singleton(t, e = L) {
-        t.register = function(e) {
-            const r = singletonRegistration(t, t);
-            return r.register(e, t);
-        };
-        t.registerInRequestor = e.scoped;
-        return t;
-    }
-};
+const O = /*@__PURE__*/ (() => {
+    t.initializeTC39Metadata();
+    return {
+        createContainer: createContainer,
+        getDesignParamtypes: getDesignParamtypes,
+        getDependencies: getDependencies,
+        createInterface: createInterface,
+        inject: inject,
+        transient(t) {
+            t.register = function(e) {
+                const r = transientRegistation(t, t);
+                return r.register(e, t);
+            };
+            t.registerInRequestor = false;
+            return t;
+        },
+        singleton(t, e = L) {
+            t.register = function(e) {
+                const r = singletonRegistration(t, t);
+                return r.register(e, t);
+            };
+            t.registerInRequestor = e.scoped;
+            return t;
+        }
+    };
+})();
 
 const E = /*@__PURE__*/ createInterface("IContainer");
 

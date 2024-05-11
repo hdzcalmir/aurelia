@@ -1,14 +1,16 @@
+import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
 import { IServiceLocator, Key } from '@aurelia/kernel';
-import { IExpressionParser } from '@aurelia/expression-parser';
-import { IObserverLocator } from '@aurelia/runtime';
-import { type Scope } from './scope';
-import { CustomElementDefinition } from '../resources/custom-element';
-import { ICustomElementController, IHydrationContext, IController } from '../templating/controller';
-import { IHasController } from '../renderer';
+import { TaskQueue } from '@aurelia/platform';
+import { IObserverLocator, IObserverLocatorBasedConnectable } from '@aurelia/runtime';
 import { ITemplateCompiler } from '@aurelia/template-compiler';
-import { IRendering } from '../templating/rendering';
+import { IAstEvaluator } from '../ast.eval';
 import { IPlatform } from '../platform';
-import { IBinding } from './interfaces-bindings';
+import { IHasController } from '../renderer';
+import { CustomElementDefinition } from '../resources/custom-element';
+import { IController, ICustomElementController, IHydrationContext } from '../templating/controller';
+import { IRendering } from '../templating/rendering';
+import { IBinding, IBindingController } from './interfaces-bindings';
+import { Scope } from './scope';
 /**
  * The public methods of this binding emulates the necessary of an IHydratableController,
  * which mainly is the addBinding method since a spread binding
@@ -39,5 +41,19 @@ export declare class SpreadBinding implements IBinding, IHasController {
     unbind(): void;
     addBinding(binding: IBinding): void;
     addChild(controller: IController): void;
+}
+export interface SpreadValueBinding extends IAstEvaluator, IServiceLocator, IObserverLocatorBasedConnectable {
+}
+export declare class SpreadValueBinding implements IBinding {
+    target: object;
+    targetKeys: string[];
+    ast: IsBindingBehavior;
+    isBound: boolean;
+    constructor(controller: IBindingController, target: object, targetKeys: string[], ast: IsBindingBehavior, ol: IObserverLocator, l: IServiceLocator, taskQueue: TaskQueue);
+    updateTarget(): void;
+    handleChange(): void;
+    handleCollectionChange(): void;
+    bind(scope: Scope): void;
+    unbind(): void;
 }
 //# sourceMappingURL=spread-binding.d.ts.map

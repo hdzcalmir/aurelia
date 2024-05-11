@@ -1,7 +1,7 @@
-import { AccessScopeExpression, ForOfStatement, BindingIdentifier } from '@aurelia/expression-parser';
+import { AccessScopeExpression, ForOfStatement, BindingIdentifier, IExpressionParser } from '@aurelia/expression-parser';
 import { DirtyChecker } from '@aurelia/runtime';
-import { Scope, BindingContext, Repeat, Controller, CustomElementDefinition, PropertyBindingRenderer, TextBindingRenderer, NodeObserverLocator, IRendering, } from '@aurelia/runtime-html';
-import { TextBindingInstruction, ITemplateCompiler, } from '@aurelia/template-compiler';
+import { Scope, BindingContext, Repeat, Controller, CustomElementDefinition, IRenderLocation, PropertyBindingRenderer, TextBindingRenderer, NodeObserverLocator, IRendering, IController, IViewFactory, } from '@aurelia/runtime-html';
+import { IInstruction, TextBindingInstruction, ITemplateCompiler, } from '@aurelia/template-compiler';
 import { eachCartesianJoin, assert, PLATFORM, createContainer, } from '@aurelia/testing';
 import { Registration } from '@aurelia/kernel';
 describe(`3-runtime-html/repeater.unit.spec.ts`, function () {
@@ -461,7 +461,13 @@ describe(`3-runtime-html/repeater.unit.spec.ts`, function () {
             const instruction = {
                 props: [{ props: [] }]
             };
-            const sut = new Repeat(instruction, null, loc, hydratable, itemFactory);
+            const child = container.createChild();
+            child.register(Registration.instance(IInstruction, instruction));
+            child.register(Registration.instance(IExpressionParser, null));
+            child.register(Registration.instance(IRenderLocation, loc));
+            child.register(Registration.instance(IController, hydratable));
+            child.register(Registration.instance(IViewFactory, itemFactory));
+            const sut = child.invoke(Repeat);
             sut.$controller = Controller.$attr(container, sut, (void 0));
             binding.target = sut;
             // -- Round 1 --

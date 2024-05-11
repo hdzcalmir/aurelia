@@ -110,9 +110,4 @@ export declare const AtPrefixedTriggerAttributePattern: {
         '@PART:PART'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;
     };
 };
-export declare const SpreadAttributePattern: {
-    new (): {
-        '...$attrs'(rawName: string, rawValue: string, _parts: readonly string[]): AttrSyntax;
-    };
-};
 //# sourceMappingURL=attribute-pattern.d.ts.map

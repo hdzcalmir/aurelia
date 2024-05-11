@@ -1,6 +1,6 @@
 import { Aurelia, CustomElement } from "@aurelia/runtime-html";
 import { TestContext, assert } from "@aurelia/testing";
-describe("3-runtime-html/generated/template-compiler.static.if-else.spec.ts", function () {
+describe("3-runtime-html/generated/static.if-else.spec.ts", function () {
     function createFixture() {
         const ctx = TestContext.create();
         const au = new Aurelia(ctx.container);
@@ -2577,4 +2577,4 @@ describe("3-runtime-html/generated/template-compiler.static.if-else.spec.ts", fu
         verify(au, host, "b");
     });
 });
-//# sourceMappingURL=template-compiler.static.if-else.spec.js.map
+//# sourceMappingURL=static.if-else.spec.js.map

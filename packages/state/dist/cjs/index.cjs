@@ -446,12 +446,10 @@ class StateBindingCommand {
         const e = i.attr;
         let r = e.target;
         let h = e.rawValue;
+        h = h === "" ? t.camelCase(r) : h;
         if (i.bindable == null) {
             r = n.map(i.node, r) ?? t.camelCase(r);
         } else {
-            if (h === "" && i.def.type === "custom-element") {
-                h = t.camelCase(r);
-            }
             r = i.bindable.name;
         }
         return new StateBindingInstruction(h, r);

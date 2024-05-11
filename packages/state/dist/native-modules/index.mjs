@@ -1,6 +1,6 @@
 import { DI as t, Registration as i, resolve as s, optional as n, all as e, ILogger as r, lazy as h, camelCase as o, IContainer as c, Protocol as a } from "../../../kernel/dist/native-modules/index.mjs";
 
-import { Scope as u, IWindow as l, State as d, mixinAstEvaluator as f, mixingBindingLimited as g, BindingMode as S, astEvaluate as p, BindingBehavior as b, astBind as m, astUnbind as B, renderer as y, AppTask as v, LifecycleHooks as w, ILifecycleHooks as C } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { Scope as u, IWindow as l, State as d, mixinAstEvaluator as f, mixingBindingLimited as g, BindingMode as S, astEvaluate as p, BindingBehavior as b, astBind as B, astUnbind as m, renderer as y, AppTask as v, LifecycleHooks as w, ILifecycleHooks as C } from "../../../runtime-html/dist/native-modules/index.mjs";
 
 import { AccessorType as D, connectable as I } from "../../../runtime/dist/native-modules/index.mjs";
 
@@ -395,7 +395,7 @@ class StateDispatchBinding {
         if (this.isBound) {
             return;
         }
-        m(this.ast, t, this);
+        B(this.ast, t, this);
         this.s = createStateBindingScope(this.L.getState(), t);
         this.M.addEventListener(this.G, this);
         this.L.subscribe(this);
@@ -406,7 +406,7 @@ class StateDispatchBinding {
             return;
         }
         this.isBound = false;
-        B(this.ast, this.s, this);
+        m(this.ast, this.s, this);
         this.s = void 0;
         this.M.removeEventListener(this.G, this);
         this.L.unsubscribe(this);
@@ -444,12 +444,10 @@ class StateBindingCommand {
         const n = t.attr;
         let e = n.target;
         let r = n.rawValue;
+        r = r === "" ? o(e) : r;
         if (t.bindable == null) {
             e = s.map(t.node, e) ?? o(e);
         } else {
-            if (r === "" && t.def.type === "custom-element") {
-                r = o(e);
-            }
             e = t.bindable.name;
         }
         return new StateBindingInstruction(r, e);

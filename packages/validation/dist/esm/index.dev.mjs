@@ -1349,7 +1349,6 @@ class ModelValidationExpressionHydrator {
     }
     hydrateRuleProperty(raw) {
         const rawName = raw.name;
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!rawName || typeof rawName !== 'string') {
             throw new Error('The property name needs to be a non-empty string'); // TODO: use reporter
         }

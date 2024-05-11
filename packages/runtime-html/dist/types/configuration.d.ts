@@ -39,8 +39,6 @@ export declare const DefaultBindingSyntax: ({
     'PART.PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
     'PART.PART.PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
 }) | (new () => {
-    '...$attrs'(rawName: string, rawValue: string, _parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-}) | (new () => {
     'PART.trigger:PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
     'PART.capture:PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
 }))[];
@@ -178,7 +176,12 @@ export declare const DefaultRenderers: ({
         readonly _compiler: import("@aurelia/template-compiler").ITemplateCompiler;
         readonly _rendering: import(".").IRendering;
         readonly target: "hs";
-        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, _instruction: import("@aurelia/template-compiler").SpreadBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement, instruction: import("@aurelia/template-compiler").SpreadTransferedBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+    };
+} | {
+    new (): {
+        readonly target: "svb";
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: import(".").ICustomElementController<import(".").ICustomElementViewModel>, instruction: import("@aurelia/template-compiler").SpreadValueBindingInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
     };
 })[];
 export declare const StandardConfiguration: {
