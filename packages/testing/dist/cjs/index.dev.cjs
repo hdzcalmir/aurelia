@@ -7761,7 +7761,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
                 Object.setPrototypeOf($class, $Ctor.prototype);
                 return $class;
             };
-    const annotations = ['aliases', 'bindables', 'cache', 'capture', 'containerless', 'dependencies', 'enhance'];
+    const annotations = ['aliases', 'bindables', /* 'cache',  */ 'capture', 'containerless', 'dependencies', 'enhance'];
     if ($$class !== $class && $class != null) {
         annotations.forEach(anno => {
             metadata.Metadata.define(runtimeHtml.CustomElement.getAnnotation($class, anno, null), $$class, anno);

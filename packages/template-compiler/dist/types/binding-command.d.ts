@@ -130,9 +130,9 @@ export declare class RefBindingCommand implements BindingCommandInstance {
     get ignoreAttr(): boolean;
     build(info: ICommandBuildInfo, exprParser: IExpressionParser): IInstruction;
 }
-export declare class SpreadBindingCommand implements BindingCommandInstance {
+export declare class SpreadValueBindingCommand implements BindingCommandInstance {
     static readonly $au: BindingCommandStaticAuDefinition;
     get ignoreAttr(): boolean;
-    build(_info: ICommandBuildInfo): IInstruction;
+    build(info: ICommandBuildInfo): IInstruction;
 }
 //# sourceMappingURL=binding-command.d.ts.map

@@ -1,7 +1,7 @@
-import { DestructuringAssignmentSingleExpression, IExpressionParser, AccessScopeExpression } from '@aurelia/expression-parser';
+import { DestructuringAssignmentSingleExpression, AccessScopeExpression, IExpressionParser } from '@aurelia/expression-parser';
 import { isArrayIndex, Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, firstDefined, mergeArrays, resourceBaseName, resource, getResourceKeyFor, resolve, IPlatform as IPlatform$1, emptyArray, Registrable, all, InstanceProvider, IContainer, optionalResource, optional, ILogger, LogLevel, onResolveAll, onResolve, fromDefinitionOrDefault, pascalCase, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, createImplementationRegister, IServiceLocator, emptyObject, transient } from '@aurelia/kernel';
 import { AccessorType, connectable, subscriberCollection, IObserverLocator, ConnectableSwitcher, ProxyObservable, ICoercionConfiguration, PropertyAccessor, INodeObserverLocator, IDirtyChecker, getObserverLookup, SetterObserver, createIndexMap, getCollectionObserver as getCollectionObserver$1, DirtyChecker } from '@aurelia/runtime';
-import { BindingMode, InstructionType, ITemplateCompiler, IInstruction, IAttrMapper, IBindablesInfoResolver, IResourceResolver, TemplateCompiler, BindingCommand, AttributePattern, AttrSyntax, RefAttributePattern, DotSeparatedAttributePattern, SpreadAttributePattern, EventAttributePattern, AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, DefaultBindingCommand, OneTimeBindingCommand, FromViewBindingCommand, ToViewBindingCommand, TwoWayBindingCommand, ForBindingCommand, RefBindingCommand, TriggerBindingCommand, CaptureBindingCommand, ClassBindingCommand, StyleBindingCommand, AttrBindingCommand, SpreadBindingCommand } from '@aurelia/template-compiler';
+import { BindingMode, InstructionType, ITemplateCompiler, IInstruction, IAttrMapper, IResourceResolver, TemplateCompiler, AttributePattern, AttrSyntax, RefAttributePattern, DotSeparatedAttributePattern, EventAttributePattern, AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, DefaultBindingCommand, OneTimeBindingCommand, FromViewBindingCommand, ToViewBindingCommand, TwoWayBindingCommand, ForBindingCommand, RefBindingCommand, TriggerBindingCommand, CaptureBindingCommand, ClassBindingCommand, StyleBindingCommand, AttrBindingCommand, SpreadValueBindingCommand } from '@aurelia/template-compiler';
 export { BindingCommand, BindingMode } from '@aurelia/template-compiler';
 import { Metadata, isObject as isObject$1 } from '@aurelia/metadata';
 import { BrowserPlatform } from '@aurelia/platform-browser';
@@ -35,11 +35,14 @@ const IsDataAttribute = /*@__PURE__*/ createLookup();
 };
 /** @internal */ const isPromise = (v) => v instanceof Promise;
 /** @internal */ const isArray = (v) => v instanceof Array;
+/** @internal */ const isSet = (v) => v instanceof Set;
+/** @internal */ const isMap = (v) => v instanceof Map;
 // eslint-disable-next-line @typescript-eslint/ban-types
 /** @internal */ const isFunction = (v) => typeof v === 'function';
 /** @internal */ const isObject = (v) => v instanceof O;
 /** @internal */ const isString = (v) => typeof v === 'string';
 /** @internal */ const isSymbol = (v) => typeof v === 'symbol';
+/** @internal */ const isNumber = (v) => typeof v === 'number';
 /** @internal */ const rethrow = (err) => { throw err; };
 /** @internal */ const areEqual = O.is;
 /** @internal */
@@ -126,24 +129,8 @@ const errorsMap = {
     [652 /* ErrorNames.node_observer_strategy_not_found */]: `Aurelia is unable to observe property {{0}}. Register observation mapping with .useConfig().`,
     [653 /* ErrorNames.node_observer_mapping_existed */]: `Mapping for property {{0}} of <{{1}} /> already exists`,
     [654 /* ErrorNames.select_observer_array_on_non_multi_select */]: `Array values can only be bound to a multi-select.`,
-    [701 /* ErrorNames.compiler_root_is_local */]: `Template compilation error in element "{{0:name}}": the root <template> cannot be a local element template.`,
-    [702 /* ErrorNames.compiler_invalid_surrogate_attr */]: `Template compilation error: attribute "{{0}}" is invalid on element surrogate.`,
-    [703 /* ErrorNames.compiler_no_tc_on_surrogate */]: `Template compilation error: template controller "{{0}}" is invalid on element surrogate.`,
-    [704 /* ErrorNames.compiler_invalid_let_command */]: `Template compilation error: Invalid command "{{0:.command}}" for <let>. Only to-view/bind supported.`,
-    [706 /* ErrorNames.compiler_au_slot_on_non_element */]: `Template compilation error: detected projection with [au-slot="{{0}}"] attempted on a non custom element {{1}}.`,
-    [707 /* ErrorNames.compiler_binding_to_non_bindable */]: `Template compilation error: creating binding to non-bindable property {{0}} on {{1}}.`,
-    [708 /* ErrorNames.compiler_template_only_local_template */]: `Template compilation error: the custom element "{{0}}" does not have any content other than local template(s).`,
-    [709 /* ErrorNames.compiler_local_el_not_under_root */]: `Template compilation error: local element template needs to be defined directly under root of element "{{0}}".`,
-    [710 /* ErrorNames.compiler_local_el_bindable_not_under_root */]: `Template compilation error: bindable properties of local element "{{0}}" template needs to be defined directly under <template>.`,
-    [711 /* ErrorNames.compiler_local_el_bindable_name_missing */]: `Template compilation error: the attribute 'property' is missing in {{0:outerHTML}} in local element "{{1}}"`,
-    [712 /* ErrorNames.compiler_local_el_bindable_duplicate */]: `Template compilation error: Bindable property and attribute needs to be unique; found property: {{0}}, attribute: {{1}}`,
-    [713 /* ErrorNames.compiler_unknown_binding_command */]: `Template compilation error: unknown binding command: "{{0}}".{{0:bindingCommandHelp}}`,
     [714 /* ErrorNames.compiler_primary_already_existed */]: `Template compilation error: primary already exists on element/attribute "{{0}}"`,
-    [715 /* ErrorNames.compiler_local_name_empty */]: `Template compilation error: the value of "as-custom-element" attribute cannot be empty for local element in element "{{0}}"`,
-    [716 /* ErrorNames.compiler_duplicate_local_name */]: `Template compilation error: duplicate definition of the local template named "{{0}} in element {{1}}"`,
-    [717 /* ErrorNames.compiler_slot_without_shadowdom */]: `Template compilation error: detected a usage of "<slot>" element without specifying shadow DOM options in element: {{0}}`,
     [719 /* ErrorNames.compiler_attr_mapper_duplicate_mapping */]: `Attribute {{0}} has been already registered for {{1:element}}`,
-    [718 /* ErrorNames.compiler_no_spread_tc */]: `Spreading template controller "{{0}}" is not supported.`,
     [767 /* ErrorNames.root_not_found */]: `Aurelia.root was accessed without a valid root.`,
     [768 /* ErrorNames.aurelia_instance_existed_in_container */]: `An instance of Aurelia is already registered with the container or an ancestor of it.`,
     [769 /* ErrorNames.invalid_platform_impl */]: `Failed to initialize the platform object. The host element's ownerDocument does not have a defaultView, did you create the host from a DOMParser and forget to call adoptNode()?`,
@@ -166,6 +153,7 @@ const errorsMap = {
     [777 /* ErrorNames.repeat_non_iterable */]: `Unsupported: [repeat] cannot iterate over {{0:toString}}`,
     [778 /* ErrorNames.repeat_non_countable */]: `Unsupported: [repeat] cannot count {{0:toString}}`,
     [814 /* ErrorNames.repeat_mismatch_length */]: `[repeat] encountered an error: number of views != number of items {{0:join(!=)}}`,
+    [779 /* ErrorNames.portal_invalid_insert_position */]: 'Invalid portal insertion position: {{0}}',
     [801 /* ErrorNames.self_behavior_invalid_usage */]: `"& self" binding behavior only supports listener binding via trigger/capture command.`,
     [802 /* ErrorNames.update_trigger_behavior_no_triggers */]: `"& updateTrigger" invalid usage. This binding behavior requires at least one event name argument: eg <input value.bind="firstName & updateTrigger:'blur'">`,
     [803 /* ErrorNames.update_trigger_invalid_usage */]: `"& updateTrigger" invalid usage. This binding behavior can only be applied to two-way/ from-view bindings.`,
@@ -182,6 +170,8 @@ const errorsMap = {
     [816 /* ErrorNames.switch_no_multiple_default */]: `Invalid [default-case] usage. Multiple 'default-case's are not allowed.`,
     [817 /* ErrorNames.signal_behavior_invalid_usage */]: `"& signal" binding behavior can only be used with bindings that have a "handleChange" method`,
     [818 /* ErrorNames.signal_behavior_no_signals */]: `"& signal" invalid usage. At least one signal name must be passed to the signal behavior, e.g. "expr & signal:'my-signal'"`,
+    [819 /* ErrorNames.spreading_bindable_onto_non_component */]: 'Spreading to bindables onto non custom element',
+    [820 /* ErrorNames.spreading_invalid_target */]: `Invalid spread target {{0}}`,
     [9999 /* ErrorNames.no_spread_scope_context_found */]: 'No scope context for spread binding.',
     [9998 /* ErrorNames.no_spread_template_controller */]: 'Spread binding does not support spreading custom attributes/template controllers. Did you build the spread instruction manually?',
     [9997 /* ErrorNames.marker_malformed */]: `Marker is malformed. This likely happens when a compiled template has been modified.`
@@ -539,7 +529,6 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
                 if (c !== null && isObject(instance) && !ast.accessGlobal) {
                     c.observe(instance, ast.name);
                 }
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 if (instance) {
                     ret = instance[ast.name];
                     if (e?.boundFn && isFunction(ret)) {
@@ -1016,7 +1005,6 @@ function bindable(configOrPropOrTarget, context) {
                 }
                 else {
                     const prop = configOrProp.name;
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!prop)
                         throw createMappedError(229 /* ErrorNames.invalid_bindable_decorator_usage_class_without_property_name_configuration */);
                     if (typeof prop !== 'string')
@@ -2167,8 +2155,7 @@ const mixingBindingLimited = /*@__PURE__*/ (() => {
         });
     };
 })();
-const createPrototypeMixer = (() => {
-    const mixed = new WeakSet();
+const createPrototypeMixer = ((mixed = new WeakSet()) => {
     return (mixer) => {
         return function () {
             if (!mixed.has(this)) {
@@ -2545,7 +2532,7 @@ class ContentBinding {
     }
     handleChange() {
         if (!this.isBound) {
-            /* istanbul-ignore-next */
+            /* istanbul ignore next */
             return;
         }
         this.obs.version++;
@@ -3183,17 +3170,14 @@ class ViewFactory {
 ViewFactory.maxCacheSize = 0xFFFF;
 
 /** @internal */
-const auLocationStart = 'au-start';
-/** @internal */
-const auLocationEnd = 'au-end';
-/** @internal */
-const createComment = (p, text) => p.document.createComment(text);
-/** @internal */
-const createLocation = (p) => {
-    const locationEnd = createComment(p, auLocationEnd);
-    locationEnd.$start = createComment(p, auLocationStart);
-    return locationEnd;
-};
+const createLocation = /*@__PURE__*/ (() => {
+    const createComment = (p, text) => p.document.createComment(text);
+    return (p) => {
+        const locationEnd = createComment(p, 'au-end');
+        locationEnd.$start = createComment(p, 'au-start');
+        return locationEnd;
+    };
+})();
 /** @internal */
 const insertManyBefore = (parent, target, newChildNodes) => {
     if (parent === null) {
@@ -3366,11 +3350,11 @@ class SpreadBinding {
             let inst;
             for (inst of instructions) {
                 switch (inst.type) {
-                    case InstructionType.spreadBinding:
+                    case InstructionType.spreadTransferedBinding:
                         renderSpreadInstruction(ancestor + 1);
                         break;
                     case InstructionType.spreadElementProp:
-                        renderers[inst.instructions.type].render(spreadBinding, findElementControllerFor(target), inst.instructions, platform, exprParser, observerLocator);
+                        renderers[inst.instruction.type].render(spreadBinding, findElementControllerFor(target), inst.instruction, platform, exprParser, observerLocator);
                         break;
                     default:
                         renderers[inst.type].render(spreadBinding, target, inst, platform, exprParser, observerLocator);
@@ -3399,8 +3383,9 @@ class SpreadBinding {
         return this.locator.get(key);
     }
     bind(_scope) {
+        /* istanbul ignore if */
         if (this.isBound) {
-            /* istanbul-ignore-next */
+            /* istanbul ignore next */
             return;
         }
         this.isBound = true;
@@ -3424,6 +3409,133 @@ class SpreadBinding {
         this.$controller.addChild(controller);
     }
 }
+class SpreadValueBinding {
+    constructor(controller, target, targetKeys, ast, ol, l, taskQueue) {
+        this.target = target;
+        this.targetKeys = targetKeys;
+        this.ast = ast;
+        this.isBound = false;
+        /** @internal */
+        this._scope = void 0;
+        // see Listener binding for explanation
+        /** @internal */
+        this.boundFn = false;
+        /** @internal */
+        this._bindingCache = {};
+        // not a static weakmap because we want to clear the cache when the binding is disposed
+        // also different binding at different logic with the same object shouldn't be sharing the same override context
+        /** @internal */
+        this._scopeCache = new WeakMap();
+        this._controller = controller;
+        this.oL = ol;
+        this.l = l;
+        this._taskQueue = taskQueue;
+    }
+    updateTarget() {
+        this.obs.version++;
+        const newValue = astEvaluate(this.ast, this._scope, this, this);
+        this.obs.clear();
+        this._createBindings(newValue, true);
+    }
+    handleChange() {
+        /* istanbul ignore if */
+        if (!this.isBound) {
+            /* istanbul ignore next */
+            return;
+        }
+        this.updateTarget();
+    }
+    handleCollectionChange() {
+        /* istanbul ignore if */
+        if (!this.isBound) {
+            /* istanbul ignore next */
+            return;
+        }
+        this.updateTarget();
+    }
+    bind(scope) {
+        /* istanbul ignore if */
+        if (this.isBound) {
+            /* istanbul ignore if */
+            if (scope === this._scope) {
+                /* istanbul ignore next */
+                return;
+            }
+        }
+        this.isBound = true;
+        this._scope = scope;
+        astBind(this.ast, scope, this);
+        const value = astEvaluate(this.ast, scope, this, this);
+        this._createBindings(value, false);
+    }
+    unbind() {
+        /* istanbul ignore if */
+        if (!this.isBound) {
+            /* istanbul ignore next */
+            return;
+        }
+        this.isBound = false;
+        astUnbind(this.ast, this._scope, this);
+        this._scope = void 0;
+        let key;
+        // can also try to keep track of what the active bindings are
+        // but we know in our impl, all unbind are idempotent
+        // so just be simple and unbind all
+        for (key in this._bindingCache) {
+            this._bindingCache[key].unbind();
+        }
+    }
+    /**
+     * @internal
+     */
+    _createBindings(value, unbind) {
+        if (value == null) {
+            value = {};
+            /* istanbul ignore if */
+            {
+                // eslint-disable-next-line no-console
+                console.warn(`[DEV:aurelia] $bindable spread is given a null/undefined value for properties: "${this.targetKeys.join(', ')}"`);
+            }
+        }
+        else if (!isObject(value)) {
+            value = {};
+            /* istanbul ignore if */
+            {
+                // eslint-disable-next-line no-console
+                console.warn(`[DEV:aurelia] $bindable spread is given a non-object value for properties: "${this.targetKeys.join(', ')}"`);
+            }
+        }
+        let key;
+        let binding;
+        // use a cache as we don't wanna cause bindings to "move" (bind/unbind)
+        // whenever there's a new evaluation
+        let scope = this._scopeCache.get(value);
+        if (scope == null) {
+            this._scopeCache.set(value, scope = Scope.fromParent(this._scope, value));
+        }
+        for (key of this.targetKeys) {
+            binding = this._bindingCache[key];
+            if (key in value) {
+                if (binding == null) {
+                    binding = this._bindingCache[key] = new PropertyBinding(this._controller, this.l, this.oL, this._taskQueue, SpreadValueBinding._astCache[key] ??= new AccessScopeExpression(key, 0), this.target, key, BindingMode.toView);
+                }
+                binding.bind(scope);
+            }
+            else if (unbind) {
+                binding?.unbind();
+            }
+        }
+    }
+}
+/** @internal */
+SpreadValueBinding.mix = createPrototypeMixer(() => {
+    mixinUseScope(SpreadValueBinding);
+    mixingBindingLimited(SpreadValueBinding, () => 'updateTarget');
+    connectable(SpreadValueBinding, null);
+    mixinAstEvaluator(true, false)(SpreadValueBinding);
+});
+/** @internal */
+SpreadValueBinding._astCache = {};
 
 const IRenderer = /*@__PURE__*/ createInterface('IRenderer');
 function renderer(target, context) {
@@ -3845,12 +3957,26 @@ const SpreadRenderer = /*@__PURE__*/ renderer(class SpreadRenderer {
     constructor() {
         /** @internal */ this._compiler = resolve(ITemplateCompiler);
         /** @internal */ this._rendering = resolve(IRendering);
-        this.target = InstructionType.spreadBinding;
+        this.target = InstructionType.spreadTransferedBinding;
     }
-    render(renderingCtrl, target, _instruction, platform, exprParser, observerLocator) {
-        SpreadBinding
-            .create(renderingCtrl.container.get(IHydrationContext), target, void 0, this._rendering, this._compiler, platform, exprParser, observerLocator)
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        SpreadBinding.create(renderingCtrl.container.get(IHydrationContext), target, void 0, this._rendering, this._compiler, platform, exprParser, observerLocator)
             .forEach(b => renderingCtrl.addBinding(b));
+    }
+});
+const SpreadValueRenderer = /*@__PURE__*/ renderer(class SpreadValueRenderer {
+    constructor() {
+        this.target = InstructionType.spreadValueBinding;
+        SpreadValueBinding.mix();
+    }
+    render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
+        const instructionTarget = instruction.target;
+        if (instructionTarget === '$bindables') {
+            renderingCtrl.addBinding(new SpreadValueBinding(renderingCtrl, target.viewModel, objectKeys(target.definition.bindables), exprParser.parse(instruction.from, etIsProperty), observerLocator, renderingCtrl.container, platform.domWriteQueue));
+        }
+        else {
+            throw createMappedError(820 /* ErrorNames.spreading_invalid_target */, instructionTarget);
+        }
     }
 });
 // http://jsben.ch/7n5Kt
@@ -3963,10 +4089,11 @@ class Rendering {
         /** @internal */
         this._fragmentCache = new WeakMap();
         const ctn = this._ctn = resolve(IContainer).root;
-        this._platform = ctn.get(IPlatform);
+        const p = this._platform = ctn.get(IPlatform);
         this._exprParser = ctn.get(IExpressionParser);
         this._observerLocator = ctn.get(IObserverLocator);
-        this._empty = new FragmentNodeSequence(this._platform, this._platform.document.createDocumentFragment());
+        this._marker = p.document.createElement('au-m');
+        this._empty = new FragmentNodeSequence(p, p.document.createDocumentFragment());
     }
     compile(definition, container) {
         const compiler = container.get(ITemplateCompiler);
@@ -4066,52 +4193,58 @@ class Rendering {
         }
     }
     /** @internal */
-    _marker() {
-        return this._platform.document.createElement('au-m');
-    }
-    /** @internal */
     _transformMarker(fragment) {
         if (fragment == null) {
             return null;
         }
-        let parent = fragment;
-        let current = parent.firstChild;
-        let next = null;
-        while (current != null) {
-            if (current.nodeType === 8 && current.nodeValue === 'au*') {
-                next = current.nextSibling;
-                parent.removeChild(current);
-                parent.insertBefore(this._marker(), next);
-                if (next.nodeType === 8) {
-                    current = next.nextSibling;
-                    // todo: maybe validate?
-                }
-                else {
-                    current = next;
-                }
-            }
-            next = current?.firstChild;
-            if (next == null) {
-                next = current?.nextSibling;
-                if (next == null) {
-                    current = parent.nextSibling;
-                    parent = parent.parentNode;
-                    // needs to keep walking up all the way til a valid next node
-                    while (current == null && parent != null) {
-                        current = parent.nextSibling;
-                        parent = parent.parentNode;
-                    }
-                }
-                else {
-                    current = next;
-                }
-            }
-            else {
-                parent = current;
-                current = next;
+        const walker = this._platform.document.createTreeWalker(fragment, /* NodeFilter.SHOW_COMMENT */ 128);
+        let currentNode;
+        while ((currentNode = walker.nextNode()) != null) {
+            if (currentNode.nodeValue === 'au*') {
+                currentNode.parentNode.replaceChild(walker.currentNode = this._marker.cloneNode(), currentNode);
             }
         }
         return fragment;
+        // below is a homemade "comment query selector that seems to be as efficient as the TreeWalker
+        // also it works with very minimal set of APIs (.nextSibling, .parentNode, .insertBefore, .removeChild)
+        // while TreeWalker maynot be always available in platform that we may potentially support
+        //
+        // so leaving it here just in case we need it again, TreeWalker is slightly less code
+        // let parent: Node = fragment;
+        // let current: Node | null | undefined = parent.firstChild;
+        // let next: Node | null | undefined = null;
+        // while (current != null) {
+        //   if (current.nodeType === 8 && current.nodeValue === 'au*') {
+        //     next = current.nextSibling!;
+        //     parent.removeChild(current);
+        //     parent.insertBefore(this._marker(), next);
+        //     if (next.nodeType === 8) {
+        //       current = next.nextSibling;
+        //       // todo: maybe validate?
+        //     } else {
+        //       current = next;
+        //     }
+        //   }
+        //   next = current?.firstChild;
+        //   if (next == null) {
+        //     next = current?.nextSibling;
+        //     if (next == null) {
+        //       current = parent.nextSibling;
+        //       parent = parent.parentNode!;
+        //       // needs to keep walking up all the way til a valid next node
+        //       while (current == null && parent != null) {
+        //         current = parent.nextSibling;
+        //         parent = parent.parentNode!;
+        //       }
+        //     } else {
+        //       current = next;
+        //     }
+        //   } else {
+        //     parent = current!;
+        //     current = next;
+        //   }
+        // }
+        // return fragment;
     }
 }
 
@@ -6073,7 +6206,7 @@ function markContainerless(target) {
 const definitionLookup = new WeakMap();
 class CustomElementDefinition {
     get type() { return dtElement; }
-    constructor(Type, name, aliases, key, cache, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, shadowOptions, 
+    constructor(Type, name, aliases, key, capture, template, instructions, dependencies, injectable, needsCompile, surrogates, bindables, containerless, shadowOptions, 
     /**
      * Indicates whether the custom element has <slot/> in its template
      */
@@ -6082,7 +6215,6 @@ class CustomElementDefinition {
         this.name = name;
         this.aliases = aliases;
         this.key = key;
-        this.cache = cache;
         this.capture = capture;
         this.template = template;
         this.instructions = instructions;
@@ -6099,7 +6231,6 @@ class CustomElementDefinition {
         this.processContent = processContent;
     }
     static create(nameOrDef, Type = null) {
-        // TODO(Sayan): aggregate the info from decorator metadata instead of using the Reflect API
         if (Type === null) {
             const def = nameOrDef;
             if (isString(def)) {
@@ -6115,19 +6246,19 @@ class CustomElementDefinition {
             else {
                 Type = generateElementType(pascalCase(name));
             }
-            return new CustomElementDefinition(Type, name, mergeArrays(def.aliases), fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), fromDefinitionOrDefault('cache', def, returnZero), fromAnnotationOrDefinitionOrTypeOrDefault('capture', def, Type, returnFalse), fromDefinitionOrDefault('template', def, returnNull), mergeArrays(def.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), def.dependencies), fromDefinitionOrDefault('injectable', def, returnNull), fromDefinitionOrDefault('needsCompile', def, returnTrue), mergeArrays(def.surrogates), Bindable.from(getElementAnnotation(Type, 'bindables'), def.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', def, Type, returnFalse), fromDefinitionOrDefault('shadowOptions', def, returnNull), fromDefinitionOrDefault('hasSlots', def, returnFalse), fromDefinitionOrDefault('enhance', def, returnFalse), fromDefinitionOrDefault('watches', def, returnEmptyArray), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, name, mergeArrays(def.aliases), fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), fromAnnotationOrDefinitionOrTypeOrDefault('capture', def, Type, returnFalse), fromDefinitionOrDefault('template', def, returnNull), mergeArrays(def.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), def.dependencies), fromDefinitionOrDefault('injectable', def, returnNull), fromDefinitionOrDefault('needsCompile', def, returnTrue), mergeArrays(def.surrogates), Bindable.from(getElementAnnotation(Type, 'bindables'), def.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', def, Type, returnFalse), fromDefinitionOrDefault('shadowOptions', def, returnNull), fromDefinitionOrDefault('hasSlots', def, returnFalse), fromDefinitionOrDefault('enhance', def, returnFalse), fromDefinitionOrDefault('watches', def, returnEmptyArray), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // If a type is passed in, we ignore the Type property on the definition if it exists.
         // TODO: document this behavior
         if (isString(nameOrDef)) {
-            return new CustomElementDefinition(Type, nameOrDef, mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), fromAnnotationOrTypeOrDefault('cache', Type, returnZero), fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), fromAnnotationOrTypeOrDefault('template', Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), mergeArrays(Watch.getDefinitions(Type), Type.watches), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
+            return new CustomElementDefinition(Type, nameOrDef, mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), fromAnnotationOrTypeOrDefault('template', Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), mergeArrays(Watch.getDefinitions(Type), Type.watches), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // This is the typical default behavior, e.g. from regular CustomElement.define invocations or from @customElement deco
         // The ViewValueConverter also uses this signature and passes in a definition where everything except for the 'hooks'
         // property needs to be copied. So we have that exception for 'hooks', but we may need to revisit that default behavior
         // if this turns out to be too opinionated.
         const name = fromDefinitionOrDefault('name', nameOrDef, generateElementName);
-        return new CustomElementDefinition(Type, name, mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), fromAnnotationOrDefinitionOrTypeOrDefault('cache', nameOrDef, Type, returnZero), fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), mergeArrays(nameOrDef.watches, Watch.getDefinitions(Type), Type.watches), fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
+        return new CustomElementDefinition(Type, name, mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), mergeArrays(nameOrDef.watches, Watch.getDefinitions(Type), Type.watches), fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
     }
     static getOrCreate(partialDefinition) {
         if (partialDefinition instanceof CustomElementDefinition) {
@@ -6163,7 +6294,6 @@ const defaultForOpts = {
     searchParents: false,
     optional: false,
 };
-const returnZero = () => 0;
 const returnNull = () => null;
 const returnFalse = () => false;
 const returnTrue = () => true;
@@ -6387,8 +6517,8 @@ class AppRoot {
             if (!config.allowActionlessForm !== false) {
                 host.addEventListener('submit', (e) => {
                     const target = e.target;
-                    const hasAction = (target.getAttribute('action')?.length ?? 0) > 0;
-                    if (target.tagName === 'FORM' && !hasAction) {
+                    const noAction = !target.getAttribute('action');
+                    if (target.tagName === 'FORM' && noAction) {
                         e.preventDefault();
                     }
                 }, false);
@@ -6860,16 +6990,39 @@ function createError(attr, tagName) {
  */
 const RuntimeTemplateCompilerImplementation = {
     register(container) {
-        container.register(TemplateCompiler, AttrMapper, BindablesInfoResolver, ResourceResolver);
+        container.register(TemplateCompiler, AttrMapper, ResourceResolver);
     }
 };
-class BindablesInfoResolver {
+class BindablesInfo {
+    constructor(attrs, bindables, primary) {
+        this.attrs = attrs;
+        this.bindables = bindables;
+        this.primary = primary;
+    }
+}
+class ResourceResolver {
     constructor() {
         /** @internal */
-        this._cache = new WeakMap();
+        this._resourceCache = new WeakMap();
+        /** @internal */
+        this._bindableCache = new WeakMap();
     }
-    get(def) {
-        let info = this._cache.get(def);
+    el(c, name) {
+        let record = this._resourceCache.get(c);
+        if (record == null) {
+            this._resourceCache.set(c, record = new RecordCache());
+        }
+        return name in record._element ? record._element[name] : (record._element[name] = CustomElement.find(c, name));
+    }
+    attr(c, name) {
+        let record = this._resourceCache.get(c);
+        if (record == null) {
+            this._resourceCache.set(c, record = new RecordCache());
+        }
+        return name in record._attr ? record._attr[name] : (record._attr[name] = CustomAttribute.find(c, name));
+    }
+    bindables(def) {
+        let info = this._bindableCache.get(def);
         if (info == null) {
             const bindables = def.bindables;
             const attrs = createLookup();
@@ -6900,64 +7053,16 @@ class BindablesInfoResolver {
                 // if no bindables are present, default to "value"
                 primary = attrs.value = BindableDefinition.create('value', { mode: def.defaultBindingMode ?? defaultMode });
             }
-            this._cache.set(def, info = new BindablesInfo(attrs, bindables, primary ?? null));
+            this._bindableCache.set(def, info = new BindablesInfo(attrs, bindables, primary ?? null));
         }
         return info;
-    }
-}
-BindablesInfoResolver.register = createImplementationRegister(IBindablesInfoResolver);
-class BindablesInfo {
-    constructor(attrs, bindables, primary) {
-        this.attrs = attrs;
-        this.bindables = bindables;
-        this.primary = primary;
-    }
-}
-class ResourceResolver {
-    constructor() {
-        this._resourceCache = new WeakMap();
-        this._commandCache = new WeakMap();
-    }
-    el(c, name) {
-        let record = this._resourceCache.get(c);
-        if (record == null) {
-            this._resourceCache.set(c, record = new RecordCache());
-        }
-        return name in record.element ? record.element[name] : (record.element[name] = CustomElement.find(c, name));
-    }
-    attr(c, name) {
-        let record = this._resourceCache.get(c);
-        if (record == null) {
-            this._resourceCache.set(c, record = new RecordCache());
-        }
-        return name in record.attr ? record.attr[name] : (record.attr[name] = CustomAttribute.find(c, name));
-    }
-    command(c, name) {
-        let commandInstanceCache = this._commandCache.get(c);
-        if (commandInstanceCache == null) {
-            this._commandCache.set(c, commandInstanceCache = createLookup());
-        }
-        let result = commandInstanceCache[name];
-        if (result === void 0) {
-            let record = this._resourceCache.get(c);
-            if (record == null) {
-                this._resourceCache.set(c, record = new RecordCache());
-            }
-            const commandDef = name in record.command ? record.command[name] : (record.command[name] = BindingCommand.find(c, name));
-            if (commandDef == null) {
-                throw createMappedError(713 /* ErrorNames.compiler_unknown_binding_command */, name);
-            }
-            commandInstanceCache[name] = result = BindingCommand.get(c, name);
-        }
-        return result;
     }
 }
 ResourceResolver.register = createImplementationRegister(IResourceResolver);
 class RecordCache {
     constructor() {
-        this.element = createLookup();
-        this.attr = createLookup();
-        this.command = createLookup();
+        this._element = createLookup();
+        this._attr = createLookup();
     }
 }
 
@@ -8234,7 +8339,7 @@ const wrappedExprs = [
     'ValueConverter',
 ];
 class Repeat {
-    constructor(instruction, parser, location, parent, factory) {
+    constructor() {
         this.views = [];
         this._oldViews = [];
         this.key = null;
@@ -8246,6 +8351,11 @@ class Repeat {
         /** @internal */ this._innerItemsExpression = null;
         /** @internal */ this._normalizedItems = void 0;
         /** @internal */ this._hasDestructuredLocal = false;
+        /** @internal */ this._location = resolve(IRenderLocation);
+        /** @internal */ this._parent = resolve(IController);
+        /** @internal */ this._factory = resolve(IViewFactory);
+        /** @internal */ this._resolver = resolve(IRepeatableHandlerResolver);
+        const instruction = resolve(IInstruction);
         const keyProp = instruction.props[0].props[0];
         if (keyProp !== void 0) {
             const { to, value, command } = keyProp;
@@ -8254,7 +8364,7 @@ class Repeat {
                     this.key = value;
                 }
                 else if (command === 'bind') {
-                    this.key = parser.parse(value, etIsProperty);
+                    this.key = resolve(IExpressionParser).parse(value, etIsProperty);
                 }
                 else {
                     throw createMappedError(775 /* ErrorNames.repeat_invalid_key_binding_command */, command);
@@ -8264,9 +8374,6 @@ class Repeat {
                 throw createMappedError(776 /* ErrorNames.repeat_extraneous_binding */, to);
             }
         }
-        this._location = location;
-        this._parent = parent;
-        this._factory = factory;
     }
     binding(_initiator, _parent) {
         const bindings = this._parent.bindings;
@@ -8296,7 +8403,7 @@ class Repeat {
     }
     attaching(initiator, _parent) {
         this._normalizeToArray();
-        return this._activateAllViews(initiator);
+        return this._activateAllViews(initiator, this._normalizedItems ?? emptyArray);
     }
     detaching(initiator, _parent) {
         this._refreshCollectionObserver();
@@ -8494,7 +8601,7 @@ class Repeat {
         if (indexMap === void 0) {
             const ret = onResolve(this._deactivateAllViews(null), () => {
                 // TODO(fkleuver): add logic to the controller that ensures correct handling of race conditions and add a variety of `if` integration tests
-                return this._activateAllViews(null);
+                return this._activateAllViews(null, this._normalizedItems ?? emptyArray);
             });
             if (isPromise(ret)) {
                 ret.catch(rethrow);
@@ -8531,7 +8638,8 @@ class Repeat {
         }
         const oldObserver = this._observer;
         if (this.$controller.isActive) {
-            newObserver = this._observer = getCollectionObserver$1(observingInnerItems ? innerItems : this.items);
+            const items = observingInnerItems ? innerItems : this.items;
+            newObserver = this._observer = this._resolver.resolve(items).getObserver?.(items);
             if (oldObserver !== newObserver) {
                 oldObserver?.unsubscribe(this);
                 newObserver?.subscribe(this);
@@ -8544,35 +8652,35 @@ class Repeat {
     }
     /** @internal */
     _normalizeToArray() {
-        const { items } = this;
+        const items = this.items;
         if (isArray(items)) {
-            this._normalizedItems = items;
+            this._normalizedItems = items.slice(0);
             return;
         }
         const normalizedItems = [];
-        iterate(items, (item, index) => {
+        this._resolver.resolve(items).iterate(items, (item, index) => {
             normalizedItems[index] = item;
         });
         this._normalizedItems = normalizedItems;
     }
     /** @internal */
-    _activateAllViews(initiator) {
+    _activateAllViews(initiator, $items) {
         let promises = void 0;
         let ret;
         let view;
         let viewScope;
-        const { $controller, _factory, local, _location, items, _scopeMap, _forOfBinding, forOf, _hasDestructuredLocal } = this;
+        const { $controller, _factory, local, _location, _scopeMap, _forOfBinding, forOf, _hasDestructuredLocal } = this;
         const parentScope = $controller.scope;
-        const newLen = getCount(items);
+        const newLen = $items.length;
         const views = this.views = Array(newLen);
-        iterate(items, (item, i) => {
+        $items.forEach((item, i) => {
             view = views[i] = _factory.create().setLocation(_location);
             view.nodes.unlink();
             viewScope = getScope(_scopeMap, item, forOf, parentScope, _forOfBinding, local, _hasDestructuredLocal);
             setContextualProperties(viewScope.overrideContext, i, newLen);
             ret = view.activate(initiator ?? view, $controller, viewScope);
             if (isPromise(ret)) {
-                (promises ?? (promises = [])).push(ret);
+                (promises ??= []).push(ret);
             }
         });
         if (promises !== void 0) {
@@ -8728,7 +8836,6 @@ Repeat.$au = {
     isTemplateController: true,
     bindables: ['items'],
 };
-/** @internal */ Repeat.inject = [IInstruction, IExpressionParser, IRenderLocation, IController, IViewFactory];
 let maxLen = 16;
 let prevIndices = new Int32Array(maxLen);
 let tailIndices = new Int32Array(maxLen);
@@ -8804,56 +8911,123 @@ const setContextualProperties = (oc, index, length) => {
     oc.$odd = !isEven;
     oc.$length = length;
 };
-const toStringTag = baseObjectPrototype.toString;
-const getCount = (result) => {
-    switch (toStringTag.call(result)) {
-        case '[object Array]': return result.length;
-        case '[object Map]': return result.size;
-        case '[object Set]': return result.size;
-        case '[object Number]': return result;
-        case '[object Null]': return 0;
-        case '[object Undefined]': return 0;
-        default: throw createMappedError(778 /* ErrorNames.repeat_non_countable */, result);
+const IRepeatableHandlerResolver = /*@__PURE__*/ createInterface('IRepeatableHandlerResolver', x => x.singleton(RepeatableHandlerResolver));
+/**
+ * The default implementation of the IRepeatableHandlerResolver interface
+ */
+class RepeatableHandlerResolver {
+    constructor() {
+        /** @internal */
+        this._handlers = resolve(all(IRepeatableHandler));
     }
+    resolve(value) {
+        if (_arrayHandler.handles(value)) {
+            return _arrayHandler;
+        }
+        if (_setHandler.handles(value)) {
+            return _setHandler;
+        }
+        if (_mapHandler.handles(value)) {
+            return _mapHandler;
+        }
+        if (_numberHandler.handles(value)) {
+            return _numberHandler;
+        }
+        if (_nullishHandler.handles(value)) {
+            return _nullishHandler;
+        }
+        const handler = this._handlers.find(x => x.handles(value));
+        if (handler !== void 0) {
+            return handler;
+        }
+        return _unknownHandler;
+    }
+}
+/**
+ * A simple implementation for handling common array like values, such as:
+ * - HTMLCollection
+ * - NodeList
+ * - FileList,
+ * - etc...
+ */
+class ArrayLikeHandler {
+    static register(c) {
+        c.register(singletonRegistration(IRepeatableHandler, this));
+    }
+    handles(value) {
+        return 'length' in value && isNumber(value.length);
+    }
+    iterate(items, func) {
+        for (let i = 0, ii = items.length; i < ii; ++i) {
+            func(items[i], i, items);
+        }
+    }
+}
+/**
+ * An interface describing a repeatable value handler
+ */
+const IRepeatableHandler = /*@__PURE__*/ createInterface('IRepeatableHandler');
+const _arrayHandler = {
+    handles: isArray,
+    getObserver: getCollectionObserver$1,
+    /* istanbul ignore next */
+    iterate(value, func) {
+        const ii = value.length;
+        let i = 0;
+        for (; i < ii; ++i) {
+            func(value[i], i, value);
+        }
+    },
+    // getCount: items => items.length,
 };
-const iterate = (result, func) => {
-    switch (toStringTag.call(result)) {
-        case '[object Array]': return $array(result, func);
-        case '[object Map]': return $map(result, func);
-        case '[object Set]': return $set(result, func);
-        case '[object Number]': return $number(result, func);
-        case '[object Null]': return;
-        case '[object Undefined]': return;
-        // todo: remove this count method
-        default: createMappedError(777 /* ErrorNames.repeat_non_iterable */, result);
-    }
+const _setHandler = {
+    handles: isSet,
+    getObserver: getCollectionObserver$1,
+    iterate(value, func) {
+        let i = 0;
+        let key;
+        for (key of value.keys()) {
+            func(key, i++, value);
+        }
+    },
+    // getCount: s => s.size,
 };
-const $array = (result, func) => {
-    const ii = result.length;
-    let i = 0;
-    for (; i < ii; ++i) {
-        func(result[i], i, result);
-    }
+const _mapHandler = {
+    handles: isMap,
+    getObserver: getCollectionObserver$1,
+    iterate(value, func) {
+        let i = 0;
+        let entry;
+        for (entry of value.entries()) {
+            func(entry, i++, value);
+        }
+    },
+    // getCount: s => s.size,
 };
-const $map = (result, func) => {
-    let i = -0;
-    let entry;
-    for (entry of result.entries()) {
-        func(entry, i++, result);
-    }
+const _numberHandler = {
+    handles: isNumber,
+    iterate(value, func) {
+        let i = 0;
+        for (; i < value; ++i) {
+            func(i, i, value);
+        }
+    },
+    // getCount: v => v,
 };
-const $set = (result, func) => {
-    let i = 0;
-    let key;
-    for (key of result.keys()) {
-        func(key, i++, result);
-    }
+const _nullishHandler = {
+    handles: v => v == null,
+    iterate() { },
+    // getCount: () => 0,
 };
-const $number = (result, func) => {
-    let i = 0;
-    for (; i < result; ++i) {
-        func(i, i, result);
-    }
+const _unknownHandler = {
+    handles(_value) {
+        // Should only return as an explicit last fallback
+        return false;
+    },
+    iterate(value, _func) {
+        throw createMappedError(777 /* ErrorNames.repeat_non_iterable */, value);
+    },
+    // getCount: () => 0,
 };
 const getKeyValue = (keyMap, key, item, scope, binding) => {
     let value = keyMap.get(item);
@@ -9780,8 +9954,9 @@ class Portal {
             case 'afterend':
                 insertManyBefore(parent, target.nextSibling, nodes);
                 break;
+            /* istanbul ignore next */
             default:
-                throw new Error('Invalid portal insertion position');
+                throw createMappedError(779 /* ErrorNames.portal_invalid_insert_position */, position);
         }
     }
     dispose() {
@@ -9875,7 +10050,7 @@ class AuSlot {
             // we won't find the information in the hydration context hierarchy <MyApp>/<S3>
             // as it's a flat wysiwyg structure based on the template html
             //
-            // since we are construction the projection (2) view based on the
+            // since we are constructing the projection (2) view based on the
             // container of <my-app>, we need to pre-register all information stored
             // in projection (1) into the container created for the projection (2) view
             // =============================
@@ -9924,6 +10099,9 @@ class AuSlot {
         this._subs.delete(subscriber);
     }
     binding(_initiator, parent) {
+        this._parentScope = parent.scope;
+        // The following block finds the real host scope for the content of this <au-slot>
+        //
         // if this <au-slot> was created by another au slot, the controller hierarchy will be like this:
         // C(au-slot)#1 --> C(synthetic)#1 --> C(au-slot)#2 --> C(synthetic)#2
         //
@@ -9934,7 +10112,7 @@ class AuSlot {
         while (parent.vmKind === 'synthetic' && parent.parent?.viewModel instanceof AuSlot) {
             parent = parent.parent.parent;
         }
-        this._parentScope = parent.scope;
+        const host = parent.scope.bindingContext;
         let outerScope;
         if (this._hasProjection) {
             // if there is a projection,
@@ -9944,7 +10122,7 @@ class AuSlot {
             // - override context has the $host pointing to inner scope binding context
             outerScope = this._hdrContext.controller.scope.parent;
             (this._outerScope = Scope.fromParent(outerScope, outerScope.bindingContext))
-                .overrideContext.$host = this.expose ?? this._parentScope.bindingContext;
+                .overrideContext.$host = this.expose ?? host;
         }
     }
     attaching(initiator, _parent) {
@@ -10515,7 +10693,6 @@ const DefaultComponents = [
 const DefaultBindingSyntax = [
     RefAttributePattern,
     DotSeparatedAttributePattern,
-    SpreadAttributePattern,
     EventAttributePattern,
     EventModifierRegistration,
 ];
@@ -10547,7 +10724,7 @@ const DefaultBindingLanguage = [
     ClassBindingCommand,
     StyleBindingCommand,
     AttrBindingCommand,
-    SpreadBindingCommand,
+    SpreadValueBindingCommand,
 ];
 /**
  * Default HTML-specific (but environment-agnostic) resources:
@@ -10625,6 +10802,7 @@ const DefaultRenderers = [
     StylePropertyBindingRenderer,
     TextBindingRenderer,
     SpreadRenderer,
+    SpreadValueRenderer,
 ];
 const StandardConfiguration = /*@__PURE__*/ createConfiguration(noop);
 function createConfiguration(optionsProvider) {
@@ -10811,5 +10989,5 @@ class ChildrenLifecycleHooks {
 }
 let mixed = false;
 
-export { AdoptedStyleSheetsStyles, AppRoot, AppTask, AttrBindingBehavior, AttrMapper, AttributeBinding, AttributeBindingRenderer, AttributeNSAccessor, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindingBehavior, BindingBehaviorDefinition, BindingContext, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, Else, EventModifier, EventModifierRegistration, ExpressionWatcher, FlushQueue, Focus, FragmentNodeSequence, FromViewBindingBehavior, FulfilledTemplateController, IAppRoot, IAppTask, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventModifier, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IKeyMapping, ILifecycleHooks, IListenerBindingOptions, ILocation, IModifiedEventHandlerCreator, INode, IPlatform, IRenderLocation, IRenderer, IRendering, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyleFactory, IShadowDOMStyles, ISignaler, IViewFactory, IWindow, If, InterpolationBinding, InterpolationBindingRenderer, InterpolationPartBinding, IteratorBindingRenderer, LetBinding, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingOptions, ListenerBindingRenderer, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingRenderer, RefBinding, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, RuntimeTemplateCompilerImplementation, SVGAnalyzer, SanitizeValueConverter, Scope, SelectValueObserver, SelfBindingBehavior, SetAttributeRenderer, SetClassAttributeRenderer, SetPropertyRenderer, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleConfiguration, StyleElementStyles, StylePropertyBindingRenderer, Switch, TemplateControllerRenderer, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, TwoWayBindingBehavior, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, Watch, With, alias, astAssign, astBind, astEvaluate, astUnbind, bindable, bindingBehavior, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateController, useShadowDOM, valueConverter, watch };
+export { AdoptedStyleSheetsStyles, AppRoot, AppTask, ArrayLikeHandler, AttrBindingBehavior, AttrMapper, AttributeBinding, AttributeBindingRenderer, AttributeNSAccessor, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindingBehavior, BindingBehaviorDefinition, BindingContext, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, Else, EventModifier, EventModifierRegistration, ExpressionWatcher, FlushQueue, Focus, FragmentNodeSequence, FromViewBindingBehavior, FulfilledTemplateController, IAppRoot, IAppTask, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventModifier, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IKeyMapping, ILifecycleHooks, IListenerBindingOptions, ILocation, IModifiedEventHandlerCreator, INode, IPlatform, IRenderLocation, IRenderer, IRendering, IRepeatableHandler, IRepeatableHandlerResolver, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyleFactory, IShadowDOMStyles, ISignaler, IViewFactory, IWindow, If, InterpolationBinding, InterpolationBindingRenderer, InterpolationPartBinding, IteratorBindingRenderer, LetBinding, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingOptions, ListenerBindingRenderer, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingRenderer, RefBinding, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, RuntimeTemplateCompilerImplementation, SVGAnalyzer, SanitizeValueConverter, Scope, SelectValueObserver, SelfBindingBehavior, SetAttributeRenderer, SetClassAttributeRenderer, SetPropertyRenderer, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleConfiguration, StyleElementStyles, StylePropertyBindingRenderer, Switch, TemplateControllerRenderer, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, TwoWayBindingBehavior, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, Watch, With, alias, astAssign, astBind, astEvaluate, astUnbind, bindable, bindingBehavior, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateController, useShadowDOM, valueConverter, watch };
 //# sourceMappingURL=index.dev.mjs.map

@@ -1,6 +1,6 @@
 import { Aurelia, CustomElement } from "@aurelia/runtime-html";
 import { TestContext, assert } from "@aurelia/testing";
-describe("3-runtime-html/generated/template-compiler.static.spec.ts", function () {
+describe("3-runtime-html/generated/static.spec.ts", function () {
     function createFixture() {
         const ctx = TestContext.create();
         const au = new Aurelia(ctx.container);
@@ -154,4 +154,4 @@ describe("3-runtime-html/generated/template-compiler.static.spec.ts", function (
         verify(au, host, "a");
     });
 });
-//# sourceMappingURL=template-compiler.static.spec.js.map
+//# sourceMappingURL=static.spec.js.map

@@ -40,7 +40,7 @@ export { SelfBindingBehavior, } from './resources/binding-behaviors/self';
 export { UpdateTriggerBindingBehavior, } from './resources/binding-behaviors/update-trigger';
 export { customAttribute, type CustomAttributeDecorator, CustomAttribute, CustomAttributeDefinition, type CustomAttributeKind, type CustomAttributeType, type PartialCustomAttributeDefinition, type CustomAttributeStaticAuDefinition, templateController, } from './resources/custom-attribute';
 export { If, Else, } from './resources/template-controllers/if';
-export { Repeat } from './resources/template-controllers/repeat';
+export { Repeat, IRepeatableHandlerResolver, IRepeatableHandler, ArrayLikeHandler, } from './resources/template-controllers/repeat';
 export { With } from './resources/template-controllers/with';
 export { Switch, Case, DefaultCase, } from './resources/template-controllers/switch';
 export { PromiseTemplateController, FulfilledTemplateController, PendingTemplateController, RejectedTemplateController, } from './resources/template-controllers/promise';

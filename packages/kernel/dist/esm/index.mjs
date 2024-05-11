@@ -884,8 +884,6 @@ const isClass = t => t.prototype !== void 0;
 
 const isResourceKey = t => isString(t) && t.indexOf(":") > 0;
 
-n();
-
 class ResolverBuilder {
     constructor(t, e) {
         this.c = t;
@@ -1032,29 +1030,32 @@ const inject = (...t) => (e, n) => {
     }
 };
 
-const L = {
-    createContainer: createContainer,
-    getDesignParamtypes: getDesignParamtypes,
-    getDependencies: getDependencies,
-    createInterface: createInterface,
-    inject: inject,
-    transient(t) {
-        t.register = function(e) {
-            const n = transientRegistation(t, t);
-            return n.register(e, t);
-        };
-        t.registerInRequestor = false;
-        return t;
-    },
-    singleton(t, e = _) {
-        t.register = function(e) {
-            const n = singletonRegistration(t, t);
-            return n.register(e, t);
-        };
-        t.registerInRequestor = e.scoped;
-        return t;
-    }
-};
+const L = /*@__PURE__*/ (() => {
+    n();
+    return {
+        createContainer: createContainer,
+        getDesignParamtypes: getDesignParamtypes,
+        getDependencies: getDependencies,
+        createInterface: createInterface,
+        inject: inject,
+        transient(t) {
+            t.register = function(e) {
+                const n = transientRegistation(t, t);
+                return n.register(e, t);
+            };
+            t.registerInRequestor = false;
+            return t;
+        },
+        singleton(t, e = _) {
+            t.register = function(e) {
+                const n = singletonRegistration(t, t);
+                return n.register(e, t);
+            };
+            t.registerInRequestor = e.scoped;
+            return t;
+        }
+    };
+})();
 
 const A = /*@__PURE__*/ createInterface("IContainer");
 

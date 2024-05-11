@@ -21,8 +21,9 @@ export declare const InstructionType: Readonly<{
     setAttribute: "he";
     setClassAttribute: "hf";
     setStyleAttribute: "hg";
-    spreadBinding: "hs";
+    spreadTransferedBinding: "hs";
     spreadElementProp: "hp";
+    spreadValueBinding: "svb";
 }>;
 export type InstructionType = typeof InstructionType[keyof typeof InstructionType];
 export interface IInstruction {
@@ -217,12 +218,23 @@ export declare class AttributeBindingInstruction {
      */
     attr: string, from: string | IsBindingBehavior, to: string);
 }
-export declare class SpreadBindingInstruction {
+export declare class SpreadTransferedBindingInstruction {
     readonly type = "hs";
 }
+/**
+ * When spreading any attribute bindings onto an element,
+ * it's possible that some attributes will be targeting the bindable properties of a custom element
+ * This instruction is used to express that
+ */
 export declare class SpreadElementPropBindingInstruction {
-    readonly instructions: IInstruction;
+    readonly instruction: IInstruction;
     readonly type = "hp";
-    constructor(instructions: IInstruction);
+    constructor(instruction: IInstruction);
+}
+export declare class SpreadValueBindingInstruction {
+    target: '$bindables' | '$element';
+    from: string;
+    readonly type = "svb";
+    constructor(target: '$bindables' | '$element', from: string);
 }
 //# sourceMappingURL=instructions.d.ts.map

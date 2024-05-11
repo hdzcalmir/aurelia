@@ -538,11 +538,6 @@ const AtPrefixedTriggerAttributePattern = /*@__PURE__*/ AttributePattern.define(
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', [parts[0], 'trigger', ...parts.slice(1)]);
     }
 });
-const SpreadAttributePattern = /*@__PURE__*/ AttributePattern.define([{ pattern: '...$attrs', symbols: '' }], class SpreadAttributePattern {
-    '...$attrs'(rawName, rawValue, _parts) {
-        return new AttrSyntax(rawName, rawValue, '', '...$attrs');
-    }
-});
 
 /** @internal */ const getMetadata = Metadata.get;
 /** @internal */ Metadata.has;
@@ -566,8 +561,9 @@ const SpreadAttributePattern = /*@__PURE__*/ AttributePattern.define([{ pattern:
 /** @internal */ const setAttribute = 'he';
 /** @internal */ const setClassAttribute = 'hf';
 /** @internal */ const setStyleAttribute = 'hg';
-/** @internal */ const spreadBinding = 'hs';
+/** @internal */ const spreadTransferedBinding = 'hs';
 /** @internal */ const spreadElementProp = 'hp';
+/** @internal */ const spreadValueBinding = 'svb';
 const InstructionType = /*@__PURE__*/ objectFreeze({
     hydrateElement,
     hydrateAttribute,
@@ -587,8 +583,9 @@ const InstructionType = /*@__PURE__*/ objectFreeze({
     setAttribute,
     setClassAttribute,
     setStyleAttribute,
-    spreadBinding,
+    spreadTransferedBinding,
     spreadElementProp,
+    spreadValueBinding,
 });
 const IInstruction = /*@__PURE__*/ createInterface('Instruction');
 class InterpolationInstruction {
@@ -776,15 +773,27 @@ class AttributeBindingInstruction {
         this.type = attributeBinding;
     }
 }
-class SpreadBindingInstruction {
+class SpreadTransferedBindingInstruction {
     constructor() {
-        this.type = spreadBinding;
+        this.type = spreadTransferedBinding;
     }
 }
+/**
+ * When spreading any attribute bindings onto an element,
+ * it's possible that some attributes will be targeting the bindable properties of a custom element
+ * This instruction is used to express that
+ */
 class SpreadElementPropBindingInstruction {
-    constructor(instructions) {
-        this.instructions = instructions;
+    constructor(instruction) {
+        this.instruction = instruction;
         this.type = spreadElementProp;
+    }
+}
+class SpreadValueBindingInstruction {
+    constructor(target, from) {
+        this.target = target;
+        this.from = from;
+        this.type = spreadValueBinding;
     }
 }
 
@@ -813,8 +822,11 @@ const errorsMap = {
     [715 /* ErrorNames.compiler_local_name_empty */]: `Template compilation error: the value of "as-custom-element" attribute cannot be empty for local element in element "{{0}}"`,
     [716 /* ErrorNames.compiler_duplicate_local_name */]: `Template compilation error: duplicate definition of the local template named "{{0}} in element {{1}}"`,
     [717 /* ErrorNames.compiler_slot_without_shadowdom */]: `Template compilation error: detected a usage of "<slot>" element without specifying shadow DOM options in element: {{0}}`,
-    [719 /* ErrorNames.compiler_attr_mapper_duplicate_mapping */]: `Attribute {{0}} has been already registered for {{1:element}}`,
     [718 /* ErrorNames.compiler_no_spread_tc */]: `Spreading template controller "{{0}}" is not supported.`,
+    [719 /* ErrorNames.compiler_attr_mapper_duplicate_mapping */]: `Attribute {{0}} has been already registered for {{1:element}}`,
+    [720 /* ErrorNames.compiler_no_reserved_spread_syntax */]: `Spreading syntax "...xxx" is reserved. Encountered "...{{0}}"`,
+    [721 /* ErrorNames.compiler_no_reserved_$bindable */]: `Usage of $bindables is only allowed on custom element. Encountered: <{{0}} {{1}}="{{2}}">`,
+    [722 /* ErrorNames.compiler_no_dom_api */]: 'Invalid platform object provided to the compilation, no DOM API found.',
     [9998 /* ErrorNames.no_spread_template_controller */]: 'Spread binding does not support spreading custom attributes/template controllers. Did you build the spread instruction manually?',
 };
 const getMessageByCode = (name, ...details) => {
@@ -990,6 +1002,7 @@ class OneTimeBindingCommand {
         const attr = info.attr;
         let target = attr.target;
         let value = info.attr.rawValue;
+        value = value === '' ? camelCase(target) : value;
         if (info.bindable == null) {
             target = attrMapper.map(info.node, target)
                 // if the mapper doesn't know how to map it
@@ -997,11 +1010,6 @@ class OneTimeBindingCommand {
                 ?? camelCase(target);
         }
         else {
-            // if it looks like: <my-el value.bind>
-            // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === definitionTypeElement) {
-                value = camelCase(target);
-            }
             target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, 1 /* InternalBindingMode.oneTime */);
@@ -1017,6 +1025,7 @@ class ToViewBindingCommand {
         const attr = info.attr;
         let target = attr.target;
         let value = info.attr.rawValue;
+        value = value === '' ? camelCase(target) : value;
         if (info.bindable == null) {
             target = attrMapper.map(info.node, target)
                 // if the mapper doesn't know how to map it
@@ -1024,11 +1033,6 @@ class ToViewBindingCommand {
                 ?? camelCase(target);
         }
         else {
-            // if it looks like: <my-el value.bind>
-            // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === definitionTypeElement) {
-                value = camelCase(target);
-            }
             target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, 2 /* InternalBindingMode.toView */);
@@ -1044,6 +1048,7 @@ class FromViewBindingCommand {
         const attr = info.attr;
         let target = attr.target;
         let value = attr.rawValue;
+        value = value === '' ? camelCase(target) : value;
         if (info.bindable == null) {
             target = attrMapper.map(info.node, target)
                 // if the mapper doesn't know how to map it
@@ -1051,11 +1056,6 @@ class FromViewBindingCommand {
                 ?? camelCase(target);
         }
         else {
-            // if it looks like: <my-el value.bind>
-            // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === definitionTypeElement) {
-                value = camelCase(target);
-            }
             target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, 4 /* InternalBindingMode.fromView */);
@@ -1071,6 +1071,7 @@ class TwoWayBindingCommand {
         const attr = info.attr;
         let target = attr.target;
         let value = attr.rawValue;
+        value = value === '' ? camelCase(target) : value;
         if (info.bindable == null) {
             target = attrMapper.map(info.node, target)
                 // if the mapper doesn't know how to map it
@@ -1078,11 +1079,6 @@ class TwoWayBindingCommand {
                 ?? camelCase(target);
         }
         else {
-            // if it looks like: <my-el value.bind>
-            // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === definitionTypeElement) {
-                value = camelCase(target);
-            }
             target = info.bindable.name;
         }
         return new PropertyBindingInstruction(exprParser.parse(value, etIsProperty), target, 6 /* InternalBindingMode.twoWay */);
@@ -1097,10 +1093,11 @@ class DefaultBindingCommand {
     build(info, exprParser, attrMapper) {
         const attr = info.attr;
         const bindable = info.bindable;
+        let value = attr.rawValue;
+        let target = attr.target;
         let defDefaultMode;
         let mode;
-        let target = attr.target;
-        let value = attr.rawValue;
+        value = value === '' ? camelCase(target) : value;
         if (bindable == null) {
             mode = attrMapper.isTwoWay(info.node, target) ? 6 /* InternalBindingMode.twoWay */ : 2 /* InternalBindingMode.toView */;
             target = attrMapper.map(info.node, target)
@@ -1109,11 +1106,6 @@ class DefaultBindingCommand {
                 ?? camelCase(target);
         }
         else {
-            // if it looks like: <my-el value.bind>
-            // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === definitionTypeElement) {
-                value = camelCase(target);
-            }
             defDefaultMode = info.def.defaultBindingMode ?? 0;
             mode = bindable.mode === 0 || bindable.mode == null
                 ? defDefaultMode == null || defDefaultMode === 0
@@ -1186,7 +1178,11 @@ CaptureBindingCommand.$au = {
 class AttrBindingCommand {
     get ignoreAttr() { return true; }
     build(info, exprParser) {
-        return new AttributeBindingInstruction(info.attr.target, exprParser.parse(info.attr.rawValue, etIsProperty), info.attr.target);
+        const attr = info.attr;
+        const target = attr.target;
+        let value = attr.rawValue;
+        value = value === '' ? camelCase(target) : value;
+        return new AttributeBindingInstruction(target, exprParser.parse(value, etIsProperty), target);
     }
 }
 AttrBindingCommand.$au = {
@@ -1232,15 +1228,15 @@ RefBindingCommand.$au = {
     type: bindingCommandTypeName,
     name: 'ref',
 };
-class SpreadBindingCommand {
-    get ignoreAttr() { return true; }
-    build(_info) {
-        return new SpreadBindingInstruction();
+class SpreadValueBindingCommand {
+    get ignoreAttr() { return false; }
+    build(info) {
+        return new SpreadValueBindingInstruction(info.attr.target, info.attr.rawValue);
     }
 }
-SpreadBindingCommand.$au = {
+SpreadValueBindingCommand.$au = {
     type: bindingCommandTypeName,
-    name: '...$attrs',
+    name: 'spread',
 };
 
 const ITemplateElementFactory = /*@__PURE__*/ createInterface('ITemplateElementFactory', x => x.singleton(TemplateElementFactory));
@@ -1324,12 +1320,9 @@ class TemplateElementFactory {
 }
 
 /** @internal */
+const auLocationStart = 'au-start';
 /** @internal */
-const createElement = (p, name) => p.document.createElement(name);
-/** @internal */
-const createComment = (p, text) => p.document.createComment(text);
-/** @internal */
-const createText = (p, text) => p.document.createTextNode(text);
+const auLocationEnd = 'au-end';
 /** @internal */
 const insertBefore = (parent, newChildNode, target) => {
     return parent.insertBefore(newChildNode, target);
@@ -1369,8 +1362,6 @@ const defaultSlotName = 'default';
 const generateElementName = ((id) => () => `anonymous-${++id}`)(0);
 class TemplateCompiler {
     constructor() {
-        /** @internal */
-        this._bindableResolver = resolve(IBindablesInfoResolver);
         this.debug = false;
         this.resolveResources = true;
     }
@@ -1436,7 +1427,11 @@ class TemplateCompiler {
             attrSyntax = attrSyntaxs[i];
             attrTarget = attrSyntax.target;
             attrValue = attrSyntax.rawValue;
-            bindingCommand = context._createCommand(attrSyntax);
+            if (attrTarget === '...$attrs') {
+                instructions.push(new SpreadTransferedBindingInstruction());
+                continue;
+            }
+            bindingCommand = context._getCommand(attrSyntax);
             if (bindingCommand !== null && bindingCommand.ignoreAttr) {
                 // when the binding command overrides everything
                 // just pass the target as is to the binding command, and treat it as a normal attribute:
@@ -1451,12 +1446,34 @@ class TemplateCompiler {
                 // to next attribute
                 continue;
             }
+            if (isCustomElement) {
+                // if the element is a custom element
+                // - prioritize bindables on a custom element before plain attributes
+                bindablesInfo = context._getBindables(elDef);
+                bindable = bindablesInfo.attrs[attrTarget];
+                if (bindable !== void 0) {
+                    if (bindingCommand == null) {
+                        expr = exprParser.parse(attrValue, etInterpolation);
+                        instructions.push(new SpreadElementPropBindingInstruction(expr == null
+                            ? new SetPropertyInstruction(attrValue, bindable.name)
+                            : new InterpolationInstruction(expr, bindable.name)));
+                    }
+                    else {
+                        commandBuildInfo.node = target;
+                        commandBuildInfo.attr = attrSyntax;
+                        commandBuildInfo.bindable = bindable;
+                        commandBuildInfo.def = elDef;
+                        instructions.push(new SpreadElementPropBindingInstruction(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper)));
+                    }
+                    continue;
+                }
+            }
             attrDef = context._findAttr(attrTarget);
             if (attrDef !== null) {
                 if (attrDef.isTemplateController) {
                     throw createMappedError(9998 /* ErrorNames.no_spread_template_controller */, attrTarget);
                 }
-                bindablesInfo = this._bindableResolver.get(attrDef);
+                bindablesInfo = context._getBindables(attrDef);
                 // Custom attributes are always in multiple binding mode,
                 // except when they can't be
                 // When they cannot be:
@@ -1503,23 +1520,11 @@ class TemplateCompiler {
                 this.resolveResources ? attrDef : attrDef.name, attrDef.aliases != null && attrDef.aliases.includes(attrTarget) ? attrTarget : void 0, attrBindableInstructions));
                 continue;
             }
-            if (bindingCommand === null) {
+            if (bindingCommand == null) {
                 expr = exprParser.parse(attrValue, etInterpolation);
                 // reaching here means:
-                // + maybe a bindable attribute with interpolation
                 // + maybe a plain attribute with interpolation
                 // + maybe a plain attribute
-                if (isCustomElement) {
-                    bindablesInfo = this._bindableResolver.get(elDef);
-                    bindable = bindablesInfo.attrs[attrTarget];
-                    if (bindable !== void 0) {
-                        expr = exprParser.parse(attrValue, etInterpolation);
-                        instructions.push(new SpreadElementPropBindingInstruction(expr == null
-                            ? new SetPropertyInstruction(attrValue, bindable.name)
-                            : new InterpolationInstruction(expr, bindable.name)));
-                        continue;
-                    }
-                }
                 if (expr != null) {
                     instructions.push(new InterpolationInstruction(expr, 
                     // if not a bindable, then ensure plain attribute are mapped correctly:
@@ -1544,20 +1549,8 @@ class TemplateCompiler {
                 }
             }
             else {
-                if (isCustomElement) {
-                    // if the element is a custom element
-                    // - prioritize bindables on a custom element before plain attributes
-                    bindablesInfo = this._bindableResolver.get(elDef);
-                    bindable = bindablesInfo.attrs[attrTarget];
-                    if (bindable !== void 0) {
-                        commandBuildInfo.node = target;
-                        commandBuildInfo.attr = attrSyntax;
-                        commandBuildInfo.bindable = bindable;
-                        commandBuildInfo.def = elDef;
-                        instructions.push(new SpreadElementPropBindingInstruction(bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper)));
-                        continue;
-                    }
-                }
+                // reaching here means:
+                // + a plain attribute with binding command
                 commandBuildInfo.node = target;
                 commandBuildInfo.attr = attrSyntax;
                 commandBuildInfo.bindable = null;
@@ -1602,7 +1595,7 @@ class TemplateCompiler {
             if (invalidSurrogateAttribute[realAttrTarget]) {
                 throw createMappedError(702 /* ErrorNames.compiler_invalid_surrogate_attr */, attrName);
             }
-            bindingCommand = context._createCommand(attrSyntax);
+            bindingCommand = context._getCommand(attrSyntax);
             if (bindingCommand !== null && bindingCommand.ignoreAttr) {
                 // when the binding command overrides everything
                 // just pass the target as is to the binding command, and treat it as a normal attribute:
@@ -1622,7 +1615,7 @@ class TemplateCompiler {
                 if (attrDef.isTemplateController) {
                     throw createMappedError(703 /* ErrorNames.compiler_no_tc_on_surrogate */, realAttrTarget);
                 }
-                bindableInfo = this._bindableResolver.get(attrDef);
+                bindableInfo = context._getBindables(attrDef);
                 // Custom attributes are always in multiple binding mode,
                 // except when they can't be
                 // When they cannot be:
@@ -1778,7 +1771,7 @@ class TemplateCompiler {
             attrSyntax = context._attrParser.parse(attrName, attrValue);
             realAttrTarget = attrSyntax.target;
             realAttrValue = attrSyntax.rawValue;
-            bindingCommand = context._createCommand(attrSyntax);
+            bindingCommand = context._getCommand(attrSyntax);
             if (bindingCommand !== null) {
                 if (attrSyntax.command === 'bind') {
                     letInstructions.push(new LetBindingInstruction(exprParser.parse(realAttrValue, etIsProperty), camelCase(realAttrTarget)));
@@ -1899,6 +1892,7 @@ class TemplateCompiler {
         let canCapture = false;
         let needsMarker = false;
         let elementMetadata;
+        let spreadIndex = 0;
         if (elName === 'slot') {
             if (context.root.def.shadowOptions == null) {
                 throw createMappedError(717 /* ErrorNames.compiler_slot_without_shadowdom */, context.root.def.name);
@@ -1925,16 +1919,15 @@ class TemplateCompiler {
             attrName = attr.name;
             attrValue = attr.value;
             switch (attrName) {
+                // ignore these 2 attributes
                 case 'as-element':
                 case 'containerless':
                     removeAttr();
-                    if (!hasContainerless) {
-                        hasContainerless = attrName === 'containerless';
-                    }
+                    hasContainerless = hasContainerless || attrName === 'containerless';
                     continue;
             }
             attrSyntax = context._attrParser.parse(attrName, attrValue);
-            bindingCommand = context._createCommand(attrSyntax);
+            bindingCommand = context._getCommand(attrSyntax);
             realAttrTarget = attrSyntax.target;
             realAttrValue = attrSyntax.rawValue;
             if (capture && (!hasCaptureFilter || hasCaptureFilter && capture(realAttrTarget))) {
@@ -1943,21 +1936,31 @@ class TemplateCompiler {
                     captures.push(attrSyntax);
                     continue;
                 }
-                canCapture = realAttrTarget !== auslotAttr && realAttrTarget !== 'slot';
+                canCapture = realAttrTarget !== auslotAttr
+                    && realAttrTarget !== 'slot'
+                    && ((spreadIndex = realAttrTarget.indexOf('...')) === -1
+                        // the following condition will allow syntaxes:
+                        // ...$bindables
+                        // ...some.expression
+                        || (spreadIndex === 0 && (realAttrTarget === '...$attrs' /* || realAttrTarget === '...$element' */)));
                 if (canCapture) {
-                    bindablesInfo = this._bindableResolver.get(elDef);
+                    bindablesInfo = context._getBindables(elDef);
                     // if capture is on, capture everything except:
                     // - as-element
                     // - containerless
                     // - bindable properties
                     // - template controller
-                    // - custom attribute
                     if (bindablesInfo.attrs[realAttrTarget] == null && !context._findAttr(realAttrTarget)?.isTemplateController) {
                         removeAttr();
                         captures.push(attrSyntax);
                         continue;
                     }
                 }
+            }
+            if (realAttrTarget === '...$attrs') {
+                (plainAttrInstructions ??= []).push(new SpreadTransferedBindingInstruction());
+                removeAttr();
+                continue;
             }
             if (bindingCommand?.ignoreAttr) {
                 // when the binding command overrides everything
@@ -1974,12 +1977,20 @@ class TemplateCompiler {
                 // to next attribute
                 continue;
             }
+            if (realAttrTarget.indexOf('...') === 0) {
+                if (isCustomElement && (realAttrTarget = realAttrTarget.slice(3)) !== '$element') {
+                    (elBindableInstructions ??= []).push(new SpreadValueBindingInstruction('$bindables', realAttrTarget === '$bindables' ? realAttrValue : realAttrTarget));
+                    removeAttr();
+                    continue;
+                }
+                throw createMappedError(720 /* ErrorNames.compiler_no_reserved_spread_syntax */, realAttrTarget);
+            }
             // reaching here means:
             // + there may or may not be a binding command, but it won't be an overriding command
             if (isCustomElement) {
                 // if the element is a custom element
                 // - prioritize bindables on a custom element before plain attributes
-                bindablesInfo = this._bindableResolver.get(elDef);
+                bindablesInfo = context._getBindables(elDef);
                 bindable = bindablesInfo.attrs[realAttrTarget];
                 if (bindable !== void 0) {
                     if (bindingCommand === null) {
@@ -2006,6 +2017,32 @@ class TemplateCompiler {
                     }
                     continue;
                 }
+                if (realAttrTarget === '$bindables') {
+                    if (bindingCommand != null) {
+                        commandBuildInfo.node = el;
+                        commandBuildInfo.attr = attrSyntax;
+                        commandBuildInfo.bindable = null;
+                        commandBuildInfo.def = elDef;
+                        {
+                            const instruction = bindingCommand.build(commandBuildInfo, context._exprParser, context._attrMapper);
+                            if (!(instruction instanceof SpreadValueBindingInstruction)) {
+                                // eslint-disable-next-line no-console
+                                console.warn(`[DEV:aurelia] Binding with "$bindables" on custom element "${elDef.name}" with command ${attrSyntax.command} ` +
+                                    ` did not result in a spread binding instruction. This likely won't work as expected.`);
+                            }
+                            (elBindableInstructions ??= []).push(instruction);
+                        }
+                    }
+                    else {
+                        // eslint-disable-next-line no-console
+                        console.warn(`[DEV:aurelia] Usage of "$bindables" on custom element "<${elDef.name}>" is ignored.`);
+                    }
+                    removeAttr();
+                    continue;
+                }
+            }
+            if (realAttrTarget === '$bindables') {
+                throw createMappedError(721 /* ErrorNames.compiler_no_reserved_$bindable */, el.nodeName, realAttrTarget, realAttrValue);
             }
             // reaching here means:
             // + there may or may not be a binding command, but it won't be an overriding command
@@ -2016,7 +2053,7 @@ class TemplateCompiler {
             // check for custom attributes before plain attributes
             attrDef = context._findAttr(realAttrTarget);
             if (attrDef !== null) {
-                bindablesInfo = this._bindableResolver.get(attrDef);
+                bindablesInfo = context._getBindables(attrDef);
                 // Custom attributes are always in multiple binding mode,
                 // except when they can't be
                 // When they cannot be:
@@ -2142,8 +2179,8 @@ class TemplateCompiler {
                 appendManyToTemplate(template, [
                     // context.h(MARKER_NODE_NAME),
                     context._marker(),
-                    context._comment(auStartComment),
-                    context._comment(auEndComment),
+                    context._comment(auLocationStart),
+                    context._comment(auLocationEnd),
                 ]);
             }
             else {
@@ -2319,8 +2356,8 @@ class TemplateCompiler {
                 marker = context._marker();
                 appendManyToTemplate(template, [
                     marker,
-                    context._comment(auStartComment),
-                    context._comment(auEndComment),
+                    context._comment(auLocationStart),
+                    context._comment(auLocationEnd),
                 ]);
                 tcInstruction.def = {
                     name: generateElementName(),
@@ -2514,7 +2551,7 @@ class TemplateCompiler {
         // my-attr="prop1: literal1 prop2.bind: ...; prop3: literal3"
         // my-attr="prop1.bind: ...; prop2.bind: ..."
         // my-attr="prop1: ${}; prop2.bind: ...; prop3: ${}"
-        const bindableAttrsInfo = this._bindableResolver.get(attrDef);
+        const bindableAttrsInfo = context._getBindables(attrDef);
         const valueLength = attrRawValue.length;
         const instructions = [];
         let attrName = void 0;
@@ -2557,7 +2594,7 @@ class TemplateCompiler {
                 // todo: should it always camel case???
                 // const attrTarget = camelCase(attrSyntax.target);
                 // ================================================
-                command = context._createCommand(attrSyntax);
+                command = context._getCommand(attrSyntax);
                 bindable = bindableAttrsInfo.attrs[attrSyntax.target];
                 if (bindable == null) {
                     throw createMappedError(707 /* ErrorNames.compiler_binding_to_non_bindable */, attrSyntax.target, attrDef.name);
@@ -2760,19 +2797,15 @@ class TemplateCompiler {
         // insertBefore(parent, marker, node);
         insertManyBefore(parent, node, [
             marker,
-            context._comment(auStartComment),
-            context._comment(auEndComment),
+            context._comment(auLocationStart),
+            context._comment(auLocationEnd),
         ]);
         parent.removeChild(node);
         return marker;
     }
 }
 TemplateCompiler.register = createImplementationRegister(ITemplateCompiler);
-// let nextSibling: Node | null;
-// const MARKER_NODE_NAME = 'AU-M';
 const TEMPLATE_NODE_NAME = 'TEMPLATE';
-const auStartComment = 'au-start';
-const auEndComment = 'au-end';
 const isMarker = (el) => el.nodeValue === 'au*';
 // && isComment(nextSibling = el.nextSibling) && nextSibling.textContent === auStartComment
 // && isComment(nextSibling = el.nextSibling) && nextSibling.textContent === auEndComment;
@@ -2793,6 +2826,7 @@ class CompilationContext {
         this.def = def;
         this.parent = parent;
         this._resourceResolver = hasParent ? parent._resourceResolver : container.get(IResourceResolver);
+        this._commandResolver = hasParent ? parent._commandResolver : container.get(IBindingCommandResolver);
         this._templateFactory = hasParent ? parent._templateFactory : container.get(ITemplateElementFactory);
         // todo: attr parser should be retrieved based in resource semantic (current leaf + root + ignore parent)
         this._attrParser = hasParent ? parent._attrParser : container.get(IAttributeParser);
@@ -2800,7 +2834,7 @@ class CompilationContext {
         this._attrMapper = hasParent ? parent._attrMapper : container.get(IAttrMapper);
         this._logger = hasParent ? parent._logger : container.get(ILogger);
         if (typeof (this.p = hasParent ? parent.p : container.get(IPlatform)).document?.nodeType !== 'number') {
-            throw new Error('Invalid platform');
+            throw createMappedError(722 /* ErrorNames.compiler_no_dom_api */);
         }
         this.localEls = hasParent ? parent.localEls : new Set();
         this.rows = instructions ?? [];
@@ -2811,16 +2845,16 @@ class CompilationContext {
         return this;
     }
     _text(text) {
-        return createText(this.p, text);
+        return this.p.document.createTextNode(text);
     }
     _comment(text) {
-        return createComment(this.p, text);
+        return this.p.document.createComment(text);
     }
     _marker() {
         return this._comment('au*');
     }
     h(name) {
-        const el = createElement(this.p, name);
+        const el = this.p.document.createElement(name);
         if (name === 'template') {
             this.p.document.adoptNode(el.content);
         }
@@ -2841,6 +2875,9 @@ class CompilationContext {
     _findAttr(name) {
         return this._resourceResolver.attr(this.c, name);
     }
+    _getBindables(def) {
+        return this._resourceResolver.bindables(def);
+    }
     /**
      * Create a new child compilation context
      */
@@ -2854,12 +2891,12 @@ class CompilationContext {
      *
      * @returns An instance of the command if it exists, or `null` if it does not exist.
      */
-    _createCommand(syntax) {
+    _getCommand(syntax) {
         const name = syntax.command;
         if (name === null) {
             return null;
         }
-        return this._resourceResolver.command(this.c, name);
+        return this._commandResolver.get(this.c, name);
     }
 }
 const hasInlineBindings = (rawValue) => {
@@ -2906,8 +2943,22 @@ const orderSensitiveInputType = {
     radio: 1,
     // todo: range is also sensitive to order, for min/max
 };
-const IBindablesInfoResolver = /*@__PURE__*/ createInterface('IBindablesInfoResolver');
 const IResourceResolver = /*@__PURE__*/ createInterface('IResourceResolver');
+const IBindingCommandResolver = /*@__PURE__*/ createInterface('IBindingCommandResolver', x => {
+    class DefaultBindingCommandResolver {
+        constructor() {
+            this._cache = new WeakMap();
+        }
+        get(c, name) {
+            let record = this._cache.get(c);
+            if (!record) {
+                this._cache.set(c, record = {});
+            }
+            return name in record ? record[name] : (record[name] = BindingCommand.get(c, name));
+        }
+    }
+    return x.singleton(DefaultBindingCommandResolver);
+});
 
 const allowedLocalTemplateBindableAttributes = objectFreeze([
     "name" /* LocalTemplateBindableAttributes.name */,
@@ -2961,5 +3012,5 @@ const templateCompilerHooks = (target, _context) => {
     }
 };
 
-export { AtPrefixedTriggerAttributePattern, AttrBindingCommand, AttrSyntax, AttributeBindingInstruction, AttributeParser, AttributePattern, BindingCommand, BindingCommandDefinition, BindingMode, CaptureBindingCommand, ClassBindingCommand, ColonPrefixedBindAttributePattern, DefaultBindingCommand, DotSeparatedAttributePattern, EventAttributePattern, ForBindingCommand, FromViewBindingCommand, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAttrMapper, IAttributeParser, IAttributePattern, IBindablesInfoResolver, IInstruction, IResourceResolver, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, InstructionType, InterpolationInstruction, Interpretation, IteratorBindingInstruction, LetBindingInstruction, ListenerBindingInstruction, MultiAttrInstruction, OneTimeBindingCommand, PropertyBindingInstruction, RefAttributePattern, RefBindingCommand, RefBindingInstruction, SetAttributeInstruction, SetClassAttributeInstruction, SetPropertyInstruction, SetStyleAttributeInstruction, SpreadAttributePattern, SpreadBindingCommand, SpreadBindingInstruction, SpreadElementPropBindingInstruction, StyleBindingCommand, StylePropertyBindingInstruction, SyntaxInterpreter, TemplateCompiler, TemplateCompilerHooks, TextBindingInstruction, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingCommand, attributePattern, bindingCommand, templateCompilerHooks };
+export { AtPrefixedTriggerAttributePattern, AttrBindingCommand, AttrSyntax, AttributeBindingInstruction, AttributeParser, AttributePattern, BindingCommand, BindingCommandDefinition, BindingMode, CaptureBindingCommand, ClassBindingCommand, ColonPrefixedBindAttributePattern, DefaultBindingCommand, DotSeparatedAttributePattern, EventAttributePattern, ForBindingCommand, FromViewBindingCommand, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IAttrMapper, IAttributeParser, IAttributePattern, IBindingCommandResolver, IInstruction, IResourceResolver, ISyntaxInterpreter, ITemplateCompiler, ITemplateCompilerHooks, ITemplateElementFactory, InstructionType, InterpolationInstruction, Interpretation, IteratorBindingInstruction, LetBindingInstruction, ListenerBindingInstruction, MultiAttrInstruction, OneTimeBindingCommand, PropertyBindingInstruction, RefAttributePattern, RefBindingCommand, RefBindingInstruction, SetAttributeInstruction, SetClassAttributeInstruction, SetPropertyInstruction, SetStyleAttributeInstruction, SpreadElementPropBindingInstruction, SpreadTransferedBindingInstruction, SpreadValueBindingCommand, SpreadValueBindingInstruction, StyleBindingCommand, StylePropertyBindingInstruction, SyntaxInterpreter, TemplateCompiler, TemplateCompilerHooks, TextBindingInstruction, ToViewBindingCommand, TriggerBindingCommand, TwoWayBindingCommand, attributePattern, bindingCommand, generateElementName, templateCompilerHooks };
 //# sourceMappingURL=index.dev.mjs.map

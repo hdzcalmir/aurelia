@@ -475,6 +475,7 @@ class StateBindingCommand {
         const attr = info.attr;
         let target = attr.target;
         let value = attr.rawValue;
+        value = value === '' ? kernel.camelCase(target) : value;
         if (info.bindable == null) {
             target = attrMapper.map(info.node, target)
                 // if the mapper doesn't know how to map it
@@ -482,11 +483,6 @@ class StateBindingCommand {
                 ?? kernel.camelCase(target);
         }
         else {
-            // if it looks like: <my-el value.bind>
-            // it means        : <my-el value.bind="value">
-            if (value === '' && info.def.type === 'custom-element') {
-                value = kernel.camelCase(target);
-            }
             target = info.bindable.name;
         }
         return new StateBindingInstruction(value, target);

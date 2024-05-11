@@ -40,7 +40,7 @@ import { delegateSyntax } from '@aurelia/compat-v1';
 import { kebabCase, } from '@aurelia/kernel';
 import { Interpolation, AccessScopeExpression, PrimitiveLiteralExpression, IExpressionParser, } from '@aurelia/expression-parser';
 import { bindable, BindingMode, customAttribute, CustomAttribute, customElement, CustomElement, CustomElementDefinition, DefaultBindingSyntax, } from '@aurelia/runtime-html';
-import { TemplateCompilerHooks, HydrateElementInstruction, InstructionType as HTT, InstructionType as TT, HydrateAttributeInstruction, AttrSyntax, attributePattern, PropertyBindingInstruction, InterpolationInstruction, InstructionType, IteratorBindingInstruction, RefBindingInstruction, AttributeBindingInstruction, SetPropertyInstruction, } from '@aurelia/template-compiler';
+import { TemplateCompilerHooks, HydrateElementInstruction, InstructionType as HTT, InstructionType as TT, HydrateAttributeInstruction, AttrSyntax, attributePattern, PropertyBindingInstruction, InterpolationInstruction, InstructionType, IteratorBindingInstruction, RefBindingInstruction, AttributeBindingInstruction, SetPropertyInstruction, SpreadValueBindingInstruction, } from '@aurelia/template-compiler';
 import { assert, TestContext, verifyBindingInstructionsEqual, } from '@aurelia/testing';
 describe('3-runtime-html/template-compiler.spec.ts', function () {
     describe('base assertions', function () {
@@ -136,7 +136,6 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     });
                     it('does not create a prop binding when attribute value is an empty string', function () {
                         const { instructions, surrogates } = compileWith(`<template foo>hello</template>`);
-                        console.log(surrogates);
                         verifyInstructions(instructions, [], 'normal');
                         verifyInstructions(surrogates, [
                             { toVerify: ['type', 'to', 'res', 'props'], type: TT.hydrateAttribute, res: 'foo', props: [] }
@@ -833,7 +832,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
         }
     }
     describe(`combination assertions`, function () {
-        function createFixture(ctx, ...globals) {
+        function createFixture(ctx = TestContext.create(), ...globals) {
             const container = ctx.container;
             container.register(...globals, delegateSyntax);
             const sut = createCompilerWrapper(ctx.templateCompiler);
@@ -1549,7 +1548,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                 });
             });
         });
-        describe('TemplateCompiler - combinations -- captures & ...$attrs', function () {
+        describe('TemplateCompiler - combinations -- captures & ...$attrs & ...', function () {
             const MyElement = CustomElement.define({
                 name: 'my-element',
                 capture: true,
@@ -1598,7 +1597,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     name: 'rando',
                     template: '<my-element ...$attrs>',
                 }, container);
-                assert.deepStrictEqual(definition.instructions[0][0].captures, [new AttrSyntax('...$attrs', '', '', '...$attrs')]);
+                assert.deepStrictEqual(definition.instructions[0][0].captures, [new AttrSyntax('...$attrs', '', '...$attrs', null)]);
             });
             it('does not capture template controller', function () {
                 const { sut, container } = createFixture(TestContext.create(), MyElement);
@@ -1607,6 +1606,22 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     template: '<my-element if.bind>',
                 }, container);
                 assert.deepStrictEqual(definition.instructions[0][0].def.instructions[0][0].captures, []);
+            });
+            it('compiles shorthand spread syntax', function () {
+                const { sut, container } = createFixture(TestContext.create(), CustomElement.define({ name: 'my-element', bindables: ['item'] }));
+                sut.resolveResources = false;
+                const definition = sut.compile({ name: 'rando', template: '<my-element ...item>' }, container);
+                verifyBindingInstructionsEqual(definition.instructions[0], [
+                    new HydrateElementInstruction('my-element', [new SpreadValueBindingInstruction('$bindables', 'item')], null, false, [], {}),
+                ]);
+            });
+            it('compiles shorthand $bindables syntax', function () {
+                const { sut, container } = createFixture(TestContext.create(), CustomElement.define({ name: 'my-element', bindables: ['item'] }));
+                sut.resolveResources = false;
+                const definition = sut.compile({ name: 'rando', template: '<my-element ...$bindables="item">' }, container);
+                verifyBindingInstructionsEqual(definition.instructions[0], [
+                    new HydrateElementInstruction('my-element', [new SpreadValueBindingInstruction('$bindables', 'item')], null, false, [], {}),
+                ]);
             });
         });
         describe('TemplateCompiler - combinations -- with attribute patterns', function () {
@@ -1638,7 +1653,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
             it('works with pattern returning command', function () {
                 const MyPattern = createPattern((name, val, _parts) => new AttrSyntax(name, val, 'id', 'bind'));
                 const { result } = compileTemplate('<div my-attr>', MyPattern);
-                assert.deepStrictEqual(result.instructions[0], [new PropertyBindingInstruction(new PrimitiveLiteralExpression(''), 'id', BindingMode.toView)]);
+                assert.deepStrictEqual(result.instructions[0], [new PropertyBindingInstruction(new AccessScopeExpression('id'), 'id', BindingMode.toView)]);
             });
             it('works when pattern returning interpolation', function () {
                 const MyPattern = createPattern((name, _val, _parts) => new AttrSyntax(name, `\${a}a`, 'id', null));

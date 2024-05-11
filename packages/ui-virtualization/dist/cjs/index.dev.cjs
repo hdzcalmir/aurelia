@@ -44,8 +44,7 @@ const getScrollerElement = (element) => {
  */
 const hasOverflowScroll = (element) => {
     const style = window.getComputedStyle(element);
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    return style && (style.overflowY === 'scroll' || style.overflow === 'scroll' || style.overflowY === 'auto' || style.overflow === 'auto');
+    return style != null && (style.overflowY === 'scroll' || style.overflow === 'scroll' || style.overflowY === 'auto' || style.overflow === 'auto');
 };
 /**
  * Get total value of a list of css style property on an element

@@ -5,7 +5,6 @@ import { ProcessContentHook, type IElementComponentDefinition, IInstruction } fr
 import type { IWatchDefinition } from '../watch';
 import { type IResourceKind } from './resources-shared';
 export type PartialCustomElementDefinition<TBindables extends string = string> = PartialResourceDefinition<Omit<IElementComponentDefinition<TBindables>, 'type'> & {
-    readonly cache?: number | '*';
     /**
      * An semi internal property used to signal the rendering process not to try to compile the template again
      */
@@ -117,7 +116,6 @@ export declare class CustomElementDefinition<C extends Constructable = Construct
     readonly name: string;
     readonly aliases: string[];
     readonly key: string;
-    readonly cache: '*' | number;
     readonly capture: boolean | ((attr: string) => boolean);
     readonly template: null | string | Node;
     readonly instructions: readonly IInstruction[][];

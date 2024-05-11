@@ -4,6 +4,7 @@ import { BindingCommandInstance } from './binding-command';
 import type { IContainer, Constructable } from '@aurelia/kernel';
 import type { IAttributeComponentDefinition, ICompiledElementComponentDefinition, IComponentBindablePropDefinition, IElementComponentDefinition } from './interfaces-template-compiler';
 import { ITemplateCompiler } from './interfaces-template-compiler';
+export declare const generateElementName: () => string;
 export declare class TemplateCompiler implements ITemplateCompiler {
     static register: <C extends Constructable>(this: C, container: IContainer) => void;
     debug: boolean;
@@ -21,17 +22,18 @@ export interface IElementBindablesInfo {
     readonly bindables: Record<string, IComponentBindablePropDefinition>;
     readonly primary: null;
 }
-export interface IBindablesInfoResolver<TElementDef extends IElementComponentDefinition = IElementComponentDefinition, TAttrDef extends IAttributeComponentDefinition = IAttributeComponentDefinition> {
-    get(def: TAttrDef): IAttributeBindablesInfo;
-    get(def: TElementDef): IElementBindablesInfo;
-}
-export declare const IBindablesInfoResolver: import("@aurelia/kernel").InterfaceSymbol<IBindablesInfoResolver<IElementComponentDefinition<string>, IAttributeComponentDefinition<string>>>;
 export interface IResourceResolver<TElementDef extends IElementComponentDefinition = IElementComponentDefinition, TAttrDef extends IAttributeComponentDefinition = IAttributeComponentDefinition> {
     el(c: IContainer, name: string): TElementDef | null;
     attr(c: IContainer, name: string): TAttrDef | null;
-    command(c: IContainer, name: string): BindingCommandInstance | null;
+    bindables(def: TAttrDef): IAttributeBindablesInfo;
+    bindables(def: TElementDef): IElementBindablesInfo;
+    bindables(def: TAttrDef | TElementDef): IAttributeBindablesInfo | IElementBindablesInfo;
 }
 export declare const IResourceResolver: import("@aurelia/kernel").InterfaceSymbol<IResourceResolver<IElementComponentDefinition<string>, IAttributeComponentDefinition<string>>>;
+export interface IBindingCommandResolver {
+    get(c: IContainer, name: string): BindingCommandInstance | null;
+}
+export declare const IBindingCommandResolver: import("@aurelia/kernel").InterfaceSymbol<IBindingCommandResolver>;
 /**
  * An interface describing the hooks a compilation process should invoke.
  *

@@ -11,10 +11,11 @@ export const name = "foo-bar";
 export const template = "<template></template>";
 export default template;
 export const dependencies = [  ];
+export const bindables = [];
 let _e;
 export function register(container) {
   if (!_e) {
-    _e = CustomElement.define({ name, template, dependencies });
+    _e = CustomElement.define({ name, template, dependencies, bindables });
   }
   container.register(_e);
 }
@@ -31,10 +32,11 @@ export const name = "foo-bar";
 export const template = "<template></template>";
 export default template;
 export const dependencies = [  ];
+export const bindables = [];
 let _e;
 export function register(container) {
   if (!_e) {
-    _e = CustomElement.define({ name, template, dependencies });
+    _e = CustomElement.define({ name, template, dependencies, bindables });
   }
   container.register(_e);
 }
@@ -62,10 +64,11 @@ export const template = "<template></template>";
 export default template;
 export const dependencies = [ d0, d1, shadowCSS(d2) ];
 export const shadowOptions = { mode: 'open' };
+export const bindables = [];
 let _e;
 export function register(container) {
   if (!_e) {
-    _e = CustomElement.define({ name, template, dependencies, shadowOptions });
+    _e = CustomElement.define({ name, template, dependencies, shadowOptions, bindables });
   }
   container.register(_e);
 }
@@ -91,10 +94,11 @@ export const template = "<template></template>";
 export default template;
 export const dependencies = [ d0, d1, shadowCSS(d2) ];
 export const shadowOptions = { mode: 'open' };
+export const bindables = [];
 let _e;
 export function register(container) {
   if (!_e) {
-    _e = CustomElement.define({ name, template, dependencies, shadowOptions });
+    _e = CustomElement.define({ name, template, dependencies, shadowOptions, bindables });
   }
   container.register(_e);
 }

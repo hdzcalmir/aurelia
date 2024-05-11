@@ -1281,7 +1281,6 @@ const isResourceKey = (key) => isString(key) && key.indexOf(':') > 0;
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-metadata.initializeTC39Metadata();
 class ResolverBuilder {
     constructor(
     /** @internal */ _container, 
@@ -1464,107 +1463,111 @@ const inject = (...dependencies) => {
         }
     };
 };
-const DI = {
-    createContainer,
-    getDesignParamtypes,
-    // getAnnotationParamtypes,
-    // getOrCreateAnnotationParamTypes,
-    getDependencies: getDependencies,
-    /**
-     * creates a decorator that also matches an interface and can be used as a {@linkcode Key}.
-     * ```ts
-     * const ILogger = DI.createInterface<Logger>('Logger');
-     * container.register(Registration.singleton(ILogger, getSomeLogger()));
-     * const log = container.get(ILogger);
-     * log.info('hello world');
-     * class Foo {
-     *   constructor( @ILogger log: ILogger ) {
-     *     log.info('hello world');
-     *   }
-     * }
-     * ```
-     * you can also build default registrations into your interface.
-     * ```ts
-     * export const ILogger = DI.createInterface<Logger>('Logger', builder => builder.cachedCallback(LoggerDefault));
-     * const log = container.get(ILogger);
-     * log.info('hello world');
-     * class Foo {
-     *   constructor( @ILogger log: ILogger ) {
-     *     log.info('hello world');
-     *   }
-     * }
-     * ```
-     * but these default registrations won't work the same with other decorators that take keys, for example
-     * ```ts
-     * export const MyStr = DI.createInterface<string>('MyStr', builder => builder.instance('somestring'));
-     * class Foo {
-     *   constructor( @optional(MyStr) public readonly str: string ) {
-     *   }
-     * }
-     * container.get(Foo).str; // returns undefined
-     * ```
-     * to fix this add this line somewhere before you do a `get`
-     * ```ts
-     * container.register(MyStr);
-     * container.get(Foo).str; // returns 'somestring'
-     * ```
-     *
-     * - @param configureOrName - supply a string to improve error messaging
-     */
-    createInterface,
-    inject,
-    /**
-     * Registers the `target` class as a transient dependency; each time the dependency is resolved
-     * a new instance will be created.
-     *
-     * @param target - The class / constructor function to register as transient.
-     * @returns The same class, with a static `register` method that takes a container and returns the appropriate resolver.
-     *
-     * @example ```ts
-     * // On an existing class
-     * class Foo { }
-     * DI.transient(Foo);
-     *
-     * // Inline declaration
-     * const Foo = DI.transient(class { });
-     * // Foo is now strongly typed with register
-     * Foo.register(container);
-     * ```
-     */
-    transient(target) {
-        target.register = function (container) {
-            const registration = transientRegistation(target, target);
-            return registration.register(container, target);
-        };
-        target.registerInRequestor = false;
-        return target;
-    },
-    /**
-     * Registers the `target` class as a singleton dependency; the class will only be created once. Each
-     * consecutive time the dependency is resolved, the same instance will be returned.
-     *
-     * @param target - The class / constructor function to register as a singleton.
-     * @returns The same class, with a static `register` method that takes a container and returns the appropriate resolver.
-     * @example ```ts
-     * // On an existing class
-     * class Foo { }
-     * DI.singleton(Foo);
-     *
-     * // Inline declaration
-     * const Foo = DI.singleton(class { });
-     * // Foo is now strongly typed with register
-     * Foo.register(container);
-     * ```
-     */
-    singleton(target, options = defaultSingletonOptions) {
-        target.register = function (container) {
-            const registration = singletonRegistration(target, target);
-            return registration.register(container, target);
-        };
-        target.registerInRequestor = options.scoped;
-        return target;
-    },
-};
+const DI = /*@__PURE__*/ (() => {
+    // putting this function inside this IIFE as we wants to call it without triggering side effect
+    metadata.initializeTC39Metadata();
+    return {
+        createContainer,
+        getDesignParamtypes,
+        // getAnnotationParamtypes,
+        // getOrCreateAnnotationParamTypes,
+        getDependencies: getDependencies,
+        /**
+         * creates a decorator that also matches an interface and can be used as a {@linkcode Key}.
+         * ```ts
+         * const ILogger = DI.createInterface<Logger>('Logger');
+         * container.register(Registration.singleton(ILogger, getSomeLogger()));
+         * const log = container.get(ILogger);
+         * log.info('hello world');
+         * class Foo {
+         *   constructor( @ILogger log: ILogger ) {
+         *     log.info('hello world');
+         *   }
+         * }
+         * ```
+         * you can also build default registrations into your interface.
+         * ```ts
+         * export const ILogger = DI.createInterface<Logger>('Logger', builder => builder.cachedCallback(LoggerDefault));
+         * const log = container.get(ILogger);
+         * log.info('hello world');
+         * class Foo {
+         *   constructor( @ILogger log: ILogger ) {
+         *     log.info('hello world');
+         *   }
+         * }
+         * ```
+         * but these default registrations won't work the same with other decorators that take keys, for example
+         * ```ts
+         * export const MyStr = DI.createInterface<string>('MyStr', builder => builder.instance('somestring'));
+         * class Foo {
+         *   constructor( @optional(MyStr) public readonly str: string ) {
+         *   }
+         * }
+         * container.get(Foo).str; // returns undefined
+         * ```
+         * to fix this add this line somewhere before you do a `get`
+         * ```ts
+         * container.register(MyStr);
+         * container.get(Foo).str; // returns 'somestring'
+         * ```
+         *
+         * - @param configureOrName - supply a string to improve error messaging
+         */
+        createInterface,
+        inject,
+        /**
+         * Registers the `target` class as a transient dependency; each time the dependency is resolved
+         * a new instance will be created.
+         *
+         * @param target - The class / constructor function to register as transient.
+         * @returns The same class, with a static `register` method that takes a container and returns the appropriate resolver.
+         *
+         * @example ```ts
+         * // On an existing class
+         * class Foo { }
+         * DI.transient(Foo);
+         *
+         * // Inline declaration
+         * const Foo = DI.transient(class { });
+         * // Foo is now strongly typed with register
+         * Foo.register(container);
+         * ```
+         */
+        transient(target) {
+            target.register = function (container) {
+                const registration = transientRegistation(target, target);
+                return registration.register(container, target);
+            };
+            target.registerInRequestor = false;
+            return target;
+        },
+        /**
+         * Registers the `target` class as a singleton dependency; the class will only be created once. Each
+         * consecutive time the dependency is resolved, the same instance will be returned.
+         *
+         * @param target - The class / constructor function to register as a singleton.
+         * @returns The same class, with a static `register` method that takes a container and returns the appropriate resolver.
+         * @example ```ts
+         * // On an existing class
+         * class Foo { }
+         * DI.singleton(Foo);
+         *
+         * // Inline declaration
+         * const Foo = DI.singleton(class { });
+         * // Foo is now strongly typed with register
+         * Foo.register(container);
+         * ```
+         */
+        singleton(target, options = defaultSingletonOptions) {
+            target.register = function (container) {
+                const registration = singletonRegistration(target, target);
+                return registration.register(container, target);
+            };
+            target.registerInRequestor = options.scoped;
+            return target;
+        },
+    };
+})();
 const IContainer = /*@__PURE__*/ createInterface('IContainer');
 const IServiceLocator = IContainer;
 function transientDecorator(target, context) {

@@ -5,11 +5,11 @@ import { IEventModifier } from './binding/listener-binding';
 import { CustomElementDefinition } from './resources/custom-element';
 import { CustomAttributeDefinition } from './resources/custom-attribute';
 import { INode } from './dom';
-import { IController } from './templating/controller';
+import { ICustomElementController, IController } from './templating/controller';
 import { IPlatform } from './platform';
 import { IRendering } from './templating/rendering';
 import type { IHydratableController } from './templating/controller';
-import { AttributeBindingInstruction, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IInstruction, ITemplateCompiler, InterpolationInstruction, IteratorBindingInstruction, ListenerBindingInstruction, PropertyBindingInstruction, RefBindingInstruction, SetAttributeInstruction, SetClassAttributeInstruction, SetPropertyInstruction, SetStyleAttributeInstruction, SpreadBindingInstruction, StylePropertyBindingInstruction, TextBindingInstruction } from '@aurelia/template-compiler';
+import { AttributeBindingInstruction, HydrateAttributeInstruction, HydrateElementInstruction, HydrateLetElementInstruction, HydrateTemplateController, IInstruction, ITemplateCompiler, InterpolationInstruction, IteratorBindingInstruction, ListenerBindingInstruction, PropertyBindingInstruction, RefBindingInstruction, SetAttributeInstruction, SetClassAttributeInstruction, SetPropertyInstruction, SetStyleAttributeInstruction, SpreadTransferedBindingInstruction, SpreadValueBindingInstruction, StylePropertyBindingInstruction, TextBindingInstruction } from '@aurelia/template-compiler';
 /**
  * An interface describing an instruction renderer
  * its target property will be used to match instruction types dynamically at render time
@@ -142,7 +142,13 @@ export declare const SpreadRenderer: {
         /** @internal */ readonly _compiler: ITemplateCompiler;
         /** @internal */ readonly _rendering: IRendering;
         readonly target: "hs";
-        render(renderingCtrl: IHydratableController, target: HTMLElement, _instruction: SpreadBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
+        render(renderingCtrl: IHydratableController, target: HTMLElement, instruction: SpreadTransferedBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
+    };
+};
+export declare const SpreadValueRenderer: {
+    new (): {
+        readonly target: "svb";
+        render(renderingCtrl: IHydratableController, target: ICustomElementController, instruction: SpreadValueBindingInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
     };
 };
 //# sourceMappingURL=renderer.d.ts.map
