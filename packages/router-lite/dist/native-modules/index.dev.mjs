@@ -2,6 +2,7 @@ import { Metadata, isObject } from '../../../metadata/dist/native-modules/index.
 import { DI, resolve, IEventAggregator, ILogger, emptyArray, onResolve, getResourceKeyFor, onResolveAll, emptyObject, IContainer, Registration, isArrayIndex, IModuleLoader, InstanceProvider, noop } from '../../../kernel/dist/native-modules/index.mjs';
 import { BindingMode, isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, CustomAttribute, INode, getRef, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { RecognizedRoute, Endpoint, ConfigurableRoute, RESIDUE, RouteRecognizer } from '../../../route-recognizer/dist/native-modules/index.mjs';
+import { batch } from '../../../runtime/dist/native-modules/index.mjs';
 
 /**
  * Ranges
@@ -3312,6 +3313,14 @@ class Router {
         });
     }
     updateTitle(tr = this.currentTr) {
+        const title = this._getTitle(tr);
+        if (title.length > 0) {
+            this._p.document.title = title;
+        }
+        return this._p.document.title;
+    }
+    /** @internal */
+    _getTitle(tr = this.currentTr) {
         let title;
         if (this._hasTitleBuilder) {
             title = this.options.buildTitle(tr) ?? '';
@@ -3329,10 +3338,7 @@ class Router {
                     break;
             }
         }
-        if (title.length > 0) {
-            this._p.document.title = title;
-        }
-        return this._p.document.title;
+        return title;
     }
     /** @internal */
     _cancelNavigation(tr) {
@@ -4977,6 +4983,50 @@ HrefCustomAttribute.$au = {
     }
 };
 
+let _currentRouteSubscription = null;
+/** @internal */
+function _disposeCurrentRouteSubscription() {
+    _currentRouteSubscription?.dispose();
+}
+const ICurrentRoute = /*@__PURE__*/ DI.createInterface('ICurrentRoute', x => x.singleton(CurrentRoute));
+class CurrentRoute {
+    constructor() {
+        this.path = '';
+        this.url = '';
+        this.title = '';
+        this.query = new URLSearchParams();
+        this.parameterInformation = emptyArray;
+        const router = resolve(IRouter);
+        const options = router.options;
+        _currentRouteSubscription = resolve(IRouterEvents)
+            .subscribe('au:router:navigation-end', (event) => {
+            const vit = event.finalInstructions;
+            batch(() => {
+                this.path = vit.toPath();
+                this.url = vit.toUrl(true, options._urlParser);
+                this.title = router._getTitle();
+                this.query = vit.queryParams;
+                this.parameterInformation = vit.children.map((instruction) => ParameterInformation.create(instruction));
+            });
+        });
+    }
+}
+class ParameterInformation {
+    constructor(config, viewport, params, children) {
+        this.config = config;
+        this.viewport = viewport;
+        this.params = params;
+        this.children = children;
+    }
+    static create(instruction) {
+        const route = instruction.recognizedRoute?.route;
+        const params = Object.create(null);
+        Object.assign(params, route?.params ?? instruction.params);
+        Reflect.deleteProperty(params, RESIDUE);
+        return new ParameterInformation(route?.endpoint.route.handler ?? null, instruction.viewport, params, instruction.children.map((ci) => this.create(ci)));
+    }
+}
+
 const RouterRegistration = IRouter;
 /**
  * Default runtime/environment-agnostic implementations for the following interfaces:
@@ -5013,6 +5063,7 @@ function configure(container, options) {
         url.pathname = normalizePath(basePath ?? url.pathname);
         return url;
     }), Registration.instance(IRouterOptions, routerOptions), Registration.instance(RouterOptions, routerOptions), AppTask.creating(IRouter, _ => { }), AppTask.hydrated(IContainer, RouteContext.setRoot), AppTask.activated(IRouter, router => router.start(true)), AppTask.deactivated(IRouter, router => {
+        _disposeCurrentRouteSubscription();
         router.stop();
     }), ...DefaultComponents, ...DefaultResources);
 }
@@ -5092,5 +5143,5 @@ class ScrollStateManager {
     }
 }
 
-export { AST, AuNavId, ComponentExpression, CompositeSegmentExpression, DefaultComponents, DefaultResources, HrefCustomAttribute, HrefCustomAttributeRegistration, ILocationManager, IRouteContext, IRouter, IRouterEvents, IRouterOptions, IStateManager, LoadCustomAttribute, LoadCustomAttributeRegistration, LocationChangeEvent, NavigationCancelEvent, NavigationEndEvent, NavigationErrorEvent, NavigationOptions, NavigationStartEvent, ParameterExpression, ParameterListExpression, Route, RouteConfig, RouteContext, RouteExpression, RouteNode, RouteTree, Router, RouterConfiguration, RouterOptions, RouterRegistration, ScopedSegmentExpression, SegmentExpression, SegmentGroupExpression, Transition, ViewportAgent, ViewportCustomElement, ViewportCustomElementRegistration, ViewportExpression, fragmentUrlParser, isManagedState, pathUrlParser, route, toManagedState };
+export { AST, AuNavId, ComponentExpression, CompositeSegmentExpression, DefaultComponents, DefaultResources, HrefCustomAttribute, HrefCustomAttributeRegistration, ICurrentRoute, ILocationManager, IRouteContext, IRouter, IRouterEvents, IRouterOptions, IStateManager, LoadCustomAttribute, LoadCustomAttributeRegistration, LocationChangeEvent, NavigationCancelEvent, NavigationEndEvent, NavigationErrorEvent, NavigationOptions, NavigationStartEvent, ParameterExpression, ParameterListExpression, Route, RouteConfig, RouteContext, RouteExpression, RouteNode, RouteTree, Router, RouterConfiguration, RouterOptions, RouterRegistration, ScopedSegmentExpression, SegmentExpression, SegmentGroupExpression, Transition, ViewportAgent, ViewportCustomElement, ViewportCustomElementRegistration, ViewportExpression, fragmentUrlParser, isManagedState, pathUrlParser, route, toManagedState };
 //# sourceMappingURL=index.dev.mjs.map

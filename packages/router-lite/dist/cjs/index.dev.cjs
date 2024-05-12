@@ -6,6 +6,7 @@ var metadata = require('@aurelia/metadata');
 var kernel = require('@aurelia/kernel');
 var runtimeHtml = require('@aurelia/runtime-html');
 var routeRecognizer = require('@aurelia/route-recognizer');
+var runtime = require('@aurelia/runtime');
 
 /**
  * Ranges
@@ -3316,6 +3317,14 @@ class Router {
         });
     }
     updateTitle(tr = this.currentTr) {
+        const title = this._getTitle(tr);
+        if (title.length > 0) {
+            this._p.document.title = title;
+        }
+        return this._p.document.title;
+    }
+    /** @internal */
+    _getTitle(tr = this.currentTr) {
         let title;
         if (this._hasTitleBuilder) {
             title = this.options.buildTitle(tr) ?? '';
@@ -3333,10 +3342,7 @@ class Router {
                     break;
             }
         }
-        if (title.length > 0) {
-            this._p.document.title = title;
-        }
-        return this._p.document.title;
+        return title;
     }
     /** @internal */
     _cancelNavigation(tr) {
@@ -4981,6 +4987,50 @@ HrefCustomAttribute.$au = {
     }
 };
 
+let _currentRouteSubscription = null;
+/** @internal */
+function _disposeCurrentRouteSubscription() {
+    _currentRouteSubscription?.dispose();
+}
+const ICurrentRoute = /*@__PURE__*/ kernel.DI.createInterface('ICurrentRoute', x => x.singleton(CurrentRoute));
+class CurrentRoute {
+    constructor() {
+        this.path = '';
+        this.url = '';
+        this.title = '';
+        this.query = new URLSearchParams();
+        this.parameterInformation = kernel.emptyArray;
+        const router = kernel.resolve(IRouter);
+        const options = router.options;
+        _currentRouteSubscription = kernel.resolve(IRouterEvents)
+            .subscribe('au:router:navigation-end', (event) => {
+            const vit = event.finalInstructions;
+            runtime.batch(() => {
+                this.path = vit.toPath();
+                this.url = vit.toUrl(true, options._urlParser);
+                this.title = router._getTitle();
+                this.query = vit.queryParams;
+                this.parameterInformation = vit.children.map((instruction) => ParameterInformation.create(instruction));
+            });
+        });
+    }
+}
+class ParameterInformation {
+    constructor(config, viewport, params, children) {
+        this.config = config;
+        this.viewport = viewport;
+        this.params = params;
+        this.children = children;
+    }
+    static create(instruction) {
+        const route = instruction.recognizedRoute?.route;
+        const params = Object.create(null);
+        Object.assign(params, route?.params ?? instruction.params);
+        Reflect.deleteProperty(params, routeRecognizer.RESIDUE);
+        return new ParameterInformation(route?.endpoint.route.handler ?? null, instruction.viewport, params, instruction.children.map((ci) => this.create(ci)));
+    }
+}
+
 const RouterRegistration = IRouter;
 /**
  * Default runtime/environment-agnostic implementations for the following interfaces:
@@ -5017,6 +5067,7 @@ function configure(container, options) {
         url.pathname = normalizePath(basePath ?? url.pathname);
         return url;
     }), kernel.Registration.instance(IRouterOptions, routerOptions), kernel.Registration.instance(RouterOptions, routerOptions), runtimeHtml.AppTask.creating(IRouter, _ => { }), runtimeHtml.AppTask.hydrated(kernel.IContainer, RouteContext.setRoot), runtimeHtml.AppTask.activated(IRouter, router => router.start(true)), runtimeHtml.AppTask.deactivated(IRouter, router => {
+        _disposeCurrentRouteSubscription();
         router.stop();
     }), ...DefaultComponents, ...DefaultResources);
 }
@@ -5104,6 +5155,7 @@ exports.DefaultComponents = DefaultComponents;
 exports.DefaultResources = DefaultResources;
 exports.HrefCustomAttribute = HrefCustomAttribute;
 exports.HrefCustomAttributeRegistration = HrefCustomAttributeRegistration;
+exports.ICurrentRoute = ICurrentRoute;
 exports.ILocationManager = ILocationManager;
 exports.IRouteContext = IRouteContext;
 exports.IRouter = IRouter;
