@@ -46,9 +46,9 @@ const A = "ValueConverter";
 
 const g = "BindingBehavior";
 
-const T = "ArrayBindingPattern";
+const C = "ArrayBindingPattern";
 
-const C = "ObjectBindingPattern";
+const T = "ObjectBindingPattern";
 
 const v = "BindingIdentifier";
 
@@ -58,16 +58,16 @@ const L = "Interpolation";
 
 const P = "ArrayDestructuring";
 
-const B = "ObjectDestructuring";
+const I = "ObjectDestructuring";
 
-const I = "DestructuringAssignmentLeaf";
+const S = "DestructuringAssignmentLeaf";
 
-const S = "Custom";
+const B = "Custom";
 
 class CustomExpression {
     constructor(e) {
         this.value = e;
-        this.$kind = S;
+        this.$kind = B;
     }
     evaluate(...e) {
         return this.value;
@@ -282,7 +282,7 @@ class TaggedTemplateExpression {
 class ArrayBindingPattern {
     constructor(e) {
         this.elements = e;
-        this.$kind = T;
+        this.$kind = C;
     }
 }
 
@@ -290,7 +290,7 @@ class ObjectBindingPattern {
     constructor(e, s) {
         this.keys = e;
         this.values = s;
-        this.$kind = C;
+        this.$kind = T;
     }
 }
 
@@ -334,7 +334,7 @@ class DestructuringAssignmentSingleExpression {
         this.target = e;
         this.source = s;
         this.initializer = t;
-        this.$kind = I;
+        this.$kind = S;
     }
 }
 
@@ -342,7 +342,7 @@ class DestructuringAssignmentRestExpression {
     constructor(e, s) {
         this.target = e;
         this.indexOrProperties = s;
-        this.$kind = I;
+        this.$kind = S;
     }
 }
 
@@ -380,7 +380,7 @@ const astVisit = (e, r) => {
       case t:
         return r.visitAccessBoundary(e);
 
-      case T:
+      case C:
         return r.visitArrayBindingPattern(e);
 
       case P:
@@ -416,7 +416,7 @@ const astVisit = (e, r) => {
       case m:
         return r.visitConditional(e);
 
-      case I:
+      case S:
         return r.visitDestructuringAssignmentSingleExpression(e);
 
       case y:
@@ -425,10 +425,10 @@ const astVisit = (e, r) => {
       case L:
         return r.visitInterpolation(e);
 
-      case C:
+      case T:
         return r.visitObjectBindingPattern(e);
 
-      case B:
+      case I:
         return r.visitDestructuringAssignmentExpression(e);
 
       case o:
@@ -449,7 +449,7 @@ const astVisit = (e, r) => {
       case A:
         return r.visitValueConverter(e);
 
-      case S:
+      case B:
         return r.visitCustom(e);
 
       default:
@@ -698,7 +698,7 @@ class Unparser {
     }
     visitDestructuringAssignmentExpression(e) {
         const s = e.$kind;
-        const t = s === B;
+        const t = s === I;
         this.text += t ? "{" : "[";
         const r = e.list;
         const n = r.length;
@@ -707,12 +707,12 @@ class Unparser {
         for (i = 0; i < n; i++) {
             o = r[i];
             switch (o.$kind) {
-              case I:
+              case S:
                 astVisit(o, this);
                 break;
 
               case P:
-              case B:
+              case I:
                 {
                     const e = o.source;
                     if (e) {
@@ -1614,7 +1614,7 @@ function parseArrayLiteralExpression(e) {
     }
 }
 
-const ce = [ T, C, v, P, B ];
+const ce = [ C, T, v, P, I ];
 
 function parseForOfStatement(e) {
     if (!ce.includes(e.$kind)) {
@@ -1740,7 +1740,7 @@ function createTemplateTail(e) {
 function nextToken() {
     while (Q < W) {
         Y = Q;
-        if ((Z = xe[se]()) != null) {
+        if ((Z = ue[se]()) != null) {
             return;
         }
     }
@@ -1899,12 +1899,6 @@ const unterminatedTemplateLiteral = () => createMappedError(166, q);
 
 const missingExpectedToken = e => createMappedError(167, q);
 
-const unexpectedCharacter = () => {
-    throw createMappedError(168, q);
-};
-
-unexpectedCharacter.notMapped = true;
-
 const unexpectedTokenInDestructuring = () => createMappedError(170, q);
 
 const unexpectedTokenInOptionalChain = () => createMappedError(171, q);
@@ -1940,53 +1934,53 @@ const le = /*@__PURE__*/ Object.assign(createLookup(), {
     of: 4204594
 });
 
-const ue = {
-    AsciiIdPart: [ 36, 0, 48, 58, 65, 91, 95, 0, 97, 123 ],
-    IdStart: [ 36, 0, 65, 91, 95, 0, 97, 123, 170, 0, 186, 0, 192, 215, 216, 247, 248, 697, 736, 741, 7424, 7462, 7468, 7517, 7522, 7526, 7531, 7544, 7545, 7615, 7680, 7936, 8305, 0, 8319, 0, 8336, 8349, 8490, 8492, 8498, 0, 8526, 0, 8544, 8585, 11360, 11392, 42786, 42888, 42891, 42927, 42928, 42936, 42999, 43008, 43824, 43867, 43868, 43877, 64256, 64263, 65313, 65339, 65345, 65371 ],
-    Digit: [ 48, 58 ],
-    Skip: [ 0, 33, 127, 161 ]
-};
-
-const decompress = (e, s, t, r) => {
-    const n = t.length;
-    for (let i = 0; i < n; i += 2) {
-        const n = t[i];
-        let o = t[i + 1];
-        o = o > 0 ? o : n + 1;
-        if (e) {
-            e.fill(r, n, o);
-        }
-        if (s) {
-            for (let e = n; e < o; e++) {
-                s.add(e);
+const {CharScanners: ue, IdParts: pe} = /*@__PURE__*/ (() => {
+    const unexpectedCharacter = () => {
+        throw createMappedError(168, q);
+    };
+    unexpectedCharacter.notMapped = true;
+    const e = {
+        AsciiIdPart: [ 36, 0, 48, 58, 65, 91, 95, 0, 97, 123 ],
+        IdStart: [ 36, 0, 65, 91, 95, 0, 97, 123, 170, 0, 186, 0, 192, 215, 216, 247, 248, 697, 736, 741, 7424, 7462, 7468, 7517, 7522, 7526, 7531, 7544, 7545, 7615, 7680, 7936, 8305, 0, 8319, 0, 8336, 8349, 8490, 8492, 8498, 0, 8526, 0, 8544, 8585, 11360, 11392, 42786, 42888, 42891, 42927, 42928, 42936, 42999, 43008, 43824, 43867, 43868, 43877, 64256, 64263, 65313, 65339, 65345, 65371 ],
+        Digit: [ 48, 58 ],
+        Skip: [ 0, 33, 127, 161 ]
+    };
+    const decompress = (e, s, t, r) => {
+        const n = t.length;
+        for (let i = 0; i < n; i += 2) {
+            const n = t[i];
+            let o = t[i + 1];
+            o = o > 0 ? o : n + 1;
+            if (e) {
+                e.fill(r, n, o);
+            }
+            if (s) {
+                for (let e = n; e < o; e++) {
+                    s.add(e);
+                }
             }
         }
-    }
-};
-
-const returnToken = e => () => {
-    nextChar();
-    return e;
-};
-
-const pe = /*@__PURE__*/ (e => {
-    decompress(e, null, ue.IdStart, 1);
-    decompress(e, null, ue.Digit, 1);
-    return e;
-})(new Uint8Array(65535));
-
-const xe = /*@__PURE__*/ (() => {
-    const e = new Array(65535);
-    e.fill(unexpectedCharacter, 0, 65535);
-    decompress(e, null, ue.Skip, (() => {
+    };
+    const s = /*@__PURE__*/ (s => {
+        decompress(s, null, e.IdStart, 1);
+        decompress(s, null, e.Digit, 1);
+        return s;
+    })(new Uint8Array(65535));
+    const returnToken = e => () => {
+        nextChar();
+        return e;
+    };
+    const t = new Array(65535);
+    t.fill(unexpectedCharacter, 0, 65535);
+    decompress(t, null, e.Skip, (() => {
         nextChar();
         return null;
     }));
-    decompress(e, null, ue.IdStart, scanIdentifier);
-    decompress(e, null, ue.Digit, (() => scanNumber(false)));
-    e[34] = e[39] = () => scanString();
-    e[96] = () => scanTemplate();
-    e[33] = () => {
+    decompress(t, null, e.IdStart, scanIdentifier);
+    decompress(t, null, e.Digit, (() => scanNumber(false)));
+    t[34] = t[39] = () => scanString();
+    t[96] = () => scanTemplate();
+    t[33] = () => {
         if (nextChar() !== 61) {
             return 131119;
         }
@@ -1996,7 +1990,7 @@ const xe = /*@__PURE__*/ (() => {
         nextChar();
         return 6553952;
     };
-    e[61] = () => {
+    t[61] = () => {
         if (nextChar() === 62) {
             nextChar();
             return 51;
@@ -2010,21 +2004,21 @@ const xe = /*@__PURE__*/ (() => {
         nextChar();
         return 6553951;
     };
-    e[38] = () => {
+    t[38] = () => {
         if (nextChar() !== 38) {
             return 6291480;
         }
         nextChar();
         return 6553884;
     };
-    e[124] = () => {
+    t[124] = () => {
         if (nextChar() !== 124) {
             return 6291481;
         }
         nextChar();
         return 6553819;
     };
-    e[63] = () => {
+    t[63] = () => {
         if (nextChar() === 46) {
             const e = $charCodeAt(Q + 1);
             if (e <= 48 || e >= 57) {
@@ -2039,7 +2033,7 @@ const xe = /*@__PURE__*/ (() => {
         nextChar();
         return 6553754;
     };
-    e[46] = () => {
+    t[46] = () => {
         if (nextChar() <= 57 && se >= 48) {
             return scanNumber(true);
         }
@@ -2052,35 +2046,38 @@ const xe = /*@__PURE__*/ (() => {
         }
         return 65546;
     };
-    e[60] = () => {
+    t[60] = () => {
         if (nextChar() !== 61) {
             return 6554017;
         }
         nextChar();
         return 6554019;
     };
-    e[62] = () => {
+    t[62] = () => {
         if (nextChar() !== 61) {
             return 6554018;
         }
         nextChar();
         return 6554020;
     };
-    e[37] = returnToken(6554156);
-    e[40] = returnToken(2688008);
-    e[41] = returnToken(7340047);
-    e[42] = returnToken(6554155);
-    e[43] = returnToken(2490855);
-    e[44] = returnToken(6291472);
-    e[45] = returnToken(2490856);
-    e[47] = returnToken(6554157);
-    e[58] = returnToken(6291477);
-    e[59] = returnToken(6291478);
-    e[91] = returnToken(2688019);
-    e[93] = returnToken(7340052);
-    e[123] = returnToken(524297);
-    e[125] = returnToken(7340046);
-    return e;
+    t[37] = returnToken(6554156);
+    t[40] = returnToken(2688008);
+    t[41] = returnToken(7340047);
+    t[42] = returnToken(6554155);
+    t[43] = returnToken(2490855);
+    t[44] = returnToken(6291472);
+    t[45] = returnToken(2490856);
+    t[47] = returnToken(6554157);
+    t[58] = returnToken(6291477);
+    t[59] = returnToken(6291478);
+    t[91] = returnToken(2688019);
+    t[93] = returnToken(7340052);
+    t[123] = returnToken(524297);
+    t[125] = returnToken(7340046);
+    return {
+        CharScanners: t,
+        IdParts: s
+    };
 })();
 
 exports.AccessBoundaryExpression = AccessBoundaryExpression;

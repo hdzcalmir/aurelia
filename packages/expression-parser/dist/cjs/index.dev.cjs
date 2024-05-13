@@ -2065,10 +2065,6 @@ const unterminatedStringLiteral = () => createMappedError(165 /* ErrorNames.pars
 const unterminatedTemplateLiteral = () => createMappedError(166 /* ErrorNames.parse_unterminated_template_string */, $input);
 const missingExpectedToken = (token) => createMappedError(167 /* ErrorNames.parse_missing_expected_token */, TokenValues[token & 63 /* Token.Type */], $input)
     ;
-const unexpectedCharacter = () => {
-    throw createMappedError(168 /* ErrorNames.parse_unexpected_character */, $input);
-};
-unexpectedCharacter.notMapped = true;
 const unexpectedTokenInDestructuring = () => createMappedError(170 /* ErrorNames.parse_unexpected_token_destructuring */, $tokenRaw(), $index, $input)
     ;
 const unexpectedTokenInOptionalChain = () => createMappedError(171 /* ErrorNames.parse_unexpected_token_optional_chain */, $tokenRaw(), $index - 1, $input)
@@ -2111,54 +2107,63 @@ const KeywordLookup = /*@__PURE__*/ Object.assign(createLookup(), {
     void: 139306 /* Token.VoidKeyword */,
     of: 4204594 /* Token.OfKeyword */,
 });
-/**
- * Ranges of code points in pairs of 2 (eg 0x41-0x5B, 0x61-0x7B, ...) where the second value is not inclusive (5-7 means 5 and 6)
- * Single values are denoted by the second value being a 0
- *
- * Copied from output generated with "node build/generate-unicode.js"
- *
- * See also: https://en.wikibooks.org/wiki/Unicode/Character_reference/0000-0FFF
- */
-const codes = {
-    /* [$0-9A-Za_a-z] */
-    AsciiIdPart: [0x24, 0, 0x30, 0x3A, 0x41, 0x5B, 0x5F, 0, 0x61, 0x7B],
-    IdStart: /* IdentifierStart */ [0x24, 0, 0x41, 0x5B, 0x5F, 0, 0x61, 0x7B, 0xAA, 0, 0xBA, 0, 0xC0, 0xD7, 0xD8, 0xF7, 0xF8, 0x2B9, 0x2E0, 0x2E5, 0x1D00, 0x1D26, 0x1D2C, 0x1D5D, 0x1D62, 0x1D66, 0x1D6B, 0x1D78, 0x1D79, 0x1DBF, 0x1E00, 0x1F00, 0x2071, 0, 0x207F, 0, 0x2090, 0x209D, 0x212A, 0x212C, 0x2132, 0, 0x214E, 0, 0x2160, 0x2189, 0x2C60, 0x2C80, 0xA722, 0xA788, 0xA78B, 0xA7AF, 0xA7B0, 0xA7B8, 0xA7F7, 0xA800, 0xAB30, 0xAB5B, 0xAB5C, 0xAB65, 0xFB00, 0xFB07, 0xFF21, 0xFF3B, 0xFF41, 0xFF5B],
-    Digit: /* DecimalNumber */ [0x30, 0x3A],
-    Skip: /* Skippable */ [0, 0x21, 0x7F, 0xA1]
-};
-/**
- * Decompress the ranges into an array of numbers so that the char code
- * can be used as an index to the lookup
- */
-const decompress = (lookup, $set, compressed, value) => {
-    const rangeCount = compressed.length;
-    for (let i = 0; i < rangeCount; i += 2) {
-        const start = compressed[i];
-        let end = compressed[i + 1];
-        end = end > 0 ? end : start + 1;
-        if (lookup) {
-            lookup.fill(value, start, end);
-        }
-        if ($set) {
-            for (let ch = start; ch < end; ch++) {
-                $set.add(ch);
+// Character scanning function lookup
+const { CharScanners, IdParts, } = /*@__PURE__*/ (() => {
+    const unexpectedCharacter = () => {
+        throw createMappedError(168 /* ErrorNames.parse_unexpected_character */, $input);
+    };
+    unexpectedCharacter.notMapped = true;
+    /**
+     * Ranges of code points in pairs of 2 (eg 0x41-0x5B, 0x61-0x7B, ...) where the second value is not inclusive (5-7 means 5 and 6)
+     * Single values are denoted by the second value being a 0
+     *
+     * Copied from output generated with "node build/generate-unicode.js"
+     *
+     * See also: https://en.wikibooks.org/wiki/Unicode/Character_reference/0000-0FFF
+     */
+    const codes = {
+        /* [$0-9A-Za_a-z] */
+        AsciiIdPart: [0x24, 0, 0x30, 0x3A, 0x41, 0x5B, 0x5F, 0, 0x61, 0x7B],
+        IdStart: /* IdentifierStart */ [0x24, 0, 0x41, 0x5B, 0x5F, 0, 0x61, 0x7B, 0xAA, 0, 0xBA, 0, 0xC0, 0xD7, 0xD8, 0xF7, 0xF8, 0x2B9, 0x2E0, 0x2E5, 0x1D00, 0x1D26, 0x1D2C, 0x1D5D, 0x1D62, 0x1D66, 0x1D6B, 0x1D78, 0x1D79, 0x1DBF, 0x1E00, 0x1F00, 0x2071, 0, 0x207F, 0, 0x2090, 0x209D, 0x212A, 0x212C, 0x2132, 0, 0x214E, 0, 0x2160, 0x2189, 0x2C60, 0x2C80, 0xA722, 0xA788, 0xA78B, 0xA7AF, 0xA7B0, 0xA7B8, 0xA7F7, 0xA800, 0xAB30, 0xAB5B, 0xAB5C, 0xAB65, 0xFB00, 0xFB07, 0xFF21, 0xFF3B, 0xFF41, 0xFF5B],
+        Digit: /* DecimalNumber */ [0x30, 0x3A],
+        Skip: /* Skippable */ [0, 0x21, 0x7F, 0xA1]
+    };
+    /**
+     * Decompress the ranges into an array of numbers so that the char code
+     * can be used as an index to the lookup
+     */
+    const decompress = (lookup, $set, compressed, value) => {
+        const rangeCount = compressed.length;
+        for (let i = 0; i < rangeCount; i += 2) {
+            const start = compressed[i];
+            let end = compressed[i + 1];
+            end = end > 0 ? end : start + 1;
+            if (lookup) {
+                lookup.fill(value, start, end);
+            }
+            if ($set) {
+                for (let ch = start; ch < end; ch++) {
+                    $set.add(ch);
+                }
             }
         }
-    }
-};
-// CharFuncLookup functions
-const returnToken = (token) => () => {
-    nextChar();
-    return token;
-};
-// IdentifierPart lookup
-const IdParts = /*@__PURE__*/ ((IdParts) => {
-    decompress(IdParts, null, codes.IdStart, 1);
-    decompress(IdParts, null, codes.Digit, 1);
-    return IdParts;
-})(new Uint8Array(0xFFFF));
-// Character scanning function lookup
-const CharScanners = /*@__PURE__*/ (() => {
+    };
+    // // ASCII IdentifierPart lookup
+    
+    //   decompress(null, AsciiIdParts, codes.AsciiIdPart, true);
+    //   return AsciiIdParts;
+    // })(new Set<number>());
+    // IdentifierPart lookup
+    const IdParts = /*@__PURE__*/ ((IdParts) => {
+        decompress(IdParts, null, codes.IdStart, 1);
+        decompress(IdParts, null, codes.Digit, 1);
+        return IdParts;
+    })(new Uint8Array(0xFFFF));
+    // CharFuncLookup functions
+    const returnToken = (token) => () => {
+        nextChar();
+        return token;
+    };
     const CharScanners = new Array(0xFFFF);
     CharScanners.fill(unexpectedCharacter, 0, 0xFFFF);
     decompress(CharScanners, null, codes.Skip, () => {
@@ -2276,7 +2281,7 @@ const CharScanners = /*@__PURE__*/ (() => {
     CharScanners[93 /* Char.CloseBracket */] = returnToken(7340052 /* Token.CloseBracket */);
     CharScanners[123 /* Char.OpenBrace */] = returnToken(524297 /* Token.OpenBrace */);
     CharScanners[125 /* Char.CloseBrace */] = returnToken(7340046 /* Token.CloseBrace */);
-    return CharScanners;
+    return { CharScanners, IdParts };
 })();
 
 exports.AccessBoundaryExpression = AccessBoundaryExpression;

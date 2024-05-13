@@ -365,7 +365,7 @@ export const template = "<template ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 let _e;
 export function register(container) {
   if (!_e) {
@@ -388,7 +388,7 @@ export const template = "<template  ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 let _e;
 export function register(container) {
   if (!_e) {
@@ -411,7 +411,7 @@ export const template = "<template  ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 export const aliases = ["test","test2"];
 let _e;
 export function register(container) {
@@ -435,7 +435,7 @@ export const template = "<template ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 export const aliases = ["test","test2"];
 let _e;
 export function register(container) {
@@ -459,7 +459,7 @@ export const template = "<template  ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 export const aliases = ["test","test2","test3","test4"];
 let _e;
 export function register(container) {
@@ -483,7 +483,7 @@ export const template = "<template  ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 export const aliases = ["test3","test4"];
 let _e;
 export function register(container) {
@@ -507,7 +507,7 @@ export const template = "<template  ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 export const aliases = ["test","test2"];
 let _e;
 export function register(container) {
@@ -531,7 +531,7 @@ export const template = "<template  ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 let _e;
 export function register(container) {
   if (!_e) {
@@ -554,7 +554,7 @@ export const template = "<template id=\\"my-template\\"  ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 export const aliases = ["test3","test4"];
 let _e;
 export function register(container) {
@@ -578,7 +578,7 @@ export const template = "<template id=\\"my-template\\" ></template>";
 export default template;
 export const dependencies = [  ];
 export const containerless = true;
-export const bindables = {"age":{"mode":2},"firstName":{},"lastName":{}};
+export const bindables = [{"name":"age","mode":2},{"name":"firstName"},{"name":"lastName"}];
 export const aliases = ["test3","test4"];
 let _e;
 export function register(container) {
