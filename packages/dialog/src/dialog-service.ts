@@ -1,8 +1,7 @@
-import { IContainer, Registration, onResolve, onResolveAll, resolve } from '@aurelia/kernel';
-import { AppTask, IPlatform } from '@aurelia/runtime-html';
+import { isFunction, isPromise, IContainer, Registration, onResolve, onResolveAll, resolve } from '@aurelia/kernel';
+import { AppTask } from '@aurelia/runtime-html';
 
 import {
-  DialogActionKey,
   DialogCloseResult,
   DialogOpenResult,
   IDialogService,
@@ -11,13 +10,13 @@ import {
   IDialogLoadedSettings,
 } from './dialog-interfaces';
 import { DialogController } from './dialog-controller';
-import { createError, isFunction, isPromise } from '../../utilities';
-import { instanceRegistration, singletonRegistration } from '../../utilities-di';
+import { instanceRegistration, singletonRegistration } from './utilities-di';
 
 import type {
   DialogOpenPromise,
   IDialogSettings,
 } from './dialog-interfaces';
+import { ErrorNames, createMappedError } from './errors';
 
 /**
  * A default implementation for the dialog service allowing for the creation of dialogs.
@@ -29,13 +28,10 @@ export class DialogService implements IDialogService {
       Registration.aliasTo(this, IDialogService),
       AppTask.deactivating(IDialogService, dialogService => onResolve(
         dialogService.closeAll(),
-        (openDialogController) => {
-          if (openDialogController.length > 0) {
+        (openDialogControllers) => {
+          if (openDialogControllers.length > 0) {
             // todo: what to do?
-            if (__DEV__)
-              throw createError(`AUR0901: There are still ${openDialogController.length} open dialog(s).`);
-            else
-              throw createError(`AUR0901:${openDialogController.length}`);
+            throw createMappedError(ErrorNames.dialog_not_all_dialogs_closed, openDialogControllers.length);
           }
         }
       ))
@@ -52,13 +48,7 @@ export class DialogService implements IDialogService {
    */
   private readonly dlgs: IDialogController[] = [];
 
-  private get top(): IDialogController | null {
-    const dlgs = this.dlgs;
-    return dlgs.length > 0 ? dlgs[dlgs.length - 1] : null;
-  }
-
   /** @internal */ private readonly _ctn = resolve(IContainer);
-  /** @internal */ private readonly p = resolve(IPlatform);
   /** @internal */ private readonly _defaultSettings = resolve(IDialogGlobalSettings);
 
   /**
@@ -96,12 +86,10 @@ export class DialogService implements IDialogService {
             dialogController.activate(loadedSettings),
             openResult => {
               if (!openResult.wasCancelled) {
-                if (this.dlgs.push(dialogController) === 1) {
-                  this.p.window.addEventListener('keydown', this);
-                }
+                this.dlgs.push(dialogController);
 
                 const $removeController = () => this.remove(dialogController);
-                dialogController.closed.then($removeController, $removeController);
+                void dialogController.closed.finally($removeController);
               }
               return openResult;
             }
@@ -139,32 +127,9 @@ export class DialogService implements IDialogService {
 
   /** @internal */
   private remove(controller: DialogController): void {
-    const dlgs = this.dlgs;
-    const idx = dlgs.indexOf(controller);
+    const idx = this.dlgs.indexOf(controller);
     if (idx > -1) {
       this.dlgs.splice(idx, 1);
-    }
-    if (dlgs.length === 0) {
-      this.p.window.removeEventListener('keydown', this);
-    }
-  }
-
-  /** @internal */
-  public handleEvent(e: Event): void {
-    const keyEvent = e as KeyboardEvent;
-    const key = getActionKey(keyEvent);
-    if (key == null) {
-      return;
-    }
-    const top = this.top;
-    if (top === null || top.settings.keyboard.length === 0) {
-      return;
-    }
-    const keyboard = top.settings.keyboard;
-    if (key === 'Escape' && keyboard.includes(key)) {
-      void top.cancel();
-    } else if (key === 'Enter' && keyboard.includes(key)) {
-      void top.ok();
     }
   }
 }
@@ -198,10 +163,7 @@ class DialogSettings<T extends object = object> implements IDialogSettings<T> {
   /** @internal */
   private _validate(): this {
     if (this.component == null && this.template == null) {
-      if (__DEV__)
-        throw createError(`AUR0903: Invalid Dialog Settings. You must provide "component", "template" or both.`);
-      else
-        throw createError(`AUR0903`);
+      throw createMappedError(ErrorNames.dialog_settings_invalid);
     }
     return this;
   }
@@ -229,14 +191,4 @@ function whenClosed<TResult1 = unknown, TResult2 = unknown>(
 function asDialogOpenPromise(promise: Promise<unknown>): DialogOpenPromise {
   (promise as DialogOpenPromise).whenClosed = whenClosed;
   return promise as DialogOpenPromise;
-}
-
-function getActionKey(e: KeyboardEvent): DialogActionKey | undefined {
-  if ((e.code || e.key) === 'Escape' || e.keyCode === 27) {
-    return 'Escape';
-  }
-  if ((e.code || e.key) === 'Enter' || e.keyCode === 13) {
-    return 'Enter';
-  }
-  return undefined;
 }

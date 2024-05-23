@@ -1,4 +1,4 @@
-import { Constructable, IContainer, InstanceProvider, onResolve } from '@aurelia/kernel';
+import { isFunction, type Constructable, IContainer, InstanceProvider, onResolve, IDisposable, resolve } from '@aurelia/kernel';
 import { Controller, ICustomElementController, IEventTarget, INode, IPlatform, CustomElement, CustomElementDefinition } from '@aurelia/runtime-html';
 import {
   IDialogController,
@@ -8,22 +8,23 @@ import {
   DialogCloseResult,
   DialogCancelError,
   DialogCloseError,
+  IDialogEventManager,
 } from './dialog-interfaces';
-import { createError, isFunction } from '../../utilities';
-import { instanceRegistration } from '../../utilities-di';
+import { instanceRegistration } from './utilities-di';
 
 import type {
   DialogDeactivationStatuses,
   IDialogComponent,
   IDialogLoadedSettings,
 } from './dialog-interfaces';
+import { ErrorNames, createMappedError } from './errors';
 
 /**
  * A controller object for a Dialog instance.
  */
 export class DialogController implements IDialogController {
-  private readonly p: IPlatform;
-  private readonly ctn: IContainer;
+  private readonly p = resolve(IPlatform);
+  private readonly ctn = resolve(IContainer);
 
   /** @internal */
   private cmp!: IDialogComponent<object>;
@@ -33,6 +34,9 @@ export class DialogController implements IDialogController {
 
   /** @internal */
   private _reject!: (reason: unknown) => void;
+
+  /** @internal */
+  private _disposeHandler: IDisposable | undefined = void 0;
 
   /**
    * @internal
@@ -58,14 +62,7 @@ export class DialogController implements IDialogController {
    */
   private controller!: ICustomElementController;
 
-  protected static get inject() { return [IPlatform, IContainer]; }
-
-  public constructor(
-    p: IPlatform,
-    container: IContainer,
-  ) {
-    this.p = p;
-    this.ctn = container;
+  public constructor() {
     this.closed = new Promise((resolve, reject) => {
       this._resolve = resolve;
       this._reject = reject;
@@ -75,14 +72,19 @@ export class DialogController implements IDialogController {
   /** @internal */
   public activate(settings: IDialogLoadedSettings): Promise<DialogOpenResult> {
     const container = this.ctn.createChild();
-    const { model, template, rejectOnCancel } = settings;
-    const hostRenderer: IDialogDomRenderer = container.get(IDialogDomRenderer);
+    const {
+      model,
+      template,
+      rejectOnCancel,
+      renderer = container.get(IDialogDomRenderer),
+    } = settings;
     const dialogTargetHost = settings.host ?? this.p.document.body;
-    const dom = this.dom = hostRenderer.render(dialogTargetHost, settings);
+    const dom = this.dom = renderer.render(dialogTargetHost, settings);
     const rootEventTarget = container.has(IEventTarget, true)
       ? container.get(IEventTarget) as Element
       : null;
     const contentHost = dom.contentHost;
+    const eventManager = container.get(IDialogEventManager);
 
     this.settings = settings;
     // application root host may be a different element with the dialog root host
@@ -108,7 +110,7 @@ export class DialogController implements IDialogController {
         if (canActivate !== true) {
           dom.dispose();
           if (rejectOnCancel) {
-            throw createDialogCancelError(null, 'Dialog activation rejected');
+            throw createDialogCancelError(null, ErrorNames.dialog_activation_rejected);
           }
           return DialogOpenResult.create(true, this);
         }
@@ -126,7 +128,7 @@ export class DialogController implements IDialogController {
             )
           ) as ICustomElementController;
           return onResolve(ctrlr.activate(ctrlr, null), () => {
-            dom.overlay.addEventListener(settings.mouseEvent ?? 'click', this);
+            this._disposeHandler = eventManager.add(this, dom);
             return DialogOpenResult.create(false, this);
           });
         });
@@ -143,7 +145,7 @@ export class DialogController implements IDialogController {
     }
 
     let deactivating = true;
-    const { controller, dom, cmp, settings: { mouseEvent, rejectOnCancel }} = this;
+    const { controller, dom, cmp, settings: { rejectOnCancel }} = this;
     const dialogResult = DialogCloseResult.create(status, value);
 
     const promise: Promise<DialogCloseResult<T>> = new Promise<DialogCloseResult<T>>(r => {
@@ -155,7 +157,7 @@ export class DialogController implements IDialogController {
             deactivating = false;
             this._closingPromise = void 0;
             if (rejectOnCancel) {
-              throw createDialogCancelError(null, 'Dialog cancellation rejected');
+              throw createDialogCancelError(null, ErrorNames.dialog_cancellation_rejected);
             }
             return DialogCloseResult.create('abort' as T);
           }
@@ -163,11 +165,11 @@ export class DialogController implements IDialogController {
             () => onResolve(controller.deactivate(controller, null),
               () => {
                 dom.dispose();
-                dom.overlay.removeEventListener(mouseEvent ?? 'click', this);
+                this._disposeHandler?.dispose();
                 if (!rejectOnCancel && status !== 'error') {
                   this._resolve(dialogResult);
                 } else {
-                  this._reject(createDialogCancelError(value, 'Dialog cancelled with a rejection on cancel'));
+                  this._reject(createDialogCancelError(value, ErrorNames.dialog_cancelled_with_cancel_on_rejection_setting));
                 }
                 return dialogResult;
               }
@@ -224,16 +226,6 @@ export class DialogController implements IDialogController {
     )));
   }
 
-  /** @internal */
-  public handleEvent(event: MouseEvent): void {
-    if (/* user allows dismiss on overlay click */this.settings.overlayDismiss
-      && /* did not click inside the host element */!this.dom.contentHost.contains(event.target as Element)
-    ) {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.cancel();
-    }
-  }
-
   private getOrCreateVm(container: IContainer, settings: IDialogLoadedSettings, host: HTMLElement): IDialogComponent<object> {
     const Component = settings.component;
     if (Component == null) {
@@ -268,15 +260,15 @@ export class DialogController implements IDialogController {
 
 class EmptyComponent {}
 
-function createDialogCancelError<T>(output: T | undefined, msg: string): DialogCancelError<T> {
-  const error = createError(msg) as DialogCancelError<T>;
+function createDialogCancelError<T>(output: T | undefined, code: ErrorNames/* , msg: string */): DialogCancelError<T> {
+  const error = createMappedError(code) as DialogCancelError<T>;
   error.wasCancelled = true;
   error.value = output;
   return error;
 }
 
 function createDialogCloseError<T = unknown>(output: T): DialogCloseError<T> {
-  const error = createError('') as DialogCloseError<T>;
+  const error = createMappedError(ErrorNames.dialog_custom_error) as DialogCloseError<T>;
   error.wasCancelled = false;
   error.value = output;
   return error;

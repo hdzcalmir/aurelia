@@ -1,6 +1,5 @@
-import { DI, InstanceProvider, onResolve } from '@aurelia/kernel';
+import { isPromise, DI, InstanceProvider, onResolve } from '@aurelia/kernel';
 import { AppRoot, IAppRoot } from './app-root';
-import { isPromise } from './utilities';
 import { createInterface, registerResolver } from './utilities-di';
 
 import type {
@@ -85,8 +84,7 @@ export class Aurelia implements IDisposable {
 
   public async waitForIdle(): Promise<void> {
     const platform = this.root.platform;
-    await platform.domWriteQueue.yield();
-    await platform.domReadQueue.yield();
+    await platform.domQueue.yield();
     await platform.taskQueue.yield();
   }
 

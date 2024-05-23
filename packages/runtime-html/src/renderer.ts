@@ -5,7 +5,8 @@ import {
   type Constructable,
   type IResolver,
   resolve,
-  Registrable,
+  isString,
+  registrableMetadataKey,
 } from '@aurelia/kernel';
 import {
   IExpressionParser,
@@ -31,7 +32,7 @@ import { Controller, ICustomElementController, ICustomElementViewModel, IControl
 import { IPlatform } from './platform';
 import { IViewFactory } from './templating/view';
 import { IRendering } from './templating/rendering';
-import { objectKeys, isString, etIsProperty, etInterpolation, etIsIterator, etIsFunction } from './utilities';
+import { objectKeys, etIsProperty, etInterpolation, etIsIterator, etIsFunction } from './utilities';
 import { createInterface, registerResolver, singletonRegistration } from './utilities-di';
 import { IAuSlotsInfo, AuSlotsInfo } from './templating/controller.projection';
 
@@ -85,9 +86,13 @@ export interface IRenderer {
 export const IRenderer = /*@__PURE__*/createInterface<IRenderer>('IRenderer');
 
 export function renderer<T extends IRenderer, C extends Constructable<T>>(target: C, context: ClassDecoratorContext): C {
-  return Registrable.define(target, function (this: typeof target, container: IContainer): void {
-    singletonRegistration(IRenderer, this).register(container);
-  });
+  const metadata = context?.metadata ?? (target[Symbol.metadata] ??= Object.create(null));
+  metadata[registrableMetadataKey] = {
+    register(container: IContainer): void {
+      singletonRegistration(IRenderer, target).register(container);
+    }
+  };
+  return target;
 }
 
 function ensureExpression<TFrom>(parser: IExpressionParser, srcOrExpr: TFrom | string, expressionType: ExpressionType): TFrom {
@@ -446,7 +451,7 @@ export const InterpolationBindingRenderer = /*@__PURE__*/ renderer(class Interpo
       renderingCtrl,
       renderingCtrl.container,
       observerLocator,
-      platform.domWriteQueue,
+      platform.domQueue,
       ensureExpression(exprParser, instruction.from, etInterpolation),
       getTarget(target),
       instruction.to,
@@ -472,7 +477,7 @@ export const PropertyBindingRenderer = /*@__PURE__*/ renderer(class PropertyBind
       renderingCtrl,
       renderingCtrl.container,
       observerLocator,
-      platform.domWriteQueue,
+      platform.domQueue,
       ensureExpression(exprParser, instruction.from, etIsProperty),
       getTarget(target),
       instruction.to,
@@ -498,7 +503,7 @@ export const IteratorBindingRenderer = /*@__PURE__*/ renderer(class IteratorBind
       renderingCtrl,
       renderingCtrl.container,
       observerLocator,
-      platform.domWriteQueue,
+      platform.domQueue,
       ensureExpression(exprParser, instruction.forOf, etIsIterator),
       getTarget(target),
       instruction.to,
@@ -524,7 +529,7 @@ export const TextBindingRenderer = /*@__PURE__*/ renderer(class TextBindingRende
       renderingCtrl,
       renderingCtrl.container,
       observerLocator,
-      platform.domWriteQueue,
+      platform.domQueue,
       platform,
       ensureExpression(exprParser, instruction.from, etIsProperty),
       target as Text,
@@ -653,7 +658,7 @@ export const StylePropertyBindingRenderer = /*@__PURE__*/ renderer(class StylePr
           renderingCtrl,
           renderingCtrl.container,
           observerLocator,
-          platform.domWriteQueue,
+          platform.domQueue,
           ensureExpression(exprParser, instruction.from, etIsProperty),
           target.style,
           instruction.to,
@@ -666,7 +671,7 @@ export const StylePropertyBindingRenderer = /*@__PURE__*/ renderer(class StylePr
       renderingCtrl,
       renderingCtrl.container,
       observerLocator,
-      platform.domWriteQueue,
+      platform.domQueue,
       ensureExpression(exprParser, instruction.from, etIsProperty),
       target.style,
       instruction.to,
@@ -708,7 +713,7 @@ export const AttributeBindingRenderer = /*@__PURE__*/ renderer(class AttributeBi
       renderingCtrl,
       container,
       observerLocator,
-      platform.domWriteQueue,
+      platform.domQueue,
       ensureExpression(exprParser, instruction.from, etIsProperty),
       target,
       instruction.attr/* targetAttribute */,
@@ -771,7 +776,7 @@ export const SpreadValueRenderer = /*@__PURE__*/ renderer(class SpreadValueRende
         exprParser.parse(instruction.from, etIsProperty),
         observerLocator,
         renderingCtrl.container,
-        platform.domWriteQueue
+        platform.domQueue
       ));
     } else {
       throw createMappedError(ErrorNames.spreading_invalid_target, instructionTarget);
