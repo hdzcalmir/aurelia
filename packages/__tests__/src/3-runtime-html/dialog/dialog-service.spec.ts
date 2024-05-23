@@ -122,7 +122,7 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
         afterStarted: async (_, dialogService) => {
           let error: DialogCancelError<unknown>;
           await dialogService.open({}).catch(err => error = err);
-          assert.strictEqual(error.message, 'AUR0903');
+          assert.includes(error.message, 'AUR0903');
           // assert.strictEqual(error.message, 'Invalid Dialog Settings. You must provide "component", "template" or both.');
         }
       },
@@ -300,7 +300,7 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
 
           assert.notStrictEqual(error, undefined);
           assert.strictEqual(error.wasCancelled, true);
-          assert.strictEqual(error.message, 'Dialog activation rejected');
+          assert.includes(error.message, 'AUR0905');
           assert.strictEqual(canActivateCallCount, 1);
           assert.html.textContent(ctx.doc.querySelector('au-dialog-container'), null);
         }
@@ -415,7 +415,7 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
             errorCaughtCount++;
             error = err;
           });
-          assert.deepStrictEqual(error, Object.assign(new Error(), {
+          assert.deepStrictEqual(error, Object.assign(new Error('AUR0908:'), {
             wasCancelled: false,
             value: expectedError
           }));
@@ -892,7 +892,37 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
           });
           await dialog.ok();
         }
-      }
+      },
+      {
+        title: 'uses custom renderer in open call settings',
+        afterStarted: async ({ platform }, dialogService) => {
+          const overlay = platform.document.createElement('haha');
+          const contentHost = platform.document.createElement('hahaha');
+          let disposed = 0;
+          const host = platform.document.createElement('host-here');
+          const { dialog } = await dialogService.open({
+            template: 'Hello world',
+            renderer: {
+              render(host, _settings) {
+                host.append(overlay, contentHost);
+                return {
+                  overlay,
+                  contentHost,
+                  dispose() {
+                    disposed = 1;
+                  }
+                };
+              }
+            },
+            host
+          });
+          assert.strictEqual(disposed, 0);
+          assert.contains(host, overlay);
+          assert.contains(host, contentHost);
+          await dialog.ok();
+          assert.strictEqual(disposed, 1);
+        },
+      },
     ];
 
     for (const { title, only, afterStarted, afterTornDown, browserOnly } of testCases) {

@@ -70,9 +70,7 @@ function configure(container: IContainer, options?: IRouterConfigurationOptions)
     AppTask.creating(IRouter, _ => { /* ensure a router instance before the app root is instantiated and there by ensuring all the necessary aliases. */ }),
     AppTask.hydrated(IContainer, RouteContext.setRoot),
     AppTask.activated(IRouter, router => router.start(true)),
-    AppTask.deactivated(IRouter, router => {
-      router.stop();
-    }),
+    AppTask.deactivated(IRouter, router => router.stop()),
     ...DefaultComponents,
     ...DefaultResources,
   );

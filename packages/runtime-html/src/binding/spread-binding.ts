@@ -1,5 +1,5 @@
-import { AccessScopeExpression, IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
-import { IServiceLocator, Key, emptyArray } from '@aurelia/kernel';
+import { AccessScopeExpression, IExpressionParser, type IsBindingBehavior } from '@aurelia/expression-parser';
+import { isObject, type IServiceLocator, type Key, emptyArray } from '@aurelia/kernel';
 import { TaskQueue } from '@aurelia/platform';
 import { IObserverLocator, IObserverLocatorBasedConnectable, connectable } from '@aurelia/runtime';
 import { BindingMode, IInstruction, ITemplateCompiler, InstructionType, SpreadElementPropBindingInstruction } from '@aurelia/template-compiler';
@@ -14,7 +14,6 @@ import { createPrototypeMixer, mixinAstEvaluator, mixinUseScope, mixingBindingLi
 import { IBinding, IBindingController } from './interfaces-bindings';
 import { PropertyBinding } from './property-binding';
 import { Scope } from './scope';
-import { isObject } from '../utilities';
 
 /**
  * The public methods of this binding emulates the necessary of an IHydratableController,
@@ -254,6 +253,8 @@ export class SpreadValueBinding implements IBinding {
       /* istanbul ignore next */
         return;
       }
+      /* istanbul ignore next */
+      this.unbind();
     }
     this.isBound = true;
     this._scope = scope;
@@ -287,25 +288,20 @@ export class SpreadValueBinding implements IBinding {
    * @internal
    */
   private _createBindings(value: Record<string, unknown> | null, unbind: boolean) {
-    if (value == null) {
-      value = {};
+    let key: string;
+    if (!isObject(value)) {
       /* istanbul ignore if */
       if (__DEV__) {
         // eslint-disable-next-line no-console
-        console.warn(`[DEV:aurelia] $bindable spread is given a null/undefined value for properties: "${this.targetKeys.join(', ')}"`);
+        console.warn(`[DEV:aurelia] $bindable spread is given a non object for properties: "${this.targetKeys.join(', ')}" of ${this.target.constructor.name}`);
       }
-    } else if (!isObject(value)) {
-      value = {};
-      /* istanbul ignore if */
-      if (__DEV__) {
-        // eslint-disable-next-line no-console
-        console.warn(`[DEV:aurelia] $bindable spread is given a non-object value for properties: "${this.targetKeys.join(', ')}"`);
+      for (key in this._bindingCache) {
+        this._bindingCache[key]?.unbind();
       }
+      return;
     }
 
-    let key: string;
     let binding: PropertyBinding;
-
     // use a cache as we don't wanna cause bindings to "move" (bind/unbind)
     // whenever there's a new evaluation
     let scope = this._scopeCache.get(value);
