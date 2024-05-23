@@ -188,6 +188,6 @@ describe('router/router.local-deps.spec.ts', function () {
 });
 const $load = async (path, router, platform) => {
     await router.load(path);
-    platform.domWriteQueue.flush();
+    platform.domQueue.flush();
 };
 //# sourceMappingURL=router.local-deps.spec.js.map

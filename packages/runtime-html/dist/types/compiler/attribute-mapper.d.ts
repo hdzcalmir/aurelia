@@ -1,4 +1,4 @@
-import { IAttrMapper, IsTwoWayPredicate } from '@aurelia/template-compiler';
+import { IAttrMapper, type IsTwoWayPredicate } from '@aurelia/template-compiler';
 export declare class AttrMapper implements IAttrMapper {
     static register: <C extends import("@aurelia/kernel").Constructable>(this: C, container: import("@aurelia/kernel").IContainer) => void;
     private readonly svg;

@@ -1,4 +1,4 @@
-import { PartialBindableDefinition } from '@aurelia/runtime-html';
+import { type PartialBindableDefinition } from '@aurelia/runtime-html';
 interface IStrippedHtml {
     html: string;
     deps: string[];

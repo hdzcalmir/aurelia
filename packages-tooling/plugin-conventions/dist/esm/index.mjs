@@ -234,11 +234,11 @@ function processBindables(bindables, classPos, m, viewDef) {
     return { statement, effectivePos: classPos };
 }
 function captureImport(s, lib, code) {
+    var _a;
     if (isImportDeclaration(s) &&
         isStringLiteral(s.moduleSpecifier) &&
         s.moduleSpecifier.text === lib &&
-        s.importClause &&
-        s.importClause.namedBindings &&
+        ((_a = s.importClause) === null || _a === void 0 ? void 0 : _a.namedBindings) &&
         isNamedImports(s.importClause.namedBindings)) {
         return {
             names: s.importClause.namedBindings.elements.map(e => e.name.text),
@@ -975,7 +975,9 @@ export const dependencies = [ ${viewDeps.join(', ')} ];
     if (capture) {
         m.append(`export const capture = true;\n`);
     }
-    m.append(`export const bindables = ${(Object.keys(bindables).length > 0 ? JSON.stringify(bindables) : '[]')};\n`);
+    m.append(`export const bindables = ${(Object.keys(bindables).length > 0
+        ? JSON.stringify(Object.keys(bindables).map(b => ({ name: b, ...bindables[b] })))
+        : '[]')};\n`);
     if (aliases.length > 0) {
         m.append(`export const aliases = ${JSON.stringify(aliases)};\n`);
     }

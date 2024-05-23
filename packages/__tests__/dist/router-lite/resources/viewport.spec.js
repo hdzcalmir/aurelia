@@ -116,7 +116,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         const [vp1, vp2] = Array.from(host.querySelectorAll('au-viewport'));
@@ -266,7 +266,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         assert.html.textContent(host, 'ce1 ce11');
@@ -382,7 +382,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         const [vp1, vp2] = Array.from(host.querySelectorAll('au-viewport'));
@@ -476,7 +476,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         assert.html.textContent(host, 'ce1');
@@ -565,7 +565,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         const vps = Array.from(host.querySelectorAll('au-viewport'));
@@ -661,7 +661,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         const vps = Array.from(host.querySelectorAll('au-viewport'));
@@ -765,7 +765,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         const vps = Array.from(host.querySelectorAll('au-viewport'));
@@ -864,7 +864,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         const vps = Array.from(host.querySelectorAll('au-viewport'));
@@ -957,7 +957,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         const vps = Array.from(host.querySelectorAll('au-viewport'));
@@ -1056,7 +1056,7 @@ describe('router-lite/resources/viewport.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         const router = container.get(IRouter);
         await queue.yield();
         const vps = Array.from(host.querySelectorAll('au-viewport'));

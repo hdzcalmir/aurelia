@@ -475,6 +475,6 @@ describe('router/router.lifecycle-hooks.spec.ts', function () {
 });
 const $load = async (path, router, platform) => {
     await router.load(path);
-    platform.domWriteQueue.flush();
+    platform.domQueue.flush();
 };
 //# sourceMappingURL=router.lifecycle-hooks.spec.js.map

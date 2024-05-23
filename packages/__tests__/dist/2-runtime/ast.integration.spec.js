@@ -28,7 +28,7 @@ describe('2-runtime/ast.integration.spec.ts', function () {
                 const source = { checked: false, yesMessage: 'yes', noMessage: 'no' };
                 const target = { value: '' };
                 const scope = createScopeForTest(target, source);
-                const binding = new PropertyBinding({ state: 0 }, container, observerLocator, container.get(IPlatform).domWriteQueue, conditionalExpr, target, 'value', BindingMode.toView);
+                const binding = new PropertyBinding({ state: 0 }, container, observerLocator, container.get(IPlatform).domQueue, conditionalExpr, target, 'value', BindingMode.toView);
                 let handleChangeCallCount = 0;
                 binding.handleChange = (handleChange => {
                     return function (...args) {

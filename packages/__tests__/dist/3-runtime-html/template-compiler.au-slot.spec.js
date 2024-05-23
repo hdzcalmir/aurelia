@@ -1,5 +1,5 @@
 import { IExpressionParser } from '@aurelia/expression-parser';
-import { BindingMode, AuSlot, CustomElement, CustomElementDefinition, DefaultBindingSyntax, } from '@aurelia/runtime-html';
+import { BindingMode, AuSlot, CustomElement, CustomElementDefinition, } from '@aurelia/runtime-html';
 import { InstructionType, PropertyBindingInstruction, TextBindingInstruction, } from '@aurelia/template-compiler';
 import { assert, TestContext } from '@aurelia/testing';
 export function createAttribute(name, value) {
@@ -215,7 +215,7 @@ describe('3-runtime-html/template-compiler.au-slot.spec.ts', function () {
     }
     function compileTemplate(template, ...registrations) {
         const { container, sut } = createFixture();
-        container.register(DefaultBindingSyntax, ...registrations);
+        container.register(...registrations);
         const templateDefinition = CustomElementDefinition.create({
             name: 'ano',
             template,

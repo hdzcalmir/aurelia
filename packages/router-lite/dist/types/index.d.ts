@@ -13,4 +13,5 @@ export { AuNavId, type ManagedState, IRouterEvents, type RouterEvent, LocationCh
 export { IStateManager, } from './state-manager';
 export { ViewportAgent, } from './viewport-agent';
 export { type IUrlParser, pathUrlParser, fragmentUrlParser, } from './url-parser';
+export { ICurrentRoute, type ParameterInformation, } from './current-route';
 //# sourceMappingURL=index.d.ts.map

@@ -172,6 +172,6 @@ const $load = async (path, router, platform) => {
             }, 1000);
         })
     ]);
-    platform.domWriteQueue.flush();
+    platform.domQueue.flush();
 };
 //# sourceMappingURL=router.fallback.spec.js.map

@@ -37,7 +37,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { DI } from '@aurelia/kernel';
-import { attributePattern, IAttributePattern, ISyntaxInterpreter, AttributePattern } from '@aurelia/template-compiler';
+import { attributePattern, IAttributePattern, ISyntaxInterpreter, } from '@aurelia/template-compiler';
 import { assert } from '@aurelia/testing';
 describe('3-runtime-html/attribute-pattern.spec.ts', function () {
     for (const [defs, tests] of [
@@ -296,19 +296,18 @@ describe('3-runtime-html/attribute-pattern.spec.ts', function () {
                     container.register(ThePattern);
                     const interpreter = container.get(ISyntaxInterpreter);
                     const attrPattern = container.get(IAttributePattern);
-                    const patternDefs = AttributePattern.getPatternDefinitions(attrPattern.constructor);
-                    interpreter.add(patternDefs);
+                    interpreter.add(defs);
                     const result = interpreter.interpret(value);
                     if (match != null) {
                         assert.strictEqual(result.pattern, match);
-                        assert.strictEqual(patternDefs.map(d => d.pattern).includes(result.pattern), true, `patternDefs.map(d => d.pattern).indexOf(result.pattern) >= 0\n  result: ${result.pattern}`);
+                        assert.strictEqual(defs.map(d => d.pattern).includes(result.pattern), true, `patternDefs.map(d => d.pattern).indexOf(result.pattern) >= 0\n  result: ${result.pattern}`);
                         attrPattern[result.pattern](value, 'foo', result.parts);
                         assert.strictEqual(receivedRawName, value, `receivedRawName`);
                         assert.strictEqual(receivedRawValue, 'foo', `receivedRawValue`);
                         assert.deepStrictEqual(receivedParts, result.parts, `receivedParts`);
                     }
                     else {
-                        assert.strictEqual(!patternDefs.map(d => d.pattern).includes(result.pattern), true, `patternDefs.map(d => d.pattern).indexOf(result.pattern) === -1`);
+                        assert.strictEqual(!defs.map(d => d.pattern).includes(result.pattern), true, `patternDefs.map(d => d.pattern).indexOf(result.pattern) === -1`);
                     }
                     assert.deepStrictEqual(result.parts, parts, `result.parts`);
                 });

@@ -160,7 +160,7 @@ let I18nService = (() => {
                     if (this.options.skipTranslationOnMissingKey && translation === key) {
                         // TODO change this once the logging infra is there.
                         // eslint-disable-next-line no-console
-                        console.warn(`Couldn't find translation for key: ${key}`);
+                        console.warn(`[DEV:aurelia] Couldn't find translation for key: ${key}`);
                     }
                     else {
                         result.value = translation;
@@ -378,6 +378,53 @@ class TranslationBindingBehavior {
 }
 runtimeHtml.BindingBehavior.define("t" /* ValueConverters.translationValueConverterName */, TranslationBindingBehavior);
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
+    [4000 /* ErrorNames.i18n_translation_key_not_found */]: 'Translation key not found',
+    [4001 /* ErrorNames.i18n_translation_parameter_existed */]: 'Translation parameter already existed',
+    [4002 /* ErrorNames.i18n_translation_key_invalid */]: `Expected the i18n key to be a string, but got {{0}} of type {{1}}`,
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
+        let matches = regex.exec(cooked);
+        while (matches != null) {
+            const method = matches[1]?.slice(1);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let value = details[i];
+            if (value != null) {
+                switch (method) {
+                    case 'join(!=)':
+                        value = value.join('!=');
+                        break;
+                    case 'element':
+                        value = value === '*' ? 'all elements' : `<${value} />`;
+                        break;
+                    default: {
+                        // property access
+                        if (method?.startsWith('.')) {
+                            value = String(value[method.slice(1)]);
+                        }
+                        else {
+                            value = String(value);
+                        }
+                    }
+                }
+            }
+            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
+            matches = regex.exec(cooked);
+        }
+    }
+    return cooked;
+};
+
 const contentAttributes = ['textContent', 'innerHTML', 'prepend', 'append'];
 const attributeAliases = new Map([['text', 'textContent'], ['html', 'innerHTML']]);
 const forOpts = { optional: true };
@@ -426,16 +473,15 @@ class TranslationBinding {
         this._platform = platform;
         this._targetAccessors = new Set();
         this.oL = observerLocator;
-        this._taskQueue = platform.domWriteQueue;
+        this._taskQueue = platform.domQueue;
     }
     bind(_scope) {
         if (this.isBound) {
             return;
         }
         const ast = this.ast;
-        if (ast == null) {
-            throw new Error('key expression is missing');
-        }
+        if (ast == null)
+            throw createMappedError(4000 /* ErrorNames.i18n_translation_key_not_found */);
         this._scope = _scope;
         this.i18n.subscribeLocaleChange(this);
         this._keyExpression = runtimeHtml.astEvaluate(ast, _scope, this, this);
@@ -474,7 +520,7 @@ class TranslationBinding {
     }
     useParameter(expr) {
         if (this.parameter != null) {
-            throw new Error('This translation parameter has already been specified.');
+            throw createMappedError(4001 /* ErrorNames.i18n_translation_parameter_existed */);
         }
         this.parameter = new ParameterBinding(this, expr, () => this.updateTranslations());
     }
@@ -596,7 +642,7 @@ class TranslationBinding {
         const expr = this._keyExpression ??= '';
         const exprType = typeof expr;
         if (exprType !== 'string') {
-            throw new Error(`Expected the i18n key to be a string, but got ${expr} of type ${exprType}`); // TODO use reporter/logger
+            throw createMappedError(4002 /* ErrorNames.i18n_translation_key_invalid */, expr, exprType);
         }
     }
 }
@@ -658,14 +704,18 @@ class ParameterBinding {
 runtime.connectable(ParameterBinding, null);
 runtimeHtml.mixinAstEvaluator(true)(ParameterBinding);
 
+var _a;
 const TranslationParametersInstructionType = 'tpt';
 // `.bind` part is needed here only for vCurrent compliance
 const attribute = 't-params.bind';
-const TranslationParametersAttributePattern = templateCompiler.AttributePattern.define([{ pattern: attribute, symbols: '' }], class TranslationParametersAttributePattern {
-    [attribute](rawName, rawValue) {
+class TranslationParametersAttributePattern {
+    [(_a = Symbol.metadata, attribute)](rawName, rawValue) {
         return new templateCompiler.AttrSyntax(rawName, rawValue, '', attribute);
     }
-});
+}
+TranslationParametersAttributePattern[_a] = {
+    [kernel.registrableMetadataKey]: templateCompiler.AttributePattern.create([{ pattern: attribute, symbols: '' }], TranslationParametersAttributePattern)
+};
 class TranslationParametersBindingInstruction {
     constructor(from, to) {
         this.from = from;
@@ -716,14 +766,6 @@ const TranslationParametersBindingRenderer = /*@__PURE__*/ runtimeHtml.renderer(
 }, null);
 
 const TranslationInstructionType = 'tt';
-class TranslationAttributePattern {
-    static registerAlias(alias) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        this.prototype[alias] = function (rawName, rawValue, parts) {
-            return new templateCompiler.AttrSyntax(rawName, rawValue, '', alias);
-        };
-    }
-}
 class TranslationBindingInstruction {
     constructor(from, to) {
         this.from = from;
@@ -767,14 +809,6 @@ const TranslationBindingRenderer = /*@__PURE__*/ runtimeHtml.renderer(class Tran
     }
 }, null);
 const TranslationBindInstructionType = 'tbt';
-class TranslationBindAttributePattern {
-    static registerAlias(alias) {
-        const bindPattern = `${alias}.bind`;
-        this.prototype[bindPattern] = function (rawName, rawValue, parts) {
-            return new templateCompiler.AttrSyntax(rawName, rawValue, parts[1], bindPattern);
-        };
-    }
-}
 class TranslationBindBindingInstruction {
     constructor(from, to) {
         this.from = from;
@@ -840,22 +874,30 @@ function coreComponents(options) {
     const bindPatterns = [];
     const commandAliases = [];
     const bindCommandAliases = [];
+    class TranslationAttributePattern {
+    }
+    class TranslationBindAttributePattern {
+    }
     for (const alias of aliases) {
-        const bindAlias = `${alias}.bind`;
         patterns.push({ pattern: alias, symbols: '' });
-        TranslationAttributePattern.registerAlias(alias);
+        TranslationAttributePattern.prototype[alias] = function (rawName, rawValue, _parts) {
+            return new templateCompiler.AttrSyntax(rawName, rawValue, '', alias);
+        };
+        const bindAlias = `${alias}.bind`;
         bindPatterns.push({ pattern: bindAlias, symbols: '.' });
-        TranslationBindAttributePattern.registerAlias(alias);
+        TranslationBindAttributePattern.prototype[bindAlias] = function (rawName, rawValue, parts) {
+            return new templateCompiler.AttrSyntax(rawName, rawValue, parts[1], bindAlias);
+        };
         if (alias !== 't') {
             commandAliases.push(alias);
             bindCommandAliases.push(bindAlias);
         }
     }
     const renderers = [
-        templateCompiler.AttributePattern.define(patterns, TranslationAttributePattern),
+        templateCompiler.AttributePattern.create(patterns, TranslationAttributePattern),
         templateCompiler.BindingCommand.define({ name: 't', aliases: commandAliases }, TranslationBindingCommand),
         TranslationBindingRenderer,
-        templateCompiler.AttributePattern.define(bindPatterns, TranslationBindAttributePattern),
+        templateCompiler.AttributePattern.create(bindPatterns, TranslationBindAttributePattern),
         templateCompiler.BindingCommand.define({ name: 't.bind', aliases: bindCommandAliases }, TranslationBindBindingCommand),
         TranslationBindBindingRenderer,
         TranslationParametersAttributePattern,
@@ -896,7 +938,7 @@ function createI18nConfiguration(optionsProvider) {
         },
     };
 }
-const I18nConfiguration = createI18nConfiguration(() => { });
+const I18nConfiguration = /*@__PURE__*/ createI18nConfiguration(() => { });
 
 exports.DateFormatBindingBehavior = DateFormatBindingBehavior;
 exports.DateFormatValueConverter = DateFormatValueConverter;
@@ -911,8 +953,6 @@ exports.NumberFormatValueConverter = NumberFormatValueConverter;
 exports.RelativeTimeBindingBehavior = RelativeTimeBindingBehavior;
 exports.RelativeTimeValueConverter = RelativeTimeValueConverter;
 exports.Signals = Signals;
-exports.TranslationAttributePattern = TranslationAttributePattern;
-exports.TranslationBindAttributePattern = TranslationBindAttributePattern;
 exports.TranslationBindBindingCommand = TranslationBindBindingCommand;
 exports.TranslationBindBindingInstruction = TranslationBindBindingInstruction;
 exports.TranslationBindBindingRenderer = TranslationBindBindingRenderer;

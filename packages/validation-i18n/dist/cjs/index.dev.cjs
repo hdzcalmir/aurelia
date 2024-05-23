@@ -13,7 +13,7 @@ const I18nKeyConfiguration = /*@__PURE__*/ kernel.DI.createInterface('I18nKeyCon
 class LocalizedValidationController extends validationHtml.ValidationController {
     constructor(ea = kernel.resolve(kernel.IEventAggregator), platform = kernel.resolve(runtimeHtml.IPlatform)) {
         super();
-        this.localeChangeSubscription = ea.subscribe(I18N_VALIDATION_EA_CHANNEL, () => { platform.domReadQueue.queueTask(async () => { await this.revalidateErrors(); }); });
+        this.localeChangeSubscription = ea.subscribe(I18N_VALIDATION_EA_CHANNEL, () => { platform.domQueue.queueTask(async () => { await this.revalidateErrors(); }); });
     }
 }
 class LocalizedValidationControllerFactory extends validationHtml.ValidationControllerFactory {
@@ -89,7 +89,7 @@ function createConfiguration(optionsProvider) {
         },
     };
 }
-const ValidationI18nConfiguration = createConfiguration(kernel.noop);
+const ValidationI18nConfiguration = /*@__PURE__*/ createConfiguration(kernel.noop);
 
 exports.I18nKeyConfiguration = I18nKeyConfiguration;
 exports.LocalizedValidationController = LocalizedValidationController;

@@ -58,7 +58,7 @@ export declare class PropertyRule<TObject extends IValidateable = IValidateable,
     /**
      * Specifies a condition that must be met before attempting to validate the rule.
      *
-     * @param {ValidationRuleExecutionPredicate<TObject>} condition - A function that accepts the object as a parameter and returns true or false whether the rule should be evaluated.
+     * @param  condition - A function that accepts the object as a parameter and returns true or false whether the rule should be evaluated.
      */
     when(this: PropertyRule<TObject>, condition: ValidationRuleExecutionPredicate<TObject>): PropertyRule<TObject, unknown>;
     /**
@@ -80,7 +80,7 @@ export declare class PropertyRule<TObject extends IValidateable = IValidateable,
     /**
      * Applies a custom rule instance.
      *
-     * @param {TRule} validationRule - rule instance.
+     * @param validationRule - rule instance.
      */
     satisfiesRule<TRule extends IValidationRule>(validationRule: TRule): this;
     /**
@@ -142,7 +142,7 @@ export declare class PropertyRule<TObject extends IValidateable = IValidateable,
     /**
      * Targets a object property for validation
      *
-     * @param {(keyof TObject | string | PropertyAccessor<TObject, TValue>)} property - can be string or a property accessor function.
+     * @param property - can be string or a property accessor function.
      */
     ensure<TProp extends keyof TObject>(property: TProp): PropertyRule<TObject, TObject[TProp]>;
     ensure<TValue>(property: PropertyAccessor<TObject, TValue>): PropertyRule<TObject, TValue>;
@@ -173,7 +173,7 @@ export interface IValidationRules<TObject extends IValidateable = IValidateable>
     /**
      * Targets a object property for validation
      *
-     * @param {(keyof TObject | string | PropertyAccessor<TObject, TValue>)} property - can be string or a property accessor function.
+     * @param property - can be string or a property accessor function.
      */
     ensure<TProp extends keyof TObject>(property: TProp): PropertyRule<TObject, TObject[TProp]>;
     ensure<TValue>(property: string | PropertyAccessor<TObject, TValue>): PropertyRule<TObject, TValue>;
@@ -231,13 +231,13 @@ export declare class ValidationResult<TRule extends IValidationRule = IValidatio
      */
     id: number;
     /**
-     * @param {boolean} valid - `true` is the validation was successful, else `false`.
-     * @param {(string | undefined)} message - Evaluated validation message, if the result is not valid, else `undefined`.
-     * @param {(string | number | undefined)} propertyName - Associated property name.
-     * @param {(IValidateable | undefined)} object - Associated target object.
-     * @param {(TRule | undefined)} rule - Associated instance of rule.
-     * @param {(PropertyRule | undefined)} propertyRule - Associated parent property rule.
-     * @param {boolean} [isManual=false] - `true` if the validation result is added manually.
+     * @param valid - `true` is the validation was successful, else `false`.
+     * @param message - Evaluated validation message, if the result is not valid, else `undefined`.
+     * @param propertyName - Associated property name.
+     * @param object - Associated target object.
+     * @param rule - Associated instance of rule.
+     * @param propertyRule - Associated parent property rule.
+     * @param isManual - `true` if the validation result is added manually. Default is `false`.
      */
     constructor(valid: boolean, message: string | undefined, propertyName: string | number | undefined, object: IValidateable | undefined, rule: TRule | undefined, propertyRule: PropertyRule | undefined, isManual?: boolean);
     toString(): string | undefined;

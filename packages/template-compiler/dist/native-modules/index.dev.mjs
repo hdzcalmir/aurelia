@@ -1,4 +1,4 @@
-import { DI, Registration, getResourceKeyFor, Registrable, emptyArray, resolve, IContainer, firstDefined, mergeArrays, Protocol, resourceBaseName, resource, camelCase, IPlatform, createImplementationRegister, noop, toArray, pascalCase, ILogger, allResources } from '../../../kernel/dist/native-modules/index.mjs';
+import { DI, Registration, getResourceKeyFor, registrableMetadataKey, emptyArray, resolve, IContainer, firstDefined, mergeArrays, Protocol, resourceBaseName, resource, camelCase, IPlatform, createImplementationRegister, noop, toArray, pascalCase, ILogger, allResources } from '../../../kernel/dist/native-modules/index.mjs';
 import { Metadata } from '../../../metadata/dist/native-modules/index.mjs';
 import { PrimitiveLiteralExpression, IExpressionParser } from '../../../expression-parser/dist/native-modules/index.mjs';
 
@@ -47,6 +47,114 @@ const ITemplateCompiler = /*@__PURE__*/ createInterface('ITemplateCompiler');
  */
 const IAttrMapper = /*@__PURE__*/ createInterface('IAttrMapper');
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [88 /* ErrorNames.attribute_pattern_already_initialized */]: 'AttributeParser is already initialized; cannot add patterns after initialization.',
+    [89 /* ErrorNames.attribute_pattern_duplicate */]: 'Attribute pattern "{{0}}" has already been registered.',
+    [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
+    [157 /* ErrorNames.binding_command_existed */]: `Binding command {{0}} has already been registered.`,
+    [701 /* ErrorNames.compiler_root_is_local */]: `Template compilation error in element "{{0:name}}": the root <template> cannot be a local element template.`,
+    [702 /* ErrorNames.compiler_invalid_surrogate_attr */]: `Template compilation error: attribute "{{0}}" is invalid on element surrogate.`,
+    [703 /* ErrorNames.compiler_no_tc_on_surrogate */]: `Template compilation error: template controller "{{0}}" is invalid on element surrogate.`,
+    [704 /* ErrorNames.compiler_invalid_let_command */]: `Template compilation error: Invalid command "{{0:.command}}" for <let>. Only to-view/bind supported.`,
+    [706 /* ErrorNames.compiler_au_slot_on_non_element */]: `Template compilation error: detected projection with [au-slot="{{0}}"] attempted on a non custom element {{1}}.`,
+    [707 /* ErrorNames.compiler_binding_to_non_bindable */]: `Template compilation error: creating binding to non-bindable property {{0}} on {{1}}.`,
+    [708 /* ErrorNames.compiler_template_only_local_template */]: `Template compilation error: the custom element "{{0}}" does not have any content other than local template(s).`,
+    [709 /* ErrorNames.compiler_local_el_not_under_root */]: `Template compilation error: local element template needs to be defined directly under root of element "{{0}}".`,
+    [710 /* ErrorNames.compiler_local_el_bindable_not_under_root */]: `Template compilation error: bindable properties of local element "{{0}}" template needs to be defined directly under <template>.`,
+    [711 /* ErrorNames.compiler_local_el_bindable_name_missing */]: `Template compilation error: the attribute 'property' is missing in {{0:outerHTML}} in local element "{{1}}"`,
+    [712 /* ErrorNames.compiler_local_el_bindable_duplicate */]: `Template compilation error: Bindable property and attribute needs to be unique; found property: {{0}}, attribute: {{1}}`,
+    [713 /* ErrorNames.compiler_unknown_binding_command */]: `Template compilation error: unknown binding command: "{{0}}".{{0:bindingCommandHelp}}`,
+    [714 /* ErrorNames.compiler_primary_already_existed */]: `Template compilation error: primary already exists on element/attribute "{{0}}"`,
+    [715 /* ErrorNames.compiler_local_name_empty */]: `Template compilation error: the value of "as-custom-element" attribute cannot be empty for local element in element "{{0}}"`,
+    [716 /* ErrorNames.compiler_duplicate_local_name */]: `Template compilation error: duplicate definition of the local template named "{{0}} in element {{1}}"`,
+    [717 /* ErrorNames.compiler_slot_without_shadowdom */]: `Template compilation error: detected a usage of "<slot>" element without specifying shadow DOM options in element: {{0}}`,
+    [718 /* ErrorNames.compiler_no_spread_tc */]: `Spreading template controller "{{0}}" is not supported.`,
+    [719 /* ErrorNames.compiler_attr_mapper_duplicate_mapping */]: `Attribute {{0}} has been already registered for {{1:element}}`,
+    [720 /* ErrorNames.compiler_no_reserved_spread_syntax */]: `Spreading syntax "...xxx" is reserved. Encountered "...{{0}}"`,
+    [721 /* ErrorNames.compiler_no_reserved_$bindable */]: `Usage of $bindables is only allowed on custom element. Encountered: <{{0}} {{1}}="{{2}}">`,
+    [722 /* ErrorNames.compiler_no_dom_api */]: 'Invalid platform object provided to the compilation, no DOM API found.',
+    [9998 /* ErrorNames.no_spread_template_controller */]: 'Spread binding does not support spreading custom attributes/template controllers. Did you build the spread instruction manually?',
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
+        let matches = regex.exec(cooked);
+        while (matches != null) {
+            const method = matches[1]?.slice(1);
+            let value = details[i];
+            if (value != null) {
+                switch (method) {
+                    case 'nodeName':
+                        value = value.nodeName.toLowerCase();
+                        break;
+                    case 'name':
+                        value = value.name;
+                        break;
+                    case 'typeof':
+                        value = typeof value;
+                        break;
+                    case 'ctor':
+                        value = value.constructor.name;
+                        break;
+                    case 'controller':
+                        value = value.controller.name;
+                        break;
+                    case 'target@property':
+                        value = `${value.target}@${value.targetProperty}`;
+                        break;
+                    case 'toString':
+                        value = Object.prototype.toString.call(value);
+                        break;
+                    case 'join(!=)':
+                        value = value.join('!=');
+                        break;
+                    case 'bindingCommandHelp':
+                        value = getBindingCommandHelp(value);
+                        break;
+                    case 'element':
+                        value = value === '*' ? 'all elements' : `<${value} />`;
+                        break;
+                    default: {
+                        // property access
+                        if (method?.startsWith('.')) {
+                            value = String(value[method.slice(1)]);
+                        }
+                        else {
+                            value = String(value);
+                        }
+                    }
+                }
+            }
+            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
+            matches = regex.exec(cooked);
+        }
+    }
+    return cooked;
+};
+function getBindingCommandHelp(name) {
+    switch (name) {
+        case 'delegate':
+            return `\nThe ".delegate" binding command has been removed in v2.`
+                + ` Binding command ".trigger" should be used instead.`
+                + ` If you are migrating v1 application, install compat package`
+                + ` to add back the ".delegate" binding command for ease of migration.`;
+        case 'call':
+            return `\nThe ".call" binding command has been removed in v2.`
+                + ` If you want to pass a callback that preserves the context of the function call,`
+                + ` you can use lambda instead. Refer to lambda expression doc for more details.`;
+        default:
+            return '';
+    }
+}
+
+var _a, _b, _c, _d, _e;
 class CharSpec {
     constructor(chars, repeat, isSymbol, isInverted) {
         this.chars = chars;
@@ -435,17 +543,45 @@ class AttributeParser {
     constructor() {
         /** @internal */
         this._cache = {};
-        const interpreter = this._interpreter = resolve(ISyntaxInterpreter);
-        const attrPatterns = AttributePattern.findAll(resolve(IContainer));
-        const patterns = this._patterns = {};
-        const allDefs = attrPatterns.reduce((allDefs, attrPattern) => {
-            const patternDefs = getAllPatternDefinitions(attrPattern.constructor);
-            patternDefs.forEach(def => patterns[def.pattern] = attrPattern);
-            return allDefs.concat(patternDefs);
-        }, emptyArray);
-        interpreter.add(allDefs);
+        /**
+         * A 2 level record with the same key on both levels.
+         * Just a trick to maintain `this` + have simple lookup + support multi patterns per class definition
+         *
+         * @internal
+         */
+        this._patterns = {};
+        /** @internal */
+        this._initialized = false;
+        /** @internal */
+        this._allDefinitions = [];
+        this._interpreter = resolve(ISyntaxInterpreter);
+        this._container = resolve(IContainer);
+    }
+    registerPattern(patterns, Type) {
+        if (this._initialized)
+            throw createMappedError(88 /* ErrorNames.attribute_pattern_already_initialized */);
+        const $patterns = this._patterns;
+        for (const { pattern } of patterns) {
+            if ($patterns[pattern] != null)
+                throw createMappedError(89 /* ErrorNames.attribute_pattern_duplicate */, pattern);
+            $patterns[pattern] = { patternType: Type };
+        }
+        this._allDefinitions.push(...patterns);
+    }
+    /** @internal */
+    _initialize() {
+        this._interpreter.add(this._allDefinitions);
+        const _container = this._container;
+        for (const [, value] of Object.entries(this._patterns)) {
+            value.pattern = _container.get(value.patternType);
+        }
     }
     parse(name, value) {
+        // Optimization Idea: move the initialization to an AppTask
+        if (!this._initialized) {
+            this._initialize();
+            this._initialized = true;
+        }
         let interpretation = this._cache[name];
         if (interpretation == null) {
             interpretation = this._cache[name] = this._interpreter.interpret(name);
@@ -455,7 +591,7 @@ class AttributeParser {
             return new AttrSyntax(name, value, name, null, null);
         }
         else {
-            return this._patterns[pattern][pattern](name, value, interpretation.parts);
+            return this._patterns[pattern].pattern[pattern](name, value, interpretation.parts);
         }
     }
 }
@@ -463,38 +599,40 @@ class AttributeParser {
  * Decorator to be used on attr pattern classes
  */
 function attributePattern(...patternDefs) {
-    return function decorator(target) {
-        return AttributePattern.define(patternDefs, target);
+    return function decorator(target, context) {
+        const registrable = AttributePattern.create(patternDefs, target);
+        // Decorators are by nature static, so we need to store the metadata on the class itself, assuming only one set of patterns per class.
+        context.metadata[registrableMetadataKey] = registrable;
+        return target;
     };
 }
-const getAllPatternDefinitions = (Type) => patterns.get(Type) ?? emptyArray;
-const patterns = new WeakMap();
 const AttributePattern = /*@__PURE__*/ objectFreeze({
     name: getResourceKeyFor('attribute-pattern'),
-    define(patternDefs, Type) {
-        patterns.set(Type, patternDefs);
-        return Registrable.define(Type, (container) => {
-            singletonRegistration(IAttributePattern, Type).register(container);
-        });
+    create(patternDefs, Type) {
+        return {
+            register(container) {
+                container.get(IAttributeParser).registerPattern(patternDefs, Type);
+                singletonRegistration(IAttributePattern, Type).register(container);
+            }
+        };
     },
-    getPatternDefinitions: getAllPatternDefinitions,
-    findAll: (container) => container.root.getAll(IAttributePattern),
 });
-const DotSeparatedAttributePattern = /*@__PURE__*/ AttributePattern.define([
-    { pattern: 'PART.PART', symbols: '.' },
-    { pattern: 'PART.PART.PART', symbols: '.' }
-], class DotSeparatedAttributePattern {
+class DotSeparatedAttributePattern {
     'PART.PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], parts[1]);
     }
     'PART.PART.PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, `${parts[0]}.${parts[1]}`, parts[2]);
     }
-});
-const RefAttributePattern = /*@__PURE__*/ AttributePattern.define([
-    { pattern: 'ref', symbols: '' },
-    { pattern: 'PART.ref', symbols: '.' }
-], class RefAttributePattern {
+}
+_a = Symbol.metadata;
+DotSeparatedAttributePattern[_a] = {
+    [registrableMetadataKey]: AttributePattern.create([
+        { pattern: 'PART.PART', symbols: '.' },
+        { pattern: 'PART.PART.PART', symbols: '.' }
+    ], DotSeparatedAttributePattern)
+};
+class RefAttributePattern {
     'ref'(rawName, rawValue, _parts) {
         return new AttrSyntax(rawName, rawValue, 'element', 'ref');
     }
@@ -510,34 +648,53 @@ const RefAttributePattern = /*@__PURE__*/ AttributePattern.define([
         }
         return new AttrSyntax(rawName, rawValue, target, 'ref');
     }
-});
-const EventAttributePattern = /*@__PURE__*/ AttributePattern.define([
-    { pattern: 'PART.trigger:PART', symbols: '.:' },
-    { pattern: 'PART.capture:PART', symbols: '.:' },
-], class EventAttributePattern {
+}
+_b = Symbol.metadata;
+RefAttributePattern[_b] = {
+    [registrableMetadataKey]: AttributePattern.create([
+        { pattern: 'ref', symbols: '' },
+        { pattern: 'PART.ref', symbols: '.' }
+    ], RefAttributePattern)
+};
+class EventAttributePattern {
     'PART.trigger:PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', parts);
     }
     'PART.capture:PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'capture', parts);
     }
-});
-const ColonPrefixedBindAttributePattern = /*@__PURE__*/ AttributePattern.define([{ pattern: ':PART', symbols: ':' }], class ColonPrefixedBindAttributePattern {
+}
+_c = Symbol.metadata;
+EventAttributePattern[_c] = {
+    [registrableMetadataKey]: AttributePattern.create([
+        { pattern: 'PART.trigger:PART', symbols: '.:' },
+        { pattern: 'PART.capture:PART', symbols: '.:' },
+    ], EventAttributePattern)
+};
+class ColonPrefixedBindAttributePattern {
     ':PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'bind');
     }
-});
-const AtPrefixedTriggerAttributePattern = /*@__PURE__*/ AttributePattern.define([
-    { pattern: '@PART', symbols: '@' },
-    { pattern: '@PART:PART', symbols: '@:' },
-], class AtPrefixedTriggerAttributePattern {
+}
+_d = Symbol.metadata;
+ColonPrefixedBindAttributePattern[_d] = {
+    [registrableMetadataKey]: AttributePattern.create([{ pattern: ':PART', symbols: ':' }], ColonPrefixedBindAttributePattern)
+};
+class AtPrefixedTriggerAttributePattern {
     '@PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger');
     }
     '@PART:PART'(rawName, rawValue, parts) {
         return new AttrSyntax(rawName, rawValue, parts[0], 'trigger', [parts[0], 'trigger', ...parts.slice(1)]);
     }
-});
+}
+_e = Symbol.metadata;
+AtPrefixedTriggerAttributePattern[_e] = {
+    [registrableMetadataKey]: AttributePattern.create([
+        { pattern: '@PART', symbols: '@' },
+        { pattern: '@PART:PART', symbols: '@:' },
+    ], AtPrefixedTriggerAttributePattern)
+};
 
 /** @internal */ const getMetadata = Metadata.get;
 /** @internal */ Metadata.has;
@@ -794,111 +951,6 @@ class SpreadValueBindingInstruction {
         this.target = target;
         this.from = from;
         this.type = spreadValueBinding;
-    }
-}
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable prefer-template */
-/** @internal */
-const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
-    ;
-
-const errorsMap = {
-    [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
-    [157 /* ErrorNames.binding_command_existed */]: `Binding command {{0}} has already been registered.`,
-    [701 /* ErrorNames.compiler_root_is_local */]: `Template compilation error in element "{{0:name}}": the root <template> cannot be a local element template.`,
-    [702 /* ErrorNames.compiler_invalid_surrogate_attr */]: `Template compilation error: attribute "{{0}}" is invalid on element surrogate.`,
-    [703 /* ErrorNames.compiler_no_tc_on_surrogate */]: `Template compilation error: template controller "{{0}}" is invalid on element surrogate.`,
-    [704 /* ErrorNames.compiler_invalid_let_command */]: `Template compilation error: Invalid command "{{0:.command}}" for <let>. Only to-view/bind supported.`,
-    [706 /* ErrorNames.compiler_au_slot_on_non_element */]: `Template compilation error: detected projection with [au-slot="{{0}}"] attempted on a non custom element {{1}}.`,
-    [707 /* ErrorNames.compiler_binding_to_non_bindable */]: `Template compilation error: creating binding to non-bindable property {{0}} on {{1}}.`,
-    [708 /* ErrorNames.compiler_template_only_local_template */]: `Template compilation error: the custom element "{{0}}" does not have any content other than local template(s).`,
-    [709 /* ErrorNames.compiler_local_el_not_under_root */]: `Template compilation error: local element template needs to be defined directly under root of element "{{0}}".`,
-    [710 /* ErrorNames.compiler_local_el_bindable_not_under_root */]: `Template compilation error: bindable properties of local element "{{0}}" template needs to be defined directly under <template>.`,
-    [711 /* ErrorNames.compiler_local_el_bindable_name_missing */]: `Template compilation error: the attribute 'property' is missing in {{0:outerHTML}} in local element "{{1}}"`,
-    [712 /* ErrorNames.compiler_local_el_bindable_duplicate */]: `Template compilation error: Bindable property and attribute needs to be unique; found property: {{0}}, attribute: {{1}}`,
-    [713 /* ErrorNames.compiler_unknown_binding_command */]: `Template compilation error: unknown binding command: "{{0}}".{{0:bindingCommandHelp}}`,
-    [714 /* ErrorNames.compiler_primary_already_existed */]: `Template compilation error: primary already exists on element/attribute "{{0}}"`,
-    [715 /* ErrorNames.compiler_local_name_empty */]: `Template compilation error: the value of "as-custom-element" attribute cannot be empty for local element in element "{{0}}"`,
-    [716 /* ErrorNames.compiler_duplicate_local_name */]: `Template compilation error: duplicate definition of the local template named "{{0}} in element {{1}}"`,
-    [717 /* ErrorNames.compiler_slot_without_shadowdom */]: `Template compilation error: detected a usage of "<slot>" element without specifying shadow DOM options in element: {{0}}`,
-    [718 /* ErrorNames.compiler_no_spread_tc */]: `Spreading template controller "{{0}}" is not supported.`,
-    [719 /* ErrorNames.compiler_attr_mapper_duplicate_mapping */]: `Attribute {{0}} has been already registered for {{1:element}}`,
-    [720 /* ErrorNames.compiler_no_reserved_spread_syntax */]: `Spreading syntax "...xxx" is reserved. Encountered "...{{0}}"`,
-    [721 /* ErrorNames.compiler_no_reserved_$bindable */]: `Usage of $bindables is only allowed on custom element. Encountered: <{{0}} {{1}}="{{2}}">`,
-    [722 /* ErrorNames.compiler_no_dom_api */]: 'Invalid platform object provided to the compilation, no DOM API found.',
-    [9998 /* ErrorNames.no_spread_template_controller */]: 'Spread binding does not support spreading custom attributes/template controllers. Did you build the spread instruction manually?',
-};
-const getMessageByCode = (name, ...details) => {
-    let cooked = errorsMap[name];
-    for (let i = 0; i < details.length; ++i) {
-        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
-        let matches = regex.exec(cooked);
-        while (matches != null) {
-            const method = matches[1]?.slice(1);
-            let value = details[i];
-            if (value != null) {
-                switch (method) {
-                    case 'nodeName':
-                        value = value.nodeName.toLowerCase();
-                        break;
-                    case 'name':
-                        value = value.name;
-                        break;
-                    case 'typeof':
-                        value = typeof value;
-                        break;
-                    case 'ctor':
-                        value = value.constructor.name;
-                        break;
-                    case 'controller':
-                        value = value.controller.name;
-                        break;
-                    case 'target@property':
-                        value = `${value.target}@${value.targetProperty}`;
-                        break;
-                    case 'toString':
-                        value = Object.prototype.toString.call(value);
-                        break;
-                    case 'join(!=)':
-                        value = value.join('!=');
-                        break;
-                    case 'bindingCommandHelp':
-                        value = getBindingCommandHelp(value);
-                        break;
-                    case 'element':
-                        value = value === '*' ? 'all elements' : `<${value} />`;
-                        break;
-                    default: {
-                        // property access
-                        if (method?.startsWith('.')) {
-                            value = String(value[method.slice(1)]);
-                        }
-                        else {
-                            value = String(value);
-                        }
-                    }
-                }
-            }
-            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
-            matches = regex.exec(cooked);
-        }
-    }
-    return cooked;
-};
-function getBindingCommandHelp(name) {
-    switch (name) {
-        case 'delegate':
-            return `\nThe ".delegate" binding command has been removed in v2.`
-                + ` Binding command ".trigger" should be used instead.`
-                + ` If you are migrating v1 application, install compat package`
-                + ` to add back the ".delegate" binding command for ease of migration.`;
-        case 'call':
-            return `\nThe ".call" binding command has been removed in v2.`
-                + ` If you want to pass a callback that preserves the context of the function call,`
-                + ` you can use lambda instead. Refer to lambda expression doc for more details.`;
-        default:
-            return '';
     }
 }
 
@@ -1942,7 +1994,7 @@ class TemplateCompiler {
                         // the following condition will allow syntaxes:
                         // ...$bindables
                         // ...some.expression
-                        || (spreadIndex === 0 && (realAttrTarget === '...$attrs' /* || realAttrTarget === '...$element' */)));
+                        || (spreadIndex === 0 && (realAttrTarget === '...$attrs')));
                 if (canCapture) {
                     bindablesInfo = context._getBindables(elDef);
                     // if capture is on, capture everything except:
@@ -1982,6 +2034,12 @@ class TemplateCompiler {
                     (elBindableInstructions ??= []).push(new SpreadValueBindingInstruction('$bindables', realAttrTarget === '$bindables' ? realAttrValue : realAttrTarget));
                     removeAttr();
                     continue;
+                }
+                {
+                    if (realAttrTarget === '$bindable' || realAttrTarget === 'bindables') {
+                        // eslint-disable-next-line no-console
+                        console.warn(`[DEV:aurelia] Detected usage of ${realAttrTarget} on <${el.nodeName}>, did you mean "$bindables"?`);
+                    }
                 }
                 throw createMappedError(720 /* ErrorNames.compiler_no_reserved_spread_syntax */, realAttrTarget);
             }
@@ -2989,9 +3047,11 @@ const ITemplateCompilerHooks = /*@__PURE__*/ createInterface('ITemplateCompilerH
 const TemplateCompilerHooks = objectFreeze({
     name: /*@__PURE__*/ getResourceKeyFor('compiler-hooks'),
     define(Type) {
-        return Registrable.define(Type, function (container) {
-            singletonRegistration(ITemplateCompilerHooks, this).register(container);
-        });
+        return {
+            register(container) {
+                singletonRegistration(ITemplateCompilerHooks, Type).register(container);
+            }
+        };
     },
     findAll(container) {
         return container.get(allResources(ITemplateCompilerHooks));
@@ -3005,10 +3065,11 @@ const TemplateCompilerHooks = objectFreeze({
  */
 /* eslint-disable */
 // deepscan-disable-next-line
-const templateCompilerHooks = (target, _context) => {
-    return target === void 0 ? decorator : decorator(target);
-    function decorator(t) {
-        return TemplateCompilerHooks.define(t);
+const templateCompilerHooks = (target, context) => {
+    return target === void 0 ? decorator : decorator(target, context);
+    function decorator(t, context) {
+        context.metadata[registrableMetadataKey] = TemplateCompilerHooks.define(t);
+        return t;
     }
 };
 

@@ -58,7 +58,7 @@ describe('2-runtime/scheduler.spec.ts', function () {
     }
     const prioritySpecs = [
         {
-            sut: platform.domWriteQueue,
+            sut: platform.domQueue,
             name: 'domWriteQueue',
         },
         {
@@ -70,7 +70,7 @@ describe('2-runtime/scheduler.spec.ts', function () {
             name: 'domReadQueue',
         },
         {
-            sut: platform.domWriteQueue,
+            sut: platform.domQueue,
             name: 'domWriteQueue',
         },
         {

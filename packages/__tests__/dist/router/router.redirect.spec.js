@@ -157,22 +157,22 @@ describe('router/router.redirect.spec.ts', function () {
                     assert.strictEqual(locationPath, '/', '0) root path');
                     // 1) The default root page will be loaded at the beginning, so we do "minus" to clear the page/content.
                     await $load('-', router, platform);
-                    // await platform.domWriteQueue.yield();
+                    // await platform.domQueue.yield();
                     assert.strictEqual(host.textContent, '', `1) ${test.load} -`);
                     assert.strictEqual(locationPath, '/', `1) ${test.load} - path`);
                     // 2) Load the wanted page
                     await $load(test.load, router, platform);
-                    // await platform.domWriteQueue.yield();
+                    // await platform.domQueue.yield();
                     assert.strictEqual(host.textContent, test.result, `2) ${test.load}`);
                     assert.strictEqual(locationPath, test.path, `2) ${test.load} path`);
                     // 3) Unload
                     await $load('-', router, platform);
-                    // await platform.domWriteQueue.yield();
+                    // await platform.domQueue.yield();
                     assert.strictEqual(host.textContent, '', `3) ${test.load} -`);
                     assert.strictEqual(locationPath, '/', `3) ${test.load} - path`);
                     // 4) reload
                     await $load(test.load, router, platform);
-                    // await platform.domWriteQueue.yield();
+                    // await platform.domQueue.yield();
                     assert.strictEqual(host.textContent, test.result, `4) ${test.load}`);
                     assert.strictEqual(locationPath, test.path, `4) ${test.load} path`);
                     // 5. back to (3) empty
@@ -199,11 +199,11 @@ describe('router/router.redirect.spec.ts', function () {
 });
 const $load = async (path, router, platform) => {
     await router.load(path);
-    platform.domWriteQueue.flush();
+    platform.domQueue.flush();
 };
 const $goBack = async (router, platform) => {
     await router.viewer.history.back();
-    platform.domWriteQueue.flush();
-    await platform.domWriteQueue.yield();
+    platform.domQueue.flush();
+    await platform.domQueue.yield();
 };
 //# sourceMappingURL=router.redirect.spec.js.map

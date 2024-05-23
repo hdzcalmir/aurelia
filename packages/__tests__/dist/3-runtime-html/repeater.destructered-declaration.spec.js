@@ -25,8 +25,8 @@ describe('3-runtime-html/repeater.destructered-declaration.spec.ts', function ()
     }
     async function changeAndAssert(ctx, change, expectedHtml) {
         change();
-        // await ctx.platform.domWriteQueue.yield();
-        ctx.platform.domWriteQueue.flush();
+        // await ctx.platform.domQueue.yield();
+        ctx.platform.domQueue.flush();
         assert.html.innerEqual(ctx.host, expectedHtml);
     }
     {

@@ -12,6 +12,12 @@ export declare function createResolver<T extends Key>(getter: (key: T, handler: 
 export declare const all: <T extends Key>(key: T, searchAncestors?: boolean) => IAllResolver<T>;
 export type IAllResolver<T> = IResolver<readonly Resolved<T>[]> & ((decorated: unknown, context: DecoratorContext) => any);
 /**
+ * Create a resolver that will resolve the last instance of a key from the resolving container
+ *
+ * - @param key [[`Key`]]
+ */
+export declare const last: <T extends Key>(key: T) => IResolver<T | undefined>;
+/**
  * Lazily inject a dependency depending on whether the [[`Key`]] is present at the time of function call.
  *
  * You need to make your argument a function that returns the type, for example

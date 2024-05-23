@@ -519,7 +519,7 @@ const StateBindingInstructionRenderer = /*@__PURE__*/ renderer(class StateBindin
         /** @internal */ this._stateContainer = resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
+        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
     }
 }, null);
 const DispatchBindingInstructionRenderer = /*@__PURE__*/ renderer(class DispatchBindingInstructionRenderer {

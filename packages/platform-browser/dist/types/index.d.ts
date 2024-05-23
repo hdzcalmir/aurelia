@@ -1,5 +1,7 @@
 import { Platform, TaskQueue } from '@aurelia/platform';
 export declare class BrowserPlatform<TGlobal extends typeof globalThis = typeof globalThis> extends Platform<TGlobal> {
+    static getOrCreate<TGlobal extends typeof globalThis = typeof globalThis>(g: TGlobal, overrides?: Partial<Exclude<BrowserPlatform, 'globalThis'>>): BrowserPlatform<TGlobal>;
+    static set(g: typeof globalThis, platform: BrowserPlatform): void;
     readonly Node: TGlobal['Node'];
     readonly Element: TGlobal['Element'];
     readonly HTMLElement: TGlobal['HTMLElement'];
@@ -17,16 +19,15 @@ export declare class BrowserPlatform<TGlobal extends typeof globalThis = typeof 
     readonly clearTimeout: TGlobal['window']['clearTimeout'];
     readonly setInterval: TGlobal['window']['setInterval'];
     readonly setTimeout: TGlobal['window']['setTimeout'];
-    readonly domWriteQueue: TaskQueue;
-    readonly domReadQueue: TaskQueue;
+    readonly domQueue: TaskQueue;
+    /**
+     * @deprecated Use `platform.domQueue` instead.
+     */
+    get domWriteQueue(): TaskQueue;
+    /**
+     * @deprecated Use `platform.domQueue` instead.
+     */
+    get domReadQueue(): TaskQueue;
     constructor(g: TGlobal, overrides?: Partial<Exclude<BrowserPlatform, 'globalThis'>>);
-    static getOrCreate<TGlobal extends typeof globalThis = typeof globalThis>(g: TGlobal, overrides?: Partial<Exclude<BrowserPlatform, 'globalThis'>>): BrowserPlatform<TGlobal>;
-    static set(g: typeof globalThis, platform: BrowserPlatform): void;
-    protected requestDomRead(): void;
-    protected cancelDomRead(): void;
-    protected flushDomRead(): void;
-    protected requestDomWrite(): void;
-    protected cancelDomWrite(): void;
-    protected flushDomWrite(): void;
 }
 //# sourceMappingURL=index.d.ts.map

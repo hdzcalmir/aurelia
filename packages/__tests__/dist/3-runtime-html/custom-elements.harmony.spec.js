@@ -46,7 +46,7 @@ describe('3-runtime-html/custom-elements.harmony.spec.ts', function () {
                 assert.equal(comp.focus, 1);
                 assert.equal(comp.blur, 1);
                 comp.hasFocus = true;
-                ctx.platform.domWriteQueue.flush();
+                ctx.platform.domQueue.flush();
                 assert.strictEqual(ctx.doc.activeElement, host);
                 assert.equal(comp.focus, 2);
                 const div = host.querySelector('div');

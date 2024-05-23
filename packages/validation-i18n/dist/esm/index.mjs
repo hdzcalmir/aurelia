@@ -16,7 +16,7 @@ class LocalizedValidationController extends c {
     constructor(i = o(r), t = o(s)) {
         super();
         this.localeChangeSubscription = i.subscribe(h, (() => {
-            t.domReadQueue.queueTask((async () => {
+            t.domQueue.queueTask((async () => {
                 await this.revalidateErrors();
             }));
         }));
@@ -96,7 +96,7 @@ function createConfiguration(i) {
     };
 }
 
-const v = createConfiguration(n);
+const v = /*@__PURE__*/ createConfiguration(n);
 
 export { m as I18nKeyConfiguration, LocalizedValidationController, LocalizedValidationControllerFactory, LocalizedValidationMessageProvider, v as ValidationI18nConfiguration };
 //# sourceMappingURL=index.mjs.map

@@ -401,7 +401,7 @@ describe('validation-html/validation-controller.spec.ts', function () {
                 const msg = 'foobar';
                 sut.addSubscriber(subscriber);
                 sut.addError(msg, person1, property);
-                platform.domReadQueue.flush();
+                platform.domQueue.flush();
                 const result = sut.results.find((r) => r.object === person1 && r.propertyName === property);
                 assert.notEqual(result, void 0);
                 assert.equal(result.message, msg);
@@ -427,12 +427,12 @@ describe('validation-html/validation-controller.spec.ts', function () {
                 const msg = 'foobar';
                 sut.addSubscriber(subscriber);
                 const result = sut.addError(msg, person1, property);
-                platform.domReadQueue.flush();
+                platform.domQueue.flush();
                 assert.html.textContent('span.error', msg, 'incorrect msg', host);
                 const events = subscriber.notifications;
                 events.splice(0);
                 sut.removeError(result);
-                platform.domReadQueue.flush();
+                platform.domQueue.flush();
                 assert.equal(events.length, 1);
                 assert.equal(events[0].kind, 'reset');
                 const removedErrors = events[0].removedResults;
@@ -452,13 +452,13 @@ describe('validation-html/validation-controller.spec.ts', function () {
             const msg = 'Name is required.';
             sut.addSubscriber(subscriber);
             await sut.validate();
-            platform.domReadQueue.flush();
+            platform.domQueue.flush();
             assert.html.textContent('span.error', msg, 'incorrect msg', host);
             const result = sut.results.find((r) => r.object === person1 && r.propertyName === 'name' && !r.valid);
             const events = subscriber.notifications;
             events.splice(0);
             sut.removeError(result);
-            platform.domReadQueue.flush();
+            platform.domQueue.flush();
             assert.equal(events.length, 1);
             assert.equal(events[0].kind, 'reset');
             const removedErrors = events[0].removedResults;
@@ -496,7 +496,7 @@ describe('validation-html/validation-controller.spec.ts', function () {
         $it(`revalidateErrors does not remove the manually added errors - w/o pre-existing errors`, async function ({ app: { controller: sut, person1 }, platform, host }) {
             const msg = 'foobar';
             const result = sut.addError(msg, person1);
-            platform.domReadQueue.flush();
+            platform.domQueue.flush();
             assert.html.textContent('span.error', msg, 'incorrect msg', host);
             await sut.revalidateErrors();
             assert.includes(sut.results, result);

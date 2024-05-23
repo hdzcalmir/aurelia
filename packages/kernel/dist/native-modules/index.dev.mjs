@@ -1,4 +1,4 @@
-import { Metadata, isObject, initializeTC39Metadata } from '../../../metadata/dist/native-modules/index.mjs';
+import { Metadata, isObject as isObject$1, initializeTC39Metadata } from '../../../metadata/dist/native-modules/index.mjs';
 
 /** @internal */ const objectFreeze = Object.freeze;
 /** @internal */ const objectAssign = Object.assign;
@@ -6,10 +6,67 @@ import { Metadata, isObject, initializeTC39Metadata } from '../../../metadata/di
 /** @internal */ const getMetadata = Metadata.get;
 /** @internal */ Metadata.has;
 /** @internal */ const defineMetadata = Metadata.define;
+/**
+ * Returns true if the value is a Promise via checking if it's an instance of Promise.
+ * This does not work for objects across different realms (e.g., iframes).
+ * An utility to be shared among core packages for better size optimization
+ */
+const isPromise = (v) => v instanceof Promise;
+/**
+ * Returns true if the value is an Array via checking if it's an instance of Array.
+ * This does not work for objects across different realms (e.g., iframes).
+ * An utility to be shared among core packages for better size optimization
+ */
+const isArray = (v) => v instanceof Array;
+/**
+ * Returns true if the value is a Set via checking if it's an instance of Set.
+ * This does not work for objects across different realms (e.g., iframes).
+ * An utility to be shared among core packages for better size optimization
+ */
+const isSet = (v) => v instanceof Set;
+/**
+ * Returns true if the value is a Map via checking if it's an instance of Map.
+ * This does not work for objects across different realms (e.g., iframes).
+ * An utility to be shared among core packages for better size optimization
+ */
+const isMap = (v) => v instanceof Map;
+/**
+ * Returns true if the value is an object via checking if it's an instance of Object.
+ * This does not work for objects across different realms (e.g., iframes).
+ * An utility to be shared among core packages for better size optimization
+ */
+const isObject = (v) => v instanceof Object;
+/**
+ * Returns true if the value is a function
+ * An utility to be shared among core packages for better size optimization
+ */
 // eslint-disable-next-line @typescript-eslint/ban-types
-/** @internal */ const isFunction = (v) => typeof v === 'function';
-/** @internal */ const isString = (v) => typeof v === 'string';
-/** @internal */ const createObject = () => Object.create(null);
+const isFunction = (v) => typeof v === 'function';
+/**
+ * Returns true if the value is a string
+ * An utility to be shared among core packages for better size optimization
+ */
+const isString = (v) => typeof v === 'string';
+/**
+ * Returns true if the value is a symbol
+ * An utility to be shared among core packages for better size optimization
+ */
+const isSymbol = (v) => typeof v === 'symbol';
+/**
+ * Returns true if the value is a number
+ * An utility to be shared among core packages for better size optimization
+ */
+const isNumber = (v) => typeof v === 'number';
+/**
+ * Create an object with no prototype to be used as a record
+ * An utility to be shared among core packages for better size optimization
+ */
+const createLookup = () => Object.create(null);
+/**
+ * Compare the 2 values without pitfall of JS ===, including NaN and +0/-0
+ * An utility to be shared among core packages for better size optimization
+ */
+const areEqual = Object.is;
 
 /* eslint-disable prefer-template */
 /** @internal */
@@ -40,7 +97,6 @@ const errorsMap = {
     [19 /* ErrorNames.event_aggregator_subscribe_invalid_event_name */]: `Invalid channel name or type: {{0}}.`,
     [20 /* ErrorNames.first_defined_no_value */]: `No defined value found when calling firstDefined()`,
     [21 /* ErrorNames.invalid_module_transform_input */]: `Invalid module transform input: {{0}}. Expected Promise or Object.`,
-    // [ErrorNames.module_loader_received_null]: `Module loader received null/undefined input. Expected Object.`,
     [22 /* ErrorNames.invalid_inject_decorator_usage */]: `The @inject decorator on the target ('{{0}}') type '{{1}}' is not supported.`,
     [23 /* ErrorNames.resource_key_already_registered */]: `Resource key '{{0}}' has already been registered.`,
 };
@@ -54,9 +110,6 @@ const getMessageByCode = (name, ...details) => {
 /** @internal */
 // eslint-disable-next-line
 const logError = (...args) => globalThis.console.error(...args);
-/** @internal */
-// eslint-disable-next-line
-const logWarn = (...args) => globalThis.console.warn(...args);
 
 /**
  * Efficiently determine whether the provided property key is numeric
@@ -107,7 +160,7 @@ const isArrayIndex = (() => {
 const baseCase = /*@__PURE__*/ (function () {
     
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const isDigit = objectAssign(createObject(), {
+    const isDigit = objectAssign(createLookup(), {
         '0': true,
         '1': true,
         '2': true,
@@ -183,7 +236,7 @@ const baseCase = /*@__PURE__*/ (function () {
  * Results are cached.
  */
 const camelCase = /*@__PURE__*/ (function () {
-    const cache = createObject();
+    const cache = createLookup();
     const callback = (char, sep) => {
         return sep ? char.toUpperCase() : char.toLowerCase();
     };
@@ -205,7 +258,7 @@ const camelCase = /*@__PURE__*/ (function () {
  * Results are cached.
  */
 const pascalCase = /*@__PURE__*/ (function () {
-    const cache = createObject();
+    const cache = createLookup();
     return (input) => {
         let output = cache[input];
         if (output === void 0) {
@@ -228,7 +281,7 @@ const pascalCase = /*@__PURE__*/ (function () {
  * Results are cached.
  */
 const kebabCase = /*@__PURE__*/ (function () {
-    const cache = createObject();
+    const cache = createLookup();
     const callback = (char, sep) => {
         return sep ? `-${char.toLowerCase()}` : char.toLowerCase();
     };
@@ -256,7 +309,7 @@ const toArray = (input) => {
     return arr;
 };
 /**
- * Decorator. (lazily) bind the method to the class instance on first call.
+ * Decorator. Bind the method to the class instance.
  */
 const bound = (originalMethod, context) => {
     const methodName = context.name;
@@ -334,7 +387,7 @@ const getPrototypeChain = /*@__PURE__*/ (function () {
 })();
 /** @internal */
 function toLookup(...objs) {
-    return objectAssign(createObject(), ...objs);
+    return objectAssign(createLookup(), ...objs);
 }
 /**
  * Determine whether the value is a native function.
@@ -665,26 +718,7 @@ function fromDefinitionOrDefault(name, def, getDefault) {
 
 /* eslint-disable @typescript-eslint/no-this-alias */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
-const Registrable = /*@__PURE__*/ (() => {
-    const map = new WeakMap();
-    return objectFreeze({
-        /**
-         * Associate an object as a registrable, making the container recognize & use
-         * the specific given register function during the registration
-         */
-        define: (object, register) => {
-            {
-                if (map.has(object) && map.get(object) !== register) {
-                    logWarn(`Overriding registrable found for key:`, object);
-                }
-            }
-            map.set(object, register);
-            return object;
-        },
-        get: (object) => map.get(object),
-        has: (object) => map.has(object),
-    });
-})();
+const registrableMetadataKey = Symbol.for('au:registrable');
 const DefaultResolver = {
     none(key) {
         throw createMappedError(2 /* ErrorNames.none_resolver_found */, key);
@@ -764,20 +798,21 @@ class Container {
         let def;
         for (; i < ii; ++i) {
             current = params[i];
-            if (!isObject(current)) {
+            if (!isObject$1(current)) {
                 continue;
             }
             if (isRegistry(current)) {
                 current.register(this);
             }
-            else if (Registrable.has(current)) {
-                Registrable.get(current).call(current, this);
-            }
             else if ((def = getMetadata(resourceBaseName, current)) != null) {
                 def.register(this);
             }
             else if (isClass(current)) {
-                if (isString((current).$au?.type)) {
+                const registrable = current[Symbol.metadata]?.[registrableMetadataKey];
+                if (isRegistry(registrable)) {
+                    registrable.register(this);
+                }
+                else if (isString((current).$au?.type)) {
                     const $au = current.$au;
                     const aliases = (current.aliases ?? emptyArray).concat($au.aliases ?? emptyArray);
                     let key = `${resourceBaseName}:${$au.type}:${$au.name}`;
@@ -816,16 +851,13 @@ class Container {
                 jj = keys.length;
                 for (; j < jj; ++j) {
                     value = current[keys[j]];
-                    if (!isObject(value)) {
+                    if (!isObject$1(value)) {
                         continue;
                     }
                     // note: we could remove this if-branch and call this.register directly
                     // - the extra check is just a perf tweak to create fewer unnecessary arrays by the spread operator
                     if (isRegistry(value)) {
                         value.register(this);
-                    }
-                    else if (Registrable.has(value)) {
-                        Registrable.get(value).call(value, this);
                     }
                     else {
                         this.register(value);
@@ -1267,7 +1299,7 @@ const containerResolver = {
         return requestor;
     }
 };
-const isRegistry = (obj) => isFunction(obj.register);
+const isRegistry = (obj) => isFunction(obj?.register);
 const isSelfRegistry = (obj) => isRegistry(obj) && typeof obj.registerInRequestor === 'boolean';
 const isRegisterInRequester = (obj) => isSelfRegistry(obj) && obj.registerInRequestor;
 const isClass = (obj) => obj.prototype !== void 0;
@@ -1737,6 +1769,18 @@ const all = (key, searchAncestors = false) => {
     resolver.resolve = (handler, requestor) => requestor.getAll(key, searchAncestors);
     return resolver;
 };
+/**
+ * Create a resolver that will resolve the last instance of a key from the resolving container
+ *
+ * - @param key [[`Key`]]
+ */
+const last = (key) => ({
+    $isResolver: true,
+    resolve: handler => {
+        const allInstances = handler.getAll(key);
+        return allInstances.length > 0 ? allInstances[allInstances.length - 1] : undefined;
+    }
+});
 /**
  * Lazily inject a dependency depending on whether the [[`Key`]] is present at the time of function call.
  *
@@ -2208,7 +2252,7 @@ let DefaultLogger = (() => {
             scope = resolve(optional(ILogScopes)) ?? [], parent = null) {
                 this.scope = (__runInitializers(this, _instanceExtraInitializers), scope);
                 /** @internal */
-                this._scopedLoggers = createObject();
+                this._scopedLoggers = createLookup();
                 /* eslint-enable default-param-last */
                 let traceSinks;
                 let debugSinks;
@@ -2668,5 +2712,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ConsoleSink, ContainerConfiguration, DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, DefaultResolver, EventAggregator, IContainer, IEventAggregator, ILogConfig, ILogEventFactory, ILogger, IModuleLoader, IPlatform, IServiceLocator, ISink, InstanceProvider, LogConfig, LogLevel, LoggerConfiguration, ModuleItem, Protocol, Registrable, Registration, aliasedResourcesRegistry, all, allResources, bound, camelCase, createImplementationRegister, createResolver, emptyArray, emptyObject, factory, firstDefined, format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, getPrototypeChain, getResourceKeyFor, ignore, inject, isArrayIndex, isNativeFunction, kebabCase, lazy, mergeArrays, newInstanceForScope, newInstanceOf, noop, onResolve, onResolveAll, optional, optionalResource, own, pascalCase, resolve, resource, resourceBaseName, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, DI, DefaultLogEvent, DefaultLogEventFactory, DefaultLogger, DefaultResolver, EventAggregator, IContainer, IEventAggregator, ILogConfig, ILogEventFactory, ILogger, IModuleLoader, IPlatform, IServiceLocator, ISink, InstanceProvider, LogConfig, LogLevel, LoggerConfiguration, ModuleItem, Protocol, Registration, aliasedResourcesRegistry, all, allResources, areEqual, bound, camelCase, createImplementationRegister, createLookup, createResolver, emptyArray, emptyObject, factory, firstDefined, format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, getPrototypeChain, getResourceKeyFor, ignore, inject, isArray, isArrayIndex, isFunction, isMap, isNativeFunction, isNumber, isObject, isPromise, isSet, isString, isSymbol, kebabCase, last, lazy, mergeArrays, newInstanceForScope, newInstanceOf, noop, onResolve, onResolveAll, optional, optionalResource, own, pascalCase, registrableMetadataKey, resolve, resource, resourceBaseName, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.dev.mjs.map

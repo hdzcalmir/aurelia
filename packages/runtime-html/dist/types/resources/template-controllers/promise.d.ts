@@ -1,3 +1,4 @@
+import { registrableMetadataKey } from '@aurelia/kernel';
 import { Scope } from '../../binding/scope';
 import { INode } from '../../dom';
 import { ICustomAttributeController, ICustomAttributeViewModel, IHydratableController, IHydratedController, IHydratedParentController, ISyntheticView } from '../../templating/controller';
@@ -56,12 +57,21 @@ export declare class RejectedTemplateController implements ICustomAttributeViewM
     dispose(): void;
 }
 export declare class PromiseAttributePattern {
+    static [Symbol.metadata]: {
+        [registrableMetadataKey]: import("@aurelia/kernel").IRegistry;
+    };
     'promise.resolve'(name: string, value: string): AttrSyntax;
 }
 export declare class FulfilledAttributePattern {
+    static [Symbol.metadata]: {
+        [registrableMetadataKey]: import("@aurelia/kernel").IRegistry;
+    };
     'then'(name: string, value: string): AttrSyntax;
 }
 export declare class RejectedAttributePattern {
+    static [Symbol.metadata]: {
+        [registrableMetadataKey]: import("@aurelia/kernel").IRegistry;
+    };
     'catch'(name: string, value: string): AttrSyntax;
 }
 //# sourceMappingURL=promise.d.ts.map

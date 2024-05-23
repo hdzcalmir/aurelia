@@ -153,7 +153,7 @@ describe('router-lite/router-containerless.spec.ts', function () {
         assert.strictEqual(null, host.querySelector('foo'));
         assert.html.textContent(host.querySelector('au-viewport'), 'foo');
         host.querySelector('a').click();
-        await container.get(IPlatform).domWriteQueue.yield();
+        await container.get(IPlatform).domQueue.yield();
         assert.html.textContent(host.querySelector('au-viewport'), 'normal-foo');
         assert.notIncludes(host.innerHTML, '<!--au-start-->');
         assert.includes(host.innerHTML, '<normal-foo>normal-foo</normal-foo>');

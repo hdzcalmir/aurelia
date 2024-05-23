@@ -213,7 +213,7 @@ describe('3-runtime-html/select-value-observer.spec.ts', function () {
         assert.strictEqual(component.selectedProductId, 1);
         component.clear();
         assert.strictEqual(component.selectEl.selectedIndex, 2);
-        ctx.platform.domWriteQueue.flush();
+        ctx.platform.domQueue.flush();
         assert.strictEqual(component.selectEl.selectedIndex, 0);
         await tearDown();
     });

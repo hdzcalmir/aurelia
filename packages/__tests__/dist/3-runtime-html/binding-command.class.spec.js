@@ -68,13 +68,13 @@ describe('3-runtime-html/binding-command.class.spec.ts', function () {
                         assert.contains(el.classList, className.toLowerCase(), `[[truthy]]${el.className}.contains(${className}) 1`);
                     }
                     component.value = falsyValue;
-                    platform.domWriteQueue.flush();
+                    platform.domQueue.flush();
                     for (let i = 0, ii = childEls.length; ii > i; ++i) {
                         const el = childEls[i];
                         assert.notContains(el.classList, className.toLowerCase(), `[${String(falsyValue)}]${el.className}.contains(${className}) 2`);
                     }
                     component.value = truthyValue;
-                    platform.domWriteQueue.flush();
+                    platform.domQueue.flush();
                     for (let i = 0, ii = childEls.length; ii > i; ++i) {
                         const el = childEls[i];
                         assert.contains(el.classList, className.toLowerCase(), `[${String(truthyValue)}]${el.className}.contains(${className}) 3`);
@@ -128,13 +128,13 @@ describe('3-runtime-html/binding-command.class.spec.ts', function () {
             }
             eachCartesianJoin([falsyValues, truthyValues], (falsyValue, truthyValue) => {
                 component.value = falsyValue;
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 for (let i = 0, ii = els.length; ii > i; ++i) {
                     const el = els[i];
                     assert.notContains(el.classList, className.toLowerCase(), `[${String(falsyValue)}]${el.className}.contains(${className}) 2`);
                 }
                 component.value = truthyValue;
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 for (let i = 0, ii = els.length; ii > i; ++i) {
                     const el = els[i];
                     assert.contains(el.classList, className.toLowerCase(), `[${String(truthyValue)}]${el.className}.contains(${className}) 3`);

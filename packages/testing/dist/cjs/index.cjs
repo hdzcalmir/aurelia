@@ -60,9 +60,9 @@ const I = uncurryThis(Map.prototype.entries);
 
 const M = uncurryThis(Boolean.prototype.valueOf);
 
-const R = uncurryThis(Number.prototype.valueOf);
+const P = uncurryThis(Number.prototype.valueOf);
 
-const P = uncurryThis(Symbol.prototype.valueOf);
+const R = uncurryThis(Symbol.prototype.valueOf);
 
 const B = uncurryThis(String.prototype.valueOf);
 
@@ -510,7 +510,7 @@ function areEqualArrayBuffers(e, t) {
 
 function isEqualBoxedPrimitive(e, t) {
     if (isNumberObject(e)) {
-        return isNumberObject(t) && g(R(e), R(t));
+        return isNumberObject(t) && g(P(e), P(t));
     }
     if (isStringObject(e)) {
         return isStringObject(t) && B(e) === B(t);
@@ -518,7 +518,7 @@ function isEqualBoxedPrimitive(e, t) {
     if (isBooleanObject(e)) {
         return isBooleanObject(t) && M(e) === M(t);
     }
-    return isSymbolObject(t) && P(e) === P(t);
+    return isSymbolObject(t) && R(e) === R(t);
 }
 
 function innerDeepEqual(e, t, n, i) {
@@ -2069,7 +2069,7 @@ function formatRaw(e, t, n, i) {
         } else if (isBoxedPrimitive(t)) {
             let n;
             if (isNumberObject(t)) {
-                o = `[Number: ${he(R(t), e)}]`;
+                o = `[Number: ${he(P(t), e)}]`;
                 n = "number";
             } else if (isStringObject(t)) {
                 o = `[String: ${he(B(t), e)}]`;
@@ -2079,7 +2079,7 @@ function formatRaw(e, t, n, i) {
                 o = `[Boolean: ${he(M(t), e)}]`;
                 n = "boolean";
             } else {
-                o = `[Symbol: ${he(P(t), e)}]`;
+                o = `[Symbol: ${he(R(t), e)}]`;
                 n = "symbol";
             }
             if (r.length === 0) {
@@ -2390,7 +2390,7 @@ function ensureTaskQueuesEmpty(t) {
         t = a.BrowserPlatform.getOrCreate(globalThis);
     }
     e.ensureEmpty(t.taskQueue);
-    e.ensureEmpty(t.domWriteQueue);
+    e.ensureEmpty(t.domQueue);
     e.ensureEmpty(t.domReadQueue);
 }
 
@@ -3021,31 +3021,26 @@ const ve = function() {
     }
     return function $areTaskQueuesEmpty(e) {
         const t = a.BrowserPlatform.getOrCreate(globalThis);
-        const n = t.domWriteQueue;
+        const n = t.domQueue;
         const i = t.taskQueue;
-        const r = t.domReadQueue;
-        let s = true;
-        let o = "";
+        let r = true;
+        let s = "";
         if (!n.isEmpty) {
-            o += `\n${$reportTaskQueue("domWriteQueue", n)}\n\n`;
-            s = false;
+            s += `\n${$reportTaskQueue("domQueue", n)}\n\n`;
+            r = false;
         }
         if (!i.isEmpty) {
-            o += `\n${$reportTaskQueue("taskQueue", i)}\n\n`;
-            s = false;
+            s += `\n${$reportTaskQueue("taskQueue", i)}\n\n`;
+            r = false;
         }
-        if (!r.isEmpty) {
-            o += `\n${$reportTaskQueue("domReadQueue", r)}\n\n`;
-            s = false;
-        }
-        if (!s) {
+        if (!r) {
             if (e === true) {
                 ensureTaskQueuesEmpty(t);
             }
             innerFail({
                 actual: void 0,
                 expected: void 0,
-                message: o,
+                message: s,
                 operator: "",
                 stackStartFn: $areTaskQueuesEmpty
             });
@@ -4533,7 +4528,7 @@ function createFixture(e, n, r = [], a = true, o = TestContext.create(), l = {})
         n.dispatchEvent(new c.window.Event("scroll"));
     };
     const flush = e => {
-        o.platform.domWriteQueue.flush(e);
+        o.platform.domQueue.flush(e);
     };
     const stop = (e = false) => {
         let t = void 0;

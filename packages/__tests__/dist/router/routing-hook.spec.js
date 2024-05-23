@@ -65,7 +65,7 @@ describe('router/routing-hook.spec.ts', function () {
     }
     const $load = async (path, router, platform) => {
         await router.load(path);
-        platform.domWriteQueue.flush();
+        platform.domQueue.flush();
     };
     it('uses a hook', async function () {
         const { router, tearDown, navigationInstruction } = await createFixture();

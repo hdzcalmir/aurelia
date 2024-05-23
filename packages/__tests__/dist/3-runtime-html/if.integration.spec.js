@@ -251,7 +251,7 @@ describe(`3-runtime-html/if.integration.spec.ts`, function () {
                 const { component, appHost, container, stop } = createFixture(`<c-1 if.bind="showC1"></c-1>`, Root, [EventLog, CeOne]);
                 const eventLog = container.get(EventLog);
                 const platform = container.get(IPlatform);
-                const queue = platform.domWriteQueue;
+                const queue = platform.domQueue;
                 queue.flush();
                 assert.html.textContent(appHost, '', 'init');
                 assert.deepStrictEqual(eventLog.events, [], 'init log');
@@ -353,7 +353,7 @@ describe(`3-runtime-html/if.integration.spec.ts`, function () {
                 const { component, appHost, container, stop } = createFixture(`<c-1 if.bind="showC1"></c-1><c-2 else></c-2>`, Root, [EventLog, CeOne, CeTwo]);
                 const eventLog = container.get(EventLog);
                 const platform = container.get(IPlatform);
-                const queue = platform.domWriteQueue;
+                const queue = platform.domQueue;
                 queue.flush();
                 assert.html.textContent(appHost, 'c-2', 'init');
                 assert.deepStrictEqual(eventLog.events, [], 'init log');

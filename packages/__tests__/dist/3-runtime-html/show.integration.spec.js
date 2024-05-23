@@ -100,7 +100,7 @@ describe('3-runtime-html/show.integration.spec.ts', function () {
             component.show = false;
             component.hide = true;
             component.assert(`started after mutating`);
-            p.domWriteQueue.flush();
+            p.domQueue.flush();
             component.appliedShow = false;
             component.appliedHide = true;
             component.assert(`started after flushing dom writes`);
@@ -159,7 +159,7 @@ describe('3-runtime-html/show.integration.spec.ts', function () {
             component.show = false;
             component.hide = true;
             component.assert(`started after mutating`);
-            p.domWriteQueue.flush();
+            p.domQueue.flush();
             component.appliedShow = false;
             component.appliedHide = true;
             component.assert(`started after flushing dom writes`);
@@ -225,7 +225,7 @@ describe('3-runtime-html/show.integration.spec.ts', function () {
                                                     this.show = !this.show;
                                                     this.assert(`attached after mutating (run ${run})`);
                                                 }
-                                                p.domWriteQueue.flush();
+                                                p.domQueue.flush();
                                                 this.appliedShow = this.show;
                                                 this.assert(`attached after flushing dom writes (run ${run})`);
                                             }
@@ -269,7 +269,7 @@ describe('3-runtime-html/show.integration.spec.ts', function () {
                                     await au.start();
                                     component.show = !component.show;
                                     component.assert(`started after mutating (run ${run})`);
-                                    p.domWriteQueue.flush();
+                                    p.domQueue.flush();
                                     component.appliedShow = component.show;
                                     component.assert(`started after flushing dom writes (run ${run})`);
                                     await au.stop();
@@ -277,7 +277,7 @@ describe('3-runtime-html/show.integration.spec.ts', function () {
                                     await au.start();
                                     component.show = !component.show;
                                     component.assert(`started after mutating (run ${run})`);
-                                    p.domWriteQueue.flush();
+                                    p.domQueue.flush();
                                     component.appliedShow = component.show;
                                     component.assert(`started after flushing dom writes (run ${run})`);
                                     await au.stop();
@@ -324,7 +324,7 @@ describe('3-runtime-html/show.integration.spec.ts', function () {
                                                     this.hide = !this.hide;
                                                     this.assert(`attached after mutating (run ${run})`);
                                                 }
-                                                p.domWriteQueue.flush();
+                                                p.domQueue.flush();
                                                 this.appliedHide = this.hide;
                                                 this.assert(`attached after flushing dom writes (run ${run})`);
                                             }
@@ -368,7 +368,7 @@ describe('3-runtime-html/show.integration.spec.ts', function () {
                                     await au.start();
                                     component.hide = !component.hide;
                                     component.assert(`started after mutating (run ${run})`);
-                                    p.domWriteQueue.flush();
+                                    p.domQueue.flush();
                                     component.appliedHide = component.hide;
                                     component.assert(`started after flushing dom writes (run ${run})`);
                                     await au.stop();
@@ -376,7 +376,7 @@ describe('3-runtime-html/show.integration.spec.ts', function () {
                                     await au.start();
                                     component.hide = !component.hide;
                                     component.assert(`started after mutating (run ${run})`);
-                                    p.domWriteQueue.flush();
+                                    p.domQueue.flush();
                                     component.appliedHide = component.hide;
                                     component.assert(`started after flushing dom writes (run ${run})`);
                                     await au.stop();

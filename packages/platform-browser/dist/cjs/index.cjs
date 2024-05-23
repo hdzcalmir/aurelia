@@ -1,85 +1,61 @@
 "use strict";
 
-var t = require("@aurelia/platform");
+var e = require("@aurelia/platform");
 
-const s = new Map;
-
-class BrowserPlatform extends t.Platform {
-    constructor(s, i = {}) {
-        super(s, i);
-        this.t = false;
-        this.i = -1;
-        this.h = false;
-        this.u = -1;
-        ("Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver " + "window document customElements").split(" ").forEach((t => this[t] = t in i ? i[t] : s[t]));
-        "fetch requestAnimationFrame cancelAnimationFrame".split(" ").forEach((t => this[t] = t in i ? i[t] : s[t]?.bind(s) ?? notImplemented(t)));
-        this.flushDomRead = this.flushDomRead.bind(this);
-        this.flushDomWrite = this.flushDomWrite.bind(this);
-        this.domReadQueue = new t.TaskQueue(this, this.requestDomRead.bind(this), this.cancelDomRead.bind(this));
-        this.domWriteQueue = new t.TaskQueue(this, this.requestDomWrite.bind(this), this.cancelDomWrite.bind(this));
+class BrowserPlatform extends e.Platform {
+    static getOrCreate(e, t = {}) {
+        let r = BrowserPlatform.t.get(e);
+        if (r === void 0) {
+            BrowserPlatform.t.set(e, r = new BrowserPlatform(e, t));
+        }
+        return r;
     }
-    static getOrCreate(t, i = {}) {
-        let e = s.get(t);
-        if (e === void 0) {
-            s.set(t, e = new BrowserPlatform(t, i));
-        }
-        return e;
+    static set(e, t) {
+        BrowserPlatform.t.set(e, t);
     }
-    static set(t, i) {
-        s.set(t, i);
+    get domWriteQueue() {
+        return this.domQueue;
     }
-    requestDomRead() {
-        this.t = true;
-        if (this.u === -1) {
-            this.u = this.requestAnimationFrame(this.flushDomWrite);
-        }
+    get domReadQueue() {
+        return this.domQueue;
     }
-    cancelDomRead() {
-        this.t = false;
-        if (this.i > -1) {
-            this.clearTimeout(this.i);
-            this.i = -1;
-        }
-        if (this.h === false && this.u > -1) {
-            this.cancelAnimationFrame(this.u);
-            this.u = -1;
-        }
-    }
-    flushDomRead() {
-        this.i = -1;
-        if (this.t === true) {
-            this.t = false;
-            this.domReadQueue.flush();
-        }
-    }
-    requestDomWrite() {
-        this.h = true;
-        if (this.u === -1) {
-            this.u = this.requestAnimationFrame(this.flushDomWrite);
-        }
-    }
-    cancelDomWrite() {
-        this.h = false;
-        if (this.u > -1 && (this.t === false || this.i > -1)) {
-            this.cancelAnimationFrame(this.u);
-            this.u = -1;
-        }
-    }
-    flushDomWrite() {
-        this.u = -1;
-        if (this.h === true) {
-            this.h = false;
-            this.domWriteQueue.flush();
-        }
-        if (this.t === true && this.i === -1) {
-            this.i = this.setTimeout(this.flushDomRead, 0);
-        }
+    constructor(t, r = {}) {
+        super(t, r);
+        const notImplemented = e => () => {
+            throw new Error(`The PLATFORM did not receive a valid reference to the global function '${e}'.`);
+        };
+        ("Node Element HTMLElement CustomEvent CSSStyleSheet ShadowRoot MutationObserver " + "window document customElements").split(" ").forEach((e => this[e] = e in r ? r[e] : t[e]));
+        "fetch requestAnimationFrame cancelAnimationFrame".split(" ").forEach((e => this[e] = e in r ? r[e] : t[e]?.bind(t) ?? notImplemented(e)));
+        this.domQueue = (() => {
+            let t = false;
+            let r = -1;
+            const requestDomFlush = () => {
+                t = true;
+                if (r === -1) {
+                    r = this.requestAnimationFrame(flushDomQueue);
+                }
+            };
+            const cancelDomFlush = () => {
+                t = false;
+                if (r > -1) {
+                    this.cancelAnimationFrame(r);
+                    r = -1;
+                }
+            };
+            const flushDomQueue = () => {
+                r = -1;
+                if (t === true) {
+                    t = false;
+                    o.flush();
+                }
+            };
+            const o = new e.TaskQueue(this, requestDomFlush, cancelDomFlush);
+            return o;
+        })();
     }
 }
 
-const notImplemented = t => () => {
-    throw new Error(`The PLATFORM did not receive a valid reference to the global function '${t}'.`);
-};
+BrowserPlatform.t = new WeakMap;
 
 exports.BrowserPlatform = BrowserPlatform;
 //# sourceMappingURL=index.cjs.map

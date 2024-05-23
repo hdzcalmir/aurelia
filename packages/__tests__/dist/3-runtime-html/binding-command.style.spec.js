@@ -62,7 +62,7 @@ describe('3-runtime-html/binding-command.style.spec.ts', function () {
                 const ruleValueNoPriority = hasImportant ? ruleValue.replace('!important', '') : ruleValue;
                 assert.strictEqual(childEls.length, 6, `childEls.length`);
                 component.value = ruleValue;
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 for (let i = 0, ii = childEls.length; ii > i; ++i) {
                     const child = childEls[i];
                     assert.strictEqual(getNormalizedStyle(child, ruleName), isInvalid ? valueOnInvalid : ruleValueNoPriority, `[${ruleName}]component.value="${ruleValue}" 1`);
@@ -71,7 +71,7 @@ describe('3-runtime-html/binding-command.style.spec.ts', function () {
                     }
                 }
                 component.value = '';
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 for (let i = 0, ii = childEls.length; ii > i; ++i) {
                     const child = childEls[i];
                     assert.strictEqual(getNormalizedStyle(child, ruleName), ruleDefaultValue, `[${ruleName}]component.value="" 1`);
@@ -80,7 +80,7 @@ describe('3-runtime-html/binding-command.style.spec.ts', function () {
                     }
                 }
                 component.value = ruleValue;
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 for (let i = 0, ii = childEls.length; ii > i; ++i) {
                     const child = childEls[i];
                     assert.strictEqual(getNormalizedStyle(child, ruleName), isInvalid ? valueOnInvalid : ruleValueNoPriority, `[${ruleName}]component.value="${ruleValue}" 2`);
@@ -144,7 +144,7 @@ describe('3-runtime-html/binding-command.style.spec.ts', function () {
                     }
                 }
                 component.value = '';
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 for (let i = 0; ii > i; ++i) {
                     const el = els[i];
                     assert.strictEqual(getNormalizedStyle(el, ruleName), ruleDefaultValue, `[${ruleName}]vm.value="" 2`);
@@ -153,7 +153,7 @@ describe('3-runtime-html/binding-command.style.spec.ts', function () {
                     }
                 }
                 component.value = ruleValue;
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 for (let i = 0; ii > i; ++i) {
                     const el = els[i];
                     assert.strictEqual(getNormalizedStyle(el, ruleName), isInvalid ? valueOnInvalid : ruleValueNoPriority, `[${ruleName}]vm.value="${ruleValue}" 3`);
@@ -162,7 +162,7 @@ describe('3-runtime-html/binding-command.style.spec.ts', function () {
                     }
                 }
                 component.value = '';
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 for (let i = 0; ii > i; ++i) {
                     const el = els[i];
                     assert.strictEqual(getNormalizedStyle(el, ruleName), ruleDefaultValue, `[${ruleName}]vm.value="" 4`);

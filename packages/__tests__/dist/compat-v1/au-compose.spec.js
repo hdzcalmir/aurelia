@@ -34,7 +34,7 @@ describe('compat-v1/au-compose.spec.ts', function () {
                 assertText('hello world');
                 component.message = 'hello';
                 assertText('hello world');
-                ctx.platform.domWriteQueue.flush();
+                ctx.platform.domQueue.flush();
                 assertText('hello');
                 await tearDown();
                 assertText('');

@@ -13,19 +13,17 @@ var platform = require('@aurelia/platform');
 const O = Object;
 /** @internal */ const safeString = String;
 /** @internal */ const baseObjectPrototype = O.prototype;
-/** @internal */ const createLookup = () => O.create(null);
-/** @internal */ const createError$1 = (message) => new Error(message);
 /** @internal */ const hasOwnProperty = baseObjectPrototype.hasOwnProperty;
 /** @internal */ const objectFreeze = O.freeze;
 /** @internal */ const objectAssign = O.assign;
 /** @internal */ const getOwnPropertyNames = O.getOwnPropertyNames;
 /** @internal */ const objectKeys = O.keys;
-const IsDataAttribute = /*@__PURE__*/ createLookup();
+const IsDataAttribute = /*@__PURE__*/ kernel.createLookup();
 /** @internal */ const isDataAttribute = (obj, key, svgAnalyzer) => {
     if (IsDataAttribute[key] === true) {
         return true;
     }
-    if (!isString(key)) {
+    if (!kernel.isString(key)) {
         return false;
     }
     const prefix = key.slice(0, 5);
@@ -36,18 +34,7 @@ const IsDataAttribute = /*@__PURE__*/ createLookup();
             prefix === 'data-' ||
             svgAnalyzer.isStandardSvgAttribute(obj, key);
 };
-/** @internal */ const isPromise = (v) => v instanceof Promise;
-/** @internal */ const isArray = (v) => v instanceof Array;
-/** @internal */ const isSet = (v) => v instanceof Set;
-/** @internal */ const isMap = (v) => v instanceof Map;
-// eslint-disable-next-line @typescript-eslint/ban-types
-/** @internal */ const isFunction = (v) => typeof v === 'function';
-/** @internal */ const isObject = (v) => v instanceof O;
-/** @internal */ const isString = (v) => typeof v === 'string';
-/** @internal */ const isSymbol = (v) => typeof v === 'symbol';
-/** @internal */ const isNumber = (v) => typeof v === 'number';
 /** @internal */ const rethrow = (err) => { throw err; };
-/** @internal */ const areEqual = O.is;
 /** @internal */
 const def = Reflect.defineProperty;
 /** @internal */
@@ -400,13 +387,13 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
                 }
                 if (e?.strict) {
                     // return evaluatedValue;
-                    return e?.boundFn && isFunction(evaluatedValue)
+                    return e?.boundFn && kernel.isFunction(evaluatedValue)
                         ? evaluatedValue.bind(obj)
                         : evaluatedValue;
                 }
                 return evaluatedValue == null
                     ? ''
-                    : e?.boundFn && isFunction(evaluatedValue)
+                    : e?.boundFn && kernel.isFunction(evaluatedValue)
                         ? evaluatedValue.bind(obj)
                         : evaluatedValue;
             }
@@ -414,7 +401,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
                 return globalThis[ast.name];
             case ekCallGlobal: {
                 const func = globalThis[ast.name];
-                if (isFunction(func)) {
+                if (kernel.isFunction(func)) {
                     return func(...ast.args.map(a => astEvaluate(a, s, e, c)));
                 }
                 /* istanbul-ignore-next */
@@ -478,7 +465,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
                     ret = func.apply(instance, args);
                     // todo(doc): investigate & document in engineering doc the difference
                     //            between observing before/after func.apply
-                    if (isArray(instance) && autoObserveArrayMethods.includes(ast.name)) {
+                    if (kernel.isArray(instance) && autoObserveArrayMethods.includes(ast.name)) {
                         c?.observeCollection(instance);
                     }
                 }
@@ -486,7 +473,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
             }
             case ekCallFunction: {
                 const func = astEvaluate(ast.func, s, e, c);
-                if (isFunction(func)) {
+                if (kernel.isFunction(func)) {
                     return func(...ast.args.map(a => astEvaluate(a, s, e, c)));
                 }
                 if (!e?.strictFnCall && func == null) {
@@ -524,17 +511,17 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
                         c.observe(instance, ast.name);
                     }
                     ret = instance[ast.name];
-                    if (e?.boundFn && isFunction(ret)) {
+                    if (e?.boundFn && kernel.isFunction(ret)) {
                         return ret.bind(instance);
                     }
                     return ret;
                 }
-                if (c !== null && isObject(instance) && !ast.accessGlobal) {
+                if (c !== null && kernel.isObject(instance) && !ast.accessGlobal) {
                     c.observe(instance, ast.name);
                 }
                 if (instance) {
                     ret = instance[ast.name];
-                    if (e?.boundFn && isFunction(ret)) {
+                    if (e?.boundFn && kernel.isFunction(ret)) {
                         return ret.bind(instance);
                     }
                     return ret;
@@ -544,7 +531,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
             case ekAccessKeyed: {
                 const instance = astEvaluate(ast.object, s, e, c);
                 const key = astEvaluate(ast.key, s, e, c);
-                if (isObject(instance)) {
+                if (kernel.isObject(instance)) {
                     if (c !== null && !ast.accessGlobal) {
                         c.observe(instance, key);
                     }
@@ -557,7 +544,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
             case ekTaggedTemplate: {
                 const results = ast.expressions.map(expr => astEvaluate(expr, s, e, c));
                 const func = astEvaluate(ast.func, s, e, c);
-                if (!isFunction(func)) {
+                if (!kernel.isFunction(func)) {
                     throw createMappedError(110 /* ErrorNames.ast_tagged_not_a_function */);
                 }
                 return func(ast.cooked, ...results);
@@ -586,14 +573,14 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
                         return astEvaluate(left, s, e, c) !== astEvaluate(right, s, e, c);
                     case 'instanceof': {
                         const $right = astEvaluate(right, s, e, c);
-                        if (isFunction($right)) {
+                        if (kernel.isFunction($right)) {
                             return astEvaluate(left, s, e, c) instanceof $right;
                         }
                         return false;
                     }
                     case 'in': {
                         const $right = astEvaluate(right, s, e, c);
-                        if (isObject($right)) {
+                        if (kernel.isObject($right)) {
                             return astEvaluate(left, s, e, c) in $right;
                         }
                         return false;
@@ -714,8 +701,8 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
             }
             case ekAccessMember: {
                 const obj = astEvaluate(ast.object, s, e, null);
-                if (isObject(obj)) {
-                    if (ast.name === 'length' && isArray(obj) && !isNaN(val)) {
+                if (kernel.isObject(obj)) {
+                    if (ast.name === 'length' && kernel.isArray(obj) && !isNaN(val)) {
                         obj.splice(val);
                     }
                     else {
@@ -730,7 +717,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
             case ekAccessKeyed: {
                 const instance = astEvaluate(ast.object, s, e, null);
                 const key = astEvaluate(ast.key, s, e, null);
-                if (isArray(instance)) {
+                if (kernel.isArray(instance)) {
                     if (key === 'length' && !isNaN(val)) {
                         instance.splice(val);
                         return val;
@@ -921,7 +908,7 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
     }
     const getFunction = (mustEvaluate, obj, name) => {
         const func = obj == null ? null : obj[name];
-        if (isFunction(func)) {
+        if (kernel.isFunction(func)) {
             return func;
         }
         if (!mustEvaluate && func == null) {
@@ -1019,7 +1006,7 @@ function bindable(configOrPropOrTarget, context) {
         const config = configOrProp == null || typeof configOrProp === 'string'
             ? { name: $prop }
             : configOrProp;
-        const metadata = (context.metadata[baseName] ??= createLookup());
+        const metadata = (context.metadata[baseName] ??= kernel.createLookup());
         metadata[$prop] = BindableDefinition.create($prop, config);
     }
     if (arguments.length > 1) {
@@ -1029,7 +1016,7 @@ function bindable(configOrPropOrTarget, context) {
         decorator(configOrPropOrTarget, context);
         return;
     }
-    else if (isString(configOrPropOrTarget)) {
+    else if (kernel.isString(configOrPropOrTarget)) {
         // ClassDecorator
         // - @bindable('bar')
         // Direct call:
@@ -1058,7 +1045,7 @@ const Bindable = objectFreeze({
         }
         function addList(maybeList) {
             if (isArray(maybeList)) {
-                maybeList.forEach(nameOrDef => isString(nameOrDef) ? addName(nameOrDef) : addDescription(nameOrDef.name, nameOrDef));
+                maybeList.forEach(nameOrDef => kernel.isString(nameOrDef) ? addName(nameOrDef) : addDescription(nameOrDef.name, nameOrDef));
             }
             else if (maybeList instanceof BindableDefinition) {
                 bindables[maybeList.name] = maybeList;
@@ -1096,7 +1083,7 @@ class BindableDefinition {
     }
     static create(prop, def = {}) {
         const mode = (def.mode ?? toView);
-        return new BindableDefinition(def.attribute ?? kernel.kebabCase(prop), def.callback ?? `${prop}Changed`, isString(mode) ? templateCompiler.BindingMode[mode] ?? defaultMode : mode, def.primary ?? false, def.name ?? prop, def.set ?? getInterceptor(def));
+        return new BindableDefinition(def.attribute ?? kernel.kebabCase(prop), def.callback ?? `${prop}Changed`, kernel.isString(mode) ? templateCompiler.BindingMode[mode] ?? defaultMode : mode, def.primary ?? false, def.name ?? prop, def.set ?? getInterceptor(def));
     }
 }
 function coercer(target, context) {
@@ -1219,7 +1206,7 @@ class BindingBehaviorDefinition {
     static create(nameOrDef, Type) {
         let name;
         let def;
-        if (isString(nameOrDef)) {
+        if (kernel.isString(nameOrDef)) {
             name = nameOrDef;
             def = { name };
         }
@@ -1250,7 +1237,7 @@ const BindingBehavior = /*@__PURE__*/ objectFreeze({
     name: bbBaseName,
     keyFrom: getBindingBehaviorKeyFrom,
     isType(value) {
-        return isFunction(value) && (hasMetadata(bbBaseName, value) || value.$au?.type === behaviorTypeName);
+        return kernel.isFunction(value) && (hasMetadata(bbBaseName, value) || value.$au?.type === behaviorTypeName);
     },
     define(nameOrDef, Type) {
         const definition = BindingBehaviorDefinition.create(nameOrDef, Type);
@@ -1330,7 +1317,7 @@ class DebounceBindingBehavior {
             delay: delay ?? defaultDelay$1,
             now: this._platform.performanceNow,
             queue: this._platform.taskQueue,
-            signals: isString(signals) ? [signals] : (signals ?? kernel.emptyArray),
+            signals: kernel.isString(signals) ? [signals] : (signals ?? kernel.emptyArray),
         };
         const handler = binding.limit?.(opts);
         if (handler == null) {
@@ -1357,7 +1344,7 @@ DebounceBindingBehavior.$au = {
 const ISignaler = /*@__PURE__*/ createInterface('ISignaler', x => x.singleton(Signaler));
 class Signaler {
     constructor() {
-        this.signals = createLookup();
+        this.signals = kernel.createLookup();
     }
     dispatchSignal(name) {
         const listeners = this.signals[name];
@@ -1423,7 +1410,7 @@ class ThrottleBindingBehavior {
             delay: delay ?? defaultDelay,
             now: this._now,
             queue: this._taskQueue,
-            signals: isString(signals) ? [signals] : (signals ?? kernel.emptyArray),
+            signals: kernel.isString(signals) ? [signals] : (signals ?? kernel.emptyArray),
         };
         const handler = binding.limit?.(opts);
         if (handler == null) {
@@ -1507,7 +1494,7 @@ const AppTask = objectFreeze({
 });
 function createAppTaskSlotHook(slotName) {
     function appTaskFactory(keyOrCallback, callback) {
-        if (isFunction(callback)) {
+        if (kernel.isFunction(callback)) {
             return new $AppTask(slotName, keyOrCallback, callback);
         }
         return new $AppTask(slotName, null, keyOrCallback);
@@ -1526,12 +1513,12 @@ function watch(expressionOrPropertyAccessFn, changeHandlerOrCallback) {
         const isClassDecorator = context.kind === 'class';
         // basic validation
         if (isClassDecorator) {
-            if (!isFunction(changeHandlerOrCallback)
+            if (!kernel.isFunction(changeHandlerOrCallback)
                 && (changeHandlerOrCallback == null || !(changeHandlerOrCallback in target.prototype))) {
                 throw createMappedError(773 /* ErrorNames.watch_invalid_change_handler */, `${safeString(changeHandlerOrCallback)}@${target.name}}`);
             }
         }
-        else if (!isFunction(target)) {
+        else if (!kernel.isFunction(target)) {
             throw createMappedError(774 /* ErrorNames.watch_non_method_decorator_usage */, context.name);
         }
         const watchDef = new WatchDefinition(expressionOrPropertyAccessFn, (isClassDecorator ? changeHandlerOrCallback : target));
@@ -1597,7 +1584,7 @@ function customAttribute(nameOrDef) {
 function templateController(nameOrDef) {
     return function (target, context) {
         context.addInitializer(function () {
-            defineAttribute(isString(nameOrDef)
+            defineAttribute(kernel.isString(nameOrDef)
                 ? { isTemplateController: true, name: nameOrDef }
                 : { isTemplateController: true, ...nameOrDef }, this);
         });
@@ -1623,7 +1610,7 @@ class CustomAttributeDefinition {
     static create(nameOrDef, Type) {
         let name;
         let def;
-        if (isString(nameOrDef)) {
+        if (kernel.isString(nameOrDef)) {
             name = nameOrDef;
             def = { name };
         }
@@ -1632,7 +1619,7 @@ class CustomAttributeDefinition {
             def = nameOrDef;
         }
         const mode = kernel.firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, toView);
-        return new CustomAttributeDefinition(Type, kernel.firstDefined(getAttributeAnnotation(Type, 'name'), name), kernel.mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), isString(mode) ? templateCompiler.BindingMode[mode] ?? defaultMode : mode, kernel.firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), kernel.firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), kernel.mergeArrays(Watch.getDefinitions(Type), Type.watches), kernel.mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies), kernel.firstDefined(getAttributeAnnotation(Type, 'containerStrategy'), def.containerStrategy, Type.containerStrategy, 'reuse'));
+        return new CustomAttributeDefinition(Type, kernel.firstDefined(getAttributeAnnotation(Type, 'name'), name), kernel.mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), kernel.isString(mode) ? templateCompiler.BindingMode[mode] ?? defaultMode : mode, kernel.firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), kernel.firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), kernel.mergeArrays(Watch.getDefinitions(Type), Type.watches), kernel.mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies), kernel.firstDefined(getAttributeAnnotation(Type, 'containerStrategy'), def.containerStrategy, Type.containerStrategy, 'reuse'));
     }
     register(container, aliasName) {
         const $Type = this.Type;
@@ -1656,7 +1643,7 @@ const getAttributeKeyFrom = (name) => `${attributeBaseName}:${name}`;
 const getAttributeAnnotation = (Type, prop) => getMetadata(getAnnotationKeyFor(prop), Type);
 /** @internal */
 const isAttributeType = (value) => {
-    return isFunction(value) && (hasMetadata(attributeBaseName, value)
+    return kernel.isFunction(value) && (hasMetadata(attributeBaseName, value)
         || value.$au?.type === attrTypeName);
 };
 /** @internal */
@@ -1683,7 +1670,7 @@ const getAttributeDefinition = (Type) => {
 const findClosestControllerByName = (node, attrNameOrType) => {
     let key = '';
     let attrName = '';
-    if (isString(attrNameOrType)) {
+    if (kernel.isString(attrNameOrType)) {
         key = getAttributeKeyFrom(attrNameOrType);
         attrName = attrNameOrType;
     }
@@ -1773,9 +1760,11 @@ const LifecycleHooks = /*@__PURE__*/ (() => {
             const definition = LifecycleHooksDefinition.create(def, Type);
             const $Type = definition.Type;
             definitionMap.set($Type, definition);
-            return kernel.Registrable.define($Type, container => {
-                singletonRegistration(ILifecycleHooks, $Type).register(container);
-            });
+            return {
+                register(container) {
+                    singletonRegistration(ILifecycleHooks, $Type).register(container);
+                }
+            };
         },
         /**
          * @param ctx - The container where the resolution starts
@@ -1820,9 +1809,11 @@ class LifecycleHooksLookupImpl {
 }
 function lifecycleHooks(target, context) {
     function decorator(target, context) {
-        return LifecycleHooks.define({}, target);
+        const metadata = context?.metadata ?? (target[Symbol.metadata] ??= Object.create(null));
+        metadata[kernel.registrableMetadataKey] = LifecycleHooks.define({}, target);
+        return target;
     }
-    return target == null ? decorator : decorator(target);
+    return target == null ? decorator : decorator(target, context);
 }
 
 function valueConverter(nameOrDef) {
@@ -1843,7 +1834,7 @@ class ValueConverterDefinition {
     static create(nameOrDef, Type) {
         let name;
         let def;
-        if (isString(nameOrDef)) {
+        if (kernel.isString(nameOrDef)) {
             name = nameOrDef;
             def = { name };
         }
@@ -1874,7 +1865,7 @@ const ValueConverter = objectFreeze({
     name: vcBaseName,
     keyFrom: getValueConverterKeyFrom,
     isType(value) {
-        return isFunction(value)
+        return kernel.isFunction(value)
             && (hasMetadata(vcBaseName, value) || value.$au?.type === converterTypeName);
     },
     define(nameOrDef, Type) {
@@ -2216,7 +2207,7 @@ class AttributeBinding {
             case 'style': {
                 let priority = '';
                 let newValue = safeString(value);
-                if (isString(newValue) && newValue.includes('!important')) {
+                if (kernel.isString(newValue) && newValue.includes('!important')) {
                     priority = 'important';
                     newValue = newValue.replace('!important', '');
                 }
@@ -2442,7 +2433,7 @@ class InterpolationPartBinding {
         // eslint-disable-next-line eqeqeq
         if (newValue != this._value) {
             this._value = newValue;
-            if (isArray(newValue)) {
+            if (kernel.isArray(newValue)) {
                 this.observeCollection(newValue);
             }
             this.updateTarget();
@@ -2462,7 +2453,7 @@ class InterpolationPartBinding {
         this._scope = _scope;
         astBind(this.ast, _scope, this);
         this._value = astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
-        if (isArray(this._value)) {
+        if (kernel.isArray(this._value)) {
             this.observeCollection(this._value);
         }
         this.isBound = true;
@@ -2567,7 +2558,7 @@ class ContentBinding {
         this.obs.version++;
         const v = this._value = astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
         this.obs.clear();
-        if (isArray(v)) {
+        if (kernel.isArray(v)) {
             this.observeCollection(v);
         }
         const shouldQueueFlush = this._controller.state !== activating;
@@ -2589,7 +2580,7 @@ class ContentBinding {
         this._scope = _scope;
         astBind(this.ast, _scope, this);
         const v = this._value = astEvaluate(this.ast, this._scope, this, (this.mode & toView) > 0 ? this : null);
-        if (isArray(v)) {
+        if (kernel.isArray(v)) {
             this.observeCollection(v);
         }
         this.updateTarget(v);
@@ -2919,7 +2910,7 @@ class ListenerBinding {
         overrideContext.$event = event;
         let result = astEvaluate(this.ast, this._scope, this, null);
         delete overrideContext.$event;
-        if (isFunction(result)) {
+        if (kernel.isFunction(result)) {
             result = result(event);
         }
         if (result !== true && this._options.prevent) {
@@ -3098,7 +3089,7 @@ class EventModifier {
         /** @internal */
         this._reg = kernel.resolve(kernel.all(IModifiedEventHandlerCreator))
             .reduce((acc, cur) => {
-            const types = isArray(cur.type) ? cur.type : [cur.type];
+            const types = kernel.isArray(cur.type) ? cur.type : [cur.type];
             types.forEach(t => acc[t] = cur);
             return acc;
         }, {});
@@ -3107,7 +3098,7 @@ class EventModifier {
         c.register(singletonRegistration(IEventModifier, EventModifier));
     }
     getHandler(type, modifier) {
-        return isString(modifier) ? this._reg[type]?.getHandler(modifier) ?? null : null;
+        return kernel.isString(modifier) ? this._reg[type]?.getHandler(modifier) ?? null : null;
     }
 }
 const EventModifierRegistration = {
@@ -3134,7 +3125,7 @@ class ViewFactory {
             if (size === '*') {
                 size = ViewFactory.maxCacheSize;
             }
-            else if (isString(size)) {
+            else if (kernel.isString(size)) {
                 size = parseInt(size, 10);
             }
             if (this._cacheSize === -1 || !doNotOverrideIfAlreadySet) {
@@ -3464,6 +3455,8 @@ class SpreadValueBinding {
                 /* istanbul ignore next */
                 return;
             }
+            /* istanbul ignore next */
+            this.unbind();
         }
         this.isBound = true;
         this._scope = scope;
@@ -3492,23 +3485,18 @@ class SpreadValueBinding {
      * @internal
      */
     _createBindings(value, unbind) {
-        if (value == null) {
-            value = {};
-            /* istanbul ignore if */
-            {
-                // eslint-disable-next-line no-console
-                console.warn(`[DEV:aurelia] $bindable spread is given a null/undefined value for properties: "${this.targetKeys.join(', ')}"`);
-            }
-        }
-        else if (!isObject(value)) {
-            value = {};
-            /* istanbul ignore if */
-            {
-                // eslint-disable-next-line no-console
-                console.warn(`[DEV:aurelia] $bindable spread is given a non-object value for properties: "${this.targetKeys.join(', ')}"`);
-            }
-        }
         let key;
+        if (!kernel.isObject(value)) {
+            /* istanbul ignore if */
+            {
+                // eslint-disable-next-line no-console
+                console.warn(`[DEV:aurelia] $bindable spread is given a non object for properties: "${this.targetKeys.join(', ')}" of ${this.target.constructor.name}`);
+            }
+            for (key in this._bindingCache) {
+                this._bindingCache[key]?.unbind();
+            }
+            return;
+        }
         let binding;
         // use a cache as we don't wanna cause bindings to "move" (bind/unbind)
         // whenever there's a new evaluation
@@ -3542,12 +3530,16 @@ SpreadValueBinding._astCache = {};
 
 const IRenderer = /*@__PURE__*/ createInterface('IRenderer');
 function renderer(target, context) {
-    return kernel.Registrable.define(target, function (container) {
-        singletonRegistration(IRenderer, this).register(container);
-    });
+    const metadata = context?.metadata ?? (target[Symbol.metadata] ??= Object.create(null));
+    metadata[kernel.registrableMetadataKey] = {
+        register(container) {
+            singletonRegistration(IRenderer, target).register(container);
+        }
+    };
+    return target;
 }
 function ensureExpression(parser, srcOrExpr, expressionType) {
-    if (isString(srcOrExpr)) {
+    if (kernel.isString(srcOrExpr)) {
         return parser.parse(srcOrExpr, expressionType);
     }
     return srcOrExpr;
@@ -3597,7 +3589,7 @@ const SetPropertyRenderer = /*@__PURE__*/ renderer(class SetPropertyRenderer {
             obj[instruction.to] = instruction.value;
         }
     }
-});
+}, null);
 const CustomElementRenderer = /*@__PURE__*/ renderer(class CustomElementRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
@@ -3659,7 +3651,7 @@ const CustomElementRenderer = /*@__PURE__*/ renderer(class CustomElementRenderer
         renderingCtrl.addChild(childCtrl);
         /* eslint-enable prefer-const */
     }
-});
+}, null);
 const CustomAttributeRenderer = /*@__PURE__*/ renderer(class CustomAttributeRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
@@ -3719,7 +3711,7 @@ const CustomAttributeRenderer = /*@__PURE__*/ renderer(class CustomAttributeRend
         renderingCtrl.addChild(childController);
         /* eslint-enable prefer-const */
     }
-});
+}, null);
 const TemplateControllerRenderer = /*@__PURE__*/ renderer(class TemplateControllerRenderer {
     constructor() {
         /** @internal */ this._rendering = kernel.resolve(IRendering);
@@ -3784,7 +3776,7 @@ const TemplateControllerRenderer = /*@__PURE__*/ renderer(class TemplateControll
         renderingCtrl.addChild(childController);
         /* eslint-enable prefer-const */
     }
-});
+}, null);
 const LetElementRenderer = /*@__PURE__*/ renderer(class LetElementRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.hydrateLetElement;
@@ -3806,7 +3798,7 @@ const LetElementRenderer = /*@__PURE__*/ renderer(class LetElementRenderer {
             ++i;
         }
     }
-});
+}, null);
 const RefBindingRenderer = /*@__PURE__*/ renderer(class RefBindingRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.refBinding;
@@ -3814,43 +3806,43 @@ const RefBindingRenderer = /*@__PURE__*/ renderer(class RefBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new RefBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsProperty), getRefTarget(target, instruction.to)));
     }
-});
+}, null);
 const InterpolationBindingRenderer = /*@__PURE__*/ renderer(class InterpolationBindingRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.interpolation;
         InterpolationPartBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, toView));
+        renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, toView));
     }
-});
+}, null);
 const PropertyBindingRenderer = /*@__PURE__*/ renderer(class PropertyBindingRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.propertyBinding;
         PropertyBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), getTarget(target), instruction.to, instruction.mode));
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), getTarget(target), instruction.to, instruction.mode));
     }
-});
+}, null);
 const IteratorBindingRenderer = /*@__PURE__*/ renderer(class IteratorBindingRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.iteratorBinding;
         PropertyBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.forOf, etIsIterator), getTarget(target), instruction.to, toView));
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.forOf, etIsIterator), getTarget(target), instruction.to, toView));
     }
-});
+}, null);
 const TextBindingRenderer = /*@__PURE__*/ renderer(class TextBindingRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.textBinding;
         ContentBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, platform, ensureExpression(exprParser, instruction.from, etIsProperty), target));
+        renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, platform, ensureExpression(exprParser, instruction.from, etIsProperty), target));
     }
-});
+}, null);
 const IListenerBindingOptions = createInterface('IListenerBindingOptions', x => x.instance({
     prevent: false,
 }));
@@ -3866,7 +3858,7 @@ const ListenerBindingRenderer = /*@__PURE__*/ renderer(class ListenerBindingRend
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(this._defaultOptions.prevent, instruction.capture), this._modifierHandler.getHandler(instruction.to, instruction.modifier)));
     }
-});
+}, null);
 const SetAttributeRenderer = /*@__PURE__*/ renderer(class SetAttributeRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.setAttribute;
@@ -3874,7 +3866,7 @@ const SetAttributeRenderer = /*@__PURE__*/ renderer(class SetAttributeRenderer {
     render(_, target, instruction) {
         target.setAttribute(instruction.to, instruction.value);
     }
-});
+}, null);
 const SetClassAttributeRenderer = /*@__PURE__*/ renderer(class SetClassAttributeRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.setClassAttribute;
@@ -3882,7 +3874,7 @@ const SetClassAttributeRenderer = /*@__PURE__*/ renderer(class SetClassAttribute
     render(_, target, instruction) {
         addClasses(target.classList, instruction.value);
     }
-});
+}, null);
 const SetStyleAttributeRenderer = /*@__PURE__*/ renderer(class SetStyleAttributeRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.setStyleAttribute;
@@ -3890,7 +3882,7 @@ const SetStyleAttributeRenderer = /*@__PURE__*/ renderer(class SetStyleAttribute
     render(_, target, instruction) {
         target.style.cssText += instruction.value;
     }
-});
+}, null);
 /* istanbul ignore next */
 const ambiguousStyles = [
     'height',
@@ -3924,13 +3916,13 @@ const StylePropertyBindingRenderer = /*@__PURE__*/ renderer(class StylePropertyB
         {
             /* istanbul ignore next */
             if (ambiguousStyles.includes(instruction.to)) {
-                renderingCtrl.addBinding(new DevStylePropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
+                renderingCtrl.addBinding(new DevStylePropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
                 return;
             }
         }
-        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
     }
-});
+}, null);
 /* istanbul ignore next */
 class DevStylePropertyBinding extends PropertyBinding {
     updateTarget(value) {
@@ -3951,11 +3943,11 @@ const AttributeBindingRenderer = /*@__PURE__*/ renderer(class AttributeBindingRe
         const classMapping = container.has(ICssModulesMapping, false)
             ? container.get(ICssModulesMapping)
             : null;
-        renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target, instruction.attr /* targetAttribute */, classMapping == null
+        renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target, instruction.attr /* targetAttribute */, classMapping == null
             ? instruction.to /* targetKey */
             : instruction.to.split(/\s/g).map(c => classMapping[c] ?? c).join(' '), toView));
     }
-});
+}, null);
 const SpreadRenderer = /*@__PURE__*/ renderer(class SpreadRenderer {
     constructor() {
         /** @internal */ this._compiler = kernel.resolve(templateCompiler.ITemplateCompiler);
@@ -3966,7 +3958,7 @@ const SpreadRenderer = /*@__PURE__*/ renderer(class SpreadRenderer {
         SpreadBinding.create(renderingCtrl.container.get(IHydrationContext), target, void 0, this._rendering, this._compiler, platform, exprParser, observerLocator)
             .forEach(b => renderingCtrl.addBinding(b));
     }
-});
+}, null);
 const SpreadValueRenderer = /*@__PURE__*/ renderer(class SpreadValueRenderer {
     constructor() {
         this.target = templateCompiler.InstructionType.spreadValueBinding;
@@ -3975,13 +3967,13 @@ const SpreadValueRenderer = /*@__PURE__*/ renderer(class SpreadValueRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const instructionTarget = instruction.target;
         if (instructionTarget === '$bindables') {
-            renderingCtrl.addBinding(new SpreadValueBinding(renderingCtrl, target.viewModel, objectKeys(target.definition.bindables), exprParser.parse(instruction.from, etIsProperty), observerLocator, renderingCtrl.container, platform.domWriteQueue));
+            renderingCtrl.addBinding(new SpreadValueBinding(renderingCtrl, target.viewModel, objectKeys(target.definition.bindables), exprParser.parse(instruction.from, etIsProperty), observerLocator, renderingCtrl.container, platform.domQueue));
         }
         else {
             throw createMappedError(820 /* ErrorNames.spreading_invalid_target */, instructionTarget);
         }
     }
-});
+}, null);
 // http://jsben.ch/7n5Kt
 function addClasses(classList, className) {
     const len = className.length;
@@ -4033,7 +4025,7 @@ class ViewFactoryProvider {
         if (f === null) {
             throw createMappedError(755 /* ErrorNames.view_factory_provider_not_ready */);
         }
-        if (!isString(f.name) || f.name.length === 0) {
+        if (!kernel.isString(f.name) || f.name.length === 0) {
             throw createMappedError(756 /* ErrorNames.view_factory_invalid_name */);
         }
         return f;
@@ -4084,7 +4076,7 @@ class Rendering {
             }
             all[r.target] ??= r;
             return all;
-        }, createLookup());
+        }, kernel.createLookup());
     }
     constructor() {
         /** @internal */
@@ -4141,7 +4133,7 @@ class Rendering {
             }
             else {
                 tpl = doc.createElement('template');
-                if (isString(template)) {
+                if (kernel.isString(template)) {
                     tpl.innerHTML = template;
                 }
                 fragment = tpl.content;
@@ -4358,13 +4350,13 @@ class ClassAttributeAccessor {
     mixinNoopSubscribable(ClassAttributeAccessor);
 })();
 function getClassesToAdd(object) {
-    if (isString(object)) {
+    if (kernel.isString(object)) {
         return splitClassString(object);
     }
     if (typeof object !== 'object') {
         return kernel.emptyArray;
     }
-    if (isArray(object)) {
+    if (kernel.isArray(object)) {
         const len = object.length;
         if (len > 0) {
             const classes = [];
@@ -4604,7 +4596,7 @@ class ComputedWatcher {
         const obj = this.obj;
         const oldValue = this._value;
         const newValue = this.compute();
-        if (!areEqual(newValue, oldValue)) {
+        if (!kernel.areEqual(newValue, oldValue)) {
             // should optionally queue
             this._callback.call(obj, newValue, oldValue, obj);
         }
@@ -4652,7 +4644,7 @@ class ExpressionWatcher {
             value = astEvaluate(expr, this.scope, this, this);
             this.obs.clear();
         }
-        if (!areEqual(value, oldValue)) {
+        if (!kernel.areEqual(value, oldValue)) {
             this._value = value;
             // should optionally queue for batch synchronous
             this._callback.call(obj, value, oldValue, obj);
@@ -5121,7 +5113,7 @@ class Controller {
             }
             ret = kernel.onResolveAll(ret, this._vm.binding(this.$initiator, this.parent));
         }
-        if (isPromise(ret)) {
+        if (kernel.isPromise(ret)) {
             this._ensurePromise();
             ret.then(() => {
                 this._isBindingDone = true;
@@ -5171,7 +5163,7 @@ class Controller {
             }
             ret = kernel.onResolveAll(ret, this._vm.bound(this.$initiator, this.parent));
         }
-        if (isPromise(ret)) {
+        if (kernel.isPromise(ret)) {
             this._ensurePromise();
             ret.then(() => {
                 this.isBound = true;
@@ -5258,7 +5250,7 @@ class Controller {
             }
             ret = kernel.onResolveAll(ret, this._vm.attaching(this.$initiator, this.parent));
         }
-        if (isPromise(ret)) {
+        if (kernel.isPromise(ret)) {
             this._ensurePromise();
             this._enterActivating();
             ret.then(() => {
@@ -5331,7 +5323,7 @@ class Controller {
                     ret = kernel.onResolveAll(ret, this._vm.detaching(this.$initiator, this.parent));
                 }
             }
-            if (isPromise(ret)) {
+            if (kernel.isPromise(ret)) {
                 this._ensurePromise();
                 initiator._enterDetaching();
                 ret.then(() => {
@@ -5480,7 +5472,7 @@ class Controller {
                 }
                 _retPromise = kernel.onResolveAll(_retPromise, this._vm.attached(this.$initiator));
             }
-            if (isPromise(_retPromise)) {
+            if (kernel.isPromise(_retPromise)) {
                 this._ensurePromise();
                 _retPromise.then(() => {
                     this.state = activated;
@@ -5539,7 +5531,7 @@ class Controller {
                         ret = kernel.onResolveAll(ret, cur.viewModel.unbinding(cur.$initiator, cur.parent));
                     }
                 }
-                if (isPromise(ret)) {
+                if (kernel.isPromise(ret)) {
                     this._ensurePromise();
                     this._enterUnbinding();
                     ret.then(() => {
@@ -5764,17 +5756,17 @@ function createWatchers(controller, context, definition, instance) {
     let i = 0;
     for (; ii > i; ++i) {
         ({ expression, callback } = watches[i]);
-        callback = isFunction(callback)
+        callback = kernel.isFunction(callback)
             ? callback
             : Reflect.get(instance, callback);
-        if (!isFunction(callback)) {
+        if (!kernel.isFunction(callback)) {
             throw createMappedError(506 /* ErrorNames.controller_watch_invalid_callback */, callback);
         }
-        if (isFunction(expression)) {
+        if (kernel.isFunction(expression)) {
             controller.addBinding(new ComputedWatcher(instance, observerLocator, expression, callback, true));
         }
         else {
-            ast = isString(expression)
+            ast = kernel.isString(expression)
                 ? expressionParser$1.parse(expression, etIsProperty)
                 : getAccessScopeAst(expression);
             controller.addBinding(new ExpressionWatcher(scope, context, observerLocator, ast, callback));
@@ -6174,7 +6166,7 @@ function useShadowDOM(targetOrOptions, context) {
             });
         };
     }
-    if (!isFunction(targetOrOptions)) {
+    if (!kernel.isFunction(targetOrOptions)) {
         return function ($target, context) {
             context.addInitializer(function () {
                 annotateElementMetadata(this, 'shadowOptions', targetOrOptions);
@@ -6236,11 +6228,11 @@ class CustomElementDefinition {
     static create(nameOrDef, Type = null) {
         if (Type === null) {
             const def = nameOrDef;
-            if (isString(def)) {
+            if (kernel.isString(def)) {
                 throw createMappedError(761 /* ErrorNames.element_only_name */, nameOrDef);
             }
             const name = kernel.fromDefinitionOrDefault('name', def, generateElementName);
-            if (isFunction(def.Type)) {
+            if (kernel.isFunction(def.Type)) {
                 // This needs to be a clone (it will usually be the compiler calling this signature)
                 // TODO: we need to make sure it's documented that passing in the type via the definition (while passing in null
                 // as the "Type" parameter) effectively skips type analysis, so it should only be used this way for cloning purposes.
@@ -6253,7 +6245,7 @@ class CustomElementDefinition {
         }
         // If a type is passed in, we ignore the Type property on the definition if it exists.
         // TODO: document this behavior
-        if (isString(nameOrDef)) {
+        if (kernel.isString(nameOrDef)) {
             return new CustomElementDefinition(Type, nameOrDef, kernel.mergeArrays(getElementAnnotation(Type, 'aliases'), Type.aliases), getElementKeyFrom(nameOrDef), kernel.fromAnnotationOrTypeOrDefault('capture', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('template', Type, returnNull), kernel.mergeArrays(getElementAnnotation(Type, 'instructions'), Type.instructions), kernel.mergeArrays(getElementAnnotation(Type, 'dependencies'), Type.dependencies), kernel.fromAnnotationOrTypeOrDefault('injectable', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('needsCompile', Type, returnTrue), kernel.mergeArrays(getElementAnnotation(Type, 'surrogates'), Type.surrogates), Bindable.from(...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables), kernel.fromAnnotationOrTypeOrDefault('containerless', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('shadowOptions', Type, returnNull), kernel.fromAnnotationOrTypeOrDefault('hasSlots', Type, returnFalse), kernel.fromAnnotationOrTypeOrDefault('enhance', Type, returnFalse), kernel.mergeArrays(Watch.getDefinitions(Type), Type.watches), kernel.fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // This is the typical default behavior, e.g. from regular CustomElement.define invocations or from @customElement deco
@@ -6321,7 +6313,7 @@ const defineElement = (nameOrDef, Type) => {
 };
 /** @internal */
 const isElementType = (value) => {
-    return isFunction(value)
+    return kernel.isFunction(value)
         && (hasMetadata(elementBaseName, value)
             || value.$au?.type === elementTypeName);
 };
@@ -6471,11 +6463,11 @@ function processContent(hook) {
         }
         : function (target, context) {
             context.addInitializer(function () {
-                if (isString(hook) || isSymbol(hook)) {
+                if (kernel.isString(hook) || kernel.isSymbol(hook)) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-explicit-any
                     hook = this[hook];
                 }
-                if (!isFunction(hook))
+                if (!kernel.isFunction(hook))
                     throw createMappedError(766 /* ErrorNames.invalid_process_content_hook */, hook);
                 const def = getMetadata(elementBaseName, this);
                 if (def !== void 0) {
@@ -6490,7 +6482,7 @@ function processContent(hook) {
 }
 function capture(targetOrFilter) {
     return function ($target, context) {
-        const value = isFunction(targetOrFilter) ? targetOrFilter : true;
+        const value = kernel.isFunction(targetOrFilter) ? targetOrFilter : true;
         context.addInitializer(function () {
             annotateElementMetadata(this, 'capture', value);
             // also do this to make order of the decorator irrelevant
@@ -6529,7 +6521,7 @@ class AppRoot {
             const childCtn = enhance ? container : container.createChild();
             const component = config.component;
             let instance;
-            if (isFunction(component)) {
+            if (kernel.isFunction(component)) {
                 instance = childCtn.invoke(component);
                 instanceRegistration(component, instance);
             }
@@ -6662,15 +6654,14 @@ class Aurelia {
     }
     async waitForIdle() {
         const platform = this.root.platform;
-        await platform.domWriteQueue.yield();
-        await platform.domReadQueue.yield();
+        await platform.domQueue.yield();
         await platform.taskQueue.yield();
     }
     start(root = this.next) {
         if (root == null) {
             throw createMappedError(770 /* ErrorNames.no_composition_root */);
         }
-        if (isPromise(this._startPromise)) {
+        if (kernel.isPromise(this._startPromise)) {
             return this._startPromise;
         }
         return this._startPromise = kernel.onResolve(this.stop(), () => {
@@ -6686,7 +6677,7 @@ class Aurelia {
         });
     }
     stop(dispose = false) {
-        if (isPromise(this._stopPromise)) {
+        if (kernel.isPromise(this._stopPromise)) {
             return this._stopPromise;
         }
         if (this._isRunning === true) {
@@ -6720,8 +6711,8 @@ class Aurelia {
 
 const ISVGAnalyzer = /*@__PURE__*/ createInterface('ISVGAnalyzer', x => x.singleton(NoopSVGAnalyzer));
 const o = (keys) => {
-    const lookup = createLookup();
-    keys = isString(keys) ? keys.split(' ') : keys;
+    const lookup = kernel.createLookup();
+    keys = kernel.isString(keys) ? keys.split(' ') : keys;
     let key;
     for (key of keys) {
         lookup[key] = true;
@@ -6739,14 +6730,14 @@ class SVGAnalyzer {
     }
     constructor() {
         /** @internal */
-        this._svgElements = objectAssign(createLookup(), {
+        this._svgElements = objectAssign(kernel.createLookup(), {
             'a': o('class externalResourcesRequired id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup requiredExtensions requiredFeatures style systemLanguage target transform xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space'),
             'altGlyph': o('class dx dy externalResourcesRequired format glyphRef id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup requiredExtensions requiredFeatures rotate style systemLanguage x xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space y'),
-            'altglyph': createLookup(),
+            'altglyph': kernel.createLookup(),
             'altGlyphDef': o('id xml:base xml:lang xml:space'),
-            'altglyphdef': createLookup(),
+            'altglyphdef': kernel.createLookup(),
             'altGlyphItem': o('id xml:base xml:lang xml:space'),
-            'altglyphitem': createLookup(),
+            'altglyphitem': kernel.createLookup(),
             'animate': o('accumulate additive attributeName attributeType begin by calcMode dur end externalResourcesRequired fill from id keySplines keyTimes max min onbegin onend onload onrepeat repeatCount repeatDur requiredExtensions requiredFeatures restart systemLanguage to values xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space'),
             'animateColor': o('accumulate additive attributeName attributeType begin by calcMode dur end externalResourcesRequired fill from id keySplines keyTimes max min onbegin onend onload onrepeat repeatCount repeatDur requiredExtensions requiredFeatures restart systemLanguage to values xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space'),
             'animateMotion': o('accumulate additive begin by calcMode dur end externalResourcesRequired fill from id keyPoints keySplines keyTimes max min onbegin onend onload onrepeat origin path repeatCount repeatDur requiredExtensions requiredFeatures restart rotate systemLanguage to values xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space'),
@@ -6793,7 +6784,7 @@ class SVGAnalyzer {
             'g': o('class externalResourcesRequired id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup requiredExtensions requiredFeatures style systemLanguage transform xml:base xml:lang xml:space'),
             'glyph': o('arabic-form class d glyph-name horiz-adv-x id lang orientation style unicode vert-adv-y vert-origin-x vert-origin-y xml:base xml:lang xml:space'),
             'glyphRef': o('class dx dy format glyphRef id style x xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space y'),
-            'glyphref': createLookup(),
+            'glyphref': kernel.createLookup(),
             'hkern': o('g1 g2 id k u1 u2 xml:base xml:lang xml:space'),
             'image': o('class externalResourcesRequired height id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup preserveAspectRatio requiredExtensions requiredFeatures style systemLanguage transform width x xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type xml:base xml:lang xml:space y'),
             'line': o('class externalResourcesRequired id onactivate onclick onfocusin onfocusout onload onmousedown onmousemove onmouseout onmouseover onmouseup requiredExtensions requiredFeatures style systemLanguage transform x1 x2 xml:base xml:lang xml:space y1 y2'),
@@ -6862,8 +6853,8 @@ class SVGAnalyzer {
 class AttrMapper {
     constructor() {
         /** @internal */ this.fns = [];
-        /** @internal */ this._tagAttrMap = createLookup();
-        /** @internal */ this._globalAttrMap = createLookup();
+        /** @internal */ this._tagAttrMap = kernel.createLookup();
+        /** @internal */ this._globalAttrMap = kernel.createLookup();
         this.svg = kernel.resolve(ISVGAnalyzer);
         this.useMapping({
             LABEL: { for: 'htmlFor' },
@@ -6904,7 +6895,7 @@ class AttrMapper {
         let attr;
         for (tagName in config) {
             newAttrMapping = config[tagName];
-            targetAttrMapping = this._tagAttrMap[tagName] ??= createLookup();
+            targetAttrMapping = this._tagAttrMap[tagName] ??= kernel.createLookup();
             for (attr in newAttrMapping) {
                 if (targetAttrMapping[attr] !== void 0) {
                     throw createError(attr, tagName);
@@ -7028,7 +7019,7 @@ class ResourceResolver {
         let info = this._bindableCache.get(def);
         if (info == null) {
             const bindables = def.bindables;
-            const attrs = createLookup();
+            const attrs = kernel.createLookup();
             let bindable;
             let prop;
             let hasPrimary = false;
@@ -7064,12 +7055,12 @@ class ResourceResolver {
 ResourceResolver.register = kernel.createImplementationRegister(templateCompiler.IResourceResolver);
 class RecordCache {
     constructor() {
-        this._element = createLookup();
-        this._attr = createLookup();
+        this._element = kernel.createLookup();
+        this._attr = kernel.createLookup();
     }
 }
 
-const nsMap = createLookup();
+const nsMap = kernel.createLookup();
 /**
  * Attribute accessor in a XML document/element that can be accessed via a namespace.
  * Wraps [`getAttributeNS`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNS).
@@ -7217,7 +7208,7 @@ class SelectValueObserver {
     syncOptions() {
         const value = this._value;
         const obj = this._el;
-        const $isArray = isArray(value);
+        const $isArray = kernel.isArray(value);
         const matcher = obj.matcher ?? SelectValueObserver._defaultMatcher;
         const options = obj.options;
         let i = options.length;
@@ -7355,7 +7346,7 @@ class SelectValueObserver {
         this._arrayObserver = void 0;
         if (array != null) {
             if (!this._el.multiple) {
-                throw createError$1(`AUR0654: array values can only be bound to a multi-select.`);
+                throw createMappedError(654 /* ErrorNames.select_observer_array_on_non_multi_select */);
             }
             (this._arrayObserver = this._observerLocator.getArrayObserver(array)).subscribe(this);
         }
@@ -7456,7 +7447,7 @@ class StyleAttributeAccessor {
             if (value == null) {
                 continue;
             }
-            if (isString(value)) {
+            if (kernel.isString(value)) {
                 // Custom properties should not be tampered with
                 if (property.startsWith(customPropertyPrefix)) {
                     styles.push([property, value]);
@@ -7484,7 +7475,7 @@ class StyleAttributeAccessor {
     }
     /** @internal */
     _getStyleTuples(currentValue) {
-        if (isString(currentValue)) {
+        if (kernel.isString(currentValue)) {
             return this._getStyleTuplesFromString(currentValue);
         }
         if (currentValue instanceof Array) {
@@ -7533,7 +7524,7 @@ class StyleAttributeAccessor {
     }
     setProperty(style, value) {
         let priority = '';
-        if (value != null && isFunction(value.indexOf) && value.includes('!important')) {
+        if (value != null && kernel.isFunction(value.indexOf) && value.includes('!important')) {
             priority = 'important';
             value = value.replace('!important', '');
         }
@@ -7577,7 +7568,7 @@ class ValueAttributeObserver {
         return this._value;
     }
     setValue(newValue) {
-        if (areEqual(newValue, this._value)) {
+        if (kernel.areEqual(newValue, this._value)) {
             return;
         }
         this._oldValue = this._value;
@@ -7632,7 +7623,7 @@ const nsAttributes = (() => {
     const xmlNS = 'http://www.w3.org/XML/1998/namespace';
     const xmlnsNS = 'http://www.w3.org/2000/xmlns/';
     // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
-    return objectAssign(createLookup(), {
+    return objectAssign(kernel.createLookup(), {
         'xlink:actuate': ['actuate', xlinkNS],
         'xlink:arcrole': ['arcrole', xlinkNS],
         'xlink:href': ['href', xlinkNS],
@@ -7655,13 +7646,13 @@ class NodeObserverLocator {
          */
         this.allowDirtyCheck = true;
         /** @internal */
-        this._events = createLookup();
+        this._events = kernel.createLookup();
         /** @internal */
-        this._globalEvents = createLookup();
+        this._globalEvents = kernel.createLookup();
         /** @internal */
-        this._overrides = createLookup();
+        this._overrides = kernel.createLookup();
         /** @internal */
-        this._globalOverrides = createLookup();
+        this._globalOverrides = kernel.createLookup();
         /** @internal */
         this._locator = kernel.resolve(kernel.IServiceLocator);
         /** @internal */
@@ -7714,8 +7705,8 @@ class NodeObserverLocator {
     useConfig(nodeNameOrConfig, key, eventsConfig) {
         const lookup = this._events;
         let existingMapping;
-        if (isString(nodeNameOrConfig)) {
-            existingMapping = lookup[nodeNameOrConfig] ??= createLookup();
+        if (kernel.isString(nodeNameOrConfig)) {
+            existingMapping = lookup[nodeNameOrConfig] ??= kernel.createLookup();
             if (existingMapping[key] == null) {
                 existingMapping[key] = eventsConfig;
             }
@@ -7725,7 +7716,7 @@ class NodeObserverLocator {
         }
         else {
             for (const nodeName in nodeNameOrConfig) {
-                existingMapping = lookup[nodeName] ??= createLookup();
+                existingMapping = lookup[nodeName] ??= kernel.createLookup();
                 const newMapping = nodeNameOrConfig[nodeName];
                 for (key in newMapping) {
                     if (existingMapping[key] == null) {
@@ -7805,14 +7796,14 @@ class NodeObserverLocator {
     }
     overrideAccessor(tagNameOrOverrides, key) {
         let existingTagOverride;
-        if (isString(tagNameOrOverrides)) {
-            existingTagOverride = this._overrides[tagNameOrOverrides] ??= createLookup();
+        if (kernel.isString(tagNameOrOverrides)) {
+            existingTagOverride = this._overrides[tagNameOrOverrides] ??= kernel.createLookup();
             existingTagOverride[key] = true;
         }
         else {
             for (const tagName in tagNameOrOverrides) {
                 for (const key of tagNameOrOverrides[tagName]) {
-                    existingTagOverride = this._overrides[tagName] ??= createLookup();
+                    existingTagOverride = this._overrides[tagName] ??= kernel.createLookup();
                     existingTagOverride[key] = true;
                 }
             }
@@ -7968,7 +7959,7 @@ class CheckedObserver {
         }
         else {
             let hasMatch = false;
-            if (isArray(currentValue)) {
+            if (kernel.isArray(currentValue)) {
                 hasMatch = currentValue.findIndex(item => !!matcher(item, elementValue)) !== -1;
             }
             else if (currentValue instanceof Set) {
@@ -8001,7 +7992,7 @@ class CheckedObserver {
         const isChecked = obj.checked;
         const matcher = obj.matcher !== void 0 ? obj.matcher : defaultMatcher;
         if (obj.type === 'checkbox') {
-            if (isArray(currentValue)) {
+            if (kernel.isArray(currentValue)) {
                 // Array binding steps on a change event:
                 // 1. find corresponding item INDEX in the Set based on current model/value and matcher
                 // 2. is the checkbox checked?
@@ -8606,7 +8597,7 @@ class Repeat {
                 // TODO(fkleuver): add logic to the controller that ensures correct handling of race conditions and add a variety of `if` integration tests
                 return this._activateAllViews(null, this._normalizedItems ?? kernel.emptyArray);
             });
-            if (isPromise(ret)) {
+            if (kernel.isPromise(ret)) {
                 ret.catch(rethrow);
             }
         }
@@ -8617,7 +8608,7 @@ class Repeat {
                     // TODO(fkleuver): add logic to the controller that ensures correct handling of race conditions and add a variety of `if` integration tests
                     return this._createAndActivateAndSortViewsByKey(oldLen, indexMap);
                 });
-                if (isPromise(ret)) {
+                if (kernel.isPromise(ret)) {
                     ret.catch(rethrow);
                 }
             }
@@ -8637,7 +8628,7 @@ class Repeat {
         let newObserver;
         if (observingInnerItems) {
             innerItems = this._innerItems = astEvaluate(this._innerItemsExpression, scope, this._forOfBinding, null) ?? null;
-            observingInnerItems = this._observingInnerItems = !areEqual(this.items, innerItems);
+            observingInnerItems = this._observingInnerItems = !kernel.areEqual(this.items, innerItems);
         }
         const oldObserver = this._observer;
         if (this.$controller.isActive) {
@@ -8656,7 +8647,7 @@ class Repeat {
     /** @internal */
     _normalizeToArray() {
         const items = this.items;
-        if (isArray(items)) {
+        if (kernel.isArray(items)) {
             this._normalizedItems = items.slice(0);
             return;
         }
@@ -8682,7 +8673,7 @@ class Repeat {
             viewScope = getScope(_scopeMap, item, forOf, parentScope, _forOfBinding, local, _hasDestructuredLocal);
             setContextualProperties(viewScope.overrideContext, i, newLen);
             ret = view.activate(initiator ?? view, $controller, viewScope);
-            if (isPromise(ret)) {
+            if (kernel.isPromise(ret)) {
                 (promises ??= []).push(ret);
             }
         });
@@ -8704,7 +8695,7 @@ class Repeat {
             view = views[i];
             view.release();
             ret = view.deactivate(initiator ?? view, $controller);
-            if (isPromise(ret)) {
+            if (kernel.isPromise(ret)) {
                 (promises ?? (promises = [])).push(ret);
             }
         }
@@ -8727,7 +8718,7 @@ class Repeat {
             view = views[deleted[i]];
             view.release();
             ret = view.deactivate(view, $controller);
-            if (isPromise(ret)) {
+            if (kernel.isPromise(ret)) {
                 (promises ?? (promises = [])).push(ret);
             }
         }
@@ -8785,7 +8776,7 @@ class Repeat {
                 setContextualProperties(viewScope.overrideContext, i, newLen);
                 view.setLocation(_location);
                 ret = view.activate(view, $controller, viewScope);
-                if (isPromise(ret)) {
+                if (kernel.isPromise(ret)) {
                     (promises ?? (promises = [])).push(ret);
                 }
             }
@@ -8958,7 +8949,7 @@ class ArrayLikeHandler {
         c.register(singletonRegistration(IRepeatableHandler, this));
     }
     handles(value) {
-        return 'length' in value && isNumber(value.length);
+        return 'length' in value && kernel.isNumber(value.length);
     }
     iterate(items, func) {
         for (let i = 0, ii = items.length; i < ii; ++i) {
@@ -8971,7 +8962,7 @@ class ArrayLikeHandler {
  */
 const IRepeatableHandler = /*@__PURE__*/ createInterface('IRepeatableHandler');
 const _arrayHandler = {
-    handles: isArray,
+    handles: kernel.isArray,
     getObserver: runtime.getCollectionObserver,
     /* istanbul ignore next */
     iterate(value, func) {
@@ -8984,7 +8975,7 @@ const _arrayHandler = {
     // getCount: items => items.length,
 };
 const _setHandler = {
-    handles: isSet,
+    handles: kernel.isSet,
     getObserver: runtime.getCollectionObserver,
     iterate(value, func) {
         let i = 0;
@@ -8996,7 +8987,7 @@ const _setHandler = {
     // getCount: s => s.size,
 };
 const _mapHandler = {
-    handles: isMap,
+    handles: kernel.isMap,
     getObserver: runtime.getCollectionObserver,
     iterate(value, func) {
         let i = 0;
@@ -9008,7 +8999,7 @@ const _mapHandler = {
     // getCount: s => s.size,
 };
 const _numberHandler = {
-    handles: isNumber,
+    handles: kernel.isNumber,
     iterate(value, func) {
         let i = 0;
         for (; i < value; ++i) {
@@ -9324,7 +9315,7 @@ class Case {
     isMatch(value) {
         this._logger.debug('isMatch()');
         const $value = this.value;
-        if (isArray($value)) {
+        if (kernel.isArray($value)) {
             if (this._observer === void 0) {
                 this._observer = this._observeCollection($value);
             }
@@ -9333,7 +9324,7 @@ class Case {
         return $value === value;
     }
     valueChanged(newValue, _oldValue) {
-        if (isArray(newValue)) {
+        if (kernel.isArray(newValue)) {
             this._observer?.unsubscribe(this);
             this._observer = this._observeCollection(newValue);
         }
@@ -9417,6 +9408,7 @@ class DefaultCase extends Case {
     defineAttribute({ name: 'case', bindables, isTemplateController: true }, Case);
 })();
 
+var _a, _b, _c;
 class PromiseTemplateController {
     constructor() {
         this.preSettledTask = null;
@@ -9442,14 +9434,14 @@ class PromiseTemplateController {
     }
     swap(initiator) {
         const value = this.value;
-        if (!isPromise(value)) {
+        if (!kernel.isPromise(value)) {
             {
                 /* istanbul ignore next */
                 this.logger.warn(`The value '${safeString(value)}' is not a promise. No change will be done.`);
             }
             return;
         }
-        const q = this._platform.domWriteQueue;
+        const q = this._platform.domQueue;
         const fulfilled = this.fulfilled;
         const rejected = this.rejected;
         const pending = this.pending;
@@ -9664,19 +9656,28 @@ class PromiseAttributePattern {
         return new templateCompiler.AttrSyntax(name, value, 'promise', 'bind');
     }
 }
-templateCompiler.AttributePattern.define([{ pattern: 'promise.resolve', symbols: '' }], PromiseAttributePattern);
+_a = Symbol.metadata;
+PromiseAttributePattern[_a] = {
+    [kernel.registrableMetadataKey]: templateCompiler.AttributePattern.create([{ pattern: 'promise.resolve', symbols: '' }], PromiseAttributePattern)
+};
 class FulfilledAttributePattern {
     'then'(name, value) {
         return new templateCompiler.AttrSyntax(name, value, 'then', 'from-view');
     }
 }
-templateCompiler.AttributePattern.define([{ pattern: 'then', symbols: '' }], FulfilledAttributePattern);
+_b = Symbol.metadata;
+FulfilledAttributePattern[_b] = {
+    [kernel.registrableMetadataKey]: templateCompiler.AttributePattern.create([{ pattern: 'then', symbols: '' }], FulfilledAttributePattern)
+};
 class RejectedAttributePattern {
     'catch'(name, value) {
         return new templateCompiler.AttrSyntax(name, value, 'catch', 'from-view');
     }
 }
-templateCompiler.AttributePattern.define([{ pattern: 'catch', symbols: '' }], RejectedAttributePattern);
+_c = Symbol.metadata;
+RejectedAttributePattern[_c] = {
+    [kernel.registrableMetadataKey]: templateCompiler.AttributePattern.create([{ pattern: 'catch', symbols: '' }], RejectedAttributePattern)
+};
 
 /**
  * Focus attribute for element focus binding
@@ -9829,7 +9830,7 @@ class Portal {
             this._moveLocation(newTarget, this.position);
             return this._activating(null, newTarget);
         });
-        if (isPromise(ret)) {
+        if (kernel.isPromise(ret)) {
             ret.catch(rethrow);
         }
     }
@@ -9843,7 +9844,7 @@ class Portal {
             this._moveLocation(_resolvedTarget, this.position);
             return this._activating(null, _resolvedTarget);
         });
-        if (isPromise(ret)) {
+        if (kernel.isPromise(ret)) {
             ret.catch(rethrow);
         }
     }
@@ -9912,9 +9913,9 @@ class Portal {
             }
             return $document.body;
         }
-        if (isString(target)) {
+        if (kernel.isString(target)) {
             let queryContext = $document;
-            if (isString(context)) {
+            if (kernel.isString(context)) {
                 context = $document.querySelector(context);
             }
             if (context instanceof p.Node) {
@@ -10395,7 +10396,7 @@ class AuCompose {
                     .reduce((attrGroups, attr) => {
                     const shouldCapture = !(attr.target in vmDef.bindables)
                         && (capture === true
-                            || isFunction(capture) && !!capture(attr.target));
+                            || kernel.isFunction(capture) && !!capture(attr.target));
                     attrGroups[shouldCapture ? 0 : 1].push(attr);
                     return attrGroups;
                 }, [[], []]);
@@ -10477,7 +10478,7 @@ class AuCompose {
             }
             return def;
         }
-        const Ctor = (isFunction(component)
+        const Ctor = (kernel.isFunction(component)
             ? component
             : component?.constructor);
         return CustomElement.isType(Ctor, void 0)
@@ -10536,7 +10537,7 @@ class ChangeInfo {
         this._src = _src;
     }
     load() {
-        if (isPromise(this._template) || isPromise(this._component)) {
+        if (kernel.isPromise(this._template) || kernel.isPromise(this._component)) {
             return Promise
                 .all([this._template, this._component])
                 .then(([template, component]) => {
@@ -10666,7 +10667,7 @@ class Show {
     }
     valueChanged() {
         if (this._isActive && this._task === null) {
-            this._task = this.p.domWriteQueue.queueTask(this.update);
+            this._task = this.p.domQueue.queueTask(this.update);
         }
     }
 }
@@ -10706,7 +10707,7 @@ const DefaultBindingSyntax = [
  */
 const ShortHandBindingSyntax = [
     templateCompiler.AtPrefixedTriggerAttributePattern,
-    templateCompiler.ColonPrefixedBindAttributePattern
+    templateCompiler.ColonPrefixedBindAttributePattern,
 ];
 /**
  * Default HTML-specific (but environment-agnostic) binding commands:
@@ -10757,7 +10758,6 @@ const DefaultResources = [
     PendingTemplateController,
     FulfilledTemplateController,
     RejectedTemplateController,
-    // TODO: activate after the attribute parser and/or interpreter such that for `t`, `then` is not picked up.
     PromiseAttributePattern,
     FulfilledAttributePattern,
     RejectedAttributePattern,
@@ -10861,7 +10861,7 @@ function children(configOrTarget, context) {
         decorator(configOrTarget, context);
         return;
     }
-    else if (isString(configOrTarget)) {
+    else if (kernel.isString(configOrTarget)) {
         // Direct call:
         // - @children('div')(Foo)
         config = {

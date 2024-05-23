@@ -1,5 +1,5 @@
 import { DestructuringAssignmentSingleExpression, AccessScopeExpression, IExpressionParser } from '../../../expression-parser/dist/native-modules/index.mjs';
-import { isArrayIndex, Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, firstDefined, mergeArrays, resourceBaseName, resource, getResourceKeyFor, resolve, IPlatform as IPlatform$1, emptyArray, Registrable, all, InstanceProvider, IContainer, optionalResource, optional, ILogger, LogLevel, onResolveAll, onResolve, fromDefinitionOrDefault, pascalCase, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, createImplementationRegister, IServiceLocator, emptyObject, transient } from '../../../kernel/dist/native-modules/index.mjs';
+import { isString, createLookup, isObject, isFunction, isArray, isArrayIndex, Protocol, getPrototypeChain, kebabCase, noop, DI, Registration, firstDefined, mergeArrays, resourceBaseName, resource, getResourceKeyFor, resolve, IPlatform as IPlatform$1, emptyArray, registrableMetadataKey, all, InstanceProvider, IContainer, areEqual, optionalResource, optional, ILogger, LogLevel, onResolveAll, isPromise, onResolve, fromDefinitionOrDefault, pascalCase, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, isSymbol, createImplementationRegister, IServiceLocator, emptyObject, isNumber, isSet, isMap, transient } from '../../../kernel/dist/native-modules/index.mjs';
 import { AccessorType, connectable, subscriberCollection, IObserverLocator, ConnectableSwitcher, ProxyObservable, ICoercionConfiguration, PropertyAccessor, INodeObserverLocator, IDirtyChecker, getObserverLookup, SetterObserver, createIndexMap, getCollectionObserver as getCollectionObserver$1, DirtyChecker } from '../../../runtime/dist/native-modules/index.mjs';
 import { BindingMode, InstructionType, ITemplateCompiler, IInstruction, IAttrMapper, IResourceResolver, TemplateCompiler, AttributePattern, AttrSyntax, RefAttributePattern, DotSeparatedAttributePattern, EventAttributePattern, AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, DefaultBindingCommand, OneTimeBindingCommand, FromViewBindingCommand, ToViewBindingCommand, TwoWayBindingCommand, ForBindingCommand, RefBindingCommand, TriggerBindingCommand, CaptureBindingCommand, ClassBindingCommand, StyleBindingCommand, AttrBindingCommand, SpreadValueBindingCommand } from '../../../template-compiler/dist/native-modules/index.mjs';
 export { BindingCommand, BindingMode } from '../../../template-compiler/dist/native-modules/index.mjs';
@@ -10,8 +10,6 @@ import { TaskAbortError } from '../../../platform/dist/native-modules/index.mjs'
 const O = Object;
 /** @internal */ const safeString = String;
 /** @internal */ const baseObjectPrototype = O.prototype;
-/** @internal */ const createLookup = () => O.create(null);
-/** @internal */ const createError$1 = (message) => new Error(message);
 /** @internal */ const hasOwnProperty = baseObjectPrototype.hasOwnProperty;
 /** @internal */ const objectFreeze = O.freeze;
 /** @internal */ const objectAssign = O.assign;
@@ -33,18 +31,7 @@ const IsDataAttribute = /*@__PURE__*/ createLookup();
             prefix === 'data-' ||
             svgAnalyzer.isStandardSvgAttribute(obj, key);
 };
-/** @internal */ const isPromise = (v) => v instanceof Promise;
-/** @internal */ const isArray = (v) => v instanceof Array;
-/** @internal */ const isSet = (v) => v instanceof Set;
-/** @internal */ const isMap = (v) => v instanceof Map;
-// eslint-disable-next-line @typescript-eslint/ban-types
-/** @internal */ const isFunction = (v) => typeof v === 'function';
-/** @internal */ const isObject = (v) => v instanceof O;
-/** @internal */ const isString = (v) => typeof v === 'string';
-/** @internal */ const isSymbol = (v) => typeof v === 'symbol';
-/** @internal */ const isNumber = (v) => typeof v === 'number';
 /** @internal */ const rethrow = (err) => { throw err; };
-/** @internal */ const areEqual = O.is;
 /** @internal */
 const def = Reflect.defineProperty;
 /** @internal */
@@ -1770,9 +1757,11 @@ const LifecycleHooks = /*@__PURE__*/ (() => {
             const definition = LifecycleHooksDefinition.create(def, Type);
             const $Type = definition.Type;
             definitionMap.set($Type, definition);
-            return Registrable.define($Type, container => {
-                singletonRegistration(ILifecycleHooks, $Type).register(container);
-            });
+            return {
+                register(container) {
+                    singletonRegistration(ILifecycleHooks, $Type).register(container);
+                }
+            };
         },
         /**
          * @param ctx - The container where the resolution starts
@@ -1817,9 +1806,11 @@ class LifecycleHooksLookupImpl {
 }
 function lifecycleHooks(target, context) {
     function decorator(target, context) {
-        return LifecycleHooks.define({}, target);
+        const metadata = context?.metadata ?? (target[Symbol.metadata] ??= Object.create(null));
+        metadata[registrableMetadataKey] = LifecycleHooks.define({}, target);
+        return target;
     }
-    return target == null ? decorator : decorator(target);
+    return target == null ? decorator : decorator(target, context);
 }
 
 function valueConverter(nameOrDef) {
@@ -3461,6 +3452,8 @@ class SpreadValueBinding {
                 /* istanbul ignore next */
                 return;
             }
+            /* istanbul ignore next */
+            this.unbind();
         }
         this.isBound = true;
         this._scope = scope;
@@ -3489,23 +3482,18 @@ class SpreadValueBinding {
      * @internal
      */
     _createBindings(value, unbind) {
-        if (value == null) {
-            value = {};
-            /* istanbul ignore if */
-            {
-                // eslint-disable-next-line no-console
-                console.warn(`[DEV:aurelia] $bindable spread is given a null/undefined value for properties: "${this.targetKeys.join(', ')}"`);
-            }
-        }
-        else if (!isObject(value)) {
-            value = {};
-            /* istanbul ignore if */
-            {
-                // eslint-disable-next-line no-console
-                console.warn(`[DEV:aurelia] $bindable spread is given a non-object value for properties: "${this.targetKeys.join(', ')}"`);
-            }
-        }
         let key;
+        if (!isObject(value)) {
+            /* istanbul ignore if */
+            {
+                // eslint-disable-next-line no-console
+                console.warn(`[DEV:aurelia] $bindable spread is given a non object for properties: "${this.targetKeys.join(', ')}" of ${this.target.constructor.name}`);
+            }
+            for (key in this._bindingCache) {
+                this._bindingCache[key]?.unbind();
+            }
+            return;
+        }
         let binding;
         // use a cache as we don't wanna cause bindings to "move" (bind/unbind)
         // whenever there's a new evaluation
@@ -3539,9 +3527,13 @@ SpreadValueBinding._astCache = {};
 
 const IRenderer = /*@__PURE__*/ createInterface('IRenderer');
 function renderer(target, context) {
-    return Registrable.define(target, function (container) {
-        singletonRegistration(IRenderer, this).register(container);
-    });
+    const metadata = context?.metadata ?? (target[Symbol.metadata] ??= Object.create(null));
+    metadata[registrableMetadataKey] = {
+        register(container) {
+            singletonRegistration(IRenderer, target).register(container);
+        }
+    };
+    return target;
 }
 function ensureExpression(parser, srcOrExpr, expressionType) {
     if (isString(srcOrExpr)) {
@@ -3594,7 +3586,7 @@ const SetPropertyRenderer = /*@__PURE__*/ renderer(class SetPropertyRenderer {
             obj[instruction.to] = instruction.value;
         }
     }
-});
+}, null);
 const CustomElementRenderer = /*@__PURE__*/ renderer(class CustomElementRenderer {
     constructor() {
         /** @internal */ this._rendering = resolve(IRendering);
@@ -3656,7 +3648,7 @@ const CustomElementRenderer = /*@__PURE__*/ renderer(class CustomElementRenderer
         renderingCtrl.addChild(childCtrl);
         /* eslint-enable prefer-const */
     }
-});
+}, null);
 const CustomAttributeRenderer = /*@__PURE__*/ renderer(class CustomAttributeRenderer {
     constructor() {
         /** @internal */ this._rendering = resolve(IRendering);
@@ -3716,7 +3708,7 @@ const CustomAttributeRenderer = /*@__PURE__*/ renderer(class CustomAttributeRend
         renderingCtrl.addChild(childController);
         /* eslint-enable prefer-const */
     }
-});
+}, null);
 const TemplateControllerRenderer = /*@__PURE__*/ renderer(class TemplateControllerRenderer {
     constructor() {
         /** @internal */ this._rendering = resolve(IRendering);
@@ -3781,7 +3773,7 @@ const TemplateControllerRenderer = /*@__PURE__*/ renderer(class TemplateControll
         renderingCtrl.addChild(childController);
         /* eslint-enable prefer-const */
     }
-});
+}, null);
 const LetElementRenderer = /*@__PURE__*/ renderer(class LetElementRenderer {
     constructor() {
         this.target = InstructionType.hydrateLetElement;
@@ -3803,7 +3795,7 @@ const LetElementRenderer = /*@__PURE__*/ renderer(class LetElementRenderer {
             ++i;
         }
     }
-});
+}, null);
 const RefBindingRenderer = /*@__PURE__*/ renderer(class RefBindingRenderer {
     constructor() {
         this.target = InstructionType.refBinding;
@@ -3811,43 +3803,43 @@ const RefBindingRenderer = /*@__PURE__*/ renderer(class RefBindingRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new RefBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsProperty), getRefTarget(target, instruction.to)));
     }
-});
+}, null);
 const InterpolationBindingRenderer = /*@__PURE__*/ renderer(class InterpolationBindingRenderer {
     constructor() {
         this.target = InstructionType.interpolation;
         InterpolationPartBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, toView));
+        renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, toView));
     }
-});
+}, null);
 const PropertyBindingRenderer = /*@__PURE__*/ renderer(class PropertyBindingRenderer {
     constructor() {
         this.target = InstructionType.propertyBinding;
         PropertyBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), getTarget(target), instruction.to, instruction.mode));
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), getTarget(target), instruction.to, instruction.mode));
     }
-});
+}, null);
 const IteratorBindingRenderer = /*@__PURE__*/ renderer(class IteratorBindingRenderer {
     constructor() {
         this.target = InstructionType.iteratorBinding;
         PropertyBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.forOf, etIsIterator), getTarget(target), instruction.to, toView));
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.forOf, etIsIterator), getTarget(target), instruction.to, toView));
     }
-});
+}, null);
 const TextBindingRenderer = /*@__PURE__*/ renderer(class TextBindingRenderer {
     constructor() {
         this.target = InstructionType.textBinding;
         ContentBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, platform, ensureExpression(exprParser, instruction.from, etIsProperty), target));
+        renderingCtrl.addBinding(new ContentBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, platform, ensureExpression(exprParser, instruction.from, etIsProperty), target));
     }
-});
+}, null);
 const IListenerBindingOptions = createInterface('IListenerBindingOptions', x => x.instance({
     prevent: false,
 }));
@@ -3863,7 +3855,7 @@ const ListenerBindingRenderer = /*@__PURE__*/ renderer(class ListenerBindingRend
     render(renderingCtrl, target, instruction, platform, exprParser) {
         renderingCtrl.addBinding(new ListenerBinding(renderingCtrl.container, ensureExpression(exprParser, instruction.from, etIsFunction), target, instruction.to, new ListenerBindingOptions(this._defaultOptions.prevent, instruction.capture), this._modifierHandler.getHandler(instruction.to, instruction.modifier)));
     }
-});
+}, null);
 const SetAttributeRenderer = /*@__PURE__*/ renderer(class SetAttributeRenderer {
     constructor() {
         this.target = InstructionType.setAttribute;
@@ -3871,7 +3863,7 @@ const SetAttributeRenderer = /*@__PURE__*/ renderer(class SetAttributeRenderer {
     render(_, target, instruction) {
         target.setAttribute(instruction.to, instruction.value);
     }
-});
+}, null);
 const SetClassAttributeRenderer = /*@__PURE__*/ renderer(class SetClassAttributeRenderer {
     constructor() {
         this.target = InstructionType.setClassAttribute;
@@ -3879,7 +3871,7 @@ const SetClassAttributeRenderer = /*@__PURE__*/ renderer(class SetClassAttribute
     render(_, target, instruction) {
         addClasses(target.classList, instruction.value);
     }
-});
+}, null);
 const SetStyleAttributeRenderer = /*@__PURE__*/ renderer(class SetStyleAttributeRenderer {
     constructor() {
         this.target = InstructionType.setStyleAttribute;
@@ -3887,7 +3879,7 @@ const SetStyleAttributeRenderer = /*@__PURE__*/ renderer(class SetStyleAttribute
     render(_, target, instruction) {
         target.style.cssText += instruction.value;
     }
-});
+}, null);
 /* istanbul ignore next */
 const ambiguousStyles = [
     'height',
@@ -3921,13 +3913,13 @@ const StylePropertyBindingRenderer = /*@__PURE__*/ renderer(class StylePropertyB
         {
             /* istanbul ignore next */
             if (ambiguousStyles.includes(instruction.to)) {
-                renderingCtrl.addBinding(new DevStylePropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
+                renderingCtrl.addBinding(new DevStylePropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
                 return;
             }
         }
-        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
+        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target.style, instruction.to, toView));
     }
-});
+}, null);
 /* istanbul ignore next */
 class DevStylePropertyBinding extends PropertyBinding {
     updateTarget(value) {
@@ -3948,11 +3940,11 @@ const AttributeBindingRenderer = /*@__PURE__*/ renderer(class AttributeBindingRe
         const classMapping = container.has(ICssModulesMapping, false)
             ? container.get(ICssModulesMapping)
             : null;
-        renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, container, observerLocator, platform.domWriteQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target, instruction.attr /* targetAttribute */, classMapping == null
+        renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target, instruction.attr /* targetAttribute */, classMapping == null
             ? instruction.to /* targetKey */
             : instruction.to.split(/\s/g).map(c => classMapping[c] ?? c).join(' '), toView));
     }
-});
+}, null);
 const SpreadRenderer = /*@__PURE__*/ renderer(class SpreadRenderer {
     constructor() {
         /** @internal */ this._compiler = resolve(ITemplateCompiler);
@@ -3963,7 +3955,7 @@ const SpreadRenderer = /*@__PURE__*/ renderer(class SpreadRenderer {
         SpreadBinding.create(renderingCtrl.container.get(IHydrationContext), target, void 0, this._rendering, this._compiler, platform, exprParser, observerLocator)
             .forEach(b => renderingCtrl.addBinding(b));
     }
-});
+}, null);
 const SpreadValueRenderer = /*@__PURE__*/ renderer(class SpreadValueRenderer {
     constructor() {
         this.target = InstructionType.spreadValueBinding;
@@ -3972,13 +3964,13 @@ const SpreadValueRenderer = /*@__PURE__*/ renderer(class SpreadValueRenderer {
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const instructionTarget = instruction.target;
         if (instructionTarget === '$bindables') {
-            renderingCtrl.addBinding(new SpreadValueBinding(renderingCtrl, target.viewModel, objectKeys(target.definition.bindables), exprParser.parse(instruction.from, etIsProperty), observerLocator, renderingCtrl.container, platform.domWriteQueue));
+            renderingCtrl.addBinding(new SpreadValueBinding(renderingCtrl, target.viewModel, objectKeys(target.definition.bindables), exprParser.parse(instruction.from, etIsProperty), observerLocator, renderingCtrl.container, platform.domQueue));
         }
         else {
             throw createMappedError(820 /* ErrorNames.spreading_invalid_target */, instructionTarget);
         }
     }
-});
+}, null);
 // http://jsben.ch/7n5Kt
 function addClasses(classList, className) {
     const len = className.length;
@@ -6659,8 +6651,7 @@ class Aurelia {
     }
     async waitForIdle() {
         const platform = this.root.platform;
-        await platform.domWriteQueue.yield();
-        await platform.domReadQueue.yield();
+        await platform.domQueue.yield();
         await platform.taskQueue.yield();
     }
     start(root = this.next) {
@@ -7352,7 +7343,7 @@ class SelectValueObserver {
         this._arrayObserver = void 0;
         if (array != null) {
             if (!this._el.multiple) {
-                throw createError$1(`AUR0654: array values can only be bound to a multi-select.`);
+                throw createMappedError(654 /* ErrorNames.select_observer_array_on_non_multi_select */);
             }
             (this._arrayObserver = this._observerLocator.getArrayObserver(array)).subscribe(this);
         }
@@ -9414,6 +9405,7 @@ class DefaultCase extends Case {
     defineAttribute({ name: 'case', bindables, isTemplateController: true }, Case);
 })();
 
+var _a, _b, _c;
 class PromiseTemplateController {
     constructor() {
         this.preSettledTask = null;
@@ -9446,7 +9438,7 @@ class PromiseTemplateController {
             }
             return;
         }
-        const q = this._platform.domWriteQueue;
+        const q = this._platform.domQueue;
         const fulfilled = this.fulfilled;
         const rejected = this.rejected;
         const pending = this.pending;
@@ -9661,19 +9653,28 @@ class PromiseAttributePattern {
         return new AttrSyntax(name, value, 'promise', 'bind');
     }
 }
-AttributePattern.define([{ pattern: 'promise.resolve', symbols: '' }], PromiseAttributePattern);
+_a = Symbol.metadata;
+PromiseAttributePattern[_a] = {
+    [registrableMetadataKey]: AttributePattern.create([{ pattern: 'promise.resolve', symbols: '' }], PromiseAttributePattern)
+};
 class FulfilledAttributePattern {
     'then'(name, value) {
         return new AttrSyntax(name, value, 'then', 'from-view');
     }
 }
-AttributePattern.define([{ pattern: 'then', symbols: '' }], FulfilledAttributePattern);
+_b = Symbol.metadata;
+FulfilledAttributePattern[_b] = {
+    [registrableMetadataKey]: AttributePattern.create([{ pattern: 'then', symbols: '' }], FulfilledAttributePattern)
+};
 class RejectedAttributePattern {
     'catch'(name, value) {
         return new AttrSyntax(name, value, 'catch', 'from-view');
     }
 }
-AttributePattern.define([{ pattern: 'catch', symbols: '' }], RejectedAttributePattern);
+_c = Symbol.metadata;
+RejectedAttributePattern[_c] = {
+    [registrableMetadataKey]: AttributePattern.create([{ pattern: 'catch', symbols: '' }], RejectedAttributePattern)
+};
 
 /**
  * Focus attribute for element focus binding
@@ -10663,7 +10664,7 @@ class Show {
     }
     valueChanged() {
         if (this._isActive && this._task === null) {
-            this._task = this.p.domWriteQueue.queueTask(this.update);
+            this._task = this.p.domQueue.queueTask(this.update);
         }
     }
 }
@@ -10703,7 +10704,7 @@ const DefaultBindingSyntax = [
  */
 const ShortHandBindingSyntax = [
     AtPrefixedTriggerAttributePattern,
-    ColonPrefixedBindAttributePattern
+    ColonPrefixedBindAttributePattern,
 ];
 /**
  * Default HTML-specific (but environment-agnostic) binding commands:
@@ -10754,7 +10755,6 @@ const DefaultResources = [
     PendingTemplateController,
     FulfilledTemplateController,
     RejectedTemplateController,
-    // TODO: activate after the attribute parser and/or interpreter such that for `t`, `then` is not picked up.
     PromiseAttributePattern,
     FulfilledAttributePattern,
     RejectedAttributePattern,

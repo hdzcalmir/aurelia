@@ -2,41 +2,25 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var metadata = require('@aurelia/metadata');
 var kernel = require('@aurelia/kernel');
+var metadata = require('@aurelia/metadata');
 
-const O = Object;
 /**
  * A shortcut to Object.prototype.hasOwnProperty
  * Needs to do explicit .call
  *
  * @internal
  */
-const hasOwnProp = O.prototype.hasOwnProperty;
+const hasOwnProp = Object.prototype.hasOwnProperty;
 /**
  * Reflect does not throw on invalid property def
  *
  * @internal
  */
-const def = Reflect.defineProperty;
+const rtDef = Reflect.defineProperty;
 /** @internal */
-const createError = (message) => new Error(message);
-/** @internal */
-// eslint-disable-next-line @typescript-eslint/ban-types
-const isFunction = (v) => typeof v === 'function';
-/** @internal */
-const isObject = (v) => v instanceof O;
-/** @internal */
-const isArray = (v) => v instanceof Array;
-/** @internal */
-const isSet = (v) => v instanceof Set;
-/** @internal */
-const isMap = (v) => v instanceof Map;
-/** @internal */
-const areEqual = O.is;
-/** @internal */
-function defineHiddenProp(obj, key, value) {
-    def(obj, key, {
+function rtDefineHiddenProp(obj, key, value) {
+    rtDef(obj, key, {
         enumerable: false,
         configurable: true,
         writable: true,
@@ -47,24 +31,23 @@ function defineHiddenProp(obj, key, value) {
 /** @internal */
 function ensureProto(proto, key, defaultValue) {
     if (!(key in proto)) {
-        defineHiddenProp(proto, key, defaultValue);
+        rtDefineHiddenProp(proto, key, defaultValue);
     }
 }
-/** @internal */ const objectAssign = Object.assign;
-/** @internal */ const objectFreeze = Object.freeze;
+/** @internal */ const rtObjectAssign = Object.assign;
+/** @internal */ const rtObjectFreeze = Object.freeze;
 // this is used inside template literal, since TS errs without String(...value)
-/** @internal */ const safeString = String;
-/** @internal */ const createInterface = kernel.DI.createInterface;
-/** @internal */ const createLookup = () => O.create(null);
-/** @internal */ const getMetadata = metadata.Metadata.get;
-/** @internal */ const defineMetadata = metadata.Metadata.define;
+/** @internal */ const rtSafeString = String;
+/** @internal */ const rtCreateInterface = kernel.DI.createInterface;
+/** @internal */ const rtGetMetadata = metadata.Metadata.get;
+/** @internal */ const rtDefineMetadata = metadata.Metadata.define;
 
 const ICoercionConfiguration = /*@__PURE__*/ kernel.DI.createInterface('ICoercionConfiguration');
 /** @internal */ const atNone = 0b0_000_000;
 /** @internal */ const atObserver = 0b0_000_001;
 /** @internal */ const atNode = 0b0_000_010;
 /** @internal */ const atLayout = 0b0_000_100;
-const AccessorType = /*@__PURE__*/ objectFreeze({
+const AccessorType = /*@__PURE__*/ rtObjectFreeze({
     None: atNone,
     Observer: atObserver,
     Node: atNode,
@@ -126,7 +109,7 @@ function cloneIndexMap(indexMap) {
     return clone;
 }
 function isIndexMap(value) {
-    return isArray(value) && value.isIndexMap === true;
+    return kernel.isArray(value) && value.isIndexMap === true;
 }
 
 let currBatch = new Map();
@@ -210,7 +193,7 @@ const subscriberCollection = /*@__PURE__*/ (() => {
         return target == null ? subscriberCollectionDeco : subscriberCollectionDeco(target);
     }
     function getSubscriberRecord() {
-        return defineHiddenProp(this, 'subs', new SubscriberRecord());
+        return rtDefineHiddenProp(this, 'subs', new SubscriberRecord());
     }
     function addSubscriber(subscriber) {
         return this.subs.add(subscriber);
@@ -225,7 +208,7 @@ const subscriberCollection = /*@__PURE__*/ (() => {
             const proto = target.prototype;
             // not configurable, as in devtool, the getter could be invoked on the prototype,
             // and become permanently broken
-            def(proto, 'subs', { get: getSubscriberRecord });
+            rtDef(proto, 'subs', { get: getSubscriberRecord });
             ensureProto(proto, 'subscribe', addSubscriber);
             ensureProto(proto, 'unsubscribe', removeSubscriber);
         }
@@ -290,7 +273,7 @@ const subscriberCollection = /*@__PURE__*/ (() => {
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable prefer-template */
 /** @internal */
-const createMappedError = (code, ...details) => new Error(`AUR${safeString(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+const createMappedError = (code, ...details) => new Error(`AUR${rtSafeString(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
     ;
 
 const errorsMap = {
@@ -341,6 +324,9 @@ const errorsMap = {
     [208 /* ErrorNames.switch_off_null_connectable */]: `Trying to pop a null/undefined connectable`,
     [209 /* ErrorNames.switch_off_inactive_connectable */]: `Trying to exit an inactive connectable`,
     [210 /* ErrorNames.non_recognisable_collection_type */]: `Unrecognised collection type {{0:toString}}.`,
+    [217 /* ErrorNames.dirty_check_no_handler */]: 'There is no registration for IDirtyChecker interface. If you want to use your own dirty checker, make sure you register it.',
+    [218 /* ErrorNames.dirty_check_not_allowed */]: `Dirty checked is not permitted in this application. Property key {{0}} is being dirty checked.`,
+    [219 /* ErrorNames.dirty_check_setter_not_allowed */]: `Trying to set value for property {{0}} in dirty checker`,
     [220 /* ErrorNames.assign_readonly_size */]: `Map/Set "size" is a readonly property`,
     [221 /* ErrorNames.assign_readonly_readonly_property_from_computed */]: `Trying to assign value to readonly property "{{0}}" through computed observer.`,
     [224 /* ErrorNames.invalid_observable_decorator_usage */]: `Invalid @observable decorator usage, cannot determine property name`,
@@ -358,23 +344,8 @@ const getMessageByCode = (name, ...details) => {
             let value = details[i];
             if (value != null) {
                 switch (method) {
-                    case 'nodeName':
-                        value = value.nodeName.toLowerCase();
-                        break;
-                    case 'name':
-                        value = value.name;
-                        break;
                     case 'typeof':
                         value = typeof value;
-                        break;
-                    case 'ctor':
-                        value = value.constructor.name;
-                        break;
-                    case 'controller':
-                        value = value.controller.name;
-                        break;
-                    case 'target@property':
-                        value = `${value.target}@${value.targetProperty}`;
                         break;
                     case 'toString':
                         value = Object.prototype.toString.call(value);
@@ -382,19 +353,16 @@ const getMessageByCode = (name, ...details) => {
                     case 'join(!=)':
                         value = value.join('!=');
                         break;
-                    case 'bindingCommandHelp':
-                        value = getBindingCommandHelp(value);
-                        break;
                     case 'element':
                         value = value === '*' ? 'all elements' : `<${value} />`;
                         break;
                     default: {
                         // property access
                         if (method?.startsWith('.')) {
-                            value = safeString(value[method.slice(1)]);
+                            value = rtSafeString(value[method.slice(1)]);
                         }
                         else {
-                            value = safeString(value);
+                            value = rtSafeString(value);
                         }
                     }
                 }
@@ -405,21 +373,6 @@ const getMessageByCode = (name, ...details) => {
     }
     return cooked;
 };
-function getBindingCommandHelp(name) {
-    switch (name) {
-        case 'delegate':
-            return `\nThe ".delegate" binding command has been removed in v2.`
-                + ` Binding command ".trigger" should be used instead.`
-                + ` If you are migrating v1 application, install compat package`
-                + ` to add back the ".delegate" binding command for ease of migration.`;
-        case 'call':
-            return `\nThe ".call" binding command has been removed in v2.`
-                + ` If you want to pass a callback that preserves the context of the function call,`
-                + ` you can use lambda instead. Refer to lambda expression doc for more details.`;
-        default:
-            return '';
-    }
-}
 
 class CollectionLengthObserver {
     constructor(owner) {
@@ -499,808 +452,741 @@ function unsubscribe(subscriber) {
     }
 }
 
-// multiple applications of Aurelia wouldn't have different observers for the same Array object
-const lookupMetadataKey$2 = Symbol.for('__au_arr_obs__');
-const observerLookup$2 = (Array[lookupMetadataKey$2]
-    ?? defineHiddenProp(Array, lookupMetadataKey$2, new WeakMap()));
-// https://tc39.github.io/ecma262/#sec-sortcompare
-function sortCompare(x, y) {
-    if (x === y) {
-        return 0;
-    }
-    x = x === null ? 'null' : x.toString();
-    y = y === null ? 'null' : y.toString();
-    return x < y ? -1 : 1;
-}
-function preSortCompare(x, y) {
-    if (x === void 0) {
-        if (y === void 0) {
+const getArrayObserver = /*@__PURE__*/ (() => {
+    // multiple applications of Aurelia wouldn't have different observers for the same Array object
+    const lookupMetadataKey = Symbol.for('__au_arr_obs__');
+    const observerLookup = (Array[lookupMetadataKey]
+        ?? rtDefineHiddenProp(Array, lookupMetadataKey, new WeakMap()));
+    // https://tc39.github.io/ecma262/#sec-sortcompare
+    function sortCompare(x, y) {
+        if (x === y) {
             return 0;
         }
-        else {
-            return 1;
-        }
+        x = x === null ? 'null' : x.toString();
+        y = y === null ? 'null' : y.toString();
+        return x < y ? -1 : 1;
     }
-    if (y === void 0) {
-        return -1;
-    }
-    return 0;
-}
-function insertionSort(arr, indexMap, from, to, compareFn) {
-    let velement, ielement, vtmp, itmp, order;
-    let i, j;
-    for (i = from + 1; i < to; i++) {
-        velement = arr[i];
-        ielement = indexMap[i];
-        for (j = i - 1; j >= from; j--) {
-            vtmp = arr[j];
-            itmp = indexMap[j];
-            order = compareFn(vtmp, velement);
-            if (order > 0) {
-                arr[j + 1] = vtmp;
-                indexMap[j + 1] = itmp;
+    function preSortCompare(x, y) {
+        if (x === void 0) {
+            if (y === void 0) {
+                return 0;
             }
             else {
-                break;
+                return 1;
             }
         }
-        arr[j + 1] = velement;
-        indexMap[j + 1] = ielement;
+        if (y === void 0) {
+            return -1;
+        }
+        return 0;
     }
-}
-function quickSort(arr, indexMap, from, to, compareFn) {
-    let thirdIndex = 0, i = 0;
-    let v0, v1, v2;
-    let i0, i1, i2;
-    let c01, c02, c12;
-    let vtmp, itmp;
-    let vpivot, ipivot, lowEnd, highStart;
-    let velement, ielement, order, vtopElement;
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        if (to - from <= 10) {
-            insertionSort(arr, indexMap, from, to, compareFn);
-            return;
-        }
-        thirdIndex = from + ((to - from) >> 1);
-        v0 = arr[from];
-        i0 = indexMap[from];
-        v1 = arr[to - 1];
-        i1 = indexMap[to - 1];
-        v2 = arr[thirdIndex];
-        i2 = indexMap[thirdIndex];
-        c01 = compareFn(v0, v1);
-        if (c01 > 0) {
-            vtmp = v0;
-            itmp = i0;
-            v0 = v1;
-            i0 = i1;
-            v1 = vtmp;
-            i1 = itmp;
-        }
-        c02 = compareFn(v0, v2);
-        if (c02 >= 0) {
-            vtmp = v0;
-            itmp = i0;
-            v0 = v2;
-            i0 = i2;
-            v2 = v1;
-            i2 = i1;
-            v1 = vtmp;
-            i1 = itmp;
-        }
-        else {
-            c12 = compareFn(v1, v2);
-            if (c12 > 0) {
-                vtmp = v1;
-                itmp = i1;
-                v1 = v2;
-                i1 = i2;
-                v2 = vtmp;
-                i2 = itmp;
-            }
-        }
-        arr[from] = v0;
-        indexMap[from] = i0;
-        arr[to - 1] = v2;
-        indexMap[to - 1] = i2;
-        vpivot = v1;
-        ipivot = i1;
-        lowEnd = from + 1;
-        highStart = to - 1;
-        arr[thirdIndex] = arr[lowEnd];
-        indexMap[thirdIndex] = indexMap[lowEnd];
-        arr[lowEnd] = vpivot;
-        indexMap[lowEnd] = ipivot;
-        partition: for (i = lowEnd + 1; i < highStart; i++) {
+    function insertionSort(arr, indexMap, from, to, compareFn) {
+        let velement, ielement, vtmp, itmp, order;
+        let i, j;
+        for (i = from + 1; i < to; i++) {
             velement = arr[i];
             ielement = indexMap[i];
-            order = compareFn(velement, vpivot);
-            if (order < 0) {
-                arr[i] = arr[lowEnd];
-                indexMap[i] = indexMap[lowEnd];
-                arr[lowEnd] = velement;
-                indexMap[lowEnd] = ielement;
-                lowEnd++;
+            for (j = i - 1; j >= from; j--) {
+                vtmp = arr[j];
+                itmp = indexMap[j];
+                order = compareFn(vtmp, velement);
+                if (order > 0) {
+                    arr[j + 1] = vtmp;
+                    indexMap[j + 1] = itmp;
+                }
+                else {
+                    break;
+                }
             }
-            else if (order > 0) {
-                do {
-                    highStart--;
-                    // eslint-disable-next-line eqeqeq
-                    if (highStart == i) {
-                        break partition;
-                    }
-                    vtopElement = arr[highStart];
-                    order = compareFn(vtopElement, vpivot);
-                } while (order > 0);
-                arr[i] = arr[highStart];
-                indexMap[i] = indexMap[highStart];
-                arr[highStart] = velement;
-                indexMap[highStart] = ielement;
+            arr[j + 1] = velement;
+            indexMap[j + 1] = ielement;
+        }
+    }
+    function quickSort(arr, indexMap, from, to, compareFn) {
+        let thirdIndex = 0, i = 0;
+        let v0, v1, v2;
+        let i0, i1, i2;
+        let c01, c02, c12;
+        let vtmp, itmp;
+        let vpivot, ipivot, lowEnd, highStart;
+        let velement, ielement, order, vtopElement;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            if (to - from <= 10) {
+                insertionSort(arr, indexMap, from, to, compareFn);
+                return;
+            }
+            thirdIndex = from + ((to - from) >> 1);
+            v0 = arr[from];
+            i0 = indexMap[from];
+            v1 = arr[to - 1];
+            i1 = indexMap[to - 1];
+            v2 = arr[thirdIndex];
+            i2 = indexMap[thirdIndex];
+            c01 = compareFn(v0, v1);
+            if (c01 > 0) {
+                vtmp = v0;
+                itmp = i0;
+                v0 = v1;
+                i0 = i1;
+                v1 = vtmp;
+                i1 = itmp;
+            }
+            c02 = compareFn(v0, v2);
+            if (c02 >= 0) {
+                vtmp = v0;
+                itmp = i0;
+                v0 = v2;
+                i0 = i2;
+                v2 = v1;
+                i2 = i1;
+                v1 = vtmp;
+                i1 = itmp;
+            }
+            else {
+                c12 = compareFn(v1, v2);
+                if (c12 > 0) {
+                    vtmp = v1;
+                    itmp = i1;
+                    v1 = v2;
+                    i1 = i2;
+                    v2 = vtmp;
+                    i2 = itmp;
+                }
+            }
+            arr[from] = v0;
+            indexMap[from] = i0;
+            arr[to - 1] = v2;
+            indexMap[to - 1] = i2;
+            vpivot = v1;
+            ipivot = i1;
+            lowEnd = from + 1;
+            highStart = to - 1;
+            arr[thirdIndex] = arr[lowEnd];
+            indexMap[thirdIndex] = indexMap[lowEnd];
+            arr[lowEnd] = vpivot;
+            indexMap[lowEnd] = ipivot;
+            partition: for (i = lowEnd + 1; i < highStart; i++) {
+                velement = arr[i];
+                ielement = indexMap[i];
+                order = compareFn(velement, vpivot);
                 if (order < 0) {
-                    velement = arr[i];
-                    ielement = indexMap[i];
                     arr[i] = arr[lowEnd];
                     indexMap[i] = indexMap[lowEnd];
                     arr[lowEnd] = velement;
                     indexMap[lowEnd] = ielement;
                     lowEnd++;
                 }
+                else if (order > 0) {
+                    do {
+                        highStart--;
+                        // eslint-disable-next-line eqeqeq
+                        if (highStart == i) {
+                            break partition;
+                        }
+                        vtopElement = arr[highStart];
+                        order = compareFn(vtopElement, vpivot);
+                    } while (order > 0);
+                    arr[i] = arr[highStart];
+                    indexMap[i] = indexMap[highStart];
+                    arr[highStart] = velement;
+                    indexMap[highStart] = ielement;
+                    if (order < 0) {
+                        velement = arr[i];
+                        ielement = indexMap[i];
+                        arr[i] = arr[lowEnd];
+                        indexMap[i] = indexMap[lowEnd];
+                        arr[lowEnd] = velement;
+                        indexMap[lowEnd] = ielement;
+                        lowEnd++;
+                    }
+                }
             }
-        }
-        if (to - highStart < lowEnd - from) {
-            quickSort(arr, indexMap, highStart, to, compareFn);
-            to = lowEnd;
-        }
-        else {
-            quickSort(arr, indexMap, from, lowEnd, compareFn);
-            from = highStart;
+            if (to - highStart < lowEnd - from) {
+                quickSort(arr, indexMap, highStart, to, compareFn);
+                to = lowEnd;
+            }
+            else {
+                quickSort(arr, indexMap, from, lowEnd, compareFn);
+                from = highStart;
+            }
         }
     }
-}
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const proto$2 = Array.prototype;
-const methods$2 = ['push', 'unshift', 'pop', 'shift', 'splice', 'reverse', 'sort'];
-let observe$2;
-let native$2;
-function overrideArrayPrototypes() {
-    const $push = proto$2.push;
-    const $unshift = proto$2.unshift;
-    const $pop = proto$2.pop;
-    const $shift = proto$2.shift;
-    const $splice = proto$2.splice;
-    const $reverse = proto$2.reverse;
-    const $sort = proto$2.sort;
-    native$2 = { push: $push, unshift: $unshift, pop: $pop, shift: $shift, splice: $splice, reverse: $reverse, sort: $sort };
-    observe$2 = {
-        // https://tc39.github.io/ecma262/#sec-array.prototype.push
-        push: function (...args) {
-            const o = observerLookup$2.get(this);
-            if (o === void 0) {
-                return $push.apply(this, args);
-            }
-            const len = this.length;
-            const argCount = args.length;
-            if (argCount === 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const proto = Array.prototype;
+    const methods = ['push', 'unshift', 'pop', 'shift', 'splice', 'reverse', 'sort'];
+    let observe;
+    // let native: undefined | Pick<typeof proto, typeof methods[number]>;
+    function overrideArrayPrototypes() {
+        const $push = proto.push;
+        const $unshift = proto.unshift;
+        const $pop = proto.pop;
+        const $shift = proto.shift;
+        const $splice = proto.splice;
+        const $reverse = proto.reverse;
+        const $sort = proto.sort;
+        // native = { push: $push, unshift: $unshift, pop: $pop, shift: $shift, splice: $splice, reverse: $reverse, sort: $sort };
+        observe = {
+            // https://tc39.github.io/ecma262/#sec-array.prototype.push
+            push: function (...args) {
+                const o = observerLookup.get(this);
+                if (o === void 0) {
+                    return $push.apply(this, args);
+                }
+                const len = this.length;
+                const argCount = args.length;
+                if (argCount === 0) {
+                    return len;
+                }
+                this.length = o.indexMap.length = len + argCount;
+                let i = len;
+                while (i < this.length) {
+                    this[i] = args[i - len];
+                    o.indexMap[i] = -2;
+                    i++;
+                }
+                o.notify();
+                return this.length;
+            },
+            // https://tc39.github.io/ecma262/#sec-array.prototype.unshift
+            unshift: function (...args) {
+                const o = observerLookup.get(this);
+                if (o === void 0) {
+                    return $unshift.apply(this, args);
+                }
+                const argCount = args.length;
+                const inserts = new Array(argCount);
+                let i = 0;
+                while (i < argCount) {
+                    inserts[i++] = -2;
+                }
+                $unshift.apply(o.indexMap, inserts);
+                const len = $unshift.apply(this, args);
+                o.notify();
                 return len;
-            }
-            this.length = o.indexMap.length = len + argCount;
-            let i = len;
-            while (i < this.length) {
-                this[i] = args[i - len];
-                o.indexMap[i] = -2;
-                i++;
-            }
-            o.notify();
-            return this.length;
-        },
-        // https://tc39.github.io/ecma262/#sec-array.prototype.unshift
-        unshift: function (...args) {
-            const o = observerLookup$2.get(this);
-            if (o === void 0) {
-                return $unshift.apply(this, args);
-            }
-            const argCount = args.length;
-            const inserts = new Array(argCount);
-            let i = 0;
-            while (i < argCount) {
-                inserts[i++] = -2;
-            }
-            $unshift.apply(o.indexMap, inserts);
-            const len = $unshift.apply(this, args);
-            o.notify();
-            return len;
-        },
-        // https://tc39.github.io/ecma262/#sec-array.prototype.pop
-        pop: function () {
-            const o = observerLookup$2.get(this);
-            if (o === void 0) {
-                return $pop.call(this);
-            }
-            const indexMap = o.indexMap;
-            const element = $pop.call(this);
-            // only mark indices as deleted if they actually existed in the original array
-            const index = indexMap.length - 1;
-            if (indexMap[index] > -1) {
-                indexMap.deletedIndices.push(indexMap[index]);
-                indexMap.deletedItems.push(element);
-            }
-            $pop.call(indexMap);
-            o.notify();
-            return element;
-        },
-        // https://tc39.github.io/ecma262/#sec-array.prototype.shift
-        shift: function () {
-            const o = observerLookup$2.get(this);
-            if (o === void 0) {
-                return $shift.call(this);
-            }
-            const indexMap = o.indexMap;
-            const element = $shift.call(this);
-            // only mark indices as deleted if they actually existed in the original array
-            if (indexMap[0] > -1) {
-                indexMap.deletedIndices.push(indexMap[0]);
-                indexMap.deletedItems.push(element);
-            }
-            $shift.call(indexMap);
-            o.notify();
-            return element;
-        },
-        // https://tc39.github.io/ecma262/#sec-array.prototype.splice
-        splice: function (...args) {
-            const start = args[0];
-            const deleteCount = args[1];
-            const o = observerLookup$2.get(this);
-            if (o === void 0) {
-                return $splice.apply(this, args);
-            }
-            const len = this.length;
-            const relativeStart = start | 0;
-            const actualStart = relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(relativeStart, len);
-            const indexMap = o.indexMap;
-            const argCount = args.length;
-            const actualDeleteCount = argCount === 0 ? 0 : argCount === 1 ? len - actualStart : deleteCount;
-            let i = actualStart;
-            if (actualDeleteCount > 0) {
-                const to = i + actualDeleteCount;
-                while (i < to) {
-                    // only mark indices as deleted if they actually existed in the original array
-                    if (indexMap[i] > -1) {
-                        indexMap.deletedIndices.push(indexMap[i]);
-                        indexMap.deletedItems.push(this[i]);
+            },
+            // https://tc39.github.io/ecma262/#sec-array.prototype.pop
+            pop: function () {
+                const o = observerLookup.get(this);
+                if (o === void 0) {
+                    return $pop.call(this);
+                }
+                const indexMap = o.indexMap;
+                const element = $pop.call(this);
+                // only mark indices as deleted if they actually existed in the original array
+                const index = indexMap.length - 1;
+                if (indexMap[index] > -1) {
+                    indexMap.deletedIndices.push(indexMap[index]);
+                    indexMap.deletedItems.push(element);
+                }
+                $pop.call(indexMap);
+                o.notify();
+                return element;
+            },
+            // https://tc39.github.io/ecma262/#sec-array.prototype.shift
+            shift: function () {
+                const o = observerLookup.get(this);
+                if (o === void 0) {
+                    return $shift.call(this);
+                }
+                const indexMap = o.indexMap;
+                const element = $shift.call(this);
+                // only mark indices as deleted if they actually existed in the original array
+                if (indexMap[0] > -1) {
+                    indexMap.deletedIndices.push(indexMap[0]);
+                    indexMap.deletedItems.push(element);
+                }
+                $shift.call(indexMap);
+                o.notify();
+                return element;
+            },
+            // https://tc39.github.io/ecma262/#sec-array.prototype.splice
+            splice: function (...args) {
+                const start = args[0];
+                const deleteCount = args[1];
+                const o = observerLookup.get(this);
+                if (o === void 0) {
+                    return $splice.apply(this, args);
+                }
+                const len = this.length;
+                const relativeStart = start | 0;
+                const actualStart = relativeStart < 0 ? Math.max((len + relativeStart), 0) : Math.min(relativeStart, len);
+                const indexMap = o.indexMap;
+                const argCount = args.length;
+                const actualDeleteCount = argCount === 0 ? 0 : argCount === 1 ? len - actualStart : deleteCount;
+                let i = actualStart;
+                if (actualDeleteCount > 0) {
+                    const to = i + actualDeleteCount;
+                    while (i < to) {
+                        // only mark indices as deleted if they actually existed in the original array
+                        if (indexMap[i] > -1) {
+                            indexMap.deletedIndices.push(indexMap[i]);
+                            indexMap.deletedItems.push(this[i]);
+                        }
+                        i++;
+                    }
+                }
+                i = 0;
+                if (argCount > 2) {
+                    const itemCount = argCount - 2;
+                    const inserts = new Array(itemCount);
+                    while (i < itemCount) {
+                        inserts[i++] = -2;
+                    }
+                    $splice.call(indexMap, start, deleteCount, ...inserts);
+                }
+                else {
+                    $splice.apply(indexMap, args);
+                }
+                const deleted = $splice.apply(this, args);
+                // only notify when there's deletion, or addition
+                if (actualDeleteCount > 0 || i > 0) {
+                    o.notify();
+                }
+                return deleted;
+            },
+            // https://tc39.github.io/ecma262/#sec-array.prototype.reverse
+            reverse: function () {
+                const o = observerLookup.get(this);
+                if (o === void 0) {
+                    $reverse.call(this);
+                    return this;
+                }
+                const len = this.length;
+                const middle = (len / 2) | 0;
+                let lower = 0;
+                while (lower !== middle) {
+                    const upper = len - lower - 1;
+                    const lowerValue = this[lower];
+                    const lowerIndex = o.indexMap[lower];
+                    const upperValue = this[upper];
+                    const upperIndex = o.indexMap[upper];
+                    this[lower] = upperValue;
+                    o.indexMap[lower] = upperIndex;
+                    this[upper] = lowerValue;
+                    o.indexMap[upper] = lowerIndex;
+                    lower++;
+                }
+                o.notify();
+                return this;
+            },
+            // https://tc39.github.io/ecma262/#sec-array.prototype.sort
+            // https://github.com/v8/v8/blob/master/src/js/array.js
+            sort: function (compareFn) {
+                const o = observerLookup.get(this);
+                if (o === void 0) {
+                    $sort.call(this, compareFn);
+                    return this;
+                }
+                let len = this.length;
+                if (len < 2) {
+                    return this;
+                }
+                quickSort(this, o.indexMap, 0, len, preSortCompare);
+                let i = 0;
+                while (i < len) {
+                    if (this[i] === void 0) {
+                        break;
                     }
                     i++;
                 }
-            }
-            i = 0;
-            if (argCount > 2) {
-                const itemCount = argCount - 2;
-                const inserts = new Array(itemCount);
-                while (i < itemCount) {
-                    inserts[i++] = -2;
+                if (compareFn === void 0 || !kernel.isFunction(compareFn) /* spec says throw a TypeError, should we do that too? */) {
+                    compareFn = sortCompare;
                 }
-                $splice.call(indexMap, start, deleteCount, ...inserts);
-            }
-            else {
-                $splice.apply(indexMap, args);
-            }
-            const deleted = $splice.apply(this, args);
-            // only notify when there's deletion, or addition
-            if (actualDeleteCount > 0 || i > 0) {
-                o.notify();
-            }
-            return deleted;
-        },
-        // https://tc39.github.io/ecma262/#sec-array.prototype.reverse
-        reverse: function () {
-            const o = observerLookup$2.get(this);
-            if (o === void 0) {
-                $reverse.call(this);
+                quickSort(this, o.indexMap, 0, i, compareFn);
+                // todo(fred): it shouldn't notify if the sort produce a stable array:
+                //             where every item has the same index before/after
+                //             though this is inefficient we loop a few times like this
+                let shouldNotify = false;
+                for (i = 0, len = o.indexMap.length; len > i; ++i) {
+                    if (o.indexMap[i] !== i) {
+                        shouldNotify = true;
+                        break;
+                    }
+                }
+                if (shouldNotify || batching) {
+                    o.notify();
+                }
                 return this;
             }
-            const len = this.length;
-            const middle = (len / 2) | 0;
-            let lower = 0;
-            while (lower !== middle) {
-                const upper = len - lower - 1;
-                const lowerValue = this[lower];
-                const lowerIndex = o.indexMap[lower];
-                const upperValue = this[upper];
-                const upperIndex = o.indexMap[upper];
-                this[lower] = upperValue;
-                o.indexMap[lower] = upperIndex;
-                this[upper] = lowerValue;
-                o.indexMap[upper] = lowerIndex;
-                lower++;
-            }
-            o.notify();
-            return this;
-        },
-        // https://tc39.github.io/ecma262/#sec-array.prototype.sort
-        // https://github.com/v8/v8/blob/master/src/js/array.js
-        sort: function (compareFn) {
-            const o = observerLookup$2.get(this);
-            if (o === void 0) {
-                $sort.call(this, compareFn);
-                return this;
-            }
-            let len = this.length;
-            if (len < 2) {
-                return this;
-            }
-            quickSort(this, o.indexMap, 0, len, preSortCompare);
-            let i = 0;
-            while (i < len) {
-                if (this[i] === void 0) {
-                    break;
-                }
-                i++;
-            }
-            if (compareFn === void 0 || !isFunction(compareFn) /* spec says throw a TypeError, should we do that too? */) {
-                compareFn = sortCompare;
-            }
-            quickSort(this, o.indexMap, 0, i, compareFn);
-            // todo(fred): it shouldn't notify if the sort produce a stable array:
-            //             where every item has the same index before/after
-            //             though this is inefficient we loop a few times like this
-            let shouldNotify = false;
-            for (i = 0, len = o.indexMap.length; len > i; ++i) {
-                if (o.indexMap[i] !== i) {
-                    shouldNotify = true;
-                    break;
-                }
-            }
-            if (shouldNotify || batching) {
-                o.notify();
-            }
-            return this;
+        };
+        for (const method of methods) {
+            rtDef(observe[method], 'observing', { value: true, writable: false, configurable: false, enumerable: false });
         }
-    };
-    for (const method of methods$2) {
-        def(observe$2[method], 'observing', { value: true, writable: false, configurable: false, enumerable: false });
     }
-}
-let enableArrayObservationCalled = false;
-const observationEnabledKey$2 = '__au_arr_on__';
-function enableArrayObservation() {
-    if (observe$2 === undefined) {
-        overrideArrayPrototypes();
-    }
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (!(getMetadata(observationEnabledKey$2, Array) ?? false)) {
-        defineMetadata(true, Array, observationEnabledKey$2);
-        for (const method of methods$2) {
-            if (proto$2[method].observing !== true) {
-                defineHiddenProp(proto$2, method, observe$2[method]);
+    let enableArrayObservationCalled = false;
+    const observationEnabledKey = '__au_arr_on__';
+    function enableArrayObservation() {
+        if (observe === undefined) {
+            overrideArrayPrototypes();
+        }
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (!(rtGetMetadata(observationEnabledKey, Array) ?? false)) {
+            rtDefineMetadata(true, Array, observationEnabledKey);
+            for (const method of methods) {
+                if (proto[method].observing !== true) {
+                    rtDefineHiddenProp(proto, method, observe[method]);
+                }
             }
         }
     }
-}
-function disableArrayObservation() {
-    for (const method of methods$2) {
-        if (proto$2[method].observing === true) {
-            defineHiddenProp(proto$2, method, native$2[method]);
+    class ArrayObserverImpl {
+        constructor(array) {
+            this.type = atObserver;
+            if (!enableArrayObservationCalled) {
+                enableArrayObservationCalled = true;
+                enableArrayObservation();
+            }
+            this.indexObservers = {};
+            this.collection = array;
+            this.indexMap = createIndexMap(array.length);
+            this.lenObs = void 0;
+            observerLookup.set(array, this);
+        }
+        notify() {
+            const subs = this.subs;
+            const indexMap = this.indexMap;
+            if (batching) {
+                addCollectionBatch(subs, this.collection, indexMap);
+                return;
+            }
+            const arr = this.collection;
+            const length = arr.length;
+            this.indexMap = createIndexMap(length);
+            this.subs.notifyCollection(arr, indexMap);
+        }
+        getLengthObserver() {
+            return this.lenObs ??= new CollectionLengthObserver(this);
+        }
+        getIndexObserver(index) {
+            // It's unnecessary to destroy/recreate index observer all the time,
+            // so just create once, and add/remove instead
+            return this.indexObservers[index] ??= new ArrayIndexObserverImpl(this, index);
         }
     }
-}
-class ArrayObserver {
-    constructor(array) {
-        this.type = atObserver;
-        if (!enableArrayObservationCalled) {
-            enableArrayObservationCalled = true;
+    (() => {
+        subscriberCollection(ArrayObserverImpl, null);
+    })();
+    class ArrayIndexObserverImpl {
+        constructor(owner, index) {
+            this.owner = owner;
+            this.index = index;
+            this.doNotCache = true;
+            this.value = this.getValue();
+        }
+        getValue() {
+            return this.owner.collection[this.index];
+        }
+        setValue(newValue) {
+            if (newValue === this.getValue()) {
+                return;
+            }
+            const arrayObserver = this.owner;
+            const index = this.index;
+            const indexMap = arrayObserver.indexMap;
+            if (indexMap[index] > -1) {
+                indexMap.deletedIndices.push(indexMap[index]);
+            }
+            indexMap[index] = -2;
+            // do not need to update current value here
+            // as it will be updated inside handle collection change
+            arrayObserver.collection[index] = newValue;
+            arrayObserver.notify();
+        }
+        /**
+         * From interface `ICollectionSubscriber`
+         */
+        handleCollectionChange(_arr, indexMap) {
+            const index = this.index;
+            const noChange = indexMap[index] === index;
+            if (noChange) {
+                return;
+            }
+            const prevValue = this.value;
+            const currValue = this.value = this.getValue();
+            // hmm
+            if (prevValue !== currValue) {
+                this.subs.notify(currValue, prevValue);
+            }
+        }
+        subscribe(subscriber) {
+            if (this.subs.add(subscriber) && this.subs.count === 1) {
+                this.owner.subscribe(this);
+            }
+        }
+        unsubscribe(subscriber) {
+            if (this.subs.remove(subscriber) && this.subs.count === 0) {
+                this.owner.unsubscribe(this);
+            }
+        }
+    }
+    (() => {
+        subscriberCollection(ArrayIndexObserverImpl, null);
+    })();
+    return function getArrayObserver(array) {
+        let observer = observerLookup.get(array);
+        if (observer === void 0) {
+            observerLookup.set(array, observer = new ArrayObserverImpl(array));
             enableArrayObservation();
         }
-        this.indexObservers = {};
-        this.collection = array;
-        this.indexMap = createIndexMap(array.length);
-        this.lenObs = void 0;
-        observerLookup$2.set(array, this);
-    }
-    notify() {
-        const subs = this.subs;
-        const indexMap = this.indexMap;
-        if (batching) {
-            addCollectionBatch(subs, this.collection, indexMap);
-            return;
-        }
-        const arr = this.collection;
-        const length = arr.length;
-        this.indexMap = createIndexMap(length);
-        this.subs.notifyCollection(arr, indexMap);
-    }
-    getLengthObserver() {
-        return this.lenObs ??= new CollectionLengthObserver(this);
-    }
-    getIndexObserver(index) {
-        // It's unnecessary to destroy/recreate index observer all the time,
-        // so just create once, and add/remove instead
-        return this.indexObservers[index] ??= new ArrayIndexObserver(this, index);
-    }
-}
-(() => {
-    subscriberCollection(ArrayObserver, null);
+        return observer;
+    };
 })();
-class ArrayIndexObserver {
-    constructor(owner, index) {
-        this.owner = owner;
-        this.index = index;
-        this.doNotCache = true;
-        this.value = this.getValue();
-    }
-    getValue() {
-        return this.owner.collection[this.index];
-    }
-    setValue(newValue) {
-        if (newValue === this.getValue()) {
-            return;
-        }
-        const arrayObserver = this.owner;
-        const index = this.index;
-        const indexMap = arrayObserver.indexMap;
-        if (indexMap[index] > -1) {
-            indexMap.deletedIndices.push(indexMap[index]);
-        }
-        indexMap[index] = -2;
-        // do not need to update current value here
-        // as it will be updated inside handle collection change
-        arrayObserver.collection[index] = newValue;
-        arrayObserver.notify();
-    }
-    /**
-     * From interface `ICollectionSubscriber`
-     */
-    handleCollectionChange(_arr, indexMap) {
-        const index = this.index;
-        const noChange = indexMap[index] === index;
-        if (noChange) {
-            return;
-        }
-        const prevValue = this.value;
-        const currValue = this.value = this.getValue();
-        // hmm
-        if (prevValue !== currValue) {
-            this.subs.notify(currValue, prevValue);
-        }
-    }
-    subscribe(subscriber) {
-        if (this.subs.add(subscriber) && this.subs.count === 1) {
-            this.owner.subscribe(this);
-        }
-    }
-    unsubscribe(subscriber) {
-        if (this.subs.remove(subscriber) && this.subs.count === 0) {
-            this.owner.unsubscribe(this);
-        }
-    }
-}
-(() => {
-    subscriberCollection(ArrayIndexObserver, null);
-})();
-function getArrayObserver(array) {
-    let observer = observerLookup$2.get(array);
-    if (observer === void 0) {
-        observer = new ArrayObserver(array);
-    }
-    return observer;
-}
 
-// multiple applications of Aurelia wouldn't have different observers for the same Set object
-const lookupMetadataKey$1 = Symbol.for('__au_set_obs__');
-const observerLookup$1 = (Set[lookupMetadataKey$1]
-    ?? defineHiddenProp(Set, lookupMetadataKey$1, new WeakMap()));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const proto$1 = Set.prototype;
-const $add = proto$1.add;
-const $clear$1 = proto$1.clear;
-const $delete$1 = proto$1.delete;
-const native$1 = { add: $add, clear: $clear$1, delete: $delete$1 };
-const methods$1 = ['add', 'clear', 'delete'];
-// note: we can't really do much with Set due to the internal data structure not being accessible so we're just using the native calls
-// fortunately, add/delete/clear are easy to reconstruct for the indexMap
-const observe$1 = {
-    // https://tc39.github.io/ecma262/#sec-set.prototype.add
-    add: function (value) {
-        const o = observerLookup$1.get(this);
-        if (o === undefined) {
+const getSetObserver = /*@__PURE__*/ (() => {
+    // multiple applications of Aurelia wouldn't have different observers for the same Set object
+    const lookupMetadataKey = Symbol.for('__au_set_obs__');
+    const observerLookup = (Set[lookupMetadataKey]
+        ?? rtDefineHiddenProp(Set, lookupMetadataKey, new WeakMap()));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { add: $add, clear: $clear, delete: $delete } = Set.prototype;
+    const methods = ['add', 'clear', 'delete'];
+    // note: we can't really do much with Set due to the internal data structure not being accessible so we're just using the native calls
+    // fortunately, add/delete/clear are easy to reconstruct for the indexMap
+    const observe = {
+        // https://tc39.github.io/ecma262/#sec-set.prototype.add
+        add: function (value) {
+            const o = observerLookup.get(this);
+            if (o === undefined) {
+                $add.call(this, value);
+                return this;
+            }
+            const oldSize = this.size;
             $add.call(this, value);
-            return this;
-        }
-        const oldSize = this.size;
-        $add.call(this, value);
-        const newSize = this.size;
-        if (newSize === oldSize) {
-            return this;
-        }
-        o.indexMap[oldSize] = -2;
-        o.notify();
-        return this;
-    },
-    // https://tc39.github.io/ecma262/#sec-set.prototype.clear
-    clear: function () {
-        const o = observerLookup$1.get(this);
-        if (o === undefined) {
-            return $clear$1.call(this);
-        }
-        const size = this.size;
-        if (size > 0) {
-            const indexMap = o.indexMap;
-            let i = 0;
-            // deepscan-disable-next-line
-            for (const key of this.keys()) {
-                if (indexMap[i] > -1) {
-                    indexMap.deletedIndices.push(indexMap[i]);
-                    indexMap.deletedItems.push(key);
-                }
-                i++;
+            const newSize = this.size;
+            if (newSize === oldSize) {
+                return this;
             }
-            $clear$1.call(this);
-            indexMap.length = 0;
+            o.indexMap[oldSize] = -2;
             o.notify();
-        }
-        return undefined;
-    },
-    // https://tc39.github.io/ecma262/#sec-set.prototype.delete
-    delete: function (value) {
-        const o = observerLookup$1.get(this);
-        if (o === undefined) {
-            return $delete$1.call(this, value);
-        }
-        const size = this.size;
-        if (size === 0) {
-            return false;
-        }
-        let i = 0;
-        const indexMap = o.indexMap;
-        for (const entry of this.keys()) {
-            if (entry === value) {
-                if (indexMap[i] > -1) {
-                    indexMap.deletedIndices.push(indexMap[i]);
-                    indexMap.deletedItems.push(entry);
-                }
-                indexMap.splice(i, 1);
-                const deleteResult = $delete$1.call(this, value);
-                if (deleteResult === true) {
-                    o.notify();
-                }
-                return deleteResult;
-            }
-            i++;
-        }
-        return false;
-    }
-};
-const descriptorProps$1 = {
-    writable: true,
-    enumerable: false,
-    configurable: true
-};
-for (const method of methods$1) {
-    def(observe$1[method], 'observing', { value: true, writable: false, configurable: false, enumerable: false });
-}
-let enableSetObservationCalled = false;
-const observationEnabledKey$1 = '__au_set_on__';
-function enableSetObservation() {
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (!(getMetadata(observationEnabledKey$1, Set) ?? false)) {
-        defineMetadata(true, Set, observationEnabledKey$1);
-        for (const method of methods$1) {
-            if (proto$1[method].observing !== true) {
-                def(proto$1, method, { ...descriptorProps$1, value: observe$1[method] });
-            }
-        }
-    }
-}
-function disableSetObservation() {
-    for (const method of methods$1) {
-        if (proto$1[method].observing === true) {
-            def(proto$1, method, { ...descriptorProps$1, value: native$1[method] });
-        }
-    }
-}
-class SetObserver {
-    constructor(observedSet) {
-        this.type = atObserver;
-        if (!enableSetObservationCalled) {
-            enableSetObservationCalled = true;
-            enableSetObservation();
-        }
-        this.collection = observedSet;
-        this.indexMap = createIndexMap(observedSet.size);
-        this.lenObs = void 0;
-        observerLookup$1.set(observedSet, this);
-    }
-    notify() {
-        const subs = this.subs;
-        const indexMap = this.indexMap;
-        if (batching) {
-            addCollectionBatch(subs, this.collection, indexMap);
-            return;
-        }
-        const set = this.collection;
-        const size = set.size;
-        this.indexMap = createIndexMap(size);
-        this.subs.notifyCollection(set, indexMap);
-    }
-    getLengthObserver() {
-        return this.lenObs ??= new CollectionSizeObserver(this);
-    }
-}
-(() => {
-    subscriberCollection(SetObserver, null);
-})();
-function getSetObserver(observedSet) {
-    let observer = observerLookup$1.get(observedSet);
-    if (observer === void 0) {
-        observer = new SetObserver(observedSet);
-    }
-    return observer;
-}
-
-// multiple applications of Aurelia wouldn't have different observers for the same Map object
-const lookupMetadataKey = Symbol.for('__au_map_obs__');
-const observerLookup = (Map[lookupMetadataKey]
-    ?? defineHiddenProp(Map, lookupMetadataKey, new WeakMap()));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const proto = Map.prototype;
-const $set = proto.set;
-const $clear = proto.clear;
-const $delete = proto.delete;
-const native = { set: $set, clear: $clear, delete: $delete };
-const methods = ['set', 'clear', 'delete'];
-// note: we can't really do much with Map due to the internal data structure not being accessible so we're just using the native calls
-// fortunately, map/delete/clear are easy to reconstruct for the indexMap
-const observe = {
-    // https://tc39.github.io/ecma262/#sec-map.prototype.map
-    set: function (key, value) {
-        const o = observerLookup.get(this);
-        if (o === undefined) {
-            $set.call(this, key, value);
             return this;
-        }
-        const oldValue = this.get(key);
-        const oldSize = this.size;
-        $set.call(this, key, value);
-        const newSize = this.size;
-        if (newSize === oldSize) {
+        },
+        // https://tc39.github.io/ecma262/#sec-set.prototype.clear
+        clear: function () {
+            const o = observerLookup.get(this);
+            if (o === undefined) {
+                return $clear.call(this);
+            }
+            const size = this.size;
+            if (size > 0) {
+                const indexMap = o.indexMap;
+                let i = 0;
+                // deepscan-disable-next-line
+                for (const key of this.keys()) {
+                    if (indexMap[i] > -1) {
+                        indexMap.deletedIndices.push(indexMap[i]);
+                        indexMap.deletedItems.push(key);
+                    }
+                    i++;
+                }
+                $clear.call(this);
+                indexMap.length = 0;
+                o.notify();
+            }
+            return undefined;
+        },
+        // https://tc39.github.io/ecma262/#sec-set.prototype.delete
+        delete: function (value) {
+            const o = observerLookup.get(this);
+            if (o === undefined) {
+                return $delete.call(this, value);
+            }
+            const size = this.size;
+            if (size === 0) {
+                return false;
+            }
             let i = 0;
-            for (const entry of this.entries()) {
-                if (entry[0] === key) {
-                    if (entry[1] !== oldValue) {
-                        o.indexMap.deletedIndices.push(o.indexMap[i]);
-                        o.indexMap.deletedItems.push(entry);
-                        o.indexMap[i] = -2;
+            const indexMap = o.indexMap;
+            for (const entry of this.keys()) {
+                if (entry === value) {
+                    if (indexMap[i] > -1) {
+                        indexMap.deletedIndices.push(indexMap[i]);
+                        indexMap.deletedItems.push(entry);
+                    }
+                    indexMap.splice(i, 1);
+                    const deleteResult = $delete.call(this, value);
+                    if (deleteResult === true) {
                         o.notify();
                     }
-                    return this;
+                    return deleteResult;
                 }
                 i++;
             }
-            return this;
-        }
-        o.indexMap[oldSize] = -2;
-        o.notify();
-        return this;
-    },
-    // https://tc39.github.io/ecma262/#sec-map.prototype.clear
-    clear: function () {
-        const o = observerLookup.get(this);
-        if (o === undefined) {
-            return $clear.call(this);
-        }
-        const size = this.size;
-        if (size > 0) {
-            const indexMap = o.indexMap;
-            let i = 0;
-            // deepscan-disable-next-line
-            for (const key of this.keys()) {
-                if (indexMap[i] > -1) {
-                    indexMap.deletedIndices.push(indexMap[i]);
-                    indexMap.deletedItems.push(key);
-                }
-                i++;
-            }
-            $clear.call(this);
-            indexMap.length = 0;
-            o.notify();
-        }
-        return undefined;
-    },
-    // https://tc39.github.io/ecma262/#sec-map.prototype.delete
-    delete: function (value) {
-        const o = observerLookup.get(this);
-        if (o === undefined) {
-            return $delete.call(this, value);
-        }
-        const size = this.size;
-        if (size === 0) {
             return false;
         }
-        let i = 0;
-        const indexMap = o.indexMap;
-        for (const entry of this.keys()) {
-            if (entry === value) {
-                if (indexMap[i] > -1) {
-                    indexMap.deletedIndices.push(indexMap[i]);
-                    indexMap.deletedItems.push(entry);
-                }
-                indexMap.splice(i, 1);
-                const deleteResult = $delete.call(this, value);
-                if (deleteResult === true) {
-                    o.notify();
-                }
-                return deleteResult;
-            }
-            ++i;
-        }
-        return false;
-    }
-};
-const descriptorProps = {
-    writable: true,
-    enumerable: false,
-    configurable: true
-};
-for (const method of methods) {
-    def(observe[method], 'observing', { value: true, writable: false, configurable: false, enumerable: false });
-}
-let enableMapObservationCalled = false;
-const observationEnabledKey = '__au_map_on__';
-function enableMapObservation() {
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (!(getMetadata(observationEnabledKey, Map) ?? false)) {
-        defineMetadata(true, Map, observationEnabledKey);
+    };
+    function enableSetObservation(set) {
         for (const method of methods) {
-            if (proto[method].observing !== true) {
-                def(proto, method, { ...descriptorProps, value: observe[method] });
+            rtDefineHiddenProp(set, method, observe[method]);
+        }
+    }
+    class SetObserverImpl {
+        constructor(observedSet) {
+            this.type = atObserver;
+            this.collection = observedSet;
+            this.indexMap = createIndexMap(observedSet.size);
+            this.lenObs = void 0;
+        }
+        notify() {
+            const subs = this.subs;
+            const indexMap = this.indexMap;
+            if (batching) {
+                addCollectionBatch(subs, this.collection, indexMap);
+                return;
             }
+            const set = this.collection;
+            const size = set.size;
+            this.indexMap = createIndexMap(size);
+            this.subs.notifyCollection(set, indexMap);
+        }
+        getLengthObserver() {
+            return this.lenObs ??= new CollectionSizeObserver(this);
         }
     }
-}
-function disableMapObservation() {
-    for (const method of methods) {
-        if (proto[method].observing === true) {
-            def(proto, method, { ...descriptorProps, value: native[method] });
+    subscriberCollection(SetObserverImpl, null);
+    return function getSetObserver(set) {
+        let observer = observerLookup.get(set);
+        if (observer === void 0) {
+            observerLookup.set(set, observer = new SetObserverImpl(set));
+            enableSetObservation(set);
         }
-    }
-}
-class MapObserver {
-    constructor(map) {
-        this.type = atObserver;
-        if (!enableMapObservationCalled) {
-            enableMapObservationCalled = true;
-            enableMapObservation();
-        }
-        this.collection = map;
-        this.indexMap = createIndexMap(map.size);
-        this.lenObs = void 0;
-        observerLookup.set(map, this);
-    }
-    notify() {
-        const subs = this.subs;
-        const indexMap = this.indexMap;
-        if (batching) {
-            addCollectionBatch(subs, this.collection, indexMap);
-            return;
-        }
-        const map = this.collection;
-        const size = map.size;
-        this.indexMap = createIndexMap(size);
-        subs.notifyCollection(map, indexMap);
-    }
-    getLengthObserver() {
-        return this.lenObs ??= new CollectionSizeObserver(this);
-    }
-}
-(() => {
-    subscriberCollection(MapObserver, null);
+        return observer;
+    };
 })();
-function getMapObserver(map) {
-    let observer = observerLookup.get(map);
-    if (observer === void 0) {
-        observer = new MapObserver(map);
+
+const getMapObserver = /*@__PURE__*/ (() => {
+    // multiple applications of Aurelia wouldn't have different observers for the same Map object
+    const lookupMetadataKey = Symbol.for('__au_map_obs__');
+    const observerLookup = (Map[lookupMetadataKey]
+        ?? rtDefineHiddenProp(Map, lookupMetadataKey, new WeakMap()));
+    const { set: $set, clear: $clear, delete: $delete } = Map.prototype;
+    const methods = ['set', 'clear', 'delete'];
+    // note: we can't really do much with Map due to the internal data structure not being accessible so we're just using the native calls
+    // fortunately, map/delete/clear are easy to reconstruct for the indexMap
+    const observe = {
+        // https://tc39.github.io/ecma262/#sec-map.prototype.map
+        set: function (key, value) {
+            const o = observerLookup.get(this);
+            if (o === undefined) {
+                $set.call(this, key, value);
+                return this;
+            }
+            const oldValue = this.get(key);
+            const oldSize = this.size;
+            $set.call(this, key, value);
+            const newSize = this.size;
+            if (newSize === oldSize) {
+                let i = 0;
+                for (const entry of this.entries()) {
+                    if (entry[0] === key) {
+                        if (entry[1] !== oldValue) {
+                            o.indexMap.deletedIndices.push(o.indexMap[i]);
+                            o.indexMap.deletedItems.push(entry);
+                            o.indexMap[i] = -2;
+                            o.notify();
+                        }
+                        return this;
+                    }
+                    i++;
+                }
+                return this;
+            }
+            o.indexMap[oldSize] = -2;
+            o.notify();
+            return this;
+        },
+        // https://tc39.github.io/ecma262/#sec-map.prototype.clear
+        clear: function () {
+            const o = observerLookup.get(this);
+            if (o === undefined) {
+                return $clear.call(this);
+            }
+            const size = this.size;
+            if (size > 0) {
+                const indexMap = o.indexMap;
+                let i = 0;
+                // deepscan-disable-next-line
+                for (const key of this.keys()) {
+                    if (indexMap[i] > -1) {
+                        indexMap.deletedIndices.push(indexMap[i]);
+                        indexMap.deletedItems.push(key);
+                    }
+                    i++;
+                }
+                $clear.call(this);
+                indexMap.length = 0;
+                o.notify();
+            }
+            return undefined;
+        },
+        // https://tc39.github.io/ecma262/#sec-map.prototype.delete
+        delete: function (value) {
+            const o = observerLookup.get(this);
+            if (o === undefined) {
+                return $delete.call(this, value);
+            }
+            const size = this.size;
+            if (size === 0) {
+                return false;
+            }
+            let i = 0;
+            const indexMap = o.indexMap;
+            for (const entry of this.keys()) {
+                if (entry === value) {
+                    if (indexMap[i] > -1) {
+                        indexMap.deletedIndices.push(indexMap[i]);
+                        indexMap.deletedItems.push(entry);
+                    }
+                    indexMap.splice(i, 1);
+                    const deleteResult = $delete.call(this, value);
+                    if (deleteResult === true) {
+                        o.notify();
+                    }
+                    return deleteResult;
+                }
+                ++i;
+            }
+            return false;
+        }
+    };
+    function enableMapObservation(map) {
+        for (const method of methods) {
+            rtDefineHiddenProp(map, method, observe[method]);
+        }
     }
-    return observer;
-}
+    class MapObserverImpl {
+        constructor(map) {
+            this.type = atObserver;
+            this.collection = map;
+            this.indexMap = createIndexMap(map.size);
+            this.lenObs = void 0;
+        }
+        notify() {
+            const subs = this.subs;
+            const indexMap = this.indexMap;
+            if (batching) {
+                addCollectionBatch(subs, this.collection, indexMap);
+                return;
+            }
+            const map = this.collection;
+            const size = map.size;
+            this.indexMap = createIndexMap(size);
+            subs.notifyCollection(map, indexMap);
+        }
+        getLengthObserver() {
+            return this.lenObs ??= new CollectionSizeObserver(this);
+        }
+    }
+    subscriberCollection(MapObserverImpl, null);
+    return function getMapObserver(map) {
+        let observer = observerLookup.get(map);
+        if (observer === void 0) {
+            observerLookup.set(map, observer = new MapObserverImpl(map));
+            enableMapObservation(map);
+        }
+        return observer;
+    };
+})();
 
 const connectableDecorator = /*@__PURE__*/ (() => {
     class BindingObserverRecord {
@@ -1347,20 +1233,20 @@ const connectableDecorator = /*@__PURE__*/ (() => {
         }
     }
     function getObserverRecord() {
-        return defineHiddenProp(this, 'obs', new BindingObserverRecord(this));
+        return rtDefineHiddenProp(this, 'obs', new BindingObserverRecord(this));
     }
     function observe(obj, key) {
         this.obs.add(this.oL.getObserver(obj, key));
     }
     function observeCollection(collection) {
         let observer;
-        if (isArray(collection)) {
+        if (kernel.isArray(collection)) {
             observer = getArrayObserver(collection);
         }
-        else if (isSet(collection)) {
+        else if (kernel.isSet(collection)) {
             observer = getSetObserver(collection);
         }
-        else if (isMap(collection)) {
+        else if (kernel.isMap(collection)) {
             observer = getMapObserver(collection);
         }
         else {
@@ -1382,7 +1268,7 @@ const connectableDecorator = /*@__PURE__*/ (() => {
         ensureProto(proto, 'observe', observe);
         ensureProto(proto, 'observeCollection', observeCollection);
         ensureProto(proto, 'subscribeTo', subscribeTo);
-        def(proto, 'obs', { get: getObserverRecord });
+        rtDef(proto, 'obs', { get: getObserverRecord });
         // optionally add these two methods to normalize a connectable impl
         // though don't override if it already exists
         ensureProto(proto, 'handleChange', noopHandleChange);
@@ -1440,7 +1326,7 @@ function exitConnectable(connectable) {
     _connectable = connectables.length > 0 ? connectables[connectables.length - 1] : null;
     connecting = _connectable != null;
 }
-const ConnectableSwitcher = /*@__PURE__*/ objectFreeze({
+const ConnectableSwitcher = /*@__PURE__*/ rtObjectFreeze({
     get current() {
         return _connectable;
     },
@@ -1504,12 +1390,12 @@ function doNotCollect(object, key) {
         // limit to string first
         // symbol can be added later
         // looking up from the constructor means inheritance is supported
-        || object.constructor[`${nowrapPropKey}_${safeString(key)}__`] === true;
+        || object.constructor[`${nowrapPropKey}_${rtSafeString(key)}__`] === true;
 }
 function createProxy(obj) {
-    const handler = isArray(obj)
+    const handler = kernel.isArray(obj)
         ? arrayHandler
-        : isMap(obj) || isSet(obj)
+        : kernel.isMap(obj) || kernel.isSet(obj)
             ? collectionHandler
             : objectHandler;
     const proxiedObj = new Proxy(obj, handler);
@@ -1746,17 +1632,17 @@ const collectionHandler = {
             case 'forEach':
                 return wrappedForEach;
             case 'add':
-                if (isSet(target)) {
+                if (kernel.isSet(target)) {
                     return wrappedAdd;
                 }
                 break;
             case 'get':
-                if (isMap(target)) {
+                if (kernel.isMap(target)) {
                     return wrappedGet;
                 }
                 break;
             case 'set':
-                if (isMap(target)) {
+                if (kernel.isMap(target)) {
                     return wrappedSet;
                 }
                 break;
@@ -1769,7 +1655,7 @@ const collectionHandler = {
             case 'entries':
                 return wrappedEntries;
             case Symbol.iterator:
-                return isMap(target) ? wrappedEntries : wrappedValues;
+                return kernel.isMap(target) ? wrappedEntries : wrappedValues;
         }
         return wrap(R$get(target, key, receiver));
     },
@@ -1861,7 +1747,7 @@ function wrappedEntries() {
     };
 }
 const observeCollection = (connectable, collection) => connectable?.observeCollection(collection);
-const ProxyObservable = /*@__PURE__*/ objectFreeze({
+const ProxyObservable = /*@__PURE__*/ rtObjectFreeze({
     getProxy,
     getRaw,
     wrap,
@@ -1907,11 +1793,11 @@ class ComputedObserver {
     }
     // deepscan-disable-next-line
     setValue(v) {
-        if (isFunction(this.$set)) {
+        if (kernel.isFunction(this.$set)) {
             if (this._coercer !== void 0) {
                 v = this._coercer.call(null, v, this._coercionConfig);
             }
-            if (!areEqual(v, this._value)) {
+            if (!kernel.areEqual(v, this._value)) {
                 // setting running true as a form of batching
                 this._isRunning = true;
                 this.$set.call(this._obj, v);
@@ -1966,7 +1852,7 @@ class ComputedObserver {
         const oldValue = this._value;
         const newValue = this.compute();
         this._isDirty = false;
-        if (!areEqual(newValue, oldValue)) {
+        if (!kernel.areEqual(newValue, oldValue)) {
             // todo: probably should set is running here too
             // to prevent depth first notification
             this._callback?.(newValue, oldValue);
@@ -1992,8 +1878,8 @@ class ComputedObserver {
     subscriberCollection(ComputedObserver, null);
 })();
 
-const IDirtyChecker = /*@__PURE__*/ createInterface('IDirtyChecker', x => x.callback(() => {
-        throw createError('AURxxxx: There is no registration for IDirtyChecker interface. If you want to use your own dirty checker, make sure you register it.');
+const IDirtyChecker = /*@__PURE__*/ rtCreateInterface('IDirtyChecker', x => x.callback(() => {
+        throw createMappedError(217 /* ErrorNames.dirty_check_no_handler */);
     })
     );
 const DirtyCheckSettings = {
@@ -2062,7 +1948,7 @@ class DirtyChecker {
     }
     createProperty(obj, key) {
         if (DirtyCheckSettings.throw) {
-            throw createError(`AUR0222: Property '${safeString(key)}' is being dirty-checked.`);
+            throw createMappedError(218 /* ErrorNames.dirty_check_not_allowed */, key);
         }
         return new DirtyCheckProperty(this, obj, key);
     }
@@ -2095,7 +1981,7 @@ class DirtyCheckProperty {
     setValue(_v) {
         // todo: this should be allowed, probably
         // but the construction of dirty checker should throw instead
-        throw createError(`Trying to set value for property ${safeString(this.key)} in dirty checker`);
+        throw createMappedError(219 /* ErrorNames.dirty_check_setter_not_allowed */, this.key);
     }
     isDirty() {
         return this._oldValue !== this.obj[this.key];
@@ -2178,7 +2064,7 @@ class SetterObserver {
             newValue = this._coercer.call(void 0, newValue, this._coercionConfig);
         }
         if (this._observing) {
-            if (areEqual(newValue, this._value)) {
+            if (kernel.areEqual(newValue, this._value)) {
                 return;
             }
             oV = this._value;
@@ -2218,10 +2104,10 @@ class SetterObserver {
         if (this._observing === false) {
             this._observing = true;
             this._value = this._obj[this._key];
-            def(this._obj, this._key, {
+            rtDef(this._obj, this._key, {
                 enumerable: true,
                 configurable: true,
-                get: objectAssign(( /* Setter Observer */) => this.getValue(), { getObserver: () => this }),
+                get: rtObjectAssign(( /* Setter Observer */) => this.getValue(), { getObserver: () => this }),
                 set: (/* Setter Observer */ value) => {
                     this.setValue(value);
                 },
@@ -2231,7 +2117,7 @@ class SetterObserver {
     }
     stop() {
         if (this._observing) {
-            def(this._obj, this._key, {
+            rtDef(this._obj, this._key, {
                 enumerable: true,
                 configurable: true,
                 writable: true,
@@ -2251,8 +2137,8 @@ class SetterObserver {
 let oV = void 0;
 
 const propertyAccessor = new PropertyAccessor();
-const IObserverLocator = /*@__PURE__*/ createInterface('IObserverLocator', x => x.singleton(ObserverLocator));
-const INodeObserverLocator = /*@__PURE__*/ createInterface('INodeObserverLocator', x => x.cachedCallback(handler => {
+const IObserverLocator = /*@__PURE__*/ rtCreateInterface('IObserverLocator', x => x.singleton(ObserverLocator));
+const INodeObserverLocator = /*@__PURE__*/ rtCreateInterface('INodeObserverLocator', x => x.cachedCallback(handler => {
     {
         handler.getAll(kernel.ILogger).forEach(logger => {
             logger.error('Using default INodeObserverLocator implementation. Will not be able to observe nodes (HTML etc...).');
@@ -2271,13 +2157,13 @@ class DefaultNodeObserverLocator {
         return propertyAccessor;
     }
 }
-const IComputedObserverLocator = /*@__PURE__*/ createInterface('IComputedObserverLocator', x => x.singleton(class DefaultLocator {
+const IComputedObserverLocator = /*@__PURE__*/ rtCreateInterface('IComputedObserverLocator', x => x.singleton(class DefaultLocator {
     getObserver(obj, key, pd, requestor) {
         const observer = new ComputedObserver(obj, pd.get, pd.set, requestor, true);
-        def(obj, key, {
+        rtDef(obj, key, {
             enumerable: pd.enumerable,
             configurable: true,
-            get: objectAssign((( /* Computed Observer */) => observer.getValue()), { getObserver: () => observer }),
+            get: rtObjectAssign((( /* Computed Observer */) => observer.getValue()), { getObserver: () => observer }),
             set: (/* Computed Observer */ v) => {
                 observer.setValue(v);
             },
@@ -2299,10 +2185,10 @@ class ObserverLocator {
         if (obj == null) {
             throw createMappedError(199 /* ErrorNames.observing_null_undefined */, key);
         }
-        if (!isObject(obj)) {
-            return new PrimitiveObserver(obj, isFunction(key) ? '' : key);
+        if (!kernel.isObject(obj)) {
+            return new PrimitiveObserver(obj, kernel.isFunction(key) ? '' : key);
         }
-        if (isFunction(key)) {
+        if (kernel.isFunction(key)) {
             return new ComputedObserver(obj, key, void 0, this, true);
         }
         const lookup = getObserverLookup(obj);
@@ -2340,20 +2226,20 @@ class ObserverLocator {
         }
         switch (key) {
             case 'length':
-                if (isArray(obj)) {
+                if (kernel.isArray(obj)) {
                     return getArrayObserver(obj).getLengthObserver();
                 }
                 break;
             case 'size':
-                if (isMap(obj)) {
+                if (kernel.isMap(obj)) {
                     return getMapObserver(obj).getLengthObserver();
                 }
-                else if (isSet(obj)) {
+                else if (kernel.isSet(obj)) {
                     return getSetObserver(obj).getLengthObserver();
                 }
                 break;
             default:
-                if (isArray(obj) && kernel.isArrayIndex(key)) {
+                if (kernel.isArray(obj) && kernel.isArrayIndex(key)) {
                     return getArrayObserver(obj).getIndexObserver(Number(key));
                 }
                 break;
@@ -2416,15 +2302,22 @@ class ObserverLocator {
         return null;
     }
 }
+// T extends unknown[]
+//   ? ArrayObserver
+//   : T extends Map<unknown, unknown>
+//     ? MapObserver
+//     : T extends Set<unknown>
+//       ? SetObserver
+//       :
 const getCollectionObserver = (collection) => {
     let obs;
-    if (isArray(collection)) {
+    if (kernel.isArray(collection)) {
         obs = getArrayObserver(collection);
     }
-    else if (isMap(collection)) {
+    else if (kernel.isMap(collection)) {
         obs = getMapObserver(collection);
     }
-    else if (isSet(collection)) {
+    else if (kernel.isSet(collection)) {
         obs = getSetObserver(collection);
     }
     return obs;
@@ -2434,15 +2327,15 @@ const getOwnPropDesc = Object.getOwnPropertyDescriptor;
 const getObserverLookup = (instance) => {
     let lookup = instance.$observers;
     if (lookup === void 0) {
-        def(instance, '$observers', {
+        rtDef(instance, '$observers', {
             enumerable: false,
-            value: lookup = createLookup(),
+            value: lookup = kernel.createLookup(),
         });
     }
     return lookup;
 };
 
-const IObservation = /*@__PURE__*/ createInterface('IObservation', x => x.singleton(Observation));
+const IObservation = /*@__PURE__*/ rtCreateInterface('IObservation', x => x.singleton(Observation));
 class Observation {
     static get inject() { return [IObserverLocator]; }
     constructor(oL) {
@@ -2546,7 +2439,7 @@ class RunEffect {
 const observable = /*@__PURE__*/ (() => {
     function getObserversLookup(obj) {
         if (obj.$observers === void 0) {
-            def(obj, '$observers', { value: {} });
+            rtDef(obj, '$observers', { value: {} });
             // todo: define in a weakmap
         }
         return obj.$observers;
@@ -2606,7 +2499,7 @@ const observable = /*@__PURE__*/ (() => {
         }
         function createDescriptor(target, property, initialValue, targetIsClass) {
             // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/strict-boolean-expressions
-            const callback = config.callback || `${safeString(property)}Changed`;
+            const callback = config.callback || `${rtSafeString(property)}Changed`;
             const $set = config.set;
             const observableGetter = function () {
                 const notifier = getNotifier(this, property, callback, initialValue, $set);
@@ -2625,9 +2518,9 @@ const observable = /*@__PURE__*/ (() => {
                 }
             };
             if (targetIsClass)
-                def(target.prototype, property, descriptor);
+                rtDef(target.prototype, property, descriptor);
             else
-                def(target, property, descriptor);
+                rtDef(target, property, descriptor);
         }
     }
     function getNotifier(obj, key, callbackKey, initialValue, set) {
@@ -2649,9 +2542,9 @@ const observable = /*@__PURE__*/ (() => {
             this._oldValue = void 0;
             this._obj = obj;
             this._setter = set;
-            this._hasSetter = isFunction(set);
+            this._hasSetter = kernel.isFunction(set);
             const callback = obj[callbackKey];
-            this.cb = isFunction(callback) ? callback : void 0;
+            this.cb = kernel.isFunction(callback) ? callback : void 0;
             this._value = initialValue;
         }
         getValue() {
@@ -2661,7 +2554,7 @@ const observable = /*@__PURE__*/ (() => {
             if (this._hasSetter) {
                 value = this._setter(value);
             }
-            if (!areEqual(value, this._value)) {
+            if (!kernel.areEqual(value, this._value)) {
                 this._oldValue = this._value;
                 this._value = value;
                 this.cb?.call(this._obj, this._value, this._oldValue);
@@ -2697,15 +2590,15 @@ function nowrap(target, context) {
     function decorator(target, context) {
         switch (context.kind) {
             case 'class':
-                defineHiddenProp(target, nowrapClassKey, true);
+                rtDefineHiddenProp(target, nowrapClassKey, true);
                 break;
             case 'field':
                 context.addInitializer(function () {
                     const target = this.constructor;
-                    const property = `${nowrapPropKey}_${safeString(context.name)}__`;
+                    const property = `${nowrapPropKey}_${rtSafeString(context.name)}__`;
                     if (property in target)
                         return;
-                    defineHiddenProp(target, property, true);
+                    rtDefineHiddenProp(target, property, true);
                 });
                 break;
         }
@@ -2714,8 +2607,6 @@ function nowrap(target, context) {
 /* eslint-enable */
 
 exports.AccessorType = AccessorType;
-exports.ArrayIndexObserver = ArrayIndexObserver;
-exports.ArrayObserver = ArrayObserver;
 exports.CollectionLengthObserver = CollectionLengthObserver;
 exports.CollectionSizeObserver = CollectionSizeObserver;
 exports.ComputedObserver = ComputedObserver;
@@ -2729,25 +2620,17 @@ exports.IDirtyChecker = IDirtyChecker;
 exports.INodeObserverLocator = INodeObserverLocator;
 exports.IObservation = IObservation;
 exports.IObserverLocator = IObserverLocator;
-exports.MapObserver = MapObserver;
 exports.Observation = Observation;
 exports.ObserverLocator = ObserverLocator;
 exports.PrimitiveObserver = PrimitiveObserver;
 exports.PropertyAccessor = PropertyAccessor;
 exports.ProxyObservable = ProxyObservable;
-exports.SetObserver = SetObserver;
 exports.SetterObserver = SetterObserver;
 exports.batch = batch;
 exports.cloneIndexMap = cloneIndexMap;
 exports.connectable = connectable;
 exports.copyIndexMap = copyIndexMap;
 exports.createIndexMap = createIndexMap;
-exports.disableArrayObservation = disableArrayObservation;
-exports.disableMapObservation = disableMapObservation;
-exports.disableSetObservation = disableSetObservation;
-exports.enableArrayObservation = enableArrayObservation;
-exports.enableMapObservation = enableMapObservation;
-exports.enableSetObservation = enableSetObservation;
 exports.getCollectionObserver = getCollectionObserver;
 exports.getObserverLookup = getObserverLookup;
 exports.isIndexMap = isIndexMap;

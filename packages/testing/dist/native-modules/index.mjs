@@ -14,9 +14,9 @@ import { Metadata as O } from "../../../metadata/dist/native-modules/index.mjs";
 
 const {getPrototypeOf: q, getOwnPropertyDescriptor: j, getOwnPropertyDescriptors: A, getOwnPropertyNames: T, getOwnPropertySymbols: F, defineProperty: I, defineProperties: M} = Object;
 
-const R = Object.keys;
+const P = Object.keys;
 
-const P = Object.is;
+const R = Object.is;
 
 const B = Object.freeze;
 
@@ -212,7 +212,7 @@ function getOwnNonIndexProperties(e, t) {
     if (t) {
         return T(e).filter((e => !i(e)));
     } else {
-        return R(e).filter((e => !i(e)));
+        return P(e).filter((e => !i(e)));
     }
 }
 
@@ -508,7 +508,7 @@ function areEqualArrayBuffers(e, t) {
 
 function isEqualBoxedPrimitive(e, t) {
     if (isNumberObject(e)) {
-        return isNumberObject(t) && P(ne(e), ne(t));
+        return isNumberObject(t) && R(ne(e), ne(t));
     }
     if (isStringObject(e)) {
         return isStringObject(t) && re(e) === re(t);
@@ -524,7 +524,7 @@ function innerDeepEqual(e, t, n, i) {
         if (e !== 0) {
             return true;
         }
-        return n ? P(e, t) : true;
+        return n ? R(e, t) : true;
     }
     if (n) {
         if (typeof e !== "object") {
@@ -617,8 +617,8 @@ function innerDeepEqual(e, t, n, i) {
 
 function keyCheck(e, t, n, i, r, a) {
     if (arguments.length === 5) {
-        a = R(e);
-        const n = R(t);
+        a = P(e);
+        const n = P(t);
         if (a.length !== n.length) {
             return false;
         }
@@ -839,14 +839,14 @@ function objEquiv(e, t, n, i, r, a) {
             } else if (V(t, s)) {
                 return false;
             } else {
-                const i = R(e);
+                const i = P(e);
                 for (;s < i.length; s++) {
                     const a = i[s];
                     if (!V(t, a) || !innerDeepEqual(e[a], t[a], n, r)) {
                         return false;
                     }
                 }
-                if (i.length !== R(t).length) {
+                if (i.length !== P(t).length) {
                     return false;
                 }
                 return true;
@@ -1032,7 +1032,7 @@ const ve = B({
     stylize: stylizeWithColor
 });
 
-const ye = R(ve);
+const ye = P(ve);
 
 function getUserOptions(e) {
     const t = {};
@@ -1514,7 +1514,7 @@ function getPrefix(e, t, n) {
     return `${e} `;
 }
 
-const Re = formatPrimitive.bind(null, stylizeNoColor);
+const Pe = formatPrimitive.bind(null, stylizeNoColor);
 
 function getKeys(e, t) {
     let n;
@@ -1525,7 +1525,7 @@ function getKeys(e, t) {
             n.push(...i);
         }
     } else {
-        n = R(e);
+        n = P(e);
         if (i.length !== 0) {
             n.push(...i.filter((t => Q(e, t))));
         }
@@ -1537,13 +1537,13 @@ function getCtxStyle(e, t) {
     return e || t || "Object";
 }
 
-const Pe = B([ [ isUint8Array, Uint8Array ], [ isUint8ClampedArray, Uint8ClampedArray ], [ isUint16Array, Uint16Array ], [ isUint32Array, Uint32Array ], [ isInt8Array, Int8Array ], [ isInt16Array, Int16Array ], [ isInt32Array, Int32Array ], [ isFloat32Array, Float32Array ], [ isFloat64Array, Float64Array ] ]);
+const Re = B([ [ isUint8Array, Uint8Array ], [ isUint8ClampedArray, Uint8ClampedArray ], [ isUint16Array, Uint16Array ], [ isUint32Array, Uint32Array ], [ isInt8Array, Int8Array ], [ isInt16Array, Int16Array ], [ isInt32Array, Int32Array ], [ isFloat32Array, Float32Array ], [ isFloat64Array, Float64Array ] ]);
 
-const Be = Pe.length;
+const Be = Re.length;
 
 function findTypedConstructor(e) {
     for (let t = 0; t < Be; ++t) {
-        const [n, i] = Pe[t];
+        const [n, i] = Re[t];
         if (n(e)) {
             return i;
         }
@@ -1608,7 +1608,7 @@ function noPrototypeIterator(e, t, n) {
 }
 
 function formatNumber(e, t) {
-    return e(P(t, -0) ? "-0" : `${t}`, "number");
+    return e(R(t, -0) ? "-0" : `${t}`, "number");
 }
 
 function formatPrimitive(e, t, n) {
@@ -1657,7 +1657,7 @@ function formatError(e) {
 }
 
 function formatSpecialArray(e, t, n, r, a, s) {
-    const o = R(t);
+    const o = P(t);
     let l = s;
     for (;s < o.length && a.length < r; s++) {
         const u = o[s];
@@ -2067,17 +2067,17 @@ function formatRaw(e, t, n, i) {
         } else if (isBoxedPrimitive(t)) {
             let n;
             if (isNumberObject(t)) {
-                o = `[Number: ${Re(ne(t), e)}]`;
+                o = `[Number: ${Pe(ne(t), e)}]`;
                 n = "number";
             } else if (isStringObject(t)) {
-                o = `[String: ${Re(re(t), e)}]`;
+                o = `[String: ${Pe(re(t), e)}]`;
                 n = "string";
                 r = r.slice(t.length);
             } else if (isBooleanObject(t)) {
-                o = `[Boolean: ${Re(te(t), e)}]`;
+                o = `[Boolean: ${Pe(te(t), e)}]`;
                 n = "boolean";
             } else {
-                o = `[Symbol: ${Re(ie(t), e)}]`;
+                o = `[Symbol: ${Pe(ie(t), e)}]`;
                 n = "symbol";
             }
             if (r.length === 0) {
@@ -2388,7 +2388,7 @@ function ensureTaskQueuesEmpty(t) {
         t = C.getOrCreate(globalThis);
     }
     e(t.taskQueue);
-    e(t.domWriteQueue);
+    e(t.domQueue);
     e(t.domReadQueue);
 }
 
@@ -2478,7 +2478,7 @@ function expectedException(e, t, n) {
             i.operator = "throws";
             throw i;
         }
-        const i = R(t);
+        const i = P(t);
         if (isError(t)) {
             i.push("name", "message");
         }
@@ -2823,7 +2823,7 @@ function notDeepStrictEqual(e, t, n) {
 }
 
 function strictEqual(e, t, n) {
-    if (!P(e, t)) {
+    if (!R(e, t)) {
         innerFail({
             actual: e,
             expected: t,
@@ -2835,7 +2835,7 @@ function strictEqual(e, t, n) {
 }
 
 function notStrictEqual(e, t, n) {
-    if (P(e, t)) {
+    if (R(e, t)) {
         innerFail({
             actual: e,
             expected: t,
@@ -3019,31 +3019,26 @@ const ze = function() {
     }
     return function $areTaskQueuesEmpty(e) {
         const t = C.getOrCreate(globalThis);
-        const n = t.domWriteQueue;
+        const n = t.domQueue;
         const i = t.taskQueue;
-        const r = t.domReadQueue;
-        let a = true;
-        let s = "";
+        let r = true;
+        let a = "";
         if (!n.isEmpty) {
-            s += `\n${$reportTaskQueue("domWriteQueue", n)}\n\n`;
-            a = false;
+            a += `\n${$reportTaskQueue("domQueue", n)}\n\n`;
+            r = false;
         }
         if (!i.isEmpty) {
-            s += `\n${$reportTaskQueue("taskQueue", i)}\n\n`;
-            a = false;
+            a += `\n${$reportTaskQueue("taskQueue", i)}\n\n`;
+            r = false;
         }
-        if (!r.isEmpty) {
-            s += `\n${$reportTaskQueue("domReadQueue", r)}\n\n`;
-            a = false;
-        }
-        if (!a) {
+        if (!r) {
             if (e === true) {
                 ensureTaskQueuesEmpty(t);
             }
             innerFail({
                 actual: void 0,
                 expected: void 0,
-                message: s,
+                message: a,
                 operator: "",
                 stackStartFn: $areTaskQueuesEmpty
             });
@@ -4531,7 +4526,7 @@ function createFixture(e, t, n = [], i = true, r = TestContext.create(), a = {})
         n.dispatchEvent(new o.window.Event("scroll"));
     };
     const flush = e => {
-        r.platform.domWriteQueue.flush(e);
+        r.platform.domQueue.flush(e);
     };
     const stop = (e = false) => {
         let t = void 0;

@@ -18,7 +18,7 @@ class LocalizedValidationController extends o.ValidationController {
     constructor(e = i.resolve(i.IEventAggregator), r = i.resolve(t.IPlatform)) {
         super();
         this.localeChangeSubscription = e.subscribe(a, (() => {
-            r.domReadQueue.queueTask((async () => {
+            r.domQueue.queueTask((async () => {
                 await this.revalidateErrors();
             }));
         }));
@@ -98,7 +98,7 @@ function createConfiguration(e) {
     };
 }
 
-const s = createConfiguration(i.noop);
+const s = /*@__PURE__*/ createConfiguration(i.noop);
 
 exports.I18nKeyConfiguration = n;
 

@@ -68,11 +68,13 @@ function rejectOnError(t) {
     return t;
 }
 
+const createMappedError = (t, ...e) => new Error(`AUR${String(t).padStart(4, "0")}:${e.map(String)}`);
+
 const s = /^([a-z][a-z0-9+\-.]*:)?\/\//i;
 
 const r = /*@__PURE__*/ t.DI.createInterface("fetch", (t => {
     if (typeof fetch !== "function") {
-        throw new Error("Could not resolve fetch function. Please provide a fetch function implementation or a polyfill for the global fetch function.");
+        throw createMappedError(5e3);
     }
     return t.instance(fetch);
 }));
@@ -114,24 +116,24 @@ class HttpClient {
                 if (typeof s === "object") {
                     e = s;
                 } else {
-                    throw new Error(`The config callback did not return a valid HttpClientConfiguration like instance. Received ${typeof s}`);
+                    throw createMappedError(5001, typeof s);
                 }
             }
         } else {
-            throw new Error(`invalid config, expecting a function or an object, received ${typeof t}`);
+            throw createMappedError(5002, typeof t);
         }
         const s = e.defaults;
         if (s?.headers instanceof Headers) {
-            throw new Error("Default headers must be a plain object.");
+            throw createMappedError(5003);
         }
         const r = e.interceptors;
         if (r?.length > 0) {
             if (r.filter((t => t instanceof RetryInterceptor)).length > 1) {
-                throw new Error("Only one RetryInterceptor is allowed.");
+                throw createMappedError(5004);
             }
             const t = r.findIndex((t => t instanceof RetryInterceptor));
             if (t >= 0 && t !== r.length - 1) {
-                throw new Error("The retry interceptor must be the last interceptor defined.");
+                throw createMappedError(5005);
             }
         }
         this.baseUrl = e.baseUrl;
@@ -152,7 +154,7 @@ class HttpClient {
                 s = t;
                 e = this.u.call(void 0, s);
             } else {
-                throw new Error(`An invalid result was returned by the interceptor chain. Expected a Request or Response instance, but got [${t}]`);
+                throw createMappedError(5006, t);
             }
             return this.processResponse(e, this.t, s);
         })).then((t => {
@@ -173,7 +175,7 @@ class HttpClient {
         let r;
         let i;
         let n;
-        const o = parseHeaderValues(s.headers);
+        const h = parseHeaderValues(s.headers);
         if (t instanceof Request) {
             r = t;
             n = new Headers(r.headers).get("Content-Type");
@@ -182,26 +184,26 @@ class HttpClient {
                 e = {};
             }
             i = e.body;
-            const o = i !== undefined ? {
+            const h = i !== undefined ? {
                 body: i
             } : null;
-            const h = {
+            const o = {
                 ...s,
                 headers: {},
                 ...e,
-                ...o
+                ...h
             };
-            n = new Headers(h.headers).get("Content-Type");
-            r = new Request(getRequestUrl(this.baseUrl, t), h);
+            n = new Headers(o.headers).get("Content-Type");
+            r = new Request(getRequestUrl(this.baseUrl, t), o);
         }
         if (!n) {
-            if (new Headers(o).has("content-type")) {
-                r.headers.set("Content-Type", new Headers(o).get("content-type"));
+            if (new Headers(h).has("content-type")) {
+                r.headers.set("Content-Type", new Headers(h).get("content-type"));
             } else if (i !== undefined && isJSON(i)) {
                 r.headers.set("Content-Type", "application/json");
             }
         }
-        setDefaultHeaders(r.headers, o);
+        setDefaultHeaders(r.headers, h);
         if (i instanceof Blob && i.type) {
             r.headers.set("Content-Type", i.type);
         }
@@ -247,9 +249,9 @@ class HttpClient {
     }
     B(t, e, s, r, i, ...n) {
         return (e ?? []).reduce(((t, e) => {
-            const o = e[s];
-            const h = e[r];
-            return t.then(o ? t => t instanceof i ? o.call(e, t, ...n) : t : identity, h ? t => h.call(e, t, ...n) : thrower);
+            const h = e[s];
+            const o = e[r];
+            return t.then(h ? t => t instanceof i ? h.call(e, t, ...n) : t : identity, o ? t => o.call(e, t, ...n) : thrower);
         }), Promise.resolve(t));
     }
     I(t, e, s, r) {
@@ -321,9 +323,9 @@ const n = /*@__PURE__*/ Object.freeze({
     drained: "aurelia-fetch-client-requests-drained"
 });
 
-const o = /*@__PURE__*/ t.DI.createInterface((t => t.singleton(CacheService)));
+const h = /*@__PURE__*/ t.DI.createInterface((t => t.singleton(CacheService)));
 
-const h = /*@__PURE__*/ Object.freeze({
+const o = /*@__PURE__*/ Object.freeze({
     Set: "au:fetch:cache:set",
     Get: "au:fetch:cache:get",
     Clear: "au:fetch:cache:clear",
@@ -365,23 +367,23 @@ class CacheService {
             this.delete(t);
             await this.q.get(s);
             const e = this.getItem(t);
-            this.ea.publish(h.CacheStaleRefreshed, {
+            this.ea.publish(o.CacheStaleRefreshed, {
                 key: t,
                 value: e
             });
-            this.P(r);
+            this.N(r);
         }), e);
         this.j.push(r);
     }
     startBackgroundRefresh(t) {
         if (!t || this.O > -1) return;
         this.O = this.p.setInterval((() => {
-            this.ea.publish(h.CacheBackgroundRefreshing);
+            this.ea.publish(o.CacheBackgroundRefreshing);
             this.T.forEach(((t, e) => {
                 this.delete(e);
                 void this.q.get(t).then((() => {
                     const t = this.getItem(e);
-                    this.ea.publish(h.CacheBackgroundRefreshed, {
+                    this.ea.publish(o.CacheBackgroundRefreshed, {
                         key: e,
                         value: t
                     });
@@ -392,7 +394,7 @@ class CacheService {
     stopBackgroundRefresh() {
         this.p.clearInterval(this.O);
         this.O = -1;
-        this.ea.publish(h.CacheBackgroundStopped);
+        this.ea.publish(o.CacheBackgroundStopped);
     }
     set(t, e, s, r) {
         const i = {
@@ -408,21 +410,21 @@ class CacheService {
         e.lastCached = Date.now();
         this.storage.set(t, e);
         this.T.set(t, s);
-        this.ea.publish(h.Set, {
+        this.ea.publish(o.Set, {
             key: t,
             value: e
         });
     }
     getItem(t) {
         if (!this.storage.has(t)) {
-            this.ea.publish(h.CacheMiss, {
+            this.ea.publish(o.CacheMiss, {
                 key: t
             });
             return;
         }
         const e = this.storage.get(t);
         if (!e?.staleTime || !e?.lastCached) {
-            this.ea.publish(h.CacheHit, {
+            this.ea.publish(o.CacheHit, {
                 key: t,
                 value: e
             });
@@ -430,20 +432,20 @@ class CacheService {
         }
         const s = Date.now();
         if (s > e.lastCached + (e.staleTime ?? 0)) {
-            this.ea.publish(h.CacheStale, {
+            this.ea.publish(o.CacheStale, {
                 key: t,
                 value: e
             });
             return;
         }
         if (s > e.lastCached + (e.cacheTime ?? 0)) {
-            this.ea.publish(h.CacheExpired, {
+            this.ea.publish(o.CacheExpired, {
                 key: t,
                 value: e
             });
             return;
         }
-        this.ea.publish(h.CacheHit, {
+        this.ea.publish(o.CacheHit, {
             key: t,
             value: e
         });
@@ -451,14 +453,14 @@ class CacheService {
     }
     delete(t) {
         this.storage.delete(t);
-        this.ea.publish(h.Clear, {
+        this.ea.publish(o.Clear, {
             key: t
         });
     }
     clear() {
         this.storage.clear();
         this.T.clear();
-        this.ea.publish(h.Reset);
+        this.ea.publish(o.Reset);
         this.stopBackgroundRefresh();
         this.j.forEach((t => {
             this.p.clearTimeout(t);
@@ -468,9 +470,9 @@ class CacheService {
     dispose() {
         this.clear();
         this.H.forEach((t => t.dispose()));
-        this.ea.publish(h.Dispose);
+        this.ea.publish(o.Dispose);
     }
-    P(t) {
+    N(t) {
         this.p.clearTimeout(t);
         const e = this.j.indexOf(t);
         if (e > -1) {
@@ -488,16 +490,16 @@ const c = {
 
 class CacheInterceptor {
     constructor(e) {
-        this.N = t.resolve(o);
+        this.P = t.resolve(h);
         this.cf = {
             ...c,
             ...e ?? {}
         };
     }
     request(t) {
-        this.N.startBackgroundRefresh(this.cf.refreshInterval);
+        this.P.startBackgroundRefresh(this.cf.refreshInterval);
         if (t.method !== "GET") return t;
-        const e = this.N.get(this.key(t));
+        const e = this.P.get(this.key(t));
         return this.mark(e) ?? t;
     }
     response(t, e) {
@@ -508,17 +510,17 @@ class CacheInterceptor {
             return t;
         }
         const s = this.key(e);
-        this.N.setItem(s, {
+        this.P.setItem(s, {
             data: t,
             ...this.cf
         }, e);
         if (this.cf?.refreshStaleImmediate && this.cf.staleTime > 0) {
-            this.N.setStaleTimer(s, this.cf.staleTime, e);
+            this.P.setStaleTimer(s, this.cf.staleTime, e);
         }
         return t;
     }
     dispose() {
-        this.N.stopBackgroundRefresh();
+        this.P.stopBackgroundRefresh();
     }
     key(t) {
         return `${CacheInterceptor.prefix}${t.url}`;
@@ -605,7 +607,7 @@ class RetryInterceptor {
             ...e ?? {}
         };
         if (this.retryConfig.strategy === a.exponential && this.retryConfig.interval <= 1e3) {
-            throw new Error("An interval less than or equal to 1 second is not allowed when using the exponential retry strategy");
+            throw createMappedError(5007, this.retryConfig.interval);
         }
     }
     request(t) {
@@ -663,23 +665,23 @@ function calculateDelay(t) {
     }
     switch (s) {
       case a.fixed:
-        return l[a.fixed](e);
+        return f[a.fixed](e);
 
       case a.incremental:
-        return l[a.incremental](n, e);
+        return f[a.incremental](n, e);
 
       case a.exponential:
-        return l[a.exponential](n, e);
+        return f[a.exponential](n, e);
 
       case a.random:
-        return l[a.random](n, e, r, i);
+        return f[a.random](n, e, r, i);
 
       default:
-        throw new Error("Unrecognized retry strategy");
+        throw createMappedError(5008, s);
     }
 }
 
-const l = [ t => t, (t, e) => e * t, (t, e) => t === 1 ? e : e ** t / 1e3, (t, e, s = 0, r = 6e4) => Math.random() * (r - s) + s ];
+const f = [ t => t, (t, e) => e * t, (t, e) => t === 1 ? e : e ** t / 1e3, (t, e, s = 0, r = 6e4) => Math.random() * (r - s) + s ];
 
 exports.BrowserIndexDBStorage = BrowserIndexDBStorage;
 
@@ -687,7 +689,7 @@ exports.BrowserLocalStorage = BrowserLocalStorage;
 
 exports.BrowserSessionStorage = BrowserSessionStorage;
 
-exports.CacheEvent = h;
+exports.CacheEvent = o;
 
 exports.CacheInterceptor = CacheInterceptor;
 
@@ -699,7 +701,7 @@ exports.HttpClientConfiguration = HttpClientConfiguration;
 
 exports.HttpClientEvent = n;
 
-exports.ICacheService = o;
+exports.ICacheService = h;
 
 exports.ICacheStorage = e;
 

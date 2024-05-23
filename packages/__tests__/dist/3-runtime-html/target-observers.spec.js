@@ -352,7 +352,7 @@ describe('3-runtime-html/target-observers.spec.ts', function () {
                     const { platform } = ctx;
                     const sut = new ClassAttributeAccessor(el);
                     function tearDown() {
-                        platform.domWriteQueue.flush();
+                        platform.domQueue.flush();
                     }
                     return { sut, el, initialClassList, tearDown };
                 }

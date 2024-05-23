@@ -2540,7 +2540,7 @@ function ensureTaskQueuesEmpty(platform$1) {
     }
     // canceling pending heading to remove the sticky tasks
     platform.ensureEmpty(platform$1.taskQueue);
-    platform.ensureEmpty(platform$1.domWriteQueue);
+    platform.ensureEmpty(platform$1.domQueue);
     platform.ensureEmpty(platform$1.domReadQueue);
 }
 
@@ -3161,21 +3161,16 @@ const areTaskQueuesEmpty = (function () {
     }
     return function $areTaskQueuesEmpty(clearBeforeThrow) {
         const platform = platformBrowser.BrowserPlatform.getOrCreate(globalThis);
-        const domWriteQueue = platform.domWriteQueue;
+        const domQueue = platform.domQueue;
         const taskQueue = platform.taskQueue;
-        const domReadQueue = platform.domReadQueue;
         let isEmpty = true;
         let message = '';
-        if (!domWriteQueue.isEmpty) {
-            message += `\n${$reportTaskQueue('domWriteQueue', domWriteQueue)}\n\n`;
+        if (!domQueue.isEmpty) {
+            message += `\n${$reportTaskQueue('domQueue', domQueue)}\n\n`;
             isEmpty = false;
         }
         if (!taskQueue.isEmpty) {
             message += `\n${$reportTaskQueue('taskQueue', taskQueue)}\n\n`;
-            isEmpty = false;
-        }
-        if (!domReadQueue.isEmpty) {
-            message += `\n${$reportTaskQueue('domReadQueue', domReadQueue)}\n\n`;
             isEmpty = false;
         }
         if (!isEmpty) {
@@ -7976,7 +7971,7 @@ function createFixture(template, $class, registrations = [], autoStart = true, c
         el.dispatchEvent(new platform.window.Event('scroll'));
     };
     const flush = (time) => {
-        ctx.platform.domWriteQueue.flush(time);
+        ctx.platform.domQueue.flush(time);
     };
     const stop = (dispose = false) => {
         let ret = void 0;

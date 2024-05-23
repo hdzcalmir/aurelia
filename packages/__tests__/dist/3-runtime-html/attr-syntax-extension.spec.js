@@ -50,7 +50,7 @@ describe('3-runtime-html/attr-syntax-extension.spec.ts', function () {
         assert.strictEqual(component.option, '2');
         component.option = '3';
         assert.strictEqual(selectEl.value, '2');
-        ctx.platform.domWriteQueue.flush();
+        ctx.platform.domQueue.flush();
         assert.strictEqual(selectEl.value, '3');
         await tearDown();
     });

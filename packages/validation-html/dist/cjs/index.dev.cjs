@@ -60,6 +60,54 @@ function __runInitializers(thisArg, initializers, value) {
     return useValue ? value : void 0;
 }
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
+    [4200 /* ErrorNames.validate_binding_behavior_on_invalid_binding_type */]: 'Validate behavior used on non property binding',
+    [4201 /* ErrorNames.validate_binding_behavior_extraneous_args */]: `Unconsumed argument#{{0}} for validate binding behavior: {{1}}`,
+    [4202 /* ErrorNames.validate_binding_behavior_invalid_trigger_name */]: `{{0}} is not a supported validation trigger`,
+    [4203 /* ErrorNames.validate_binding_behavior_invalid_controller */]: `{{0}} is not of type ValidationController`,
+    [4204 /* ErrorNames.validate_binding_behavior_invalid_binding_target */]: 'Invalid binding target',
+    [4205 /* ErrorNames.validation_controller_unknown_expression */]: `Unknown expression of type {{0}}`,
+    [4206 /* ErrorNames.validation_controller_unable_to_parse_expression */]: `Unable to parse binding expression: {{0}}`,
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
+        let matches = regex.exec(cooked);
+        while (matches != null) {
+            const method = matches[1]?.slice(1);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let value = details[i];
+            if (value != null) {
+                switch (method) {
+                    case 'element':
+                        value = value === '*' ? 'all elements' : `<${value} />`;
+                        break;
+                    default: {
+                        // property access
+                        if (method?.startsWith('.')) {
+                            value = String(value[method.slice(1)]);
+                        }
+                        else {
+                            value = String(value);
+                        }
+                    }
+                }
+            }
+            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
+            matches = regex.exec(cooked);
+        }
+    }
+    return cooked;
+};
+
 /**
  * The result of a call to the validation controller's validate method.
  */
@@ -158,14 +206,14 @@ function getPropertyInfo(binding, info) {
                 break;
             }
             default:
-                throw new Error(`Unknown expression of type ${expression.constructor.name}`); // TODO: use reporter/logger
+                throw createMappedError(4205 /* ErrorNames.validation_controller_unknown_expression */, expression.constructor.name);
         }
         const separator = propertyName.startsWith('[') ? '' : '.';
         propertyName = propertyName.length === 0 ? memberName : `${memberName}${separator}${propertyName}`;
         expression = expression.object;
     }
     if (expression === void 0) {
-        throw new Error(`Unable to parse binding expression: ${binding.ast.expression}`); // TODO: use reporter/logger
+        throw createMappedError(4206 /* ErrorNames.validation_controller_unable_to_parse_expression */, binding.ast.expression);
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let object;
@@ -261,7 +309,7 @@ class ValidationController {
             ];
         }
         this.validating = true;
-        const task = this.platform.domReadQueue.queueTask(async () => {
+        const task = this.platform.domQueue.queueTask(async () => {
             try {
                 const results = await Promise.all(instructions.map(async (x) => this.validator.validate(x)));
                 const newResults = results.reduce((acc, resultSet) => {
@@ -597,7 +645,7 @@ class ValidateBindingBehavior {
     }
     bind(scope, binding) {
         if (!(binding instanceof runtimeHtml.PropertyBinding)) {
-            throw new Error('Validate behavior used on non property binding');
+            throw createMappedError(4200 /* ErrorNames.validate_binding_behavior_on_invalid_binding_type */);
         }
         let connector = validationConnectorMap.get(binding);
         if (connector == null) {
@@ -719,7 +767,7 @@ class ValidatitionConnector {
                     rules = this._ensureRules(runtimeHtml.astEvaluate(arg, scope, this, this._rulesMediator));
                     break;
                 default:
-                    throw new Error(`Unconsumed argument#${i + 1} for validate binding behavior: ${runtimeHtml.astEvaluate(arg, scope, this, null)}`);
+                    throw createMappedError(4201 /* ErrorNames.validate_binding_behavior_extraneous_args */, i + 1, runtimeHtml.astEvaluate(arg, scope, this, null));
             }
         }
         return new ValidateArgumentsDelta(this._ensureController(controller), this._ensureTrigger(trigger), rules);
@@ -730,7 +778,7 @@ class ValidatitionConnector {
     validateBinding() {
         // Queue the new one before canceling the old one, to prevent early yield
         const task = this.task;
-        this.task = this._platform.domReadQueue.queueTask(() => this.controller.validateBinding(this.propertyBinding));
+        this.task = this._platform.domQueue.queueTask(() => this.controller.validateBinding(this.propertyBinding));
         if (task !== this.task) {
             task?.cancel();
         }
@@ -770,17 +818,17 @@ class ValidatitionConnector {
             trigger = this.defaultTrigger;
         }
         else if (!Object.values(exports.ValidationTrigger).includes(trigger)) {
-            throw new Error(`${trigger} is not a supported validation trigger`); // TODO: use reporter
+            throw createMappedError(4202 /* ErrorNames.validate_binding_behavior_invalid_trigger_name */, trigger);
         }
         return trigger;
     }
     /** @internal */
     _ensureController(controller) {
-        if (controller === (void 0) || controller === null) {
+        if (controller == null) {
             controller = this.scopedController;
         }
         else if (!(controller instanceof ValidationController)) {
-            throw new Error(`${controller} is not of type ValidationController`); // TODO: use reporter
+            throw createMappedError(4203 /* ErrorNames.validate_binding_behavior_invalid_controller */, controller);
         }
         return controller;
     }
@@ -799,7 +847,7 @@ class ValidatitionConnector {
         else {
             const controller = target?.$controller;
             if (controller === void 0) {
-                throw new Error('Invalid binding target'); // TODO: use reporter
+                throw createMappedError(4204 /* ErrorNames.validate_binding_behavior_invalid_binding_target */);
             }
             return controller.host;
         }
@@ -895,7 +943,7 @@ function createConfiguration(optionsProvider) {
         },
     };
 }
-const ValidationHtmlConfiguration = createConfiguration(kernel.noop);
+const ValidationHtmlConfiguration = /*@__PURE__*/ createConfiguration(kernel.noop);
 
 const resultIdAttribute = 'validation-result-id';
 const resultContainerAttribute = 'validation-result-container';

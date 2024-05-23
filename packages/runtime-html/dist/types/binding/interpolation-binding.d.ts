@@ -1,5 +1,5 @@
+import { type IServiceLocator } from '@aurelia/kernel';
 import { IAstEvaluator } from '../ast.eval';
-import type { IServiceLocator } from '@aurelia/kernel';
 import type { ITask, TaskQueue } from '@aurelia/platform';
 import type { ICollectionSubscriber, IObserverLocator, IObserverLocatorBasedConnectable, ISubscriber } from '@aurelia/runtime';
 import { type Scope } from './scope';

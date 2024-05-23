@@ -1,5 +1,4 @@
-import { Class } from '@aurelia/kernel';
-import type { Constructable } from '@aurelia/kernel';
+import { type Class, type Constructable } from '@aurelia/kernel';
 import type { InterceptorFunc } from '@aurelia/runtime';
 import { BindingMode, IComponentBindablePropDefinition } from '@aurelia/template-compiler';
 type PropertyType = typeof Number | typeof String | typeof Boolean | typeof BigInt | {

@@ -103,7 +103,7 @@ describe('router-lite/resources/href.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, host, container } = await start({ appRoot: Root, registrations: [Products, Product] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         assert.html.textContent(host, 'products');
         const anchors = Array.from(host.querySelectorAll('a'));
@@ -229,7 +229,7 @@ describe('router-lite/resources/href.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, host, container } = await start({ appRoot: Root, registrations: [L11, L12, L21, L22] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         assert.html.textContent(host, 'l11 l21');
         host.querySelector('a').click();
@@ -393,7 +393,7 @@ describe('router-lite/resources/href.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, host, container } = await start({ appRoot: Root, registrations: [L11, L12, L21, L22, L23, L24] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         assert.html.textContent(host, 'l11 l21', 'init');
         // l21 -> l22
@@ -532,7 +532,7 @@ describe('router-lite/resources/href.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, host, container } = await start({ appRoot: Root, useHash: true, registrations: [CeOne, CeTwo, CeThree] });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         const anchors = Array.from(host.querySelectorAll('a'));
         assert.deepStrictEqual(anchors.map(a => a.getAttribute('href')), ['#ce-one', '#ce-two', '#ce-two', './ce-three']);
@@ -603,7 +603,7 @@ describe('router-lite/resources/href.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, container, host } = await start({ appRoot: Root });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         assert.html.textContent(host, '', 'init');
         host.querySelector('a').click();
         await queue.yield();
@@ -677,7 +677,7 @@ describe('router-lite/resources/href.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, host, container } = await start({ appRoot: Root });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         const anchors = Array.from(host.querySelectorAll('a'));
         anchors[0].click();

@@ -1,8 +1,8 @@
+import { type IServiceLocator } from '@aurelia/kernel';
 import { type IObserverLocator, IObserverLocatorBasedConnectable, ISubscriber, ICollectionSubscriber } from '@aurelia/runtime';
 import { type Scope } from './scope';
 import { IAstEvaluator } from '../ast.eval';
 import type { TaskQueue } from '@aurelia/platform';
-import type { IServiceLocator } from '@aurelia/kernel';
 import type { INode } from '../dom';
 import type { IBinding, BindingMode, IBindingController } from './interfaces-bindings';
 import { ForOfStatement, IsBindingBehavior } from '@aurelia/expression-parser';

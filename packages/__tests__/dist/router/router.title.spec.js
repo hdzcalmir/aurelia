@@ -208,6 +208,6 @@ describe('router/router.title.spec.ts', function () {
 });
 const $load = async (path, router, platform) => {
     await router.load(path);
-    platform.domWriteQueue.flush();
+    platform.domQueue.flush();
 };
 //# sourceMappingURL=router.title.spec.js.map

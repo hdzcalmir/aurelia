@@ -100,11 +100,11 @@ describe('router/router.fast-switch.spec.ts', function () {
                     assert.strictEqual(host.textContent, '!root!', '0) root default page');
                     // 2) Go to one
                     await $load('/route-one', router, platform);
-                    await platform.domWriteQueue.yield();
+                    await platform.domQueue.yield();
                     assert.strictEqual(host.textContent, '!one!', `2) /route-one`);
                     // 3) Go to two
                     await $load('/route-two', router, platform);
-                    await platform.domWriteQueue.yield();
+                    await platform.domQueue.yield();
                     assert.strictEqual(host.textContent, '!two!', `3) /route-two -`);
                     // 4) Ok, let's flood
                     const proms = [];
@@ -129,11 +129,11 @@ describe('router/router.fast-switch.spec.ts', function () {
                     assert.strictEqual(host.textContent, '!root!', '0) root default page');
                     // 2) Go to one
                     await $load('/route-one', router, platform);
-                    await platform.domWriteQueue.yield();
+                    await platform.domQueue.yield();
                     assert.strictEqual(host.textContent, '!one!', `2) /route-one`);
                     // 3) Go to two
                     await $load('/route-two', router, platform);
-                    await platform.domWriteQueue.yield();
+                    await platform.domQueue.yield();
                     assert.strictEqual(host.textContent, '!two!', `3) /route-two -`);
                     for (let i = 0; i < 98; i++) {
                         if (i % 2 === 0) {
@@ -161,20 +161,20 @@ describe('router/router.fast-switch.spec.ts', function () {
 });
 const $load = async (path, router, platform) => {
     await router.load(path);
-    platform.domWriteQueue.flush();
+    platform.domQueue.flush();
 };
 const $goBack = async (router, platform) => {
     await router.viewer.history.back();
     if (platform) {
-        platform.domWriteQueue.flush();
-        await platform.domWriteQueue.yield();
+        platform.domQueue.flush();
+        await platform.domQueue.yield();
     }
 };
 const $goForward = async (router, platform) => {
     await router.viewer.history.forward();
     if (platform) {
-        platform.domWriteQueue.flush();
-        await platform.domWriteQueue.yield();
+        platform.domQueue.flush();
+        await platform.domQueue.yield();
     }
 };
 //# sourceMappingURL=router.fast-switch.spec.js.map

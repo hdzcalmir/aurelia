@@ -1,4 +1,4 @@
-import { Constructable } from '@aurelia/kernel';
+import { type Constructable } from '@aurelia/kernel';
 import { IHydratedController } from '../../templating/controller';
 /**
  * An optional interface describing the dynamic composition activate convention.

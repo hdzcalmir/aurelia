@@ -134,6 +134,59 @@ function rejectOnError(response) {
     return response;
 }
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
+    [5000 /* ErrorNames.http_client_fetch_fn_not_found */]: 'Could not resolve fetch function. Please provide a fetch function implementation or a polyfill for the global fetch function.',
+    [5001 /* ErrorNames.http_client_configure_invalid_return */]: `The config callback did not return a valid HttpClientConfiguration like instance. Received {{0}}`,
+    [5002 /* ErrorNames.http_client_configure_invalid_config */]: `invalid config, expecting a function or an object, received {{0}}`,
+    [5004 /* ErrorNames.http_client_more_than_one_retry_interceptor */]: `Only one RetryInterceptor is allowed.`,
+    [5005 /* ErrorNames.http_client_retry_interceptor_not_last */]: 'The retry interceptor must be the last interceptor defined.',
+    [5003 /* ErrorNames.http_client_configure_invalid_header */]: 'Default headers must be a plain object.',
+    [5006 /* ErrorNames.http_client_invalid_request_from_interceptor */]: `An invalid result was returned by the interceptor chain. Expected a Request or Response instance, but got [{{{0}}]`,
+    [5007 /* ErrorNames.retry_interceptor_invalid_exponential_interval */]: 'An interval less than or equal to 1 second is not allowed when using the exponential retry strategy. Received: {{0}}',
+    [5008 /* ErrorNames.retry_interceptor_invalid_strategy */]: 'Invalid retry strategy: {{0}}',
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
+        let matches = regex.exec(cooked);
+        while (matches != null) {
+            const method = matches[1]?.slice(1);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let value = details[i];
+            if (value != null) {
+                switch (method) {
+                    case 'join(!=)':
+                        value = value.join('!=');
+                        break;
+                    case 'element':
+                        value = value === '*' ? 'all elements' : `<${value} />`;
+                        break;
+                    default: {
+                        // property access
+                        if (method?.startsWith('.')) {
+                            value = String(value[method.slice(1)]);
+                        }
+                        else {
+                            value = String(value);
+                        }
+                    }
+                }
+            }
+            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
+            matches = regex.exec(cooked);
+        }
+    }
+    return cooked;
+};
+
 const absoluteUrlRegexp = /^([a-z][a-z0-9+\-.]*:)?\/\//i;
 /**
  * An interface to resolve what fetch function will be used for the http client
@@ -141,7 +194,7 @@ const absoluteUrlRegexp = /^([a-z][a-z0-9+\-.]*:)?\/\//i;
  */
 const IFetchFn = /*@__PURE__*/ DI.createInterface('fetch', x => {
     if (typeof fetch !== 'function') {
-        throw new Error('Could not resolve fetch function. Please provide a fetch function implementation or a polyfill for the global fetch function.');
+        throw createMappedError(5000 /* ErrorNames.http_client_fetch_fn_not_found */);
     }
     return x.instance(fetch);
 });
@@ -215,29 +268,29 @@ class HttpClient {
                     normalizedConfig = c;
                 }
                 else {
-                    throw new Error(`The config callback did not return a valid HttpClientConfiguration like instance. Received ${typeof c}`);
+                    throw createMappedError(5001 /* ErrorNames.http_client_configure_invalid_return */, typeof c);
                 }
             }
         }
         else {
-            throw new Error(`invalid config, expecting a function or an object, received ${typeof config}`);
+            throw createMappedError(5002 /* ErrorNames.http_client_configure_invalid_config */, typeof config);
         }
         const defaults = normalizedConfig.defaults;
         if (defaults?.headers instanceof Headers) {
             // Headers instances are not iterable in all browsers. Require a plain
             // object here to allow default headers to be merged into request headers.
             // extract throwing error into an utility function
-            throw new Error('Default headers must be a plain object.');
+            throw createMappedError(5003 /* ErrorNames.http_client_configure_invalid_header */);
         }
         const interceptors = normalizedConfig.interceptors;
         if (interceptors?.length > 0) {
             // find if there is a RetryInterceptor
             if (interceptors.filter(x => x instanceof RetryInterceptor).length > 1) {
-                throw new Error('Only one RetryInterceptor is allowed.');
+                throw createMappedError(5004 /* ErrorNames.http_client_more_than_one_retry_interceptor */);
             }
             const retryInterceptorIndex = interceptors.findIndex(x => x instanceof RetryInterceptor);
             if (retryInterceptorIndex >= 0 && retryInterceptorIndex !== interceptors.length - 1) {
-                throw new Error('The retry interceptor must be the last interceptor defined.');
+                throw createMappedError(5005 /* ErrorNames.http_client_retry_interceptor_not_last */);
             }
             // const cacheInterceptorIndex = interceptors.findIndex(x => x instanceof CacheInterceptor);
             // if (cacheInterceptorIndex >= 0) {
@@ -289,7 +342,7 @@ class HttpClient {
                 response = this._fetchFn.call(void 0, request);
             }
             else {
-                throw new Error(`An invalid result was returned by the interceptor chain. Expected a Request or Response instance, but got [${result}]`);
+                throw createMappedError(5006 /* ErrorNames.http_client_invalid_request_from_interceptor */, result);
             }
             return this.processResponse(response, this._interceptors, request);
         })
@@ -803,7 +856,7 @@ class RetryInterceptor {
         this.retryConfig = { ...defaultRetryConfig, ...(retryConfig ?? {}) };
         if (this.retryConfig.strategy === RetryStrategy.exponential
             && this.retryConfig.interval <= 1000) {
-            throw new Error('An interval less than or equal to 1 second is not allowed when using the exponential retry strategy');
+            throw createMappedError(5007 /* ErrorNames.retry_interceptor_invalid_exponential_interval */, this.retryConfig.interval);
         }
     }
     /**
@@ -890,7 +943,7 @@ function calculateDelay(retryConfig) {
         case (RetryStrategy.random):
             return retryStrategies[RetryStrategy.random](counter, interval, minRandomInterval, maxRandomInterval);
         default:
-            throw new Error('Unrecognized retry strategy');
+            throw createMappedError(5008 /* ErrorNames.retry_interceptor_invalid_strategy */, strategy);
     }
 }
 const retryStrategies = [
