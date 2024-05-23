@@ -42,7 +42,7 @@ import { assert, createFixture, TestContext } from '@aurelia/testing';
 describe('3-runtime-html/signaler.integration.spec.ts', function () {
     it('1 non-observed input and 2 observed inputs - toView', async function () {
         const ctx = TestContext.create();
-        const tq = ctx.platform.domWriteQueue;
+        const tq = ctx.platform.domQueue;
         ctx.container.register(LoggerConfiguration.create({ sinks: [ConsoleSink], level: LogLevel.warn }));
         const au = new Aurelia(ctx.container);
         const host = ctx.createElement('div');
@@ -131,7 +131,7 @@ describe('3-runtime-html/signaler.integration.spec.ts', function () {
         ]) {
             it(expr, async function () {
                 const ctx = TestContext.create();
-                const tq = ctx.platform.domWriteQueue;
+                const tq = ctx.platform.domQueue;
                 ctx.container.register(LoggerConfiguration.create({ $console: console, level: LogLevel.warn }));
                 const au = new Aurelia(ctx.container);
                 const host = ctx.createElement('div');

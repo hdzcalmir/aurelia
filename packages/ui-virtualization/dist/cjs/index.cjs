@@ -110,7 +110,7 @@ class VirtualRepeat {
         const a = this.$ = i.iterable !== c;
         this.T = new CollectionObservationMediator(this, (() => a ? this.I() : this.L()));
         this.local = i.declaration.name;
-        this.taskQueue = t.resolve(s.IPlatform).domWriteQueue;
+        this.taskQueue = t.resolve(s.IPlatform).domQueue;
     }
     attaching() {
         this.dom = this.O.render(this.location);

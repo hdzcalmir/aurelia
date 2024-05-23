@@ -701,32 +701,11 @@ const getMessageByCode = (name, ...details) => {
             let value = details[i];
             if (value != null) {
                 switch (method) {
-                    case 'nodeName':
-                        value = value.nodeName.toLowerCase();
-                        break;
-                    case 'name':
-                        value = value.name;
-                        break;
-                    case 'typeof':
-                        value = typeof value;
-                        break;
-                    case 'ctor':
-                        value = value.constructor.name;
-                        break;
-                    case 'controller':
-                        value = value.controller.name;
-                        break;
-                    case 'target@property':
-                        value = `${value.target}@${value.targetProperty}`;
-                        break;
                     case 'toString':
                         value = Object.prototype.toString.call(value);
                         break;
                     case 'join(!=)':
                         value = value.join('!=');
-                        break;
-                    case 'bindingCommandHelp':
-                        value = getBindingCommandHelp(value);
                         break;
                     case 'element':
                         value = value === '*' ? 'all elements' : `<${value} />`;
@@ -748,21 +727,6 @@ const getMessageByCode = (name, ...details) => {
     }
     return cooked;
 };
-function getBindingCommandHelp(name) {
-    switch (name) {
-        case 'delegate':
-            return `\nThe ".delegate" binding command has been removed in v2.`
-                + ` Binding command ".trigger" should be used instead.`
-                + ` If you are migrating v1 application, install compat package`
-                + ` to add back the ".delegate" binding command for ease of migration.`;
-        case 'call':
-            return `\nThe ".call" binding command has been removed in v2.`
-                + ` If you want to pass a callback that preserves the context of the function call,`
-                + ` you can use lambda instead. Refer to lambda expression doc for more details.`;
-        default:
-            return '';
-    }
-}
 
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 const IExpressionParser = /*@__PURE__*/ DI.createInterface('IExpressionParser', x => x.singleton(ExpressionParser));
@@ -2145,7 +2109,7 @@ const { CharScanners, IdParts, } = /*@__PURE__*/ (() => {
         }
     };
     // // ASCII IdentifierPart lookup
-    
+    // const AsciiIdParts = ((AsciiIdParts) => {
     //   decompress(null, AsciiIdParts, codes.AsciiIdPart, true);
     //   return AsciiIdParts;
     // })(new Set<number>());

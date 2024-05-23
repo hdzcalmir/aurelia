@@ -14,7 +14,7 @@ describe('3-runtime-html/input.spec.ts', function () {
         input.dispatchEvent(new ctx.Event('change'));
         assert.strictEqual(component.message, 'world');
         component.message = 'hello world';
-        ctx.platform.domWriteQueue.flush();
+        ctx.platform.domQueue.flush();
         assert.strictEqual(input.value, 'hello world');
     });
     if (!isTestingInNode) {
@@ -39,7 +39,7 @@ describe('3-runtime-html/input.spec.ts', function () {
             });
             assert.doesNotThrow(() => {
                 component.file = 'c:/my-file.txt';
-                ctx.platform.domWriteQueue.flush();
+                ctx.platform.domQueue.flush();
             });
         });
         it('special property valueAsNumber on <input type=number> + bad value', function () {
@@ -61,7 +61,7 @@ describe('3-runtime-html/input.spec.ts', function () {
             assert.strictEqual(comp.count, 0);
             // then bogus value
             comp.count = 'abc';
-            ctx.platform.domWriteQueue.flush();
+            ctx.platform.domQueue.flush();
             assert.strictEqual(input.valueAsNumber, NaN);
             // input.valueAsNumber observer does not propagate the value back
             // this may result in some GH issues
@@ -99,7 +99,7 @@ describe('3-runtime-html/input.spec.ts', function () {
             assert.strictEqual(comp.count, NaN, 'comp.count === NaN when input.valueAsNumber is bogus');
             // then bogus value
             comp.count = 'abc';
-            ctx.platform.domWriteQueue.flush();
+            ctx.platform.domQueue.flush();
             assert.strictEqual(input.valueAsNumber, NaN);
             // input.valueAsNumber observer does not propagate the value back
             // this may result in some GH issues
@@ -118,7 +118,7 @@ describe('3-runtime-html/input.spec.ts', function () {
         input.dispatchEvent(new ctx.Event('change'));
         assert.strictEqual(component.message, 'world');
         component.message = 'hello world';
-        ctx.platform.domWriteQueue.flush();
+        ctx.platform.domQueue.flush();
         assert.strictEqual(input.value, 'hello world');
     });
     it('assigns removes attribute to "minLength", "maxLength" on null/undefined', function () {

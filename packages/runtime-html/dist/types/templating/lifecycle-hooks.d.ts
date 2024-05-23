@@ -1,4 +1,4 @@
-import { type Constructable, type IContainer, type AnyFunction, type FunctionPropNames } from '@aurelia/kernel';
+import { type Constructable, type IContainer, type AnyFunction, type FunctionPropNames, IRegistry } from '@aurelia/kernel';
 export type LifecycleHook<TViewModel, TKey extends keyof TViewModel> = TViewModel[TKey] extends (AnyFunction | undefined) ? (vm: TViewModel, ...args: Parameters<NonNullable<TViewModel[TKey]>>) => ReturnType<NonNullable<TViewModel[TKey]>> : never;
 export type ILifecycleHooks<TViewModel = {}, TKey extends keyof TViewModel = keyof TViewModel> = {
     [K in TKey]-?: LifecycleHook<TViewModel, K>;
@@ -30,7 +30,7 @@ export declare const LifecycleHooks: Readonly<{
     /**
      * @param def - Placeholder for future extensions. Currently always an empty object.
      */
-    define<T extends Constructable>(def: {}, Type: T): T;
+    define<T extends Constructable>(def: {}, Type: T): IRegistry;
     /**
      * @param ctx - The container where the resolution starts
      * @param Type - The constructor of the Custom element/ Custom attribute with lifecycle metadata

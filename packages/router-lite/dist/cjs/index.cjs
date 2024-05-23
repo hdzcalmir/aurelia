@@ -4034,63 +4034,17 @@ HrefCustomAttribute.$au = {
     }
 };
 
-let k = null;
+const k = x;
 
-function _disposeCurrentRouteSubscription() {
-    k?.dispose();
-}
+const $ = [ k ];
 
-const $ = /*@__PURE__*/ e.DI.createInterface("ICurrentRoute", (t => t.singleton(CurrentRoute)));
+const _ = ViewportCustomElement;
 
-class CurrentRoute {
-    constructor() {
-        this.path = "";
-        this.url = "";
-        this.title = "";
-        this.query = new URLSearchParams;
-        this.parameterInformation = e.emptyArray;
-        const t = e.resolve(x);
-        const s = t.options;
-        k = e.resolve(c).subscribe("au:router:navigation-end", (e => {
-            const i = e.finalInstructions;
-            n.batch((() => {
-                this.path = i.toPath();
-                this.url = i.toUrl(true, s.Ve);
-                this.title = t.Me();
-                this.query = i.queryParams;
-                this.parameterInformation = i.children.map((t => ParameterInformation.create(t)));
-            }));
-        }));
-    }
-}
+const T = LoadCustomAttribute;
 
-class ParameterInformation {
-    constructor(t, e, s, i) {
-        this.config = t;
-        this.viewport = e;
-        this.params = s;
-        this.children = i;
-    }
-    static create(t) {
-        const e = t.recognizedRoute?.route;
-        const s = Object.create(null);
-        Object.assign(s, e?.params ?? t.params);
-        Reflect.deleteProperty(s, i.RESIDUE);
-        return new ParameterInformation(e?.endpoint.route.handler ?? null, t.viewport, s, t.children.map((t => this.create(t))));
-    }
-}
+const I = HrefCustomAttribute;
 
-const _ = x;
-
-const T = [ _ ];
-
-const I = ViewportCustomElement;
-
-const P = LoadCustomAttribute;
-
-const V = HrefCustomAttribute;
-
-const A = [ ViewportCustomElement, LoadCustomAttribute, HrefCustomAttribute ];
+const P = [ ViewportCustomElement, LoadCustomAttribute, HrefCustomAttribute ];
 
 function configure(i, n) {
     let r = null;
@@ -4105,13 +4059,10 @@ function configure(i, n) {
         const o = new URL(n.document.baseURI);
         o.pathname = normalizePath(r ?? o.pathname);
         return o;
-    })), e.Registration.instance(y, o), e.Registration.instance(RouterOptions, o), s.AppTask.creating(x, (t => {})), s.AppTask.hydrated(e.IContainer, RouteContext.setRoot), s.AppTask.activated(x, (t => t.start(true))), s.AppTask.deactivated(x, (t => {
-        _disposeCurrentRouteSubscription();
-        t.stop();
-    })), ...T, ...A);
+    })), e.Registration.instance(y, o), e.Registration.instance(RouterOptions, o), s.AppTask.creating(x, (t => {})), s.AppTask.hydrated(e.IContainer, RouteContext.setRoot), s.AppTask.activated(x, (t => t.start(true))), s.AppTask.deactivated(x, (t => t.stop())), ...$, ...P);
 }
 
-const O = {
+const V = {
     register(t) {
         return configure(t);
     },
@@ -4164,7 +4115,7 @@ class HostElementState {
     }
 }
 
-const M = /*@__PURE__*/ e.DI.createInterface("IStateManager", (t => t.singleton(ScrollStateManager)));
+const A = /*@__PURE__*/ e.DI.createInterface("IStateManager", (t => t.singleton(ScrollStateManager)));
 
 class ScrollStateManager {
     constructor() {
@@ -4182,6 +4133,46 @@ class ScrollStateManager {
     }
 }
 
+const O = /*@__PURE__*/ e.DI.createInterface("ICurrentRoute", (t => t.singleton(CurrentRoute)));
+
+class CurrentRoute {
+    constructor() {
+        this.path = "";
+        this.url = "";
+        this.title = "";
+        this.query = new URLSearchParams;
+        this.parameterInformation = e.emptyArray;
+        const t = e.resolve(x);
+        const s = t.options;
+        e.resolve(c).subscribe("au:router:navigation-end", (e => {
+            const i = e.finalInstructions;
+            n.batch((() => {
+                this.path = i.toPath();
+                this.url = i.toUrl(true, s.Ve);
+                this.title = t.Me();
+                this.query = i.queryParams;
+                this.parameterInformation = i.children.map((t => ParameterInformation.create(t)));
+            }));
+        }));
+    }
+}
+
+class ParameterInformation {
+    constructor(t, e, s, i) {
+        this.config = t;
+        this.viewport = e;
+        this.params = s;
+        this.children = i;
+    }
+    static create(t) {
+        const e = t.recognizedRoute?.route;
+        const s = Object.create(null);
+        Object.assign(s, e?.params ?? t.params);
+        Reflect.deleteProperty(s, i.RESIDUE);
+        return new ParameterInformation(e?.endpoint.route.handler ?? null, t.viewport, s, t.children.map((t => this.create(t))));
+    }
+}
+
 exports.AST = d;
 
 exports.AuNavId = a;
@@ -4190,15 +4181,15 @@ exports.ComponentExpression = ComponentExpression;
 
 exports.CompositeSegmentExpression = CompositeSegmentExpression;
 
-exports.DefaultComponents = T;
+exports.DefaultComponents = $;
 
-exports.DefaultResources = A;
+exports.DefaultResources = P;
 
 exports.HrefCustomAttribute = HrefCustomAttribute;
 
-exports.HrefCustomAttributeRegistration = V;
+exports.HrefCustomAttributeRegistration = I;
 
-exports.ICurrentRoute = $;
+exports.ICurrentRoute = O;
 
 exports.ILocationManager = h;
 
@@ -4210,11 +4201,11 @@ exports.IRouterEvents = c;
 
 exports.IRouterOptions = y;
 
-exports.IStateManager = M;
+exports.IStateManager = A;
 
 exports.LoadCustomAttribute = LoadCustomAttribute;
 
-exports.LoadCustomAttributeRegistration = P;
+exports.LoadCustomAttributeRegistration = T;
 
 exports.LocationChangeEvent = LocationChangeEvent;
 
@@ -4246,11 +4237,11 @@ exports.RouteTree = RouteTree;
 
 exports.Router = Router;
 
-exports.RouterConfiguration = O;
+exports.RouterConfiguration = V;
 
 exports.RouterOptions = RouterOptions;
 
-exports.RouterRegistration = _;
+exports.RouterRegistration = k;
 
 exports.ScopedSegmentExpression = ScopedSegmentExpression;
 
@@ -4264,7 +4255,7 @@ exports.ViewportAgent = ViewportAgent;
 
 exports.ViewportCustomElement = ViewportCustomElement;
 
-exports.ViewportCustomElementRegistration = I;
+exports.ViewportCustomElementRegistration = _;
 
 exports.ViewportExpression = ViewportExpression;
 

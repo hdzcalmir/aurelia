@@ -1,5 +1,5 @@
-import { DI, Registration, IContainer, onResolve, InstanceProvider, resolve, onResolveAll, noop } from '../../../kernel/dist/native-modules/index.mjs';
-import { IPlatform, IEventTarget, INode, Controller, CustomElementDefinition, CustomElement, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { DI, Registration, resolve, IContainer, onResolve, InstanceProvider, isFunction, onResolveAll, isPromise, noop } from '../../../kernel/dist/native-modules/index.mjs';
+import { IPlatform, IEventTarget, INode, Controller, CustomElementDefinition, CustomElement, AppTask, IWindow } from '../../../runtime-html/dist/native-modules/index.mjs';
 
 /** @internal */
 const createInterface = DI.createInterface;
@@ -7,8 +7,6 @@ const createInterface = DI.createInterface;
 const singletonRegistration = Registration.singleton;
 /** @internal */
 const instanceRegistration = Registration.instance;
-/** @internal */
-Registration.callback;
 
 /**
  * The dialog service for composing view & view model into a dialog
@@ -26,6 +24,7 @@ const IDialogDomRenderer = /*@__PURE__*/ createInterface('IDialogDomRenderer');
  * An interface describing the DOM structure of a dialog
  */
 const IDialogDom = /*@__PURE__*/ createInterface('IDialogDom');
+const IDialogEventManager = /*@__PURE__*/ createInterface('IDialogKeyboardService');
 const IDialogGlobalSettings = /*@__PURE__*/ createInterface('IDialogGlobalSettings');
 class DialogOpenResult {
     constructor(wasCancelled, dialog) {
@@ -47,19 +46,68 @@ class DialogCloseResult {
 }
 // #endregion
 
-/** @internal */ const createError = (message) => new Error(message);
-/** @internal */ const isPromise = (v) => v instanceof Promise;
-// eslint-disable-next-line @typescript-eslint/ban-types
-/** @internal */ const isFunction = (v) => typeof v === 'function';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
+    [901 /* ErrorNames.dialog_not_all_dialogs_closed */]: `Failured to close all dialogs when deactivating the application, There are still {{0}} open dialog(s).`,
+    [903 /* ErrorNames.dialog_settings_invalid */]: `Invalid Dialog Settings. You must provide either "component" or "template" or both.`,
+    [904 /* ErrorNames.dialog_no_empty_default_configuration */]: `Invalid dialog configuration. ` +
+        'Specify the implementations for <IDialogService>, <IDialogGlobalSettings> and <IDialogDomRenderer>, ' +
+        'or use the DialogDefaultConfiguration export.',
+    [905 /* ErrorNames.dialog_activation_rejected */]: 'Dialog activation rejected',
+    [906 /* ErrorNames.dialog_cancellation_rejected */]: 'Dialog cancellation rejected',
+    [907 /* ErrorNames.dialog_cancelled_with_cancel_on_rejection_setting */]: 'Dialog cancelled with a rejection on cancel',
+    [908 /* ErrorNames.dialog_custom_error */]: 'Dialog custom error',
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
+        let matches = regex.exec(cooked);
+        while (matches != null) {
+            const method = matches[1]?.slice(1);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let value = details[i];
+            if (value != null) {
+                switch (method) {
+                    case 'join(!=)':
+                        value = value.join('!=');
+                        break;
+                    case 'element':
+                        value = value === '*' ? 'all elements' : `<${value} />`;
+                        break;
+                    default: {
+                        // property access
+                        if (method?.startsWith('.')) {
+                            value = String(value[method.slice(1)]);
+                        }
+                        else {
+                            value = String(value);
+                        }
+                    }
+                }
+            }
+            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
+            matches = regex.exec(cooked);
+        }
+    }
+    return cooked;
+};
 
 /**
  * A controller object for a Dialog instance.
  */
 class DialogController {
-    static get inject() { return [IPlatform, IContainer]; }
-    constructor(p, container) {
-        this.p = p;
-        this.ctn = container;
+    constructor() {
+        this.p = resolve(IPlatform);
+        this.ctn = resolve(IContainer);
+        /** @internal */
+        this._disposeHandler = void 0;
         this.closed = new Promise((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;
@@ -68,14 +116,14 @@ class DialogController {
     /** @internal */
     activate(settings) {
         const container = this.ctn.createChild();
-        const { model, template, rejectOnCancel } = settings;
-        const hostRenderer = container.get(IDialogDomRenderer);
+        const { model, template, rejectOnCancel, renderer = container.get(IDialogDomRenderer), } = settings;
         const dialogTargetHost = settings.host ?? this.p.document.body;
-        const dom = this.dom = hostRenderer.render(dialogTargetHost, settings);
+        const dom = this.dom = renderer.render(dialogTargetHost, settings);
         const rootEventTarget = container.has(IEventTarget, true)
             ? container.get(IEventTarget)
             : null;
         const contentHost = dom.contentHost;
+        const eventManager = container.get(IDialogEventManager);
         this.settings = settings;
         // application root host may be a different element with the dialog root host
         // example:
@@ -95,7 +143,7 @@ class DialogController {
             if (canActivate !== true) {
                 dom.dispose();
                 if (rejectOnCancel) {
-                    throw createDialogCancelError(null, 'Dialog activation rejected');
+                    throw createDialogCancelError(null, 905 /* ErrorNames.dialog_activation_rejected */);
                 }
                 return DialogOpenResult.create(true, this);
             }
@@ -103,7 +151,7 @@ class DialogController {
             return onResolve(cmp.activate?.(model), () => {
                 const ctrlr = this.controller = Controller.$el(container, cmp, contentHost, null, CustomElementDefinition.create(this.getDefinition(cmp) ?? { name: CustomElement.generateName(), template }));
                 return onResolve(ctrlr.activate(ctrlr, null), () => {
-                    dom.overlay.addEventListener(settings.mouseEvent ?? 'click', this);
+                    this._disposeHandler = eventManager.add(this, dom);
                     return DialogOpenResult.create(false, this);
                 });
             });
@@ -118,7 +166,7 @@ class DialogController {
             return this._closingPromise;
         }
         let deactivating = true;
-        const { controller, dom, cmp, settings: { mouseEvent, rejectOnCancel } } = this;
+        const { controller, dom, cmp, settings: { rejectOnCancel } } = this;
         const dialogResult = DialogCloseResult.create(status, value);
         const promise = new Promise(r => {
             r(onResolve(cmp.canDeactivate?.(dialogResult) ?? true, canDeactivate => {
@@ -127,18 +175,18 @@ class DialogController {
                     deactivating = false;
                     this._closingPromise = void 0;
                     if (rejectOnCancel) {
-                        throw createDialogCancelError(null, 'Dialog cancellation rejected');
+                        throw createDialogCancelError(null, 906 /* ErrorNames.dialog_cancellation_rejected */);
                     }
                     return DialogCloseResult.create('abort');
                 }
                 return onResolve(cmp.deactivate?.(dialogResult), () => onResolve(controller.deactivate(controller, null), () => {
                     dom.dispose();
-                    dom.overlay.removeEventListener(mouseEvent ?? 'click', this);
+                    this._disposeHandler?.dispose();
                     if (!rejectOnCancel && status !== 'error') {
                         this._resolve(dialogResult);
                     }
                     else {
-                        this._reject(createDialogCancelError(value, 'Dialog cancelled with a rejection on cancel'));
+                        this._reject(createDialogCancelError(value, 907 /* ErrorNames.dialog_cancelled_with_cancel_on_rejection_setting */));
                     }
                     return dialogResult;
                 }));
@@ -182,14 +230,6 @@ class DialogController {
             this._reject(closeError);
         }))));
     }
-    /** @internal */
-    handleEvent(event) {
-        if ( /* user allows dismiss on overlay click */this.settings.overlayDismiss
-            && /* did not click inside the host element */ !this.dom.contentHost.contains(event.target)) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.cancel();
-        }
-    }
     getOrCreateVm(container, settings, host) {
         const Component = settings.component;
         if (Component == null) {
@@ -213,14 +253,14 @@ class DialogController {
 }
 class EmptyComponent {
 }
-function createDialogCancelError(output, msg) {
-    const error = createError(msg);
+function createDialogCancelError(output, code /* , msg: string */) {
+    const error = createMappedError(code);
     error.wasCancelled = true;
     error.value = output;
     return error;
 }
 function createDialogCloseError(output) {
-    const error = createError('');
+    const error = createMappedError(908 /* ErrorNames.dialog_custom_error */);
     error.wasCancelled = false;
     error.value = output;
     return error;
@@ -238,23 +278,18 @@ class DialogService {
          */
         this.dlgs = [];
         /** @internal */ this._ctn = resolve(IContainer);
-        /** @internal */ this.p = resolve(IPlatform);
         /** @internal */ this._defaultSettings = resolve(IDialogGlobalSettings);
     }
     static register(container) {
-        container.register(singletonRegistration(this, this), Registration.aliasTo(this, IDialogService), AppTask.deactivating(IDialogService, dialogService => onResolve(dialogService.closeAll(), (openDialogController) => {
-            if (openDialogController.length > 0) {
+        container.register(singletonRegistration(this, this), Registration.aliasTo(this, IDialogService), AppTask.deactivating(IDialogService, dialogService => onResolve(dialogService.closeAll(), (openDialogControllers) => {
+            if (openDialogControllers.length > 0) {
                 // todo: what to do?
-                throw createError(`AUR0901: There are still ${openDialogController.length} open dialog(s).`);
+                throw createMappedError(901 /* ErrorNames.dialog_not_all_dialogs_closed */, openDialogControllers.length);
             }
         })));
     }
     get controllers() {
         return this.dlgs.slice(0);
-    }
-    get top() {
-        const dlgs = this.dlgs;
-        return dlgs.length > 0 ? dlgs[dlgs.length - 1] : null;
     }
     /**
      * Opens a new dialog.
@@ -282,11 +317,9 @@ class DialogService {
                 container.register(instanceRegistration(IDialogController, dialogController), instanceRegistration(DialogController, dialogController));
                 return onResolve(dialogController.activate(loadedSettings), openResult => {
                     if (!openResult.wasCancelled) {
-                        if (this.dlgs.push(dialogController) === 1) {
-                            this.p.window.addEventListener('keydown', this);
-                        }
+                        this.dlgs.push(dialogController);
                         const $removeController = () => this.remove(dialogController);
-                        dialogController.closed.then($removeController, $removeController);
+                        void dialogController.closed.finally($removeController);
                     }
                     return openResult;
                 });
@@ -315,32 +348,9 @@ class DialogService {
     }
     /** @internal */
     remove(controller) {
-        const dlgs = this.dlgs;
-        const idx = dlgs.indexOf(controller);
+        const idx = this.dlgs.indexOf(controller);
         if (idx > -1) {
             this.dlgs.splice(idx, 1);
-        }
-        if (dlgs.length === 0) {
-            this.p.window.removeEventListener('keydown', this);
-        }
-    }
-    /** @internal */
-    handleEvent(e) {
-        const keyEvent = e;
-        const key = getActionKey(keyEvent);
-        if (key == null) {
-            return;
-        }
-        const top = this.top;
-        if (top === null || top.settings.keyboard.length === 0) {
-            return;
-        }
-        const keyboard = top.settings.keyboard;
-        if (key === 'Escape' && keyboard.includes(key)) {
-            void top.cancel();
-        }
-        else if (key === 'Enter' && keyboard.includes(key)) {
-            void top.ok();
         }
     }
 }
@@ -369,7 +379,7 @@ class DialogSettings {
     /** @internal */
     _validate() {
         if (this.component == null && this.template == null) {
-            throw createError(`AUR0903: Invalid Dialog Settings. You must provide "component", "template" or both.`);
+            throw createMappedError(903 /* ErrorNames.dialog_settings_invalid */);
         }
         return this;
     }
@@ -391,15 +401,6 @@ function asDialogOpenPromise(promise) {
     promise.whenClosed = whenClosed;
     return promise;
 }
-function getActionKey(e) {
-    if ((e.code || e.key) === 'Escape' || e.keyCode === 27) {
-        return 'Escape';
-    }
-    if ((e.code || e.key) === 'Enter' || e.keyCode === 13) {
-        return 'Enter';
-    }
-    return undefined;
-}
 
 class DefaultDialogGlobalSettings {
     constructor() {
@@ -411,12 +412,11 @@ class DefaultDialogGlobalSettings {
         singletonRegistration(IDialogGlobalSettings, this).register(container);
     }
 }
-const baseWrapperCss = 'position:absolute;width:100%;height:100%;top:0;left:0;';
 class DefaultDialogDomRenderer {
     constructor() {
         this.p = resolve(IPlatform);
-        this.wrapperCss = `${baseWrapperCss} display:flex;`;
-        this.overlayCss = baseWrapperCss;
+        this.overlayCss = 'position:absolute;width:100%;height:100%;top:0;left:0;';
+        this.wrapperCss = `${this.overlayCss} display:flex;`;
         this.hostCss = 'position:relative;margin:auto;';
     }
     static register(container) {
@@ -448,6 +448,74 @@ class DefaultDialogDom {
     }
 }
 
+class DefaultDialogEventManager {
+    constructor() {
+        this.ctrls = [];
+        this.w = resolve(IWindow);
+    }
+    static register(container) {
+        singletonRegistration(IDialogEventManager, this).register(container);
+    }
+    add(controller, dom) {
+        if (this.ctrls.push(controller) === 1) {
+            this.w.addEventListener('keydown', this);
+        }
+        const mouseEvent = controller.settings.mouseEvent ?? 'click';
+        const handleClick = (e) => {
+            if ( /* user allows dismiss on overlay click */controller.settings.overlayDismiss
+                && /* did not click inside the host element */ !dom.contentHost.contains(e.target)) {
+                void controller.cancel();
+            }
+        };
+        dom.overlay.addEventListener(mouseEvent, handleClick);
+        return {
+            dispose: () => {
+                this._remove(controller);
+                dom.overlay.removeEventListener(mouseEvent, handleClick);
+            }
+        };
+    }
+    /** @internal */
+    _remove(controller) {
+        const ctrls = this.ctrls;
+        const idx = ctrls.indexOf(controller);
+        if (idx !== -1) {
+            ctrls.splice(idx, 1);
+        }
+        if (ctrls.length === 0) {
+            this.w.removeEventListener('keydown', this);
+        }
+    }
+    /** @internal */
+    handleEvent(e) {
+        const keyEvent = e;
+        const key = getActionKey(keyEvent);
+        if (key == null) {
+            return;
+        }
+        const top = this.ctrls.slice(-1)[0];
+        if (top == null || top.settings.keyboard.length === 0) {
+            return;
+        }
+        const keyboard = top.settings.keyboard;
+        if (key === 'Escape' && keyboard.includes(key)) {
+            void top.cancel();
+        }
+        else if (key === 'Enter' && keyboard.includes(key)) {
+            void top.ok();
+        }
+    }
+}
+function getActionKey(e) {
+    if ((e.code || e.key) === 'Escape' || e.keyCode === 27) {
+        return 'Escape';
+    }
+    if ((e.code || e.key) === 'Enter' || e.keyCode === 13) {
+        return 'Enter';
+    }
+    return undefined;
+}
+
 function createDialogConfiguration(settingsProvider, registrations) {
     return {
         settingsProvider: settingsProvider,
@@ -466,10 +534,7 @@ DialogConfiguration.customize(settings => {
 ```
  */
 const DialogConfiguration = /*@__PURE__*/ createDialogConfiguration(() => {
-    throw createError(`AUR0904: Invalid dialog configuration. ` +
-            'Specify the implementations for ' +
-            '<IDialogService>, <IDialogGlobalSettings> and <IDialogDomRenderer>, ' +
-            'or use the DialogDefaultConfiguration export.');
+    throw createMappedError(904 /* ErrorNames.dialog_no_empty_default_configuration */);
 }, [class NoopDialogGlobalSettings {
         static register(container) {
             container.register(singletonRegistration(IDialogGlobalSettings, this));
@@ -479,7 +544,8 @@ const DialogDefaultConfiguration = /*@__PURE__*/ createDialogConfiguration(noop,
     DialogService,
     DefaultDialogGlobalSettings,
     DefaultDialogDomRenderer,
+    DefaultDialogEventManager,
 ]);
 
-export { DefaultDialogDom, DefaultDialogDomRenderer, DefaultDialogGlobalSettings, DialogCloseResult, DialogConfiguration, DialogController, DialogDefaultConfiguration, DialogOpenResult, DialogService, IDialogController, IDialogDom, IDialogDomRenderer, IDialogGlobalSettings, IDialogService };
+export { DefaultDialogDom, DefaultDialogDomRenderer, DefaultDialogEventManager, DefaultDialogGlobalSettings, DialogCloseResult, DialogConfiguration, DialogController, DialogDefaultConfiguration, DialogOpenResult, DialogService, IDialogController, IDialogDom, IDialogDomRenderer, IDialogGlobalSettings, IDialogService };
 //# sourceMappingURL=index.dev.mjs.map

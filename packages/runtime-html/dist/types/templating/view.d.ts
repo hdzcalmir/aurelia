@@ -1,5 +1,5 @@
+import { type IContainer } from '@aurelia/kernel';
 import { CustomElementDefinition } from '../resources/custom-element';
-import type { IContainer } from '@aurelia/kernel';
 import type { ICustomAttributeController, ICustomElementController, ISyntheticView } from './controller';
 export interface IViewFactory {
     name: string;

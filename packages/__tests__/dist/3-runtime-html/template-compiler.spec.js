@@ -39,7 +39,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
 import { delegateSyntax } from '@aurelia/compat-v1';
 import { kebabCase, } from '@aurelia/kernel';
 import { Interpolation, AccessScopeExpression, PrimitiveLiteralExpression, IExpressionParser, } from '@aurelia/expression-parser';
-import { bindable, BindingMode, customAttribute, CustomAttribute, customElement, CustomElement, CustomElementDefinition, DefaultBindingSyntax, } from '@aurelia/runtime-html';
+import { bindable, BindingMode, customAttribute, CustomAttribute, customElement, CustomElement, CustomElementDefinition, } from '@aurelia/runtime-html';
 import { TemplateCompilerHooks, HydrateElementInstruction, InstructionType as HTT, InstructionType as TT, HydrateAttributeInstruction, AttrSyntax, attributePattern, PropertyBindingInstruction, InterpolationInstruction, InstructionType, IteratorBindingInstruction, RefBindingInstruction, AttributeBindingInstruction, SetPropertyInstruction, SpreadValueBindingInstruction, } from '@aurelia/template-compiler';
 import { assert, TestContext, verifyBindingInstructionsEqual, } from '@aurelia/testing';
 describe('3-runtime-html/template-compiler.spec.ts', function () {
@@ -373,7 +373,7 @@ describe('3-runtime-html/template-compiler.spec.ts', function () {
                     verifyInstructions(rootInstructions[0].props, expectedElInstructions);
                 });
                 it('enables binding commands to override custom attribute', function () {
-                    const { template, instructions } = compileWith(`<el foo.trigger="1">`, [DefaultBindingSyntax, CustomAttribute.define('foo', class {
+                    const { template, instructions } = compileWith(`<el foo.trigger="1">`, [CustomAttribute.define('foo', class {
                         })]);
                     assertTemplateHtml(template, '<!--au*--><el></el>');
                     verifyInstructions(instructions[0], [

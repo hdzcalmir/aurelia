@@ -9,7 +9,7 @@ const I18nKeyConfiguration = /*@__PURE__*/ DI.createInterface('I18nKeyConfigurat
 class LocalizedValidationController extends ValidationController {
     constructor(ea = resolve(IEventAggregator), platform = resolve(IPlatform)) {
         super();
-        this.localeChangeSubscription = ea.subscribe(I18N_VALIDATION_EA_CHANNEL, () => { platform.domReadQueue.queueTask(async () => { await this.revalidateErrors(); }); });
+        this.localeChangeSubscription = ea.subscribe(I18N_VALIDATION_EA_CHANNEL, () => { platform.domQueue.queueTask(async () => { await this.revalidateErrors(); }); });
     }
 }
 class LocalizedValidationControllerFactory extends ValidationControllerFactory {
@@ -85,7 +85,7 @@ function createConfiguration(optionsProvider) {
         },
     };
 }
-const ValidationI18nConfiguration = createConfiguration(noop);
+const ValidationI18nConfiguration = /*@__PURE__*/ createConfiguration(noop);
 
 export { I18nKeyConfiguration, LocalizedValidationController, LocalizedValidationControllerFactory, LocalizedValidationMessageProvider, ValidationI18nConfiguration };
 //# sourceMappingURL=index.dev.mjs.map

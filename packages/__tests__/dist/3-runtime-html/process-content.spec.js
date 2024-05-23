@@ -617,7 +617,7 @@ describe('3-runtime-html/process-content.spec.ts', function () {
                 assert.html.textContent(header, expectedHeaders[i], `header#${i} content`);
                 // assert the bound trigger
                 header.click();
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 for (let j = numTabs - 1; j > -1; j--) {
                     assert.strictEqual(headers[j].classList.contains('active'), i === j, `header#${j} class`);
                     assert.html.innerEqual(tabs.querySelector('div.content div'), expectedContents[i], `content#${i} content`);

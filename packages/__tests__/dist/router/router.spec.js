@@ -370,7 +370,7 @@ describe('router/router.spec.ts', function () {
         await $load('foo@left', router, platform);
         assert.includes(host.textContent, 'foo', `host.textContent`);
         host.getElementsByTagName('SPAN')[0].parentElement.click();
-        await platform.domWriteQueue.yield();
+        await platform.domQueue.yield();
         assert.includes(host.textContent, 'Viewport: baz', `host.textContent`);
         await tearDown();
     });
@@ -431,7 +431,7 @@ describe('router/router.spec.ts', function () {
         for (let i = 0; i < tests.length; i++) {
             const test = tests[i];
             host.getElementsByTagName('A')[i].click();
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.includes(host.textContent, '|id-name|', `host.textContent`);
             assert.includes(host.textContent, `Parameter id: [${test.result}]`, `host.textContent`);
             await router.back();
@@ -635,15 +635,15 @@ describe('router/router.spec.ts', function () {
         assert.notIncludes(host.textContent, 'Viewport: grault', `host.textContent`);
         assert.notIncludes(host.textContent, 'garply', `host.textContent`);
         host.getElementsByTagName('INPUT')[0].click();
-        await platform.domWriteQueue.yield();
+        await platform.domQueue.yield();
         assert.includes(host.textContent, 'Viewport: grault', `host.textContent`);
         assert.includes(host.textContent, 'garply', `host.textContent`);
         host.getElementsByTagName('INPUT')[0].click();
-        await platform.domWriteQueue.yield();
+        await platform.domQueue.yield();
         assert.notIncludes(host.textContent, 'Viewport: grault', `host.textContent`);
         assert.notIncludes(host.textContent, 'garply', `host.textContent`);
         host.getElementsByTagName('INPUT')[0].click();
-        await platform.domWriteQueue.yield();
+        await platform.domQueue.yield();
         assert.includes(host.textContent, 'Viewport: grault', `host.textContent`);
         assert.includes(host.textContent, 'garply', `host.textContent`);
         await tearDown();
@@ -659,11 +659,11 @@ describe('router/router.spec.ts', function () {
         assert.notIncludes(host.textContent, 'Viewport: grault', `host.textContent`);
         assert.notIncludes(host.textContent, 'garply', `host.textContent`);
         host.getElementsByTagName('INPUT')[0].click();
-        await platform.domWriteQueue.yield();
+        await platform.domQueue.yield();
         assert.includes(host.textContent, 'Viewport: grault', `host.textContent`);
         assert.includes(host.textContent, 'garply', `host.textContent`);
         host.getElementsByTagName('INPUT')[1].value = 'asdf';
-        await platform.domWriteQueue.yield();
+        await platform.domQueue.yield();
         // NOT going to work since it loads non-stateful parent grault
         await $load('grault@left/corge@grault', router, platform);
         assert.notIncludes(host.textContent, 'garply', `host.textContent`);
@@ -684,7 +684,7 @@ describe('router/router.spec.ts', function () {
         assert.notIncludes(host.textContent, 'Viewport: grault', `host.textContent`);
         assert.notIncludes(host.textContent, 'garply', `host.textContent`);
         host.getElementsByTagName('INPUT')[0].click();
-        await platform.domWriteQueue.yield();
+        await platform.domQueue.yield();
         assert.includes(host.textContent, 'Viewport: grault', `host.textContent`);
         assert.includes(host.textContent, 'garply', `host.textContent`);
         host.getElementsByTagName('INPUT')[1].value = 'asdf';
@@ -762,7 +762,7 @@ describe('router/router.spec.ts', function () {
         await $load('quux@left/foo@quux!', router, platform);
         assert.includes(host.textContent, 'Viewport: foo', `host.textContent`);
         host.getElementsByTagName('SPAN')[0].click();
-        await platform.domWriteQueue.yield();
+        await platform.domQueue.yield();
         assert.includes(host.textContent, 'Viewport: baz', `host.textContent`);
         await $load('bar@left', router, platform);
         assert.includes(host.textContent, 'Viewport: bar', `host.textContent`);
@@ -774,7 +774,7 @@ let quxCantUnload = 0;
 let plughReloadBehavior = 'default';
 const $load = async (path, router, platform) => {
     await router.load(path);
-    platform.domWriteQueue.flush();
+    platform.domQueue.flush();
 };
 const wait = async (time = 500) => {
     await new Promise((resolve) => {

@@ -498,7 +498,7 @@ const S = /*@__PURE__*/ i.renderer(class StateBindingInstructionRenderer {
         this.G = t.resolve(h);
     }
     render(t, i, s, n, e, r) {
-        t.addBinding(new StateBinding(t, t.container, r, n.domWriteQueue, ensureExpression(e, s.from, "IsFunction"), i, s.to, this.G));
+        t.addBinding(new StateBinding(t, t.container, r, n.domQueue, ensureExpression(e, s.from, "IsFunction"), i, s.to, this.G));
     }
 }, null);
 

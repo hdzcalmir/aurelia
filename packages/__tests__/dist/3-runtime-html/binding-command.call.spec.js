@@ -13,7 +13,7 @@ describe('3-runtime-html/binding-command.call.spec.ts', function () {
             },
             assertFn: ({ ctx, appHost }) => {
                 appHost.querySelector('div').click();
-                ctx.platform.domWriteQueue.flush();
+                ctx.platform.domQueue.flush();
                 assert.visibleTextEqual(appHost.querySelector('div'), '6');
             },
         },
@@ -27,7 +27,7 @@ describe('3-runtime-html/binding-command.call.spec.ts', function () {
             },
             assertFn: ({ ctx, appHost }) => {
                 appHost.querySelector('div').onBla();
-                ctx.platform.domWriteQueue.flush();
+                ctx.platform.domQueue.flush();
                 assert.visibleTextEqual(appHost.querySelector('div'), '6');
             },
         },
@@ -48,7 +48,7 @@ describe('3-runtime-html/binding-command.call.spec.ts', function () {
             ],
             assertFn: ({ ctx, appHost, component }) => {
                 component.attr.value(6);
-                ctx.platform.domWriteQueue.flush();
+                ctx.platform.domQueue.flush();
                 assert.visibleTextEqual(appHost.querySelector('div'), '6');
             },
         },
@@ -69,7 +69,7 @@ describe('3-runtime-html/binding-command.call.spec.ts', function () {
             ],
             assertFn: ({ ctx, appHost, component }) => {
                 component.attr.value(6);
-                ctx.platform.domWriteQueue.flush();
+                ctx.platform.domQueue.flush();
                 assert.visibleTextEqual(appHost.querySelector('div'), '6');
             },
         },

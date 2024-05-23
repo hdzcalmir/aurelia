@@ -1002,7 +1002,7 @@ describe('validation/rule-provider.spec.ts', function () {
                 const { parser } = setup();
                 assert.throws(() => {
                     parsePropertyName(property, parser);
-                }, /Unable to parse accessor function/);
+                }, /AUR4102/);
             });
         }
     });

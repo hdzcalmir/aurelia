@@ -47,7 +47,7 @@ export declare const kebabCase: (input: string) => string;
  */
 export declare const toArray: <T = unknown>(input: ArrayLike<T>) => T[];
 /**
- * Decorator. (lazily) bind the method to the class instance on first call.
+ * Decorator. Bind the method to the class instance.
  */
 export declare const bound: <TThis extends object, TArgs extends unknown[], TReturn>(originalMethod: (this: TThis, ...args: TArgs) => TReturn, context: ClassMethodDecoratorContext<TThis, (this: TThis, ...args: TArgs) => TReturn>) => void;
 export declare const mergeArrays: <T>(...arrays: (readonly T[] | undefined)[]) => T[];

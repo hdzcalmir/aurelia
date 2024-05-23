@@ -102,7 +102,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
         $it('static child content', async function ({ app, platform, host }) {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
-            const q = platform.domWriteQueue;
+            const q = platform.domQueue;
             await q.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
@@ -146,7 +146,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
         </template>`,
         };
         $it('dynamic child content', async function ({ platform, host }) {
-            const q = platform.domWriteQueue;
+            const q = platform.domQueue;
             await q.yield();
             assert.html.innerEqual(host, '<foo>0</foo> <foo>1</foo> <foo>2</foo>', `host.textContent`);
         }, setup);
@@ -189,7 +189,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
         </template>`,
         };
         $it('let integration', async function ({ platform, host }) {
-            const q = platform.domWriteQueue;
+            const q = platform.domQueue;
             await q.yield();
             assert.html.innerEqual(host, '<foo>1</foo> <foo>2</foo> <foo>3</foo>', `host.textContent`);
         }, setup);
@@ -264,7 +264,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
         </template>`,
         };
         $it('from-view integration', async function ({ platform, host }) {
-            const q = platform.domWriteQueue;
+            const q = platform.domQueue;
             await q.yield();
             assert.html.innerEqual(host, '<bar>bar</bar> <foo>1</foo> <bar>bar</bar> <foo>2</foo>', `host.textContent`);
         }, setup);
@@ -310,8 +310,8 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
             app.theText = 'a';
-            // await platform.domWriteQueue.yield();
-            platform.domWriteQueue.flush();
+            // await platform.domQueue.yield();
+            platform.domQueue.flush();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -356,7 +356,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
             app.text = 'a';
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -398,7 +398,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
             app.theText = 'a';
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -440,7 +440,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
             app.text = 'a';
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -483,7 +483,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             template: `<foo repeat.for="i of count" text.bind="theText"></foo>`,
         };
         $it('repeater with custom element + inner bindable with different name than outer property, reversed - initialized property', async function ({ platform, host }) {
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -526,7 +526,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             template: `<foo repeat.for="i of count" text.bind="theText"></foo>`,
         };
         $it('repeater with custom element + inner bindable with same name as outer property, reversed - initialized property', async function ({ platform, host }) {
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -569,7 +569,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             template: `<foo repeat.for="i of count" todos.bind="todos"></foo>`,
         };
         $it('repeater with custom element with repeater', async function ({ platform, host, app }) {
-            const q = platform.domWriteQueue;
+            const q = platform.domQueue;
             await q.yield();
             assert.strictEqual(host.textContent, 'abcabcabc', `host.textContent`);
             app.count = 1;
@@ -619,7 +619,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             template: `<foo repeat.for="i of count" todos.bind="todos"></foo>`,
         };
         $it('repeater with custom element with repeater, nested arrays', async function ({ platform, host, app }) {
-            const q = platform.domWriteQueue;
+            const q = platform.domQueue;
             await q.yield();
             assert.strictEqual(host.textContent, 'abcabcabcabcabcabcabcabcabc', `host.textContent`);
             app.count = 1;
@@ -858,7 +858,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
         $it('repeater with custom element', async function ({ platform, host, app }) {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -903,7 +903,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
             app.theText = 'a';
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -948,7 +948,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
             app.text = 'a';
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -993,7 +993,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
             app.theText = 'a';
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -1038,7 +1038,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             assert.strictEqual(host.textContent, '', `host.textContent`);
             app.count = 3;
             app.text = 'a';
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -1081,7 +1081,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             template: `<foo repeat.for="i of count & keyed" text.bind="theText"></foo>`,
         };
         $it('repeater with custom element + inner bindable with different name than outer property, reversed', async function ({ platform, host }) {
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -1124,7 +1124,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             template: `<foo repeat.for="i of count & keyed" text.bind="theText"></foo>`,
         };
         $it('repeater with custom element + inner bindable with same name as outer property, reversed', async function ({ platform, host }) {
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.strictEqual(host.textContent, 'aaa', `host.textContent`);
         }, setup);
     }
@@ -1167,7 +1167,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             template: `<foo repeat.for="i of count & keyed" todos.bind="todos"></foo>`,
         };
         $it('repeater with custom element with repeater', async function ({ platform, host, app }) {
-            const q = platform.domWriteQueue;
+            const q = platform.domQueue;
             await q.yield();
             assert.strictEqual(host.textContent, 'abcabcabc', `host.textContent`);
             app.count = 1;
@@ -1217,7 +1217,7 @@ describe('3-runtime-html/repeater-custom-element.spec.ts', function () {
             template: `<foo repeat.for="i of count & keyed" todos.bind="todos"></foo>`,
         };
         $it('repeater with custom element with repeater, nested arrays', async function ({ platform, host, app }) {
-            const q = platform.domWriteQueue;
+            const q = platform.domQueue;
             await q.yield();
             assert.strictEqual(host.textContent, 'abcabcabcabcabcabcabcabcabc', `host.textContent`);
             app.count = 1;

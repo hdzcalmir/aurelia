@@ -53,6 +53,8 @@ function __runInitializers(t, i, e) {
     return s ? e : void 0;
 }
 
+const createMappedError = (t, ...i) => new Error(`AUR${String(t).padStart(4, "0")}:${i.map(String)}`);
+
 class ControllerValidateResult {
     constructor(t, i, e) {
         this.valid = t;
@@ -124,14 +126,14 @@ function getPropertyInfo(t, i) {
             }
 
           default:
-            throw new Error(`Unknown expression of type ${n.constructor.name}`);
+            throw createMappedError(4205, n.constructor.name);
         }
         const s = a.startsWith("[") ? "" : ".";
         a = a.length === 0 ? i : `${i}${s}${a}`;
         n = n.object;
     }
     if (n === void 0) {
-        throw new Error(`Unable to parse binding expression: ${t.ast.expression}`);
+        throw createMappedError(4206, t.ast.expression);
     }
     let l;
     if (a.length === 0) {
@@ -214,7 +216,7 @@ class ValidationController {
             }), []) ];
         }
         this.validating = true;
-        const n = this.platform.domReadQueue.queueTask((async () => {
+        const n = this.platform.domQueue.queueTask((async () => {
             try {
                 const i = await Promise.all(r.map((async t => this.validator.validate(t))));
                 const e = i.reduce(((t, i) => {
@@ -531,7 +533,7 @@ class ValidateBindingBehavior {
     }
     bind(i, s) {
         if (!(s instanceof e.PropertyBinding)) {
-            throw new Error("Validate behavior used on non property binding");
+            throw createMappedError(4200);
         }
         let r = c.get(s);
         if (r == null) {
@@ -603,10 +605,10 @@ class ValidatitionConnector {
         this.B(new ValidateArgumentsDelta(void 0, this._(t), void 0));
     }
     handleControllerChange(t, i) {
-        this.B(new ValidateArgumentsDelta(this.T(t), void 0, void 0));
+        this.B(new ValidateArgumentsDelta(this.R(t), void 0, void 0));
     }
     handleRulesChange(t, i) {
-        this.B(new ValidateArgumentsDelta(void 0, void 0, this.I(t)));
+        this.B(new ValidateArgumentsDelta(void 0, void 0, this.T(t)));
     }
     handleValidationEvent(t) {
         if (this.validatedOnce || !this.isChangeTrigger) return;
@@ -634,22 +636,22 @@ class ValidatitionConnector {
                 break;
 
               case 1:
-                r = this.T(e.astEvaluate(a, t, this, this.i));
+                r = this.R(e.astEvaluate(a, t, this, this.i));
                 break;
 
               case 2:
-                i = this.I(e.astEvaluate(a, t, this, this.h));
+                i = this.T(e.astEvaluate(a, t, this, this.h));
                 break;
 
               default:
-                throw new Error(`Unconsumed argument#${n + 1} for validate binding behavior: ${e.astEvaluate(a, t, this, null)}`);
+                throw createMappedError(4201, n + 1, e.astEvaluate(a, t, this, null));
             }
         }
-        return new ValidateArgumentsDelta(this.T(r), this._(s), i);
+        return new ValidateArgumentsDelta(this.R(r), this._(s), i);
     }
     validateBinding() {
         const t = this.task;
-        this.task = this.p.domReadQueue.queueTask((() => this.controller.validateBinding(this.propertyBinding)));
+        this.task = this.p.domQueue.queueTask((() => this.controller.validateBinding(this.propertyBinding)));
         if (t !== this.task) {
             t?.cancel();
         }
@@ -667,7 +669,7 @@ class ValidatitionConnector {
             this.isDirty = false;
             this.trigger = i;
             this.isChangeTrigger = i === exports.ValidationTrigger.change || i === exports.ValidationTrigger.changeOrBlur || i === exports.ValidationTrigger.changeOrFocusout;
-            t = this.triggerEvent = this.R(this.trigger);
+            t = this.triggerEvent = this.I(this.trigger);
             if (t !== null) {
                 this.target.addEventListener(t, this);
             }
@@ -684,19 +686,19 @@ class ValidatitionConnector {
         if (t === void 0 || t === null) {
             t = this.defaultTrigger;
         } else if (!Object.values(exports.ValidationTrigger).includes(t)) {
-            throw new Error(`${t} is not a supported validation trigger`);
+            throw createMappedError(4202, t);
+        }
+        return t;
+    }
+    R(t) {
+        if (t == null) {
+            t = this.scopedController;
+        } else if (!(t instanceof ValidationController)) {
+            throw createMappedError(4203, t);
         }
         return t;
     }
     T(t) {
-        if (t === void 0 || t === null) {
-            t = this.scopedController;
-        } else if (!(t instanceof ValidationController)) {
-            throw new Error(`${t} is not of type ValidationController`);
-        }
-        return t;
-    }
-    I(t) {
         if (Array.isArray(t) && t.every((t => t instanceof i.PropertyRule))) {
             return t;
         }
@@ -708,12 +710,12 @@ class ValidatitionConnector {
         } else {
             const i = t?.$controller;
             if (i === void 0) {
-                throw new Error("Invalid binding target");
+                throw createMappedError(4204);
             }
             return i.host;
         }
     }
-    R(t) {
+    I(t) {
         let i = null;
         switch (t) {
           case exports.ValidationTrigger.blur:
@@ -814,7 +816,7 @@ function createConfiguration(s) {
     };
 }
 
-const d = createConfiguration(t.noop);
+const d = /*@__PURE__*/ createConfiguration(t.noop);
 
 const f = "validation-result-id";
 

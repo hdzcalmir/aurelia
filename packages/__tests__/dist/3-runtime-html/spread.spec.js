@@ -25,7 +25,7 @@ describe('3-runtime-html/spread.spec.ts', function () {
                 ctx.type(appHost, 'input', 'hello');
                 assert.strictEqual(component.message, 'hello');
                 component.message = 'Aurelia';
-                ctx.platform.domWriteQueue.flush();
+                ctx.platform.domQueue.flush();
                 assert.strictEqual(appHost.querySelector('input').value, 'Aurelia');
             },
         });
@@ -56,7 +56,7 @@ describe('3-runtime-html/spread.spec.ts', function () {
             assertFn: ({ platform, component, appHost }) => {
                 assert.strictEqual(appHost.querySelector('input').value, 'Aurelia');
                 component.message = 'hello';
-                platform.domWriteQueue.flush();
+                platform.domQueue.flush();
                 assert.strictEqual(appHost.querySelector('input').value, 'hello');
             },
         });
@@ -67,7 +67,7 @@ describe('3-runtime-html/spread.spec.ts', function () {
                 assert.html.innerEqual(appHost, '');
             },
         });
-        $it('does not apture slot', {
+        $it('does not capture slot', {
             template: '<my-input slot="a" value.bind="message">',
             component: { hasInput: false, message: 'Aurelia' },
             assertFn: ({ appHost }) => {

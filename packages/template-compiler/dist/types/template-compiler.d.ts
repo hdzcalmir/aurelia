@@ -1,7 +1,7 @@
 import { IInstruction } from './instructions';
 import { AttrSyntax } from './attribute-pattern';
 import { BindingCommandInstance } from './binding-command';
-import type { IContainer, Constructable } from '@aurelia/kernel';
+import type { IContainer, Constructable, IRegistry } from '@aurelia/kernel';
 import type { IAttributeComponentDefinition, ICompiledElementComponentDefinition, IComponentBindablePropDefinition, IElementComponentDefinition } from './interfaces-template-compiler';
 import { ITemplateCompiler } from './interfaces-template-compiler';
 export declare const generateElementName: () => string;
@@ -48,7 +48,7 @@ export interface ITemplateCompilerHooks {
 }
 export declare const TemplateCompilerHooks: Readonly<{
     name: string;
-    define<K extends ITemplateCompilerHooks, T extends Constructable<K>>(Type: T): T;
+    define<K extends ITemplateCompilerHooks, T extends Constructable<K>>(Type: T): IRegistry;
     findAll(container: IContainer): readonly ITemplateCompilerHooks[];
 }>;
 /**
@@ -57,5 +57,5 @@ export declare const TemplateCompilerHooks: Readonly<{
  * An instance of this class will be created and appropriate compilation hooks will be invoked
  * at different phases of the default compiler.
  */
-export declare const templateCompilerHooks: <T extends Constructable>(target?: T, _context?: ClassDecoratorContext) => any;
+export declare const templateCompilerHooks: <T extends Constructable>(target?: T, context?: ClassDecoratorContext) => any;
 //# sourceMappingURL=template-compiler.d.ts.map

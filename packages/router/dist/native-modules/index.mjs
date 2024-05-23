@@ -4033,7 +4033,7 @@ class TaskQueue {
     start(t) {
         this.platform = t.platform;
         this.allowedExecutionCostWithinTick = t.allowedExecutionCostWithinTick;
-        this.task = this.platform.domWriteQueue.queueTask(this.dequeue, {
+        this.task = this.platform.domQueue.queueTask(this.dequeue, {
             persistent: true
         });
     }

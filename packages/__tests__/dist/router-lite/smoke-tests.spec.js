@@ -4159,7 +4159,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                     NotFound,
                 ]
             });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const rootVp = host.querySelector('au-viewport');
             let childVp = rootVp.querySelector('au-viewport');
             assert.html.textContent(childVp, 'gc11');
@@ -4646,7 +4646,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         })();
         const { au, container, host } = await start({ appRoot: MyApp });
         const router = container.get(IRouter);
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
         assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
@@ -4832,7 +4832,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         })();
         const { au, container, host } = await start({ appRoot: MyApp });
         const router = container.get(IRouter);
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
         assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
@@ -5044,7 +5044,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         })();
         const { au, container, host } = await start({ appRoot: MyApp });
         const router = container.get(IRouter);
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
         assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
@@ -5256,7 +5256,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         })();
         const { au, container, host } = await start({ appRoot: MyApp });
         const router = container.get(IRouter);
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
         assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
@@ -5477,7 +5477,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         })();
         const { au, container, host } = await start({ appRoot: MyApp });
         const router = container.get(IRouter);
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         const vps = Array.from(host.querySelectorAll(':scope>au-viewport'));
         assert.html.textContent(vps[0], 'c1 gc11', 'round#1 vp1');
@@ -5666,7 +5666,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         await au.app({ component, host }).start();
         assert.strictEqual(host.querySelector('a').getAttribute('href'), 'abc');
         component.href = null;
-        ctx.platform.domWriteQueue.flush();
+        ctx.platform.domQueue.flush();
         assert.strictEqual(host.querySelector('a').getAttribute('href'), null);
         await au.stop(true);
     });
@@ -6475,7 +6475,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             // Start
             await queue.yield();
@@ -6678,7 +6678,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             // Start
             await queue.yield();
@@ -6880,7 +6880,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             // Start
             await queue.yield();
@@ -7055,7 +7055,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             // Start
             await queue.yield();
@@ -7258,7 +7258,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             // Start
             await queue.yield();
@@ -7454,7 +7454,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             // Start
             await queue.yield();
@@ -7553,7 +7553,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             // Start
             await queue.yield();
@@ -7636,7 +7636,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const au = new Aurelia(container);
             const host = ctx.createElement('div');
             await au.app({ component: Root, host }).start();
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             await queue.yield();
             assert.html.textContent(host, 'no nav model root no nav model p1 c11');
             await au.stop(true);
@@ -7850,7 +7850,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
         assert.strictEqual(host.querySelector('ce-p1'), null);
         assert.strictEqual(host.querySelector('ce-p2'), null);
         anchors[0].click();
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         assert.notEqual(host.querySelector('ce-p1'), null);
         assert.strictEqual(host.querySelector('ce-p2'), null);
@@ -8667,7 +8667,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 return Root = _classThis;
             })();
             const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             host.querySelector('a').click();
             await queue.yield();
             assert.html.textContent(host, 'ce1 1 1', 'round#1');
@@ -8769,7 +8769,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 return Root = _classThis;
             })();
             const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             host.querySelector('a').click();
             await queue.yield();
             assert.html.textContent(host, 'ce1 1 1 ce2 1 1', 'round#1');
@@ -8837,7 +8837,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 return Root = _classThis;
             })();
             const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             host.querySelector('a').click();
             await queue.yield();
             assert.html.textContent(host, 'ce1 1 1', 'round#1');
@@ -8939,7 +8939,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 return Root = _classThis;
             })();
             const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             host.querySelector('a').click();
             await queue.yield();
             assert.html.textContent(host, 'ce1 1 1 ce2 1 1', 'round#1');
@@ -9098,7 +9098,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             })();
             const { au, container, host } = await start({ appRoot: Root });
             const router = container.get(IRouter);
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             await router.load('p1/1/c2/1');
             await queue.yield();
             assert.html.textContent(host, 'p1 1 1 ce2 1 1', 'round#1');
@@ -9180,7 +9180,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 return Root = _classThis;
             })();
             const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             host.querySelector('a').click();
             await router.currentTr.promise;
@@ -9283,7 +9283,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 return Root = _classThis;
             })();
             const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             host.querySelector('a').click();
             await router.currentTr.promise;
@@ -9389,7 +9389,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 return Root = _classThis;
             })();
             const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             host.querySelector('a').click();
             await router.currentTr.promise;
@@ -9495,7 +9495,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 return Root = _classThis;
             })();
             const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             host.querySelector('a').click();
             await router.currentTr.promise;
@@ -9600,7 +9600,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 return Root = _classThis;
             })();
             const { au, container, host } = await start({ appRoot: Root });
-            const queue = container.get(IPlatform).domWriteQueue;
+            const queue = container.get(IPlatform).domQueue;
             const router = container.get(IRouter);
             await router.load('ce1/42');
             await queue.yield();
@@ -9724,7 +9724,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                     return Root = _classThis;
                 })();
                 const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne, CeTwo], historyStrategy: data.strategy });
-                const queue = container.get(IPlatform).domWriteQueue;
+                const queue = container.get(IPlatform).domQueue;
                 const router = container.get(IRouter);
                 const expectations = data.expectations;
                 const len = expectations.length;
@@ -9837,7 +9837,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             })();
             const { au, container, host } = await start({ appRoot: Root, historyStrategy: 'push', registrations: [getLocationChangeHandlerRegistration()] });
             const platform = container.get(IPlatform);
-            const dwQueue = platform.domWriteQueue;
+            const dwQueue = platform.domQueue;
             await dwQueue.yield();
             const historyEl = host.querySelector('#history');
             const vp = host.querySelector('au-viewport');
@@ -9969,7 +9969,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             })();
             const { au, container, host } = await start({ appRoot: Root, historyStrategy: 'replace', registrations: [getLocationChangeHandlerRegistration()] });
             const platform = container.get(IPlatform);
-            const dwQueue = platform.domWriteQueue;
+            const dwQueue = platform.domQueue;
             await dwQueue.yield();
             const historyEl = host.querySelector('#history');
             const vp = host.querySelector('au-viewport');
@@ -10101,7 +10101,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             })();
             const { au, container, host } = await start({ appRoot: Root, historyStrategy: 'none', registrations: [getLocationChangeHandlerRegistration()] });
             const platform = container.get(IPlatform);
-            const dwQueue = platform.domWriteQueue;
+            const dwQueue = platform.domQueue;
             await dwQueue.yield();
             const historyEl = host.querySelector('#history');
             const vp = host.querySelector('au-viewport');
@@ -10699,7 +10699,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             await router.load('p2/c1/42');
             assert.html.textContent(host, 'p-2/c1 - 42 - 3 - 3');
             await router.load('p2/c1/24');
-            await container.get(IPlatform).domWriteQueue.yield();
+            await container.get(IPlatform).domQueue.yield();
             assert.html.textContent(host, 'p-2/c1 - 24 - 3 - 4');
             await au.stop(true);
         });
@@ -11584,7 +11584,7 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             return Root = _classThis;
         })();
         const { au, host, container } = await start({ appRoot: Root });
-        const queue = container.get(IPlatform).domWriteQueue;
+        const queue = container.get(IPlatform).domQueue;
         await queue.yield();
         const router = container.get(IRouter);
         await router.load('product/42');

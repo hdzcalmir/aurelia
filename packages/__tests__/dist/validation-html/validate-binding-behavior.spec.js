@@ -39,7 +39,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
 import { callSyntax, delegateSyntax } from '@aurelia/compat-v1';
 import { DI, IServiceLocator, newInstanceForScope, newInstanceOf, Registration, resolve } from '@aurelia/kernel';
 import { Unparser } from '@aurelia/expression-parser';
-import { ArrayObserver, IObserverLocator, } from '@aurelia/runtime';
+import { IObserverLocator, getCollectionObserver, } from '@aurelia/runtime';
 import { bindable, bindingBehavior, customAttribute, valueConverter, CustomElement, customElement, IPlatform, INode, Aurelia, } from '@aurelia/runtime-html';
 import { assert, createFixture, createSpy, TestContext } from '@aurelia/testing';
 import { IValidationRules, PropertyRule, RangeRule, RequiredRule } from '@aurelia/validation';
@@ -91,7 +91,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
                     .satisfies((pin, _) => !Number.isNaN(Number(pin)));
                 if (observeCollection) {
                     this.employeesMediator = new BindingMediator('handleEmployeesChange', this, observerLocator, serviceLocator);
-                    this.employeeObserver = new ArrayObserver(this.org.employees);
+                    this.employeeObserver = getCollectionObserver(this.org.employees);
                     this.employeeObserver.getLengthObserver().subscribe(this.employeesMediator);
                 }
                 this.obj = { coll: [{ a: 1 }, { a: 2 }] };
@@ -107,7 +107,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
                     .required();
             }
             async handleEmployeesChange() {
-                await this.platform.domReadQueue.queueTask(async () => {
+                await this.platform.domQueue.queueTask(async () => {
                     await this.controller.validate();
                 }).result;
             }
@@ -388,7 +388,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             validateBindingSpy.calls.splice(0);
             validateSpy.calls.splice(0);
             target.dispatchEvent(new ctx.Event(event, { bubbles: event === 'focusout' }));
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(validateBindingSpy.calls.length, callCount, 'incorrect validateBinding calls');
             assert.equal(validateSpy.calls.length, callCount, 'incorrect validate calls');
         }
@@ -464,7 +464,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
                 await assertEventHandler(target, 'change', 1, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
                 assert.deepStrictEqual(controller.results.filter((e) => !e.valid).map((e) => e.toString()), [], 'error4');
             }, { template: `<input id="target" type="text" value.two-way="person.age | toNumber & validate:'${trigger}'">` });
-            $it(`GH#1470 - multiple round of validations involving multiple fields - **${trigger}** validation trigger`, async function ({ app, host, platform, ctx }) {
+            $it(`GH#1470 - multiple rounds of validations involving multiple fields - **${trigger}** validation trigger`, async function ({ app, host, platform, ctx }) {
                 const controller = app.controller;
                 const t1 = host.querySelector('#t1');
                 const t2 = host.querySelector('#t2');
@@ -569,7 +569,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             assert.equal(controller.results.filter((e) => !e.valid && e.propertyName === 'name').length, 1, 'error1');
             assert.equal(controller2.results.filter((e) => !e.valid && e.propertyName === 'name').length, 0, 'error2');
             app.tempController = controller2;
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.controllerUnregisterBindingSpy.calls.length, 1);
             assertControllerBinding(controller2, 'person.name', target1, app.controller2RegisterBindingSpy);
             await assertEventHandler(target1, 'blur', 1, platform, app.controller2ValidateBindingSpy, app.controller2ValidateSpy, ctx);
@@ -632,7 +632,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             await assertEventHandler(target2, 'change', 1, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             assert.equal(controller.results.filter((e) => !e.valid && e.propertyName === 'age').length, 0, 'error4');
             app.tempAgeRule = [app.ageMinRule];
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             target2.value = '';
             await assertEventHandler(target2, 'change', 1, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             assert.equal(controller.results.filter((e) => !e.valid && e.propertyName === 'age' && e.rule instanceof RequiredRule).length, 0, 'error5');
@@ -650,16 +650,16 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
         // #endregion
         // #region argument parsing
         const negativeTestData = [
-            { args: `'chaos'`, expectedError: 'is not a supported validation trigger' },
-            { args: `controller`, expectedError: 'is not a supported validation trigger' },
-            { args: `ageMinRule`, expectedError: 'is not a supported validation trigger' },
-            { args: `controller:'change'`, expectedError: 'is not a supported validation trigger' },
-            { args: `'change':'foo'`, expectedError: 'foo is not of type ValidationController' },
-            { args: `'change':{}`, expectedError: 'is not of type ValidationController' },
-            { args: `'change':ageMinRule`, expectedError: 'is not of type ValidationController' },
-            { args: `'change':controller:ageMinRule:'foo'`, expectedError: 'Unconsumed argument#4 for validate binding behavior: foo' },
+            { args: `'chaos'`, code: 'AUR4202', expectedError: 'is not a supported validation trigger' },
+            { args: `controller`, code: 'AUR4202', expectedError: 'is not a supported validation trigger' },
+            { args: `ageMinRule`, code: 'AUR4202', expectedError: 'is not a supported validation trigger' },
+            { args: `controller:'change'`, code: 'AUR4202', expectedError: 'is not a supported validation trigger' },
+            { args: `'change':'foo'`, code: 'AUR4203', expectedError: 'foo is not of type ValidationController' },
+            { args: `'change':{}`, code: 'AUR4203', expectedError: 'is not of type ValidationController' },
+            { args: `'change':ageMinRule`, code: 'AUR4203', expectedError: 'is not of type ValidationController' },
+            { args: `'change':controller:ageMinRule:'foo'`, code: 'AUR4201', expectedError: 'Unconsumed argument#4 for validate binding behavior: foo' },
         ];
-        for (const { args, expectedError } of negativeTestData) {
+        for (const { args, code } of negativeTestData) {
             it(`throws error if the arguments are not provided in correct order - ${args}`, async function () {
                 const ctx = TestContext.create();
                 const container = ctx.container;
@@ -677,7 +677,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
                         .start();
                 }
                 catch (e) {
-                    assert.equal(e.message.endsWith(expectedError), true);
+                    assert.includes(e.message, code);
                 }
                 await au.stop();
                 ctx.doc.body.removeChild(host);
@@ -708,13 +708,13 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 1, 'error2');
             app.clearControllerCalls();
             person.name = 'foo';
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.controllerValidateBindingSpy.calls.length, 0);
             assert.equal(app.controllerValidateSpy.calls.length, 0);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 1, 'error3');
             app.clearControllerCalls();
             ceHost.focus();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             await assertEventHandler(ceHost.querySelector('input'), 'blur', 0, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             await assertEventHandler(ceHost, 'blur', 1, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 0, 'error4');
@@ -746,7 +746,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             await assertEventHandler(input, 'change', 1, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             app.clearControllerCalls();
             ceHost.focus();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             await assertEventHandler(input, 'blur', 0, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             await assertEventHandler(ceHost, 'blur', 1, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 0, 'error4');
@@ -777,7 +777,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             await assertEventHandler(input, 'change', 0, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             app.clearControllerCalls();
             ceHost.focus();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             await assertEventHandler(ceHost, 'blur', 0, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             await controller.validate();
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 0, 'error4');
@@ -793,7 +793,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 1, 'error2');
             app.clearControllerCalls();
             caHost.click();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.controllerValidateBindingSpy.calls.length, 1);
             assert.equal(app.controllerValidateSpy.calls.length, 1);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 0, 'error3');
@@ -807,7 +807,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 1, 'error2');
             app.clearControllerCalls();
             caHost.focus();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             await assertEventHandler(caHost, 'blur', 1, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 0, 'error3');
         }, { template: `<div id="target" tabindex="-1" foo-bar="value.two-way:person.name & validate:'blur'; triggering-events.bind:['blur']"></div>` });
@@ -820,7 +820,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 1, 'error2');
             app.clearControllerCalls();
             caHost.focus();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             await assertEventHandler(caHost, 'focusout', 1, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 0, 'error3');
         }, { template: `<div id="target" tabindex="-1" foo-bar="value.two-way:person.name & validate:'focusout'; triggering-events.bind:['focusout']"></div>` });
@@ -834,13 +834,13 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             // clicking the CE host triggers change in CA value
             app.clearControllerCalls();
             caHost.click();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.controllerValidateBindingSpy.calls.length, 1);
             assert.equal(app.controllerValidateSpy.calls.length, 1);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 0, 'error3');
             app.clearControllerCalls();
             caHost.focus();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             await assertEventHandler(caHost, 'blur', 1, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
         }, { template: `<div id="target" tabindex="-1" foo-bar="value.two-way:person.name & validate:'changeOrBlur'; triggering-events.bind:['click']"></div>` });
         $it('can be used with custom attribute - changeOrFocusout trigger', async function ({ app, host, platform, ctx }) {
@@ -853,7 +853,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             // clicking the CE host triggers change in CA value
             app.clearControllerCalls();
             caHost.click();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.controllerValidateBindingSpy.calls.length, 1);
             assert.equal(app.controllerValidateSpy.calls.length, 1);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 0, 'error3');
@@ -869,13 +869,13 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 1, 'error2');
             app.clearControllerCalls();
             caHost.click();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.controllerValidateBindingSpy.calls.length, 0);
             assert.equal(app.controllerValidateSpy.calls.length, 0);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 1, 'error3');
             app.clearControllerCalls();
             caHost.focus();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             await assertEventHandler(caHost, 'blur', 0, platform, app.controllerValidateBindingSpy, app.controllerValidateSpy, ctx);
             await controller.validate();
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'name' && r.object === person).length, 0, 'error5');
@@ -959,13 +959,13 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'employees').length, 1, 'error2');
             app.clearControllerCalls();
             target.querySelector('button#hire-replace').click();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.controllerValidateBindingSpy.calls.length, 1);
             assert.equal(app.controllerValidateSpy.calls.length, 1);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'employees').length, 0, 'error3');
             app.clearControllerCalls();
             target.querySelector('button#fire-replace').click();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.controllerValidateBindingSpy.calls.length, 1);
             assert.equal(app.controllerValidateSpy.calls.length, 1);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'employees').length, 1, 'error4');
@@ -985,13 +985,13 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'employees').length, 1, 'error2');
             app.clearControllerCalls();
             target.querySelector('button#hire-in-place').click();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.org.employees.length, 1, 'should have 1 employee');
             assert.equal(app.controllerValidateSpy.calls.length, 1, 'should have 1 controller.validate() call');
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'employees').length, 0, 'error3');
             app.clearControllerCalls();
             target.querySelector('button#fire-in-place').click();
-            await platform.domReadQueue.yield();
+            await platform.domQueue.yield();
             assert.equal(app.org.employees.length, 0, 'should have no employees');
             assert.equal(app.controllerValidateSpy.calls.length, 1, 'should have 1 controller.validate() call');
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'employees').length, 1, 'error4');
@@ -1030,7 +1030,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             const controller = app.controller;
             const person = app.person;
             person.address = { pin: 'foobar', city: 'foobar', line1: 'foobar' };
-            await platform.domReadQueue.yield();
+            // await platform.domQueue.yield();
             const target = host.querySelector('#target');
             assertControllerBinding(controller, 'person.address.pin|toNumber', target, app.controllerRegisterBindingSpy);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'address.pin').length, 0, 'error1');
@@ -1059,7 +1059,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
             const controller = app.controller;
             const org = app.org;
             org.employees.push(new Person((void 0), (void 0), { pin: 'foobar', city: 'foobar', line1: 'foobar' }));
-            await platform.domReadQueue.yield();
+            // await platform.domQueue.yield();
             const target = host.querySelector('#target');
             assertControllerBinding(controller, 'org.employees[(0)].address.pin|toNumber', target, app.controllerRegisterBindingSpy);
             assert.equal(controller.results.filter((r) => !r.valid && r.propertyName === 'employees[0].address.pin').length, 0, 'error1');
@@ -1160,7 +1160,7 @@ describe('validation-html/validate-binding-behavior.spec.ts', function () {
                         .start();
                 }
                 catch (e) {
-                    assert.equal(e.message, 'Validate behavior used on non property binding');
+                    assert.includes(e.message, 'AUR4200');
                 }
                 await au.stop();
                 ctx.doc.body.removeChild(host);

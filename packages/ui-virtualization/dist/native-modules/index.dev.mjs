@@ -123,7 +123,7 @@ class VirtualRepeat {
         const hasWrapExpression = this._hasWrapExpression = forOf.iterable !== iterable;
         this._obsMediator = new CollectionObservationMediator(this, () => hasWrapExpression ? this._handleInnerCollectionChange() : this._handleCollectionChange());
         this.local = forOf.declaration.name;
-        this.taskQueue = resolve(IPlatform).domWriteQueue;
+        this.taskQueue = resolve(IPlatform).domQueue;
     }
     /**
      * @internal

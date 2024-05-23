@@ -1,6 +1,6 @@
 import { IContainer } from '@aurelia/kernel';
 import { ICoercionConfiguration } from '@aurelia/runtime';
-import { DefaultBindingCommand, ForBindingCommand } from '@aurelia/template-compiler';
+import { AtPrefixedTriggerAttributePattern, ColonPrefixedBindAttributePattern, DotSeparatedAttributePattern, RefAttributePattern, EventAttributePattern, DefaultBindingCommand, ForBindingCommand } from '@aurelia/template-compiler';
 import { DebounceBindingBehavior } from './resources/binding-behaviors/debounce';
 import { SignalBindingBehavior } from './resources/binding-behaviors/signals';
 import { ThrottleBindingBehavior } from './resources/binding-behaviors/throttle';
@@ -32,27 +32,13 @@ export declare const DefaultComponents: import("@aurelia/kernel").IRegistry[];
  */
 export declare const DefaultBindingSyntax: ({
     register(c: IContainer): void;
-} | (new () => {
-    ref(rawName: string, rawValue: string, _parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-    'PART.ref'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-}) | (new () => {
-    'PART.PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-    'PART.PART.PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-}) | (new () => {
-    'PART.trigger:PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-    'PART.capture:PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-}))[];
+} | typeof RefAttributePattern | typeof DotSeparatedAttributePattern | typeof EventAttributePattern)[];
 /**
  * Binding syntax for short-hand attribute name patterns:
  * - `@target` (short-hand for `target.trigger`)
  * - `:target` (short-hand for `target.bind`)
  */
-export declare const ShortHandBindingSyntax: ((new () => {
-    '@PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-    '@PART:PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-}) | (new () => {
-    ':PART'(rawName: string, rawValue: string, parts: readonly string[]): import("@aurelia/template-compiler").AttrSyntax;
-}))[];
+export declare const ShortHandBindingSyntax: (typeof AtPrefixedTriggerAttributePattern | typeof ColonPrefixedBindAttributePattern)[];
 /**
  * Default HTML-specific (but environment-agnostic) binding commands:
  * - Property observation: `.bind`, `.one-time`, `.from-view`, `.to-view`, `.two-way

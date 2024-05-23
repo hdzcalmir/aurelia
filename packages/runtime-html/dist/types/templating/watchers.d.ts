@@ -1,5 +1,5 @@
+import { type IServiceLocator } from '@aurelia/kernel';
 import { type Scope } from '../binding/scope';
-import type { IServiceLocator } from '@aurelia/kernel';
 import type { ICollectionSubscriber, IConnectable, IObservable, IObserverLocator, IObserverLocatorBasedConnectable, ISubscriber } from '@aurelia/runtime';
 import type { IWatcherCallback } from '../watch';
 import { IsBindingBehavior } from '@aurelia/expression-parser';

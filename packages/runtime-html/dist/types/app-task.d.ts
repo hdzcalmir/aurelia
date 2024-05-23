@@ -1,4 +1,4 @@
-import type { IContainer, IRegistry, Key, Resolved } from '@aurelia/kernel';
+import { type IContainer, type IRegistry, type Key, type Resolved } from '@aurelia/kernel';
 export type TaskSlot = 'creating' | 'hydrating' | 'hydrated' | 'activating' | 'activated' | 'deactivating' | 'deactivated';
 export declare const IAppTask: import("@aurelia/kernel").InterfaceSymbol<IAppTask>;
 export interface IAppTask {

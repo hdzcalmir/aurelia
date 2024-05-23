@@ -266,6 +266,6 @@ describe('router/router.with-configuration.spec.ts', function () {
 });
 const $load = async (path, router, platform) => {
     await router.load(path);
-    platform.domWriteQueue.flush();
+    platform.domQueue.flush();
 };
 //# sourceMappingURL=router.with-configuration.spec.js.map

@@ -1,14 +1,6 @@
 import { IContainer, InterfaceSymbol, type IContainerConfiguration, type IResolver, type Key, type Resolved } from './di';
 import type { IAllResolver, IFactoryResolver, ILazyResolver, INewInstanceResolver, IOptionalResolver, IResolvedFactory, IResolvedLazy } from './di.resolvers';
-export declare const Registrable: Readonly<{
-    /**
-     * Associate an object as a registrable, making the container recognize & use
-     * the specific given register function during the registration
-     */
-    define: <T extends WeakKey>(object: T, register: (this: T, container: IContainer) => IContainer | void) => T;
-    get: <T_1 extends WeakKey>(object: T_1) => ((container: IContainer) => IContainer | void) | undefined;
-    has: <T_2 extends WeakKey>(object: T_2) => boolean;
-}>;
+export declare const registrableMetadataKey: unique symbol;
 export declare const DefaultResolver: {
     none(key: Key): IResolver;
     singleton: (key: Key) => IResolver;

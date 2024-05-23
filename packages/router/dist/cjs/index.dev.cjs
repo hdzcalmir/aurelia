@@ -6356,7 +6356,7 @@ class TaskQueue {
     start(options) {
         this.platform = options.platform;
         this.allowedExecutionCostWithinTick = options.allowedExecutionCostWithinTick;
-        this.task = this.platform.domWriteQueue.queueTask(this.dequeue, { persistent: true });
+        this.task = this.platform.domQueue.queueTask(this.dequeue, { persistent: true });
     }
     stop() {
         this.task.cancel();

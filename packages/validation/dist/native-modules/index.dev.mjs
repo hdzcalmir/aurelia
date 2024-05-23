@@ -13,6 +13,54 @@ const IValidationExpressionHydrator = /*@__PURE__*/ DI.createInterface('IValidat
 const { annotation } = Protocol;
 /** @internal */ const getAnnotationKeyFor = annotation.keyFor;
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
+    [4100 /* ErrorNames.unable_to_deserialize_expression */]: 'Unable to deserialize the expression: {{0}}',
+    [4101 /* ErrorNames.rule_provider_no_rule_found */]: 'No rule has been added',
+    [4102 /* ErrorNames.unable_to_parse_accessor_fn */]: `Unable to parse accessor function:\n{{0}}`,
+    [4103 /* ErrorNames.serialization_display_name_not_a_string */]: 'Serializing a non-string displayName for rule property is not supported. Given: {{0}}',
+    [4104 /* ErrorNames.hydrate_rule_not_an_array */]: 'The ruleset has to be an array of serialized property rule objects',
+    [4105 /* ErrorNames.hydrate_rule_unsupported */]: `Unsupported rule {{0}}`,
+    [4106 /* ErrorNames.hydrate_rule_invalid_name */]: 'The property name needs to be a non-empty string, encountered: {{0}}',
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
+        let matches = regex.exec(cooked);
+        while (matches != null) {
+            const method = matches[1]?.slice(1);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let value = details[i];
+            if (value != null) {
+                switch (method) {
+                    case 'element':
+                        value = value === '*' ? 'all elements' : `<${value} />`;
+                        break;
+                    default: {
+                        // property access
+                        if (method?.startsWith('.')) {
+                            value = String(value[method.slice(1)]);
+                        }
+                        else {
+                            value = String(value);
+                        }
+                    }
+                }
+            }
+            cooked = cooked.slice(0, matches.index) + value + cooked.slice(regex.lastIndex);
+            matches = regex.exec(cooked);
+        }
+    }
+    return cooked;
+};
+
 // import { Metadata } from '@aurelia/metadata';
 // import { Constructable, Protocol, Class, DI, toArray } from '@aurelia/kernel';
 const IValidationMessageProvider = /*@__PURE__*/ DI.createInterface('IValidationMessageProvider');
@@ -49,6 +97,7 @@ function validationRule(definition) {
 /**
  * Abstract validation rule.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 class BaseValidationRule {
     constructor(messageKey = (void 0)) {
         this.messageKey = messageKey;
@@ -56,10 +105,11 @@ class BaseValidationRule {
     }
     canExecute(_object) { return true; }
     execute(_value, _object) {
-        throw new Error('No base implementation of execute. Did you forget to implement the execute method?'); // TODO: reporter
+        throw createMappedError(99 /* ErrorNames.method_not_implemented */, 'execute');
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     accept(_visitor) {
-        throw new Error('No base implementation of accept. Did you forget to implement the accept method?'); // TODO: reporter
+        throw createMappedError(99 /* ErrorNames.method_not_implemented */, 'accept');
     }
 }
 BaseValidationRule.$TYPE = '';
@@ -313,6 +363,7 @@ class ValidationMessageEvaluationContext {
         return this.messageProvider.getDisplayName(propertyName, displayName);
     }
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 class PropertyRule {
     constructor(locator, validationRules, messageProvider, property, $rules = [[]]) {
         this.validationRules = validationRules;
@@ -407,7 +458,7 @@ class PropertyRule {
     /**
      * Specifies a condition that must be met before attempting to validate the rule.
      *
-     * @param {ValidationRuleExecutionPredicate<TObject>} condition - A function that accepts the object as a parameter and returns true or false whether the rule should be evaluated.
+     * @param  condition - A function that accepts the object as a parameter and returns true or false whether the rule should be evaluated.
      */
     when(condition) {
         this.assertLatestRule(this.latestRule);
@@ -425,7 +476,7 @@ class PropertyRule {
     }
     assertLatestRule(latestRule) {
         if (latestRule === void 0) {
-            throw new Error('No rule has been added'); // TODO: use reporter
+            throw createMappedError(4101 /* ErrorNames.rule_provider_no_rule_found */);
         }
     }
     // #endregion
@@ -454,7 +505,7 @@ class PropertyRule {
     /**
      * Applies a custom rule instance.
      *
-     * @param {TRule} validationRule - rule instance.
+     * @param validationRule - rule instance.
      */
     satisfiesRule(validationRule) {
         return this.addRule(validationRule);
@@ -565,7 +616,9 @@ class PropertyRule {
 PropertyRule.$TYPE = 'PropertyRule';
 mixinAstEvaluator()(PropertyRule);
 class ModelBasedRule {
-    constructor(ruleset, tag = validationRulesRegistrar.defaultRuleSetName) {
+    constructor(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ruleset, tag = validationRulesRegistrar.defaultRuleSetName) {
         this.ruleset = ruleset;
         this.tag = tag;
     }
@@ -580,7 +633,9 @@ class ValidationRules {
         this.messageProvider = resolve(IValidationMessageProvider);
         this.deserializer = resolve(IValidationExpressionHydrator);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ensure(property) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [name, expression] = parsePropertyName(property, this.parser);
         // eslint-disable-next-line eqeqeq
         let rule = this.rules.find((r) => r.property.name == name);
@@ -618,8 +673,11 @@ class ValidationRules {
         const tags = new Set();
         for (const rule of rules) {
             const tag = rule.tag;
-            if (tags.has(tag)) {
-                console.warn(`A ruleset for tag ${tag} is already defined which will be overwritten`); // TODO: use reporter/logger
+            {
+                if (tags.has(tag)) {
+                    // eslint-disable-next-line no-console
+                    console.warn(`A ruleset for tag ${tag} is already defined which will be overwritten`); // TODO: use reporter/logger
+                }
             }
             const ruleset = this.deserializer.hydrateRuleset(rule.ruleset, this);
             validationRulesRegistrar.set(target, ruleset, tag);
@@ -639,13 +697,13 @@ function parsePropertyName(property, parser) {
             const fn = property.toString();
             const match = arrowAccessorPattern.exec(fn) ?? classicAccessorPattern.exec(fn);
             if (match === null) {
-                throw new Error(`Unable to parse accessor function:\n${fn}`); // TODO: use reporter
+                throw createMappedError(4102 /* ErrorNames.unable_to_parse_accessor_fn */, fn);
             }
             property = match[1].substring(1);
             break;
         }
         default:
-            throw new Error(`Unable to parse accessor function:\n${property}`); // TODO: use reporter
+            throw createMappedError(4102 /* ErrorNames.unable_to_parse_accessor_fn */, property);
     }
     return [property, parser.parse(`${rootObjectSymbol}.${property}`, 'IsProperty')];
 }
@@ -654,13 +712,13 @@ function parsePropertyName(property, parser) {
  */
 class ValidationResult {
     /**
-     * @param {boolean} valid - `true` is the validation was successful, else `false`.
-     * @param {(string | undefined)} message - Evaluated validation message, if the result is not valid, else `undefined`.
-     * @param {(string | number | undefined)} propertyName - Associated property name.
-     * @param {(IValidateable | undefined)} object - Associated target object.
-     * @param {(TRule | undefined)} rule - Associated instance of rule.
-     * @param {(PropertyRule | undefined)} propertyRule - Associated parent property rule.
-     * @param {boolean} [isManual=false] - `true` if the validation result is added manually.
+     * @param valid - `true` is the validation was successful, else `false`.
+     * @param message - Evaluated validation message, if the result is not valid, else `undefined`.
+     * @param propertyName - Associated property name.
+     * @param object - Associated target object.
+     * @param rule - Associated instance of rule.
+     * @param propertyRule - Associated parent property rule.
+     * @param isManual - `true` if the validation result is added manually. Default is `false`.
      */
     constructor(valid, message, propertyName, object, rule, propertyRule, isManual = false) {
         this.valid = valid;
@@ -911,7 +969,7 @@ class Deserializer {
                 else if (typeof raw !== 'object') {
                     return deserializePrimitive(raw);
                 }
-                throw new Error(`unable to deserialize the expression: ${raw}`); // TODO use reporter/logger
+                throw createMappedError(4100 /* ErrorNames.unable_to_deserialize_expression */, raw);
         }
     }
     deserializeExpressions(exprs) {
@@ -1127,8 +1185,9 @@ class ValidationSerializer {
     }
     visitRuleProperty(property) {
         const displayName = property.displayName;
-        if (displayName !== void 0 && typeof displayName !== 'string') {
-            throw new Error('Serializing a non-string displayName for rule property is not supported.'); // TODO: use reporter/logger
+        const type = typeof displayName;
+        if (displayName != null && type !== 'string') {
+            throw createMappedError(4103 /* ErrorNames.serialization_display_name_not_a_string */, type);
         }
         const expression = property.expression;
         return `{"$TYPE":"${RuleProperty.$TYPE}","name":${serializePrimitive(property.name)},"expression":${expression ? Serializer.serialize(expression) : null},"displayName":${serializePrimitive(displayName)}}`;
@@ -1235,7 +1294,7 @@ class ValidationDeserializer {
     }
     hydrateRuleset(ruleset, validationRules) {
         if (!Array.isArray(ruleset)) {
-            throw new Error("The ruleset has to be an array of serialized property rule objects"); // TODO: use reporter
+            throw createMappedError(4104 /* ErrorNames.hydrate_rule_not_an_array */);
         }
         return ruleset.map(($rule) => this.hydrate($rule, validationRules));
     }
@@ -1248,7 +1307,7 @@ class ModelValidationExpressionHydrator {
         this.parser = resolve(IExpressionParser);
     }
     hydrate(_raw, _validationRules) {
-        throw new Error('Method not implemented.');
+        throw createMappedError(99 /* ErrorNames.method_not_implemented */, 'hydrate');
     }
     hydrateRuleset(ruleset, validationRules) {
         const accRules = [];
@@ -1290,7 +1349,7 @@ class ModelValidationExpressionHydrator {
             case 'equals':
                 return this.hydrateEqualsRule(ruleConfig);
             default:
-                throw new Error(`Unsupported rule ${ruleName}`);
+                throw createMappedError(4105 /* ErrorNames.hydrate_rule_unsupported */, ruleName);
         }
     }
     setCommonRuleProperties(raw, rule) {
@@ -1349,8 +1408,9 @@ class ModelValidationExpressionHydrator {
     }
     hydrateRuleProperty(raw) {
         const rawName = raw.name;
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!rawName || typeof rawName !== 'string') {
-            throw new Error('The property name needs to be a non-empty string'); // TODO: use reporter
+            throw createMappedError(4106 /* ErrorNames.hydrate_rule_invalid_name */, typeof rawName);
         }
         const [name, expression] = parsePropertyName(rawName, this.parser);
         return new RuleProperty(expression, name, raw.displayName);
@@ -1363,12 +1423,11 @@ mixinAstEvaluator()(ModelValidationExpressionHydrator);
  */
 class ValidateInstruction {
     /**
-     * @template TObject
-     * @param {TObject} [object=(void 0)!] - The object to validate.
-     * @param {(keyof TObject | string)} [propertyName=(void 0)!] - The property name to validate.
-     * @param {PropertyRule[]} [rules=(void 0)!] - The rules to validate.
-     * @param {string} [objectTag=(void 0)!] - The tag indicating the ruleset defined for the object.
-     * @param {string} [propertyTag=(void 0)!] - The tag indicating the ruleset for the property.
+     * @param object - The object to validate.
+     * @param propertyName - The property name to validate.
+     * @param rules - The rules to validate.
+     * @param objectTag - The tag indicating the ruleset defined for the object.
+     * @param propertyTag - The tag indicating the ruleset for the property.
      */
     constructor(object = (void 0), propertyName = (void 0), rules = (void 0), objectTag = (void 0), propertyTag = (void 0)) {
         this.object = object;
@@ -1418,7 +1477,7 @@ function createConfiguration(optionsProvider) {
         },
     };
 }
-const ValidationConfiguration = createConfiguration(noop);
+const ValidationConfiguration = /*@__PURE__*/ createConfiguration(noop);
 
 export { BaseValidationRule, Deserializer, EqualsRule, ICustomMessages, IValidationExpressionHydrator, IValidationMessageProvider, IValidationRules, IValidator, LengthRule, ModelBasedRule, ModelValidationExpressionHydrator, PropertyRule, RangeRule, RegexRule, RequiredRule, RuleProperty, Serializer, SizeRule, StandardValidator, ValidateInstruction, ValidationConfiguration, ValidationDeserializer, ValidationMessageProvider, ValidationResult, ValidationRuleAliasMessage, ValidationRules, ValidationSerializer, deserializePrimitive, getDefaultValidationConfiguration, parsePropertyName, rootObjectSymbol, serializePrimitive, serializePrimitives, validationRule, validationRulesRegistrar };
 //# sourceMappingURL=index.dev.mjs.map

@@ -617,7 +617,7 @@ describe('3-runtime-html/switch.spec.ts', function () {
         </template>`,
             }, config(), '<div> the curious case of processing </div>', [], [], async (ctx) => {
                 ctx.app.status = "delivered" /* Status.delivered */;
-                ctx.platform.domWriteQueue.flush();
+                ctx.platform.domQueue.flush();
                 assert.html.innerEqual(ctx.host, '<div> the curious case of delivered </div>', 'change innerHTML1');
             });
             yield new TestData('supports non-case elements', {

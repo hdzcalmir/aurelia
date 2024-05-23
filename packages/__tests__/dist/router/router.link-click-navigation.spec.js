@@ -140,11 +140,11 @@ describe('router/router.link-click-navigation.spec.ts', function () {
         it(`for "${test.load}"`, async function () {
             const { platform, host, router, $teardown } = await $setup({}, [Nav, One, Two, OneRoute, TwoRoute], routes);
             await $load('/nav', router, platform);
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             const links = host.getElementsByTagName('A');
             const link = links[i];
             link.click();
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.includes(host.textContent, test.result, test.load);
             for (const l of links) {
                 assert.strictEqual(l.classList.contains('active'), l === link, `${l.innerText}: ${l.classList.contains('active')}`);
@@ -165,11 +165,11 @@ describe('router/router.link-click-navigation.spec.ts', function () {
         it(`for "${test.load}"`, async function () {
             const { platform, host, router, $teardown } = await $setup({}, [NavBind, One, Two, OneRoute, TwoRoute], routes);
             await $load('/nav-bind', router, platform);
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             const links = host.getElementsByTagName('A');
             const link = links[i];
             link.click();
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.includes(host.textContent, test.result, test.load);
             for (const l of links) {
                 assert.strictEqual(l.classList.contains('active'), l === link, `${l.innerText}: ${l.classList.contains('active')}`);
@@ -190,11 +190,11 @@ describe('router/router.link-click-navigation.spec.ts', function () {
         it(`for "${test.load}"`, async function () {
             const { platform, host, router, $teardown } = await $setup({}, [NavAttributes, One, Two, OneRoute, TwoRoute], routes);
             await $load('/nav-attributes', router, platform);
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             const links = host.getElementsByTagName('A');
             const link = links[i];
             link.click();
-            await platform.domWriteQueue.yield();
+            await platform.domQueue.yield();
             assert.includes(host.textContent, test.result, test.load);
             for (const l of links) {
                 assert.strictEqual(l.classList.contains('active'), l === link, `${l.innerText}: ${l.classList.contains('active')}`);
@@ -205,6 +205,6 @@ describe('router/router.link-click-navigation.spec.ts', function () {
 });
 const $load = async (path, router, platform) => {
     await router.load(path);
-    platform.domWriteQueue.flush();
+    platform.domQueue.flush();
 };
 //# sourceMappingURL=router.link-click-navigation.spec.js.map

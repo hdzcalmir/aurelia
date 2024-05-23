@@ -66,11 +66,13 @@ function rejectOnError(t) {
     return t;
 }
 
-const o = /^([a-z][a-z0-9+\-.]*:)?\/\//i;
+const createMappedError = (t, ...e) => new Error(`AUR${String(t).padStart(4, "0")}:${e.map(String)}`);
 
-const c = /*@__PURE__*/ t.createInterface("fetch", (t => {
+const c = /^([a-z][a-z0-9+\-.]*:)?\/\//i;
+
+const o = /*@__PURE__*/ t.createInterface("fetch", (t => {
     if (typeof fetch !== "function") {
-        throw new Error("Could not resolve fetch function. Please provide a fetch function implementation or a polyfill for the global fetch function.");
+        throw createMappedError(5e3);
     }
     return t.instance(fetch);
 }));
@@ -87,7 +89,7 @@ class HttpClient {
         this.t = [];
         this.i = null;
         this.h = e(r(HttpClientConfiguration));
-        this.u = e(c);
+        this.u = e(o);
     }
     get interceptors() {
         return this.t.slice(0);
@@ -112,24 +114,24 @@ class HttpClient {
                 if (typeof s === "object") {
                     e = s;
                 } else {
-                    throw new Error(`The config callback did not return a valid HttpClientConfiguration like instance. Received ${typeof s}`);
+                    throw createMappedError(5001, typeof s);
                 }
             }
         } else {
-            throw new Error(`invalid config, expecting a function or an object, received ${typeof t}`);
+            throw createMappedError(5002, typeof t);
         }
         const s = e.defaults;
         if (s?.headers instanceof Headers) {
-            throw new Error("Default headers must be a plain object.");
+            throw createMappedError(5003);
         }
         const r = e.interceptors;
         if (r?.length > 0) {
             if (r.filter((t => t instanceof RetryInterceptor)).length > 1) {
-                throw new Error("Only one RetryInterceptor is allowed.");
+                throw createMappedError(5004);
             }
             const t = r.findIndex((t => t instanceof RetryInterceptor));
             if (t >= 0 && t !== r.length - 1) {
-                throw new Error("The retry interceptor must be the last interceptor defined.");
+                throw createMappedError(5005);
             }
         }
         this.baseUrl = e.baseUrl;
@@ -150,7 +152,7 @@ class HttpClient {
                 s = t;
                 e = this.u.call(void 0, s);
             } else {
-                throw new Error(`An invalid result was returned by the interceptor chain. Expected a Request or Response instance, but got [${t}]`);
+                throw createMappedError(5006, t);
             }
             return this.processResponse(e, this.t, s);
         })).then((t => {
@@ -183,14 +185,14 @@ class HttpClient {
             const h = i !== undefined ? {
                 body: i
             } : null;
-            const o = {
+            const c = {
                 ...s,
                 headers: {},
                 ...e,
                 ...h
             };
-            n = new Headers(o.headers).get("Content-Type");
-            r = new Request(getRequestUrl(this.baseUrl, t), o);
+            n = new Headers(c.headers).get("Content-Type");
+            r = new Request(getRequestUrl(this.baseUrl, t), c);
         }
         if (!n) {
             if (new Headers(h).has("content-type")) {
@@ -246,8 +248,8 @@ class HttpClient {
     B(t, e, s, r, i, ...n) {
         return (e ?? []).reduce(((t, e) => {
             const h = e[s];
-            const o = e[r];
-            return t.then(h ? t => t instanceof i ? h.call(e, t, ...n) : t : identity, o ? t => o.call(e, t, ...n) : thrower);
+            const c = e[r];
+            return t.then(h ? t => t instanceof i ? h.call(e, t, ...n) : t : identity, c ? t => c.call(e, t, ...n) : thrower);
         }), Promise.resolve(t));
     }
     I(t, e, s, r) {
@@ -272,7 +274,7 @@ function parseHeaderValues(t) {
 }
 
 function getRequestUrl(t, e) {
-    if (o.test(e)) {
+    if (c.test(e)) {
         return e;
     }
     return (t ?? "") + e;
@@ -319,9 +321,9 @@ const u = /*@__PURE__*/ Object.freeze({
     drained: "aurelia-fetch-client-requests-drained"
 });
 
-const l = /*@__PURE__*/ t.createInterface((t => t.singleton(CacheService)));
+const f = /*@__PURE__*/ t.createInterface((t => t.singleton(CacheService)));
 
-const f = /*@__PURE__*/ Object.freeze({
+const l = /*@__PURE__*/ Object.freeze({
     Set: "au:fetch:cache:set",
     Get: "au:fetch:cache:get",
     Clear: "au:fetch:cache:clear",
@@ -363,23 +365,23 @@ class CacheService {
             this.delete(t);
             await this.q.get(s);
             const e = this.getItem(t);
-            this.ea.publish(f.CacheStaleRefreshed, {
+            this.ea.publish(l.CacheStaleRefreshed, {
                 key: t,
                 value: e
             });
-            this.P(r);
+            this.N(r);
         }), e);
         this.j.push(r);
     }
     startBackgroundRefresh(t) {
         if (!t || this.O > -1) return;
         this.O = this.p.setInterval((() => {
-            this.ea.publish(f.CacheBackgroundRefreshing);
+            this.ea.publish(l.CacheBackgroundRefreshing);
             this.T.forEach(((t, e) => {
                 this.delete(e);
                 void this.q.get(t).then((() => {
                     const t = this.getItem(e);
-                    this.ea.publish(f.CacheBackgroundRefreshed, {
+                    this.ea.publish(l.CacheBackgroundRefreshed, {
                         key: e,
                         value: t
                     });
@@ -390,7 +392,7 @@ class CacheService {
     stopBackgroundRefresh() {
         this.p.clearInterval(this.O);
         this.O = -1;
-        this.ea.publish(f.CacheBackgroundStopped);
+        this.ea.publish(l.CacheBackgroundStopped);
     }
     set(t, e, s, r) {
         const i = {
@@ -406,21 +408,21 @@ class CacheService {
         e.lastCached = Date.now();
         this.storage.set(t, e);
         this.T.set(t, s);
-        this.ea.publish(f.Set, {
+        this.ea.publish(l.Set, {
             key: t,
             value: e
         });
     }
     getItem(t) {
         if (!this.storage.has(t)) {
-            this.ea.publish(f.CacheMiss, {
+            this.ea.publish(l.CacheMiss, {
                 key: t
             });
             return;
         }
         const e = this.storage.get(t);
         if (!e?.staleTime || !e?.lastCached) {
-            this.ea.publish(f.CacheHit, {
+            this.ea.publish(l.CacheHit, {
                 key: t,
                 value: e
             });
@@ -428,20 +430,20 @@ class CacheService {
         }
         const s = Date.now();
         if (s > e.lastCached + (e.staleTime ?? 0)) {
-            this.ea.publish(f.CacheStale, {
+            this.ea.publish(l.CacheStale, {
                 key: t,
                 value: e
             });
             return;
         }
         if (s > e.lastCached + (e.cacheTime ?? 0)) {
-            this.ea.publish(f.CacheExpired, {
+            this.ea.publish(l.CacheExpired, {
                 key: t,
                 value: e
             });
             return;
         }
-        this.ea.publish(f.CacheHit, {
+        this.ea.publish(l.CacheHit, {
             key: t,
             value: e
         });
@@ -449,14 +451,14 @@ class CacheService {
     }
     delete(t) {
         this.storage.delete(t);
-        this.ea.publish(f.Clear, {
+        this.ea.publish(l.Clear, {
             key: t
         });
     }
     clear() {
         this.storage.clear();
         this.T.clear();
-        this.ea.publish(f.Reset);
+        this.ea.publish(l.Reset);
         this.stopBackgroundRefresh();
         this.j.forEach((t => {
             this.p.clearTimeout(t);
@@ -466,9 +468,9 @@ class CacheService {
     dispose() {
         this.clear();
         this.H.forEach((t => t.dispose()));
-        this.ea.publish(f.Dispose);
+        this.ea.publish(l.Dispose);
     }
-    P(t) {
+    N(t) {
         this.p.clearTimeout(t);
         const e = this.j.indexOf(t);
         if (e > -1) {
@@ -486,16 +488,16 @@ const p = {
 
 class CacheInterceptor {
     constructor(t) {
-        this.N = e(l);
+        this.P = e(f);
         this.cf = {
             ...p,
             ...t ?? {}
         };
     }
     request(t) {
-        this.N.startBackgroundRefresh(this.cf.refreshInterval);
+        this.P.startBackgroundRefresh(this.cf.refreshInterval);
         if (t.method !== "GET") return t;
-        const e = this.N.get(this.key(t));
+        const e = this.P.get(this.key(t));
         return this.mark(e) ?? t;
     }
     response(t, e) {
@@ -506,17 +508,17 @@ class CacheInterceptor {
             return t;
         }
         const s = this.key(e);
-        this.N.setItem(s, {
+        this.P.setItem(s, {
             data: t,
             ...this.cf
         }, e);
         if (this.cf?.refreshStaleImmediate && this.cf.staleTime > 0) {
-            this.N.setStaleTimer(s, this.cf.staleTime, e);
+            this.P.setStaleTimer(s, this.cf.staleTime, e);
         }
         return t;
     }
     dispose() {
-        this.N.stopBackgroundRefresh();
+        this.P.stopBackgroundRefresh();
     }
     key(t) {
         return `${CacheInterceptor.prefix}${t.url}`;
@@ -603,7 +605,7 @@ class RetryInterceptor {
             ...t ?? {}
         };
         if (this.retryConfig.strategy === d.exponential && this.retryConfig.interval <= 1e3) {
-            throw new Error("An interval less than or equal to 1 second is not allowed when using the exponential retry strategy");
+            throw createMappedError(5007, this.retryConfig.interval);
         }
     }
     request(t) {
@@ -673,11 +675,11 @@ function calculateDelay(t) {
         return y[d.random](n, e, r, i);
 
       default:
-        throw new Error("Unrecognized retry strategy");
+        throw createMappedError(5008, s);
     }
 }
 
 const y = [ t => t, (t, e) => e * t, (t, e) => t === 1 ? e : e ** t / 1e3, (t, e, s = 0, r = 6e4) => Math.random() * (r - s) + s ];
 
-export { BrowserIndexDBStorage, BrowserLocalStorage, BrowserSessionStorage, f as CacheEvent, CacheInterceptor, CacheService, HttpClient, HttpClientConfiguration, u as HttpClientEvent, l as ICacheService, h as ICacheStorage, c as IFetchFn, a as IHttpClient, MemoryStorage, RetryInterceptor, d as RetryStrategy, json };
+export { BrowserIndexDBStorage, BrowserLocalStorage, BrowserSessionStorage, l as CacheEvent, CacheInterceptor, CacheService, HttpClient, HttpClientConfiguration, u as HttpClientEvent, f as ICacheService, h as ICacheStorage, o as IFetchFn, a as IHttpClient, MemoryStorage, RetryInterceptor, d as RetryStrategy, json };
 //# sourceMappingURL=index.mjs.map

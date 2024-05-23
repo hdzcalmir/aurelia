@@ -1,5 +1,5 @@
-import { IExpressionParser, IsBindingBehavior } from '@aurelia/expression-parser';
-import { IServiceLocator, Key } from '@aurelia/kernel';
+import { IExpressionParser, type IsBindingBehavior } from '@aurelia/expression-parser';
+import { type IServiceLocator, type Key } from '@aurelia/kernel';
 import { TaskQueue } from '@aurelia/platform';
 import { IObserverLocator, IObserverLocatorBasedConnectable } from '@aurelia/runtime';
 import { ITemplateCompiler } from '@aurelia/template-compiler';
