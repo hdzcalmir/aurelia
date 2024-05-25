@@ -860,13 +860,20 @@ class RouteConfig {
     }
     /** @internal */
     _getTransitionPlan(cur, next, overridingTransitionPlan) {
-        const hasSameParameters = shallowEquals(cur.params, next.params);
-        if (hasSameParameters)
+        if (hasSamePath(cur, next) && shallowEquals(cur.params, next.params))
             return 'none';
         if (overridingTransitionPlan != null)
             return overridingTransitionPlan;
         const plan = this.transitionPlan ?? 'replace';
         return typeof plan === 'function' ? plan(cur, next) : plan;
+        function cleanPath(path) { return path.replace(`/*${routeRecognizer.RESIDUE}`, ''); }
+        function hasSamePath(nodeA, nodeB) {
+            const pathA = nodeA.finalPath;
+            const pathB = nodeB.finalPath;
+            // As this function is invoked when the components are same, we are giving a benefit of doubt for empty paths.
+            // It is seems like a sensible assumption that a transition from '' to '/p1' (assuming p1 is same as the empty path) does not require a non-none transition.
+            return pathA.length === 0 || pathB.length === 0 || cleanPath(pathA) === cleanPath(pathB);
+        }
     }
     /** @internal */
     _applyFromConfigurationHook(instance, parent, routeNode) {

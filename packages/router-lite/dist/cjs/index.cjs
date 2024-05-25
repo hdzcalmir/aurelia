@@ -596,11 +596,18 @@ class RouteConfig {
         return new RouteConfig(ensureString(t.id ?? this.id ?? s), s, t.title ?? this.title, t.redirectTo ?? this.redirectTo, t.caseSensitive ?? this.caseSensitive, t.transitionPlan ?? this.transitionPlan ?? e?.transitionPlan ?? null, t.viewport ?? this.viewport, t.data ?? this.data, t.routes ?? this.routes, t.fallback ?? this.fallback ?? e?.fallback ?? null, this.component, t.nav ?? this.nav);
     }
     X(t, e, s) {
-        const i = shallowEquals(t.params, e.params);
-        if (i) return "none";
+        if (hasSamePath(t, e) && shallowEquals(t.params, e.params)) return "none";
         if (s != null) return s;
         const n = this.transitionPlan ?? "replace";
         return typeof n === "function" ? n(t, e) : n;
+        function cleanPath(t) {
+            return t.replace(`/*${i.RESIDUE}`, "");
+        }
+        function hasSamePath(t, e) {
+            const s = t.finalPath;
+            const i = e.finalPath;
+            return s.length === 0 || i.length === 0 || cleanPath(s) === cleanPath(i);
+        }
     }
     Y(t, s, i) {
         if (this.W) throw new Error(getMessage(3550));
