@@ -59,7 +59,7 @@ const a = (() => {
             r = 0;
             s = 0;
             for (;s < n; ++s) {
-                r = charCodeAt(i, s);
+                r = i.charCodeAt(s);
                 if (s === 0 && r === 48 && n > 1 || r < 48 || r > 57) {
                     return t[i] = false;
                 }
@@ -253,22 +253,21 @@ function toLookup(...t) {
     return s(createLookup(), ...t);
 }
 
-const g = /*@__PURE__*/ function() {
+const g = /*@__PURE__*/ (() => {
     const t = new WeakMap;
     let e = false;
     let n = "";
     let r = 0;
     return s => {
         e = t.get(s);
-        if (e === void 0) {
-            n = s.toString();
-            r = n.length;
-            e = r >= 29 && r <= 100 && charCodeAt(n, r - 1) === 125 && charCodeAt(n, r - 2) <= 32 && charCodeAt(n, r - 3) === 93 && charCodeAt(n, r - 4) === 101 && charCodeAt(n, r - 5) === 100 && charCodeAt(n, r - 6) === 111 && charCodeAt(n, r - 7) === 99 && charCodeAt(n, r - 8) === 32 && charCodeAt(n, r - 9) === 101 && charCodeAt(n, r - 10) === 118 && charCodeAt(n, r - 11) === 105 && charCodeAt(n, r - 12) === 116 && charCodeAt(n, r - 13) === 97 && charCodeAt(n, r - 14) === 110 && charCodeAt(n, r - 15) === 91;
+        if (e == null) {
+            r = (n = s.toString()).length;
+            e = r > 28 && n.indexOf("[native code] }") === r - 15;
             t.set(s, e);
         }
         return e;
     };
-}();
+})();
 
 const onResolve = (t, e) => {
     if (t instanceof Promise) {
@@ -285,7 +284,7 @@ const onResolveAll = (...t) => {
     let i = t.length;
     for (;s < i; ++s) {
         e = t[s];
-        if ((e = t[s]) instanceof Promise) {
+        if (isPromise(e = t[s])) {
             if (n === void 0) {
                 n = e;
             } else if (r === void 0) {
@@ -301,8 +300,6 @@ const onResolveAll = (...t) => {
     return Promise.all(r);
 };
 
-const charCodeAt = (t, e) => t.charCodeAt(e);
-
 const instanceRegistration = (t, e) => new Resolver(t, 0, e);
 
 const singletonRegistration = (t, e) => new Resolver(t, 1, e);
@@ -317,12 +314,12 @@ const aliasToRegistration = (t, e) => new Resolver(e, 5, t);
 
 const deferRegistration = (t, ...e) => new ParameterizedRegistry(t, e);
 
-const m = new WeakMap;
+const y = new WeakMap;
 
 const cacheCallbackResult = t => (e, n, r) => {
-    let s = m.get(e);
+    let s = y.get(e);
     if (s === void 0) {
-        m.set(e, s = new WeakMap);
+        y.set(e, s = new WeakMap);
     }
     if (s.has(r)) {
         return s.get(r);
@@ -332,7 +329,7 @@ const cacheCallbackResult = t => (e, n, r) => {
     return i;
 };
 
-const y = {
+const m = {
     instance: instanceRegistration,
     singleton: singletonRegistration,
     transient: transientRegistation,
@@ -1976,5 +1973,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ConsoleSink, ContainerConfiguration, L as DI, DefaultLogEvent, DefaultLogEventFactory, ft as DefaultLogger, D as DefaultResolver, EventAggregator, j as IContainer, dt as IEventAggregator, rt as ILogConfig, it as ILogEventFactory, ot as ILogger, vt as IModuleLoader, P as IPlatform, F as IServiceLocator, st as ISink, InstanceProvider, LogConfig, nt as LogLevel, ht as LoggerConfiguration, ModuleItem, b as Protocol, y as Registration, aliasedResourcesRegistry, all, U as allResources, c as areEqual, bound, f as camelCase, createImplementationRegister, createLookup, createResolver, T as emptyArray, S as emptyObject, G as factory, firstDefined, at as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, d as getPrototypeChain, getResourceKeyFor, z as ignore, inject, isArray, a as isArrayIndex, isFunction, isMap, g as isNativeFunction, isNumber, isObject, isPromise, isSet, isString, isSymbol, v as kebabCase, last, K as lazy, mergeArrays, x as newInstanceForScope, H as newInstanceOf, noop, onResolve, onResolveAll, N as optional, Q as optionalResource, W as own, h as pascalCase, C as registrableMetadataKey, resolve, B as resource, R as resourceBaseName, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, L as DI, DefaultLogEvent, DefaultLogEventFactory, ft as DefaultLogger, D as DefaultResolver, EventAggregator, j as IContainer, dt as IEventAggregator, rt as ILogConfig, it as ILogEventFactory, ot as ILogger, vt as IModuleLoader, P as IPlatform, F as IServiceLocator, st as ISink, InstanceProvider, LogConfig, nt as LogLevel, ht as LoggerConfiguration, ModuleItem, b as Protocol, m as Registration, aliasedResourcesRegistry, all, U as allResources, c as areEqual, bound, f as camelCase, createImplementationRegister, createLookup, createResolver, T as emptyArray, S as emptyObject, G as factory, firstDefined, at as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, d as getPrototypeChain, getResourceKeyFor, z as ignore, inject, isArray, a as isArrayIndex, isFunction, isMap, g as isNativeFunction, isNumber, isObject, isPromise, isSet, isString, isSymbol, v as kebabCase, last, K as lazy, mergeArrays, x as newInstanceForScope, H as newInstanceOf, noop, onResolve, onResolveAll, N as optional, Q as optionalResource, W as own, h as pascalCase, C as registrableMetadataKey, resolve, B as resource, R as resourceBaseName, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.mjs.map

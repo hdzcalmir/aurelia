@@ -606,6 +606,7 @@ function attributePattern(...patternDefs) {
     return function decorator(target, context) {
         const registrable = AttributePattern.create(patternDefs, target);
         // Decorators are by nature static, so we need to store the metadata on the class itself, assuming only one set of patterns per class.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         context.metadata[kernel.registrableMetadataKey] = registrable;
         return target;
     };
@@ -631,7 +632,7 @@ class DotSeparatedAttributePattern {
 }
 _a = Symbol.metadata;
 DotSeparatedAttributePattern[_a] = {
-    [kernel.registrableMetadataKey]: AttributePattern.create([
+    [kernel.registrableMetadataKey]: /*@__PURE__*/ AttributePattern.create([
         { pattern: 'PART.PART', symbols: '.' },
         { pattern: 'PART.PART.PART', symbols: '.' }
     ], DotSeparatedAttributePattern)
@@ -655,7 +656,7 @@ class RefAttributePattern {
 }
 _b = Symbol.metadata;
 RefAttributePattern[_b] = {
-    [kernel.registrableMetadataKey]: AttributePattern.create([
+    [kernel.registrableMetadataKey]: /*@__PURE__*/ AttributePattern.create([
         { pattern: 'ref', symbols: '' },
         { pattern: 'PART.ref', symbols: '.' }
     ], RefAttributePattern)
@@ -670,7 +671,7 @@ class EventAttributePattern {
 }
 _c = Symbol.metadata;
 EventAttributePattern[_c] = {
-    [kernel.registrableMetadataKey]: AttributePattern.create([
+    [kernel.registrableMetadataKey]: /*@__PURE__*/ AttributePattern.create([
         { pattern: 'PART.trigger:PART', symbols: '.:' },
         { pattern: 'PART.capture:PART', symbols: '.:' },
     ], EventAttributePattern)
@@ -682,7 +683,7 @@ class ColonPrefixedBindAttributePattern {
 }
 _d = Symbol.metadata;
 ColonPrefixedBindAttributePattern[_d] = {
-    [kernel.registrableMetadataKey]: AttributePattern.create([{ pattern: ':PART', symbols: ':' }], ColonPrefixedBindAttributePattern)
+    [kernel.registrableMetadataKey]: /*@__PURE__*/ AttributePattern.create([{ pattern: ':PART', symbols: ':' }], ColonPrefixedBindAttributePattern)
 };
 class AtPrefixedTriggerAttributePattern {
     '@PART'(rawName, rawValue, parts) {
@@ -694,7 +695,7 @@ class AtPrefixedTriggerAttributePattern {
 }
 _e = Symbol.metadata;
 AtPrefixedTriggerAttributePattern[_e] = {
-    [kernel.registrableMetadataKey]: AttributePattern.create([
+    [kernel.registrableMetadataKey]: /*@__PURE__*/ AttributePattern.create([
         { pattern: '@PART', symbols: '@' },
         { pattern: '@PART:PART', symbols: '@:' },
     ], AtPrefixedTriggerAttributePattern)

@@ -61,7 +61,7 @@ const l = (() => {
             n = 0;
             s = 0;
             for (;s < r; ++s) {
-                n = charCodeAt(o, s);
+                n = o.charCodeAt(s);
                 if (s === 0 && n === 48 && r > 1 || n < 48 || n > 57) {
                     return t[o] = false;
                 }
@@ -255,22 +255,21 @@ function toLookup(...t) {
     return r(createLookup(), ...t);
 }
 
-const p = /*@__PURE__*/ function() {
+const p = /*@__PURE__*/ (() => {
     const t = new WeakMap;
     let e = false;
     let r = "";
     let n = 0;
     return s => {
         e = t.get(s);
-        if (e === void 0) {
-            r = s.toString();
-            n = r.length;
-            e = n >= 29 && n <= 100 && charCodeAt(r, n - 1) === 125 && charCodeAt(r, n - 2) <= 32 && charCodeAt(r, n - 3) === 93 && charCodeAt(r, n - 4) === 101 && charCodeAt(r, n - 5) === 100 && charCodeAt(r, n - 6) === 111 && charCodeAt(r, n - 7) === 99 && charCodeAt(r, n - 8) === 32 && charCodeAt(r, n - 9) === 101 && charCodeAt(r, n - 10) === 118 && charCodeAt(r, n - 11) === 105 && charCodeAt(r, n - 12) === 116 && charCodeAt(r, n - 13) === 97 && charCodeAt(r, n - 14) === 110 && charCodeAt(r, n - 15) === 91;
+        if (e == null) {
+            n = (r = s.toString()).length;
+            e = n > 28 && r.indexOf("[native code] }") === n - 15;
             t.set(s, e);
         }
         return e;
     };
-}();
+})();
 
 const onResolve = (t, e) => {
     if (t instanceof Promise) {
@@ -287,7 +286,7 @@ const onResolveAll = (...t) => {
     let o = t.length;
     for (;s < o; ++s) {
         e = t[s];
-        if ((e = t[s]) instanceof Promise) {
+        if (isPromise(e = t[s])) {
             if (r === void 0) {
                 r = e;
             } else if (n === void 0) {
@@ -302,8 +301,6 @@ const onResolveAll = (...t) => {
     }
     return Promise.all(n);
 };
-
-const charCodeAt = (t, e) => t.charCodeAt(e);
 
 const instanceRegistration = (t, e) => new Resolver(t, 0, e);
 

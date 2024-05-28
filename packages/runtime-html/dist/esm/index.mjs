@@ -2831,12 +2831,13 @@ class AuSlotWatcherBinding {
         }
         const s = this.G;
         const i = [];
-        let n;
+        const n = this.K;
         let r;
-        for (n of this.U) {
-            for (r of n === t ? e : n.nodes) {
-                if (this.K === "*" || isElement(r) && r.matches(this.K)) {
-                    i[i.length] = r;
+        let l;
+        for (r of this.U) {
+            for (l of r === t ? e : r.nodes) {
+                if (n === "$all" || isElement(l) && (n === "*" || l.matches(n))) {
+                    i[i.length] = l;
                 }
             }
         }
@@ -3453,7 +3454,7 @@ const Fs = "ISlotsInfo";
 
 function createElementContainer(t, e, s, i, n, r) {
     const l = e.container.createChild();
-    registerHostNode(l, t, s);
+    registerHostNode(l, s, t);
     registerResolver(l, xi, new A(qs, e));
     registerResolver(l, ut, new A(_s, i));
     registerResolver(l, Si, n == null ? Vs : new RenderLocationProvider(n));
@@ -3484,7 +3485,7 @@ class ViewFactoryProvider {
 function invokeAttribute(t, e, s, i, n, r, l, a) {
     const h = s instanceof Controller ? s : s.$controller;
     const c = h.container.createChild();
-    registerHostNode(c, t, i);
+    registerHostNode(c, i, t);
     registerResolver(c, xi, new A(qs, h));
     registerResolver(c, ut, new A(_s, n));
     registerResolver(c, Si, l == null ? Vs : new A(Os, l));
@@ -5261,8 +5262,8 @@ const Ti = /*@__PURE__*/ ye("ILocation", (t => t.callback((t => t.get(Ei).locati
 
 const Li = /*@__PURE__*/ ye("IHistory", (t => t.callback((t => t.get(Ei).history))));
 
-const registerHostNode = (t, e, s) => {
-    registerResolver(t, e.HTMLElement, registerResolver(t, e.Element, registerResolver(t, Ci, new A("ElementResolver", s))));
+const registerHostNode = (t, e, s = t.get(Fe)) => {
+    registerResolver(t, s.HTMLElement, registerResolver(t, s.Element, registerResolver(t, Ci, new A("ElementResolver", e))));
     return t;
 };
 
@@ -5596,7 +5597,7 @@ class AppRoot {
         const n = this.host = t.host;
         s.prepare(this);
         registerResolver(e, Bi, new A("IEventTarget", n));
-        registerHostNode(e, this.platform = this.fe(e, n), n);
+        registerHostNode(e, n, this.platform = this.fe(e, n));
         this.ce = I(this.de("creating"), (() => {
             if (!t.allowActionlessForm !== false) {
                 n.addEventListener("submit", (t => {
@@ -8963,7 +8964,7 @@ class AuCompose {
             return e;
         }
         const n = this.p;
-        registerHostNode(t, n, s);
+        registerHostNode(t, s, n);
         registerResolver(t, Si, new A("IRenderLocation", i));
         const r = t.invoke(e);
         registerResolver(t, e, new A("au-compose.component", r));
@@ -9199,8 +9200,8 @@ function createConfiguration(t) {
 }
 
 function children(t, e) {
-    if (!Bn) {
-        Bn = true;
+    if (!children.mixed) {
+        children.mixed = true;
         X(ChildrenBinding, null);
         lifecycleHooks()(ChildrenLifecycleHooks, null);
     }
@@ -9213,7 +9214,7 @@ function children(t, e) {
             break;
         }
         const i = e.metadata[n] ??= [];
-        i.push(new ChildrenLifecycleHooks(s));
+        i.push(new ChildrenLifecycleHooks(s ?? {}));
     }
     if (arguments.length > 1) {
         s = {};
@@ -9221,8 +9222,7 @@ function children(t, e) {
         return;
     } else if (i(t)) {
         s = {
-            filter: e => isElement(e) && e.matches(t),
-            map: t => t
+            query: t
         };
         return decorator;
     }
@@ -9230,21 +9230,18 @@ function children(t, e) {
     return decorator;
 }
 
+children.mixed = false;
+
 class ChildrenBinding {
-    constructor(t, e, s, i = defaultChildQuery, n = defaultChildFilter, r = defaultChildMap, l = kn) {
+    constructor(t, e, s, i, n, r) {
         this.ki = void 0;
-        this.K = defaultChildQuery;
-        this.Ci = defaultChildFilter;
-        this.Bi = defaultChildMap;
         this.isBound = false;
-        this.L = t;
         this.obj = e;
         this.cb = s;
         this.K = i;
         this.Ci = n;
         this.Bi = r;
-        this.V = l;
-        this.cs = createMutationObserver(this.oi = t.host, (() => {
+        this.cs = createMutationObserver(this.oi = t, (() => {
             this.Si();
         }));
     }
@@ -9257,7 +9254,9 @@ class ChildrenBinding {
             return;
         }
         this.isBound = true;
-        this.cs.observe(this.oi, this.V);
+        this.cs.observe(this.oi, {
+            childList: true
+        });
         this.ki = this.Ai();
     }
     unbind() {
@@ -9265,6 +9264,7 @@ class ChildrenBinding {
             return;
         }
         this.isBound = false;
+        this.cs.takeRecords();
         this.cs.disconnect();
         this.ki = C;
     }
@@ -9277,42 +9277,31 @@ class ChildrenBinding {
         throw createMappedError(99, "get");
     }
     Ai() {
-        return filterChildren(this.L, this.K, this.Ci, this.Bi);
+        const t = this.K;
+        const e = this.Ci;
+        const s = this.Bi;
+        const i = t === "$all" ? this.oi.childNodes : this.oi.querySelectorAll(`:scope > ${t}`);
+        const n = i.length;
+        const r = [];
+        const l = {
+            optional: true
+        };
+        let a;
+        let h;
+        let c = 0;
+        let u;
+        while (n > c) {
+            u = i[c];
+            a = findElementControllerFor(u, l);
+            h = a?.viewModel ?? null;
+            if (e == null ? true : e(u, h)) {
+                r.push(s == null ? h ?? u : s(u, h));
+            }
+            ++c;
+        }
+        return r;
     }
 }
-
-const kn = {
-    childList: true
-};
-
-const defaultChildQuery = t => t.host.childNodes;
-
-const defaultChildFilter = (t, e, s) => !!s;
-
-const defaultChildMap = (t, e, s) => s;
-
-const Cn = {
-    optional: true
-};
-
-const filterChildren = (t, e, s, i) => {
-    const n = e(t);
-    const r = n.length;
-    const l = [];
-    let a;
-    let h;
-    let c;
-    let u = 0;
-    for (;u < r; ++u) {
-        a = n[u];
-        h = findElementControllerFor(a, Cn);
-        c = h?.viewModel ?? null;
-        if (s(a, h, c)) {
-            l.push(i(a, h, c));
-        }
-    }
-    return l;
-};
 
 class ChildrenLifecycleHooks {
     constructor(t) {
@@ -9323,20 +9312,22 @@ class ChildrenLifecycleHooks {
     }
     hydrating(t, e) {
         const s = this.X;
-        const i = new ChildrenBinding(e, t, t[s.callback ?? `${Ht(s.name)}Changed`], s.query ?? defaultChildQuery, s.filter ?? defaultChildFilter, s.map ?? defaultChildMap, s.options ?? kn);
+        const i = s.query ?? "*";
+        const n = new ChildrenBinding(e.host, t, t[s.callback ?? `${Ht(s.name)}Changed`], i, s.filter, s.map);
+        if (/[\s>]/.test(i)) {
+            throw createMappedError(9989, i);
+        }
         Kt(t, s.name, {
             enumerable: true,
             configurable: true,
-            get: jt((() => i.getValue()), {
-                getObserver: () => i
+            get: jt((() => n.getValue()), {
+                getObserver: () => n
             }),
             set: () => {}
         });
-        e.addBinding(i);
+        e.addBinding(n);
     }
 }
 
-let Bn = false;
-
-export { AdoptedStyleSheetsStyles, AppRoot, Oe as AppTask, ArrayLikeHandler, AttrBindingBehavior, AttrMapper, AttributeBinding, Ds as AttributeBindingRenderer, AttributeNSAccessor, AuCompose, AuSlot, AuSlotsInfo, Aurelia, be as Bindable, BindableDefinition, Te as BindingBehavior, BindingBehaviorDefinition, BindingContext, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ComputedWatcher, ContentBinding, Controller, Ne as CustomAttribute, CustomAttributeDefinition, xs as CustomAttributeRenderer, Oi as CustomElement, CustomElementDefinition, vs as CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, xn as DefaultBindingLanguage, pn as DefaultBindingSyntax, DefaultCase, gn as DefaultComponents, wn as DefaultRenderers, bn as DefaultResources, Else, EventModifier, ls as EventModifierRegistration, ExpressionWatcher, FlushQueue, Focus, FragmentNodeSequence, FromViewBindingBehavior, FulfilledTemplateController, Vi as IAppRoot, _e as IAppTask, ds as IAuSlotWatcher, fs as IAuSlotsInfo, Hi as IAurelia, xi as IController, os as IEventModifier, Bi as IEventTarget, Qe as IFlushQueue, Li as IHistory, bi as IHydrationContext, rs as IKeyMapping, We as ILifecycleHooks, As as IListenerBindingOptions, Ti as ILocation, ns as IModifiedEventHandlerCreator, Ci as INode, Fe as IPlatform, Si as IRenderLocation, gs as IRenderer, Ns as IRendering, tn as IRepeatableHandler, Ji as IRepeatableHandlerResolver, $i as ISVGAnalyzer, mn as ISanitizer, zs as IShadowDOMGlobalStyles, Ws as IShadowDOMStyleFactory, js as IShadowDOMStyles, Ie as ISignaler, as as IViewFactory, Ei as IWindow, If, InterpolationBinding, ks as InterpolationBindingRenderer, InterpolationPartBinding, Bs as IteratorBindingRenderer, LetBinding, ws as LetElementRenderer, je as LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingOptions, Rs as ListenerBindingRenderer, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, Cs as PropertyBindingRenderer, RefBinding, ys as RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, Ni as RuntimeTemplateCompilerImplementation, SVGAnalyzer, SanitizeValueConverter, Scope, SelectValueObserver, SelfBindingBehavior, Es as SetAttributeRenderer, Ts as SetClassAttributeRenderer, ps as SetPropertyRenderer, Ls as SetStyleAttributeRenderer, ShadowDOMRegistry, vn as ShortHandBindingSyntax, SignalBindingBehavior, Is as SpreadRenderer, yn as StandardConfiguration, vi as State, StyleAttributeAccessor, Us as StyleConfiguration, StyleElementStyles, Ms as StylePropertyBindingRenderer, Switch, bs as TemplateControllerRenderer, Ss as TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, TwoWayBindingBehavior, UpdateTriggerBindingBehavior, ValueAttributeObserver, Ge as ValueConverter, ValueConverterDefinition, ViewFactory, Ve as Watch, With, alias, ne as astAssign, oe as astBind, re as astEvaluate, le as astUnbind, bindable, bindingBehavior, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isRenderLocation, lifecycleHooks, Xe as mixinAstEvaluator, Ke as mixinUseScope, Ye as mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateController, useShadowDOM, valueConverter, watch };
+export { AdoptedStyleSheetsStyles, AppRoot, Oe as AppTask, ArrayLikeHandler, AttrBindingBehavior, AttrMapper, AttributeBinding, Ds as AttributeBindingRenderer, AttributeNSAccessor, AuCompose, AuSlot, AuSlotsInfo, Aurelia, be as Bindable, BindableDefinition, Te as BindingBehavior, BindingBehaviorDefinition, BindingContext, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ComputedWatcher, ContentBinding, Controller, Ne as CustomAttribute, CustomAttributeDefinition, xs as CustomAttributeRenderer, Oi as CustomElement, CustomElementDefinition, vs as CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, xn as DefaultBindingLanguage, pn as DefaultBindingSyntax, DefaultCase, gn as DefaultComponents, wn as DefaultRenderers, bn as DefaultResources, Else, EventModifier, ls as EventModifierRegistration, ExpressionWatcher, FlushQueue, Focus, FragmentNodeSequence, FromViewBindingBehavior, FulfilledTemplateController, Vi as IAppRoot, _e as IAppTask, ds as IAuSlotWatcher, fs as IAuSlotsInfo, Hi as IAurelia, xi as IController, os as IEventModifier, Bi as IEventTarget, Qe as IFlushQueue, Li as IHistory, bi as IHydrationContext, rs as IKeyMapping, We as ILifecycleHooks, As as IListenerBindingOptions, Ti as ILocation, ns as IModifiedEventHandlerCreator, Ci as INode, Fe as IPlatform, Si as IRenderLocation, gs as IRenderer, Ns as IRendering, tn as IRepeatableHandler, Ji as IRepeatableHandlerResolver, $i as ISVGAnalyzer, mn as ISanitizer, zs as IShadowDOMGlobalStyles, Ws as IShadowDOMStyleFactory, js as IShadowDOMStyles, Ie as ISignaler, as as IViewFactory, Ei as IWindow, If, InterpolationBinding, ks as InterpolationBindingRenderer, InterpolationPartBinding, Bs as IteratorBindingRenderer, LetBinding, ws as LetElementRenderer, je as LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingOptions, Rs as ListenerBindingRenderer, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, Cs as PropertyBindingRenderer, RefBinding, ys as RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, Ni as RuntimeTemplateCompilerImplementation, SVGAnalyzer, SanitizeValueConverter, Scope, SelectValueObserver, SelfBindingBehavior, Es as SetAttributeRenderer, Ts as SetClassAttributeRenderer, ps as SetPropertyRenderer, Ls as SetStyleAttributeRenderer, ShadowDOMRegistry, vn as ShortHandBindingSyntax, SignalBindingBehavior, Is as SpreadRenderer, yn as StandardConfiguration, vi as State, StyleAttributeAccessor, Us as StyleConfiguration, StyleElementStyles, Ms as StylePropertyBindingRenderer, Switch, bs as TemplateControllerRenderer, Ss as TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, TwoWayBindingBehavior, UpdateTriggerBindingBehavior, ValueAttributeObserver, Ge as ValueConverter, ValueConverterDefinition, ViewFactory, Ve as Watch, With, alias, ne as astAssign, oe as astBind, re as astEvaluate, le as astUnbind, bindable, bindingBehavior, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isRenderLocation, lifecycleHooks, Xe as mixinAstEvaluator, Ke as mixinUseScope, Ye as mixingBindingLimited, processContent, registerAliases, registerHostNode, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateController, useShadowDOM, valueConverter, watch };
 //# sourceMappingURL=index.mjs.map

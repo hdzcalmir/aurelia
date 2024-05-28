@@ -39,6 +39,38 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
 import { children, CustomElement, Aurelia, customElement } from '@aurelia/runtime-html';
 import { TestContext, assert, createFixture } from '@aurelia/testing';
 describe('3-runtime-html/children-observer.spec.ts', function () {
+    it('throws on invalid query', function () {
+        let El = (() => {
+            let _classDecorators = [customElement({
+                    name: 'el',
+                    template: '<au-slot>'
+                })];
+            let _classDescriptor;
+            let _classExtraInitializers = [];
+            let _classThis;
+            let _divs_decorators;
+            let _divs_initializers = [];
+            let _divs_extraInitializers = [];
+            var El = _classThis = class {
+                constructor() {
+                    this.divs = __runInitializers(this, _divs_initializers, void 0);
+                    __runInitializers(this, _divs_extraInitializers);
+                }
+            };
+            __setFunctionName(_classThis, "El");
+            (() => {
+                const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                _divs_decorators = [children('div div')];
+                __esDecorate(null, null, _divs_decorators, { kind: "field", name: "divs", static: false, private: false, access: { has: obj => "divs" in obj, get: obj => obj.divs, set: (obj, value) => { obj.divs = value; } }, metadata: _metadata }, _divs_initializers, _divs_extraInitializers);
+                __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                El = _classThis = _classDescriptor.value;
+                if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                __runInitializers(_classThis, _classExtraInitializers);
+            })();
+            return El = _classThis;
+        })();
+        assert.throws(() => createFixture('', El));
+    });
     describe('populates', function () {
         it('[without shadow DOM] static plain elements', async function () {
             let MyEl = (() => {
@@ -83,7 +115,7 @@ describe('3-runtime-html/children-observer.spec.ts', function () {
         });
         it('children array with by custom query', async function () {
             const { au, viewModel, ChildOne } = createAppAndStart({
-                query: p => p.host.querySelectorAll('.child-one')
+                query: '.child-one'
             });
             await Promise.resolve();
             assert.equal(viewModel.children.length, 1);
@@ -93,7 +125,7 @@ describe('3-runtime-html/children-observer.spec.ts', function () {
         });
         it('children array with by custom query, filter, and map', async function () {
             const { au, viewModel, ChildOne } = createAppAndStart({
-                query: p => p.host.querySelectorAll('.child-one'),
+                query: '.child-one',
                 filter: (node) => !!node,
                 map: (node) => node
             });
@@ -102,6 +134,30 @@ describe('3-runtime-html/children-observer.spec.ts', function () {
             assert.equal(viewModel.children[0].tagName, CustomElement.getDefinition(ChildOne).name.toUpperCase());
             await au.stop();
             au.dispose();
+        });
+        it('queries all nodes when using "$all"', async function () {
+            const { component } = createFixture('<e-l component.ref="el">hi<div>hey</div><span></span><p></p><!--hah-->', { el: { children: [] } }, [
+                CustomElement.define({ name: 'e-l', template: '<slot>', shadowOptions: { mode: 'open' } }, (() => {
+                    var _a;
+                    let _children_decorators;
+                    let _children_initializers = [];
+                    let _children_extraInitializers = [];
+                    return _a = class El {
+                            constructor() {
+                                this.children = __runInitializers(this, _children_initializers, void 0);
+                                __runInitializers(this, _children_extraInitializers);
+                            }
+                        },
+                        (() => {
+                            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                            _children_decorators = [children('$all')];
+                            __esDecorate(null, null, _children_decorators, { kind: "field", name: "children", static: false, private: false, access: { has: obj => "children" in obj, get: obj => obj.children, set: (obj, value) => { obj.children = value; } }, metadata: _metadata }, _children_initializers, _children_extraInitializers);
+                            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                        })(),
+                        _a;
+                })())
+            ]);
+            assert.strictEqual(component.el.children.length, 5 /* #text + div + span + p + #comment */);
         });
     });
     describe('updates', function () {
@@ -124,7 +180,7 @@ describe('3-runtime-html/children-observer.spec.ts', function () {
         });
         it('children array with by custom query', async function () {
             const { au, viewModel, ChildTwo, hostViewModel } = createAppAndStart({
-                query: p => p.host.querySelectorAll('.child-two')
+                query: '.child-two'
             });
             await Promise.resolve();
             assert.equal(viewModel.children.length, 1);
@@ -142,7 +198,7 @@ describe('3-runtime-html/children-observer.spec.ts', function () {
         });
         it('children array with by custom query, filter, and map', async function () {
             const { au, viewModel, ChildTwo, hostViewModel } = createAppAndStart({
-                query: p => p.host.querySelectorAll('.child-two'),
+                query: '.child-two',
                 filter: (node) => !!node,
                 map: (node) => node
             });
@@ -192,12 +248,13 @@ describe('3-runtime-html/children-observer.spec.ts', function () {
                 })();
                 return El = _classThis;
             })();
-            const { assertText } = createFixture('<e-l ref=el><div repeat.for="i of items">', class App {
+            const { flush, assertText } = createFixture('<e-l ref=el><div repeat.for="i of items">', class App {
                 constructor() {
                     this.items = 3;
                 }
             }, [El]);
-            await new Promise(r => setTimeout(r, 50));
+            await Promise.resolve();
+            flush();
             assertText('child count: 3');
         });
     });

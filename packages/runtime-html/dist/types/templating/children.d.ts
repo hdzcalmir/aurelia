@@ -1,26 +1,28 @@
 import { type IServiceLocator } from '@aurelia/kernel';
 import { type ISubscriberCollection } from '@aurelia/runtime';
-import { type ICustomElementViewModel, type ICustomElementController } from './controller';
-import type { INode } from '../dom';
+import { type ICustomElementViewModel } from './controller';
 import { IBinding } from '../binding/interfaces-bindings';
-export type PartialChildrenDefinition = {
+/**
+ * An interface describing options to observe the children elements of a custom element host
+ */
+export type PartialChildrenDefinition<TQuery extends string = string> = {
+    query?: TQuery;
     callback?: PropertyKey;
     name?: PropertyKey;
-    options?: MutationObserverInit;
-    query?: (controller: ICustomElementController) => ArrayLike<Node>;
-    filter?: (node: Node, controller?: ICustomElementController | null, viewModel?: ICustomElementViewModel) => boolean;
-    map?: (node: Node, controller?: ICustomElementController | null, viewModel?: ICustomElementViewModel) => unknown;
+    filter?: (node: TQuery extends '$all' ? Node : HTMLElement, viewModel: ICustomElementViewModel | null) => boolean;
+    map?: (node: TQuery extends '$all' ? Node : HTMLElement, viewModel: ICustomElementViewModel | null) => unknown;
 };
 /**
  * Decorator: Specifies custom behavior for an array children property that synchronizes its items with child content nodes of the element.
  *
  * @param config - The overrides
  */
-export declare function children<TThis, TValue>(config?: PartialChildrenDefinition): (target: undefined, context: ClassFieldDecoratorContext<TThis, TValue>) => void;
+export declare function children<TThis, TValue, TQuery extends string>(config?: PartialChildrenDefinition<TQuery>): (target: undefined, context: ClassFieldDecoratorContext<TThis, TValue>) => void;
 /**
  * Decorator: Specifies an array property on a class that synchronizes its items with child content nodes of the element.
  *
- * @param selector - The CSS element selector for filtering children
+ * @param selector - The CSS element selector for filtering children. Use `$all` to select everything including non element nodes.
+ * If nothing is provided, it defaults to `*`, which means all elements
  */
 export declare function children<TThis, TValue>(selector: string): (target: undefined, context: ClassFieldDecoratorContext<TThis, TValue>) => void;
 /**
@@ -30,6 +32,9 @@ export declare function children<TThis, TValue>(selector: string): (target: unde
  * @param prop - The property name
  */
 export declare function children<TThis, TValue>(target: undefined, context: ClassFieldDecoratorContext<TThis, TValue>): void;
+export declare namespace children {
+    var mixed: boolean;
+}
 export interface ChildrenBinding extends ISubscriberCollection {
 }
 /**
@@ -38,7 +43,7 @@ export interface ChildrenBinding extends ISubscriberCollection {
 export declare class ChildrenBinding implements IBinding {
     isBound: boolean;
     readonly obj: ICustomElementViewModel;
-    constructor(controller: ICustomElementController, obj: ICustomElementViewModel, callback: undefined | (() => void), query?: (controller: ICustomElementController<ICustomElementViewModel>) => ArrayLike<INode>, filter?: (node: INode, controller?: ICustomElementController<ICustomElementViewModel> | null | undefined, viewModel?: any) => boolean, map?: (node: INode, controller?: ICustomElementController<ICustomElementViewModel> | null | undefined, viewModel?: any) => any, options?: MutationObserverInit);
+    constructor(host: HTMLElement, obj: ICustomElementViewModel, callback: undefined | (() => void), query: string, filter?: (node: Node, viewModel: ICustomElementViewModel | null) => boolean, map?: (node: Node, viewModel: ICustomElementViewModel | null) => unknown);
     getValue(): unknown[];
     setValue(_value: unknown): void;
     bind(): void;

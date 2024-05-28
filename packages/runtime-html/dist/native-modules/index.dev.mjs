@@ -170,6 +170,7 @@ const errorsMap = {
     [9992 /* ErrorNames.update_trigger_behavior_node_property_not_observable */]: `"& updateTrigger" uses node observer to observe, but it does not know how to use events to observe property <{{0:target@property}} />`,
     [9991 /* ErrorNames.children_decorator_invalid_usage */]: `Invalid @children usage. @children decorator can only be used on a field`,
     [9990 /* ErrorNames.slotted_decorator_invalid_usage */]: `Invalid @slotted usage. @slotted decorator can only be used on a field`,
+    [9989 /* ErrorNames.children_invalid_query */]: `Invalid query selector. Only selectors with alpha-numeric characters, or $all are allowed. Got {{0}} instead.`
 };
 const getMessageByCode = (name, ...details) => {
     let cooked = errorsMap[name];
@@ -3237,11 +3238,12 @@ class AuSlotWatcherBinding {
         }
         const oldNodes = this._nodes;
         const $nodes = [];
+        const query = this._query;
         let $slot;
         let node;
         for ($slot of this._slots) {
             for (node of $slot === slot ? nodes : $slot.nodes) {
-                if (this._query === '*' || (isElement(node) && node.matches(this._query))) {
+                if (query === '$all' || (isElement(node) && (query === '*' || node.matches(query)))) {
                     $nodes[$nodes.length] = node;
                 }
             }
@@ -3278,8 +3280,8 @@ class SlottedLifecycleHooks {
     }
 }
 function slotted(queryOrDef, slotName) {
-    if (!mixed$1) {
-        mixed$1 = true;
+    if (!mixed) {
+        mixed = true;
         subscriberCollection(AuSlotWatcherBinding, null);
         lifecycleHooks()(SlottedLifecycleHooks, null);
     }
@@ -3301,7 +3303,7 @@ function slotted(queryOrDef, slotName) {
     }
     return decorator;
 }
-let mixed$1 = false;
+let mixed = false;
 
 /**
  * The public methods of this binding emulates the necessary of an IHydratableController,
@@ -3995,7 +3997,7 @@ const locationProviderName = 'IRenderLocation';
 const slotInfoProviderName = 'ISlotsInfo';
 function createElementContainer(p, renderingCtrl, host, instruction, location, auSlotsInfo) {
     const ctn = renderingCtrl.container.createChild();
-    registerHostNode(ctn, p, host);
+    registerHostNode(ctn, host, p);
     registerResolver(ctn, IController, new InstanceProvider(controllerProviderName, renderingCtrl));
     registerResolver(ctn, IInstruction, new InstanceProvider(instructionProviderName, instruction));
     registerResolver(ctn, IRenderLocation, location == null
@@ -4033,7 +4035,7 @@ function invokeAttribute(p, definition, $renderingCtrl, host, instruction, viewF
         ? $renderingCtrl
         : $renderingCtrl.$controller;
     const ctn = renderingCtrl.container.createChild();
-    registerHostNode(ctn, p, host);
+    registerHostNode(ctn, host, p);
     registerResolver(ctn, IController, new InstanceProvider(controllerProviderName, renderingCtrl));
     registerResolver(ctn, IInstruction, new InstanceProvider(instructionProviderName, instruction));
     registerResolver(ctn, IRenderLocation, location == null
@@ -6141,8 +6143,10 @@ class FragmentNodeSequence {
 const IWindow = /*@__PURE__*/ createInterface('IWindow', x => x.callback(handler => handler.get(IPlatform).window));
 const ILocation = /*@__PURE__*/ createInterface('ILocation', x => x.callback(handler => handler.get(IWindow).location));
 const IHistory = /*@__PURE__*/ createInterface('IHistory', x => x.callback(handler => handler.get(IWindow).history));
-/** @internal */
-const registerHostNode = (container, platform, host) => {
+/**
+ * An utility to register a host node with the container with all the commonly used keys.
+ */
+const registerHostNode = (container, host, platform = container.get(IPlatform)) => {
     registerResolver(container, platform.HTMLElement, registerResolver(container, platform.Element, registerResolver(container, INode, new InstanceProvider('ElementResolver', host))));
     return container;
 };
@@ -6504,7 +6508,7 @@ class AppRoot {
         const host = this.host = config.host;
         rootProvider.prepare(this);
         registerResolver(container, IEventTarget, new InstanceProvider('IEventTarget', host));
-        registerHostNode(container, this.platform = this._createPlatform(container, host), host);
+        registerHostNode(container, host, this.platform = this._createPlatform(container, host));
         this._hydratePromise = onResolve(this._runAppTasks('creating'), () => {
             if (!config.allowActionlessForm !== false) {
                 host.addEventListener('submit', (e) => {
@@ -10109,6 +10113,15 @@ class AuSlot {
         // C(synthetic)#2 is what will provide the content for C(au-slot)#1
         // but C(au-slot)#1 is what will provide the $host value for the content of C(au-slot)#2
         //
+        // example:
+        // <template as-custom-element="parent">
+        //   <child>
+        //    <au-slot> #2
+        //   </child>
+        // ...
+        // <template as-custom-element="child">
+        //  <au-slot> #1
+        //
         // because of this structure, walk 2 level of controller at once to find the right parent scope for $host value
         while (parent.vmKind === 'synthetic' && parent.parent?.viewModel instanceof AuSlot) {
             parent = parent.parent.parent;
@@ -10460,7 +10473,7 @@ class AuCompose {
             return comp;
         }
         const p = this._platform;
-        registerHostNode(container, p, host);
+        registerHostNode(container, host, p);
         registerResolver(container, IRenderLocation, new InstanceProvider('IRenderLocation', location));
         const instance = container.invoke(comp);
         registerResolver(container, comp, new InstanceProvider('au-compose.component', instance));
@@ -10835,8 +10848,8 @@ function createConfiguration(optionsProvider) {
 }
 
 function children(configOrTarget, context) {
-    if (!mixed) {
-        mixed = true;
+    if (!children.mixed) {
+        children.mixed = true;
         subscriberCollection(ChildrenBinding, null);
         lifecycleHooks()(ChildrenLifecycleHooks, null);
     }
@@ -10849,7 +10862,7 @@ function children(configOrTarget, context) {
                 break;
         }
         const dependencies = (context.metadata[dependenciesKey] ??= []);
-        dependencies.push(new ChildrenLifecycleHooks(config));
+        dependencies.push(new ChildrenLifecycleHooks(config ?? {}));
     }
     if (arguments.length > 1) {
         // Non invocation:
@@ -10862,8 +10875,9 @@ function children(configOrTarget, context) {
         // Direct call:
         // - @children('div')(Foo)
         config = {
-            filter: (node) => isElement(node) && node.matches(configOrTarget),
-            map: el => el
+            query: configOrTarget,
+            // filter: (node: Node) => isElement(node) && node.matches(configOrTarget),
+            // map: el => el
         };
         return decorator;
     }
@@ -10873,28 +10887,21 @@ function children(configOrTarget, context) {
     config = configOrTarget === void 0 ? {} : configOrTarget;
     return decorator;
 }
+children.mixed = false;
 /**
  * A binding for observing & notifying the children of a custom element.
  */
 class ChildrenBinding {
-    constructor(controller, obj, callback, query = defaultChildQuery, filter = defaultChildFilter, map = defaultChildMap, options = childObserverOptions) {
+    constructor(host, obj, callback, query, filter, map) {
         /** @internal */
         this._children = (void 0);
-        /** @internal */
-        this._query = defaultChildQuery;
-        /** @internal */
-        this._filter = defaultChildFilter;
-        /** @internal */
-        this._map = defaultChildMap;
         this.isBound = false;
-        this._controller = controller;
         this.obj = obj;
         this._callback = callback;
         this._query = query;
         this._filter = filter;
         this._map = map;
-        this._options = options;
-        this._observer = createMutationObserver(this._host = controller.host, () => {
+        this._observer = createMutationObserver(this._host = host, () => {
             this._onChildrenChanged();
         });
     }
@@ -10907,7 +10914,7 @@ class ChildrenBinding {
             return;
         }
         this.isBound = true;
-        this._observer.observe(this._host, this._options);
+        this._observer.observe(this._host, { childList: true });
         this._children = this._getNodes();
     }
     unbind() {
@@ -10915,6 +10922,8 @@ class ChildrenBinding {
             return;
         }
         this.isBound = false;
+        // prevent memory leaks
+        this._observer.takeRecords();
         this._observer.disconnect();
         this._children = emptyArray;
     }
@@ -10931,38 +10940,29 @@ class ChildrenBinding {
     // freshly retrieve the children everytime
     // in case this observer is not observing
     _getNodes() {
-        return filterChildren(this._controller, this._query, this._filter, this._map);
+        const query = this._query;
+        const filter = this._filter;
+        const map = this._map;
+        const nodes = query === '$all' ? this._host.childNodes : this._host.querySelectorAll(`:scope > ${query}`);
+        const ii = nodes.length;
+        const results = [];
+        const findControllerOptions = { optional: true };
+        let $controller;
+        let viewModel;
+        let i = 0;
+        let node;
+        while (ii > i) {
+            node = nodes[i];
+            $controller = findElementControllerFor(node, findControllerOptions);
+            viewModel = $controller?.viewModel ?? null;
+            if (filter == null ? true : filter(node, viewModel)) {
+                results.push(map == null ? viewModel ?? node : map(node, viewModel));
+            }
+            ++i;
+        }
+        return results;
     }
 }
-const childObserverOptions = { childList: true };
-const defaultChildQuery = (controller) => controller.host.childNodes;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const defaultChildFilter = (node, controller, viewModel) => 
-// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-!!viewModel;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const defaultChildMap = (node, controller, viewModel) => viewModel;
-const forOpts = { optional: true };
-const filterChildren = (controller, query, filter, map
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-) => {
-    const nodes = query(controller);
-    const ii = nodes.length;
-    const children = [];
-    let node;
-    let $controller;
-    let viewModel;
-    let i = 0;
-    for (; i < ii; ++i) {
-        node = nodes[i];
-        $controller = findElementControllerFor(node, forOpts);
-        viewModel = $controller?.viewModel ?? null;
-        if (filter(node, $controller, viewModel)) {
-            children.push(map(node, $controller, viewModel));
-        }
-    }
-    return children;
-};
 class ChildrenLifecycleHooks {
     constructor(_def) {
         this._def = _def;
@@ -10972,7 +10972,11 @@ class ChildrenLifecycleHooks {
     }
     hydrating(vm, controller) {
         const $def = this._def;
-        const childrenObserver = new ChildrenBinding(controller, vm, vm[$def.callback ?? `${safeString($def.name)}Changed`], $def.query ?? defaultChildQuery, $def.filter ?? defaultChildFilter, $def.map ?? defaultChildMap, $def.options ?? childObserverOptions);
+        const query = $def.query ?? '*';
+        const childrenObserver = new ChildrenBinding(controller.host, vm, vm[$def.callback ?? `${safeString($def.name)}Changed`], query, $def.filter, $def.map);
+        if (/[\s>]/.test(query)) {
+            throw createMappedError(9989 /* ErrorNames.children_invalid_query */, query);
+        }
         def(vm, $def.name, {
             enumerable: true,
             configurable: true,
@@ -10987,7 +10991,6 @@ class ChildrenLifecycleHooks {
         controller.addBinding(childrenObserver);
     }
 }
-let mixed = false;
 
-export { AdoptedStyleSheetsStyles, AppRoot, AppTask, ArrayLikeHandler, AttrBindingBehavior, AttrMapper, AttributeBinding, AttributeBindingRenderer, AttributeNSAccessor, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindingBehavior, BindingBehaviorDefinition, BindingContext, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, Else, EventModifier, EventModifierRegistration, ExpressionWatcher, FlushQueue, Focus, FragmentNodeSequence, FromViewBindingBehavior, FulfilledTemplateController, IAppRoot, IAppTask, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventModifier, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IKeyMapping, ILifecycleHooks, IListenerBindingOptions, ILocation, IModifiedEventHandlerCreator, INode, IPlatform, IRenderLocation, IRenderer, IRendering, IRepeatableHandler, IRepeatableHandlerResolver, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyleFactory, IShadowDOMStyles, ISignaler, IViewFactory, IWindow, If, InterpolationBinding, InterpolationBindingRenderer, InterpolationPartBinding, IteratorBindingRenderer, LetBinding, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingOptions, ListenerBindingRenderer, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingRenderer, RefBinding, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, RuntimeTemplateCompilerImplementation, SVGAnalyzer, SanitizeValueConverter, Scope, SelectValueObserver, SelfBindingBehavior, SetAttributeRenderer, SetClassAttributeRenderer, SetPropertyRenderer, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleConfiguration, StyleElementStyles, StylePropertyBindingRenderer, Switch, TemplateControllerRenderer, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, TwoWayBindingBehavior, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, Watch, With, alias, astAssign, astBind, astEvaluate, astUnbind, bindable, bindingBehavior, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateController, useShadowDOM, valueConverter, watch };
+export { AdoptedStyleSheetsStyles, AppRoot, AppTask, ArrayLikeHandler, AttrBindingBehavior, AttrMapper, AttributeBinding, AttributeBindingRenderer, AttributeNSAccessor, AuCompose, AuSlot, AuSlotsInfo, Aurelia, Bindable, BindableDefinition, BindingBehavior, BindingBehaviorDefinition, BindingContext, BindingModeBehavior, BindingTargetSubscriber, CSSModulesProcessorRegistry, Case, CheckedObserver, ChildrenBinding, ClassAttributeAccessor, ComputedWatcher, ContentBinding, Controller, CustomAttribute, CustomAttributeDefinition, CustomAttributeRenderer, CustomElement, CustomElementDefinition, CustomElementRenderer, DataAttributeAccessor, DebounceBindingBehavior, DefaultBindingLanguage, DefaultBindingSyntax, DefaultCase, DefaultComponents, DefaultRenderers, DefaultResources, Else, EventModifier, EventModifierRegistration, ExpressionWatcher, FlushQueue, Focus, FragmentNodeSequence, FromViewBindingBehavior, FulfilledTemplateController, IAppRoot, IAppTask, IAuSlotWatcher, IAuSlotsInfo, IAurelia, IController, IEventModifier, IEventTarget, IFlushQueue, IHistory, IHydrationContext, IKeyMapping, ILifecycleHooks, IListenerBindingOptions, ILocation, IModifiedEventHandlerCreator, INode, IPlatform, IRenderLocation, IRenderer, IRendering, IRepeatableHandler, IRepeatableHandlerResolver, ISVGAnalyzer, ISanitizer, IShadowDOMGlobalStyles, IShadowDOMStyleFactory, IShadowDOMStyles, ISignaler, IViewFactory, IWindow, If, InterpolationBinding, InterpolationBindingRenderer, InterpolationPartBinding, IteratorBindingRenderer, LetBinding, LetElementRenderer, LifecycleHooks, LifecycleHooksDefinition, LifecycleHooksEntry, ListenerBinding, ListenerBindingOptions, ListenerBindingRenderer, NodeObserverLocator, NoopSVGAnalyzer, OneTimeBindingBehavior, PendingTemplateController, Portal, PromiseTemplateController, PropertyBinding, PropertyBindingRenderer, RefBinding, RefBindingRenderer, RejectedTemplateController, Rendering, Repeat, RuntimeTemplateCompilerImplementation, SVGAnalyzer, SanitizeValueConverter, Scope, SelectValueObserver, SelfBindingBehavior, SetAttributeRenderer, SetClassAttributeRenderer, SetPropertyRenderer, SetStyleAttributeRenderer, ShadowDOMRegistry, ShortHandBindingSyntax, SignalBindingBehavior, SpreadRenderer, StandardConfiguration, State, StyleAttributeAccessor, StyleConfiguration, StyleElementStyles, StylePropertyBindingRenderer, Switch, TemplateControllerRenderer, TextBindingRenderer, ThrottleBindingBehavior, ToViewBindingBehavior, TwoWayBindingBehavior, UpdateTriggerBindingBehavior, ValueAttributeObserver, ValueConverter, ValueConverterDefinition, ViewFactory, Watch, With, alias, astAssign, astBind, astEvaluate, astUnbind, bindable, bindingBehavior, capture, children, coercer, containerless, convertToRenderLocation, cssModules, customAttribute, customElement, getEffectiveParentNode, getRef, isCustomElementController, isCustomElementViewModel, isRenderLocation, lifecycleHooks, mixinAstEvaluator, mixinUseScope, mixingBindingLimited, processContent, registerAliases, registerHostNode, renderer, setEffectiveParentNode, setRef, shadowCSS, slotted, templateController, useShadowDOM, valueConverter, watch };
 //# sourceMappingURL=index.dev.mjs.map

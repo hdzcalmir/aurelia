@@ -1,3 +1,4 @@
+import { IContainer } from '@aurelia/kernel';
 import { IPlatform } from './platform';
 import type { IHydratedController } from './templating/controller';
 export declare class Refs {
@@ -195,4 +196,8 @@ export interface IHistory extends History {
      */
     replaceState(state: {} | null, title: string, url?: string | null): void;
 }
+/**
+ * An utility to register a host node with the container with all the commonly used keys.
+ */
+export declare const registerHostNode: (container: IContainer, host: INode | null, platform?: IPlatform) => IContainer;
 //# sourceMappingURL=dom.d.ts.map

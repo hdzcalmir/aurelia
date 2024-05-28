@@ -475,7 +475,7 @@ class DotSeparatedAttributePattern {
 D = Symbol.metadata;
 
 DotSeparatedAttributePattern[D] = {
-    [i]: N.create([ {
+    [i]: /*@__PURE__*/ N.create([ {
         pattern: "PART.PART",
         symbols: "."
     }, {
@@ -500,7 +500,7 @@ class RefAttributePattern {
 V = Symbol.metadata;
 
 RefAttributePattern[V] = {
-    [i]: N.create([ {
+    [i]: /*@__PURE__*/ N.create([ {
         pattern: "ref",
         symbols: ""
     }, {
@@ -521,7 +521,7 @@ class EventAttributePattern {
 H = Symbol.metadata;
 
 EventAttributePattern[H] = {
-    [i]: N.create([ {
+    [i]: /*@__PURE__*/ N.create([ {
         pattern: "PART.trigger:PART",
         symbols: ".:"
     }, {
@@ -539,7 +539,7 @@ class ColonPrefixedBindAttributePattern {
 M = Symbol.metadata;
 
 ColonPrefixedBindAttributePattern[M] = {
-    [i]: N.create([ {
+    [i]: /*@__PURE__*/ N.create([ {
         pattern: ":PART",
         symbols: ":"
     } ], ColonPrefixedBindAttributePattern)
@@ -557,7 +557,7 @@ class AtPrefixedTriggerAttributePattern {
 $ = Symbol.metadata;
 
 AtPrefixedTriggerAttributePattern[$] = {
-    [i]: N.create([ {
+    [i]: /*@__PURE__*/ N.create([ {
         pattern: "@PART",
         symbols: "@"
     }, {

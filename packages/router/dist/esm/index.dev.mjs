@@ -1844,6 +1844,103 @@ class Step {
 }
 Step.id = 0;
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable prefer-template */
+/** @internal */
+const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
+    ;
+
+const errorsMap = {
+    [99 /* ErrorNames.method_not_implemented */]: 'Method {{0}} not implemented',
+    [2000 /* ErrorNames.router_started */]: `Router.start() called while the it has already been started.`,
+    [2001 /* ErrorNames.router_not_started */]: 'Router.stop() has been called while it has not been started',
+    [2002 /* ErrorNames.router_remove_endpoint_failure */]: "Router failed to remove endpoint: {{0}}",
+    [2003 /* ErrorNames.router_check_activate_string_error */]: `Parameter instructions to checkActivate can not be a string ('{{0}}')!`,
+    [2004 /* ErrorNames.router_failed_appending_routing_instructions */]: 'Router failed to append routing instructions to coordinator',
+    [2005 /* ErrorNames.router_failed_finding_viewport_when_updating_viewer_path */]: 'Router failed to find viewport when updating viewer paths.',
+    [2006 /* ErrorNames.router_infinite_instruction */]: `{{0}} remaining instructions after 100 iterations; there is likely an infinite loop.`,
+    [2007 /* ErrorNames.browser_viewer_store_already_started */]: 'Browser navigation has already been started',
+    [2008 /* ErrorNames.browser_viewer_store_not_started */]: 'Browser navigation has not been started',
+    [2009 /* ErrorNames.browser_viewer_store_state_serialization_failed */]: `Failed to "{{0}}" state, probably due to unserializable data and/or parameters:` +
+        `\nSerialization error: {{1}}` +
+        `\nOriginal error: {originalError}`,
+    [2010 /* ErrorNames.navigator_already_started */]: 'Navigator has already been started',
+    [2011 /* ErrorNames.navigator_not_started */]: 'Navigator has not been started',
+    [2012 /* ErrorNames.route_no_component_as_config */]: `Invalid route configuration: A component ` +
+        `can't be specified in a component route configuration.`,
+    [2013 /* ErrorNames.route_no_both_component_and_instructions */]: `Invalid route configuration: The 'component' and 'instructions' properties ` +
+        `can't be specified in a component route configuration.`,
+    [2014 /* ErrorNames.route_nullish_config */]: `Invalid route configuration: expected an object but got null/undefined.`,
+    [2015 /* ErrorNames.route_instructions_existed */]: `Invalid route configuration: the 'instructions' property can't be used together with ` +
+        `the 'component', 'viewport', 'parameters' or 'children' properties.`,
+    [2016 /* ErrorNames.route_invalid_config */]: `Invalid route configuration: either 'redirectTo' or 'instructions' need to be specified.`,
+    [2017 /* ErrorNames.endpoint_instantiation_error */]: `There was an error durating the instantiation of "{{0}}".`
+        + ` "{{0}}" did not match any configured route or registered component name`
+        + ` - did you forget to add the component "{{0}}" to the dependencies or to register it as a global dependency?\n`
+        + `{{1:innerError}}`,
+    [2018 /* ErrorNames.element_name_not_found */]: `Cannot find an element with the name "{{0}}", did you register it via "dependencies" option or <import> with convention?.\n`,
+    [2019 /* ErrorNames.router_error_3 */]: `-- placeholder --`,
+    [2020 /* ErrorNames.router_error_4 */]: `-- placeholder --`,
+    [2021 /* ErrorNames.router_error_5 */]: `-- placeholder --`,
+    [2022 /* ErrorNames.router_error_6 */]: `-- placeholder --`,
+    [2023 /* ErrorNames.router_error_7 */]: `-- placeholder --`,
+    [2024 /* ErrorNames.router_error_8 */]: `-- placeholder --`,
+    [2025 /* ErrorNames.router_error_9 */]: `-- placeholder --`,
+    [2026 /* ErrorNames.router_error_10 */]: `-- placeholder --`,
+};
+const getMessageByCode = (name, ...details) => {
+    let cooked = errorsMap[name];
+    for (let i = 0; i < details.length; ++i) {
+        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
+        let matches = regex.exec(cooked);
+        while (matches != null) {
+            const method = matches[1]?.slice(1);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let value = details[i];
+            if (value != null) {
+                switch (method) {
+                    case 'nodeName':
+                        value = value.nodeName.toLowerCase();
+                        break;
+                    case 'name':
+                        value = value.name;
+                        break;
+                    case 'typeof':
+                        value = typeof value;
+                        break;
+                    case 'ctor':
+                        value = value.constructor.name;
+                        break;
+                    case 'toString':
+                        value = Object.prototype.toString.call(value);
+                        break;
+                    case 'join(!=)':
+                        value = value.join('!=');
+                        break;
+                    case 'element':
+                        value = value === '*' ? 'all elements' : `<${value} />`;
+                        break;
+                    case 'innerError':
+                        value = `\nDetails:\n${value}\n${(value instanceof Error) && value.cause != null ? `${String(value.cause)}\n` : ''}`;
+                        break;
+                    default: {
+                        // property access
+                        if (method?.startsWith('.')) {
+                            const paths = method.slice(1).split('.');
+                            for (let j = 0; j < paths.length && value != null; ++j) {
+                                value = value[paths[j]];
+                            }
+                        }
+                    }
+                }
+            }
+            cooked = cooked.slice(0, matches.index) + String(value) + cooked.slice(regex.lastIndex);
+            matches = regex.exec(cooked);
+        }
+    }
+    return cooked;
+};
+
 class Route {
     constructor(
     /**
@@ -1953,15 +2050,13 @@ class Route {
      */
     static transferTypeToComponent(configOrType, Type) {
         if (CustomElement.isType(configOrType)) {
-            throw new Error(`Invalid route configuration: A component ` +
-                `can't be specified in a component route configuration.`);
+            throw createMappedError(2012 /* ErrorNames.route_no_component_as_config */);
         }
         // Clone it so that original route isn't affected
         // NOTE that it's not a deep clone (yet)
         const config = { ...configOrType };
         if ('component' in config || 'instructions' in config) {
-            throw new Error(`Invalid route configuration: The 'component' and 'instructions' properties ` +
-                `can't be specified in a component route configuration.`);
+            throw createMappedError(2013 /* ErrorNames.route_no_both_component_and_instructions */);
         }
         if (!('redirectTo' in config)) {
             config.component = Type;
@@ -1978,16 +2073,15 @@ class Route {
      * is used.
      */
     static transferIndividualIntoInstructions(config) {
-        if (config === null || config === void 0) {
-            throw new Error(`Invalid route configuration: expected an object.`);
+        if (config == null) {
+            throw createMappedError(2014 /* ErrorNames.route_nullish_config */);
         }
-        if ((config.component ?? null) !== null
-            || (config.viewport ?? null) !== null
-            || (config.parameters ?? null) !== null
-            || (config.children ?? null) !== null) {
+        if (config.component != null
+            || config.viewport != null
+            || config.parameters != null
+            || config.children != null) {
             if (config.instructions != null) {
-                throw new Error(`Invalid route configuration: The 'instructions' property can't be used together with ` +
-                    `the 'component', 'viewport', 'parameters' or 'children' properties.`);
+                throw createMappedError(2015 /* ErrorNames.route_instructions_existed */);
             }
             config.instructions = [{
                     component: config.component,
@@ -2003,8 +2097,7 @@ class Route {
      */
     static validateRouteConfiguration(config) {
         if (config.redirectTo === null && config.instructions === null) {
-            throw new Error(`Invalid route configuration: either 'redirectTo' or 'instructions' ` +
-                `need to be specified.`);
+            throw createMappedError(2016 /* ErrorNames.route_invalid_config */);
         }
         // TODO: Add validations for remaining properties and each index of 'instructions'
     }
@@ -2413,86 +2506,6 @@ class AwaitableMap {
     }
 }
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable prefer-template */
-/** @internal */
-const createMappedError = (code, ...details) => new Error(`AUR${String(code).padStart(4, '0')}: ${getMessageByCode(code, ...details)}`)
-    ;
-
-const errorsMap = {
-    [2000 /* ErrorNames.router_started */]: `Router.start() called while the it has already been started.`,
-    [2001 /* ErrorNames.router_not_started */]: 'Router.stop() has been called while it has not been started',
-    [2002 /* ErrorNames.router_remove_endpoint_failure */]: "Router failed to remove endpoint: {{0}}",
-    [2003 /* ErrorNames.router_check_activate_string_error */]: `Parameter instructions to checkActivate can not be a string ('{{0}}')!`,
-    [2004 /* ErrorNames.router_failed_appending_routing_instructions */]: 'Router failed to append routing instructions to coordinator',
-    [2005 /* ErrorNames.router_failed_finding_viewport_when_updating_viewer_path */]: 'Router failed to find viewport when updating viewer paths.',
-    [2006 /* ErrorNames.instantiation_error */]: `There was an error durating the instantiation of "{{0}}".`
-        + ` "{{0}}" did not match any configured route or registered component name`
-        + ` - did you forget to add the component "{{0}}" to the dependencies or to register it as a global dependency?\n`
-        + `{{1:innerError}}`,
-    [2007 /* ErrorNames.element_name_not_found */]: `Cannot find an element with the name "{{0}}", did you register it via "dependencies" option or <import> with convention?.\n`,
-    [2008 /* ErrorNames.router_error_3 */]: `-- placeholder --`,
-    [2009 /* ErrorNames.router_error_4 */]: `-- placeholder --`,
-    [2010 /* ErrorNames.router_error_5 */]: `-- placeholder --`,
-    [2011 /* ErrorNames.router_error_6 */]: `-- placeholder --`,
-    [2012 /* ErrorNames.router_error_7 */]: `-- placeholder --`,
-    [2013 /* ErrorNames.router_error_8 */]: `-- placeholder --`,
-    [2014 /* ErrorNames.router_error_9 */]: `-- placeholder --`,
-    [2015 /* ErrorNames.router_error_10 */]: `-- placeholder --`,
-};
-const getMessageByCode = (name, ...details) => {
-    let cooked = errorsMap[name];
-    for (let i = 0; i < details.length; ++i) {
-        const regex = new RegExp(`{{${i}(:.*)?}}`, 'g');
-        let matches = regex.exec(cooked);
-        while (matches != null) {
-            const method = matches[1]?.slice(1);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let value = details[i];
-            if (value != null) {
-                switch (method) {
-                    case 'nodeName':
-                        value = value.nodeName.toLowerCase();
-                        break;
-                    case 'name':
-                        value = value.name;
-                        break;
-                    case 'typeof':
-                        value = typeof value;
-                        break;
-                    case 'ctor':
-                        value = value.constructor.name;
-                        break;
-                    case 'toString':
-                        value = Object.prototype.toString.call(value);
-                        break;
-                    case 'join(!=)':
-                        value = value.join('!=');
-                        break;
-                    case 'element':
-                        value = value === '*' ? 'all elements' : `<${value} />`;
-                        break;
-                    case 'innerError':
-                        value = `\nDetails:\n${value}\n${(value instanceof Error) && value.cause != null ? `${String(value.cause)}\n` : ''}`;
-                        break;
-                    default: {
-                        // property access
-                        if (method?.startsWith('.')) {
-                            const paths = method.slice(1).split('.');
-                            for (let j = 0; j < paths.length && value != null; ++j) {
-                                value = value[paths[j]];
-                            }
-                        }
-                    }
-                }
-            }
-            cooked = cooked.slice(0, matches.index) + String(value) + cooked.slice(regex.lastIndex);
-            matches = regex.exec(cooked);
-        }
-    }
-    return cooked;
-};
-
 /**
  * @internal
  */
@@ -2650,7 +2663,7 @@ class ViewportContent extends EndpointContent {
                 {
                     const componentName = this.instruction.component.name;
                     // eslint-disable-next-line no-console
-                    console.warn(createMappedError(2006 /* ErrorNames.instantiation_error */, componentName, e));
+                    console.warn(createMappedError(2017 /* ErrorNames.endpoint_instantiation_error */, componentName, e));
                 }
                 // If there's a fallback component...
                 if ((fallback ?? '') !== '') {
@@ -2675,13 +2688,13 @@ class ViewportContent extends EndpointContent {
                             throw ee;
                         }
                         const componentName = this.instruction.component.name;
-                        throw createMappedError(2006 /* ErrorNames.instantiation_error */, componentName, ee);
+                        throw createMappedError(2017 /* ErrorNames.endpoint_instantiation_error */, componentName, ee);
                         // throw new Error(`'${this.instruction.component.name as string}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                     }
                 }
                 else {
                     const componentName = this.instruction.component.name;
-                    throw createMappedError(2006 /* ErrorNames.instantiation_error */, componentName);
+                    throw createMappedError(2017 /* ErrorNames.endpoint_instantiation_error */, componentName);
                     // throw new Error(`'${this.instruction.component.name as string}' did not match any configured route or registered component name - did you forget to add the component '${this.instruction.component.name}' to the dependencies or to register it as a global dependency?`);
                 }
             }
@@ -4753,14 +4766,14 @@ class Navigator {
     }
     start(options) {
         if (this.isActive) {
-            throw new Error('Navigator has already been started');
+            throw createMappedError(2010 /* ErrorNames.navigator_already_started */);
         }
         this.isActive = true;
         this.options = { ...options };
     }
     stop() {
         if (!this.isActive) {
-            throw new Error('Navigator has not been started');
+            throw createMappedError(2011 /* ErrorNames.navigator_not_started */);
         }
         this.isActive = false;
     }
@@ -6449,7 +6462,7 @@ class BrowserViewerStore {
     }
     start(options) {
         if (this.isActive) {
-            throw new Error('Browser navigation has already been started');
+            throw createMappedError(2007 /* ErrorNames.browser_viewer_store_already_started */);
         }
         this.isActive = true;
         if (options.useUrlFragmentHash != void 0) {
@@ -6460,7 +6473,7 @@ class BrowserViewerStore {
     }
     stop() {
         if (!this.isActive) {
-            throw new Error('Browser navigation has not been started');
+            throw createMappedError(2008 /* ErrorNames.browser_viewer_store_not_started */);
         }
         this.window.removeEventListener('popstate', this);
         this.pendingCalls.stop();
@@ -6660,7 +6673,7 @@ class BrowserViewerStore {
             return JSON.parse(JSON.stringify(data));
         }
         catch (err) {
-            throw new Error(`Failed to ${type} state, probably due to unserializable data and/or parameters: ${err}${originalError}`);
+            throw createMappedError(2009 /* ErrorNames.browser_viewer_store_state_serialization_failed */, type, err, originalError);
         }
     }
 }
@@ -7643,7 +7656,7 @@ class Router {
      * Public API (not yet implemented)
      */
     addEndpoint(_type, ..._args) {
-        throw new Error('Not implemented');
+        throw createMappedError(99 /* ErrorNames.method_not_implemented */, 'addEndPoint');
     }
     /**
      * Connect an endpoint custom element to an endpoint. Called from the custom
@@ -8023,7 +8036,7 @@ class Router {
 Router.closestEndpointKey = Protocol.annotation.keyFor('closest-endpoint');
 function createUnresolvedinstructionsError(remainingInstructions, logger) {
     // TODO: Improve error message, including suggesting solutions
-    const error = new Error(`${remainingInstructions.length} remaining instructions after 100 iterations; there is likely an infinite loop.`);
+    const error = createMappedError(2006 /* ErrorNames.router_infinite_instruction */, remainingInstructions.length);
     error.remainingInstructions = remainingInstructions;
     logger.warn(error, error.remainingInstructions);
     {
@@ -8305,7 +8318,7 @@ class ViewportCustomElement {
                 this.parentViewport.pendingPromise = new OpenPromise();
             }
         }
-        return Runner.run(null, 
+        Runner.run(null, 
         // The first viewport(s) might be hydrated before the router is started
         () => waitForRouterStart(this.router, this.ea), () => {
             // Only call connect this early if we need to

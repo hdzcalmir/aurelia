@@ -30,7 +30,7 @@ export { AttributeNSAccessor, } from './observation/attribute-ns-accessor';
 export { type IInputElement, CheckedObserver, } from './observation/checked-observer';
 export { ClassAttributeAccessor, } from './observation/class-attribute-accessor';
 export { DataAttributeAccessor, } from './observation/data-attribute-accessor';
-export { NodeObserverLocator, type INodeObserverConfig, type INodeObserverConstructor as IHtmlObserverConstructor, } from './observation/observer-locator';
+export { NodeObserverLocator, type INodeObserverConfig, type INodeObserverConstructor, } from './observation/observer-locator';
 export { type ISelectElement, type IOptionElement, SelectValueObserver } from './observation/select-value-observer';
 export { StyleAttributeAccessor } from './observation/style-attribute-accessor';
 export { ISVGAnalyzer, SVGAnalyzer, NoopSVGAnalyzer, } from './observation/svg-analyzer';
@@ -61,7 +61,7 @@ export { type IAuSlotProjections, type IAuSlot, type IAuSlotSubscriber, IAuSlotW
 export { ILifecycleHooks, LifecycleHooksEntry, LifecycleHooksDefinition, type LifecycleHooksLookup, type LifecycleHook, LifecycleHooks, lifecycleHooks, } from './templating/lifecycle-hooks';
 export { IRendering, Rendering, } from './templating/rendering';
 export { ViewFactory, IViewFactory, } from './templating/view';
-export { INode, IEventTarget, IRenderLocation, type INodeSequence, FragmentNodeSequence, IHistory, IWindow, ILocation, getEffectiveParentNode, setEffectiveParentNode, convertToRenderLocation, isRenderLocation, getRef, setRef, } from './dom';
+export { INode, IEventTarget, IRenderLocation, type INodeSequence, FragmentNodeSequence, IHistory, IWindow, ILocation, getEffectiveParentNode, setEffectiveParentNode, convertToRenderLocation, isRenderLocation, getRef, setRef, registerHostNode, } from './dom';
 export { IPlatform, } from './platform';
 export { CSSModulesProcessorRegistry, cssModules, ShadowDOMRegistry, shadowCSS, StyleConfiguration, IShadowDOMStyleFactory, type IShadowDOMConfiguration, AdoptedStyleSheetsStyles, StyleElementStyles, IShadowDOMStyles, IShadowDOMGlobalStyles, } from './templating/styles';
 export { Watch, watch, type IWatchDefinition, type IWatcherCallback, type IDepCollectionFn, } from './watch';

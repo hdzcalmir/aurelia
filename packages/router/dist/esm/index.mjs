@@ -1244,6 +1244,8 @@ class Step {
 
 Step.id = 0;
 
+const createMappedError = (t, ...i) => new Error(`AUR${String(t).padStart(4, "0")}:${i.map(String)}`);
+
 class Route {
     constructor(t, i, s, n, e, r, o, h) {
         this.path = t;
@@ -1291,13 +1293,13 @@ class Route {
     }
     static transferTypeToComponent(t, i) {
         if (u.isType(t)) {
-            throw new Error(`Invalid route configuration: A component ` + `can't be specified in a component route configuration.`);
+            throw createMappedError(2012);
         }
         const s = {
             ...t
         };
         if ("component" in s || "instructions" in s) {
-            throw new Error(`Invalid route configuration: The 'component' and 'instructions' properties ` + `can't be specified in a component route configuration.`);
+            throw createMappedError(2013);
         }
         if (!("redirectTo" in s)) {
             s.component = i;
@@ -1308,12 +1310,12 @@ class Route {
         return s;
     }
     static transferIndividualIntoInstructions(t) {
-        if (t === null || t === void 0) {
-            throw new Error(`Invalid route configuration: expected an object.`);
+        if (t == null) {
+            throw createMappedError(2014);
         }
-        if ((t.component ?? null) !== null || (t.viewport ?? null) !== null || (t.parameters ?? null) !== null || (t.children ?? null) !== null) {
+        if (t.component != null || t.viewport != null || t.parameters != null || t.children != null) {
             if (t.instructions != null) {
-                throw new Error(`Invalid route configuration: The 'instructions' property can't be used together with ` + `the 'component', 'viewport', 'parameters' or 'children' properties.`);
+                throw createMappedError(2015);
             }
             t.instructions = [ {
                 component: t.component,
@@ -1326,27 +1328,27 @@ class Route {
     }
     static validateRouteConfiguration(t) {
         if (t.redirectTo === null && t.instructions === null) {
-            throw new Error(`Invalid route configuration: either 'redirectTo' or 'instructions' ` + `need to be specified.`);
+            throw createMappedError(2016);
         }
     }
 }
 
 Route.resourceKey = t("route");
 
-const $ = {
+const P = {
     name: /*@__PURE__*/ t("routes"),
     isConfigured(t) {
-        return C.has($.name, t) || "routes" in t;
+        return C.has(P.name, t) || "routes" in t;
     },
     configure(t, i) {
         const s = t.map((t => Route.create(t)));
-        C.define(s, i, $.name);
+        C.define(s, i, P.name);
         return i;
     },
     getConfiguration(t) {
         const i = t;
         const s = [];
-        const n = C.get($.name, t);
+        const n = C.get(P.name, t);
         if (Array.isArray(n)) {
             s.push(...n);
         }
@@ -1360,7 +1362,7 @@ const $ = {
 function routes(t) {
     return function(i, s) {
         s.addInitializer((function() {
-            $.configure(t, this);
+            P.configure(t, this);
         }));
         return i;
     };
@@ -1528,7 +1530,7 @@ class ViewportScope extends k {
         const t = [];
         if (this.rootComponentType !== null) {
             const i = this.rootComponentType.constructor === this.rootComponentType.constructor.constructor ? this.rootComponentType : this.rootComponentType.constructor;
-            t.push(...$.getConfiguration(i) ?? []);
+            t.push(...P.getConfiguration(i) ?? []);
         }
         return t;
     }
@@ -1655,8 +1657,6 @@ class AwaitableMap {
     }
 }
 
-const createMappedError = (t, ...i) => new Error(`AUR${String(t).padStart(4, "0")}:${i.map(String)}`);
-
 class ViewportContent extends EndpointContent {
     constructor(t, i, s, n, e = RoutingInstruction.create(""), r = Navigation.create({
         instruction: "",
@@ -1725,11 +1725,11 @@ class ViewportContent extends EndpointContent {
                             throw t;
                         }
                         const i = this.instruction.component.name;
-                        throw createMappedError(2006, i, t);
+                        throw createMappedError(2017, i, t);
                     }
                 } else {
                     const t = this.instruction.component.name;
-                    throw createMappedError(2006, t);
+                    throw createMappedError(2017, t);
                 }
             }
         }
@@ -2479,7 +2479,7 @@ class Viewport extends k {
         let i = this.getComponentType();
         if (i != null) {
             i = i.constructor === i.constructor.constructor ? i : i.constructor;
-            t.push(...$.getConfiguration(i) ?? []);
+            t.push(...P.getConfiguration(i) ?? []);
         }
         return t;
     }
@@ -2950,7 +2950,7 @@ class Navigator {
     }
     start(t) {
         if (this.isActive) {
-            throw new Error("Navigator has already been started");
+            throw createMappedError(2010);
         }
         this.isActive = true;
         this.options = {
@@ -2959,7 +2959,7 @@ class Navigator {
     }
     stop() {
         if (!this.isActive) {
-            throw new Error("Navigator has not been started");
+            throw createMappedError(2011);
         }
         this.isActive = false;
     }
@@ -3165,9 +3165,9 @@ class Navigator {
     }
 }
 
-const P = y;
+const V = y;
 
-const V = E;
+const $ = E;
 
 const A = S;
 
@@ -3892,7 +3892,7 @@ class RoutingScope {
             }));
             t = i.join("/");
         } else {
-            const i = new P;
+            const i = new V;
             i.add(e);
             o = i.recognize(t);
         }
@@ -4093,7 +4093,7 @@ class BrowserViewerStore {
     }
     start(t) {
         if (this.isActive) {
-            throw new Error("Browser navigation has already been started");
+            throw createMappedError(2007);
         }
         this.isActive = true;
         if (t.useUrlFragmentHash != void 0) {
@@ -4107,7 +4107,7 @@ class BrowserViewerStore {
     }
     stop() {
         if (!this.isActive) {
-            throw new Error("Browser navigation has not been started");
+            throw createMappedError(2008);
         }
         this.window.removeEventListener("popstate", this);
         this.pendingCalls.stop();
@@ -4237,7 +4237,7 @@ class BrowserViewerStore {
         try {
             return JSON.parse(JSON.stringify(t));
         } catch (t) {
-            throw new Error(`Failed to ${i} state, probably due to unserializable data and/or parameters: ${t}${s}`);
+            throw createMappedError(2009, i, t, s);
         }
     }
 }
@@ -4799,10 +4799,10 @@ class Router {
     }
     async I(t) {
         if (this.u) {
-            if (this.$) {
-                this.$.navigation.process?.resolve(false);
+            if (this.P) {
+                this.P.navigation.process?.resolve(false);
             }
-            this.$ = t;
+            this.P = t;
             return;
         }
         this.u = true;
@@ -4813,14 +4813,14 @@ class Router {
         } finally {
             this.u = false;
         }
-        if (this.$) {
-            const t = this.$;
-            this.$ = undefined;
+        if (this.P) {
+            const t = this.P;
+            this.P = undefined;
             await this.I(t);
         }
     }
     get isProcessingNav() {
-        return this.u || this.$ != null;
+        return this.u || this.P != null;
     }
     getEndpoint(t, i) {
         return this.allEndpoints(t).find((t => t.name === i)) ?? null;
@@ -4829,7 +4829,7 @@ class Router {
         return this.rootScope.scope.allScopes(i).filter((i => t === null || i.type === t)).map((t => t.endpoint));
     }
     addEndpoint(t, ...i) {
-        throw new Error("Not implemented");
+        throw createMappedError(99, "addEndPoint");
     }
     connectEndpoint(t, i, s, n, e) {
         const r = s.container;
@@ -5067,7 +5067,7 @@ class Router {
 Router.closestEndpointKey = e.annotation.keyFor("closest-endpoint");
 
 function createUnresolvedinstructionsError(t, i) {
-    const s = new Error(`${t.length} remaining instructions after 100 iterations; there is likely an infinite loop.`);
+    const s = createMappedError(2006, t.length);
     s.remainingInstructions = t;
     i.warn(s, s.remainingInstructions);
     return s;
@@ -5287,7 +5287,7 @@ class ViewportCustomElement {
                 this.parentViewport.pendingPromise = new OpenPromise;
             }
         }
-        return Runner.run(null, (() => waitForRouterStart(this.router, this.ea)), (() => {
+        Runner.run(null, (() => waitForRouterStart(this.router, this.ea)), (() => {
             if (this.router.isRestrictedNavigation) {
                 this.connect();
             }
@@ -5461,7 +5461,7 @@ u.define({
 
 class LoadCustomAttribute {
     constructor() {
-        this.P = false;
+        this.V = false;
         this.hasHref = null;
         this.element = i(w);
         this.router = i(O);
@@ -5474,7 +5474,7 @@ class LoadCustomAttribute {
     }
     binding() {
         if (this.value == null) {
-            this.P = true;
+            this.V = true;
         }
         this.element.addEventListener("click", this.linkHandler);
         this.updateValue();
@@ -5490,7 +5490,7 @@ class LoadCustomAttribute {
         void this.updateActive();
     }
     updateValue() {
-        if (this.P) {
+        if (this.V) {
             this.value = {
                 component: this.component,
                 parameters: this.parameters,
@@ -5505,7 +5505,7 @@ class LoadCustomAttribute {
             let t = this.value;
             if (typeof t !== "string") {
                 const i = RoutingInstruction.from(this.router, t).shift();
-                const s = this.V(t);
+                const s = this.$(t);
                 if (s.foundConfiguration) {
                     i.route = s.matching;
                 }
@@ -5526,14 +5526,14 @@ class LoadCustomAttribute {
             id: this.value,
             path: this.value
         } : this.value;
-        const s = this.V(i);
+        const s = this.$(i);
         const n = s.foundConfiguration ? s.instructions : getConsideredActiveInstructions(this.router, t, this.element, this.value);
         const e = getLoadIndicator(this.element);
         e.classList.toggle(this.activeClass, this.router.checkActive(n, {
             context: t
         }));
     }
-    V(t) {
+    $(t) {
         if (typeof t === "string") {
             return new FoundRoute;
         }
@@ -5701,5 +5701,5 @@ RouterConfiguration.configurationCall = t => {
     t.start();
 };
 
-export { V as ConfigurableRoute, ConsideredActiveCustomAttribute, j as DefaultComponents, Q as DefaultResources, k as Endpoint, EndpointContent, FoundRoute, HrefCustomAttribute, D as HrefCustomAttributeRegistration, x as ILinkHandler, O as IRouter, L as IRouterConfiguration, InstructionParameters, LinkHandler, LoadCustomAttribute, z as LoadCustomAttributeRegistration, Navigation, NavigationCoordinator, NavigationFlags, Navigator, A as RecognizedRoute, T as RecognizerEndpoint, Route, P as RouteRecognizer, Router, RouterConfiguration, RouterNavigationCancelEvent, RouterNavigationCompleteEvent, RouterNavigationEndEvent, RouterNavigationErrorEvent, RouterNavigationStartEvent, RouterOptions, M as RouterRegistration, RouterStartEvent, RouterStopEvent, $ as Routes, RoutingHook, RoutingInstruction, RoutingScope, Runner, Step, Viewport, ViewportContent, ViewportCustomElement, B as ViewportCustomElementRegistration, ViewportOptions, ViewportScope, ViewportScopeContent, ViewportScopeCustomElement, q as ViewportScopeCustomElementRegistration, route, routes };
+export { $ as ConfigurableRoute, ConsideredActiveCustomAttribute, j as DefaultComponents, Q as DefaultResources, k as Endpoint, EndpointContent, FoundRoute, HrefCustomAttribute, D as HrefCustomAttributeRegistration, x as ILinkHandler, O as IRouter, L as IRouterConfiguration, InstructionParameters, LinkHandler, LoadCustomAttribute, z as LoadCustomAttributeRegistration, Navigation, NavigationCoordinator, NavigationFlags, Navigator, A as RecognizedRoute, T as RecognizerEndpoint, Route, V as RouteRecognizer, Router, RouterConfiguration, RouterNavigationCancelEvent, RouterNavigationCompleteEvent, RouterNavigationEndEvent, RouterNavigationErrorEvent, RouterNavigationStartEvent, RouterOptions, M as RouterRegistration, RouterStartEvent, RouterStopEvent, P as Routes, RoutingHook, RoutingInstruction, RoutingScope, Runner, Step, Viewport, ViewportContent, ViewportCustomElement, B as ViewportCustomElementRegistration, ViewportOptions, ViewportScope, ViewportScopeContent, ViewportScopeCustomElement, q as ViewportScopeCustomElementRegistration, route, routes };
 //# sourceMappingURL=index.mjs.map

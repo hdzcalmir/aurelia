@@ -18,9 +18,11 @@ const l = /*@__PURE__*/ s("IDialogDomRenderer");
 
 const a = /*@__PURE__*/ s("IDialogDom");
 
-const c = /*@__PURE__*/ s("IDialogKeyboardService");
+const c = /*@__PURE__*/ s("IDialogDomAnimator");
 
-const u = /*@__PURE__*/ s("IDialogGlobalSettings");
+const u = /*@__PURE__*/ s("IDialogKeyboardService");
+
+const g = /*@__PURE__*/ s("IDialogGlobalSettings");
 
 class DialogOpenResult {
     constructor(t, e) {
@@ -56,17 +58,18 @@ class DialogController {
     }
     activate(s) {
         const i = this.ctn.createChild();
-        const {model: o, template: n, rejectOnCancel: u, renderer: g = i.get(l)} = s;
+        const {model: o, template: n, rejectOnCancel: c, renderer: g = i.get(l)} = s;
         const D = s.host ?? this.p.document.body;
         const f = this.dom = g.render(D, s);
         const p = i.has(e.IEventTarget, true) ? i.get(e.IEventTarget) : null;
         const d = f.contentHost;
-        const m = i.get(c);
+        const m = i.get(u);
         this.settings = s;
         if (p == null || !p.contains(D)) {
             i.register(r(e.IEventTarget, D));
         }
-        i.register(r(e.INode, d), r(a, f));
+        i.register(r(a, f));
+        e.registerHostNode(i, d, this.p);
         return new Promise((t => {
             const e = Object.assign(this.cmp = this.getOrCreateVm(i, s, d), {
                 $dialog: this
@@ -75,7 +78,7 @@ class DialogController {
         })).then((s => {
             if (s !== true) {
                 f.dispose();
-                if (u) {
+                if (c) {
                     throw createDialogCancelError(null, 905);
                 }
                 return DialogOpenResult.create(true, this);
@@ -88,7 +91,7 @@ class DialogController {
                 }));
                 return t.onResolve(s.activate(s, null), (() => {
                     this.t = m.add(this, f);
-                    return DialogOpenResult.create(false, this);
+                    return t.onResolve(f.show?.(), (() => DialogOpenResult.create(false, this)));
                 }));
             }));
         }), (t => {
@@ -113,7 +116,7 @@ class DialogController {
                     }
                     return DialogCloseResult.create("abort");
                 }
-                return t.onResolve(n.deactivate?.(a), (() => t.onResolve(r.deactivate(r, null), (() => {
+                return t.onResolve(n.deactivate?.(a), (() => t.onResolve(o.hide?.(), (() => t.onResolve(r.deactivate(r, null), (() => {
                     o.dispose();
                     this.t?.dispose();
                     if (!l && e !== "error") {
@@ -122,7 +125,7 @@ class DialogController {
                         this.u(createDialogCancelError(s, 907));
                     }
                     return a;
-                }))));
+                }))))));
             })));
         })).catch((t => {
             this.h = void 0;
@@ -182,7 +185,7 @@ class DialogService {
     constructor() {
         this.dlgs = [];
         this.C = t.resolve(t.IContainer);
-        this.R = t.resolve(u);
+        this.R = t.resolve(g);
     }
     static register(s) {
         s.register(i(this, this), t.Registration.aliasTo(this, o), e.AppTask.deactivating(o, (e => t.onResolve(e.closeAll(), (t => {
@@ -276,13 +279,14 @@ class DefaultDialogGlobalSettings {
         this.rejectOnCancel = false;
     }
     static register(t) {
-        i(u, this).register(t);
+        i(g, this).register(t);
     }
 }
 
 class DefaultDialogDomRenderer {
     constructor() {
         this.p = t.resolve(e.IPlatform);
+        this.I = t.resolve(t.optional(c));
         this.overlayCss = "position:absolute;width:100%;height:100%;top:0;left:0;";
         this.wrapperCss = `${this.overlayCss} display:flex;`;
         this.hostCss = "position:relative;margin:auto;";
@@ -302,15 +306,22 @@ class DefaultDialogDomRenderer {
         const o = t.appendChild(h("au-dialog-container", r));
         const n = o.appendChild(h("au-dialog-overlay", this.overlayCss));
         const l = o.appendChild(h("div", this.hostCss));
-        return new DefaultDialogDom(o, n, l);
+        return new DefaultDialogDom(o, n, l, this.I);
     }
 }
 
 class DefaultDialogDom {
-    constructor(t, e, s) {
+    constructor(t, e, s, i) {
         this.wrapper = t;
         this.overlay = e;
         this.contentHost = s;
+        this.I = i;
+    }
+    show() {
+        return this.I?.show(this);
+    }
+    hide() {
+        return this.I?.hide(this);
     }
     dispose() {
         this.wrapper.remove();
@@ -323,7 +334,7 @@ class DefaultDialogEventManager {
         this.w = t.resolve(e.IWindow);
     }
     static register(t) {
-        i(c, this).register(t);
+        i(u, this).register(t);
     }
     add(t, e) {
         if (this.ctrls.push(t) === 1) {
@@ -338,12 +349,12 @@ class DefaultDialogEventManager {
         e.overlay.addEventListener(s, handleClick);
         return {
             dispose: () => {
-                this.I(t);
+                this.$(t);
                 e.overlay.removeEventListener(s, handleClick);
             }
         };
     }
-    I(t) {
+    $(t) {
         const e = this.ctrls;
         const s = e.indexOf(t);
         if (s !== -1) {
@@ -385,22 +396,22 @@ function getActionKey(t) {
 function createDialogConfiguration(t, s) {
     return {
         settingsProvider: t,
-        register: i => i.register(...s, e.AppTask.creating((() => t(i.get(u))))),
+        register: i => i.register(...s, e.AppTask.creating((() => t(i.get(g))))),
         customize(t, e) {
             return createDialogConfiguration(t, e ?? s);
         }
     };
 }
 
-const g = /*@__PURE__*/ createDialogConfiguration((() => {
+const D = /*@__PURE__*/ createDialogConfiguration((() => {
     throw createMappedError(904);
 }), [ class NoopDialogGlobalSettings {
     static register(t) {
-        t.register(i(u, this));
+        t.register(i(g, this));
     }
 } ]);
 
-const D = /*@__PURE__*/ createDialogConfiguration(t.noop, [ DialogService, DefaultDialogGlobalSettings, DefaultDialogDomRenderer, DefaultDialogEventManager ]);
+const f = /*@__PURE__*/ createDialogConfiguration(t.noop, [ DialogService, DefaultDialogGlobalSettings, DefaultDialogDomRenderer, DefaultDialogEventManager ]);
 
 exports.DefaultDialogDom = DefaultDialogDom;
 
@@ -412,11 +423,11 @@ exports.DefaultDialogGlobalSettings = DefaultDialogGlobalSettings;
 
 exports.DialogCloseResult = DialogCloseResult;
 
-exports.DialogConfiguration = g;
+exports.DialogConfiguration = D;
 
 exports.DialogController = DialogController;
 
-exports.DialogDefaultConfiguration = D;
+exports.DialogDefaultConfiguration = f;
 
 exports.DialogOpenResult = DialogOpenResult;
 
@@ -426,9 +437,13 @@ exports.IDialogController = n;
 
 exports.IDialogDom = a;
 
+exports.IDialogDomAnimator = c;
+
 exports.IDialogDomRenderer = l;
 
-exports.IDialogGlobalSettings = u;
+exports.IDialogEventManager = u;
+
+exports.IDialogGlobalSettings = g;
 
 exports.IDialogService = o;
 //# sourceMappingURL=index.cjs.map

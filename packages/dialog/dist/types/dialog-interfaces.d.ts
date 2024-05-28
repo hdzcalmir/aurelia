@@ -48,6 +48,23 @@ export declare const IDialogDom: import("@aurelia/kernel").InterfaceSymbol<IDial
 export interface IDialogDom extends IDisposable {
     readonly overlay: HTMLElement;
     readonly contentHost: HTMLElement;
+    /**
+     * Called when the dialog should be shown. Application can use this for animations
+     */
+    show?(): void | Promise<void>;
+    /**
+     * Called when the dialog should be hidden. Application can use this for animations
+     */
+    hide?(): void | Promise<void>;
+}
+/**
+ * An interface for managing the animations of dialog doms.
+ * This is only used by the default dialog renderer.
+ */
+export declare const IDialogDomAnimator: import("@aurelia/kernel").InterfaceSymbol<IDialogDomAnimator>;
+export interface IDialogDomAnimator {
+    show(dom: IDialogDom): void | Promise<void>;
+    hide(dom: IDialogDom): void | Promise<void>;
 }
 export declare const IDialogEventManager: import("@aurelia/kernel").InterfaceSymbol<IDialogEventManager>;
 /**
@@ -82,7 +99,7 @@ export interface IDialogSettings<TModel = unknown, TVm extends object = object> 
     /**
      * The view model url, constructor or instance for the dialog.
      */
-    component?: () => Constructable<TVm> | TVm | Promise<TVm | Constructable<TVm>>;
+    component?: () => (Constructable<TVm> | TVm | Promise<TVm | Constructable<TVm>>);
     /**
      * The view url or view strategy to override the default view location convention.
      */
