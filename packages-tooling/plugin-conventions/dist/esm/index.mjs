@@ -714,8 +714,8 @@ function traverse(tree, cb) {
             return;
         }
         cb(ne);
-        if (n.childNodes)
-            traverse(n, cb);
+        if (ne.childNodes)
+            traverse(ne, cb);
         if ((_a = n.content) === null || _a === void 0 ? void 0 : _a.childNodes)
             traverse(n.content, cb);
     });

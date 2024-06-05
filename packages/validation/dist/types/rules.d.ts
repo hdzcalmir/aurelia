@@ -1,6 +1,7 @@
 import { Constructable, Class } from '@aurelia/kernel';
 import { Interpolation, PrimitiveLiteralExpression } from '@aurelia/expression-parser';
 import { IValidateable, IValidationRule, IRequiredRule, IRegexRule, ILengthRule, ISizeRule, IRangeRule, IEqualsRule, IValidationVisitor, ValidationDisplayNameAccessor } from './rule-interfaces';
+export declare const explicitMessageKey: unique symbol;
 /**
  * Retrieves validation messages and property display names.
  */
@@ -12,7 +13,7 @@ export interface IValidationMessageProvider {
     /**
      * Gets the parsed message for the `rule`.
      */
-    setMessage(rule: IValidationRule, message: string): Interpolation | PrimitiveLiteralExpression;
+    setMessage(rule: IValidationRule, message: string, messageKey?: symbol): Interpolation | PrimitiveLiteralExpression;
     /**
      * Core message parsing function.
      */
@@ -141,6 +142,17 @@ export declare class EqualsRule extends BaseValidationRule implements IEqualsRul
     constructor(expectedValue: unknown);
     execute(value: unknown): boolean | Promise<boolean>;
     accept(visitor: IValidationVisitor): string;
+}
+export declare class StateRule<TValue = any, TObject extends IValidateable = IValidateable, TState = unknown> extends BaseValidationRule<TValue, TObject> {
+    private readonly validState;
+    private readonly stateFunction;
+    private readonly messageMapper;
+    static readonly $TYPE: string;
+    private _state;
+    constructor(validState: TState, stateFunction: (value: TValue, object?: TObject) => TState | Promise<TState>, messageMapper: (state: TState) => string);
+    execute(value: unknown, object?: TObject): boolean | Promise<boolean>;
+    accept(_visitor: IValidationVisitor): void;
+    getMessage(): string;
 }
 export {};
 //# sourceMappingURL=rules.d.ts.map

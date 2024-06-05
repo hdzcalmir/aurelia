@@ -13,12 +13,12 @@
     "serve": "npx http-server"
   },
   "dependencies": {
-    "@aurelia/kernel": "2.1.0-dev.202405280947",
-    "@aurelia/metadata": "2.1.0-dev.202405280947",
-    "@aurelia/platform": "2.1.0-dev.202405280947",
-    "@aurelia/platform-browser": "2.1.0-dev.202405280947",
-    "@aurelia/runtime-html": "2.1.0-dev.202405280947",
-    "@aurelia/runtime": "2.1.0-dev.202405280947",
+    "@aurelia/kernel": "2.1.0-dev.202406051916",
+    "@aurelia/metadata": "2.1.0-dev.202406051916",
+    "@aurelia/platform": "2.1.0-dev.202406051916",
+    "@aurelia/platform-browser": "2.1.0-dev.202406051916",
+    "@aurelia/runtime-html": "2.1.0-dev.202406051916",
+    "@aurelia/runtime": "2.1.0-dev.202406051916",
     "perf-monitor": "0.6.0"
   }
 }

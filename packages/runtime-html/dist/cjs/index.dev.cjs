@@ -85,8 +85,8 @@ const errorsMap = {
     [112 /* ErrorNames.ast_destruct_null */]: `Ast eval error: cannot use non-object value for destructuring assignment.`,
     [151 /* ErrorNames.binding_behavior_def_not_found */]: `No binding behavior definition found for type {{0:name}}`,
     [152 /* ErrorNames.value_converter_def_not_found */]: `No value converter definition found for type {{0:name}}`,
-    [153 /* ErrorNames.element_existed */]: `Element {{0}} has already been registered.`,
-    [154 /* ErrorNames.attribute_existed */]: `Attribute {{0}} has already been registered.`,
+    [153 /* ErrorNames.element_existed */]: `Element "{{0}}" has already been registered.`,
+    [154 /* ErrorNames.attribute_existed */]: `Attribute "{{0}}" has already been registered.`,
     [155 /* ErrorNames.value_converter_existed */]: `Value converter {{0}} has already been registered.`,
     [156 /* ErrorNames.binding_behavior_existed */]: `Binding behavior {{0}} has already been registered.`,
     [157 /* ErrorNames.binding_command_existed */]: `Binding command {{0}} has already been registered.`,
@@ -1630,14 +1630,21 @@ class CustomAttributeDefinition {
             container.register(container.has($Type, false) ? null : singletonRegistration($Type, $Type), aliasRegistration($Type, key), ...aliases.map(alias => aliasRegistration($Type, getAttributeKeyFrom(alias))));
         } /* istanbul ignore next */
         else {
-            // eslint-disable-next-line no-console
-            console.warn(`[DEV:aurelia] ${createMappedError(154 /* ErrorNames.attribute_existed */, this.name)}`);
+            if (CustomAttributeDefinition.warnDuplicate) {
+                container.get(kernel.ILogger).warn(createMappedError(154 /* ErrorNames.attribute_existed */, this.name));
+            }
+            /* istanbul ignore if */
+            {
+                // eslint-disable-next-line no-console
+                console.warn(`[DEV:aurelia] ${createMappedError(154 /* ErrorNames.attribute_existed */, this.name)}`);
+            }
         }
     }
     toString() {
         return `au:ca:${this.name}`;
     }
 }
+CustomAttributeDefinition.warnDuplicate = true;
 /** @internal */ const attrTypeName = 'custom-attribute';
 const attributeBaseName = /*@__PURE__*/ kernel.getResourceKeyFor(attrTypeName);
 const getAttributeKeyFrom = (name) => `${attributeBaseName}:${name}`;
@@ -2396,6 +2403,12 @@ class InterpolationBinding {
         }
         this._task?.cancel();
         this._task = null;
+    }
+    /**
+     * Start using a given observer to update the target
+     */
+    useAccessor(accessor) {
+        this._targetObserver = accessor;
     }
 }
 class InterpolationPartBinding {
@@ -3530,6 +3543,171 @@ SpreadValueBinding.mix = createPrototypeMixer(() => {
 /** @internal */
 SpreadValueBinding._astCache = {};
 
+const addListener = (target, name, handler, options) => {
+    target.addEventListener(name, handler, options);
+};
+const removeListener = (target, name, handler, options) => {
+    target.removeEventListener(name, handler, options);
+};
+/** @internal */
+const mixinNodeObserverUseConfig = (target) => {
+    let event;
+    const prototype = target.prototype;
+    defineHiddenProp(prototype, 'subscribe', function (subscriber) {
+        if (this.subs.add(subscriber) && this.subs.count === 1) {
+            for (event of this._config.events) {
+                addListener(this._el, event, this);
+            }
+            this._listened = true;
+            this._start?.();
+        }
+    });
+    defineHiddenProp(prototype, 'unsubscribe', function (subscriber) {
+        if (this.subs.remove(subscriber) && this.subs.count === 0) {
+            for (event of this._config.events) {
+                removeListener(this._el, event, this);
+            }
+            this._listened = false;
+            this._stop?.();
+        }
+    });
+    defineHiddenProp(prototype, 'useConfig', function (config) {
+        this._config = config;
+        if (this._listened) {
+            for (event of this._config.events) {
+                removeListener(this._el, event, this);
+            }
+            for (event of this._config.events) {
+                addListener(this._el, event, this);
+            }
+        }
+    });
+};
+/** @internal */
+const mixinNoopSubscribable = (target) => {
+    defineHiddenProp(target.prototype, 'subscribe', kernel.noop);
+    defineHiddenProp(target.prototype, 'unsubscribe', kernel.noop);
+};
+
+class ClassAttributeAccessor {
+    get doNotCache() { return true; }
+    constructor(obj, mapping = {}) {
+        this.obj = obj;
+        this.mapping = mapping;
+        this.type = (atNode | atLayout);
+        /** @internal */
+        this._value = '';
+        /** @internal */
+        this._nameIndex = {};
+        /** @internal */
+        this._version = 0;
+    }
+    getValue() {
+        return this._value;
+    }
+    setValue(newValue) {
+        if (newValue !== this._value) {
+            this._value = newValue;
+            this._flushChanges();
+        }
+    }
+    /** @internal */
+    _flushChanges() {
+        const nameIndex = this._nameIndex;
+        const version = ++this._version;
+        const classList = this.obj.classList;
+        const classesToAdd = getClassesToAdd(this._value);
+        const ii = classesToAdd.length;
+        let i = 0;
+        let name;
+        // Get strings split on a space not including empties
+        if (ii > 0) {
+            for (; i < ii; i++) {
+                name = classesToAdd[i];
+                name = this.mapping[name] || name;
+                if (name.length === 0) {
+                    continue;
+                }
+                nameIndex[name] = this._version;
+                classList.add(name);
+            }
+        }
+        // First call to setValue?  We're done.
+        if (version === 1) {
+            return;
+        }
+        for (name in nameIndex) {
+            name = this.mapping[name] || name;
+            if (nameIndex[name] === version) {
+                continue;
+            }
+            // TODO: this has the side-effect that classes already present which are added again,
+            // will be removed if they're not present in the next update.
+            // Better would be do have some configurability for this behavior, allowing the user to
+            // decide whether initial classes always need to be kept, always removed, or something in between
+            classList.remove(name);
+        }
+    }
+}
+(() => {
+    mixinNoopSubscribable(ClassAttributeAccessor);
+})();
+function getClassesToAdd(object) {
+    if (kernel.isString(object)) {
+        return splitClassString(object);
+    }
+    if (typeof object !== 'object') {
+        return kernel.emptyArray;
+    }
+    if (kernel.isArray(object)) {
+        const len = object.length;
+        if (len > 0) {
+            const classes = [];
+            let i = 0;
+            for (; len > i; ++i) {
+                classes.push(...getClassesToAdd(object[i]));
+            }
+            return classes;
+        }
+        else {
+            return kernel.emptyArray;
+        }
+    }
+    const classes = [];
+    let property;
+    for (property in object) {
+        // Let non typical values also evaluate true so disable bool check
+        // eslint-disable-next-line no-extra-boolean-cast
+        if (Boolean(object[property])) {
+            // We must do this in case object property has a space in the name which results in two classes
+            if (property.includes(' ')) {
+                classes.push(...splitClassString(property));
+            }
+            else {
+                classes.push(property);
+            }
+        }
+    }
+    return classes;
+}
+function splitClassString(classString) {
+    const matches = classString.match(/\S+/g);
+    if (matches === null) {
+        return kernel.emptyArray;
+    }
+    return matches;
+}
+
+/**
+ * Create a resolver for a given key that will only resolve from the nearest hydration context.
+ */
+const fromHydrationContext = (key) => ({
+    $isResolver: true,
+    resolve(_, requestor) {
+        return requestor.get(IHydrationContext).controller.container.get(kernel.own(key));
+    }
+});
+
 const IRenderer = /*@__PURE__*/ createInterface('IRenderer');
 function renderer(target, context) {
     const metadata = context?.metadata ?? (target[Symbol.metadata] ??= Object.create(null));
@@ -3815,7 +3993,13 @@ const InterpolationBindingRenderer = /*@__PURE__*/ renderer(class InterpolationB
         InterpolationPartBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new InterpolationBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, toView));
+        const container = renderingCtrl.container;
+        const binding = new InterpolationBinding(renderingCtrl, container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etInterpolation), getTarget(target), instruction.to, toView);
+        if (instruction.to === 'class' && binding.target.nodeType > 0) {
+            const cssMapping = container.get(fromHydrationContext(ICssClassMapping));
+            binding.useAccessor(new ClassAttributeAccessor(binding.target, cssMapping));
+        }
+        renderingCtrl.addBinding(binding);
     }
 }, null);
 const PropertyBindingRenderer = /*@__PURE__*/ renderer(class PropertyBindingRenderer {
@@ -3824,7 +4008,13 @@ const PropertyBindingRenderer = /*@__PURE__*/ renderer(class PropertyBindingRend
         PropertyBinding.mix();
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new PropertyBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), getTarget(target), instruction.to, instruction.mode));
+        const container = renderingCtrl.container;
+        const binding = new PropertyBinding(renderingCtrl, container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), getTarget(target), instruction.to, instruction.mode);
+        if (instruction.to === 'class' && binding.target.nodeType > 0) {
+            const cssMapping = container.get(fromHydrationContext(ICssClassMapping));
+            binding.useTargetObserver(new ClassAttributeAccessor(binding.target, cssMapping));
+        }
+        renderingCtrl.addBinding(binding);
     }
 }, null);
 const IteratorBindingRenderer = /*@__PURE__*/ renderer(class IteratorBindingRenderer {
@@ -3942,8 +4132,8 @@ const AttributeBindingRenderer = /*@__PURE__*/ renderer(class AttributeBindingRe
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const container = renderingCtrl.container;
-        const classMapping = container.has(ICssModulesMapping, false)
-            ? container.get(ICssModulesMapping)
+        const classMapping = container.has(ICssClassMapping, false)
+            ? container.get(ICssClassMapping)
             : null;
         renderingCtrl.addBinding(new AttributeBinding(renderingCtrl, container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, etIsProperty), target, instruction.attr /* targetAttribute */, classMapping == null
             ? instruction.to /* targetKey */
@@ -4245,165 +4435,13 @@ class Rendering {
     }
 }
 
-const addListener = (target, name, handler, options) => {
-    target.addEventListener(name, handler, options);
-};
-const removeListener = (target, name, handler, options) => {
-    target.removeEventListener(name, handler, options);
-};
-/** @internal */
-const mixinNodeObserverUseConfig = (target) => {
-    let event;
-    const prototype = target.prototype;
-    defineHiddenProp(prototype, 'subscribe', function (subscriber) {
-        if (this.subs.add(subscriber) && this.subs.count === 1) {
-            for (event of this._config.events) {
-                addListener(this._el, event, this);
-            }
-            this._listened = true;
-            this._start?.();
-        }
-    });
-    defineHiddenProp(prototype, 'unsubscribe', function (subscriber) {
-        if (this.subs.remove(subscriber) && this.subs.count === 0) {
-            for (event of this._config.events) {
-                removeListener(this._el, event, this);
-            }
-            this._listened = false;
-            this._stop?.();
-        }
-    });
-    defineHiddenProp(prototype, 'useConfig', function (config) {
-        this._config = config;
-        if (this._listened) {
-            for (event of this._config.events) {
-                removeListener(this._el, event, this);
-            }
-            for (event of this._config.events) {
-                addListener(this._el, event, this);
-            }
-        }
-    });
-};
-/** @internal */
-const mixinNoopSubscribable = (target) => {
-    defineHiddenProp(target.prototype, 'subscribe', kernel.noop);
-    defineHiddenProp(target.prototype, 'unsubscribe', kernel.noop);
-};
-
-class ClassAttributeAccessor {
-    get doNotCache() { return true; }
-    constructor(obj) {
-        this.obj = obj;
-        this.type = (atNode | atLayout);
-        /** @internal */
-        this._value = '';
-        /** @internal */
-        this._nameIndex = {};
-        /** @internal */
-        this._version = 0;
-    }
-    getValue() {
-        return this._value;
-    }
-    setValue(newValue) {
-        if (newValue !== this._value) {
-            this._value = newValue;
-            this._flushChanges();
-        }
-    }
-    /** @internal */
-    _flushChanges() {
-        const nameIndex = this._nameIndex;
-        const version = ++this._version;
-        const classList = this.obj.classList;
-        const classesToAdd = getClassesToAdd(this._value);
-        const ii = classesToAdd.length;
-        let i = 0;
-        let name;
-        // Get strings split on a space not including empties
-        if (ii > 0) {
-            for (; i < ii; i++) {
-                name = classesToAdd[i];
-                if (name.length === 0) {
-                    continue;
-                }
-                nameIndex[name] = this._version;
-                classList.add(name);
-            }
-        }
-        // First call to setValue?  We're done.
-        if (version === 1) {
-            return;
-        }
-        for (name in nameIndex) {
-            if (nameIndex[name] === version) {
-                continue;
-            }
-            // TODO: this has the side-effect that classes already present which are added again,
-            // will be removed if they're not present in the next update.
-            // Better would be do have some configurability for this behavior, allowing the user to
-            // decide whether initial classes always need to be kept, always removed, or something in between
-            classList.remove(name);
-        }
-    }
-}
-(() => {
-    mixinNoopSubscribable(ClassAttributeAccessor);
-})();
-function getClassesToAdd(object) {
-    if (kernel.isString(object)) {
-        return splitClassString(object);
-    }
-    if (typeof object !== 'object') {
-        return kernel.emptyArray;
-    }
-    if (kernel.isArray(object)) {
-        const len = object.length;
-        if (len > 0) {
-            const classes = [];
-            let i = 0;
-            for (; len > i; ++i) {
-                classes.push(...getClassesToAdd(object[i]));
-            }
-            return classes;
-        }
-        else {
-            return kernel.emptyArray;
-        }
-    }
-    const classes = [];
-    let property;
-    for (property in object) {
-        // Let non typical values also evaluate true so disable bool check
-        // eslint-disable-next-line no-extra-boolean-cast
-        if (Boolean(object[property])) {
-            // We must do this in case object property has a space in the name which results in two classes
-            if (property.includes(' ')) {
-                classes.push(...splitClassString(property));
-            }
-            else {
-                classes.push(property);
-            }
-        }
-    }
-    return classes;
-}
-function splitClassString(classString) {
-    const matches = classString.match(/\S+/g);
-    if (matches === null) {
-        return kernel.emptyArray;
-    }
-    return matches;
-}
-
 /**
  * There are 2 implementations of CSS registry: css module registry and shadow dom registry.
  *
- * CSS registry alters the way class attribute works instead.
+ * - CSS registry alters the way class bindings work via altering templates and register interfaces that will alter bindings to class attribute.
  *
- * Shadow dom registry regisiters some interfaces with the custom element container to handle shadow dom styles.
- * abtraction summary:
+ * - Shadow dom registry regisiters some interfaces with the custom element container to handle shadow dom styles.
+ * Shadow DOM abtraction summary:
  * CSS registry ---(register)---> IShadowDOMStyleFactory ---(createStyles)---> IShadowDOMStyles ---(applyTo)---> ShadowRoot
  */
 /**
@@ -4418,30 +4456,41 @@ class CSSModulesProcessorRegistry {
         this.modules = modules;
     }
     register(container) {
-        // it'd be nice to be able to register a template compiler hook instead
-        // so that it's lighter weight on the creation of a custom element with css module
-        // also it'll be more consitent in terms as CSS class output
-        // if custom attribute is used, the class controlled by custom attribute may come after
-        // other bindings, regardless what their declaration order is in the template
-        const classLookup = objectAssign({}, ...this.modules);
-        const ClassCustomAttribute = defineAttribute({
-            name: 'class',
-            bindables: ['value'],
-            noMultiBindings: true,
-        }, class CustomAttributeClass {
-            constructor() {
-                /** @internal */
-                this._accessor = new ClassAttributeAccessor(kernel.resolve(INode));
-                this.value = '';
+        let existingMapping = container.get(kernel.own(ICssClassMapping));
+        if (existingMapping == null) {
+            container.register(instanceRegistration(ICssClassMapping, existingMapping = kernel.createLookup()));
+        }
+        /* istanbul ignore if */
+        {
+            for (const mapping of this.modules) {
+                for (const originalClass in mapping) {
+                    if (originalClass in existingMapping) {
+                        // eslint-disable-next-line no-console
+                        console.warn(`[DEV:aurelia] CSS class mapping for class "${originalClass}": "${mapping[originalClass]}" is overridden by "${existingMapping[originalClass]}"`);
+                    }
+                    existingMapping[originalClass] = mapping[originalClass];
+                }
             }
-            binding() {
-                this.valueChanged();
+        }
+        class CompilingHook {
+            compiling(template) {
+                const isTemplate = template.tagName === 'TEMPLATE';
+                const container = isTemplate
+                    ? template.content
+                    : template;
+                const plainClasses = [template, ...kernel.toArray(container.querySelectorAll('[class]'))];
+                for (const element of plainClasses) {
+                    const classes = element.getAttributeNode('class');
+                    // we always include container, so there's a case where classes is null
+                    if (classes == null) {
+                        continue;
+                    }
+                    const newClasses = classes.value.split(/\s+/g).map(x => existingMapping[x] || x).join(' ');
+                    classes.value = newClasses;
+                }
             }
-            valueChanged() {
-                this._accessor.setValue(this.value?.split(/\s+/g).map(x => classLookup[x] || x) ?? '');
-            }
-        });
-        container.register(ClassCustomAttribute, instanceRegistration(ICssModulesMapping, classLookup));
+        }
+        container.register(templateCompiler.TemplateCompilerHooks.define(CompilingHook));
     }
 }
 /**
@@ -5902,8 +5951,13 @@ const IEventTarget = /*@__PURE__*/ createInterface('IEventTarget', x => x.cached
     }
     return handler.get(IPlatform).document;
 }));
+/**
+ * An interface describing a marker.
+ * Components can use this to anchor where their content should be rendered in place of a host element.
+ */
 const IRenderLocation = /*@__PURE__*/ createInterface('IRenderLocation');
-const ICssModulesMapping = /*@__PURE__*/ createInterface('CssModules');
+/** @internal */
+const ICssClassMapping = /*@__PURE__*/ createInterface('ICssClassMapping');
 
 const effectiveParentNodeOverrides = new WeakMap();
 /**

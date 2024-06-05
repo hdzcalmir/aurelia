@@ -108,7 +108,7 @@ export declare const DefaultRenderers: ({
 } | {
     new (): {
         readonly target: "rf";
-        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: import(".").IController<import(".").IViewModel>, instruction: import("@aurelia/template-compiler").InterpolationInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
+        render(renderingCtrl: import(".").IHydratableController<import(".").IViewModel>, target: HTMLElement | import(".").IController<import(".").IViewModel>, instruction: import("@aurelia/template-compiler").InterpolationInstruction, platform: import("./platform").IPlatform, exprParser: import("@aurelia/expression-parser").IExpressionParser<import("@aurelia/expression-parser").CustomExpression>, observerLocator: import("@aurelia/runtime").IObserverLocator): void;
     };
 } | {
     new (): {

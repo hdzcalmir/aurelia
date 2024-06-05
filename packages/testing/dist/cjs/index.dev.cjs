@@ -8149,6 +8149,25 @@ keyboardEvents.forEach(event => {
     });
 });
 
+const createSink = Object.assign((callback, level) => {
+    return class TargetedConsoleSink {
+        static register(container) {
+            container.register(kernel.Registration.singleton(kernel.ISink, this));
+        }
+        handleEvent(event) {
+            if (level == null || event.severity === level) {
+                callback(event.message);
+            }
+        }
+    };
+}, {
+    error: (callback) => createSink(callback, kernel.LogLevel.error),
+    warn: (callback) => createSink(callback, kernel.LogLevel.warn),
+    info: (callback) => createSink(callback, kernel.LogLevel.info),
+    debug: (callback) => createSink(callback, kernel.LogLevel.debug),
+    trace: (callback) => createSink(callback, kernel.LogLevel.trace),
+});
+
 class MockBinding {
     constructor() {
         this.calls = [];
@@ -9309,6 +9328,7 @@ exports.createContainer = createContainer;
 exports.createFixture = createFixture;
 exports.createObserverLocator = createObserverLocator;
 exports.createScopeForTest = createScopeForTest;
+exports.createSink = createSink;
 exports.createSpy = createSpy;
 exports.eachCartesianJoin = eachCartesianJoin;
 exports.eachCartesianJoinAsync = eachCartesianJoinAsync;

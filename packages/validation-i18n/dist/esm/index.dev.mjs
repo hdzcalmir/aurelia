@@ -1,5 +1,5 @@
 import { I18N, Signals } from '@aurelia/i18n';
-import { DI, resolve, IEventAggregator, Registration, noop } from '@aurelia/kernel';
+import { DI, resolve, IEventAggregator, isFunction, Registration, noop } from '@aurelia/kernel';
 import { IPlatform } from '@aurelia/runtime-html';
 import { ValidationMessageProvider } from '@aurelia/validation';
 import { ValidationController, ValidationControllerFactory, getDefaultValidationHtmlConfiguration, ValidationHtmlConfiguration } from '@aurelia/validation-html';
@@ -17,6 +17,7 @@ class LocalizedValidationControllerFactory extends ValidationControllerFactory {
         return container.invoke(LocalizedValidationController, _dynamicDependencies);
     }
 }
+const explicitMessageKey = Symbol.for('au:validation:explicit-message-key');
 class LocalizedValidationMessageProvider extends ValidationMessageProvider {
     constructor(keyConfiguration = resolve(I18nKeyConfiguration), ea = resolve(IEventAggregator)) {
         super(undefined, []);
@@ -34,11 +35,15 @@ class LocalizedValidationMessageProvider extends ValidationMessageProvider {
         });
     }
     getMessage(rule) {
-        const parsedMessage = this.registeredMessages.get(rule);
-        if (parsedMessage !== void 0) {
-            return parsedMessage;
+        const messageKey = isFunction(rule.getMessage) ? rule.getMessage() : rule.messageKey;
+        const lookup = this.registeredMessages.get(rule);
+        if (lookup != null) {
+            const parsedMessage = lookup.get(explicitMessageKey) ?? lookup.get(messageKey);
+            if (parsedMessage !== void 0) {
+                return parsedMessage;
+            }
         }
-        return this.setMessage(rule, this.i18n.tr(this.getKey(rule.messageKey)));
+        return this.setMessage(rule, this.i18n.tr(this.getKey(messageKey)));
     }
     getDisplayName(propertyName, displayName) {
         if (displayName !== null && displayName !== undefined) {

@@ -4718,6 +4718,23 @@ Ce.forEach((e => {
     });
 }));
 
+const Oe = Object.assign(((e, n) => class TargetedConsoleSink {
+    static register(e) {
+        e.register(t.Registration.singleton(t.ISink, this));
+    }
+    handleEvent(t) {
+        if (n == null || t.severity === n) {
+            e(t.message);
+        }
+    }
+}), {
+    error: e => Oe(e, t.LogLevel.error),
+    warn: e => Oe(e, t.LogLevel.warn),
+    info: e => Oe(e, t.LogLevel.info),
+    debug: e => Oe(e, t.LogLevel.debug),
+    trace: e => Oe(e, t.LogLevel.trace)
+});
+
 class MockBinding {
     constructor() {
         this.calls = [];
@@ -5129,14 +5146,14 @@ function _(e, ...t) {
     return n.result + e[i];
 }
 
-const Oe = /\r?\n/g;
+const qe = /\r?\n/g;
 
-const qe = /\s+/g;
+const je = /\s+/g;
 
-const je = Object.prototype.toString;
+const Ae = Object.prototype.toString;
 
 function stringify(e, t) {
-    const n = je.call(e);
+    const n = Ae.call(e);
     switch (n) {
       case "[object Undefined]":
         return "undefined";
@@ -5170,7 +5187,7 @@ function stringify(e, t) {
         if (e.name && e.name.length) {
             return `class ${e.name}`;
         }
-        return e.toString().replace(qe, "");
+        return e.toString().replace(je, "");
 
       default:
         return jsonStringify(e, t);
@@ -5210,7 +5227,7 @@ function jsonStringify(e, t) {
             return r;
         }));
         n = void 0;
-        let a = r.replace(Oe, "");
+        let a = r.replace(qe, "");
         if (a.length > 25) {
             const e = a.length;
             a = `${a.slice(0, 25)}...(+${e - 25})`;
@@ -5233,7 +5250,7 @@ function htmlStringify(e, t) {
         return "undefined";
     }
     if (e.textContent != null && e.textContent.length || e.nodeType === 3 || e.nodeType === 8) {
-        const t = e.textContent.replace(Oe, "");
+        const t = e.textContent.replace(qe, "");
         if (t.length > 10) {
             const e = t.length;
             return `${t.slice(0, 10)}...(+${e - 10})`;
@@ -5242,7 +5259,7 @@ function htmlStringify(e, t) {
     }
     if (e.nodeType === 1) {
         if (e.innerHTML.length) {
-            const t = e.innerHTML.replace(Oe, "");
+            const t = e.innerHTML.replace(qe, "");
             if (t.length > 10) {
                 const e = t.length;
                 return `${t.slice(0, 10)}...(+${e - 10})`;
@@ -5455,6 +5472,8 @@ exports.createFixture = createFixture;
 exports.createObserverLocator = createObserverLocator;
 
 exports.createScopeForTest = createScopeForTest;
+
+exports.createSink = Oe;
 
 exports.createSpy = createSpy;
 

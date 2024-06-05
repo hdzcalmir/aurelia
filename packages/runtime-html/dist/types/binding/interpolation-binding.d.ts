@@ -1,7 +1,7 @@
 import { type IServiceLocator } from '@aurelia/kernel';
 import { IAstEvaluator } from '../ast.eval';
 import type { ITask, TaskQueue } from '@aurelia/platform';
-import type { ICollectionSubscriber, IObserverLocator, IObserverLocatorBasedConnectable, ISubscriber } from '@aurelia/runtime';
+import type { IAccessor, ICollectionSubscriber, IObserverLocator, IObserverLocatorBasedConnectable, ISubscriber } from '@aurelia/runtime';
 import { type Scope } from './scope';
 import type { IBinding, BindingMode, IBindingController } from './interfaces-bindings';
 import { type Interpolation, IsExpression } from '@aurelia/expression-parser';
@@ -18,6 +18,10 @@ export declare class InterpolationBinding implements IBinding, ISubscriber, ICol
     updateTarget(): void;
     bind(_scope: Scope): void;
     unbind(): void;
+    /**
+     * Start using a given observer to update the target
+     */
+    useAccessor(accessor: IAccessor): void;
 }
 export interface InterpolationPartBinding extends IAstEvaluator, IObserverLocatorBasedConnectable, IServiceLocator {
 }

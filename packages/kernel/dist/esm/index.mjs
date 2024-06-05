@@ -162,7 +162,7 @@ const h = /*@__PURE__*/ function() {
     };
 }();
 
-const v = /*@__PURE__*/ function() {
+const d = /*@__PURE__*/ function() {
     const t = createLookup();
     const callback = (t, e) => e ? `-${t.toLowerCase()}` : t.toLowerCase();
     return e => {
@@ -229,7 +229,7 @@ const firstDefined = (...t) => {
     throw createMappedError(20);
 };
 
-const d = /*@__PURE__*/ function() {
+const v = /*@__PURE__*/ function() {
     const t = Function.prototype;
     const e = Object.getPrototypeOf;
     const n = new WeakMap;
@@ -586,6 +586,20 @@ class Container {
             this.u.set(t, e);
         }
         return e;
+    }
+    deregister(t) {
+        validateKey(t);
+        const e = this.h.get(t);
+        if (e != null) {
+            this.h.delete(t);
+            if (isResourceKey(t)) {
+                delete this.res[t];
+            }
+            if (this.u.has(t)) {
+                e.dispose();
+                this.u.delete(t);
+            }
+        }
     }
     registerTransformer(t, e) {
         const n = this.getResolver(t);
@@ -1310,17 +1324,17 @@ function __esDecorate(t, e, n, r, s, i) {
     var a = e || (c ? Object.getOwnPropertyDescriptor(c, r.name) : {});
     var u, f = false;
     for (var h = n.length - 1; h >= 0; h--) {
-        var v = {};
-        for (var d in r) v[d] = d === "access" ? {} : r[d];
-        for (var d in r.access) v.access[d] = r.access[d];
-        v.addInitializer = function(t) {
+        var d = {};
+        for (var v in r) d[v] = v === "access" ? {} : r[v];
+        for (var v in r.access) d.access[v] = r.access[v];
+        d.addInitializer = function(t) {
             if (f) throw new TypeError("Cannot add initializers after decoration has completed");
             i.push(accept(t || null));
         };
         var g = (0, n[h])(o === "accessor" ? {
             get: a.get,
             set: a.set
-        } : a[l], v);
+        } : a[l], d);
         if (o === "accessor") {
             if (g === void 0) continue;
             if (g === null || typeof g !== "object") throw new TypeError("Object expected");
@@ -1766,7 +1780,7 @@ const ht = /*@__PURE__*/ toLookup({
     }
 });
 
-const vt = /*@__PURE__*/ createInterface((t => t.singleton(ModuleLoader)));
+const dt = /*@__PURE__*/ createInterface((t => t.singleton(ModuleLoader)));
 
 const noTransform = t => t;
 
@@ -1879,7 +1893,7 @@ class ModuleItem {
 
 const aliasedResourcesRegistry = (t, e, n = {}) => ({
     register(r) {
-        const s = r.get(vt).load(t);
+        const s = r.get(dt).load(t);
         let i = false;
         s.items.forEach((t => {
             const s = t.definition;
@@ -1910,7 +1924,7 @@ class Handler {
     }
 }
 
-const dt = /*@__PURE__*/ createInterface("IEventAggregator", (t => t.singleton(EventAggregator)));
+const vt = /*@__PURE__*/ createInterface("IEventAggregator", (t => t.singleton(EventAggregator)));
 
 class EventAggregator {
     constructor() {
@@ -1973,5 +1987,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ConsoleSink, ContainerConfiguration, L as DI, DefaultLogEvent, DefaultLogEventFactory, ft as DefaultLogger, D as DefaultResolver, EventAggregator, j as IContainer, dt as IEventAggregator, rt as ILogConfig, it as ILogEventFactory, ot as ILogger, vt as IModuleLoader, P as IPlatform, F as IServiceLocator, st as ISink, InstanceProvider, LogConfig, nt as LogLevel, ht as LoggerConfiguration, ModuleItem, b as Protocol, m as Registration, aliasedResourcesRegistry, all, U as allResources, c as areEqual, bound, f as camelCase, createImplementationRegister, createLookup, createResolver, T as emptyArray, S as emptyObject, G as factory, firstDefined, at as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, d as getPrototypeChain, getResourceKeyFor, z as ignore, inject, isArray, a as isArrayIndex, isFunction, isMap, g as isNativeFunction, isNumber, isObject, isPromise, isSet, isString, isSymbol, v as kebabCase, last, K as lazy, mergeArrays, x as newInstanceForScope, H as newInstanceOf, noop, onResolve, onResolveAll, N as optional, Q as optionalResource, W as own, h as pascalCase, C as registrableMetadataKey, resolve, B as resource, R as resourceBaseName, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, L as DI, DefaultLogEvent, DefaultLogEventFactory, ft as DefaultLogger, D as DefaultResolver, EventAggregator, j as IContainer, vt as IEventAggregator, rt as ILogConfig, it as ILogEventFactory, ot as ILogger, dt as IModuleLoader, P as IPlatform, F as IServiceLocator, st as ISink, InstanceProvider, LogConfig, nt as LogLevel, ht as LoggerConfiguration, ModuleItem, b as Protocol, m as Registration, aliasedResourcesRegistry, all, U as allResources, c as areEqual, bound, f as camelCase, createImplementationRegister, createLookup, createResolver, T as emptyArray, S as emptyObject, G as factory, firstDefined, at as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, v as getPrototypeChain, getResourceKeyFor, z as ignore, inject, isArray, a as isArrayIndex, isFunction, isMap, g as isNativeFunction, isNumber, isObject, isPromise, isSet, isString, isSymbol, d as kebabCase, last, K as lazy, mergeArrays, x as newInstanceForScope, H as newInstanceOf, noop, onResolve, onResolveAll, N as optional, Q as optionalResource, W as own, h as pascalCase, C as registrableMetadataKey, resolve, B as resource, R as resourceBaseName, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.mjs.map

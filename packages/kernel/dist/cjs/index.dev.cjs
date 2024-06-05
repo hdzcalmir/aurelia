@@ -871,6 +871,21 @@ class Container {
         }
         return resolver;
     }
+    deregister(key) {
+        validateKey(key);
+        const resolver = this._resolvers.get(key);
+        if (resolver != null) {
+            this._resolvers.delete(key);
+            if (isResourceKey(key)) {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete this.res[key];
+            }
+            if (this._disposableResolvers.has(key)) {
+                resolver.dispose();
+                this._disposableResolvers.delete(key);
+            }
+        }
+    }
     // public deregisterResolverFor<K extends Key>(key: K, searchAncestors: boolean): void {
     //   validateKey(key);
     //   // eslint-disable-next-line @typescript-eslint/no-this-alias

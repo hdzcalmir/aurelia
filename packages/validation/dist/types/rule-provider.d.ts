@@ -71,6 +71,7 @@ export declare class PropertyRule<TObject extends IValidateable = IValidateable,
      * Sets the display name of the ensured property.
      */
     displayName(name: string | ValidationDisplayNameAccessor): this;
+    satisfiesState<TState, TVal>(this: PropertyRule<TObject, TVal>, validState: TState, stateFunction: (value: TVal, object?: TObject) => TState | Promise<TState>, messageMapper: (state: TState) => string): PropertyRule<TObject, TVal>;
     /**
      * Applies an ad-hoc rule function to the ensured property or object.
      *
@@ -244,11 +245,11 @@ export declare class ValidationResult<TRule extends IValidationRule = IValidatio
 }
 export declare class ValidationMessageProvider implements IValidationMessageProvider {
     private readonly logger;
-    protected registeredMessages: WeakMap<IValidationRule, Interpolation | PrimitiveLiteralExpression>;
+    protected registeredMessages: WeakMap<IValidationRule, Map<string | symbol, Interpolation | PrimitiveLiteralExpression>>;
     parser: IExpressionParser;
     constructor(logger?: ILogger, customMessages?: ICustomMessage[]);
     getMessage(rule: IValidationRule): Interpolation | PrimitiveLiteralExpression;
-    setMessage(rule: IValidationRule, message: string): Interpolation | PrimitiveLiteralExpression;
+    setMessage(rule: IValidationRule, message: string, messageKey?: symbol): Interpolation | PrimitiveLiteralExpression;
     parseMessage(message: string): Interpolation | PrimitiveLiteralExpression;
     getDisplayName(propertyName: string | number | undefined, displayName?: string | null | ValidationDisplayNameAccessor): string | undefined;
 }
