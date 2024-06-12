@@ -37,7 +37,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { delegateSyntax } from '@aurelia/compat-v1';
-import { Registration, noop } from '@aurelia/kernel';
+import { Registration, noop, resolve } from '@aurelia/kernel';
 import { INode, customElement, CustomElement, } from '@aurelia/runtime-html';
 import { IDialogService, IDialogGlobalSettings, DialogConfiguration, DialogDefaultConfiguration, DefaultDialogGlobalSettings, IDialogDom, IDialogController, DialogController, DialogService, IDialogDomAnimator, } from '@aurelia/dialog';
 import { createFixture, assert, createSpy, } from '@aurelia/testing';
@@ -1014,6 +1014,29 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
                     assert.deepEqual(calls, ['deactivate', 'hide']);
                 }
             },
+            {
+                title: 'calls prevent default on form submit event',
+                async afterStarted(appCreationResult, dialogService) {
+                    let submit;
+                    let e;
+                    await dialogService.open({
+                        template: '<form submit.trigger="onSubmit($event)"><button>Submit</button></form>',
+                        component: () => class {
+                            constructor() {
+                                this.dom = resolve(IDialogDom);
+                            }
+                            activate() {
+                                submit = () => this.dom.contentHost.querySelector('button').click();
+                            }
+                            onSubmit(event) {
+                                e = event;
+                            }
+                        }
+                    });
+                    submit();
+                    assert.strictEqual(e?.defaultPrevented, true);
+                },
+            }
         ];
         // #region test run
         for (const { title, only, afterStarted, afterTornDown, browserOnly } of testCases) {

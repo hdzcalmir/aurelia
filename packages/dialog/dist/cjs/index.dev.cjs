@@ -487,10 +487,19 @@ class DefaultDialogEventManager {
             }
         };
         dom.overlay.addEventListener(mouseEvent, handleClick);
+        const handleSubmit = (e) => {
+            const target = e.target;
+            const noAction = !target.getAttribute('action');
+            if (target.tagName === 'FORM' && noAction) {
+                e.preventDefault();
+            }
+        };
+        dom.contentHost.addEventListener('submit', handleSubmit);
         return {
             dispose: () => {
                 this._remove(controller);
                 dom.overlay.removeEventListener(mouseEvent, handleClick);
+                dom.contentHost.removeEventListener('submit', handleSubmit);
             }
         };
     }

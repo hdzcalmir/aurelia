@@ -1,6 +1,6 @@
 import { DI as t, Registration as e, resolve as i, IContainer as s, onResolve as o, InstanceProvider as r, isFunction as n, onResolveAll as l, isPromise as a, optional as c, noop as u } from "@aurelia/kernel";
 
-import { IPlatform as g, IEventTarget as D, registerHostNode as f, Controller as d, CustomElementDefinition as m, CustomElement as p, INode as v, AppTask as C, IWindow as w } from "@aurelia/runtime-html";
+import { IPlatform as g, IEventTarget as D, registerHostNode as f, Controller as m, CustomElementDefinition as d, CustomElement as p, INode as v, AppTask as C, IWindow as w } from "@aurelia/runtime-html";
 
 const E = t.createInterface;
 
@@ -10,9 +10,9 @@ const S = e.instance;
 
 const b = /*@__PURE__*/ E("IDialogService");
 
-const y = /*@__PURE__*/ E("IDialogController");
+const O = /*@__PURE__*/ E("IDialogController");
 
-const O = /*@__PURE__*/ E("IDialogDomRenderer");
+const y = /*@__PURE__*/ E("IDialogDomRenderer");
 
 const P = /*@__PURE__*/ E("IDialogDom");
 
@@ -56,7 +56,7 @@ class DialogController {
     }
     activate(t) {
         const e = this.ctn.createChild();
-        const {model: i, template: s, rejectOnCancel: r, renderer: n = e.get(O)} = t;
+        const {model: i, template: s, rejectOnCancel: r, renderer: n = e.get(y)} = t;
         const l = t.host ?? this.p.document.body;
         const a = this.dom = n.render(l, t);
         const c = e.has(D, true) ? e.get(D) : null;
@@ -83,7 +83,7 @@ class DialogController {
             }
             const n = this.cmp;
             return o(n.activate?.(i), (() => {
-                const t = this.controller = d.$el(e, n, u, null, m.create(this.getDefinition(n) ?? {
+                const t = this.controller = m.$el(e, n, u, null, d.create(this.getDefinition(n) ?? {
                     name: p.generateName(),
                     template: s
                 }));
@@ -201,7 +201,7 @@ class DialogService {
             const s = i.container ?? this.C.createChild();
             e(o(i.load(), (t => {
                 const e = s.invoke(DialogController);
-                s.register(S(y, e), S(DialogController, e));
+                s.register(S(O, e), S(DialogController, e));
                 return o(e.activate(t), (t => {
                     if (!t.wasCancelled) {
                         this.dlgs.push(e);
@@ -290,7 +290,7 @@ class DefaultDialogDomRenderer {
         this.hostCss = "position:relative;margin:auto;";
     }
     static register(t) {
-        t.register(R(O, this));
+        t.register(R(y, this));
     }
     render(t, e) {
         const i = this.p.document;
@@ -345,10 +345,19 @@ class DefaultDialogEventManager {
             }
         };
         e.overlay.addEventListener(i, handleClick);
+        const handleSubmit = t => {
+            const e = t.target;
+            const i = !e.getAttribute("action");
+            if (e.tagName === "FORM" && i) {
+                t.preventDefault();
+            }
+        };
+        e.contentHost.addEventListener("submit", handleSubmit);
         return {
             dispose: () => {
                 this.$(t);
                 e.overlay.removeEventListener(i, handleClick);
+                e.contentHost.removeEventListener("submit", handleSubmit);
             }
         };
     }
@@ -411,5 +420,5 @@ const A = /*@__PURE__*/ createDialogConfiguration((() => {
 
 const j = /*@__PURE__*/ createDialogConfiguration(u, [ DialogService, DefaultDialogGlobalSettings, DefaultDialogDomRenderer, DefaultDialogEventManager ]);
 
-export { DefaultDialogDom, DefaultDialogDomRenderer, DefaultDialogEventManager, DefaultDialogGlobalSettings, DialogCloseResult, A as DialogConfiguration, DialogController, j as DialogDefaultConfiguration, DialogOpenResult, DialogService, y as IDialogController, P as IDialogDom, I as IDialogDomAnimator, O as IDialogDomRenderer, $ as IDialogEventManager, k as IDialogGlobalSettings, b as IDialogService };
+export { DefaultDialogDom, DefaultDialogDomRenderer, DefaultDialogEventManager, DefaultDialogGlobalSettings, DialogCloseResult, A as DialogConfiguration, DialogController, j as DialogDefaultConfiguration, DialogOpenResult, DialogService, O as IDialogController, P as IDialogDom, I as IDialogDomAnimator, y as IDialogDomRenderer, $ as IDialogEventManager, k as IDialogGlobalSettings, b as IDialogService };
 //# sourceMappingURL=index.mjs.map

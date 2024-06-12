@@ -3088,6 +3088,44 @@ class ModifiedKeyboardEventHandler {
         });
     }
 }
+/**
+ * A generic event handler that can be used for any event type
+ */
+class ModifiedEventHandler {
+    constructor() {
+        this.type = ['$ALL'];
+    }
+    static register(c) {
+        c.register(singletonRegistration(IModifiedEventHandlerCreator, ModifiedEventHandler));
+    }
+    getHandler(modifier) {
+        const modifiers = modifier.split(/[:+.]/);
+        return ((event) => {
+            let prevent = false;
+            let stop = false;
+            let mod;
+            for (mod of modifiers) {
+                switch (mod) {
+                    case 'prevent':
+                        prevent = true;
+                        continue;
+                    case 'stop':
+                        stop = true;
+                        continue;
+                }
+                {
+                    // eslint-disable-next-line no-console
+                    console.warn(`Modifier '${mod}' is not supported for event "${event.type}".`);
+                }
+            }
+            if (prevent)
+                event.preventDefault();
+            if (stop)
+                event.stopPropagation();
+            return true;
+        });
+    }
+}
 const IEventModifier = /*@__PURE__*/ createInterface('IEventModifierHandler', x => x.instance({
     getHandler: () => {
         {
@@ -3112,12 +3150,12 @@ class EventModifier {
         c.register(singletonRegistration(IEventModifier, EventModifier));
     }
     getHandler(type, modifier) {
-        return kernel.isString(modifier) ? this._reg[type]?.getHandler(modifier) ?? null : null;
+        return kernel.isString(modifier) ? (this._reg[type] ?? this._reg.$ALL)?.getHandler(modifier) ?? null : null;
     }
 }
 const EventModifierRegistration = {
     register(c) {
-        c.register(EventModifier, ModifiedMouseEventHandler, ModifiedKeyboardEventHandler);
+        c.register(EventModifier, ModifiedMouseEventHandler, ModifiedKeyboardEventHandler, ModifiedEventHandler);
     }
 };
 
