@@ -61,7 +61,7 @@ const l = (() => {
             n = 0;
             s = 0;
             for (;s < r; ++s) {
-                n = charCodeAt(o, s);
+                n = o.charCodeAt(s);
                 if (s === 0 && n === 48 && r > 1 || n < 48 || n > 57) {
                     return t[o] = false;
                 }
@@ -255,22 +255,21 @@ function toLookup(...t) {
     return r(createLookup(), ...t);
 }
 
-const p = /*@__PURE__*/ function() {
+const p = /*@__PURE__*/ (() => {
     const t = new WeakMap;
     let e = false;
     let r = "";
     let n = 0;
     return s => {
         e = t.get(s);
-        if (e === void 0) {
-            r = s.toString();
-            n = r.length;
-            e = n >= 29 && n <= 100 && charCodeAt(r, n - 1) === 125 && charCodeAt(r, n - 2) <= 32 && charCodeAt(r, n - 3) === 93 && charCodeAt(r, n - 4) === 101 && charCodeAt(r, n - 5) === 100 && charCodeAt(r, n - 6) === 111 && charCodeAt(r, n - 7) === 99 && charCodeAt(r, n - 8) === 32 && charCodeAt(r, n - 9) === 101 && charCodeAt(r, n - 10) === 118 && charCodeAt(r, n - 11) === 105 && charCodeAt(r, n - 12) === 116 && charCodeAt(r, n - 13) === 97 && charCodeAt(r, n - 14) === 110 && charCodeAt(r, n - 15) === 91;
+        if (e == null) {
+            n = (r = s.toString()).length;
+            e = n > 28 && r.indexOf("[native code] }") === n - 15;
             t.set(s, e);
         }
         return e;
     };
-}();
+})();
 
 const onResolve = (t, e) => {
     if (t instanceof Promise) {
@@ -287,7 +286,7 @@ const onResolveAll = (...t) => {
     let o = t.length;
     for (;s < o; ++s) {
         e = t[s];
-        if ((e = t[s]) instanceof Promise) {
+        if (isPromise(e = t[s])) {
             if (r === void 0) {
                 r = e;
             } else if (n === void 0) {
@@ -303,8 +302,6 @@ const onResolveAll = (...t) => {
     return Promise.all(n);
 };
 
-const charCodeAt = (t, e) => t.charCodeAt(e);
-
 const instanceRegistration = (t, e) => new Resolver(t, 0, e);
 
 const singletonRegistration = (t, e) => new Resolver(t, 1, e);
@@ -319,12 +316,12 @@ const aliasToRegistration = (t, e) => new Resolver(e, 5, t);
 
 const deferRegistration = (t, ...e) => new ParameterizedRegistry(t, e);
 
-const v = new WeakMap;
+const d = new WeakMap;
 
 const cacheCallbackResult = t => (e, r, n) => {
-    let s = v.get(e);
+    let s = d.get(e);
     if (s === void 0) {
-        v.set(e, s = new WeakMap);
+        d.set(e, s = new WeakMap);
     }
     if (s.has(n)) {
         return s.get(n);
@@ -334,7 +331,7 @@ const cacheCallbackResult = t => (e, r, n) => {
     return o;
 };
 
-const d = {
+const v = {
     instance: instanceRegistration,
     singleton: singletonRegistration,
     transient: transientRegistation,
@@ -591,6 +588,20 @@ class Container {
             this.u.set(t, e);
         }
         return e;
+    }
+    deregister(t) {
+        validateKey(t);
+        const e = this.h.get(t);
+        if (e != null) {
+            this.h.delete(t);
+            if (isResourceKey(t)) {
+                delete this.res[t];
+            }
+            if (this.u.has(t)) {
+                e.dispose();
+                this.u.delete(t);
+            }
+        }
     }
     registerTransformer(t, e) {
         const r = this.getResolver(t);
@@ -1316,23 +1327,23 @@ function __esDecorate(t, e, r, n, s, o) {
     var u, f = false;
     for (var h = r.length - 1; h >= 0; h--) {
         var p = {};
-        for (var v in n) p[v] = v === "access" ? {} : n[v];
-        for (var v in n.access) p.access[v] = n.access[v];
+        for (var d in n) p[d] = d === "access" ? {} : n[d];
+        for (var d in n.access) p.access[d] = n.access[d];
         p.addInitializer = function(t) {
             if (f) throw new TypeError("Cannot add initializers after decoration has completed");
             o.push(accept(t || null));
         };
-        var d = (0, r[h])(i === "accessor" ? {
+        var v = (0, r[h])(i === "accessor" ? {
             get: a.get,
             set: a.set
         } : a[l], p);
         if (i === "accessor") {
-            if (d === void 0) continue;
-            if (d === null || typeof d !== "object") throw new TypeError("Object expected");
-            if (u = accept(d.get)) a.get = u;
-            if (u = accept(d.set)) a.set = u;
-            if (u = accept(d.init)) s.unshift(u);
-        } else if (u = accept(d)) {
+            if (v === void 0) continue;
+            if (v === null || typeof v !== "object") throw new TypeError("Object expected");
+            if (u = accept(v.get)) a.get = u;
+            if (u = accept(v.set)) a.set = u;
+            if (u = accept(v.init)) s.unshift(u);
+        } else if (u = accept(v)) {
             if (i === "field") s.unshift(u); else a[l] = u;
         }
     }
@@ -2026,7 +2037,7 @@ exports.ModuleItem = ModuleItem;
 
 exports.Protocol = m;
 
-exports.Registration = d;
+exports.Registration = v;
 
 exports.aliasedResourcesRegistry = aliasedResourcesRegistry;
 

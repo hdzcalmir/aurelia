@@ -1,4 +1,4 @@
-import { DI, Protocol, toArray, resolve, IServiceLocator, ILogger, Registration, noop } from '../../../kernel/dist/native-modules/index.mjs';
+import { DI, Protocol, toArray, onResolve, resolve, IServiceLocator, ILogger, isFunction, Registration, noop } from '../../../kernel/dist/native-modules/index.mjs';
 import * as AST from '../../../expression-parser/dist/native-modules/index.mjs';
 import { IExpressionParser, PrimitiveLiteralExpression } from '../../../expression-parser/dist/native-modules/index.mjs';
 import { mixinAstEvaluator, Scope, astEvaluate } from '../../../runtime-html/dist/native-modules/index.mjs';
@@ -61,8 +61,7 @@ const getMessageByCode = (name, ...details) => {
     return cooked;
 };
 
-// import { Metadata } from '@aurelia/metadata';
-// import { Constructable, Protocol, Class, DI, toArray } from '@aurelia/kernel';
+const explicitMessageKey = Symbol.for('au:validation:explicit-message-key');
 const IValidationMessageProvider = /*@__PURE__*/ DI.createInterface('IValidationMessageProvider');
 const ValidationRuleAliasMessage = Object.freeze({
     aliasKey: getAnnotationKeyFor('validation-rule-alias-message'),
@@ -254,6 +253,26 @@ class EqualsRule extends BaseValidationRule {
     }
 }
 EqualsRule.$TYPE = 'EqualsRule';
+class StateRule extends BaseValidationRule {
+    constructor(validState, stateFunction, messageMapper) {
+        super(void 0);
+        this.validState = validState;
+        this.stateFunction = stateFunction;
+        this.messageMapper = messageMapper;
+        this._state = validState;
+    }
+    execute(value, object) {
+        return onResolve(this.stateFunction(value, object), state => (this._state = state) === this.validState);
+    }
+    accept(_visitor) {
+        {
+            // eslint-disable-next-line no-console
+            console.warn('Serialization of a StateRule is not supported.');
+        }
+    }
+    getMessage() { return this.messageKey = this.messageMapper(this._state); }
+}
+StateRule.$TYPE = 'StateRule';
 // #region definitions
 ValidationRuleAliasMessage.define(EqualsRule, {
     aliases: [
@@ -452,7 +471,7 @@ class PropertyRule {
     withMessage(message) {
         const rule = this.latestRule;
         this.assertLatestRule(rule);
-        this.messageProvider.setMessage(rule, message);
+        this.messageProvider.setMessage(rule, message, explicitMessageKey);
         return this;
     }
     /**
@@ -487,6 +506,9 @@ class PropertyRule {
     displayName(name) {
         this.property.displayName = name;
         return this;
+    }
+    satisfiesState(validState, stateFunction, messageMapper) {
+        return this.addRule(new StateRule(validState, stateFunction, messageMapper));
     }
     /**
      * Applies an ad-hoc rule function to the ensured property or object.
@@ -753,12 +775,18 @@ class ValidationMessageProvider {
         }
     }
     getMessage(rule) {
-        const parsedMessage = this.registeredMessages.get(rule);
-        if (parsedMessage !== void 0) {
-            return parsedMessage;
+        const $providesMessage = isFunction(rule.getMessage);
+        const messageKey = $providesMessage ? rule.getMessage() : rule.messageKey;
+        const lookup = this.registeredMessages.get(rule);
+        if (lookup != null) {
+            const parsedMessage = lookup.get(explicitMessageKey) ?? lookup.get(messageKey);
+            if (parsedMessage !== void 0) {
+                return parsedMessage;
+            }
         }
+        if ($providesMessage)
+            return this.setMessage(rule, messageKey);
         const validationMessages = ValidationRuleAliasMessage.getDefaultMessages(rule);
-        const messageKey = rule.messageKey;
         let message;
         const messageCount = validationMessages.length;
         if (messageCount === 1 && messageKey === void 0) {
@@ -772,9 +800,14 @@ class ValidationMessageProvider {
         }
         return this.setMessage(rule, message);
     }
-    setMessage(rule, message) {
+    setMessage(rule, message, messageKey) {
         const parsedMessage = this.parseMessage(message);
-        this.registeredMessages.set(rule, parsedMessage);
+        const rm = this.registeredMessages;
+        let messageLookup = rm.get(rule);
+        if (messageLookup === void 0) {
+            rm.set(rule, messageLookup = new Map());
+        }
+        messageLookup.set(messageKey ?? rule.messageKey, parsedMessage);
         return parsedMessage;
     }
     parseMessage(message) {
@@ -1479,5 +1512,5 @@ function createConfiguration(optionsProvider) {
 }
 const ValidationConfiguration = /*@__PURE__*/ createConfiguration(noop);
 
-export { BaseValidationRule, Deserializer, EqualsRule, ICustomMessages, IValidationExpressionHydrator, IValidationMessageProvider, IValidationRules, IValidator, LengthRule, ModelBasedRule, ModelValidationExpressionHydrator, PropertyRule, RangeRule, RegexRule, RequiredRule, RuleProperty, Serializer, SizeRule, StandardValidator, ValidateInstruction, ValidationConfiguration, ValidationDeserializer, ValidationMessageProvider, ValidationResult, ValidationRuleAliasMessage, ValidationRules, ValidationSerializer, deserializePrimitive, getDefaultValidationConfiguration, parsePropertyName, rootObjectSymbol, serializePrimitive, serializePrimitives, validationRule, validationRulesRegistrar };
+export { BaseValidationRule, Deserializer, EqualsRule, ICustomMessages, IValidationExpressionHydrator, IValidationMessageProvider, IValidationRules, IValidator, LengthRule, ModelBasedRule, ModelValidationExpressionHydrator, PropertyRule, RangeRule, RegexRule, RequiredRule, RuleProperty, Serializer, SizeRule, StandardValidator, StateRule, ValidateInstruction, ValidationConfiguration, ValidationDeserializer, ValidationMessageProvider, ValidationResult, ValidationRuleAliasMessage, ValidationRules, ValidationSerializer, deserializePrimitive, explicitMessageKey, getDefaultValidationConfiguration, parsePropertyName, rootObjectSymbol, serializePrimitive, serializePrimitives, validationRule, validationRulesRegistrar };
 //# sourceMappingURL=index.dev.mjs.map

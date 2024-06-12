@@ -4,7 +4,7 @@ import { DI as s, resolve as i, IEventAggregator as n, ILogger as r, emptyArray 
 
 import { BindingMode as m, isCustomElementViewModel as v, IHistory as E, ILocation as R, IWindow as y, CustomElement as b, Controller as S, IPlatform as C, CustomElementDefinition as x, IController as N, IAppRoot as k, isCustomElementController as $, CustomAttribute as _, INode as T, getRef as I, AppTask as P } from "../../../runtime-html/dist/native-modules/index.mjs";
 
-import { RecognizedRoute as V, Endpoint as A, ConfigurableRoute as O, RESIDUE as M, RouteRecognizer as j } from "../../../route-recognizer/dist/native-modules/index.mjs";
+import { RESIDUE as V, RecognizedRoute as A, Endpoint as O, ConfigurableRoute as M, RouteRecognizer as j } from "../../../route-recognizer/dist/native-modules/index.mjs";
 
 import { batch as L } from "../../../runtime/dist/native-modules/index.mjs";
 
@@ -594,11 +594,18 @@ class RouteConfig {
         return new RouteConfig(ensureString(t.id ?? this.id ?? s), s, t.title ?? this.title, t.redirectTo ?? this.redirectTo, t.caseSensitive ?? this.caseSensitive, t.transitionPlan ?? this.transitionPlan ?? e?.transitionPlan ?? null, t.viewport ?? this.viewport, t.data ?? this.data, t.routes ?? this.routes, t.fallback ?? this.fallback ?? e?.fallback ?? null, this.component, t.nav ?? this.nav);
     }
     X(t, e, s) {
-        const i = shallowEquals(t.params, e.params);
-        if (i) return "none";
+        if (hasSamePath(t, e) && shallowEquals(t.params, e.params)) return "none";
         if (s != null) return s;
-        const n = this.transitionPlan ?? "replace";
-        return typeof n === "function" ? n(t, e) : n;
+        const i = this.transitionPlan ?? "replace";
+        return typeof i === "function" ? i(t, e) : i;
+        function cleanPath(t) {
+            return t.replace(`/*${V}`, "");
+        }
+        function hasSamePath(t, e) {
+            const s = t.finalPath;
+            const i = e.finalPath;
+            return s.length === 0 || i.length === 0 || cleanPath(s) === cleanPath(i);
+        }
     }
     Y(t, e, s) {
         if (this.W) throw new Error(getMessage(3550));
@@ -1921,7 +1928,7 @@ class RouteNode {
         this.ne ??= n;
     }
     static create(t) {
-        const {[M]: e, ...s} = t.params ?? {};
+        const {[V]: e, ...s} = t.params ?? {};
         return new RouteNode(t.path, t.finalPath, t.context, t.originalInstruction ?? t.instruction, t.instruction, Object.freeze(s), t.queryParams ?? Y, t.fragment ?? null, Object.freeze(t.data ?? h), t.re ?? null, t.title ?? null, t.component, t.residue ?? []);
     }
     contains(t, e = false) {
@@ -2302,7 +2309,7 @@ function appendNode(t, e, s) {
 }
 
 function createFallbackNode(t, e, s, i) {
-    const n = new $RecognizedRoute(new V(new A(new O(e.path[0], e.caseSensitive, e), []), h), null);
+    const n = new $RecognizedRoute(new A(new O(new M(e.path[0], e.caseSensitive, e), []), h), null);
     i.children.length = 0;
     return createConfiguredNode(t, s, i, n, null);
 }
@@ -3531,7 +3538,7 @@ class RouteContext {
                 i = false;
             }
         }
-        return new $RecognizedRoute(n, Reflect.has(n.params, M) ? n.params[M] ?? null : null);
+        return new $RecognizedRoute(n, Reflect.has(n.params, V) ? n.params[V] ?? null : null);
     }
     us(t) {
         return a(resolveRouteConfiguration(t, true, this.config, null, this), (t => {
@@ -3612,7 +3619,7 @@ class RouteContext {
             }
             return {
                 vi: ViewportInstruction.create({
-                    recognizedRoute: new $RecognizedRoute(new V(e.endpoint, e.consumed), null),
+                    recognizedRoute: new $RecognizedRoute(new A(e.endpoint, e.consumed), null),
                     component: e.path,
                     children: t.children,
                     viewport: t.viewport,
@@ -3639,7 +3646,7 @@ class RouteContext {
         }
         return {
             vi: ViewportInstruction.create({
-                recognizedRoute: new $RecognizedRoute(new V(c.endpoint, c.consumed), null),
+                recognizedRoute: new $RecognizedRoute(new A(c.endpoint, c.consumed), null),
                 component: c.path,
                 children: t.children,
                 viewport: t.viewport,
@@ -3771,7 +3778,7 @@ class NavigationRoute {
                 return new ViewportInstructionTree(NavigationOptions.create(i, {
                     context: e
                 }), false, [ ViewportInstruction.create({
-                    recognizedRoute: new $RecognizedRoute(new V(s, h), null),
+                    recognizedRoute: new $RecognizedRoute(new A(s, h), null),
                     component: t
                 }) ], Y, null);
             }));
@@ -4166,7 +4173,7 @@ class ParameterInformation {
         const e = t.recognizedRoute?.route;
         const s = Object.create(null);
         Object.assign(s, e?.params ?? t.params);
-        Reflect.deleteProperty(s, M);
+        Reflect.deleteProperty(s, V);
         return new ParameterInformation(e?.endpoint.route.handler ?? null, t.viewport, s, t.children.map((t => this.create(t))));
     }
 }

@@ -1,14 +1,8 @@
 import { IExpressionParser, type IsBindingBehavior } from '@aurelia/expression-parser';
 import { IObserverLocator } from '@aurelia/runtime';
 import { IHydratableController, IPlatform } from '@aurelia/runtime-html';
-import { AttrSyntax, IAttrMapper, type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, type BindingCommandStaticAuDefinition } from '@aurelia/template-compiler';
+import { IAttrMapper, type BindingCommandInstance, type ICommandBuildInfo, type IInstruction, type BindingCommandStaticAuDefinition } from '@aurelia/template-compiler';
 import { IStore } from './interfaces';
-export declare class StateAttributePattern {
-    'PART.state'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;
-}
-export declare class DispatchAttributePattern {
-    'PART.dispatch'(rawName: string, rawValue: string, parts: readonly string[]): AttrSyntax;
-}
 export declare class StateBindingCommand implements BindingCommandInstance {
     static readonly $au: BindingCommandStaticAuDefinition;
     get ignoreAttr(): boolean;

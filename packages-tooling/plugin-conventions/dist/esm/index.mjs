@@ -714,8 +714,8 @@ function traverse(tree, cb) {
             return;
         }
         cb(ne);
-        if (n.childNodes)
-            traverse(n, cb);
+        if (ne.childNodes)
+            traverse(ne, cb);
         if ((_a = n.content) === null || _a === void 0 ? void 0 : _a.childNodes)
             traverse(n.content, cb);
     });
@@ -878,6 +878,7 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
     const useCSSModule = shadowMode !== null ? false : options.useCSSModule;
     const viewDeps = [];
     const cssDeps = [];
+    const cssModuleDeps = [];
     const statements = [];
     let registrationImported = false;
     let aliasedModule = 0;
@@ -931,9 +932,9 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
                 statements.push(`import d${i} from ${s(stringModuleId)};\n`);
                 cssDeps.push(`d${i}`);
             }
-            else if (useCSSModule) {
+            else if (useCSSModule || path.basename(d, ext).endsWith('.module')) {
                 statements.push(`import d${i} from ${s(d)};\n`);
-                cssDeps.push(`d${i}`);
+                cssModuleDeps.push(`d${i}`);
             }
             else {
                 statements.push(`import ${s(d)};\n`);
@@ -950,15 +951,13 @@ function preprocessHtmlTemplate(unit, options, hasViewModel, _fileExists = fileE
     const m = modifyCode('', unit.path);
     const hmrEnabled = !hasViewModel && options.hmr && process.env.NODE_ENV !== 'production';
     m.append(`import { CustomElement } from '@aurelia/runtime-html';\n`);
-    if (cssDeps.length > 0) {
-        if (shadowMode !== null) {
-            m.append(`import { shadowCSS } from '@aurelia/runtime-html';\n`);
-            viewDeps.push(`shadowCSS(${cssDeps.join(', ')})`);
-        }
-        else if (useCSSModule) {
-            m.append(`import { cssModules } from '@aurelia/runtime-html';\n`);
-            viewDeps.push(`cssModules(${cssDeps.join(', ')})`);
-        }
+    if (cssDeps.length > 0 && shadowMode !== null) {
+        m.append(`import { shadowCSS } from '@aurelia/runtime-html';\n`);
+        viewDeps.push(`shadowCSS(${cssDeps.join(', ')})`);
+    }
+    if (cssModuleDeps.length > 0) {
+        m.append(`import { cssModules } from '@aurelia/runtime-html';\n`);
+        viewDeps.push(`cssModules(${cssModuleDeps.join(', ')})`);
     }
     statements.forEach(st => m.append(st));
     m.append(`export const name = ${s(name)};
@@ -1041,11 +1040,14 @@ function preprocess(unit, options, _fileExists = fileExists) {
     const basename = path.basename(unit.path, ext);
     const allOptions = preprocessOptions(options);
     if (allOptions.enableConventions && allOptions.templateExtensions.includes(ext)) {
-        const possibleFilePair = allOptions.cssExtensions.map(e => `${basename}${e}`);
+        const possibleFilePair = [];
+        allOptions.cssExtensions.forEach(e => {
+            possibleFilePair.push(`${basename}.module${e}`, `${basename}${e}`);
+        });
         const filePair = possibleFilePair.find(p => _fileExists(unit, `./${p}`));
         if (filePair) {
             if (allOptions.useProcessedFilePairFilename) {
-                unit.filePair = `${basename}.css`;
+                unit.filePair = `${path.basename(filePair, path.extname(filePair))}.css`;
             }
             else {
                 unit.filePair = filePair;

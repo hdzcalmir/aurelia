@@ -1,3 +1,4 @@
+import { IContainer } from '@aurelia/kernel';
 import { IPlatform } from './platform';
 import type { IHydratedController } from './templating/controller';
 export declare class Refs {
@@ -11,13 +12,19 @@ export type INode<T extends Node = Node> = T & {
 export declare const INode: import("@aurelia/kernel").InterfaceSymbol<INode<Node>>;
 export type IEventTarget<T extends EventTarget = EventTarget> = T;
 export declare const IEventTarget: import("@aurelia/kernel").InterfaceSymbol<EventTarget>;
+/**
+ * An interface describing a marker.
+ * Components can use this to anchor where their content should be rendered in place of a host element.
+ */
 export declare const IRenderLocation: import("@aurelia/kernel").InterfaceSymbol<IRenderLocation<ChildNode>>;
 export type IRenderLocation<T extends ChildNode = ChildNode> = T & {
     $start?: IRenderLocation<T>;
 };
-export declare const ICssModulesMapping: import("@aurelia/kernel").InterfaceSymbol<Record<string, string>>;
 /**
- * Represents a DocumentFragment
+ * Represents a DocumentFragment with a memory of what it has.
+ * This is known as many names, a live fragment for example.
+ *
+ * Relevant discussion at https://github.com/whatwg/dom/issues/736
  */
 export interface INodeSequence<T extends INode = INode> {
     readonly platform: IPlatform;
@@ -195,4 +202,8 @@ export interface IHistory extends History {
      */
     replaceState(state: {} | null, title: string, url?: string | null): void;
 }
+/**
+ * An utility to register a host node with the container with all the commonly used keys.
+ */
+export declare const registerHostNode: (container: IContainer, host: INode | null, platform?: IPlatform) => IContainer;
 //# sourceMappingURL=dom.d.ts.map

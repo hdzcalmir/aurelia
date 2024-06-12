@@ -9622,6 +9622,75 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             assert.html.textContent(host, 'ce2 2 3 44', 'round#6');
             await au.stop(true);
         });
+        it('replace - different paths for same component', async function () {
+            let CeOne = (() => {
+                let _classDecorators = [customElement({ name: 'ce-one', template: 'ce1 ${id1} ${id2}' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var CeOne = _classThis = class {
+                    constructor() {
+                        this.id1 = ++CeOne.id1;
+                    }
+                    canLoad() {
+                        this.id2 = ++CeOne.id2;
+                        return true;
+                    }
+                };
+                __setFunctionName(_classThis, "CeOne");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeOne = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                })();
+                _classThis.id1 = 0;
+                _classThis.id2 = 0;
+                (() => {
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeOne = _classThis;
+            })();
+            let Root = (() => {
+                let _classDecorators = [route({
+                        transitionPlan: 'replace',
+                        routes: [
+                            {
+                                id: 'ce1',
+                                path: ['ce1', 'ce2'],
+                                component: CeOne,
+                            },
+                        ]
+                    }), customElement({ name: 'ro-ot', template: '<a load="ce1"></a><a load="ce2"></a><au-viewport></au-viewport>' })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                var Root = _classThis = class {
+                };
+                __setFunctionName(_classThis, "Root");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    Root = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return Root = _classThis;
+            })();
+            const { au, container, host } = await start({ appRoot: Root, registrations: [CeOne] });
+            const queue = container.get(IPlatform).domQueue;
+            host.querySelector('a').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 1 1', 'round#1');
+            host.querySelector('a:nth-of-type(2)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 2 2', 'round#2');
+            // no change
+            host.querySelector('a:nth-of-type(2)').click();
+            await queue.yield();
+            assert.html.textContent(host, 'ce1 2 2', 'round#3');
+            await au.stop(true);
+        });
     });
     describe('history strategy', function () {
         class TestData {

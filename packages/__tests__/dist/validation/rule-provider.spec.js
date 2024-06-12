@@ -1144,6 +1144,94 @@ describe('validation/rule-provider.spec.ts', function () {
             assert.deepEqual(results[0].message, msg);
             validationRules.off();
         });
+        // The state rule is tested here as the individual unit tests are somewhat pointless.
+        describe('StateRule', function () {
+            it('stateful message - sync state function', async function () {
+                const { validationRules } = setup();
+                const obj = new Person((void 0), (void 0), (void 0));
+                let state = 'none';
+                const rule = validationRules
+                    .on(obj)
+                    .ensure('name')
+                    .satisfiesState('none', (_value, _object) => state, ($state) => $state === 'fooError' ? 'foo' : 'bar')
+                    .rules[0];
+                state = 'fooError';
+                let result = await rule.validate(obj);
+                assert.equal(result[0].valid, false);
+                assert.equal(result[0].message, 'foo');
+                state = 'barError';
+                result = await rule.validate(obj);
+                assert.equal(result[0].valid, false);
+                assert.equal(result[0].message, 'bar');
+                state = 'none';
+                result = await rule.validate(obj);
+                assert.equal(result[0].valid, true);
+            });
+            it('stateful message - async state function', async function () {
+                const { validationRules } = setup();
+                const obj = new Person((void 0), (void 0), (void 0));
+                let state = 'none';
+                const rule = validationRules
+                    .on(obj)
+                    .ensure('name')
+                    .satisfiesState('none', (_value, _object) => new Promise((res) => setTimeout(() => res(state), 1)), ($state) => $state === 'fooError' ? 'foo' : 'bar')
+                    .rules[0];
+                state = 'fooError';
+                let result = await rule.validate(obj);
+                assert.equal(result[0].valid, false);
+                assert.equal(result[0].message, 'foo');
+                state = 'barError';
+                result = await rule.validate(obj);
+                assert.equal(result[0].valid, false);
+                assert.equal(result[0].message, 'bar');
+                state = 'none';
+                result = await rule.validate(obj);
+                assert.equal(result[0].valid, true);
+            });
+            it('stateful message - interpolated message', async function () {
+                const { validationRules } = setup();
+                const obj = new Person('awesome possum', (void 0), (void 0));
+                let state = 'none';
+                const rule = validationRules
+                    .on(obj)
+                    .ensure('name')
+                    .satisfiesState('none', (_value, _object) => state, ($state) => `\${$displayName} is ${$state === 'fooError' ? 'foo' : 'bar'} (value: \${$value}).`)
+                    .rules[0];
+                state = 'fooError';
+                let result = await rule.validate(obj);
+                assert.equal(result[0].valid, false);
+                assert.equal(result[0].message, 'Name is foo (value: awesome possum).');
+                state = 'barError';
+                result = await rule.validate(obj);
+                assert.equal(result[0].valid, false);
+                assert.equal(result[0].message, 'Name is bar (value: awesome possum).');
+                state = 'none';
+                result = await rule.validate(obj);
+                assert.equal(result[0].valid, true);
+            });
+            it('overridden message', async function () {
+                const { validationRules } = setup();
+                const obj = new Person((void 0), (void 0), (void 0));
+                let state = 'none';
+                const rule = validationRules
+                    .on(obj)
+                    .ensure('name')
+                    .satisfiesState('none', (_value, _object) => state, ($state) => $state === 'fooError' ? 'foo' : 'bar')
+                    .withMessage('baz')
+                    .rules[0];
+                state = 'fooError';
+                let result = await rule.validate(obj);
+                assert.equal(result[0].valid, false);
+                assert.equal(result[0].message, 'baz');
+                state = 'barError';
+                result = await rule.validate(obj);
+                assert.equal(result[0].valid, false);
+                assert.equal(result[0].message, 'baz');
+                state = 'none';
+                result = await rule.validate(obj);
+                assert.equal(result[0].valid, true);
+            });
+        });
     });
 });
 //# sourceMappingURL=rule-provider.spec.js.map

@@ -21,6 +21,7 @@ class LocalizedValidationControllerFactory extends validationHtml.ValidationCont
         return container.invoke(LocalizedValidationController, _dynamicDependencies);
     }
 }
+const explicitMessageKey = Symbol.for('au:validation:explicit-message-key');
 class LocalizedValidationMessageProvider extends validation.ValidationMessageProvider {
     constructor(keyConfiguration = kernel.resolve(I18nKeyConfiguration), ea = kernel.resolve(kernel.IEventAggregator)) {
         super(undefined, []);
@@ -38,11 +39,15 @@ class LocalizedValidationMessageProvider extends validation.ValidationMessagePro
         });
     }
     getMessage(rule) {
-        const parsedMessage = this.registeredMessages.get(rule);
-        if (parsedMessage !== void 0) {
-            return parsedMessage;
+        const messageKey = kernel.isFunction(rule.getMessage) ? rule.getMessage() : rule.messageKey;
+        const lookup = this.registeredMessages.get(rule);
+        if (lookup != null) {
+            const parsedMessage = lookup.get(explicitMessageKey) ?? lookup.get(messageKey);
+            if (parsedMessage !== void 0) {
+                return parsedMessage;
+            }
         }
-        return this.setMessage(rule, this.i18n.tr(this.getKey(rule.messageKey)));
+        return this.setMessage(rule, this.i18n.tr(this.getKey(messageKey)));
     }
     getDisplayName(propertyName, displayName) {
         if (displayName !== null && displayName !== undefined) {

@@ -5,7 +5,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var kernel = require('@aurelia/kernel');
 var runtimeHtml = require('@aurelia/runtime-html');
 var runtime = require('@aurelia/runtime');
-var templateCompiler = require('@aurelia/template-compiler');
 
 /** @internal */
 const createInterface = kernel.DI.createInterface;
@@ -459,16 +458,6 @@ runtime.connectable(StateDispatchBinding, null);
 runtimeHtml.mixinAstEvaluator(true)(StateDispatchBinding);
 runtimeHtml.mixingBindingLimited(StateDispatchBinding, () => 'callSource');
 
-class StateAttributePattern {
-    'PART.state'(rawName, rawValue, parts) {
-        return new templateCompiler.AttrSyntax(rawName, rawValue, parts[0], 'state');
-    }
-}
-class DispatchAttributePattern {
-    'PART.dispatch'(rawName, rawValue, parts) {
-        return new templateCompiler.AttrSyntax(rawName, rawValue, parts[0], 'dispatch');
-    }
-}
 class StateBindingCommand {
     get ignoreAttr() { return false; }
     build(info, parser, attrMapper) {
@@ -523,7 +512,10 @@ const StateBindingInstructionRenderer = /*@__PURE__*/ runtimeHtml.renderer(class
         /** @internal */ this._stateContainer = kernel.resolve(IStore);
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
-        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ensureExpression(exprParser, instruction.from, 'IsFunction'), target, instruction.to, this._stateContainer));
+        const ast = ensureExpression(exprParser, instruction.from, 'IsFunction');
+        // todo: insert `$state` access scope into the expression when it does not start with `$this`/`$parent`/`$state`/`$host`
+        //    example: <input value.state="value"> means <input value.bind="$state.value">
+        renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ast, target, instruction.to, this._stateContainer));
     }
 }, null);
 const DispatchBindingInstructionRenderer = /*@__PURE__*/ runtimeHtml.renderer(class DispatchBindingInstructionRenderer {
@@ -544,10 +536,8 @@ function ensureExpression(parser, srcOrExpr, expressionType) {
 }
 
 const standardRegistrations = [
-    StateAttributePattern,
     StateBindingCommand,
     StateBindingInstructionRenderer,
-    DispatchAttributePattern,
     DispatchBindingCommand,
     DispatchBindingInstructionRenderer,
     StateBindingBehavior,
@@ -716,14 +706,12 @@ class CreatedLifecycleHooks {
 runtimeHtml.LifecycleHooks.define({}, CreatedLifecycleHooks);
 
 exports.ActionHandler = ActionHandler;
-exports.DispatchAttributePattern = DispatchAttributePattern;
 exports.DispatchBindingCommand = DispatchBindingCommand;
 exports.DispatchBindingInstruction = DispatchBindingInstruction;
 exports.DispatchBindingInstructionRenderer = DispatchBindingInstructionRenderer;
 exports.IActionHandler = IActionHandler;
 exports.IState = IState;
 exports.IStore = IStore;
-exports.StateAttributePattern = StateAttributePattern;
 exports.StateBinding = StateBinding;
 exports.StateBindingBehavior = StateBindingBehavior;
 exports.StateBindingCommand = StateBindingCommand;

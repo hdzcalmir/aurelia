@@ -85,6 +85,7 @@ export declare class CustomAttributeDefinition<T extends Constructable = Constru
     readonly watches: IWatchDefinition[];
     readonly dependencies: Key[];
     readonly containerStrategy: 'reuse' | 'new';
+    static warnDuplicate: boolean;
     get type(): 'custom-attribute';
     private constructor();
     static create<T extends Constructable = Constructable>(nameOrDef: string | PartialCustomAttributeDefinition, Type: CustomAttributeType<T>): CustomAttributeDefinition<T>;

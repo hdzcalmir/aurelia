@@ -28,6 +28,11 @@ const IDialogDomRenderer = /*@__PURE__*/ createInterface('IDialogDomRenderer');
  * An interface describing the DOM structure of a dialog
  */
 const IDialogDom = /*@__PURE__*/ createInterface('IDialogDom');
+/**
+ * An interface for managing the animations of dialog doms.
+ * This is only used by the default dialog renderer.
+ */
+const IDialogDomAnimator = /*@__PURE__*/ createInterface('IDialogDomAnimator');
 const IDialogEventManager = /*@__PURE__*/ createInterface('IDialogKeyboardService');
 const IDialogGlobalSettings = /*@__PURE__*/ createInterface('IDialogGlobalSettings');
 class DialogOpenResult {
@@ -138,7 +143,8 @@ class DialogController {
         if (rootEventTarget == null || !rootEventTarget.contains(dialogTargetHost)) {
             container.register(instanceRegistration(runtimeHtml.IEventTarget, dialogTargetHost));
         }
-        container.register(instanceRegistration(runtimeHtml.INode, contentHost), instanceRegistration(IDialogDom, dom));
+        container.register(instanceRegistration(IDialogDom, dom));
+        runtimeHtml.registerHostNode(container, contentHost, this.p);
         return new Promise(r => {
             const cmp = Object.assign(this.cmp = this.getOrCreateVm(container, settings, contentHost), { $dialog: this });
             r(cmp.canActivate?.(model) ?? true);
@@ -156,7 +162,7 @@ class DialogController {
                 const ctrlr = this.controller = runtimeHtml.Controller.$el(container, cmp, contentHost, null, runtimeHtml.CustomElementDefinition.create(this.getDefinition(cmp) ?? { name: runtimeHtml.CustomElement.generateName(), template }));
                 return kernel.onResolve(ctrlr.activate(ctrlr, null), () => {
                     this._disposeHandler = eventManager.add(this, dom);
-                    return DialogOpenResult.create(false, this);
+                    return kernel.onResolve(dom.show?.(), () => DialogOpenResult.create(false, this));
                 });
             });
         }, e => {
@@ -183,7 +189,7 @@ class DialogController {
                     }
                     return DialogCloseResult.create('abort');
                 }
-                return kernel.onResolve(cmp.deactivate?.(dialogResult), () => kernel.onResolve(controller.deactivate(controller, null), () => {
+                return kernel.onResolve(cmp.deactivate?.(dialogResult), () => kernel.onResolve(dom.hide?.(), () => kernel.onResolve(controller.deactivate(controller, null), () => {
                     dom.dispose();
                     this._disposeHandler?.dispose();
                     if (!rejectOnCancel && status !== 'error') {
@@ -193,7 +199,7 @@ class DialogController {
                         this._reject(createDialogCancelError(value, 907 /* ErrorNames.dialog_cancelled_with_cancel_on_rejection_setting */));
                     }
                     return dialogResult;
-                }));
+                })));
             }));
         }).catch(reason => {
             this._closingPromise = void 0;
@@ -419,6 +425,8 @@ class DefaultDialogGlobalSettings {
 class DefaultDialogDomRenderer {
     constructor() {
         this.p = kernel.resolve(runtimeHtml.IPlatform);
+        /** @internal */
+        this._animator = kernel.resolve(kernel.optional(IDialogDomAnimator));
         this.overlayCss = 'position:absolute;width:100%;height:100%;top:0;left:0;';
         this.wrapperCss = `${this.overlayCss} display:flex;`;
         this.hostCss = 'position:relative;margin:auto;';
@@ -438,14 +446,21 @@ class DefaultDialogDomRenderer {
         const wrapper = dialogHost.appendChild(h('au-dialog-container', wrapperCss));
         const overlay = wrapper.appendChild(h('au-dialog-overlay', this.overlayCss));
         const host = wrapper.appendChild(h('div', this.hostCss));
-        return new DefaultDialogDom(wrapper, overlay, host);
+        return new DefaultDialogDom(wrapper, overlay, host, this._animator);
     }
 }
 class DefaultDialogDom {
-    constructor(wrapper, overlay, contentHost) {
+    constructor(wrapper, overlay, contentHost, animator) {
         this.wrapper = wrapper;
         this.overlay = overlay;
         this.contentHost = contentHost;
+        this._animator = animator;
+    }
+    show() {
+        return this._animator?.show(this);
+    }
+    hide() {
+        return this._animator?.hide(this);
     }
     dispose() {
         this.wrapper.remove();
@@ -472,10 +487,19 @@ class DefaultDialogEventManager {
             }
         };
         dom.overlay.addEventListener(mouseEvent, handleClick);
+        const handleSubmit = (e) => {
+            const target = e.target;
+            const noAction = !target.getAttribute('action');
+            if (target.tagName === 'FORM' && noAction) {
+                e.preventDefault();
+            }
+        };
+        dom.contentHost.addEventListener('submit', handleSubmit);
         return {
             dispose: () => {
                 this._remove(controller);
                 dom.overlay.removeEventListener(mouseEvent, handleClick);
+                dom.contentHost.removeEventListener('submit', handleSubmit);
             }
         };
     }
@@ -563,7 +587,9 @@ exports.DialogOpenResult = DialogOpenResult;
 exports.DialogService = DialogService;
 exports.IDialogController = IDialogController;
 exports.IDialogDom = IDialogDom;
+exports.IDialogDomAnimator = IDialogDomAnimator;
 exports.IDialogDomRenderer = IDialogDomRenderer;
+exports.IDialogEventManager = IDialogEventManager;
 exports.IDialogGlobalSettings = IDialogGlobalSettings;
 exports.IDialogService = IDialogService;
 //# sourceMappingURL=index.dev.cjs.map

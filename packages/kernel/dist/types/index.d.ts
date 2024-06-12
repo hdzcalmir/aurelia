@@ -1,5 +1,5 @@
 export { IPlatform, } from './platform';
-export { DI, IContainer, type IFactory, inject, type IRegistration, type IRegistry, type IResolver, IServiceLocator, type Key, type RegisterSelf, type ResolveCallback, singleton, transient, type AbstractInjectable, type Injectable, type InterfaceSymbol, InstanceProvider, type Resolved, type Transformer, type IContainerConfiguration, } from './di';
+export { DI, IContainer, type IFactory, inject, type IRegistration, type IRegistry, type IResolver, type IDisposableResolver, IServiceLocator, type Key, type RegisterSelf, type ResolveCallback, singleton, transient, type AbstractInjectable, type Injectable, type InterfaceSymbol, InstanceProvider, type Resolved, type Transformer, type IContainerConfiguration, } from './di';
 export { resolve, type IResolvedInjection, ContainerConfiguration, DefaultResolver, registrableMetadataKey, } from './di.container';
 export { Registration, createImplementationRegister, } from './di.registration';
 export { createResolver, all, factory, type IAllResolver, type IFactoryResolver, type IOptionalResolver, type IResolvedFactory, type INewInstanceResolver, last, lazy, type ILazyResolver, type IResolvedLazy, optional, ignore, newInstanceForScope, newInstanceOf, type ICallableResolver, allResources, optionalResource, own, resource, } from './di.resolvers';

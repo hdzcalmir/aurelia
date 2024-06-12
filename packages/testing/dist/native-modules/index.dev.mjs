@@ -1,5 +1,5 @@
 import { ensureEmpty, reportTaskQueue } from '../../../platform/dist/native-modules/index.mjs';
-import { noop, isArrayIndex, DI, Registration, kebabCase, emptyArray, EventAggregator, ILogger } from '../../../kernel/dist/native-modules/index.mjs';
+import { noop, isArrayIndex, DI, Registration, kebabCase, emptyArray, EventAggregator, ILogger, ISink, LogLevel } from '../../../kernel/dist/native-modules/index.mjs';
 import { IObserverLocator, IDirtyChecker, INodeObserverLocator } from '../../../runtime/dist/native-modules/index.mjs';
 import { StandardConfiguration, IPlatform, CustomElement, CustomAttribute, Aurelia, astEvaluate, astAssign, astBind, astUnbind, Scope } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { ITemplateCompiler, InstructionType } from '../../../template-compiler/dist/native-modules/index.mjs';
@@ -8145,6 +8145,25 @@ keyboardEvents.forEach(event => {
     });
 });
 
+const createSink = Object.assign((callback, level) => {
+    return class TargetedConsoleSink {
+        static register(container) {
+            container.register(Registration.singleton(ISink, this));
+        }
+        handleEvent(event) {
+            if (level == null || event.severity === level) {
+                callback(event.message);
+            }
+        }
+    };
+}, {
+    error: (callback) => createSink(callback, LogLevel.error),
+    warn: (callback) => createSink(callback, LogLevel.warn),
+    info: (callback) => createSink(callback, LogLevel.info),
+    debug: (callback) => createSink(callback, LogLevel.debug),
+    trace: (callback) => createSink(callback, LogLevel.trace),
+});
+
 class MockBinding {
     constructor() {
         this.calls = [];
@@ -9281,5 +9300,5 @@ function trace(calls) {
     };
 }
 
-export { CSS_PROPERTIES, Call, CallCollection, ChangeSet, CollectionChangeSet, MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, PLATFORM, PLATFORMRegistration, PSEUDO_ELEMENTS, ProxyChangeSet, SpySubscriber, TestContext, _, assert, createContainer, createFixture, createObserverLocator, createScopeForTest, createSpy, eachCartesianJoin, eachCartesianJoinAsync, eachCartesianJoinFactory, ensureTaskQueuesEmpty, fail, generateCartesianProduct, getVisibleText, globalAttributeNames, h, hJsx, htmlStringify, inspect, instructionTypeName, jsonStringify, onFixtureCreated, padLeft, padRight, recordCalls, setPlatform, stopRecordingCalls, stringify, trace, trimFull, verifyBindingInstructionsEqual, verifyEqual };
+export { CSS_PROPERTIES, Call, CallCollection, ChangeSet, CollectionChangeSet, MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, PLATFORM, PLATFORMRegistration, PSEUDO_ELEMENTS, ProxyChangeSet, SpySubscriber, TestContext, _, assert, createContainer, createFixture, createObserverLocator, createScopeForTest, createSink, createSpy, eachCartesianJoin, eachCartesianJoinAsync, eachCartesianJoinFactory, ensureTaskQueuesEmpty, fail, generateCartesianProduct, getVisibleText, globalAttributeNames, h, hJsx, htmlStringify, inspect, instructionTypeName, jsonStringify, onFixtureCreated, padLeft, padRight, recordCalls, setPlatform, stopRecordingCalls, stringify, trace, trimFull, verifyBindingInstructionsEqual, verifyEqual };
 //# sourceMappingURL=index.dev.mjs.map

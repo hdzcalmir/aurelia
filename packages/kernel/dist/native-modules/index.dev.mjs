@@ -143,7 +143,7 @@ const isArrayIndex = (() => {
                 ch = 0;
                 i = 0;
                 for (; i < length; ++i) {
-                    ch = charCodeAt(value, i);
+                    ch = value.charCodeAt(i);
                     if (i === 0 && ch === 0x30 && length > 1 /* must not start with 0 */ || ch < 0x30 /* 0 */ || ch > 0x39 /* 9 */) {
                         return isNumericLookup[value] = false;
                     }
@@ -395,7 +395,7 @@ function toLookup(...objs) {
  * @param fn - The function to check.
  * @returns `true` is the function is a native function, otherwise `false`
  */
-const isNativeFunction = /*@__PURE__*/ (function () {
+const isNativeFunction = /*@__PURE__*/ (() => {
     // eslint-disable-next-line @typescript-eslint/ban-types
     const lookup = new WeakMap();
     let isNative = false;
@@ -404,33 +404,9 @@ const isNativeFunction = /*@__PURE__*/ (function () {
     // eslint-disable-next-line @typescript-eslint/ban-types
     return (fn) => {
         isNative = lookup.get(fn);
-        if (isNative === void 0) {
-            sourceText = fn.toString();
-            i = sourceText.length;
-            // http://www.ecma-international.org/ecma-262/#prod-NativeFunction
-            isNative = (
-            // 29 is the length of 'function () { [native code] }' which is the smallest length of a native function string
-            i >= 29 &&
-                // 100 seems to be a safe upper bound of the max length of a native function. In Chrome and FF it's 56, in Edge it's 61.
-                i <= 100 &&
-                // This whole heuristic *could* be tricked by a comment. Do we need to care about that?
-                charCodeAt(sourceText, i - 1) === 0x7D && // }
-                // TODO: the spec is a little vague about the precise constraints, so we do need to test this across various browsers to make sure just one whitespace is a safe assumption.
-                charCodeAt(sourceText, i - 2) <= 0x20 && // whitespace
-                charCodeAt(sourceText, i - 3) === 0x5D && // ]
-                charCodeAt(sourceText, i - 4) === 0x65 && // e
-                charCodeAt(sourceText, i - 5) === 0x64 && // d
-                charCodeAt(sourceText, i - 6) === 0x6F && // o
-                charCodeAt(sourceText, i - 7) === 0x63 && // c
-                charCodeAt(sourceText, i - 8) === 0x20 && //
-                charCodeAt(sourceText, i - 9) === 0x65 && // e
-                charCodeAt(sourceText, i - 10) === 0x76 && // v
-                charCodeAt(sourceText, i - 11) === 0x69 && // i
-                charCodeAt(sourceText, i - 12) === 0x74 && // t
-                charCodeAt(sourceText, i - 13) === 0x61 && // a
-                charCodeAt(sourceText, i - 14) === 0x6E && // n
-                charCodeAt(sourceText, i - 15) === 0x5B // [
-            );
+        if (isNative == null) {
+            i = (sourceText = fn.toString()).length;
+            isNative = i > 28 && sourceText.indexOf('[native code] }') === i - 15;
             lookup.set(fn, isNative);
         }
         return isNative;
@@ -465,7 +441,7 @@ const onResolveAll = (...maybePromises) => {
     let ii = maybePromises.length;
     for (; i < ii; ++i) {
         maybePromise = maybePromises[i];
-        if ((maybePromise = maybePromises[i]) instanceof Promise) {
+        if (isPromise(maybePromise = maybePromises[i])) {
             if (firstPromise === void 0) {
                 firstPromise = maybePromise;
             }
@@ -482,7 +458,6 @@ const onResolveAll = (...maybePromises) => {
     }
     return Promise.all(promises);
 };
-const charCodeAt = (str, index) => str.charCodeAt(index);
 
 /** @internal */
 const instanceRegistration = (key, value) => new Resolver(key, 0 /* ResolverStrategy.instance */, value);
@@ -891,6 +866,21 @@ class Container {
             this._disposableResolvers.set(key, resolver);
         }
         return resolver;
+    }
+    deregister(key) {
+        validateKey(key);
+        const resolver = this._resolvers.get(key);
+        if (resolver != null) {
+            this._resolvers.delete(key);
+            if (isResourceKey(key)) {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete this.res[key];
+            }
+            if (this._disposableResolvers.has(key)) {
+                resolver.dispose();
+                this._disposableResolvers.delete(key);
+            }
+        }
     }
     // public deregisterResolverFor<K extends Key>(key: K, searchAncestors: boolean): void {
     //   validateKey(key);

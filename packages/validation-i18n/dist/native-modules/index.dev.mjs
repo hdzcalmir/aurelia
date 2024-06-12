@@ -1,5 +1,5 @@
 import { I18N, Signals } from '../../../i18n/dist/native-modules/index.mjs';
-import { DI, resolve, IEventAggregator, Registration, noop } from '../../../kernel/dist/native-modules/index.mjs';
+import { DI, resolve, IEventAggregator, isFunction, Registration, noop } from '../../../kernel/dist/native-modules/index.mjs';
 import { IPlatform } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { ValidationMessageProvider } from '../../../validation/dist/native-modules/index.mjs';
 import { ValidationController, ValidationControllerFactory, getDefaultValidationHtmlConfiguration, ValidationHtmlConfiguration } from '../../../validation-html/dist/native-modules/index.mjs';
@@ -17,6 +17,7 @@ class LocalizedValidationControllerFactory extends ValidationControllerFactory {
         return container.invoke(LocalizedValidationController, _dynamicDependencies);
     }
 }
+const explicitMessageKey = Symbol.for('au:validation:explicit-message-key');
 class LocalizedValidationMessageProvider extends ValidationMessageProvider {
     constructor(keyConfiguration = resolve(I18nKeyConfiguration), ea = resolve(IEventAggregator)) {
         super(undefined, []);
@@ -34,11 +35,15 @@ class LocalizedValidationMessageProvider extends ValidationMessageProvider {
         });
     }
     getMessage(rule) {
-        const parsedMessage = this.registeredMessages.get(rule);
-        if (parsedMessage !== void 0) {
-            return parsedMessage;
+        const messageKey = isFunction(rule.getMessage) ? rule.getMessage() : rule.messageKey;
+        const lookup = this.registeredMessages.get(rule);
+        if (lookup != null) {
+            const parsedMessage = lookup.get(explicitMessageKey) ?? lookup.get(messageKey);
+            if (parsedMessage !== void 0) {
+                return parsedMessage;
+            }
         }
-        return this.setMessage(rule, this.i18n.tr(this.getKey(rule.messageKey)));
+        return this.setMessage(rule, this.i18n.tr(this.getKey(messageKey)));
     }
     getDisplayName(propertyName, displayName) {
         if (displayName !== null && displayName !== undefined) {

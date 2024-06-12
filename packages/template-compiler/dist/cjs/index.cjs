@@ -477,7 +477,7 @@ class DotSeparatedAttributePattern {
 p = Symbol.metadata;
 
 DotSeparatedAttributePattern[p] = {
-    [t.registrableMetadataKey]: B.create([ {
+    [t.registrableMetadataKey]: /*@__PURE__*/ B.create([ {
         pattern: "PART.PART",
         symbols: "."
     }, {
@@ -502,7 +502,7 @@ class RefAttributePattern {
 m = Symbol.metadata;
 
 RefAttributePattern[m] = {
-    [t.registrableMetadataKey]: B.create([ {
+    [t.registrableMetadataKey]: /*@__PURE__*/ B.create([ {
         pattern: "ref",
         symbols: ""
     }, {
@@ -523,7 +523,7 @@ class EventAttributePattern {
 g = Symbol.metadata;
 
 EventAttributePattern[g] = {
-    [t.registrableMetadataKey]: B.create([ {
+    [t.registrableMetadataKey]: /*@__PURE__*/ B.create([ {
         pattern: "PART.trigger:PART",
         symbols: ".:"
     }, {
@@ -541,7 +541,7 @@ class ColonPrefixedBindAttributePattern {
 w = Symbol.metadata;
 
 ColonPrefixedBindAttributePattern[w] = {
-    [t.registrableMetadataKey]: B.create([ {
+    [t.registrableMetadataKey]: /*@__PURE__*/ B.create([ {
         pattern: ":PART",
         symbols: ":"
     } ], ColonPrefixedBindAttributePattern)
@@ -559,7 +559,7 @@ class AtPrefixedTriggerAttributePattern {
 b = Symbol.metadata;
 
 AtPrefixedTriggerAttributePattern[b] = {
-    [t.registrableMetadataKey]: B.create([ {
+    [t.registrableMetadataKey]: /*@__PURE__*/ B.create([ {
         pattern: "@PART",
         symbols: "@"
     }, {

@@ -66,7 +66,7 @@ export declare const RefBindingRenderer: {
 export declare const InterpolationBindingRenderer: {
     new (): {
         readonly target: "rf";
-        render(renderingCtrl: IHydratableController, target: IController, instruction: InterpolationInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
+        render(renderingCtrl: IHydratableController, target: IController | HTMLElement, instruction: InterpolationInstruction, platform: IPlatform, exprParser: IExpressionParser, observerLocator: IObserverLocator): void;
     };
 };
 export declare const PropertyBindingRenderer: {

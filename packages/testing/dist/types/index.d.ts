@@ -5,6 +5,7 @@ export { h, hJsx, } from './h';
 export { createFixture, type IFixture, onFixtureCreated, } from './startup';
 export { TestContext, PLATFORM, PLATFORMRegistration, setPlatform, createContainer, } from './test-context';
 export { inspect, } from './inspect';
+export { createSink, } from './logger-sinks';
 export { MockBinding, MockBindingBehavior, MockBrowserHistoryLocation, MockContext, MockPropertySubscriber, MockServiceLocator, MockSignaler, MockTracingExpression, MockValueConverter, CollectionChangeSet, ChangeSet, ProxyChangeSet, SpySubscriber, } from './mocks';
 export { ensureTaskQueuesEmpty, } from './scheduler';
 export { verifyBindingInstructionsEqual, verifyEqual, getVisibleText, instructionTypeName, } from './specialized-assertions';

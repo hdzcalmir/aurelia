@@ -37,9 +37,9 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 import { delegateSyntax } from '@aurelia/compat-v1';
-import { noop } from '@aurelia/kernel';
+import { Registration, noop, resolve } from '@aurelia/kernel';
 import { INode, customElement, CustomElement, } from '@aurelia/runtime-html';
-import { IDialogService, IDialogGlobalSettings, DialogConfiguration, DialogDefaultConfiguration, DefaultDialogGlobalSettings, IDialogDom, IDialogController, DialogController, DialogService, } from '@aurelia/dialog';
+import { IDialogService, IDialogGlobalSettings, DialogConfiguration, DialogDefaultConfiguration, DefaultDialogGlobalSettings, IDialogDom, IDialogController, DialogController, DialogService, IDialogDomAnimator, } from '@aurelia/dialog';
 import { createFixture, assert, createSpy, } from '@aurelia/testing';
 import { isNode } from '../../util.js';
 describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
@@ -931,7 +931,114 @@ describe('3-runtime-html/dialog/dialog-service.spec.ts', function () {
                     assert.strictEqual(disposed, 1);
                 },
             },
+            {
+                title: 'calls show/hide on custom dialog dom',
+                afterStarted: async ({ platform }, dialogService) => {
+                    const overlay = platform.document.createElement('div');
+                    const contentHost = platform.document.createElement('div');
+                    const host = platform.document.createElement('host-here');
+                    let i = 0;
+                    const { dialog } = await dialogService.open({
+                        template: 'Hello world',
+                        renderer: {
+                            render(_host, _settings) {
+                                return {
+                                    overlay,
+                                    contentHost,
+                                    show() { i = 1; },
+                                    hide() { i = 2; },
+                                    dispose() { }
+                                };
+                            }
+                        },
+                        host
+                    });
+                    assert.strictEqual(i, 1);
+                    await dialog.ok();
+                    assert.strictEqual(i, 2);
+                },
+            },
+            // #region animator
+            {
+                title: 'allows custom animator',
+                afterStarted: async ({ container }, dialogService) => {
+                    let i = 0;
+                    container.register(Registration.instance(IDialogDomAnimator, {
+                        show(_dom) { i = 1; },
+                        hide(_dom) { i = 2; }
+                    }));
+                    const result = await dialogService.open({
+                        template: 'Hello world',
+                    });
+                    assert.strictEqual(i, 1);
+                    await result.dialog.ok();
+                    assert.strictEqual(i, 2);
+                }
+            },
+            {
+                title: 'uses animator from provided animator instead of the global one',
+                afterStarted: async ({ container }, dialogService) => {
+                    let i = 0;
+                    container.register(Registration.instance(IDialogDomAnimator, {
+                        show(_dom) { throw new Error('??'); },
+                        hide(_dom) { throw new Error('??'); },
+                    }));
+                    const result = await dialogService.open({
+                        template: 'Hello world',
+                        container: container.createChild().register(Registration.instance(IDialogDomAnimator, {
+                            show(_dom) { i = 3; },
+                            hide(_dom) { i = 4; }
+                        }))
+                    });
+                    assert.strictEqual(i, 3);
+                    await result.dialog.ok();
+                    assert.strictEqual(i, 4);
+                }
+            },
+            {
+                title: 'calls deactivate before animator.hide',
+                afterStarted: async ({ container }, dialogService) => {
+                    const calls = [];
+                    container.register(Registration.instance(IDialogDomAnimator, {
+                        show(_dom) { },
+                        hide(_dom) { calls.push('hide'); },
+                    }));
+                    const result = await dialogService.open({
+                        template: 'Hello world',
+                        component: () => ({
+                            deactivate() { calls.push('deactivate'); }
+                        })
+                    });
+                    assert.deepEqual(calls, []);
+                    await result.dialog.ok();
+                    assert.deepEqual(calls, ['deactivate', 'hide']);
+                }
+            },
+            {
+                title: 'calls prevent default on form submit event',
+                async afterStarted(appCreationResult, dialogService) {
+                    let submit;
+                    let e;
+                    await dialogService.open({
+                        template: '<form submit.trigger="onSubmit($event)"><button>Submit</button></form>',
+                        component: () => class {
+                            constructor() {
+                                this.dom = resolve(IDialogDom);
+                            }
+                            activate() {
+                                submit = () => this.dom.contentHost.querySelector('button').click();
+                            }
+                            onSubmit(event) {
+                                e = event;
+                            }
+                        }
+                    });
+                    submit();
+                    assert.strictEqual(e?.defaultPrevented, true);
+                },
+            }
         ];
+        // #region test run
         for (const { title, only, afterStarted, afterTornDown, browserOnly } of testCases) {
             if (browserOnly && isNode())
                 continue;
