@@ -1301,5 +1301,354 @@ describe('3-runtime-html/custom-attributes.spec.ts', function () {
             }));
         });
     });
+    describe('bindable inheritance', function () {
+        it('works for array', async function () {
+            let CeOne = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-1',
+                        bindables: ['p21', { name: 'p22' }]
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _p1_decorators;
+                let _p1_initializers = [];
+                let _p1_extraInitializers = [];
+                var CeOne = _classThis = class {
+                    constructor() {
+                        this.p1 = __runInitializers(this, _p1_initializers, void 0);
+                        this.p21 = __runInitializers(this, _p1_extraInitializers);
+                        this.el = resolve(INode);
+                    }
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p1} ${this.p21} ${this.p22}`;
+                    }
+                };
+                __setFunctionName(_classThis, "CeOne");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _p1_decorators = [bindable];
+                    __esDecorate(null, null, _p1_decorators, { kind: "field", name: "p1", static: false, private: false, access: { has: obj => "p1" in obj, get: obj => obj.p1, set: (obj, value) => { obj.p1 = value; } }, metadata: _metadata }, _p1_initializers, _p1_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeOne = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeOne = _classThis;
+            })();
+            let CeTwo = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-2',
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = CeOne;
+                let _p3_decorators;
+                let _p3_initializers = [];
+                let _p3_extraInitializers = [];
+                var CeTwo = _classThis = class extends _classSuper {
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p3} ${this.p1} ${this.p21} ${this.p22}`;
+                    }
+                    constructor() {
+                        super(...arguments);
+                        this.p3 = __runInitializers(this, _p3_initializers, void 0);
+                        __runInitializers(this, _p3_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "CeTwo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    _p3_decorators = [bindable];
+                    __esDecorate(null, null, _p3_decorators, { kind: "field", name: "p3", static: false, private: false, access: { has: obj => "p3" in obj, get: obj => obj.p3, set: (obj, value) => { obj.p3 = value; } }, metadata: _metadata }, _p3_initializers, _p3_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeTwo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeTwo = _classThis;
+            })();
+            const { appHost } = createFixture(`<span c-1="p1:c1-p1; p21:c1-p21; p22:c1-p22"></span> <span c-2="p1:c2-p1; p21:c2-p21; p22:c2-p22; p3:c2-p3"></span>`, {}, [CeOne, CeTwo]);
+            assert.html.textContent(appHost, 'c1-p1 c1-p21 c1-p22 c2-p3 c2-p1 c2-p21 c2-p22');
+        });
+        it('works for object', async function () {
+            let CeOne = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-1',
+                        bindables: { p2: {} }
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _p1_decorators;
+                let _p1_initializers = [];
+                let _p1_extraInitializers = [];
+                var CeOne = _classThis = class {
+                    constructor() {
+                        this.p1 = __runInitializers(this, _p1_initializers, void 0);
+                        this.p2 = __runInitializers(this, _p1_extraInitializers);
+                        this.el = resolve(INode);
+                    }
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p1} ${this.p2}`;
+                    }
+                };
+                __setFunctionName(_classThis, "CeOne");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _p1_decorators = [bindable];
+                    __esDecorate(null, null, _p1_decorators, { kind: "field", name: "p1", static: false, private: false, access: { has: obj => "p1" in obj, get: obj => obj.p1, set: (obj, value) => { obj.p1 = value; } }, metadata: _metadata }, _p1_initializers, _p1_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeOne = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeOne = _classThis;
+            })();
+            let CeTwo = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-2',
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = CeOne;
+                let _p3_decorators;
+                let _p3_initializers = [];
+                let _p3_extraInitializers = [];
+                var CeTwo = _classThis = class extends _classSuper {
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p3} ${this.p1} ${this.p2}`;
+                    }
+                    constructor() {
+                        super(...arguments);
+                        this.p3 = __runInitializers(this, _p3_initializers, void 0);
+                        __runInitializers(this, _p3_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "CeTwo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    _p3_decorators = [bindable];
+                    __esDecorate(null, null, _p3_decorators, { kind: "field", name: "p3", static: false, private: false, access: { has: obj => "p3" in obj, get: obj => obj.p3, set: (obj, value) => { obj.p3 = value; } }, metadata: _metadata }, _p3_initializers, _p3_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeTwo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeTwo = _classThis;
+            })();
+            const { appHost } = createFixture(`<span c-1="p1:c1-p1; p2:c1-p2"></span> <span c-2="p1:c2-p1; p2:c2-p2; p3:c2-p3"></span>`, {}, [CeOne, CeTwo]);
+            assert.html.textContent(appHost, 'c1-p1 c1-p2 c2-p3 c2-p1 c2-p2');
+        });
+        it('works for primary bindable on parent', async function () {
+            let CeOne = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-1',
+                        bindables: { p2: { primary: true } }
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _p1_decorators;
+                let _p1_initializers = [];
+                let _p1_extraInitializers = [];
+                var CeOne = _classThis = class {
+                    constructor() {
+                        this.p1 = __runInitializers(this, _p1_initializers, 'dp1');
+                        this.p2 = __runInitializers(this, _p1_extraInitializers);
+                        this.el = resolve(INode);
+                    }
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p1} ${this.p2}`;
+                    }
+                };
+                __setFunctionName(_classThis, "CeOne");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _p1_decorators = [bindable];
+                    __esDecorate(null, null, _p1_decorators, { kind: "field", name: "p1", static: false, private: false, access: { has: obj => "p1" in obj, get: obj => obj.p1, set: (obj, value) => { obj.p1 = value; } }, metadata: _metadata }, _p1_initializers, _p1_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeOne = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeOne = _classThis;
+            })();
+            let CeTwo = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-2',
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = CeOne;
+                let _p3_decorators;
+                let _p3_initializers = [];
+                let _p3_extraInitializers = [];
+                var CeTwo = _classThis = class extends _classSuper {
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p3} ${this.p1} ${this.p2}`;
+                    }
+                    constructor() {
+                        super(...arguments);
+                        this.p3 = __runInitializers(this, _p3_initializers, 'dp3');
+                        __runInitializers(this, _p3_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "CeTwo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    _p3_decorators = [bindable];
+                    __esDecorate(null, null, _p3_decorators, { kind: "field", name: "p3", static: false, private: false, access: { has: obj => "p3" in obj, get: obj => obj.p3, set: (obj, value) => { obj.p3 = value; } }, metadata: _metadata }, _p3_initializers, _p3_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeTwo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeTwo = _classThis;
+            })();
+            const { appHost } = createFixture(`<span c-1="c1-p2"></span> <span c-2="c2-p2"></span>`, {}, [CeOne, CeTwo]);
+            assert.html.textContent(appHost, 'dp1 c1-p2 dp3 dp1 c2-p2');
+        });
+        it('works for primary bindable on child', async function () {
+            let CeOne = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-1',
+                        bindables: { p2: {} }
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _p1_decorators;
+                let _p1_initializers = [];
+                let _p1_extraInitializers = [];
+                var CeOne = _classThis = class {
+                    constructor() {
+                        this.p1 = __runInitializers(this, _p1_initializers, 'dp1');
+                        this.p2 = __runInitializers(this, _p1_extraInitializers);
+                        this.el = resolve(INode);
+                    }
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p1} ${this.p2}`;
+                    }
+                };
+                __setFunctionName(_classThis, "CeOne");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _p1_decorators = [bindable];
+                    __esDecorate(null, null, _p1_decorators, { kind: "field", name: "p1", static: false, private: false, access: { has: obj => "p1" in obj, get: obj => obj.p1, set: (obj, value) => { obj.p1 = value; } }, metadata: _metadata }, _p1_initializers, _p1_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeOne = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeOne = _classThis;
+            })();
+            let CeTwo = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-2',
+                        bindables: { p2: { primary: true } }
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = CeOne;
+                let _p3_decorators;
+                let _p3_initializers = [];
+                let _p3_extraInitializers = [];
+                var CeTwo = _classThis = class extends _classSuper {
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p3} ${this.p1} ${this.p2}`;
+                    }
+                    constructor() {
+                        super(...arguments);
+                        this.p3 = __runInitializers(this, _p3_initializers, 'dp3');
+                        __runInitializers(this, _p3_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "CeTwo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    _p3_decorators = [bindable];
+                    __esDecorate(null, null, _p3_decorators, { kind: "field", name: "p3", static: false, private: false, access: { has: obj => "p3" in obj, get: obj => obj.p3, set: (obj, value) => { obj.p3 = value; } }, metadata: _metadata }, _p3_initializers, _p3_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeTwo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeTwo = _classThis;
+            })();
+            const { appHost } = createFixture(`<span c-1="p1:c1-p1; p2:c1-p2"></span> <span c-2="c2-p2"></span>`, {}, [CeOne, CeTwo]);
+            assert.html.textContent(appHost, 'c1-p1 c1-p2 dp3 dp1 c2-p2');
+        });
+        it('does not work for if child defines a second primary bindable', async function () {
+            let CeOne = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-1',
+                        bindables: { p2: { primary: true } }
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _p1_decorators;
+                let _p1_initializers = [];
+                let _p1_extraInitializers = [];
+                var CeOne = _classThis = class {
+                    constructor() {
+                        this.p1 = __runInitializers(this, _p1_initializers, 'dp1');
+                        this.p2 = __runInitializers(this, _p1_extraInitializers);
+                        this.el = resolve(INode);
+                    }
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p1} ${this.p2}`;
+                    }
+                };
+                __setFunctionName(_classThis, "CeOne");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _p1_decorators = [bindable];
+                    __esDecorate(null, null, _p1_decorators, { kind: "field", name: "p1", static: false, private: false, access: { has: obj => "p1" in obj, get: obj => obj.p1, set: (obj, value) => { obj.p1 = value; } }, metadata: _metadata }, _p1_initializers, _p1_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeOne = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeOne = _classThis;
+            })();
+            let CeTwo = (() => {
+                let _classDecorators = [customAttribute({
+                        name: 'c-2',
+                        bindables: { p3: { primary: true } }
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = CeOne;
+                var CeTwo = _classThis = class extends _classSuper {
+                    attached(_initiator) {
+                        this.el.textContent = `${this.p3} ${this.p1} ${this.p2}`;
+                    }
+                };
+                __setFunctionName(_classThis, "CeTwo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeTwo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeTwo = _classThis;
+            })();
+            try {
+                createFixture(`<span c-1="c1-p2"></span> <span c-2="c2-p3"></span>`, {}, [CeOne, CeTwo]);
+                assert.fail('Should have thrown due to conflicting primary bindables.');
+            }
+            catch (e) {
+                assert.match(e.message, /714/, 'incorrect error code');
+            }
+        });
+    });
 });
 //# sourceMappingURL=custom-attributes.spec.js.map

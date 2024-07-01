@@ -1069,6 +1069,14 @@ const Bindable = objectFreeze({
         }
         return defs;
     },
+    /** @internal */
+    _add(bindable, Type) {
+        let bindables = getMetadata(baseName, Type);
+        if (bindables == null) {
+            defineMetadata(bindables = createLookup(), Type, baseName);
+        }
+        bindables[bindable.name] = bindable;
+    }
 });
 class BindableDefinition {
     constructor(attribute, callback, mode, primary, name, set) {
@@ -1617,6 +1625,9 @@ class CustomAttributeDefinition {
             def = nameOrDef;
         }
         const mode = firstDefined(getAttributeAnnotation(Type, 'defaultBindingMode'), def.defaultBindingMode, Type.defaultBindingMode, toView);
+        for (const bindable of Object.values(Bindable.from(def.bindables))) {
+            Bindable._add(bindable, Type);
+        }
         return new CustomAttributeDefinition(Type, firstDefined(getAttributeAnnotation(Type, 'name'), name), mergeArrays(getAttributeAnnotation(Type, 'aliases'), def.aliases, Type.aliases), getAttributeKeyFrom(name), isString(mode) ? BindingMode[mode] ?? defaultMode : mode, firstDefined(getAttributeAnnotation(Type, 'isTemplateController'), def.isTemplateController, Type.isTemplateController, false), Bindable.from(...Bindable.getAll(Type), getAttributeAnnotation(Type, 'bindables'), Type.bindables, def.bindables), firstDefined(getAttributeAnnotation(Type, 'noMultiBindings'), def.noMultiBindings, Type.noMultiBindings, false), mergeArrays(Watch.getDefinitions(Type), Type.watches), mergeArrays(getAttributeAnnotation(Type, 'dependencies'), def.dependencies, Type.dependencies), firstDefined(getAttributeAnnotation(Type, 'containerStrategy'), def.containerStrategy, Type.containerStrategy, 'reuse'));
     }
     register(container, aliasName) {
@@ -6334,6 +6345,9 @@ class CustomElementDefinition {
             else {
                 Type = generateElementType(pascalCase(name));
             }
+            for (const bindable of Object.values(Bindable.from(def.bindables))) {
+                Bindable._add(bindable, Type);
+            }
             return new CustomElementDefinition(Type, name, mergeArrays(def.aliases), fromDefinitionOrDefault('key', def, () => getElementKeyFrom(name)), fromAnnotationOrDefinitionOrTypeOrDefault('capture', def, Type, returnFalse), fromDefinitionOrDefault('template', def, returnNull), mergeArrays(def.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), def.dependencies), fromDefinitionOrDefault('injectable', def, returnNull), fromDefinitionOrDefault('needsCompile', def, returnTrue), mergeArrays(def.surrogates), Bindable.from(getElementAnnotation(Type, 'bindables'), def.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', def, Type, returnFalse), fromDefinitionOrDefault('shadowOptions', def, returnNull), fromDefinitionOrDefault('hasSlots', def, returnFalse), fromDefinitionOrDefault('enhance', def, returnFalse), fromDefinitionOrDefault('watches', def, returnEmptyArray), fromAnnotationOrTypeOrDefault('processContent', Type, returnNull));
         }
         // If a type is passed in, we ignore the Type property on the definition if it exists.
@@ -6346,6 +6360,9 @@ class CustomElementDefinition {
         // property needs to be copied. So we have that exception for 'hooks', but we may need to revisit that default behavior
         // if this turns out to be too opinionated.
         const name = fromDefinitionOrDefault('name', nameOrDef, generateElementName);
+        for (const bindable of Object.values(Bindable.from(nameOrDef.bindables))) {
+            Bindable._add(bindable, Type);
+        }
         return new CustomElementDefinition(Type, name, mergeArrays(getElementAnnotation(Type, 'aliases'), nameOrDef.aliases, Type.aliases), getElementKeyFrom(name), fromAnnotationOrDefinitionOrTypeOrDefault('capture', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('template', nameOrDef, Type, returnNull), mergeArrays(getElementAnnotation(Type, 'instructions'), nameOrDef.instructions, Type.instructions), mergeArrays(getElementAnnotation(Type, 'dependencies'), nameOrDef.dependencies, Type.dependencies), fromAnnotationOrDefinitionOrTypeOrDefault('injectable', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('needsCompile', nameOrDef, Type, returnTrue), mergeArrays(getElementAnnotation(Type, 'surrogates'), nameOrDef.surrogates, Type.surrogates), Bindable.from(...Bindable.getAll(Type), getElementAnnotation(Type, 'bindables'), Type.bindables, nameOrDef.bindables), fromAnnotationOrDefinitionOrTypeOrDefault('containerless', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('shadowOptions', nameOrDef, Type, returnNull), fromAnnotationOrDefinitionOrTypeOrDefault('hasSlots', nameOrDef, Type, returnFalse), fromAnnotationOrDefinitionOrTypeOrDefault('enhance', nameOrDef, Type, returnFalse), mergeArrays(nameOrDef.watches, Watch.getDefinitions(Type), Type.watches), fromAnnotationOrDefinitionOrTypeOrDefault('processContent', nameOrDef, Type, returnNull));
     }
     static getOrCreate(partialDefinition) {
@@ -9381,6 +9398,21 @@ Switch.$au = {
     bindables: ['value'],
 };
 let caseId = 0;
+const bindables = [
+    'value',
+    {
+        name: 'fallThrough',
+        mode: oneTime,
+        set(v) {
+            switch (v) {
+                case 'true': return true;
+                case 'false': return false;
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                default: return !!v;
+            }
+        }
+    }
+];
 class Case {
     constructor() {
         /** @internal */ this.id = ++caseId;
@@ -9467,6 +9499,9 @@ class Case {
         return this.view?.accept(visitor);
     }
 }
+(() => {
+    defineAttribute({ name: 'case', bindables, isTemplateController: true }, Case);
+})();
 class DefaultCase extends Case {
     linkToSwitch($switch) {
         if ($switch.defaultCase !== void 0) {
@@ -9476,29 +9511,7 @@ class DefaultCase extends Case {
     }
 }
 (() => {
-    // Notes:
-    // - The usage of $au is intentionally avoided here.
-    //   Once the 'case' TC is defined, the TC definition is put to the Class[Symbol.metadata], that is implicitly inherited by the 'default-case' TC.
-    //   Thus, when resolving the definition, the definition from the 'case' TC is found and used, rendering the $au property not-useful.
-    // - The order of the 'case' and 'default-case' TC definitions is important also because of above said reason.
-    //   We want to deliberately define the 'case' TC second, so that the 'default-case' cannot inherit the metadata.
-    const bindables = [
-        'value',
-        {
-            name: 'fallThrough',
-            mode: oneTime,
-            set(v) {
-                switch (v) {
-                    case 'true': return true;
-                    case 'false': return false;
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    default: return !!v;
-                }
-            }
-        }
-    ];
     defineAttribute({ name: 'default-case', bindables, isTemplateController: true }, DefaultCase);
-    defineAttribute({ name: 'case', bindables, isTemplateController: true }, Case);
 })();
 
 var _a, _b, _c;

@@ -48,6 +48,8 @@ export declare const Bindable: Readonly<{
         name: string;
     }))[] | undefined)[]): Record<string, BindableDefinition>;
     getAll(Type: Constructable): readonly BindableDefinition[];
+    /** @internal */
+    _add(bindable: BindableDefinition, Type: Constructable): void;
 }>;
 export declare class BindableDefinition {
     readonly attribute: string;
