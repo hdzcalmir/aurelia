@@ -4005,7 +4005,7 @@ class HrefCustomAttribute {
         if (t == null) {
             this.ys.removeAttribute("href");
         } else {
-            if (this.Ze.options.useUrlFragmentHash && this.we.isRoot && !/^[.#]/.test(t)) {
+            if (this.Ze.options.useUrlFragmentHash && this.we.isRoot && !/^[.#]/.test(t) && !this.Ns) {
                 t = `#${t}`;
             }
             this.ys.setAttribute("href", t);

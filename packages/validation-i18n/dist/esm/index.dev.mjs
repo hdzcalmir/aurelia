@@ -1,7 +1,7 @@
 import { I18N, Signals } from '@aurelia/i18n';
-import { DI, resolve, IEventAggregator, isFunction, Registration, noop } from '@aurelia/kernel';
+import { DI, resolve, IEventAggregator, Registration, noop } from '@aurelia/kernel';
 import { IPlatform } from '@aurelia/runtime-html';
-import { ValidationMessageProvider } from '@aurelia/validation';
+import { ValidationMessageProvider, ValidationRuleAliasMessage } from '@aurelia/validation';
 import { ValidationController, ValidationControllerFactory, getDefaultValidationHtmlConfiguration, ValidationHtmlConfiguration } from '@aurelia/validation-html';
 
 const I18N_VALIDATION_EA_CHANNEL = 'i18n:locale:changed:validation';
@@ -35,7 +35,7 @@ class LocalizedValidationMessageProvider extends ValidationMessageProvider {
         });
     }
     getMessage(rule) {
-        const messageKey = isFunction(rule.getMessage) ? rule.getMessage() : rule.messageKey;
+        const messageKey = rule.messageKey;
         const lookup = this.registeredMessages.get(rule);
         if (lookup != null) {
             const parsedMessage = lookup.get(explicitMessageKey) ?? lookup.get(messageKey);
@@ -43,7 +43,19 @@ class LocalizedValidationMessageProvider extends ValidationMessageProvider {
                 return parsedMessage;
             }
         }
-        return this.setMessage(rule, this.i18n.tr(this.getKey(messageKey)));
+        let key = messageKey;
+        if (!this.i18n.i18next.exists(key)) {
+            const validationMessages = ValidationRuleAliasMessage.getDefaultMessages(rule);
+            const messageCount = validationMessages.length;
+            if (messageCount === 1 && messageKey === void 0) {
+                key = validationMessages[0].defaultMessage;
+            }
+            else {
+                key = validationMessages.find(m => m.name === messageKey)?.defaultMessage;
+            }
+            key ??= messageKey;
+        }
+        return this.setMessage(rule, this.i18n.tr(this.getKey(key)));
     }
     getDisplayName(propertyName, displayName) {
         if (displayName !== null && displayName !== undefined) {

@@ -1,4 +1,4 @@
-import { DI, Protocol, toArray, onResolve, resolve, IServiceLocator, ILogger, isFunction, Registration, noop } from '../../../kernel/dist/native-modules/index.mjs';
+import { DI, Protocol, toArray, onResolve, resolve, IServiceLocator, ILogger, Registration, noop } from '../../../kernel/dist/native-modules/index.mjs';
 import * as AST from '../../../expression-parser/dist/native-modules/index.mjs';
 import { IExpressionParser, PrimitiveLiteralExpression } from '../../../expression-parser/dist/native-modules/index.mjs';
 import { mixinAstEvaluator, Scope, astEvaluate } from '../../../runtime-html/dist/native-modules/index.mjs';
@@ -79,10 +79,13 @@ const ValidationRuleAliasMessage = Object.freeze({
             };
             aliases = toArray(Object.entries(allMessages)).map(([name, defaultMessage]) => ({ name, defaultMessage }));
         }
-        defineMetadata(aliases, rule instanceof Function ? rule : rule.constructor, this.aliasKey);
+        defineMetadata(aliases, rule, this.aliasKey);
     },
     getDefaultMessages(rule) {
-        return getMetadata(this.aliasKey, rule instanceof Function ? rule : rule.constructor);
+        const messages = getMetadata(this.aliasKey, rule);
+        if (messages != null || rule instanceof Function)
+            return messages;
+        return getMetadata(this.aliasKey, rule.constructor);
     }
 });
 function validationRule(definition) {
@@ -98,9 +101,11 @@ function validationRule(definition) {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 class BaseValidationRule {
+    get messageKey() { return this._messageKey; }
+    set messageKey(value) { this._messageKey = value; }
     constructor(messageKey = (void 0)) {
-        this.messageKey = messageKey;
         this.tag = (void 0);
+        this._messageKey = messageKey;
     }
     canExecute(_object) { return true; }
     execute(_value, _object) {
@@ -254,15 +259,25 @@ class EqualsRule extends BaseValidationRule {
 }
 EqualsRule.$TYPE = 'EqualsRule';
 class StateRule extends BaseValidationRule {
-    constructor(validState, stateFunction, messageMapper) {
+    get messageKey() { return this._explicitMessageKey ?? this._messageKey ?? (void 0); }
+    set messageKey(value) { this._explicitMessageKey = value; }
+    constructor(validState, stateFunction, messages) {
         super(void 0);
         this.validState = validState;
         this.stateFunction = stateFunction;
-        this.messageMapper = messageMapper;
-        this._state = validState;
+        this.messages = messages;
+        this._explicitMessageKey = null;
+        const aliases = [];
+        for (const [name, defaultMessage] of Object.entries(messages)) {
+            aliases.push({ name, defaultMessage });
+        }
+        ValidationRuleAliasMessage.setDefaultMessage(this, { aliases }, false);
     }
     execute(value, object) {
-        return onResolve(this.stateFunction(value, object), state => (this._state = state) === this.validState);
+        return onResolve(this.stateFunction(value, object), state => {
+            this._messageKey = state;
+            return state === this.validState;
+        });
     }
     accept(_visitor) {
         {
@@ -270,7 +285,6 @@ class StateRule extends BaseValidationRule {
             console.warn('Serialization of a StateRule is not supported.');
         }
     }
-    getMessage() { return this.messageKey = this.messageMapper(this._state); }
 }
 StateRule.$TYPE = 'StateRule';
 // #region definitions
@@ -507,8 +521,8 @@ class PropertyRule {
         this.property.displayName = name;
         return this;
     }
-    satisfiesState(validState, stateFunction, messageMapper) {
-        return this.addRule(new StateRule(validState, stateFunction, messageMapper));
+    satisfiesState(validState, stateFunction, messages) {
+        return this.addRule(new StateRule(validState, stateFunction, messages));
     }
     /**
      * Applies an ad-hoc rule function to the ensured property or object.
@@ -775,8 +789,7 @@ class ValidationMessageProvider {
         }
     }
     getMessage(rule) {
-        const $providesMessage = isFunction(rule.getMessage);
-        const messageKey = $providesMessage ? rule.getMessage() : rule.messageKey;
+        const messageKey = rule.messageKey;
         const lookup = this.registeredMessages.get(rule);
         if (lookup != null) {
             const parsedMessage = lookup.get(explicitMessageKey) ?? lookup.get(messageKey);
@@ -784,8 +797,6 @@ class ValidationMessageProvider {
                 return parsedMessage;
             }
         }
-        if ($providesMessage)
-            return this.setMessage(rule, messageKey);
         const validationMessages = ValidationRuleAliasMessage.getDefaultMessages(rule);
         let message;
         const messageCount = validationMessages.length;

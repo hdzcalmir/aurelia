@@ -1153,7 +1153,7 @@ describe('validation/rule-provider.spec.ts', function () {
                 const rule = validationRules
                     .on(obj)
                     .ensure('name')
-                    .satisfiesState('none', (_value, _object) => state, ($state) => $state === 'fooError' ? 'foo' : 'bar')
+                    .satisfiesState('none', (_value, _object) => state, { fooError: 'foo', barError: 'bar' })
                     .rules[0];
                 state = 'fooError';
                 let result = await rule.validate(obj);
@@ -1174,7 +1174,7 @@ describe('validation/rule-provider.spec.ts', function () {
                 const rule = validationRules
                     .on(obj)
                     .ensure('name')
-                    .satisfiesState('none', (_value, _object) => new Promise((res) => setTimeout(() => res(state), 1)), ($state) => $state === 'fooError' ? 'foo' : 'bar')
+                    .satisfiesState('none', (_value, _object) => new Promise((res) => setTimeout(() => res(state), 1)), { fooError: 'foo', barError: 'bar' })
                     .rules[0];
                 state = 'fooError';
                 let result = await rule.validate(obj);
@@ -1195,7 +1195,10 @@ describe('validation/rule-provider.spec.ts', function () {
                 const rule = validationRules
                     .on(obj)
                     .ensure('name')
-                    .satisfiesState('none', (_value, _object) => state, ($state) => `\${$displayName} is ${$state === 'fooError' ? 'foo' : 'bar'} (value: \${$value}).`)
+                    .satisfiesState('none', (_value, _object) => state, {
+                    fooError: `\${$displayName} is foo (value: \${$value}).`,
+                    barError: `\${$displayName} is bar (value: \${$value}).`,
+                })
                     .rules[0];
                 state = 'fooError';
                 let result = await rule.validate(obj);
@@ -1216,7 +1219,7 @@ describe('validation/rule-provider.spec.ts', function () {
                 const rule = validationRules
                     .on(obj)
                     .ensure('name')
-                    .satisfiesState('none', (_value, _object) => state, ($state) => $state === 'fooError' ? 'foo' : 'bar')
+                    .satisfiesState('none', (_value, _object) => state, { fooError: 'foo', barError: 'bar' })
                     .withMessage('baz')
                     .rules[0];
                 state = 'fooError';

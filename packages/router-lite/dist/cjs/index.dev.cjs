@@ -4958,7 +4958,8 @@ class HrefCustomAttribute {
         else {
             if (this._router.options.useUrlFragmentHash
                 && this._ctx.isRoot
-                && !/^[.#]/.test(newValue)) {
+                && !/^[.#]/.test(newValue)
+                && !this._isExternal) {
                 newValue = `#${newValue}`;
             }
             this._el.setAttribute('href', newValue);

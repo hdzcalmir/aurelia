@@ -49,15 +49,26 @@ class LocalizedValidationMessageProvider extends o.ValidationMessageProvider {
         }));
     }
     getMessage(e) {
-        const t = i.isFunction(e.getMessage) ? e.getMessage() : e.messageKey;
-        const o = this.registeredMessages.get(e);
-        if (o != null) {
-            const e = o.get(s) ?? o.get(t);
+        const i = e.messageKey;
+        const t = this.registeredMessages.get(e);
+        if (t != null) {
+            const e = t.get(s) ?? t.get(i);
             if (e !== void 0) {
                 return e;
             }
         }
-        return this.setMessage(e, this.i18n.tr(this.getKey(t)));
+        let r = i;
+        if (!this.i18n.i18next.exists(r)) {
+            const t = o.ValidationRuleAliasMessage.getDefaultMessages(e);
+            const a = t.length;
+            if (a === 1 && i === void 0) {
+                r = t[0].defaultMessage;
+            } else {
+                r = t.find((e => e.name === i))?.defaultMessage;
+            }
+            r ??= i;
+        }
+        return this.setMessage(e, this.i18n.tr(this.getKey(r)));
     }
     getDisplayName(e, i) {
         if (i !== null && i !== undefined) {
