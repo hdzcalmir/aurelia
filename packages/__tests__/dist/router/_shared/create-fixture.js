@@ -45,7 +45,7 @@ export function translateOptions(routerOptionsSpec) {
     //   : 'integrated';
     // console.log('SyncStates', syncStates.toString());
     return {
-        additiveInstructionDefault: false,
+        completeStateNavigations: true,
         swapOrder: swap,
         navigationSyncStates: syncStates,
         // routingHookIntegration: integration,
@@ -104,6 +104,7 @@ export async function createFixture(Component, deps = [], createHIAConfig = null
             hia.setPhase('stop');
             RouterConfiguration.customize();
             await au.stop(true);
+            au.dispose();
         },
         logTicks(callback) {
             return startTickLogging(window, callback);

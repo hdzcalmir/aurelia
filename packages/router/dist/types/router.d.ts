@@ -73,11 +73,12 @@ export interface ILoadOptions {
      */
     replace?: boolean;
     /**
-     * Whether the instructions should be appended to a current navigation
-     * in progress (if any). If no current navigation is in progress, the
-     * instructions will be treated as a new navigation. Default: false
+     * Whether the instructions should be appended to a navigation coordinator,
+     * the coordinator of the current navigation in progress (if any). If no
+     * current navigation is in progress, the instructions will be treated as
+     * a new navigation. Default: false
      */
-    append?: boolean;
+    append?: boolean | NavigationCoordinator;
     /**
      * The origin of the navigation. Will also be used as context if no
      * context is specified.
@@ -146,6 +147,11 @@ export declare class Router implements IRouter {
      * Whether the router is currently navigating.
      */
     get isNavigating(): boolean;
+    /**
+     * Whether the router has a navigation that's open for more
+     * instructions to be appended.
+     */
+    get hasOpenNavigation(): boolean;
     /**
      * Whether navigations are restricted/synchronized beyond the minimum.
      */
@@ -252,7 +258,7 @@ export declare class Router implements IRouter {
      * @param instructions - The instructions to append
      * @param scope - The scope of the instructions
      */
-    appendInstructions(instructions: RoutingInstruction[], scope?: RoutingScope | null): void;
+    appendInstructions(instructions: RoutingInstruction[], scope?: RoutingScope | null, coordinator?: NavigationCoordinator | null): void;
     /**
      * Update the navigation with full state, url, query string and title. The
      * appropriate hooks are called. The `activeComponents` are also set.

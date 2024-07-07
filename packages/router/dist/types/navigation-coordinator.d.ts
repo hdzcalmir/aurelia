@@ -3,7 +3,7 @@ import { Navigation } from './navigation';
 import { IEndpoint } from './endpoints/endpoint';
 import { OpenPromise } from './utilities/open-promise';
 import { RoutingInstruction } from './instructions/routing-instruction';
-import { Step } from './index';
+import { RoutingScope, Step } from './index';
 /**
  * The navigation coordinator coordinates navigation between endpoints/entities
  * and their navigation states. The coordinator keeps the endpoints synchronized
@@ -31,7 +31,7 @@ import { Step } from './index';
  * - **loaded**: fulfilled when loading (if any) has been called
  * - **routed**: fulfilled when initial routing hooks (if any) have been called
  * - **bound**: fulfilled when bind has been called
- * - **swwap**:
+ * - **swap**:
  * - **completed**: fulfilled when everything is done
  */
 export type NavigationState = 'guardedUnload' | 'guardedLoad' | 'guarded' | 'unloaded' | 'loaded' | 'routed' | 'bound' | 'swapped' | 'completed';
@@ -92,6 +92,10 @@ export declare class NavigationCoordinator {
      * The navigation that created the coordinator.
      */
     readonly navigation: Navigation;
+    instructions: RoutingInstruction[];
+    matchedInstructions: RoutingInstruction[];
+    processedInstructions: RoutingInstruction[];
+    changedEndpoints: IEndpoint[];
     /**
      * Whether the coordinator is running/has started entity transitions.
      */
@@ -113,9 +117,13 @@ export declare class NavigationCoordinator {
      */
     appendedInstructions: RoutingInstruction[];
     /**
+     * Whether the coordinator is closed for new appended instructions.
+     */
+    closed: boolean;
+    /**
      * The entities the coordinator is coordinating.
      */
-    private readonly entities;
+    readonly entities: Entity[];
     /**
      * The sync states the coordinator is coordinating.
      */
@@ -137,6 +145,41 @@ export declare class NavigationCoordinator {
      * @param options - The navigation coordinator options
      */
     static create(router: IRouter, navigation: Navigation, options: NavigationCoordinatorOptions): NavigationCoordinator;
+    /**
+     * Append instructions to the current process.
+     *
+     * @param instructions - The instructions to append
+     */
+    appendInstructions(instructions: RoutingInstruction[]): void;
+    /**
+     * Remove instructions from the current process.
+     *
+     * @param instructions - The instructions to remove
+     */
+    removeInstructions(instructions: RoutingInstruction[]): void;
+    private manageDefaults;
+    /**
+     * Process the appended instructions, moving them to matched or remaining.
+     */
+    processInstructions(): Promise<IEndpoint[]>;
+    processInstructionsForScope(scope: RoutingScope): Promise<IEndpoint[]>;
+    /**
+     * Get all instructions for a specific scope
+     */
+    getInstructionsForScope(scope: RoutingScope): RoutingInstruction[];
+    /**
+     * Ensure that there's a clear all instruction present in instructions for a scope.
+     */
+    ensureClearStateInstruction(scope: RoutingScope): void;
+    /**
+     * Match the instructions to available endpoints within, and with the help of, their scope.
+     *
+     * @param scope - The scope to match the instructions within
+     * @param instructions - The instructions to matched
+     * @param alreadyFound - The already found matches
+     * @param disregardViewports - Whether viewports should be ignored when matching
+     */
+    matchEndpoints(scope: RoutingScope, disregardViewports?: boolean): void;
     /**
      * Run the navigation coordination, transitioning all entities/endpoints
      */
@@ -209,25 +252,6 @@ export declare class NavigationCoordinator {
      */
     cancel(): void;
     /**
-     * Enqueue instructions that should be appended to the navigation
-     *
-     * @param instructions - The instructions that should be appended to the navigation
-     */
-    enqueueAppendedInstructions(instructions: RoutingInstruction[]): void;
-    /**
-     * Dequeue appended instructions to either matched or remaining except default instructions
-     * where there's a non-default already in the lists.
-     *
-     * @param matchedInstructions - The matched instructions
-     * @param earlierMatchedInstructions - The earlier matched instructions
-     * @param remainingInstructions - The remaining instructions
-     * @param appendedInstructions - The instructions to append
-     */
-    dequeueAppendedInstructions(matchedInstructions: RoutingInstruction[], earlierMatchedInstructions: RoutingInstruction[], remainingInstructions: RoutingInstruction[]): {
-        matchedInstructions: RoutingInstruction[];
-        remainingInstructions: RoutingInstruction[];
-    };
-    /**
      * Check if a navigation state has been reached, notifying waiting
      * endpoints if so.
      *
@@ -239,6 +263,19 @@ export declare class NavigationCoordinator {
      * now unresolved ones back.
      */
     private recheckSyncStates;
+    /**
+     * Get all endpoints affected by any clear all routing instructions and then remove those
+     * routing instructions.
+     *
+     * @param instructions - The instructions to process
+     */
+    private getClearAllEndpoints;
+    /**
+     * Deal with/throw an unknown route error.
+     *
+     * @param instructions - The failing instructions
+     */
+    private createUnknownRouteError;
 }
 export {};
 //# sourceMappingURL=navigation-coordinator.d.ts.map

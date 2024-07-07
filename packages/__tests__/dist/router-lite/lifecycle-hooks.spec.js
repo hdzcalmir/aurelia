@@ -259,10 +259,10 @@ describe('router-lite/lifecycle-hooks.spec.ts', function () {
                     this.logger.trace(`canLoad ${next.instruction.component}`);
                     const claim = next.data.claim ?? null;
                     if (claim === null)
-                        return true;
-                    return this.authService.hasClaim(claim.type, claim.value)
-                        ? true
-                        : 'forbidden';
+                        return;
+                    if (this.authService.hasClaim(claim.type, claim.value))
+                        return;
+                    return 'forbidden';
                 }
             };
             __setFunctionName(_classThis, "AuthorizationHook");

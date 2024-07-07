@@ -7,6 +7,11 @@ import { Endpoint, EndpointType } from '../endpoints/endpoint';
 import { IRouter, IRouterConfiguration, Navigation } from '../index';
 import { EndpointHandle, InstructionEndpoint } from './instruction-endpoint';
 import { IContainer } from '@aurelia/kernel';
+export interface IRoutingInstructionStringifyOptions {
+    excludeEndpoint?: boolean;
+    endpointContext?: boolean;
+    fullState?: boolean;
+}
 /**
  * The routing instructions are the core of the router's navigations. All
  * navigation instructions to the router are translated to a set of
@@ -124,10 +129,10 @@ export declare class RoutingInstruction {
      *
      * @param context - The context (used for syntax) within to stringify the instructions
      * @param instructions - The instructions to stringify
-     * @param excludeEndpoint - Whether to exclude endpoint names in the string
-     * @param endpointContext - Whether to include endpoint context in the string
+     * @param options - The options for stringifying the instructions
+     * @param endpointContext - Whether to include endpoint context in the string. [Deprecated] Use the new interface instead: { excludeEndpoint: boolean; endpointContext: boolean; }
      */
-    static stringify(context: IRouterConfiguration | IRouter | IContainer, instructions: RoutingInstruction[] | string, excludeEndpoint?: boolean, endpointContext?: boolean): string;
+    static stringify(context: IRouterConfiguration | IRouter | IContainer, instructions: RoutingInstruction[] | string, options?: IRoutingInstructionStringifyOptions | boolean, endpointContext?: boolean): string;
     /**
      * Resolve a list of routing instructions, returning a promise that should be awaited if needed.
      *
@@ -203,6 +208,11 @@ export declare class RoutingInstruction {
      */
     get hasNextScopeInstructions(): boolean;
     /**
+     * Get the dynasty of the routing instruction. The dynasty is the instruction
+     * itself and all its descendants (next scope instructions iteratively).
+     */
+    get dynasty(): RoutingInstruction[];
+    /**
      * Whether the routing instruction is unresolved.
      */
     get isUnresolved(): boolean;
@@ -252,11 +262,12 @@ export declare class RoutingInstruction {
      * Stringify the routing instruction, recursively down next scope/child instructions.
      *
      * @param context - The context (used for syntax) within to stringify the instructions
-     * @param excludeEndpoint - Whether to exclude endpoint names in the string
-     * @param endpointContext - Whether to include endpoint context in the string
+     * @param options - The options for stringifying the instructions
+     * @param endpointContext - Whether to include endpoint context in the string.
+     * [Deprecated] Use the new interface instead: { excludeEndpoint: boolean; endpointContext: boolean; }
      * @param shallow - Whether to stringify next scope instructions
      */
-    stringify(context: IRouterConfiguration | IRouter | IContainer, excludeEndpoint?: boolean, endpointContext?: boolean, shallow?: boolean): string;
+    stringify(context: IRouterConfiguration | IRouter | IContainer, options?: IRoutingInstructionStringifyOptions | boolean, endpointContextOrShallow?: boolean, shallow?: boolean): string;
     /**
      * Clone the routing instruction.
      *

@@ -237,6 +237,8 @@ describe('router/router.lifecycle-hooks.spec.ts', function () {
                 await $load('/my-two', router, platform);
                 await $load('-', router, platform);
                 assert.strictEqual(calledHooks.join('|'), expected.join('|'), `calledHooks`);
+                // Make sure there's time to store the result before teardown. Should only be needed in testing.
+                await new Promise((resolve) => setTimeout(resolve, 0));
                 await $teardown();
             });
         }
