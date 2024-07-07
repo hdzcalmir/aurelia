@@ -650,5 +650,137 @@ describe('3-runtime-html/custom-elements.spec.ts', function () {
             ]);
         });
     });
+    describe('bindable inheritance', function () {
+        it('works for array', async function () {
+            let CeOne = (() => {
+                let _classDecorators = [customElement({
+                        name: 'c-1',
+                        template: '${p1} ${p21} ${p22}',
+                        bindables: ['p21', { name: 'p22' }]
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _p1_decorators;
+                let _p1_initializers = [];
+                let _p1_extraInitializers = [];
+                var CeOne = _classThis = class {
+                    constructor() {
+                        this.p1 = __runInitializers(this, _p1_initializers, void 0);
+                        __runInitializers(this, _p1_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "CeOne");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _p1_decorators = [bindable];
+                    __esDecorate(null, null, _p1_decorators, { kind: "field", name: "p1", static: false, private: false, access: { has: obj => "p1" in obj, get: obj => obj.p1, set: (obj, value) => { obj.p1 = value; } }, metadata: _metadata }, _p1_initializers, _p1_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeOne = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeOne = _classThis;
+            })();
+            let CeTwo = (() => {
+                let _classDecorators = [customElement({
+                        name: 'c-2',
+                        template: '${p3} ${p1} ${p21} ${p22}',
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = CeOne;
+                let _p3_decorators;
+                let _p3_initializers = [];
+                let _p3_extraInitializers = [];
+                var CeTwo = _classThis = class extends _classSuper {
+                    constructor() {
+                        super(...arguments);
+                        this.p3 = __runInitializers(this, _p3_initializers, void 0);
+                        __runInitializers(this, _p3_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "CeTwo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    _p3_decorators = [bindable];
+                    __esDecorate(null, null, _p3_decorators, { kind: "field", name: "p3", static: false, private: false, access: { has: obj => "p3" in obj, get: obj => obj.p3, set: (obj, value) => { obj.p3 = value; } }, metadata: _metadata }, _p3_initializers, _p3_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeTwo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeTwo = _classThis;
+            })();
+            const { appHost } = createFixture('<c-1 p1="c1-p1" p21="c1-p21" p22="c1-p22"></c-1> <c-2 p1="c2-p1" p21="c2-p21" p22="c2-p22" p3="c2-p3"></c-2>', {}, [CeOne, CeTwo]);
+            assert.html.textContent(appHost, 'c1-p1 c1-p21 c1-p22 c2-p3 c2-p1 c2-p21 c2-p22');
+        });
+        it('works for object', async function () {
+            let CeOne = (() => {
+                let _classDecorators = [customElement({
+                        name: 'c-1',
+                        template: '${p1} ${p2}',
+                        bindables: { p2: {} }
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _p1_decorators;
+                let _p1_initializers = [];
+                let _p1_extraInitializers = [];
+                var CeOne = _classThis = class {
+                    constructor() {
+                        this.p1 = __runInitializers(this, _p1_initializers, void 0);
+                        __runInitializers(this, _p1_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "CeOne");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                    _p1_decorators = [bindable];
+                    __esDecorate(null, null, _p1_decorators, { kind: "field", name: "p1", static: false, private: false, access: { has: obj => "p1" in obj, get: obj => obj.p1, set: (obj, value) => { obj.p1 = value; } }, metadata: _metadata }, _p1_initializers, _p1_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeOne = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeOne = _classThis;
+            })();
+            let CeTwo = (() => {
+                let _classDecorators = [customElement({
+                        name: 'c-2',
+                        template: '${p3} ${p1} ${p2}',
+                    })];
+                let _classDescriptor;
+                let _classExtraInitializers = [];
+                let _classThis;
+                let _classSuper = CeOne;
+                let _p3_decorators;
+                let _p3_initializers = [];
+                let _p3_extraInitializers = [];
+                var CeTwo = _classThis = class extends _classSuper {
+                    constructor() {
+                        super(...arguments);
+                        this.p3 = __runInitializers(this, _p3_initializers, void 0);
+                        __runInitializers(this, _p3_extraInitializers);
+                    }
+                };
+                __setFunctionName(_classThis, "CeTwo");
+                (() => {
+                    const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+                    _p3_decorators = [bindable];
+                    __esDecorate(null, null, _p3_decorators, { kind: "field", name: "p3", static: false, private: false, access: { has: obj => "p3" in obj, get: obj => obj.p3, set: (obj, value) => { obj.p3 = value; } }, metadata: _metadata }, _p3_initializers, _p3_extraInitializers);
+                    __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+                    CeTwo = _classThis = _classDescriptor.value;
+                    if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    __runInitializers(_classThis, _classExtraInitializers);
+                })();
+                return CeTwo = _classThis;
+            })();
+            const { appHost } = createFixture('<c-1 p1="c1-p1" p2="c1-p2"></c-1> <c-2 p1="c2-p1" p2="c2-p2" p3="c2-p3"></c-2>', {}, [CeOne, CeTwo]);
+            assert.html.textContent(appHost, 'c1-p1 c1-p2 c2-p3 c2-p1 c2-p2');
+        });
+    });
 });
 //# sourceMappingURL=custom-elements.spec.js.map

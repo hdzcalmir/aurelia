@@ -17,24 +17,32 @@ const e = {
         return t[Symbol.metadata]?.[e];
     },
     define(e, t, ...n) {
-        const r = t[Symbol.metadata] ??= Object.create(null);
-        const l = n.length;
-        switch (l) {
+        let l = Object.getOwnPropertyDescriptor(t, Symbol.metadata)?.value;
+        if (l == null) {
+            Object.defineProperty(t, Symbol.metadata, {
+                value: l = Object.create(null),
+                enumerable: true,
+                configurable: true,
+                writable: true
+            });
+        }
+        const r = n.length;
+        switch (r) {
           case 0:
             throw new Error("At least one key must be provided");
 
           case 1:
-            r[n[0]] = e;
+            l[n[0]] = e;
             return;
 
           case 2:
-            r[n[0]] = r[n[1]] = e;
+            l[n[0]] = l[n[1]] = e;
             return;
 
           default:
             {
-                for (let t = 0; t < l; ++t) {
-                    r[n[t]] = e;
+                for (let t = 0; t < r; ++t) {
+                    l[n[t]] = e;
                 }
                 return;
             }

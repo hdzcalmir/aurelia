@@ -25,7 +25,7 @@ export interface IValidationMessageProvider {
 }
 export declare const IValidationMessageProvider: import("@aurelia/kernel").InterfaceSymbol<IValidationMessageProvider>;
 export interface ValidationRuleAlias {
-    name: string;
+    name: PropertyKey;
     defaultMessage?: string;
 }
 export interface ValidationRuleDefinition {
@@ -45,9 +45,11 @@ export declare function validationRule(definition: ValidationRuleDefinition): <T
  * Abstract validation rule.
  */
 export declare class BaseValidationRule<TValue = any, TObject extends IValidateable = IValidateable> implements IValidationRule<TValue, TObject> {
-    messageKey: string;
     static readonly $TYPE: string;
     tag?: string;
+    protected _messageKey: string;
+    get messageKey(): string;
+    set messageKey(value: string);
     constructor(messageKey?: string);
     canExecute(_object?: IValidateable): boolean;
     execute(_value: TValue, _object?: TObject): boolean | Promise<boolean>;
@@ -143,16 +145,18 @@ export declare class EqualsRule extends BaseValidationRule implements IEqualsRul
     execute(value: unknown): boolean | Promise<boolean>;
     accept(visitor: IValidationVisitor): string;
 }
-export declare class StateRule<TValue = any, TObject extends IValidateable = IValidateable, TState = unknown> extends BaseValidationRule<TValue, TObject> {
+export declare class StateRule<TValue = any, TObject extends IValidateable = IValidateable, TState extends PropertyKey = PropertyKey> extends BaseValidationRule<TValue, TObject> {
     private readonly validState;
     private readonly stateFunction;
-    private readonly messageMapper;
+    private readonly messages;
     static readonly $TYPE: string;
-    private _state;
-    constructor(validState: TState, stateFunction: (value: TValue, object?: TObject) => TState | Promise<TState>, messageMapper: (state: TState) => string);
+    private _explicitMessageKey;
+    protected _messageKey: string;
+    get messageKey(): string;
+    set messageKey(value: string);
+    constructor(validState: TState, stateFunction: (value: TValue, object?: TObject) => TState | Promise<TState>, messages: Partial<Record<TState, string>>);
     execute(value: unknown, object?: TObject): boolean | Promise<boolean>;
     accept(_visitor: IValidationVisitor): void;
-    getMessage(): string;
 }
 export {};
 //# sourceMappingURL=rules.d.ts.map

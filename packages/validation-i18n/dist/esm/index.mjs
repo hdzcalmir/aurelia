@@ -1,21 +1,21 @@
 import { I18N as i, Signals as t } from "@aurelia/i18n";
 
-import { DI as o, resolve as e, IEventAggregator as a, isFunction as r, Registration as n, noop as s } from "@aurelia/kernel";
+import { DI as o, resolve as e, IEventAggregator as a, Registration as r, noop as n } from "@aurelia/kernel";
 
-import { IPlatform as l } from "@aurelia/runtime-html";
+import { IPlatform as s } from "@aurelia/runtime-html";
 
-import { ValidationMessageProvider as c } from "@aurelia/validation";
+import { ValidationMessageProvider as l, ValidationRuleAliasMessage as c } from "@aurelia/validation";
 
-import { ValidationController as d, ValidationControllerFactory as u, getDefaultValidationHtmlConfiguration as f, ValidationHtmlConfiguration as m } from "@aurelia/validation-html";
+import { ValidationController as d, ValidationControllerFactory as u, getDefaultValidationHtmlConfiguration as f, ValidationHtmlConfiguration as h } from "@aurelia/validation-html";
 
-const h = "i18n:locale:changed:validation";
+const m = "i18n:locale:changed:validation";
 
 const v = /*@__PURE__*/ o.createInterface("I18nKeyConfiguration");
 
 class LocalizedValidationController extends d {
-    constructor(i = e(a), t = e(l)) {
+    constructor(i = e(a), t = e(s)) {
         super();
-        this.localeChangeSubscription = i.subscribe(h, (() => {
+        this.localeChangeSubscription = i.subscribe(m, (() => {
             t.domQueue.queueTask((async () => {
                 await this.revalidateErrors();
             }));
@@ -31,7 +31,7 @@ class LocalizedValidationControllerFactory extends u {
 
 const p = Symbol.for("au:validation:explicit-message-key");
 
-class LocalizedValidationMessageProvider extends c {
+class LocalizedValidationMessageProvider extends l {
     constructor(o = e(v), r = e(a)) {
         super(undefined, []);
         this.i18n = e(i);
@@ -43,11 +43,11 @@ class LocalizedValidationMessageProvider extends c {
         }
         r.subscribe(t.I18N_EA_CHANNEL, (() => {
             this.registeredMessages = new WeakMap;
-            r.publish(h);
+            r.publish(m);
         }));
     }
     getMessage(i) {
-        const t = r(i.getMessage) ? i.getMessage() : i.messageKey;
+        const t = i.messageKey;
         const o = this.registeredMessages.get(i);
         if (o != null) {
             const i = o.get(p) ?? o.get(t);
@@ -55,7 +55,18 @@ class LocalizedValidationMessageProvider extends c {
                 return i;
             }
         }
-        return this.setMessage(i, this.i18n.tr(this.getKey(t)));
+        let e = t;
+        if (!this.i18n.i18next.exists(e)) {
+            const o = c.getDefaultMessages(i);
+            const a = o.length;
+            if (a === 1 && t === void 0) {
+                e = o[0].defaultMessage;
+            } else {
+                e = o.find((i => i.name === t))?.defaultMessage;
+            }
+            e ??= t;
+        }
+        return this.setMessage(i, this.i18n.tr(this.getKey(e)));
     }
     getDisplayName(i, t) {
         if (t !== null && t !== undefined) {
@@ -88,13 +99,13 @@ function createConfiguration(i) {
                 DefaultNamespace: o.DefaultNamespace,
                 DefaultKeyPrefix: o.DefaultKeyPrefix
             };
-            return t.register(m.customize((i => {
+            return t.register(h.customize((i => {
                 for (const t of Object.keys(i)) {
                     if (t in o) {
                         i[t] = o[t];
                     }
                 }
-            })), n.callback(v, (() => e)));
+            })), r.callback(v, (() => e)));
         },
         customize(t) {
             return createConfiguration(t ?? i);
@@ -102,7 +113,7 @@ function createConfiguration(i) {
     };
 }
 
-const g = /*@__PURE__*/ createConfiguration(s);
+const g = /*@__PURE__*/ createConfiguration(n);
 
 export { v as I18nKeyConfiguration, LocalizedValidationController, LocalizedValidationControllerFactory, LocalizedValidationMessageProvider, g as ValidationI18nConfiguration };
 //# sourceMappingURL=index.mjs.map

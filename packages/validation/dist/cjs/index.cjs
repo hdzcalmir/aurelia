@@ -56,10 +56,12 @@ const $ = Object.freeze({
                 defaultMessage: t
             })));
         }
-        u(s, t instanceof Function ? t : t.constructor, this.aliasKey);
+        u(s, t, this.aliasKey);
     },
     getDefaultMessages(e) {
-        return a(this.aliasKey, e instanceof Function ? e : e.constructor);
+        const t = a(this.aliasKey, e);
+        if (t != null || e instanceof Function) return t;
+        return a(this.aliasKey, e.constructor);
     }
 });
 
@@ -73,9 +75,15 @@ function validationRule(e) {
 }
 
 class BaseValidationRule {
+    get messageKey() {
+        return this.t;
+    }
+    set messageKey(e) {
+        this.t = e;
+    }
     constructor(e = void 0) {
-        this.messageKey = e;
         this.tag = void 0;
+        this.t = e;
     }
     canExecute(e) {
         return true;
@@ -186,20 +194,36 @@ class EqualsRule extends BaseValidationRule {
 EqualsRule.$TYPE = "EqualsRule";
 
 class StateRule extends BaseValidationRule {
+    get messageKey() {
+        return this.i ?? this.t ?? void 0;
+    }
+    set messageKey(e) {
+        this.i = e;
+    }
     constructor(e, t, s) {
         super(void 0);
         this.validState = e;
         this.stateFunction = t;
-        this.messageMapper = s;
-        this._state = e;
+        this.messages = s;
+        this.i = null;
+        const i = [];
+        for (const [e, t] of Object.entries(s)) {
+            i.push({
+                name: e,
+                defaultMessage: t
+            });
+        }
+        $.setDefaultMessage(this, {
+            aliases: i
+        }, false);
     }
     execute(t, s) {
-        return e.onResolve(this.stateFunction(t, s), (e => (this._state = e) === this.validState));
+        return e.onResolve(this.stateFunction(t, s), (e => {
+            this.t = e;
+            return e === this.validState;
+        }));
     }
     accept(e) {}
-    getMessage() {
-        return this.messageKey = this.messageMapper(this._state);
-    }
 }
 
 StateRule.$TYPE = "StateRule";
@@ -638,29 +662,27 @@ class ValidationMessageProvider {
             }, true);
         }
     }
-    getMessage(t) {
-        const s = e.isFunction(t.getMessage);
-        const i = s ? t.getMessage() : t.messageKey;
-        const r = this.registeredMessages.get(t);
-        if (r != null) {
-            const e = r.get(h) ?? r.get(i);
+    getMessage(e) {
+        const t = e.messageKey;
+        const s = this.registeredMessages.get(e);
+        if (s != null) {
+            const e = s.get(h) ?? s.get(t);
             if (e !== void 0) {
                 return e;
             }
         }
-        if (s) return this.setMessage(t, i);
-        const n = $.getDefaultMessages(t);
-        let a;
-        const u = n.length;
-        if (u === 1 && i === void 0) {
-            a = n[0].defaultMessage;
+        const i = $.getDefaultMessages(e);
+        let r;
+        const n = i.length;
+        if (n === 1 && t === void 0) {
+            r = i[0].defaultMessage;
         } else {
-            a = n.find((e => e.name === i))?.defaultMessage;
+            r = i.find((e => e.name === t))?.defaultMessage;
         }
-        if (!a) {
-            a = $.getDefaultMessages(BaseValidationRule)[0].defaultMessage;
+        if (!r) {
+            r = $.getDefaultMessages(BaseValidationRule)[0].defaultMessage;
         }
-        return this.setMessage(t, a);
+        return this.setMessage(e, r);
     }
     setMessage(e, t, s) {
         const i = this.parseMessage(t);

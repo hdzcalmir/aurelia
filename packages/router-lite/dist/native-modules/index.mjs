@@ -3204,7 +3204,7 @@ class ComponentAgent {
                     return;
                 }
                 t.Qt((() => n.canUnload(this.je, e, this.Zt)), (e => {
-                    if (t.guardsResult === true && e !== true) {
+                    if (t.guardsResult === true && e === false) {
                         t.guardsResult = false;
                     }
                     s.$();
@@ -3220,7 +3220,7 @@ class ComponentAgent {
                     return;
                 }
                 t.Qt((() => this.je.canUnload(e, this.Zt)), (e => {
-                    if (t.guardsResult === true && e !== true) {
+                    if (t.guardsResult === true && e === false) {
                         t.guardsResult = false;
                     }
                     s.$();
@@ -3242,7 +3242,7 @@ class ComponentAgent {
                     return;
                 }
                 t.Qt((() => r.canLoad(this.je, e.params, e, this.Zt)), (e => {
-                    if (t.guardsResult === true && e !== true) {
+                    if (t.guardsResult === true && e != null && e !== true) {
                         t.guardsResult = e === false ? false : ViewportInstructionTree.create(e, this.Ue, void 0, i);
                     }
                     s.$();
@@ -3258,7 +3258,7 @@ class ComponentAgent {
                     return;
                 }
                 t.Qt((() => this.je.canLoad(e.params, e, this.Zt)), (e => {
-                    if (t.guardsResult === true && e !== true) {
+                    if (t.guardsResult === true && e != null && e !== true) {
                         t.guardsResult = e === false ? false : ViewportInstructionTree.create(e, this.Ue, void 0, i);
                     }
                     s.$();
@@ -4005,7 +4005,7 @@ class HrefCustomAttribute {
         if (t == null) {
             this.ys.removeAttribute("href");
         } else {
-            if (this.Ze.options.useUrlFragmentHash && this.we.isRoot && !/^[.#]/.test(t)) {
+            if (this.Ze.options.useUrlFragmentHash && this.we.isRoot && !/^[.#]/.test(t) && !this.Ns) {
                 t = `#${t}`;
             }
             this.ys.setAttribute("href", t);

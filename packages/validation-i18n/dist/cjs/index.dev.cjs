@@ -39,7 +39,7 @@ class LocalizedValidationMessageProvider extends validation.ValidationMessagePro
         });
     }
     getMessage(rule) {
-        const messageKey = kernel.isFunction(rule.getMessage) ? rule.getMessage() : rule.messageKey;
+        const messageKey = rule.messageKey;
         const lookup = this.registeredMessages.get(rule);
         if (lookup != null) {
             const parsedMessage = lookup.get(explicitMessageKey) ?? lookup.get(messageKey);
@@ -47,7 +47,19 @@ class LocalizedValidationMessageProvider extends validation.ValidationMessagePro
                 return parsedMessage;
             }
         }
-        return this.setMessage(rule, this.i18n.tr(this.getKey(messageKey)));
+        let key = messageKey;
+        if (!this.i18n.i18next.exists(key)) {
+            const validationMessages = validation.ValidationRuleAliasMessage.getDefaultMessages(rule);
+            const messageCount = validationMessages.length;
+            if (messageCount === 1 && messageKey === void 0) {
+                key = validationMessages[0].defaultMessage;
+            }
+            else {
+                key = validationMessages.find(m => m.name === messageKey)?.defaultMessage;
+            }
+            key ??= messageKey;
+        }
+        return this.setMessage(rule, this.i18n.tr(this.getKey(key)));
     }
     getDisplayName(propertyName, displayName) {
         if (displayName !== null && displayName !== undefined) {

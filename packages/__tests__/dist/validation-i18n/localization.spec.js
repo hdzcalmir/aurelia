@@ -21,6 +21,7 @@ describe('validation-i18n/localization.spec.ts', function () {
                 this.person1 = new Person((void 0), (void 0));
                 this.person2 = new Person((void 0), (void 0));
                 this.person3 = new Person((void 0), (void 0));
+                this.person4 = new Person((void 0), (void 0));
                 this.stateError = 'none';
                 const factory = this.factory = new LocalizedValidationControllerFactory();
                 this.controllerSpy = new Spy();
@@ -43,7 +44,12 @@ describe('validation-i18n/localization.spec.ts', function () {
                 validationRules
                     .on(this.person3)
                     .ensure('name')
-                    .satisfiesState('none', (_v, _o) => this.stateError, (state) => `stateError.${state}`);
+                    .satisfiesState('none', (_v, _o) => this.stateError, { foo: 'stateError.foo', bar: 'stateError.bar' });
+                validationRules
+                    .on(this.person4)
+                    .ensure('name')
+                    .satisfiesState('none', (_v, _o) => this.stateError, { foo: 'stateError.foo', bar: 'stateError.bar' })
+                    .withMessageKey('customStateError');
             }
             unbinding() {
                 this.validationRules.off();
@@ -83,7 +89,8 @@ describe('validation-i18n/localization.spec.ts', function () {
                             stateError: {
                                 foo: 'Foo Error',
                                 bar: 'Bar Error'
-                            }
+                            },
+                            customStateError: 'Invalid state'
                         },
                         errorMessages: {
                             required: `The value of the \${$displayName} is required.`,
@@ -107,7 +114,8 @@ describe('validation-i18n/localization.spec.ts', function () {
                             stateError: {
                                 foo: 'Foo Fehler',
                                 bar: 'Bar Fehler'
-                            }
+                            },
+                            customStateError: 'Ungültiger Status'
                         },
                         errorMessages: {
                             required: `Der Wert des \${$displayName} ist erforderlich.`,
@@ -286,6 +294,27 @@ describe('validation-i18n/localization.spec.ts', function () {
             assert.deepStrictEqual(controller.results.filter(r => !r.valid), []);
         }, {
             template: `<input type="text" value.two-way="person3.name & validate">`
+        });
+        $it('supports translating state rule with explicit message key', async function ({ app, container, host, platform, ctx }) {
+            const controller = app.controller;
+            const controllerSpy = app.controllerSpy;
+            const target = host.querySelector('input');
+            assertControllerBinding(controller, 'person4.name', target, controllerSpy);
+            app.stateError = 'foo';
+            await assertEventHandler(target, 'focusout', 1, platform, controllerSpy, ctx);
+            assert.deepStrictEqual(controller.results.filter(r => !r.valid).map((r) => r.toString()), ['Invalid state']);
+            await changeLocale(container, platform, controllerSpy);
+            assert.deepStrictEqual(controller.results.filter(r => !r.valid).map((r) => r.toString()), ['Ungültiger Status']);
+            app.stateError = 'bar';
+            await assertEventHandler(target, 'focusout', 1, platform, controllerSpy, ctx);
+            assert.deepStrictEqual(controller.results.filter(r => !r.valid).map((r) => r.toString()), ['Ungültiger Status']);
+            await changeLocale(container, platform, controllerSpy, 'en');
+            assert.deepStrictEqual(controller.results.filter(r => !r.valid).map((r) => r.toString()), ['Invalid state']);
+            app.stateError = 'none';
+            await assertEventHandler(target, 'focusout', 1, platform, controllerSpy, ctx);
+            assert.deepStrictEqual(controller.results.filter(r => !r.valid), []);
+        }, {
+            template: `<input type="text" value.two-way="person4.name & validate">`
         });
     });
 });

@@ -15,7 +15,15 @@ const e = {
         return t[Symbol.metadata]?.[e];
     },
     define(e, t, ...n) {
-        const l = t[Symbol.metadata] ??= Object.create(null);
+        let l = Object.getOwnPropertyDescriptor(t, Symbol.metadata)?.value;
+        if (l == null) {
+            Object.defineProperty(t, Symbol.metadata, {
+                value: l = Object.create(null),
+                enumerable: true,
+                configurable: true,
+                writable: true
+            });
+        }
         const r = n.length;
         switch (r) {
           case 0:

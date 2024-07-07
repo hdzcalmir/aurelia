@@ -8,7 +8,7 @@ import { Viewport } from './endpoints/viewport';
 import { IViewportOptions } from './endpoints/viewport-options';
 import { Step } from './utilities/runner';
 import { Endpoint, EndpointTypeName, IConnectedCustomElement } from './endpoints/endpoint';
-import { EndpointContent, Navigation } from './index';
+import { EndpointContent } from './index';
 import { IContainer } from '@aurelia/kernel';
 import { Parameters } from './instructions/instruction-parameters';
 export type TransitionAction = 'skip' | 'reload' | 'swap' | '';
@@ -111,24 +111,6 @@ export declare class RoutingScope {
     get ownedScopes(): RoutingScope[];
     get routingInstruction(): RoutingInstruction | null;
     getOwnedScopes(includeDisabled?: boolean): RoutingScope[];
-    processInstructions(instructions: RoutingInstruction[], earlierMatchedInstructions: RoutingInstruction[], navigation: Navigation, coordinator: NavigationCoordinator, configuredRoutePath?: string): Promise<Endpoint[]>;
-    /**
-     * Deal with/throw an unknown route error.
-     *
-     * @param instructions - The failing instructions
-     */
-    private createUnknownRouteError;
-    /**
-     * Ensure that there's a clear all instruction present in instructions.
-     */
-    private ensureClearStateInstruction;
-    /**
-     * Get all endpoints affected by any clear all routing instructions and then remove those
-     * routing instructions.
-     *
-     * @param instructions - The instructions to process
-     */
-    private getClearAllEndpoints;
     findInstructions(instructions: RoutingInstruction[], useDirectRouting: boolean, useConfiguredRoutes: boolean): FoundRoute;
     /**
      * Match the instructions to available endpoints within, and with the help of, their scope.

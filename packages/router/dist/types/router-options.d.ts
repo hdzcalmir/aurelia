@@ -305,11 +305,11 @@ export declare class RouterOptions implements INavigatorOptions {
      */
     useConfiguredRoutes: boolean;
     /**
-     * Whether a load instruction by default is additive, that is specifying
-     * the change of the state of viewports rather than the complete state
-     * of viewports. Default: true
+     * Whether a load instruction by default is a complete state navigation,
+     * for all viewports, or a partial state navigation that is only specifying
+     * the change of the new state of specified viewports. Default: false
      */
-    additiveInstructionDefault: boolean;
+    completeStateNavigations: boolean;
     /**
      * The router's title configuration
      */
@@ -389,11 +389,11 @@ export declare class RouterOptions implements INavigatorOptions {
      */
     useConfiguredRoutes?: boolean, 
     /**
-     * Whether a load instruction by default is additive, that is specifying
-     * the change of the state of viewports rather than the complete state
-     * of viewports. Default: true
+     * Whether a load instruction by default is a complete state navigation,
+     * for all viewports, or a partial state navigation that is only specifying
+     * the change of the new state of specified viewports. Default: false
      */
-    additiveInstructionDefault?: boolean, 
+    completeStateNavigations?: boolean, 
     /**
      * The router's title configuration
      */

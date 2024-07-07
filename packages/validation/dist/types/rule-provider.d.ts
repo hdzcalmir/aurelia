@@ -71,7 +71,7 @@ export declare class PropertyRule<TObject extends IValidateable = IValidateable,
      * Sets the display name of the ensured property.
      */
     displayName(name: string | ValidationDisplayNameAccessor): this;
-    satisfiesState<TState, TVal>(this: PropertyRule<TObject, TVal>, validState: TState, stateFunction: (value: TVal, object?: TObject) => TState | Promise<TState>, messageMapper: (state: TState) => string): PropertyRule<TObject, TVal>;
+    satisfiesState<TState extends PropertyKey, TVal>(this: PropertyRule<TObject, TVal>, validState: TState, stateFunction: (value: TVal, object?: TObject) => TState | Promise<TState>, messages: Partial<Record<TState, string>>): PropertyRule<TObject, TVal>;
     /**
      * Applies an ad-hoc rule function to the ensured property or object.
      *
