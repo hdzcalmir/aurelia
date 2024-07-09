@@ -1,19 +1,20 @@
-import {
-  type CallExpression,
-  type Statement,
-  type Node,
-  type SourceFile,
-  type TransformerFactory,
-  type ClassDeclaration,
-  type Identifier,
+import type {
+  CallExpression,
+  Statement,
+  Node,
+  SourceFile,
+  TransformerFactory,
+  ClassDeclaration,
+  Identifier,
 } from 'typescript';
 import { type ModifyCodeResult } from 'modify-code';
 import { nameConvention } from './name-convention';
 import { IFileUnit, IPreprocessOptions, ResourceType } from './options';
 import { resourceName } from './resource-name';
-
 import pkg from 'typescript';
 import { modifyCode } from './modify-code';
+import { createTypeCheckedTemplate } from './template-typechecking';
+
 const {
   ModifierFlags,
   ScriptTarget,
@@ -49,6 +50,18 @@ interface ICapturedImport {
   names: string[];
   start: number;
   end: number;
+}
+
+interface ITemplateMetadata {
+  /** Identifier for the HTML import. */
+  name?: string;
+  /** Path to the module. */
+  modulePath?: string;
+  inlineTemplate?: string;
+  classNames: string[];
+  // TODO(Sayan): we probably don't need the following; remove.
+  start?: number;
+  end?: number;
 }
 
 interface IPos {
@@ -94,6 +107,10 @@ interface IModifyResourceOptions {
   customElementDecorator?: CustomElementDecorator;
   transformHtmlImportSpecifier?: (path: string) => string;
   defineElementInformation?: DefineElementInformation;
+  exportedClassName?: string;
+  typeCheckTemplate: boolean;
+  useConventions: boolean;
+  templateMetadata: ITemplateMetadata[];
 }
 
 export function preprocessResource(unit: IFileUnit, options: IPreprocessOptions): ModifyCodeResult {
@@ -106,6 +123,7 @@ export function preprocessResource(unit: IFileUnit, options: IPreprocessOptions)
   let implicitElement: IPos | undefined;
   let customElementDecorator: CustomElementDecorator | undefined; // for @customName('custom-name')
   let defineElementInformation: DefineElementInformation | undefined;
+  const templateMetadata: ITemplateMetadata[] = [];
 
   // When there are multiple exported classes (e.g. local value converters),
   // they might be deps for composing the main implicit custom element.
@@ -129,11 +147,17 @@ export function preprocessResource(unit: IFileUnit, options: IPreprocessOptions)
       return;
     }
 
+    const templateImport = captureTemplateImport(s, unit.contents);
+    if (templateImport) {
+      templateMetadata.push(templateImport);
+      return;
+    }
+
     // Only care about export class Foo {...}.
     // Note this convention simply doesn't work for
     //   class Foo {}
     //   export {Foo};
-    const resource = findResource(s, expectedResourceName, unit.filePair, unit.contents);
+    const resource = findResource(s, expectedResourceName, unit.filePair, unit.contents, options.enableConventions, templateMetadata);
     if (!resource) return;
     const {
       className,
@@ -169,16 +193,18 @@ export function preprocessResource(unit: IFileUnit, options: IPreprocessOptions)
     }
   }
 
-  if (options.enableConventions) {
-    m = modifyResource(unit, m, {
-      implicitElement,
-      localDeps,
-      modifications,
-      customElementDecorator,
-      transformHtmlImportSpecifier: options.transformHtmlImportSpecifier,
-      defineElementInformation,
-    });
-  }
+  m = modifyResource(unit, m, {
+    implicitElement,
+    localDeps,
+    modifications,
+    customElementDecorator,
+    transformHtmlImportSpecifier: options.transformHtmlImportSpecifier,
+    defineElementInformation,
+    exportedClassName,
+    typeCheckTemplate: options.typeCheckTemplate,
+    useConventions: options.enableConventions ?? false,
+    templateMetadata: templateMetadata
+  });
 
   if (options.hmr && exportedClassName && process.env.NODE_ENV !== 'production') {
     if (options.getHmrCode) {
@@ -197,11 +223,29 @@ function modifyResource(unit: IFileUnit, m: ReturnType<typeof modifyCode>, optio
     customElementDecorator,
     transformHtmlImportSpecifier = s => s,
     defineElementInformation,
+    exportedClassName,
+    useConventions,
+    templateMetadata,
   } = options;
 
-  if (implicitElement && unit.filePair) {
+  if (!useConventions) {
+    if (options.typeCheckTemplate) {
+      for (const templateImport of templateMetadata) {
+        const classNames = templateImport.classNames;
+        if (classNames.length === 0) continue;
+        emitTypeCheckedTemplate(
+          () => templateImport.inlineTemplate ?? unit.readFile?.(templateImport.modulePath!),
+          templateImport.classNames.join('|')
+        );
+      }
+    }
+  } else if (implicitElement && unit.filePair) {
     const viewDef = '__au2ViewDef';
     m.prepend(`import * as ${viewDef} from './${transformHtmlImportSpecifier(unit.filePair)}';\n`);
+
+    if (options.typeCheckTemplate) {
+      emitTypeCheckedTemplate(() => unit.readFile?.(`./${unit.filePair}`), exportedClassName!);
+    }
 
     if (defineElementInformation) {
       m.replace(defineElementInformation.position.pos, defineElementInformation.position.end, defineElementInformation.modifiedContent);
@@ -262,6 +306,18 @@ function modifyResource(unit: IFileUnit, m: ReturnType<typeof modifyCode>, optio
   }
 
   return m;
+
+  function emitTypeCheckedTemplate(contentFactory: () => string | undefined, className: string): void {
+    const htmlContent = contentFactory();
+    if (!htmlContent) return;
+    const typecheckedTemplate = createTypeCheckedTemplate(htmlContent, className);
+    // console.log(typecheckedTemplate);
+    m.prepend(`
+function __typecheck_template_${className}__() {
+  const access = <T extends object>(typecheck: (o: T) => unknown, expr: string) => expr;
+  return \`${typecheckedTemplate}\`;
+}\n\n`);
+  }
 }
 
 function captureImport(s: Statement, lib: string, code: string): ICapturedImport | void {
@@ -276,6 +332,22 @@ function captureImport(s: Statement, lib: string, code: string): ICapturedImport
       end: s.end
     };
   }
+}
+
+function captureTemplateImport(s: Statement, code: string): ITemplateMetadata | void {
+  if (
+    isImportDeclaration(s)
+    && isStringLiteral(s.moduleSpecifier)
+    && s.moduleSpecifier.text.endsWith('.html') // Start small, only support html for now. TODO: Support other template extensions later.
+    && s.importClause?.name != null
+    && isIdentifier(s.importClause.name)
+  ) return {
+    name: s.importClause.name.text,
+    modulePath: s.moduleSpecifier.text,
+    classNames: [],
+    start: ensureTokenStart(s.pos, code),
+    end: s.end
+  };
 }
 
 // This method mutates runtimeExports.
@@ -344,9 +416,20 @@ function createAuResourceTransformer(): TransformerFactory<SourceFile> {
   }
 }
 
-function findResource(node: Node, expectedResourceName: string, filePair: string | undefined, code: string): IFoundResource | void {
+function findResource(
+  node: Node,
+  expectedResourceName: string,
+  filePair: string | undefined,
+  code: string,
+  useConvention: boolean | undefined,
+  templateMetadata: ITemplateMetadata[],
+): IFoundResource | void {
 
-  if (!isClassDeclaration(node) || !node.name || !isExported(node)) return;
+  if (
+    !isClassDeclaration(node)           // Only care about class declaration
+    || !node.name                          // Ignore anonymous class.
+    || !isExported(node) && !useConvention // Convention dictates that the class must be exported.
+  ) return;
   const pos = ensureTokenStart(node.pos, code);
 
   const className = node.name.text;
@@ -356,6 +439,47 @@ function findResource(node: Node, expectedResourceName: string, filePair: string
   const resourceType = collectClassDecorators(node);
 
   if (resourceType) {
+    const decorator = resourceType.expression;
+    const dArgs = decorator.arguments;
+    const numArguments = dArgs.length;
+
+    // map the classes to the template imports to classes - @customElement decorator
+    if (
+      resourceType.type === 'customElement'
+      && numArguments === 1
+    ) {
+      const arg = dArgs[0];
+      if (isObjectLiteralExpression(arg)) {
+        const properties = arg.properties;
+        for (const p of properties) {
+          switch (p.kind) {
+            case SyntaxKind.ShorthandPropertyAssignment:
+              if (p.name.text === 'template') {
+                templateMetadata.find(ti => ti.name === 'template')?.classNames.push(className);
+              }
+              break;
+            case SyntaxKind.PropertyAssignment: {
+              const l = p.name;
+              if (isIdentifier(l) && l.text === 'template') {
+                const value = p.initializer;
+                if (isIdentifier(value)) {
+                  templateMetadata.find(ti => ti.name === value.text)?.classNames.push(className);
+                } else if (isStringLiteral(value)) {
+                  templateMetadata.push({
+                    inlineTemplate: value.text,
+                    classNames: [className],
+                  });
+                }
+              }
+              break;
+            }
+            default:
+              break;
+          }
+        }
+      }
+    }
+
     // Explicitly decorated resource
     if (
       !isImplicitResource &&
@@ -369,12 +493,11 @@ function findResource(node: Node, expectedResourceName: string, filePair: string
     if (
       isImplicitResource &&
       resourceType.type === 'customElement' &&
-      resourceType.expression.arguments.length === 1 &&
-      isStringLiteral(resourceType.expression.arguments[0])
+      numArguments === 1 &&
+      isStringLiteral(dArgs[0])
     ) {
       // @customElement('custom-name')
-      const decorator = resourceType.expression;
-      const customName = decorator.arguments[0];
+      const customName = dArgs[0];
       return {
         type: resourceType.type,
         className,
@@ -388,6 +511,10 @@ function findResource(node: Node, expectedResourceName: string, filePair: string
     }
   } else {
     if (type === 'customElement') {
+      // TODO: map the template imports to classes:
+      // - $au
+      // - static template
+
       if (!isImplicitResource || !filePair) return;
       return {
         type,
@@ -409,12 +536,11 @@ function findResource(node: Node, expectedResourceName: string, filePair: string
 
 function collectClassDecorators(node: ClassDeclaration): IResourceDecorator | undefined {
 
-  // gather decorator information
-  let resourceType: IResourceDecorator | undefined;
-  // later these decorators will be replaced with the modified content
+  if (!canHaveDecorators(node)) return;
 
-  if (!canHaveDecorators(node)) return resourceType;
   const decorators = getDecorators(node) ?? [];
+  if (decorators.length === 0) return;
+
   for (const d of decorators) {
     let name: string | undefined;
     let resourceExpression: CallExpression | undefined;
@@ -427,19 +553,17 @@ function collectClassDecorators(node: ClassDeclaration): IResourceDecorator | un
     } else if (isIdentifier(d.expression)) {
       name = d.expression.text;
     }
-    if (name == null) continue;
+    if (
+      name == null
+      || !KNOWN_RESOURCE_DECORATORS.includes(name)
+      || resourceExpression == null
+    ) continue;
 
-    if (KNOWN_RESOURCE_DECORATORS.includes(name)) {
-      if (resourceExpression == null) continue;
-      resourceType = {
-        type: name as ResourceType,
-        expression: resourceExpression
-      };
-      continue;
-    }
+    return {
+      type: name as ResourceType,
+      expression: resourceExpression
+    };
   }
-
-  return resourceType;
 }
 
 function getPosition(node: Node, code: string): IPos {
