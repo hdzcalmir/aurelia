@@ -2470,7 +2470,7 @@ class Router {
         }));
         if (!this.ye && t) {
             return this.load(this.$e.getPath(), {
-                historyStrategy: "replace"
+                historyStrategy: this.options.historyStrategy !== "none" ? "replace" : "none"
             });
         }
     }

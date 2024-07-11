@@ -3025,7 +3025,7 @@ class Router {
             });
         });
         if (!this._navigated && performInitialNavigation) {
-            return this.load(this._locationMgr.getPath(), { historyStrategy: 'replace' });
+            return this.load(this._locationMgr.getPath(), { historyStrategy: this.options.historyStrategy !== 'none' ? 'replace' : 'none' });
         }
     }
     stop() {

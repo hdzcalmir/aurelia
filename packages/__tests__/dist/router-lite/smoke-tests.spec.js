@@ -9713,10 +9713,10 @@ describe('router-lite/smoke-tests.spec.ts', function () {
                 '#4 - len: 1 - state: {"au-nav-id":4}',
             ]);
             yield new TestData('none', [
-                '#1 - len: 1 - state: {"au-nav-id":1}', // initial state replace
-                '#2 - len: 1 - state: {"au-nav-id":1}',
-                '#3 - len: 1 - state: {"au-nav-id":1}',
-                '#4 - len: 1 - state: {"au-nav-id":1}',
+                '#1 - len: 1 - state: {}',
+                '#2 - len: 1 - state: {}',
+                '#3 - len: 1 - state: {}',
+                '#4 - len: 1 - state: {}',
             ]);
         }
         for (const data of getTestData()) {
@@ -10176,11 +10176,11 @@ describe('router-lite/smoke-tests.spec.ts', function () {
             const vp = host.querySelector('au-viewport');
             const router = container.get(IRouter);
             assert.html.textContent(vp, 'ce1', 'start - component');
-            assert.html.textContent(historyEl, '#1 - len: 1 - state: {"au-nav-id":1}', 'start - history');
+            assert.html.textContent(historyEl, '#1 - len: 1 - state: {}', 'start - history');
             await router.load('ce2');
             await dwQueue.yield();
             assert.html.textContent(vp, 'ce2', 'round#2 - component');
-            assert.html.textContent(historyEl, '#2 - len: 1 - state: {"au-nav-id":1}', 'round#2 - history');
+            assert.html.textContent(historyEl, '#2 - len: 1 - state: {}', 'round#2 - history');
             await router.load('ce3', { historyStrategy: 'push' });
             await dwQueue.yield();
             assert.html.textContent(vp, 'ce3', 'round#3 - component');
