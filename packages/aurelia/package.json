@@ -1,6 +1,6 @@
 {
   "name": "aurelia",
-  "version": "2.0.1-dev.202407071342",
+  "version": "2.0.1-dev.202407111120",
   "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.mjs",
   "exports": {
@@ -53,15 +53,15 @@
     "access": "public"
   },
   "dependencies": {
-    "@aurelia/fetch-client": "2.0.1-dev.202407071342",
-    "@aurelia/kernel": "2.0.1-dev.202407071342",
-    "@aurelia/metadata": "2.0.1-dev.202407071342",
-    "@aurelia/expression-parser": "2.0.1-dev.202407071342",
-    "@aurelia/platform": "2.0.1-dev.202407071342",
-    "@aurelia/platform-browser": "2.0.1-dev.202407071342",
-    "@aurelia/runtime": "2.0.1-dev.202407071342",
-    "@aurelia/template-compiler": "2.0.1-dev.202407071342",
-    "@aurelia/runtime-html": "2.0.1-dev.202407071342"
+    "@aurelia/fetch-client": "2.0.1-dev.202407111120",
+    "@aurelia/kernel": "2.0.1-dev.202407111120",
+    "@aurelia/metadata": "2.0.1-dev.202407111120",
+    "@aurelia/expression-parser": "2.0.1-dev.202407111120",
+    "@aurelia/platform": "2.0.1-dev.202407111120",
+    "@aurelia/platform-browser": "2.0.1-dev.202407111120",
+    "@aurelia/runtime": "2.0.1-dev.202407111120",
+    "@aurelia/template-compiler": "2.0.1-dev.202407111120",
+    "@aurelia/runtime-html": "2.0.1-dev.202407111120"
   },
   "devDependencies": {
     "typescript": "5.4.2"

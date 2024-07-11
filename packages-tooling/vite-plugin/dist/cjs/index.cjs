@@ -81,6 +81,8 @@ function au(options = {}) {
             if (!isVirtualTsFileFromHtml(id)) {
                 return null;
             }
+            if (id.startsWith('/'))
+                return id;
             id = path.resolve(path.dirname(importer !== null && importer !== void 0 ? importer : ''), this.meta.watchMode ? id.replace(/^\//, './') : id);
             return id;
         },
