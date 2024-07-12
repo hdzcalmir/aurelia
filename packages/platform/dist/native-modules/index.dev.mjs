@@ -98,10 +98,6 @@ class TaskQueue {
         /** @internal */
         this._yieldPromise = void 0;
         /** @internal */
-        this._taskPool = [];
-        /** @internal */
-        this._taskPoolSize = 0;
-        /** @internal */
         this._lastRequest = 0;
         /** @internal */
         this._lastFlush = 0;
@@ -122,22 +118,27 @@ class TaskQueue {
         this._now = platform.performanceNow;
         this._tracer = new Tracer(platform.console);
     }
-    flush(time = this._now()) {
+    flush(now = this._now()) {
         if (this._tracer.enabled) {
             this._tracer.enter(this, 'flush');
         }
         this._flushRequested = false;
-        this._lastFlush = time;
+        this._lastFlush = now;
         // Only process normally if we are *not* currently waiting for an async task to finish
         if (this._suspenderTask === void 0) {
+            let curr;
             if (this._pending.length > 0) {
                 this._processing.push(...this._pending);
                 this._pending.length = 0;
             }
             if (this._delayed.length > 0) {
-                let i = -1;
-                while (++i < this._delayed.length && this._delayed[i].queueTime <= time) { /* do nothing */ }
-                this._processing.push(...this._delayed.splice(0, i));
+                for (let i = 0; i < this._delayed.length; ++i) {
+                    curr = this._delayed[i];
+                    if (curr.queueTime <= now) {
+                        this._processing.push(curr);
+                        this._delayed.splice(i--, 1);
+                    }
+                }
             }
             let cur;
             while (this._processing.length > 0) {
@@ -162,9 +163,13 @@ class TaskQueue {
                 this._pending.length = 0;
             }
             if (this._delayed.length > 0) {
-                let i = -1;
-                while (++i < this._delayed.length && this._delayed[i].queueTime <= time) { /* do nothing */ }
-                this._processing.push(...this._delayed.splice(0, i));
+                for (let i = 0; i < this._delayed.length; ++i) {
+                    curr = this._delayed[i];
+                    if (curr.queueTime <= now) {
+                        this._processing.push(curr);
+                        this._delayed.splice(i--, 1);
+                    }
+                }
             }
             if (this._processing.length > 0 || this._delayed.length > 0 || this._pendingAsyncCount > 0) {
                 this._requestFlush();
@@ -238,7 +243,7 @@ class TaskQueue {
         if (this._tracer.enabled) {
             this._tracer.enter(this, 'queueTask');
         }
-        const { delay, preempt, persistent, reusable, suspend } = { ...defaultQueueTaskOptions, ...opts };
+        const { delay, preempt, persistent, suspend } = { ...defaultQueueTaskOptions, ...opts };
         if (preempt) {
             if (delay > 0) {
                 throw preemptDelayComboError();
@@ -251,23 +256,7 @@ class TaskQueue {
             this._requestFlush();
         }
         const time = this._now();
-        let task;
-        if (reusable) {
-            const taskPool = this._taskPool;
-            const index = this._taskPoolSize - 1;
-            if (index >= 0) {
-                task = taskPool[index];
-                taskPool[index] = (void 0);
-                this._taskPoolSize = index;
-                task.reuse(time, delay, preempt, persistent, suspend, callback);
-            }
-            else {
-                task = new Task(this._tracer, this, time, time + delay, preempt, persistent, suspend, reusable, callback);
-            }
-        }
-        else {
-            task = new Task(this._tracer, this, time, time + delay, preempt, persistent, suspend, reusable, callback);
-        }
+        const task = new Task(this._tracer, this, time, time + delay, preempt, persistent, suspend, callback);
         if (preempt) {
             this._processing[this._processing.length] = task;
         }
@@ -317,18 +306,6 @@ class TaskQueue {
             this._tracer.leave(this, 'remove error');
         }
         throw createError(`Task #${task.id} could not be found`);
-    }
-    /**
-     * Return a reusable task to the shared task pool.
-     * The next queued callback will reuse this task object instead of creating a new one, to save overhead of creating additional objects.
-     *
-     * @internal
-     */
-    _returnToPool(task) {
-        if (this._tracer.enabled) {
-            this._tracer.trace(this, 'returnToPool');
-        }
-        this._taskPool[this._taskPoolSize++] = task;
     }
     /**
      * Reset the persistent task back to its pending state, preparing it for being invoked again on the next flush.
@@ -417,14 +394,13 @@ class Task {
     get status() {
         return this._status;
     }
-    constructor(tracer, taskQueue, createdTime, queueTime, preempt, persistent, suspend, reusable, callback) {
+    constructor(tracer, taskQueue, createdTime, queueTime, preempt, persistent, suspend, callback) {
         this.taskQueue = taskQueue;
         this.createdTime = createdTime;
         this.queueTime = queueTime;
         this.preempt = preempt;
         this.persistent = persistent;
         this.suspend = suspend;
-        this.reusable = reusable;
         this.callback = callback;
         this.id = ++id;
         /** @internal */ this._resolve = void 0;
@@ -448,7 +424,7 @@ class Task {
         // this.persistent could be changed while the task is running (this can only be done by the task itself if canceled, and is a valid way of stopping a loop)
         // so we deliberately reference this.persistent instead of the local variable, but we keep it around to know whether the task *was* persistent before running it,
         // so we can set the correct cancelation state.
-        const { persistent, reusable, taskQueue, callback, _resolve: resolve, _reject: reject, createdTime, } = this;
+        const { persistent, taskQueue, callback, _resolve: resolve, _reject: reject, createdTime, } = this;
         let ret;
         this._status = tsRunning;
         try {
@@ -474,9 +450,6 @@ class Task {
                     }
                     if (resolve !== void 0) {
                         resolve($ret);
-                    }
-                    if (!this.persistent && reusable) {
-                        taskQueue._returnToPool(this);
                     }
                 })
                     .catch((err) => {
@@ -515,9 +488,6 @@ class Task {
                 if (resolve !== void 0) {
                     resolve(ret);
                 }
-                if (!this.persistent && reusable) {
-                    taskQueue._returnToPool(this);
-                }
             }
         }
         catch (err) {
@@ -541,7 +511,6 @@ class Task {
         }
         if (this._status === tsPending) {
             const taskQueue = this.taskQueue;
-            const reusable = this.reusable;
             const reject = this._reject;
             taskQueue.remove(this);
             if (taskQueue.isEmpty) {
@@ -549,9 +518,6 @@ class Task {
             }
             this._status = tsCanceled;
             this.dispose();
-            if (reusable) {
-                taskQueue._returnToPool(this);
-            }
             if (reject !== void 0) {
                 reject(new TaskAbortError(this));
             }
@@ -585,21 +551,6 @@ class Task {
         this._result = void 0;
         if (this._tracer.enabled) {
             this._tracer.leave(this, 'reset');
-        }
-    }
-    reuse(time, delay, preempt, persistent, suspend, callback) {
-        if (this._tracer.enabled) {
-            this._tracer.enter(this, 'reuse');
-        }
-        this.createdTime = time;
-        this.queueTime = time + delay;
-        this.preempt = preempt;
-        this.persistent = persistent;
-        this.suspend = suspend;
-        this.callback = callback;
-        this._status = tsPending;
-        if (this._tracer.enabled) {
-            this._tracer.leave(this, 'reuse');
         }
     }
     dispose() {
@@ -642,11 +593,10 @@ class Tracer {
             const created = Math.round(obj['createdTime'] * 10) / 10;
             const queue = Math.round(obj['queueTime'] * 10) / 10;
             const preempt = obj['preempt'];
-            const reusable = obj['reusable'];
             const persistent = obj['persistent'];
             const suspend = obj['suspend'];
             const status = obj['_status'];
-            const info = `id=${id} created=${created} queue=${queue} preempt=${preempt} persistent=${persistent} reusable=${reusable} status=${status} suspend=${suspend}`;
+            const info = `id=${id} created=${created} queue=${queue} preempt=${preempt} persistent=${persistent} status=${status} suspend=${suspend}`;
             this.console.log(`${prefix}[T.${method}] ${info}`);
         }
     }
@@ -655,7 +605,6 @@ const defaultQueueTaskOptions = {
     delay: 0,
     preempt: false,
     persistent: false,
-    reusable: true,
     suspend: false,
 };
 let $resolve;

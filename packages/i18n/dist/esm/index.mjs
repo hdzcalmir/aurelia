@@ -390,7 +390,6 @@ const $ = {
 };
 
 const G = {
-    reusable: false,
     preempt: true
 };
 

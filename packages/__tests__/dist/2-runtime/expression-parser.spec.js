@@ -16,6 +16,7 @@ const binaryRelational = [
     ['instanceof', ' instanceof '],
 ];
 const binaryEquality = ['==', '!=', '===', '!=='];
+const binaryAssignment = ['/=', '*=', '+=', '-='];
 const $false = PrimitiveLiteralExpression.$false;
 const $true = PrimitiveLiteralExpression.$true;
 const $null = PrimitiveLiteralExpression.$null;
@@ -256,8 +257,12 @@ describe('2-runtime/expression-parser.spec.ts', function () {
     // parseUnaryExpression (this is actually at the top in the parser due to the order in which expressions must be parsed)
     const SimpleUnaryList = [
         [`!$1`, new UnaryExpression('!', new AccessScopeExpression('$1'))],
-        [`-$2`, new UnaryExpression('-', new AccessScopeExpression('$2'))],
-        [`+$3`, new UnaryExpression('+', new AccessScopeExpression('$3'))],
+        [`(-$2)`, new UnaryExpression('-', new AccessScopeExpression('$2'))],
+        [`(+$3)`, new UnaryExpression('+', new AccessScopeExpression('$3'))],
+        [`(--$3)`, new UnaryExpression('--', new AccessScopeExpression('$3'))],
+        [`(++$3)`, new UnaryExpression('++', new AccessScopeExpression('$3'))],
+        [`($3--)`, new UnaryExpression('--', new AccessScopeExpression('$3'), 1)],
+        [`($3++)`, new UnaryExpression('++', new AccessScopeExpression('$3'), 1)],
         [`void $4`, new UnaryExpression('void', new AccessScopeExpression('$4'))],
         [`typeof $5`, new UnaryExpression('typeof', new AccessScopeExpression('$5'))]
     ];
@@ -328,7 +333,7 @@ describe('2-runtime/expression-parser.spec.ts', function () {
     ];
     // This forms the group Precedence.NullishCoalescing
     const SimpleNullishCoalescingList = [
-        [`$38??$39`, new BinaryExpression('??', new AccessScopeExpression('$38'), new AccessScopeExpression('$39'))]
+        [`$40??$41`, new BinaryExpression('??', new AccessScopeExpression('$40'), new AccessScopeExpression('$41'))]
     ];
     const SimpleIsNullishCoalescingList = [
         ...SimpleIsLogicalORList,
@@ -344,7 +349,11 @@ describe('2-runtime/expression-parser.spec.ts', function () {
     ];
     // This forms the group Precedence.Assign
     const SimpleAssignList = [
-        [`a=b`, new AssignExpression($a, $b)]
+        [`a=b`, new AssignExpression($a, $b)],
+        [`$42/=$43`, new AssignExpression(new AccessScopeExpression('$42'), new AccessScopeExpression('$43'), '/=')],
+        [`$44*=$45`, new AssignExpression(new AccessScopeExpression('$44'), new AccessScopeExpression('$45'), '*=')],
+        [`$46+=$47`, new AssignExpression(new AccessScopeExpression('$46'), new AccessScopeExpression('$47'), '+=')],
+        [`$48-=$49`, new AssignExpression(new AccessScopeExpression('$48'), new AccessScopeExpression('$49'), '-=')]
     ];
     const SimpleArrowList = [
         [`(a) => a`, new ArrowFunction([new BindingIdentifier('a')], $a)],
@@ -896,6 +905,10 @@ describe('2-runtime/expression-parser.spec.ts', function () {
         ...SimpleIsLeftHandSideList
             .map(([input, expr]) => [`-${input}`, new UnaryExpression('-', expr)]),
         ...SimpleIsLeftHandSideList
+            .map(([input, expr]) => [`++${input}`, new UnaryExpression('++', expr)]),
+        ...SimpleIsLeftHandSideList
+            .map(([input, expr]) => [`--${input}`, new UnaryExpression('--', expr)]),
+        ...SimpleIsLeftHandSideList
             .map(([input, expr]) => [`void ${input}`, new UnaryExpression('void', expr)]),
         ...SimpleIsLeftHandSideList
             .map(([input, expr]) => [`typeof ${input}`, new UnaryExpression('typeof', expr)])
@@ -1081,7 +1094,7 @@ describe('2-runtime/expression-parser.spec.ts', function () {
         ...AccessScopeList.map(([i1, e1]) => [`${i1}=a`, new AssignExpression(e1, $a)]),
         ...SimpleAccessMemberList.map(([i1, e1]) => [`${i1}=a`, new AssignExpression(e1, $a)]),
         ...SimpleAccessKeyedList.map(([i1, e1]) => [`${i1}=a`, new AssignExpression(e1, $a)]),
-        ...SimpleAssignList.map(([i1, e1]) => [`${i1}=c`, new AssignExpression(e1.target, new AssignExpression(e1.value, $c))])
+        ...SimpleAssignList.map(([i1, e1]) => [`${i1}=c`, new AssignExpression(e1.target, new AssignExpression(e1.value, $c), e1.op)])
     ];
     describe('parse ComplexAssignList', function () {
         for (const [input, expected] of ComplexAssignList) {
@@ -1413,7 +1426,7 @@ describe('2-runtime/expression-parser.spec.ts', function () {
         }
         for (const token of [
             '%', '*', '/', '>', '<',
-            '=', '?', ' instanceof', ' in',
+            '=', '+=', '-=', '*=', '/=', '?', ' instanceof', ' in',
         ]) {
             const accessScope = `\${a${token}}`;
             it(`throw unexpectedEndOfExpression on interpolation "${accessScope}"`, function () {
@@ -1464,7 +1477,7 @@ describe('2-runtime/expression-parser.spec.ts', function () {
                 verifyResultOrError(`$parent${nonTerminal}`, null, 'AUR0154');
             });
         }
-        for (const op of ['!', '(', '+', '-', '.', '[', 'typeof']) {
+        for (const op of ['!', '(', '+', '-', '++', '--', '.', '[', 'typeof']) {
             it(`throw 'Unexpected end of expression' on "${op}"`, function () {
                 verifyResultOrError(op, null, 'AUR0155');
             });
@@ -1570,6 +1583,11 @@ describe('2-runtime/expression-parser.spec.ts', function () {
             it(`throw 'Left hand side of expression is not assignable' on "${input}=a"`, function () {
                 verifyResultOrError(`${input}=a`, null, `AUR0158:${input}=a`);
             });
+            for (const op of binaryAssignment) {
+                it(`throw 'Left hand side of expression is not assignable' on "${input}${op}a"`, function () {
+                    verifyResultOrError(`${input}${op}a`, null, `AUR0158:${input}${op}a`);
+                });
+            }
         }
         for (const [input] of SimpleIsBindingBehaviorList.filter(([, e]) => !e.ancestor)) {
             it(`throw 'Unexpected keyword "of"' on "${input} of"`, function () {

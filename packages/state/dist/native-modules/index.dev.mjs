@@ -348,7 +348,6 @@ function isSubscribable(v) {
     return v instanceof Object && 'subscribe' in v;
 }
 const updateTaskOpts = {
-    reusable: false,
     preempt: true,
 };
 connectable(StateBinding, null);

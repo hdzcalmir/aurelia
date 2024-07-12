@@ -3000,10 +3000,9 @@ const ve = function() {
         const n = round(e.createdTime);
         const i = round(e.queueTime);
         const r = e.preempt;
-        const a = e.reusable;
-        const s = e.persistent;
-        const o = e.status;
-        return `    task id=${t} createdTime=${n} queueTime=${i} preempt=${r} reusable=${a} persistent=${s} status=${o}\n` + `    task callback="${e.callback?.toString()}"`;
+        const a = e.persistent;
+        const s = e.status;
+        return `    task id=${t} createdTime=${n} queueTime=${i} preempt=${r} persistent=${a} status=${s}\n` + `    task callback="${e.callback?.toString()}"`;
     }
     function $reportTaskQueue(t, n) {
         const {processing: i, pending: r, delayed: a, flushRequested: s} = e.reportTaskQueue(n);

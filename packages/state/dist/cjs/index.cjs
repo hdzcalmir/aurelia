@@ -186,7 +186,7 @@ function tryParseJson(t) {
 
 const u = s.AccessorType.Layout;
 
-const l = i.State.activating;
+const d = i.State.activating;
 
 class StateBinding {
     constructor(t, s, n, e, r, h, o, c) {
@@ -256,7 +256,7 @@ class StateBinding {
         if (!this.isBound) {
             return;
         }
-        const s = this._.state !== l && (this.J.type & u) > 0;
+        const s = this._.state !== d && (this.J.type & u) > 0;
         const n = this.obs;
         n.version++;
         t = i.astEvaluate(this.ast, this.s, this, this);
@@ -267,7 +267,7 @@ class StateBinding {
             this.O = this.H.queueTask((() => {
                 this.updateTarget(t);
                 this.O = null;
-            }), d);
+            }), l);
             e?.cancel();
             e = null;
         } else {
@@ -283,7 +283,7 @@ class StateBinding {
         const n = s.overrideContext;
         s.bindingContext = n.bindingContext = n.$state = t;
         const e = i.astEvaluate(this.ast, s, this, this.mode > i.BindingMode.oneTime ? this : null);
-        const r = this._.state !== l && (this.J.type & u) > 0;
+        const r = this._.state !== d && (this.J.type & u) > 0;
         if (e === this.v) {
             return;
         }
@@ -294,7 +294,7 @@ class StateBinding {
             this.O = this.H.queueTask((() => {
                 this.updateTarget(e);
                 this.O = null;
-            }), d);
+            }), l);
             h?.cancel();
         } else {
             this.updateTarget(this.v);
@@ -315,8 +315,7 @@ function isSubscribable(t) {
     return t instanceof Object && "subscribe" in t;
 }
 
-const d = {
-    reusable: false,
+const l = {
     preempt: true
 };
 

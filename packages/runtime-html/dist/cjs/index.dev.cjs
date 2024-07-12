@@ -83,6 +83,7 @@ const errorsMap = {
     [110 /* ErrorNames.ast_tagged_not_a_function */]: `Ast eval error: left-hand side of tagged template expression is not a function.`,
     [111 /* ErrorNames.ast_name_is_not_a_function */]: `Ast eval error: expected "{{0}}" to be a function`,
     [112 /* ErrorNames.ast_destruct_null */]: `Ast eval error: cannot use non-object value for destructuring assignment.`,
+    [113 /* ErrorNames.ast_increment_infinite_loop */]: `Ast eval error: infinite loop detected. Increment operators should only be used in event handlers.`,
     [151 /* ErrorNames.binding_behavior_def_not_found */]: `No binding behavior definition found for type {{0:name}}`,
     [152 /* ErrorNames.value_converter_def_not_found */]: `No value converter definition found for type {{0:name}}`,
     [153 /* ErrorNames.element_existed */]: `Element "{{0}}" has already been registered.`,
@@ -430,21 +431,31 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
                 }
                 return result;
             }
-            case ekUnary:
+            case ekUnary: {
+                const value = astEvaluate(ast.expression, s, e, c);
                 switch (ast.operation) {
                     case 'void':
-                        return void astEvaluate(ast.expression, s, e, c);
+                        return void value;
                     case 'typeof':
-                        return typeof astEvaluate(ast.expression, s, e, c);
+                        return typeof value;
                     case '!':
-                        return !astEvaluate(ast.expression, s, e, c);
+                        return !value;
                     case '-':
-                        return -astEvaluate(ast.expression, s, e, c);
+                        return -value;
                     case '+':
-                        return +astEvaluate(ast.expression, s, e, c);
+                        return +value;
+                    case '--':
+                        if (c != null)
+                            throw createMappedError(113 /* ErrorNames.ast_increment_infinite_loop */);
+                        return astAssign(ast.expression, s, e, value - 1) + ast.pos;
+                    case '++':
+                        if (c != null)
+                            throw createMappedError(113 /* ErrorNames.ast_increment_infinite_loop */);
+                        return astAssign(ast.expression, s, e, value + 1) - ast.pos;
                     default:
                         throw createMappedError(109 /* ErrorNames.ast_unknown_unary_operator */, ast.operation);
                 }
+            }
             case ekCallScope: {
                 const args = ast.args.map(a => astEvaluate(a, s, e, c));
                 const context = getContext(s, ast.name, ast.ancestor);
@@ -630,8 +641,32 @@ const { astAssign, astEvaluate, astBind, astUnbind } = /*@__PURE__*/ (() => {
             case ekConditional:
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 return astEvaluate(ast.condition, s, e, c) ? astEvaluate(ast.yes, s, e, c) : astEvaluate(ast.no, s, e, c);
-            case ekAssign:
-                return astAssign(ast.target, s, e, astEvaluate(ast.value, s, e, c));
+            case ekAssign: {
+                let value = astEvaluate(ast.value, s, e, c);
+                if (ast.op !== '=') {
+                    if (c != null) {
+                        throw createMappedError(113 /* ErrorNames.ast_increment_infinite_loop */);
+                    }
+                    const target = astEvaluate(ast.target, s, e, c);
+                    switch (ast.op) {
+                        case '/=':
+                            value = target / value;
+                            break;
+                        case '*=':
+                            value = target * value;
+                            break;
+                        case '+=':
+                            value = target + value;
+                            break;
+                        case '-=':
+                            value = target - value;
+                            break;
+                        default:
+                            throw createMappedError(108 /* ErrorNames.ast_unknown_binary_operator */, ast.op);
+                    }
+                }
+                return astAssign(ast.target, s, e, value);
+            }
             case ekValueConverter: {
                 const vc = e?.getConverter?.(ast.name);
                 if (vc == null) {
@@ -2063,7 +2098,7 @@ const mixingBindingLimited = /*@__PURE__*/ (() => {
             latestValue = v;
             if (binding.isBound) {
                 task = limiterTask;
-                limiterTask = taskQueue.queueTask(callOriginalCallback, { delay: opts.delay, reusable: false });
+                limiterTask = taskQueue.queueTask(callOriginalCallback, { delay: opts.delay });
                 task?.cancel();
             }
             else {
@@ -2112,7 +2147,7 @@ const mixingBindingLimited = /*@__PURE__*/ (() => {
                     limiterTask = taskQueue.queueTask(() => {
                         last = now();
                         callOriginalCallback();
-                    }, { delay: opts.delay - elapsed, reusable: false });
+                    }, { delay: opts.delay - elapsed });
                 }
                 task?.cancel();
             }
@@ -2180,7 +2215,6 @@ const createPrototypeMixer = ((mixed = new WeakSet()) => {
 })();
 
 const taskOptions = {
-    reusable: false,
     preempt: true,
 };
 /**
@@ -2313,7 +2347,6 @@ AttributeBinding.mix = createPrototypeMixer(() => {
 });
 
 const queueTaskOptions$1 = {
-    reusable: false,
     preempt: true,
 };
 class InterpolationBinding {
@@ -2503,7 +2536,6 @@ InterpolationPartBinding.mix = createPrototypeMixer(() => {
 });
 
 const queueTaskOptions = {
-    reusable: false,
     preempt: true,
 };
 /**
@@ -2854,7 +2886,6 @@ PropertyBinding.mix = createPrototypeMixer(() => {
 });
 let task = null;
 const updateTaskOpts = {
-    reusable: false,
     preempt: true,
 };
 
@@ -9556,7 +9587,6 @@ class PromiseTemplateController {
         const pending = this.pending;
         const s = this.viewScope;
         let preSettlePromise;
-        const defaultQueuingOptions = { reusable: false };
         const $swap = () => {
             // Note that the whole thing is not wrapped in a q.queueTask intentionally.
             // Because that would block the app till the actual promise is resolved, which is not the goal anyway.
@@ -9565,7 +9595,7 @@ class PromiseTemplateController {
             // The order of these 3 should not necessarily be sequential (i.e. order-irrelevant).
             preSettlePromise = (this.preSettledTask = q.queueTask(() => {
                 return kernel.onResolveAll(fulfilled?.deactivate(initiator), rejected?.deactivate(initiator), pending?.activate(initiator, s));
-            }, defaultQueuingOptions)).result.catch((err) => { if (!(err instanceof platform.TaskAbortError))
+            })).result.catch((err) => { if (!(err instanceof platform.TaskAbortError))
                 throw err; }), value
                 .then((data) => {
                 if (this.value !== value) {
@@ -9573,7 +9603,7 @@ class PromiseTemplateController {
                 }
                 const fulfill = () => {
                     // Deactivation of pending view and the activation of the fulfilled view should not necessarily be sequential.
-                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => kernel.onResolveAll(pending?.deactivate(initiator), rejected?.deactivate(initiator), fulfilled?.activate(initiator, s, data)), defaultQueuingOptions)).result;
+                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => kernel.onResolveAll(pending?.deactivate(initiator), rejected?.deactivate(initiator), fulfilled?.activate(initiator, s, data)))).result;
                 };
                 if (this.preSettledTask.status === tsRunning) {
                     void preSettlePromise.then(fulfill);
@@ -9588,7 +9618,7 @@ class PromiseTemplateController {
                 }
                 const reject = () => {
                     // Deactivation of pending view and the activation of the rejected view should also not necessarily be sequential.
-                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => kernel.onResolveAll(pending?.deactivate(initiator), fulfilled?.deactivate(initiator), rejected?.activate(initiator, s, err)), defaultQueuingOptions)).result;
+                    this.postSettlePromise = (this.postSettledTask = q.queueTask(() => kernel.onResolveAll(pending?.deactivate(initiator), fulfilled?.deactivate(initiator), rejected?.activate(initiator, s, err)))).result;
                 };
                 if (this.preSettledTask.status === tsRunning) {
                     void preSettlePromise.then(reject);

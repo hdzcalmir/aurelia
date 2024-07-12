@@ -392,7 +392,6 @@ const T = {
 };
 
 const x = {
-    reusable: false,
     preempt: true
 };
 

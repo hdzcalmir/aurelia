@@ -1,6 +1,6 @@
 import { DI as t, Registration as i, resolve as s, optional as n, all as e, ILogger as h, lazy as r, camelCase as o, IContainer as c, Protocol as a } from "@aurelia/kernel";
 
-import { Scope as u, IWindow as l, State as d, mixinAstEvaluator as f, mixingBindingLimited as g, BindingMode as S, astEvaluate as p, BindingBehavior as B, astBind as b, astUnbind as m, renderer as y, AppTask as v, LifecycleHooks as w, ILifecycleHooks as C } from "@aurelia/runtime-html";
+import { Scope as u, IWindow as d, State as l, mixinAstEvaluator as f, mixingBindingLimited as g, BindingMode as S, astEvaluate as p, BindingBehavior as B, astBind as b, astUnbind as m, renderer as y, AppTask as v, LifecycleHooks as w, ILifecycleHooks as C } from "@aurelia/runtime-html";
 
 import { AccessorType as I, connectable as D } from "@aurelia/runtime";
 
@@ -42,7 +42,7 @@ const _ = Object.freeze({
 });
 
 const H = /*@__PURE__*/ T("IDevToolsExtension", (t => t.cachedCallback((t => {
-    const i = t.get(l);
+    const i = t.get(d);
     const s = i.__REDUX_DEVTOOLS_EXTENSION__;
     return s ?? null;
 }))));
@@ -184,7 +184,7 @@ function tryParseJson(t) {
 
 const L = I.Layout;
 
-const k = d.activating;
+const k = l.activating;
 
 class StateBinding {
     constructor(t, i, s, n, e, h, r, o) {
@@ -314,7 +314,6 @@ function isSubscribable(t) {
 }
 
 const J = {
-    reusable: false,
     preempt: true
 };
 

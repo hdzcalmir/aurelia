@@ -35,7 +35,7 @@ export declare class TaskQueue {
     private readonly $cancel;
     get isEmpty(): boolean;
     constructor(platform: Platform, $request: () => void, $cancel: () => void);
-    flush(time?: number): void;
+    flush(now?: number): void;
     /**
      * Cancel the next flush cycle (and/or the macrotask that schedules the next flush cycle, in case this is a microtask queue), if it was requested.
      *
@@ -76,16 +76,14 @@ export declare class Task<T = any> implements ITask {
     preempt: boolean;
     persistent: boolean;
     suspend: boolean;
-    readonly reusable: boolean;
     callback: TaskCallback<T>;
     readonly id: number;
     get result(): Promise<UnwrapPromise<T>>;
     get status(): TaskStatus;
-    constructor(tracer: Tracer, taskQueue: TaskQueue, createdTime: number, queueTime: number, preempt: boolean, persistent: boolean, suspend: boolean, reusable: boolean, callback: TaskCallback<T>);
+    constructor(tracer: Tracer, taskQueue: TaskQueue, createdTime: number, queueTime: number, preempt: boolean, persistent: boolean, suspend: boolean, callback: TaskCallback<T>);
     run(time?: number): void;
     cancel(): boolean;
     reset(time: number): void;
-    reuse(time: number, delay: number, preempt: boolean, persistent: boolean, suspend: boolean, callback: TaskCallback<T>): void;
     dispose(): void;
 }
 export type QueueTaskOptions = {
@@ -111,12 +109,6 @@ export type QueueTaskOptions = {
      * Defaults to `false`
      */
     persistent?: boolean;
-    /**
-     * If `true`, the task will be kept in-memory after finishing, so that it can be reused for future tasks for efficiency.
-     *
-     * Defaults to `true`
-     */
-    reusable?: boolean;
     /**
      * If `true`, and the task callback returns a promise, that promise will be awaited before consecutive tasks are run.
      *

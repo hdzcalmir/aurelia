@@ -425,7 +425,6 @@ const contentAttributes = ['textContent', 'innerHTML', 'prepend', 'append'];
 const attributeAliases = new Map([['text', 'textContent'], ['html', 'innerHTML']]);
 const forOpts = { optional: true };
 const taskQueueOpts = {
-    reusable: false,
     preempt: true,
 };
 class TranslationBinding {
