@@ -9,93 +9,27 @@ export declare namespace createFixture {
     var html: <T = Record<PropertyKey, any>>(html: string | TemplateStringsArray, ...values: TemplateValues<T>[]) => CreateBuilder<T, "component" | "deps" | "config">;
     var component: <T, K extends ObjectType<T>>(component: T) => {
         html: {
-            (html: string): CreateBuilder<K, "deps" | "config">;
-            (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "deps" | "config">;
+            (html: string): CreateBuilder<K, Exclude<"html" | "deps" | "config", "html">>;
+            (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, Exclude<"html" | "deps" | "config", "html">>;
         };
-        deps: (...args: unknown[]) => {
-            html: {
-                (html: string): CreateBuilder<K, "config">;
-                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "config">;
-            };
-            config: (config: IFixtureConfig) => {
-                html: {
-                    (html: string): CreateBuilder<K, never>;
-                    (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
-                };
-            };
-        };
-        config: (config: IFixtureConfig) => {
-            html: {
-                (html: string): CreateBuilder<K, "deps">;
-                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "deps">;
-            };
-            deps: (...args: unknown[]) => {
-                html: {
-                    (html: string): CreateBuilder<K, never>;
-                    (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
-                };
-            };
-        };
+        deps: (...args: unknown[]) => CreateBuilder<K, Exclude<"html" | "deps" | "config", "deps">>;
+        config: (config: IFixtureConfig) => CreateBuilder<K, Exclude<"html" | "deps" | "config", "config">>;
     };
     var deps: <T = Record<PropertyKey, any>>(...deps: unknown[]) => {
         html: {
-            (html: string): CreateBuilder<T, "component" | "config">;
-            (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component" | "config">;
+            (html: string): CreateBuilder<T, Exclude<"html" | "component" | "config", "html">>;
+            (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, Exclude<"html" | "component" | "config", "html">>;
         };
-        component: <K>(comp: K | Constructable<K>) => {
-            html: {
-                (html: string): CreateBuilder<K, "config">;
-                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "config">;
-            };
-            config: (config: IFixtureConfig) => {
-                html: {
-                    (html: string): CreateBuilder<K, never>;
-                    (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
-                };
-            };
-        };
-        config: (config: IFixtureConfig) => {
-            html: {
-                (html: string): CreateBuilder<T, "component">;
-                (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component">;
-            };
-            component: <K_1>(comp: K_1 | Constructable<K_1>) => {
-                html: {
-                    (html: string): CreateBuilder<K_1, never>;
-                    (html: TemplateStringsArray, ...values: TemplateValues<K_1>[]): CreateBuilder<K_1, never>;
-                };
-            };
-        };
+        component: <K>(comp: K | Constructable<K>) => CreateBuilder<K, Exclude<"html" | "component" | "config", "component">>;
+        config: (config: IFixtureConfig) => CreateBuilder<T, Exclude<"html" | "component" | "config", "config">>;
     };
     var config: <T = Record<PropertyKey, any>>(config: IFixtureConfig) => {
         html: {
-            (html: string): CreateBuilder<T, "component" | "deps">;
-            (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component" | "deps">;
+            (html: string): CreateBuilder<T, Exclude<"html" | "component" | "deps", "html">>;
+            (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, Exclude<"html" | "component" | "deps", "html">>;
         };
-        component: <K>(comp: K | Constructable<K>) => {
-            html: {
-                (html: string): CreateBuilder<K, "deps">;
-                (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, "deps">;
-            };
-            deps: (...args: unknown[]) => {
-                html: {
-                    (html: string): CreateBuilder<K, never>;
-                    (html: TemplateStringsArray, ...values: TemplateValues<K>[]): CreateBuilder<K, never>;
-                };
-            };
-        };
-        deps: (...args: unknown[]) => {
-            html: {
-                (html: string): CreateBuilder<T, "component">;
-                (html: TemplateStringsArray, ...values: TemplateValues<T>[]): CreateBuilder<T, "component">;
-            };
-            component: <K_1>(comp: K_1 | Constructable<K_1>) => {
-                html: {
-                    (html: string): CreateBuilder<K_1, never>;
-                    (html: TemplateStringsArray, ...values: TemplateValues<K_1>[]): CreateBuilder<K_1, never>;
-                };
-            };
-        };
+        component: <K>(comp: K | Constructable<K>) => CreateBuilder<K, Exclude<"html" | "component" | "deps", "component">>;
+        deps: (...args: unknown[]) => CreateBuilder<T, Exclude<"html" | "component" | "deps", "deps">>;
     };
 }
 export interface ITextAssertOptions {

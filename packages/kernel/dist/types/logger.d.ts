@@ -153,7 +153,7 @@ interface SinkDefinition {
 export declare const LoggerSink: Readonly<{
     key: string;
     define<TSink extends Constructable<ISink>>(target: TSink, definition: SinkDefinition): void;
-    getHandles<TSink_1 extends ISink>(target: TSink_1): Exclude<LogLevel, typeof none>[] | undefined;
+    getHandles<TSink extends ISink>(target: TSink): Exclude<LogLevel, typeof none>[] | undefined;
 }>;
 export declare const sink: (definition: SinkDefinition) => <TSink extends Constructable<ISink>>(_target: TSink, context: ClassDecoratorContext<TSink>) => void;
 export interface IConsoleLike {
@@ -164,13 +164,13 @@ export interface IConsoleLike {
 }
 export declare const format: {
     readonly red: <T extends string>(str: T) => T;
-    readonly green: <T_1 extends string>(str: T_1) => T_1;
-    readonly yellow: <T_2 extends string>(str: T_2) => T_2;
-    readonly blue: <T_3 extends string>(str: T_3) => T_3;
-    readonly magenta: <T_4 extends string>(str: T_4) => T_4;
-    readonly cyan: <T_5 extends string>(str: T_5) => T_5;
-    readonly white: <T_6 extends string>(str: T_6) => T_6;
-    readonly grey: <T_7 extends string>(str: T_7) => T_7;
+    readonly green: <T extends string>(str: T) => T;
+    readonly yellow: <T extends string>(str: T) => T;
+    readonly blue: <T extends string>(str: T) => T;
+    readonly magenta: <T extends string>(str: T) => T;
+    readonly cyan: <T extends string>(str: T) => T;
+    readonly white: <T extends string>(str: T) => T;
+    readonly grey: <T extends string>(str: T) => T;
 };
 export interface ILogEvent {
     readonly severity: LogLevel;

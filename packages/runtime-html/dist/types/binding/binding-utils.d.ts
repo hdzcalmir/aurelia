@@ -15,7 +15,7 @@ export declare class BindingTargetSubscriber implements ISubscriber {
  * Implement method `useScope` in a common way for a binding. For internal use only for size saving.
  */
 export declare const mixinUseScope: <T extends {
-    _scope?: Scope | undefined;
+    _scope?: Scope;
 }>(target: Constructable<T>) => void;
 /**
  * Turns a class into AST evaluator. For internal use only

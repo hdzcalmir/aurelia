@@ -9,7 +9,7 @@ import { Constructable, Overwrite } from './interfaces';
  *
  * Results are cached.
  */
-export declare const isArrayIndex: (value: unknown) => value is string | number;
+export declare const isArrayIndex: (value: unknown) => value is number | string;
 /**
  * Efficiently convert a string to camelCase.
  *

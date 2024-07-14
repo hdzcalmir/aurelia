@@ -17,6 +17,18 @@ export type PartialBindableDefinition = Omit<IComponentBindablePropDefinition, '
     nullable?: boolean;
 };
 /**
+ * Decorator: Specifies a bindable property on a class property.
+ *
+ * @example
+ * ```ts
+ * class Foo {
+ *   ⁣@bindable bar: string;
+ * }
+ * ```
+ */
+export declare function bindable(_: undefined, context: ClassFieldDecoratorContext): void;
+export declare function bindable(_: Function, context: ClassGetterDecoratorContext): void;
+/**
  * Decorator: Specifies custom behavior for a bindable property.
  * This can be either be a property decorator or a class decorator.
  *
@@ -29,22 +41,10 @@ export declare function bindable(config?: Omit<PartialBindableDefinition, 'name'
  * @param prop - The property name
  */
 export declare function bindable(prop: string): (target: Constructable, context: ClassDecoratorContext) => void;
-/**
- * Decorator: Specifies a bindable property on a class property.
- *
- * @example
- * ```ts
- * class Foo {
- *   ⁣@bindable bar: string;
- * }
- * ```
- */
-export declare function bindable(_: undefined, context: ClassFieldDecoratorContext): void;
-export declare function bindable(_: Function, context: ClassGetterDecoratorContext): void;
 export declare const Bindable: Readonly<{
     name: string;
     keyFrom: (name: string) => string;
-    from(...bindableLists: readonly (BindableDefinition | Record<string, Exclude<PartialBindableDefinition, 'name'> | true> | readonly (string | (PartialBindableDefinition & {
+    from(...bindableLists: readonly (BindableDefinition | Record<string, Exclude<PartialBindableDefinition, "name"> | true> | readonly (string | (PartialBindableDefinition & {
         name: string;
     }))[] | undefined)[]): Record<string, BindableDefinition>;
     getAll(Type: Constructable): readonly BindableDefinition[];

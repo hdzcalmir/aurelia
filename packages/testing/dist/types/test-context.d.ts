@@ -8,11 +8,11 @@ export declare class TestContext {
     get doc(): Document;
     get userAgent(): string;
     get UIEvent(): {
-        new (type: string, eventInitDict?: UIEventInit | undefined): UIEvent;
+        new (type: string, eventInitDict?: UIEventInit): UIEvent;
         prototype: UIEvent;
     };
     get Event(): {
-        new (type: string, eventInitDict?: EventInit | undefined): Event;
+        new (type: string, eventInitDict?: EventInit): Event;
         prototype: Event;
         readonly NONE: 0;
         readonly CAPTURING_PHASE: 1;
@@ -20,11 +20,11 @@ export declare class TestContext {
         readonly BUBBLING_PHASE: 3;
     };
     get CustomEvent(): {
-        new <T>(type: string, eventInitDict?: CustomEventInit<T> | undefined): CustomEvent<T>;
-        prototype: CustomEvent<any>;
+        new <T>(type: string, eventInitDict?: CustomEventInit<T>): CustomEvent<T>;
+        prototype: CustomEvent;
     };
     get KeyboardEvent(): {
-        new (type: string, eventInitDict?: KeyboardEventInit | undefined): KeyboardEvent;
+        new (type: string, eventInitDict?: KeyboardEventInit): KeyboardEvent;
         prototype: KeyboardEvent;
         readonly DOM_KEY_LOCATION_STANDARD: 0;
         readonly DOM_KEY_LOCATION_LEFT: 1;
@@ -32,11 +32,11 @@ export declare class TestContext {
         readonly DOM_KEY_LOCATION_NUMPAD: 3;
     };
     get MouseEvent(): {
-        new (type: string, eventInitDict?: MouseEventInit | undefined): MouseEvent;
+        new (type: string, eventInitDict?: MouseEventInit): MouseEvent;
         prototype: MouseEvent;
     };
     get SubmitEvent(): {
-        new (type: string, eventInitDict?: SubmitEventInit | undefined): SubmitEvent;
+        new (type: string, eventInitDict?: SubmitEventInit): SubmitEvent;
         prototype: SubmitEvent;
     };
     get Node(): {
@@ -74,11 +74,11 @@ export declare class TestContext {
         prototype: HTMLDivElement;
     };
     get Text(): {
-        new (data?: string | undefined): Text;
+        new (data?: string): Text;
         prototype: Text;
     };
     get Comment(): {
-        new (data?: string | undefined): Comment;
+        new (data?: string): Comment;
         prototype: Comment;
     };
     get DOMParser(): {

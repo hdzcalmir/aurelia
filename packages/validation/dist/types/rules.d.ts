@@ -36,11 +36,11 @@ export type RuleType<TRule extends IValidationRule> = Class<TRule, {
 }>;
 export declare const ValidationRuleAliasMessage: Readonly<{
     aliasKey: string;
-    define<TRule extends IValidationRule<any, IValidateable<any>>>(target: RuleType<TRule>, definition: ValidationRuleDefinition, append: boolean): void;
-    setDefaultMessage<TRule_1 extends IValidationRule<any, IValidateable<any>>>(rule: TRule_1 | Constructable<TRule_1>, { aliases }: ValidationRuleDefinition, append: boolean): void;
-    getDefaultMessages<TRule_2 extends IValidationRule<any, IValidateable<any>>>(rule: TRule_2 | Constructable<TRule_2>): ValidationRuleAlias[];
+    define<TRule extends IValidationRule>(target: RuleType<TRule>, definition: ValidationRuleDefinition, append: boolean): void;
+    setDefaultMessage<TRule extends IValidationRule>(rule: Constructable<TRule> | TRule, { aliases }: ValidationRuleDefinition, append: boolean): void;
+    getDefaultMessages<TRule extends IValidationRule>(rule: Constructable<TRule> | TRule): ValidationRuleAlias[];
 }>;
-export declare function validationRule(definition: ValidationRuleDefinition): <TRule extends IValidationRule<any, IValidateable<any>>>(target: RuleType<TRule>, context: ClassDecoratorContext<RuleType<TRule>>) => RuleType<TRule>;
+export declare function validationRule(definition: ValidationRuleDefinition): <TRule extends IValidationRule>(target: RuleType<TRule>, context: ClassDecoratorContext<RuleType<TRule>>) => RuleType<TRule>;
 /**
  * Abstract validation rule.
  */

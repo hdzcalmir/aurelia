@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { Store } from './store';
+import { Class } from '@aurelia/kernel';
 export interface ConnectToSettings<T, R = T> {
     onChanged?: string;
     selector: ((store: Store<T>) => Observable<R>) | MultipleSelector<T, R>;
@@ -16,8 +17,5 @@ export interface ConnectToSettings<T, R = T> {
 export interface MultipleSelector<T, R = T> {
     [key: string]: ((store: Store<T>) => Observable<R>);
 }
-export declare function connectTo<T, R = any>(settings?: ((store: Store<T>) => Observable<R>) | ConnectToSettings<T, R>): <TClass extends {
-    new (...args: any[]): unknown;
-    readonly prototype: unknown;
-}>(target: any, context: ClassDecoratorContext<TClass>) => void;
+export declare function connectTo<T, R = any>(settings?: ((store: Store<T>) => Observable<R>) | ConnectToSettings<T, R>): <TClass extends Class<unknown>>(target: any, context: ClassDecoratorContext<TClass>) => void;
 //# sourceMappingURL=decorator.d.ts.map

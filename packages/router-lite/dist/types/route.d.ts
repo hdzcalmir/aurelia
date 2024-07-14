@@ -1,7 +1,7 @@
 import { Constructable, ResourceType } from '@aurelia/kernel';
 import type { RouteNode } from './route-tree';
 import type { FallbackFunction, IChildRouteConfig, IRouteConfig, Routeable, TransitionPlanOrFunc } from './options';
-export declare const noRoutes: readonly Routeable[];
+export declare const noRoutes: RouteConfig["routes"];
 export declare class RouteConfig implements IRouteConfig, IChildRouteConfig {
     readonly id: string;
     readonly title: string | ((node: RouteNode) => string | null) | null;
@@ -26,7 +26,7 @@ export declare const Route: {
     /**
      * Apply the specified configuration to the specified type, overwriting any existing configuration.
      */
-    configure<T extends RouteType<Constructable>>(configOrPath: IRouteConfig | IChildRouteConfig | string | string[], Type: T): T;
+    configure<T extends RouteType>(configOrPath: IRouteConfig | IChildRouteConfig | string | string[], Type: T): T;
     /**
      * Get the `RouteConfig` associated with the specified type, creating a new one if it does not yet exist.
      */
