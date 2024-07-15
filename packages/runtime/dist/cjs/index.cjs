@@ -378,7 +378,7 @@ const y = /*@__PURE__*/ (() => {
         let p, d, b;
         let w, v;
         let g, y, C, O;
-        let A, x, m, S;
+        let A, x, S, m;
         while (true) {
             if (s - r <= 10) {
                 insertionSort(t, e, r, s, n);
@@ -436,27 +436,27 @@ const y = /*@__PURE__*/ (() => {
             t: for (o = C + 1; o < O; o++) {
                 A = t[o];
                 x = e[o];
-                m = n(A, g);
-                if (m < 0) {
+                S = n(A, g);
+                if (S < 0) {
                     t[o] = t[C];
                     e[o] = e[C];
                     t[C] = A;
                     e[C] = x;
                     C++;
-                } else if (m > 0) {
+                } else if (S > 0) {
                     do {
                         O--;
                         if (O == o) {
                             break t;
                         }
-                        S = t[O];
-                        m = n(S, g);
-                    } while (m > 0);
+                        m = t[O];
+                        S = n(m, g);
+                    } while (S > 0);
                     t[o] = t[O];
                     e[o] = e[O];
                     t[O] = A;
                     e[O] = x;
-                    if (m < 0) {
+                    if (S < 0) {
                         A = t[o];
                         x = e[o];
                         t[o] = t[C];
@@ -1094,16 +1094,16 @@ function connectable(t, e) {
 
 let x = null;
 
-const m = [];
+const S = [];
 
-let S = false;
+let m = false;
 
 function pauseConnecting() {
-    S = false;
+    m = false;
 }
 
 function resumeConnecting() {
-    S = true;
+    m = true;
 }
 
 function currentConnectable() {
@@ -1116,16 +1116,16 @@ function enterConnectable(t) {
     }
     if (x == null) {
         x = t;
-        m[0] = x;
-        S = true;
+        S[0] = x;
+        m = true;
         return;
     }
     if (x === t) {
         throw createMappedError(207);
     }
-    m.push(t);
+    S.push(t);
     x = t;
-    S = true;
+    m = true;
 }
 
 function exitConnectable(t) {
@@ -1135,9 +1135,9 @@ function exitConnectable(t) {
     if (x !== t) {
         throw createMappedError(209);
     }
-    m.pop();
-    x = m.length > 0 ? m[m.length - 1] : null;
-    S = x != null;
+    S.pop();
+    x = S.length > 0 ? S[S.length - 1] : null;
+    m = x != null;
 }
 
 const R = /*@__PURE__*/ i({
@@ -1145,7 +1145,7 @@ const R = /*@__PURE__*/ i({
         return x;
     },
     get connecting() {
-        return S;
+        return m;
     },
     enter: enterConnectable,
     exit: exitConnectable,
@@ -1214,7 +1214,7 @@ const L = {
             return t;
         }
         const s = currentConnectable();
-        if (!S || doNotCollect(t, e) || s == null) {
+        if (!m || doNotCollect(t, e) || s == null) {
             return P(t, e, r);
         }
         s.observe(t, e);
@@ -1227,7 +1227,7 @@ const V = {
         if (e === D) {
             return t;
         }
-        if (!S || doNotCollect(t, e) || x == null) {
+        if (!m || doNotCollect(t, e) || x == null) {
             return P(t, e, r);
         }
         switch (e) {
@@ -1461,7 +1461,7 @@ const N = {
             return e;
         }
         const n = currentConnectable();
-        if (!S || doNotCollect(e, r) || n == null) {
+        if (!m || doNotCollect(e, r) || n == null) {
             return P(e, r, s);
         }
         switch (r) {
@@ -1738,9 +1738,9 @@ class ComputedObserver {
     g(ComputedObserver, null);
 })();
 
-const F = /*@__PURE__*/ c("IDirtyChecker", void 0);
+const E = /*@__PURE__*/ c("IDirtyChecker", void 0);
 
-const j = {
+const F = {
     timeoutsPerCheck: 25,
     disabled: false,
     throw: false,
@@ -1753,7 +1753,7 @@ const j = {
 
 class DirtyChecker {
     static register(e) {
-        e.register(t.Registration.singleton(this, this), t.Registration.aliasTo(this, F));
+        e.register(t.Registration.singleton(this, this), t.Registration.aliasTo(this, E));
     }
     constructor() {
         this.tracked = [];
@@ -1761,10 +1761,10 @@ class DirtyChecker {
         this.O = 0;
         this.p = t.resolve(t.IPlatform);
         this.check = () => {
-            if (j.disabled) {
+            if (F.disabled) {
                 return;
             }
-            if (++this.O < j.timeoutsPerCheck) {
+            if (++this.O < F.timeoutsPerCheck) {
                 return;
             }
             this.O = 0;
@@ -1782,7 +1782,7 @@ class DirtyChecker {
         g(DirtyCheckProperty, null);
     }
     createProperty(t, e) {
-        if (j.throw) {
+        if (F.throw) {
             throw createMappedError(218, e);
         }
         return new DirtyCheckProperty(this, t, e);
@@ -1891,13 +1891,13 @@ class SetterObserver {
             if (t.areEqual(e, this.v)) {
                 return;
             }
-            E = this.v;
+            j = this.v;
             this.v = e;
-            this.cb?.(e, E);
-            this.subs.notify(e, E);
+            this.cb?.(e, j);
+            this.subs.notify(e, j);
         } else {
             this.v = this.o[this.k] = e;
-            this.cb?.(e, E);
+            this.cb?.(e, j);
         }
     }
     useCallback(t) {
@@ -1952,7 +1952,7 @@ class SetterObserver {
     g(SetterObserver, null);
 })();
 
-let E = void 0;
+let j = void 0;
 
 const z = new PropertyAccessor;
 
@@ -1992,7 +1992,7 @@ const W = /*@__PURE__*/ c("IComputedObserverLocator", (t => t.singleton(class De
 class ObserverLocator {
     constructor() {
         this.R = [];
-        this.A = t.resolve(F);
+        this.A = t.resolve(E);
         this.P = t.resolve(B);
         this.I = t.resolve(W);
     }
@@ -2349,6 +2349,11 @@ const U = /*@__PURE__*/ (() => {
     return observable;
 })();
 
+typeof SuppressedError === "function" ? SuppressedError : function(t, e, r) {
+    var s = new Error(r);
+    return s.name = "SuppressedError", s.error = t, s.suppressed = e, s;
+};
+
 function nowrap(t, e) {
     return arguments.length === 0 ? decorator : decorator(t, e);
     function decorator(t, e) {
@@ -2381,7 +2386,7 @@ exports.ConnectableSwitcher = R;
 
 exports.DirtyCheckProperty = DirtyCheckProperty;
 
-exports.DirtyCheckSettings = j;
+exports.DirtyCheckSettings = F;
 
 exports.DirtyChecker = DirtyChecker;
 
@@ -2389,7 +2394,7 @@ exports.ICoercionConfiguration = h;
 
 exports.IComputedObserverLocator = W;
 
-exports.IDirtyChecker = F;
+exports.IDirtyChecker = E;
 
 exports.INodeObserverLocator = B;
 

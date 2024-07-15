@@ -27,17 +27,17 @@ function __esDecorate(t, i, e, s, r, n) {
             if (u) throw new TypeError("Cannot add initializers after decoration has completed");
             n.push(accept(t || null));
         };
-        var g = (0, e[d])(o === "accessor" ? {
+        var p = (0, e[d])(o === "accessor" ? {
             get: h.get,
             set: h.set
         } : h[a], f);
         if (o === "accessor") {
-            if (g === void 0) continue;
-            if (g === null || typeof g !== "object") throw new TypeError("Object expected");
-            if (c = accept(g.get)) h.get = c;
-            if (c = accept(g.set)) h.set = c;
-            if (c = accept(g.init)) r.unshift(c);
-        } else if (c = accept(g)) {
+            if (p === void 0) continue;
+            if (p === null || typeof p !== "object") throw new TypeError("Object expected");
+            if (c = accept(p.get)) h.get = c;
+            if (c = accept(p.set)) h.set = c;
+            if (c = accept(p.init)) r.unshift(c);
+        } else if (c = accept(p)) {
             if (o === "field") r.unshift(c); else h[a] = c;
         }
     }
@@ -52,6 +52,11 @@ function __runInitializers(t, i, e) {
     }
     return s ? e : void 0;
 }
+
+typeof SuppressedError === "function" ? SuppressedError : function(t, i, e) {
+    var s = new Error(e);
+    return s.name = "SuppressedError", s.error = t, s.suppressed = i, s;
+};
 
 const createMappedError = (t, ...i) => new Error(`AUR${String(t).padStart(4, "0")}:${i.map(String)}`);
 
@@ -822,7 +827,7 @@ const f = "validation-result-id";
 
 const v = "validation-result-container";
 
-const g = /*@__PURE__*/ t.DI.createInterface("IValidationResultPresenterService", (t => t.transient(ValidationResultPresenterService)));
+const p = /*@__PURE__*/ t.DI.createInterface("IValidationResultPresenterService", (t => t.transient(ValidationResultPresenterService)));
 
 class ValidationResultPresenterService {
     constructor() {
@@ -906,7 +911,7 @@ exports.IDefaultTrigger = h;
 
 exports.IValidationController = n;
 
-exports.IValidationResultPresenterService = g;
+exports.IValidationResultPresenterService = p;
 
 exports.ValidateBindingBehavior = ValidateBindingBehavior;
 

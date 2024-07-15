@@ -329,7 +329,7 @@ const cacheCallbackResult = t => (e, n, r) => {
     return i;
 };
 
-const m = {
+const w = {
     instance: instanceRegistration,
     singleton: singletonRegistration,
     transient: transientRegistation,
@@ -345,19 +345,19 @@ const createImplementationRegister = function(t) {
     };
 };
 
-const w = "au:annotation";
+const m = "au:annotation";
 
 const getAnnotationKeyFor = (t, e) => {
     if (e === void 0) {
-        return `${w}:${t}`;
+        return `${m}:${t}`;
     }
-    return `${w}:${t}:${e}`;
+    return `${m}:${t}:${e}`;
 };
 
 const appendAnnotation = (t, e) => {
-    const n = o(w, t);
+    const n = o(m, t);
     if (n === void 0) {
-        l([ e ], t, w);
+        l([ e ], t, m);
     } else {
         n.push(e);
     }
@@ -371,13 +371,13 @@ const p = /*@__PURE__*/ r({
     },
     get: (t, e) => o(getAnnotationKeyFor(e), t),
     getKeys(t) {
-        let e = o(w, t);
+        let e = o(m, t);
         if (e === void 0) {
-            l(e = [], t, w);
+            l(e = [], t, m);
         }
         return e;
     },
-    isKey: t => t.startsWith(w),
+    isKey: t => t.startsWith(m),
     keyFor: getAnnotationKeyFor
 });
 
@@ -524,7 +524,7 @@ class Container {
                     t.register(this);
                 } else if (isString(n.$au?.type)) {
                     const t = n.$au;
-                    const e = (n.aliases ?? T).concat(t.aliases ?? T);
+                    const e = (n.aliases ?? M).concat(t.aliases ?? M);
                     let r = `${R}:${t.type}:${t.name}`;
                     if (this.has(r, false)) {
                         continue;
@@ -683,7 +683,7 @@ class Container {
         const r = E = this;
         let s = r;
         let i;
-        let o = T;
+        let o = M;
         try {
             if (e) {
                 while (s != null) {
@@ -700,7 +700,7 @@ class Container {
                 if (i == null) {
                     s = s.t;
                     if (s == null) {
-                        return T;
+                        return M;
                     }
                 } else {
                     return buildAllResponse(i, s, r);
@@ -709,7 +709,7 @@ class Container {
         } finally {
             E = n;
         }
-        return T;
+        return M;
     }
     invoke(t, e) {
         if (g(t)) {
@@ -1062,7 +1062,7 @@ const L = /*@__PURE__*/ (() => {
             t.registerInRequestor = false;
             return t;
         },
-        singleton(t, e = _) {
+        singleton(t, e = S) {
             t.register = function(e) {
                 const n = singletonRegistration(t, t);
                 return n.register(e, t);
@@ -1085,15 +1085,15 @@ function transient(t, e) {
     return t == null ? transientDecorator : transientDecorator(t);
 }
 
-const _ = {
+const S = {
     scoped: false
 };
 
-const M = L.singleton;
+const _ = L.singleton;
 
 function singleton(t, e) {
-    return isFunction(t) ? M(t) : function(e, n) {
-        return M(e, t);
+    return isFunction(t) ? _(t) : function(e, n) {
+        return _(e, t);
     };
 }
 
@@ -1212,9 +1212,9 @@ class ParameterizedRegistry {
     }
 }
 
-const T = r([]);
+const M = r([]);
 
-const S = r({});
+const T = r({});
 
 function noop() {}
 
@@ -1356,6 +1356,11 @@ function __runInitializers(t, e, n) {
     }
     return r ? n : void 0;
 }
+
+typeof SuppressedError === "function" ? SuppressedError : function(t, e, n) {
+    var r = new Error(n);
+    return r.name = "SuppressedError", r.error = t, r.suppressed = e, r;
+};
 
 const q = 0;
 
@@ -1987,5 +1992,5 @@ class EventAggregator {
     }
 }
 
-export { AnalyzedModule, ConsoleSink, ContainerConfiguration, L as DI, DefaultLogEvent, DefaultLogEventFactory, ft as DefaultLogger, D as DefaultResolver, EventAggregator, j as IContainer, vt as IEventAggregator, rt as ILogConfig, it as ILogEventFactory, ot as ILogger, dt as IModuleLoader, P as IPlatform, F as IServiceLocator, st as ISink, InstanceProvider, LogConfig, nt as LogLevel, ht as LoggerConfiguration, ModuleItem, b as Protocol, m as Registration, aliasedResourcesRegistry, all, U as allResources, c as areEqual, bound, f as camelCase, createImplementationRegister, createLookup, createResolver, T as emptyArray, S as emptyObject, G as factory, firstDefined, at as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, v as getPrototypeChain, getResourceKeyFor, z as ignore, inject, isArray, a as isArrayIndex, isFunction, isMap, g as isNativeFunction, isNumber, isObject, isPromise, isSet, isString, isSymbol, d as kebabCase, last, K as lazy, mergeArrays, x as newInstanceForScope, H as newInstanceOf, noop, onResolve, onResolveAll, N as optional, Q as optionalResource, W as own, h as pascalCase, C as registrableMetadataKey, resolve, B as resource, R as resourceBaseName, singleton, sink, toArray, transient };
+export { AnalyzedModule, ConsoleSink, ContainerConfiguration, L as DI, DefaultLogEvent, DefaultLogEventFactory, ft as DefaultLogger, D as DefaultResolver, EventAggregator, j as IContainer, vt as IEventAggregator, rt as ILogConfig, it as ILogEventFactory, ot as ILogger, dt as IModuleLoader, P as IPlatform, F as IServiceLocator, st as ISink, InstanceProvider, LogConfig, nt as LogLevel, ht as LoggerConfiguration, ModuleItem, b as Protocol, w as Registration, aliasedResourcesRegistry, all, U as allResources, c as areEqual, bound, f as camelCase, createImplementationRegister, createLookup, createResolver, M as emptyArray, T as emptyObject, G as factory, firstDefined, at as format, fromAnnotationOrDefinitionOrTypeOrDefault, fromAnnotationOrTypeOrDefault, fromDefinitionOrDefault, v as getPrototypeChain, getResourceKeyFor, z as ignore, inject, isArray, a as isArrayIndex, isFunction, isMap, g as isNativeFunction, isNumber, isObject, isPromise, isSet, isString, isSymbol, d as kebabCase, last, K as lazy, mergeArrays, x as newInstanceForScope, H as newInstanceOf, noop, onResolve, onResolveAll, N as optional, Q as optionalResource, W as own, h as pascalCase, C as registrableMetadataKey, resolve, B as resource, R as resourceBaseName, singleton, sink, toArray, transient };
 //# sourceMappingURL=index.mjs.map

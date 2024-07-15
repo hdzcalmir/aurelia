@@ -1094,14 +1094,14 @@ let N = null;
 
 const H = [];
 
-let F = false;
+let E = false;
 
 function pauseConnecting() {
-    F = false;
+    E = false;
 }
 
 function resumeConnecting() {
-    F = true;
+    E = true;
 }
 
 function currentConnectable() {
@@ -1115,7 +1115,7 @@ function enterConnectable(t) {
     if (N == null) {
         N = t;
         H[0] = N;
-        F = true;
+        E = true;
         return;
     }
     if (N === t) {
@@ -1123,7 +1123,7 @@ function enterConnectable(t) {
     }
     H.push(t);
     N = t;
-    F = true;
+    E = true;
 }
 
 function exitConnectable(t) {
@@ -1135,15 +1135,15 @@ function exitConnectable(t) {
     }
     H.pop();
     N = H.length > 0 ? H[H.length - 1] : null;
-    F = N != null;
+    E = N != null;
 }
 
-const j = /*@__PURE__*/ v({
+const F = /*@__PURE__*/ v({
     get current() {
         return N;
     },
     get connecting() {
-        return F;
+        return E;
     },
     enter: enterConnectable,
     exit: exitConnectable,
@@ -1151,7 +1151,7 @@ const j = /*@__PURE__*/ v({
     resume: resumeConnecting
 });
 
-const E = Reflect.get;
+const j = Reflect.get;
 
 const z = Object.prototype.toString;
 
@@ -1212,11 +1212,11 @@ const K = {
             return t;
         }
         const s = currentConnectable();
-        if (!F || doNotCollect(t, e) || s == null) {
-            return E(t, e, r);
+        if (!E || doNotCollect(t, e) || s == null) {
+            return j(t, e, r);
         }
         s.observe(t, e);
-        return wrap(E(t, e, r));
+        return wrap(j(t, e, r));
     }
 };
 
@@ -1225,8 +1225,8 @@ const T = {
         if (e === q) {
             return t;
         }
-        if (!F || doNotCollect(t, e) || N == null) {
-            return E(t, e, r);
+        if (!E || doNotCollect(t, e) || N == null) {
+            return j(t, e, r);
         }
         switch (e) {
           case "length":
@@ -1310,7 +1310,7 @@ const T = {
             return wrappedEntries;
         }
         N.observe(t, e);
-        return wrap(E(t, e, r));
+        return wrap(j(t, e, r));
     },
     ownKeys(t) {
         currentConnectable()?.observe(t, "length");
@@ -1459,8 +1459,8 @@ const U = {
             return t;
         }
         const i = currentConnectable();
-        if (!F || doNotCollect(t, e) || i == null) {
-            return E(t, e, r);
+        if (!E || doNotCollect(t, e) || i == null) {
+            return j(t, e, r);
         }
         switch (e) {
           case "size":
@@ -1509,7 +1509,7 @@ const U = {
           case Symbol.iterator:
             return n(t) ? wrappedEntries : wrappedValues;
         }
-        return wrap(E(t, e, r));
+        return wrap(j(t, e, r));
     }
 };
 
@@ -2347,6 +2347,11 @@ const it = /*@__PURE__*/ (() => {
     return observable;
 })();
 
+typeof SuppressedError === "function" ? SuppressedError : function(t, e, r) {
+    var s = new Error(r);
+    return s.name = "SuppressedError", s.error = t, s.suppressed = e, s;
+};
+
 function nowrap(t, e) {
     return arguments.length === 0 ? decorator : decorator(t, e);
     function decorator(t, e) {
@@ -2367,5 +2372,5 @@ function nowrap(t, e) {
     }
 }
 
-export { I as AccessorType, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, j as ConnectableSwitcher, DirtyCheckProperty, Q as DirtyCheckSettings, DirtyChecker, A as ICoercionConfiguration, et as IComputedObserverLocator, J as IDirtyChecker, tt as INodeObserverLocator, nt as IObservation, Z as IObserverLocator, Observation, ObserverLocator, PrimitiveObserver, PropertyAccessor, G as ProxyObservable, SetterObserver, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, it as observable, k as subscriberCollection };
+export { I as AccessorType, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, F as ConnectableSwitcher, DirtyCheckProperty, Q as DirtyCheckSettings, DirtyChecker, A as ICoercionConfiguration, et as IComputedObserverLocator, J as IDirtyChecker, tt as INodeObserverLocator, nt as IObservation, Z as IObserverLocator, Observation, ObserverLocator, PrimitiveObserver, PropertyAccessor, G as ProxyObservable, SetterObserver, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, it as observable, k as subscriberCollection };
 //# sourceMappingURL=index.mjs.map
