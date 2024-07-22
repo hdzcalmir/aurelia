@@ -1,6 +1,6 @@
 import { Metadata, isObject } from '../../../metadata/dist/native-modules/index.mjs';
 import { DI, resolve, IEventAggregator, ILogger, emptyArray, onResolve, getResourceKeyFor, onResolveAll, emptyObject, IContainer, Registration, isArrayIndex, IModuleLoader, InstanceProvider, noop } from '../../../kernel/dist/native-modules/index.mjs';
-import { BindingMode, isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, CustomAttribute, INode, getRef, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
+import { BindingMode, isCustomElementViewModel, IHistory, ILocation, IWindow, CustomElement, Controller, IPlatform, CustomElementDefinition, IController, IAppRoot, isCustomElementController, registerHostNode, CustomAttribute, INode, getRef, AppTask } from '../../../runtime-html/dist/native-modules/index.mjs';
 import { RESIDUE, RecognizedRoute, Endpoint, ConfigurableRoute, RouteRecognizer } from '../../../route-recognizer/dist/native-modules/index.mjs';
 import { batch } from '../../../runtime/dist/native-modules/index.mjs';
 
@@ -4215,6 +4215,7 @@ class RouteContext {
         trace(this._logger, 3150 /* Events.rcCreated */);
         this._moduleLoader = parentContainer.get(IModuleLoader);
         const container = this.container = parentContainer.createChild();
+        this._platform = container.get(IPlatform);
         container.registerResolver(IController, this._hostControllerProvider = new InstanceProvider(), true);
         const ctxProvider = new InstanceProvider('IRouteContext', this);
         container.registerResolver(IRouteContext, ctxProvider);
@@ -4379,13 +4380,17 @@ class RouteContext {
         trace(this._logger, 3159 /* Events.rcCreateCa */, routeNode);
         this._hostControllerProvider.prepare(hostController);
         const container = this.container.createChild({ inheritParentResources: true });
-        const componentInstance = container.invoke(routeNode.component.Type);
+        const platform = this._platform;
+        const elDefn = routeNode.component;
+        const host = platform.document.createElement(elDefn.name);
+        registerHostNode(container, host, platform);
+        const componentInstance = container.invoke(elDefn.Type);
         // this is the point where we can load the delayed (non-static) child route configuration by calling the getRouteConfig
         const task = this._childRoutesConfigured
             ? void 0
             : onResolve(resolveRouteConfiguration(componentInstance, false, this.config, routeNode, null), config => this._processConfig(config));
         return onResolve(task, () => {
-            const controller = Controller.$el(container, componentInstance, hostController.host, null);
+            const controller = Controller.$el(container, componentInstance, hostController.host, null, elDefn);
             const componentAgent = new ComponentAgent(componentInstance, controller, routeNode, this, this._router.options);
             this._hostControllerProvider.dispose();
             return componentAgent;
