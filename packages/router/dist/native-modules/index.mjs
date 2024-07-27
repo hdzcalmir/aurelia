@@ -3263,7 +3263,7 @@ class EndpointMatcher {
         const e = [];
         const r = t.getOwnedRoutingScopes(Infinity);
         const o = r.map((t => t.endpoint));
-        const h = o.filter((t => t !== null && !s.some((i => t === i.endpoint.instance && !i.cancelled))));
+        const h = o.filter((i => i !== null && !s.some((s => i === s.endpoint.instance && !s.cancelled && !s.isClear(t.router)))));
         const u = new Collection(...i.slice());
         let a = null;
         EndpointMatcher.matchKnownEndpoints(t.router, "ViewportScope", u, h, e, false);
