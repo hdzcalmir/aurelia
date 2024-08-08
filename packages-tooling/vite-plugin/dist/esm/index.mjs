@@ -76,6 +76,8 @@ function au(options = {}) {
             if (!isVirtualTsFileFromHtml(id)) {
                 return null;
             }
+            if (id.startsWith('/'))
+                return id;
             id = resolve(dirname(importer !== null && importer !== void 0 ? importer : ''), this.meta.watchMode ? id.replace(/^\//, './') : id);
             return id;
         },

@@ -55,7 +55,7 @@ class Store {
     }
     constructor() {
         this.t = new Set;
-        this.i = 0;
+        this.i = false;
         this.h = [];
         this.u = this._state = t.resolve(t.optional(h)) ?? new State;
         this.B = t.resolve(t.all(e));
@@ -76,43 +76,40 @@ class Store {
     getState() {
         return this._state;
     }
-    dispatch(t) {
-        if (this.i > 0) {
-            this.h.push(t);
+    O(i, s, n) {
+        for (const e of i) {
+            s = t.onResolve(s, (t => e(t, n)));
+        }
+        return t.onResolve(s, (t => t));
+    }
+    dispatch(i) {
+        if (this.i) {
+            this.h.push(i);
             return;
         }
-        this.i++;
-        let i;
-        const reduce = (t, i) => this.B.reduce(((t, s) => {
-            if (t instanceof Promise) {
-                return t.then((t => s(t, i)));
+        this.i = true;
+        const afterDispatch = i => t.onResolve(i, (i => {
+            const s = this.h.shift();
+            if (s != null) {
+                return t.onResolve(this.O(this.B, i, s), (t => {
+                    this.T(t);
+                    return afterDispatch(t);
+                }));
+            } else {
+                this.i = false;
             }
-            return s(t, i);
-        }), t);
-        const afterDispatch = t => {
-            if (this.h.length > 0) {
-                i = this.h.shift();
-                const s = reduce(t, i);
-                if (s instanceof Promise) {
-                    return s.then((t => afterDispatch(t)));
-                } else {
-                    return afterDispatch(s);
-                }
-            }
-        };
-        const s = reduce(this._state, t);
-        if (s instanceof Promise) {
+        }));
+        const s = this.O(this.B, this._state, i);
+        if (t.isPromise(s)) {
             return s.then((t => {
                 this.T(t);
-                this.i--;
                 return afterDispatch(this._state);
             }), (t => {
-                this.i--;
+                this.i = false;
                 throw t;
             }));
         } else {
             this.T(s);
-            this.i--;
             return afterDispatch(this._state);
         }
     }
@@ -191,30 +188,30 @@ const l = i.State.activating;
 class StateBinding {
     constructor(t, s, n, e, r, h, o, c) {
         this.isBound = false;
-        this.O = null;
+        this.A = null;
         this.v = void 0;
-        this.A = void 0;
-        this.P = 0;
+        this._ = void 0;
+        this.H = 0;
         this.boundFn = false;
         this.mode = i.BindingMode.toView;
-        this._ = t;
+        this.L = t;
         this.l = s;
-        this.H = e;
-        this.L = c;
+        this.P = e;
+        this.J = c;
         this.oL = n;
         this.ast = r;
         this.target = h;
         this.targetProperty = o;
     }
     updateTarget(t) {
-        const i = this.J;
+        const i = this.N;
         const s = this.target;
         const n = this.targetProperty;
-        const e = this.P++;
-        const isCurrentValue = () => e === this.P - 1;
-        this.N();
+        const e = this.H++;
+        const isCurrentValue = () => e === this.H - 1;
+        this.$();
         if (isSubscribable(t)) {
-            this.A = t.subscribe((t => {
+            this._ = t.subscribe((t => {
                 if (isCurrentValue()) {
                     i.setValue(t, s, n);
                 }
@@ -235,9 +232,9 @@ class StateBinding {
         if (this.isBound) {
             return;
         }
-        this.J = this.oL.getAccessor(this.target, this.targetProperty);
-        this.L.subscribe(this);
-        this.updateTarget(this.v = i.astEvaluate(this.ast, this.s = createStateBindingScope(this.L.getState(), t), this, this.mode > i.BindingMode.oneTime ? this : null));
+        this.N = this.oL.getAccessor(this.target, this.targetProperty);
+        this.J.subscribe(this);
+        this.updateTarget(this.v = i.astEvaluate(this.ast, this.s = createStateBindingScope(this.J.getState(), t), this, this.mode > i.BindingMode.oneTime ? this : null));
         this.isBound = true;
     }
     unbind() {
@@ -245,28 +242,28 @@ class StateBinding {
             return;
         }
         this.isBound = false;
-        this.N();
-        this.P++;
+        this.$();
+        this.H++;
         this.s = void 0;
-        this.O?.cancel();
-        this.O = null;
-        this.L.unsubscribe(this);
+        this.A?.cancel();
+        this.A = null;
+        this.J.unsubscribe(this);
     }
     handleChange(t) {
         if (!this.isBound) {
             return;
         }
-        const s = this._.state !== l && (this.J.type & u) > 0;
+        const s = this.L.state !== l && (this.N.type & u) > 0;
         const n = this.obs;
         n.version++;
         t = i.astEvaluate(this.ast, this.s, this, this);
         n.clear();
         let e;
         if (s) {
-            e = this.O;
-            this.O = this.H.queueTask((() => {
+            e = this.A;
+            this.A = this.P.queueTask((() => {
                 this.updateTarget(t);
-                this.O = null;
+                this.A = null;
             }), d);
             e?.cancel();
             e = null;
@@ -278,36 +275,36 @@ class StateBinding {
         if (!this.isBound) {
             return;
         }
-        const t = this.L.getState();
+        const t = this.J.getState();
         const s = this.s;
         const n = s.overrideContext;
-        s.bindingContext = n.bindingContext = n.$state = t;
+        s.bindingContext = n.bindingContext = t;
         const e = i.astEvaluate(this.ast, s, this, this.mode > i.BindingMode.oneTime ? this : null);
-        const r = this._.state !== l && (this.J.type & u) > 0;
+        const r = this.L.state !== l && (this.N.type & u) > 0;
         if (e === this.v) {
             return;
         }
         this.v = e;
         let h = null;
         if (r) {
-            h = this.O;
-            this.O = this.H.queueTask((() => {
+            h = this.A;
+            this.A = this.P.queueTask((() => {
                 this.updateTarget(e);
-                this.O = null;
+                this.A = null;
             }), d);
             h?.cancel();
         } else {
             this.updateTarget(this.v);
         }
     }
-    N() {
-        if (typeof this.A === "function") {
-            this.A();
-        } else if (this.A !== void 0) {
-            this.A.dispose?.();
-            this.A.unsubscribe?.();
+    $() {
+        if (typeof this._ === "function") {
+            this._();
+        } else if (this._ !== void 0) {
+            this._.dispose?.();
+            this._.unsubscribe?.();
         }
-        this.A = void 0;
+        this._ = void 0;
     }
 }
 
@@ -316,7 +313,6 @@ function isSubscribable(t) {
 }
 
 const d = {
-    reusable: false,
     preempt: true
 };
 
@@ -330,27 +326,27 @@ const f = new WeakMap;
 
 class StateBindingBehavior {
     constructor() {
-        this.L = t.resolve(r);
+        this.J = t.resolve(r);
     }
     bind(t, i) {
         const s = i instanceof StateBinding;
-        t = s ? t : createStateBindingScope(this.L.getState(), t);
+        t = s ? t : createStateBindingScope(this.J.getState(), t);
         let n;
         if (!s) {
             n = f.get(i);
             if (n == null) {
                 f.set(i, n = new StateSubscriber(i, t));
             } else {
-                n.$ = t;
+                n.M = t;
             }
-            this.L.subscribe(n);
+            this.J.subscribe(n);
             i.useScope?.(t);
         }
     }
     unbind(t, i) {
         const s = i instanceof StateBinding;
         if (!s) {
-            this.L.unsubscribe(f.get(i));
+            this.J.unsubscribe(f.get(i));
             f.delete(i);
         }
     }
@@ -360,14 +356,14 @@ i.BindingBehavior.define("state", StateBindingBehavior);
 
 class StateSubscriber {
     constructor(t, i) {
-        this.M = t;
-        this.$ = i;
+        this.R = t;
+        this.M = i;
     }
     handleStateChange(t) {
-        const i = this.$;
+        const i = this.M;
         const s = i.overrideContext;
-        i.bindingContext = s.bindingContext = s.$state = t;
-        this.M.handleChange?.(undefined, undefined);
+        i.bindingContext = s.bindingContext = t;
+        this.R.handleChange?.(undefined, undefined);
     }
 }
 
@@ -376,17 +372,17 @@ class StateDispatchBinding {
         this.isBound = false;
         this.boundFn = false;
         this.l = t;
-        this.L = e;
+        this.J = e;
         this.ast = i;
-        this.R = s;
-        this.G = n;
+        this.G = s;
+        this.j = n;
     }
     callSource(t) {
         const s = this.s;
         s.overrideContext.$event = t;
         const n = i.astEvaluate(this.ast, s, this, null);
         delete s.overrideContext.$event;
-        void this.L.dispatch(n);
+        void this.J.dispatch(n);
     }
     handleEvent(t) {
         this.callSource(t);
@@ -396,9 +392,9 @@ class StateDispatchBinding {
             return;
         }
         i.astBind(this.ast, t, this);
-        this.s = createStateBindingScope(this.L.getState(), t);
-        this.R.addEventListener(this.G, this);
-        this.L.subscribe(this);
+        this.s = createStateBindingScope(this.J.getState(), t);
+        this.G.addEventListener(this.j, this);
+        this.J.subscribe(this);
         this.isBound = true;
     }
     unbind() {
@@ -408,8 +404,8 @@ class StateDispatchBinding {
         this.isBound = false;
         i.astUnbind(this.ast, this.s, this);
         this.s = void 0;
-        this.R.removeEventListener(this.G, this);
-        this.L.unsubscribe(this);
+        this.G.removeEventListener(this.j, this);
+        this.J.unsubscribe(this);
     }
     handleStateChange(t) {
         const i = this.s;
@@ -481,22 +477,22 @@ class DispatchBindingInstruction {
 const g = /*@__PURE__*/ i.renderer(class StateBindingInstructionRenderer {
     constructor() {
         this.target = "sb";
-        this.j = t.resolve(r);
+        this.q = t.resolve(r);
     }
     render(t, i, s, n, e, r) {
         const h = ensureExpression(e, s.from, "IsFunction");
-        t.addBinding(new StateBinding(t, t.container, r, n.domQueue, h, i, s.to, this.j));
+        t.addBinding(new StateBinding(t, t.container, r, n.domQueue, h, i, s.to, this.q));
     }
 }, null);
 
 const S = /*@__PURE__*/ i.renderer(class DispatchBindingInstructionRenderer {
     constructor() {
         this.target = "sd";
-        this.j = t.resolve(r);
+        this.q = t.resolve(r);
     }
     render(t, i, s, n, e) {
         const r = ensureExpression(e, s.ast, "IsProperty");
-        t.addBinding(new StateDispatchBinding(t.container, r, i, s.from, this.j));
+        t.addBinding(new StateDispatchBinding(t.container, r, i, s.from, this.q));
     }
 }, null);
 
@@ -533,9 +529,9 @@ class StateGetterBinding {
     constructor(t, i, s, n) {
         this.isBound = false;
         this.v = void 0;
-        this.A = void 0;
-        this.P = 0;
-        this.L = s;
+        this._ = void 0;
+        this.H = 0;
+        this.J = s;
         this.$get = n;
         this.target = t;
         this.key = i;
@@ -543,11 +539,11 @@ class StateGetterBinding {
     updateTarget(t) {
         const i = this.target;
         const s = this.key;
-        const n = this.P++;
-        const isCurrentValue = () => n === this.P - 1;
-        this.N();
+        const n = this.H++;
+        const isCurrentValue = () => n === this.H - 1;
+        this.$();
         if (isSubscribable$1(t)) {
-            this.A = t.subscribe((t => {
+            this._ = t.subscribe((t => {
                 if (isCurrentValue()) {
                     i[s] = t;
                 }
@@ -568,9 +564,9 @@ class StateGetterBinding {
         if (this.isBound) {
             return;
         }
-        const i = this.L.getState();
+        const i = this.J.getState();
         this.s = createStateBindingScope(i, t);
-        this.L.subscribe(this);
+        this.J.subscribe(this);
         this.updateTarget(this.v = this.$get(i));
         this.isBound = true;
     }
@@ -579,30 +575,30 @@ class StateGetterBinding {
             return;
         }
         this.isBound = false;
-        this.N();
-        this.P++;
+        this.$();
+        this.H++;
         this.s = void 0;
-        this.L.unsubscribe(this);
+        this.J.unsubscribe(this);
     }
     handleStateChange(t) {
         const i = this.s;
         const s = i.overrideContext;
-        i.bindingContext = s.bindingContext = s.$state = t;
-        const n = this.$get(this.L.getState());
+        i.bindingContext = s.bindingContext = t;
+        const n = this.$get(this.J.getState());
         if (n === this.v) {
             return;
         }
         this.v = n;
         this.updateTarget(n);
     }
-    N() {
-        if (typeof this.A === "function") {
-            this.A();
-        } else if (this.A !== void 0) {
-            this.A.dispose?.();
-            this.A.unsubscribe?.();
+    $() {
+        if (typeof this._ === "function") {
+            this._();
+        } else if (this._ !== void 0) {
+            this._.dispose?.();
+            this._.unsubscribe?.();
         }
-        this.A = void 0;
+        this._ = void 0;
     }
 }
 

@@ -19,6 +19,7 @@ declare const enum Precedence {
     Variadic = 61,
     Assign = 62,
     Conditional = 63,
+    Assignment = 64,
     NullishCoalescing = 128,
     LogicalOR = 192,
     LogicalAND = 256,

@@ -1,7 +1,8 @@
 import type { IVisitor } from './ast.visitor';
 export type ExpressionKind = 'AccessThis' | 'AccessGlobal' | 'AccessBoundary' | 'AccessScope' | 'ArrayLiteral' | 'ObjectLiteral' | 'PrimitiveLiteral' | 'Template' | 'Unary' | 'CallScope' | 'CallMember' | 'CallFunction' | 'CallGlobal' | 'AccessMember' | 'AccessKeyed' | 'TaggedTemplate' | 'Binary' | 'Conditional' | 'Assign' | 'ArrowFunction' | 'ValueConverter' | 'BindingBehavior' | 'ArrayBindingPattern' | 'ObjectBindingPattern' | 'BindingIdentifier' | 'ForOfStatement' | 'Interpolation' | 'ArrayDestructuring' | 'ObjectDestructuring' | 'DestructuringAssignmentLeaf' | 'Custom';
-export type UnaryOperator = 'void' | 'typeof' | '!' | '-' | '+';
+export type UnaryOperator = 'void' | 'typeof' | '!' | '-' | '+' | '++' | '--';
 export type BinaryOperator = '??' | '&&' | '||' | '==' | '===' | '!=' | '!==' | 'instanceof' | 'in' | '+' | '-' | '*' | '/' | '%' | '<' | '>' | '<=' | '>=';
+export type AssignmentOperator = '=' | '/=' | '*=' | '+=' | '-=';
 export type IsPrimary = AccessThisExpression | AccessBoundaryExpression | AccessScopeExpression | AccessGlobalExpression | ArrayLiteralExpression | ObjectLiteralExpression | PrimitiveLiteralExpression | TemplateExpression;
 export type IsLiteral = ArrayLiteralExpression | ObjectLiteralExpression | PrimitiveLiteralExpression | TemplateExpression;
 export type IsLeftHandSide = IsPrimary | CallGlobalExpression | CallFunctionExpression | CallMemberExpression | CallScopeExpression | AccessMemberExpression | AccessKeyedExpression | TaggedTemplateExpression;
@@ -47,8 +48,9 @@ export declare class ValueConverterExpression {
 export declare class AssignExpression {
     readonly target: IsAssignable;
     readonly value: IsAssign;
+    readonly op: AssignmentOperator;
     readonly $kind = "Assign";
-    constructor(target: IsAssignable, value: IsAssign);
+    constructor(target: IsAssignable, value: IsAssign, op?: AssignmentOperator);
 }
 export declare class ConditionalExpression {
     readonly condition: IsBinary;
@@ -132,8 +134,9 @@ export declare class BinaryExpression {
 export declare class UnaryExpression {
     readonly operation: UnaryOperator;
     readonly expression: IsLeftHandSide;
+    readonly pos: 0 | 1;
     readonly $kind = "Unary";
-    constructor(operation: UnaryOperator, expression: IsLeftHandSide);
+    constructor(operation: UnaryOperator, expression: IsLeftHandSide, pos?: 0 | 1);
 }
 export declare class PrimitiveLiteralExpression<TValue extends null | undefined | number | boolean | string = null | undefined | number | boolean | string> {
     readonly value: TValue;

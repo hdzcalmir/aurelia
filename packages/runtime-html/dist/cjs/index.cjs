@@ -253,24 +253,35 @@ const {astAssign: E, astEvaluate: R, astBind: T, astUnbind: L} = /*@__PURE__*/ (
             }
 
           case f:
-            switch (t.operation) {
-              case "void":
-                return void astEvaluate(t.expression, O, F, V);
+            {
+                const e = astEvaluate(t.expression, O, F, V);
+                switch (t.operation) {
+                  case "void":
+                    return void e;
 
-              case "typeof":
-                return typeof astEvaluate(t.expression, O, F, V);
+                  case "typeof":
+                    return typeof e;
 
-              case "!":
-                return !astEvaluate(t.expression, O, F, V);
+                  case "!":
+                    return !e;
 
-              case "-":
-                return -astEvaluate(t.expression, O, F, V);
+                  case "-":
+                    return -e;
 
-              case "+":
-                return +astEvaluate(t.expression, O, F, V);
+                  case "+":
+                    return +e;
 
-              default:
-                throw createMappedError(109, t.operation);
+                  case "--":
+                    if (V != null) throw createMappedError(113);
+                    return astAssign(t.expression, O, F, e - 1) + t.pos;
+
+                  case "++":
+                    if (V != null) throw createMappedError(113);
+                    return astAssign(t.expression, O, F, e + 1) - t.pos;
+
+                  default:
+                    throw createMappedError(109, t.operation);
+                }
             }
 
           case d:
@@ -479,7 +490,36 @@ const {astAssign: E, astEvaluate: R, astBind: T, astUnbind: L} = /*@__PURE__*/ (
             return astEvaluate(t.condition, O, F, V) ? astEvaluate(t.yes, O, F, V) : astEvaluate(t.no, O, F, V);
 
           case k:
-            return astAssign(t.target, O, F, astEvaluate(t.value, O, F, V));
+            {
+                let e = astEvaluate(t.value, O, F, V);
+                if (t.op !== "=") {
+                    if (V != null) {
+                        throw createMappedError(113);
+                    }
+                    const s = astEvaluate(t.target, O, F, V);
+                    switch (t.op) {
+                      case "/=":
+                        e = s / e;
+                        break;
+
+                      case "*=":
+                        e = s * e;
+                        break;
+
+                      case "+=":
+                        e = s + e;
+                        break;
+
+                      case "-=":
+                        e = s - e;
+                        break;
+
+                      default:
+                        throw createMappedError(108, t.op);
+                    }
+                }
+                return astAssign(t.target, O, F, e);
+            }
 
           case B:
             {
@@ -810,6 +850,11 @@ const {astAssign: E, astEvaluate: R, astBind: T, astUnbind: L} = /*@__PURE__*/ (
         astUnbind: astUnbind
     };
 })();
+
+typeof SuppressedError === "function" ? SuppressedError : function(t, e, s) {
+    var i = new Error(s);
+    return i.name = "SuppressedError", i.error = t, i.suppressed = e, i;
+};
 
 const {default: M, oneTime: D, toView: q, fromView: I, twoWay: P} = i.BindingMode;
 
@@ -1800,8 +1845,7 @@ const wt = /*@__PURE__*/ (() => {
             if (s.isBound) {
                 n = i;
                 i = a.queueTask(callOriginalCallback, {
-                    delay: t.delay,
-                    reusable: false
+                    delay: t.delay
                 });
                 n?.cancel();
             } else {
@@ -1845,8 +1889,7 @@ const wt = /*@__PURE__*/ (() => {
                         r = now();
                         callOriginalCallback();
                     }), {
-                        delay: t.delay - l,
-                        reusable: false
+                        delay: t.delay - l
                     });
                 }
                 n?.cancel();
@@ -1909,7 +1952,6 @@ const yt = ((t = new WeakSet) => e => function() {
 })();
 
 const kt = {
-    reusable: false,
     preempt: true
 };
 
@@ -2023,7 +2065,6 @@ AttributeBinding.mix = yt((() => {
 }));
 
 const Ct = {
-    reusable: false,
     preempt: true
 };
 
@@ -2186,7 +2227,6 @@ InterpolationPartBinding.mix = yt((() => {
 }));
 
 const Bt = {
-    reusable: false,
     preempt: true
 };
 
@@ -2479,7 +2519,6 @@ PropertyBinding.mix = yt((() => {
 let St = null;
 
 const At = {
-    reusable: false,
     preempt: true
 };
 
@@ -8230,18 +8269,15 @@ class PromiseTemplateController {
         const a = this.pending;
         const h = this.viewScope;
         let c;
-        const u = {
-            reusable: false
-        };
         const $swap = () => {
-            void e.onResolveAll(c = (this.preSettledTask = i.queueTask((() => e.onResolveAll(n?.deactivate(t), r?.deactivate(t), a?.activate(t, h))), u)).result.catch((t => {
+            void e.onResolveAll(c = (this.preSettledTask = i.queueTask((() => e.onResolveAll(n?.deactivate(t), r?.deactivate(t), a?.activate(t, h))))).result.catch((t => {
                 if (!(t instanceof l.TaskAbortError)) throw t;
             })), s.then((l => {
                 if (this.value !== s) {
                     return;
                 }
                 const fulfill = () => {
-                    this.postSettlePromise = (this.postSettledTask = i.queueTask((() => e.onResolveAll(a?.deactivate(t), r?.deactivate(t), n?.activate(t, h, l))), u)).result;
+                    this.postSettlePromise = (this.postSettledTask = i.queueTask((() => e.onResolveAll(a?.deactivate(t), r?.deactivate(t), n?.activate(t, h, l))))).result;
                 };
                 if (this.preSettledTask.status === C) {
                     void c.then(fulfill);
@@ -8254,7 +8290,7 @@ class PromiseTemplateController {
                     return;
                 }
                 const reject = () => {
-                    this.postSettlePromise = (this.postSettledTask = i.queueTask((() => e.onResolveAll(a?.deactivate(t), n?.deactivate(t), r?.activate(t, h, l))), u)).result;
+                    this.postSettlePromise = (this.postSettledTask = i.queueTask((() => e.onResolveAll(a?.deactivate(t), n?.deactivate(t), r?.activate(t, h, l))))).result;
                 };
                 if (this.preSettledTask.status === C) {
                     void c.then(reject);
@@ -9187,13 +9223,13 @@ const _s = /*@__PURE__*/ j("ISanitizer", (t => t.singleton(class {
 
 class SanitizeValueConverter {
     constructor() {
-        this.vi = e.resolve(_s);
+        this.bi = e.resolve(_s);
     }
     toView(t) {
         if (t == null) {
             return null;
         }
-        return this.vi.sanitize(t);
+        return this.bi.sanitize(t);
     }
 }
 
@@ -9206,20 +9242,20 @@ class Show {
     constructor() {
         this.el = e.resolve(Ue);
         this.p = e.resolve(lt);
-        this.bi = false;
+        this.wi = false;
         this.L = null;
         this.$val = "";
         this.$prio = "";
         this.update = () => {
             this.L = null;
-            if (Boolean(this.value) !== this.wi) {
-                if (this.wi === this.yi) {
-                    this.wi = !this.yi;
+            if (Boolean(this.value) !== this.yi) {
+                if (this.yi === this.ki) {
+                    this.yi = !this.ki;
                     this.$val = this.el.style.getPropertyValue("display");
                     this.$prio = this.el.style.getPropertyPriority("display");
                     this.el.style.setProperty("display", "none", "important");
                 } else {
-                    this.wi = this.yi;
+                    this.yi = this.ki;
                     this.el.style.setProperty("display", this.$val, this.$prio);
                     if (this.el.getAttribute("style") === "") {
                         this.el.removeAttribute("style");
@@ -9228,19 +9264,19 @@ class Show {
             }
         };
         const t = e.resolve(i.IInstruction);
-        this.wi = this.yi = t.alias !== "hide";
+        this.yi = this.ki = t.alias !== "hide";
     }
     binding() {
-        this.bi = true;
+        this.wi = true;
         this.update();
     }
     detaching() {
-        this.bi = false;
+        this.wi = false;
         this.L?.cancel();
         this.L = null;
     }
     valueChanged() {
-        if (this.bi && this.L === null) {
+        if (this.wi && this.L === null) {
             this.L = this.p.domQueue.queueTask(this.update);
         }
     }
@@ -9321,19 +9357,19 @@ children.mixed = false;
 
 class ChildrenBinding {
     constructor(t, e, s, i, n, r) {
-        this.ki = void 0;
+        this.Ci = void 0;
         this.isBound = false;
         this.obj = e;
         this.cb = s;
         this.X = i;
-        this.Ci = n;
-        this.Bi = r;
+        this.Bi = n;
+        this.Si = r;
         this.cs = createMutationObserver(this.oi = t, (() => {
-            this.Si();
+            this.Ai();
         }));
     }
     getValue() {
-        return this.isBound ? this.ki : this.Ai();
+        return this.isBound ? this.Ci : this.Ei();
     }
     setValue(t) {}
     bind() {
@@ -9344,7 +9380,7 @@ class ChildrenBinding {
         this.cs.observe(this.oi, {
             childList: true
         });
-        this.ki = this.Ai();
+        this.Ci = this.Ei();
     }
     unbind() {
         if (!this.isBound) {
@@ -9353,20 +9389,20 @@ class ChildrenBinding {
         this.isBound = false;
         this.cs.takeRecords();
         this.cs.disconnect();
-        this.ki = e.emptyArray;
+        this.Ci = e.emptyArray;
     }
-    Si() {
-        this.ki = this.Ai();
+    Ai() {
+        this.Ci = this.Ei();
         this.cb?.call(this.obj);
-        this.subs.notify(this.ki, undefined);
+        this.subs.notify(this.Ci, undefined);
     }
     get() {
         throw createMappedError(99, "get");
     }
-    Ai() {
+    Ei() {
         const t = this.X;
-        const e = this.Ci;
-        const s = this.Bi;
+        const e = this.Bi;
+        const s = this.Si;
         const i = t === "$all" ? this.oi.childNodes : this.oi.querySelectorAll(`:scope > ${t}`);
         const n = i.length;
         const r = [];

@@ -347,7 +347,7 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
-/* global Reflect, Promise */
+/* global Reflect, Promise, SuppressedError, Symbol */
 
 
 function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
@@ -384,6 +384,10 @@ function __runInitializers(thisArg, initializers, value) {
     }
     return useValue ? value : void 0;
 }
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
 
 class HttpContext {
     constructor(container, request, response, requestBuffer) {

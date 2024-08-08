@@ -107,7 +107,7 @@ export interface IContainerConfiguration {
 }
 export declare const inject: (...dependencies: Key[]) => (decorated: unknown, context: DecoratorContext) => void;
 export declare const DI: {
-    createContainer: (config?: Partial<IContainerConfiguration> | undefined) => IContainer;
+    createContainer: (config?: Partial<IContainerConfiguration>) => IContainer;
     getDesignParamtypes: (Type: Constructable | Injectable) => readonly Key[] | undefined;
     getDependencies: (Type: Constructable | Injectable) => Key[];
     /**
@@ -151,7 +151,7 @@ export declare const DI: {
      *
      * - @param configureOrName - supply a string to improve error messaging
      */
-    createInterface: <K extends Key>(configureOrName?: string | ((builder: ResolverBuilder<K>) => IResolver<K>) | undefined, configuror?: ((builder: ResolverBuilder<K>) => IResolver<K>) | undefined) => InterfaceSymbol<K>;
+    createInterface: <K extends Key>(configureOrName?: string | ((builder: ResolverBuilder<K>) => IResolver<K>), configuror?: (builder: ResolverBuilder<K>) => IResolver<K>) => InterfaceSymbol<K>;
     inject: (...dependencies: Key[]) => (decorated: unknown, context: DecoratorContext) => void;
     /**
      * Registers the `target` class as a transient dependency; each time the dependency is resolved
@@ -189,7 +189,7 @@ export declare const DI: {
      * Foo.register(container);
      * ```
      */
-    singleton<T_1 extends Constructable>(target: T_1 & Partial<RegisterSelf<T_1>>, options?: SingletonOptions): T_1 & RegisterSelf<T_1>;
+    singleton<T extends Constructable>(target: T & Partial<RegisterSelf<T>>, options?: SingletonOptions): T & RegisterSelf<T>;
 };
 export declare const IContainer: InterfaceSymbol<IContainer>;
 export declare const IServiceLocator: InterfaceSymbol<IServiceLocator>;

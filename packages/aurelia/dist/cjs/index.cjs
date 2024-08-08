@@ -157,6 +157,8 @@ exports.IEventTarget = r.IEventTarget;
 
 exports.IFlushQueue = r.IFlushQueue;
 
+exports.IHistory = r.IHistory;
+
 exports.IKeyMapping = r.IKeyMapping;
 
 exports.ILifecycleHooks = r.ILifecycleHooks;
@@ -176,6 +178,8 @@ exports.IRepeatableHandlerResolver = r.IRepeatableHandlerResolver;
 exports.ISignaler = r.ISignaler;
 
 exports.IViewFactory = r.IViewFactory;
+
+exports.IWindow = r.IWindow;
 
 exports.LifecycleHooks = r.LifecycleHooks;
 

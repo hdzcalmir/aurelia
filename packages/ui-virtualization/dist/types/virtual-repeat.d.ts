@@ -14,7 +14,7 @@ export declare class VirtualRepeat implements IScrollerSubscriber, IVirtualRepea
     private dom;
     private scrollerObserver;
     readonly location: IRenderLocation<ChildNode>;
-    readonly instruction: HydrateTemplateController<import("@aurelia/template-compiler").IAttributeComponentDefinition<string>>;
+    readonly instruction: HydrateTemplateController;
     readonly parent: IHydratedComponentController;
     constructor();
     handleScrollerChange(scrollerInfo: IScrollerInfo): void;

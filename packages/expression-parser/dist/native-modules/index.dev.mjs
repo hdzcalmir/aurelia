@@ -71,9 +71,10 @@ class ValueConverterExpression {
     }
 }
 class AssignExpression {
-    constructor(target, value) {
+    constructor(target, value, op = '=') {
         this.target = target;
         this.value = value;
+        this.op = op;
         this.$kind = ekAssign;
     }
 }
@@ -173,9 +174,10 @@ class BinaryExpression {
     }
 }
 class UnaryExpression {
-    constructor(operation, expression) {
+    constructor(operation, expression, pos = 0) {
         this.operation = operation;
         this.expression = expression;
+        this.pos = pos;
         this.$kind = ekUnary;
     }
 }
@@ -891,12 +893,14 @@ function parse(minPrecedence, expressionType) {
          * 4. + UnaryExpression
          * 5. - UnaryExpression
          * 6. ! UnaryExpression
+         * 7. ++ UnaryExpression
+         * 8. -- UnaryExpression
          *
          * IsValidAssignmentTarget
-         * 2,3,4,5,6 = false
+         * 2,3,4,5,6,7,8 = false
          * 1 = see parseLeftHandSideExpression
          *
-         * Note: technically we should throw on ++ / -- / +++ / ---, but there's nothing to gain from that
+         * Note: technically we should throw on +++ / ---, but there's nothing to gain from that
          */
         const op = TokenValues[$currentToken & 63 /* Token.Type */];
         nextToken();
@@ -1063,6 +1067,14 @@ function parse(minPrecedence, expressionType) {
         }
         if (expressionType === etIsIterator) {
             return parseForOfStatement(result);
+        }
+        switch ($currentToken) {
+            case 2228280 /* Token.PlusPlus */:
+            case 2228281 /* Token.MinusMinus */:
+                result = new UnaryExpression(TokenValues[$currentToken & 63 /* Token.Type */], result, 1);
+                nextToken();
+                $assignable = false;
+                break;
         }
         if (514 /* Precedence.LeftHandSide */ < minPrecedence) {
             return result;
@@ -1279,15 +1291,25 @@ function parse(minPrecedence, expressionType) {
      * AssignmentExpression :
      * 1. ConditionalExpression
      * 2. LeftHandSideExpression = AssignmentExpression
+     * 3. LeftHandSideExpression AssignmentOperator AssignmentExpression
      *
      * IsValidAssignmentTarget
      * 1,2 = false
      */
-    if (consumeOpt(4194350 /* Token.Equals */)) {
-        if (!$assignable) {
-            throw lhsNotAssignable();
+    switch ($currentToken) {
+        case 4194350 /* Token.Equals */:
+        case 4194356 /* Token.PlusEquals */:
+        case 4194357 /* Token.MinusEquals */:
+        case 4194358 /* Token.AsteriskEquals */:
+        case 4194359 /* Token.SlashEquals */: {
+            if (!$assignable) {
+                throw lhsNotAssignable();
+            }
+            const op = TokenValues[$currentToken & 63 /* Token.Type */];
+            nextToken();
+            result = new AssignExpression(result, parse(62 /* Precedence.Assign */, expressionType), op);
+            break;
         }
-        result = new AssignExpression(result, parse(62 /* Precedence.Assign */, expressionType));
     }
     if (61 /* Precedence.Variadic */ < minPrecedence) {
         return result;
@@ -1487,7 +1509,6 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
     const currentTokenSave = $currentToken;
     const currentCharSave = $currentChar;
     const tokenValueSave = $tokenValue;
-    const assignableSave = $assignable;
     const optionalSave = $optional;
     const arrowParams = [];
     let paramsState = 1 /* ArrowFnParams.Valid */;
@@ -1626,7 +1647,6 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(expressionType) 
     $currentToken = currentTokenSave;
     $currentChar = currentCharSave;
     $tokenValue = tokenValueSave;
-    $assignable = assignableSave;
     $optional = optionalSave;
     const _optional = $optional;
     const expr = parse(62 /* Precedence.Assign */, expressionType);
@@ -2051,7 +2071,7 @@ const TokenValues = [
     '&', '|', '??', '||', '&&', '==', '!=', '===', '!==', '<', '>',
     '<=', '>=', 'in', 'instanceof', '+', '-', 'typeof', 'void', '*', '%', '/', '=', '!',
     2163760 /* Token.TemplateTail */, 2163761 /* Token.TemplateContinuation */,
-    'of', '=>'
+    'of', '=>', '+=', '-=', '*=', '/=', '++', '--'
 ];
 const KeywordLookup = /*@__PURE__*/ Object.assign(createLookup(), {
     true: 8193 /* Token.TrueKeyword */,
@@ -2230,11 +2250,47 @@ const { CharScanners, IdParts, } = /*@__PURE__*/ (() => {
     CharScanners[37 /* Char.Percent */] = returnToken(6554156 /* Token.Percent */);
     CharScanners[40 /* Char.OpenParen */] = returnToken(2688008 /* Token.OpenParen */);
     CharScanners[41 /* Char.CloseParen */] = returnToken(7340047 /* Token.CloseParen */);
-    CharScanners[42 /* Char.Asterisk */] = returnToken(6554155 /* Token.Asterisk */);
-    CharScanners[43 /* Char.Plus */] = returnToken(2490855 /* Token.Plus */);
+    // *, *=
+    CharScanners[42 /* Char.Asterisk */] = () => {
+        if (nextChar() !== 61 /* Char.Equals */) {
+            return 6554155 /* Token.Asterisk */;
+        }
+        nextChar();
+        return 4194358 /* Token.AsteriskEquals */;
+    };
+    // +, +=, ++
+    CharScanners[43 /* Char.Plus */] = () => {
+        if (nextChar() === 43 /* Char.Plus */) {
+            nextChar();
+            return 2228280 /* Token.PlusPlus */;
+        }
+        if ($currentChar !== 61 /* Char.Equals */) {
+            return 2490855 /* Token.Plus */;
+        }
+        nextChar();
+        return 4194356 /* Token.PlusEquals */;
+    };
     CharScanners[44 /* Char.Comma */] = returnToken(6291472 /* Token.Comma */);
-    CharScanners[45 /* Char.Minus */] = returnToken(2490856 /* Token.Minus */);
-    CharScanners[47 /* Char.Slash */] = returnToken(6554157 /* Token.Slash */);
+    // -, -=, --
+    CharScanners[45 /* Char.Minus */] = () => {
+        if (nextChar() === 45 /* Char.Minus */) {
+            nextChar();
+            return 2228281 /* Token.MinusMinus */;
+        }
+        if ($currentChar !== 61 /* Char.Equals */) {
+            return 2490856 /* Token.Minus */;
+        }
+        nextChar();
+        return 4194357 /* Token.MinusEquals */;
+    };
+    // /, /=
+    CharScanners[47 /* Char.Slash */] = () => {
+        if (nextChar() !== 61 /* Char.Equals */) {
+            return 6554157 /* Token.Slash */;
+        }
+        nextChar();
+        return 4194359 /* Token.SlashEquals */;
+    };
     CharScanners[58 /* Char.Colon */] = returnToken(6291477 /* Token.Colon */);
     CharScanners[59 /* Char.Semicolon */] = returnToken(6291478 /* Token.Semicolon */);
     CharScanners[91 /* Char.OpenBracket */] = returnToken(2688019 /* Token.OpenBracket */);

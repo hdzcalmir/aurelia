@@ -10,9 +10,9 @@ type ObservableFieldDecorator<TFThis, TValue> = (target: undefined, context: Cla
 type ObservableClassDecorator<TCThis extends Constructable> = (target: TCThis, context: ClassDecoratorContext<TCThis>) => void;
 export declare const observable: {
     <TFThis, TValue>(target: undefined, context: ClassFieldDecoratorContext<TFThis, TValue>): FieldInitializer<TFThis, TValue>;
-    <TCThis extends Constructable, TFThis_1, TValue_1>(config: IObservableDefinition): (target: TCThis | undefined, context: ClassDecoratorContext<TCThis> | ClassFieldDecoratorContext<TFThis_1, TValue_1>) => void | FieldInitializer<TFThis_1, TValue_1>;
-    <TCThis_1 extends Constructable>(key: PropertyKey): ObservableClassDecorator<TCThis_1>;
-    <TFThis_2, TValue_2>(): ObservableFieldDecorator<TFThis_2, TValue_2>;
+    <TCThis extends Constructable, TFThis, TValue>(config: IObservableDefinition): (target: TCThis | undefined, context: ClassDecoratorContext<TCThis> | ClassFieldDecoratorContext<TFThis, TValue>) => FieldInitializer<TFThis, TValue> | void;
+    <TCThis extends Constructable>(key: PropertyKey): ObservableClassDecorator<TCThis>;
+    <TFThis, TValue>(): ObservableFieldDecorator<TFThis, TValue>;
 };
 export {};
 //# sourceMappingURL=observable.d.ts.map

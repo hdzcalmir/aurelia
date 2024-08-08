@@ -35,6 +35,7 @@ describe('router/routing-hook.spec.ts', function () {
             if (index >= 0) {
                 platform.window.history.replaceState({}, '', href.slice(0, index));
             }
+            au.dispose();
         }
         const navigationInstruction = Navigation.create({ instruction: 'test', fullStateInstruction: 'full-test' });
         const routingInstructions = RoutingInstruction.parse(router, 'parent/child');

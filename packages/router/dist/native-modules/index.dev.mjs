@@ -5260,7 +5260,7 @@ class EndpointMatcher {
         const endpoints = ownedScopes.map(scope => scope.endpoint);
         const availableEndpoints = endpoints
             .filter(endpoint => endpoint !== null
-            && !alreadyMatched.some(found => endpoint === found.endpoint.instance && !found.cancelled));
+            && !alreadyMatched.some(found => endpoint === found.endpoint.instance && !found.cancelled && !found.isClear(routingScope.router)));
         const routingInstructions = new Collection(...instructions.slice());
         let instruction = null;
         // First, match instructions with already known viewport scopes...

@@ -3025,7 +3025,7 @@ class Router {
             });
         });
         if (!this._navigated && performInitialNavigation) {
-            return this.load(this._locationMgr.getPath(), { historyStrategy: 'replace' });
+            return this.load(this._locationMgr.getPath(), { historyStrategy: this.options.historyStrategy !== 'none' ? 'replace' : 'none' });
         }
     }
     stop() {
@@ -4219,6 +4219,7 @@ class RouteContext {
         trace(this._logger, 3150 /* Events.rcCreated */);
         this._moduleLoader = parentContainer.get(kernel.IModuleLoader);
         const container = this.container = parentContainer.createChild();
+        this._platform = container.get(runtimeHtml.IPlatform);
         container.registerResolver(runtimeHtml.IController, this._hostControllerProvider = new kernel.InstanceProvider(), true);
         const ctxProvider = new kernel.InstanceProvider('IRouteContext', this);
         container.registerResolver(IRouteContext, ctxProvider);
@@ -4383,13 +4384,17 @@ class RouteContext {
         trace(this._logger, 3159 /* Events.rcCreateCa */, routeNode);
         this._hostControllerProvider.prepare(hostController);
         const container = this.container.createChild({ inheritParentResources: true });
-        const componentInstance = container.invoke(routeNode.component.Type);
+        const platform = this._platform;
+        const elDefn = routeNode.component;
+        const host = platform.document.createElement(elDefn.name);
+        runtimeHtml.registerHostNode(container, host, platform);
+        const componentInstance = container.invoke(elDefn.Type);
         // this is the point where we can load the delayed (non-static) child route configuration by calling the getRouteConfig
         const task = this._childRoutesConfigured
             ? void 0
             : kernel.onResolve(resolveRouteConfiguration(componentInstance, false, this.config, routeNode, null), config => this._processConfig(config));
         return kernel.onResolve(task, () => {
-            const controller = runtimeHtml.Controller.$el(container, componentInstance, hostController.host, null);
+            const controller = runtimeHtml.Controller.$el(container, componentInstance, hostController.host, null, elDefn);
             const componentAgent = new ComponentAgent(componentInstance, controller, routeNode, this, this._router.options);
             this._hostControllerProvider.dispose();
             return componentAgent;

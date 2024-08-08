@@ -2470,7 +2470,7 @@ class Router {
         }));
         if (!this.ye && t) {
             return this.load(this.$e.getPath(), {
-                historyStrategy: "replace"
+                historyStrategy: this.options.historyStrategy !== "none" ? "replace" : "none"
             });
         }
     }
@@ -3375,6 +3375,7 @@ class RouteContext {
         this.L = a.get(e.ILogger).scopeTo(`RouteContext<${this.At}>`);
         this.ss = a.get(e.IModuleLoader);
         const h = this.container = a.createChild();
+        this.p = h.get(s.IPlatform);
         h.registerResolver(s.IController, this.ns = new e.InstanceProvider, true);
         const l = new e.InstanceProvider("IRouteContext", this);
         h.registerResolver(S, l);
@@ -3503,13 +3504,17 @@ class RouteContext {
         const n = this.container.createChild({
             inheritParentResources: true
         });
-        const r = n.invoke(i.component.Type);
-        const o = this.es ? void 0 : e.onResolve(resolveRouteConfiguration(r, false, this.config, i, null), (t => this.cs(t)));
-        return e.onResolve(o, (() => {
-            const e = s.Controller.$el(n, r, t.host, null);
-            const o = new ComponentAgent(r, e, i, this, this.Ze.options);
+        const r = this.p;
+        const o = i.component;
+        const a = r.document.createElement(o.name);
+        s.registerHostNode(n, a, r);
+        const c = n.invoke(o.Type);
+        const u = this.es ? void 0 : e.onResolve(resolveRouteConfiguration(c, false, this.config, i, null), (t => this.cs(t)));
+        return e.onResolve(u, (() => {
+            const e = s.Controller.$el(n, c, t.host, null, o);
+            const r = new ComponentAgent(c, e, i, this, this.Ze.options);
             this.ns.dispose();
-            return o;
+            return r;
         }));
     }
     gs(t) {

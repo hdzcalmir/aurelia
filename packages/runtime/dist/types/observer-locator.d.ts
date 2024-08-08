@@ -44,5 +44,5 @@ export declare const getCollectionObserver: {
     (set: Set<unknown>): SetObserver;
     (collection: RepeatableCollection): CollectionObserver | undefined;
 };
-export declare const getObserverLookup: <T extends IObserver<unknown>>(instance: object) => Record<PropertyKey, T>;
+export declare const getObserverLookup: <T extends IObserver>(instance: object) => Record<PropertyKey, T>;
 //# sourceMappingURL=observer-locator.d.ts.map

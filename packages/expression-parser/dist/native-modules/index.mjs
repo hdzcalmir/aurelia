@@ -40,9 +40,9 @@ const b = "Assign";
 
 const A = "ArrowFunction";
 
-const g = "ValueConverter";
+const C = "ValueConverter";
 
-const C = "BindingBehavior";
+const g = "BindingBehavior";
 
 const T = "ArrayBindingPattern";
 
@@ -85,7 +85,7 @@ class BindingBehaviorExpression {
         this.expression = e;
         this.name = s;
         this.args = t;
-        this.$kind = C;
+        this.$kind = g;
         this.key = `_bb_${s}`;
     }
 }
@@ -95,14 +95,15 @@ class ValueConverterExpression {
         this.expression = e;
         this.name = s;
         this.args = t;
-        this.$kind = g;
+        this.$kind = C;
     }
 }
 
 class AssignExpression {
-    constructor(e, s) {
+    constructor(e, s, t = "=") {
         this.target = e;
         this.value = s;
+        this.op = t;
         this.$kind = b;
     }
 }
@@ -214,9 +215,10 @@ class BinaryExpression {
 }
 
 class UnaryExpression {
-    constructor(e, s) {
+    constructor(e, s, t = 0) {
         this.operation = e;
         this.expression = s;
+        this.pos = t;
         this.$kind = l;
     }
 }
@@ -396,7 +398,7 @@ const astVisit = (e, s) => {
       case m:
         return s.visitBinary(e);
 
-      case C:
+      case g:
         return s.visitBindingBehavior(e);
 
       case y:
@@ -444,7 +446,7 @@ const astVisit = (e, s) => {
       case l:
         return s.visitUnary(e);
 
-      case g:
+      case C:
         return s.visitValueConverter(e);
 
       case $:
@@ -1098,6 +1100,14 @@ function parse(e, s) {
         if (s === V) {
             return parseForOfStatement(o);
         }
+        switch (ee) {
+          case 2228280:
+          case 2228281:
+            o = new UnaryExpression(le[ee & 63], o, 1);
+            nextToken();
+            re = false;
+            break;
+        }
         if (514 < e) {
             return o;
         }
@@ -1233,11 +1243,21 @@ function parse(e, s) {
     if (62 < e) {
         return o;
     }
-    if (consumeOpt(4194350)) {
-        if (!re) {
-            throw lhsNotAssignable();
+    switch (ee) {
+      case 4194350:
+      case 4194356:
+      case 4194357:
+      case 4194358:
+      case 4194359:
+        {
+            if (!re) {
+                throw lhsNotAssignable();
+            }
+            const e = le[ee & 63];
+            nextToken();
+            o = new AssignExpression(o, parse(62, s), e);
+            break;
         }
-        o = new AssignExpression(o, parse(62, s));
     }
     if (61 < e) {
         return o;
@@ -1427,18 +1447,17 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(e) {
     const r = ee;
     const n = te;
     const i = se;
-    const o = re;
-    const a = ne;
-    const c = [];
-    let h = 1;
-    let l = false;
+    const o = ne;
+    const a = [];
+    let c = 1;
+    let h = false;
     e: while (true) {
         if (ee === 12) {
             nextToken();
             if (ee !== 4096) {
                 throw expectedIdentifier();
             }
-            c.push(new BindingIdentifier(se));
+            a.push(new BindingIdentifier(se));
             nextToken();
             if (ee === 6291472) {
                 throw restParamsMustBeLastParam();
@@ -1458,11 +1477,11 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(e) {
             ne = e;
             Y = s;
             re = false;
-            return new ArrowFunction(c, t, true);
+            return new ArrowFunction(a, t, true);
         }
         switch (ee) {
           case 4096:
-            c.push(new BindingIdentifier(se));
+            a.push(new BindingIdentifier(se));
             nextToken();
             break;
 
@@ -1473,28 +1492,28 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(e) {
           case 524297:
           case 2688019:
             nextToken();
-            h = 4;
+            c = 4;
             break;
 
           case 6291472:
-            h = 2;
-            l = true;
+            c = 2;
+            h = true;
             break e;
 
           case 2688008:
-            h = 2;
+            c = 2;
             break e;
 
           default:
             nextToken();
-            h = 2;
+            c = 2;
             break;
         }
         switch (ee) {
           case 6291472:
             nextToken();
-            l = true;
-            if (h === 1) {
+            h = true;
+            if (c === 1) {
                 break;
             }
             break e;
@@ -1504,28 +1523,28 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(e) {
             break e;
 
           case 4194350:
-            if (h === 1) {
-                h = 3;
+            if (c === 1) {
+                c = 3;
             }
             break e;
 
           case 51:
-            if (l) {
+            if (h) {
                 throw invalidArrowParameterList();
             }
             nextToken();
-            h = 2;
+            c = 2;
             break e;
 
           default:
-            if (h === 1) {
-                h = 2;
+            if (c === 1) {
+                c = 2;
             }
             break e;
         }
     }
     if (ee === 51) {
-        if (h === 1) {
+        if (c === 1) {
             nextToken();
             if (ee === 524297) {
                 throw functionBodyInArrowFn();
@@ -1537,14 +1556,14 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(e) {
             ne = e;
             Y = s;
             re = false;
-            return new ArrowFunction(c, t);
+            return new ArrowFunction(a, t);
         }
         throw invalidArrowParameterList();
-    } else if (h === 1 && c.length === 0) {
+    } else if (c === 1 && a.length === 0) {
         throw missingExpectedToken();
     }
-    if (l) {
-        switch (h) {
+    if (h) {
+        switch (c) {
           case 2:
             throw invalidArrowParameterList();
 
@@ -1560,14 +1579,13 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(e) {
     ee = r;
     te = n;
     se = i;
-    re = o;
-    ne = a;
-    const u = ne;
-    const p = parse(62, e);
-    ne = u;
+    ne = o;
+    const l = ne;
+    const u = parse(62, e);
+    ne = l;
     consume(7340047);
     if (ee === 51) {
-        switch (h) {
+        switch (c) {
           case 2:
             throw invalidArrowParameterList();
 
@@ -1578,7 +1596,7 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(e) {
             throw destructuringParamsInArrowFn();
         }
     }
-    return p;
+    return u;
 }
 
 function parseArrayLiteralExpression(e) {
@@ -1915,7 +1933,7 @@ const functionBodyInArrowFn = () => createMappedError(178, Q);
 
 const unexpectedDoubleDot = () => createMappedError(179, Q);
 
-const le = [ M, j, D, U, "this", "$this", null, "$parent", "(", "{", ".", "..", "...", "?.", "}", ")", ",", "[", "]", ":", ";", "?", "'", '"', "&", "|", "??", "||", "&&", "==", "!=", "===", "!==", "<", ">", "<=", ">=", "in", "instanceof", "+", "-", "typeof", "void", "*", "%", "/", "=", "!", 2163760, 2163761, "of", "=>" ];
+const le = [ M, j, D, U, "this", "$this", null, "$parent", "(", "{", ".", "..", "...", "?.", "}", ")", ",", "[", "]", ":", ";", "?", "'", '"', "&", "|", "??", "||", "&&", "==", "!=", "===", "!==", "<", ">", "<=", ">=", "in", "instanceof", "+", "-", "typeof", "void", "*", "%", "/", "=", "!", 2163760, 2163761, "of", "=>", "+=", "-=", "*=", "/=", "++", "--" ];
 
 const ue = /*@__PURE__*/ Object.assign(createLookup(), {
     true: 8193,
@@ -2061,11 +2079,43 @@ const {CharScanners: pe, IdParts: fe} = /*@__PURE__*/ (() => {
     t[37] = returnToken(6554156);
     t[40] = returnToken(2688008);
     t[41] = returnToken(7340047);
-    t[42] = returnToken(6554155);
-    t[43] = returnToken(2490855);
+    t[42] = () => {
+        if (nextChar() !== 61) {
+            return 6554155;
+        }
+        nextChar();
+        return 4194358;
+    };
+    t[43] = () => {
+        if (nextChar() === 43) {
+            nextChar();
+            return 2228280;
+        }
+        if (te !== 61) {
+            return 2490855;
+        }
+        nextChar();
+        return 4194356;
+    };
     t[44] = returnToken(6291472);
-    t[45] = returnToken(2490856);
-    t[47] = returnToken(6554157);
+    t[45] = () => {
+        if (nextChar() === 45) {
+            nextChar();
+            return 2228281;
+        }
+        if (te !== 61) {
+            return 2490856;
+        }
+        nextChar();
+        return 4194357;
+    };
+    t[47] = () => {
+        if (nextChar() !== 61) {
+            return 6554157;
+        }
+        nextChar();
+        return 4194359;
+    };
     t[58] = returnToken(6291477);
     t[59] = returnToken(6291478);
     t[91] = returnToken(2688019);

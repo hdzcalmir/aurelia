@@ -12,7 +12,7 @@ export declare const AppTask: Readonly<{
      */
     creating: {
         <T extends Key = Key>(callback: AppTaskCallbackNoArg): IRegistry;
-        <T_1 extends Key = Key>(key: T_1, callback: AppTaskCallback<T_1>): IRegistry;
+        <T extends Key = Key>(key: T, callback: AppTaskCallback<T>): IRegistry;
     };
     /**
      * Returns a task that will run after instantiating the root controller,
@@ -22,7 +22,7 @@ export declare const AppTask: Readonly<{
      */
     hydrating: {
         <T extends Key = Key>(callback: AppTaskCallbackNoArg): IRegistry;
-        <T_1 extends Key = Key>(key: T_1, callback: AppTaskCallback<T_1>): IRegistry;
+        <T extends Key = Key>(key: T, callback: AppTaskCallback<T>): IRegistry;
     };
     /**
      * Return a task that will run after the hydration of the root controller,
@@ -32,7 +32,7 @@ export declare const AppTask: Readonly<{
      */
     hydrated: {
         <T extends Key = Key>(callback: AppTaskCallbackNoArg): IRegistry;
-        <T_1 extends Key = Key>(key: T_1, callback: AppTaskCallback<T_1>): IRegistry;
+        <T extends Key = Key>(key: T, callback: AppTaskCallback<T>): IRegistry;
     };
     /**
      * Return a task that will run right before the root component is activated.
@@ -40,14 +40,14 @@ export declare const AppTask: Readonly<{
      */
     activating: {
         <T extends Key = Key>(callback: AppTaskCallbackNoArg): IRegistry;
-        <T_1 extends Key = Key>(key: T_1, callback: AppTaskCallback<T_1>): IRegistry;
+        <T extends Key = Key>(key: T, callback: AppTaskCallback<T>): IRegistry;
     };
     /**
      * Return a task that will run right after the root component is activated - the app is now running
      */
     activated: {
         <T extends Key = Key>(callback: AppTaskCallbackNoArg): IRegistry;
-        <T_1 extends Key = Key>(key: T_1, callback: AppTaskCallback<T_1>): IRegistry;
+        <T extends Key = Key>(key: T, callback: AppTaskCallback<T>): IRegistry;
     };
     /**
      * Return a task that will runs right before the root component is deactivated.
@@ -55,14 +55,14 @@ export declare const AppTask: Readonly<{
      */
     deactivating: {
         <T extends Key = Key>(callback: AppTaskCallbackNoArg): IRegistry;
-        <T_1 extends Key = Key>(key: T_1, callback: AppTaskCallback<T_1>): IRegistry;
+        <T extends Key = Key>(key: T, callback: AppTaskCallback<T>): IRegistry;
     };
     /**
      * Return a task that will run right after the root component is deactivated
      */
     deactivated: {
         <T extends Key = Key>(callback: AppTaskCallbackNoArg): IRegistry;
-        <T_1 extends Key = Key>(key: T_1, callback: AppTaskCallback<T_1>): IRegistry;
+        <T extends Key = Key>(key: T, callback: AppTaskCallback<T>): IRegistry;
     };
 }>;
 export type AppTaskCallbackNoArg = () => unknown;

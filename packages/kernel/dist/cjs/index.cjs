@@ -272,7 +272,7 @@ const p = /*@__PURE__*/ (() => {
 })();
 
 const onResolve = (t, e) => {
-    if (t instanceof Promise) {
+    if (isPromise(t)) {
         return t.then(e);
     }
     return e(t);
@@ -1216,11 +1216,11 @@ class ParameterizedRegistry {
 
 const j = e([]);
 
-const _ = e({});
+const S = e({});
 
 function noop() {}
 
-const M = /*@__PURE__*/ createInterface("IPlatform");
+const _ = /*@__PURE__*/ createInterface("IPlatform");
 
 function createResolver(t) {
     return function(e) {
@@ -1252,9 +1252,9 @@ const last = t => ({
     }
 });
 
-const T = /*@__PURE__*/ createResolver(((t, e, r) => () => r.get(t)));
+const M = /*@__PURE__*/ createResolver(((t, e, r) => () => r.get(t)));
 
-const S = /*@__PURE__*/ createResolver(((t, e, r) => {
+const T = /*@__PURE__*/ createResolver(((t, e, r) => {
     if (r.has(t, true)) {
         return r.get(t);
     } else {
@@ -1358,6 +1358,11 @@ function __runInitializers(t, e, r) {
     }
     return n ? r : void 0;
 }
+
+typeof SuppressedError === "function" ? SuppressedError : function(t, e, r) {
+    var n = new Error(r);
+    return n.name = "SuppressedError", n.error = t, n.suppressed = e, n;
+};
 
 const H = 0;
 
@@ -1550,7 +1555,7 @@ class ConsoleSink {
     static register(t) {
         singletonRegistration(rt, ConsoleSink).register(t);
     }
-    constructor(t = resolve(M)) {
+    constructor(t = resolve(_)) {
         const e = t.console;
         this.handleEvent = function emit(t) {
             const r = t.getFormattedLogInfo(true);
@@ -1583,7 +1588,7 @@ let at = (() => {
     let i;
     let l;
     return t = class DefaultLogger {
-        constructor(t = resolve(et), r = resolve(nt), n = resolve(all(rt)), s = resolve(S(ot)) ?? [], o = null) {
+        constructor(t = resolve(et), r = resolve(nt), n = resolve(all(rt)), s = resolve(T(ot)) ?? [], o = null) {
             this.scope = (__runInitializers(this, e), s);
             this._ = createLookup();
             let i;
@@ -2019,7 +2024,7 @@ exports.ILogger = st;
 
 exports.IModuleLoader = ft;
 
-exports.IPlatform = M;
+exports.IPlatform = _;
 
 exports.IServiceLocator = A;
 
@@ -2059,7 +2064,7 @@ exports.createResolver = createResolver;
 
 exports.emptyArray = j;
 
-exports.emptyObject = _;
+exports.emptyObject = S;
 
 exports.factory = K;
 
@@ -2107,7 +2112,7 @@ exports.kebabCase = f;
 
 exports.last = last;
 
-exports.lazy = T;
+exports.lazy = M;
 
 exports.mergeArrays = mergeArrays;
 
@@ -2121,7 +2126,7 @@ exports.onResolve = onResolve;
 
 exports.onResolveAll = onResolveAll;
 
-exports.optional = S;
+exports.optional = T;
 
 exports.optionalResource = G;
 

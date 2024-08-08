@@ -36,7 +36,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { pluck, distinctUntilChanged } from "rxjs/operators";
+import { map, distinctUntilChanged } from "rxjs/operators";
 import { customElement, IWindow } from '@aurelia/runtime-html';
 import { assert } from "@aurelia/testing";
 import { DI, Registration } from '@aurelia/kernel';
@@ -103,7 +103,7 @@ describe("store-v1/decorator.spec.ts", function () {
     });
     it("should be possible to provide a state selector", function () {
         let DemoStoreConsumer = (() => {
-            let _classDecorators = [connectTo((store) => store.state.pipe(pluck("bar")))];
+            let _classDecorators = [connectTo((store) => store.state.pipe(map(x => x.bar)))];
             let _classDescriptor;
             let _classExtraInitializers = [];
             let _classThis;
@@ -128,7 +128,7 @@ describe("store-v1/decorator.spec.ts", function () {
         it("should be possible to provide a selector", function () {
             let DemoStoreConsumer = (() => {
                 let _classDecorators = [connectTo({
-                        selector: (store) => store.state.pipe(pluck("bar"))
+                        selector: (store) => store.state.pipe(map(x => x.bar))
                     })];
                 let _classDescriptor;
                 let _classExtraInitializers = [];
@@ -179,8 +179,8 @@ describe("store-v1/decorator.spec.ts", function () {
             let DemoStoreConsumer = (() => {
                 let _classDecorators = [connectTo({
                         selector: {
-                            barTarget: (store) => store.state.pipe(pluck("bar")),
-                            fooTarget: (store) => store.state.pipe(pluck("foo"))
+                            barTarget: (store) => store.state.pipe(map(x => x.bar)),
+                            fooTarget: (store) => store.state.pipe(map(x => x.foo))
                         }
                     })];
                 let _classDescriptor;
@@ -232,7 +232,7 @@ describe("store-v1/decorator.spec.ts", function () {
         it("should be possible to override the target property", function () {
             let DemoStoreConsumer = (() => {
                 let _classDecorators = [connectTo({
-                        selector: (store) => store.state.pipe(pluck("bar")),
+                        selector: (store) => store.state.pipe(map(x => x.bar)),
                         target: "foo"
                     })];
                 let _classDescriptor;
@@ -260,8 +260,8 @@ describe("store-v1/decorator.spec.ts", function () {
             let DemoStoreConsumer = (() => {
                 let _classDecorators = [connectTo({
                         selector: {
-                            barTarget: (store) => store.state.pipe(pluck("bar")),
-                            fooTarget: (store) => store.state.pipe(pluck("foo"))
+                            barTarget: (store) => store.state.pipe(map(x => x.bar)),
+                            fooTarget: (store) => store.state.pipe(map(x => x.foo))
                         },
                         target: "foo"
                     })];
@@ -387,7 +387,7 @@ describe("store-v1/decorator.spec.ts", function () {
             let DemoStoreConsumer = (() => {
                 let _classDecorators = [connectTo({
                         selector: {
-                            barTarget: (store) => store.state.pipe(pluck("bar")),
+                            barTarget: (store) => store.state.pipe(map(x => x.bar)),
                             stateTarget: () => "foo"
                         }
                     })];
@@ -840,8 +840,8 @@ describe("store-v1/decorator.spec.ts", function () {
             let DemoStoreConsumer = (() => {
                 let _classDecorators = [connectTo({
                         selector: {
-                            foo: (pStore) => pStore.state.pipe(pluck("foo"), distinctUntilChanged()),
-                            bar: (pStore) => pStore.state.pipe(pluck("bar"), distinctUntilChanged())
+                            foo: (pStore) => pStore.state.pipe(map(x => x.foo), distinctUntilChanged()),
+                            bar: (pStore) => pStore.state.pipe(map(x => x.bar), distinctUntilChanged())
                         }
                     })];
                 let _classDescriptor;

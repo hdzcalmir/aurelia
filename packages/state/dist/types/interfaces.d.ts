@@ -1,7 +1,7 @@
-import { type MaybePromise, type IRegistry } from '@aurelia/kernel';
+import { type IRegistry } from '@aurelia/kernel';
 import { IDevToolsOptions } from './interfaces-devtools';
 export declare const IActionHandler: import("@aurelia/kernel").InterfaceSymbol<IActionHandler<any>>;
-export type IActionHandler<T = any> = (state: T, action: unknown) => MaybePromise<T>;
+export type IActionHandler<T = any> = (state: T, action: unknown) => T | Promise<T>;
 export declare const IStore: import("@aurelia/kernel").InterfaceSymbol<IStore<object, unknown>>;
 export interface IStore<T extends object, TAction = unknown> {
     subscribe(subscriber: IStoreSubscriber<T>): void;

@@ -1,4 +1,5 @@
 import { Constructable, Overwrite } from './interfaces';
+import { MaybePromise } from './utilities';
 /**
  * Efficiently determine whether the provided property key is numeric
  * (and thus could be an array indexer) or not.
@@ -9,7 +10,7 @@ import { Constructable, Overwrite } from './interfaces';
  *
  * Results are cached.
  */
-export declare const isArrayIndex: (value: unknown) => value is string | number;
+export declare const isArrayIndex: (value: unknown) => value is number | string;
 /**
  * Efficiently convert a string to camelCase.
  *
@@ -78,14 +79,16 @@ export declare function toLookup<T1 extends {}, T2 extends {}, T3 extends {}, T4
  * @returns `true` is the function is a native function, otherwise `false`
  */
 export declare const isNativeFunction: (fn: Function) => boolean;
-type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;
-type MaybePromise<T> = T extends Promise<infer R> ? (T | R) : (T | Promise<T>);
 /**
  * Normalize a potential promise via a callback, to ensure things stay synchronous when they can.
  *
  * If the value is a promise, it is `then`ed before the callback is invoked. Otherwise the callback is invoked synchronously.
  */
-export declare const onResolve: <TValue, TRet>(maybePromise: TValue, resolveCallback: (value: UnwrapPromise<TValue>) => TRet) => MaybePromise<TRet>;
+export declare const onResolve: {
+    <TValue, TRet>(maybePromise: Promise<TValue>, resolveCallback: (value: TValue) => MaybePromise<TRet>): Promise<TRet>;
+    <TValue, TRet>(maybePromise: TValue extends Promise<unknown> ? never : TValue, resolveCallback: (value: TValue) => TRet): TRet extends Promise<infer R> ? Promise<R> : TRet;
+    <TValue, TRet>(maybePromise: MaybePromise<TValue>, resolveCallback: (value: TValue) => MaybePromise<TRet>): MaybePromise<TRet>;
+};
 /**
  * Normalize an array of potential promises, to ensure things stay synchronous when they can.
  *
@@ -96,5 +99,4 @@ export declare const onResolve: <TValue, TRet>(maybePromise: TValue, resolveCall
  * If none of the values is a promise, nothing is returned, to indicate that things can stay synchronous.
  */
 export declare const onResolveAll: (...maybePromises: unknown[]) => void | Promise<void>;
-export {};
 //# sourceMappingURL=functions.d.ts.map

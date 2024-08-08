@@ -32,7 +32,7 @@ export declare const Registration: {
      * @param key - key to register the singleton class with
      * @param value - the singleton class to instantiate when a container resolves the associated key
      */
-    singleton: <T_1 extends Constructable>(key: Key, value: T_1) => IRegistration<InstanceType<T_1>>;
+    singleton: <T extends Constructable>(key: Key, value: T) => IRegistration<InstanceType<T>>;
     /**
      * Creates an instance from a class.
      * Every time you request this {@linkcode Key} you will get a new instance.
@@ -43,7 +43,7 @@ export declare const Registration: {
      * @param key - key to register the transient class with
      * @param value - the class to instantiate when a container resolves the associated key
      */
-    transient: <T_2 extends Constructable>(key: Key, value: T_2) => IRegistration<InstanceType<T_2>>;
+    transient: <T extends Constructable>(key: Key, value: T) => IRegistration<InstanceType<T>>;
     /**
      * Creates an instance from the method passed.
      * Every time you request this {@linkcode Key} you will get a new instance.
@@ -55,7 +55,7 @@ export declare const Registration: {
      * @param key - key to register the callback with
      * @param callback - the callback to invoke when a container resolves the associated key
      */
-    callback: <T_3>(key: Key, callback: ResolveCallback<T_3>) => IRegistration<Resolved<T_3>>;
+    callback: <T>(key: Key, callback: ResolveCallback<T>) => IRegistration<Resolved<T>>;
     /**
      * Creates an instance from the method passed.
      * On the first request for the {@linkcode Key} your callback is called and returns an instance.
@@ -70,7 +70,7 @@ export declare const Registration: {
      * @param key - key to register the cached callback with
      * @param callback - the cache callback to invoke when a container resolves the associated key
      */
-    cachedCallback: <T_4>(key: Key, callback: ResolveCallback<T_4>) => IRegistration<Resolved<T_4>>;
+    cachedCallback: <T>(key: Key, callback: ResolveCallback<T>) => IRegistration<Resolved<T>>;
     /**
      * creates an alternate {@linkcode Key} to retrieve an instance by.
      * Returns the same scope as the original {@linkcode Key}.
@@ -84,7 +84,7 @@ export declare const Registration: {
      * @param originalKey - the real key to resolve the get call from a container
      * @param aliasKey - the key that a container allows to resolve the real key associated
      */
-    aliasTo: <T_5>(originalKey: T_5, aliasKey: Key) => IRegistration<Resolved<T_5>>;
+    aliasTo: <T>(originalKey: T, aliasKey: Key) => IRegistration<Resolved<T>>;
     /**
      * @internal
      * @param key - the key to register a defer registration

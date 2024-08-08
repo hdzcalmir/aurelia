@@ -2,11 +2,11 @@ import { DI as t, resolve as i, IServiceLocator as e, optional as s, IContainer 
 
 import { IValidator as a, parsePropertyName as l, ValidationResult as h, ValidateInstruction as c, PropertyRule as u, getDefaultValidationConfiguration as d, ValidationConfiguration as f } from "../../../validation/dist/native-modules/index.mjs";
 
-import { astEvaluate as v, IPlatform as g, INode as p, bindable as m, CustomAttribute as w, BindingMode as b, BindingBehavior as V, mixinAstEvaluator as C, PropertyBinding as y, IFlushQueue as B, BindingTargetSubscriber as _, CustomElement as E } from "../../../runtime-html/dist/native-modules/index.mjs";
+import { astEvaluate as v, IPlatform as g, INode as p, bindable as m, CustomAttribute as w, BindingMode as b, BindingBehavior as V, mixinAstEvaluator as C, PropertyBinding as y, IFlushQueue as B, BindingTargetSubscriber as E, CustomElement as _ } from "../../../runtime-html/dist/native-modules/index.mjs";
 
 import { IExpressionParser as R } from "../../../expression-parser/dist/native-modules/index.mjs";
 
-import { connectable as T, IObserverLocator as I } from "../../../runtime/dist/native-modules/index.mjs";
+import { connectable as T, IObserverLocator as S } from "../../../runtime/dist/native-modules/index.mjs";
 
 function __esDecorate(t, i, e, s, n, r) {
     function accept(t) {
@@ -50,6 +50,11 @@ function __runInitializers(t, i, e) {
     }
     return s ? e : void 0;
 }
+
+typeof SuppressedError === "function" ? SuppressedError : function(t, i, e) {
+    var s = new Error(e);
+    return s.name = "SuppressedError", s.error = t, s.suppressed = i, s;
+};
 
 const createMappedError = (t, ...i) => new Error(`AUR${String(t).padStart(4, "0")}:${i.map(String)}`);
 
@@ -150,7 +155,7 @@ function getPropertyInfo(t, i) {
     return e;
 }
 
-const P = /*@__PURE__*/ t.createInterface("IValidationController");
+const I = /*@__PURE__*/ t.createInterface("IValidationController");
 
 class ValidationController {
     constructor() {
@@ -360,9 +365,9 @@ function compareDocumentPositionFlat(t, i) {
     }
 }
 
-const A = `\n<slot></slot>\n<slot name='secondary'>\n  <span repeat.for="error of errors">\n    \${error.result.message}\n  </span>\n</slot>\n`;
+const P = `\n<slot></slot>\n<slot name='secondary'>\n  <span repeat.for="error of errors">\n    \${error.result.message}\n  </span>\n</slot>\n`;
 
-const M = {
+const A = {
     name: "validation-container",
     shadowOptions: {
         mode: "open"
@@ -370,7 +375,7 @@ const M = {
     hasSlots: true
 };
 
-let S = (() => {
+let M = (() => {
     var t;
     let e;
     let n = [];
@@ -383,7 +388,7 @@ let S = (() => {
             this.controller = __runInitializers(this, n, void 0);
             this.errors = (__runInitializers(this, r), __runInitializers(this, a, []));
             this.host = (__runInitializers(this, l), i(p));
-            this.scopedController = i(s(P));
+            this.scopedController = i(s(I));
         }
         handleValidationEvent(t) {
             for (const {result: i} of t.removedResults) {
@@ -461,7 +466,7 @@ class ValidationErrorsCustomAttribute {
         this.errors = [];
         this.errorsInternal = [];
         this.host = i(p);
-        this.scopedController = i(s(P));
+        this.scopedController = i(s(I));
     }
     handleValidationEvent(t) {
         for (const {result: i} of t.removedResults) {
@@ -527,7 +532,7 @@ const O = new WeakMap;
 class ValidateBindingBehavior {
     constructor() {
         this.p = i(g);
-        this.oL = i(I);
+        this.oL = i(S);
     }
     bind(t, i) {
         if (!(i instanceof y)) {
@@ -567,8 +572,8 @@ class ValidatitionConnector {
         this.t = new BindingMediator("handleTriggerChange", this, i, n);
         this.i = new BindingMediator("handleControllerChange", this, i, n);
         this.h = new BindingMediator("handleRulesChange", this, i, n);
-        if (n.has(P, true)) {
-            this.scopedController = n.get(P);
+        if (n.has(I, true)) {
+            this.scopedController = n.get(I);
         }
     }
     u() {
@@ -737,7 +742,7 @@ T(ValidatitionConnector, null);
 
 C(true)(ValidatitionConnector);
 
-class WithValidationTargetSubscriber extends _ {
+class WithValidationTargetSubscriber extends E {
     constructor(t, i, e) {
         super(i, e);
         this.vs = t;
@@ -778,7 +783,7 @@ function getDefaultValidationHtmlConfiguration() {
         ValidationControllerFactoryType: ValidationControllerFactory,
         DefaultTrigger: D.focusout,
         UseSubscriberCustomAttribute: true,
-        SubscriberCustomElementTemplate: A
+        SubscriberCustomElementTemplate: P
     };
 }
 
@@ -788,7 +793,7 @@ function createConfiguration(t) {
         register(i) {
             const e = getDefaultValidationHtmlConfiguration();
             t(e);
-            i.registerFactory(P, new e.ValidationControllerFactoryType);
+            i.registerFactory(I, new e.ValidationControllerFactoryType);
             i.register(f.customize((t => {
                 for (const i of Object.keys(t)) {
                     if (i in e) {
@@ -801,10 +806,10 @@ function createConfiguration(t) {
             }
             const s = e.SubscriberCustomElementTemplate;
             if (s) {
-                i.register(E.define({
-                    ...M,
+                i.register(_.define({
+                    ...A,
                     template: s
-                }, S));
+                }, M));
             }
             return i;
         },
@@ -894,5 +899,5 @@ class ValidationResultPresenterService {
     }
 }
 
-export { BindingInfo, BindingMediator, ControllerValidateResult, j as IDefaultTrigger, P as IValidationController, x as IValidationResultPresenterService, ValidateBindingBehavior, S as ValidationContainerCustomElement, ValidationController, ValidationControllerFactory, ValidationErrorsCustomAttribute, ValidationEvent, $ as ValidationHtmlConfiguration, ValidationResultPresenterService, ValidationResultTarget, D as ValidationTrigger, M as defaultContainerDefinition, A as defaultContainerTemplate, getDefaultValidationHtmlConfiguration, getPropertyInfo };
+export { BindingInfo, BindingMediator, ControllerValidateResult, j as IDefaultTrigger, I as IValidationController, x as IValidationResultPresenterService, ValidateBindingBehavior, M as ValidationContainerCustomElement, ValidationController, ValidationControllerFactory, ValidationErrorsCustomAttribute, ValidationEvent, $ as ValidationHtmlConfiguration, ValidationResultPresenterService, ValidationResultTarget, D as ValidationTrigger, A as defaultContainerDefinition, P as defaultContainerTemplate, getDefaultValidationHtmlConfiguration, getPropertyInfo };
 

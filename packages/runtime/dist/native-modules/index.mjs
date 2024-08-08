@@ -1,4 +1,4 @@
-import { DI as t, isArray as e, isFunction as r, isSet as s, isMap as n, areEqual as i, Registration as o, resolve as c, IPlatform as u, isObject as a, isArrayIndex as h, createLookup as l, emptyObject as f } from "../../../kernel/dist/native-modules/index.mjs";
+import { DI as t, isArray as e, isFunction as r, isSet as s, isMap as i, areEqual as n, Registration as o, resolve as c, IPlatform as u, isObject as a, isArrayIndex as h, createLookup as l, emptyObject as f } from "../../../kernel/dist/native-modules/index.mjs";
 
 import { Metadata as p } from "../../../metadata/dist/native-modules/index.mjs";
 
@@ -53,28 +53,28 @@ const I = /*@__PURE__*/ v({
 
 function copyIndexMap(t, e, r) {
     const {length: s} = t;
-    const n = Array(s);
-    let i = 0;
-    while (i < s) {
-        n[i] = t[i];
-        ++i;
+    const i = Array(s);
+    let n = 0;
+    while (n < s) {
+        i[n] = t[n];
+        ++n;
     }
     if (e !== void 0) {
-        n.deletedIndices = e.slice(0);
+        i.deletedIndices = e.slice(0);
     } else if (t.deletedIndices !== void 0) {
-        n.deletedIndices = t.deletedIndices.slice(0);
+        i.deletedIndices = t.deletedIndices.slice(0);
     } else {
-        n.deletedIndices = [];
+        i.deletedIndices = [];
     }
     if (r !== void 0) {
-        n.deletedItems = r.slice(0);
+        i.deletedItems = r.slice(0);
     } else if (t.deletedItems !== void 0) {
-        n.deletedItems = t.deletedItems.slice(0);
+        i.deletedItems = t.deletedItems.slice(0);
     } else {
-        n.deletedItems = [];
+        i.deletedItems = [];
     }
-    n.isIndexMap = true;
-    return n;
+    i.isIndexMap = true;
+    return i;
 }
 
 function createIndexMap(t = 0) {
@@ -117,23 +117,23 @@ function batch(t) {
         try {
             let t;
             let s;
-            let n;
             let i;
+            let n;
             let o;
             let c = false;
             let u;
             let a;
             for (t of r) {
                 s = t[0];
-                n = t[1];
+                i = t[1];
                 if (e?.has(s)) {
-                    e.set(s, n);
+                    e.set(s, i);
                 }
-                if (n[0] === 1) {
-                    s.notify(n[1], n[2]);
+                if (i[0] === 1) {
+                    s.notify(i[1], i[2]);
                 } else {
-                    i = n[1];
-                    o = n[2];
+                    n = i[1];
+                    o = i[2];
                     c = false;
                     if (o.deletedIndices.length > 0) {
                         c = true;
@@ -146,7 +146,7 @@ function batch(t) {
                         }
                     }
                     if (c) {
-                        s.notifyCollection(i, o);
+                        s.notifyCollection(n, o);
                     }
                 }
             }
@@ -174,7 +174,7 @@ function addValueBatch(t, e, r) {
     }
 }
 
-const k = /*@__PURE__*/ (() => {
+const D = /*@__PURE__*/ (() => {
     function subscriberCollection(t, e) {
         return t == null ? subscriberCollectionDeco : subscriberCollectionDeco(t);
     }
@@ -204,19 +204,30 @@ const k = /*@__PURE__*/ (() => {
         constructor() {
             this.count = 0;
             this.t = [];
+            this.i = [];
+            this.u = false;
         }
         add(t) {
             if (this.t.includes(t)) {
                 return false;
             }
             this.t[this.t.length] = t;
+            if ("handleDirty" in t) {
+                this.i[this.i.length] = t;
+                this.u = true;
+            }
             ++this.count;
             return true;
         }
         remove(t) {
-            const e = this.t.indexOf(t);
+            let e = this.t.indexOf(t);
             if (e !== -1) {
                 this.t.splice(e, 1);
+                e = this.i.indexOf(t);
+                if (e !== -1) {
+                    this.i.splice(e, 1);
+                    this.u = this.i.length > 0;
+                }
                 --this.count;
                 return true;
             }
@@ -227,22 +238,25 @@ const k = /*@__PURE__*/ (() => {
                 addValueBatch(this, t, e);
                 return;
             }
-            const r = this.t.slice(0);
-            const s = r.length;
-            let n = 0;
-            for (;n < s; ++n) {
-                r[n].handleChange(t, e);
+            for (const r of this.t.slice(0)) {
+                r.handleChange(t, e);
             }
-            return;
         }
         notifyCollection(t, e) {
             const r = this.t.slice(0);
             const s = r.length;
-            let n = 0;
-            for (;n < s; ++n) {
-                r[n].handleCollectionChange(t, e);
+            let i = 0;
+            for (;i < s; ++i) {
+                r[i].handleCollectionChange(t, e);
             }
             return;
+        }
+        notifyDirty() {
+            if (this.u) {
+                for (const t of this.i.slice(0)) {
+                    t.handleDirty();
+                }
+            }
         }
     }
     return subscriberCollection;
@@ -267,10 +281,16 @@ class CollectionLengthObserver {
             }
         }
     }
+    handleDirty() {
+        if (this.v !== this.o.length) {
+            this.subs.notifyDirty();
+        }
+    }
     handleCollectionChange(t, e) {
         const r = this.v;
         const s = this.o.length;
         if ((this.v = s) !== r) {
+            this.subs.notifyDirty();
             this.subs.notify(this.v, r);
         }
     }
@@ -292,6 +312,11 @@ class CollectionSizeObserver {
     setValue() {
         throw createMappedError(220);
     }
+    handleDirty() {
+        if (this.v !== this.o.size) {
+            this.subs.notifyDirty();
+        }
+    }
     handleCollectionChange(t, e) {
         const r = this.v;
         const s = this.o.size;
@@ -309,7 +334,7 @@ function implementLengthObserver(t) {
     const e = t.prototype;
     ensureProto(e, "subscribe", subscribe);
     ensureProto(e, "unsubscribe", unsubscribe);
-    return k(t, null);
+    return D(t, null);
 }
 
 function subscribe(t) {
@@ -324,7 +349,7 @@ function unsubscribe(t) {
     }
 }
 
-const M = /*@__PURE__*/ (() => {
+const k = /*@__PURE__*/ (() => {
     const t = Symbol.for("__au_arr_obs__");
     const e = Array[t] ?? rtDefineHiddenProp(Array, t, new WeakMap);
     function sortCompare(t, e) {
@@ -348,16 +373,16 @@ const M = /*@__PURE__*/ (() => {
         }
         return 0;
     }
-    function insertionSort(t, e, r, s, n) {
-        let i, o, c, u, a;
+    function insertionSort(t, e, r, s, i) {
+        let n, o, c, u, a;
         let h, l;
         for (h = r + 1; h < s; h++) {
-            i = t[h];
+            n = t[h];
             o = e[h];
             for (l = h - 1; l >= r; l--) {
                 c = t[l];
                 u = e[l];
-                a = n(c, i);
+                a = i(c, n);
                 if (a > 0) {
                     t[l + 1] = c;
                     e[l + 1] = u;
@@ -365,12 +390,12 @@ const M = /*@__PURE__*/ (() => {
                     break;
                 }
             }
-            t[l + 1] = i;
+            t[l + 1] = n;
             e[l + 1] = o;
         }
     }
-    function quickSort(t, e, r, s, n) {
-        let i = 0, o = 0;
+    function quickSort(t, e, r, s, i) {
+        let n = 0, o = 0;
         let c, u, a;
         let h, l, f;
         let p, d, b;
@@ -379,17 +404,17 @@ const M = /*@__PURE__*/ (() => {
         let A, m, S, R;
         while (true) {
             if (s - r <= 10) {
-                insertionSort(t, e, r, s, n);
+                insertionSort(t, e, r, s, i);
                 return;
             }
-            i = r + (s - r >> 1);
+            n = r + (s - r >> 1);
             c = t[r];
             h = e[r];
             u = t[s - 1];
             l = e[s - 1];
-            a = t[i];
-            f = e[i];
-            p = n(c, u);
+            a = t[n];
+            f = e[n];
+            p = i(c, u);
             if (p > 0) {
                 w = c;
                 v = h;
@@ -398,7 +423,7 @@ const M = /*@__PURE__*/ (() => {
                 u = w;
                 l = v;
             }
-            d = n(c, a);
+            d = i(c, a);
             if (d >= 0) {
                 w = c;
                 v = h;
@@ -409,7 +434,7 @@ const M = /*@__PURE__*/ (() => {
                 u = w;
                 l = v;
             } else {
-                b = n(u, a);
+                b = i(u, a);
                 if (b > 0) {
                     w = u;
                     v = l;
@@ -427,14 +452,14 @@ const M = /*@__PURE__*/ (() => {
             y = l;
             C = r + 1;
             O = s - 1;
-            t[i] = t[C];
-            e[i] = e[C];
+            t[n] = t[C];
+            e[n] = e[C];
             t[C] = g;
             e[C] = y;
             t: for (o = C + 1; o < O; o++) {
                 A = t[o];
                 m = e[o];
-                S = n(A, g);
+                S = i(A, g);
                 if (S < 0) {
                     t[o] = t[C];
                     e[o] = e[C];
@@ -448,7 +473,7 @@ const M = /*@__PURE__*/ (() => {
                             break t;
                         }
                         R = t[O];
-                        S = n(R, g);
+                        S = i(R, g);
                     } while (S > 0);
                     t[o] = t[O];
                     e[o] = e[O];
@@ -466,17 +491,17 @@ const M = /*@__PURE__*/ (() => {
                 }
             }
             if (s - O < C - r) {
-                quickSort(t, e, O, s, n);
+                quickSort(t, e, O, s, i);
                 s = C;
             } else {
-                quickSort(t, e, r, C, n);
+                quickSort(t, e, r, C, i);
                 r = O;
             }
         }
     }
     const s = Array.prototype;
-    const n = [ "push", "unshift", "pop", "shift", "splice", "reverse", "sort" ];
-    let i;
+    const i = [ "push", "unshift", "pop", "shift", "splice", "reverse", "sort" ];
+    let n;
     function overrideArrayPrototypes() {
         const t = s.push;
         const o = s.unshift;
@@ -485,21 +510,21 @@ const M = /*@__PURE__*/ (() => {
         const a = s.splice;
         const h = s.reverse;
         const l = s.sort;
-        i = {
+        n = {
             push: function(...r) {
                 const s = e.get(this);
                 if (s === void 0) {
                     return t.apply(this, r);
                 }
-                const n = this.length;
-                const i = r.length;
-                if (i === 0) {
-                    return n;
+                const i = this.length;
+                const n = r.length;
+                if (n === 0) {
+                    return i;
                 }
-                this.length = s.indexMap.length = n + i;
-                let o = n;
+                this.length = s.indexMap.length = i + n;
+                let o = i;
                 while (o < this.length) {
-                    this[o] = r[o - n];
+                    this[o] = r[o - i];
                     s.indexMap[o] = -2;
                     o++;
                 }
@@ -512,12 +537,12 @@ const M = /*@__PURE__*/ (() => {
                     return o.apply(this, t);
                 }
                 const s = t.length;
-                const n = new Array(s);
-                let i = 0;
-                while (i < s) {
-                    n[i++] = -2;
+                const i = new Array(s);
+                let n = 0;
+                while (n < s) {
+                    i[n++] = -2;
                 }
-                o.apply(r.indexMap, n);
+                o.apply(r.indexMap, i);
                 const c = o.apply(this, t);
                 r.notify();
                 return c;
@@ -529,9 +554,9 @@ const M = /*@__PURE__*/ (() => {
                 }
                 const r = t.indexMap;
                 const s = c.call(this);
-                const n = r.length - 1;
-                if (r[n] > -1) {
-                    r.deletedIndices.push(r[n]);
+                const i = r.length - 1;
+                if (r[i] > -1) {
+                    r.deletedIndices.push(r[i]);
                     r.deletedItems.push(s);
                 }
                 c.call(r);
@@ -556,16 +581,16 @@ const M = /*@__PURE__*/ (() => {
             splice: function(...t) {
                 const r = t[0];
                 const s = t[1];
-                const n = e.get(this);
-                if (n === void 0) {
+                const i = e.get(this);
+                if (i === void 0) {
                     return a.apply(this, t);
                 }
-                const i = this.length;
+                const n = this.length;
                 const o = r | 0;
-                const c = o < 0 ? Math.max(i + o, 0) : Math.min(o, i);
-                const u = n.indexMap;
+                const c = o < 0 ? Math.max(n + o, 0) : Math.min(o, n);
+                const u = i.indexMap;
                 const h = t.length;
-                const l = h === 0 ? 0 : h === 1 ? i - c : s;
+                const l = h === 0 ? 0 : h === 1 ? n - c : s;
                 let f = c;
                 if (l > 0) {
                     const t = f + l;
@@ -590,7 +615,7 @@ const M = /*@__PURE__*/ (() => {
                 }
                 const p = a.apply(this, t);
                 if (l > 0 || f > 0) {
-                    n.notify();
+                    i.notify();
                 }
                 return p;
             },
@@ -602,18 +627,18 @@ const M = /*@__PURE__*/ (() => {
                 }
                 const r = this.length;
                 const s = r / 2 | 0;
-                let n = 0;
-                while (n !== s) {
-                    const e = r - n - 1;
-                    const s = this[n];
-                    const i = t.indexMap[n];
+                let i = 0;
+                while (i !== s) {
+                    const e = r - i - 1;
+                    const s = this[i];
+                    const n = t.indexMap[i];
                     const o = this[e];
                     const c = t.indexMap[e];
-                    this[n] = o;
-                    t.indexMap[n] = c;
+                    this[i] = o;
+                    t.indexMap[i] = c;
                     this[e] = s;
-                    t.indexMap[e] = i;
-                    n++;
+                    t.indexMap[e] = n;
+                    i++;
                 }
                 t.notify();
                 return this;
@@ -624,25 +649,25 @@ const M = /*@__PURE__*/ (() => {
                     l.call(this, t);
                     return this;
                 }
-                let n = this.length;
-                if (n < 2) {
+                let i = this.length;
+                if (i < 2) {
                     return this;
                 }
-                quickSort(this, s.indexMap, 0, n, preSortCompare);
-                let i = 0;
-                while (i < n) {
-                    if (this[i] === void 0) {
+                quickSort(this, s.indexMap, 0, i, preSortCompare);
+                let n = 0;
+                while (n < i) {
+                    if (this[n] === void 0) {
                         break;
                     }
-                    i++;
+                    n++;
                 }
                 if (t === void 0 || !r(t)) {
                     t = sortCompare;
                 }
-                quickSort(this, s.indexMap, 0, i, t);
+                quickSort(this, s.indexMap, 0, n, t);
                 let o = false;
-                for (i = 0, n = s.indexMap.length; n > i; ++i) {
-                    if (s.indexMap[i] !== i) {
+                for (n = 0, i = s.indexMap.length; i > n; ++n) {
+                    if (s.indexMap[n] !== n) {
                         o = true;
                         break;
                     }
@@ -653,8 +678,8 @@ const M = /*@__PURE__*/ (() => {
                 return this;
             }
         };
-        for (const t of n) {
-            b(i[t], "observing", {
+        for (const t of i) {
+            b(n[t], "observing", {
                 value: true,
                 writable: false,
                 configurable: false,
@@ -665,14 +690,14 @@ const M = /*@__PURE__*/ (() => {
     let o = false;
     const c = "__au_arr_on__";
     function enableArrayObservation() {
-        if (i === undefined) {
+        if (n === undefined) {
             overrideArrayPrototypes();
         }
         if (!(C(c, Array) ?? false)) {
             O(true, Array, c);
-            for (const t of n) {
+            for (const t of i) {
                 if (s[t].observing !== true) {
-                    rtDefineHiddenProp(s, t, i[t]);
+                    rtDefineHiddenProp(s, t, n[t]);
                 }
             }
         }
@@ -692,6 +717,7 @@ const M = /*@__PURE__*/ (() => {
         }
         notify() {
             const t = this.subs;
+            t.notifyDirty();
             const e = this.indexMap;
             if (x) {
                 addCollectionBatch(t, this.collection, e);
@@ -700,7 +726,7 @@ const M = /*@__PURE__*/ (() => {
             const r = this.collection;
             const s = r.length;
             this.indexMap = createIndexMap(s);
-            this.subs.notifyCollection(r, e);
+            t.notifyCollection(r, e);
         }
         getLengthObserver() {
             return this.lenObs ??= new CollectionLengthObserver(this);
@@ -710,7 +736,7 @@ const M = /*@__PURE__*/ (() => {
         }
     }
     (() => {
-        k(ArrayObserverImpl, null);
+        D(ArrayObserverImpl, null);
     })();
     class ArrayIndexObserverImpl {
         constructor(t, e) {
@@ -736,16 +762,21 @@ const M = /*@__PURE__*/ (() => {
             e.collection[r] = t;
             e.notify();
         }
+        handleDirty() {
+            if (this.value !== this.getValue()) {
+                this.subs.notifyDirty();
+            }
+        }
         handleCollectionChange(t, e) {
             const r = this.index;
             const s = e[r] === r;
             if (s) {
                 return;
             }
-            const n = this.value;
-            const i = this.value = this.getValue();
-            if (n !== i) {
-                this.subs.notify(i, n);
+            const i = this.value;
+            const n = this.value = this.getValue();
+            if (i !== n) {
+                this.subs.notify(n, i);
             }
         }
         subscribe(t) {
@@ -760,7 +791,7 @@ const M = /*@__PURE__*/ (() => {
         }
     }
     (() => {
-        k(ArrayIndexObserverImpl, null);
+        D(ArrayIndexObserverImpl, null);
     })();
     return function getArrayObserver(t) {
         let r = e.get(t);
@@ -772,11 +803,11 @@ const M = /*@__PURE__*/ (() => {
     };
 })();
 
-const D = /*@__PURE__*/ (() => {
+const M = /*@__PURE__*/ (() => {
     const t = Symbol.for("__au_set_obs__");
     const e = Set[t] ?? rtDefineHiddenProp(Set, t, new WeakMap);
-    const {add: r, clear: s, delete: n} = Set.prototype;
-    const i = [ "add", "clear", "delete" ];
+    const {add: r, clear: s, delete: i} = Set.prototype;
+    const n = [ "add", "clear", "delete" ];
     const o = {
         add: function(t) {
             const s = e.get(this);
@@ -784,13 +815,13 @@ const D = /*@__PURE__*/ (() => {
                 r.call(this, t);
                 return this;
             }
-            const n = this.size;
-            r.call(this, t);
             const i = this.size;
-            if (i === n) {
+            r.call(this, t);
+            const n = this.size;
+            if (n === i) {
                 return this;
             }
-            s.indexMap[n] = -2;
+            s.indexMap[i] = -2;
             s.notify();
             return this;
         },
@@ -819,34 +850,34 @@ const D = /*@__PURE__*/ (() => {
         delete: function(t) {
             const r = e.get(this);
             if (r === undefined) {
-                return n.call(this, t);
+                return i.call(this, t);
             }
             const s = this.size;
             if (s === 0) {
                 return false;
             }
-            let i = 0;
+            let n = 0;
             const o = r.indexMap;
             for (const e of this.keys()) {
                 if (e === t) {
-                    if (o[i] > -1) {
-                        o.deletedIndices.push(o[i]);
+                    if (o[n] > -1) {
+                        o.deletedIndices.push(o[n]);
                         o.deletedItems.push(e);
                     }
-                    o.splice(i, 1);
-                    const s = n.call(this, t);
+                    o.splice(n, 1);
+                    const s = i.call(this, t);
                     if (s === true) {
                         r.notify();
                     }
                     return s;
                 }
-                i++;
+                n++;
             }
             return false;
         }
     };
     function enableSetObservation(t) {
-        for (const e of i) {
+        for (const e of n) {
             rtDefineHiddenProp(t, e, o[e]);
         }
     }
@@ -859,6 +890,7 @@ const D = /*@__PURE__*/ (() => {
         }
         notify() {
             const t = this.subs;
+            t.notifyDirty();
             const e = this.indexMap;
             if (x) {
                 addCollectionBatch(t, this.collection, e);
@@ -867,13 +899,13 @@ const D = /*@__PURE__*/ (() => {
             const r = this.collection;
             const s = r.size;
             this.indexMap = createIndexMap(s);
-            this.subs.notifyCollection(r, e);
+            t.notifyCollection(r, e);
         }
         getLengthObserver() {
             return this.lenObs ??= new CollectionSizeObserver(this);
         }
     }
-    k(SetObserverImpl, null);
+    D(SetObserverImpl, null);
     return function getSetObserver(t) {
         let r = e.get(t);
         if (r === void 0) {
@@ -887,16 +919,16 @@ const D = /*@__PURE__*/ (() => {
 const L = /*@__PURE__*/ (() => {
     const t = Symbol.for("__au_map_obs__");
     const e = Map[t] ?? rtDefineHiddenProp(Map, t, new WeakMap);
-    const {set: r, clear: s, delete: n} = Map.prototype;
-    const i = [ "set", "clear", "delete" ];
+    const {set: r, clear: s, delete: i} = Map.prototype;
+    const n = [ "set", "clear", "delete" ];
     const o = {
         set: function(t, s) {
-            const n = e.get(this);
-            if (n === undefined) {
+            const i = e.get(this);
+            if (i === undefined) {
                 r.call(this, t, s);
                 return this;
             }
-            const i = this.get(t);
+            const n = this.get(t);
             const o = this.size;
             r.call(this, t, s);
             const c = this.size;
@@ -904,11 +936,11 @@ const L = /*@__PURE__*/ (() => {
                 let e = 0;
                 for (const r of this.entries()) {
                     if (r[0] === t) {
-                        if (r[1] !== i) {
-                            n.indexMap.deletedIndices.push(n.indexMap[e]);
-                            n.indexMap.deletedItems.push(r);
-                            n.indexMap[e] = -2;
-                            n.notify();
+                        if (r[1] !== n) {
+                            i.indexMap.deletedIndices.push(i.indexMap[e]);
+                            i.indexMap.deletedItems.push(r);
+                            i.indexMap[e] = -2;
+                            i.notify();
                         }
                         return this;
                     }
@@ -916,8 +948,8 @@ const L = /*@__PURE__*/ (() => {
                 }
                 return this;
             }
-            n.indexMap[o] = -2;
-            n.notify();
+            i.indexMap[o] = -2;
+            i.notify();
             return this;
         },
         clear: function() {
@@ -945,34 +977,34 @@ const L = /*@__PURE__*/ (() => {
         delete: function(t) {
             const r = e.get(this);
             if (r === undefined) {
-                return n.call(this, t);
+                return i.call(this, t);
             }
             const s = this.size;
             if (s === 0) {
                 return false;
             }
-            let i = 0;
+            let n = 0;
             const o = r.indexMap;
             for (const e of this.keys()) {
                 if (e === t) {
-                    if (o[i] > -1) {
-                        o.deletedIndices.push(o[i]);
+                    if (o[n] > -1) {
+                        o.deletedIndices.push(o[n]);
                         o.deletedItems.push(e);
                     }
-                    o.splice(i, 1);
-                    const s = n.call(this, t);
+                    o.splice(n, 1);
+                    const s = i.call(this, t);
                     if (s === true) {
                         r.notify();
                     }
                     return s;
                 }
-                ++i;
+                ++n;
             }
             return false;
         }
     };
     function enableMapObservation(t) {
-        for (const e of i) {
+        for (const e of n) {
             rtDefineHiddenProp(t, e, o[e]);
         }
     }
@@ -985,6 +1017,7 @@ const L = /*@__PURE__*/ (() => {
         }
         notify() {
             const t = this.subs;
+            t.notifyDirty();
             const e = this.indexMap;
             if (x) {
                 addCollectionBatch(t, this.collection, e);
@@ -999,7 +1032,7 @@ const L = /*@__PURE__*/ (() => {
             return this.lenObs ??= new CollectionSizeObserver(this);
         }
     }
-    k(MapObserverImpl, null);
+    D(MapObserverImpl, null);
     return function getMapObserver(t) {
         let r = e.get(t);
         if (r === void 0) {
@@ -1053,10 +1086,10 @@ const V = /*@__PURE__*/ (() => {
     function observeCollection(t) {
         let r;
         if (e(t)) {
-            r = M(t);
+            r = k(t);
         } else if (s(t)) {
-            r = D(t);
-        } else if (n(t)) {
+            r = M(t);
+        } else if (i(t)) {
             r = L(t);
         } else {
             throw createMappedError(210, t);
@@ -1094,14 +1127,14 @@ let N = null;
 
 const H = [];
 
-let F = false;
+let E = false;
 
 function pauseConnecting() {
-    F = false;
+    E = false;
 }
 
 function resumeConnecting() {
-    F = true;
+    E = true;
 }
 
 function currentConnectable() {
@@ -1115,7 +1148,7 @@ function enterConnectable(t) {
     if (N == null) {
         N = t;
         H[0] = N;
-        F = true;
+        E = true;
         return;
     }
     if (N === t) {
@@ -1123,7 +1156,7 @@ function enterConnectable(t) {
     }
     H.push(t);
     N = t;
-    F = true;
+    E = true;
 }
 
 function exitConnectable(t) {
@@ -1135,15 +1168,15 @@ function exitConnectable(t) {
     }
     H.pop();
     N = H.length > 0 ? H[H.length - 1] : null;
-    F = N != null;
+    E = N != null;
 }
 
-const j = /*@__PURE__*/ v({
+const F = /*@__PURE__*/ v({
     get current() {
         return N;
     },
     get connecting() {
-        return F;
+        return E;
     },
     enter: enterConnectable,
     exit: exitConnectable,
@@ -1151,7 +1184,7 @@ const j = /*@__PURE__*/ v({
     resume: resumeConnecting
 });
 
-const E = Reflect.get;
+const j = Reflect.get;
 
 const z = Object.prototype.toString;
 
@@ -1199,11 +1232,11 @@ function doNotCollect(t, e) {
 }
 
 function createProxy(t) {
-    const r = e(t) ? T : n(t) || s(t) ? U : K;
-    const i = new Proxy(t, r);
-    $.set(t, i);
-    $.set(i, i);
-    return i;
+    const r = e(t) ? T : i(t) || s(t) ? U : K;
+    const n = new Proxy(t, r);
+    $.set(t, n);
+    $.set(n, n);
+    return n;
 }
 
 const K = {
@@ -1212,11 +1245,11 @@ const K = {
             return t;
         }
         const s = currentConnectable();
-        if (!F || doNotCollect(t, e) || s == null) {
-            return E(t, e, r);
+        if (!E || doNotCollect(t, e) || s == null) {
+            return j(t, e, r);
         }
         s.observe(t, e);
-        return wrap(E(t, e, r));
+        return wrap(j(t, e, r));
     }
 };
 
@@ -1225,8 +1258,8 @@ const T = {
         if (e === q) {
             return t;
         }
-        if (!F || doNotCollect(t, e) || N == null) {
-            return E(t, e, r);
+        if (!E || doNotCollect(t, e) || N == null) {
+            return j(t, e, r);
         }
         switch (e) {
           case "length":
@@ -1310,7 +1343,7 @@ const T = {
             return wrappedEntries;
         }
         N.observe(t, e);
-        return wrap(E(t, e, r));
+        return wrap(j(t, e, r));
     },
     ownKeys(t) {
         currentConnectable()?.observe(t, "length");
@@ -1458,13 +1491,13 @@ const U = {
         if (e === q) {
             return t;
         }
-        const i = currentConnectable();
-        if (!F || doNotCollect(t, e) || i == null) {
-            return E(t, e, r);
+        const n = currentConnectable();
+        if (!E || doNotCollect(t, e) || n == null) {
+            return j(t, e, r);
         }
         switch (e) {
           case "size":
-            i.observe(t, "size");
+            n.observe(t, "size");
             return t.size;
 
           case "clear":
@@ -1483,13 +1516,13 @@ const U = {
             break;
 
           case "get":
-            if (n(t)) {
+            if (i(t)) {
                 return wrappedGet;
             }
             break;
 
           case "set":
-            if (n(t)) {
+            if (i(t)) {
                 return wrappedSet;
             }
             break;
@@ -1507,9 +1540,9 @@ const U = {
             return wrappedEntries;
 
           case Symbol.iterator:
-            return n(t) ? wrappedEntries : wrappedValues;
+            return i(t) ? wrappedEntries : wrappedValues;
         }
-        return wrap(E(t, e, r));
+        return wrap(j(t, e, r));
     }
 };
 
@@ -1629,16 +1662,16 @@ const G = /*@__PURE__*/ v({
 });
 
 class ComputedObserver {
-    constructor(t, e, r, s, n) {
+    constructor(t, e, r, s, i) {
         this.type = S;
         this.v = void 0;
         this.ir = false;
         this.D = false;
         this.cb = void 0;
-        this.i = void 0;
-        this.u = void 0;
+        this.h = void 0;
+        this.C = void 0;
         this.o = t;
-        this.h = n ? wrap(t) : t;
+        this.O = i ? wrap(t) : t;
         this.$get = e;
         this.$set = r;
         this.oL = s;
@@ -1659,10 +1692,10 @@ class ComputedObserver {
     }
     setValue(t) {
         if (r(this.$set)) {
-            if (this.i !== void 0) {
-                t = this.i.call(null, t, this.u);
+            if (this.h !== void 0) {
+                t = this.h.call(null, t, this.C);
             }
-            if (!i(t, this.v)) {
+            if (!n(t, this.v)) {
                 this.ir = true;
                 this.$set.call(this.o, t);
                 this.ir = false;
@@ -1673,13 +1706,19 @@ class ComputedObserver {
         }
     }
     useCoercer(t, e) {
-        this.i = t;
-        this.u = e;
+        this.h = t;
+        this.C = e;
         return true;
     }
     useCallback(t) {
         this.cb = t;
         return true;
+    }
+    handleDirty() {
+        if (!this.D) {
+            this.D = true;
+            this.subs.notifyDirty();
+        }
     }
     handleChange() {
         this.D = true;
@@ -1712,7 +1751,7 @@ class ComputedObserver {
         const t = this.v;
         const e = this.compute();
         this.D = false;
-        if (!i(e, t)) {
+        if (!n(e, t)) {
             this.cb?.(e, t);
             this.subs.notify(this.v, t);
         }
@@ -1722,7 +1761,7 @@ class ComputedObserver {
         this.obs.version++;
         try {
             enterConnectable(this);
-            return this.v = unwrap(this.$get.call(this.h, this.h, this));
+            return this.v = unwrap(this.$get.call(this.O, this.O, this));
         } finally {
             this.obs.clear();
             this.ir = false;
@@ -1733,7 +1772,7 @@ class ComputedObserver {
 
 (() => {
     connectable(ComputedObserver, null);
-    k(ComputedObserver, null);
+    D(ComputedObserver, null);
 })();
 
 const J = /*@__PURE__*/ y("IDirtyChecker", void 0);
@@ -1755,17 +1794,17 @@ class DirtyChecker {
     }
     constructor() {
         this.tracked = [];
-        this.C = null;
-        this.O = 0;
+        this.A = null;
+        this.R = 0;
         this.p = c(u);
         this.check = () => {
             if (Q.disabled) {
                 return;
             }
-            if (++this.O < Q.timeoutsPerCheck) {
+            if (++this.R < Q.timeoutsPerCheck) {
                 return;
             }
-            this.O = 0;
+            this.R = 0;
             const t = this.tracked;
             const e = t.length;
             let r;
@@ -1777,7 +1816,7 @@ class DirtyChecker {
                 }
             }
         };
-        k(DirtyCheckProperty, null);
+        D(DirtyCheckProperty, null);
     }
     createProperty(t, e) {
         if (Q.throw) {
@@ -1788,7 +1827,7 @@ class DirtyChecker {
     addProperty(t) {
         this.tracked.push(t);
         if (this.tracked.length === 1) {
-            this.C = this.p.taskQueue.queueTask(this.check, {
+            this.A = this.p.taskQueue.queueTask(this.check, {
                 persistent: true
             });
         }
@@ -1796,8 +1835,8 @@ class DirtyChecker {
     removeProperty(t) {
         this.tracked.splice(this.tracked.indexOf(t), 1);
         if (this.tracked.length === 0) {
-            this.C.cancel();
-            this.C = null;
+            this.A.cancel();
+            this.A = null;
         }
     }
 }
@@ -1808,7 +1847,7 @@ class DirtyCheckProperty {
         this.key = r;
         this.type = m;
         this.ov = void 0;
-        this.A = t;
+        this.P = t;
     }
     getValue() {
         return this.obj[this.key];
@@ -1828,12 +1867,12 @@ class DirtyCheckProperty {
     subscribe(t) {
         if (this.subs.add(t) && this.subs.count === 1) {
             this.ov = this.obj[this.key];
-            this.A.addProperty(this);
+            this.P.addProperty(this);
         }
     }
     unsubscribe(t) {
         if (this.subs.remove(t) && this.subs.count === 0) {
-            this.A.removeProperty(this);
+            this.P.removeProperty(this);
         }
     }
 }
@@ -1873,8 +1912,8 @@ class SetterObserver {
         this.v = void 0;
         this.iO = false;
         this.cb = void 0;
-        this.i = void 0;
-        this.u = void 0;
+        this.h = void 0;
+        this.C = void 0;
         this.o = t;
         this.k = e;
     }
@@ -1882,16 +1921,17 @@ class SetterObserver {
         return this.v;
     }
     setValue(t) {
-        if (this.i !== void 0) {
-            t = this.i.call(void 0, t, this.u);
+        if (this.h !== void 0) {
+            t = this.h.call(void 0, t, this.C);
         }
         if (this.iO) {
-            if (i(t, this.v)) {
+            if (n(t, this.v)) {
                 return;
             }
             X = this.v;
             this.v = t;
             this.cb?.(t, X);
+            this.subs.notifyDirty();
             this.subs.notify(t, X);
         } else {
             this.v = this.o[this.k] = t;
@@ -1904,8 +1944,8 @@ class SetterObserver {
         return true;
     }
     useCoercer(t, e) {
-        this.i = t;
-        this.u = e;
+        this.h = t;
+        this.C = e;
         this.start();
         return true;
     }
@@ -1947,7 +1987,7 @@ class SetterObserver {
 }
 
 (() => {
-    k(SetterObserver, null);
+    D(SetterObserver, null);
 })();
 
 let X = void 0;
@@ -1972,30 +2012,30 @@ class DefaultNodeObserverLocator {
 
 const et = /*@__PURE__*/ y("IComputedObserverLocator", (t => t.singleton(class DefaultLocator {
     getObserver(t, e, r, s) {
-        const n = new ComputedObserver(t, r.get, r.set, s, true);
+        const i = new ComputedObserver(t, r.get, r.set, s, true);
         b(t, e, {
             enumerable: r.enumerable,
             configurable: true,
-            get: w((() => n.getValue()), {
-                getObserver: () => n
+            get: w((() => i.getValue()), {
+                getObserver: () => i
             }),
             set: t => {
-                n.setValue(t);
+                i.setValue(t);
             }
         });
-        return n;
+        return i;
     }
 })));
 
 class ObserverLocator {
     constructor() {
-        this.R = [];
-        this.A = c(J);
-        this.P = c(tt);
-        this.I = c(et);
+        this.I = [];
+        this.P = c(J);
+        this._ = c(tt);
+        this.M = c(et);
     }
     addAdapter(t) {
-        this.R.push(t);
+        this.I.push(t);
     }
     getObserver(t, e) {
         if (t == null) {
@@ -2008,86 +2048,86 @@ class ObserverLocator {
             return new ComputedObserver(t, e, void 0, this, true);
         }
         const s = getObserverLookup(t);
-        let n = s[e];
-        if (n === void 0) {
-            n = this.createObserver(t, e);
-            if (!n.doNotCache) {
-                s[e] = n;
+        let i = s[e];
+        if (i === void 0) {
+            i = this.createObserver(t, e);
+            if (!i.doNotCache) {
+                s[e] = i;
             }
         }
-        return n;
+        return i;
     }
     getAccessor(t, e) {
         const r = t.$observers?.[e];
         if (r !== void 0) {
             return r;
         }
-        if (this.P.handles(t, e, this)) {
-            return this.P.getAccessor(t, e, this);
+        if (this._.handles(t, e, this)) {
+            return this._.getAccessor(t, e, this);
         }
         return Y;
     }
     getArrayObserver(t) {
-        return M(t);
+        return k(t);
     }
     getMapObserver(t) {
         return L(t);
     }
     getSetObserver(t) {
-        return D(t);
+        return M(t);
     }
     createObserver(t, r) {
-        if (this.P.handles(t, r, this)) {
-            return this.P.getObserver(t, r, this);
+        if (this._.handles(t, r, this)) {
+            return this._.getObserver(t, r, this);
         }
         switch (r) {
           case "length":
             if (e(t)) {
-                return M(t).getLengthObserver();
+                return k(t).getLengthObserver();
             }
             break;
 
           case "size":
-            if (n(t)) {
+            if (i(t)) {
                 return L(t).getLengthObserver();
             } else if (s(t)) {
-                return D(t).getLengthObserver();
+                return M(t).getLengthObserver();
             }
             break;
 
           default:
             if (e(t) && h(r)) {
-                return M(t).getIndexObserver(Number(r));
+                return k(t).getIndexObserver(Number(r));
             }
             break;
         }
-        let i = st(t, r);
-        if (i === void 0) {
+        let n = st(t, r);
+        if (n === void 0) {
             let e = rt(t);
             while (e !== null) {
-                i = st(e, r);
-                if (i === void 0) {
+                n = st(e, r);
+                if (n === void 0) {
                     e = rt(e);
                 } else {
                     break;
                 }
             }
         }
-        if (i !== void 0 && !d.call(i, "value")) {
-            let e = this._(t, r, i);
+        if (n !== void 0 && !d.call(n, "value")) {
+            let e = this.L(t, r, n);
             if (e == null) {
-                e = (i.get?.getObserver)?.(t);
+                e = (n.get?.getObserver)?.(t);
             }
-            return e == null ? i.configurable ? this.I.getObserver(t, r, i, this) : this.A.createProperty(t, r) : e;
+            return e == null ? n.configurable ? this.M.getObserver(t, r, n, this) : this.P.createProperty(t, r) : e;
         }
         return new SetterObserver(t, r);
     }
-    _(t, e, r) {
-        if (this.R.length > 0) {
-            for (const s of this.R) {
-                const n = s.getObserver(t, e, r, this);
-                if (n != null) {
-                    return n;
+    L(t, e, r) {
+        if (this.I.length > 0) {
+            for (const s of this.I) {
+                const i = s.getObserver(t, e, r, this);
+                if (i != null) {
+                    return i;
                 }
             }
         }
@@ -2098,11 +2138,11 @@ class ObserverLocator {
 const getCollectionObserver = t => {
     let r;
     if (e(t)) {
-        r = M(t);
-    } else if (n(t)) {
+        r = k(t);
+    } else if (i(t)) {
         r = L(t);
     } else if (s(t)) {
-        r = D(t);
+        r = M(t);
     }
     return r;
 };
@@ -2122,7 +2162,7 @@ const getObserverLookup = t => {
     return e;
 };
 
-const nt = /*@__PURE__*/ y("IObservation", (t => t.singleton(Observation)));
+const it = /*@__PURE__*/ y("IObservation", (t => t.singleton(Observation)));
 
 class Observation {
     static get inject() {
@@ -2130,7 +2170,7 @@ class Observation {
     }
     constructor(t) {
         this.oL = t;
-        this.M = {
+        this.V = {
             immediate: true
         };
     }
@@ -2139,19 +2179,19 @@ class Observation {
         e.run();
         return e;
     }
-    watch(t, e, r, s = this.M) {
-        let n = undefined;
-        let i = false;
+    watch(t, e, r, s = this.V) {
+        let i = undefined;
+        let n = false;
         const o = this.oL.getObserver(t, e);
         const c = {
-            handleChange: (t, e) => r(t, n = e)
+            handleChange: (t, e) => r(t, i = e)
         };
         const run = () => {
-            if (i) return;
-            r(o.getValue(), n);
+            if (n) return;
+            r(o.getValue(), i);
         };
         const stop = () => {
-            i = true;
+            n = true;
             o.unsubscribe(c);
         };
         o.subscribe(c);
@@ -2222,7 +2262,7 @@ class RunEffect {
     connectable(RunEffect, null);
 })();
 
-const it = /*@__PURE__*/ (() => {
+const nt = /*@__PURE__*/ (() => {
     function getObserversLookup(t) {
         if (t.$observers === void 0) {
             b(t, "$observers", {
@@ -2235,19 +2275,19 @@ const it = /*@__PURE__*/ (() => {
     function observable(e, r) {
         if (!SetterNotifier.mixed) {
             SetterNotifier.mixed = true;
-            k(SetterNotifier, null);
+            D(SetterNotifier, null);
         }
         let s = false;
-        let n;
+        let i;
         if (typeof e === "object") {
-            n = e;
+            i = e;
         } else if (e != null) {
-            n = {
+            i = {
                 name: e
             };
             s = true;
         } else {
-            n = f;
+            i = f;
         }
         if (arguments.length === 0) {
             return function(t, e) {
@@ -2258,7 +2298,7 @@ const it = /*@__PURE__*/ (() => {
         if (r?.kind === "field") return createFieldInitializer(r);
         if (s) {
             return function(e, r) {
-                createDescriptor(e, n.name, (() => t), true);
+                createDescriptor(e, i.name, (() => t), true);
             };
         }
         return function(e, r) {
@@ -2267,7 +2307,7 @@ const it = /*@__PURE__*/ (() => {
                 return createFieldInitializer(r);
 
               case "class":
-                return createDescriptor(e, n.name, (() => t), true);
+                return createDescriptor(e, i.name, (() => t), true);
 
               default:
                 throw createMappedError(224);
@@ -2283,48 +2323,48 @@ const it = /*@__PURE__*/ (() => {
             };
         }
         function createDescriptor(t, e, r, s) {
-            const i = n.callback || `${g(e)}Changed`;
-            const o = n.set;
+            const n = i.callback || `${g(e)}Changed`;
+            const o = i.set;
             const observableGetter = function() {
-                const t = getNotifier(this, e, i, r, o);
+                const t = getNotifier(this, e, n, r, o);
                 currentConnectable()?.subscribeTo(t);
                 return t.getValue();
             };
             observableGetter.getObserver = function(t) {
-                return getNotifier(t, e, i, r, o);
+                return getNotifier(t, e, n, r, o);
             };
             const c = {
                 enumerable: true,
                 configurable: true,
                 get: observableGetter,
                 set(t) {
-                    getNotifier(this, e, i, r, o).setValue(t);
+                    getNotifier(this, e, n, r, o).setValue(t);
                 }
             };
             if (s) b(t.prototype, e, c); else b(t, e, c);
         }
     }
-    function getNotifier(e, r, s, n, i) {
+    function getNotifier(e, r, s, i, n) {
         const o = getObserversLookup(e);
         let c = o[r];
         if (c == null) {
-            const u = n();
-            c = new SetterNotifier(e, s, i, u === t ? void 0 : u);
+            const u = i();
+            c = new SetterNotifier(e, s, n, u === t ? void 0 : u);
             o[r] = c;
         }
         return c;
     }
     class SetterNotifier {
-        constructor(t, e, s, n) {
+        constructor(t, e, s, i) {
             this.type = S;
             this.v = void 0;
             this.ov = void 0;
             this.o = t;
             this.S = s;
             this.hs = r(s);
-            const i = t[e];
-            this.cb = r(i) ? i : void 0;
-            this.v = n;
+            const n = t[e];
+            this.cb = r(n) ? n : void 0;
+            this.v = i;
         }
         getValue() {
             return this.v;
@@ -2333,12 +2373,13 @@ const it = /*@__PURE__*/ (() => {
             if (this.hs) {
                 t = this.S(t);
             }
-            if (!i(t, this.v)) {
+            if (!n(t, this.v)) {
                 this.ov = this.v;
                 this.v = t;
                 this.cb?.call(this.o, this.v, this.ov);
                 t = this.ov;
                 this.ov = this.v;
+                this.subs.notifyDirty();
                 this.subs.notify(this.v, t);
             }
         }
@@ -2346,6 +2387,11 @@ const it = /*@__PURE__*/ (() => {
     SetterNotifier.mixed = false;
     return observable;
 })();
+
+typeof SuppressedError === "function" ? SuppressedError : function(t, e, r) {
+    var s = new Error(r);
+    return s.name = "SuppressedError", s.error = t, s.suppressed = e, s;
+};
 
 function nowrap(t, e) {
     return arguments.length === 0 ? decorator : decorator(t, e);
@@ -2367,5 +2413,5 @@ function nowrap(t, e) {
     }
 }
 
-export { I as AccessorType, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, j as ConnectableSwitcher, DirtyCheckProperty, Q as DirtyCheckSettings, DirtyChecker, A as ICoercionConfiguration, et as IComputedObserverLocator, J as IDirtyChecker, tt as INodeObserverLocator, nt as IObservation, Z as IObserverLocator, Observation, ObserverLocator, PrimitiveObserver, PropertyAccessor, G as ProxyObservable, SetterObserver, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, it as observable, k as subscriberCollection };
+export { I as AccessorType, CollectionLengthObserver, CollectionSizeObserver, ComputedObserver, F as ConnectableSwitcher, DirtyCheckProperty, Q as DirtyCheckSettings, DirtyChecker, A as ICoercionConfiguration, et as IComputedObserverLocator, J as IDirtyChecker, tt as INodeObserverLocator, it as IObservation, Z as IObserverLocator, Observation, ObserverLocator, PrimitiveObserver, PropertyAccessor, G as ProxyObservable, SetterObserver, batch, cloneIndexMap, connectable, copyIndexMap, createIndexMap, getCollectionObserver, getObserverLookup, isIndexMap, nowrap, nt as observable, D as subscriberCollection };
 
