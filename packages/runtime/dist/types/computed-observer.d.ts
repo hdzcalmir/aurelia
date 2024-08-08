@@ -25,6 +25,7 @@ export declare class ComputedObserver<T extends object> implements IObserver, IO
     setValue(v: unknown): void;
     useCoercer(coercer: InterceptorFunc, coercionConfig?: ICoercionConfiguration | undefined): boolean;
     useCallback(callback: (newValue: unknown, oldValue: unknown) => void): boolean;
+    handleDirty(): void;
     handleChange(): void;
     handleCollectionChange(): void;
     subscribe(subscriber: ISubscriber): void;

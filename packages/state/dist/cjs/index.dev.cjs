@@ -51,7 +51,7 @@ class Store {
     }
     constructor() {
         /** @internal */ this._subs = new Set();
-        /** @internal */ this._dispatching = 0;
+        /** @internal */ this._dispatching = false;
         /** @internal */ this._dispatchQueues = [];
         this._initialState = this._state = kernel.resolve(kernel.optional(IState)) ?? new State();
         this._handlers = kernel.resolve(kernel.all(IActionHandler));
@@ -87,45 +87,45 @@ class Store {
             return new Proxy(this._state, new StateProxyHandler(this, this._logger));
         }
     }
+    /** @internal */
+    _handleAction(handlers, $state, $action) {
+        for (const handler of handlers) {
+            $state = kernel.onResolve($state, $state => handler($state, $action));
+        }
+        return kernel.onResolve($state, s => s);
+    }
     dispatch(action) {
-        if (this._dispatching > 0) {
+        if (this._dispatching) {
             this._dispatchQueues.push(action);
             return;
         }
-        this._dispatching++;
-        let $$action;
-        const reduce = ($state, $action) => this._handlers.reduce(($state, handler) => {
-            if ($state instanceof Promise) {
-                return $state.then($ => handler($, $action));
-            }
-            return handler($state, $action);
-        }, $state);
+        this._dispatching = true;
         const afterDispatch = ($state) => {
-            if (this._dispatchQueues.length > 0) {
-                $$action = this._dispatchQueues.shift();
-                const newState = reduce($state, $$action);
-                if (newState instanceof Promise) {
-                    return newState.then($ => afterDispatch($));
+            return kernel.onResolve($state, s => {
+                const $$action = this._dispatchQueues.shift();
+                if ($$action != null) {
+                    return kernel.onResolve(this._handleAction(this._handlers, s, $$action), state => {
+                        this._setState(state);
+                        return afterDispatch(state);
+                    });
                 }
                 else {
-                    return afterDispatch(newState);
+                    this._dispatching = false;
                 }
-            }
+            });
         };
-        const newState = reduce(this._state, action);
-        if (newState instanceof Promise) {
+        const newState = this._handleAction(this._handlers, this._state, action);
+        if (kernel.isPromise(newState)) {
             return newState.then($state => {
                 this._setState($state);
-                this._dispatching--;
                 return afterDispatch(this._state);
             }, ex => {
-                this._dispatching--;
+                this._dispatching = false;
                 throw ex;
             });
         }
         else {
             this._setState(newState);
-            this._dispatching--;
             return afterDispatch(this._state);
         }
     }
@@ -195,7 +195,7 @@ class StateProxyHandler {
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     set(target, prop, value, receiver) {
-        this._logger.warn(`Setting State is immutable. Dispatch an action to create a new state`);
+        this._logger.warn(`State is immutable. Dispatch an action to create a new state`);
         return true;
     }
 }
@@ -315,7 +315,7 @@ class StateBinding {
         const state = this._store.getState();
         const _scope = this._scope;
         const overrideContext = _scope.overrideContext;
-        _scope.bindingContext = overrideContext.bindingContext = overrideContext.$state = state;
+        _scope.bindingContext = overrideContext.bindingContext = state;
         const value = runtimeHtml.astEvaluate(this.ast, _scope, this, this.mode > runtimeHtml.BindingMode.oneTime ? this : null);
         const shouldQueueFlush = this._controller.state !== stateActivating && (this._targetObserver.type & atLayout) > 0;
         if (value === this._value) {
@@ -400,7 +400,7 @@ class StateSubscriber {
     handleStateChange(state) {
         const scope = this._wrappedScope;
         const overrideContext = scope.overrideContext;
-        scope.bindingContext = overrideContext.bindingContext = overrideContext.$state = state;
+        scope.bindingContext = overrideContext.bindingContext = state;
         this._binding.handleChange?.(undefined, undefined);
     }
 }
@@ -512,8 +512,6 @@ const StateBindingInstructionRenderer = /*@__PURE__*/ runtimeHtml.renderer(class
     }
     render(renderingCtrl, target, instruction, platform, exprParser, observerLocator) {
         const ast = ensureExpression(exprParser, instruction.from, 'IsFunction');
-        // todo: insert `$state` access scope into the expression when it does not start with `$this`/`$parent`/`$state`/`$host`
-        //    example: <input value.state="value"> means <input value.bind="$state.value">
         renderingCtrl.addBinding(new StateBinding(renderingCtrl, renderingCtrl.container, observerLocator, platform.domQueue, ast, target, instruction.to, this._stateContainer));
     }
 }, null);
@@ -624,7 +622,7 @@ class StateGetterBinding {
     handleStateChange(state) {
         const _scope = this._scope;
         const overrideContext = _scope.overrideContext;
-        _scope.bindingContext = overrideContext.bindingContext = overrideContext.$state = state;
+        _scope.bindingContext = overrideContext.bindingContext = state;
         const value = this.$get(this._store.getState());
         if (value === this._value) {
             return;

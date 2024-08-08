@@ -417,8 +417,10 @@ const isNativeFunction = /*@__PURE__*/ (() => {
  *
  * If the value is a promise, it is `then`ed before the callback is invoked. Otherwise the callback is invoked synchronously.
  */
-const onResolve = (maybePromise, resolveCallback) => {
-    if (maybePromise instanceof Promise) {
+const onResolve 
+// implementation
+= (maybePromise, resolveCallback) => {
+    if (isPromise(maybePromise)) {
         return maybePromise.then(resolveCallback);
     }
     return resolveCallback(maybePromise);

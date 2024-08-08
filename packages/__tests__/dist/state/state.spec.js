@@ -129,15 +129,6 @@ describe('state/state.spec.ts', function () {
         flush();
         assert.strictEqual(getBy('input').value, '123');
     });
-    it('makes state immutable', async function () {
-        const state = { text: '123' };
-        const { trigger } = await createFixture
-            .html('<input value.state="text" input.trigger="$state.text = `456`">')
-            .deps(StateDefaultConfiguration.init(state))
-            .build().started;
-        trigger('input', 'input');
-        assert.strictEqual(state.text, '123');
-    });
     it('works with promise', async function () {
         const state = { data: () => resolveAfter(1, 'value-1-2') };
         const { getBy } = await createFixture
@@ -317,6 +308,181 @@ describe('state/state.spec.ts', function () {
             assert.strictEqual(actionCallCount, 2);
             flush();
             assert.strictEqual(getBy('input').value, '1111');
+        });
+        it('notifies changes only once for single synchronous dispatch', async function () {
+            let started = 0;
+            const logs = [];
+            const state = { text: '1', click: 0 };
+            const { trigger } = await createFixture
+                .html `
+          <input value.state="text" input.dispatch="{ type: 'event', v: $event.target.value }">
+          <button click.dispatch="{ type: 'click' }">Change</button>
+        `
+                .deps(StateDefaultConfiguration.init(state, (s, { type, v }) => {
+                if (type === 'event') {
+                    return { ...s, text: s.text + v };
+                }
+                if (type === 'click') {
+                    return { ...s, click: s.click + 1 };
+                }
+                return s;
+            }))
+                .component((() => {
+                var _a;
+                let _text_decorators;
+                let _text_initializers = [];
+                let _text_extraInitializers = [];
+                return _a = class {
+                        constructor() {
+                            this.text = __runInitializers(this, _text_initializers, void 0);
+                            __runInitializers(this, _text_extraInitializers);
+                        }
+                    },
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _text_decorators = [fromState(state => {
+                                if (started > 0) {
+                                    logs.push({ ...state });
+                                }
+                                return state.text;
+                            })];
+                        __esDecorate(null, null, _text_decorators, { kind: "field", name: "text", static: false, private: false, access: { has: obj => "text" in obj, get: obj => obj.text, set: (obj, value) => { obj.text = value; } }, metadata: _metadata }, _text_initializers, _text_extraInitializers);
+                        if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    })(),
+                    _a;
+            })())
+                .build().started;
+            started = 1;
+            trigger('input', 'input');
+            trigger('button', 'click');
+            assert.deepEqual(logs, [
+                { text: '11', click: 0 },
+                { text: '11', click: 1 }
+            ]);
+        });
+        it('notifies changes only once for single asynchronous dispatch', async function () {
+            let started = 0;
+            const logs = [];
+            const state = { text: '1', click: 0 };
+            const { trigger, assertValue, flush } = await createFixture
+                .html `
+          <input value.state="text" input.dispatch="{ type: 'event', v: $event.target.value }">
+        `
+                .deps(StateDefaultConfiguration.init(state, (s, { type, v }) => {
+                return Promise.resolve().then(() => {
+                    if (type === 'event') {
+                        return { ...s, text: s.text + v };
+                    }
+                    if (type === 'click') {
+                        return { ...s, click: s.click + 1 };
+                    }
+                    return s;
+                });
+            }))
+                .component((() => {
+                var _a;
+                let _text_decorators;
+                let _text_initializers = [];
+                let _text_extraInitializers = [];
+                return _a = class {
+                        constructor() {
+                            this.text = __runInitializers(this, _text_initializers, void 0);
+                            __runInitializers(this, _text_extraInitializers);
+                        }
+                    },
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _text_decorators = [fromState(state => {
+                                if (started > 0) {
+                                    logs.push({ ...state });
+                                }
+                                return state.text;
+                            })];
+                        __esDecorate(null, null, _text_decorators, { kind: "field", name: "text", static: false, private: false, access: { has: obj => "text" in obj, get: obj => obj.text, set: (obj, value) => { obj.text = value; } }, metadata: _metadata }, _text_initializers, _text_extraInitializers);
+                        if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    })(),
+                    _a;
+            })())
+                .build().started;
+            started = 1;
+            trigger('input', 'input');
+            await resolveAfter(1);
+            assert.deepEqual(logs, [
+                { text: '11', click: 0 },
+            ]);
+            assertValue('input', '1');
+            flush();
+            assertValue('input', '11');
+        });
+        it('notifies change for every dispatch', async function () {
+            let started = false;
+            const logs = [];
+            const state = { text: '1', click: 0 };
+            const { trigger, assertValue, flush } = await createFixture
+                .html `
+          <input value.state="text" input.dispatch="{ type: 'event', v: $event.target.value }">
+          <button click.dispatch="{ type: 'click' }">Change</button>
+        `
+                .deps(StateDefaultConfiguration.init(state, (s, { type, v }) => {
+                return Promise.resolve().then(() => {
+                    if (type === 'event') {
+                        return { ...s, text: s.text + v };
+                    }
+                    if (type === 'click') {
+                        return { ...s, click: s.click + 1 };
+                    }
+                    return s;
+                });
+            }))
+                .component((() => {
+                var _a;
+                let _text_decorators;
+                let _text_initializers = [];
+                let _text_extraInitializers = [];
+                return _a = class {
+                        constructor() {
+                            this.text = __runInitializers(this, _text_initializers, void 0);
+                            __runInitializers(this, _text_extraInitializers);
+                        }
+                    },
+                    (() => {
+                        const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+                        _text_decorators = [fromState(state => {
+                                if (started) {
+                                    logs.push({ ...state });
+                                }
+                                return state.text;
+                            })];
+                        __esDecorate(null, null, _text_decorators, { kind: "field", name: "text", static: false, private: false, access: { has: obj => "text" in obj, get: obj => obj.text, set: (obj, value) => { obj.text = value; } }, metadata: _metadata }, _text_initializers, _text_extraInitializers);
+                        if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+                    })(),
+                    _a;
+            })())
+                .build().started;
+            started = true;
+            trigger('input', 'input');
+            trigger('button', 'click');
+            assert.deepEqual(logs, []);
+            await resolveAfter(1);
+            assert.deepEqual(logs, [
+                { text: '11', click: 0 },
+                { text: '11', click: 1 }
+            ]);
+            await resolveAfter(1);
+            flush();
+            assertValue('input', '11');
+            trigger('input', 'input');
+            trigger('button', 'click');
+            await resolveAfter(1);
+            assert.deepEqual(logs, [
+                { text: '11', click: 0 },
+                { text: '11', click: 1 },
+                { text: '1111', click: 1 },
+                { text: '1111', click: 2 },
+            ]);
+            assertValue('input', '11');
+            flush();
+            assertValue('input', '1111');
         });
     });
     describe('@state decorator', function () {

@@ -272,7 +272,7 @@ const p = /*@__PURE__*/ (() => {
 })();
 
 const onResolve = (t, e) => {
-    if (t instanceof Promise) {
+    if (isPromise(t)) {
         return t.then(e);
     }
     return e(t);

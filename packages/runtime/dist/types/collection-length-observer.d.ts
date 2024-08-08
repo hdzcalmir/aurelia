@@ -8,6 +8,7 @@ export declare class CollectionLengthObserver implements IObserver, ICollectionS
     constructor(owner: ICollectionObserver<'array'>);
     getValue(): number;
     setValue(newValue: number): void;
+    handleDirty(): void;
     handleCollectionChange(_arr: unknown[], _: IndexMap): void;
 }
 export interface CollectionSizeObserver extends ISubscriberCollection {
@@ -18,6 +19,7 @@ export declare class CollectionSizeObserver implements ICollectionSubscriber {
     constructor(owner: ICollectionObserver<'map' | 'set'>);
     getValue(): number;
     setValue(): void;
+    handleDirty(): void;
     handleCollectionChange(_collection: Collection, _: IndexMap): void;
 }
 //# sourceMappingURL=collection-length-observer.d.ts.map

@@ -270,7 +270,7 @@ const g = /*@__PURE__*/ (() => {
 })();
 
 const onResolve = (t, e) => {
-    if (t instanceof Promise) {
+    if (isPromise(t)) {
         return t.then(e);
     }
     return e(t);
@@ -345,25 +345,25 @@ const createImplementationRegister = function(t) {
     };
 };
 
-const m = "au:annotation";
+const p = "au:annotation";
 
 const getAnnotationKeyFor = (t, e) => {
     if (e === void 0) {
-        return `${m}:${t}`;
+        return `${p}:${t}`;
     }
-    return `${m}:${t}:${e}`;
+    return `${p}:${t}:${e}`;
 };
 
 const appendAnnotation = (t, e) => {
-    const n = o(m, t);
+    const n = o(p, t);
     if (n === void 0) {
-        l([ e ], t, m);
+        l([ e ], t, p);
     } else {
         n.push(e);
     }
 };
 
-const p = /*@__PURE__*/ r({
+const m = /*@__PURE__*/ r({
     name: "au:annotation",
     appendTo: appendAnnotation,
     set(t, e, n) {
@@ -371,13 +371,13 @@ const p = /*@__PURE__*/ r({
     },
     get: (t, e) => o(getAnnotationKeyFor(e), t),
     getKeys(t) {
-        let e = o(m, t);
+        let e = o(p, t);
         if (e === void 0) {
-            l(e = [], t, m);
+            l(e = [], t, p);
         }
         return e;
     },
-    isKey: t => t.startsWith(m),
+    isKey: t => t.startsWith(p),
     keyFor: getAnnotationKeyFor
 });
 
@@ -394,7 +394,7 @@ const getResourceKeyFor = (t, e, n) => {
 };
 
 const b = {
-    annotation: p
+    annotation: m
 };
 
 const $ = Object.prototype.hasOwnProperty;

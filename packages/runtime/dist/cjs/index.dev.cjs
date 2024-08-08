@@ -219,19 +219,32 @@ const subscriberCollection = /*@__PURE__*/ (() => {
             this.count = 0;
             /** @internal */
             this._subs = [];
+            /** @internal */
+            this._requestDirtySubs = [];
+            /** @internal */
+            this._hasDirtySubs = false;
         }
         add(subscriber) {
             if (this._subs.includes(subscriber)) {
                 return false;
             }
             this._subs[this._subs.length] = subscriber;
+            if ('handleDirty' in subscriber) {
+                this._requestDirtySubs[this._requestDirtySubs.length] = subscriber;
+                this._hasDirtySubs = true;
+            }
             ++this.count;
             return true;
         }
         remove(subscriber) {
-            const idx = this._subs.indexOf(subscriber);
+            let idx = this._subs.indexOf(subscriber);
             if (idx !== -1) {
                 this._subs.splice(idx, 1);
+                idx = this._requestDirtySubs.indexOf(subscriber);
+                if (idx !== -1) {
+                    this._requestDirtySubs.splice(idx, 1);
+                    this._hasDirtySubs = this._requestDirtySubs.length > 0;
+                }
                 --this.count;
                 return true;
             }
@@ -249,13 +262,9 @@ const subscriberCollection = /*@__PURE__*/ (() => {
              * Subscribers removed during this invocation will still be invoked (and they also shouldn't be,
              * however this is accounted for via $isBound and similar flags on the subscriber objects)
              */
-            const _subs = this._subs.slice(0);
-            const len = _subs.length;
-            let i = 0;
-            for (; i < len; ++i) {
-                _subs[i].handleChange(val, oldVal);
+            for (const sub of this._subs.slice(0)) {
+                sub.handleChange(val, oldVal);
             }
-            return;
         }
         notifyCollection(collection, indexMap) {
             const _subs = this._subs.slice(0);
@@ -265,6 +274,13 @@ const subscriberCollection = /*@__PURE__*/ (() => {
                 _subs[i].handleCollectionChange(collection, indexMap);
             }
             return;
+        }
+        notifyDirty() {
+            if (this._hasDirtySubs) {
+                for (const dirtySub of this._requestDirtySubs.slice(0)) {
+                    dirtySub.handleDirty();
+                }
+            }
         }
     }
     return subscriberCollection;
@@ -401,10 +417,16 @@ class CollectionLengthObserver {
             }
         }
     }
+    handleDirty() {
+        if (this._value !== this._obj.length) {
+            this.subs.notifyDirty();
+        }
+    }
     handleCollectionChange(_arr, _) {
         const oldValue = this._value;
         const value = this._obj.length;
         if ((this._value = value) !== oldValue) {
+            this.subs.notifyDirty();
             this.subs.notify(this._value, oldValue);
         }
     }
@@ -423,6 +445,11 @@ class CollectionSizeObserver {
     }
     setValue() {
         throw createMappedError(220 /* ErrorNames.assign_readonly_size */);
+    }
+    handleDirty() {
+        if (this._value !== this._obj.size) {
+            this.subs.notifyDirty();
+        }
     }
     handleCollectionChange(_collection, _) {
         const oldValue = this._value;
@@ -845,6 +872,7 @@ const getArrayObserver = /*@__PURE__*/ (() => {
         }
         notify() {
             const subs = this.subs;
+            subs.notifyDirty();
             const indexMap = this.indexMap;
             if (batching) {
                 addCollectionBatch(subs, this.collection, indexMap);
@@ -853,7 +881,7 @@ const getArrayObserver = /*@__PURE__*/ (() => {
             const arr = this.collection;
             const length = arr.length;
             this.indexMap = createIndexMap(length);
-            this.subs.notifyCollection(arr, indexMap);
+            subs.notifyCollection(arr, indexMap);
         }
         getLengthObserver() {
             return this.lenObs ??= new CollectionLengthObserver(this);
@@ -893,6 +921,11 @@ const getArrayObserver = /*@__PURE__*/ (() => {
             arrayObserver.collection[index] = newValue;
             arrayObserver.notify();
         }
+        handleDirty() {
+            if (this.value !== this.getValue()) {
+                this.subs.notifyDirty();
+            }
+        }
         /**
          * From interface `ICollectionSubscriber`
          */
@@ -904,7 +937,6 @@ const getArrayObserver = /*@__PURE__*/ (() => {
             }
             const prevValue = this.value;
             const currValue = this.value = this.getValue();
-            // hmm
             if (prevValue !== currValue) {
                 this.subs.notify(currValue, prevValue);
             }
@@ -1029,6 +1061,7 @@ const getSetObserver = /*@__PURE__*/ (() => {
         }
         notify() {
             const subs = this.subs;
+            subs.notifyDirty();
             const indexMap = this.indexMap;
             if (batching) {
                 addCollectionBatch(subs, this.collection, indexMap);
@@ -1037,7 +1070,7 @@ const getSetObserver = /*@__PURE__*/ (() => {
             const set = this.collection;
             const size = set.size;
             this.indexMap = createIndexMap(size);
-            this.subs.notifyCollection(set, indexMap);
+            subs.notifyCollection(set, indexMap);
         }
         getLengthObserver() {
             return this.lenObs ??= new CollectionSizeObserver(this);
@@ -1163,6 +1196,7 @@ const getMapObserver = /*@__PURE__*/ (() => {
         }
         notify() {
             const subs = this.subs;
+            subs.notifyDirty();
             const indexMap = this.indexMap;
             if (batching) {
                 addCollectionBatch(subs, this.collection, indexMap);
@@ -1818,6 +1852,12 @@ class ComputedObserver {
         this._callback = callback;
         return true;
     }
+    handleDirty() {
+        if (!this._isDirty) {
+            this._isDirty = true;
+            this.subs.notifyDirty();
+        }
+    }
     handleChange() {
         this._isDirty = true;
         if (this.subs.count > 0) {
@@ -2070,6 +2110,7 @@ class SetterObserver {
             oV = this._value;
             this._value = newValue;
             this._callback?.(newValue, oV);
+            this.subs.notifyDirty();
             this.subs.notify(newValue, oV);
         }
         else {
@@ -2562,6 +2603,7 @@ const observable = /*@__PURE__*/ (() => {
                 // we only want to notify subscribers with the latest values
                 value = this._oldValue;
                 this._oldValue = this._value;
+                this.subs.notifyDirty();
                 this.subs.notify(this._value, value);
             }
         }
