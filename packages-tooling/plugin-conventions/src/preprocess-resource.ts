@@ -235,7 +235,7 @@ function modifyResource(unit: IFileUnit, m: ReturnType<typeof modifyCode>, optio
         if (classNames.length === 0) continue;
         emitTypeCheckedTemplate(
           () => templateImport.inlineTemplate ?? unit.readFile?.(templateImport.modulePath!),
-          templateImport.classNames.join('|')
+          templateImport.classNames
         );
       }
     }
@@ -244,7 +244,7 @@ function modifyResource(unit: IFileUnit, m: ReturnType<typeof modifyCode>, optio
     m.prepend(`import * as ${viewDef} from './${transformHtmlImportSpecifier(unit.filePair)}';\n`);
 
     if (options.typeCheckTemplate) {
-      emitTypeCheckedTemplate(() => unit.readFile?.(`./${unit.filePair}`), exportedClassName!);
+      emitTypeCheckedTemplate(() => unit.readFile?.(`./${unit.filePair}`), [exportedClassName!]);
     }
 
     if (defineElementInformation) {
@@ -307,13 +307,13 @@ function modifyResource(unit: IFileUnit, m: ReturnType<typeof modifyCode>, optio
 
   return m;
 
-  function emitTypeCheckedTemplate(contentFactory: () => string | undefined, className: string): void {
+  function emitTypeCheckedTemplate(contentFactory: () => string | undefined, classNames: string[]): void {
     const htmlContent = contentFactory();
     if (!htmlContent) return;
-    const typecheckedTemplate = createTypeCheckedTemplate(htmlContent, className);
+    const typecheckedTemplate = createTypeCheckedTemplate(htmlContent, classNames.join('|'));
     // console.log(typecheckedTemplate);
     m.prepend(`
-function __typecheck_template_${className}__() {
+function __typecheck_template_${classNames.join('_')}__() {
   const access = <T extends object>(typecheck: (o: T) => unknown, expr: string) => expr;
   return \`${typecheckedTemplate}\`;
 }\n\n`);

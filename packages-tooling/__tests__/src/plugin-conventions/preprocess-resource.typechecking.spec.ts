@@ -53,67 +53,138 @@ declare module '*.html' {
       .map(d => flattenDiagnosticMessageText(d.messageText, EOL));
   }
 
-  it('@customElement - short-hand assignment - pass', function () {
-    const entry = 'foo.ts';
-    const markupFile = 'foo.html';
-    const markup = '${prop}';
-    const result = preprocessResource(
-      {
-        path: entry,
-        contents: `
-import { customElement } from '@aurelia/runtime-html';
-import template from './${markupFile}';
+  function createMarkupReader(fileName: string, markup: string) {
+    return (path: string) => {
+      if (path.endsWith(fileName)) return markup;
+      throw new Error(`unexpected path: ${path}`);
+    };
+  }
 
-@customElement({ name: 'foo', template })
-export class Foo {
-  public prop: string;
-}
-`,
-        readFile(path) {
-          if (path.endsWith(markupFile)) return markup;
-          throw new Error(`unexpected path: ${path}`);
-        },
-      }, nonConventionalOptions);
+  function assertSuccess(entry: string, code: string) {
+    const errors = compileProcessedCode(entry, { [entry]: code });
+    assert.deepStrictEqual(errors, [], `Errors: ${errors.join(EOL)}${EOL}Code: ${code}`);
+  }
 
-    const errors = compileProcessedCode(entry, { [entry]: result.code });
-    assert.deepStrictEqual(errors, [], errors.join(EOL));
-  });
+  function assertFailure(entry: string, code: string, expectedErrors: RegExp[]) {
+    const errors = compileProcessedCode(entry, { [entry]: code });
+    const len = expectedErrors.length;
+    assert.strictEqual(errors.length, len);
+    for (let i = 0; i < len; i++) {
+      const pattern = expectedErrors[i];
+      assert.strictEqual(errors.some(e => pattern.test(e)), true, `Expected error not found: ${pattern}${EOL}Errors: ${errors.join(EOL)}${EOL}Code: ${code}`);
+    }
+  }
 
-  it('@customElement - short-hand assignment - fail', function () {
-    const entry = 'foo.ts';
-    const markupFile = 'foo.html';
-    const markup = '${prop1}';
-    const result = preprocessResource(
-      {
-        path: entry,
-        contents: `
-import { customElement } from '@aurelia/runtime-html';
-import template from './${markupFile}';
+  describe('@customElement', function () {
+    describe('short-hand assignment', function () {
+      it('single class - pass', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
+  import { customElement } from '@aurelia/runtime-html';
+  import template from './${markupFile}';
 
-@customElement({ name: 'foo', template })
-export class Foo {
-  public prop: string;
-}
-`,
-        readFile(path) {
-          if (path.endsWith(markupFile)) return markup;
-          throw new Error(`unexpected path: ${path}`);
-        },
-      }, nonConventionalOptions);
+  @customElement({ name: 'foo', template })
+  export class Foo {
+    public prop: string;
+  }
+  `,
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
 
-    const errors = compileProcessedCode(entry, { [entry]: result.code });
-    assert.strictEqual(errors.length, 1);
-    assert.match(errors[0], /Property 'prop1' does not exist on type 'Foo'./);
-  });
+        assertSuccess(entry, result.code);
+      });
 
-  it('@customElement - property assignment - pass', function () {
-    const entry = 'foo.ts';
-    const markupFile = 'foo.html';
-    const markup = '${prop}';
-    const result = preprocessResource(
-      {
-        path: entry,
-        contents: `
+      it('single class - fail', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop1}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
+  import { customElement } from '@aurelia/runtime-html';
+  import template from './${markupFile}';
+
+  @customElement({ name: 'foo', template })
+  export class Foo {
+    public prop: string;
+  }
+  `,
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
+
+        assertFailure(entry, result.code, [/Property 'prop1' does not exist on type 'Foo'\./]);
+      });
+
+      it('multiple classes - pass', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
+  import { customElement } from '@aurelia/runtime-html';
+  import template from './${markupFile}';
+
+  @customElement({ name: 'foo', template })
+  export class Foo {
+    public prop: string;
+  }
+
+  @customElement({ name: 'bar', template })
+  export class Bar {
+    public prop: string;
+  }
+  `,
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
+
+        assertSuccess(entry, result.code);
+      });
+
+      it('multiple classes - fail', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
+  import { customElement } from '@aurelia/runtime-html';
+  import template from './${markupFile}';
+
+  @customElement({ name: 'foo', template })
+  export class Foo {
+    public prop: string;
+  }
+
+  @customElement({ name: 'bar', template })
+  export class Bar {
+    public prop1: string;
+  }
+  `,
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
+
+        assertFailure(entry, result.code, [/Property 'prop' does not exist on type 'Bar'\./]);
+      });
+    });
+
+    describe('property assignment', function () {
+      it('single class - pass', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
 import { customElement } from '@aurelia/runtime-html';
 import x from './${markupFile}';
 
@@ -122,24 +193,20 @@ export class Foo {
   public prop: string;
 }
 `,
-        readFile(path) {
-          if (path.endsWith(markupFile)) return markup;
-          throw new Error(`unexpected path: ${path}`);
-        },
-      }, nonConventionalOptions);
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
 
-    const errors = compileProcessedCode(entry, { [entry]: result.code });
-    assert.deepStrictEqual(errors, [], errors.join(EOL));
-  });
+        assertSuccess(entry, result.code);
+      });
 
-  it('@customElement - property assignment - fail', function () {
-    const entry = 'foo.ts';
-    const markupFile = 'foo.html';
-    const markup = '${prop1}';
-    const result = preprocessResource(
-      {
-        path: entry,
-        contents: `
+      it('single class - fail', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop1}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
 import { customElement } from '@aurelia/runtime-html';
 import x from './${markupFile}';
 
@@ -148,25 +215,76 @@ export class Foo {
   public prop: string;
 }
 `,
-        readFile(path) {
-          if (path.endsWith(markupFile)) return markup;
-          throw new Error(`unexpected path: ${path}`);
-        },
-      }, nonConventionalOptions);
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
 
-    const errors = compileProcessedCode(entry, { [entry]: result.code });
-    assert.strictEqual(errors.length, 1);
-    assert.match(errors[0], /Property 'prop1' does not exist on type 'Foo'./);
-  });
+        assertFailure(entry, result.code, [/Property 'prop1' does not exist on type 'Foo'\./]);
+      });
 
-  it('@customElement - string literal assignment - pass', function () {
-    const entry = 'foo.ts';
-    const markupFile = 'foo.html';
-    const markup = '${prop}';
-    const result = preprocessResource(
-      {
-        path: entry,
-        contents: `
+      it('multiple classes - pass', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
+  import { customElement } from '@aurelia/runtime-html';
+  import x from './${markupFile}';
+
+  @customElement({ name: 'foo', template: x })
+  export class Foo {
+    public prop: string;
+  }
+
+  @customElement({ name: 'bar', template: x })
+  export class Bar {
+    public prop: string;
+  }
+  `,
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
+
+        assertSuccess(entry, result.code);
+      });
+
+      it('multiple classes - fail', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
+  import { customElement } from '@aurelia/runtime-html';
+  import x from './${markupFile}';
+
+  @customElement({ name: 'foo', template: x })
+  export class Foo {
+    public prop: string;
+  }
+
+  @customElement({ name: 'bar', template: x })
+  export class Bar {
+    public prop1: string;
+  }
+  `,
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
+
+        assertFailure(entry, result.code, [/Property 'prop' does not exist on type 'Bar'\./]);
+      });
+    });
+
+    describe('string literal assignment', function () {
+      it('single class - pass', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
 import { customElement } from '@aurelia/runtime-html';
 import x from './${markupFile}';
 
@@ -175,24 +293,20 @@ export class Foo {
   public prop: string;
 }
 `,
-        readFile(path) {
-          if (path.endsWith(markupFile)) return markup;
-          throw new Error(`unexpected path: ${path}`);
-        },
-      }, nonConventionalOptions);
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
 
-    const errors = compileProcessedCode(entry, { [entry]: result.code });
-    assert.deepStrictEqual(errors, [], errors.join(EOL));
-  });
+        assertSuccess(entry, result.code);
+      });
 
-  it('@customElement - string literal assignment - fail', function () {
-    const entry = 'foo.ts';
-    const markupFile = 'foo.html';
-    const markup = '${prop1}';
-    const result = preprocessResource(
-      {
-        path: entry,
-        contents: `
+      it('single class - fail', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop1}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
 import { customElement } from '@aurelia/runtime-html';
 import x from './${markupFile}';
 
@@ -201,14 +315,65 @@ export class Foo {
   public prop: string;
 }
 `,
-        readFile(path) {
-          if (path.endsWith(markupFile)) return markup;
-          throw new Error(`unexpected path: ${path}`);
-        },
-      }, nonConventionalOptions);
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
 
-    const errors = compileProcessedCode(entry, { [entry]: result.code });
-    assert.strictEqual(errors.length, 1);
-    assert.match(errors[0], /Property 'prop1' does not exist on type 'Foo'./);
+        assertFailure(entry, result.code, [/Property 'prop1' does not exist on type 'Foo'\./]);
+      });
+
+      it('multiple classes - pass', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
+  import { customElement } from '@aurelia/runtime-html';
+  import x from './${markupFile}';
+
+  @customElement({ name: 'foo', template: '${markup}' })
+  export class Foo {
+    public prop: string;
+  }
+
+  @customElement({ name: 'bar', template: '${markup}' })
+  export class Bar {
+    public prop: string;
+  }
+  `,
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
+
+        assertSuccess(entry, result.code);
+      });
+
+      it('multiple classes - fail', function () {
+        const entry = 'foo.ts';
+        const markupFile = 'foo.html';
+        const markup = '${prop}';
+        const result = preprocessResource(
+          {
+            path: entry,
+            contents: `
+  import { customElement } from '@aurelia/runtime-html';
+  import x from './${markupFile}';
+
+  @customElement({ name: 'foo', template: '${markup}' })
+  export class Foo {
+    public prop: string;
+  }
+
+  @customElement({ name: 'bar', template: '${markup}' })
+  export class Bar {
+    public prop1: string;
+  }
+  `,
+            readFile: createMarkupReader(markupFile, markup),
+          }, nonConventionalOptions);
+
+        assertFailure(entry, result.code, [/Property 'prop' does not exist on type 'Bar'\./]);
+      });
+    });
   });
 });

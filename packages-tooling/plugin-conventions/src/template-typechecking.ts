@@ -1,5 +1,5 @@
 import { DI } from '@aurelia/kernel';
-import { IExpressionParser, Unparser } from '@aurelia/expression-parser';
+import { ExpressionParser, Unparser } from '@aurelia/expression-parser';
 import {
   DotSeparatedAttributePattern,
   EventAttributePattern,
@@ -25,7 +25,7 @@ export function createTypeCheckedTemplate(rawHtml: string, viewModelClassName: s
     ColonPrefixedBindAttributePattern,
   );
   const attrParser = container.get(IAttributeParser);
-  const exprParser = container.get(IExpressionParser);
+  const exprParser = container.get(ExpressionParser);
 
   const toReplace: { loc: Location; modifiedContent: string }[] = [];
   traverse(tree, node => {
